@@ -18,7 +18,7 @@ import {
 import { templateForService, type ChecklistTemplate, type ServiceType } from "@/lib/templates";
 
 export type FaqMatch = { faq: FaqEntry; score: number };
-export type DocMatch = { doc: ReferenceDoc; score: number };
+export type DocMatch = { doc: ReferenceDoc; score: number; snippet?: string };
 
 export type CaseContext = {
   company: Company;
