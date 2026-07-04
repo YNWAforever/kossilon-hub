@@ -160,7 +160,11 @@ export function draftReply(
     sources.push({ kind: "template", id: template.id, label: template.name });
   }
 
-  // Document citations
+  // Document citations — quote a real snippet when we indexed the file's text.
+  const topDoc = context.docs[0];
+  if (topDoc?.snippet) {
+    parts.push(`From **${topDoc.doc.title}**:\n\n> ${topDoc.snippet}`);
+  }
   for (const dm of context.docs.slice(0, 2)) {
     sources.push({ kind: "doc", id: dm.doc.id, label: dm.doc.title });
   }
