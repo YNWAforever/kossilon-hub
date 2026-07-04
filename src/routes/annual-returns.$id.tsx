@@ -6,7 +6,8 @@ import { Timeline } from "@/components/timeline";
 import { cases, companies, formatDate, formatDateTime, type AnnualReturnCase, type Company, type ChecklistItem } from "@/lib/mock-data";
 import { caseStatusTone } from "@/lib/status";
 import { templateForService } from "@/lib/templates";
-import { Check, FileText, Bell, Zap, Upload, ClipboardList } from "lucide-react";
+import { evaluateRisk, riskTone, type ScheduledReminder } from "@/lib/risk";
+import { Check, FileText, Bell, Zap, Upload, ClipboardList, Shield, AlertTriangle, Sparkles, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/annual-returns/$id")({
