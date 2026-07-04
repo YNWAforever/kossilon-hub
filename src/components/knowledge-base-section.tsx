@@ -21,8 +21,12 @@ import {
   MessageSquare,
   Loader2,
   Sparkles,
+  Upload,
+  X,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseFaqImport, SAMPLE_CSV, type ImportRow } from "@/lib/faq-import";
 
 const categoryTone = (c: FaqCategory) =>
   c === "Annual Return"
