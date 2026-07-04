@@ -235,15 +235,44 @@ const seedDocs: ReferenceDoc[] = [
 
 // ---------- store ----------
 type State = { faqs: FaqEntry[]; docs: ReferenceDoc[] };
-const state: State = { faqs: seedFaqs, docs: seedDocs };
+
+const STORAGE_KEY = "kossilon.kb.v1";
+
+function loadPersisted(): Partial<State> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Partial<State>;
+  } catch {
+    return {};
+  }
+}
+
+const persisted = loadPersisted();
+const state: State = {
+  faqs: persisted.faqs ?? seedFaqs,
+  docs: persisted.docs ?? seedDocs,
+};
+
 const listeners = new Set<() => void>();
-const emit = () => listeners.forEach((l) => l());
+const emit = () => {
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* quota — ignore */
+    }
+  }
+  listeners.forEach((l) => l());
+};
 const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
 const getSnapshot = () => state;
-const touch = () => nowIso();
+const touch = () => new Date().toISOString();
+
 
 export const kbStore = {
   get: () => state,
