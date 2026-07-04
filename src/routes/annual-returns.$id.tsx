@@ -45,6 +45,10 @@ function CaseDetailPage() {
           <div className="hidden md:flex items-center gap-2">
             <StatusPill tone={caseStatusTone(c.status)}>{c.status}</StatusPill>
             <DeadlinePill dueDate={c.dueDate} />
+            <StatusPill tone={riskTone(risk.level)}>
+              <Shield className="mr-1 inline h-3 w-3" />
+              {risk.level} risk
+            </StatusPill>
           </div>
         }
       />
