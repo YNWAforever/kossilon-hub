@@ -137,51 +137,44 @@ function EnquiriesPage() {
 
           <div className="border-t border-border bg-card p-3">
             <div className="flex items-end gap-2 rounded-lg border border-border bg-background p-2">
-              <button className="p-2 text-muted-foreground hover:text-foreground"><Paperclip className="h-4 w-4" /></button>
-              <textarea rows={2} placeholder="Type a message… (templates available)" className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
-              <button className="rounded-md bg-primary px-3 py-2 text-primary-foreground hover:bg-primary/90"><Send className="h-4 w-4" /></button>
+              <button className="p-2 text-muted-foreground hover:text-foreground" aria-label="Attach"><Paperclip className="h-4 w-4" /></button>
+              <textarea
+                rows={2}
+                value={composerText}
+                onChange={(e) => setComposerText(e.target.value)}
+                placeholder="Type a message… or use the AI draft →"
+                className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              />
+              <button
+                onClick={() => {
+                  if (!composerText.trim()) return;
+                  toast.success("Reply sent");
+                  setComposerText("");
+                }}
+                className="rounded-md bg-primary px-3 py-2 text-primary-foreground hover:bg-primary/90"
+                aria-label="Send"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-1.5 flex items-center justify-between px-1 text-[10px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-primary" /> AI draft available in the right panel
+              </span>
+              <span>Intent: {active.intent} · {(active.intentConfidence * 100).toFixed(0)}%</span>
             </div>
           </div>
         </section>
 
-        {/* AI panel */}
-        <aside className="hidden w-72 shrink-0 space-y-4 overflow-y-auto border-l border-border bg-card p-5 lg:block">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">AI Intent</p>
-            <div className="mt-2 rounded-lg border border-status-blue/20 bg-status-blue-soft p-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-status-blue" />
-                <p className="text-sm font-semibold text-foreground">{active.intent}</p>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">Confidence: {(active.intentConfidence * 100).toFixed(0)}%</p>
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Quote</p>
-            <p className="mt-2 text-sm font-medium text-foreground">{active.quoteStatus}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned to</p>
-            {assignee ? (
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sand text-xs font-semibold text-white">{assignee.initials}</div>
-                <div>
-                  <p className="text-sm font-medium">{assignee.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{assignee.role}</p>
-                </div>
-              </div>
-            ) : (
-              <button className="mt-2 w-full rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground hover:bg-muted/50">
-                + Assign staff
-              </button>
-            )}
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Suggested next step</p>
-            <p className="mt-2 rounded-md bg-muted p-3 text-xs text-foreground">Send Standard incorporation package quote (HKD 4,800) and request identity documents.</p>
-          </div>
-      </aside>
+        <AiAssistantPanel
+          enquiry={active}
+          onInsert={(text) => setComposerText(text)}
+          onSend={() => setComposerText("")}
+        />
       </main>
+      {/* Assignee sr-only reference to keep type usage explicit */}
+      <span className="sr-only">{assignee?.name}</span>
+
       <ConvertToClientDialog
         enquiry={convertOpen ? active : null}
         open={convertOpen}
