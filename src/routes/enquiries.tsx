@@ -1,9 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
+import { ConvertToClientDialog } from "@/components/convert-to-client-dialog";
 import { enquiries, formatDateTime, teamMembers } from "@/lib/mock-data";
-import { Sparkles, UserPlus, Send, Paperclip } from "lucide-react";
+import { useEnquiryConversion } from "@/lib/clients-store";
+import { Sparkles, UserPlus, Send, Paperclip, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/enquiries")({
@@ -17,9 +20,13 @@ export const Route = createFileRoute("/enquiries")({
 });
 
 function EnquiriesPage() {
+  const router = useRouter();
   const [selected, setSelected] = useState(enquiries[0].id);
+  const [convertOpen, setConvertOpen] = useState(false);
   const active = enquiries.find((e) => e.id === selected)!;
   const assignee = teamMembers.find((t) => t.id === active.assignedTo);
+  const convertedClientId = useEnquiryConversion(active.id);
+
 
   return (
     <>
@@ -68,9 +75,22 @@ function EnquiriesPage() {
               <p className="text-xs text-muted-foreground">{active.phone}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent">
-                <span className="inline-flex items-center gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Convert to client</span>
-              </button>
+              {convertedClientId ? (
+                <Link
+                  to="/clients/$id"
+                  params={{ id: convertedClientId }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-status-green/30 bg-status-green-soft px-3 py-1.5 text-xs font-medium text-foreground hover:bg-status-green-soft/80"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-status-green" /> View client →
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setConvertOpen(true)}
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                >
+                  <span className="inline-flex items-center gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Convert to client</span>
+                </button>
+              )}
               <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                 Send quote
               </button>
@@ -139,8 +159,22 @@ function EnquiriesPage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Suggested next step</p>
             <p className="mt-2 rounded-md bg-muted p-3 text-xs text-foreground">Send Standard incorporation package quote (HKD 4,800) and request identity documents.</p>
           </div>
-        </aside>
+      </aside>
       </main>
+      <ConvertToClientDialog
+        enquiry={convertOpen ? active : null}
+        open={convertOpen}
+        onOpenChange={setConvertOpen}
+        onConverted={(company) => {
+          toast.success(`${company.name} added to clients`, {
+            description: `Owner: ${teamMembers.find((t) => t.id === company.ownerId)?.name}`,
+            action: {
+              label: "Open",
+              onClick: () => router.navigate({ to: "/clients/$id", params: { id: company.id } }),
+            },
+          });
+        }}
+      />
     </>
   );
 }
