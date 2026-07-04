@@ -17,6 +17,7 @@ export const Route = createFileRoute("/clients")({
 });
 
 function ClientsPage() {
+  const companies = useAllCompanies();
   return (
     <>
       <TopBar
