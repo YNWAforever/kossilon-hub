@@ -83,12 +83,15 @@ function FaqManager() {
             {active} active · used by the AI to draft WhatsApp replies
           </p>
         </div>
-        <button
-          onClick={() => setExpanded(kbStore.addFaq())}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add FAQ
-        </button>
+        <div className="flex items-center gap-1.5">
+          <FaqImportButton />
+          <button
+            onClick={() => setExpanded(kbStore.addFaq())}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add FAQ
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
