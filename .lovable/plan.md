@@ -1,61 +1,72 @@
-## Kossilon Company Secretary OS — Build Plan
+## Goal
+Give staff a client-facing AI assist in the WhatsApp Inbox that suggests draft replies grounded in a curated FAQ, uploaded reference documents, the active client's live case state, and the checklist templates from Settings. Everything is mocked (no live model call) but the UX shows end-to-end how retrieval + drafting would work.
 
-A UI prototype for an internal SaaS dashboard used by a Hong Kong company secretary firm. All data mocked in-memory (no backend). Focus: deadline visibility, status clarity, complete UX across 10 pages.
+## What gets added
 
-### Visual System
+### 1. Knowledge base (Settings)
+A new **Knowledge base** section in `/settings`, alongside the existing Checklist templates card.
 
-- **Palette**: warm neutral — sand `#A69572`, taupe `#B39A6C`, warm gray `#BBB5A5`, white `#FFFFFF`, plus dark ink for text and semantic status colors.
-- **Status colors** (semantic only): green on-track, yellow action-needed, orange deadline-approaching, red overdue, blue filed/completed.
-- **Type**: Sora (headings), Manrope (body) via `@fontsource`.
-- **Density**: Comfortable — Ramp-like breathing room, not Linear-dense.
-- **Tokens** defined in `src/styles.css` under `@theme` (Tailwind v4).
+**FAQ manager**
+- Table of Q&A entries with: question, answer (markdown), category (Incorporation / Annual Return / Payments / Deregistration / General), tags, active toggle.
+- Inline editing + Add / Duplicate / Delete.
+- Seeded with ~12 realistic HK CoSec FAQs (fees, NAR1 timing, penalties, share transfer, deregistration steps, payment methods, turnaround times, etc.).
 
-### Information Architecture
+**Reference documents**
+- Card listing "uploaded" reference docs (mocked file entries — no real upload): title, filename, category, short summary, updated date, active toggle.
+- Add / edit / delete rows. A "Simulate upload" button appends a new mock entry so the flow is demoable.
+- Seeded with ~6 docs (Fee schedule 2026, HK CoSec SOP, NAR1 filing guide, KYC checklist, Payment terms, Deregistration playbook).
 
-Sidebar (persistent, collapsible): Dashboard, Enquiries, Clients, Annual Returns, Documents, Payments, WhatsApp Inbox, Tasks, Teams, Settings. Top bar: global search + user menu. Every detail view has a right-rail timeline.
+Both stored in a new module store `src/lib/knowledge-base.ts` (same `useSyncExternalStore` pattern already used for templates + clients).
 
-### Pages
+### 2. AI-suggested replies in WhatsApp Inbox
+Rework the existing right rail on `/whatsapp` (currently a static "Suggested next step" card) into an **AI Assistant** panel:
 
-1. **Dashboard** (`/`) — 8 KPI cards (AR due 7d, AR due 30d, missing docs, payment pending, WhatsApp today, my cases, overdue, team workload) + "Upcoming annual returns" table + "Today's enquiries" + "Team workload" panels.
-2. **Enquiries** (`/enquiries`) — WhatsApp conversation list with AI intent tag, quote status, assigned staff, convert-to-client button. Split view: list + conversation preview.
-3. **Clients** (`/clients`) — Table of client companies. Row click → profile.
-4. **Client profile** (`/clients/$id`) — Company details, contacts, AR history, docs, payments, assigned team, timeline rail.
-5. **Annual Returns board** (`/annual-returns`) — Kanban with 11 status columns. Cards show company, deadline pill, next action, owner.
-6. **AR case detail** (`/annual-returns/$id`) — Checklist of required docs (missing/received), reminders sent, uploaded files, staff notes, clear "Next action" panel, timeline.
-7. **Documents** (`/documents`) — Cross-client doc library filtered by status.
-8. **Payments** (`/payments`) — Invoice/payment tracking with reminder cadence.
-9. **WhatsApp Inbox** (`/whatsapp`) — Full conversation UI with template picker + AI intent panel.
-10. **WhatsApp Automation** (`/whatsapp/automation`) — Templates, reminder schedules, escalation rules, message logs.
-11. **Tasks** (`/tasks`) — Task list assigned to current user + team.
-12. **Teams** (`/teams`) — Teams, members, roles (Admin / Manager / Staff), client ownership.
-13. **Settings** (`/settings`) — Checklist templates, service packages, risk rules, reminder cadence, WOZTELL API connection form (stub).
+- **Draft reply card** — auto-generated draft based on the current enquiry (intent + last message) and linked client case if the phone maps to a converted client:
+  - Header shows model badge ("Kossilon AI · mocked"), confidence, and a **Regenerate** button.
+  - Body renders markdown (add `react-markdown` + `remark-gfm`).
+  - Actions: **Insert into composer**, **Send as-is**, **Copy**.
+- **Sources used** — chips listing the FAQs, documents, checklist template items, and case fields the draft cited. Each chip is clickable and expands a small preview.
+- **Live case context** — if the enquiry is tied to a client (via `useEnquiryConversion` or phone match), show: company name, active case status, days-to-due, missing docs count, payment status. Link to the case.
+- **Related FAQs** — top 3 matches surfaced independently for one-click send.
 
-### Technical Approach
+Composer changes:
+- Textarea becomes controlled state so "Insert into composer" works.
+- Small "AI ✨" button in the composer footer to re-open the draft.
 
-- TanStack Start file-based routes under `src/routes/`.
-- Mock data module `src/lib/mock-data.ts` — companies, cases, enquiries, messages, tasks, team, timeline events. Deterministic seeds so numbers on dashboard match detail pages.
-- Shared components in `src/components/`: `AppSidebar`, `TopBar`, `KpiCard`, `StatusPill`, `DeadlinePill`, `Timeline`, `CaseBoardColumn`, `CaseCard`, `ConversationList`, `MessageThread`, `ChecklistItem`.
-- Shadcn primitives: sidebar, card, table, tabs, badge, button, input, dialog, dropdown, avatar, separator, scroll-area, tooltip.
-- Icons from `lucide-react`.
-- Each route has proper `head()` metadata (title + description).
-- All navigation via `<Link to="...">`, no `<a href>`.
+### 3. Mocked "retrieval + drafting" engine
+New file `src/lib/ai-agent.ts` — deterministic, no network:
+- `retrieveContext(enquiry, clientCase?)` → scores FAQ entries + documents by keyword overlap with `enquiry.lastMessage` + `enquiry.intent`, returns top matches with a numeric score.
+- `draftReply(enquiry, context, caseCtx?)` → templated markdown reply that composes: greeting → intent-specific answer stitched from top-1 FAQ answer → case-specific line (deadline, missing docs) when a case exists → next-step CTA (send quote, request docs, book call) → sign-off "— Kossilon team".
+- `suggestedFaqs(enquiry)` → top 3 FAQ IDs by score.
 
-### Status Pill System
+All pure functions so re-renders and "Regenerate" produce stable, believable output.
 
-One reusable component maps case status → color:
-- Upcoming, Filed, Completed → blue
-- Reminder Sent, Documents Received, NAR1 Prepared, Ready to File → green
-- Documents Pending, Signature Pending → yellow
-- Payment Pending → orange (approaching deadline) or red (overdue)
-- Overdue → red
+### 4. Small touch-ups
+- Sidebar: no new route; Knowledge base lives inside Settings to keep the nav lean.
+- Case detail: add a subtle "Ask the AI about this case" button in the header that deep-links to `/whatsapp` opened on the client's enquiry (if any). Skip if no matching enquiry.
+- Toast on Insert / Send so the interaction feels responsive.
 
-Deadline pill: days-left → color (>30 green, 8-30 yellow, 1-7 orange, ≤0 red).
+## Files
 
-### Out of Scope (this build)
+**New**
+- `src/lib/knowledge-base.ts` — types, seeds, store, hooks (`useFaqs`, `useReferenceDocs`, mutators).
+- `src/lib/ai-agent.ts` — `retrieveContext`, `draftReply`, `suggestedFaqs`.
+- `src/components/knowledge-base-section.tsx` — FAQ + docs UI mounted inside Settings.
+- `src/components/ai-assistant-panel.tsx` — right-rail panel used by WhatsApp Inbox.
 
-- Real backend / auth (mocked user "Amy Chan, Admin")
-- Real WOZTELL integration (settings form stores locally)
-- Real file uploads (mocked file list)
-- Report exports
+**Edited**
+- `src/routes/settings.tsx` — mount `<KnowledgeBaseSection />` below Checklist templates.
+- `src/routes/whatsapp.tsx` — replace static right rail with `<AiAssistantPanel />`, controlled composer state, wire Insert / Send / Regenerate.
+- `src/routes/annual-returns.$id.tsx` — small "Ask AI" link when a matching enquiry exists.
+- `package.json` — add `react-markdown`, `remark-gfm`.
 
-Ready to build on approval.
+## Out of scope
+- No real model call, no server route, no Lovable AI Gateway wiring (mocked flag surfaced on the panel).
+- No real file uploads or storage; reference documents are metadata-only mock rows.
+- No changes to auth, roles, or backend.
+
+## Verification
+- Create/edit/delete a FAQ and a document in Settings and see them affect suggestions immediately.
+- Open each enquiry in `/whatsapp`; draft reply, sources, related FAQs, and case context all render sensibly and change per enquiry.
+- Click **Insert into composer** and confirm the textarea fills; **Regenerate** produces a fresh draft; toggling a FAQ off in Settings removes it from suggestions.
+- `bunx tsgo --noEmit` passes.

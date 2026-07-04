@@ -24,6 +24,7 @@ import {
   type ReminderRule,
 } from "@/lib/templates";
 import { cases, formatDate } from "@/lib/mock-data";
+import { KnowledgeBaseSection } from "@/components/knowledge-base-section";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
@@ -172,6 +173,10 @@ function SettingsPage() {
             </div>
           </div>
         </section>
+
+
+        {/* Knowledge base for the AI assistant */}
+        <KnowledgeBaseSection />
 
         {/* Secondary settings */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
