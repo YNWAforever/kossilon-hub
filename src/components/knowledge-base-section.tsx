@@ -316,10 +316,19 @@ function DocRow({ d }: { d: ReferenceDoc }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{d.title}</p>
           <p className="truncate text-[11px] text-muted-foreground">
-            {d.filename} · {d.sizeKb} KB
+            {d.filename} · {d.sizeKb} KB{d.pageCount ? ` · ${d.pageCount}p` : ""}
           </p>
-          <div className="mt-1 flex items-center gap-1.5">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <StatusPill tone={categoryTone(d.category)}>{d.category}</StatusPill>
+            {d.chunks && d.chunks.length > 0 ? (
+              <StatusPill tone="green">
+                <span className="inline-flex items-center gap-1">
+                  <Sparkles className="h-2.5 w-2.5" /> Indexed · {d.chunks.length} chunks
+                </span>
+              </StatusPill>
+            ) : (
+              <StatusPill tone="neutral">Metadata only</StatusPill>
+            )}
             {!d.active && <StatusPill tone="neutral">Inactive</StatusPill>}
           </div>
         </div>
