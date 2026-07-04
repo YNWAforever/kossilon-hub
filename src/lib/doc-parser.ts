@@ -8,7 +8,6 @@ import mammoth from "mammoth";
 
 // Register worker exactly once.
 if (typeof window !== "undefined") {
-  // @ts-expect-error — GlobalWorkerOptions typing is loose across builds.
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 }
 
