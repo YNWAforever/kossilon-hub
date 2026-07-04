@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   useFaqs,
   useReferenceDocs,
@@ -18,6 +19,8 @@ import {
   Search,
   FileText,
   MessageSquare,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
