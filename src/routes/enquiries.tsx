@@ -159,8 +159,22 @@ function EnquiriesPage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Suggested next step</p>
             <p className="mt-2 rounded-md bg-muted p-3 text-xs text-foreground">Send Standard incorporation package quote (HKD 4,800) and request identity documents.</p>
           </div>
-        </aside>
+      </aside>
       </main>
+      <ConvertToClientDialog
+        enquiry={convertOpen ? active : null}
+        open={convertOpen}
+        onOpenChange={setConvertOpen}
+        onConverted={(company) => {
+          toast.success(`${company.name} added to clients`, {
+            description: `Owner: ${teamMembers.find((t) => t.id === company.ownerId)?.name}`,
+            action: {
+              label: "Open",
+              onClick: () => router.navigate({ to: "/clients/$id", params: { id: company.id } }),
+            },
+          });
+        }}
+      />
     </>
   );
 }
