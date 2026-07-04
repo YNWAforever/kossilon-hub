@@ -75,9 +75,22 @@ function EnquiriesPage() {
               <p className="text-xs text-muted-foreground">{active.phone}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent">
-                <span className="inline-flex items-center gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Convert to client</span>
-              </button>
+              {convertedClientId ? (
+                <Link
+                  to="/clients/$id"
+                  params={{ id: convertedClientId }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-status-green/30 bg-status-green-soft px-3 py-1.5 text-xs font-medium text-foreground hover:bg-status-green-soft/80"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-status-green" /> View client →
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setConvertOpen(true)}
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                >
+                  <span className="inline-flex items-center gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Convert to client</span>
+                </button>
+              )}
               <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                 Send quote
               </button>
