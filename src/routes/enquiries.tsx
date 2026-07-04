@@ -1,15 +1,21 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
 import { ConvertToClientDialog } from "@/components/convert-to-client-dialog";
+import { AiAssistantPanel } from "@/components/ai-assistant-panel";
 import { enquiries, formatDateTime, teamMembers } from "@/lib/mock-data";
 import { useEnquiryConversion } from "@/lib/clients-store";
-import { Sparkles, UserPlus, Send, Paperclip, CheckCircle2 } from "lucide-react";
+import { UserPlus, Send, Paperclip, CheckCircle2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type SearchParams = { enquiry?: string };
+
 export const Route = createFileRoute("/enquiries")({
+  validateSearch: (s: Record<string, unknown>): SearchParams => ({
+    enquiry: typeof s.enquiry === "string" ? s.enquiry : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Enquiries — Kossilon CoSec OS" },
@@ -21,11 +27,26 @@ export const Route = createFileRoute("/enquiries")({
 
 function EnquiriesPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState(enquiries[0].id);
+  const { enquiry: enquiryParam } = Route.useSearch();
+  const initial = enquiries.find((e) => e.id === enquiryParam)?.id ?? enquiries[0].id;
+  const [selected, setSelected] = useState(initial);
   const [convertOpen, setConvertOpen] = useState(false);
+  const [composerText, setComposerText] = useState("");
   const active = enquiries.find((e) => e.id === selected)!;
   const assignee = teamMembers.find((t) => t.id === active.assignedTo);
   const convertedClientId = useEnquiryConversion(active.id);
+
+  // Sync when URL search param changes (e.g. deep link from case detail)
+  useEffect(() => {
+    if (enquiryParam && enquiries.find((e) => e.id === enquiryParam)) {
+      setSelected(enquiryParam);
+    }
+  }, [enquiryParam]);
+
+  // Reset composer when switching threads
+  useEffect(() => { setComposerText(""); }, [selected]);
+
+
 
 
   return (
