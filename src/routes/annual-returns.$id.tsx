@@ -52,6 +52,15 @@ function CaseDetailPage() {
               <Shield className="mr-1 inline h-3 w-3" />
               {risk.level} risk
             </StatusPill>
+            {enquiryId && (
+              <Link
+                to="/enquiries"
+                search={{ enquiry: enquiryId }}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium hover:bg-accent"
+              >
+                <Sparkles className="h-3 w-3 text-primary" /> Ask AI
+              </Link>
+            )}
           </div>
         }
       />
