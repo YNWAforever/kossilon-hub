@@ -381,6 +381,16 @@ function DocRow({ d }: { d: ReferenceDoc }) {
               <span className="text-muted-foreground">Active</span>
             </label>
           </div>
+          {d.extractedText && (
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Indexed content preview
+              </p>
+              <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-background/60 p-2 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                {d.extractedText.slice(0, 1200)}{d.extractedText.length > 1200 ? "\n…" : ""}
+              </pre>
+            </div>
+          )}
         </div>
       )}
     </li>
