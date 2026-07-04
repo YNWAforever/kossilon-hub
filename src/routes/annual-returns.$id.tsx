@@ -7,6 +7,7 @@ import { cases, companies, formatDate, formatDateTime, type AnnualReturnCase, ty
 import { caseStatusTone } from "@/lib/status";
 import { templateForService } from "@/lib/templates";
 import { evaluateRisk, riskTone, type ScheduledReminder } from "@/lib/risk";
+import { useEnquiryIdForCompany } from "@/lib/clients-store";
 import { Check, FileText, Bell, Zap, Upload, ClipboardList, Shield, AlertTriangle, Sparkles, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
