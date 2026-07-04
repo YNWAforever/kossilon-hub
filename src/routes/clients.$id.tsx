@@ -3,7 +3,7 @@ import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Timeline } from "@/components/timeline";
-import { companies, cases, teamMembers, formatDate } from "@/lib/mock-data";
+import { companies, cases, teamMembers, formatDate, type Company, type Contact } from "@/lib/mock-data";
 import { caseStatusTone } from "@/lib/status";
 import { Building2, Mail, Phone, MapPin, FileText, CreditCard } from "lucide-react";
 

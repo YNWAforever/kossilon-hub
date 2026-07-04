@@ -3,7 +3,7 @@ import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Timeline } from "@/components/timeline";
-import { cases, companies, formatDate, formatDateTime } from "@/lib/mock-data";
+import { cases, companies, formatDate, formatDateTime, type AnnualReturnCase, type Company, type ChecklistItem } from "@/lib/mock-data";
 import { caseStatusTone } from "@/lib/status";
 import { Check, FileText, Bell, Zap, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,8 +28,8 @@ export const Route = createFileRoute("/annual-returns/$id")({
 });
 
 function CaseDetailPage() {
-  const { c, company } = Route.useLoaderData();
-  const missing = c.checklist.filter((i) => !i.received).length;
+  const { c, company } = Route.useLoaderData() as { c: AnnualReturnCase; company: Company | undefined };
+  const missing = c.checklist.filter((i: ChecklistItem) => !i.received).length;
   const received = c.checklist.length - missing;
 
   return (
@@ -94,7 +94,7 @@ function CaseDetailPage() {
               </button>
             </div>
             <ul className="divide-y divide-border">
-              {c.checklist.map((i) => (
+              {c.checklist.map((i: ChecklistItem) => (
                 <li key={i.id} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className={cn(
@@ -132,7 +132,7 @@ function CaseDetailPage() {
               <h2 className="font-display text-base font-semibold text-foreground">Staff notes</h2>
             </div>
             <ul className="divide-y divide-border">
-              {c.notes.map((n, i) => (
+              {c.notes.map((n: { at: string; author: string; text: string }, i: number) => (
                 <li key={i} className="px-5 py-3">
                   <p className="text-sm text-foreground">{n.text}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{n.author} · {formatDateTime(n.at)}</p>
