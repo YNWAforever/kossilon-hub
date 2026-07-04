@@ -81,7 +81,11 @@ function CaseDetailPage() {
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Reminders sent</p>
               <p className="mt-1 font-display text-2xl font-semibold text-foreground">{c.remindersSent}</p>
-              <p className="mt-2 text-xs text-muted-foreground">Next auto-reminder in 2 days</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {nextReminder
+                  ? `Next: ${nextReminder.label} in ${Math.max(0, nextReminder.daysBeforeDue)}d`
+                  : "All reminders complete"}
+              </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Payment</p>
@@ -89,6 +93,10 @@ function CaseDetailPage() {
               <p className="mt-2 text-xs text-muted-foreground">HKD {company?.invoiceAmount.toLocaleString()}</p>
             </div>
           </div>
+
+          {/* Risk & schedule */}
+          <RiskAndSchedule risk={risk} />
+
 
           {/* Checklist */}
           <div className="rounded-xl border border-border bg-card">
