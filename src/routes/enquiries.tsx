@@ -1,9 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
+import { ConvertToClientDialog } from "@/components/convert-to-client-dialog";
 import { enquiries, formatDateTime, teamMembers } from "@/lib/mock-data";
-import { Sparkles, UserPlus, Send, Paperclip } from "lucide-react";
+import { useEnquiryConversion } from "@/lib/clients-store";
+import { Sparkles, UserPlus, Send, Paperclip, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/enquiries")({
@@ -17,9 +20,13 @@ export const Route = createFileRoute("/enquiries")({
 });
 
 function EnquiriesPage() {
+  const router = useRouter();
   const [selected, setSelected] = useState(enquiries[0].id);
+  const [convertOpen, setConvertOpen] = useState(false);
   const active = enquiries.find((e) => e.id === selected)!;
   const assignee = teamMembers.find((t) => t.id === active.assignedTo);
+  const convertedClientId = useEnquiryConversion(active.id);
+
 
   return (
     <>
