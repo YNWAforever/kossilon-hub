@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
-import { companies, teamMembers, formatDate } from "@/lib/mock-data";
+import { teamMembers, formatDate } from "@/lib/mock-data";
+import { useAllCompanies } from "@/lib/clients-store";
 import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/clients")({
