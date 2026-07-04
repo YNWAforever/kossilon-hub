@@ -1,35 +1,39 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Timeline } from "@/components/timeline";
-import { companies, cases, teamMembers, formatDate, type Company, type Contact } from "@/lib/mock-data";
+import { cases, teamMembers, formatDate, type Contact } from "@/lib/mock-data";
+import { useCompanyById } from "@/lib/clients-store";
 import { caseStatusTone } from "@/lib/status";
 import { Building2, Mail, Phone, MapPin, FileText, CreditCard } from "lucide-react";
 
 export const Route = createFileRoute("/clients/$id")({
-  loader: ({ params }) => {
-    const company = companies.find((c) => c.id === params.id);
-    if (!company) throw notFound();
-    return { company };
-  },
-  head: ({ loaderData }) => ({
+  head: () => ({
     meta: [
-      { title: `${loaderData?.company.name ?? "Client"} — Kossilon CoSec OS` },
+      { title: `Client — Kossilon CoSec OS` },
       { name: "description", content: `Client profile, annual return history, documents, and payment status.` },
     ],
   }),
   component: ClientProfilePage,
-  notFoundComponent: () => (
-    <div className="p-10 text-center text-muted-foreground">Client not found. <Link to="/clients" className="text-primary underline">Back to clients</Link></div>
-  ),
 });
 
 function ClientProfilePage() {
-  const { company } = Route.useLoaderData() as { company: Company };
+  const { id } = Route.useParams();
+  const company = useCompanyById(id);
+
+  if (!company) {
+    return (
+      <div className="p-10 text-center text-muted-foreground">
+        Client not found. <Link to="/clients" className="text-primary underline">Back to clients</Link>
+      </div>
+    );
+  }
+
   const owner = teamMembers.find((t) => t.id === company.ownerId)!;
   const activeCase = cases.find((c) => c.companyId === company.id);
   const history = cases.filter((c) => c.companyId === company.id);
+
 
   return (
     <>
