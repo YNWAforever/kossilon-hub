@@ -338,6 +338,29 @@ export const kbStore = {
     state.docs = state.docs.filter((d) => d.id !== id);
     emit();
   },
+  uploadDoc: async (file: File, opts?: { category?: FaqCategory; title?: string }) => {
+    const { parseFile } = await import("@/lib/doc-parser");
+    const parsed = await parseFile(file);
+    const now = touch();
+    const d: ReferenceDoc = {
+      id: `doc-${rid()}`,
+      title: opts?.title ?? file.name.replace(/\.[^.]+$/, ""),
+      filename: file.name,
+      category: opts?.category ?? "General",
+      summary: parsed.summary,
+      updatedAt: now,
+      active: true,
+      sizeKb: Math.max(1, Math.round(file.size / 1024)),
+      mime: file.type || undefined,
+      pageCount: parsed.pageCount,
+      extractedText: parsed.text,
+      chunks: parsed.chunks,
+      indexedAt: now,
+    };
+    state.docs = [d, ...state.docs];
+    emit();
+    return d.id;
+  },
 };
 
 export function useFaqs(): FaqEntry[] {
