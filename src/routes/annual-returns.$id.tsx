@@ -181,3 +181,141 @@ function CaseDetailPage() {
     </>
   );
 }
+
+function RiskAndSchedule({ risk }: { risk: ReturnType<typeof evaluateRisk> }) {
+  const tone = riskTone(risk.level);
+  const bannerBg =
+    tone === "red" ? "bg-status-red-soft border-status-red/30"
+      : tone === "orange" ? "bg-status-orange-soft border-status-orange/30"
+        : "bg-status-green-soft border-status-green/30";
+  const bannerIcon =
+    tone === "red" ? "text-status-red"
+      : tone === "orange" ? "text-status-orange"
+        : "text-status-green";
+
+  return (
+    <div className="rounded-xl border border-border bg-card">
+      <div className={cn("flex items-start gap-3 border-b border-border p-5", bannerBg)}>
+        <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg bg-background", bannerIcon)}>
+          <Shield className="h-4 w-4" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Risk assessment</p>
+            <StatusPill tone={tone}>{risk.level}</StatusPill>
+            {risk.template && (
+              <Link to="/settings" className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground">
+                <ClipboardList className="h-3 w-3" /> {risk.template.name}
+              </Link>
+            )}
+          </div>
+          <p className="mt-1 font-display text-base font-semibold text-foreground">{risk.summary}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0">
+        {/* Triggered rules */}
+        <div className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-primary" />
+            <h3 className="font-display text-sm font-semibold text-foreground">Triggered rules</h3>
+            <span className="text-xs text-muted-foreground">
+              {risk.triggered.length}/{risk.template?.riskRules.filter((r) => r.enabled).length ?? 0}
+            </span>
+          </div>
+          {risk.triggered.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No risk rules triggered. Monitoring {risk.template?.riskRules.filter((r) => r.enabled).length ?? 0} active rule(s).
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {risk.triggered.map((t) => (
+                <li key={t.rule.id} className="rounded-md border border-border bg-background p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-foreground">{t.rule.label}</span>
+                    <StatusPill tone={riskTone(t.rule.severity)}>{t.rule.severity}</StatusPill>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{t.reason}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Escalations */}
+          <div className="mt-5">
+            <div className="mb-2 flex items-center gap-2">
+              <ArrowUpRight className="h-4 w-4 text-primary" />
+              <h3 className="font-display text-sm font-semibold text-foreground">Escalation path</h3>
+            </div>
+            <ol className="space-y-1.5">
+              {risk.escalations.map((e, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs">
+                  <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="font-medium text-foreground">{e.actor}</p>
+                    <p className="text-muted-foreground">{e.when} · {e.action}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+
+        {/* Reminder schedule */}
+        <div className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Bell className="h-4 w-4 text-primary" />
+            <h3 className="font-display text-sm font-semibold text-foreground">Reminder cadence</h3>
+            <span className="ml-auto text-[11px] text-muted-foreground">
+              {risk.reminders.filter((r) => r.source === "risk-boost").length > 0
+                ? "Boosted by risk"
+                : "Template default"}
+            </span>
+          </div>
+          {risk.reminders.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No reminders configured in the template.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {risk.reminders.map((r) => (
+                <ReminderRow key={r.id} r={r} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReminderRow({ r }: { r: ScheduledReminder }) {
+  const statusTone =
+    r.status === "sent" ? "green" : r.status === "overdue" ? "red" : "yellow";
+  const whenLabel =
+    r.daysBeforeDue > 0
+      ? `T-${r.daysBeforeDue}d`
+      : r.daysBeforeDue === 0
+        ? "Today"
+        : `+${Math.abs(r.daysBeforeDue)}d overdue`;
+  return (
+    <li className="flex items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2">
+      <div className="flex items-center gap-2">
+        {r.source === "risk-boost" ? (
+          <Sparkles className="h-3.5 w-3.5 text-status-orange" />
+        ) : (
+          <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+        )}
+        <div>
+          <p className="text-sm font-medium text-foreground">{r.label}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {r.channel} · {whenLabel}
+            {r.source === "risk-boost" && " · auto-added"}
+          </p>
+        </div>
+      </div>
+      <StatusPill tone={statusTone}>{r.status}</StatusPill>
+    </li>
+  );
+}
+
