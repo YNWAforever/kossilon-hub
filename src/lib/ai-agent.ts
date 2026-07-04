@@ -18,7 +18,7 @@ import {
 import { templateForService, type ChecklistTemplate, type ServiceType } from "@/lib/templates";
 
 export type FaqMatch = { faq: FaqEntry; score: number };
-export type DocMatch = { doc: ReferenceDoc; score: number };
+export type DocMatch = { doc: ReferenceDoc; score: number; snippet?: string };
 
 export type CaseContext = {
   company: Company;
@@ -77,9 +77,23 @@ export function retrieveContext(enquiry: Enquiry): RetrievedContext {
 
   const docs: DocMatch[] = getActiveDocs()
     .map((d) => {
-      const hay = tokenize(`${d.title} ${d.summary} ${d.category}`);
-      const score = scoreOverlap(hay, query);
-      return { doc: d, score };
+      const metaHay = tokenize(`${d.title} ${d.summary} ${d.category}`);
+      let score = scoreOverlap(metaHay, query);
+      let snippet: string | undefined;
+      // Boost with real extracted content when the doc was actually uploaded.
+      if (d.chunks && d.chunks.length > 0) {
+        let best = { s: 0, i: -1 };
+        d.chunks.forEach((c, i) => {
+          const cs = scoreOverlap(tokenize(c), query);
+          if (cs > best.s) best = { s: cs, i };
+        });
+        if (best.i >= 0) {
+          score += best.s * 2; // real-text hits weigh more than metadata
+          const chunk = d.chunks[best.i].replace(/\s+/g, " ").trim();
+          snippet = chunk.length > 220 ? chunk.slice(0, 220) + "…" : chunk;
+        }
+      }
+      return { doc: d, score, snippet };
     })
     .filter((m) => m.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -146,7 +160,11 @@ export function draftReply(
     sources.push({ kind: "template", id: template.id, label: template.name });
   }
 
-  // Document citations
+  // Document citations — quote a real snippet when we indexed the file's text.
+  const topDoc = context.docs[0];
+  if (topDoc?.snippet) {
+    parts.push(`From **${topDoc.doc.title}**:\n\n> ${topDoc.snippet}`);
+  }
   for (const dm of context.docs.slice(0, 2)) {
     sources.push({ kind: "doc", id: dm.doc.id, label: dm.doc.title });
   }

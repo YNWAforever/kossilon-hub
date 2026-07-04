@@ -35,7 +35,14 @@ export type ReferenceDoc = {
   updatedAt: string;
   active: boolean;
   sizeKb: number;
+  mime?: string;
+  pageCount?: number;
+  // Real extracted content — present when the doc was uploaded (not seeded).
+  extractedText?: string;
+  chunks?: string[];
+  indexedAt?: string;
 };
+
 
 const nowIso = () => new Date("2026-07-04T09:00:00+08:00").toISOString();
 const rid = () => Math.random().toString(36).slice(2, 10);
@@ -228,15 +235,44 @@ const seedDocs: ReferenceDoc[] = [
 
 // ---------- store ----------
 type State = { faqs: FaqEntry[]; docs: ReferenceDoc[] };
-const state: State = { faqs: seedFaqs, docs: seedDocs };
+
+const STORAGE_KEY = "kossilon.kb.v1";
+
+function loadPersisted(): Partial<State> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Partial<State>;
+  } catch {
+    return {};
+  }
+}
+
+const persisted = loadPersisted();
+const state: State = {
+  faqs: persisted.faqs ?? seedFaqs,
+  docs: persisted.docs ?? seedDocs,
+};
+
 const listeners = new Set<() => void>();
-const emit = () => listeners.forEach((l) => l());
+const emit = () => {
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* quota — ignore */
+    }
+  }
+  listeners.forEach((l) => l());
+};
 const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
 const getSnapshot = () => state;
-const touch = () => nowIso();
+const touch = () => new Date().toISOString();
+
 
 export const kbStore = {
   get: () => state,
@@ -301,6 +337,29 @@ export const kbStore = {
   removeDoc: (id: string) => {
     state.docs = state.docs.filter((d) => d.id !== id);
     emit();
+  },
+  uploadDoc: async (file: File, opts?: { category?: FaqCategory; title?: string }) => {
+    const { parseFile } = await import("@/lib/doc-parser");
+    const parsed = await parseFile(file);
+    const now = touch();
+    const d: ReferenceDoc = {
+      id: `doc-${rid()}`,
+      title: opts?.title ?? file.name.replace(/\.[^.]+$/, ""),
+      filename: file.name,
+      category: opts?.category ?? "General",
+      summary: parsed.summary,
+      updatedAt: now,
+      active: true,
+      sizeKb: Math.max(1, Math.round(file.size / 1024)),
+      mime: file.type || undefined,
+      pageCount: parsed.pageCount,
+      extractedText: parsed.text,
+      chunks: parsed.chunks,
+      indexedAt: now,
+    };
+    state.docs = [d, ...state.docs];
+    emit();
+    return d.id;
   },
 };
 

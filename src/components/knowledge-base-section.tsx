@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   useFaqs,
   useReferenceDocs,
@@ -18,6 +19,8 @@ import {
   Search,
   FileText,
   MessageSquare,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -222,6 +225,27 @@ function FaqRow({ f, expanded, onToggle }: { f: FaqEntry; expanded: boolean; onT
 
 function ReferenceDocsManager() {
   const docs = useReferenceDocs();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    setUploading(true);
+    let ok = 0;
+    for (const file of arr) {
+      try {
+        await kbStore.uploadDoc(file);
+        ok++;
+      } catch (err) {
+        toast.error(`${file.name}: ${err instanceof Error ? err.message : "Upload failed"}`);
+      }
+    }
+    setUploading(false);
+    if (ok > 0) toast.success(`Indexed ${ok} document${ok === 1 ? "" : "s"}`);
+  };
+
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
@@ -231,15 +255,43 @@ function ReferenceDocsManager() {
             <h2 className="font-display text-base font-semibold text-foreground">Reference documents</h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {docs.filter((d) => d.active).length} active · cited by the AI
+            {docs.filter((d) => d.active).length} active · text-indexed for AI retrieval
           </p>
         </div>
         <button
-          onClick={() => kbStore.addDoc()}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
-          <FileUp className="h-3.5 w-3.5" /> Simulate upload
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
+          {uploading ? "Indexing…" : "Upload document"}
         </button>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          accept=".pdf,.docx,.txt,.md,.markdown,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/*"
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files) handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+        }}
+        className={cn(
+          "mx-3 my-3 rounded-lg border border-dashed border-border px-4 py-3 text-center text-[11px] text-muted-foreground transition-colors",
+          dragOver && "border-primary bg-primary/5 text-primary",
+        )}
+      >
+        Drop PDF, DOCX, TXT, MD, or CSV here — text is extracted & indexed in your browser
       </div>
       <ul className="max-h-[520px] divide-y divide-border overflow-y-auto">
         {docs.map((d) => (
@@ -264,10 +316,19 @@ function DocRow({ d }: { d: ReferenceDoc }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{d.title}</p>
           <p className="truncate text-[11px] text-muted-foreground">
-            {d.filename} · {d.sizeKb} KB
+            {d.filename} · {d.sizeKb} KB{d.pageCount ? ` · ${d.pageCount}p` : ""}
           </p>
-          <div className="mt-1 flex items-center gap-1.5">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <StatusPill tone={categoryTone(d.category)}>{d.category}</StatusPill>
+            {d.chunks && d.chunks.length > 0 ? (
+              <StatusPill tone="green">
+                <span className="inline-flex items-center gap-1">
+                  <Sparkles className="h-2.5 w-2.5" /> Indexed · {d.chunks.length} chunks
+                </span>
+              </StatusPill>
+            ) : (
+              <StatusPill tone="neutral">Metadata only</StatusPill>
+            )}
             {!d.active && <StatusPill tone="neutral">Inactive</StatusPill>}
           </div>
         </div>
@@ -320,6 +381,16 @@ function DocRow({ d }: { d: ReferenceDoc }) {
               <span className="text-muted-foreground">Active</span>
             </label>
           </div>
+          {d.extractedText && (
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Indexed content preview
+              </p>
+              <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-background/60 p-2 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                {d.extractedText.slice(0, 1200)}{d.extractedText.length > 1200 ? "\n…" : ""}
+              </pre>
+            </div>
+          )}
         </div>
       )}
     </li>
