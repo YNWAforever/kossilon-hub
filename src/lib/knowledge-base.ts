@@ -311,6 +311,48 @@ export const kbStore = {
     state.faqs = state.faqs.filter((f) => f.id !== id);
     emit();
   },
+  importFaqs: (rows: Array<Partial<FaqEntry> & { question: string; answer: string }>) => {
+    const now = touch();
+    const existing = new Map(state.faqs.map((f) => [f.question.trim().toLowerCase(), f]));
+    let added = 0;
+    let updated = 0;
+    for (const r of rows) {
+      const key = r.question.trim().toLowerCase();
+      const cat = (FAQ_CATEGORIES as string[]).includes(r.category as string)
+        ? (r.category as FaqCategory)
+        : "General";
+      const tags = Array.isArray(r.tags)
+        ? r.tags.map(String).map((t) => t.trim()).filter(Boolean)
+        : [];
+      const active = r.active === undefined ? true : Boolean(r.active);
+      const dup = existing.get(key);
+      if (dup) {
+        Object.assign(dup, {
+          answer: r.answer,
+          category: cat,
+          tags: tags.length ? tags : dup.tags,
+          active,
+          updatedAt: now,
+        });
+        updated++;
+      } else {
+        const f: FaqEntry = {
+          id: `faq-${rid()}`,
+          question: r.question.trim(),
+          answer: r.answer,
+          category: cat,
+          tags,
+          active,
+          updatedAt: now,
+        };
+        state.faqs = [f, ...state.faqs];
+        existing.set(key, f);
+        added++;
+      }
+    }
+    emit();
+    return { added, updated };
+  },
 
   // ----- Documents -----
   addDoc: (partial?: Partial<ReferenceDoc>) => {
