@@ -225,6 +225,27 @@ function FaqRow({ f, expanded, onToggle }: { f: FaqEntry; expanded: boolean; onT
 
 function ReferenceDocsManager() {
   const docs = useReferenceDocs();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    setUploading(true);
+    let ok = 0;
+    for (const file of arr) {
+      try {
+        await kbStore.uploadDoc(file);
+        ok++;
+      } catch (err) {
+        toast.error(`${file.name}: ${err instanceof Error ? err.message : "Upload failed"}`);
+      }
+    }
+    setUploading(false);
+    if (ok > 0) toast.success(`Indexed ${ok} document${ok === 1 ? "" : "s"}`);
+  };
+
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
@@ -234,15 +255,43 @@ function ReferenceDocsManager() {
             <h2 className="font-display text-base font-semibold text-foreground">Reference documents</h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {docs.filter((d) => d.active).length} active · cited by the AI
+            {docs.filter((d) => d.active).length} active · text-indexed for AI retrieval
           </p>
         </div>
         <button
-          onClick={() => kbStore.addDoc()}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
-          <FileUp className="h-3.5 w-3.5" /> Simulate upload
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
+          {uploading ? "Indexing…" : "Upload document"}
         </button>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          accept=".pdf,.docx,.txt,.md,.markdown,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/*"
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files) handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+        }}
+        className={cn(
+          "mx-3 my-3 rounded-lg border border-dashed border-border px-4 py-3 text-center text-[11px] text-muted-foreground transition-colors",
+          dragOver && "border-primary bg-primary/5 text-primary",
+        )}
+      >
+        Drop PDF, DOCX, TXT, MD, or CSV here — text is extracted & indexed in your browser
       </div>
       <ul className="max-h-[520px] divide-y divide-border overflow-y-auto">
         {docs.map((d) => (
