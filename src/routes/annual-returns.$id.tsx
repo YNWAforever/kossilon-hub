@@ -33,6 +33,8 @@ function CaseDetailPage() {
   const { c, company } = Route.useLoaderData() as { c: AnnualReturnCase; company: Company | undefined };
   const missing = c.checklist.filter((i: ChecklistItem) => !i.received).length;
   const received = c.checklist.length - missing;
+  const risk = evaluateRisk(c, company, "Annual Return — Private Ltd");
+  const nextReminder = risk.reminders.find((r) => r.status === "scheduled");
 
   return (
     <>
