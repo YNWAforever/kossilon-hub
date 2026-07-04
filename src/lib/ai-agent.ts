@@ -77,9 +77,23 @@ export function retrieveContext(enquiry: Enquiry): RetrievedContext {
 
   const docs: DocMatch[] = getActiveDocs()
     .map((d) => {
-      const hay = tokenize(`${d.title} ${d.summary} ${d.category}`);
-      const score = scoreOverlap(hay, query);
-      return { doc: d, score };
+      const metaHay = tokenize(`${d.title} ${d.summary} ${d.category}`);
+      let score = scoreOverlap(metaHay, query);
+      let snippet: string | undefined;
+      // Boost with real extracted content when the doc was actually uploaded.
+      if (d.chunks && d.chunks.length > 0) {
+        let best = { s: 0, i: -1 };
+        d.chunks.forEach((c, i) => {
+          const cs = scoreOverlap(tokenize(c), query);
+          if (cs > best.s) best = { s: cs, i };
+        });
+        if (best.i >= 0) {
+          score += best.s * 2; // real-text hits weigh more than metadata
+          const chunk = d.chunks[best.i].replace(/\s+/g, " ").trim();
+          snippet = chunk.length > 220 ? chunk.slice(0, 220) + "…" : chunk;
+        }
+      }
+      return { doc: d, score, snippet };
     })
     .filter((m) => m.score > 0)
     .sort((a, b) => b.score - a.score)
