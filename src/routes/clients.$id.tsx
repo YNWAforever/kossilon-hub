@@ -26,7 +26,7 @@ export const Route = createFileRoute("/clients/$id")({
 });
 
 function ClientProfilePage() {
-  const { company } = Route.useLoaderData();
+  const { company } = Route.useLoaderData() as { company: Company };
   const owner = teamMembers.find((t) => t.id === company.ownerId)!;
   const activeCase = cases.find((c) => c.companyId === company.id);
   const history = cases.filter((c) => c.companyId === company.id);
@@ -85,7 +85,7 @@ function ClientProfilePage() {
               <h2 className="font-display text-base font-semibold text-foreground">Contacts</h2>
             </div>
             <ul className="divide-y divide-border">
-              {company.contacts.map((c) => (
+              {company.contacts.map((c: Contact) => (
                 <li key={c.email} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-sm">
                   <div>
                     <p className="font-medium text-foreground">{c.name}</p>
