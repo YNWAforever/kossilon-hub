@@ -174,6 +174,10 @@ function SettingsPage() {
           </div>
         </section>
 
+
+        {/* Knowledge base for the AI assistant */}
+        <KnowledgeBaseSection />
+
         {/* Secondary settings */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <SimpleCard
