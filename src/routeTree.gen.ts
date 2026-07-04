@@ -9,38 +9,258 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as TeamsRouteImport } from './routes/teams'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as EnquiriesRouteImport } from './routes/enquiries'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as ClientsRouteImport } from './routes/clients'
+import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automation'
+import { Route as ClientsIdRouteImport } from './routes/clients.$id'
+import { Route as AnnualReturnsIdRouteImport } from './routes/annual-returns.$id'
 
+const WhatsappRoute = WhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnquiriesRoute = EnquiriesRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientsRoute = ClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnualReturnsRoute = AnnualReturnsRouteImport.update({
+  id: '/annual-returns',
+  path: '/annual-returns',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WhatsappAutomationRoute = WhatsappAutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
+  getParentRoute: () => WhatsappRoute,
+} as any)
+const ClientsIdRoute = ClientsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ClientsRoute,
+} as any)
+const AnnualReturnsIdRoute = AnnualReturnsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AnnualReturnsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/clients': typeof ClientsRouteWithChildren
+  '/documents': typeof DocumentsRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/payments': typeof PaymentsRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
+  '/teams': typeof TeamsRoute
+  '/whatsapp': typeof WhatsappRouteWithChildren
+  '/annual-returns/$id': typeof AnnualReturnsIdRoute
+  '/clients/$id': typeof ClientsIdRoute
+  '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/clients': typeof ClientsRouteWithChildren
+  '/documents': typeof DocumentsRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/payments': typeof PaymentsRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
+  '/teams': typeof TeamsRoute
+  '/whatsapp': typeof WhatsappRouteWithChildren
+  '/annual-returns/$id': typeof AnnualReturnsIdRoute
+  '/clients/$id': typeof ClientsIdRoute
+  '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/clients': typeof ClientsRouteWithChildren
+  '/documents': typeof DocumentsRoute
+  '/enquiries': typeof EnquiriesRoute
+  '/payments': typeof PaymentsRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
+  '/teams': typeof TeamsRoute
+  '/whatsapp': typeof WhatsappRouteWithChildren
+  '/annual-returns/$id': typeof AnnualReturnsIdRoute
+  '/clients/$id': typeof ClientsIdRoute
+  '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/annual-returns'
+    | '/clients'
+    | '/documents'
+    | '/enquiries'
+    | '/payments'
+    | '/settings'
+    | '/tasks'
+    | '/teams'
+    | '/whatsapp'
+    | '/annual-returns/$id'
+    | '/clients/$id'
+    | '/whatsapp/automation'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/annual-returns'
+    | '/clients'
+    | '/documents'
+    | '/enquiries'
+    | '/payments'
+    | '/settings'
+    | '/tasks'
+    | '/teams'
+    | '/whatsapp'
+    | '/annual-returns/$id'
+    | '/clients/$id'
+    | '/whatsapp/automation'
+  id:
+    | '__root__'
+    | '/'
+    | '/annual-returns'
+    | '/clients'
+    | '/documents'
+    | '/enquiries'
+    | '/payments'
+    | '/settings'
+    | '/tasks'
+    | '/teams'
+    | '/whatsapp'
+    | '/annual-returns/$id'
+    | '/clients/$id'
+    | '/whatsapp/automation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnnualReturnsRoute: typeof AnnualReturnsRouteWithChildren
+  ClientsRoute: typeof ClientsRouteWithChildren
+  DocumentsRoute: typeof DocumentsRoute
+  EnquiriesRoute: typeof EnquiriesRoute
+  PaymentsRoute: typeof PaymentsRoute
+  SettingsRoute: typeof SettingsRoute
+  TasksRoute: typeof TasksRoute
+  TeamsRoute: typeof TeamsRoute
+  WhatsappRoute: typeof WhatsappRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatsapp': {
+      id: '/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enquiries': {
+      id: '/enquiries'
+      path: '/enquiries'
+      fullPath: '/enquiries'
+      preLoaderRoute: typeof EnquiriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients': {
+      id: '/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof ClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/annual-returns': {
+      id: '/annual-returns'
+      path: '/annual-returns'
+      fullPath: '/annual-returns'
+      preLoaderRoute: typeof AnnualReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +268,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/whatsapp/automation': {
+      id: '/whatsapp/automation'
+      path: '/automation'
+      fullPath: '/whatsapp/automation'
+      preLoaderRoute: typeof WhatsappAutomationRouteImport
+      parentRoute: typeof WhatsappRoute
+    }
+    '/clients/$id': {
+      id: '/clients/$id'
+      path: '/$id'
+      fullPath: '/clients/$id'
+      preLoaderRoute: typeof ClientsIdRouteImport
+      parentRoute: typeof ClientsRoute
+    }
+    '/annual-returns/$id': {
+      id: '/annual-returns/$id'
+      path: '/$id'
+      fullPath: '/annual-returns/$id'
+      preLoaderRoute: typeof AnnualReturnsIdRouteImport
+      parentRoute: typeof AnnualReturnsRoute
+    }
   }
 }
 
+interface AnnualReturnsRouteChildren {
+  AnnualReturnsIdRoute: typeof AnnualReturnsIdRoute
+}
+
+const AnnualReturnsRouteChildren: AnnualReturnsRouteChildren = {
+  AnnualReturnsIdRoute: AnnualReturnsIdRoute,
+}
+
+const AnnualReturnsRouteWithChildren = AnnualReturnsRoute._addFileChildren(
+  AnnualReturnsRouteChildren,
+)
+
+interface ClientsRouteChildren {
+  ClientsIdRoute: typeof ClientsIdRoute
+}
+
+const ClientsRouteChildren: ClientsRouteChildren = {
+  ClientsIdRoute: ClientsIdRoute,
+}
+
+const ClientsRouteWithChildren =
+  ClientsRoute._addFileChildren(ClientsRouteChildren)
+
+interface WhatsappRouteChildren {
+  WhatsappAutomationRoute: typeof WhatsappAutomationRoute
+}
+
+const WhatsappRouteChildren: WhatsappRouteChildren = {
+  WhatsappAutomationRoute: WhatsappAutomationRoute,
+}
+
+const WhatsappRouteWithChildren = WhatsappRoute._addFileChildren(
+  WhatsappRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnnualReturnsRoute: AnnualReturnsRouteWithChildren,
+  ClientsRoute: ClientsRouteWithChildren,
+  DocumentsRoute: DocumentsRoute,
+  EnquiriesRoute: EnquiriesRoute,
+  PaymentsRoute: PaymentsRoute,
+  SettingsRoute: SettingsRoute,
+  TasksRoute: TasksRoute,
+  TeamsRoute: TeamsRoute,
+  WhatsappRoute: WhatsappRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
