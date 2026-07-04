@@ -36,6 +36,8 @@ function CaseDetailPage() {
   const received = c.checklist.length - missing;
   const risk = evaluateRisk(c, company, "Annual Return — Private Ltd");
   const nextReminder = risk.reminders.find((r) => r.status === "scheduled");
+  const enquiryId = useEnquiryIdForCompany(c.companyId);
+
 
   return (
     <>
