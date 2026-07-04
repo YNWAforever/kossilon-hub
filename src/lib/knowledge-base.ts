@@ -35,7 +35,14 @@ export type ReferenceDoc = {
   updatedAt: string;
   active: boolean;
   sizeKb: number;
+  mime?: string;
+  pageCount?: number;
+  // Real extracted content — present when the doc was uploaded (not seeded).
+  extractedText?: string;
+  chunks?: string[];
+  indexedAt?: string;
 };
+
 
 const nowIso = () => new Date("2026-07-04T09:00:00+08:00").toISOString();
 const rid = () => Math.random().toString(36).slice(2, 10);
