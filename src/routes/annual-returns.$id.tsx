@@ -89,6 +89,19 @@ function CaseDetailPage() {
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
                 <h2 className="font-display text-base font-semibold text-foreground">Document checklist</h2>
+                {(() => {
+                  const tpl = templateForService("Annual Return — Private Ltd");
+                  return tpl ? (
+                    <Link
+                      to="/settings"
+                      className="ml-2 inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                      title="Preloaded from template"
+                    >
+                      <ClipboardList className="h-3 w-3" />
+                      Template: {tpl.name}
+                    </Link>
+                  ) : null;
+                })()}
               </div>
               <button className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-accent">
                 <Upload className="h-3 w-3" /> Upload
