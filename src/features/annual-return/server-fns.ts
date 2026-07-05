@@ -1,13 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { getSqlClient } from "@/server/db/client";
 import {
   createAnnualReturnRepository,
   hongKongBusinessDate,
   type AnnualReturnRepository,
 } from "./repository";
+import { createWhatsAppRepository } from "@/features/whatsapp/repository";
 import { getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
+import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 
 const RISK_LEVELS = ["green", "yellow", "orange", "red"] as const;
 const CHECKLIST_STATUSES = ["Missing", "Received", "Verified", "Rejected"] as const;
@@ -34,6 +37,11 @@ const listAnnualReturnCasesSchema = z
 
 const annualReturnCaseIdSchema = z.object({
   caseId: z.string().uuid(),
+});
+export const queueAnnualReturnWhatsAppReminderSchema = z.object({
+  caseId: z.string().uuid(),
+  recipientName: z.string().min(1),
+  recipientPhone: z.string().min(3),
 });
 const updateChecklistItemSchema = z
   .object({
@@ -156,6 +164,45 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
       }),
     ),
   );
+
+export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
+  .validator(queueAnnualReturnWhatsAppReminderSchema)
+  .handler(async ({ data }) => {
+    const sql = getSqlClient();
+
+    return sql.begin(async (tx) => {
+      const annualReturnRepository = createAnnualReturnRepository({ sql: tx });
+      const whatsAppRepository = createWhatsAppRepository({ sql: tx });
+
+      try {
+        const case_ = await annualReturnRepository.getCase(data.caseId);
+
+        if (!case_) {
+          throw new Error("Annual return case not found.");
+        }
+
+        const result = await queueAnnualReturnWhatsAppReminder({
+          annualReturnRepository,
+          whatsAppRepository,
+          case_,
+          actorId: getCurrentAnnualReturnActorId(),
+          recipientName: data.recipientName,
+          recipientPhone: data.recipientPhone,
+        });
+
+        return {
+          caseId: result.case.id,
+          remindersSent: result.case.remindersSent,
+          currentStatus: result.case.currentStatus,
+          messageId: result.message.id,
+          messageStatus: result.message.status,
+        };
+      } finally {
+        await annualReturnRepository.close();
+        await whatsAppRepository.close();
+      }
+    });
+  });
 
 export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" })
   .validator(updateChecklistItemSchema)

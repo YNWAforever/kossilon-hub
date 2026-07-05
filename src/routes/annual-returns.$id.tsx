@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import {
   buildAnnualReturnReminderDraft,
   getAnnualReturnCase,
-  recordAnnualReturnReminder,
+  queueAnnualReturnWhatsAppReminderMessage,
   updateAnnualReturnChecklistItem,
   updateAnnualReturnFilingProof,
   updateAnnualReturnPayment,
@@ -127,14 +127,11 @@ function CaseDetailPage() {
     await runCaseAction("reminder", async () => {
       const { draftBody } = await buildAnnualReturnReminderDraft({ data: { caseId: c.id } });
       await copyDraftToClipboard(draftBody);
-      await recordAnnualReturnReminder({
+      await queueAnnualReturnWhatsAppReminderMessage({
         data: {
           caseId: c.id,
-          templateLabel: "Annual return manual reminder",
           recipientName,
           recipientPhone,
-          draftBody,
-          note: "Draft copied and reminder recorded by staff.",
         },
       });
     });

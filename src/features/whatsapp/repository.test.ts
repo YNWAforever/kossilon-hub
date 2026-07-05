@@ -2,7 +2,7 @@ import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { normalizeWoztellInboundMessage } from "./woztell";
-import { createWhatsAppRepository } from "./repository";
+import { createWhatsAppRepository, planContactIdentityMerge } from "./repository";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -64,6 +64,7 @@ async function cleanupWhatsAppFixtures() {
       delete from timeline_events
       where case_id = ${TEST_CASE_ID}
         or metadata ->> 'source' = 'phase2-whatsapp-test'
+        or metadata ->> 'providerMessageId' like 'phase2-test-%'
     `;
     await tx`
       delete from annual_return_cases
@@ -173,6 +174,46 @@ afterAll(async () => {
   await testSql?.end();
 });
 
+describe("WhatsApp contact identity reconciliation", () => {
+  it("prefers the WhatsApp identity and marks split phone contacts for merge", () => {
+    expect(
+      planContactIdentityMerge(
+        {
+          whatsAppId: "phase2-test-wa-split",
+          phoneE164: "+85269990001",
+        },
+        [
+          {
+            id: "phone-contact",
+            company_id: TEST_COMPANY_ID,
+            display_name: "Phone Contact",
+            phone_e164: "+85269990001",
+            whatsapp_id: null,
+          },
+          {
+            id: "wa-contact",
+            company_id: null,
+            display_name: "WhatsApp Contact",
+            phone_e164: null,
+            whatsapp_id: "phase2-test-wa-split",
+          },
+        ],
+      ),
+    ).toEqual({
+      primary: {
+        id: "wa-contact",
+        company_id: null,
+        display_name: "WhatsApp Contact",
+        phone_e164: null,
+        whatsapp_id: "phase2-test-wa-split",
+      },
+      duplicateContactIds: ["phone-contact"],
+      duplicateCompanyId: TEST_COMPANY_ID,
+      duplicateDisplayName: "Phone Contact",
+    });
+  });
+});
+
 describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
   beforeEach(async () => {
     await cleanupWhatsAppFixtures();
@@ -206,6 +247,14 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       const first = await repository.recordInboundMessage(normalized);
       const second = await repository.recordInboundMessage(normalized);
 
+      expect(first).toMatchObject({
+        provider: "woztell",
+        direction: "inbound",
+        status: "received",
+        companyId: null,
+        caseId: null,
+        timelineEventCreated: false,
+      });
       expect(second).toEqual(first);
 
       const sql = sqlForTests();
@@ -227,6 +276,14 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         where provider_message_id = 'phase2-test-inbound-001'
       `;
       expect(messages[0].count).toBe(1);
+
+      const timelineEvents = await sql<{ count: number }[]>`
+        select count(*)::int as count
+        from timeline_events
+        where event_type = 'whatsapp_message_received'
+          and metadata ->> 'providerMessageId' = 'phase2-test-inbound-001'
+      `;
+      expect(timelineEvents[0].count).toBe(0);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
@@ -270,6 +327,199 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
           event_type: "whatsapp_message_queued",
           description:
             "Queued WhatsApp template phase2_test_annual_return_30_day for Phase 2 Director.",
+        },
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "matches inbound replies to a prior outbound annual return case and records timeline",
+    async () => {
+      const repository = repositoryFor();
+
+      const outbound = await repository.queueOutboundTemplateMessage({
+        actorId: TEST_USER_ID,
+        caseId: TEST_CASE_ID,
+        toPhone: "+852 6999 0001",
+        toWhatsAppId: "phase2-test-wa-outbound",
+        contactName: "Phase 2 Director",
+        templateName: "phase2_test_annual_return_30_day",
+        languageCode: "en",
+        category: "annual_return",
+        body: "Phase 2 test annual return reminder body.",
+      });
+      const normalized = normalizeWoztellInboundMessage({
+        event: "message",
+        channel: { id: "kossilon-whatsapp-channel" },
+        contact: {
+          wa_id: "phase2-test-wa-outbound",
+          phone: "+852 6999 0001",
+          profile: { name: "Phase 2 Director" },
+        },
+        message: {
+          id: "phase2-test-inbound-reply-001",
+          type: "text",
+          text: { body: "Phase 2 test reply: documents are ready." },
+          timestamp: "2026-07-05T12:20:00.000Z",
+        },
+      });
+
+      const inbound = await repository.recordInboundMessage(normalized);
+      const duplicate = await repository.recordInboundMessage(normalized);
+
+      expect(inbound).toMatchObject({
+        provider: "woztell",
+        direction: "inbound",
+        status: "received",
+        contactId: outbound.contactId,
+        companyId: TEST_COMPANY_ID,
+        caseId: TEST_CASE_ID,
+        phoneE164: "+85269990001",
+        whatsAppId: "phase2-test-wa-outbound",
+        body: "Phase 2 test reply: documents are ready.",
+        timelineEventCreated: true,
+      });
+      expect(duplicate).toMatchObject({
+        id: inbound.id,
+        companyId: TEST_COMPANY_ID,
+        caseId: TEST_CASE_ID,
+        timelineEventCreated: false,
+      });
+
+      const sql = sqlForTests();
+      const timelineEvents = await sql<
+        {
+          event_type: string;
+          description: string;
+          message_id: string | null;
+          provider_message_id: string | null;
+          body_preview: string | null;
+        }[]
+      >`
+        select
+          event_type,
+          description,
+          metadata ->> 'messageId' as message_id,
+          metadata ->> 'providerMessageId' as provider_message_id,
+          metadata ->> 'bodyPreview' as body_preview
+        from timeline_events
+        where case_id = ${TEST_CASE_ID}
+          and event_type in ('whatsapp_message_queued', 'whatsapp_message_received')
+        order by created_at asc, id asc
+      `;
+      expect(timelineEvents).toEqual([
+        {
+          event_type: "whatsapp_message_queued",
+          description:
+            "Queued WhatsApp template phase2_test_annual_return_30_day for Phase 2 Director.",
+          message_id: outbound.id,
+          provider_message_id: null,
+          body_preview: null,
+        },
+        {
+          event_type: "whatsapp_message_received",
+          description: "Received WhatsApp reply from Phase 2 Director.",
+          message_id: inbound.id,
+          provider_message_id: "phase2-test-inbound-reply-001",
+          body_preview: "Phase 2 test reply: documents are ready.",
+        },
+      ]);
+
+      const receivedEvents = await sql<{ count: number }[]>`
+        select count(*)::int as count
+        from timeline_events
+        where event_type = 'whatsapp_message_received'
+          and metadata ->> 'providerMessageId' = 'phase2-test-inbound-reply-001'
+      `;
+      expect(receivedEvents[0].count).toBe(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "merges split contact identities before inbound matching",
+    async () => {
+      const sql = sqlForTests();
+      const [whatsAppContact] = await sql<{ id: string }[]>`
+        insert into whatsapp_contacts (
+          provider,
+          whatsapp_id,
+          display_name,
+          metadata
+        )
+        values (
+          'woztell',
+          'phase2-test-wa-split',
+          'Split WhatsApp Contact',
+          ${sql.json({})}
+        )
+        returning id
+      `;
+      await sql`
+        insert into whatsapp_contacts (
+          provider,
+          phone_e164,
+          display_name,
+          company_id,
+          metadata
+        )
+        values (
+          'woztell',
+          '+85269990001',
+          'Split Phone Contact',
+          ${TEST_COMPANY_ID},
+          ${sql.json({})}
+        )
+      `;
+      const repository = repositoryFor();
+      const normalized = normalizeWoztellInboundMessage({
+        event: "message",
+        channel: { id: "kossilon-whatsapp-channel" },
+        contact: {
+          wa_id: "phase2-test-wa-split",
+          phone: "+852 6999 0001",
+          profile: { name: "Phase 2 Director" },
+        },
+        message: {
+          id: "phase2-test-inbound-split-001",
+          type: "text",
+          text: { body: "Phase 2 test split identity reply." },
+          timestamp: "2026-07-05T12:25:00.000Z",
+        },
+      });
+
+      const inbound = await repository.recordInboundMessage(normalized);
+
+      expect(inbound).toMatchObject({
+        contactId: whatsAppContact.id,
+        companyId: TEST_COMPANY_ID,
+        caseId: TEST_CASE_ID,
+        phoneE164: "+85269990001",
+        whatsAppId: "phase2-test-wa-split",
+        timelineEventCreated: true,
+      });
+
+      const contacts = await sql<
+        {
+          id: string;
+          company_id: string | null;
+          phone_e164: string | null;
+          whatsapp_id: string | null;
+        }[]
+      >`
+        select id, company_id, phone_e164, whatsapp_id
+        from whatsapp_contacts
+        where whatsapp_id = 'phase2-test-wa-split'
+          or phone_e164 = '+85269990001'
+        order by id asc
+      `;
+      expect(contacts).toEqual([
+        {
+          id: whatsAppContact.id,
+          company_id: TEST_COMPANY_ID,
+          phone_e164: "+85269990001",
+          whatsapp_id: "phase2-test-wa-split",
         },
       ]);
     },

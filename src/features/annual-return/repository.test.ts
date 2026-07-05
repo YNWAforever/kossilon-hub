@@ -1,9 +1,11 @@
 import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createWhatsAppRepository } from "@/features/whatsapp/repository";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { createAnnualReturnRepository, hongKongBusinessDate } from "./repository";
 import { assertAnnualReturnStatusActionAllowed } from "./server-fns";
 import type { AnnualReturnStatus, ChecklistStatus, PaymentStatus } from "./types";
+import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -20,7 +22,7 @@ const TEST_DOCUMENT_UUID_PREFIX = "92000000";
 const TEST_CHECKLIST_UUID_PREFIX = "93000000";
 const TEST_PAYMENT_UUID_PREFIX = "94000000";
 const TEST_FIXTURE_SEQUENCES = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 ] as const;
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 
@@ -118,6 +120,30 @@ async function cleanupAnnualReturnTestFixtures() {
       set payment_proof_document_id = null
       where id = any(${paymentIds}::uuid[])
         or case_id = any(${caseIds}::uuid[])
+    `;
+    await tx`
+      delete from whatsapp_webhook_events
+      where normalized_message_id in (
+        select id
+        from whatsapp_messages
+        where case_id = any(${caseIds}::uuid[])
+          or company_id = any(${companyIds}::uuid[])
+      )
+    `;
+    await tx`
+      delete from whatsapp_messages
+      where case_id = any(${caseIds}::uuid[])
+        or company_id = any(${companyIds}::uuid[])
+    `;
+    await tx`
+      delete from whatsapp_templates
+      where template_name = 'annual_return_manual_reminder'
+        and created_by in (${USER_AMY_ID}, ${USER_KEN_ID}, ${USER_MEI_ID}, ${USER_PRIYA_ID})
+    `;
+    await tx`
+      delete from whatsapp_contacts
+      where company_id = any(${companyIds}::uuid[])
+        or phone_e164 in ('+85261234567', '+85255550123')
     `;
     await tx`delete from reminder_logs where case_id = any(${caseIds}::uuid[])`;
     await tx`delete from annual_return_audit_events where case_id = any(${caseIds}::uuid[])`;
@@ -615,6 +641,137 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       expect(timelineEvents).toContainEqual({
         event_type: "client_reminder_logged",
         actor_id: USER_AMY_ID,
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "queues annual return WhatsApp reminders while preserving compliance records",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 21 });
+      const sql = sqlForTests();
+
+      await sql.begin(async (tx) => {
+        const annualReturnRepository = createAnnualReturnRepository({
+          sql: tx,
+          today: "2026-07-05",
+        });
+        const whatsAppRepository = createWhatsAppRepository({ sql: tx });
+        const result = await queueAnnualReturnWhatsAppReminder({
+          annualReturnRepository,
+          whatsAppRepository,
+          case_: (await annualReturnRepository.getCase(fixture.caseId))!,
+          actorId: USER_AMY_ID,
+          recipientName: "Ada Director",
+          recipientPhone: "+852 6123 4567",
+        });
+
+        expect(result.case).toMatchObject({
+          id: fixture.caseId,
+          currentStatus: "Client reminder sent",
+          remindersSent: 1,
+        });
+        expect(result.message).toMatchObject({
+          direction: "outbound",
+          status: "queued",
+          companyId: fixture.companyId,
+          caseId: fixture.caseId,
+          phoneE164: "+85261234567",
+          body: expect.stringContaining("Task 5 Test Company 21 Ltd"),
+        });
+
+        const reminderLogs = await tx<
+          {
+            template_label: string;
+            recipient_name: string;
+            recipient_phone: string;
+            note: string | null;
+          }[]
+        >`
+          select template_label, recipient_name, recipient_phone, note
+          from reminder_logs
+          where case_id = ${fixture.caseId}
+        `;
+        expect(reminderLogs).toEqual([
+          {
+            template_label: "Annual return WhatsApp reminder",
+            recipient_name: "Ada Director",
+            recipient_phone: "+852 6123 4567",
+            note: "Queued as WhatsApp template message.",
+          },
+        ]);
+
+        const auditEvents = await tx<
+          {
+            action: string;
+            actor_id: string | null;
+            summary: string;
+          }[]
+        >`
+          select action, actor_id, summary
+          from annual_return_audit_events
+          where case_id = ${fixture.caseId}
+        `;
+        expect(auditEvents).toContainEqual({
+          action: "record_reminder",
+          actor_id: USER_AMY_ID,
+          summary: "Manual WhatsApp reminder logged for Ada Director.",
+        });
+
+        const whatsAppMessages = await tx<
+          {
+            id: string;
+            direction: string;
+            status: string;
+            template_name: string;
+            phone_e164: string | null;
+            sent_by: string | null;
+          }[]
+        >`
+          select
+            wm.id,
+            wm.direction,
+            wm.status,
+            wt.template_name,
+            wm.phone_e164,
+            wm.sent_by
+          from whatsapp_messages wm
+          join whatsapp_templates wt on wt.id = wm.template_id
+          where wm.case_id = ${fixture.caseId}
+        `;
+        expect(whatsAppMessages).toEqual([
+          {
+            id: result.message.id,
+            direction: "outbound",
+            status: "queued",
+            template_name: "annual_return_manual_reminder",
+            phone_e164: "+85261234567",
+            sent_by: USER_AMY_ID,
+          },
+        ]);
+
+        const timelineEvents = await tx<
+          {
+            event_type: string;
+            actor_id: string | null;
+          }[]
+        >`
+          select event_type, actor_id
+          from timeline_events
+          where case_id = ${fixture.caseId}
+          order by created_at asc
+        `;
+        expect(timelineEvents).toEqual([
+          {
+            event_type: "client_reminder_logged",
+            actor_id: USER_AMY_ID,
+          },
+          {
+            event_type: "whatsapp_message_queued",
+            actor_id: USER_AMY_ID,
+          },
+        ]);
       });
     },
     INTEGRATION_TEST_TIMEOUT_MS,

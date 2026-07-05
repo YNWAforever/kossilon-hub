@@ -86,6 +86,7 @@ type LockedCaseRow = {
   confirmation_document_id: string | null;
 };
 
+type QueryClient = SqlClient | postgres.TransactionSql;
 type TransactionSqlClient = postgres.TransactionSql;
 
 export type CaseFilters = {
@@ -142,7 +143,7 @@ export type UpdateAnnualReturnFilingProofInput = {
 };
 
 export type CreateAnnualReturnRepositoryOptions = CreateSqlClientOptions & {
-  sql?: SqlClient;
+  sql?: QueryClient;
   today?: string | (() => string);
 };
 
@@ -335,6 +336,17 @@ function caseMatchesHydratedFilters(
 
 function countOutstandingRequiredEvidence(case_: AnnualReturnCase): number {
   return case_.checklist.filter(hasOutstandingRequiredEvidence).length;
+}
+
+function withTransaction<T>(
+  client: QueryClient,
+  handler: (tx: TransactionSqlClient) => Promise<T>,
+): Promise<T> {
+  if ("begin" in client) {
+    return client.begin(handler) as Promise<T>;
+  }
+
+  return handler(client);
 }
 
 export function createAnnualReturnRepository(
@@ -771,7 +783,7 @@ export function createAnnualReturnRepository(
     const action = completing ? "complete" : "change_status";
     assertCaseIsWritable(current);
 
-    await sql.begin(async (tx) => {
+    await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, caseId);
       const actor = await assertActorCanMutateLockedCase(tx, actorId, lockedCase, action);
 
@@ -849,7 +861,7 @@ export function createAnnualReturnRepository(
 
     assertCaseIsWritable(current);
 
-    await sql.begin(async (tx) => {
+    await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, input.caseId);
       const actor = await assertActorCanMutateLockedCase(
         tx,
@@ -957,7 +969,7 @@ export function createAnnualReturnRepository(
     const hasReceivedEvidence = input.status !== "Missing";
     const hasVerifiedEvidence = input.status === "Verified";
 
-    await sql.begin(async (tx) => {
+    await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, input.caseId);
       const actor = await assertActorCanMutateLockedCase(
         tx,
@@ -1061,7 +1073,7 @@ export function createAnnualReturnRepository(
     const isPaymentReceived = input.status === "Payment received";
     const paymentProofDocumentId = isPaymentReceived ? input.paymentProofDocumentId : null;
 
-    await sql.begin(async (tx) => {
+    await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, input.caseId);
       const actor = await assertActorCanMutateLockedCase(
         tx,
@@ -1160,7 +1172,7 @@ export function createAnnualReturnRepository(
 
     assertCaseIsWritable(current);
 
-    await sql.begin(async (tx) => {
+    await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, input.caseId);
       const actor = await assertActorCanMutateLockedCase(
         tx,
@@ -1239,7 +1251,7 @@ export function createAnnualReturnRepository(
   }
 
   async function close(): Promise<void> {
-    if (ownsClient) {
+    if (ownsClient && "end" in sql) {
       await sql.end();
     }
   }

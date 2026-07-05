@@ -41,6 +41,10 @@ export type WhatsAppMessageRecord = {
   createdAt: string;
 };
 
+export type InboundWhatsAppMessageRecord = WhatsAppMessageRecord & {
+  timelineEventCreated: boolean;
+};
+
 export type WhatsAppWebhookEventRecord = {
   id: string;
   provider: WhatsAppProvider;
@@ -75,12 +79,16 @@ export type RecordWebhookEventInput = {
   errorMessage: string | null;
 };
 
+type QueryClient = SqlClient | postgres.TransactionSql;
+
 export type CreateWhatsAppRepositoryOptions = CreateSqlClientOptions & {
-  sql?: SqlClient;
+  sql?: QueryClient;
 };
 
 export type WhatsAppRepository = {
-  recordInboundMessage(input: NormalizedInboundWhatsAppMessage): Promise<WhatsAppMessageRecord>;
+  recordInboundMessage(
+    input: NormalizedInboundWhatsAppMessage,
+  ): Promise<InboundWhatsAppMessageRecord>;
   queueOutboundTemplateMessage(
     input: QueueOutboundTemplateMessageInput,
   ): Promise<WhatsAppMessageRecord>;
@@ -88,10 +96,50 @@ export type WhatsAppRepository = {
   close(): Promise<void>;
 };
 
-type QueryClient = SqlClient | postgres.TransactionSql;
-
 type ContactRow = {
   id: string;
+  company_id: string | null;
+  display_name: string | null;
+  phone_e164: string | null;
+  whatsapp_id: string | null;
+};
+
+export type ContactIdentityMergeInput = {
+  whatsAppId: string | null;
+  phoneE164: string | null;
+};
+
+export type ContactUpsertCandidate = ContactRow;
+
+export type ContactIdentityMergePlan = {
+  primary: ContactUpsertCandidate | null;
+  duplicateContactIds: string[];
+  duplicateCompanyId: string | null;
+  duplicateDisplayName: string | null;
+};
+
+type ContactRecord = {
+  id: string;
+  companyId: string | null;
+  displayName: string | null;
+  phoneE164: string | null;
+  whatsAppId: string | null;
+};
+
+type InboundMatch = {
+  companyId: string | null;
+  caseId: string | null;
+};
+
+type OutboundContextRow = {
+  company_id: string | null;
+  case_id: string | null;
+  case_company_id: string | null;
+};
+
+type ActiveCaseRow = {
+  id: string;
+  company_id: string;
 };
 
 type AnnualReturnCaseRow = {
@@ -148,6 +196,17 @@ function toJsonValue(value: unknown): postgres.JSONValue {
   return JSON.parse(JSON.stringify(value ?? {})) as postgres.JSONValue;
 }
 
+function withTransaction<T>(
+  client: QueryClient,
+  handler: (tx: postgres.TransactionSql) => Promise<T>,
+): Promise<T> {
+  if ("begin" in client) {
+    return client.begin(handler) as Promise<T>;
+  }
+
+  return handler(client);
+}
+
 function normalizePhone(value: string): string {
   const trimmed = value.trim();
   const prefix = trimmed.startsWith("+") ? "+" : "";
@@ -197,6 +256,80 @@ function mapWebhookEvent(row: WebhookEventRow): WhatsAppWebhookEventRecord {
   };
 }
 
+function mapContact(row: ContactRow): ContactRecord {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    displayName: row.display_name,
+    phoneE164: row.phone_e164,
+    whatsAppId: row.whatsapp_id,
+  };
+}
+
+function bodyPreview(body: string): string {
+  const normalized = body.replace(/\s+/g, " ").trim();
+
+  if (normalized.length <= 160) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 157)}...`;
+}
+
+function inboundDescriptionTarget(contact: ContactRecord): string {
+  return contact.displayName ?? contact.phoneE164 ?? contact.whatsAppId ?? "client";
+}
+
+export function planContactIdentityMerge(
+  input: ContactIdentityMergeInput,
+  candidates: ContactUpsertCandidate[],
+): ContactIdentityMergePlan {
+  const primary =
+    candidates.find(
+      (candidate) => Boolean(input.whatsAppId) && candidate.whatsapp_id === input.whatsAppId,
+    ) ??
+    candidates.find(
+      (candidate) => Boolean(input.phoneE164) && candidate.phone_e164 === input.phoneE164,
+    ) ??
+    candidates[0] ??
+    null;
+  const duplicates = primary ? candidates.filter((candidate) => candidate.id !== primary.id) : [];
+
+  return {
+    primary,
+    duplicateContactIds: duplicates.map((candidate) => candidate.id),
+    duplicateCompanyId: duplicates.find((candidate) => candidate.company_id)?.company_id ?? null,
+    duplicateDisplayName:
+      duplicates.find((candidate) => candidate.display_name)?.display_name ?? null,
+  };
+}
+
+function contactIdentityLockKeys(input: {
+  whatsAppId: string | null;
+  phoneE164: string | null;
+}): string[] {
+  const keys = [
+    input.whatsAppId ? `woztell:whatsapp_id:${input.whatsAppId}` : null,
+    input.phoneE164 ? `woztell:phone_e164:${input.phoneE164}` : null,
+  ];
+
+  return Array.from(new Set(keys.filter((key): key is string => Boolean(key)))).sort();
+}
+
+async function lockContactIdentities(
+  client: QueryClient,
+  input: {
+    whatsAppId: string | null;
+    phoneE164: string | null;
+  },
+): Promise<void> {
+  for (const lockKey of contactIdentityLockKeys(input)) {
+    await client`
+      select pg_advisory_xact_lock(hashtext('whatsapp_contacts'), hashtext(${lockKey}))
+    `;
+  }
+}
+
 export function createWhatsAppRepository(
   options?: CreateWhatsAppRepositoryOptions,
 ): WhatsAppRepository;
@@ -223,33 +356,67 @@ export function createWhatsAppRepository(
       displayName: string | null;
       companyId?: string | null;
     },
-  ): Promise<string> {
+  ): Promise<ContactRecord> {
+    await lockContactIdentities(client, input);
+
     const existingRows = await client<ContactRow[]>`
-      select id
+      select id, company_id, display_name, phone_e164, whatsapp_id
       from whatsapp_contacts
       where provider = 'woztell'
         and (
           (${input.whatsAppId}::text is not null and whatsapp_id = ${input.whatsAppId})
           or (${input.phoneE164}::text is not null and phone_e164 = ${input.phoneE164})
         )
-      limit 1
+      order by
+        case
+          when ${input.whatsAppId}::text is not null
+            and whatsapp_id = ${input.whatsAppId}
+          then 0
+          when ${input.phoneE164}::text is not null
+            and phone_e164 = ${input.phoneE164}
+          then 1
+          else 2
+        end,
+        id asc
     `;
-    const [existing] = existingRows;
+    const mergePlan = planContactIdentityMerge(input, existingRows);
+    const existing = mergePlan.primary;
 
     if (existing) {
+      if (mergePlan.duplicateContactIds.length > 0) {
+        await client`
+          update whatsapp_messages
+          set contact_id = ${existing.id},
+              updated_at = now()
+          where contact_id = any(${mergePlan.duplicateContactIds}::uuid[])
+        `;
+        await client`
+          delete from whatsapp_contacts
+          where id = any(${mergePlan.duplicateContactIds}::uuid[])
+        `;
+      }
+
       const updatedRows = await client<ContactRow[]>`
         update whatsapp_contacts
         set whatsapp_id = coalesce(whatsapp_contacts.whatsapp_id, ${input.whatsAppId}),
             phone_e164 = coalesce(whatsapp_contacts.phone_e164, ${input.phoneE164}),
-            display_name = coalesce(${input.displayName}, whatsapp_contacts.display_name),
-            company_id = coalesce(${input.companyId ?? null}, whatsapp_contacts.company_id),
+            display_name = coalesce(
+              ${input.displayName},
+              whatsapp_contacts.display_name,
+              ${mergePlan.duplicateDisplayName}
+            ),
+            company_id = coalesce(
+              ${input.companyId ?? null},
+              whatsapp_contacts.company_id,
+              ${mergePlan.duplicateCompanyId}
+            ),
             last_seen_at = now(),
             updated_at = now()
         where id = ${existing.id}
-        returning id
+        returning id, company_id, display_name, phone_e164, whatsapp_id
       `;
 
-      return updatedRows[0].id;
+      return mapContact(updatedRows[0]);
     }
 
     const insertedRows = await client<ContactRow[]>`
@@ -269,10 +436,10 @@ export function createWhatsAppRepository(
         ${input.companyId ?? null},
         ${client.json({})}
       )
-      returning id
+      returning id, company_id, display_name, phone_e164, whatsapp_id
     `;
 
-    return insertedRows[0].id;
+    return mapContact(insertedRows[0]);
   }
 
   async function upsertTemplate(
@@ -315,69 +482,242 @@ export function createWhatsAppRepository(
     return rows[0].id;
   }
 
+  async function resolveInboundMatch(
+    client: QueryClient,
+    contact: ContactRecord,
+  ): Promise<InboundMatch> {
+    let companyId: string | null = null;
+    let caseId: string | null = null;
+
+    const outboundRows = await client<OutboundContextRow[]>`
+      select
+        wm.company_id,
+        case
+          when arc.id is not null
+            and arc.current_status not in ('Filed', 'Completed')
+          then wm.case_id
+          else null
+        end as case_id,
+        arc.company_id as case_company_id
+      from whatsapp_messages wm
+      left join annual_return_cases arc on arc.id = wm.case_id
+      where wm.contact_id = ${contact.id}
+        and wm.direction = 'outbound'
+        and (wm.company_id is not null or wm.case_id is not null)
+      order by wm.created_at desc
+      limit 1
+    `;
+    const [outbound] = outboundRows;
+    const outboundCompanyId = outbound ? (outbound.company_id ?? outbound.case_company_id) : null;
+
+    companyId = outboundCompanyId ?? contact.companyId;
+
+    if (outbound?.case_id) {
+      caseId = outbound.case_id;
+    }
+
+    if (!caseId && companyId) {
+      const activeCaseRows = await client<ActiveCaseRow[]>`
+        select id, company_id
+        from annual_return_cases
+        where company_id = ${companyId}
+          and current_status not in ('Filed', 'Completed')
+        order by filing_due_date asc, created_at desc
+        limit 1
+      `;
+      const [activeCase] = activeCaseRows;
+
+      if (activeCase) {
+        caseId = activeCase.id;
+        companyId = activeCase.company_id;
+      }
+    }
+
+    if (companyId && contact.companyId !== companyId) {
+      await client`
+        update whatsapp_contacts
+        set company_id = ${companyId},
+            updated_at = now()
+        where id = ${contact.id}
+      `;
+    }
+
+    return { companyId, caseId };
+  }
+
   async function recordInboundMessage(
     input: NormalizedInboundWhatsAppMessage,
-  ): Promise<WhatsAppMessageRecord> {
-    const contactId = await upsertContact(sql, {
-      whatsAppId: input.fromWhatsAppId,
-      phoneE164: input.fromPhone,
-      displayName: input.contactName,
-    });
-    const rows = await sql<MessageRow[]>`
-      insert into whatsapp_messages (
-        provider,
-        provider_message_id,
-        direction,
-        status,
-        contact_id,
-        phone_e164,
-        whatsapp_id,
-        body,
-        payload,
-        received_at
-      )
-      values (
-        'woztell',
-        ${input.providerMessageId},
-        'inbound',
-        'received',
-        ${contactId},
-        ${input.fromPhone},
-        ${input.fromWhatsAppId},
-        ${input.body},
-        ${sql.json(toJsonValue(input.rawPayload))},
-        ${input.receivedAt}
-      )
-      on conflict (provider, provider_message_id)
-      where provider_message_id is not null
-      do update set updated_at = whatsapp_messages.updated_at
-      returning
-        id,
-        provider,
-        provider_message_id,
-        direction,
-        status,
-        contact_id,
-        company_id,
-        case_id,
-        template_id,
-        phone_e164,
-        whatsapp_id,
-        body,
-        payload,
-        sent_by,
-        received_at::text as received_at,
-        sent_at::text as sent_at,
-        created_at::text as created_at
-    `;
+  ): Promise<InboundWhatsAppMessageRecord> {
+    return withTransaction(sql, async (tx) => {
+      const contact = await upsertContact(tx, {
+        whatsAppId: input.fromWhatsAppId,
+        phoneE164: input.fromPhone,
+        displayName: input.contactName,
+      });
+      const existingRows = await tx<MessageRow[]>`
+        select
+          id,
+          provider,
+          provider_message_id,
+          direction,
+          status,
+          contact_id,
+          company_id,
+          case_id,
+          template_id,
+          phone_e164,
+          whatsapp_id,
+          body,
+          payload,
+          sent_by,
+          received_at::text as received_at,
+          sent_at::text as sent_at,
+          created_at::text as created_at
+        from whatsapp_messages
+        where provider = 'woztell'
+          and provider_message_id = ${input.providerMessageId}
+        limit 1
+      `;
+      const [existing] = existingRows;
 
-    return mapMessage(rows[0]);
+      if (existing) {
+        return {
+          ...mapMessage(existing),
+          timelineEventCreated: false,
+        };
+      }
+
+      const match = await resolveInboundMatch(tx, contact);
+      const rows = await tx<MessageRow[]>`
+        insert into whatsapp_messages (
+          provider,
+          provider_message_id,
+          direction,
+          status,
+          contact_id,
+          company_id,
+          case_id,
+          phone_e164,
+          whatsapp_id,
+          body,
+          payload,
+          received_at
+        )
+        values (
+          'woztell',
+          ${input.providerMessageId},
+          'inbound',
+          'received',
+          ${contact.id},
+          ${match.companyId},
+          ${match.caseId},
+          ${input.fromPhone},
+          ${input.fromWhatsAppId},
+          ${input.body},
+          ${tx.json(toJsonValue(input.rawPayload))},
+          ${input.receivedAt}
+        )
+        on conflict (provider, provider_message_id)
+        where provider_message_id is not null
+        do nothing
+        returning
+          id,
+          provider,
+          provider_message_id,
+          direction,
+          status,
+          contact_id,
+          company_id,
+          case_id,
+          template_id,
+          phone_e164,
+          whatsapp_id,
+          body,
+          payload,
+          sent_by,
+          received_at::text as received_at,
+          sent_at::text as sent_at,
+          created_at::text as created_at
+      `;
+      const [inserted] = rows;
+
+      if (!inserted) {
+        const conflictRows = await tx<MessageRow[]>`
+          select
+            id,
+            provider,
+            provider_message_id,
+            direction,
+            status,
+            contact_id,
+            company_id,
+            case_id,
+            template_id,
+            phone_e164,
+            whatsapp_id,
+            body,
+            payload,
+            sent_by,
+            received_at::text as received_at,
+            sent_at::text as sent_at,
+            created_at::text as created_at
+          from whatsapp_messages
+          where provider = 'woztell'
+            and provider_message_id = ${input.providerMessageId}
+          limit 1
+        `;
+
+        return {
+          ...mapMessage(conflictRows[0]),
+          timelineEventCreated: false,
+        };
+      }
+
+      const message = mapMessage(inserted);
+      const timelineEventCreated = Boolean(match.companyId && match.caseId);
+
+      if (timelineEventCreated) {
+        await tx`
+          insert into timeline_events (
+            company_id,
+            case_id,
+            event_type,
+            actor_type,
+            actor_id,
+            description,
+            metadata
+          )
+          values (
+            ${match.companyId},
+            ${match.caseId},
+            'whatsapp_message_received',
+            'system',
+            null,
+            ${`Received WhatsApp reply from ${inboundDescriptionTarget(contact)}.`},
+            ${tx.json({
+              source: "woztell",
+              messageId: message.id,
+              providerMessageId: input.providerMessageId,
+              contactId: contact.id,
+              phoneE164: input.fromPhone,
+              whatsAppId: input.fromWhatsAppId,
+              bodyPreview: bodyPreview(input.body),
+            })}
+          )
+        `;
+      }
+
+      return {
+        ...message,
+        timelineEventCreated,
+      };
+    });
   }
 
   async function queueOutboundTemplateMessage(
     input: QueueOutboundTemplateMessageInput,
   ): Promise<WhatsAppMessageRecord> {
-    return sql.begin(async (tx) => {
+    return withTransaction(sql, async (tx) => {
       const caseRows = await tx<AnnualReturnCaseRow[]>`
         select arc.company_id, c.company_name
         from annual_return_cases arc
@@ -392,7 +732,7 @@ export function createWhatsAppRepository(
       }
 
       const phoneE164 = normalizePhone(input.toPhone);
-      const contactId = await upsertContact(tx, {
+      const contact = await upsertContact(tx, {
         whatsAppId: input.toWhatsAppId ?? null,
         phoneE164,
         displayName: input.contactName ?? null,
@@ -430,7 +770,7 @@ export function createWhatsAppRepository(
           'woztell',
           'outbound',
           'queued',
-          ${contactId},
+          ${contact.id},
           ${caseRow.company_id},
           ${input.caseId},
           ${templateId},
@@ -540,7 +880,7 @@ export function createWhatsAppRepository(
     queueOutboundTemplateMessage,
     recordWebhookEvent,
     async close() {
-      if (ownsClient) {
+      if (ownsClient && "end" in sql) {
         await sql.end();
       }
     },
