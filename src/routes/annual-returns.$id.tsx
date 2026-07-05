@@ -134,7 +134,7 @@ function CaseDetailPage() {
           recipientName,
           recipientPhone,
           draftBody,
-          note: "Recorded from annual return case detail.",
+          note: "Draft copied and reminder recorded by staff.",
         },
       });
     });
@@ -379,7 +379,7 @@ function CaseDetailPage() {
                 onClick={handleReminder}
               >
                 <Bell className="h-4 w-4" />
-                Record sent
+                Copy draft & record reminder
               </Button>
             }
           >
