@@ -5,10 +5,9 @@ import {
   hongKongBusinessDate,
   type AnnualReturnRepository,
 } from "./repository";
+import { getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
-
-const CURRENT_USER_ID = "20000000-0000-0000-0000-000000000001";
 
 const RISK_LEVELS = ["green", "yellow", "orange", "red"] as const;
 const CHECKLIST_STATUSES = ["Missing", "Received", "Verified", "Rejected"] as const;
@@ -113,7 +112,7 @@ export const getAnnualReturnCase = createServerFn({ method: "GET" })
 
 export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" }).handler(async () =>
   withAnnualReturnRepository((repository) =>
-    repository.dashboardMetrics(hongKongBusinessDate(), CURRENT_USER_ID),
+    repository.dashboardMetrics(hongKongBusinessDate(), getCurrentAnnualReturnActorId()),
   ),
 );
 
@@ -134,7 +133,7 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
 
       assertAnnualReturnStatusActionAllowed(current, data.nextStatus);
 
-      return repository.updateStatus(data.caseId, data.nextStatus, CURRENT_USER_ID);
+      return repository.updateStatus(data.caseId, data.nextStatus, getCurrentAnnualReturnActorId());
     }),
   );
 
@@ -153,7 +152,7 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
     withAnnualReturnRepository((repository) =>
       repository.recordReminder({
         ...data,
-        actorId: CURRENT_USER_ID,
+        actorId: getCurrentAnnualReturnActorId(),
       }),
     ),
   );
@@ -164,7 +163,7 @@ export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" }
     withAnnualReturnRepository((repository) =>
       repository.updateChecklistItem({
         ...data,
-        actorId: CURRENT_USER_ID,
+        actorId: getCurrentAnnualReturnActorId(),
       }),
     ),
   );
@@ -175,7 +174,7 @@ export const updateAnnualReturnPayment = createServerFn({ method: "POST" })
     withAnnualReturnRepository((repository) =>
       repository.updatePayment({
         ...data,
-        actorId: CURRENT_USER_ID,
+        actorId: getCurrentAnnualReturnActorId(),
       }),
     ),
   );
@@ -192,7 +191,7 @@ export const updateAnnualReturnFilingProof = createServerFn({ method: "POST" })
     withAnnualReturnRepository((repository) =>
       repository.updateFilingProof({
         ...data,
-        actorId: CURRENT_USER_ID,
+        actorId: getCurrentAnnualReturnActorId(),
       }),
     ),
   );

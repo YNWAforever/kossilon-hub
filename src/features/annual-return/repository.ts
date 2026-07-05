@@ -6,6 +6,12 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { daysBetween, isAllowedStatusTransition, riskForCase } from "./workflow";
+import {
+  assertAnnualReturnActionAllowed,
+  type AnnualReturnAction,
+  type AnnualReturnActionActor,
+  type AnnualReturnActorRole,
+} from "./permissions";
 import type {
   AnnualReturnCase,
   AnnualReturnChecklistItem,
@@ -19,6 +25,7 @@ import type {
 type CaseRow = {
   id: string;
   company_id: string;
+  company_team_id: string;
   company_name: string;
   return_year: number;
   made_up_date: string | Date;
@@ -58,6 +65,25 @@ type PaymentRow = {
   due_date: string | Date;
   paid_at: string | Date | null;
   payment_proof_document_id: string | null;
+};
+
+type ActorRow = {
+  id: string;
+  role: AnnualReturnActorRole;
+  team_id: string | null;
+  active: boolean;
+};
+
+type LockedCaseRow = {
+  id: string;
+  company_id: string;
+  company_name: string;
+  company_team_id: string;
+  current_status: AnnualReturnStatus;
+  owner_id: string;
+  reviewer_id: string | null;
+  filing_reference: string | null;
+  confirmation_document_id: string | null;
 };
 
 type TransactionSqlClient = postgres.TransactionSql;
@@ -257,6 +283,7 @@ function hydrateCase(
   const case_: AnnualReturnCase = {
     id: row.id,
     companyId: row.company_id,
+    companyTeamId: row.company_team_id,
     companyName: row.company_name,
     returnYear: row.return_year,
     madeUpDate: dateOnly(row.made_up_date),
@@ -336,6 +363,109 @@ export function createAnnualReturnRepository(
     return options.today ?? hongKongBusinessDate();
   }
 
+  async function writeAuditEvent(
+    tx: TransactionSqlClient,
+    input: {
+      case_: AnnualReturnCase;
+      companyId?: string;
+      actor: AnnualReturnActionActor;
+      action: AnnualReturnAction;
+      summary: string;
+      metadata: postgres.JSONValue;
+    },
+  ): Promise<void> {
+    await tx`
+      insert into annual_return_audit_events (
+        case_id,
+        company_id,
+        actor_id,
+        actor_role,
+        action,
+        result,
+        summary,
+        metadata
+      )
+      values (
+        ${input.case_.id},
+        ${input.companyId ?? input.case_.companyId},
+        ${input.actor.id},
+        ${input.actor.role},
+        ${input.action},
+        'succeeded',
+        ${input.summary},
+        ${tx.json(input.metadata)}
+      )
+    `;
+  }
+
+  async function lockWritableCase(
+    tx: TransactionSqlClient,
+    caseId: string,
+  ): Promise<LockedCaseRow> {
+    const rows = await tx<LockedCaseRow[]>`
+      select
+        arc.id,
+        arc.company_id,
+        c.company_name,
+        c.assigned_team_id as company_team_id,
+        arc.current_status,
+        arc.owner_id,
+        arc.reviewer_id,
+        arc.filing_reference,
+        arc.confirmation_document_id
+      from annual_return_cases arc
+      join companies c on c.id = arc.company_id
+      where arc.id = ${caseId}
+        and arc.locked_at is null
+        and arc.completed_at is null
+        and arc.current_status <> 'Completed'
+      for update
+    `;
+
+    assertSingleMutatedRow(rows, COMPLETED_CASE_LOCKED_MESSAGE);
+    return rows[0];
+  }
+
+  async function assertActorCanMutateLockedCase(
+    tx: TransactionSqlClient,
+    actorId: string,
+    lockedCase: LockedCaseRow,
+    action: AnnualReturnAction,
+  ): Promise<AnnualReturnActionActor> {
+    const actorRows = await tx<ActorRow[]>`
+      select id, role, team_id, active
+      from users
+      where id = ${actorId}
+      limit 1
+    `;
+    const [actorRow] = actorRows;
+
+    if (!actorRow) {
+      throw new Error("Annual return actor not found.");
+    }
+
+    const actor: AnnualReturnActionActor = {
+      id: actorRow.id,
+      role: actorRow.role,
+      teamId: actorRow.team_id,
+      active: actorRow.active,
+    };
+
+    assertAnnualReturnActionAllowed(
+      actor,
+      {
+        id: lockedCase.id,
+        companyName: lockedCase.company_name,
+        companyTeamId: lockedCase.company_team_id,
+        ownerId: lockedCase.owner_id,
+        reviewerId: lockedCase.reviewer_id,
+      },
+      action,
+    );
+
+    return actor;
+  }
+
   async function selectCaseRows(filters: CaseFilters): Promise<CaseRow[]> {
     const ownerId = filters.ownerId ?? null;
     const teamId = filters.teamId ?? null;
@@ -347,6 +477,7 @@ export function createAnnualReturnRepository(
       select
         arc.id,
         arc.company_id,
+        c.assigned_team_id as company_team_id,
         c.company_name,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
@@ -460,6 +591,7 @@ export function createAnnualReturnRepository(
       select
         arc.id,
         arc.company_id,
+        c.assigned_team_id as company_team_id,
         c.company_name,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
@@ -635,32 +767,13 @@ export function createAnnualReturnRepository(
       throw new Error("Annual return case not found.");
     }
 
+    const completing = nextStatus === "Completed";
+    const action = completing ? "complete" : "change_status";
     assertCaseIsWritable(current);
 
-    const completing = nextStatus === "Completed";
-
     await sql.begin(async (tx) => {
-      const lockedCaseRows = await tx<
-        {
-          id: string;
-          company_id: string;
-          current_status: AnnualReturnStatus;
-          filing_reference: string | null;
-          confirmation_document_id: string | null;
-        }[]
-      >`
-        select id, company_id, current_status, filing_reference, confirmation_document_id
-        from annual_return_cases
-        where id = ${caseId}
-          and locked_at is null
-          and completed_at is null
-          and current_status <> 'Completed'
-        for update
-      `;
-
-      assertSingleMutatedRow(lockedCaseRows, COMPLETED_CASE_LOCKED_MESSAGE);
-
-      const lockedCase = lockedCaseRows[0];
+      const lockedCase = await lockWritableCase(tx, caseId);
+      const actor = await assertActorCanMutateLockedCase(tx, actorId, lockedCase, action);
 
       if (completing) {
         const blockers = await completionBlockerMessagesForLockedCase(
@@ -713,6 +826,15 @@ export function createAnnualReturnRepository(
           ${tx.json({ from: lockedCase.current_status, to: nextStatus })}
         )
       `;
+
+      await writeAuditEvent(tx, {
+        case_: current,
+        companyId: lockedCase.company_id,
+        actor,
+        action,
+        summary: `Status changed from ${lockedCase.current_status} to ${nextStatus}.`,
+        metadata: { from: lockedCase.current_status, to: nextStatus },
+      });
     });
 
     return hydratedCaseAfterMutation(caseId, "status update");
@@ -728,6 +850,14 @@ export function createAnnualReturnRepository(
     assertCaseIsWritable(current);
 
     await sql.begin(async (tx) => {
+      const lockedCase = await lockWritableCase(tx, input.caseId);
+      const actor = await assertActorCanMutateLockedCase(
+        tx,
+        input.actorId,
+        lockedCase,
+        "record_reminder",
+      );
+
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases
         set reminders_sent = reminders_sent + 1,
@@ -781,7 +911,7 @@ export function createAnnualReturnRepository(
           metadata
         )
         values (
-          ${current.companyId},
+          ${lockedCase.company_id},
           ${input.caseId},
           'client_reminder_logged',
           'user',
@@ -794,6 +924,19 @@ export function createAnnualReturnRepository(
           })}
         )
       `;
+
+      await writeAuditEvent(tx, {
+        case_: current,
+        companyId: lockedCase.company_id,
+        actor,
+        action: "record_reminder",
+        summary: `Manual WhatsApp reminder logged for ${input.recipientName}.`,
+        metadata: {
+          channel: "WhatsApp",
+          templateLabel: input.templateLabel,
+          recipientPhone: input.recipientPhone,
+        },
+      });
     });
 
     return hydratedCaseAfterMutation(input.caseId, "reminder logging");
@@ -815,17 +958,13 @@ export function createAnnualReturnRepository(
     const hasVerifiedEvidence = input.status === "Verified";
 
     await sql.begin(async (tx) => {
-      const writableRows = await tx<{ id: string; company_id: string }[]>`
-        select id, company_id
-        from annual_return_cases
-        where id = ${input.caseId}
-          and locked_at is null
-          and completed_at is null
-          and current_status <> 'Completed'
-        for update
-      `;
-
-      assertSingleMutatedRow(writableRows, COMPLETED_CASE_LOCKED_MESSAGE);
+      const lockedCase = await lockWritableCase(tx, input.caseId);
+      const actor = await assertActorCanMutateLockedCase(
+        tx,
+        input.actorId,
+        lockedCase,
+        "update_checklist",
+      );
 
       if (hasVerifiedEvidence && !documentId) {
         throw new Error("Verified checklist items require a document.");
@@ -837,7 +976,7 @@ export function createAnnualReturnRepository(
           from documents
           where id = ${documentId}
             and case_id = ${input.caseId}
-            and company_id = ${writableRows[0].company_id}
+            and company_id = ${lockedCase.company_id}
             and verification_status = 'verified'
             and file_type = ${CHECKLIST_EVIDENCE_FILE_TYPE}
           limit 1
@@ -877,7 +1016,7 @@ export function createAnnualReturnRepository(
           metadata
         )
         values (
-          ${current.companyId},
+          ${lockedCase.company_id},
           ${input.caseId},
           'checklist_item_updated',
           'user',
@@ -891,6 +1030,20 @@ export function createAnnualReturnRepository(
           })}
         )
       `;
+
+      await writeAuditEvent(tx, {
+        case_: current,
+        companyId: lockedCase.company_id,
+        actor,
+        action: "update_checklist",
+        summary: `${updatedRows[0].item_label} marked as ${input.status}.`,
+        metadata: {
+          itemId: input.itemId,
+          itemLabel: updatedRows[0].item_label,
+          status: input.status,
+          documentId,
+        },
+      });
     });
 
     return hydratedCaseAfterMutation(input.caseId, "checklist update");
@@ -909,17 +1062,13 @@ export function createAnnualReturnRepository(
     const paymentProofDocumentId = isPaymentReceived ? input.paymentProofDocumentId : null;
 
     await sql.begin(async (tx) => {
-      const writableRows = await tx<{ id: string; company_id: string }[]>`
-        select id, company_id
-        from annual_return_cases
-        where id = ${input.caseId}
-          and locked_at is null
-          and completed_at is null
-          and current_status <> 'Completed'
-        for update
-      `;
-
-      assertSingleMutatedRow(writableRows, COMPLETED_CASE_LOCKED_MESSAGE);
+      const lockedCase = await lockWritableCase(tx, input.caseId);
+      const actor = await assertActorCanMutateLockedCase(
+        tx,
+        input.actorId,
+        lockedCase,
+        "update_payment",
+      );
 
       if (isPaymentReceived && !paymentProofDocumentId) {
         throw new Error("Payment received requires a payment proof document.");
@@ -931,7 +1080,7 @@ export function createAnnualReturnRepository(
           from documents
           where id = ${paymentProofDocumentId}
             and case_id = ${input.caseId}
-            and company_id = ${writableRows[0].company_id}
+            and company_id = ${lockedCase.company_id}
             and verification_status = 'verified'
             and file_type = ${PAYMENT_PROOF_FILE_TYPE}
           limit 1
@@ -967,7 +1116,7 @@ export function createAnnualReturnRepository(
           metadata
         )
         values (
-          ${current.companyId},
+          ${lockedCase.company_id},
           ${input.caseId},
           'payment_updated',
           'user',
@@ -981,6 +1130,20 @@ export function createAnnualReturnRepository(
           })}
         )
       `;
+
+      await writeAuditEvent(tx, {
+        case_: current,
+        companyId: lockedCase.company_id,
+        actor,
+        action: "update_payment",
+        summary: `Payment status changed to ${input.status}.`,
+        metadata: {
+          paymentId: updatedRows[0].id,
+          invoiceNumber: updatedRows[0].invoice_number,
+          status: input.status,
+          paymentProofDocumentId,
+        },
+      });
     });
 
     return hydratedCaseAfterMutation(input.caseId, "payment update");
@@ -998,12 +1161,20 @@ export function createAnnualReturnRepository(
     assertCaseIsWritable(current);
 
     await sql.begin(async (tx) => {
+      const lockedCase = await lockWritableCase(tx, input.caseId);
+      const actor = await assertActorCanMutateLockedCase(
+        tx,
+        input.actorId,
+        lockedCase,
+        "update_filing_proof",
+      );
+
       const documentRows = await tx<{ id: string }[]>`
         select id
         from documents
         where id = ${input.confirmationDocumentId}
           and case_id = ${input.caseId}
-          and company_id = ${current.companyId}
+          and company_id = ${lockedCase.company_id}
           and verification_status = 'verified'
           and file_type = ${FILING_CONFIRMATION_FILE_TYPE}
         limit 1
@@ -1038,7 +1209,7 @@ export function createAnnualReturnRepository(
           metadata
         )
         values (
-          ${current.companyId},
+          ${lockedCase.company_id},
           ${input.caseId},
           'filing_proof_updated',
           'user',
@@ -1050,6 +1221,18 @@ export function createAnnualReturnRepository(
           })}
         )
       `;
+
+      await writeAuditEvent(tx, {
+        case_: current,
+        companyId: lockedCase.company_id,
+        actor,
+        action: "update_filing_proof",
+        summary: "Filing reference and confirmation proof updated.",
+        metadata: {
+          filingReference: input.filingReference,
+          confirmationDocumentId: input.confirmationDocumentId,
+        },
+      });
     });
 
     return hydratedCaseAfterMutation(input.caseId, "filing proof update");
