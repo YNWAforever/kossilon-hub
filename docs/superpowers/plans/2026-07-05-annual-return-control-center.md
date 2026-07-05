@@ -1104,7 +1104,7 @@ git commit -m "feat: seed annual return control data"
 - Create: `src/features/annual-return/repository.ts`
 - Create: `src/features/annual-return/repository.test.ts`
 
-- [ ] **Step 1: Write repository smoke test**
+- [x] **Step 1: Write repository smoke test**
 
 Create `src/features/annual-return/repository.test.ts`:
 
@@ -1135,7 +1135,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 });
 ```
 
-- [ ] **Step 2: Run test and verify it fails when `TEST_DATABASE_URL` is set**
+- [x] **Step 2: Run test and verify it fails when `TEST_DATABASE_URL` is set**
 
 Run:
 
@@ -1145,7 +1145,7 @@ TEST_DATABASE_URL="$DATABASE_URL" bun run test src/features/annual-return/reposi
 
 Expected: FAIL because `repository.ts` does not exist.
 
-- [ ] **Step 3: Implement repository**
+- [x] **Step 3: Implement repository**
 
 Create `src/features/annual-return/repository.ts`:
 
@@ -1442,7 +1442,7 @@ export function createAnnualReturnRepository(databaseUrl?: string) {
 }
 ```
 
-- [ ] **Step 4: Run repository tests**
+- [x] **Step 4: Run repository tests**
 
 Run:
 
@@ -1452,12 +1452,14 @@ TEST_DATABASE_URL="$DATABASE_URL" bun run test src/features/annual-return/reposi
 
 Expected: PASS after migration and seed have run.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/features/annual-return/repository.ts src/features/annual-return/repository.test.ts
 git commit -m "feat: read annual return cases from database"
 ```
+
+Completed in commits `c1145de`, `76fa255`, and `c65802d`. Final Task 4 verification passed repository integration tests with `TEST_DATABASE_URL`, repository skip-mode tests without `TEST_DATABASE_URL`, targeted lint, TypeScript, production build, spec review, and quality review.
 
 ## Task 5: Add Server Functions For Case Actions
 
