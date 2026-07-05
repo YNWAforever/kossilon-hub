@@ -100,6 +100,11 @@ export function completionBlockers(case_: AnnualReturnCase): CompletionBlocker[]
       code: "payment_not_received",
       message: "Payment must be marked as received.",
     });
+  } else if (!hasText(case_.payment.paymentProofDocumentId)) {
+    blockers.push({
+      code: "payment_proof_missing",
+      message: "Verified payment proof document is required.",
+    });
   }
 
   if (!hasText(case_.filingReference)) {

@@ -84,6 +84,7 @@ export type CompletionBlocker = {
   code:
     | "required_checklist_unverified"
     | "payment_not_received"
+    | "payment_proof_missing"
     | "filing_reference_missing"
     | "confirmation_document_missing";
   message: string;

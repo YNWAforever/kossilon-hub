@@ -129,6 +129,20 @@ describe("annual return workflow", () => {
     ]);
   });
 
+  it("blocks completion when payment proof is missing", () => {
+    const missingPaymentProof: AnnualReturnCase = {
+      ...readyCase,
+      payment: {
+        ...readyCase.payment!,
+        paymentProofDocumentId: null,
+      },
+    };
+
+    expect(completionBlockers(missingPaymentProof).map((b) => b.code)).toEqual([
+      "payment_proof_missing",
+    ]);
+  });
+
   it("allows completion when required evidence is present", () => {
     expect(completionBlockers(readyCase)).toEqual([]);
   });
