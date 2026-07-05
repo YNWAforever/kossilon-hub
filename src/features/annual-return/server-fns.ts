@@ -5,9 +5,11 @@ import {
   hongKongBusinessDate,
   type AnnualReturnRepository,
 } from "./repository";
+import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
 import { getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
+import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 
 const RISK_LEVELS = ["green", "yellow", "orange", "red"] as const;
 const CHECKLIST_STATUSES = ["Missing", "Received", "Verified", "Rejected"] as const;
@@ -34,6 +36,11 @@ const listAnnualReturnCasesSchema = z
 
 const annualReturnCaseIdSchema = z.object({
   caseId: z.string().uuid(),
+});
+export const queueAnnualReturnWhatsAppReminderSchema = z.object({
+  caseId: z.string().uuid(),
+  recipientName: z.string().min(1),
+  recipientPhone: z.string().min(3),
 });
 const updateChecklistItemSchema = z
   .object({
@@ -98,6 +105,18 @@ async function withAnnualReturnRepository<T>(
   }
 }
 
+async function withWhatsAppRepository<T>(
+  handler: (repository: WhatsAppRepository) => Promise<T>,
+): Promise<T> {
+  const repository = createWhatsAppRepository();
+
+  try {
+    return await handler(repository);
+  } finally {
+    await repository.close();
+  }
+}
+
 export const listAnnualReturnCases = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
   .handler(async ({ data }) =>
@@ -153,6 +172,37 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
       repository.recordReminder({
         ...data,
         actorId: getCurrentAnnualReturnActorId(),
+      }),
+    ),
+  );
+
+export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
+  .validator(queueAnnualReturnWhatsAppReminderSchema)
+  .handler(async ({ data }) =>
+    withAnnualReturnRepository(async (annualReturnRepository) =>
+      withWhatsAppRepository(async (whatsAppRepository) => {
+        const case_ = await annualReturnRepository.getCase(data.caseId);
+
+        if (!case_) {
+          throw new Error("Annual return case not found.");
+        }
+
+        const result = await queueAnnualReturnWhatsAppReminder({
+          annualReturnRepository,
+          whatsAppRepository,
+          case_,
+          actorId: getCurrentAnnualReturnActorId(),
+          recipientName: data.recipientName,
+          recipientPhone: data.recipientPhone,
+        });
+
+        return {
+          caseId: result.case.id,
+          remindersSent: result.case.remindersSent,
+          currentStatus: result.case.currentStatus,
+          messageId: result.message.id,
+          messageStatus: result.message.status,
+        };
       }),
     ),
   );
