@@ -97,8 +97,42 @@ type TimelineFixture = {
   createdAt: string;
 };
 
-function fixtureId(group: string, sequence: number): string {
+type CaseIdRow = {
+  company_id: string;
+  id: string;
+};
+
+type PaymentIdRow = {
+  case_id: string;
+  id: string;
+};
+
+const FIXTURE_UUID_PREFIXES = {
+  teams: "10000000",
+  users: "20000000",
+  companies: "30000000",
+  cases: "40000000",
+  documents: "50000000",
+  checklistItems: "60000000",
+  payments: "70000000",
+  timelineEvents: "80000000",
+} as const;
+
+type FixtureUuidPrefix = (typeof FIXTURE_UUID_PREFIXES)[keyof typeof FIXTURE_UUID_PREFIXES];
+
+// Reserved fixture UUID ranges: each seed-owned table uses one 8-digit prefix above.
+function fixtureId(group: FixtureUuidPrefix, sequence: number): string {
   return `${group}-0000-0000-0000-${String(sequence).padStart(12, "0")}`;
+}
+
+function actualCaseIdFor(caseIdsByFixtureId: Map<string, string>, fixtureCaseId: string): string {
+  const actualCaseId = caseIdsByFixtureId.get(fixtureCaseId);
+
+  if (!actualCaseId) {
+    throw new Error(`Missing adopted annual return case for fixture case ${fixtureCaseId}.`);
+  }
+
+  return actualCaseId;
 }
 
 const teams: TeamFixture[] = [
@@ -619,7 +653,7 @@ try {
         updated_at = now()
     `;
 
-    await tx`
+    const caseRows = (await tx`
       insert into annual_return_cases ${tx(
         companies.map((company) => ({
           id: company.caseId,
@@ -648,9 +682,7 @@ try {
         "filing_reference",
         "confirmation_document_id",
       )}
-      on conflict (id) do update set
-        company_id = excluded.company_id,
-        return_year = excluded.return_year,
+      on conflict (company_id, return_year) do update set
         made_up_date = excluded.made_up_date,
         filing_due_date = excluded.filing_due_date,
         current_status = excluded.current_status,
@@ -663,14 +695,27 @@ try {
         locked_at = null,
         completed_at = null,
         updated_at = now()
-    `;
+      returning company_id, id
+    `) as CaseIdRow[];
+
+    const caseIdsByFixtureId = new Map<string, string>();
+
+    for (const company of companies) {
+      const caseRow = caseRows.find((row) => row.company_id === company.id);
+
+      if (!caseRow) {
+        throw new Error(`Missing annual return case for fixture company ${company.id}.`);
+      }
+
+      caseIdsByFixtureId.set(company.caseId, caseRow.id);
+    }
 
     await tx`
       insert into documents ${tx(
         documents.map((document) => ({
           id: document.id,
           company_id: document.companyId,
-          case_id: document.caseId,
+          case_id: actualCaseIdFor(caseIdsByFixtureId, document.caseId),
           file_type: document.fileType,
           file_name: document.fileName,
           storage_url: document.storageUrl,
@@ -717,7 +762,7 @@ try {
 
       return {
         id: item.id,
-        case_id: item.caseId,
+        case_id: actualCaseIdFor(caseIdsByFixtureId, item.caseId),
         item_label: item.itemLabel,
         required: item.required,
         status: item.status,
@@ -753,12 +798,12 @@ try {
         updated_at = now()
     `;
 
-    await tx`
+    const paymentRows = (await tx`
       insert into payments ${tx(
         payments.map((payment) => ({
           id: payment.id,
           company_id: payment.companyId,
-          case_id: payment.caseId,
+          case_id: actualCaseIdFor(caseIdsByFixtureId, payment.caseId),
           invoice_number: payment.invoiceNumber,
           amount: payment.amount,
           currency: "HKD",
@@ -778,9 +823,8 @@ try {
         "paid_at",
         "payment_proof_document_id",
       )}
-      on conflict (id) do update set
+      on conflict (case_id) do update set
         company_id = excluded.company_id,
-        case_id = excluded.case_id,
         invoice_number = excluded.invoice_number,
         amount = excluded.amount,
         currency = excluded.currency,
@@ -789,13 +833,18 @@ try {
         paid_at = excluded.paid_at,
         payment_proof_document_id = excluded.payment_proof_document_id,
         updated_at = now()
-    `;
+      returning case_id, id
+    `) as PaymentIdRow[];
+
+    if (paymentRows.length !== payments.length) {
+      throw new Error("Missing adopted annual return payments for fixture cases.");
+    }
 
     for (const company of companies) {
       await tx`
         update annual_return_cases
         set confirmation_document_id = ${company.confirmationDocumentId}, updated_at = now()
-        where id = ${company.caseId}
+        where id = ${actualCaseIdFor(caseIdsByFixtureId, company.caseId)}
       `;
     }
 
@@ -815,7 +864,7 @@ try {
         values (
           ${event.id},
           ${event.companyId},
-          ${event.caseId},
+          ${actualCaseIdFor(caseIdsByFixtureId, event.caseId)},
           ${event.eventType},
           ${event.actorType},
           ${event.actorId},

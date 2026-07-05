@@ -209,4 +209,17 @@ describe("package scripts", () => {
       }
     }
   });
+
+  it("keeps annual return seed idempotency aligned with database natural keys", () => {
+    const seedScript = readFileSync(
+      resolve(process.cwd(), "scripts/db-seed-annual-return.ts"),
+      "utf8",
+    );
+
+    expect(seedScript).toContain("Reserved fixture UUID ranges");
+    expect(seedScript).toContain("on conflict (company_id, return_year)");
+    expect(seedScript).toContain("returning company_id, id");
+    expect(seedScript).toContain("on conflict (case_id)");
+    expect(seedScript).toContain("returning case_id, id");
+  });
 });

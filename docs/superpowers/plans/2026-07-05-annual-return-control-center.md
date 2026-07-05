@@ -823,6 +823,8 @@ git commit -m "feat: add annual return database schema"
 
 - [ ] **Step 1: Write seed script**
 
+Implementation note: keep fixture UUIDs deterministic for fresh databases, but make idempotency follow database natural keys. Annual return cases must upsert on `(company_id, return_year)` and use the returned case IDs for downstream rows. Payments must upsert on `(case_id)` so an existing payment for an adopted case is reused.
+
 Create `scripts/db-seed-annual-return.ts`:
 
 ```ts
