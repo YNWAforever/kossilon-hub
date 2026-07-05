@@ -405,7 +405,7 @@ export function createWhatsAppRepository(
     client: QueryClient,
     contact: ContactRecord,
   ): Promise<InboundMatch> {
-    let companyId = contact.companyId;
+    let companyId: string | null = null;
     let caseId: string | null = null;
 
     const outboundRows = await client<OutboundContextRow[]>`
@@ -427,10 +427,9 @@ export function createWhatsAppRepository(
       limit 1
     `;
     const [outbound] = outboundRows;
+    const outboundCompanyId = outbound ? (outbound.company_id ?? outbound.case_company_id) : null;
 
-    if (!companyId && outbound) {
-      companyId = outbound.company_id ?? outbound.case_company_id;
-    }
+    companyId = outboundCompanyId ?? contact.companyId;
 
     if (outbound?.case_id) {
       caseId = outbound.case_id;
