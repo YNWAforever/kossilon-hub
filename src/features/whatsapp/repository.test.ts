@@ -64,6 +64,7 @@ async function cleanupWhatsAppFixtures() {
       delete from timeline_events
       where case_id = ${TEST_CASE_ID}
         or metadata ->> 'source' = 'phase2-whatsapp-test'
+        or metadata ->> 'providerMessageId' like 'phase2-test-%'
     `;
     await tx`
       delete from annual_return_cases
@@ -293,7 +294,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
   );
 
   it(
-    "matches inbound replies to the most recent outbound annual return case and records timeline",
+    "matches inbound replies to a prior outbound annual return case and records timeline",
     async () => {
       const repository = repositoryFor();
 
@@ -364,7 +365,8 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
           metadata ->> 'bodyPreview' as body_preview
         from timeline_events
         where case_id = ${TEST_CASE_ID}
-        order by created_at asc
+          and event_type in ('whatsapp_message_queued', 'whatsapp_message_received')
+        order by created_at asc, id asc
       `;
       expect(timelineEvents).toEqual([
         {
