@@ -20,10 +20,21 @@ create table if not exists users (
   updated_at timestamptz not null default now()
 );
 
-alter table teams
-  add constraint teams_manager_id_fkey
-  foreign key (manager_id) references users(id)
-  deferrable initially deferred;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'teams_manager_id_fkey'
+      and conrelid = 'teams'::regclass
+  ) then
+    alter table teams
+      add constraint teams_manager_id_fkey
+      foreign key (manager_id) references users(id)
+      deferrable initially deferred;
+  end if;
+end
+$$;
 
 create table if not exists companies (
   id uuid primary key default gen_random_uuid(),
@@ -59,7 +70,7 @@ create table if not exists documents (
 create table if not exists annual_return_cases (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references companies(id) on delete cascade,
-  return_year integer not null,
+  return_year integer not null constraint annual_return_cases_return_year_check check (return_year between 1900 and 2100),
   made_up_date date not null,
   filing_due_date date not null,
   current_status text not null check (
@@ -80,7 +91,7 @@ create table if not exists annual_return_cases (
   risk_level text not null default 'green' check (risk_level in ('green', 'yellow', 'orange', 'red')),
   owner_id uuid not null references users(id),
   reviewer_id uuid references users(id),
-  reminders_sent integer not null default 0,
+  reminders_sent integer not null default 0 constraint annual_return_cases_reminders_sent_nonnegative_check check (reminders_sent >= 0),
   filing_reference text,
   confirmation_document_id uuid references documents(id),
   locked_at timestamptz,
@@ -90,10 +101,21 @@ create table if not exists annual_return_cases (
   unique (company_id, return_year)
 );
 
-alter table documents
-  add constraint documents_case_id_fkey
-  foreign key (case_id) references annual_return_cases(id) on delete cascade
-  deferrable initially deferred;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'documents_case_id_fkey'
+      and conrelid = 'documents'::regclass
+  ) then
+    alter table documents
+      add constraint documents_case_id_fkey
+      foreign key (case_id) references annual_return_cases(id) on delete cascade
+      deferrable initially deferred;
+  end if;
+end
+$$;
 
 create table if not exists annual_return_checklist_items (
   id uuid primary key default gen_random_uuid(),
@@ -114,8 +136,8 @@ create table if not exists payments (
   company_id uuid not null references companies(id) on delete cascade,
   case_id uuid not null references annual_return_cases(id) on delete cascade,
   invoice_number text not null,
-  amount integer not null,
-  currency text not null default 'HKD',
+  amount integer not null constraint payments_amount_positive_check check (amount > 0),
+  currency text not null default 'HKD' constraint payments_currency_hkd_check check (currency = 'HKD'),
   status text not null default 'Payment pending' check (status in ('Not invoiced', 'Payment pending', 'Payment received', 'Overdue')),
   due_date date not null,
   paid_at timestamptz,
@@ -166,3 +188,8 @@ create index if not exists annual_return_cases_risk_idx on annual_return_cases (
 create index if not exists annual_return_cases_owner_idx on annual_return_cases (owner_id);
 create index if not exists checklist_case_idx on annual_return_checklist_items (case_id);
 create index if not exists timeline_case_created_idx on timeline_events (case_id, created_at desc);
+create index if not exists documents_case_idx on documents (case_id);
+create index if not exists documents_company_idx on documents (company_id);
+create index if not exists case_notes_case_idx on case_notes (case_id);
+create index if not exists reminder_logs_case_idx on reminder_logs (case_id);
+create index if not exists companies_assigned_team_idx on companies (assigned_team_id);

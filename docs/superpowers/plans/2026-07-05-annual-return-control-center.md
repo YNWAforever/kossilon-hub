@@ -18,6 +18,7 @@
 - Create `src/server/db/client.ts`: Neon SQL client factory with clear `DATABASE_URL` error.
 - Create `src/server/db/schema.sql`: canonical schema text for local inspection.
 - Create `db/migrations/0001_annual_return_control_center.sql`: initial database schema.
+- Create `db/migrations/0002_harden_annual_return_schema.sql`: forward-only hardening for databases where `0001` was already applied.
 - Create `scripts/db-migrate.ts`: applies SQL migrations in order.
 - Create `scripts/db-seed-annual-return.ts`: seeds users, teams, companies, and annual-return cases.
 - Create `src/features/annual-return/repository.ts`: typed SQL reads/writes for annual-return data.
@@ -483,6 +484,7 @@ git commit -m "feat: add annual return workflow rules"
 **Files:**
 - Modify: `package.json`
 - Create: `db/migrations/0001_annual_return_control_center.sql`
+- Create: `db/migrations/0002_harden_annual_return_schema.sql`
 - Create: `src/server/db/schema.sql`
 - Create: `src/server/db/client.ts`
 - Create: `scripts/db-migrate.ts`
@@ -660,7 +662,18 @@ create index if not exists annual_return_cases_risk_idx on annual_return_cases (
 create index if not exists annual_return_cases_owner_idx on annual_return_cases (owner_id);
 create index if not exists checklist_case_idx on annual_return_checklist_items (case_id);
 create index if not exists timeline_case_created_idx on timeline_events (case_id, created_at desc);
+create index if not exists documents_case_idx on documents (case_id);
+create index if not exists documents_company_idx on documents (company_id);
+create index if not exists case_notes_case_idx on case_notes (case_id);
+create index if not exists reminder_logs_case_idx on reminder_logs (case_id);
+create index if not exists companies_assigned_team_idx on companies (assigned_team_id);
 ```
+
+Review hardening update:
+
+- Keep `0001_annual_return_control_center.sql` and `src/server/db/schema.sql` as the final fresh-database schema, including named check constraints for HKD-only payments, positive payment amounts, non-negative reminder counts, bounded return years, additional lookup indexes, and idempotent foreign-key `alter table` blocks.
+- Add `0002_harden_annual_return_schema.sql` for already-applied databases because `schema_migrations` will skip `0001`.
+- `src/server/db/schema.sql` remains the canonical final schema after the Task 2 migrations.
 
 - [ ] **Step 2: Copy schema for inspection**
 
@@ -675,6 +688,15 @@ import postgres, { type Sql } from "postgres";
 
 export type SqlClient = Sql;
 
+export type DatabaseSslOption = "require" | "allow" | "prefer" | "verify-full" | boolean | object;
+
+export type CreateSqlClientOptions = {
+  max?: number;
+  ssl?: DatabaseSslOption;
+};
+
+let singletonSqlClient: SqlClient | undefined;
+
 export function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -683,14 +705,31 @@ export function getDatabaseUrl(): string {
   return url;
 }
 
-export function createSqlClient(url = getDatabaseUrl()): SqlClient {
+export function createSqlClient(
+  url = getDatabaseUrl(),
+  options: CreateSqlClientOptions = {},
+): SqlClient {
   return postgres(url, {
-    ssl: "require",
-    max: 1,
+    ssl: options.ssl ?? "require",
+    max: options.max ?? 1,
   });
 }
 
-export const sql = createSqlClient();
+export function getSqlClient(): SqlClient {
+  singletonSqlClient ??= createSqlClient();
+  return singletonSqlClient;
+}
+
+export const sql = new Proxy((() => undefined) as unknown as SqlClient, {
+  apply(_target, thisArg, args) {
+    return Reflect.apply(getSqlClient(), thisArg, args);
+  },
+  get(_target, property) {
+    const client = getSqlClient();
+    const value = Reflect.get(client, property, client);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+}) as SqlClient;
 ```
 
 - [ ] **Step 4: Create migration runner**
