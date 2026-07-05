@@ -5,7 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
-import { daysBetween, riskForCase } from "./workflow";
+import { daysBetween, isAllowedStatusTransition, riskForCase } from "./workflow";
 import type {
   AnnualReturnCase,
   AnnualReturnChecklistItem,
@@ -580,7 +580,7 @@ export function createAnnualReturnRepository(
       from payments p
       left join documents d on d.id = p.payment_proof_document_id
         and d.case_id = p.case_id
-        and d.company_id = p.company_id
+        and d.company_id = ${companyId}
         and d.verification_status = 'verified'
         and d.file_type = ${PAYMENT_PROOF_FILE_TYPE}
       where p.case_id = ${caseId}
@@ -640,37 +640,42 @@ export function createAnnualReturnRepository(
     const completing = nextStatus === "Completed";
 
     await sql.begin(async (tx) => {
+      const lockedCaseRows = await tx<
+        {
+          id: string;
+          company_id: string;
+          current_status: AnnualReturnStatus;
+          filing_reference: string | null;
+          confirmation_document_id: string | null;
+        }[]
+      >`
+        select id, company_id, current_status, filing_reference, confirmation_document_id
+        from annual_return_cases
+        where id = ${caseId}
+          and locked_at is null
+          and completed_at is null
+          and current_status <> 'Completed'
+        for update
+      `;
+
+      assertSingleMutatedRow(lockedCaseRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      const lockedCase = lockedCaseRows[0];
+
       if (completing) {
-        const lockedCaseRows = await tx<
-          {
-            id: string;
-            company_id: string;
-            filing_reference: string | null;
-            confirmation_document_id: string | null;
-          }[]
-        >`
-          select id, company_id, filing_reference, confirmation_document_id
-          from annual_return_cases
-          where id = ${caseId}
-            and locked_at is null
-            and completed_at is null
-            and current_status <> 'Completed'
-          for update
-        `;
-
-        assertSingleMutatedRow(lockedCaseRows, COMPLETED_CASE_LOCKED_MESSAGE);
-
         const blockers = await completionBlockerMessagesForLockedCase(
           tx,
           caseId,
-          lockedCaseRows[0].company_id,
-          lockedCaseRows[0].filing_reference,
-          lockedCaseRows[0].confirmation_document_id,
+          lockedCase.company_id,
+          lockedCase.filing_reference,
+          lockedCase.confirmation_document_id,
         );
 
         if (blockers.length > 0) {
           throw new Error(`Cannot complete annual return case: ${blockers.join(" ")}`);
         }
+      } else if (!isAllowedStatusTransition(lockedCase.current_status, nextStatus)) {
+        throw new Error(`Cannot move from ${lockedCase.current_status} to ${nextStatus}.`);
       }
 
       const updatedRows = await tx<{ id: string }[]>`
@@ -699,13 +704,13 @@ export function createAnnualReturnRepository(
           metadata
         )
         values (
-          ${current.companyId},
+          ${lockedCase.company_id},
           ${caseId},
           'status_changed',
           'user',
           ${actorId},
-          ${`Status changed from ${current.currentStatus} to ${nextStatus}.`},
-          ${tx.json({ from: current.currentStatus, to: nextStatus })}
+          ${`Status changed from ${lockedCase.current_status} to ${nextStatus}.`},
+          ${tx.json({ from: lockedCase.current_status, to: nextStatus })}
         )
       `;
     });

@@ -18,7 +18,7 @@ const TEST_CASE_UUID_PREFIX = "91000000";
 const TEST_DOCUMENT_UUID_PREFIX = "92000000";
 const TEST_CHECKLIST_UUID_PREFIX = "93000000";
 const TEST_PAYMENT_UUID_PREFIX = "94000000";
-const TEST_FIXTURE_SEQUENCES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+const TEST_FIXTURE_SEQUENCES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 
 type ClosableRepository = ReturnType<typeof createAnnualReturnRepository>;
@@ -703,6 +703,44 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   );
 
   it(
+    "rejects stale non-completion transitions against the locked current status",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 13,
+        currentStatus: "Documents pending",
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await sqlForTests()`
+        update annual_return_cases
+        set current_status = 'Payment pending',
+            updated_at = now()
+        where id = ${fixture.caseId}
+      `;
+
+      await expect(
+        repository.updateStatus(fixture.caseId, "Documents received", USER_AMY_ID),
+      ).rejects.toThrow(/Cannot move from Payment pending to Documents received/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        currentStatus: "Payment pending",
+      });
+
+      const timelineEvents = await sqlForTests()<
+        {
+          event_type: string;
+        }[]
+      >`
+        select event_type
+        from timeline_events
+        where case_id = ${fixture.caseId}
+      `;
+      expect(timelineEvents).toEqual([]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "rejects case mutations after a case is locked",
     async () => {
       const fixture = await createMutableAnnualReturnFixture({
@@ -979,6 +1017,48 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           verified_at = null
       where id = ${fixture.paymentProofDocumentId}
     `;
+
+      await expect(
+        repository.updateStatus(fixture.caseId, "Completed", USER_AMY_ID),
+      ).rejects.toThrow(/payment proof/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        currentStatus: "Filed",
+        lockedAt: null,
+        completedAt: null,
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "validates completion payment proof against the locked case company",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 14,
+        currentStatus: "Filed",
+        checklistStatus: "Verified",
+        checklistDocument: true,
+        paymentStatus: "Payment received",
+        paymentProof: true,
+        filingProof: true,
+      });
+      const foreignFixture = await createMutableAnnualReturnFixture({
+        sequence: 15,
+        currentStatus: "Filed",
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await sqlForTests()`
+        update documents
+        set company_id = ${foreignFixture.companyId}
+        where id = ${fixture.paymentProofDocumentId}
+      `;
+      await sqlForTests()`
+        update payments
+        set company_id = ${foreignFixture.companyId}
+        where case_id = ${fixture.caseId}
+      `;
 
       await expect(
         repository.updateStatus(fixture.caseId, "Completed", USER_AMY_ID),
