@@ -32,7 +32,7 @@ export function calculateFilingDueDate(annualReturnBasisDate: string): string {
 }
 
 export function shouldGenerateCase(filingDueDate: string, today: string): boolean {
-  return daysBetween(today, filingDueDate) < 90;
+  return daysBetween(today, filingDueDate) <= 90;
 }
 
 export function riskForCase(case_: AnnualReturnCase, today: string): RiskLevel {

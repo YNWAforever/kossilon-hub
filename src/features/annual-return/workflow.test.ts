@@ -59,16 +59,17 @@ describe("annual return workflow", () => {
     expect(calculateFilingDueDate("2026-07-01")).toBe("2026-08-12");
   });
 
-  it("generates cases inside the 90-day window only", () => {
-    expect(shouldGenerateCase("2026-08-12", "2026-05-14")).toBe(false);
-    expect(shouldGenerateCase("2026-08-12", "2026-05-15")).toBe(true);
+  it("generates cases when the filing due date is 90 days away or overdue", () => {
+    expect(shouldGenerateCase("2026-08-12", "2026-05-13")).toBe(false);
+    expect(shouldGenerateCase("2026-08-12", "2026-05-14")).toBe(true);
     expect(shouldGenerateCase("2026-08-12", "2026-08-13")).toBe(true);
   });
 
-  it("uses yellow, orange, and red risk thresholds", () => {
+  it("uses 60, 30, 14, 7, and overdue risk thresholds", () => {
+    expect(riskForCase(baseCase, "2026-06-13")).toBe("green");
     expect(riskForCase(baseCase, "2026-07-13")).toBe("yellow");
-    expect(riskForCase(baseCase, "2026-07-30")).toBe("orange");
-    expect(riskForCase(baseCase, "2026-08-06")).toBe("red");
+    expect(riskForCase(baseCase, "2026-07-29")).toBe("orange");
+    expect(riskForCase(baseCase, "2026-08-05")).toBe("red");
     expect(riskForCase(baseCase, "2026-08-13")).toBe("red");
   });
 
