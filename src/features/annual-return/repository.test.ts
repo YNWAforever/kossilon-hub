@@ -1,8 +1,9 @@
 import "dotenv/config";
-import { afterEach, describe, expect, it } from "vitest";
-import { createAnnualReturnRepository } from "./repository";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { SqlClient } from "@/server/db/client";
+import { createAnnualReturnRepository, hongKongBusinessDate } from "./repository";
 
-const databaseUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
+const databaseUrl = process.env.TEST_DATABASE_URL;
 
 const USER_AMY_ID = "20000000-0000-0000-0000-000000000001";
 const USER_KEN_ID = "20000000-0000-0000-0000-000000000002";
@@ -23,6 +24,30 @@ function repositoryFor(today = "2026-07-05"): ClosableRepository {
 
 afterEach(async () => {
   await Promise.all(repositories.splice(0).map((repository) => repository.close()));
+  vi.unstubAllEnvs();
+});
+
+describe("annual return repository configuration", () => {
+  it("uses Hong Kong business dates by default", () => {
+    expect(hongKongBusinessDate(new Date("2026-07-04T15:59:59.000Z"))).toBe("2026-07-04");
+    expect(hongKongBusinessDate(new Date("2026-07-04T16:00:00.000Z"))).toBe("2026-07-05");
+  });
+
+  it("honors options when the database URL argument is explicitly undefined", async () => {
+    vi.stubEnv("DATABASE_URL", "");
+
+    const unusedSql = (() => {
+      throw new Error("SQL client should not be called by this test.");
+    }) as unknown as SqlClient;
+
+    const repository = createAnnualReturnRepository(undefined, {
+      sql: unusedSql,
+      today: "2026-07-05",
+    });
+    repositories.push(repository);
+
+    await expect(repository.close()).resolves.toBeUndefined();
+  });
 });
 
 describe.skipIf(!databaseUrl)("annual return repository", () => {

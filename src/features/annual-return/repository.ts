@@ -93,9 +93,27 @@ export type AnnualReturnRepository = {
 };
 
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
+const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
 
-function systemToday(): string {
-  return new Date().toISOString().slice(0, 10);
+function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
+  const part = parts.find((candidate) => candidate.type === type);
+
+  if (!part) {
+    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
+  }
+
+  return part.value;
+}
+
+export function hongKongBusinessDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: HONG_KONG_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
 }
 
 function dateOnly(value: string | Date): string {
@@ -223,18 +241,19 @@ function countOutstandingRequiredEvidence(case_: AnnualReturnCase): number {
 }
 
 export function createAnnualReturnRepository(
-  databaseUrl?: string,
   options?: CreateAnnualReturnRepositoryOptions,
 ): AnnualReturnRepository;
 export function createAnnualReturnRepository(
+  databaseUrl: string | undefined,
   options?: CreateAnnualReturnRepositoryOptions,
 ): AnnualReturnRepository;
 export function createAnnualReturnRepository(
   databaseUrlOrOptions?: string | CreateAnnualReturnRepositoryOptions,
-  maybeOptions: CreateAnnualReturnRepositoryOptions = {},
+  maybeOptions?: CreateAnnualReturnRepositoryOptions,
 ): AnnualReturnRepository {
-  const options =
-    typeof databaseUrlOrOptions === "string" ? maybeOptions : (databaseUrlOrOptions ?? {});
+  const hasDatabaseUrlArgument =
+    typeof databaseUrlOrOptions === "string" || maybeOptions !== undefined;
+  const options = hasDatabaseUrlArgument ? (maybeOptions ?? {}) : (databaseUrlOrOptions ?? {});
   const databaseUrl = typeof databaseUrlOrOptions === "string" ? databaseUrlOrOptions : undefined;
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
@@ -244,7 +263,7 @@ export function createAnnualReturnRepository(
       return options.today();
     }
 
-    return options.today ?? systemToday();
+    return options.today ?? hongKongBusinessDate();
   }
 
   async function selectCaseRows(filters: CaseFilters): Promise<CaseRow[]> {
@@ -402,6 +421,7 @@ export function createAnnualReturnRepository(
     today: string,
     currentUserId: string,
   ): Promise<AnnualReturnDashboardMetrics> {
+    // TODO: Move dashboard tiles to SQL aggregates and paginated reads as case volume grows.
     const cases = await listCasesForToday({}, today);
     const activeCases = cases.filter(isActiveForOperationalMetrics);
 
