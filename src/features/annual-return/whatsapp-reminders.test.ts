@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { queueAnnualReturnWhatsAppReminderSchema } from "./server-fns";
 import type { AnnualReturnCase } from "./types";
 import { buildReminderDraft } from "./workflow";
@@ -90,7 +90,7 @@ describe("annual return WhatsApp reminders", () => {
     });
   });
 
-  it("records the compliance reminder before queueing the WhatsApp message", async () => {
+  it("queues the WhatsApp message before recording the compliance reminder", async () => {
     const calls: string[] = [];
     const updatedCase = { ...harbourCase, remindersSent: harbourCase.remindersSent + 1 };
     const message = {
@@ -135,7 +135,30 @@ describe("annual return WhatsApp reminders", () => {
         recipientPhone: "+852 6123 4567",
       }),
     ).resolves.toEqual({ case: updatedCase, message });
-    expect(calls).toEqual(["record-reminder", "queue-whatsapp"]);
+    expect(calls).toEqual(["queue-whatsapp", "record-reminder"]);
+  });
+
+  it("does not record the compliance reminder when WhatsApp queueing fails", async () => {
+    const annualReturnRepository = {
+      recordReminder: vi.fn(),
+    } as unknown as AnnualReturnRepository;
+    const whatsAppRepository = {
+      queueOutboundTemplateMessage: vi.fn(async () => {
+        throw new Error("WhatsApp queue unavailable.");
+      }),
+    } as unknown as WhatsAppRepository;
+
+    await expect(
+      queueAnnualReturnWhatsAppReminder({
+        annualReturnRepository,
+        whatsAppRepository,
+        case_: harbourCase,
+        actorId,
+        recipientName: "Ada Director",
+        recipientPhone: "+852 6123 4567",
+      }),
+    ).rejects.toThrow("WhatsApp queue unavailable.");
+    expect(annualReturnRepository.recordReminder).not.toHaveBeenCalled();
   });
 
   it("validates the server action payload for queued reminders", () => {

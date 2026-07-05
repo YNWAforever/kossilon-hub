@@ -70,8 +70,8 @@ export async function queueAnnualReturnWhatsAppReminder({
   ...input
 }: QueueAnnualReturnWhatsAppReminderInput): Promise<QueueAnnualReturnWhatsAppReminderResult> {
   const request = buildAnnualReturnWhatsAppReminderRequest(input);
-  const updatedCase = await annualReturnRepository.recordReminder(request.annualReturnReminder);
   const message = await whatsAppRepository.queueOutboundTemplateMessage(request.whatsAppMessage);
+  const updatedCase = await annualReturnRepository.recordReminder(request.annualReturnReminder);
 
   return {
     case: updatedCase,

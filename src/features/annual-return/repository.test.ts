@@ -650,10 +650,14 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     "queues annual return WhatsApp reminders while preserving compliance records",
     async () => {
       const fixture = await createMutableAnnualReturnFixture({ sequence: 21 });
-      const annualReturnRepository = repositoryFor("2026-07-05");
-      const whatsAppRepository = createWhatsAppRepository(databaseUrl!);
+      const sql = sqlForTests();
 
-      try {
+      await sql.begin(async (tx) => {
+        const annualReturnRepository = createAnnualReturnRepository({
+          sql: tx,
+          today: "2026-07-05",
+        });
+        const whatsAppRepository = createWhatsAppRepository({ sql: tx });
         const result = await queueAnnualReturnWhatsAppReminder({
           annualReturnRepository,
           whatsAppRepository,
@@ -677,8 +681,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           body: expect.stringContaining("Task 5 Test Company 21 Ltd"),
         });
 
-        const sql = sqlForTests();
-        const reminderLogs = await sql<
+        const reminderLogs = await tx<
           {
             template_label: string;
             recipient_name: string;
@@ -699,7 +702,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           },
         ]);
 
-        const auditEvents = await sql<
+        const auditEvents = await tx<
           {
             action: string;
             actor_id: string | null;
@@ -716,7 +719,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           summary: "Manual WhatsApp reminder logged for Ada Director.",
         });
 
-        const whatsAppMessages = await sql<
+        const whatsAppMessages = await tx<
           {
             id: string;
             direction: string;
@@ -748,7 +751,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           },
         ]);
 
-        const timelineEvents = await sql<
+        const timelineEvents = await tx<
           {
             event_type: string;
             actor_id: string | null;
@@ -769,9 +772,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
             actor_id: USER_AMY_ID,
           },
         ]);
-      } finally {
-        await whatsAppRepository.close();
-      }
+      });
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

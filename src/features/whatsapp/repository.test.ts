@@ -2,7 +2,7 @@ import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { normalizeWoztellInboundMessage } from "./woztell";
-import { createWhatsAppRepository } from "./repository";
+import { createWhatsAppRepository, planContactIdentityMerge } from "./repository";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -172,6 +172,46 @@ afterEach(async () => {
 
 afterAll(async () => {
   await testSql?.end();
+});
+
+describe("WhatsApp contact identity reconciliation", () => {
+  it("prefers the WhatsApp identity and marks split phone contacts for merge", () => {
+    expect(
+      planContactIdentityMerge(
+        {
+          whatsAppId: "phase2-test-wa-split",
+          phoneE164: "+85269990001",
+        },
+        [
+          {
+            id: "phone-contact",
+            company_id: TEST_COMPANY_ID,
+            display_name: "Phone Contact",
+            phone_e164: "+85269990001",
+            whatsapp_id: null,
+          },
+          {
+            id: "wa-contact",
+            company_id: null,
+            display_name: "WhatsApp Contact",
+            phone_e164: null,
+            whatsapp_id: "phase2-test-wa-split",
+          },
+        ],
+      ),
+    ).toEqual({
+      primary: {
+        id: "wa-contact",
+        company_id: null,
+        display_name: "WhatsApp Contact",
+        phone_e164: null,
+        whatsapp_id: "phase2-test-wa-split",
+      },
+      duplicateContactIds: ["phone-contact"],
+      duplicateCompanyId: TEST_COMPANY_ID,
+      duplicateDisplayName: "Phone Contact",
+    });
+  });
 });
 
 describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
@@ -393,6 +433,95 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
           and metadata ->> 'providerMessageId' = 'phase2-test-inbound-reply-001'
       `;
       expect(receivedEvents[0].count).toBe(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "merges split contact identities before inbound matching",
+    async () => {
+      const sql = sqlForTests();
+      const [whatsAppContact] = await sql<{ id: string }[]>`
+        insert into whatsapp_contacts (
+          provider,
+          whatsapp_id,
+          display_name,
+          metadata
+        )
+        values (
+          'woztell',
+          'phase2-test-wa-split',
+          'Split WhatsApp Contact',
+          ${sql.json({})}
+        )
+        returning id
+      `;
+      await sql`
+        insert into whatsapp_contacts (
+          provider,
+          phone_e164,
+          display_name,
+          company_id,
+          metadata
+        )
+        values (
+          'woztell',
+          '+85269990001',
+          'Split Phone Contact',
+          ${TEST_COMPANY_ID},
+          ${sql.json({})}
+        )
+      `;
+      const repository = repositoryFor();
+      const normalized = normalizeWoztellInboundMessage({
+        event: "message",
+        channel: { id: "kossilon-whatsapp-channel" },
+        contact: {
+          wa_id: "phase2-test-wa-split",
+          phone: "+852 6999 0001",
+          profile: { name: "Phase 2 Director" },
+        },
+        message: {
+          id: "phase2-test-inbound-split-001",
+          type: "text",
+          text: { body: "Phase 2 test split identity reply." },
+          timestamp: "2026-07-05T12:25:00.000Z",
+        },
+      });
+
+      const inbound = await repository.recordInboundMessage(normalized);
+
+      expect(inbound).toMatchObject({
+        contactId: whatsAppContact.id,
+        companyId: TEST_COMPANY_ID,
+        caseId: TEST_CASE_ID,
+        phoneE164: "+85269990001",
+        whatsAppId: "phase2-test-wa-split",
+        timelineEventCreated: true,
+      });
+
+      const contacts = await sql<
+        {
+          id: string;
+          company_id: string | null;
+          phone_e164: string | null;
+          whatsapp_id: string | null;
+        }[]
+      >`
+        select id, company_id, phone_e164, whatsapp_id
+        from whatsapp_contacts
+        where whatsapp_id = 'phase2-test-wa-split'
+          or phone_e164 = '+85269990001'
+        order by id asc
+      `;
+      expect(contacts).toEqual([
+        {
+          id: whatsAppContact.id,
+          company_id: TEST_COMPANY_ID,
+          phone_e164: "+85269990001",
+          whatsapp_id: "phase2-test-wa-split",
+        },
+      ]);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

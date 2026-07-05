@@ -12,6 +12,11 @@ import {
 import { normalizeWoztellInboundMessage } from "./woztell";
 
 type Env = Record<string, string | undefined>;
+type ProcessWhatsAppInboundWebhookInput = z.infer<typeof processWhatsAppInboundWebhookInputSchema>;
+type ProcessWhatsAppInboundWebhookRepository = Pick<
+  WhatsAppRepository,
+  "recordInboundMessage" | "recordWebhookEvent"
+>;
 
 const templateCategories = [
   "annual_return",
@@ -99,6 +104,69 @@ export function buildWhatsAppInboundWebhookResponse(input: {
   };
 }
 
+function buildFailedWhatsAppInboundWebhookResponse(
+  event: Pick<WhatsAppWebhookEventRecord, "id" | "processingStatus" | "errorMessage">,
+): WhatsAppInboundWebhookResponse {
+  return {
+    ok: false,
+    messageId: null,
+    eventId: event.id,
+    processingStatus: event.processingStatus,
+    errorMessage: event.errorMessage,
+    matchedCompanyId: null,
+    matchedCaseId: null,
+    timelineEventCreated: false,
+  };
+}
+
+export async function processWhatsAppInboundWebhookWithRepository(
+  repository: ProcessWhatsAppInboundWebhookRepository,
+  data: ProcessWhatsAppInboundWebhookInput,
+): Promise<WhatsAppInboundWebhookResponse> {
+  if (!data.signatureValid) {
+    const event = await repository.recordWebhookEvent({
+      providerEventId: data.providerEventId,
+      signatureValid: data.signatureValid,
+      payload: data.payload,
+      normalizedMessageId: null,
+      processingStatus: "failed",
+      errorMessage: "Webhook signature was not verified.",
+    });
+
+    return buildFailedWhatsAppInboundWebhookResponse(event);
+  }
+
+  try {
+    const normalized = normalizeWoztellInboundMessage(data.payload);
+    const message = await repository.recordInboundMessage(normalized);
+    const event = await repository.recordWebhookEvent({
+      providerEventId: data.providerEventId,
+      signatureValid: data.signatureValid,
+      payload: data.payload,
+      normalizedMessageId: message.id,
+      processingStatus: "processed",
+      errorMessage: null,
+    });
+
+    return buildWhatsAppInboundWebhookResponse({
+      signatureValid: data.signatureValid,
+      message,
+      event,
+    });
+  } catch (error) {
+    const event = await repository.recordWebhookEvent({
+      providerEventId: data.providerEventId,
+      signatureValid: data.signatureValid,
+      payload: data.payload,
+      normalizedMessageId: null,
+      processingStatus: "failed",
+      errorMessage: error instanceof Error ? error.message : "Unknown WhatsApp webhook error.",
+    });
+
+    return buildFailedWhatsAppInboundWebhookResponse(event);
+  }
+}
+
 export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () =>
   getWhatsAppIntegrationStatusForEnv(),
 );
@@ -106,46 +174,9 @@ export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).ha
 export const processWhatsAppInboundWebhook = createServerFn({ method: "POST" })
   .validator(processWhatsAppInboundWebhookInputSchema)
   .handler(async ({ data }) =>
-    withWhatsAppRepository(async (repository) => {
-      try {
-        const normalized = normalizeWoztellInboundMessage(data.payload);
-        const message = await repository.recordInboundMessage(normalized);
-        const event = await repository.recordWebhookEvent({
-          providerEventId: data.providerEventId,
-          signatureValid: data.signatureValid,
-          payload: data.payload,
-          normalizedMessageId: message.id,
-          processingStatus: data.signatureValid ? "processed" : "failed",
-          errorMessage: data.signatureValid ? null : "Webhook signature was not verified.",
-        });
-
-        return buildWhatsAppInboundWebhookResponse({
-          signatureValid: data.signatureValid,
-          message,
-          event,
-        });
-      } catch (error) {
-        const event = await repository.recordWebhookEvent({
-          providerEventId: data.providerEventId,
-          signatureValid: data.signatureValid,
-          payload: data.payload,
-          normalizedMessageId: null,
-          processingStatus: "failed",
-          errorMessage: error instanceof Error ? error.message : "Unknown WhatsApp webhook error.",
-        });
-
-        return {
-          ok: false,
-          messageId: null,
-          eventId: event.id,
-          processingStatus: event.processingStatus,
-          errorMessage: event.errorMessage,
-          matchedCompanyId: null,
-          matchedCaseId: null,
-          timelineEventCreated: false,
-        };
-      }
-    }),
+    withWhatsAppRepository((repository) =>
+      processWhatsAppInboundWebhookWithRepository(repository, data),
+    ),
   );
 
 export const queueWhatsAppTemplateMessage = createServerFn({ method: "POST" })

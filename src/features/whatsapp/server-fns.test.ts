@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildWhatsAppInboundWebhookResponse,
   getWhatsAppIntegrationStatusForEnv,
+  processWhatsAppInboundWebhookWithRepository,
   processWhatsAppInboundWebhookInputSchema,
   queueWhatsAppTemplateMessageInputSchema,
 } from "./server-fns";
@@ -86,6 +87,68 @@ describe("WhatsApp server function validation", () => {
       matchedCompanyId: "95200000-0000-0000-0000-000000000001",
       matchedCaseId: "95300000-0000-0000-0000-000000000001",
       timelineEventCreated: true,
+    });
+  });
+
+  it("does not record unverified inbound webhook payloads as WhatsApp messages", async () => {
+    const recordInboundMessage = vi.fn();
+    const recordWebhookEvent = vi.fn(async (input) => ({
+      id: "97000000-0000-0000-0000-000000000002",
+      provider: "woztell" as const,
+      providerEventId: input.providerEventId,
+      signatureValid: input.signatureValid,
+      payload: input.payload,
+      normalizedMessageId: input.normalizedMessageId,
+      processingStatus: input.processingStatus,
+      errorMessage: input.errorMessage,
+      receivedAt: "2026-07-05T12:00:00.000Z",
+      processedAt: "2026-07-05T12:00:00.000Z",
+    }));
+
+    const response = await processWhatsAppInboundWebhookWithRepository(
+      {
+        recordInboundMessage,
+        recordWebhookEvent,
+      },
+      {
+        providerEventId: "phase2-test-invalid-signature",
+        signatureValid: false,
+        payload: {
+          event: "message",
+          message: {
+            id: "phase2-test-invalid-inbound",
+            type: "text",
+            text: { body: "Unverified message" },
+          },
+        },
+      },
+    );
+
+    expect(recordInboundMessage).not.toHaveBeenCalled();
+    expect(recordWebhookEvent).toHaveBeenCalledWith({
+      providerEventId: "phase2-test-invalid-signature",
+      signatureValid: false,
+      payload: {
+        event: "message",
+        message: {
+          id: "phase2-test-invalid-inbound",
+          type: "text",
+          text: { body: "Unverified message" },
+        },
+      },
+      normalizedMessageId: null,
+      processingStatus: "failed",
+      errorMessage: "Webhook signature was not verified.",
+    });
+    expect(response).toEqual({
+      ok: false,
+      messageId: null,
+      eventId: "97000000-0000-0000-0000-000000000002",
+      processingStatus: "failed",
+      errorMessage: "Webhook signature was not verified.",
+      matchedCompanyId: null,
+      matchedCaseId: null,
+      timelineEventCreated: false,
     });
   });
 

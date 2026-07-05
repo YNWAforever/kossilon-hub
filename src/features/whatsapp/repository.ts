@@ -79,8 +79,10 @@ export type RecordWebhookEventInput = {
   errorMessage: string | null;
 };
 
+type QueryClient = SqlClient | postgres.TransactionSql;
+
 export type CreateWhatsAppRepositoryOptions = CreateSqlClientOptions & {
-  sql?: SqlClient;
+  sql?: QueryClient;
 };
 
 export type WhatsAppRepository = {
@@ -94,14 +96,26 @@ export type WhatsAppRepository = {
   close(): Promise<void>;
 };
 
-type QueryClient = SqlClient | postgres.TransactionSql;
-
 type ContactRow = {
   id: string;
   company_id: string | null;
   display_name: string | null;
   phone_e164: string | null;
   whatsapp_id: string | null;
+};
+
+export type ContactIdentityMergeInput = {
+  whatsAppId: string | null;
+  phoneE164: string | null;
+};
+
+export type ContactUpsertCandidate = ContactRow;
+
+export type ContactIdentityMergePlan = {
+  primary: ContactUpsertCandidate | null;
+  duplicateContactIds: string[];
+  duplicateCompanyId: string | null;
+  duplicateDisplayName: string | null;
 };
 
 type ContactRecord = {
@@ -182,6 +196,17 @@ function toJsonValue(value: unknown): postgres.JSONValue {
   return JSON.parse(JSON.stringify(value ?? {})) as postgres.JSONValue;
 }
 
+function withTransaction<T>(
+  client: QueryClient,
+  handler: (tx: postgres.TransactionSql) => Promise<T>,
+): Promise<T> {
+  if ("begin" in client) {
+    return client.begin(handler) as Promise<T>;
+  }
+
+  return handler(client);
+}
+
 function normalizePhone(value: string): string {
   const trimmed = value.trim();
   const prefix = trimmed.startsWith("+") ? "+" : "";
@@ -255,6 +280,30 @@ function inboundDescriptionTarget(contact: ContactRecord): string {
   return contact.displayName ?? contact.phoneE164 ?? contact.whatsAppId ?? "client";
 }
 
+export function planContactIdentityMerge(
+  input: ContactIdentityMergeInput,
+  candidates: ContactUpsertCandidate[],
+): ContactIdentityMergePlan {
+  const primary =
+    candidates.find(
+      (candidate) => Boolean(input.whatsAppId) && candidate.whatsapp_id === input.whatsAppId,
+    ) ??
+    candidates.find(
+      (candidate) => Boolean(input.phoneE164) && candidate.phone_e164 === input.phoneE164,
+    ) ??
+    candidates[0] ??
+    null;
+  const duplicates = primary ? candidates.filter((candidate) => candidate.id !== primary.id) : [];
+
+  return {
+    primary,
+    duplicateContactIds: duplicates.map((candidate) => candidate.id),
+    duplicateCompanyId: duplicates.find((candidate) => candidate.company_id)?.company_id ?? null,
+    duplicateDisplayName:
+      duplicates.find((candidate) => candidate.display_name)?.display_name ?? null,
+  };
+}
+
 function contactIdentityLockKeys(input: {
   whatsAppId: string | null;
   phoneE164: string | null;
@@ -318,17 +367,49 @@ export function createWhatsAppRepository(
           (${input.whatsAppId}::text is not null and whatsapp_id = ${input.whatsAppId})
           or (${input.phoneE164}::text is not null and phone_e164 = ${input.phoneE164})
         )
-      limit 1
+      order by
+        case
+          when ${input.whatsAppId}::text is not null
+            and whatsapp_id = ${input.whatsAppId}
+          then 0
+          when ${input.phoneE164}::text is not null
+            and phone_e164 = ${input.phoneE164}
+          then 1
+          else 2
+        end,
+        id asc
     `;
-    const [existing] = existingRows;
+    const mergePlan = planContactIdentityMerge(input, existingRows);
+    const existing = mergePlan.primary;
 
     if (existing) {
+      if (mergePlan.duplicateContactIds.length > 0) {
+        await client`
+          update whatsapp_messages
+          set contact_id = ${existing.id},
+              updated_at = now()
+          where contact_id = any(${mergePlan.duplicateContactIds}::uuid[])
+        `;
+        await client`
+          delete from whatsapp_contacts
+          where id = any(${mergePlan.duplicateContactIds}::uuid[])
+        `;
+      }
+
       const updatedRows = await client<ContactRow[]>`
         update whatsapp_contacts
         set whatsapp_id = coalesce(whatsapp_contacts.whatsapp_id, ${input.whatsAppId}),
             phone_e164 = coalesce(whatsapp_contacts.phone_e164, ${input.phoneE164}),
-            display_name = coalesce(${input.displayName}, whatsapp_contacts.display_name),
-            company_id = coalesce(${input.companyId ?? null}, whatsapp_contacts.company_id),
+            display_name = coalesce(
+              ${input.displayName},
+              whatsapp_contacts.display_name,
+              ${mergePlan.duplicateDisplayName}
+            ),
+            company_id = coalesce(
+              ${input.companyId ?? null},
+              whatsapp_contacts.company_id,
+              ${mergePlan.duplicateCompanyId}
+            ),
             last_seen_at = now(),
             updated_at = now()
         where id = ${existing.id}
@@ -467,7 +548,7 @@ export function createWhatsAppRepository(
   async function recordInboundMessage(
     input: NormalizedInboundWhatsAppMessage,
   ): Promise<InboundWhatsAppMessageRecord> {
-    return sql.begin(async (tx) => {
+    return withTransaction(sql, async (tx) => {
       const contact = await upsertContact(tx, {
         whatsAppId: input.fromWhatsAppId,
         phoneE164: input.fromPhone,
@@ -636,7 +717,7 @@ export function createWhatsAppRepository(
   async function queueOutboundTemplateMessage(
     input: QueueOutboundTemplateMessageInput,
   ): Promise<WhatsAppMessageRecord> {
-    return sql.begin(async (tx) => {
+    return withTransaction(sql, async (tx) => {
       const caseRows = await tx<AnnualReturnCaseRow[]>`
         select arc.company_id, c.company_name
         from annual_return_cases arc
@@ -799,7 +880,7 @@ export function createWhatsAppRepository(
     queueOutboundTemplateMessage,
     recordWebhookEvent,
     async close() {
-      if (ownsClient) {
+      if (ownsClient && "end" in sql) {
         await sql.end();
       }
     },

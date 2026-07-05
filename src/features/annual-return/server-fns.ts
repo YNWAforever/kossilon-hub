@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { getSqlClient } from "@/server/db/client";
 import {
   createAnnualReturnRepository,
   hongKongBusinessDate,
   type AnnualReturnRepository,
 } from "./repository";
-import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
+import { createWhatsAppRepository } from "@/features/whatsapp/repository";
 import { getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
@@ -105,18 +106,6 @@ async function withAnnualReturnRepository<T>(
   }
 }
 
-async function withWhatsAppRepository<T>(
-  handler: (repository: WhatsAppRepository) => Promise<T>,
-): Promise<T> {
-  const repository = createWhatsAppRepository();
-
-  try {
-    return await handler(repository);
-  } finally {
-    await repository.close();
-  }
-}
-
 export const listAnnualReturnCases = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
   .handler(async ({ data }) =>
@@ -178,9 +167,14 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
 
 export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
   .validator(queueAnnualReturnWhatsAppReminderSchema)
-  .handler(async ({ data }) =>
-    withAnnualReturnRepository(async (annualReturnRepository) =>
-      withWhatsAppRepository(async (whatsAppRepository) => {
+  .handler(async ({ data }) => {
+    const sql = getSqlClient();
+
+    return sql.begin(async (tx) => {
+      const annualReturnRepository = createAnnualReturnRepository({ sql: tx });
+      const whatsAppRepository = createWhatsAppRepository({ sql: tx });
+
+      try {
         const case_ = await annualReturnRepository.getCase(data.caseId);
 
         if (!case_) {
@@ -203,9 +197,12 @@ export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method:
           messageId: result.message.id,
           messageStatus: result.message.status,
         };
-      }),
-    ),
-  );
+      } finally {
+        await annualReturnRepository.close();
+        await whatsAppRepository.close();
+      }
+    });
+  });
 
 export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" })
   .validator(updateChecklistItemSchema)
