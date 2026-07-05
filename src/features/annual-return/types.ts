@@ -61,6 +61,7 @@ export type AnnualReturnPayment = {
 export type AnnualReturnCase = {
   id: string;
   companyId: string;
+  companyTeamId: string;
   companyName: string;
   returnYear: number;
   madeUpDate: string;

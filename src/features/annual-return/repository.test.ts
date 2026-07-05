@@ -11,6 +11,7 @@ const USER_AMY_ID = "20000000-0000-0000-0000-000000000001";
 const USER_KEN_ID = "20000000-0000-0000-0000-000000000002";
 const USER_MEI_ID = "20000000-0000-0000-0000-000000000003";
 const USER_PRIYA_ID = "20000000-0000-0000-0000-000000000004";
+const USER_SAM_ID = "20000000-0000-0000-0000-000000000005";
 const TEAM_ANNUAL_RETURN_ID = "10000000-0000-0000-0000-000000000001";
 const TEAM_EVIDENCE_ID = "10000000-0000-0000-0000-000000000002";
 const TEST_COMPANY_UUID_PREFIX = "90000000";
@@ -18,7 +19,9 @@ const TEST_CASE_UUID_PREFIX = "91000000";
 const TEST_DOCUMENT_UUID_PREFIX = "92000000";
 const TEST_CHECKLIST_UUID_PREFIX = "93000000";
 const TEST_PAYMENT_UUID_PREFIX = "94000000";
-const TEST_FIXTURE_SEQUENCES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
+const TEST_FIXTURE_SEQUENCES = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+] as const;
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 
 type ClosableRepository = ReturnType<typeof createAnnualReturnRepository>;
@@ -36,6 +39,9 @@ type MutableAnnualReturnFixtureOptions = {
   paymentStatus?: PaymentStatus;
   paymentProof?: boolean;
   filingProof?: boolean;
+  ownerId?: string;
+  reviewerId?: string;
+  teamId?: string;
 };
 
 type MutableAnnualReturnFixture = {
@@ -114,6 +120,7 @@ async function cleanupAnnualReturnTestFixtures() {
         or case_id = any(${caseIds}::uuid[])
     `;
     await tx`delete from reminder_logs where case_id = any(${caseIds}::uuid[])`;
+    await tx`delete from annual_return_audit_events where case_id = any(${caseIds}::uuid[])`;
     await tx`delete from timeline_events where case_id = any(${caseIds}::uuid[])`;
     await tx`
       delete from payments
@@ -137,7 +144,38 @@ async function cleanupAnnualReturnTestFixtures() {
         or company_id = any(${companyIds}::uuid[])
     `;
     await tx`delete from companies where id = any(${companyIds}::uuid[])`;
+    await tx`delete from users where id = ${USER_SAM_ID}`;
   });
+}
+
+async function ensurePolicyTestUsers() {
+  const sql = sqlForTests();
+
+  await sql`
+    insert into users (
+      id,
+      name,
+      email,
+      role,
+      team_id,
+      active
+    )
+    values (
+      ${USER_SAM_ID},
+      'Sam Tse',
+      'sam.tse.policy-test@kossilon.hk',
+      'Staff',
+      ${TEAM_EVIDENCE_ID},
+      true
+    )
+    on conflict (id) do update
+    set name = excluded.name,
+        email = excluded.email,
+        role = excluded.role,
+        team_id = excluded.team_id,
+        active = excluded.active,
+        updated_at = now()
+  `;
 }
 
 async function createMutableAnnualReturnFixture({
@@ -150,6 +188,9 @@ async function createMutableAnnualReturnFixture({
   paymentStatus = "Payment pending",
   paymentProof = false,
   filingProof = false,
+  ownerId = USER_AMY_ID,
+  reviewerId = USER_KEN_ID,
+  teamId = TEAM_ANNUAL_RETURN_ID,
 }: MutableAnnualReturnFixtureOptions): Promise<MutableAnnualReturnFixture> {
   const sql = sqlForTests();
   const companyId = testUuid(TEST_COMPANY_UUID_PREFIX, sequence);
@@ -192,8 +233,8 @@ async function createMutableAnnualReturnFixture({
         'Unit 5, Test Tower, Hong Kong',
         'Kossilon Corporate Services Limited',
         'active',
-        ${USER_AMY_ID},
-        ${TEAM_ANNUAL_RETURN_ID}
+        ${ownerId},
+        ${teamId}
       )
     `;
 
@@ -221,8 +262,8 @@ async function createMutableAnnualReturnFixture({
         '2026-08-12',
         ${currentStatus},
         'green',
-        ${USER_AMY_ID},
-        ${USER_KEN_ID},
+        ${ownerId},
+        ${reviewerId},
         ${remindersSent},
         ${filingReference},
         ${lockedAt},
@@ -649,6 +690,61 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   );
 
   it(
+    "writes structured audit events for successful mutations",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 20,
+        currentStatus: "Payment pending",
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await repository.updatePayment({
+        caseId: fixture.caseId,
+        status: "Payment received",
+        paymentProofDocumentId: fixture.paymentProofDocumentId,
+        actorId: USER_AMY_ID,
+      });
+
+      const auditEvents = await sqlForTests()<
+        {
+          case_id: string;
+          company_id: string;
+          actor_id: string | null;
+          actor_role: string;
+          action: string;
+          result: string;
+          summary: string;
+          metadata: Record<string, unknown>;
+        }[]
+      >`
+        select case_id, company_id, actor_id, actor_role, action, result, summary, metadata
+        from annual_return_audit_events
+        where case_id = ${fixture.caseId}
+        order by created_at asc
+      `;
+
+      expect(auditEvents).toEqual([
+        {
+          case_id: fixture.caseId,
+          company_id: fixture.companyId,
+          actor_id: USER_AMY_ID,
+          actor_role: "Admin",
+          action: "update_payment",
+          result: "succeeded",
+          summary: "Payment status changed to Payment received.",
+          metadata: {
+            invoiceNumber: "KOS-T5-0020",
+            paymentId: fixture.paymentId,
+            paymentProofDocumentId: fixture.paymentProofDocumentId,
+            status: "Payment received",
+          },
+        },
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "blocks incomplete completion and locks fully evidenced completed cases",
     async () => {
       const incompleteFixture = await createMutableAnnualReturnFixture({
@@ -1069,6 +1165,129 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         lockedAt: null,
         completedAt: null,
       });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects operational annual return mutations from staff who are not assigned to the case",
+    async () => {
+      await ensurePolicyTestUsers();
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 16,
+        currentStatus: "Documents pending",
+        ownerId: USER_MEI_ID,
+        reviewerId: USER_KEN_ID,
+        teamId: TEAM_ANNUAL_RETURN_ID,
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await expect(
+        repository.updateChecklistItem({
+          caseId: fixture.caseId,
+          itemId: fixture.checklistItemId,
+          status: "Received",
+          documentId: fixture.evidenceDocumentId,
+          actorId: USER_SAM_ID,
+        }),
+      ).rejects.toThrow(/assigned staff|reviewers|team managers|admins/i);
+
+      const timelineEvents = await sqlForTests()<{ event_type: string }[]>`
+        select event_type
+        from timeline_events
+        where case_id = ${fixture.caseId}
+      `;
+      expect(timelineEvents).toEqual([]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects operational annual return mutations from managers outside the assigned team",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 17,
+        currentStatus: "Payment pending",
+        ownerId: USER_MEI_ID,
+        reviewerId: USER_KEN_ID,
+        teamId: TEAM_ANNUAL_RETURN_ID,
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await expect(
+        repository.updatePayment({
+          caseId: fixture.caseId,
+          status: "Payment received",
+          paymentProofDocumentId: fixture.paymentProofDocumentId,
+          actorId: USER_PRIYA_ID,
+        }),
+      ).rejects.toThrow(/assigned staff|reviewers|team managers|admins/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        payment: expect.objectContaining({
+          status: "Payment pending",
+          paymentProofDocumentId: null,
+        }),
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects completion by an owner staff member who is not the reviewer",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 18,
+        currentStatus: "Filed",
+        checklistStatus: "Verified",
+        checklistDocument: true,
+        paymentStatus: "Payment received",
+        paymentProof: true,
+        filingProof: true,
+        ownerId: USER_MEI_ID,
+        reviewerId: USER_KEN_ID,
+        teamId: TEAM_ANNUAL_RETURN_ID,
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await expect(
+        repository.updateStatus(fixture.caseId, "Completed", USER_MEI_ID),
+      ).rejects.toThrow(/admins|team managers|assigned reviewers/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        currentStatus: "Filed",
+        lockedAt: null,
+        completedAt: null,
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "allows an assigned staff reviewer to complete a ready case",
+    async () => {
+      await ensurePolicyTestUsers();
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 19,
+        currentStatus: "Filed",
+        checklistStatus: "Verified",
+        checklistDocument: true,
+        paymentStatus: "Payment received",
+        paymentProof: true,
+        filingProof: true,
+        ownerId: USER_MEI_ID,
+        reviewerId: USER_SAM_ID,
+        teamId: TEAM_ANNUAL_RETURN_ID,
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      const completed = await repository.updateStatus(fixture.caseId, "Completed", USER_SAM_ID);
+
+      expect(completed).toMatchObject({
+        currentStatus: "Completed",
+      });
+      expect(completed.lockedAt).toEqual(expect.any(String));
+      expect(completed.completedAt).toEqual(expect.any(String));
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

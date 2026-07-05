@@ -15,6 +15,7 @@ import type { AnnualReturnCase } from "./types";
 const baseCase: AnnualReturnCase = {
   id: "case-1",
   companyId: "company-1",
+  companyTeamId: "team-1",
   companyName: "Harbour Trading Ltd",
   returnYear: 2026,
   madeUpDate: "2026-07-01",
