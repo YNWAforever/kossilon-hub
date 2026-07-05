@@ -509,6 +509,9 @@ export function createWhatsAppRepository(
           ${tx.json(toJsonValue(input.rawPayload))},
           ${input.receivedAt}
         )
+        on conflict (provider, provider_message_id)
+        where provider_message_id is not null
+        do nothing
         returning
           id,
           provider,
@@ -528,7 +531,41 @@ export function createWhatsAppRepository(
           sent_at::text as sent_at,
           created_at::text as created_at
       `;
-      const message = mapMessage(rows[0]);
+      const [inserted] = rows;
+
+      if (!inserted) {
+        const conflictRows = await tx<MessageRow[]>`
+          select
+            id,
+            provider,
+            provider_message_id,
+            direction,
+            status,
+            contact_id,
+            company_id,
+            case_id,
+            template_id,
+            phone_e164,
+            whatsapp_id,
+            body,
+            payload,
+            sent_by,
+            received_at::text as received_at,
+            sent_at::text as sent_at,
+            created_at::text as created_at
+          from whatsapp_messages
+          where provider = 'woztell'
+            and provider_message_id = ${input.providerMessageId}
+          limit 1
+        `;
+
+        return {
+          ...mapMessage(conflictRows[0]),
+          timelineEventCreated: false,
+        };
+      }
+
+      const message = mapMessage(inserted);
       const timelineEventCreated = Boolean(match.companyId && match.caseId);
 
       if (timelineEventCreated) {
