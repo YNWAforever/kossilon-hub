@@ -114,10 +114,13 @@ function timestampString(value: string | Date | null): string | null {
   return value;
 }
 
-function hasMissingRequiredDocument(item: AnnualReturnChecklistItem): boolean {
+function hasOutstandingRequiredEvidence(item: AnnualReturnChecklistItem): boolean {
   return (
     item.required &&
-    (item.status === "Missing" || item.status === "Rejected" || item.documentId === null)
+    (item.status !== "Verified" ||
+      item.receivedAt === null ||
+      item.verifiedAt === null ||
+      item.documentId === null)
   );
 }
 
@@ -201,9 +204,9 @@ function caseMatchesHydratedFilters(
   }
 
   if (typeof filters.missingDocuments === "boolean") {
-    const hasMissingDocuments = case_.checklist.some(hasMissingRequiredDocument);
+    const hasOutstandingEvidence = case_.checklist.some(hasOutstandingRequiredEvidence);
 
-    if (hasMissingDocuments !== filters.missingDocuments) {
+    if (hasOutstandingEvidence !== filters.missingDocuments) {
       return false;
     }
   }
@@ -215,8 +218,8 @@ function caseMatchesHydratedFilters(
   return true;
 }
 
-function countMissingRequiredDocuments(case_: AnnualReturnCase): number {
-  return case_.checklist.filter(hasMissingRequiredDocument).length;
+function countOutstandingRequiredEvidence(case_: AnnualReturnCase): number {
+  return case_.checklist.filter(hasOutstandingRequiredEvidence).length;
 }
 
 export function createAnnualReturnRepository(
@@ -414,7 +417,7 @@ export function createAnnualReturnRepository(
       overdue: activeCases.filter((case_) => daysBetween(today, case_.filingDueDate) < 0).length,
       highRisk: activeCases.filter((case_) => case_.riskLevel === "red").length,
       missingDocuments: activeCases.reduce(
-        (count, case_) => count + countMissingRequiredDocuments(case_),
+        (count, case_) => count + countOutstandingRequiredEvidence(case_),
         0,
       ),
       paymentPending: activeCases.filter((case_) => case_.payment?.status !== "Payment received")

@@ -127,7 +127,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       dueIn30: 1,
       overdue: 0,
       highRisk: 0,
-      missingDocuments: 3,
+      missingDocuments: 4,
       paymentPending: 2,
       assignedToMe: 1,
     });
