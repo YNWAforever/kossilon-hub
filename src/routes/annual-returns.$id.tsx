@@ -490,6 +490,12 @@ function PaymentPanel({
     );
   }
 
+  const hasPaymentProof = Boolean(payment.paymentProofDocumentId);
+  const needsReceivedPaymentProof = payment.status === "Payment received" && !hasPaymentProof;
+  const paymentReceivedDisabled =
+    disabled || (payment.status === "Payment received" && hasPaymentProof);
+  const paymentReceivedLabel = needsReceivedPaymentProof ? "Attach proof" : "Mark received";
+
   return (
     <Panel title="Payment" icon={<Receipt className="h-4 w-4" />}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -526,11 +532,11 @@ function PaymentPanel({
         <Button
           type="button"
           size="sm"
-          disabled={disabled || payment.status === "Payment received"}
+          disabled={paymentReceivedDisabled}
           onClick={() => onChange("Payment received")}
         >
           <Check className="h-4 w-4" />
-          {pending === "payment-received" ? "Saving" : "Mark received"}
+          {pending === "payment-received" ? "Saving" : paymentReceivedLabel}
         </Button>
       </div>
       <div className="mt-3">
@@ -610,13 +616,13 @@ function RiskPill({ risk }: { risk: RiskLevel }) {
 
 async function copyDraftToClipboard(draftBody: string) {
   if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-    return;
+    throw new Error("Clipboard is unavailable. Reminder was not recorded.");
   }
 
   try {
     await navigator.clipboard.writeText(draftBody);
   } catch {
-    // Recording the reminder should not depend on browser clipboard permissions.
+    throw new Error("Unable to copy reminder draft. Reminder was not recorded.");
   }
 }
 
