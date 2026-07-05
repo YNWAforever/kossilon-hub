@@ -2,6 +2,7 @@ import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { createAnnualReturnRepository, hongKongBusinessDate } from "./repository";
+import { assertAnnualReturnStatusActionAllowed } from "./server-fns";
 import type { AnnualReturnStatus, ChecklistStatus, PaymentStatus } from "./types";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
@@ -17,7 +18,8 @@ const TEST_CASE_UUID_PREFIX = "91000000";
 const TEST_DOCUMENT_UUID_PREFIX = "92000000";
 const TEST_CHECKLIST_UUID_PREFIX = "93000000";
 const TEST_PAYMENT_UUID_PREFIX = "94000000";
-const TEST_FIXTURE_SEQUENCES = [1, 2, 3, 4, 5, 6] as const;
+const TEST_FIXTURE_SEQUENCES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 
 type ClosableRepository = ReturnType<typeof createAnnualReturnRepository>;
 
@@ -494,281 +496,521 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     ]);
   });
 
-  it("returns dashboard metrics for active operational work", async () => {
-    const repository = repositoryFor("2026-07-05");
+  it(
+    "returns dashboard metrics for active operational work",
+    async () => {
+      const repository = repositoryFor("2026-07-05");
 
-    await expect(repository.dashboardMetrics("2026-07-05", USER_AMY_ID)).resolves.toEqual({
-      dueIn7: 0,
-      dueIn30: 1,
-      overdue: 0,
-      highRisk: 0,
-      missingDocuments: 4,
-      paymentPending: 2,
-      assignedToMe: 1,
-    });
+      await expect(repository.dashboardMetrics("2026-07-05", USER_AMY_ID)).resolves.toEqual({
+        dueIn7: 0,
+        dueIn30: 1,
+        overdue: 0,
+        highRisk: 0,
+        missingDocuments: 4,
+        paymentPending: 2,
+        assignedToMe: 1,
+      });
 
-    await expect(repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID)).resolves.toMatchObject({
-      assignedToMe: 1,
-    });
-  });
+      await expect(repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID)).resolves.toMatchObject(
+        {
+          assignedToMe: 1,
+        },
+      );
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("records reminders, increments the case counter, moves upcoming cases, and writes timeline", async () => {
-    const fixture = await createMutableAnnualReturnFixture({ sequence: 1 });
-    const repository = repositoryFor("2026-07-05");
+  it(
+    "records reminders, increments the case counter, moves upcoming cases, and writes timeline",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 1 });
+      const repository = repositoryFor("2026-07-05");
 
-    const updated = await repository.recordReminder({
-      caseId: fixture.caseId,
-      actorId: USER_AMY_ID,
-      templateLabel: "First statutory reminder",
-      recipientName: "Chris Client",
-      recipientPhone: "+85255550123",
-      draftBody: "Please send the signed NAR1 form.",
-      note: "Called before sending WhatsApp copy.",
-    });
+      const updated = await repository.recordReminder({
+        caseId: fixture.caseId,
+        actorId: USER_AMY_ID,
+        templateLabel: "First statutory reminder",
+        recipientName: "Chris Client",
+        recipientPhone: "+85255550123",
+        draftBody: "Please send the signed NAR1 form.",
+        note: "Called before sending WhatsApp copy.",
+      });
 
-    expect(updated).toMatchObject({
-      id: fixture.caseId,
-      currentStatus: "Client reminder sent",
-      remindersSent: 1,
-    });
+      expect(updated).toMatchObject({
+        id: fixture.caseId,
+        currentStatus: "Client reminder sent",
+        remindersSent: 1,
+      });
 
-    const sql = sqlForTests();
-    const reminderLogs = await sql<
-      {
-        template_label: string;
-        recipient_name: string;
-        recipient_phone: string;
-        draft_body: string;
-        note: string | null;
-      }[]
-    >`
+      const sql = sqlForTests();
+      const reminderLogs = await sql<
+        {
+          template_label: string;
+          recipient_name: string;
+          recipient_phone: string;
+          draft_body: string;
+          note: string | null;
+        }[]
+      >`
       select template_label, recipient_name, recipient_phone, draft_body, note
       from reminder_logs
       where case_id = ${fixture.caseId}
     `;
-    expect(reminderLogs).toEqual([
-      {
-        template_label: "First statutory reminder",
-        recipient_name: "Chris Client",
-        recipient_phone: "+85255550123",
-        draft_body: "Please send the signed NAR1 form.",
-        note: "Called before sending WhatsApp copy.",
-      },
-    ]);
+      expect(reminderLogs).toEqual([
+        {
+          template_label: "First statutory reminder",
+          recipient_name: "Chris Client",
+          recipient_phone: "+85255550123",
+          draft_body: "Please send the signed NAR1 form.",
+          note: "Called before sending WhatsApp copy.",
+        },
+      ]);
 
-    const timelineEvents = await sql<{ event_type: string; actor_id: string | null }[]>`
+      const timelineEvents = await sql<{ event_type: string; actor_id: string | null }[]>`
       select event_type, actor_id
       from timeline_events
       where case_id = ${fixture.caseId}
     `;
-    expect(timelineEvents).toContainEqual({
-      event_type: "client_reminder_logged",
-      actor_id: USER_AMY_ID,
-    });
-  });
+      expect(timelineEvents).toContainEqual({
+        event_type: "client_reminder_logged",
+        actor_id: USER_AMY_ID,
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("updates checklist, payment, and filing proof data and records timeline events", async () => {
-    const fixture = await createMutableAnnualReturnFixture({
-      sequence: 2,
-      currentStatus: "Documents pending",
-    });
-    const repository = repositoryFor("2026-07-05");
+  it(
+    "updates checklist, payment, and filing proof data and records timeline events",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 2,
+        currentStatus: "Documents pending",
+      });
+      const repository = repositoryFor("2026-07-05");
 
-    const afterChecklist = await repository.updateChecklistItem({
-      caseId: fixture.caseId,
-      itemId: fixture.checklistItemId,
-      status: "Verified",
-      documentId: fixture.evidenceDocumentId,
-      actorId: USER_AMY_ID,
-    });
-    const checklistItem = afterChecklist.checklist.find(
-      (item) => item.id === fixture.checklistItemId,
-    );
-    expect(checklistItem).toMatchObject({
-      status: "Verified",
-      documentId: fixture.evidenceDocumentId,
-    });
-    expect(checklistItem?.receivedAt).toEqual(expect.any(String));
-    expect(checklistItem?.verifiedAt).toEqual(expect.any(String));
+      const afterChecklist = await repository.updateChecklistItem({
+        caseId: fixture.caseId,
+        itemId: fixture.checklistItemId,
+        status: "Verified",
+        documentId: fixture.evidenceDocumentId,
+        actorId: USER_AMY_ID,
+      });
+      const checklistItem = afterChecklist.checklist.find(
+        (item) => item.id === fixture.checklistItemId,
+      );
+      expect(checklistItem).toMatchObject({
+        status: "Verified",
+        documentId: fixture.evidenceDocumentId,
+      });
+      expect(checklistItem?.receivedAt).toEqual(expect.any(String));
+      expect(checklistItem?.verifiedAt).toEqual(expect.any(String));
 
-    const afterPayment = await repository.updatePayment({
-      caseId: fixture.caseId,
-      status: "Payment received",
-      paymentProofDocumentId: fixture.paymentProofDocumentId,
-      actorId: USER_AMY_ID,
-    });
-    expect(afterPayment.payment).toMatchObject({
-      id: fixture.paymentId,
-      status: "Payment received",
-      paymentProofDocumentId: fixture.paymentProofDocumentId,
-    });
-    expect(afterPayment.payment?.paidAt).toEqual(expect.any(String));
+      const afterPayment = await repository.updatePayment({
+        caseId: fixture.caseId,
+        status: "Payment received",
+        paymentProofDocumentId: fixture.paymentProofDocumentId,
+        actorId: USER_AMY_ID,
+      });
+      expect(afterPayment.payment).toMatchObject({
+        id: fixture.paymentId,
+        status: "Payment received",
+        paymentProofDocumentId: fixture.paymentProofDocumentId,
+      });
+      expect(afterPayment.payment?.paidAt).toEqual(expect.any(String));
 
-    const afterFiling = await repository.updateFilingProof({
-      caseId: fixture.caseId,
-      filingReference: "CR-NAR1-TEST-2",
-      confirmationDocumentId: fixture.confirmationDocumentId,
-      actorId: USER_AMY_ID,
-    });
-    expect(afterFiling).toMatchObject({
-      filingReference: "CR-NAR1-TEST-2",
-      confirmationDocumentId: fixture.confirmationDocumentId,
-    });
+      const afterFiling = await repository.updateFilingProof({
+        caseId: fixture.caseId,
+        filingReference: "CR-NAR1-TEST-2",
+        confirmationDocumentId: fixture.confirmationDocumentId,
+        actorId: USER_AMY_ID,
+      });
+      expect(afterFiling).toMatchObject({
+        filingReference: "CR-NAR1-TEST-2",
+        confirmationDocumentId: fixture.confirmationDocumentId,
+      });
 
-    const timelineEvents = await sqlForTests()<
-      {
-        event_type: string;
-      }[]
-    >`
+      const timelineEvents = await sqlForTests()<
+        {
+          event_type: string;
+        }[]
+      >`
       select event_type
       from timeline_events
       where case_id = ${fixture.caseId}
       order by created_at asc
     `;
-    expect(timelineEvents.map((event) => event.event_type)).toEqual([
-      "checklist_item_updated",
-      "payment_updated",
-      "filing_proof_updated",
-    ]);
-  });
+      expect(timelineEvents.map((event) => event.event_type)).toEqual([
+        "checklist_item_updated",
+        "payment_updated",
+        "filing_proof_updated",
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("blocks incomplete completion and locks fully evidenced completed cases", async () => {
-    const incompleteFixture = await createMutableAnnualReturnFixture({
-      sequence: 3,
-      currentStatus: "Filed",
-    });
-    const readyFixture = await createMutableAnnualReturnFixture({
-      sequence: 4,
-      currentStatus: "Filed",
-      checklistStatus: "Verified",
-      checklistDocument: true,
-      paymentStatus: "Payment received",
-      paymentProof: true,
-      filingProof: true,
-    });
-    const repository = repositoryFor("2026-07-05");
+  it(
+    "blocks incomplete completion and locks fully evidenced completed cases",
+    async () => {
+      const incompleteFixture = await createMutableAnnualReturnFixture({
+        sequence: 3,
+        currentStatus: "Filed",
+      });
+      const readyFixture = await createMutableAnnualReturnFixture({
+        sequence: 4,
+        currentStatus: "Filed",
+        checklistStatus: "Verified",
+        checklistDocument: true,
+        paymentStatus: "Payment received",
+        paymentProof: true,
+        filingProof: true,
+      });
+      const repository = repositoryFor("2026-07-05");
 
-    await expect(
-      repository.updateStatus(incompleteFixture.caseId, "Completed", USER_AMY_ID),
-    ).rejects.toThrow(/Cannot complete annual return case/i);
+      await expect(
+        repository.updateStatus(incompleteFixture.caseId, "Completed", USER_AMY_ID),
+      ).rejects.toThrow(/Cannot complete annual return case/i);
 
-    await expect(repository.getCase(incompleteFixture.caseId)).resolves.toMatchObject({
-      currentStatus: "Filed",
-      lockedAt: null,
-      completedAt: null,
-    });
+      await expect(repository.getCase(incompleteFixture.caseId)).resolves.toMatchObject({
+        currentStatus: "Filed",
+        lockedAt: null,
+        completedAt: null,
+      });
 
-    const completed = await repository.updateStatus(readyFixture.caseId, "Completed", USER_AMY_ID);
+      const completed = await repository.updateStatus(
+        readyFixture.caseId,
+        "Completed",
+        USER_AMY_ID,
+      );
 
-    expect(completed).toMatchObject({
-      currentStatus: "Completed",
-    });
-    expect(completed.lockedAt).toEqual(expect.any(String));
-    expect(completed.completedAt).toEqual(expect.any(String));
+      expect(completed).toMatchObject({
+        currentStatus: "Completed",
+      });
+      expect(completed.lockedAt).toEqual(expect.any(String));
+      expect(completed.completedAt).toEqual(expect.any(String));
 
-    const timelineEvents = await sqlForTests()<
-      {
-        event_type: string;
-      }[]
-    >`
+      const timelineEvents = await sqlForTests()<
+        {
+          event_type: string;
+        }[]
+      >`
       select event_type
       from timeline_events
       where case_id = ${readyFixture.caseId}
     `;
-    expect(timelineEvents).toContainEqual({ event_type: "status_changed" });
-  });
+      expect(timelineEvents).toContainEqual({ event_type: "status_changed" });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("rejects case mutations after a case is locked", async () => {
-    const fixture = await createMutableAnnualReturnFixture({
-      sequence: 5,
-      currentStatus: "Completed",
-      locked: true,
-      checklistStatus: "Verified",
-      checklistDocument: true,
-      paymentStatus: "Payment received",
-      paymentProof: true,
-      filingProof: true,
-    });
-    const repository = repositoryFor("2026-07-05");
+  it(
+    "rejects case mutations after a case is locked",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 5,
+        currentStatus: "Completed",
+        locked: true,
+        checklistStatus: "Verified",
+        checklistDocument: true,
+        paymentStatus: "Payment received",
+        paymentProof: true,
+        filingProof: true,
+      });
+      const repository = repositoryFor("2026-07-05");
 
-    await expect(repository.updateStatus(fixture.caseId, "Filed", USER_AMY_ID)).rejects.toThrow(
-      /locked|completed/i,
-    );
-    await expect(
-      repository.recordReminder({
-        caseId: fixture.caseId,
-        actorId: USER_AMY_ID,
-        templateLabel: "Locked reminder",
-        recipientName: "Chris Client",
-        recipientPhone: "+85255550123",
-        draftBody: "Please ignore.",
-        note: "",
-      }),
-    ).rejects.toThrow(/locked|completed/i);
-    await expect(
-      repository.updateChecklistItem({
-        caseId: fixture.caseId,
-        itemId: fixture.checklistItemId,
-        status: "Received",
-        documentId: fixture.evidenceDocumentId,
-        actorId: USER_AMY_ID,
-      }),
-    ).rejects.toThrow(/locked|completed/i);
-    await expect(
-      repository.updatePayment({
-        caseId: fixture.caseId,
-        status: "Payment pending",
-        paymentProofDocumentId: null,
-        actorId: USER_AMY_ID,
-      }),
-    ).rejects.toThrow(/locked|completed/i);
-    await expect(
-      repository.updateFilingProof({
-        caseId: fixture.caseId,
-        filingReference: "CR-NAR1-LOCKED",
-        confirmationDocumentId: fixture.confirmationDocumentId,
-        actorId: USER_AMY_ID,
-      }),
-    ).rejects.toThrow(/locked|completed/i);
-  });
+      await expect(repository.updateStatus(fixture.caseId, "Filed", USER_AMY_ID)).rejects.toThrow(
+        /locked|completed/i,
+      );
+      await expect(
+        repository.recordReminder({
+          caseId: fixture.caseId,
+          actorId: USER_AMY_ID,
+          templateLabel: "Locked reminder",
+          recipientName: "Chris Client",
+          recipientPhone: "+85255550123",
+          draftBody: "Please ignore.",
+          note: "",
+        }),
+      ).rejects.toThrow(/locked|completed/i);
+      await expect(
+        repository.updateChecklistItem({
+          caseId: fixture.caseId,
+          itemId: fixture.checklistItemId,
+          status: "Received",
+          documentId: fixture.evidenceDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/locked|completed/i);
+      await expect(
+        repository.updatePayment({
+          caseId: fixture.caseId,
+          status: "Payment pending",
+          paymentProofDocumentId: null,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/locked|completed/i);
+      await expect(
+        repository.updateFilingProof({
+          caseId: fixture.caseId,
+          filingReference: "CR-NAR1-LOCKED",
+          confirmationDocumentId: fixture.confirmationDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/locked|completed/i);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("rejects missing checklist items and missing payments without writing timeline events", async () => {
-    const fixture = await createMutableAnnualReturnFixture({
-      sequence: 6,
-      currentStatus: "Documents pending",
-    });
-    const repository = repositoryFor("2026-07-05");
+  it(
+    "rejects missing checklist items and missing payments without writing timeline events",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 6,
+        currentStatus: "Documents pending",
+      });
+      const repository = repositoryFor("2026-07-05");
 
-    await expect(
-      repository.updateChecklistItem({
-        caseId: fixture.caseId,
-        itemId: "93000000-0000-0000-0000-000000999999",
-        status: "Received",
-        documentId: fixture.evidenceDocumentId,
-        actorId: USER_AMY_ID,
-      }),
-    ).rejects.toThrow(/Checklist item not found/i);
+      await expect(
+        repository.updateChecklistItem({
+          caseId: fixture.caseId,
+          itemId: "93000000-0000-0000-0000-000000999999",
+          status: "Received",
+          documentId: fixture.evidenceDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/Checklist item not found/i);
 
-    await sqlForTests()`delete from payments where case_id = ${fixture.caseId}`;
+      await sqlForTests()`delete from payments where case_id = ${fixture.caseId}`;
 
-    await expect(
-      repository.updatePayment({
-        caseId: fixture.caseId,
-        status: "Payment received",
-        paymentProofDocumentId: fixture.paymentProofDocumentId,
-        actorId: USER_AMY_ID,
-      }),
-    ).rejects.toThrow(/payment not found/i);
+      await expect(
+        repository.updatePayment({
+          caseId: fixture.caseId,
+          status: "Payment received",
+          paymentProofDocumentId: fixture.paymentProofDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/payment not found/i);
 
-    const timelineEvents = await sqlForTests()<
-      {
-        event_type: string;
-      }[]
-    >`
+      const timelineEvents = await sqlForTests()<
+        {
+          event_type: string;
+        }[]
+      >`
       select event_type
       from timeline_events
       where case_id = ${fixture.caseId}
     `;
-    expect(timelineEvents).toEqual([]);
-  });
+      expect(timelineEvents).toEqual([]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects verified checklist updates without a same-case verified annual return evidence document",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 7,
+        currentStatus: "Documents pending",
+      });
+      const foreignFixture = await createMutableAnnualReturnFixture({
+        sequence: 8,
+        currentStatus: "Documents pending",
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await expect(
+        repository.updateChecklistItem({
+          caseId: fixture.caseId,
+          itemId: fixture.checklistItemId,
+          status: "Verified",
+          documentId: null,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/document/i);
+
+      await sqlForTests()`
+      update documents
+      set verification_status = 'pending',
+          verified_by = null,
+          verified_at = null
+      where id = ${fixture.evidenceDocumentId}
+    `;
+
+      await expect(
+        repository.updateChecklistItem({
+          caseId: fixture.caseId,
+          itemId: fixture.checklistItemId,
+          status: "Verified",
+          documentId: fixture.evidenceDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/verified annual return evidence/i);
+
+      await expect(
+        repository.updateChecklistItem({
+          caseId: fixture.caseId,
+          itemId: fixture.checklistItemId,
+          status: "Verified",
+          documentId: foreignFixture.evidenceDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/verified annual return evidence/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        checklist: [
+          expect.objectContaining({
+            id: fixture.checklistItemId,
+            status: "Missing",
+            documentId: null,
+          }),
+        ],
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects payment received updates without a same-case verified payment proof document",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 9,
+        currentStatus: "Payment pending",
+      });
+      const foreignFixture = await createMutableAnnualReturnFixture({
+        sequence: 10,
+        currentStatus: "Payment pending",
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await expect(
+        repository.updatePayment({
+          caseId: fixture.caseId,
+          status: "Payment received",
+          paymentProofDocumentId: null,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/payment proof/i);
+
+      await expect(
+        repository.updatePayment({
+          caseId: fixture.caseId,
+          status: "Payment received",
+          paymentProofDocumentId: fixture.evidenceDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/verified payment proof/i);
+
+      await expect(
+        repository.updatePayment({
+          caseId: fixture.caseId,
+          status: "Payment received",
+          paymentProofDocumentId: foreignFixture.paymentProofDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/verified payment proof/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        payment: expect.objectContaining({
+          status: "Payment pending",
+          paidAt: null,
+          paymentProofDocumentId: null,
+        }),
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects filing proof updates without a same-case verified filing confirmation document",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 11,
+        currentStatus: "Filed",
+      });
+      const foreignFixture = await createMutableAnnualReturnFixture({
+        sequence: 12,
+        currentStatus: "Filed",
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await expect(
+        repository.updateFilingProof({
+          caseId: fixture.caseId,
+          filingReference: "CR-NAR1-TEST-11",
+          confirmationDocumentId: fixture.paymentProofDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/verified filing confirmation/i);
+
+      await expect(
+        repository.updateFilingProof({
+          caseId: fixture.caseId,
+          filingReference: "CR-NAR1-TEST-11",
+          confirmationDocumentId: foreignFixture.confirmationDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/verified filing confirmation/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        filingReference: null,
+        confirmationDocumentId: null,
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rechecks current evidence, payment, and filing proof validity before completion",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 11,
+        currentStatus: "Filed",
+        checklistStatus: "Verified",
+        checklistDocument: true,
+        paymentStatus: "Payment received",
+        paymentProof: true,
+        filingProof: true,
+      });
+      const repository = repositoryFor("2026-07-05");
+
+      await sqlForTests()`
+      update documents
+      set verification_status = 'pending',
+          verified_by = null,
+          verified_at = null
+      where id = ${fixture.paymentProofDocumentId}
+    `;
+
+      await expect(
+        repository.updateStatus(fixture.caseId, "Completed", USER_AMY_ID),
+      ).rejects.toThrow(/payment proof/i);
+
+      await expect(repository.getCase(fixture.caseId)).resolves.toMatchObject({
+        currentStatus: "Filed",
+        lockedAt: null,
+        completedAt: null,
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "allows the status server action rules to complete a ready case from a non-adjacent status",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 12,
+        currentStatus: "Documents pending",
+        checklistStatus: "Verified",
+        checklistDocument: true,
+        paymentStatus: "Payment received",
+        paymentProof: true,
+        filingProof: true,
+      });
+      const repository = repositoryFor("2026-07-05");
+      const current = await repository.getCase(fixture.caseId);
+
+      expect(current).not.toBeNull();
+      expect(() => assertAnnualReturnStatusActionAllowed(current!, "Completed")).not.toThrow();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });

@@ -6,7 +6,7 @@ import {
   type AnnualReturnRepository,
 } from "./repository";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
-import { ANNUAL_RETURN_STATUSES } from "./types";
+import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 
 const CURRENT_USER_ID = "20000000-0000-0000-0000-000000000001";
 
@@ -36,6 +36,56 @@ const listAnnualReturnCasesSchema = z
 const annualReturnCaseIdSchema = z.object({
   caseId: z.string().uuid(),
 });
+const updateChecklistItemSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    itemId: z.string().uuid(),
+    status: z.enum(CHECKLIST_STATUSES),
+    documentId: z.string().uuid().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === "Verified" && !data.documentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["documentId"],
+        message: "documentId is required when verifying a checklist item.",
+      });
+    }
+  });
+const updatePaymentSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    status: z.enum(PAYMENT_STATUSES),
+    paymentProofDocumentId: z.string().uuid().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === "Payment received" && !data.paymentProofDocumentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["paymentProofDocumentId"],
+        message: "paymentProofDocumentId is required when payment is received.",
+      });
+    }
+  });
+
+export function assertAnnualReturnStatusActionAllowed(
+  current: AnnualReturnCase,
+  nextStatus: AnnualReturnStatus,
+): void {
+  if (nextStatus === "Completed") {
+    const blockers = completionBlockers(current);
+
+    if (blockers.length > 0) {
+      throw new Error(blockers.map((blocker) => blocker.message).join(" "));
+    }
+
+    return;
+  }
+
+  if (!isAllowedStatusTransition(current.currentStatus, nextStatus)) {
+    throw new Error(`Cannot move from ${current.currentStatus} to ${nextStatus}.`);
+  }
+}
 
 async function withAnnualReturnRepository<T>(
   handler: (repository: AnnualReturnRepository) => Promise<T>,
@@ -82,17 +132,7 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
         throw new Error("Annual return case not found.");
       }
 
-      if (!isAllowedStatusTransition(current.currentStatus, data.nextStatus)) {
-        throw new Error(`Cannot move from ${current.currentStatus} to ${data.nextStatus}.`);
-      }
-
-      if (data.nextStatus === "Completed") {
-        const blockers = completionBlockers(current);
-
-        if (blockers.length > 0) {
-          throw new Error(blockers.map((blocker) => blocker.message).join(" "));
-        }
-      }
+      assertAnnualReturnStatusActionAllowed(current, data.nextStatus);
 
       return repository.updateStatus(data.caseId, data.nextStatus, CURRENT_USER_ID);
     }),
@@ -119,14 +159,7 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
   );
 
 export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" })
-  .validator(
-    z.object({
-      caseId: z.string().uuid(),
-      itemId: z.string().uuid(),
-      status: z.enum(CHECKLIST_STATUSES),
-      documentId: z.string().uuid().nullable(),
-    }),
-  )
+  .validator(updateChecklistItemSchema)
   .handler(async ({ data }) =>
     withAnnualReturnRepository((repository) =>
       repository.updateChecklistItem({
@@ -137,13 +170,7 @@ export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" }
   );
 
 export const updateAnnualReturnPayment = createServerFn({ method: "POST" })
-  .validator(
-    z.object({
-      caseId: z.string().uuid(),
-      status: z.enum(PAYMENT_STATUSES),
-      paymentProofDocumentId: z.string().uuid().nullable(),
-    }),
-  )
+  .validator(updatePaymentSchema)
   .handler(async ({ data }) =>
     withAnnualReturnRepository((repository) =>
       repository.updatePayment({

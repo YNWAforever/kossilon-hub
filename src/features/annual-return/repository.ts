@@ -4,7 +4,8 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
-import { completionBlockers, daysBetween, riskForCase } from "./workflow";
+import type postgres from "postgres";
+import { daysBetween, riskForCase } from "./workflow";
 import type {
   AnnualReturnCase,
   AnnualReturnChecklistItem,
@@ -58,6 +59,8 @@ type PaymentRow = {
   paid_at: string | Date | null;
   payment_proof_document_id: string | null;
 };
+
+type TransactionSqlClient = postgres.TransactionSql;
 
 export type CaseFilters = {
   ownerId?: string;
@@ -136,6 +139,9 @@ export type AnnualReturnRepository = {
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
+const CHECKLIST_EVIDENCE_FILE_TYPE = "annual-return-evidence";
+const PAYMENT_PROOF_FILE_TYPE = "payment-proof";
+const FILING_CONFIRMATION_FILE_TYPE = "filing-confirmation";
 
 function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
   const part = parts.find((candidate) => candidate.type === type);
@@ -182,6 +188,10 @@ function hasOutstandingRequiredEvidence(item: AnnualReturnChecklistItem): boolea
       item.verifiedAt === null ||
       item.documentId === null)
   );
+}
+
+function hasText(value: string | null): boolean {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function isFiledOrCompleted(case_: AnnualReturnCase): boolean {
@@ -518,6 +528,102 @@ export function createAnnualReturnRepository(
     return updated;
   }
 
+  async function completionBlockerMessagesForLockedCase(
+    tx: TransactionSqlClient,
+    caseId: string,
+    companyId: string,
+    filingReference: string | null,
+    confirmationDocumentId: string | null,
+  ): Promise<string[]> {
+    const blockers: string[] = [];
+    const unverifiedRequiredRows = await tx<{ id: string }[]>`
+      select arci.id
+      from annual_return_checklist_items arci
+      left join documents d on d.id = arci.document_id
+        and d.case_id = arci.case_id
+        and d.company_id = ${companyId}
+        and d.verification_status = 'verified'
+        and d.file_type = ${CHECKLIST_EVIDENCE_FILE_TYPE}
+      where arci.case_id = ${caseId}
+        and arci.required = true
+        and (
+          arci.status <> 'Verified'
+          or arci.received_at is null
+          or arci.verified_at is null
+          or arci.document_id is null
+          or d.id is null
+        )
+      for update of arci
+    `;
+
+    if (unverifiedRequiredRows.length > 0) {
+      blockers.push(
+        `${unverifiedRequiredRows.length} required checklist item${
+          unverifiedRequiredRows.length === 1 ? " is" : "s are"
+        } not verified.`,
+      );
+    }
+
+    const paymentRows = await tx<
+      {
+        id: string;
+        status: PaymentStatus;
+        payment_proof_document_id: string | null;
+        verified_payment_proof_document_id: string | null;
+      }[]
+    >`
+      select
+        p.id,
+        p.status,
+        p.payment_proof_document_id,
+        d.id as verified_payment_proof_document_id
+      from payments p
+      left join documents d on d.id = p.payment_proof_document_id
+        and d.case_id = p.case_id
+        and d.company_id = p.company_id
+        and d.verification_status = 'verified'
+        and d.file_type = ${PAYMENT_PROOF_FILE_TYPE}
+      where p.case_id = ${caseId}
+      for update of p
+    `;
+
+    const [paymentRow] = paymentRows;
+
+    if (!paymentRow || paymentRow.status !== "Payment received") {
+      blockers.push("Payment must be marked as received.");
+    } else if (
+      !paymentRow.payment_proof_document_id ||
+      !paymentRow.verified_payment_proof_document_id
+    ) {
+      blockers.push("Verified payment proof document is required.");
+    }
+
+    if (!hasText(filingReference)) {
+      blockers.push("Filing reference is required.");
+    }
+
+    if (!confirmationDocumentId) {
+      blockers.push("Filing confirmation document is required.");
+    } else {
+      const filingConfirmationRows = await tx<{ id: string }[]>`
+        select id
+        from documents
+        where id = ${confirmationDocumentId}
+          and case_id = ${caseId}
+          and company_id = ${companyId}
+          and verification_status = 'verified'
+          and file_type = ${FILING_CONFIRMATION_FILE_TYPE}
+        limit 1
+      `;
+
+      if (filingConfirmationRows.length !== 1) {
+        blockers.push("Verified filing confirmation document is required.");
+      }
+    }
+
+    return blockers;
+  }
+
   async function updateStatus(
     caseId: string,
     nextStatus: AnnualReturnStatus,
@@ -531,21 +637,42 @@ export function createAnnualReturnRepository(
 
     assertCaseIsWritable(current);
 
-    if (nextStatus === "Completed") {
-      const blockers = completionBlockers(current);
-
-      if (blockers.length > 0) {
-        throw new Error(
-          `Cannot complete annual return case: ${blockers
-            .map((blocker) => blocker.message)
-            .join(" ")}`,
-        );
-      }
-    }
-
     const completing = nextStatus === "Completed";
 
     await sql.begin(async (tx) => {
+      if (completing) {
+        const lockedCaseRows = await tx<
+          {
+            id: string;
+            company_id: string;
+            filing_reference: string | null;
+            confirmation_document_id: string | null;
+          }[]
+        >`
+          select id, company_id, filing_reference, confirmation_document_id
+          from annual_return_cases
+          where id = ${caseId}
+            and locked_at is null
+            and completed_at is null
+            and current_status <> 'Completed'
+          for update
+        `;
+
+        assertSingleMutatedRow(lockedCaseRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+        const blockers = await completionBlockerMessagesForLockedCase(
+          tx,
+          caseId,
+          lockedCaseRows[0].company_id,
+          lockedCaseRows[0].filing_reference,
+          lockedCaseRows[0].confirmation_document_id,
+        );
+
+        if (blockers.length > 0) {
+          throw new Error(`Cannot complete annual return case: ${blockers.join(" ")}`);
+        }
+      }
+
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases
         set current_status = ${nextStatus},
@@ -683,8 +810,8 @@ export function createAnnualReturnRepository(
     const hasVerifiedEvidence = input.status === "Verified";
 
     await sql.begin(async (tx) => {
-      const writableRows = await tx<{ id: string }[]>`
-        select id
+      const writableRows = await tx<{ id: string; company_id: string }[]>`
+        select id, company_id
         from annual_return_cases
         where id = ${input.caseId}
           and locked_at is null
@@ -694,6 +821,29 @@ export function createAnnualReturnRepository(
       `;
 
       assertSingleMutatedRow(writableRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      if (hasVerifiedEvidence && !documentId) {
+        throw new Error("Verified checklist items require a document.");
+      }
+
+      if (hasVerifiedEvidence && documentId) {
+        const documentRows = await tx<{ id: string }[]>`
+          select id
+          from documents
+          where id = ${documentId}
+            and case_id = ${input.caseId}
+            and company_id = ${writableRows[0].company_id}
+            and verification_status = 'verified'
+            and file_type = ${CHECKLIST_EVIDENCE_FILE_TYPE}
+          limit 1
+        `;
+
+        if (documentRows.length !== 1) {
+          throw new Error(
+            "Verified checklist items require a same-case verified annual return evidence document.",
+          );
+        }
+      }
 
       const updatedRows = await tx<{ id: string; item_label: string }[]>`
         update annual_return_checklist_items
@@ -754,8 +904,8 @@ export function createAnnualReturnRepository(
     const paymentProofDocumentId = isPaymentReceived ? input.paymentProofDocumentId : null;
 
     await sql.begin(async (tx) => {
-      const writableRows = await tx<{ id: string }[]>`
-        select id
+      const writableRows = await tx<{ id: string; company_id: string }[]>`
+        select id, company_id
         from annual_return_cases
         where id = ${input.caseId}
           and locked_at is null
@@ -765,6 +915,27 @@ export function createAnnualReturnRepository(
       `;
 
       assertSingleMutatedRow(writableRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      if (isPaymentReceived && !paymentProofDocumentId) {
+        throw new Error("Payment received requires a payment proof document.");
+      }
+
+      if (isPaymentReceived && paymentProofDocumentId) {
+        const documentRows = await tx<{ id: string }[]>`
+          select id
+          from documents
+          where id = ${paymentProofDocumentId}
+            and case_id = ${input.caseId}
+            and company_id = ${writableRows[0].company_id}
+            and verification_status = 'verified'
+            and file_type = ${PAYMENT_PROOF_FILE_TYPE}
+          limit 1
+        `;
+
+        if (documentRows.length !== 1) {
+          throw new Error("Payment received requires a same-case verified payment proof document.");
+        }
+      }
 
       const updatedRows = await tx<{ id: string; invoice_number: string }[]>`
         update payments
@@ -822,6 +993,21 @@ export function createAnnualReturnRepository(
     assertCaseIsWritable(current);
 
     await sql.begin(async (tx) => {
+      const documentRows = await tx<{ id: string }[]>`
+        select id
+        from documents
+        where id = ${input.confirmationDocumentId}
+          and case_id = ${input.caseId}
+          and company_id = ${current.companyId}
+          and verification_status = 'verified'
+          and file_type = ${FILING_CONFIRMATION_FILE_TYPE}
+        limit 1
+      `;
+
+      if (documentRows.length !== 1) {
+        throw new Error("Filing proof requires a same-case verified filing confirmation document.");
+      }
+
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases
         set filing_reference = ${input.filingReference},
