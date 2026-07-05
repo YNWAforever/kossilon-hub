@@ -255,6 +255,32 @@ function inboundDescriptionTarget(contact: ContactRecord): string {
   return contact.displayName ?? contact.phoneE164 ?? contact.whatsAppId ?? "client";
 }
 
+function contactIdentityLockKeys(input: {
+  whatsAppId: string | null;
+  phoneE164: string | null;
+}): string[] {
+  const keys = [
+    input.whatsAppId ? `woztell:whatsapp_id:${input.whatsAppId}` : null,
+    input.phoneE164 ? `woztell:phone_e164:${input.phoneE164}` : null,
+  ];
+
+  return Array.from(new Set(keys.filter((key): key is string => Boolean(key)))).sort();
+}
+
+async function lockContactIdentities(
+  client: QueryClient,
+  input: {
+    whatsAppId: string | null;
+    phoneE164: string | null;
+  },
+): Promise<void> {
+  for (const lockKey of contactIdentityLockKeys(input)) {
+    await client`
+      select pg_advisory_xact_lock(hashtext('whatsapp_contacts'), hashtext(${lockKey}))
+    `;
+  }
+}
+
 export function createWhatsAppRepository(
   options?: CreateWhatsAppRepositoryOptions,
 ): WhatsAppRepository;
@@ -282,6 +308,8 @@ export function createWhatsAppRepository(
       companyId?: string | null;
     },
   ): Promise<ContactRecord> {
+    await lockContactIdentities(client, input);
+
     const existingRows = await client<ContactRow[]>`
       select id, company_id, display_name, phone_e164, whatsapp_id
       from whatsapp_contacts
