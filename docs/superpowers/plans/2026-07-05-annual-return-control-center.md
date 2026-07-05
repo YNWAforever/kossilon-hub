@@ -1468,7 +1468,7 @@ Completed in commits `c1145de`, `76fa255`, and `c65802d`. Final Task 4 verificat
 - Modify: `src/features/annual-return/repository.ts`
 - Modify: `src/features/annual-return/repository.test.ts`
 
-- [ ] **Step 1: Extend repository with writes**
+- [x] **Step 1: Extend repository with writes**
 
 Add these methods inside `createAnnualReturnRepository` before the `return` statement:
 
@@ -1707,7 +1707,7 @@ Update the returned object:
   };
 ```
 
-- [ ] **Step 2: Add server functions**
+- [x] **Step 2: Add server functions**
 
 Create `src/features/annual-return/server-fns.ts`:
 
@@ -1854,7 +1854,7 @@ export const buildAnnualReturnReminderDraft = createServerFn({ method: "GET" })
   });
 ```
 
-- [ ] **Step 3: Run tests and build**
+- [x] **Step 3: Run tests and build**
 
 Run:
 
@@ -1865,7 +1865,7 @@ bun run build
 
 Expected: tests pass and build exits 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/features/annual-return/repository.ts src/features/annual-return/repository.test.ts src/features/annual-return/server-fns.ts

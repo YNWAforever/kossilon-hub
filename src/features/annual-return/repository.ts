@@ -4,7 +4,7 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
-import { daysBetween, riskForCase } from "./workflow";
+import { completionBlockers, daysBetween, riskForCase } from "./workflow";
 import type {
   AnnualReturnCase,
   AnnualReturnChecklistItem,
@@ -80,6 +80,38 @@ export type AnnualReturnDashboardMetrics = {
   assignedToMe: number;
 };
 
+export type RecordAnnualReturnReminderInput = {
+  caseId: string;
+  actorId: string;
+  templateLabel: string;
+  recipientName: string;
+  recipientPhone: string;
+  draftBody: string;
+  note: string;
+};
+
+export type UpdateAnnualReturnChecklistItemInput = {
+  caseId: string;
+  itemId: string;
+  status: ChecklistStatus;
+  documentId: string | null;
+  actorId: string;
+};
+
+export type UpdateAnnualReturnPaymentInput = {
+  caseId: string;
+  status: PaymentStatus;
+  paymentProofDocumentId: string | null;
+  actorId: string;
+};
+
+export type UpdateAnnualReturnFilingProofInput = {
+  caseId: string;
+  filingReference: string;
+  confirmationDocumentId: string;
+  actorId: string;
+};
+
 export type CreateAnnualReturnRepositoryOptions = CreateSqlClientOptions & {
   sql?: SqlClient;
   today?: string | (() => string);
@@ -89,11 +121,21 @@ export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
   dashboardMetrics(today: string, currentUserId: string): Promise<AnnualReturnDashboardMetrics>;
+  updateStatus(
+    caseId: string,
+    nextStatus: AnnualReturnStatus,
+    actorId: string,
+  ): Promise<AnnualReturnCase>;
+  recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase>;
+  updateChecklistItem(input: UpdateAnnualReturnChecklistItemInput): Promise<AnnualReturnCase>;
+  updatePayment(input: UpdateAnnualReturnPaymentInput): Promise<AnnualReturnCase>;
+  updateFilingProof(input: UpdateAnnualReturnFilingProofInput): Promise<AnnualReturnCase>;
   close(): Promise<void>;
 };
 
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
+const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
 
 function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
   const part = parts.find((candidate) => candidate.type === type);
@@ -144,6 +186,24 @@ function hasOutstandingRequiredEvidence(item: AnnualReturnChecklistItem): boolea
 
 function isFiledOrCompleted(case_: AnnualReturnCase): boolean {
   return FILED_OR_COMPLETED_STATUSES.has(case_.currentStatus);
+}
+
+function isLockedOrCompleted(case_: AnnualReturnCase): boolean {
+  return (
+    case_.currentStatus === "Completed" || case_.lockedAt !== null || case_.completedAt !== null
+  );
+}
+
+function assertCaseIsWritable(case_: AnnualReturnCase): void {
+  if (isLockedOrCompleted(case_)) {
+    throw new Error(COMPLETED_CASE_LOCKED_MESSAGE);
+  }
+}
+
+function assertSingleMutatedRow(rows: { id: string }[], message: string): void {
+  if (rows.length !== 1) {
+    throw new Error(message);
+  }
 }
 
 function isActiveForOperationalMetrics(case_: AnnualReturnCase): boolean {
@@ -448,6 +508,362 @@ export function createAnnualReturnRepository(
     };
   }
 
+  async function hydratedCaseAfterMutation(caseId: string, actionLabel: string) {
+    const updated = await getCase(caseId);
+
+    if (!updated) {
+      throw new Error(`Annual return case disappeared after ${actionLabel}.`);
+    }
+
+    return updated;
+  }
+
+  async function updateStatus(
+    caseId: string,
+    nextStatus: AnnualReturnStatus,
+    actorId: string,
+  ): Promise<AnnualReturnCase> {
+    const current = await getCase(caseId);
+
+    if (!current) {
+      throw new Error("Annual return case not found.");
+    }
+
+    assertCaseIsWritable(current);
+
+    if (nextStatus === "Completed") {
+      const blockers = completionBlockers(current);
+
+      if (blockers.length > 0) {
+        throw new Error(
+          `Cannot complete annual return case: ${blockers
+            .map((blocker) => blocker.message)
+            .join(" ")}`,
+        );
+      }
+    }
+
+    const completing = nextStatus === "Completed";
+
+    await sql.begin(async (tx) => {
+      const updatedRows = await tx<{ id: string }[]>`
+        update annual_return_cases
+        set current_status = ${nextStatus},
+            locked_at = case when ${completing} then coalesce(locked_at, now()) else locked_at end,
+            completed_at = case when ${completing} then coalesce(completed_at, now()) else completed_at end,
+            updated_at = now()
+        where id = ${caseId}
+          and locked_at is null
+          and completed_at is null
+          and current_status <> 'Completed'
+        returning id
+      `;
+
+      assertSingleMutatedRow(updatedRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      await tx`
+        insert into timeline_events (
+          company_id,
+          case_id,
+          event_type,
+          actor_type,
+          actor_id,
+          description,
+          metadata
+        )
+        values (
+          ${current.companyId},
+          ${caseId},
+          'status_changed',
+          'user',
+          ${actorId},
+          ${`Status changed from ${current.currentStatus} to ${nextStatus}.`},
+          ${tx.json({ from: current.currentStatus, to: nextStatus })}
+        )
+      `;
+    });
+
+    return hydratedCaseAfterMutation(caseId, "status update");
+  }
+
+  async function recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase> {
+    const current = await getCase(input.caseId);
+
+    if (!current) {
+      throw new Error("Annual return case not found.");
+    }
+
+    assertCaseIsWritable(current);
+
+    await sql.begin(async (tx) => {
+      const updatedRows = await tx<{ id: string }[]>`
+        update annual_return_cases
+        set reminders_sent = reminders_sent + 1,
+            current_status = case
+              when current_status = 'Upcoming' then 'Client reminder sent'
+              else current_status
+            end,
+            updated_at = now()
+        where id = ${input.caseId}
+          and locked_at is null
+          and completed_at is null
+          and current_status <> 'Completed'
+        returning id
+      `;
+
+      assertSingleMutatedRow(updatedRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      await tx`
+        insert into reminder_logs (
+          case_id,
+          channel,
+          template_label,
+          recipient_name,
+          recipient_phone,
+          draft_body,
+          recorded_sent_at,
+          staff_actor_id,
+          note
+        )
+        values (
+          ${input.caseId},
+          'WhatsApp',
+          ${input.templateLabel},
+          ${input.recipientName},
+          ${input.recipientPhone},
+          ${input.draftBody},
+          now(),
+          ${input.actorId},
+          ${input.note}
+        )
+      `;
+
+      await tx`
+        insert into timeline_events (
+          company_id,
+          case_id,
+          event_type,
+          actor_type,
+          actor_id,
+          description,
+          metadata
+        )
+        values (
+          ${current.companyId},
+          ${input.caseId},
+          'client_reminder_logged',
+          'user',
+          ${input.actorId},
+          ${`Manual WhatsApp reminder logged for ${input.recipientName}.`},
+          ${tx.json({
+            channel: "WhatsApp",
+            templateLabel: input.templateLabel,
+            recipientPhone: input.recipientPhone,
+          })}
+        )
+      `;
+    });
+
+    return hydratedCaseAfterMutation(input.caseId, "reminder logging");
+  }
+
+  async function updateChecklistItem(
+    input: UpdateAnnualReturnChecklistItemInput,
+  ): Promise<AnnualReturnCase> {
+    const current = await getCase(input.caseId);
+
+    if (!current) {
+      throw new Error("Annual return case not found.");
+    }
+
+    assertCaseIsWritable(current);
+
+    const documentId = input.status === "Missing" ? null : input.documentId;
+    const hasReceivedEvidence = input.status !== "Missing";
+    const hasVerifiedEvidence = input.status === "Verified";
+
+    await sql.begin(async (tx) => {
+      const writableRows = await tx<{ id: string }[]>`
+        select id
+        from annual_return_cases
+        where id = ${input.caseId}
+          and locked_at is null
+          and completed_at is null
+          and current_status <> 'Completed'
+        for update
+      `;
+
+      assertSingleMutatedRow(writableRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      const updatedRows = await tx<{ id: string; item_label: string }[]>`
+        update annual_return_checklist_items
+        set status = ${input.status},
+            document_id = ${documentId},
+            received_at = case when ${hasReceivedEvidence} then coalesce(received_at, now()) else null end,
+            verified_at = case when ${hasVerifiedEvidence} then coalesce(verified_at, now()) else null end,
+            updated_at = now()
+        where id = ${input.itemId}
+          and case_id = ${input.caseId}
+        returning id, item_label
+      `;
+
+      if (updatedRows.length !== 1) {
+        throw new Error("Checklist item not found for annual return case.");
+      }
+
+      await tx`
+        insert into timeline_events (
+          company_id,
+          case_id,
+          event_type,
+          actor_type,
+          actor_id,
+          description,
+          metadata
+        )
+        values (
+          ${current.companyId},
+          ${input.caseId},
+          'checklist_item_updated',
+          'user',
+          ${input.actorId},
+          ${`${updatedRows[0].item_label} marked as ${input.status}.`},
+          ${tx.json({
+            itemId: input.itemId,
+            itemLabel: updatedRows[0].item_label,
+            status: input.status,
+            documentId,
+          })}
+        )
+      `;
+    });
+
+    return hydratedCaseAfterMutation(input.caseId, "checklist update");
+  }
+
+  async function updatePayment(input: UpdateAnnualReturnPaymentInput): Promise<AnnualReturnCase> {
+    const current = await getCase(input.caseId);
+
+    if (!current) {
+      throw new Error("Annual return case not found.");
+    }
+
+    assertCaseIsWritable(current);
+
+    const isPaymentReceived = input.status === "Payment received";
+    const paymentProofDocumentId = isPaymentReceived ? input.paymentProofDocumentId : null;
+
+    await sql.begin(async (tx) => {
+      const writableRows = await tx<{ id: string }[]>`
+        select id
+        from annual_return_cases
+        where id = ${input.caseId}
+          and locked_at is null
+          and completed_at is null
+          and current_status <> 'Completed'
+        for update
+      `;
+
+      assertSingleMutatedRow(writableRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      const updatedRows = await tx<{ id: string; invoice_number: string }[]>`
+        update payments
+        set status = ${input.status},
+            payment_proof_document_id = ${paymentProofDocumentId},
+            paid_at = case when ${isPaymentReceived} then coalesce(paid_at, now()) else null end,
+            updated_at = now()
+        where case_id = ${input.caseId}
+        returning id, invoice_number
+      `;
+
+      if (updatedRows.length !== 1) {
+        throw new Error("Annual return payment not found.");
+      }
+
+      await tx`
+        insert into timeline_events (
+          company_id,
+          case_id,
+          event_type,
+          actor_type,
+          actor_id,
+          description,
+          metadata
+        )
+        values (
+          ${current.companyId},
+          ${input.caseId},
+          'payment_updated',
+          'user',
+          ${input.actorId},
+          ${`Payment status changed to ${input.status}.`},
+          ${tx.json({
+            paymentId: updatedRows[0].id,
+            invoiceNumber: updatedRows[0].invoice_number,
+            status: input.status,
+            paymentProofDocumentId,
+          })}
+        )
+      `;
+    });
+
+    return hydratedCaseAfterMutation(input.caseId, "payment update");
+  }
+
+  async function updateFilingProof(
+    input: UpdateAnnualReturnFilingProofInput,
+  ): Promise<AnnualReturnCase> {
+    const current = await getCase(input.caseId);
+
+    if (!current) {
+      throw new Error("Annual return case not found.");
+    }
+
+    assertCaseIsWritable(current);
+
+    await sql.begin(async (tx) => {
+      const updatedRows = await tx<{ id: string }[]>`
+        update annual_return_cases
+        set filing_reference = ${input.filingReference},
+            confirmation_document_id = ${input.confirmationDocumentId},
+            updated_at = now()
+        where id = ${input.caseId}
+          and locked_at is null
+          and completed_at is null
+          and current_status <> 'Completed'
+        returning id
+      `;
+
+      assertSingleMutatedRow(updatedRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      await tx`
+        insert into timeline_events (
+          company_id,
+          case_id,
+          event_type,
+          actor_type,
+          actor_id,
+          description,
+          metadata
+        )
+        values (
+          ${current.companyId},
+          ${input.caseId},
+          'filing_proof_updated',
+          'user',
+          ${input.actorId},
+          'Filing reference and confirmation proof updated.',
+          ${tx.json({
+            filingReference: input.filingReference,
+            confirmationDocumentId: input.confirmationDocumentId,
+          })}
+        )
+      `;
+    });
+
+    return hydratedCaseAfterMutation(input.caseId, "filing proof update");
+  }
+
   async function close(): Promise<void> {
     if (ownsClient) {
       await sql.end();
@@ -458,6 +874,11 @@ export function createAnnualReturnRepository(
     listCases,
     getCase,
     dashboardMetrics,
+    updateStatus,
+    recordReminder,
+    updateChecklistItem,
+    updatePayment,
+    updateFilingProof,
     close,
   };
 }
