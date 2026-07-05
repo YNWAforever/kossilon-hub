@@ -8,6 +8,8 @@ import {
   UserCheck,
   Flame,
   Users,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { TopBar } from "@/components/top-bar";
 import { KpiCard } from "@/components/kpi-card";
@@ -18,11 +20,13 @@ import {
   listAnnualReturnCases,
 } from "@/features/annual-return/server-fns";
 import type { AnnualReturnCase, AnnualReturnStatus } from "@/features/annual-return/types";
+import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
 import type { StatusTone } from "@/lib/status";
 import {
   dashboardMetrics,
   teamWorkloadRows,
   enquiries,
+  tasks,
   currentUser,
   formatDate,
 } from "@/lib/mock-data";
@@ -71,6 +75,12 @@ function DashboardPage() {
   const upcoming = upcomingAnnualReturns;
   const workload = teamWorkloadRows();
   const todaysEnquiries = enquiries.slice(0, 5);
+  const digest = buildDailyDigest({
+    annualReturnCases: upcoming,
+    enquiries,
+    tasks,
+    maxItems: 4,
+  });
 
   return (
     <>
@@ -138,6 +148,59 @@ function DashboardPage() {
             icon={Users}
             tone="neutral"
           />
+        </section>
+
+        <section className="rounded-xl border border-border bg-card">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-display text-base font-semibold text-foreground">
+                  AI daily digest
+                </h2>
+                <p className="text-xs text-muted-foreground">{digest.headline}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <StatusPill tone="red" className="!py-0.5 !text-[10px]">
+                {digest.counts.critical} critical
+              </StatusPill>
+              <StatusPill tone="orange" className="!py-0.5 !text-[10px]">
+                {digest.counts.high} high
+              </StatusPill>
+              <StatusPill tone="yellow" className="!py-0.5 !text-[10px]">
+                {digest.counts.medium} medium
+              </StatusPill>
+            </div>
+          </div>
+
+          {digest.items.length === 0 ? (
+            <div className="px-5 py-4 text-sm text-muted-foreground">
+              No priority work detected from annual returns, WhatsApp enquiries, or open tasks.
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {digest.items.map((item) => (
+                <li key={item.id} className="flex flex-wrap items-start gap-3 px-5 py-3">
+                  <StatusPill tone={digestTone(item.severity)} className="capitalize">
+                    {item.severity}
+                  </StatusPill>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      <span className="text-[11px] capitalize text-muted-foreground">
+                        {item.kind.replace("-", " ")}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
+                  </div>
+                  <DigestActionLink item={item} />
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* Upcoming AR table */}
@@ -314,6 +377,33 @@ function DashboardPage() {
       </main>
     </>
   );
+}
+
+function DigestActionLink({ item }: { item: DailyDigestItem }) {
+  const className =
+    "inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent";
+
+  switch (item.route.to) {
+    case "/annual-returns/$id":
+      return (
+        <Link to="/annual-returns/$id" params={item.route.params} className={className}>
+          {item.actionLabel} <ArrowRight className="h-3 w-3" />
+        </Link>
+      );
+    case "/enquiries":
+      return (
+        <Link to="/enquiries" search={item.route.search} className={className}>
+          {item.actionLabel} <ArrowRight className="h-3 w-3" />
+        </Link>
+      );
+    case "/tasks":
+    default:
+      return (
+        <Link to="/tasks" className={className}>
+          {item.actionLabel} <ArrowRight className="h-3 w-3" />
+        </Link>
+      );
+  }
 }
 
 function nextAnnualReturnAction(case_: AnnualReturnCase) {
