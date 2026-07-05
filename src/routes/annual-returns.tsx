@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { TopBar } from "@/components/top-bar";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
@@ -35,6 +35,8 @@ export const Route = createFileRoute("/annual-returns")({
 });
 
 function AnnualReturnsPage() {
+  const matchRoute = useMatchRoute();
+  const detailMatch = matchRoute({ to: "/annual-returns/$id", fuzzy: false });
   const cases = Route.useLoaderData() as AnnualReturnCase[];
   const [view, setView] = useState<ViewMode>("deadline");
   const [risk, setRisk] = useState<RiskFilter>("all");
@@ -56,6 +58,10 @@ function AnnualReturnsPage() {
         ),
     [cases, risk, status],
   );
+
+  if (detailMatch) {
+    return <Outlet />;
+  }
 
   return (
     <>

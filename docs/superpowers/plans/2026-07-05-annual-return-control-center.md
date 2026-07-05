@@ -2084,8 +2084,10 @@ git commit -m "feat: make annual returns deadline first"
 
 **Files:**
 - Modify: `src/routes/annual-returns.$id.tsx`
+- Modify: `src/routes/annual-returns.tsx`
+- Modify: `src/components/deadline-pill.tsx`
 
-- [ ] **Step 1: Update loader to fetch real case**
+- [x] **Step 1: Update loader to fetch real case**
 
 In `src/routes/annual-returns.$id.tsx`, replace the existing loader body with:
 
@@ -2113,7 +2115,7 @@ import { completionBlockers } from "@/features/annual-return/workflow";
 import type { AnnualReturnCase, AnnualReturnChecklistItem } from "@/features/annual-return/types";
 ```
 
-- [ ] **Step 2: Update component data shape**
+- [x] **Step 2: Update component data shape**
 
 In `CaseDetailPage`, use:
 
@@ -2124,7 +2126,7 @@ const missing = c.checklist.filter((item) => item.required && item.status !== "V
 const received = c.checklist.length - missing;
 ```
 
-- [ ] **Step 3: Add manual reminder action**
+- [x] **Step 3: Add manual reminder action**
 
 Add this function inside `CaseDetailPage`:
 
@@ -2154,7 +2156,7 @@ Use it on the reminder button:
 </button>
 ```
 
-- [ ] **Step 4: Add blocker-clearing staff actions**
+- [x] **Step 4: Add blocker-clearing staff actions**
 
 Add these functions inside `CaseDetailPage`:
 
@@ -2219,7 +2221,7 @@ For each checklist row, add this action when the item is not verified:
 )}
 ```
 
-- [ ] **Step 5: Add completion blocker panel**
+- [x] **Step 5: Add completion blocker panel**
 
 Add this panel near the top summary:
 
@@ -2241,7 +2243,7 @@ Add this panel near the top summary:
 )}
 ```
 
-- [ ] **Step 6: Add guarded status advance**
+- [x] **Step 6: Add guarded status advance**
 
 Add:
 
@@ -2264,7 +2266,7 @@ Render:
 </button>
 ```
 
-- [ ] **Step 7: Run build and commit**
+- [x] **Step 7: Run build and commit**
 
 Run:
 
