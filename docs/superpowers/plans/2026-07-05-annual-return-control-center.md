@@ -26,7 +26,7 @@
 - Modify `src/routes/annual-returns.tsx`: deadline-first list with board toggle and filters.
 - Modify `src/routes/annual-returns.$id.tsx`: real case workspace and server-backed actions.
 - Modify `src/routes/index.tsx`: dashboard annual-return metrics read from server data.
-- Modify `package.json`: add database and test scripts plus dependencies.
+- Modify `package.json`: add dependencies and task-scoped scripts as their backing files are introduced.
 
 ## Task 1: Add Test And Database Tooling
 
@@ -47,20 +47,20 @@ bun add -d vitest dotenv
 
 Expected: `package.json` and `bun.lock` update with `postgres`, `vitest`, and `dotenv`.
 
-- [ ] **Step 2: Add scripts to `package.json`**
+- [ ] **Step 2: Add test scripts to `package.json`**
 
 Add these scripts alongside the existing scripts:
 
 ```json
 {
   "test": "vitest run",
-  "test:watch": "vitest",
-  "db:migrate": "bun scripts/db-migrate.ts",
-  "db:seed": "bun scripts/db-seed-annual-return.ts"
+  "test:watch": "vitest"
 }
 ```
 
 Expected: `bun run test` invokes Vitest.
+
+Database scripts are added with their backing files: `db:migrate` in Task 2 when `scripts/db-migrate.ts` is created, and `db:seed` in Task 3 when `scripts/db-seed-annual-return.ts` is created.
 
 - [ ] **Step 3: Create the domain types**
 
@@ -323,6 +323,7 @@ Create `src/features/annual-return/workflow.ts`:
 import {
   ANNUAL_RETURN_STATUSES,
   type AnnualReturnCase,
+  type AnnualReturnChecklistItem,
   type AnnualReturnStatus,
   type CompletionBlocker,
   type RiskLevel,
@@ -337,6 +338,19 @@ function parseDateOnly(date: string): Date {
 
 function formatDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function hasText(value: string | null): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasRequiredChecklistEvidence(item: AnnualReturnChecklistItem): boolean {
+  return (
+    item.status === "Verified" &&
+    hasText(item.receivedAt) &&
+    hasText(item.verifiedAt) &&
+    hasText(item.documentId)
+  );
 }
 
 export function daysBetween(startDate: string, endDate: string): number {
@@ -357,11 +371,17 @@ export function shouldGenerateCase(filingDueDate: string, today: string): boolea
 
 export function riskForCase(case_: AnnualReturnCase, today: string): RiskLevel {
   const daysLeft = daysBetween(today, case_.filingDueDate);
+  const isFiledOrCompleted = case_.currentStatus === "Filed" || case_.currentStatus === "Completed";
+
+  if (isFiledOrCompleted && completionBlockers(case_).length === 0) {
+    return "green";
+  }
+
   const missingRequired = case_.checklist.some(
-    (item) => item.required && item.status !== "Verified",
+    (item) => item.required && !hasRequiredChecklistEvidence(item),
   );
   const paymentIncomplete = case_.payment?.status !== "Payment received";
-  const filingIncomplete = !case_.filingReference || !case_.confirmationDocumentId;
+  const filingIncomplete = !hasText(case_.filingReference) || !hasText(case_.confirmationDocumentId);
 
   if (daysLeft < 0) return "red";
   if (daysLeft <= 7 && (missingRequired || paymentIncomplete || filingIncomplete)) return "red";
@@ -382,7 +402,7 @@ export function isAllowedStatusTransition(
 export function completionBlockers(case_: AnnualReturnCase): CompletionBlocker[] {
   const blockers: CompletionBlocker[] = [];
   const unverifiedRequired = case_.checklist.filter(
-    (item) => item.required && item.status !== "Verified",
+    (item) => item.required && !hasRequiredChecklistEvidence(item),
   );
 
   if (unverifiedRequired.length > 0) {
@@ -401,14 +421,14 @@ export function completionBlockers(case_: AnnualReturnCase): CompletionBlocker[]
     });
   }
 
-  if (!case_.filingReference) {
+  if (!hasText(case_.filingReference)) {
     blockers.push({
       code: "filing_reference_missing",
       message: "Filing reference is required.",
     });
   }
 
-  if (!case_.confirmationDocumentId) {
+  if (!hasText(case_.confirmationDocumentId)) {
     blockers.push({
       code: "confirmation_document_missing",
       message: "Filing confirmation document is required.",
@@ -419,21 +439,23 @@ export function completionBlockers(case_: AnnualReturnCase): CompletionBlocker[]
 }
 
 export function buildReminderDraft(case_: AnnualReturnCase): string {
-  const missingItems = case_.checklist
-    .filter((item) => item.required && item.status !== "Verified")
-    .map((item) => `- ${item.itemLabel}`)
-    .join("\n");
+  const missingItems = case_.checklist.filter((item) => item.required && item.status !== "Verified");
+  const missingItemList = missingItems.map((item) => `- ${item.itemLabel}`).join("\n");
 
   const missingSection =
-    missingItems.length > 0
-      ? `We are still waiting for:\n${missingItems}`
+    missingItemList.length > 0
+      ? `We are still waiting for:\n${missingItemList}`
       : "All required documents are recorded. We will continue preparing the filing.";
+  const closing =
+    missingItems.length > 0
+      ? "Please send the outstanding items as soon as possible so we can avoid late filing risk."
+      : "We will continue preparing the filing and follow up if anything else is needed.";
 
   return [
     `Hello, this is Kossilon following up on the annual return for ${case_.companyName}.`,
     `The filing deadline is ${case_.filingDueDate}.`,
     missingSection,
-    "Please send the outstanding items as soon as possible so we can avoid late filing risk.",
+    closing,
     "Thank you.",
   ].join("\n\n");
 }
@@ -459,6 +481,7 @@ git commit -m "feat: add annual return workflow rules"
 ## Task 2: Add Database Schema And Migration Runner
 
 **Files:**
+- Modify: `package.json`
 - Create: `db/migrations/0001_annual_return_control_center.sql`
 - Create: `src/server/db/schema.sql`
 - Create: `src/server/db/client.ts`
@@ -724,7 +747,19 @@ for (const file of files) {
 await sql.end();
 ```
 
-- [ ] **Step 5: Run migration**
+- [ ] **Step 5: Add migration script to `package.json`**
+
+Add this script alongside the existing scripts:
+
+```json
+{
+  "db:migrate": "bun scripts/db-migrate.ts"
+}
+```
+
+Expected: `bun run db:migrate` invokes the migration runner created in this task.
+
+- [ ] **Step 6: Run migration**
 
 Run:
 
@@ -734,7 +769,7 @@ bun run db:migrate
 
 Expected: `Applied 0001_annual_return_control_center.sql` on first run. A second run should print `Skipping 0001_annual_return_control_center.sql`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add db/migrations/0001_annual_return_control_center.sql src/server/db/schema.sql src/server/db/client.ts scripts/db-migrate.ts package.json bun.lock
@@ -744,6 +779,7 @@ git commit -m "feat: add annual return database schema"
 ## Task 3: Seed Annual Return Data
 
 **Files:**
+- Modify: `package.json`
 - Create: `scripts/db-seed-annual-return.ts`
 
 - [ ] **Step 1: Write seed script**
@@ -991,7 +1027,19 @@ console.log(`Seeded ${companies.length} companies and annual return cases.`);
 await sql.end();
 ```
 
-- [ ] **Step 2: Run migration and seed**
+- [ ] **Step 2: Add seed script to `package.json`**
+
+Add this script alongside the existing scripts:
+
+```json
+{
+  "db:seed": "bun scripts/db-seed-annual-return.ts"
+}
+```
+
+Expected: `bun run db:seed` invokes the seed runner created in this task.
+
+- [ ] **Step 3: Run migration and seed**
 
 Run:
 
@@ -1002,7 +1050,7 @@ bun run db:seed
 
 Expected: seed prints `Seeded 3 companies and annual return cases.`
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add scripts/db-seed-annual-return.ts package.json bun.lock

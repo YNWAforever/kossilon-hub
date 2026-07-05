@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ANNUAL_RETURN_STATUSES,
@@ -54,6 +56,28 @@ const baseCase: AnnualReturnCase = {
   },
 };
 
+const readyCase: AnnualReturnCase = {
+  ...baseCase,
+  currentStatus: "Filed",
+  filingReference: "CR-NAR1-2026-0001",
+  confirmationDocumentId: "doc-confirmation",
+  checklist: [
+    {
+      ...baseCase.checklist[0],
+      status: "Verified",
+      receivedAt: "2026-07-20T09:00:00.000Z",
+      verifiedAt: "2026-07-21T09:00:00.000Z",
+      documentId: "doc-1",
+    },
+  ],
+  payment: {
+    ...baseCase.payment!,
+    status: "Payment received",
+    paidAt: "2026-07-21T10:00:00.000Z",
+    paymentProofDocumentId: "doc-proof",
+  },
+};
+
 describe("annual return workflow", () => {
   it("calculates the filing due date as 42 days after the basis date", () => {
     expect(calculateFilingDueDate("2026-07-01")).toBe("2026-08-12");
@@ -106,34 +130,83 @@ describe("annual return workflow", () => {
   });
 
   it("allows completion when required evidence is present", () => {
-    const ready: AnnualReturnCase = {
-      ...baseCase,
-      currentStatus: "Filed",
-      filingReference: "CR-NAR1-2026-0001",
-      confirmationDocumentId: "doc-confirmation",
+    expect(completionBlockers(readyCase)).toEqual([]);
+  });
+
+  it("blocks completion when verified checklist evidence fields are missing", () => {
+    const missingEvidence: AnnualReturnCase = {
+      ...readyCase,
       checklist: [
         {
-          ...baseCase.checklist[0],
-          status: "Verified",
-          receivedAt: "2026-07-20T09:00:00.000Z",
-          verifiedAt: "2026-07-21T09:00:00.000Z",
-          documentId: "doc-1",
+          ...readyCase.checklist[0],
+          receivedAt: null,
+          verifiedAt: null,
+          documentId: null,
         },
       ],
-      payment: {
-        ...baseCase.payment!,
-        status: "Payment received",
-        paidAt: "2026-07-21T10:00:00.000Z",
-        paymentProofDocumentId: "doc-proof",
-      },
     };
 
-    expect(completionBlockers(ready)).toEqual([]);
+    expect(completionBlockers(missingEvidence).map((b) => b.code)).toEqual([
+      "required_checklist_unverified",
+    ]);
+  });
+
+  it("blocks completion when filing evidence identifiers are blank", () => {
+    const blankFilingEvidence: AnnualReturnCase = {
+      ...readyCase,
+      filingReference: "   ",
+      confirmationDocumentId: "\t",
+    };
+
+    expect(completionBlockers(blankFilingEvidence).map((b) => b.code)).toEqual([
+      "filing_reference_missing",
+      "confirmation_document_missing",
+    ]);
+  });
+
+  it("keeps filed and completed cases green after the due date when evidence is complete", () => {
+    expect(riskForCase(readyCase, "2026-08-13")).toBe("green");
+    expect(
+      riskForCase(
+        {
+          ...readyCase,
+          currentStatus: "Completed",
+        },
+        "2026-08-13",
+      ),
+    ).toBe("green");
   });
 
   it("builds a staff-copyable WhatsApp reminder draft", () => {
     expect(buildReminderDraft(baseCase)).toContain("Harbour Trading Ltd");
     expect(buildReminderDraft(baseCase)).toContain("2026-08-12");
     expect(buildReminderDraft(baseCase)).toContain("Signed NAR1 form");
+  });
+
+  it("does not ask for outstanding items when required documents are complete", () => {
+    expect(buildReminderDraft(readyCase)).not.toContain("outstanding items");
+  });
+});
+
+describe("package scripts", () => {
+  it("does not point database commands at missing script files", () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(process.cwd(), "package.json"), "utf8"),
+    ) as { scripts?: Record<string, string> };
+    const scripts = packageJson.scripts ?? {};
+
+    const databaseScripts = [
+      ["db:migrate", "scripts/db-migrate.ts"],
+      ["db:seed", "scripts/db-seed-annual-return.ts"],
+    ] as const;
+
+    for (const [scriptName, scriptPath] of databaseScripts) {
+      if (scripts[scriptName]) {
+        expect(scripts[scriptName]).toBe(`bun ${scriptPath}`);
+        expect(existsSync(resolve(process.cwd(), scriptPath))).toBe(true);
+      } else {
+        expect(existsSync(resolve(process.cwd(), scriptPath))).toBe(false);
+      }
+    }
   });
 });
