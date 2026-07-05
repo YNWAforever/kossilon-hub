@@ -13,11 +13,14 @@ import { TopBar } from "@/components/top-bar";
 import { KpiCard } from "@/components/kpi-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
-import { getAnnualReturnDashboardMetrics } from "@/features/annual-return/server-fns";
-import { caseStatusTone } from "@/lib/status";
+import {
+  getAnnualReturnDashboardMetrics,
+  listAnnualReturnCases,
+} from "@/features/annual-return/server-fns";
+import type { AnnualReturnCase, AnnualReturnStatus } from "@/features/annual-return/types";
+import type { StatusTone } from "@/lib/status";
 import {
   dashboardMetrics,
-  upcomingCases,
   teamWorkloadRows,
   enquiries,
   currentUser,
@@ -25,7 +28,19 @@ import {
 } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
-  loader: () => getAnnualReturnDashboardMetrics(),
+  loader: async () => {
+    const [metrics, annualReturnCases] = await Promise.all([
+      getAnnualReturnDashboardMetrics(),
+      listAnnualReturnCases({ data: {} }),
+    ]);
+
+    return {
+      metrics,
+      upcomingAnnualReturns: annualReturnCases
+        .filter((case_) => case_.currentStatus !== "Completed")
+        .slice(0, 8),
+    };
+  },
   head: () => ({
     meta: [
       { title: "Dashboard — Kossilon CoSec OS" },
@@ -40,9 +55,10 @@ export const Route = createFileRoute("/")({
 });
 
 function DashboardPage() {
-  const realMetrics = Route.useLoaderData() as Awaited<
-    ReturnType<typeof getAnnualReturnDashboardMetrics>
-  >;
+  const { metrics: realMetrics, upcomingAnnualReturns } = Route.useLoaderData() as {
+    metrics: Awaited<ReturnType<typeof getAnnualReturnDashboardMetrics>>;
+    upcomingAnnualReturns: AnnualReturnCase[];
+  };
   const m = {
     ...dashboardMetrics(),
     dueIn7: realMetrics.dueIn7,
@@ -52,7 +68,7 @@ function DashboardPage() {
     paymentPending: realMetrics.paymentPending,
     myCases: realMetrics.assignedToMe,
   };
-  const upcoming = upcomingCases();
+  const upcoming = upcomingAnnualReturns;
   const workload = teamWorkloadRows();
   const todaysEnquiries = enquiries.slice(0, 5);
 
@@ -163,16 +179,22 @@ function DashboardPage() {
                         >
                           {c.companyName}
                         </Link>
-                        <div className="text-xs text-muted-foreground">{formatDate(c.dueDate)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDate(c.filingDueDate)}
+                        </div>
                       </td>
                       <td className="px-5 py-3">
-                        <DeadlinePill dueDate={c.dueDate} />
+                        <DeadlinePill dueDate={c.filingDueDate} />
                       </td>
                       <td className="px-5 py-3">
-                        <StatusPill tone={caseStatusTone(c.status)}>{c.status}</StatusPill>
+                        <StatusPill tone={annualReturnStatusTone(c.currentStatus)}>
+                          {c.currentStatus}
+                        </StatusPill>
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">{c.ownerName}</td>
-                      <td className="px-5 py-3 text-xs text-muted-foreground">{c.nextAction}</td>
+                      <td className="px-5 py-3 text-xs text-muted-foreground">
+                        {nextAnnualReturnAction(c)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -292,4 +314,50 @@ function DashboardPage() {
       </main>
     </>
   );
+}
+
+function nextAnnualReturnAction(case_: AnnualReturnCase) {
+  const missingRequired = case_.checklist.filter(
+    (item) => item.required && item.status !== "Verified",
+  ).length;
+
+  if (missingRequired > 0) {
+    return `${missingRequired} evidence ${missingRequired === 1 ? "item" : "items"} to verify`;
+  }
+
+  if (case_.payment?.status !== "Payment received") {
+    return "Collect payment";
+  }
+
+  if (!case_.filingReference || !case_.confirmationDocumentId) {
+    return "Record filing proof";
+  }
+
+  if (case_.currentStatus === "Completed") {
+    return "Completed";
+  }
+
+  return "Ready to complete";
+}
+
+function annualReturnStatusTone(status: AnnualReturnStatus): StatusTone {
+  switch (status) {
+    case "Upcoming":
+    case "Filed":
+    case "Completed":
+      return "blue";
+    case "Client reminder sent":
+    case "Documents received":
+    case "Payment received":
+    case "NAR1 prepared":
+    case "Ready to file":
+      return "green";
+    case "Documents pending":
+    case "Signature pending":
+      return "yellow";
+    case "Payment pending":
+      return "orange";
+    default:
+      return "neutral";
+  }
 }

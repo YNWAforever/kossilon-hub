@@ -20,7 +20,8 @@ type StatusFilter = AnnualReturnStatus | "all";
 type ViewMode = "deadline" | "board";
 
 export const Route = createFileRoute("/annual-returns")({
-  loader: () => listAnnualReturnCases({ data: {} }),
+  loader: ({ location }) =>
+    isAnnualReturnsIndexPath(location.pathname) ? listAnnualReturnCases({ data: {} }) : [],
   head: () => ({
     meta: [
       { title: "Annual Returns Board — Kossilon CoSec OS" },
@@ -33,6 +34,10 @@ export const Route = createFileRoute("/annual-returns")({
   }),
   component: AnnualReturnsPage,
 });
+
+function isAnnualReturnsIndexPath(pathname: string) {
+  return pathname === "/annual-returns" || pathname === "/annual-returns/";
+}
 
 function AnnualReturnsPage() {
   const matchRoute = useMatchRoute();

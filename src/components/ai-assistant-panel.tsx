@@ -55,12 +55,18 @@ export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
     return { company, case: c, template: templateForService("Annual Return — Private Ltd") };
   }, [companies, enquiry.phone]);
 
-  const context = useMemo(() => retrieveContext(enquiry), [enquiry, nonce]);
-  const draft = useMemo(
-    () => draftReply(enquiry, context, caseCtx),
-    [enquiry, context, caseCtx, nonce],
-  );
-  const relatedFaqs = useMemo(() => suggestedFaqs(enquiry), [enquiry, nonce]);
+  const context = useMemo(() => {
+    void nonce;
+    return retrieveContext(enquiry);
+  }, [enquiry, nonce]);
+  const draft = useMemo(() => {
+    void nonce;
+    return draftReply(enquiry, context, caseCtx);
+  }, [enquiry, context, caseCtx, nonce]);
+  const relatedFaqs = useMemo(() => {
+    void nonce;
+    return suggestedFaqs(enquiry);
+  }, [enquiry, nonce]);
 
   const copy = () => {
     navigator.clipboard?.writeText(draft.markdown);
@@ -102,13 +108,19 @@ export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             <button
-              onClick={() => { onInsert(draft.markdown); toast.success("Inserted into composer"); }}
+              onClick={() => {
+                onInsert(draft.markdown);
+                toast.success("Inserted into composer");
+              }}
               className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90"
             >
               <ArrowDown className="h-3 w-3" /> Insert
             </button>
             <button
-              onClick={() => { onSend(draft.markdown); toast.success("Reply sent"); }}
+              onClick={() => {
+                onSend(draft.markdown);
+                toast.success("Reply sent");
+              }}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-[11px] font-medium hover:bg-accent"
             >
               <Send className="h-3 w-3" /> Send as-is
@@ -166,11 +178,10 @@ export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
               <div className="mt-2 flex items-center justify-between gap-2">
                 <DeadlinePill dueDate={caseCtx.case.dueDate} />
                 <Link
-                  to="/annual-returns/$id"
-                  params={{ id: caseCtx.case.id }}
+                  to="/annual-returns"
                   className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
                 >
-                  Open case <ExternalLink className="h-3 w-3" />
+                  Open board <ExternalLink className="h-3 w-3" />
                 </Link>
               </div>
             </div>
@@ -192,7 +203,10 @@ export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <span className="text-[10px] text-muted-foreground">{f.category}</span>
                     <button
-                      onClick={() => { onInsert(f.answer); toast.success("Inserted answer"); }}
+                      onClick={() => {
+                        onInsert(f.answer);
+                        toast.success("Inserted answer");
+                      }}
                       className="text-[10px] font-medium text-primary hover:underline"
                     >
                       Use answer →
@@ -206,7 +220,10 @@ export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
 
         <p className="border-t border-border pt-3 text-[10px] text-muted-foreground">
           Manage FAQs and reference documents in{" "}
-          <Link to="/settings" className="text-primary hover:underline">Settings</Link>.
+          <Link to="/settings" className="text-primary hover:underline">
+            Settings
+          </Link>
+          .
         </p>
       </div>
     </aside>

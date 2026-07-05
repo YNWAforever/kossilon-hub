@@ -685,15 +685,9 @@ try {
       on conflict (company_id, return_year) do update set
         made_up_date = excluded.made_up_date,
         filing_due_date = excluded.filing_due_date,
-        current_status = excluded.current_status,
         risk_level = excluded.risk_level,
         owner_id = excluded.owner_id,
         reviewer_id = excluded.reviewer_id,
-        reminders_sent = excluded.reminders_sent,
-        filing_reference = excluded.filing_reference,
-        confirmation_document_id = excluded.confirmation_document_id,
-        locked_at = null,
-        completed_at = null,
         updated_at = now()
       returning company_id, id
     `) as CaseIdRow[];
@@ -790,11 +784,7 @@ try {
         case_id = excluded.case_id,
         item_label = excluded.item_label,
         required = excluded.required,
-        status = excluded.status,
         due_date = excluded.due_date,
-        received_at = excluded.received_at,
-        verified_at = excluded.verified_at,
-        document_id = excluded.document_id,
         updated_at = now()
     `;
 
@@ -828,10 +818,7 @@ try {
         invoice_number = excluded.invoice_number,
         amount = excluded.amount,
         currency = excluded.currency,
-        status = excluded.status,
         due_date = excluded.due_date,
-        paid_at = excluded.paid_at,
-        payment_proof_document_id = excluded.payment_proof_document_id,
         updated_at = now()
       returning case_id, id
     `) as PaymentIdRow[];
@@ -843,7 +830,11 @@ try {
     for (const company of companies) {
       await tx`
         update annual_return_cases
-        set confirmation_document_id = ${company.confirmationDocumentId}, updated_at = now()
+        set confirmation_document_id = coalesce(
+              annual_return_cases.confirmation_document_id,
+              ${company.confirmationDocumentId}
+            ),
+            updated_at = now()
         where id = ${actualCaseIdFor(caseIdsByFixtureId, company.caseId)}
       `;
     }
