@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate": "bun scripts/db-migrate.ts"
+    "db:migrate": "bun scripts/db-migrate.ts",
+    "db:seed": "bun scripts/db-seed-annual-return.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",
