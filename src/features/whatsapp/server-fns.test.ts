@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildWhatsAppInboundWebhookResponse,
   getWhatsAppIntegrationStatusForEnv,
   processWhatsAppInboundWebhookInputSchema,
   queueWhatsAppTemplateMessageInputSchema,
@@ -58,6 +59,34 @@ describe("WhatsApp server function validation", () => {
         body: "",
       }),
     ).toThrow();
+  });
+
+  it("serializes inbound webhook matching metadata", () => {
+    const response = buildWhatsAppInboundWebhookResponse({
+      signatureValid: true,
+      message: {
+        id: "96000000-0000-0000-0000-000000000001",
+        companyId: "95200000-0000-0000-0000-000000000001",
+        caseId: "95300000-0000-0000-0000-000000000001",
+        timelineEventCreated: true,
+      },
+      event: {
+        id: "97000000-0000-0000-0000-000000000001",
+        processingStatus: "processed",
+        errorMessage: null,
+      },
+    });
+
+    expect(response).toEqual({
+      ok: true,
+      messageId: "96000000-0000-0000-0000-000000000001",
+      eventId: "97000000-0000-0000-0000-000000000001",
+      processingStatus: "processed",
+      errorMessage: null,
+      matchedCompanyId: "95200000-0000-0000-0000-000000000001",
+      matchedCaseId: "95300000-0000-0000-0000-000000000001",
+      timelineEventCreated: true,
+    });
   });
 
   it("reports webhook and live-send readiness from env vars", () => {

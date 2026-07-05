@@ -3,8 +3,11 @@ import { z } from "zod";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
 import {
   createWhatsAppRepository,
+  type InboundWhatsAppMessageRecord,
   type WhatsAppRepository,
   type WhatsAppTemplateCategory,
+  type WhatsAppWebhookEventRecord,
+  type WhatsAppWebhookProcessingStatus,
 } from "./repository";
 import { normalizeWoztellInboundMessage } from "./woztell";
 
@@ -65,6 +68,37 @@ export function getWhatsAppIntegrationStatusForEnv(env: Env = process.env) {
   };
 }
 
+export type WhatsAppInboundWebhookResponse = {
+  ok: boolean;
+  messageId: string | null;
+  eventId: string;
+  processingStatus: WhatsAppWebhookProcessingStatus;
+  errorMessage: string | null;
+  matchedCompanyId: string | null;
+  matchedCaseId: string | null;
+  timelineEventCreated: boolean;
+};
+
+export function buildWhatsAppInboundWebhookResponse(input: {
+  signatureValid: boolean;
+  message: Pick<
+    InboundWhatsAppMessageRecord,
+    "id" | "companyId" | "caseId" | "timelineEventCreated"
+  >;
+  event: Pick<WhatsAppWebhookEventRecord, "id" | "processingStatus" | "errorMessage">;
+}): WhatsAppInboundWebhookResponse {
+  return {
+    ok: input.signatureValid,
+    messageId: input.message.id,
+    eventId: input.event.id,
+    processingStatus: input.event.processingStatus,
+    errorMessage: input.event.errorMessage,
+    matchedCompanyId: input.message.companyId,
+    matchedCaseId: input.message.caseId,
+    timelineEventCreated: input.message.timelineEventCreated,
+  };
+}
+
 export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () =>
   getWhatsAppIntegrationStatusForEnv(),
 );
@@ -85,13 +119,11 @@ export const processWhatsAppInboundWebhook = createServerFn({ method: "POST" })
           errorMessage: data.signatureValid ? null : "Webhook signature was not verified.",
         });
 
-        return {
-          ok: data.signatureValid,
-          messageId: message.id,
-          eventId: event.id,
-          processingStatus: event.processingStatus,
-          errorMessage: event.errorMessage,
-        };
+        return buildWhatsAppInboundWebhookResponse({
+          signatureValid: data.signatureValid,
+          message,
+          event,
+        });
       } catch (error) {
         const event = await repository.recordWebhookEvent({
           providerEventId: data.providerEventId,
@@ -108,6 +140,9 @@ export const processWhatsAppInboundWebhook = createServerFn({ method: "POST" })
           eventId: event.id,
           processingStatus: event.processingStatus,
           errorMessage: event.errorMessage,
+          matchedCompanyId: null,
+          matchedCaseId: null,
+          timelineEventCreated: false,
         };
       }
     }),
