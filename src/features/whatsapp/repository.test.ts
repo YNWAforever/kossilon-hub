@@ -206,6 +206,14 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       const first = await repository.recordInboundMessage(normalized);
       const second = await repository.recordInboundMessage(normalized);
 
+      expect(first).toMatchObject({
+        provider: "woztell",
+        direction: "inbound",
+        status: "received",
+        companyId: null,
+        caseId: null,
+        timelineEventCreated: false,
+      });
       expect(second).toEqual(first);
 
       const sql = sqlForTests();
@@ -227,6 +235,14 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         where provider_message_id = 'phase2-test-inbound-001'
       `;
       expect(messages[0].count).toBe(1);
+
+      const timelineEvents = await sql<{ count: number }[]>`
+        select count(*)::int as count
+        from timeline_events
+        where event_type = 'whatsapp_message_received'
+          and metadata ->> 'providerMessageId' = 'phase2-test-inbound-001'
+      `;
+      expect(timelineEvents[0].count).toBe(0);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
@@ -272,6 +288,109 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
             "Queued WhatsApp template phase2_test_annual_return_30_day for Phase 2 Director.",
         },
       ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "matches inbound replies to the most recent outbound annual return case and records timeline",
+    async () => {
+      const repository = repositoryFor();
+
+      const outbound = await repository.queueOutboundTemplateMessage({
+        actorId: TEST_USER_ID,
+        caseId: TEST_CASE_ID,
+        toPhone: "+852 6999 0001",
+        toWhatsAppId: "phase2-test-wa-outbound",
+        contactName: "Phase 2 Director",
+        templateName: "phase2_test_annual_return_30_day",
+        languageCode: "en",
+        category: "annual_return",
+        body: "Phase 2 test annual return reminder body.",
+      });
+      const normalized = normalizeWoztellInboundMessage({
+        event: "message",
+        channel: { id: "kossilon-whatsapp-channel" },
+        contact: {
+          wa_id: "phase2-test-wa-outbound",
+          phone: "+852 6999 0001",
+          profile: { name: "Phase 2 Director" },
+        },
+        message: {
+          id: "phase2-test-inbound-reply-001",
+          type: "text",
+          text: { body: "Phase 2 test reply: documents are ready." },
+          timestamp: "2026-07-05T12:20:00.000Z",
+        },
+      });
+
+      const inbound = await repository.recordInboundMessage(normalized);
+      const duplicate = await repository.recordInboundMessage(normalized);
+
+      expect(inbound).toMatchObject({
+        provider: "woztell",
+        direction: "inbound",
+        status: "received",
+        contactId: outbound.contactId,
+        companyId: TEST_COMPANY_ID,
+        caseId: TEST_CASE_ID,
+        phoneE164: "+85269990001",
+        whatsAppId: "phase2-test-wa-outbound",
+        body: "Phase 2 test reply: documents are ready.",
+        timelineEventCreated: true,
+      });
+      expect(duplicate).toMatchObject({
+        id: inbound.id,
+        companyId: TEST_COMPANY_ID,
+        caseId: TEST_CASE_ID,
+        timelineEventCreated: false,
+      });
+
+      const sql = sqlForTests();
+      const timelineEvents = await sql<
+        {
+          event_type: string;
+          description: string;
+          message_id: string | null;
+          provider_message_id: string | null;
+          body_preview: string | null;
+        }[]
+      >`
+        select
+          event_type,
+          description,
+          metadata ->> 'messageId' as message_id,
+          metadata ->> 'providerMessageId' as provider_message_id,
+          metadata ->> 'bodyPreview' as body_preview
+        from timeline_events
+        where case_id = ${TEST_CASE_ID}
+        order by created_at asc
+      `;
+      expect(timelineEvents).toEqual([
+        {
+          event_type: "whatsapp_message_queued",
+          description:
+            "Queued WhatsApp template phase2_test_annual_return_30_day for Phase 2 Director.",
+          message_id: outbound.id,
+          provider_message_id: null,
+          body_preview: null,
+        },
+        {
+          event_type: "whatsapp_message_received",
+          description: "Received WhatsApp reply from Phase 2 Director.",
+          message_id: inbound.id,
+          provider_message_id: "phase2-test-inbound-reply-001",
+          body_preview: "Phase 2 test reply: documents are ready.",
+        },
+      ]);
+
+      const receivedEvents = await sql<{ count: number }[]>`
+        select count(*)::int as count
+        from timeline_events
+        where event_type = 'whatsapp_message_received'
+          and metadata ->> 'providerMessageId' = 'phase2-test-inbound-reply-001'
+      `;
+      expect(receivedEvents[0].count).toBe(1);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
