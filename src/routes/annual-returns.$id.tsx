@@ -68,11 +68,11 @@ export const Route = createFileRoute("/annual-returns/$id")({
       throw notFound();
     }
 
-    return c;
+    return { c };
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.companyName ?? "Case"} - Annual Return` },
+      { title: `${loaderData?.c.companyName ?? "Case"} - Annual Return` },
       {
         name: "description",
         content: "Annual return case checklist, payment, filing proof, and reminder controls.",
@@ -91,14 +91,13 @@ export const Route = createFileRoute("/annual-returns/$id")({
 });
 
 function CaseDetailPage() {
-  const c = Route.useLoaderData() as AnnualReturnCase;
+  const { c } = Route.useLoaderData() as { c: AnnualReturnCase };
   const blockers = useMemo(() => completionBlockers(c), [c]);
   const [pending, setPending] = useState<ActionKey | null>(null);
   const locked = isLocked(c);
-  const requiredItems = c.checklist.filter((item) => item.required);
-  const verifiedRequiredItems = requiredItems.filter(hasRequiredEvidence);
-  const checklistProgress =
-    requiredItems.length === 0 ? 100 : (verifiedRequiredItems.length / requiredItems.length) * 100;
+  const missing = c.checklist.filter((item) => item.required && item.status !== "Verified").length;
+  const received = c.checklist.length - missing;
+  const checklistProgress = c.checklist.length === 0 ? 100 : (received / c.checklist.length) * 100;
 
   async function runCaseAction(actionKey: ActionKey, action: () => Promise<void>) {
     setPending(actionKey);
@@ -131,7 +130,7 @@ function CaseDetailPage() {
       await recordAnnualReturnReminder({
         data: {
           caseId: c.id,
-          templateLabel: "Manual annual return reminder",
+          templateLabel: "Annual return manual reminder",
           recipientName,
           recipientPhone,
           draftBody,
@@ -274,12 +273,9 @@ function CaseDetailPage() {
                 label="Deadline"
                 value={<DeadlinePill dueDate={c.filingDueDate} showDate />}
               />
-              <Metric
-                label="Required evidence"
-                value={`${verifiedRequiredItems.length}/${requiredItems.length}`}
-              />
+              <Metric label="Checklist received" value={`${received}/${c.checklist.length}`} />
+              <Metric label="Missing required" value={missing.toString()} />
               <Metric label="Payment" value={c.payment?.status ?? "Not invoiced"} />
-              <Metric label="Reminders" value={c.remindersSent.toString()} />
             </div>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
               <div
@@ -653,15 +649,6 @@ function shortId(id: string): string {
 function isLocked(case_: AnnualReturnCase): boolean {
   return (
     case_.currentStatus === "Completed" || case_.lockedAt !== null || case_.completedAt !== null
-  );
-}
-
-function hasRequiredEvidence(item: AnnualReturnChecklistItem): boolean {
-  return (
-    item.status === "Verified" &&
-    item.receivedAt !== null &&
-    item.verifiedAt !== null &&
-    item.documentId !== null
   );
 }
 
