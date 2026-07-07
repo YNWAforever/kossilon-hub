@@ -59,7 +59,12 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: rid(), label: "Register of members (updated)", required: true, daysBeforeDue: 14 },
       { id: rid(), label: "Register of directors", required: true, daysBeforeDue: 14 },
       { id: rid(), label: "Register of secretaries", required: true, daysBeforeDue: 14 },
-      { id: rid(), label: "Business registration certificate copy", required: true, daysBeforeDue: 30 },
+      {
+        id: rid(),
+        label: "Business registration certificate copy",
+        required: true,
+        daysBeforeDue: 30,
+      },
       { id: rid(), label: "Proof of registered office address", required: true, daysBeforeDue: 30 },
       { id: rid(), label: "ID copies of all directors", required: true, daysBeforeDue: 30 },
     ],
@@ -70,9 +75,27 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: rid(), label: "Final reminder", daysBeforeDue: 2, channel: "WhatsApp" },
     ],
     riskRules: [
-      { id: rid(), label: "Deadline critical", severity: "High", trigger: "Deadline < 3 days & docs incomplete", enabled: true },
-      { id: rid(), label: "Client silent", severity: "Medium", trigger: "No client reply after 3 reminders", enabled: true },
-      { id: rid(), label: "Payment overdue", severity: "Medium", trigger: "Invoice unpaid > 14 days", enabled: true },
+      {
+        id: rid(),
+        label: "Deadline critical",
+        severity: "High",
+        trigger: "Deadline < 3 days & docs incomplete",
+        enabled: true,
+      },
+      {
+        id: rid(),
+        label: "Client silent",
+        severity: "Medium",
+        trigger: "No client reply after 3 reminders",
+        enabled: true,
+      },
+      {
+        id: rid(),
+        label: "Payment overdue",
+        severity: "Medium",
+        trigger: "Invoice unpaid > 14 days",
+        enabled: true,
+      },
     ],
   },
   {
@@ -96,8 +119,20 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: rid(), label: "Final reminder", daysBeforeDue: 7, channel: "WhatsApp" },
     ],
     riskRules: [
-      { id: rid(), label: "Auditor delay", severity: "High", trigger: "Audit report outstanding < 21 days to due", enabled: true },
-      { id: rid(), label: "Deadline critical", severity: "High", trigger: "Deadline < 3 days & docs incomplete", enabled: true },
+      {
+        id: rid(),
+        label: "Auditor delay",
+        severity: "High",
+        trigger: "Audit report outstanding < 21 days to due",
+        enabled: true,
+      },
+      {
+        id: rid(),
+        label: "Deadline critical",
+        severity: "High",
+        trigger: "Deadline < 3 days & docs incomplete",
+        enabled: true,
+      },
     ],
   },
   {
@@ -111,7 +146,12 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: rid(), label: "NNC1 incorporation form", required: true, daysBeforeDue: 3 },
       { id: rid(), label: "Articles of association", required: true, daysBeforeDue: 3 },
       { id: rid(), label: "IRBR1 business registration notice", required: true, daysBeforeDue: 3 },
-      { id: rid(), label: "ID / passport of each director & shareholder", required: true, daysBeforeDue: 5 },
+      {
+        id: rid(),
+        label: "ID / passport of each director & shareholder",
+        required: true,
+        daysBeforeDue: 5,
+      },
       { id: rid(), label: "Proof of address for each director", required: true, daysBeforeDue: 5 },
     ],
     reminders: [
@@ -119,7 +159,13 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: rid(), label: "Signature reminder", daysBeforeDue: 2, channel: "WhatsApp" },
     ],
     riskRules: [
-      { id: rid(), label: "KYC incomplete", severity: "High", trigger: "Missing director ID > 3 days", enabled: true },
+      {
+        id: rid(),
+        label: "KYC incomplete",
+        severity: "High",
+        trigger: "Missing director ID > 3 days",
+        enabled: true,
+      },
     ],
   },
   {
@@ -135,11 +181,15 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: rid(), label: "Consent to act as director", required: true, daysBeforeDue: 5 },
       { id: rid(), label: "New director ID copy", required: true, daysBeforeDue: 5 },
     ],
-    reminders: [
-      { id: rid(), label: "Docs reminder", daysBeforeDue: 7, channel: "WhatsApp" },
-    ],
+    reminders: [{ id: rid(), label: "Docs reminder", daysBeforeDue: 7, channel: "WhatsApp" }],
     riskRules: [
-      { id: rid(), label: "Statutory 15-day window", severity: "High", trigger: "Filing not submitted within 15 days of change", enabled: true },
+      {
+        id: rid(),
+        label: "Statutory 15-day window",
+        severity: "High",
+        trigger: "Filing not submitted within 15 days of change",
+        enabled: true,
+      },
     ],
   },
   {
@@ -154,11 +204,15 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: rid(), label: "IRD notice of no objection", required: true, daysBeforeDue: 30 },
       { id: rid(), label: "Written consent from all directors", required: true, daysBeforeDue: 14 },
     ],
-    reminders: [
-      { id: rid(), label: "IRD follow-up", daysBeforeDue: 21, channel: "Email" },
-    ],
+    reminders: [{ id: rid(), label: "IRD follow-up", daysBeforeDue: 21, channel: "Email" }],
     riskRules: [
-      { id: rid(), label: "Outstanding tax", severity: "High", trigger: "IRD clearance not received", enabled: true },
+      {
+        id: rid(),
+        label: "Outstanding tax",
+        severity: "High",
+        trigger: "IRD clearance not received",
+        enabled: true,
+      },
     ],
   },
 ];
@@ -257,7 +311,13 @@ export const templatesStore = {
     templatesStore.update(id, {
       riskRules: [
         ...(state.find((t) => t.id === id)?.riskRules ?? []),
-        { id: rid(), label: "New risk rule", severity: "Medium", trigger: "Describe the trigger…", enabled: true },
+        {
+          id: rid(),
+          label: "New risk rule",
+          severity: "Medium",
+          trigger: "Describe the trigger…",
+          enabled: true,
+        },
       ],
     }),
   updateRisk: (id: string, rId: string, patch: Partial<RiskRule>) => {
@@ -275,11 +335,7 @@ export const templatesStore = {
 };
 
 export function useTemplates(): ChecklistTemplate[] {
-  return useSyncExternalStore(
-    templatesStore.subscribe,
-    templatesStore.get,
-    templatesStore.get,
-  );
+  return useSyncExternalStore(templatesStore.subscribe, templatesStore.get, templatesStore.get);
 }
 
 // Map a service type to the active template that would preload a new case.

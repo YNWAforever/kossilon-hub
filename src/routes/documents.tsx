@@ -31,13 +31,21 @@ function DocumentsPage() {
 
   return (
     <>
-      <TopBar title="Documents" subtitle={`${rows.length} document requirements across all cases`} />
+      <TopBar
+        title="Documents"
+        subtitle={`${rows.length} document requirements across all cases`}
+      />
       <main className="flex-1 p-6">
         <div className="rounded-xl border border-border bg-card">
           <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3">
-            <input placeholder="Search documents…" className="flex-1 min-w-40 rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none" />
+            <input
+              placeholder="Search documents…"
+              className="flex-1 min-w-40 rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none"
+            />
             <select className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">
-              <option>All statuses</option><option>Received</option><option>Missing</option>
+              <option>All statuses</option>
+              <option>Received</option>
+              <option>Missing</option>
             </select>
           </div>
           <table className="w-full text-sm">
@@ -63,11 +71,21 @@ function DocumentsPage() {
                     </div>
                   </td>
                   <td className="px-5 py-3">
-                    <Link to="/clients/$id" params={{ id: r.companyId }} className="text-foreground hover:text-primary">{r.companyName}</Link>
+                    <Link
+                      to="/clients/$id"
+                      params={{ id: r.companyId }}
+                      className="text-foreground hover:text-primary"
+                    >
+                      {r.companyName}
+                    </Link>
                   </td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{r.requiredBy && formatDate(r.requiredBy)}</td>
+                  <td className="px-5 py-3 text-xs text-muted-foreground">
+                    {r.requiredBy && formatDate(r.requiredBy)}
+                  </td>
                   <td className="px-5 py-3">
-                    <StatusPill tone={r.received ? "green" : "yellow"}>{r.received ? "Received" : "Missing"}</StatusPill>
+                    <StatusPill tone={r.received ? "green" : "yellow"}>
+                      {r.received ? "Received" : "Missing"}
+                    </StatusPill>
                   </td>
                   <td className="px-5 py-3 text-right">
                     {r.file && (

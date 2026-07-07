@@ -43,7 +43,6 @@ export type ReferenceDoc = {
   indexedAt?: string;
 };
 
-
 const nowIso = () => new Date("2026-07-04T09:00:00+08:00").toISOString();
 const rid = () => Math.random().toString(36).slice(2, 10);
 
@@ -186,7 +185,8 @@ const seedDocs: ReferenceDoc[] = [
     title: "HK Company Secretary SOP",
     filename: "cosec-sop-v3.pdf",
     category: "General",
-    summary: "Internal standard operating procedures for onboarding, annual filings, and client communication.",
+    summary:
+      "Internal standard operating procedures for onboarding, annual filings, and client communication.",
     updatedAt: nowIso(),
     active: true,
     sizeKb: 812,
@@ -196,7 +196,8 @@ const seedDocs: ReferenceDoc[] = [
     title: "NAR1 Filing Guide",
     filename: "nar1-filing-guide.pdf",
     category: "Annual Return",
-    summary: "Step-by-step walkthrough of preparing and filing the NAR1 form with the Companies Registry.",
+    summary:
+      "Step-by-step walkthrough of preparing and filing the NAR1 form with the Companies Registry.",
     updatedAt: nowIso(),
     active: true,
     sizeKb: 356,
@@ -206,7 +207,8 @@ const seedDocs: ReferenceDoc[] = [
     title: "KYC Document Checklist",
     filename: "kyc-checklist.pdf",
     category: "Incorporation",
-    summary: "Complete list of KYC documents required per director and shareholder for HK incorporations.",
+    summary:
+      "Complete list of KYC documents required per director and shareholder for HK incorporations.",
     updatedAt: nowIso(),
     active: true,
     sizeKb: 92,
@@ -226,7 +228,8 @@ const seedDocs: ReferenceDoc[] = [
     title: "Deregistration Playbook",
     filename: "deregistration-playbook.pdf",
     category: "Deregistration",
-    summary: "End-to-end playbook covering IRD clearance, DR1 preparation, and 6-month wait period.",
+    summary:
+      "End-to-end playbook covering IRD clearance, DR1 preparation, and 6-month wait period.",
     updatedAt: nowIso(),
     active: true,
     sizeKb: 274,
@@ -273,7 +276,6 @@ const subscribe = (l: () => void) => {
 const getSnapshot = () => state;
 const touch = () => new Date().toISOString();
 
-
 export const kbStore = {
   get: () => state,
 
@@ -293,9 +295,7 @@ export const kbStore = {
     return f.id;
   },
   updateFaq: (id: string, patch: Partial<FaqEntry>) => {
-    state.faqs = state.faqs.map((f) =>
-      f.id === id ? { ...f, ...patch, updatedAt: touch() } : f,
-    );
+    state.faqs = state.faqs.map((f) => (f.id === id ? { ...f, ...patch, updatedAt: touch() } : f));
     emit();
   },
   duplicateFaq: (id: string) => {
@@ -322,7 +322,10 @@ export const kbStore = {
         ? (r.category as FaqCategory)
         : "General";
       const tags = Array.isArray(r.tags)
-        ? r.tags.map(String).map((t) => t.trim()).filter(Boolean)
+        ? r.tags
+            .map(String)
+            .map((t) => t.trim())
+            .filter(Boolean)
         : [];
       const active = r.active === undefined ? true : Boolean(r.active);
       const dup = existing.get(key);
@@ -371,9 +374,7 @@ export const kbStore = {
     return d.id;
   },
   updateDoc: (id: string, patch: Partial<ReferenceDoc>) => {
-    state.docs = state.docs.map((d) =>
-      d.id === id ? { ...d, ...patch, updatedAt: touch() } : d,
-    );
+    state.docs = state.docs.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: touch() } : d));
     emit();
   },
   removeDoc: (id: string) => {

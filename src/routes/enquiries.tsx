@@ -19,7 +19,11 @@ export const Route = createFileRoute("/enquiries")({
   head: () => ({
     meta: [
       { title: "Enquiries — Kossilon CoSec OS" },
-      { name: "description", content: "WhatsApp enquiries with AI intent classification, quote status, and staff assignment." },
+      {
+        name: "description",
+        content:
+          "WhatsApp enquiries with AI intent classification, quote status, and staff assignment.",
+      },
     ],
   }),
   component: EnquiriesPage,
@@ -44,19 +48,24 @@ function EnquiriesPage() {
   }, [enquiryParam]);
 
   // Reset composer when switching threads
-  useEffect(() => { setComposerText(""); }, [selected]);
-
-
-
+  useEffect(() => {
+    setComposerText("");
+  }, [selected]);
 
   return (
     <>
-      <TopBar title="Enquiry Inbox" subtitle={`${enquiries.length} conversations · ${enquiries.reduce((s, e) => s + e.unread, 0)} unread`} />
+      <TopBar
+        title="Enquiry Inbox"
+        subtitle={`${enquiries.length} conversations · ${enquiries.reduce((s, e) => s + e.unread, 0)} unread`}
+      />
       <main className="flex flex-1 overflow-hidden">
         {/* Conversation list */}
         <aside className="w-80 shrink-0 overflow-y-auto border-r border-border bg-card">
           <div className="border-b border-border p-3">
-            <input placeholder="Search conversations…" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring" />
+            <input
+              placeholder="Search conversations…"
+              className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
           <ul>
             {enquiries.map((e) => {
@@ -72,13 +81,21 @@ function EnquiriesPage() {
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-foreground">{e.contactName}</p>
-                      <span className="text-[10px] text-muted-foreground">{formatDateTime(e.lastMessageAt)}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatDateTime(e.lastMessageAt)}
+                      </span>
                     </div>
-                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{e.lastMessage}</p>
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                      {e.lastMessage}
+                    </p>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <StatusPill tone="blue" className="!py-0.5 !text-[10px]">{e.intent}</StatusPill>
+                      <StatusPill tone="blue" className="!py-0.5 !text-[10px]">
+                        {e.intent}
+                      </StatusPill>
                       {e.unread > 0 && (
-                        <span className="rounded-full bg-status-green px-1.5 text-[10px] font-semibold text-white">{e.unread}</span>
+                        <span className="rounded-full bg-status-green px-1.5 text-[10px] font-semibold text-white">
+                          {e.unread}
+                        </span>
                       )}
                     </div>
                   </button>
@@ -92,7 +109,9 @@ function EnquiriesPage() {
         <section className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center justify-between border-b border-border bg-background px-5 py-3">
             <div>
-              <p className="font-display text-base font-semibold text-foreground">{active.contactName}</p>
+              <p className="font-display text-base font-semibold text-foreground">
+                {active.contactName}
+              </p>
               <p className="text-xs text-muted-foreground">{active.phone}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -109,7 +128,9 @@ function EnquiriesPage() {
                   onClick={() => setConvertOpen(true)}
                   className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent"
                 >
-                  <span className="inline-flex items-center gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Convert to client</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <UserPlus className="h-3.5 w-3.5" /> Convert to client
+                  </span>
                 </button>
               )}
               <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
@@ -120,16 +141,34 @@ function EnquiriesPage() {
 
           <div className="flex-1 space-y-3 overflow-y-auto p-6">
             {active.messages.map((m, i) => (
-              <div key={i} className={cn("flex", m.from === "staff" ? "justify-end" : "justify-start")}>
-                <div className={cn(
-                  "max-w-md rounded-2xl px-4 py-2 text-sm",
-                  m.from === "staff" ? "bg-primary text-primary-foreground" :
-                  m.from === "bot" ? "bg-status-blue-soft text-foreground ring-1 ring-status-blue/20" :
-                  "bg-card text-foreground ring-1 ring-border",
-                )}>
-                  {m.from === "bot" && <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-status-blue">AI assistant</p>}
+              <div
+                key={i}
+                className={cn("flex", m.from === "staff" ? "justify-end" : "justify-start")}
+              >
+                <div
+                  className={cn(
+                    "max-w-md rounded-2xl px-4 py-2 text-sm",
+                    m.from === "staff"
+                      ? "bg-primary text-primary-foreground"
+                      : m.from === "bot"
+                        ? "bg-status-blue-soft text-foreground ring-1 ring-status-blue/20"
+                        : "bg-card text-foreground ring-1 ring-border",
+                  )}
+                >
+                  {m.from === "bot" && (
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-status-blue">
+                      AI assistant
+                    </p>
+                  )}
                   {m.text}
-                  <p className={cn("mt-1 text-[10px]", m.from === "staff" ? "text-primary-foreground/70" : "text-muted-foreground")}>{formatDateTime(m.at)}</p>
+                  <p
+                    className={cn(
+                      "mt-1 text-[10px]",
+                      m.from === "staff" ? "text-primary-foreground/70" : "text-muted-foreground",
+                    )}
+                  >
+                    {formatDateTime(m.at)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -137,7 +176,12 @@ function EnquiriesPage() {
 
           <div className="border-t border-border bg-card p-3">
             <div className="flex items-end gap-2 rounded-lg border border-border bg-background p-2">
-              <button className="p-2 text-muted-foreground hover:text-foreground" aria-label="Attach"><Paperclip className="h-4 w-4" /></button>
+              <button
+                className="p-2 text-muted-foreground hover:text-foreground"
+                aria-label="Attach"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
               <textarea
                 rows={2}
                 value={composerText}
@@ -161,7 +205,9 @@ function EnquiriesPage() {
               <span className="inline-flex items-center gap-1">
                 <Sparkles className="h-3 w-3 text-primary" /> AI draft available in the right panel
               </span>
-              <span>Intent: {active.intent} · {(active.intentConfidence * 100).toFixed(0)}%</span>
+              <span>
+                Intent: {active.intent} · {(active.intentConfidence * 100).toFixed(0)}%
+              </span>
             </div>
           </div>
         </section>

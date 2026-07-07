@@ -49,9 +49,7 @@ export async function parseFile(file: File): Promise<ParsedDoc> {
   ) {
     text = await file.text();
   } else {
-    throw new Error(
-      `Unsupported file type: ${file.name}. Upload PDF, DOCX, TXT, MD, or CSV.`,
-    );
+    throw new Error(`Unsupported file type: ${file.name}. Upload PDF, DOCX, TXT, MD, or CSV.`);
   }
 
   text = normalize(text).slice(0, MAX_CHARS);
@@ -78,7 +76,11 @@ async function parsePdf(file: File): Promise<{ text: string; pageCount: number }
 }
 
 function normalize(s: string): string {
-  return s.replace(/\r\n/g, "\n").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return s
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function buildSummary(text: string): string {

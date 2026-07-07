@@ -27,7 +27,11 @@ const parseBool = (v: unknown): boolean | undefined => {
 
 const parseTags = (v: unknown): string[] | undefined => {
   if (v === undefined || v === null || v === "") return undefined;
-  if (Array.isArray(v)) return v.map(String).map((t) => t.trim()).filter(Boolean);
+  if (Array.isArray(v))
+    return v
+      .map(String)
+      .map((t) => t.trim())
+      .filter(Boolean);
   return String(v)
     .split(/[,;|]/)
     .map((t) => t.trim())
@@ -41,7 +45,11 @@ const parseCategory = (v: unknown): FaqCategory | undefined => {
   return match;
 };
 
-function normalizeRow(raw: Record<string, unknown>, idx: number, errors: string[]): ImportRow | null {
+function normalizeRow(
+  raw: Record<string, unknown>,
+  idx: number,
+  errors: string[],
+): ImportRow | null {
   const lower: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(raw)) lower[k.trim().toLowerCase()] = v;
   const question = String(lower.question ?? lower.q ?? "").trim();
@@ -77,15 +85,26 @@ function parseCsv(text: string): string[][] {
     const c = text[i];
     if (inQuotes) {
       if (c === '"') {
-        if (text[i + 1] === '"') { field += '"'; i++; }
-        else { inQuotes = false; }
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
       } else field += c;
     } else {
       if (c === '"') inQuotes = true;
-      else if (c === ",") { row.push(field); field = ""; }
-      else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
-      else if (c === "\r") { /* skip, handled by \n */ }
-      else field += c;
+      else if (c === ",") {
+        row.push(field);
+        field = "";
+      } else if (c === "\n") {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = "";
+      } else if (c === "\r") {
+        /* skip, handled by \n */
+      } else field += c;
     }
   }
   if (field.length > 0 || row.length > 0) {
@@ -100,13 +119,18 @@ export function parseFaqImport(text: string, filename: string): ImportResult {
   const trimmed = text.trim();
   if (!trimmed) return { rows: [], errors: ["File is empty"] };
 
-  const isJson = filename.toLowerCase().endsWith(".json") || trimmed.startsWith("[") || trimmed.startsWith("{");
+  const isJson =
+    filename.toLowerCase().endsWith(".json") || trimmed.startsWith("[") || trimmed.startsWith("{");
 
   let raw: Record<string, unknown>[] = [];
   if (isJson) {
     try {
       const parsed = JSON.parse(trimmed);
-      const arr = Array.isArray(parsed) ? parsed : Array.isArray((parsed as { faqs?: unknown }).faqs) ? (parsed as { faqs: unknown[] }).faqs : null;
+      const arr = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray((parsed as { faqs?: unknown }).faqs)
+          ? (parsed as { faqs: unknown[] }).faqs
+          : null;
       if (!arr) return { rows: [], errors: ["JSON must be an array of FAQs or { faqs: [...] }"] };
       raw = arr.filter((r): r is Record<string, unknown> => typeof r === "object" && r !== null);
     } catch (e) {
@@ -114,14 +138,17 @@ export function parseFaqImport(text: string, filename: string): ImportResult {
     }
   } else {
     const table = parseCsv(trimmed);
-    if (table.length < 2) return { rows: [], errors: ["CSV needs a header row and at least one data row"] };
+    if (table.length < 2)
+      return { rows: [], errors: ["CSV needs a header row and at least one data row"] };
     const header = table[0].map((h) => h.trim().toLowerCase());
     if (!header.includes("question") || !header.includes("answer")) {
       return { rows: [], errors: ["CSV header must include 'question' and 'answer'"] };
     }
     raw = table.slice(1).map((cols) => {
       const obj: Record<string, unknown> = {};
-      header.forEach((h, i) => { obj[h] = cols[i] ?? ""; });
+      header.forEach((h, i) => {
+        obj[h] = cols[i] ?? "";
+      });
       return obj;
     });
   }

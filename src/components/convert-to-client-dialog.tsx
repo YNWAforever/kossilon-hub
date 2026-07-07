@@ -130,7 +130,9 @@ export function ConvertToClientDialog({ enquiry, open, onOpenChange, onConverted
                 className={inputCls}
               >
                 {SERVICE_TYPES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </Field>
