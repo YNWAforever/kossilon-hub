@@ -177,6 +177,6 @@ export function logout(storage = browserStorage()): void {
   clearStoredSession(storage);
 }
 
-export function isAdmin(user: Pick<AuthSession | DemoUser, "role"> | null | undefined): boolean {
+export function isAdmin(user?: Pick<AuthSession | DemoUser, "role"> | null): boolean {
   return user?.role === "Admin";
 }

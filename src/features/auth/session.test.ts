@@ -93,6 +93,10 @@ describe("auth session adapter", () => {
     expect(isAdmin(staff)).toBe(false);
   });
 
+  it("returns false when no user is provided", () => {
+    expect(isAdmin()).toBe(false);
+  });
+
   it("clears stored session data explicitly", () => {
     const result = loginAsDemoUser("u-amy", storage, now);
     expect(result.ok).toBe(true);
