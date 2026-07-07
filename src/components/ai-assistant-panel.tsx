@@ -1,264 +1,217 @@
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { toast } from "sonner";
-import {
-  Sparkles,
-  RefreshCw,
-  ClipboardCopy,
-  ArrowDown,
-  FileText,
-  MessageSquare,
-  ClipboardList,
-  Briefcase,
-  Send,
-  ExternalLink,
-} from "lucide-react";
-import type { Enquiry } from "@/lib/mock-data";
-import { useAllCompanies } from "@/lib/clients-store";
-import { cases, daysUntil, formatDate } from "@/lib/mock-data";
-import { templateForService } from "@/lib/templates";
-import {
-  retrieveContext,
-  draftReply,
-  suggestedFaqs,
-  type CaseContext,
-  type DraftSource,
-} from "@/lib/ai-agent";
-import { useFaqs } from "@/lib/knowledge-base";
-import { StatusPill } from "@/components/status-pill";
-import { DeadlinePill } from "@/components/deadline-pill";
-import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
 
-type Props = {
+import { draftReply, retrieveContext, suggestedFaqs, type DraftReply } from "../lib/ai-agent";
+import { daysUntil, type ClientCase, type Enquiry } from "../lib/app-data";
+import { getAnnualReturnAiContext, useAnnualReturnCase } from "../lib/annual-return-store";
+import { useKnowledgeBase } from "../lib/knowledge-base";
+
+type AiAssistantPanelProps = {
   enquiry: Enquiry;
-  onInsert: (text: string) => void;
-  onSend: (text: string) => void;
+  clientCase?: ClientCase;
+  onInsert: (draft: string) => void;
+  onSend: (draft: string) => void;
 };
 
-export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
-  // Force re-run when regenerating (deterministic outputs otherwise).
-  const [nonce, setNonce] = useState(0);
-  const companies = useAllCompanies();
-  // Ensure the panel re-renders when the KB changes.
-  useFaqs();
+const annualReturnStatusLabels = {
+  preparing: "Preparing",
+  "waiting-documents": "Waiting documents",
+  "payment-pending": "Payment pending",
+  "internal-review": "Internal review",
+  "ready-to-file": "Ready to file",
+  filed: "Filed",
+} as const;
 
-  const caseCtx: CaseContext | undefined = useMemo(() => {
-    // Match by phone across contacts of any company
-    const company = companies.find((c) =>
-      c.contacts.some((ct) => ct.phone.replace(/\s+/g, "") === enquiry.phone.replace(/\s+/g, "")),
-    );
-    if (!company) return undefined;
-    const c = cases.find((k) => k.companyId === company.id);
-    if (!c) return undefined;
-    return { company, case: c, template: templateForService("Annual Return — Private Ltd") };
-  }, [companies, enquiry.phone]);
+const annualReturnPaymentStatusLabels = {
+  pending: "Pending",
+  paid: "Paid",
+  overdue: "Overdue",
+} as const;
 
-  const context = useMemo(() => {
-    void nonce;
-    return retrieveContext(enquiry);
-  }, [enquiry, nonce]);
-  const draft = useMemo(() => {
-    void nonce;
-    return draftReply(enquiry, context, caseCtx);
-  }, [enquiry, context, caseCtx, nonce]);
-  const relatedFaqs = useMemo(() => {
-    void nonce;
-    return suggestedFaqs(enquiry);
-  }, [enquiry, nonce]);
+export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAssistantPanelProps) {
+  const { faqs, referenceDocs } = useKnowledgeBase();
+  const [generation, setGeneration] = useState(1);
+  const [expandedSource, setExpandedSource] = useState<string | undefined>();
+  const annualReturnCase = useAnnualReturnCase(clientCase ? clientCase.annualReturnCaseId : "");
+  const annualReturnContext = annualReturnCase
+    ? getAnnualReturnAiContext(annualReturnCase)
+    : undefined;
+  const liveStatusLabel = annualReturnContext
+    ? annualReturnStatusLabels[annualReturnContext.status]
+    : clientCase?.status;
+  const livePaymentStatusLabel = annualReturnContext
+    ? annualReturnPaymentStatusLabels[annualReturnContext.paymentStatus]
+    : clientCase?.paymentStatus;
 
-  const copy = () => {
-    navigator.clipboard?.writeText(draft.markdown);
-    toast.success("Draft copied to clipboard");
-  };
+  const context = useMemo(
+    () => retrieveContext(enquiry, faqs, referenceDocs, clientCase),
+    [clientCase, enquiry, faqs, referenceDocs],
+  );
+  const draft = useMemo(
+    () => tweakDraft(draftReply(enquiry, context, clientCase, annualReturnContext), generation),
+    [annualReturnContext, clientCase, context, enquiry, generation],
+  );
+  const relatedFaqs = useMemo(() => suggestedFaqs(enquiry, faqs), [enquiry, faqs]);
 
   return (
-    <aside className="hidden w-80 shrink-0 overflow-y-auto border-l border-border bg-card lg:block">
-      <div className="space-y-5 p-5">
-        {/* Draft reply */}
-        <section>
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">AI draft reply</p>
-                <p className="text-[10px] text-muted-foreground">
-                  Kossilon AI · mocked · {(draft.confidence * 100).toFixed(0)}% match
-                </p>
-              </div>
+    <aside className="space-y-4">
+      <section className="rounded-lg border bg-card">
+        <div className="flex items-start justify-between gap-3 border-b p-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-semibold">AI Assistant</h2>
+              <span className="rounded-full bg-status-blue-soft px-2 py-1 text-xs font-medium text-status-blue">
+                Kossilon AI mocked
+              </span>
             </div>
-            <button
-              onClick={() => setNonce((n) => n + 1)}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Regenerate"
-              title="Regenerate"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-            </button>
+            <p className="mt-1 text-sm text-muted-foreground">Confidence {draft.confidence}%</p>
           </div>
+          <button
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={() => setGeneration((value) => value + 1)}
+          >
+            Regenerate
+          </button>
+        </div>
 
-          <div className="rounded-lg border border-border bg-background p-3">
-            <div className="prose prose-sm max-w-none text-foreground [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_strong]:text-foreground">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft.markdown}</ReactMarkdown>
+        <div className="max-w-none space-y-2 p-4 text-sm leading-6 text-foreground">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft.markdown}</ReactMarkdown>
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t p-4">
+          <button
+            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+            onClick={() => onInsert(draft.markdown)}
+          >
+            Insert into composer
+          </button>
+          <button
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={() => onSend(draft.markdown)}
+          >
+            Send as-is
+          </button>
+          <button
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={() => void navigator.clipboard?.writeText(draft.markdown)}
+          >
+            Copy
+          </button>
+        </div>
+      </section>
+
+      {clientCase ? (
+        <section className="rounded-lg border bg-card p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-semibold">Live case context</h3>
+              <p className="text-sm text-muted-foreground">{clientCase.companyName}</p>
             </div>
+            <Link
+              className="rounded-md border px-3 py-2 text-sm"
+              to="/annual-returns/$id"
+              params={{ id: clientCase.annualReturnCaseId }}
+            >
+              Open
+            </Link>
           </div>
-
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <button
-              onClick={() => {
-                onInsert(draft.markdown);
-                toast.success("Inserted into composer");
-              }}
-              className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <ArrowDown className="h-3 w-3" /> Insert
-            </button>
-            <button
-              onClick={() => {
-                onSend(draft.markdown);
-                toast.success("Reply sent");
-              }}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-[11px] font-medium hover:bg-accent"
-            >
-              <Send className="h-3 w-3" /> Send as-is
-            </button>
-            <button
-              onClick={copy}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-[11px] font-medium hover:bg-accent"
-            >
-              <ClipboardCopy className="h-3 w-3" /> Copy
-            </button>
-          </div>
+          <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt className="text-muted-foreground">Status</dt>
+              <dd className="font-medium">{liveStatusLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Days to due</dt>
+              <dd className="font-medium">
+                {annualReturnContext?.daysToDue ?? daysUntil(clientCase.dueDate)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Readiness</dt>
+              <dd className="font-medium">
+                {annualReturnContext
+                  ? `${annualReturnContext.readinessScore}%`
+                  : `${Math.max(0, 100 - clientCase.missingDocs.length * 25)}%`}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Payment</dt>
+              <dd className="font-medium">{livePaymentStatusLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Blockers</dt>
+              <dd className="font-medium">
+                {annualReturnContext?.blockers.length ?? clientCase.missingDocs.length}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Next action</dt>
+              <dd className="font-medium">
+                {annualReturnContext?.nextAction ?? "Follow up with client"}
+              </dd>
+            </div>
+          </dl>
         </section>
+      ) : null}
 
-        {/* Sources */}
-        <section>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Sources used ({draft.sources.length})
+      <section className="rounded-lg border bg-card p-4">
+        <h3 className="font-semibold">Sources used</h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {draft.sources.map((source) => (
+            <button
+              key={source.id}
+              className="rounded-full border px-3 py-1 text-left text-xs"
+              onClick={() =>
+                setExpandedSource(expandedSource === source.id ? undefined : source.id)
+              }
+            >
+              {source.type}: {source.label}
+            </button>
+          ))}
+        </div>
+        {expandedSource ? (
+          <p className="mt-3 rounded-md bg-muted p-3 text-sm text-muted-foreground">
+            {draft.sources.find((source) => source.id === expandedSource)?.preview}
           </p>
-          {draft.sources.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No matches — draft is generic.</p>
-          ) : (
-            <ul className="flex flex-wrap gap-1.5">
-              {draft.sources.map((s, i) => (
-                <SourceChip key={i} s={s} />
-              ))}
-            </ul>
-          )}
-        </section>
+        ) : null}
+      </section>
 
-        {/* Live case context */}
-        {caseCtx && (
-          <section>
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Live case context
-            </p>
-            <div className="rounded-lg border border-border bg-background p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{caseCtx.company.name}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {caseCtx.company.package} · {caseCtx.company.team}
-                  </p>
-                </div>
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-                <Stat label="Due" value={formatDate(caseCtx.case.dueDate)} />
-                <Stat label="Days left" value={`${daysUntil(caseCtx.case.dueDate)}d`} />
-                <Stat
-                  label="Missing docs"
-                  value={String(caseCtx.case.checklist.filter((i) => !i.received).length)}
-                />
-                <Stat label="Payment" value={caseCtx.company.paymentStatus} />
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <DeadlinePill dueDate={caseCtx.case.dueDate} />
-                <Link
-                  to="/annual-returns"
-                  className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-                >
-                  Open board <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Related FAQs */}
-        <section>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Related FAQs
-          </p>
-          {relatedFaqs.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No related FAQs.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {relatedFaqs.map((f) => (
-                <li key={f.id} className="rounded-md border border-border bg-background p-2">
-                  <p className="text-xs font-medium text-foreground">{f.question}</p>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-muted-foreground">{f.category}</span>
-                    <button
-                      onClick={() => {
-                        onInsert(f.answer);
-                        toast.success("Inserted answer");
-                      }}
-                      className="text-[10px] font-medium text-primary hover:underline"
-                    >
-                      Use answer →
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <p className="border-t border-border pt-3 text-[10px] text-muted-foreground">
-          Manage FAQs and reference documents in{" "}
-          <Link to="/settings" className="text-primary hover:underline">
-            Settings
-          </Link>
-          .
-        </p>
-      </div>
+      <section className="rounded-lg border bg-card p-4">
+        <h3 className="font-semibold">Related FAQs</h3>
+        <div className="mt-3 space-y-2">
+          {relatedFaqs.map((faq) => (
+            <button
+              key={faq.id}
+              className="w-full rounded-md border px-3 py-2 text-left text-sm hover:bg-muted"
+              onClick={() =>
+                onSend(`Hi ${enquiry.name},\n\n${faq.answer}\n\nRegards,\nKossilon team`)
+              }
+            >
+              {faq.question}
+            </button>
+          ))}
+        </div>
+      </section>
     </aside>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-medium tabular-nums text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function SourceChip({ s }: { s: DraftSource }) {
-  const meta =
-    s.kind === "faq"
-      ? { Icon: MessageSquare, tone: "green" as const, label: "FAQ" }
-      : s.kind === "doc"
-        ? { Icon: FileText, tone: "blue" as const, label: "Doc" }
-        : s.kind === "template"
-          ? { Icon: ClipboardList, tone: "yellow" as const, label: "Template" }
-          : { Icon: Briefcase, tone: "orange" as const, label: "Case" };
-  const { Icon } = meta;
-  return (
-    <li
-      className={cn(
-        "inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px]",
-      )}
-      title={s.label}
-    >
-      <Icon className="h-3 w-3 text-muted-foreground" />
-      <span className="font-semibold text-muted-foreground">{meta.label}</span>
-      <span className="truncate text-foreground">{s.label}</span>
-    </li>
-  );
+function tweakDraft(draft: DraftReply, generation: number): DraftReply {
+  if (generation <= 1) return draft;
+  const variants = [
+    "\n\nI can keep this moving once you confirm the above.",
+    "\n\nIf helpful, we can also summarise the outstanding items in one checklist.",
+    "\n\nWe will keep the filing timeline visible while the remaining items come in.",
+  ];
+  const variant = variants[(generation - 2) % variants.length];
+  return {
+    ...draft,
+    confidence: Math.max(68, draft.confidence - ((generation - 1) % 4)),
+    markdown: draft.markdown.replace(
+      "\n\nRegards,\nKossilon team",
+      `${variant}\n\nRegards,\nKossilon team`,
+    ),
+  };
 }

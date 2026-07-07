@@ -393,30 +393,26 @@ const checklists: ChecklistFixture[] = [
     verifiedAt: null,
     documentId: null,
   },
-  ...checklistLabels.map(
-    (label, index): ChecklistFixture => ({
-      id: fixtureId("60000000", 201 + index),
-      caseId: companies[1].caseId,
-      itemLabel: label,
-      required: true,
-      status: "Verified",
-      receivedAt: "2026-06-28T09:00:00.000Z",
-      verifiedAt: "2026-06-29T10:00:00.000Z",
-      documentId: fixtureId("50000000", 200 + index),
-    }),
-  ),
-  ...checklistLabels.map(
-    (label, index): ChecklistFixture => ({
-      id: fixtureId("60000000", 301 + index),
-      caseId: companies[2].caseId,
-      itemLabel: label,
-      required: true,
-      status: "Verified",
-      receivedAt: "2026-06-10T09:00:00.000Z",
-      verifiedAt: "2026-06-11T10:00:00.000Z",
-      documentId: fixtureId("50000000", 300 + index),
-    }),
-  ),
+  ...checklistLabels.map((label, index): ChecklistFixture => ({
+    id: fixtureId("60000000", 201 + index),
+    caseId: companies[1].caseId,
+    itemLabel: label,
+    required: true,
+    status: "Verified",
+    receivedAt: "2026-06-28T09:00:00.000Z",
+    verifiedAt: "2026-06-29T10:00:00.000Z",
+    documentId: fixtureId("50000000", 200 + index),
+  })),
+  ...checklistLabels.map((label, index): ChecklistFixture => ({
+    id: fixtureId("60000000", 301 + index),
+    caseId: companies[2].caseId,
+    itemLabel: label,
+    required: true,
+    status: "Verified",
+    receivedAt: "2026-06-10T09:00:00.000Z",
+    verifiedAt: "2026-06-11T10:00:00.000Z",
+    documentId: fixtureId("50000000", 300 + index),
+  })),
 ];
 
 const payments: PaymentFixture[] = [

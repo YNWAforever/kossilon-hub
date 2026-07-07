@@ -13,11 +13,7 @@ import type {
 } from "./types";
 
 export type WhatsAppTemplateCategory =
-  | "annual_return"
-  | "payment"
-  | "document"
-  | "signature"
-  | "general";
+  "annual_return" | "payment" | "document" | "signature" | "general";
 
 export type WhatsAppWebhookProcessingStatus = "received" | "processed" | "ignored" | "failed";
 
