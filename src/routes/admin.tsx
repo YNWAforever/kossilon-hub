@@ -133,12 +133,16 @@ function AdminPage() {
         </section>
 
         <section className="rounded-xl border border-border bg-card">
-          <div className="flex flex-wrap gap-2 border-b border-border px-5 py-4">
+          <div
+            className="flex flex-wrap gap-2 border-b border-border px-5 py-4"
+            aria-label="Admin sections"
+          >
             {adminTabs.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setTab(value)}
+                aria-pressed={tab === value}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition",
                   tab === value
@@ -158,7 +162,10 @@ function AdminPage() {
                 users={localUsers}
                 onToggleActive={toggleActive}
                 onRoleChange={changeRole}
-                onSwitchUser={(userId) => loginDemo(userId)}
+                onSwitchUser={(userId) => {
+                  const user = localUsers.find((candidate) => candidate.id === userId);
+                  if (user?.active) loginDemo(userId);
+                }}
               />
             )}
             {tab === "system" && <SystemPanel />}
@@ -206,12 +213,24 @@ function UsersPanel({
       <table className="w-full text-sm">
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
-            <th className="px-4 py-3 font-medium">User</th>
-            <th className="px-4 py-3 font-medium">Role</th>
-            <th className="px-4 py-3 font-medium">Team</th>
-            <th className="px-4 py-3 font-medium">Status</th>
-            <th className="px-4 py-3 font-medium">Last login</th>
-            <th className="px-4 py-3 font-medium">Actions</th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              User
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Role
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Team
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Status
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Last login
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -232,6 +251,7 @@ function UsersPanel({
                 <select
                   value={user.role}
                   onChange={(event) => onRoleChange(user.id, event.target.value as AuthRole)}
+                  aria-label={`Role for ${user.name}`}
                   className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="Admin">Admin</option>
@@ -253,13 +273,16 @@ function UsersPanel({
                   <button
                     type="button"
                     onClick={() => onSwitchUser(user.id)}
-                    className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent"
+                    disabled={!user.active}
+                    aria-label={`Sign in as ${user.name}`}
+                    className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Sign in as
                   </button>
                   <button
                     type="button"
                     onClick={() => onToggleActive(user.id)}
+                    aria-label={`${user.active ? "Deactivate" : "Activate"} ${user.name}`}
                     className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent"
                   >
                     {user.active ? "Deactivate" : "Activate"}
@@ -334,10 +357,18 @@ function AuditPanel() {
       <table className="w-full text-sm">
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
-            <th className="px-4 py-3 font-medium">Action</th>
-            <th className="px-4 py-3 font-medium">Area</th>
-            <th className="px-4 py-3 font-medium">Actor</th>
-            <th className="px-4 py-3 font-medium">Time</th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Action
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Area
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Actor
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Time
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
