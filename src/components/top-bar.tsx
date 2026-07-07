@@ -65,6 +65,7 @@ export function TopBar({
           onClick={signOut}
           className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
           aria-label="Sign out"
+          title="Sign out"
         >
           <LogOut className="h-4 w-4" />
         </button>

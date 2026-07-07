@@ -136,7 +136,7 @@ function ProtectedAppShell() {
     if (!isHydrated || session) return;
 
     rememberRedirectPath(redirectPath);
-    void navigate({ href: "/login" });
+    void navigate({ href: "/login", replace: true });
   }, [isHydrated, navigate, redirectPath, session]);
 
   if (!isHydrated) {
