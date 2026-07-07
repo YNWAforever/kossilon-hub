@@ -95,7 +95,7 @@ function LoginPage() {
 
           <div>
             <StatusPill tone="blue">Prototype access</StatusPill>
-            <h2 className="mt-4 font-display text-2xl font-semibold">Sign in to Compliance Core</h2>
+            <h1 className="mt-4 font-display text-2xl font-semibold">Sign in to Compliance Core</h1>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
               Use the default admin credentials or enter with a demo identity.
             </p>
@@ -125,7 +125,10 @@ function LoginPage() {
             </label>
 
             {error && (
-              <div className="flex items-start gap-2 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red">
+              <div
+                className="flex items-start gap-2 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red"
+                role="alert"
+              >
                 <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>{error}</span>
               </div>
