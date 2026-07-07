@@ -9,6 +9,7 @@ import {
   MessageCircle,
   CheckSquare,
   Users,
+  ShieldCheck,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const nav: NavItem[] = [
   { to: "/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/teams", label: "Teams", icon: Users },
+  { to: "/admin", label: "Admin", icon: ShieldCheck },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -60,7 +62,12 @@ export function AppSidebar() {
                       : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                   )}
                 >
-                  <Icon className={cn("h-4 w-4", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                  <Icon
+                    className={cn(
+                      "h-4 w-4",
+                      active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                    )}
+                  />
                   <span>{item.label}</span>
                 </Link>
               </li>
