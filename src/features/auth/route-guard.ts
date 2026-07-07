@@ -16,7 +16,7 @@ export function isPublicRoute(pathname: string): boolean {
   return pathname === "/login";
 }
 
-function normalizeRedirectPath(path: string | null): string {
+export function getSafeRedirectPath(path: string | null): string {
   if (
     !path ||
     !path.startsWith("/") ||
@@ -35,7 +35,7 @@ export function rememberRedirectPath(path: string, storage = browserStorage()): 
   if (!storage) return;
 
   try {
-    storage.setItem(AUTH_REDIRECT_STORAGE_KEY, normalizeRedirectPath(path));
+    storage.setItem(AUTH_REDIRECT_STORAGE_KEY, getSafeRedirectPath(path));
   } catch {
     // Redirect memory is optional; navigation should continue if storage is unavailable.
   }
@@ -45,7 +45,7 @@ export function consumeRedirectPath(storage = browserStorage()): string {
   if (!storage) return "/";
 
   try {
-    const path = normalizeRedirectPath(storage.getItem(AUTH_REDIRECT_STORAGE_KEY));
+    const path = getSafeRedirectPath(storage.getItem(AUTH_REDIRECT_STORAGE_KEY));
     storage.removeItem(AUTH_REDIRECT_STORAGE_KEY);
     return path;
   } catch {

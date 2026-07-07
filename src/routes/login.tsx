@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
 import { useAuth } from "@/features/auth/auth-context";
-import { consumeRedirectPath } from "@/features/auth/route-guard";
+import { consumeRedirectPath, getSafeRedirectPath } from "@/features/auth/route-guard";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -29,7 +29,9 @@ function LoginPage() {
   useEffect(() => {
     if (!isHydrated || !session) return;
 
-    const redirectPath = consumeRedirectPath();
+    const searchRedirect = new URLSearchParams(window.location.search).get("redirect");
+    const safeSearchRedirect = getSafeRedirectPath(searchRedirect);
+    const redirectPath = safeSearchRedirect === "/" ? consumeRedirectPath() : safeSearchRedirect;
     void navigate({ href: redirectPath, replace: true });
   }, [isHydrated, navigate, session]);
 

@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   createRootRouteWithContext,
+  redirect,
   useNavigate,
   useRouter,
   useRouterState,
@@ -15,7 +16,12 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
-import { isPublicRoute, rememberRedirectPath } from "@/features/auth/route-guard";
+import { getStoredSession } from "@/features/auth/session";
+import {
+  getSafeRedirectPath,
+  isPublicRoute,
+  rememberRedirectPath,
+} from "@/features/auth/route-guard";
 
 function NotFoundComponent() {
   return (
@@ -68,6 +74,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: ({ location }) => {
+    if (isPublicRoute(location.pathname) || getStoredSession()) return;
+
+    const redirectPath = getSafeRedirectPath(location.href);
+    rememberRedirectPath(redirectPath);
+    throw redirect({
+      href: `/login?redirect=${encodeURIComponent(redirectPath)}`,
+      replace: true,
+    });
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },

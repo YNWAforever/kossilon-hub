@@ -14,9 +14,11 @@ import {
   isAdmin,
   loginAsDemoUser,
   loginWithCredentials,
+  loginWithDemoUser,
   logout,
   type AuthResult,
   type AuthSession,
+  type DemoUser,
 } from "./session";
 
 type AuthContextValue = {
@@ -26,6 +28,7 @@ type AuthContextValue = {
   isCurrentUserAdmin: boolean;
   login: (email: string, password: string) => AuthResult;
   loginDemo: (userId: string) => AuthResult;
+  loginDemoUser: (user: DemoUser) => AuthResult;
   signOut: () => void;
 };
 
@@ -52,6 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return result;
   }, []);
 
+  const loginDemoUser = useCallback((user: DemoUser) => {
+    const result = loginWithDemoUser(user);
+    if (result.ok) setSession(result.session);
+    return result;
+  }, []);
+
   const signOut = useCallback(() => {
     logout();
     setSession(null);
@@ -65,9 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isCurrentUserAdmin: isAdmin(session),
       login,
       loginDemo,
+      loginDemoUser,
       signOut,
     }),
-    [isHydrated, login, loginDemo, session, signOut],
+    [isHydrated, login, loginDemo, loginDemoUser, session, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

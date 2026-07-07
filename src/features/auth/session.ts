@@ -107,7 +107,13 @@ function isAuthSession(value: unknown): value is AuthSession {
 export function getStoredSession(storage = browserStorage()): AuthSession | null {
   if (!storage) return null;
 
-  const raw = storage.getItem(AUTH_SESSION_STORAGE_KEY);
+  let raw: string | null;
+  try {
+    raw = storage.getItem(AUTH_SESSION_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+
   if (!raw) return null;
 
   try {
@@ -124,12 +130,22 @@ export function getStoredSession(storage = browserStorage()): AuthSession | null
 
 export function storeSession(session: AuthSession, storage = browserStorage()): void {
   if (!storage) return;
-  storage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+
+  try {
+    storage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // Local demo auth should not crash if browser storage is unavailable.
+  }
 }
 
 export function clearStoredSession(storage = browserStorage()): void {
   if (!storage) return;
-  storage.removeItem(AUTH_SESSION_STORAGE_KEY);
+
+  try {
+    storage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  } catch {
+    // Local demo auth should not crash if browser storage is unavailable.
+  }
 }
 
 export function loginWithCredentials(
@@ -163,6 +179,20 @@ export function loginAsDemoUser(
   const user = demoUsers.find((candidate) => candidate.active && candidate.id === userId);
 
   if (!user) {
+    return { ok: false, error: "Demo user is unavailable." };
+  }
+
+  const session = toSession(user, now());
+  storeSession(session, storage);
+  return { ok: true, session };
+}
+
+export function loginWithDemoUser(
+  user: DemoUser,
+  storage = browserStorage(),
+  now: NowProvider = systemNow,
+): AuthResult {
+  if (!user.active) {
     return { ok: false, error: "Demo user is unavailable." };
   }
 

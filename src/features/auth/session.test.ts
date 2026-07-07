@@ -7,6 +7,7 @@ import {
   isAdmin,
   loginAsDemoUser,
   loginWithCredentials,
+  loginWithDemoUser,
   logout,
 } from "./session";
 
@@ -23,6 +24,20 @@ class MemoryStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem
 
   removeItem(key: string) {
     this.values.delete(key);
+  }
+}
+
+class ThrowingStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem"> {
+  getItem(): string | null {
+    throw new Error("Storage read unavailable");
+  }
+
+  setItem(): void {
+    throw new Error("Storage write unavailable");
+  }
+
+  removeItem(): void {
+    throw new Error("Storage removal unavailable");
   }
 }
 
@@ -69,6 +84,28 @@ describe("auth session adapter", () => {
     });
   });
 
+  it("signs in with a locally edited demo user", () => {
+    const mei = demoUsers.find((user) => user.id === "u-mei")!;
+    const result = loginWithDemoUser({ ...mei, role: "Manager" }, storage, now);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.session).toMatchObject({
+      id: "u-mei",
+      name: "Mei Lam",
+      role: "Manager",
+    });
+  });
+
+  it("rejects locally inactive demo users", () => {
+    const mei = demoUsers.find((user) => user.id === "u-mei")!;
+
+    expect(loginWithDemoUser({ ...mei, active: false }, storage, now)).toEqual({
+      ok: false,
+      error: "Demo user is unavailable.",
+    });
+  });
+
   it("clears the session on logout", () => {
     const result = loginAsDemoUser("u-amy", storage, now);
     expect(result.ok).toBe(true);
@@ -104,5 +141,16 @@ describe("auth session adapter", () => {
     clearStoredSession(storage);
 
     expect(storage.getItem(AUTH_SESSION_STORAGE_KEY)).toBeNull();
+  });
+
+  it("handles unavailable browser storage without throwing", () => {
+    const throwingStorage = new ThrowingStorage();
+
+    expect(getStoredSession(throwingStorage)).toBeNull();
+    expect(() =>
+      loginWithCredentials("admin@kossilon.test", "admin-demo", throwingStorage, now),
+    ).not.toThrow();
+    expect(() => logout(throwingStorage)).not.toThrow();
+    expect(() => clearStoredSession(throwingStorage)).not.toThrow();
   });
 });

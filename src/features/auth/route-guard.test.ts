@@ -4,6 +4,7 @@ import {
   consumeRedirectPath,
   isPublicRoute,
   rememberRedirectPath,
+  getSafeRedirectPath,
 } from "./route-guard";
 
 class MemoryStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem"> {
@@ -74,6 +75,13 @@ describe("auth route guard helpers", () => {
       expect(consumeRedirectPath(storage)).toBe("/");
       expect(storage.getItem(AUTH_REDIRECT_STORAGE_KEY)).toBeNull();
     }
+  });
+
+  it("returns safe redirect paths for URL search redirects", () => {
+    expect(getSafeRedirectPath("/admin")).toBe("/admin");
+    expect(getSafeRedirectPath("/annual-returns?risk=red")).toBe("/annual-returns?risk=red");
+    expect(getSafeRedirectPath("/login?redirect=/admin")).toBe("/");
+    expect(getSafeRedirectPath("https://example.com/phish")).toBe("/");
   });
 
   it("normalizes empty stored redirects when consuming", () => {

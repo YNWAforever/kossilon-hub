@@ -69,7 +69,7 @@ const auditRows = [
 ];
 
 function AdminPage() {
-  const { session, loginDemo } = useAuth();
+  const { session, loginDemoUser } = useAuth();
   const [tab, setTab] = useState<AdminTab>("users");
   const [localUsers, setLocalUsers] = useState<DemoUser[]>(demoUsers);
   const canAdmin = isAdmin(session);
@@ -164,7 +164,7 @@ function AdminPage() {
                 onRoleChange={changeRole}
                 onSwitchUser={(userId) => {
                   const user = localUsers.find((candidate) => candidate.id === userId);
-                  if (user?.active) loginDemo(userId);
+                  if (user?.active) loginDemoUser(user);
                 }}
               />
             )}

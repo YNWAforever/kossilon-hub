@@ -14,15 +14,10 @@ import { KpiCard } from "@/components/kpi-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
 import type { AnnualReturnCase, AnnualReturnStatus } from "@/features/annual-return/types";
+import { useAuth } from "@/features/auth/auth-context";
 import { loadDashboardData, type DashboardData } from "@/features/dashboard/dashboard-data";
 import type { StatusTone } from "@/lib/status";
-import {
-  dashboardMetrics,
-  teamWorkloadRows,
-  enquiries,
-  currentUser,
-  formatDate,
-} from "@/lib/mock-data";
+import { dashboardMetrics, teamWorkloadRows, enquiries, formatDate } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
   loader: () => loadDashboardData(),
@@ -40,6 +35,7 @@ export const Route = createFileRoute("/")({
 });
 
 function DashboardPage() {
+  const { session } = useAuth();
   const {
     metrics: realMetrics,
     upcomingAnnualReturns,
@@ -62,7 +58,7 @@ function DashboardPage() {
     <>
       <TopBar
         title="Dashboard"
-        subtitle={`Good morning, ${currentUser.name.split(" ")[0]} — you have ${m.myCases} active cases.`}
+        subtitle={`Good morning, ${session?.name.split(" ")[0] ?? "there"} — you have ${m.myCases} active cases.`}
       />
 
       <main className="flex-1 space-y-6 p-6">
