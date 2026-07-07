@@ -80,6 +80,29 @@ const baseCase: AnnualReturnCase = {
   timeline: [],
 };
 
+function makeDeltaReadyForPacketSubmission(): void {
+  markDocumentReceived("ar-delta", "signed-nar1");
+  markDocumentReceived("ar-delta", "scr");
+  updatePaymentStatus("ar-delta", "paid");
+  updateSignatureStatus("ar-delta", "received");
+  completeChecklistItem("ar-delta", "collect-signed-nar1");
+  completeChecklistItem("ar-delta", "verify-scr");
+  completeChecklistItem("ar-delta", "confirm-payment");
+  completeChecklistItem("ar-delta", "submit-registry");
+  updateReviewStatus("ar-delta", "approved");
+
+  for (const requirementId of [
+    "nar1-draft",
+    "company-particulars",
+    "scr-confirmed",
+    "signed-nar1-attached",
+    "payment-proof-checked",
+    "internal-filing-review",
+  ]) {
+    togglePacketRequirement("ar-delta", requirementId);
+  }
+}
+
 describe("annual return derived helpers", () => {
   it("prioritizes overdue risk before blocker risk", () => {
     expect(getRiskLevel(baseCase, new Date("2026-07-20T00:00:00"))).toBe("overdue");
@@ -273,19 +296,33 @@ describe("annual return store mutations", () => {
     });
   });
 
-  it("files a case once existing mutations make it ready", () => {
-    markDocumentReceived("ar-delta", "signed-nar1");
-    markDocumentReceived("ar-delta", "scr");
-    updatePaymentStatus("ar-delta", "paid");
-    updateSignatureStatus("ar-delta", "received");
-    completeChecklistItem("ar-delta", "collect-signed-nar1");
-    completeChecklistItem("ar-delta", "verify-scr");
-    completeChecklistItem("ar-delta", "confirm-payment");
-    completeChecklistItem("ar-delta", "submit-registry");
-    updateReviewStatus("ar-delta", "approved");
+  it("refuses to file a ready case directly before a receipt is accepted", () => {
+    makeDeltaReadyForPacketSubmission();
 
     const readyCase = getAnnualReturnCaseById("ar-delta");
     expect(readyCase && getReadinessScore(readyCase)).toBe(100);
+
+    expect(markFiled("ar-delta")).toEqual({
+      ok: false,
+      reason: "Filing receipt must be accepted before marking filed",
+    });
+  });
+
+  it("blocks receipt acceptance before packet submission", () => {
+    expect(acceptFilingReceipt("ar-delta")).toEqual({
+      ok: false,
+      reason: "Packet must be submitted before receipt acceptance",
+    });
+  });
+
+  it("marks a case filed once a receipt has been accepted", () => {
+    makeDeltaReadyForPacketSubmission();
+
+    const submitted = submitFilingPacket("ar-delta");
+    expect(submitted.ok).toBe(true);
+
+    const accepted = acceptFilingReceipt("ar-delta");
+    expect(accepted.ok).toBe(true);
 
     expect(markFiled("ar-delta")).toEqual({ ok: true });
 
@@ -293,22 +330,14 @@ describe("annual return store mutations", () => {
 
     expect(filedCase?.status).toBe("filed");
     expect(filedCase?.timeline[0]).toMatchObject({
-      label: "Case filed",
-      detail: "Annual return filed with Companies Registry.",
+      label: "Filing receipt accepted",
     });
   });
 
   it("ignores readiness mutations after a case is filed", () => {
-    markDocumentReceived("ar-delta", "signed-nar1");
-    markDocumentReceived("ar-delta", "scr");
-    updatePaymentStatus("ar-delta", "paid");
-    updateSignatureStatus("ar-delta", "received");
-    completeChecklistItem("ar-delta", "collect-signed-nar1");
-    completeChecklistItem("ar-delta", "verify-scr");
-    completeChecklistItem("ar-delta", "confirm-payment");
-    completeChecklistItem("ar-delta", "submit-registry");
-    updateReviewStatus("ar-delta", "approved");
-    markFiled("ar-delta");
+    makeDeltaReadyForPacketSubmission();
+    submitFilingPacket("ar-delta");
+    acceptFilingReceipt("ar-delta");
 
     const before = getAnnualReturnCaseById("ar-delta");
     const timelineLength = before?.timeline.length;
@@ -380,26 +409,7 @@ describe("annual return store mutations", () => {
   });
 
   it("submits a complete packet, accepts the receipt, and marks the case filed", () => {
-    markDocumentReceived("ar-delta", "signed-nar1");
-    markDocumentReceived("ar-delta", "scr");
-    updatePaymentStatus("ar-delta", "paid");
-    updateSignatureStatus("ar-delta", "received");
-    completeChecklistItem("ar-delta", "collect-signed-nar1");
-    completeChecklistItem("ar-delta", "verify-scr");
-    completeChecklistItem("ar-delta", "confirm-payment");
-    completeChecklistItem("ar-delta", "submit-registry");
-    updateReviewStatus("ar-delta", "approved");
-
-    for (const requirementId of [
-      "nar1-draft",
-      "company-particulars",
-      "scr-confirmed",
-      "signed-nar1-attached",
-      "payment-proof-checked",
-      "internal-filing-review",
-    ]) {
-      togglePacketRequirement("ar-delta", requirementId);
-    }
+    makeDeltaReadyForPacketSubmission();
 
     const submitted = submitFilingPacket("ar-delta");
     expect(submitted.ok).toBe(true);
@@ -419,16 +429,9 @@ describe("annual return store mutations", () => {
   });
 
   it("ignores packet and follow-up mutations after a case is filed", () => {
-    markDocumentReceived("ar-delta", "signed-nar1");
-    markDocumentReceived("ar-delta", "scr");
-    updatePaymentStatus("ar-delta", "paid");
-    updateSignatureStatus("ar-delta", "received");
-    completeChecklistItem("ar-delta", "collect-signed-nar1");
-    completeChecklistItem("ar-delta", "verify-scr");
-    completeChecklistItem("ar-delta", "confirm-payment");
-    completeChecklistItem("ar-delta", "submit-registry");
-    updateReviewStatus("ar-delta", "approved");
-    markFiled("ar-delta");
+    makeDeltaReadyForPacketSubmission();
+    submitFilingPacket("ar-delta");
+    acceptFilingReceipt("ar-delta");
 
     const before = getAnnualReturnCaseById("ar-delta");
     const timelineLength = before?.timeline.length;

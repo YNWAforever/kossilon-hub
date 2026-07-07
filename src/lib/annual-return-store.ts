@@ -1074,8 +1074,16 @@ export function markFiled(caseId: string): { ok: false; reason: string } | { ok:
     return { ok: false, reason: "Case not found" };
   }
 
+  if (caseItem.status === "filed") {
+    return { ok: true };
+  }
+
   if (getReadinessScore(caseItem) < 100) {
     return { ok: false, reason: "Case is not ready to file" };
+  }
+
+  if (!caseItem.receipt) {
+    return { ok: false, reason: "Filing receipt must be accepted before marking filed" };
   }
 
   replaceCase(caseId, (currentCase) =>
