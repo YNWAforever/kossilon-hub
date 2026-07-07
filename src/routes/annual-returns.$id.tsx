@@ -113,6 +113,7 @@ function AnnualReturnDetailRoute() {
   const isFiled = caseItem.status === "filed";
   const packetReadiness = getPacketReadiness(caseItem);
   const packetStatus = getPacketStatus(caseItem);
+  const packetLocked = isFiled || Boolean(caseItem.submission);
   const followUps = getFollowUpDrafts(caseItem);
 
   return (
@@ -182,7 +183,8 @@ function AnnualReturnDetailRoute() {
               </span>
               <select
                 aria-label="Assign owner"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                disabled={isFiled}
                 value={caseItem.owner}
                 onChange={(event) => assignOwner(caseItem.id, event.target.value)}
               >
@@ -326,7 +328,7 @@ function AnnualReturnDetailRoute() {
                 <button
                   key={requirement.id}
                   className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled={isFiled}
+                  disabled={packetLocked}
                   onClick={() => {
                     setPacketWarning(undefined);
                     togglePacketRequirement(caseItem.id, requirement.id);
@@ -470,13 +472,16 @@ function AnnualReturnDetailRoute() {
 
             <div className="mt-4 space-y-3">
               <textarea
-                className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm"
+                aria-readonly={isFiled}
+                className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm read-only:cursor-not-allowed read-only:bg-muted read-only:text-muted-foreground"
+                readOnly={isFiled}
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
               />
               <div className="flex justify-end">
                 <button
-                  className="rounded-md border px-3 py-2 text-sm"
+                  className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  disabled={isFiled || !note.trim()}
                   onClick={() => {
                     if (!note.trim()) return;
                     addCaseNote(caseItem.id, "Operations", note.trim());

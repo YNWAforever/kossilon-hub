@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import {
@@ -60,11 +60,12 @@ function WhatsAppAutomationRoute() {
       ) : null}
 
       <section className="rounded-lg border bg-card">
-        <div className="hidden grid-cols-[1.2fr_1fr_140px_120px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[1.2fr_1fr_140px_120px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
           <span>Company</span>
           <span>Recipient</span>
           <span>Type</span>
           <span>Timing</span>
+          <span>Status</span>
           <span>Preview</span>
           <span className="text-right">Action</span>
         </div>
@@ -103,7 +104,7 @@ function AutomationRow({
   const disabled = draft.status !== "draft";
 
   return (
-    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_140px_120px_minmax(0,1.5fr)_120px] lg:items-center">
+    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_140px_120px_110px_minmax(0,1.5fr)_120px] lg:items-center">
       <div className="min-w-0">
         <Link
           className="font-medium hover:underline"
@@ -117,6 +118,16 @@ function AutomationRow({
       <Field label="Recipient" value={`${draft.recipientName} / ${draft.phone}`} />
       <Field label="Type" value={followUpTypeLabel(draft.type)} />
       <Field label="Timing" value={draft.suggestedTiming} />
+      <Field
+        label="Status"
+        value={
+          <span
+            className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${statusToneClass(draft.status)}`}
+          >
+            {statusLabel(draft.status)}
+          </span>
+        }
+      />
       <Field label="Preview" value={draft.messagePreview} />
       <div className="flex justify-start lg:justify-end">
         <button
@@ -132,7 +143,7 @@ function AutomationRow({
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-0">
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
@@ -151,4 +162,20 @@ function followUpTypeLabel(type: AnnualReturnFollowUpDraft["type"]): string {
     "review-escalation": "Review",
     "packet-reminder": "Packet",
   }[type];
+}
+
+function statusLabel(status: AnnualReturnFollowUpDraft["status"]): string {
+  return {
+    draft: "Draft",
+    sent: "Sent",
+    blocked: "Blocked",
+  }[status];
+}
+
+function statusToneClass(status: AnnualReturnFollowUpDraft["status"]): string {
+  return {
+    draft: "bg-slate-100 text-slate-700",
+    sent: "bg-green-100 text-green-700",
+    blocked: "bg-yellow-100 text-yellow-800",
+  }[status];
 }

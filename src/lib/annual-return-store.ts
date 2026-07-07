@@ -60,6 +60,13 @@ export type AnnualReturnFollowUpDraft = {
   blockedReason?: string;
 };
 
+export type AnnualReturnSentFollowUp = Omit<
+  AnnualReturnFollowUpDraft,
+  "status" | "blockedReason"
+> & {
+  sentAt: string;
+};
+
 export type AnnualReturnDocument = {
   id: string;
   label: string;
@@ -107,6 +114,7 @@ export type AnnualReturnCase = {
   submission?: AnnualReturnSubmission;
   receipt?: AnnualReturnReceipt;
   sentFollowUpIds: string[];
+  sentFollowUps: AnnualReturnSentFollowUp[];
   notes: AnnualReturnNote[];
   timeline: AnnualReturnTimelineEvent[];
 };
@@ -161,6 +169,7 @@ function cloneAnnualReturnCase(caseItem: AnnualReturnCase): AnnualReturnCase {
     submission: caseItem.submission ? { ...caseItem.submission } : undefined,
     receipt: caseItem.receipt ? { ...caseItem.receipt } : undefined,
     sentFollowUpIds: [...caseItem.sentFollowUpIds],
+    sentFollowUps: caseItem.sentFollowUps.map((followUp) => ({ ...followUp })),
     notes: caseItem.notes.map((note) => ({ ...note })),
     timeline: caseItem.timeline.map((event) => ({ ...event })),
   };
@@ -319,6 +328,7 @@ function buildCaseFromClient(clientId: string, owner: string): AnnualReturnCase 
           }
         : undefined,
     sentFollowUpIds: [],
+    sentFollowUps: [],
     notes: [],
     timeline: [
       {
@@ -408,6 +418,7 @@ const seedAnnualReturnCases: AnnualReturnCase[] = [
     reviewStatus: "not-started",
     packetRequirements: createDefaultPacketRequirements(),
     sentFollowUpIds: [],
+    sentFollowUps: [],
     notes: [],
     timeline: [
       {
@@ -450,6 +461,7 @@ const seedAnnualReturnCases: AnnualReturnCase[] = [
     reviewStatus: "not-started",
     packetRequirements: createDefaultPacketRequirements(),
     sentFollowUpIds: [],
+    sentFollowUps: [],
     notes: [],
     timeline: [
       {
@@ -702,26 +714,54 @@ function followUpMessagePreview(
   return `Hi ${caseItem.contactName}, this is Kossilon. For ${caseItem.companyName}, we still need ${label.toLowerCase()} before we can complete the annual return filing.`;
 }
 
+function hasSentFollowUp(caseItem: AnnualReturnCase, draftId: string): boolean {
+  return (
+    caseItem.sentFollowUpIds.includes(draftId) ||
+    caseItem.sentFollowUps.some((followUp) => followUp.id === draftId)
+  );
+}
+
+function toSentFollowUpDraft(followUp: AnnualReturnSentFollowUp): AnnualReturnFollowUpDraft {
+  return {
+    id: followUp.id,
+    caseId: followUp.caseId,
+    companyName: followUp.companyName,
+    type: followUp.type,
+    recipientName: followUp.recipientName,
+    phone: followUp.phone,
+    suggestedTiming: followUp.suggestedTiming,
+    messagePreview: followUp.messagePreview,
+    status: "sent",
+  };
+}
+
 export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollowUpDraft[] {
+  const sentFollowUpsById = new Map(
+    caseItem.sentFollowUps.map((followUp) => [followUp.id, followUp] as const),
+  );
+
   const caseBlockerDrafts = getBlockers(caseItem).map((blocker) => {
     const type = followUpTypeForBlocker(blocker);
     const id = `follow-up-${caseItem.id}-${blocker.id}`;
-    const sent = caseItem.sentFollowUpIds.includes(id);
+    const sent = hasSentFollowUp(caseItem, id);
     const blockedReason =
       caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const sentFollowUp = sentFollowUpsById.get(id);
 
-    return {
-      id,
-      caseId: caseItem.id,
-      companyName: caseItem.companyName,
-      type,
-      recipientName: type === "review-escalation" ? caseItem.owner : caseItem.contactName,
-      phone: caseItem.phone,
-      suggestedTiming: followUpTiming(type),
-      messagePreview: followUpMessagePreview(caseItem, type, blocker.label),
-      status: sent ? "sent" : blockedReason ? "blocked" : "draft",
-      blockedReason,
-    } satisfies AnnualReturnFollowUpDraft;
+    return sentFollowUp
+      ? toSentFollowUpDraft(sentFollowUp)
+      : ({
+          id,
+          caseId: caseItem.id,
+          companyName: caseItem.companyName,
+          type,
+          recipientName: type === "review-escalation" ? caseItem.owner : caseItem.contactName,
+          phone: caseItem.phone,
+          suggestedTiming: followUpTiming(type),
+          messagePreview: followUpMessagePreview(caseItem, type, blocker.label),
+          status: sent ? "sent" : blockedReason ? "blocked" : "draft",
+          blockedReason,
+        } satisfies AnnualReturnFollowUpDraft);
   });
 
   const packetDrafts = getPacketBlockers(caseItem).map((label) => {
@@ -729,25 +769,33 @@ export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollo
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")}`;
-    const sent = caseItem.sentFollowUpIds.includes(id);
+    const sent = hasSentFollowUp(caseItem, id);
     const blockedReason =
       caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const sentFollowUp = sentFollowUpsById.get(id);
 
-    return {
-      id,
-      caseId: caseItem.id,
-      companyName: caseItem.companyName,
-      type: "packet-reminder",
-      recipientName: caseItem.owner,
-      phone: caseItem.phone,
-      suggestedTiming: followUpTiming("packet-reminder"),
-      messagePreview: `${caseItem.owner}, packet item "${label}" is still open for ${caseItem.companyName}.`,
-      status: sent ? "sent" : blockedReason ? "blocked" : "draft",
-      blockedReason,
-    } satisfies AnnualReturnFollowUpDraft;
+    return sentFollowUp
+      ? toSentFollowUpDraft(sentFollowUp)
+      : ({
+          id,
+          caseId: caseItem.id,
+          companyName: caseItem.companyName,
+          type: "packet-reminder",
+          recipientName: caseItem.owner,
+          phone: caseItem.phone,
+          suggestedTiming: followUpTiming("packet-reminder"),
+          messagePreview: `${caseItem.owner}, packet item "${label}" is still open for ${caseItem.companyName}.`,
+          status: sent ? "sent" : blockedReason ? "blocked" : "draft",
+          blockedReason,
+        } satisfies AnnualReturnFollowUpDraft);
   });
 
-  return [...caseBlockerDrafts, ...packetDrafts];
+  const activeDraftIds = new Set([...caseBlockerDrafts, ...packetDrafts].map((draft) => draft.id));
+  const historicalSentDrafts = caseItem.sentFollowUps
+    .filter((followUp) => !activeDraftIds.has(followUp.id))
+    .map(toSentFollowUpDraft);
+
+  return [...caseBlockerDrafts, ...packetDrafts, ...historicalSentDrafts];
 }
 
 export function canSendFollowUp(
@@ -756,7 +804,7 @@ export function canSendFollowUp(
 ): { ok: true } | { ok: false; reason: string } {
   if (caseItem.status === "filed")
     return { ok: false, reason: "Filed cases cannot send follow-ups" };
-  if (caseItem.sentFollowUpIds.includes(draft.id) || draft.status === "sent") {
+  if (hasSentFollowUp(caseItem, draft.id) || draft.status === "sent") {
     return { ok: false, reason: "Follow-up has already been sent" };
   }
   const activeDraft = getFollowUpDrafts(caseItem).find((candidate) => candidate.id === draft.id);
@@ -909,6 +957,7 @@ export function updateReviewStatus(caseId: string, reviewStatus: AnnualReturnRev
 
 export function assignOwner(caseId: string, owner: string): void {
   replaceCase(caseId, (caseItem) => {
+    if (caseItem.status === "filed") return caseItem;
     if (caseItem.owner === owner) return caseItem;
 
     return appendTimeline(
@@ -921,10 +970,13 @@ export function assignOwner(caseId: string, owner: string): void {
 
 export function addCaseNote(caseId: string, author: string, body: string): void {
   replaceCase(caseId, (caseItem) => {
+    if (caseItem.status === "filed") return caseItem;
+    if (!body.trim()) return caseItem;
+
     const note: AnnualReturnNote = {
       id: `note-${caseItem.id}-${Date.now()}`,
       author,
-      body,
+      body: body.trim(),
       createdAt: nowStamp(),
     };
 
@@ -939,7 +991,7 @@ export function addCaseNote(caseId: string, author: string, body: string): void 
 export function togglePacketRequirement(caseId: string, requirementId: string): void {
   replaceCase(caseId, (caseItem) => {
     const requirement = caseItem.packetRequirements.find((item) => item.id === requirementId);
-    if (caseItem.status === "filed") return caseItem;
+    if (caseItem.status === "filed" || caseItem.submission) return caseItem;
     if (!requirement) return caseItem;
 
     const complete = !requirement.complete;
@@ -987,6 +1039,20 @@ export function sendFollowUpNow(
       {
         ...currentCase,
         sentFollowUpIds: [...currentCase.sentFollowUpIds, draft.id],
+        sentFollowUps: [
+          ...currentCase.sentFollowUps,
+          {
+            id: draft.id,
+            caseId: draft.caseId,
+            companyName: draft.companyName,
+            type: draft.type,
+            recipientName: draft.recipientName,
+            phone: draft.phone,
+            suggestedTiming: draft.suggestedTiming,
+            messagePreview: draft.messagePreview,
+            sentAt: nowStamp(),
+          },
+        ],
       },
       "WhatsApp reminder sent",
       `${followUpTypeLabel(draft.type)} sent to ${draft.recipientName}: ${draft.messagePreview}`,

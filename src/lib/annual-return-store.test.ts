@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   acceptFilingReceipt,
+  addCaseNote,
+  assignOwner,
   canSendFollowUp,
   completeChecklistItem,
   getAnnualReturnCaseById,
@@ -81,6 +83,7 @@ const baseCase: AnnualReturnCase = {
     },
   ],
   sentFollowUpIds: [],
+  sentFollowUps: [],
   notes: [],
   timeline: [],
 };
@@ -227,6 +230,7 @@ describe("annual return filing packet helpers", () => {
       ...baseCase,
       status: "filed",
       sentFollowUpIds: [],
+      sentFollowUps: [],
     };
     const [draft] = getFollowUpDrafts(baseCase);
 
@@ -405,6 +409,32 @@ describe("annual return store mutations", () => {
     });
   });
 
+  it("keeps sent follow-ups visible after the original blocker is resolved", () => {
+    const before = getAnnualReturnCaseById("ar-delta");
+    const draft = before?.documents[0]
+      ? getFollowUpDrafts(before).find(
+          (candidate) => candidate.id === "follow-up-ar-delta-document-signed-nar1",
+        )
+      : undefined;
+
+    expect(draft).toBeDefined();
+    expect(draft && sendFollowUpNow("ar-delta", draft.id)).toEqual({ ok: true });
+
+    markDocumentReceived("ar-delta", "signed-nar1");
+
+    const after = getAnnualReturnCaseById("ar-delta");
+    const persistedDraft = after
+      ? getFollowUpDrafts(after).find((candidate) => candidate.id === draft?.id)
+      : undefined;
+
+    expect(persistedDraft).toMatchObject({
+      id: draft?.id,
+      status: "sent",
+      recipientName: draft?.recipientName,
+      messagePreview: draft?.messagePreview,
+    });
+  });
+
   it("blocks packet submission until case and packet are complete", () => {
     expect(submitFilingPacket("ar-delta")).toEqual({
       ok: false,
@@ -433,6 +463,21 @@ describe("annual return store mutations", () => {
     });
   });
 
+  it("locks packet requirements once a packet has been submitted", () => {
+    makeDeltaReadyForPacketSubmission();
+    submitFilingPacket("ar-delta");
+
+    const before = getAnnualReturnCaseById("ar-delta");
+    const timelineLength = before?.timeline.length;
+
+    togglePacketRequirement("ar-delta", "nar1-draft");
+
+    const after = getAnnualReturnCaseById("ar-delta");
+
+    expect(after?.packetRequirements.find((item) => item.id === "nar1-draft")?.complete).toBe(true);
+    expect(after?.timeline.length).toBe(timelineLength);
+  });
+
   it("ignores packet and follow-up mutations after a case is filed", () => {
     makeDeltaReadyForPacketSubmission();
     submitFilingPacket("ar-delta");
@@ -455,6 +500,24 @@ describe("annual return store mutations", () => {
       ok: false,
       reason: "Filed cases cannot be submitted",
     });
+    expect(after?.timeline.length).toBe(timelineLength);
+  });
+
+  it("ignores owner and note mutations after a case is filed", () => {
+    makeDeltaReadyForPacketSubmission();
+    submitFilingPacket("ar-delta");
+    acceptFilingReceipt("ar-delta");
+
+    const before = getAnnualReturnCaseById("ar-delta");
+    const timelineLength = before?.timeline.length;
+
+    assignOwner("ar-delta", "Operations");
+    addCaseNote("ar-delta", "Operations", "Filed follow-up note");
+
+    const after = getAnnualReturnCaseById("ar-delta");
+
+    expect(after?.owner).toBe(before?.owner);
+    expect(after?.notes).toEqual(before?.notes);
     expect(after?.timeline.length).toBe(timelineLength);
   });
 });

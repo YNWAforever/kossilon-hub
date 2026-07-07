@@ -119,12 +119,13 @@ function AnnualReturnsRoute() {
           </select>
         </div>
 
-        <div className="hidden grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_110px_95px_1fr_95px_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_180px_110px_95px_1fr_95px_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
           <span>Company</span>
           <span>Owner</span>
           <span>Risk</span>
           <span>Due</span>
           <span>Case</span>
+          <span>Blockers</span>
           <span>Packet</span>
           <span>Follow-ups</span>
           <span>Next action</span>
@@ -176,9 +177,16 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
   const packetStatus = getPacketStatus(caseItem);
   const followUps = getFollowUpDrafts(caseItem);
   const openFollowUps = followUps.filter((draft) => draft.status === "draft").length;
+  const blockers = getBlockers(caseItem);
+  const blockerSummary =
+    blockers.length === 0
+      ? "None"
+      : blockers.length === 1
+        ? blockers[0].label
+        : `${blockers[0].label} +${blockers.length - 1}`;
 
   return (
-    <div className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_110px_95px_1fr_95px_72px] lg:items-center">
+    <div className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_180px_110px_95px_1fr_95px_72px] lg:items-center">
       <div className="min-w-0">
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
@@ -188,6 +196,7 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
       <Field label="Risk" value={<RiskPill risk={risk} />} />
       <Field label="Due" value={formatDue(caseItem.dueDate, dueInDays)} />
       <Field label="Case" value={`${readiness}%`} />
+      <Field label="Blockers" value={blockerSummary} />
       <Field label="Packet" value={`${packetLabel(packetStatus)} / ${packetReadiness}%`} />
       <Field label="Follow-ups" value={openFollowUps === 0 ? "None" : `${openFollowUps} open`} />
       <Field label="Next action" value={nextAction} />
