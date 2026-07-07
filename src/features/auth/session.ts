@@ -24,9 +24,7 @@ export type AuthSession = {
   signedInAt: string;
 };
 
-export type AuthResult =
-  | { ok: true; session: AuthSession }
-  | { ok: false; error: string };
+export type AuthResult = { ok: true; session: AuthSession } | { ok: false; error: string };
 
 type SessionStorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 type NowProvider = () => string;
