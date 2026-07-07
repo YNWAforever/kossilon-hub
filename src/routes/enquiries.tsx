@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
@@ -7,8 +7,17 @@ import { ConvertToClientDialog } from "@/components/convert-to-client-dialog";
 import { AiAssistantPanel } from "@/components/ai-assistant-panel";
 import { enquiries, formatDateTime, teamMembers } from "@/lib/mock-data";
 import { useEnquiryConversion } from "@/lib/clients-store";
-import { UserPlus, Send, Paperclip, CheckCircle2, Sparkles } from "lucide-react";
+import {
+  UserPlus,
+  Send,
+  Paperclip,
+  CheckCircle2,
+  Sparkles,
+  AlertTriangle,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sortEnquiriesByTriage, triageEnquiry, triageTone } from "@/lib/enquiry-triage";
 
 type SearchParams = { enquiry?: string };
 
@@ -32,11 +41,34 @@ export const Route = createFileRoute("/enquiries")({
 function EnquiriesPage() {
   const router = useRouter();
   const { enquiry: enquiryParam } = Route.useSearch();
-  const initial = enquiries.find((e) => e.id === enquiryParam)?.id ?? enquiries[0].id;
+  const triageRows = useMemo(
+    () =>
+      sortEnquiriesByTriage(enquiries).map((enquiry) => ({
+        enquiry,
+        triage: triageEnquiry(enquiry),
+      })),
+    [],
+  );
+  const triageCounts = useMemo(
+    () =>
+      triageRows.reduce(
+        (counts, row) => {
+          counts[row.triage.band] += 1;
+          return counts;
+        },
+        { urgent: 0, priority: 0, watch: 0, routine: 0 },
+      ),
+    [triageRows],
+  );
+  const initial =
+    enquiries.find((e) => e.id === enquiryParam)?.id ??
+    triageRows[0]?.enquiry.id ??
+    enquiries[0].id;
   const [selected, setSelected] = useState(initial);
   const [convertOpen, setConvertOpen] = useState(false);
   const [composerText, setComposerText] = useState("");
   const active = enquiries.find((e) => e.id === selected)!;
+  const activeTriage = useMemo(() => triageEnquiry(active), [active]);
   const assignee = teamMembers.find((t) => t.id === active.assignedTo);
   const convertedClientId = useEnquiryConversion(active.id);
 
@@ -66,9 +98,19 @@ function EnquiriesPage() {
               placeholder="Search conversations…"
               className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
+            <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3 text-status-red" />
+                {triageCounts.urgent} urgent
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-status-orange" />
+                {triageCounts.priority} priority
+              </span>
+            </div>
           </div>
           <ul>
-            {enquiries.map((e) => {
+            {triageRows.map(({ enquiry: e, triage }) => {
               const isActive = e.id === selected;
               return (
                 <li key={e.id}>
@@ -88,7 +130,13 @@ function EnquiriesPage() {
                     <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                       {e.lastMessage}
                     </p>
-                    <div className="mt-2 flex items-center gap-1.5">
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <StatusPill
+                        tone={triageTone(triage.band)}
+                        className="!py-0.5 !text-[10px] capitalize"
+                      >
+                        {triage.band}
+                      </StatusPill>
                       <StatusPill tone="blue" className="!py-0.5 !text-[10px]">
                         {e.intent}
                       </StatusPill>
@@ -97,6 +145,10 @@ function EnquiriesPage() {
                           {e.unread}
                         </span>
                       )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Users className="h-3 w-3" />
+                      {triage.routeTeam} · {(triage.confidence * 100).toFixed(0)}%
                     </div>
                   </button>
                 </li>
@@ -115,6 +167,9 @@ function EnquiriesPage() {
               <p className="text-xs text-muted-foreground">{active.phone}</p>
             </div>
             <div className="flex items-center gap-2">
+              <StatusPill tone={triageTone(activeTriage.band)} className="capitalize">
+                {activeTriage.band}
+              </StatusPill>
               {convertedClientId ? (
                 <Link
                   to="/clients/$id"
@@ -136,6 +191,36 @@ function EnquiriesPage() {
               <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                 Send quote
               </button>
+            </div>
+          </div>
+
+          <div className="border-b border-border bg-muted/30 px-5 py-3">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">AI triage</p>
+                  <span className="text-xs text-muted-foreground">
+                    {activeTriage.intent} · {activeTriage.routeTeam} ·{" "}
+                    {(activeTriage.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  {activeTriage.recommendedAction}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {activeTriage.reasons.map((reason) => (
+                    <span
+                      key={reason}
+                      className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground"
+                    >
+                      {reason}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -206,7 +291,7 @@ function EnquiriesPage() {
                 <Sparkles className="h-3 w-3 text-primary" /> AI draft available in the right panel
               </span>
               <span>
-                Intent: {active.intent} · {(active.intentConfidence * 100).toFixed(0)}%
+                Intent: {activeTriage.intent} · {(activeTriage.confidence * 100).toFixed(0)}%
               </span>
             </div>
           </div>
