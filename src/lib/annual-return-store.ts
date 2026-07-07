@@ -752,26 +752,7 @@ export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollo
     } satisfies AnnualReturnFollowUpDraft;
   });
 
-  const drafts = [...caseBlockerDrafts, ...packetDrafts];
-
-  if (drafts.length > 0 || caseItem.status !== "filed") {
-    return drafts;
-  }
-
-  return [
-    {
-      id: `follow-up-${caseItem.id}-packet-filed`,
-      caseId: caseItem.id,
-      companyName: caseItem.companyName,
-      type: "packet-reminder",
-      recipientName: caseItem.owner,
-      phone: caseItem.phone,
-      suggestedTiming: followUpTiming("packet-reminder"),
-      messagePreview: `${caseItem.owner}, packet item "Filed case follow-up" is still open for ${caseItem.companyName}.`,
-      status: "blocked",
-      blockedReason: "Filed cases cannot send follow-ups",
-    },
-  ];
+  return [...caseBlockerDrafts, ...packetDrafts];
 }
 
 export function canSendFollowUp(
@@ -997,6 +978,8 @@ export function sendFollowUpNow(
 ): { ok: true } | { ok: false; reason: string } {
   const caseItem = cases.find((candidate) => candidate.id === caseId);
   if (!caseItem) return { ok: false, reason: "Case not found" };
+  if (caseItem.status === "filed")
+    return { ok: false, reason: "Filed cases cannot send follow-ups" };
 
   const draft = getFollowUpDrafts(caseItem).find((candidate) => candidate.id === draftId);
   if (!draft) return { ok: false, reason: "The original blocker has been resolved" };

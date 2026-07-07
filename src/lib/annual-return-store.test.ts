@@ -200,7 +200,7 @@ describe("annual return filing packet helpers", () => {
       status: "filed",
       sentFollowUpIds: [],
     };
-    const [draft] = getFollowUpDrafts(filedCase);
+    const [draft] = getFollowUpDrafts(baseCase);
 
     expect(canSendFollowUp(filedCase, draft)).toEqual({
       ok: false,
@@ -434,8 +434,7 @@ describe("annual return store mutations", () => {
     const timelineLength = before?.timeline.length;
 
     togglePacketRequirement("ar-delta", "nar1-draft");
-    const draft = before ? getFollowUpDrafts(before)[0] : undefined;
-    const sendResult = draft ? sendFollowUpNow("ar-delta", draft.id) : undefined;
+    const sendResult = sendFollowUpNow("ar-delta", "follow-up-ar-delta-document-signed-nar1");
     const submitResult = submitFilingPacket("ar-delta");
 
     const after = getAnnualReturnCaseById("ar-delta");
