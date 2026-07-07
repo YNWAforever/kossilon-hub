@@ -1,363 +1,270 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
-import { TopBar } from "@/components/top-bar";
-import { DeadlinePill } from "@/components/deadline-pill";
-import { StatusPill } from "@/components/status-pill";
-import { Button } from "@/components/ui/button";
-import { listAnnualReturnCases } from "@/features/annual-return/server-fns";
-import {
-  ANNUAL_RETURN_STATUSES,
-  type AnnualReturnCase,
-  type AnnualReturnStatus,
-  type PaymentStatus,
-  type RiskLevel,
-} from "@/features/annual-return/types";
-import { toneClasses, type StatusTone } from "@/lib/status";
-import { cn } from "@/lib/utils";
+import { type ReactNode, useMemo, useState } from "react";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
-type RiskFilter = RiskLevel | "all";
-type StatusFilter = AnnualReturnStatus | "all";
-type ViewMode = "deadline" | "board";
+import {
+  getBlockers,
+  getCaseMetrics,
+  getNextAction,
+  getReadinessScore,
+  getRiskLevel,
+  useAnnualReturnCases,
+  type AnnualReturnCase,
+  type AnnualReturnRiskLevel,
+} from "../lib/annual-return-store";
+import { daysUntil } from "../lib/app-data";
 
 export const Route = createFileRoute("/annual-returns")({
-  loader: ({ location }) =>
-    isAnnualReturnsIndexPath(location.pathname) ? listAnnualReturnCases({ data: {} }) : [],
-  head: () => ({
-    meta: [
-      { title: "Annual Returns Board — Kossilon CoSec OS" },
-      {
-        name: "description",
-        content:
-          "Deadline-first annual return control center with risk filters and status board view.",
-      },
-    ],
-  }),
-  component: AnnualReturnsPage,
+  component: AnnualReturnsRoute,
 });
 
-function isAnnualReturnsIndexPath(pathname: string) {
-  return pathname === "/annual-returns" || pathname === "/annual-returns/";
-}
+function AnnualReturnsRoute() {
+  const cases = useAnnualReturnCases();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "urgent" | "blocked" | "ready" | "filed">("all");
+  const [owner, setOwner] = useState("all");
 
-function AnnualReturnsPage() {
-  const matchRoute = useMatchRoute();
-  const detailMatch = matchRoute({ to: "/annual-returns/$id", fuzzy: false });
-  const cases = Route.useLoaderData() as AnnualReturnCase[];
-  const [view, setView] = useState<ViewMode>("deadline");
-  const [risk, setRisk] = useState<RiskFilter>("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const metrics = getCaseMetrics(cases);
+  const owners = Array.from(new Set(cases.map((caseItem) => caseItem.owner))).sort();
 
-  const filteredCases = useMemo(
-    () =>
-      cases
-        .filter((case_) => {
-          const riskMatch = risk === "all" || case_.riskLevel === risk;
-          const statusMatch = status === "all" || case_.currentStatus === status;
-
-          return riskMatch && statusMatch;
-        })
-        .sort(
-          (a, b) =>
-            a.filingDueDate.localeCompare(b.filingDueDate) ||
-            a.companyName.localeCompare(b.companyName),
-        ),
-    [cases, risk, status],
-  );
-
-  if (detailMatch) {
-    return <Outlet />;
-  }
+  const visibleCases = useMemo(() => {
+    return cases
+      .filter((caseItem) => {
+        const risk = getRiskLevel(caseItem);
+        const matchesQuery = `${caseItem.companyName} ${caseItem.contactName}`
+          .toLowerCase()
+          .includes(query.toLowerCase());
+        const matchesOwner = owner === "all" || caseItem.owner === owner;
+        const matchesFilter =
+          filter === "all" ||
+          (filter === "urgent" && (risk === "overdue" || risk === "due-soon")) ||
+          (filter === "blocked" && getBlockers(caseItem).length > 0 && risk !== "filed") ||
+          (filter === "ready" && risk === "ready-to-file") ||
+          (filter === "filed" && risk === "filed");
+        return matchesQuery && matchesOwner && matchesFilter;
+      })
+      .sort((a, b) => riskSortValue(getRiskLevel(a)) - riskSortValue(getRiskLevel(b)));
+  }, [cases, filter, owner, query]);
 
   return (
-    <>
-      <TopBar
-        title="Annual Return Control Center"
-        subtitle={`${filteredCases.length} of ${cases.length} cases sorted by statutory deadline`}
-      />
-      <main className="flex-1 space-y-4 p-4 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              aria-label="Filter annual return cases by risk"
-              value={risk}
-              onChange={(event) => setRisk(event.target.value as RiskFilter)}
-              className="h-8 rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="all">All risks</option>
-              <option value="red">Red risk</option>
-              <option value="orange">Orange risk</option>
-              <option value="yellow">Yellow risk</option>
-              <option value="green">Green risk</option>
-            </select>
-            <select
-              aria-label="Filter annual return cases by status"
-              value={status}
-              onChange={(event) => setStatus(event.target.value as StatusFilter)}
-              className="h-8 rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="all">All statuses</option>
-              {ANNUAL_RETURN_STATUSES.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
+    <div className="space-y-6 p-6">
+      <div>
+        <p className="text-sm font-medium text-muted-foreground">Cases</p>
+        <h1 className="mt-1 text-3xl font-semibold">Annual returns</h1>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-5">
+        <Metric label="Overdue" value={metrics.overdue} tone="red" />
+        <Metric label="Due soon" value={metrics.dueSoon} tone="orange" />
+        <Metric label="Blocked" value={metrics.blocked} tone="yellow" />
+        <Metric label="Ready to file" value={metrics.readyToFile} tone="green" />
+        <Metric label="Filed" value={metrics.filed} tone="blue" />
+      </div>
+
+      <section className="rounded-lg border bg-card">
+        <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto]">
+          <input
+            className="rounded-md border bg-background px-3 py-2 text-sm"
+            aria-label="Search company or contact"
+            placeholder="Search company or contact"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <div className="flex flex-wrap gap-2">
+            {(["all", "urgent", "blocked", "ready", "filed"] as const).map((value) => (
+              <button
+                key={value}
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  filter === value ? "bg-primary text-primary-foreground" : "bg-background"
+                }`}
+                onClick={() => setFilter(value)}
+                type="button"
+              >
+                {value === "all" ? "All" : value[0].toUpperCase() + value.slice(1)}
+              </button>
+            ))}
+          </div>
+          <select
+            className="rounded-md border bg-background px-3 py-2 text-sm"
+            value={owner}
+            onChange={(event) => setOwner(event.target.value)}
+            aria-label="Filter by owner"
+          >
+            <option value="all">All owners</option>
+            {owners.map((ownerName) => (
+              <option key={ownerName} value={ownerName}>
+                {ownerName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="hidden grid-cols-[minmax(0,1.5fr)_120px_120px_150px_110px_1.1fr_110px_minmax(0,1fr)_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+          <span>Company</span>
+          <span>Owner</span>
+          <span>Risk</span>
+          <span>Due</span>
+          <span>Readiness</span>
+          <span>Blockers</span>
+          <span>Payment</span>
+          <span>Next action</span>
+          <span className="text-right">Open</span>
+        </div>
+
+        <div className="divide-y">
+          {visibleCases.map((caseItem) => (
+            <CaseRow key={caseItem.id} caseItem={caseItem} />
+          ))}
+          {visibleCases.length === 0 ? (
+            <div className="px-4 py-8 text-sm text-muted-foreground">
+              No annual return cases match the current filters.
+            </div>
+          ) : null}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "red" | "orange" | "yellow" | "green" | "blue";
+}) {
+  return (
+    <section className="rounded-lg border bg-card p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <span className={`h-2.5 w-2.5 rounded-full ${metricToneClass(tone)}`} />
+      </div>
+      <p className="mt-3 text-3xl font-semibold">{value}</p>
+    </section>
+  );
+}
+
+function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
+  const risk = getRiskLevel(caseItem);
+  const blockers = getBlockers(caseItem);
+  const readiness = getReadinessScore(caseItem);
+  const nextAction = getNextAction(caseItem);
+  const dueInDays = daysUntil(caseItem.dueDate);
+
+  return (
+    <div className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.5fr)_120px_120px_150px_110px_1.1fr_110px_minmax(0,1fr)_72px] lg:items-center">
+      <div className="min-w-0">
+        <p className="truncate font-medium">{caseItem.companyName}</p>
+        <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
+      </div>
+
+      <Field label="Owner" value={caseItem.owner} />
+      <Field label="Risk" value={<RiskPill risk={risk} />} />
+      <Field label="Due" value={formatDue(caseItem.dueDate, dueInDays)} />
+      <Field label="Readiness" value={`${readiness}%`} />
+      <Field
+        label="Blockers"
+        value={
+          blockers.length > 0 ? (
+            <div className="space-y-1">
+              {blockers.slice(0, 2).map((blocker) => (
+                <p key={blocker.id} className="truncate text-sm">
+                  {blocker.label}
+                </p>
               ))}
-            </select>
-          </div>
-          <div className="inline-flex rounded-md border border-border bg-card p-1">
-            <Button
-              type="button"
-              size="sm"
-              variant={view === "deadline" ? "default" : "ghost"}
-              aria-pressed={view === "deadline"}
-              onClick={() => setView("deadline")}
-            >
-              Deadline list
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={view === "board" ? "default" : "ghost"}
-              aria-pressed={view === "board"}
-              onClick={() => setView("board")}
-            >
-              Status board
-            </Button>
-          </div>
-        </div>
+              {blockers.length > 2 ? (
+                <p className="text-xs text-muted-foreground">+{blockers.length - 2} more</p>
+              ) : null}
+            </div>
+          ) : (
+            "None"
+          )
+        }
+      />
+      <Field label="Payment" value={paymentLabel(caseItem.paymentStatus)} />
+      <Field label="Next action" value={nextAction} />
 
-        {view === "deadline" ? (
-          <DeadlineList cases={filteredCases} />
-        ) : (
-          <StatusBoard cases={filteredCases} />
-        )}
-      </main>
-    </>
-  );
-}
-
-function DeadlineList({ cases }: { cases: AnnualReturnCase[] }) {
-  return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="overflow-x-auto">
-        <table className="min-w-[980px] w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
-            <tr>
-              <th className="w-[260px] px-5 py-3 font-medium">Company</th>
-              <th className="w-[170px] px-5 py-3 font-medium">Deadline</th>
-              <th className="w-[120px] px-5 py-3 font-medium">Risk</th>
-              <th className="w-[190px] px-5 py-3 font-medium">Status</th>
-              <th className="w-[120px] px-5 py-3 font-medium">Missing</th>
-              <th className="w-[170px] px-5 py-3 font-medium">Payment</th>
-              <th className="w-[150px] px-5 py-3 font-medium">Owner</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {cases.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-sm text-muted-foreground">
-                  No annual return cases match the current filters.
-                </td>
-              </tr>
-            ) : (
-              cases.map((case_) => (
-                <tr key={case_.id} className="hover:bg-muted/30">
-                  <td className="px-5 py-3">
-                    <Link
-                      to="/annual-returns/$id"
-                      params={{ id: case_.id }}
-                      className="font-medium text-foreground hover:text-primary"
-                    >
-                      {case_.companyName}
-                    </Link>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      Return year {case_.returnYear}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    <DeadlinePill dueDate={case_.filingDueDate} showDate />
-                  </td>
-                  <td className="px-5 py-3">
-                    <RiskPill risk={case_.riskLevel} />
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusPill
-                      tone={annualReturnStatusTone(case_.currentStatus)}
-                      className="whitespace-nowrap"
-                    >
-                      {case_.currentStatus}
-                    </StatusPill>
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="font-medium tabular-nums text-foreground">
-                      {missingRequiredEvidenceCount(case_)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <PaymentPill status={case_.payment?.status ?? "Not invoiced"} />
-                  </td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">
-                    <span className="block max-w-[140px] truncate">{case_.ownerName}</span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function StatusBoard({ cases }: { cases: AnnualReturnCase[] }) {
-  return (
-    <div className="overflow-x-auto pb-2">
-      <div className="flex min-w-max gap-4">
-        {ANNUAL_RETURN_STATUSES.map((status) => {
-          const items = cases.filter((case_) => case_.currentStatus === status);
-          const tone = annualReturnStatusTone(status);
-          const t = toneClasses[tone];
-
-          return (
-            <section key={status} className="w-72 shrink-0">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className={cn("h-2 w-2 shrink-0 rounded-full", t.dot)} />
-                  <h2 className="truncate text-sm font-semibold text-foreground">{status}</h2>
-                </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
-                  {items.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {items.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                    No cases
-                  </div>
-                ) : (
-                  items.map((case_) => <BoardCaseCard key={case_.id} case_={case_} />)
-                )}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function BoardCaseCard({ case_ }: { case_: AnnualReturnCase }) {
-  return (
-    <Link
-      to="/annual-returns/$id"
-      params={{ id: case_.id }}
-      className="block rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{case_.companyName}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">Owner: {case_.ownerName}</p>
-        </div>
-        <RiskPill risk={case_.riskLevel} />
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <DeadlinePill dueDate={case_.filingDueDate} />
-        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-          {missingRequiredEvidenceCount(case_)} missing
-        </span>
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <StatusPill
-          tone={annualReturnStatusTone(case_.currentStatus)}
-          className="max-w-[150px] truncate whitespace-nowrap !py-0.5 !text-[10px]"
+      <div className="flex justify-start lg:justify-end">
+        <Link
+          className="rounded-md border px-3 py-2 text-center text-sm"
+          to="/annual-returns/$id"
+          params={{ id: caseItem.id }}
         >
-          {case_.currentStatus}
-        </StatusPill>
-        <PaymentPill status={case_.payment?.status ?? "Not invoiced"} compact />
+          Open
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
 
-function RiskPill({ risk }: { risk: RiskLevel }) {
+function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <StatusPill tone={riskTone(risk)} className="shrink-0 whitespace-nowrap capitalize">
-      {risk} risk
-    </StatusPill>
+    <div className="min-w-0">
+      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
+        {label}
+      </p>
+      <div className="text-sm leading-5">{value}</div>
+    </div>
   );
 }
 
-function PaymentPill({ status, compact = false }: { status: PaymentStatus; compact?: boolean }) {
+function RiskPill({ risk }: { risk: AnnualReturnRiskLevel }) {
   return (
-    <StatusPill
-      tone={paymentTone(status)}
-      className={cn("whitespace-nowrap", compact && "max-w-[110px] truncate !py-0.5 !text-[10px]")}
-    >
-      {status}
-    </StatusPill>
+    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClass(risk)}`}>
+      {riskLabel(risk)}
+    </span>
   );
 }
 
-function missingRequiredEvidenceCount(case_: AnnualReturnCase) {
-  return case_.checklist.filter((item) => item.required && !hasRequiredEvidence(item)).length;
+function riskSortValue(risk: AnnualReturnRiskLevel): number {
+  return { overdue: 0, "due-soon": 1, blocked: 2, "ready-to-file": 3, healthy: 4, filed: 5 }[risk];
 }
 
-function hasRequiredEvidence(item: AnnualReturnCase["checklist"][number]) {
-  return (
-    item.status === "Verified" &&
-    hasText(item.receivedAt) &&
-    hasText(item.verifiedAt) &&
-    hasText(item.documentId)
-  );
+function riskLabel(risk: AnnualReturnRiskLevel): string {
+  return {
+    overdue: "Overdue",
+    "due-soon": "Due soon",
+    blocked: "Blocked",
+    healthy: "Healthy",
+    "ready-to-file": "Ready",
+    filed: "Filed",
+  }[risk];
 }
 
-function hasText(value: string | null) {
-  return typeof value === "string" && value.trim().length > 0;
+function metricToneClass(tone: "red" | "orange" | "yellow" | "green" | "blue"): string {
+  return {
+    red: "bg-red-500",
+    orange: "bg-orange-500",
+    yellow: "bg-yellow-500",
+    green: "bg-green-500",
+    blue: "bg-blue-500",
+  }[tone];
 }
 
-function annualReturnStatusTone(status: AnnualReturnStatus): StatusTone {
-  switch (status) {
-    case "Upcoming":
-    case "Filed":
-    case "Completed":
-      return "blue";
-    case "Client reminder sent":
-    case "Documents received":
-    case "Payment received":
-    case "NAR1 prepared":
-    case "Ready to file":
-      return "green";
-    case "Documents pending":
-    case "Signature pending":
-      return "yellow";
-    case "Payment pending":
-      return "orange";
-    default:
-      return "neutral";
+function riskToneClass(risk: AnnualReturnRiskLevel): string {
+  return {
+    overdue: "bg-red-100 text-red-700",
+    "due-soon": "bg-orange-100 text-orange-700",
+    blocked: "bg-yellow-100 text-yellow-800",
+    healthy: "bg-slate-100 text-slate-700",
+    "ready-to-file": "bg-green-100 text-green-700",
+    filed: "bg-blue-100 text-blue-700",
+  }[risk];
+}
+
+function paymentLabel(paymentStatus: AnnualReturnCase["paymentStatus"]): string {
+  return {
+    overdue: "Overdue",
+    paid: "Paid",
+    pending: "Pending",
+  }[paymentStatus];
+}
+
+function formatDue(dueDate: string, dueInDays: number): string {
+  if (dueInDays < 0) {
+    return `${dueDate} (${Math.abs(dueInDays)}d overdue)`;
   }
-}
 
-function riskTone(risk: RiskLevel): StatusTone {
-  switch (risk) {
-    case "red":
-      return "red";
-    case "orange":
-      return "orange";
-    case "yellow":
-      return "yellow";
-    case "green":
-      return "green";
-  }
-}
-
-function paymentTone(status: PaymentStatus): StatusTone {
-  switch (status) {
-    case "Payment received":
-      return "green";
-    case "Payment pending":
-      return "orange";
-    case "Overdue":
-      return "red";
-    case "Not invoiced":
-      return "neutral";
-  }
+  return `${dueDate} (${dueInDays}d)`;
 }

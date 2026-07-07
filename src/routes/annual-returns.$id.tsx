@@ -1,717 +1,487 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import {
-  AlertTriangle,
-  Bell,
-  Check,
-  ClipboardList,
-  FileText,
-  Lock,
-  Receipt,
-  Shield,
-  Upload,
-} from "lucide-react";
-import { DeadlinePill } from "@/components/deadline-pill";
-import { StatusPill } from "@/components/status-pill";
-import { TopBar } from "@/components/top-bar";
-import { Button } from "@/components/ui/button";
-import {
-  buildAnnualReturnReminderDraft,
-  getAnnualReturnCase,
-  queueAnnualReturnWhatsAppReminderMessage,
-  updateAnnualReturnChecklistItem,
-  updateAnnualReturnFilingProof,
-  updateAnnualReturnPayment,
-  updateAnnualReturnStatus,
-} from "@/features/annual-return/server-fns";
-import type {
-  AnnualReturnCase,
-  AnnualReturnChecklistItem,
-  AnnualReturnStatus,
-  ChecklistStatus,
-  PaymentStatus,
-  RiskLevel,
-} from "@/features/annual-return/types";
-import { completionBlockers } from "@/features/annual-return/workflow";
-import { cn } from "@/lib/utils";
-import type { StatusTone } from "@/lib/status";
+import { useEffect, useState } from "react";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
-const MONTH_LABELS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
-
-type ActionKey =
-  | "complete"
-  | "filing-proof"
-  | "payment-pending"
-  | "payment-overdue"
-  | "payment-received"
-  | "reminder"
-  | `checklist-${string}-${ChecklistStatus}`;
+import { daysUntil, findEnquiryForClient } from "../lib/app-data";
+import {
+  type AnnualReturnPaymentStatus,
+  type AnnualReturnReviewStatus,
+  type AnnualReturnRiskLevel,
+  type AnnualReturnSignatureStatus,
+  type AnnualReturnStatus,
+  addCaseNote,
+  assignOwner,
+  completeChecklistItem,
+  getBlockers,
+  getNextAction,
+  getReadinessScore,
+  getRiskLevel,
+  markDocumentMissing,
+  markDocumentReceived,
+  markFiled,
+  reopenChecklistItem,
+  updatePaymentStatus,
+  updateReviewStatus,
+  updateSignatureStatus,
+  useAnnualReturnCase,
+} from "../lib/annual-return-store";
 
 export const Route = createFileRoute("/annual-returns/$id")({
-  loader: async ({ params }) => {
-    const c = await getAnnualReturnCase({ data: { id: params.id } });
-
-    if (!c) {
-      throw notFound();
-    }
-
-    return { c };
-  },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.c.companyName ?? "Case"} - Annual Return` },
-      {
-        name: "description",
-        content: "Annual return case checklist, payment, filing proof, and reminder controls.",
-      },
-    ],
-  }),
-  component: CaseDetailPage,
-  notFoundComponent: () => (
-    <div className="p-10 text-center text-muted-foreground">
-      Case not found.{" "}
-      <Link to="/annual-returns" className="text-primary underline">
-        Back to board
-      </Link>
-    </div>
-  ),
+  component: AnnualReturnDetailRoute,
 });
 
-function CaseDetailPage() {
-  const { c } = Route.useLoaderData() as { c: AnnualReturnCase };
-  const blockers = useMemo(() => completionBlockers(c), [c]);
-  const [pending, setPending] = useState<ActionKey | null>(null);
-  const locked = isLocked(c);
-  const missing = c.checklist.filter((item) => item.required && item.status !== "Verified").length;
-  const received = c.checklist.length - missing;
-  const checklistProgress = c.checklist.length === 0 ? 100 : (received / c.checklist.length) * 100;
+const ownerOptions = ["Iris Wong", "Calvin Ho", "Mandy Lee", "Operations"] as const;
+type MetricTone = "red" | "orange" | "yellow" | "green" | "blue";
 
-  async function runCaseAction(actionKey: ActionKey, action: () => Promise<void>) {
-    setPending(actionKey);
+const statusLabels: Record<AnnualReturnStatus, string> = {
+  preparing: "Preparing",
+  "waiting-documents": "Waiting documents",
+  "payment-pending": "Payment pending",
+  "internal-review": "Internal review",
+  "ready-to-file": "Ready to file",
+  filed: "Filed",
+};
 
-    try {
-      await action();
-      window.location.reload();
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : "Unable to update annual return case.");
-      setPending(null);
-    }
-  }
+const riskLabels: Record<AnnualReturnRiskLevel, string> = {
+  overdue: "Overdue",
+  "due-soon": "Due soon",
+  blocked: "Blocked",
+  healthy: "Healthy",
+  "ready-to-file": "Ready",
+  filed: "Filed",
+};
 
-  async function handleReminder() {
-    const recipientName = promptRequired("Recipient name", c.companyName);
+const metricToneClasses: Record<MetricTone, string> = {
+  red: "bg-red-500",
+  orange: "bg-orange-500",
+  yellow: "bg-yellow-500",
+  green: "bg-green-500",
+  blue: "bg-blue-500",
+};
 
-    if (!recipientName) {
-      return;
-    }
+const riskToneClasses: Record<AnnualReturnRiskLevel, string> = {
+  overdue: "bg-red-100 text-red-700",
+  "due-soon": "bg-orange-100 text-orange-700",
+  blocked: "bg-yellow-100 text-yellow-800",
+  healthy: "bg-slate-100 text-slate-700",
+  "ready-to-file": "bg-green-100 text-green-700",
+  filed: "bg-blue-100 text-blue-700",
+};
 
-    const recipientPhone = promptRequired("Recipient phone");
+function AnnualReturnDetailRoute() {
+  const { id } = Route.useParams();
+  const caseItem = useAnnualReturnCase(id);
+  const [note, setNote] = useState("");
+  const [filingWarning, setFilingWarning] = useState<string | undefined>();
 
-    if (!recipientPhone) {
-      return;
-    }
+  useEffect(() => {
+    setNote("");
+    setFilingWarning(undefined);
+  }, [id]);
 
-    await runCaseAction("reminder", async () => {
-      const { draftBody } = await buildAnnualReturnReminderDraft({ data: { caseId: c.id } });
-      await copyDraftToClipboard(draftBody);
-      await queueAnnualReturnWhatsAppReminderMessage({
-        data: {
-          caseId: c.id,
-          recipientName,
-          recipientPhone,
-        },
-      });
-    });
-  }
-
-  async function handleChecklistStatus(item: AnnualReturnChecklistItem, status: ChecklistStatus) {
-    let documentId = status === "Missing" ? null : item.documentId;
-
-    if (status === "Verified" && !documentId) {
-      documentId = promptRequired("Verified annual return evidence document UUID");
-
-      if (!documentId) {
-        return;
-      }
-    }
-
-    await runCaseAction(`checklist-${item.id}-${status}`, async () => {
-      await updateAnnualReturnChecklistItem({
-        data: {
-          caseId: c.id,
-          itemId: item.id,
-          status,
-          documentId,
-        },
-      });
-    });
-  }
-
-  async function handlePaymentStatus(status: PaymentStatus) {
-    if (!c.payment) {
-      return;
-    }
-
-    let paymentProofDocumentId =
-      status === "Payment received" ? c.payment.paymentProofDocumentId : null;
-
-    if (status === "Payment received" && !paymentProofDocumentId) {
-      paymentProofDocumentId = promptRequired("Verified payment proof document UUID");
-
-      if (!paymentProofDocumentId) {
-        return;
-      }
-    }
-
-    const actionKey =
-      status === "Payment received"
-        ? "payment-received"
-        : status === "Overdue"
-          ? "payment-overdue"
-          : "payment-pending";
-
-    await runCaseAction(actionKey, async () => {
-      await updateAnnualReturnPayment({
-        data: {
-          caseId: c.id,
-          status,
-          paymentProofDocumentId,
-        },
-      });
-    });
-  }
-
-  async function handleFilingProof() {
-    const filingReference = promptRequired("Filing reference", c.filingReference ?? "");
-
-    if (!filingReference) {
-      return;
-    }
-
-    const confirmationDocumentId = promptRequired(
-      "Verified filing confirmation document UUID",
-      c.confirmationDocumentId ?? "",
-    );
-
-    if (!confirmationDocumentId) {
-      return;
-    }
-
-    await runCaseAction("filing-proof", async () => {
-      await updateAnnualReturnFilingProof({
-        data: {
-          caseId: c.id,
-          filingReference,
-          confirmationDocumentId,
-        },
-      });
-    });
-  }
-
-  async function handleComplete() {
-    if (blockers.length > 0) {
-      return;
-    }
-
-    await runCaseAction("complete", async () => {
-      await updateAnnualReturnStatus({ data: { caseId: c.id, nextStatus: "Completed" } });
-    });
-  }
-
-  return (
-    <>
-      <TopBar
-        title={c.companyName}
-        subtitle={`Return year ${c.returnYear} · Case ${shortId(c.id)} · Due ${formatDateOnly(c.filingDueDate)}`}
-        actions={
-          <div className="hidden items-center gap-2 lg:flex">
-            <StatusPill tone={annualReturnStatusTone(c.currentStatus)}>
-              {c.currentStatus}
-            </StatusPill>
-            <DeadlinePill dueDate={c.filingDueDate} />
-            <RiskPill risk={c.riskLevel} />
-          </div>
-        }
-      />
-
-      <main className="grid flex-1 grid-cols-1 gap-4 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <Link
-              to="/annual-returns"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Back to annual returns
-            </Link>
-            {locked && (
-              <StatusPill tone="blue" className="shrink-0">
-                <Lock className="h-3 w-3" />
-                Locked
-              </StatusPill>
-            )}
-          </div>
-
-          <Panel title="Case Summary" icon={<Shield className="h-4 w-4" />}>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <Metric
-                label="Deadline"
-                value={<DeadlinePill dueDate={c.filingDueDate} showDate />}
-              />
-              <Metric label="Checklist received" value={`${received}/${c.checklist.length}`} />
-              <Metric label="Missing required" value={missing.toString()} />
-              <Metric label="Payment" value={c.payment?.status ?? "Not invoiced"} />
-            </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-status-green"
-                style={{ width: `${checklistProgress}%` }}
-              />
-            </div>
-          </Panel>
-
-          <Panel
-            title="Completion Blockers"
-            icon={<AlertTriangle className="h-4 w-4" />}
-            action={
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleComplete}
-                disabled={locked || blockers.length > 0 || pending !== null}
-              >
-                <Check className="h-4 w-4" />
-                Complete
-              </Button>
-            }
-          >
-            {blockers.length === 0 ? (
-              <div className="rounded-md border border-status-green/20 bg-status-green-soft px-3 py-2 text-sm text-status-green">
-                Required evidence, payment, and filing proof are ready.
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {blockers.map((blocker) => (
-                  <li
-                    key={blocker.code}
-                    className="flex items-start gap-2 rounded-md border border-status-orange/20 bg-status-orange-soft px-3 py-2 text-sm text-status-orange"
-                  >
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{blocker.message}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-
-          <Panel title="Checklist" icon={<ClipboardList className="h-4 w-4" />}>
-            <ul className="divide-y divide-border">
-              {c.checklist.map((item) => (
-                <ChecklistRow
-                  key={item.id}
-                  item={item}
-                  disabled={locked || pending !== null}
-                  pending={pending}
-                  onChange={handleChecklistStatus}
-                />
-              ))}
-            </ul>
-          </Panel>
-
-          <PaymentPanel
-            payment={c.payment}
-            disabled={locked || pending !== null}
-            pending={pending}
-            onChange={handlePaymentStatus}
-          />
-
-          <Panel
-            title="Filing Proof"
-            icon={<Upload className="h-4 w-4" />}
-            action={
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={locked || pending !== null}
-                onClick={handleFilingProof}
-              >
-                <Upload className="h-4 w-4" />
-                Record
-              </Button>
-            }
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Fact label="Filing reference" value={c.filingReference ?? "Missing"} />
-              <Fact
-                label="Confirmation document"
-                value={c.confirmationDocumentId ? shortId(c.confirmationDocumentId) : "Missing"}
-                mono={Boolean(c.confirmationDocumentId)}
-              />
-            </div>
-          </Panel>
-        </div>
-
-        <aside className="space-y-4">
-          <Panel
-            title="Reminder"
-            icon={<Bell className="h-4 w-4" />}
-            action={
-              <Button
-                type="button"
-                size="sm"
-                disabled={locked || pending !== null}
-                onClick={handleReminder}
-              >
-                <Bell className="h-4 w-4" />
-                Copy draft & record reminder
-              </Button>
-            }
-          >
-            <div className="space-y-3">
-              <Metric label="Manual reminders" value={c.remindersSent.toString()} />
-            </div>
-          </Panel>
-
-          <Panel title="Case Facts" icon={<FileText className="h-4 w-4" />}>
-            <div className="space-y-3">
-              <Fact label="Case ID" value={c.id} mono />
-              <Fact label="Company ID" value={c.companyId} mono />
-              <Fact label="Made-up date" value={formatDateOnly(c.madeUpDate)} />
-              <Fact label="Filing due date" value={formatDateOnly(c.filingDueDate)} />
-              <Fact label="Owner" value={c.ownerName} />
-              <Fact label="Reviewer" value={c.reviewerName ?? "Unassigned"} />
-              <Fact
-                label="Completed"
-                value={c.completedAt ? formatDateOnly(c.completedAt) : "Not completed"}
-              />
-            </div>
-          </Panel>
-        </aside>
-      </main>
-    </>
-  );
-}
-
-function ChecklistRow({
-  item,
-  disabled,
-  pending,
-  onChange,
-}: {
-  item: AnnualReturnChecklistItem;
-  disabled: boolean;
-  pending: ActionKey | null;
-  onChange: (item: AnnualReturnChecklistItem, status: ChecklistStatus) => void;
-}) {
-  const verifyPending = pending === `checklist-${item.id}-Verified`;
-  const receivedPending = pending === `checklist-${item.id}-Received`;
-  const missingPending = pending === `checklist-${item.id}-Missing`;
-
-  return (
-    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium text-foreground">{item.itemLabel}</p>
-          {item.required && <span className="text-[11px] text-muted-foreground">Required</span>}
-        </div>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <DeadlinePill dueDate={item.dueDate} showDate />
-          {item.documentId && <span className="font-mono">Doc {shortId(item.documentId)}</span>}
-        </div>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <StatusPill tone={checklistTone(item.status)}>{item.status}</StatusPill>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={disabled || item.status === "Received" || item.status === "Verified"}
-          onClick={() => onChange(item, "Received")}
-        >
-          <Receipt className="h-4 w-4" />
-          {receivedPending ? "Saving" : "Received"}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={disabled || item.status === "Verified"}
-          onClick={() => onChange(item, "Verified")}
-        >
-          <Check className="h-4 w-4" />
-          {verifyPending ? "Saving" : "Verify"}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={disabled || item.status === "Missing"}
-          onClick={() => onChange(item, "Missing")}
-        >
-          {missingPending ? "Saving" : "Reset"}
-        </Button>
-      </div>
-    </li>
-  );
-}
-
-function PaymentPanel({
-  payment,
-  disabled,
-  pending,
-  onChange,
-}: {
-  payment: AnnualReturnCase["payment"];
-  disabled: boolean;
-  pending: ActionKey | null;
-  onChange: (status: PaymentStatus) => void;
-}) {
-  if (!payment) {
+  if (!caseItem) {
     return (
-      <Panel title="Payment" icon={<Receipt className="h-4 w-4" />}>
-        <div className="text-sm text-muted-foreground">No payment record.</div>
-      </Panel>
+      <div className="space-y-4 p-6">
+        <h1 className="text-2xl font-semibold">Case not found</h1>
+        <p className="text-sm text-muted-foreground">
+          This annual return case does not exist in the mocked workspace.
+        </p>
+        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
+          Back to command center
+        </Link>
+      </div>
     );
   }
 
-  const hasPaymentProof = Boolean(payment.paymentProofDocumentId);
-  const needsReceivedPaymentProof = payment.status === "Payment received" && !hasPaymentProof;
-  const paymentReceivedDisabled =
-    disabled || (payment.status === "Payment received" && hasPaymentProof);
-  const paymentReceivedLabel = needsReceivedPaymentProof ? "Attach proof" : "Mark received";
+  const enquiry = findEnquiryForClient(caseItem.clientId);
+  const risk = getRiskLevel(caseItem);
+  const readiness = getReadinessScore(caseItem);
+  const blockers = getBlockers(caseItem);
+  const nextAction = getNextAction(caseItem);
+  const dueInDays = daysUntil(caseItem.dueDate);
+  const isFiled = caseItem.status === "filed";
 
   return (
-    <Panel title="Payment" icon={<Receipt className="h-4 w-4" />}>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric
-          label="Status"
-          value={<StatusPill tone={paymentTone(payment.status)}>{payment.status}</StatusPill>}
-        />
-        <Metric label="Invoice" value={payment.invoiceNumber} />
-        <Metric
-          label="Amount"
-          value={`${payment.currency} ${payment.amount.toLocaleString("en-HK")}`}
-        />
-        <Metric label="Due" value={<DeadlinePill dueDate={payment.dueDate} showDate />} />
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={disabled || payment.status === "Payment pending"}
-          onClick={() => onChange("Payment pending")}
-        >
-          {pending === "payment-pending" ? "Saving" : "Mark pending"}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={disabled || payment.status === "Overdue"}
-          onClick={() => onChange("Overdue")}
-        >
-          {pending === "payment-overdue" ? "Saving" : "Mark overdue"}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={paymentReceivedDisabled}
-          onClick={() => onChange("Payment received")}
-        >
-          <Check className="h-4 w-4" />
-          {pending === "payment-received" ? "Saving" : paymentReceivedLabel}
-        </Button>
-      </div>
-      <div className="mt-3">
-        <Fact
-          label="Payment proof"
-          value={
-            payment.paymentProofDocumentId ? shortId(payment.paymentProofDocumentId) : "Missing"
-          }
-          mono={Boolean(payment.paymentProofDocumentId)}
-        />
-      </div>
-    </Panel>
-  );
-}
-
-function Panel({
-  title,
-  icon,
-  action,
-  children,
-}: {
-  title: string;
-  icon: ReactNode;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="text-primary">{icon}</span>
-          <h2 className="truncate font-display text-base font-semibold text-foreground">{title}</h2>
+    <div className="space-y-4 p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
+          Back
+        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {enquiry ? (
+            <Link
+              className="rounded-md border px-3 py-2 text-sm"
+              to="/whatsapp"
+              search={{ enquiry: enquiry.id }}
+            >
+              Ask AI
+            </Link>
+          ) : null}
+          <button
+            className={`rounded-md px-3 py-2 text-sm ${
+              isFiled
+                ? "border bg-muted text-muted-foreground"
+                : "bg-primary text-primary-foreground"
+            }`}
+            disabled={isFiled}
+            onClick={() => {
+              const result = markFiled(caseItem.id);
+              if (!result.ok) setFilingWarning(result.reason);
+              else setFilingWarning(undefined);
+            }}
+            type="button"
+          >
+            {isFiled ? "Filed" : "Mark filed"}
+          </button>
         </div>
-        {action}
       </div>
-      <div className="p-5">{children}</div>
-    </section>
-  );
-}
 
-function Metric({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <div className="mt-1 truncate text-sm font-medium text-foreground">{value}</div>
+      <section className="rounded-lg border bg-card p-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0 space-y-3">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Annual return case</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-semibold">{caseItem.companyName}</h1>
+                <RiskPill risk={risk} />
+                <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium">
+                  {statusLabel(caseItem.status)}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {caseItem.contactName} / {caseItem.phone} / Basis date {caseItem.basisDate}
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <DenseStat
+                label="Due"
+                value={formatDue(caseItem.dueDate, dueInDays)}
+                tone={dueInDays < 0 ? "red" : dueInDays <= 14 ? "orange" : "blue"}
+              />
+              <DenseStat
+                label="Readiness"
+                value={`${readiness}%`}
+                tone={readiness === 100 ? "green" : readiness >= 60 ? "blue" : "yellow"}
+              />
+              <DenseStat
+                label="Next action"
+                value={nextAction}
+                tone={
+                  blockers.length > 0 ? "yellow" : caseItem.status === "filed" ? "blue" : "green"
+                }
+              />
+              <DenseStat
+                label="Blockers"
+                value={blockers.length === 0 ? "None" : `${blockers.length} open`}
+                tone={blockers.length === 0 ? "green" : "yellow"}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:min-w-72">
+            <label className="space-y-1">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Owner
+              </span>
+              <select
+                aria-label="Assign owner"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                value={caseItem.owner}
+                onChange={(event) => {
+                  setFilingWarning(undefined);
+                  assignOwner(caseItem.id, event.target.value);
+                }}
+              >
+                {ownerOptions.map((owner) => (
+                  <option key={owner} value={owner}>
+                    {owner}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {filingWarning ? (
+              <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+                {filingWarning}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <div className="space-y-4">
+          <section className="rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Blockers</h2>
+                <p className="text-sm text-muted-foreground">
+                  Clear document, payment, signature, and review blockers to raise readiness.
+                </p>
+              </div>
+              <span className="text-sm text-muted-foreground">{blockers.length} open</span>
+            </div>
+
+            <div className="mt-4 divide-y">
+              {caseItem.documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between gap-3 border-b py-3 last:border-b-0"
+                >
+                  <div>
+                    <p className="font-medium">{doc.label}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {doc.received ? "Received" : "Missing"}
+                    </p>
+                  </div>
+                  <button
+                    className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                    disabled={isFiled}
+                    onClick={() => {
+                      setFilingWarning(undefined);
+                      return doc.received
+                        ? markDocumentMissing(caseItem.id, doc.id)
+                        : markDocumentReceived(caseItem.id, doc.id);
+                    }}
+                    type="button"
+                  >
+                    {doc.received ? "Mark missing" : "Mark received"}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <label className="space-y-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Payment
+                </span>
+                <select
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  disabled={isFiled}
+                  value={caseItem.paymentStatus}
+                  onChange={(event) => {
+                    setFilingWarning(undefined);
+                    updatePaymentStatus(
+                      caseItem.id,
+                      event.target.value as AnnualReturnPaymentStatus,
+                    );
+                  }}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </label>
+
+              <label className="space-y-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Signature
+                </span>
+                <select
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  disabled={isFiled}
+                  value={caseItem.signatureStatus}
+                  onChange={(event) => {
+                    setFilingWarning(undefined);
+                    updateSignatureStatus(
+                      caseItem.id,
+                      event.target.value as AnnualReturnSignatureStatus,
+                    );
+                  }}
+                >
+                  <option value="missing">Missing</option>
+                  <option value="requested">Requested</option>
+                  <option value="received">Received</option>
+                </select>
+              </label>
+
+              <label className="space-y-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Review
+                </span>
+                <select
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  disabled={isFiled}
+                  value={caseItem.reviewStatus}
+                  onChange={(event) => {
+                    setFilingWarning(undefined);
+                    updateReviewStatus(caseItem.id, event.target.value as AnnualReturnReviewStatus);
+                  }}
+                >
+                  <option value="not-started">Not started</option>
+                  <option value="in-review">In review</option>
+                  <option value="approved">Approved</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Checklist</h2>
+                <p className="text-sm text-muted-foreground">
+                  Toggle each operator task as work moves forward or reopens.
+                </p>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {caseItem.checklist.filter((item) => item.complete).length}/
+                {caseItem.checklist.length}
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {caseItem.checklist.map((item) => (
+                <button
+                  key={item.id}
+                  className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  disabled={isFiled}
+                  onClick={() => {
+                    setFilingWarning(undefined);
+                    return item.complete
+                      ? reopenChecklistItem(caseItem.id, item.id)
+                      : completeChecklistItem(caseItem.id, item.id);
+                  }}
+                  type="button"
+                >
+                  <span>{item.label}</span>
+                  <span>{item.complete ? "Complete" : "Open"}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Notes</h2>
+                <p className="text-sm text-muted-foreground">
+                  Capture operator context without leaving the case.
+                </p>
+              </div>
+              <span className="text-sm text-muted-foreground">{caseItem.notes.length} notes</span>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <textarea
+                className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+              />
+              <div className="flex justify-end">
+                <button
+                  className="rounded-md border px-3 py-2 text-sm"
+                  onClick={() => {
+                    if (!note.trim()) return;
+                    addCaseNote(caseItem.id, "Operations", note.trim());
+                    setNote("");
+                  }}
+                  type="button"
+                >
+                  Add note
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {caseItem.notes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No notes yet.</p>
+              ) : (
+                caseItem.notes.map((entry) => (
+                  <div key={entry.id} className="rounded-md border px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium">{entry.author}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatTimestamp(entry.createdAt)}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-sm">{entry.body}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+
+        <section className="rounded-lg border bg-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Timeline</h2>
+              <p className="text-sm text-muted-foreground">Newest case activity appears first.</p>
+            </div>
+            <span className="text-sm text-muted-foreground">{caseItem.timeline.length} events</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {caseItem.timeline.map((event) => (
+              <div key={event.id} className="rounded-md border px-3 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium">{event.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatTimestamp(event.createdAt)}
+                  </p>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{event.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
 
-function Fact({ label, value, mono = false }: { label: string; value: ReactNode; mono?: boolean }) {
+function DenseStat({ label, value, tone }: { label: string; value: string; tone: MetricTone }) {
   return (
-    <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <div
-        className={cn(
-          "mt-1 truncate text-sm font-medium text-foreground",
-          mono && "font-mono text-xs",
-        )}
-      >
-        {value}
+    <div className="rounded-md border bg-background px-3 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <span className={`h-2.5 w-2.5 rounded-full ${metricToneClass(tone)}`} />
       </div>
+      <p className="mt-2 text-sm font-medium">{value}</p>
     </div>
   );
 }
 
-function RiskPill({ risk }: { risk: RiskLevel }) {
+function RiskPill({ risk }: { risk: AnnualReturnRiskLevel }) {
   return (
-    <StatusPill tone={riskTone(risk)} className="shrink-0 whitespace-nowrap capitalize">
-      {risk} risk
-    </StatusPill>
+    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClass(risk)}`}>
+      {riskLabel(risk)}
+    </span>
   );
 }
 
-async function copyDraftToClipboard(draftBody: string) {
-  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-    throw new Error("Clipboard is unavailable. Reminder was not recorded.");
+function formatDue(dueDate: string, dueInDays: number): string {
+  if (dueInDays < 0) {
+    return `${dueDate} (${Math.abs(dueInDays)}d overdue)`;
   }
 
-  try {
-    await navigator.clipboard.writeText(draftBody);
-  } catch {
-    throw new Error("Unable to copy reminder draft. Reminder was not recorded.");
-  }
+  return `${dueDate} (${dueInDays}d)`;
 }
 
-function promptRequired(label: string, defaultValue = ""): string | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const value = window.prompt(label, defaultValue);
-
-  if (value === null) {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
+function formatTimestamp(value: string): string {
+  return new Date(value).toLocaleString("en-HK", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-function formatDateOnly(value: string): string {
-  const [year, month, day] = value.slice(0, 10).split("-");
-  const monthLabel = MONTH_LABELS[Number(month) - 1] ?? month;
-
-  return `${day} ${monthLabel} ${year}`;
+function statusLabel(status: AnnualReturnStatus): string {
+  return statusLabels[status];
 }
 
-function shortId(id: string): string {
-  return id.slice(0, 8);
+function riskLabel(risk: AnnualReturnRiskLevel): string {
+  return riskLabels[risk];
 }
 
-function isLocked(case_: AnnualReturnCase): boolean {
-  return (
-    case_.currentStatus === "Completed" || case_.lockedAt !== null || case_.completedAt !== null
-  );
+function metricToneClass(tone: MetricTone): string {
+  return metricToneClasses[tone];
 }
 
-function annualReturnStatusTone(status: AnnualReturnStatus): StatusTone {
-  switch (status) {
-    case "Upcoming":
-    case "Filed":
-    case "Completed":
-      return "blue";
-    case "Client reminder sent":
-    case "Documents received":
-    case "Payment received":
-    case "NAR1 prepared":
-    case "Ready to file":
-      return "green";
-    case "Documents pending":
-    case "Signature pending":
-      return "yellow";
-    case "Payment pending":
-      return "orange";
-    default:
-      return "neutral";
-  }
-}
-
-function checklistTone(status: ChecklistStatus): StatusTone {
-  switch (status) {
-    case "Verified":
-      return "green";
-    case "Received":
-      return "blue";
-    case "Rejected":
-      return "red";
-    case "Missing":
-      return "yellow";
-  }
-}
-
-function paymentTone(status: PaymentStatus): StatusTone {
-  switch (status) {
-    case "Payment received":
-      return "green";
-    case "Payment pending":
-      return "orange";
-    case "Overdue":
-      return "red";
-    case "Not invoiced":
-      return "neutral";
-  }
-}
-
-function riskTone(risk: RiskLevel): StatusTone {
-  switch (risk) {
-    case "red":
-      return "red";
-    case "orange":
-      return "orange";
-    case "yellow":
-      return "yellow";
-    case "green":
-      return "green";
-  }
+function riskToneClass(risk: AnnualReturnRiskLevel): string {
+  return riskToneClasses[risk];
 }
