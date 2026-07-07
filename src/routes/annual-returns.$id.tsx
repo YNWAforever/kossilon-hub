@@ -25,7 +25,6 @@ import {
   getRiskLevel,
   markDocumentMissing,
   markDocumentReceived,
-  markFiled,
   reopenChecklistItem,
   sendFollowUpNow,
   submitFilingPacket,
@@ -82,13 +81,11 @@ function AnnualReturnDetailRoute() {
   const { id } = Route.useParams();
   const caseItem = useAnnualReturnCase(id);
   const [note, setNote] = useState("");
-  const [filingWarning, setFilingWarning] = useState<string | undefined>();
   const [packetWarning, setPacketWarning] = useState<string | undefined>();
   const [followUpWarning, setFollowUpWarning] = useState<string | undefined>();
 
   useEffect(() => {
     setNote("");
-    setFilingWarning(undefined);
     setPacketWarning(undefined);
     setFollowUpWarning(undefined);
   }, [id]);
@@ -124,33 +121,15 @@ function AnnualReturnDetailRoute() {
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
           Back
         </Link>
-        <div className="flex flex-wrap items-center gap-2">
-          {enquiry ? (
-            <Link
-              className="rounded-md border px-3 py-2 text-sm"
-              to="/whatsapp"
-              search={{ enquiry: enquiry.id }}
-            >
-              Ask AI
-            </Link>
-          ) : null}
-          <button
-            className={`rounded-md px-3 py-2 text-sm ${
-              isFiled
-                ? "border bg-muted text-muted-foreground"
-                : "bg-primary text-primary-foreground"
-            }`}
-            disabled={isFiled}
-            onClick={() => {
-              const result = markFiled(caseItem.id);
-              if (!result.ok) setFilingWarning(result.reason);
-              else setFilingWarning(undefined);
-            }}
-            type="button"
+        {enquiry ? (
+          <Link
+            className="rounded-md border px-3 py-2 text-sm"
+            to="/whatsapp"
+            search={{ enquiry: enquiry.id }}
           >
-            {isFiled ? "Filed" : "Mark filed"}
-          </button>
-        </div>
+            Ask AI
+          </Link>
+        ) : null}
       </div>
 
       <section className="rounded-lg border bg-card p-4">
@@ -205,10 +184,7 @@ function AnnualReturnDetailRoute() {
                 aria-label="Assign owner"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                 value={caseItem.owner}
-                onChange={(event) => {
-                  setFilingWarning(undefined);
-                  assignOwner(caseItem.id, event.target.value);
-                }}
+                onChange={(event) => assignOwner(caseItem.id, event.target.value)}
               >
                 {ownerOptions.map((owner) => (
                   <option key={owner} value={owner}>
@@ -217,12 +193,6 @@ function AnnualReturnDetailRoute() {
                 ))}
               </select>
             </label>
-
-            {filingWarning ? (
-              <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
-                {filingWarning}
-              </div>
-            ) : null}
           </div>
         </div>
       </section>
@@ -255,12 +225,11 @@ function AnnualReturnDetailRoute() {
                   <button
                     className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                     disabled={isFiled}
-                    onClick={() => {
-                      setFilingWarning(undefined);
-                      return doc.received
+                    onClick={() =>
+                      doc.received
                         ? markDocumentMissing(caseItem.id, doc.id)
-                        : markDocumentReceived(caseItem.id, doc.id);
-                    }}
+                        : markDocumentReceived(caseItem.id, doc.id)
+                    }
                     type="button"
                   >
                     {doc.received ? "Mark missing" : "Mark received"}
@@ -278,13 +247,12 @@ function AnnualReturnDetailRoute() {
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={isFiled}
                   value={caseItem.paymentStatus}
-                  onChange={(event) => {
-                    setFilingWarning(undefined);
+                  onChange={(event) =>
                     updatePaymentStatus(
                       caseItem.id,
                       event.target.value as AnnualReturnPaymentStatus,
-                    );
-                  }}
+                    )
+                  }
                 >
                   <option value="pending">Pending</option>
                   <option value="paid">Paid</option>
@@ -300,13 +268,12 @@ function AnnualReturnDetailRoute() {
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={isFiled}
                   value={caseItem.signatureStatus}
-                  onChange={(event) => {
-                    setFilingWarning(undefined);
+                  onChange={(event) =>
                     updateSignatureStatus(
                       caseItem.id,
                       event.target.value as AnnualReturnSignatureStatus,
-                    );
-                  }}
+                    )
+                  }
                 >
                   <option value="missing">Missing</option>
                   <option value="requested">Requested</option>
@@ -322,10 +289,9 @@ function AnnualReturnDetailRoute() {
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={isFiled}
                   value={caseItem.reviewStatus}
-                  onChange={(event) => {
-                    setFilingWarning(undefined);
-                    updateReviewStatus(caseItem.id, event.target.value as AnnualReturnReviewStatus);
-                  }}
+                  onChange={(event) =>
+                    updateReviewStatus(caseItem.id, event.target.value as AnnualReturnReviewStatus)
+                  }
                 >
                   <option value="not-started">Not started</option>
                   <option value="in-review">In review</option>
@@ -477,12 +443,11 @@ function AnnualReturnDetailRoute() {
                   key={item.id}
                   className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={isFiled}
-                  onClick={() => {
-                    setFilingWarning(undefined);
-                    return item.complete
+                  onClick={() =>
+                    item.complete
                       ? reopenChecklistItem(caseItem.id, item.id)
-                      : completeChecklistItem(caseItem.id, item.id);
-                  }}
+                      : completeChecklistItem(caseItem.id, item.id)
+                  }
                   type="button"
                 >
                   <span>{item.label}</span>
