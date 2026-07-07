@@ -14,6 +14,7 @@ import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as EnquiriesRouteImport } from './routes/enquiries'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ClientsRouteImport } from './routes/clients'
@@ -46,6 +47,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EnquiriesRoute = EnquiriesRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/documents'
     | '/enquiries'
+    | '/login'
     | '/payments'
     | '/settings'
     | '/tasks'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/documents'
     | '/enquiries'
+    | '/login'
     | '/payments'
     | '/settings'
     | '/tasks'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/documents'
     | '/enquiries'
+    | '/login'
     | '/payments'
     | '/settings'
     | '/tasks'
@@ -189,6 +201,7 @@ export interface RootRouteChildren {
   ClientsRoute: typeof ClientsRouteWithChildren
   DocumentsRoute: typeof DocumentsRoute
   EnquiriesRoute: typeof EnquiriesRoute
+  LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/enquiries': {
@@ -333,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsRoute: ClientsRouteWithChildren,
   DocumentsRoute: DocumentsRoute,
   EnquiriesRoute: EnquiriesRoute,
+  LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
