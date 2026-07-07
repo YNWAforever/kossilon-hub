@@ -17,12 +17,7 @@ export type AnnualReturnPaymentStatus = "pending" | "paid" | "overdue";
 export type AnnualReturnSignatureStatus = "missing" | "requested" | "received";
 export type AnnualReturnReviewStatus = "not-started" | "in-review" | "approved";
 export type AnnualReturnPacketStatus =
-  | "not-started"
-  | "building"
-  | "ready-for-review"
-  | "approved"
-  | "submitted"
-  | "accepted";
+  "not-started" | "building" | "ready-for-review" | "approved" | "submitted" | "accepted";
 
 export type AnnualReturnPacketRequirement = {
   id: string;

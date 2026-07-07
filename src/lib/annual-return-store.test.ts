@@ -67,7 +67,12 @@ const baseCase: AnnualReturnCase = {
       required: true,
     },
     { id: "signed-nar1-attached", label: "Signed NAR1 attached", complete: false, required: true },
-    { id: "payment-proof-checked", label: "Payment proof checked", complete: false, required: true },
+    {
+      id: "payment-proof-checked",
+      label: "Payment proof checked",
+      complete: false,
+      required: true,
+    },
     {
       id: "internal-filing-review",
       label: "Internal filing review approved",
