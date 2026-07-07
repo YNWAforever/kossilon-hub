@@ -22,6 +22,20 @@ class MemoryStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem
   }
 }
 
+class ThrowingStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem"> {
+  getItem(): string | null {
+    throw new Error("Storage read unavailable");
+  }
+
+  setItem(): void {
+    throw new Error("Storage write unavailable");
+  }
+
+  removeItem(): void {
+    throw new Error("Storage removal unavailable");
+  }
+}
+
 describe("auth route guard helpers", () => {
   let storage: MemoryStorage;
 
@@ -52,6 +66,8 @@ describe("auth route guard helpers", () => {
       "annual-returns",
       "",
       "/login",
+      "/login?next=/admin",
+      "/login#expired",
     ]) {
       rememberRedirectPath(unsafePath, storage);
 
@@ -70,5 +86,12 @@ describe("auth route guard helpers", () => {
   it("is safe to call without browser storage", () => {
     expect(() => rememberRedirectPath("/admin")).not.toThrow();
     expect(consumeRedirectPath()).toBe("/");
+  });
+
+  it("falls back safely when storage operations fail", () => {
+    const throwingStorage = new ThrowingStorage();
+
+    expect(() => rememberRedirectPath("/admin", throwingStorage)).not.toThrow();
+    expect(consumeRedirectPath(throwingStorage)).toBe("/");
   });
 });

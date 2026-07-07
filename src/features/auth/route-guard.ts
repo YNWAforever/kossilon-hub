@@ -17,7 +17,14 @@ export function isPublicRoute(pathname: string): boolean {
 }
 
 function normalizeRedirectPath(path: string | null): string {
-  if (!path || !path.startsWith("/") || path.startsWith("//") || path === "/login") {
+  if (
+    !path ||
+    !path.startsWith("/") ||
+    path.startsWith("//") ||
+    path === "/login" ||
+    path.startsWith("/login?") ||
+    path.startsWith("/login#")
+  ) {
     return "/";
   }
 
@@ -26,13 +33,22 @@ function normalizeRedirectPath(path: string | null): string {
 
 export function rememberRedirectPath(path: string, storage = browserStorage()): void {
   if (!storage) return;
-  storage.setItem(AUTH_REDIRECT_STORAGE_KEY, normalizeRedirectPath(path));
+
+  try {
+    storage.setItem(AUTH_REDIRECT_STORAGE_KEY, normalizeRedirectPath(path));
+  } catch {
+    // Redirect memory is optional; navigation should continue if storage is unavailable.
+  }
 }
 
 export function consumeRedirectPath(storage = browserStorage()): string {
   if (!storage) return "/";
 
-  const path = normalizeRedirectPath(storage.getItem(AUTH_REDIRECT_STORAGE_KEY));
-  storage.removeItem(AUTH_REDIRECT_STORAGE_KEY);
-  return path;
+  try {
+    const path = normalizeRedirectPath(storage.getItem(AUTH_REDIRECT_STORAGE_KEY));
+    storage.removeItem(AUTH_REDIRECT_STORAGE_KEY);
+    return path;
+  } catch {
+    return "/";
+  }
 }
