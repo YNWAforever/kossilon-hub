@@ -68,7 +68,9 @@ export function retrieveContext(enquiry: Enquiry): RetrievedContext {
   const faqs: FaqMatch[] = getActiveFaqs()
     .map((f) => {
       const hay = tokenize(`${f.question} ${f.answer} ${f.tags.join(" ")} ${f.category}`);
-      const score = scoreOverlap(hay, query) + (f.category.toLowerCase().includes(enquiry.intent.toLowerCase().split(" ")[0]) ? 1 : 0);
+      const score =
+        scoreOverlap(hay, query) +
+        (f.category.toLowerCase().includes(enquiry.intent.toLowerCase().split(" ")[0]) ? 1 : 0);
       return { faq: f, score };
     })
     .filter((m) => m.score > 0)
@@ -103,7 +105,9 @@ export function retrieveContext(enquiry: Enquiry): RetrievedContext {
 }
 
 export function suggestedFaqs(enquiry: Enquiry): FaqEntry[] {
-  return retrieveContext(enquiry).faqs.slice(0, 3).map((m) => m.faq);
+  return retrieveContext(enquiry)
+    .faqs.slice(0, 3)
+    .map((m) => m.faq);
 }
 
 // ---- drafting ----
@@ -114,8 +118,7 @@ export function draftReply(
 ): { markdown: string; confidence: number; sources: DraftSource[] } {
   const firstName = enquiry.contactName.split(" ")[0];
   const topFaq = context.faqs[0]?.faq;
-  const template =
-    caseCtx?.template ?? templateForService(context.intentServiceType);
+  const template = caseCtx?.template ?? templateForService(context.intentServiceType);
   const sources: DraftSource[] = [];
 
   const parts: string[] = [];
@@ -147,15 +150,24 @@ export function draftReply(
       caseBits.push(`All documents are in — we're preparing the filing now. ✅`);
     }
     if (caseCtx.company.paymentStatus === "Overdue") {
-      caseBits.push(`Please note the invoice (HKD ${caseCtx.company.invoiceAmount.toLocaleString()}) is overdue — we can resend it via FPS.`);
+      caseBits.push(
+        `Please note the invoice (HKD ${caseCtx.company.invoiceAmount.toLocaleString()}) is overdue — we can resend it via FPS.`,
+      );
     }
     parts.push(caseBits.join(" "));
-    sources.push({ kind: "case", id: caseCtx.case.id, label: `Case ${caseCtx.case.id.toUpperCase()}` });
+    sources.push({
+      kind: "case",
+      id: caseCtx.case.id,
+      label: `Case ${caseCtx.case.id.toUpperCase()}`,
+    });
   }
 
   // Template docs (if we know the service and no case context)
   if (!caseCtx && template && template.documents.length > 0) {
-    const top = template.documents.slice(0, 3).map((d) => `- ${d.label}`).join("\n");
+    const top = template.documents
+      .slice(0, 3)
+      .map((d) => `- ${d.label}`)
+      .join("\n");
     parts.push(`To get started we'll need:\n\n${top}\n\nI can WhatsApp you the full checklist.`);
     sources.push({ kind: "template", id: template.id, label: template.name });
   }

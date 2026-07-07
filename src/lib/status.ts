@@ -32,13 +32,46 @@ export const deadlineTone = (daysLeft: number): StatusTone => {
   return "green";
 };
 
-export const toneClasses: Record<StatusTone, { bg: string; text: string; ring: string; dot: string }> = {
-  green:   { bg: "bg-status-green-soft",  text: "text-status-green",  ring: "ring-status-green/20",  dot: "bg-status-green" },
-  yellow:  { bg: "bg-status-yellow-soft", text: "text-status-yellow", ring: "ring-status-yellow/20", dot: "bg-status-yellow" },
-  orange:  { bg: "bg-status-orange-soft", text: "text-status-orange", ring: "ring-status-orange/20", dot: "bg-status-orange" },
-  red:     { bg: "bg-status-red-soft",    text: "text-status-red",    ring: "ring-status-red/20",    dot: "bg-status-red" },
-  blue:    { bg: "bg-status-blue-soft",   text: "text-status-blue",   ring: "ring-status-blue/20",   dot: "bg-status-blue" },
-  neutral: { bg: "bg-muted",              text: "text-muted-foreground", ring: "ring-border",        dot: "bg-muted-foreground" },
+export const toneClasses: Record<
+  StatusTone,
+  { bg: string; text: string; ring: string; dot: string }
+> = {
+  green: {
+    bg: "bg-status-green-soft",
+    text: "text-status-green",
+    ring: "ring-status-green/20",
+    dot: "bg-status-green",
+  },
+  yellow: {
+    bg: "bg-status-yellow-soft",
+    text: "text-status-yellow",
+    ring: "ring-status-yellow/20",
+    dot: "bg-status-yellow",
+  },
+  orange: {
+    bg: "bg-status-orange-soft",
+    text: "text-status-orange",
+    ring: "ring-status-orange/20",
+    dot: "bg-status-orange",
+  },
+  red: {
+    bg: "bg-status-red-soft",
+    text: "text-status-red",
+    ring: "ring-status-red/20",
+    dot: "bg-status-red",
+  },
+  blue: {
+    bg: "bg-status-blue-soft",
+    text: "text-status-blue",
+    ring: "ring-status-blue/20",
+    dot: "bg-status-blue",
+  },
+  neutral: {
+    bg: "bg-muted",
+    text: "text-muted-foreground",
+    ring: "ring-border",
+    dot: "bg-muted-foreground",
+  },
 };
 
 export const formatDaysLeft = (daysLeft: number) => {

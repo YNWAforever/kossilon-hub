@@ -14,10 +14,12 @@ import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as EnquiriesRouteImport } from './routes/enquiries'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automation'
 import { Route as ClientsIdRouteImport } from './routes/clients.$id'
@@ -48,6 +50,11 @@ const PaymentsRoute = PaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnquiriesRoute = EnquiriesRouteImport.update({
   id: '/enquiries',
   path: '/enquiries',
@@ -66,6 +73,11 @@ const ClientsRoute = ClientsRouteImport.update({
 const AnnualReturnsRoute = AnnualReturnsRouteImport.update({
   id: '/annual-returns',
   path: '/annual-returns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -91,10 +103,12 @@ const AnnualReturnsIdRoute = AnnualReturnsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -106,10 +120,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -122,10 +138,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/enquiries': typeof EnquiriesRoute
+  '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -139,10 +157,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/annual-returns'
     | '/clients'
     | '/documents'
     | '/enquiries'
+    | '/login'
     | '/payments'
     | '/settings'
     | '/tasks'
@@ -154,10 +174,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/annual-returns'
     | '/clients'
     | '/documents'
     | '/enquiries'
+    | '/login'
     | '/payments'
     | '/settings'
     | '/tasks'
@@ -169,10 +191,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/annual-returns'
     | '/clients'
     | '/documents'
     | '/enquiries'
+    | '/login'
     | '/payments'
     | '/settings'
     | '/tasks'
@@ -185,10 +209,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AnnualReturnsRoute: typeof AnnualReturnsRouteWithChildren
   ClientsRoute: typeof ClientsRouteWithChildren
   DocumentsRoute: typeof DocumentsRoute
   EnquiriesRoute: typeof EnquiriesRoute
+  LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
@@ -233,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enquiries': {
       id: '/enquiries'
       path: '/enquiries'
@@ -259,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/annual-returns'
       fullPath: '/annual-returns'
       preLoaderRoute: typeof AnnualReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -329,10 +369,12 @@ const WhatsappRouteWithChildren = WhatsappRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AnnualReturnsRoute: AnnualReturnsRouteWithChildren,
   ClientsRoute: ClientsRouteWithChildren,
   DocumentsRoute: DocumentsRoute,
   EnquiriesRoute: EnquiriesRoute,
+  LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,

@@ -15,36 +15,15 @@ import { TopBar } from "@/components/top-bar";
 import { KpiCard } from "@/components/kpi-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
-import {
-  getAnnualReturnDashboardMetrics,
-  listAnnualReturnCases,
-} from "@/features/annual-return/server-fns";
 import type { AnnualReturnCase, AnnualReturnStatus } from "@/features/annual-return/types";
+import { useAuth } from "@/features/auth/auth-context";
+import { loadDashboardData, type DashboardData } from "@/features/dashboard/dashboard-data";
 import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
 import type { StatusTone } from "@/lib/status";
-import {
-  dashboardMetrics,
-  teamWorkloadRows,
-  enquiries,
-  tasks,
-  currentUser,
-  formatDate,
-} from "@/lib/mock-data";
+import { dashboardMetrics, teamWorkloadRows, enquiries, tasks, formatDate } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
-  loader: async () => {
-    const [metrics, annualReturnCases] = await Promise.all([
-      getAnnualReturnDashboardMetrics(),
-      listAnnualReturnCases({ data: {} }),
-    ]);
-
-    return {
-      metrics,
-      upcomingAnnualReturns: annualReturnCases
-        .filter((case_) => case_.currentStatus !== "Completed")
-        .slice(0, 8),
-    };
-  },
+  loader: () => loadDashboardData(),
   head: () => ({
     meta: [
       { title: "Dashboard — Kossilon CoSec OS" },
@@ -59,10 +38,12 @@ export const Route = createFileRoute("/")({
 });
 
 function DashboardPage() {
-  const { metrics: realMetrics, upcomingAnnualReturns } = Route.useLoaderData() as {
-    metrics: Awaited<ReturnType<typeof getAnnualReturnDashboardMetrics>>;
-    upcomingAnnualReturns: AnnualReturnCase[];
-  };
+  const { session } = useAuth();
+  const {
+    metrics: realMetrics,
+    upcomingAnnualReturns,
+    annualReturnDataAvailable,
+  } = Route.useLoaderData() as DashboardData;
   const m = {
     ...dashboardMetrics(),
     dueIn7: realMetrics.dueIn7,
@@ -86,10 +67,27 @@ function DashboardPage() {
     <>
       <TopBar
         title="Dashboard"
-        subtitle={`Good morning, ${currentUser.name.split(" ")[0]} — you have ${m.myCases} active cases.`}
+        subtitle={`Good morning, ${session?.name.split(" ")[0] ?? "there"} — you have ${m.myCases} active cases.`}
       />
 
       <main className="flex-1 space-y-6 p-6">
+        {!annualReturnDataAvailable && (
+          <section className="rounded-lg border border-status-yellow/40 bg-status-yellow-soft px-4 py-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 text-status-orange" />
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">
+                  Annual return data is temporarily unavailable
+                </h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Showing fallback annual-return KPI totals while enquiries and team workload remain
+                  available.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* KPI grid */}
         <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <KpiCard

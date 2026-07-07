@@ -10,7 +10,11 @@ export const Route = createFileRoute("/clients")({
   head: () => ({
     meta: [
       { title: "Clients — Kossilon CoSec OS" },
-      { name: "description", content: "Client company directory with annual return deadlines, assigned team, and payment status." },
+      {
+        name: "description",
+        content:
+          "Client company directory with annual return deadlines, assigned team, and payment status.",
+      },
     ],
   }),
   component: ClientsPage,
@@ -33,12 +37,20 @@ function ClientsPage() {
         <div className="rounded-xl border border-border bg-card">
           <div className="border-b border-border px-5 py-3">
             <div className="flex flex-wrap items-center gap-2">
-              <input placeholder="Search clients…" className="flex-1 min-w-40 rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none" />
+              <input
+                placeholder="Search clients…"
+                className="flex-1 min-w-40 rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none"
+              />
               <select className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">
-                <option>All packages</option><option>Basic</option><option>Standard</option><option>Premium</option>
+                <option>All packages</option>
+                <option>Basic</option>
+                <option>Standard</option>
+                <option>Premium</option>
               </select>
               <select className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">
-                <option>All teams</option><option>Filing Team A</option><option>Filing Team B</option>
+                <option>All teams</option>
+                <option>Filing Team A</option>
+                <option>Filing Team B</option>
               </select>
             </div>
           </div>
@@ -60,27 +72,47 @@ function ClientsPage() {
                   return (
                     <tr key={c.id} className="hover:bg-muted/30">
                       <td className="px-5 py-3">
-                        <Link to="/clients/$id" params={{ id: c.id }} className="font-medium text-foreground hover:text-primary">
+                        <Link
+                          to="/clients/$id"
+                          params={{ id: c.id }}
+                          className="font-medium text-foreground hover:text-primary"
+                        >
                           {c.name}
                         </Link>
                         <div className="text-xs text-muted-foreground">{c.team}</div>
                       </td>
                       <td className="px-5 py-3 text-xs text-muted-foreground tabular-nums">
-                        BR {c.brNumber}<br />CR {c.crNumber}
+                        BR {c.brNumber}
+                        <br />
+                        CR {c.crNumber}
                       </td>
-                      <td className="px-5 py-3"><StatusPill tone="neutral">{c.package}</StatusPill></td>
+                      <td className="px-5 py-3">
+                        <StatusPill tone="neutral">{c.package}</StatusPill>
+                      </td>
                       <td className="px-5 py-3">
                         <DeadlinePill dueDate={c.arDueDate} />
-                        <div className="mt-1 text-[10px] text-muted-foreground">{formatDate(c.arDueDate)}</div>
+                        <div className="mt-1 text-[10px] text-muted-foreground">
+                          {formatDate(c.arDueDate)}
+                        </div>
                       </td>
                       <td className="px-5 py-3">
-                        <StatusPill tone={c.paymentStatus === "Paid" ? "green" : c.paymentStatus === "Pending" ? "yellow" : "red"}>
+                        <StatusPill
+                          tone={
+                            c.paymentStatus === "Paid"
+                              ? "green"
+                              : c.paymentStatus === "Pending"
+                                ? "yellow"
+                                : "red"
+                          }
+                        >
                           {c.paymentStatus}
                         </StatusPill>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sand text-[10px] font-semibold text-white">{owner.initials}</div>
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sand text-[10px] font-semibold text-white">
+                            {owner.initials}
+                          </div>
                           <span className="text-xs text-muted-foreground">{owner.name}</span>
                         </div>
                       </td>

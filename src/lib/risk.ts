@@ -3,12 +3,7 @@
 // reminder cadence to produce a risk level, list of triggered rules, an
 // adjusted reminder schedule, and escalation actions.
 
-import {
-  daysUntil,
-  teamMembers,
-  type AnnualReturnCase,
-  type Company,
-} from "@/lib/mock-data";
+import { daysUntil, teamMembers, type AnnualReturnCase, type Company } from "@/lib/mock-data";
 import {
   templateForService,
   type ChecklistTemplate,
@@ -84,9 +79,7 @@ const matchers: Array<{ test: RegExp; matcher: Matcher }> = [
   {
     test: /payment.*(overdue|unpaid).*(14|two weeks)/i,
     matcher: (c) =>
-      c.paymentOverdueDays > 14
-        ? `Invoice unpaid for ${c.paymentOverdueDays} day(s)`
-        : null,
+      c.paymentOverdueDays > 14 ? `Invoice unpaid for ${c.paymentOverdueDays} day(s)` : null,
   },
   {
     test: /(no.*reply|unresponsive|silent).*(3|three)/i,
@@ -105,16 +98,11 @@ const matchers: Array<{ test: RegExp; matcher: Matcher }> = [
   {
     test: /(15.*day|statutory)/i,
     matcher: (c) =>
-      c.daysLeft < 0
-        ? `Statutory filing window exceeded by ${Math.abs(c.daysLeft)} day(s)`
-        : null,
+      c.daysLeft < 0 ? `Statutory filing window exceeded by ${Math.abs(c.daysLeft)} day(s)` : null,
   },
   {
     test: /(ird|tax)/i,
-    matcher: (c) =>
-      c.missingRequired > 0
-        ? `IRD clearance / tax documents outstanding`
-        : null,
+    matcher: (c) => (c.missingRequired > 0 ? `IRD clearance / tax documents outstanding` : null),
   },
 ];
 
@@ -141,12 +129,7 @@ function buildSchedule(
     channel: r.channel,
     daysBeforeDue: r.daysBeforeDue,
     source: "template",
-    status:
-      remindersSent > i
-        ? "sent"
-        : r.daysBeforeDue > daysLeft
-          ? "overdue"
-          : "scheduled",
+    status: remindersSent > i ? "sent" : r.daysBeforeDue > daysLeft ? "overdue" : "scheduled",
   }));
 
   const boosts: ScheduledReminder[] = [];
@@ -190,15 +173,11 @@ function buildSchedule(
   return [...base, ...boosts].sort((a, b) => b.daysBeforeDue - a.daysBeforeDue);
 }
 
-function buildEscalations(
-  level: RiskLevel,
-  case_: AnnualReturnCase,
-): EscalationStep[] {
+function buildEscalations(level: RiskLevel, case_: AnnualReturnCase): EscalationStep[] {
   const owner = teamMembers.find((t) => t.id === case_.ownerId);
   const teamLead =
-    teamMembers.find(
-      (t) => t.team === owner?.team && t.role === "Manager",
-    ) ?? teamMembers.find((t) => t.role === "Manager");
+    teamMembers.find((t) => t.team === owner?.team && t.role === "Manager") ??
+    teamMembers.find((t) => t.role === "Manager");
   const admin = teamMembers.find((t) => t.role === "Admin");
 
   if (level === "Low") {

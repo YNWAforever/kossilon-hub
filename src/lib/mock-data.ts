@@ -153,18 +153,86 @@ export const currentUser = {
 };
 
 export const teamMembers: TeamMember[] = [
-  { id: "u-amy", name: "Amy Chan", initials: "AC", role: "Admin", team: "Filing Team A", email: "amy@kossilon.hk", clientsOwned: 12 },
-  { id: "u-ken", name: "Ken Wong", initials: "KW", role: "Manager", team: "Filing Team A", email: "ken@kossilon.hk", clientsOwned: 18 },
-  { id: "u-mei", name: "Mei Lam", initials: "ML", role: "Staff", team: "Filing Team A", email: "mei@kossilon.hk", clientsOwned: 24 },
-  { id: "u-jon", name: "Jonathan Ho", initials: "JH", role: "Staff", team: "Filing Team B", email: "jon@kossilon.hk", clientsOwned: 21 },
-  { id: "u-pri", name: "Priya Singh", initials: "PS", role: "Manager", team: "Filing Team B", email: "priya@kossilon.hk", clientsOwned: 16 },
-  { id: "u-raj", name: "Raj Kumar", initials: "RK", role: "Staff", team: "Filing Team B", email: "raj@kossilon.hk", clientsOwned: 19 },
-  { id: "u-sam", name: "Sam Tse", initials: "ST", role: "Staff", team: "New Business", email: "sam@kossilon.hk", clientsOwned: 8 },
+  {
+    id: "u-amy",
+    name: "Amy Chan",
+    initials: "AC",
+    role: "Admin",
+    team: "Filing Team A",
+    email: "amy@kossilon.hk",
+    clientsOwned: 12,
+  },
+  {
+    id: "u-ken",
+    name: "Ken Wong",
+    initials: "KW",
+    role: "Manager",
+    team: "Filing Team A",
+    email: "ken@kossilon.hk",
+    clientsOwned: 18,
+  },
+  {
+    id: "u-mei",
+    name: "Mei Lam",
+    initials: "ML",
+    role: "Staff",
+    team: "Filing Team A",
+    email: "mei@kossilon.hk",
+    clientsOwned: 24,
+  },
+  {
+    id: "u-jon",
+    name: "Jonathan Ho",
+    initials: "JH",
+    role: "Staff",
+    team: "Filing Team B",
+    email: "jon@kossilon.hk",
+    clientsOwned: 21,
+  },
+  {
+    id: "u-pri",
+    name: "Priya Singh",
+    initials: "PS",
+    role: "Manager",
+    team: "Filing Team B",
+    email: "priya@kossilon.hk",
+    clientsOwned: 16,
+  },
+  {
+    id: "u-raj",
+    name: "Raj Kumar",
+    initials: "RK",
+    role: "Staff",
+    team: "Filing Team B",
+    email: "raj@kossilon.hk",
+    clientsOwned: 19,
+  },
+  {
+    id: "u-sam",
+    name: "Sam Tse",
+    initials: "ST",
+    role: "Staff",
+    team: "New Business",
+    email: "sam@kossilon.hk",
+    clientsOwned: 8,
+  },
 ];
 
 export const teams: Team[] = [
-  { id: "t-a", name: "Filing Team A", lead: "Ken Wong", memberIds: ["u-amy", "u-ken", "u-mei"], clientCount: 54 },
-  { id: "t-b", name: "Filing Team B", lead: "Priya Singh", memberIds: ["u-jon", "u-pri", "u-raj"], clientCount: 56 },
+  {
+    id: "t-a",
+    name: "Filing Team A",
+    lead: "Ken Wong",
+    memberIds: ["u-amy", "u-ken", "u-mei"],
+    clientCount: 54,
+  },
+  {
+    id: "t-b",
+    name: "Filing Team B",
+    lead: "Priya Singh",
+    memberIds: ["u-jon", "u-pri", "u-raj"],
+    clientCount: 56,
+  },
   { id: "t-c", name: "New Business", lead: "Sam Tse", memberIds: ["u-sam"], clientCount: 8 },
 ];
 
@@ -233,18 +301,63 @@ const makeChecklist = (companyId: string, allReceived = false): ChecklistItem[] 
     label,
     received: allReceived ? true : (i + companyId.length) % 3 !== 0,
     requiredBy: iso(3 + (i % 5)),
-    file: allReceived || i % 2 === 0 ? `${label.toLowerCase().replace(/[^a-z]+/g, "-")}.pdf` : undefined,
+    file:
+      allReceived || i % 2 === 0
+        ? `${label.toLowerCase().replace(/[^a-z]+/g, "-")}.pdf`
+        : undefined,
   }));
 };
 
 const makeTimeline = (companyId: string, name: string): TimelineEvent[] => [
-  { id: `${companyId}-t1`, at: iso(-30), kind: "status", actor: "System", text: `Annual return cycle opened for ${name}` },
-  { id: `${companyId}-t2`, at: iso(-20), kind: "reminder", actor: "System", text: "First reminder sent via WhatsApp" },
-  { id: `${companyId}-t3`, at: iso(-14), kind: "message", actor: "Client", text: "Requested extension of 5 days" },
-  { id: `${companyId}-t4`, at: iso(-10), kind: "document", actor: "Mei Lam", text: "Received register of directors" },
-  { id: `${companyId}-t5`, at: iso(-7), kind: "payment", actor: "System", text: "Invoice INV-2026-0142 issued (HKD 3,800)" },
-  { id: `${companyId}-t6`, at: iso(-3), kind: "note", actor: "Ken Wong", text: "Chased director for signature; will call again Monday" },
-  { id: `${companyId}-t7`, at: iso(-1), kind: "reminder", actor: "System", text: "Second reminder scheduled for tomorrow" },
+  {
+    id: `${companyId}-t1`,
+    at: iso(-30),
+    kind: "status",
+    actor: "System",
+    text: `Annual return cycle opened for ${name}`,
+  },
+  {
+    id: `${companyId}-t2`,
+    at: iso(-20),
+    kind: "reminder",
+    actor: "System",
+    text: "First reminder sent via WhatsApp",
+  },
+  {
+    id: `${companyId}-t3`,
+    at: iso(-14),
+    kind: "message",
+    actor: "Client",
+    text: "Requested extension of 5 days",
+  },
+  {
+    id: `${companyId}-t4`,
+    at: iso(-10),
+    kind: "document",
+    actor: "Mei Lam",
+    text: "Received register of directors",
+  },
+  {
+    id: `${companyId}-t5`,
+    at: iso(-7),
+    kind: "payment",
+    actor: "System",
+    text: "Invoice INV-2026-0142 issued (HKD 3,800)",
+  },
+  {
+    id: `${companyId}-t6`,
+    at: iso(-3),
+    kind: "note",
+    actor: "Ken Wong",
+    text: "Chased director for signature; will call again Monday",
+  },
+  {
+    id: `${companyId}-t7`,
+    at: iso(-1),
+    kind: "reminder",
+    actor: "System",
+    text: "Second reminder scheduled for tomorrow",
+  },
 ];
 
 export const companies: Company[] = companyNames.map((name, i) => {
@@ -261,8 +374,18 @@ export const companies: Company[] = companyNames.map((name, i) => {
     ownerId,
     team: owner.team,
     contacts: [
-      { name: `${name.split(" ")[0]} Director`, role: "Director", email: `director@${name.toLowerCase().replace(/[^a-z]+/g, "")}.hk`, phone: `+852 9${100 + i}0 ${1000 + i}` },
-      { name: `${name.split(" ")[0]} Finance`, role: "Finance Contact", email: `finance@${name.toLowerCase().replace(/[^a-z]+/g, "")}.hk`, phone: `+852 9${200 + i}0 ${2000 + i}` },
+      {
+        name: `${name.split(" ")[0]} Director`,
+        role: "Director",
+        email: `director@${name.toLowerCase().replace(/[^a-z]+/g, "")}.hk`,
+        phone: `+852 9${100 + i}0 ${1000 + i}`,
+      },
+      {
+        name: `${name.split(" ")[0]} Finance`,
+        role: "Finance Contact",
+        email: `finance@${name.toLowerCase().replace(/[^a-z]+/g, "")}.hk`,
+        phone: `+852 9${200 + i}0 ${2000 + i}`,
+      },
     ],
     address: `${i + 1}/F, ${name.split(" ")[0]} Building, ${["Central", "Wan Chai", "Kowloon", "Sha Tin", "Tsuen Wan"][i % 5]}, Hong Kong`,
     arDueDate: iso(dueOffsets[i]),
@@ -273,7 +396,7 @@ export const companies: Company[] = companyNames.map((name, i) => {
 });
 
 const nextActionByStatus: Record<CaseStatus, string> = {
-  "Upcoming": "Send initial checklist",
+  Upcoming: "Send initial checklist",
   "Reminder Sent": "Await client response (3-day follow-up)",
   "Documents Pending": "Chase missing documents",
   "Documents Received": "Verify documents & issue invoice",
@@ -282,8 +405,8 @@ const nextActionByStatus: Record<CaseStatus, string> = {
   "NAR1 Prepared": "Send NAR1 for director signature",
   "Signature Pending": "Chase director for signature",
   "Ready to File": "File with Companies Registry",
-  "Filed": "Update client & archive documents",
-  "Completed": "Cycle complete — schedule next reminder",
+  Filed: "Update client & archive documents",
+  Completed: "Cycle complete — schedule next reminder",
 };
 
 export const cases: AnnualReturnCase[] = companies.map((c, i) => {
@@ -355,27 +478,102 @@ export const enquiries: Enquiry[] = enquiryContacts.map((c, i) => ({
   lastMessageAt: iso(0, 8 + i),
   intent: intents[i],
   intentConfidence: 0.72 + (i % 5) * 0.05,
-  quoteStatus: (["None", "Draft", "Sent", "Accepted", "None", "None", "Sent", "None"] as Enquiry["quoteStatus"][])[i],
+  quoteStatus: (
+    [
+      "None",
+      "Draft",
+      "Sent",
+      "Accepted",
+      "None",
+      "None",
+      "Sent",
+      "None",
+    ] as Enquiry["quoteStatus"][]
+  )[i],
   assignedTo: i % 3 === 0 ? undefined : teamMembers[i % teamMembers.length].id,
   unread: i % 2 === 0 ? Math.max(1, i % 4) : 0,
   messages: [
     { from: "client", text: "Hi, need some help.", at: iso(-1, 14) },
-    { from: "bot", text: "Hi! This is Kossilon assistant. May I know what you need help with?", at: iso(-1, 14) },
+    {
+      from: "bot",
+      text: "Hi! This is Kossilon assistant. May I know what you need help with?",
+      at: iso(-1, 14),
+    },
     { from: "client", text: "Annual return / new company", at: iso(-1, 15) },
-    { from: "staff", text: "Sure, we can help. Sending you our package details now.", at: iso(0, 8 + i) },
+    {
+      from: "staff",
+      text: "Sure, we can help. Sending you our package details now.",
+      at: iso(0, 8 + i),
+    },
   ],
 }));
 
 // ---------- tasks ----------
 
 export const tasks: Task[] = [
-  { id: "tk-1", title: "Chase director signature — Harbour Trading Ltd", companyName: "Harbour Trading Ltd", dueDate: iso(0), priority: "High", assigneeId: "u-amy", done: false },
-  { id: "tk-2", title: "Verify register of members — Kowloon Textiles Ltd", companyName: "Kowloon Textiles Ltd", dueDate: iso(1), priority: "Normal", assigneeId: "u-mei", done: false },
-  { id: "tk-3", title: "Send invoice — Wanchai Foods Ltd", companyName: "Wanchai Foods Ltd", dueDate: iso(2), priority: "Normal", assigneeId: "u-amy", done: false },
-  { id: "tk-4", title: "File NAR1 — Central Fintech Ltd", companyName: "Central Fintech Ltd", dueDate: iso(3), priority: "High", assigneeId: "u-ken", done: false },
-  { id: "tk-5", title: "Prepare quote — new enquiry Jason Lau", companyName: "—", dueDate: iso(1), priority: "Normal", assigneeId: "u-sam", done: false },
-  { id: "tk-6", title: "Follow up payment — Nathan Road Retail Ltd", companyName: "Nathan Road Retail Ltd", dueDate: iso(-1), priority: "High", assigneeId: "u-jon", done: false },
-  { id: "tk-7", title: "Archive filed documents — Sha Tin Property Ltd", companyName: "Sha Tin Property Ltd", dueDate: iso(4), priority: "Low", assigneeId: "u-mei", done: true },
+  {
+    id: "tk-1",
+    title: "Chase director signature — Harbour Trading Ltd",
+    companyName: "Harbour Trading Ltd",
+    dueDate: iso(0),
+    priority: "High",
+    assigneeId: "u-amy",
+    done: false,
+  },
+  {
+    id: "tk-2",
+    title: "Verify register of members — Kowloon Textiles Ltd",
+    companyName: "Kowloon Textiles Ltd",
+    dueDate: iso(1),
+    priority: "Normal",
+    assigneeId: "u-mei",
+    done: false,
+  },
+  {
+    id: "tk-3",
+    title: "Send invoice — Wanchai Foods Ltd",
+    companyName: "Wanchai Foods Ltd",
+    dueDate: iso(2),
+    priority: "Normal",
+    assigneeId: "u-amy",
+    done: false,
+  },
+  {
+    id: "tk-4",
+    title: "File NAR1 — Central Fintech Ltd",
+    companyName: "Central Fintech Ltd",
+    dueDate: iso(3),
+    priority: "High",
+    assigneeId: "u-ken",
+    done: false,
+  },
+  {
+    id: "tk-5",
+    title: "Prepare quote — new enquiry Jason Lau",
+    companyName: "—",
+    dueDate: iso(1),
+    priority: "Normal",
+    assigneeId: "u-sam",
+    done: false,
+  },
+  {
+    id: "tk-6",
+    title: "Follow up payment — Nathan Road Retail Ltd",
+    companyName: "Nathan Road Retail Ltd",
+    dueDate: iso(-1),
+    priority: "High",
+    assigneeId: "u-jon",
+    done: false,
+  },
+  {
+    id: "tk-7",
+    title: "Archive filed documents — Sha Tin Property Ltd",
+    companyName: "Sha Tin Property Ltd",
+    dueDate: iso(4),
+    priority: "Low",
+    assigneeId: "u-mei",
+    done: true,
+  },
 ];
 
 // ---------- derived helpers ----------
@@ -393,7 +591,12 @@ export const formatDate = (isoDate: string) => {
 
 export const formatDateTime = (isoDate: string) => {
   const d = new Date(isoDate);
-  return d.toLocaleString("en-HK", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("en-HK", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 export const dashboardMetrics = () => {
@@ -405,13 +608,29 @@ export const dashboardMetrics = () => {
     const d = daysUntil(c.dueDate);
     return d >= 0 && d <= 30 && !["Filed", "Completed"].includes(c.status);
   }).length;
-  const overdue = cases.filter((c) => daysUntil(c.dueDate) < 0 && !["Filed", "Completed"].includes(c.status)).length;
-  const missingDocs = cases.reduce((sum, c) => sum + c.checklist.filter((i) => !i.received).length, 0);
+  const overdue = cases.filter(
+    (c) => daysUntil(c.dueDate) < 0 && !["Filed", "Completed"].includes(c.status),
+  ).length;
+  const missingDocs = cases.reduce(
+    (sum, c) => sum + c.checklist.filter((i) => !i.received).length,
+    0,
+  );
   const paymentPending = companies.filter((c) => c.paymentStatus !== "Paid").length;
   const whatsappToday = enquiries.reduce((s, e) => s + (e.unread || 0), 0) + 12;
-  const myCases = cases.filter((c) => c.ownerId === currentUser.id && !["Completed"].includes(c.status)).length;
+  const myCases = cases.filter(
+    (c) => c.ownerId === currentUser.id && !["Completed"].includes(c.status),
+  ).length;
   const teamWorkload = teamMembers.reduce((s, m) => s + m.clientsOwned, 0);
-  return { dueIn7, dueIn30, overdue, missingDocs, paymentPending, whatsappToday, myCases, teamWorkload };
+  return {
+    dueIn7,
+    dueIn30,
+    overdue,
+    missingDocs,
+    paymentPending,
+    whatsappToday,
+    myCases,
+    teamWorkload,
+  };
 };
 
 export const upcomingCases = () =>
@@ -423,6 +642,13 @@ export const upcomingCases = () =>
 export const teamWorkloadRows = () =>
   teamMembers.map((m) => ({
     ...m,
-    activeCases: cases.filter((c) => c.ownerId === m.id && !["Completed", "Filed"].includes(c.status)).length,
-    overdue: cases.filter((c) => c.ownerId === m.id && daysUntil(c.dueDate) < 0 && !["Filed", "Completed"].includes(c.status)).length,
+    activeCases: cases.filter(
+      (c) => c.ownerId === m.id && !["Completed", "Filed"].includes(c.status),
+    ).length,
+    overdue: cases.filter(
+      (c) =>
+        c.ownerId === m.id &&
+        daysUntil(c.dueDate) < 0 &&
+        !["Filed", "Completed"].includes(c.status),
+    ).length,
   }));

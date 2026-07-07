@@ -81,7 +81,9 @@ function FaqManager() {
         <div>
           <div className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-base font-semibold text-foreground">FAQ knowledge base</h2>
+            <h2 className="font-display text-base font-semibold text-foreground">
+              FAQ knowledge base
+            </h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {active} active · used by the AI to draft WhatsApp replies
@@ -115,7 +117,9 @@ function FaqManager() {
         >
           <option value="All">All categories</option>
           {FAQ_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
       </div>
@@ -137,7 +141,15 @@ function FaqManager() {
   );
 }
 
-function FaqRow({ f, expanded, onToggle }: { f: FaqEntry; expanded: boolean; onToggle: () => void }) {
+function FaqRow({
+  f,
+  expanded,
+  onToggle,
+}: {
+  f: FaqEntry;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   return (
     <li>
       <div
@@ -156,14 +168,20 @@ function FaqRow({ f, expanded, onToggle }: { f: FaqEntry; expanded: boolean; onT
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
-            onClick={(e) => { e.stopPropagation(); kbStore.duplicateFaq(f.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              kbStore.duplicateFaq(f.id);
+            }}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Duplicate"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); kbStore.removeFaq(f.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              kbStore.removeFaq(f.id);
+            }}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             aria-label="Delete"
           >
@@ -174,7 +192,9 @@ function FaqRow({ f, expanded, onToggle }: { f: FaqEntry; expanded: boolean; onT
       {expanded && (
         <div className="space-y-3 border-t border-border bg-background/40 p-5">
           <label className="block">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Question</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Question
+            </span>
             <input
               value={f.question}
               onChange={(e) => kbStore.updateFaq(f.id, { question: e.target.value })}
@@ -182,7 +202,9 @@ function FaqRow({ f, expanded, onToggle }: { f: FaqEntry; expanded: boolean; onT
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Answer (markdown)</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Answer (markdown)
+            </span>
             <textarea
               value={f.answer}
               onChange={(e) => kbStore.updateFaq(f.id, { answer: e.target.value })}
@@ -192,24 +214,35 @@ function FaqRow({ f, expanded, onToggle }: { f: FaqEntry; expanded: boolean; onT
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Category</span>
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Category
+              </span>
               <select
                 value={f.category}
-                onChange={(e) => kbStore.updateFaq(f.id, { category: e.target.value as FaqCategory })}
+                onChange={(e) =>
+                  kbStore.updateFaq(f.id, { category: e.target.value as FaqCategory })
+                }
                 className="w-full rounded-md border border-border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 {FAQ_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Tags (comma separated)</span>
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Tags (comma separated)
+              </span>
               <input
                 value={f.tags.join(", ")}
                 onChange={(e) =>
                   kbStore.updateFaq(f.id, {
-                    tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
+                    tags: e.target.value
+                      .split(",")
+                      .map((t) => t.trim())
+                      .filter(Boolean),
                   })
                 }
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -259,7 +292,9 @@ function ReferenceDocsManager() {
         <div>
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-base font-semibold text-foreground">Reference documents</h2>
+            <h2 className="font-display text-base font-semibold text-foreground">
+              Reference documents
+            </h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {docs.filter((d) => d.active).length} active · text-indexed for AI retrieval
@@ -270,7 +305,11 @@ function ReferenceDocsManager() {
           disabled={uploading}
           className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
+          {uploading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <FileUp className="h-3.5 w-3.5" />
+          )}
           {uploading ? "Indexing…" : "Upload document"}
         </button>
         <input
@@ -286,7 +325,10 @@ function ReferenceDocsManager() {
         />
       </div>
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => {
           e.preventDefault();
@@ -340,7 +382,10 @@ function DocRow({ d }: { d: ReferenceDoc }) {
           </div>
         </div>
         <button
-          onClick={(e) => { e.stopPropagation(); kbStore.removeDoc(d.id); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            kbStore.removeDoc(d.id);
+          }}
           className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           aria-label="Delete"
         >
@@ -350,7 +395,9 @@ function DocRow({ d }: { d: ReferenceDoc }) {
       {open && (
         <div className="space-y-2 border-t border-border bg-background/40 p-5">
           <label className="block">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Title</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Title
+            </span>
             <input
               value={d.title}
               onChange={(e) => kbStore.updateDoc(d.id, { title: e.target.value })}
@@ -358,7 +405,9 @@ function DocRow({ d }: { d: ReferenceDoc }) {
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Summary</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Summary
+            </span>
             <textarea
               value={d.summary}
               onChange={(e) => kbStore.updateDoc(d.id, { summary: e.target.value })}
@@ -368,14 +417,20 @@ function DocRow({ d }: { d: ReferenceDoc }) {
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Category</span>
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Category
+              </span>
               <select
                 value={d.category}
-                onChange={(e) => kbStore.updateDoc(d.id, { category: e.target.value as FaqCategory })}
+                onChange={(e) =>
+                  kbStore.updateDoc(d.id, { category: e.target.value as FaqCategory })
+                }
                 className="w-full rounded-md border border-border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 {FAQ_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </label>
@@ -394,7 +449,8 @@ function DocRow({ d }: { d: ReferenceDoc }) {
                 Indexed content preview
               </p>
               <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-background/60 p-2 font-mono text-[11px] leading-relaxed text-muted-foreground">
-                {d.extractedText.slice(0, 1200)}{d.extractedText.length > 1200 ? "\n…" : ""}
+                {d.extractedText.slice(0, 1200)}
+                {d.extractedText.length > 1200 ? "\n…" : ""}
               </pre>
             </div>
           )}
@@ -444,7 +500,9 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
   const commit = () => {
     if (preview.length === 0) return;
     const { added, updated } = kbStore.importFaqs(preview);
-    toast.success(`Imported ${preview.length} FAQ${preview.length === 1 ? "" : "s"} · ${added} new, ${updated} updated`);
+    toast.success(
+      `Imported ${preview.length} FAQ${preview.length === 1 ? "" : "s"} · ${added} new, ${updated} updated`,
+    );
     onClose();
   };
 
@@ -459,7 +517,10 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
       <div
         className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -469,11 +530,14 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
             <h3 className="font-display text-base font-semibold text-foreground">Import FAQs</h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Upload a CSV or JSON file. Columns: <code className="text-foreground">question</code>,{" "}
-              <code className="text-foreground">answer</code>, <code>category</code>, <code>tags</code>, <code>active</code>.
-              Duplicates by question are updated in place.
+              <code className="text-foreground">answer</code>, <code>category</code>,{" "}
+              <code>tags</code>, <code>active</code>. Duplicates by question are updated in place.
             </p>
           </div>
-          <button onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -530,9 +594,13 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
 
           {errors.length > 0 && (
             <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
-              <p className="text-xs font-semibold text-destructive">Skipped {errors.length} row{errors.length === 1 ? "" : "s"}</p>
+              <p className="text-xs font-semibold text-destructive">
+                Skipped {errors.length} row{errors.length === 1 ? "" : "s"}
+              </p>
               <ul className="mt-1 list-inside list-disc space-y-0.5 text-[11px] text-destructive/80">
-                {errors.slice(0, 6).map((e, i) => <li key={i}>{e}</li>)}
+                {errors.slice(0, 6).map((e, i) => (
+                  <li key={i}>{e}</li>
+                ))}
                 {errors.length > 6 && <li>…and {errors.length - 6} more</li>}
               </ul>
             </div>
@@ -550,9 +618,13 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
                     <p className="truncate text-xs font-medium text-foreground">{r.question}</p>
                     <p className="line-clamp-2 text-[11px] text-muted-foreground">{r.answer}</p>
                     <div className="mt-1 flex items-center gap-1.5">
-                      <StatusPill tone={categoryTone(r.category ?? "General")}>{r.category ?? "General"}</StatusPill>
+                      <StatusPill tone={categoryTone(r.category ?? "General")}>
+                        {r.category ?? "General"}
+                      </StatusPill>
                       {r.tags && r.tags.length > 0 && (
-                        <span className="text-[10px] text-muted-foreground">{r.tags.join(", ")}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {r.tags.join(", ")}
+                        </span>
                       )}
                     </div>
                   </li>
@@ -568,7 +640,10 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3">
-          <button onClick={onClose} className="rounded-md px-3 py-2 text-xs font-medium hover:bg-accent">
+          <button
+            onClick={onClose}
+            className="rounded-md px-3 py-2 text-xs font-medium hover:bg-accent"
+          >
             Cancel
           </button>
           <button
@@ -576,7 +651,8 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
             disabled={preview.length === 0}
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            <Upload className="h-3.5 w-3.5" /> Import {preview.length > 0 ? `${preview.length} FAQ${preview.length === 1 ? "" : "s"}` : ""}
+            <Upload className="h-3.5 w-3.5" /> Import{" "}
+            {preview.length > 0 ? `${preview.length} FAQ${preview.length === 1 ? "" : "s"}` : ""}
           </button>
         </div>
       </div>

@@ -62,10 +62,7 @@ function SettingsPage() {
 
   return (
     <>
-      <TopBar
-        title="Settings"
-        subtitle="Checklist templates, packages, integrations"
-      />
+      <TopBar title="Settings" subtitle="Checklist templates, packages, integrations" />
       <main className="flex-1 space-y-6 p-6">
         {/* Checklist templates section */}
         <section className="rounded-xl border border-border bg-card">
@@ -78,8 +75,8 @@ function SettingsPage() {
                 </h2>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Each new case preloads required documents, reminder cadence,
-                and risk rules from the active template for its service type.
+                Each new case preloads required documents, reminder cadence, and risk rules from the
+                active template for its service type.
               </p>
             </div>
             <button
@@ -115,7 +112,7 @@ function SettingsPage() {
                     (c) =>
                       t.serviceType.startsWith("Annual Return") &&
                       // simplistic: assume all AR cases use the AR template
-                      (t.serviceType === "Annual Return — Private Ltd"),
+                      t.serviceType === "Annual Return — Private Ltd",
                   ).length;
                   return (
                     <li key={t.id}>
@@ -174,7 +171,6 @@ function SettingsPage() {
           </div>
         </section>
 
-
         {/* Knowledge base for the AI assistant */}
         <KnowledgeBaseSection />
 
@@ -207,8 +203,7 @@ function SettingsPage() {
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Connect your WOZTELL account to enable two-way WhatsApp messaging
-              and automation.
+              Connect your WOZTELL account to enable two-way WhatsApp messaging and automation.
             </p>
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <LabeledInput label="API endpoint" defaultValue="https://api.woztell.com/v3" />
@@ -260,9 +255,7 @@ function TemplateEditor({
           />
           <textarea
             value={t.description}
-            onChange={(e) =>
-              templatesStore.update(t.id, { description: e.target.value })
-            }
+            onChange={(e) => templatesStore.update(t.id, { description: e.target.value })}
             placeholder="Describe when this template applies…"
             rows={2}
             className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring"
@@ -290,15 +283,11 @@ function TemplateEditor({
               <input
                 type="checkbox"
                 checked={t.active}
-                onChange={(e) =>
-                  templatesStore.update(t.id, { active: e.target.checked })
-                }
+                onChange={(e) => templatesStore.update(t.id, { active: e.target.checked })}
               />
               <span className="text-muted-foreground">Active</span>
             </label>
-            <span className="text-muted-foreground">
-              Updated {formatDate(t.updatedAt)}
-            </span>
+            <span className="text-muted-foreground">Updated {formatDate(t.updatedAt)}</span>
           </div>
         </div>
         <div className="flex gap-2">
@@ -369,9 +358,7 @@ function DocumentsTab({ t }: { t: ChecklistTemplate }) {
         <span className="text-right">Actions</span>
       </div>
       {t.documents.length === 0 && (
-        <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-          No documents yet.
-        </p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">No documents yet.</p>
       )}
       <ul className="divide-y divide-border">
         {t.documents.map((d) => (
@@ -381,9 +368,7 @@ function DocumentsTab({ t }: { t: ChecklistTemplate }) {
           >
             <input
               value={d.label}
-              onChange={(e) =>
-                templatesStore.updateDocument(t.id, d.id, { label: e.target.value })
-              }
+              onChange={(e) => templatesStore.updateDocument(t.id, d.id, { label: e.target.value })}
               className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
             />
             <div className="flex items-center gap-1 text-xs">
@@ -448,9 +433,7 @@ function RemindersTab({ t }: { t: ChecklistTemplate }) {
         <span className="text-right">Actions</span>
       </div>
       {t.reminders.length === 0 && (
-        <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-          No reminders yet.
-        </p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">No reminders yet.</p>
       )}
       <ul className="divide-y divide-border">
         {t.reminders.map((r) => (
@@ -460,9 +443,7 @@ function RemindersTab({ t }: { t: ChecklistTemplate }) {
           >
             <input
               value={r.label}
-              onChange={(e) =>
-                templatesStore.updateReminder(t.id, r.id, { label: e.target.value })
-              }
+              onChange={(e) => templatesStore.updateReminder(t.id, r.id, { label: e.target.value })}
               className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
             />
             <div className="flex items-center gap-1 text-xs">
@@ -533,9 +514,7 @@ function RisksTab({ t }: { t: ChecklistTemplate }) {
         <span className="text-right">Actions</span>
       </div>
       {t.riskRules.length === 0 && (
-        <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-          No risk rules yet.
-        </p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">No risk rules yet.</p>
       )}
       <ul className="divide-y divide-border">
         {t.riskRules.map((r) => (
@@ -545,16 +524,12 @@ function RisksTab({ t }: { t: ChecklistTemplate }) {
           >
             <input
               value={r.label}
-              onChange={(e) =>
-                templatesStore.updateRisk(t.id, r.id, { label: e.target.value })
-              }
+              onChange={(e) => templatesStore.updateRisk(t.id, r.id, { label: e.target.value })}
               className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
             />
             <input
               value={r.trigger}
-              onChange={(e) =>
-                templatesStore.updateRisk(t.id, r.id, { trigger: e.target.value })
-              }
+              onChange={(e) => templatesStore.updateRisk(t.id, r.id, { trigger: e.target.value })}
               className="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
             />
             <div className="flex items-center gap-2">
@@ -627,9 +602,7 @@ function SimpleCard({
       <div className="border-b border-border px-5 py-3">
         <div className="flex items-center gap-2">
           {icon}
-          <h2 className="font-display text-base font-semibold text-foreground">
-            {title}
-          </h2>
+          <h2 className="font-display text-base font-semibold text-foreground">{title}</h2>
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
       </div>
