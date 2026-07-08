@@ -37,8 +37,21 @@ function timelineLabels(caseId: string, label: string) {
 }
 
 function makeDeltaReadyForReceipt(): void {
-  uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
-  uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+  const signed = uploadClientDocument(
+    requireCase("ar-delta"),
+    "signed-nar1",
+    "signed-nar1.pdf",
+    "Joanna Poon",
+  );
+  const scr = uploadClientDocument(
+    requireCase("ar-delta"),
+    "scr",
+    "updated-scr.pdf",
+    "Joanna Poon",
+  );
+  if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
+  reviewClientDocument(signed.documentId, "accepted", "Operations");
+  reviewClientDocument(scr.documentId, "accepted", "Operations");
   updatePaymentStatus("ar-delta", "paid");
   updateSignatureStatus("ar-delta", "received");
   completeChecklistItem("ar-delta", "collect-signed-nar1");
@@ -83,7 +96,7 @@ describe("client portal store", () => {
     });
   });
 
-  it("uploads a current client document, updates annual-return documents, and appends activity", () => {
+  it("uploads a current client document, leaves annual-return readiness pending review, and appends activity", () => {
     const result = uploadClientDocument(
       requireCase("ar-delta"),
       "signed-nar1",
@@ -99,7 +112,7 @@ describe("client portal store", () => {
     });
     expect(
       requireCase("ar-delta").documents.find((document) => document.id === "signed-nar1"),
-    ).toMatchObject({ received: true });
+    ).toMatchObject({ received: false });
     expect(getClientPortalActivity("ar-delta")[0]).toMatchObject({
       type: "upload-document",
       summary: "Joanna Poon uploaded Signed NAR1.",
@@ -195,6 +208,21 @@ describe("client portal store", () => {
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
       ok: false,
       reason: "Packet approval blocked: Signed NAR1; Updated significant controller register",
+    });
+  });
+
+  it("shows waiting for staff review when uploads are pending review", () => {
+    acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon");
+    uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
+    uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.kind === "packet",
+      ),
+    ).toMatchObject({ status: "blocked" });
+    expect(getClientPortalProgress(requireCase("ar-delta"))).toMatchObject({
+      nextAction: "Waiting for staff review",
     });
   });
 

@@ -336,8 +336,14 @@ export function getClientPortalRequiredActions(
           caseId: caseItem.id,
           kind: "packet" as const,
           label: "Approve filing packet",
-          status: isReadOnlyCase(caseItem) ? ("blocked" as const) : ("open" as const),
-          detail: "Confirm the client has reviewed the prepared packet details.",
+          status:
+            isReadOnlyCase(caseItem) || getPacketApprovalBlockers(caseItem).length > 0
+              ? ("blocked" as const)
+              : ("open" as const),
+          detail:
+            getPacketApprovalBlockers(caseItem).length > 0
+              ? "Required documents still need staff review or replacement before packet approval is available."
+              : "Confirm the client has reviewed the prepared packet details.",
         },
       ];
 
@@ -635,7 +641,6 @@ export function uploadClientDocument(
   snapshot = { ...snapshot, documents: [document, ...snapshot.documents] };
   const summary = `${actor} uploaded ${requirement.label}.`;
   addAction(caseItem, "upload-document", actor, summary);
-  markDocumentReceived(caseItem.id, requirementId);
   appendClientPortalTimelineEvent(caseItem.id, "Client document uploaded", summary);
   emit();
 
@@ -668,7 +673,6 @@ export function replaceClientDocument(
   };
   const summary = `${actor} replaced ${requirement.label}.`;
   addAction(caseItem, "replace-document", actor, summary);
-  markDocumentReceived(caseItem.id, requirementId);
   appendClientPortalTimelineEvent(caseItem.id, "Client document replaced", summary);
   emit();
 
