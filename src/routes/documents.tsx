@@ -4,8 +4,10 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
   getDocumentArchiveRows,
+  reviewClientDocument,
   useClientPortalSnapshot,
   type ClientPortalArchiveRow,
+  type ClientPortalDocumentReviewDecision,
 } from "../lib/client-portal-store";
 
 type DocumentsSearch = {
@@ -28,6 +30,7 @@ function DocumentsRoute() {
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
   const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
+  const [warning, setWarning] = useState<string | undefined>();
 
   useEffect(() => {
     setCaseFilter(caseId ?? "all");
@@ -52,6 +55,12 @@ function DocumentsRoute() {
         <p className="text-sm font-medium text-muted-foreground">Workspace</p>
         <h1 className="mt-1 text-3xl font-semibold">Documents</h1>
       </div>
+
+      {warning ? (
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+          {warning}
+        </div>
+      ) : null}
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 xl:grid-cols-[1fr_180px_180px_180px_220px]">
@@ -104,7 +113,7 @@ function DocumentsRoute() {
           </select>
         </div>
 
-        <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
           <span>Document</span>
           <span>Company</span>
           <span>Category</span>
@@ -112,6 +121,7 @@ function DocumentsRoute() {
           <span>Status</span>
           <span>Uploaded by</span>
           <span>Updated</span>
+          <span>Review</span>
           <span className="text-right">Case</span>
         </div>
 
@@ -119,7 +129,7 @@ function DocumentsRoute() {
           {visibleRows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">No documents match these filters.</p>
           ) : (
-            visibleRows.map((row) => <DocumentRow key={row.id} row={row} />)
+            visibleRows.map((row) => <DocumentRow key={row.id} row={row} onWarning={setWarning} />)
           )}
         </div>
       </section>
@@ -155,9 +165,21 @@ function FilterSelect({
   );
 }
 
-function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
+function DocumentRow({
+  row,
+  onWarning,
+}: {
+  row: ClientPortalArchiveRow;
+  onWarning: (warning: string | undefined) => void;
+}) {
+  function handleReview(decision: ClientPortalDocumentReviewDecision) {
+    if (!row.documentId) return;
+    const result = reviewClientDocument(row.documentId, decision, "Operations");
+    onWarning(result.ok ? undefined : result.reason);
+  }
+
   return (
-    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_100px] lg:items-center">
+    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] lg:items-center">
       <div className="min-w-0">
         <p className="truncate font-medium">{row.title}</p>
         <p className="truncate text-muted-foreground">{row.filename}</p>
@@ -168,6 +190,7 @@ function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
       <Field label="Status" value={labelValue(row.status)} />
       <Field label="Uploaded by" value={row.actor} />
       <Field label="Updated" value={formatTimestamp(row.createdAt)} />
+      <ReviewCell row={row} onReview={handleReview} />
       <div className="flex justify-start lg:justify-end">
         <Link
           className="rounded-md border px-3 py-2 text-sm"
@@ -178,6 +201,44 @@ function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
         </Link>
       </div>
     </div>
+  );
+}
+
+function ReviewCell({
+  row,
+  onReview,
+}: {
+  row: ClientPortalArchiveRow;
+  onReview: (decision: ClientPortalDocumentReviewDecision) => void;
+}) {
+  if (row.reviewable) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <button
+          aria-label={`Accept ${row.title}`}
+          className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+          onClick={() => onReview("accepted")}
+          type="button"
+        >
+          Accept
+        </button>
+        <button
+          aria-label={`Reject ${row.title}`}
+          className="rounded-md border px-3 py-2 text-sm"
+          onClick={() => onReview("rejected")}
+          type="button"
+        >
+          Reject
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <Field
+      label="Review"
+      value={row.reviewSummary ?? (row.readonly ? "Read-only" : "No review needed")}
+    />
   );
 }
 

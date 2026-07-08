@@ -193,7 +193,7 @@ function PortalActionRow({
   onWarning: (warning: string | undefined) => void;
 }) {
   const primaryDisabled = action.status !== "open" || (action.kind !== "receipt" && isReadOnly);
-  const replaceDisabled = action.status === "blocked" || isReadOnly;
+  const replaceDisabled = action.status !== "complete" || isReadOnly;
   const documentPrimaryLabel =
     action.kind === "document"
       ? action.documentAction === "replace"
@@ -281,12 +281,7 @@ function PortalActionRow({
               documentPrimaryLabel ? `${documentPrimaryLabel} ${action.label}` : undefined
             }
           >
-            {documentPrimaryLabel ??
-              (action.kind === "payment"
-                ? "Acknowledge payment"
-                : action.kind === "packet"
-                  ? "Approve packet"
-                  : "View receipt")}
+            {primaryActionLabel(action)}
           </button>
         ) : null}
       </div>
@@ -345,4 +340,11 @@ function formatTimestamp(value: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function primaryActionLabel(action: ClientPortalRequiredAction): string {
+  if (action.kind === "document") return action.documentAction === "replace" ? "Replace" : "Upload";
+  if (action.kind === "payment") return "Acknowledge payment";
+  if (action.kind === "packet") return "Approve packet";
+  return "View receipt";
 }
