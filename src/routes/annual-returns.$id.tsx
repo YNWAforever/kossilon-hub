@@ -86,6 +86,7 @@ const riskToneClasses: Record<AnnualReturnRiskLevel, string> = {
 function AnnualReturnDetailRoute() {
   const { id } = Route.useParams();
   const caseItem = useAnnualReturnCase(id);
+  const portalSnapshot = useClientPortalSnapshot();
   const [note, setNote] = useState("");
   const [packetWarning, setPacketWarning] = useState<string | undefined>();
   const [followUpWarning, setFollowUpWarning] = useState<string | undefined>();
@@ -121,7 +122,6 @@ function AnnualReturnDetailRoute() {
   const packetStatus = getPacketStatus(caseItem);
   const packetLocked = isFiled || Boolean(caseItem.submission);
   const followUps = getFollowUpDrafts(caseItem);
-  const portalSnapshot = useClientPortalSnapshot();
   const portalActions = getClientPortalRequiredActions(caseItem, portalSnapshot);
   const portalActivity = getClientPortalActivity(caseItem.id, portalSnapshot);
   const archiveRows = getDocumentArchiveRows([caseItem], portalSnapshot);
@@ -548,7 +548,9 @@ function AnnualReturnDetailRoute() {
               <DenseStat label="Archive" value={`${archiveRows.length}`} tone="blue" />
               <DenseStat
                 label="Latest"
-                value={latestPortalActivity ? formatTimestamp(latestPortalActivity.createdAt) : "None"}
+                value={
+                  latestPortalActivity ? formatTimestamp(latestPortalActivity.createdAt) : "None"
+                }
                 tone={latestPortalActivity ? "green" : "blue"}
               />
             </div>
@@ -577,7 +579,9 @@ function AnnualReturnDetailRoute() {
                 <h2 className="text-lg font-semibold">Timeline</h2>
                 <p className="text-sm text-muted-foreground">Newest case activity appears first.</p>
               </div>
-              <span className="text-sm text-muted-foreground">{caseItem.timeline.length} events</span>
+              <span className="text-sm text-muted-foreground">
+                {caseItem.timeline.length} events
+              </span>
             </div>
 
             <div className="mt-4 space-y-3">

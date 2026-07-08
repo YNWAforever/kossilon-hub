@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import {
   getBlockers,
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/annual-returns")({
 });
 
 function AnnualReturnsRoute() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const cases = useAnnualReturnCases();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<
@@ -55,6 +56,10 @@ function AnnualReturnsRoute() {
       })
       .sort((a, b) => riskSortValue(getRiskLevel(a)) - riskSortValue(getRiskLevel(b)));
   }, [cases, filter, owner, query]);
+
+  if (pathname !== "/annual-returns") {
+    return <Outlet />;
+  }
 
   return (
     <div className="space-y-6 p-6">

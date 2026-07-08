@@ -35,7 +35,8 @@ function DocumentsRoute() {
 
   const rows = useMemo(() => getDocumentArchiveRows(cases, snapshot), [cases, snapshot]);
   const visibleRows = rows.filter((row) => {
-    const queryText = `${row.companyName} ${row.contactName} ${row.title} ${row.filename}`.toLowerCase();
+    const queryText =
+      `${row.companyName} ${row.contactName} ${row.title} ${row.filename}`.toLowerCase();
     return (
       queryText.includes(query.toLowerCase()) &&
       (source === "all" || row.source === source) &&

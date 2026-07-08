@@ -40,8 +40,7 @@ function PortalRoute() {
   const navigate = useNavigate({ from: "/portal" });
   const [warning, setWarning] = useState<string | undefined>();
 
-  const selectedCase =
-    cases.find((caseItem) => caseItem.id === caseId) ?? cases[0];
+  const selectedCase = cases.find((caseItem) => caseItem.id === caseId) ?? cases[0];
 
   useEffect(() => {
     if (!selectedCase || caseId === selectedCase.id) return;

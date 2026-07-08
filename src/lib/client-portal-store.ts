@@ -8,28 +8,13 @@ import {
 } from "./annual-return-store";
 
 export type ClientPortalDocumentCategory =
-  | "identity"
-  | "registry"
-  | "signature"
-  | "payment"
-  | "packet"
-  | "submission"
-  | "receipt"
-  | "other";
+  "identity" | "registry" | "signature" | "payment" | "packet" | "submission" | "receipt" | "other";
 
 export type ClientPortalDocumentSource =
-  | "client-portal"
-  | "staff-packet"
-  | "filing-submission"
-  | "filing-receipt";
+  "client-portal" | "staff-packet" | "filing-submission" | "filing-receipt";
 
 export type ClientPortalDocumentStatus =
-  | "required"
-  | "uploaded"
-  | "superseded"
-  | "accepted"
-  | "rejected"
-  | "generated";
+  "required" | "uploaded" | "superseded" | "accepted" | "rejected" | "generated";
 
 export type ClientPortalActionType =
   | "upload-document"

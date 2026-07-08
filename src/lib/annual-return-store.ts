@@ -844,9 +844,7 @@ export function appendClientPortalTimelineEvent(
   if (!label.trim()) return { ok: false, reason: "Timeline label is required" };
   if (!detail.trim()) return { ok: false, reason: "Timeline detail is required" };
 
-  replaceCase(caseId, (currentCase) =>
-    appendTimeline(currentCase, label.trim(), detail.trim()),
-  );
+  replaceCase(caseId, (currentCase) => appendTimeline(currentCase, label.trim(), detail.trim()));
 
   return { ok: true };
 }

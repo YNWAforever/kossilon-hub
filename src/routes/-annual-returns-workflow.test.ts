@@ -23,6 +23,8 @@ describe("annual return workflow route regressions", () => {
     expect(annualReturnsRouteSource).toContain("<span>Packet</span>");
     expect(annualReturnsRouteSource).toContain("<span>Follow-ups</span>");
     expect(annualReturnsRouteSource).toContain('<Field label="Blockers" value={blockerSummary} />');
+    expect(annualReturnsRouteSource).toContain("Outlet");
+    expect(annualReturnsRouteSource).toContain('pathname !== "/annual-returns"');
   });
 
   it("renders an explicit status column in WhatsApp automation", () => {
@@ -51,7 +53,7 @@ describe("annual return workflow route regressions", () => {
     expect(documentsRouteSource).toContain('createFileRoute("/documents")');
     expect(documentsRouteSource).toContain("validateSearch");
     expect(documentsRouteSource).toContain("caseId");
-    expect(portalRouteSource).toContain('search={{ caseId: selectedCase.id }}');
+    expect(portalRouteSource).toContain("search={{ caseId: selectedCase.id }}");
     expect(portalRouteSource).toContain('action.kind === "receipt"');
     expect(portalRouteSource).toContain('action.kind !== "receipt" && isReadOnly');
     expect(portalRouteSource).toContain('action.status !== "complete"');

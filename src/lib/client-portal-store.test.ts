@@ -123,7 +123,12 @@ describe("client portal store", () => {
 
   it("scopes client-uploaded archive rows to the requested cases", () => {
     uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
-    uploadClientDocument(requireCase("ar-crestview"), "signed-nar1", "crestview-signed.pdf", "Samuel Cheng");
+    uploadClientDocument(
+      requireCase("ar-crestview"),
+      "signed-nar1",
+      "crestview-signed.pdf",
+      "Samuel Cheng",
+    );
 
     const rows = getDocumentArchiveRows([requireCase("ar-delta")]).filter(
       (row) => row.source === "client-portal",
@@ -148,11 +153,15 @@ describe("client portal store", () => {
   });
 
   it("rejects invalid replacement inputs without creating archive rows", () => {
-    expect(replaceClientDocument(requireCase("ar-delta"), "missing-doc", "named.pdf", "Joanna Poon")).toEqual({
+    expect(
+      replaceClientDocument(requireCase("ar-delta"), "missing-doc", "named.pdf", "Joanna Poon"),
+    ).toEqual({
       ok: false,
       reason: "Document requirement not found",
     });
-    expect(replaceClientDocument(requireCase("ar-delta"), "signed-nar1", "   ", "Joanna Poon")).toEqual({
+    expect(
+      replaceClientDocument(requireCase("ar-delta"), "signed-nar1", "   ", "Joanna Poon"),
+    ).toEqual({
       ok: false,
       reason: "Filename is required",
     });
