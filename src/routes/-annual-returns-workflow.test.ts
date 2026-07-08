@@ -228,6 +228,7 @@ describe("annual return workflow route regressions", () => {
 
     expect(html).toContain("Replace Signed NAR1");
     expect(html).toMatch(/Replace Signed NAR1[\s\S]*?>Replace<\/button>/);
+    expect(html.match(/>Replace<\/button>/g) ?? []).toHaveLength(1);
   });
 
   it("does not render replace controls for accepted portal documents", async () => {

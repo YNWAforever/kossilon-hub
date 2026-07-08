@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, FileUp, ReceiptText } from "lucide-react";
+import { CheckCircle2, ReceiptText } from "lucide-react";
 
 import {
   type AnnualReturnCase,
@@ -194,8 +194,6 @@ function PortalActionRow({
   onWarning: (warning: string | undefined) => void;
 }) {
   const primaryDisabled = action.status !== "open" || (action.kind !== "receipt" && isReadOnly);
-  const canReplace = action.kind === "document" && action.documentAction === "replace";
-  const replaceDisabled = !canReplace || action.status !== "open" || isReadOnly;
   const documentPrimaryLabel =
     action.kind === "document"
       ? action.documentAction === "replace"
@@ -241,16 +239,6 @@ function PortalActionRow({
     }
   }
 
-  function handleReplace() {
-    if (!action.requirementId) return;
-    const result = replaceClientDocument(
-      caseItem,
-      action.requirementId,
-      `${caseItem.id}-${action.requirementId}-replacement.pdf`,
-    );
-    onWarning(result.ok ? undefined : result.reason);
-  }
-
   return (
     <div className="rounded-md border px-3 py-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -261,17 +249,6 @@ function PortalActionRow({
         <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        {canReplace ? (
-          <button
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-            disabled={replaceDisabled}
-            onClick={handleReplace}
-            type="button"
-          >
-            <FileUp className="h-4 w-4" />
-            Replace
-          </button>
-        ) : null}
         {action.kind !== "document" || (action.status === "open" && action.documentAction) ? (
           <button
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
