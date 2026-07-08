@@ -22,6 +22,7 @@ import {
   recordReceiptViewed,
   replaceClientDocument,
   resetClientPortalStoreForTest,
+  reviewClientDocument,
   uploadClientDocument,
 } from "./client-portal-store";
 
@@ -29,6 +30,10 @@ function requireCase(caseId: string) {
   const caseItem = getAnnualReturnCaseById(caseId);
   if (!caseItem) throw new Error(`Missing fixture ${caseId}`);
   return caseItem;
+}
+
+function timelineLabels(caseId: string, label: string) {
+  return requireCase(caseId).timeline.filter((event) => event.label === label);
 }
 
 function makeDeltaReadyForReceipt(): void {
@@ -194,8 +199,28 @@ describe("client portal store", () => {
   });
 
   it("approves a packet after portal-visible documents are present", () => {
-    uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
-    uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+    const signed = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    const scr = uploadClientDocument(
+      requireCase("ar-delta"),
+      "scr",
+      "updated-scr.pdf",
+      "Joanna Poon",
+    );
+
+    if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
+    expect(reviewClientDocument(signed.documentId, "accepted", "Operations")).toEqual({
+      ok: true,
+      documentId: signed.documentId,
+    });
+    expect(reviewClientDocument(scr.documentId, "accepted", "Operations")).toEqual({
+      ok: true,
+      documentId: scr.documentId,
+    });
 
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
     expect(getClientPortalActivity("ar-delta")[0]).toMatchObject({
@@ -233,5 +258,148 @@ describe("client portal store", () => {
       reason: "Filed cases are read-only in the client portal",
     });
     expect(getClientPortalProgress(filedCase)).toMatchObject({ isReadOnly: true });
+  });
+
+  it("keeps payment acknowledgement idempotent without duplicating activity or timeline", () => {
+    expect(acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: true,
+    });
+    expect(acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: true,
+    });
+
+    expect(
+      getClientPortalActivity("ar-delta").filter(
+        (action) => action.type === "acknowledge-payment",
+      ),
+    ).toHaveLength(1);
+    expect(timelineLabels("ar-delta", "Payment instructions acknowledged")).toHaveLength(1);
+  });
+
+  it("blocks packet approval until required client uploads are accepted by staff", () => {
+    uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
+    uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: false,
+      reason:
+        "Packet approval blocked: Signed NAR1 pending staff review; Updated significant controller register pending staff review",
+    });
+
+    for (const row of getDocumentArchiveRows([requireCase("ar-delta")]).filter(
+      (candidate) => candidate.source === "client-portal",
+    )) {
+      expect(reviewClientDocument(row.documentId ?? row.id, "accepted", "Operations")).toMatchObject({
+        ok: true,
+      });
+    }
+
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
+  });
+
+  it("keeps packet approval idempotent after it succeeds", () => {
+    const signed = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    const scr = uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+
+    if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
+
+    reviewClientDocument(signed.documentId, "accepted", "Operations");
+    reviewClientDocument(scr.documentId, "accepted", "Operations");
+
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
+
+    expect(
+      getClientPortalActivity("ar-delta").filter((action) => action.type === "approve-packet"),
+    ).toHaveLength(1);
+    expect(timelineLabels("ar-delta", "Client packet approved")).toHaveLength(1);
+  });
+
+  it("keeps receipt viewing idempotent after a receipt exists", () => {
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    expect(recordReceiptViewed(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
+    expect(recordReceiptViewed(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
+
+    expect(
+      getClientPortalActivity("ar-delta").filter((action) => action.type === "view-receipt"),
+    ).toHaveLength(1);
+    expect(timelineLabels("ar-delta", "Client viewed receipt")).toHaveLength(1);
+  });
+
+  it("reopens rejected required documents for replacement", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
+
+    expect(getCurrentClientDocument("ar-delta", "signed-nar1")).toMatchObject({
+      status: "rejected",
+      reviewedBy: "Operations",
+    });
+    expect(
+      requireCase("ar-delta").documents.find((document) => document.id === "signed-nar1"),
+    ).toMatchObject({ received: false });
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.requirementId === "signed-nar1",
+      ),
+    ).toMatchObject({
+      label: "Replace Signed NAR1",
+      status: "open",
+      documentAction: "replace",
+    });
+  });
+
+  it("rejects invalid document review attempts without changing archive state", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    const replacement = replaceClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1-v2.pdf",
+      "Joanna Poon",
+    );
+    if (!replacement.ok || !replacement.supersededDocumentId) {
+      throw new Error("Expected fixture replacement to supersede the first document");
+    }
+
+    expect(reviewClientDocument("missing-document", "accepted", "Operations")).toEqual({
+      ok: false,
+      reason: "Document not found",
+    });
+    expect(reviewClientDocument(replacement.supersededDocumentId, "accepted", "Operations")).toEqual({
+      ok: false,
+      reason: "Superseded documents cannot be reviewed",
+    });
+    expect(reviewClientDocument(replacement.documentId, "accepted", "Operations")).toEqual({
+      ok: true,
+      documentId: replacement.documentId,
+    });
+    expect(reviewClientDocument(replacement.documentId, "rejected", "Operations")).toEqual({
+      ok: false,
+      reason: "Document has already been reviewed",
+    });
   });
 });

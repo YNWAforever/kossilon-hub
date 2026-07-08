@@ -4,6 +4,7 @@ import {
   type AnnualReturnCase,
   appendClientPortalTimelineEvent,
   getPacketStatus,
+  markDocumentMissing,
   markDocumentReceived,
 } from "./annual-return-store";
 
@@ -21,7 +22,11 @@ export type ClientPortalActionType =
   | "replace-document"
   | "acknowledge-payment"
   | "approve-packet"
-  | "view-receipt";
+  | "view-receipt"
+  | "accept-document"
+  | "reject-document";
+
+export type ClientPortalDocumentReviewDecision = "accepted" | "rejected";
 
 export type ClientPortalActionStatus = "completed" | "blocked";
 
@@ -39,6 +44,9 @@ export type ClientPortalDocument = {
   actor: string;
   createdAt: string;
   supersedesDocumentId?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewSummary?: string;
 };
 
 export type ClientPortalAction = {
@@ -53,6 +61,7 @@ export type ClientPortalAction = {
 
 export type ClientPortalArchiveRow = {
   id: string;
+  documentId?: string;
   caseId: string;
   requirementId?: string;
   companyName: string;
@@ -65,16 +74,23 @@ export type ClientPortalArchiveRow = {
   actor: string;
   createdAt: string;
   readonly: boolean;
+  reviewable: boolean;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewSummary?: string;
 };
+
+export type ClientPortalRequiredActionStatus = "open" | "complete" | "blocked" | "pending-review";
 
 export type ClientPortalRequiredAction = {
   id: string;
   caseId: string;
   kind: "document" | "payment" | "packet" | "receipt";
   label: string;
-  status: "open" | "complete" | "blocked";
+  status: ClientPortalRequiredActionStatus;
   detail: string;
   requirementId?: string;
+  documentAction?: "upload" | "replace";
 };
 
 export type ClientPortalProgress = {
@@ -176,6 +192,40 @@ function addAction(
   return action;
 }
 
+function addActionForCase(
+  caseId: string,
+  type: ClientPortalActionType,
+  actor: string,
+  summary: string,
+): ClientPortalAction {
+  const action: ClientPortalAction = {
+    id: `portal-action-${caseId}-${type}-${Date.now()}-${snapshot.actions.length + 1}`,
+    caseId,
+    type,
+    actor,
+    status: "completed",
+    summary,
+    createdAt: nowStamp(),
+  };
+
+  snapshot = { ...snapshot, actions: [action, ...snapshot.actions] };
+  return action;
+}
+
+function addActionOnce(
+  caseItem: AnnualReturnCase,
+  type: ClientPortalActionType,
+  actor: string,
+  summary: string,
+): { action: ClientPortalAction; inserted: boolean } {
+  const existing = snapshot.actions.find(
+    (action) => action.caseId === caseItem.id && action.type === type && action.status === "completed",
+  );
+  if (existing) return { action: existing, inserted: false };
+
+  return { action: addActionForCase(caseItem.id, type, actor, summary), inserted: true };
+}
+
 export function getCurrentClientDocument(
   caseId: string,
   requirementId: string,
@@ -186,9 +236,46 @@ export function getCurrentClientDocument(
       (document) =>
         document.caseId === caseId &&
         document.requirementId === requirementId &&
-        document.status === "uploaded",
+        document.source === "client-portal" &&
+        document.status !== "superseded",
     )
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+}
+
+function isAcceptedClientDocument(
+  caseId: string,
+  requirementId: string,
+  currentSnapshot = snapshot,
+): boolean {
+  return getCurrentClientDocument(caseId, requirementId, currentSnapshot)?.status === "accepted";
+}
+
+function documentActionForCurrentDocument(
+  document: ClientPortalDocument | undefined,
+): "upload" | "replace" {
+  return document?.status === "rejected" ? "replace" : "upload";
+}
+
+function requiredDocumentLabel(documentLabel: string, document?: ClientPortalDocument): string {
+  if (!document) return `Upload ${documentLabel}`;
+  if (document.status === "rejected") return `Replace ${documentLabel}`;
+  return documentLabel;
+}
+
+function requiredDocumentDetail(documentLabel: string, document?: ClientPortalDocument): string {
+  if (!document) {
+    return `${documentLabel} is required before the annual return filing can proceed.`;
+  }
+  if (document.status === "uploaded") {
+    return `${document.filename} is uploaded and waiting for staff review.`;
+  }
+  if (document.status === "accepted") {
+    return `${document.filename} has been accepted by staff.`;
+  }
+  if (document.status === "rejected") {
+    return `${document.filename} was rejected by staff. Please upload a replacement.`;
+  }
+  return `${documentLabel} is required before the annual return filing can proceed.`;
 }
 
 export function getClientPortalActivity(
@@ -206,20 +293,24 @@ export function getClientPortalRequiredActions(
     .filter((document) => document.required)
     .map((document) => {
       const currentDocument = getCurrentClientDocument(caseItem.id, document.id, currentSnapshot);
+      const status: ClientPortalRequiredActionStatus = isReadOnlyCase(caseItem)
+        ? "blocked"
+        : currentDocument?.status === "accepted"
+          ? "complete"
+          : currentDocument?.status === "uploaded"
+            ? "pending-review"
+            : "open";
+      const documentAction = documentActionForCurrentDocument(currentDocument);
+
       return {
         id: `action-${caseItem.id}-document-${document.id}`,
         caseId: caseItem.id,
         kind: "document" as const,
-        label: currentDocument ? `Replace ${document.label}` : `Upload ${document.label}`,
-        status: isReadOnlyCase(caseItem)
-          ? ("blocked" as const)
-          : currentDocument
-            ? ("complete" as const)
-            : ("open" as const),
-        detail: currentDocument
-          ? `${currentDocument.filename} is the current uploaded file.`
-          : `${document.label} is required before the annual return filing can proceed.`,
+        label: requiredDocumentLabel(document.label, currentDocument),
+        status,
+        detail: requiredDocumentDetail(document.label, currentDocument),
         requirementId: document.id,
+        documentAction,
       };
     });
 
@@ -273,7 +364,7 @@ export function getClientPortalProgress(
 ): ClientPortalProgress {
   const requiredDocuments = caseItem.documents.filter((document) => document.required);
   const completedDocuments = requiredDocuments.filter((document) =>
-    getCurrentClientDocument(caseItem.id, document.id, currentSnapshot),
+    isAcceptedClientDocument(caseItem.id, document.id, currentSnapshot),
   ).length;
   const paymentComplete = hasCompletedAction(caseItem.id, "acknowledge-payment", currentSnapshot);
   const packetComplete = hasCompletedAction(caseItem.id, "approve-packet", currentSnapshot);
@@ -285,22 +376,25 @@ export function getClientPortalProgress(
     (paymentComplete ? 1 : 0) +
     (packetComplete ? 1 : 0) +
     (receiptComplete ? 1 : 0);
-  const nextOpen = getClientPortalRequiredActions(caseItem, currentSnapshot).find(
-    (action) => action.status === "open",
-  );
+  const requiredActions = getClientPortalRequiredActions(caseItem, currentSnapshot);
+  const nextOpen = requiredActions.find((action) => action.status === "open");
+  const nextPending = requiredActions.find((action) => action.status === "pending-review");
 
   return {
     completed,
     total,
     percentage: total === 0 ? 100 : Math.round((completed / total) * 100),
-    nextAction: nextOpen?.label ?? "No client action needed",
+    nextAction: nextOpen?.label ?? (nextPending ? "Waiting for staff review" : "No client action needed"),
     isReadOnly: isReadOnlyCase(caseItem),
   };
 }
 
 function rowFromDocument(document: ClientPortalDocument): ClientPortalArchiveRow {
+  const reviewable = document.source === "client-portal" && document.status === "uploaded";
+
   return {
     id: `archive-${document.id}`,
+    documentId: document.id,
     caseId: document.caseId,
     requirementId: document.requirementId,
     companyName: document.companyName,
@@ -312,7 +406,11 @@ function rowFromDocument(document: ClientPortalDocument): ClientPortalArchiveRow
     status: document.status,
     actor: document.actor,
     createdAt: document.createdAt,
-    readonly: document.source !== "client-portal" || document.status === "superseded",
+    readonly: !reviewable,
+    reviewable,
+    reviewedBy: document.reviewedBy,
+    reviewedAt: document.reviewedAt,
+    reviewSummary: document.reviewSummary,
   };
 }
 
@@ -336,6 +434,7 @@ function generatedRowsForCase(
       actor: caseItem.owner || "Operations",
       createdAt: `${caseItem.dueDate}T09:00:00.000Z`,
       readonly: true,
+      reviewable: false,
     }));
 
   if (hasCompletedAction(caseItem.id, "approve-packet", currentSnapshot)) {
@@ -355,6 +454,7 @@ function generatedRowsForCase(
       actor: approvalAction?.actor ?? caseItem.contactName,
       createdAt: approvalAction?.createdAt ?? nowStamp(),
       readonly: true,
+      reviewable: false,
     });
   }
 
@@ -372,6 +472,7 @@ function generatedRowsForCase(
       actor: caseItem.submission.submittedBy,
       createdAt: caseItem.submission.submittedAt,
       readonly: true,
+      reviewable: false,
     });
   }
 
@@ -389,6 +490,7 @@ function generatedRowsForCase(
       actor: caseItem.receipt.acceptedBy,
       createdAt: caseItem.receipt.acceptedAt,
       readonly: true,
+      reviewable: false,
     });
   }
 
@@ -439,6 +541,81 @@ function createDocument(
 function blockReadOnlyCase(caseItem: AnnualReturnCase): { ok: false; reason: string } | undefined {
   if (!isReadOnlyCase(caseItem)) return undefined;
   return { ok: false, reason: "Filed cases are read-only in the client portal" };
+}
+
+function getPacketApprovalBlockers(caseItem: AnnualReturnCase): string[] {
+  return caseItem.documents
+    .filter((document) => document.required)
+    .flatMap((document) => {
+      const current = getCurrentClientDocument(caseItem.id, document.id);
+      if (!current) return [document.label];
+      if (current.status === "uploaded") return [`${document.label} pending staff review`];
+      if (current.status === "rejected") return [`${document.label} rejected`];
+      if (current.status !== "accepted") return [document.label];
+      return [];
+    });
+}
+
+export function reviewClientDocument(
+  documentId: string,
+  decision: ClientPortalDocumentReviewDecision,
+  actor = "Operations",
+): { ok: true; documentId: string } | { ok: false; reason: string } {
+  const document = snapshot.documents.find((candidate) => candidate.id === documentId);
+  if (!document) return { ok: false, reason: "Document not found" };
+  if (document.source !== "client-portal") {
+    return { ok: false, reason: "Only client portal documents can be reviewed" };
+  }
+  if (document.status === "superseded") {
+    return { ok: false, reason: "Superseded documents cannot be reviewed" };
+  }
+  if (document.status === "accepted" || document.status === "rejected") {
+    return { ok: false, reason: "Document has already been reviewed" };
+  }
+  if (document.status !== "uploaded") {
+    return { ok: false, reason: "Document is not ready for review" };
+  }
+
+  const reviewedAt = nowStamp();
+  const status = decision;
+  const actionType: ClientPortalActionType =
+    decision === "accepted" ? "accept-document" : "reject-document";
+  const reviewSummary =
+    decision === "accepted"
+      ? `Accepted by ${actor}`
+      : `Rejected by ${actor}; replacement required`;
+  const summary =
+    decision === "accepted"
+      ? `${actor} accepted ${document.title}.`
+      : `${actor} rejected ${document.title}.`;
+
+  snapshot = {
+    ...snapshot,
+    documents: snapshot.documents.map((candidate) =>
+      candidate.id === document.id
+        ? { ...candidate, status, reviewedBy: actor, reviewedAt, reviewSummary }
+        : candidate,
+    ),
+  };
+
+  addActionForCase(document.caseId, actionType, actor, summary);
+
+  if (document.requirementId) {
+    if (decision === "accepted") {
+      markDocumentReceived(document.caseId, document.requirementId);
+    } else {
+      markDocumentMissing(document.caseId, document.requirementId);
+    }
+  }
+
+  appendClientPortalTimelineEvent(
+    document.caseId,
+    decision === "accepted" ? "Client document accepted" : "Client document rejected",
+    summary,
+  );
+  emit();
+
+  return { ok: true, documentId: document.id };
 }
 
 export function uploadClientDocument(
@@ -506,7 +683,9 @@ export function acknowledgePaymentInstructions(
   if (readOnly) return readOnly;
 
   const summary = `${actor} acknowledged payment instructions.`;
-  addAction(caseItem, "acknowledge-payment", actor, summary);
+  const { inserted } = addActionOnce(caseItem, "acknowledge-payment", actor, summary);
+  if (!inserted) return { ok: true };
+
   appendClientPortalTimelineEvent(caseItem.id, "Payment instructions acknowledged", summary);
   emit();
 
@@ -520,15 +699,15 @@ export function approveClientPacket(
   const readOnly = blockReadOnlyCase(caseItem);
   if (readOnly) return readOnly;
 
-  const missingDocuments = caseItem.documents
-    .filter((document) => document.required && !getCurrentClientDocument(caseItem.id, document.id))
-    .map((document) => document.label);
+  const missingDocuments = getPacketApprovalBlockers(caseItem);
   if (missingDocuments.length > 0) {
     return { ok: false, reason: `Packet approval blocked: ${missingDocuments.join("; ")}` };
   }
 
   const summary = `${actor} approved the filing packet.`;
-  addAction(caseItem, "approve-packet", actor, summary);
+  const { inserted } = addActionOnce(caseItem, "approve-packet", actor, summary);
+  if (!inserted) return { ok: true };
+
   appendClientPortalTimelineEvent(caseItem.id, "Client packet approved", summary);
   emit();
 
@@ -542,7 +721,9 @@ export function recordReceiptViewed(
   if (!caseItem.receipt) return { ok: false, reason: "No filing receipt is available" };
 
   const summary = `${actor} viewed filing receipt ${caseItem.receipt.receiptNumber}.`;
-  addAction(caseItem, "view-receipt", actor, summary);
+  const { inserted } = addActionOnce(caseItem, "view-receipt", actor, summary);
+  if (!inserted) return { ok: true };
+
   appendClientPortalTimelineEvent(caseItem.id, "Client viewed receipt", summary);
   emit();
 
