@@ -414,8 +414,12 @@ export function getDocumentArchiveRows(
   cases: AnnualReturnCase[],
   currentSnapshot = snapshot,
 ): ClientPortalArchiveRow[] {
+  const caseIds = new Set(cases.map((caseItem) => caseItem.id));
+
   return [
-    ...currentSnapshot.documents.map(rowFromDocument),
+    ...currentSnapshot.documents
+      .filter((document) => caseIds.has(document.caseId))
+      .map(rowFromDocument),
     ...cases.flatMap((caseItem) => generatedRowsForCase(caseItem, currentSnapshot)),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
@@ -485,6 +489,10 @@ export function replaceClientDocument(
   const readOnly = blockReadOnlyCase(caseItem);
   if (readOnly) return readOnly;
 
+  const requirement = caseItem.documents.find((document) => document.id === requirementId);
+  if (!requirement) return { ok: false, reason: "Document requirement not found" };
+  if (!filename.trim()) return { ok: false, reason: "Filename is required" };
+
   const current = getCurrentClientDocument(caseItem.id, requirementId);
   const document = createDocument(caseItem, requirementId, filename.trim(), actor, current?.id);
   snapshot = {
@@ -496,7 +504,7 @@ export function replaceClientDocument(
       ),
     ],
   };
-  const summary = `${actor} replaced ${document.title}.`;
+  const summary = `${actor} replaced ${requirement.label}.`;
   addAction(caseItem, "replace-document", actor, summary);
   markDocumentReceived(caseItem.id, requirementId);
   appendClientPortalTimelineEvent(caseItem.id, "Client document replaced", summary);

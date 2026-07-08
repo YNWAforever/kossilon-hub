@@ -121,6 +121,51 @@ describe("client portal store", () => {
     expect(rows.map((row) => row.status).sort()).toEqual(["superseded", "uploaded"]);
   });
 
+  it("scopes client-uploaded archive rows to the requested cases", () => {
+    uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
+    uploadClientDocument(requireCase("ar-crestview"), "signed-nar1", "crestview-signed.pdf", "Samuel Cheng");
+
+    const rows = getDocumentArchiveRows([requireCase("ar-delta")]).filter(
+      (row) => row.source === "client-portal",
+    );
+
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          caseId: "ar-delta",
+          filename: "signed-nar1.pdf",
+        }),
+      ]),
+    );
+    expect(rows).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          caseId: "ar-crestview",
+          filename: "crestview-signed.pdf",
+        }),
+      ]),
+    );
+  });
+
+  it("rejects invalid replacement inputs without creating archive rows", () => {
+    expect(replaceClientDocument(requireCase("ar-delta"), "missing-doc", "named.pdf", "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Document requirement not found",
+    });
+    expect(replaceClientDocument(requireCase("ar-delta"), "signed-nar1", "   ", "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Filename is required",
+    });
+
+    expect(getCurrentClientDocument("ar-delta", "signed-nar1")).toBeUndefined();
+    expect(
+      getDocumentArchiveRows([requireCase("ar-delta")]).filter(
+        (row) => row.caseId === "ar-delta" && row.source === "client-portal",
+      ),
+    ).toHaveLength(0);
+    expect(getClientPortalActivity("ar-delta")).toHaveLength(0);
+  });
+
   it("records payment acknowledgement without marking payment paid", () => {
     expect(acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon")).toEqual({
       ok: true,
