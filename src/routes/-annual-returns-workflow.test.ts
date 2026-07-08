@@ -66,6 +66,8 @@ describe("annual return workflow route regressions", () => {
     expect(documentsRouteSource).toContain("Filter by category");
     expect(documentsRouteSource).toContain("Filter by status");
     expect(documentsRouteSource).toContain("getDocumentArchiveRows");
+    expect(documentsRouteSource).toContain("Uploaded by");
+    expect(documentsRouteSource).toContain("row.actor");
     expect(documentsRouteSource).toContain('to="/annual-returns/$id"');
   });
 });

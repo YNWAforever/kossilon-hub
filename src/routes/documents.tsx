@@ -99,12 +99,13 @@ function DocumentsRoute() {
           </select>
         </div>
 
-        <div className="hidden grid-cols-[1.4fr_1fr_120px_150px_120px_150px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
           <span>Document</span>
           <span>Company</span>
           <span>Category</span>
           <span>Source</span>
           <span>Status</span>
+          <span>Uploaded by</span>
           <span>Updated</span>
           <span className="text-right">Case</span>
         </div>
@@ -151,7 +152,7 @@ function FilterSelect({
 
 function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
   return (
-    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.4fr_1fr_120px_150px_120px_150px_100px] lg:items-center">
+    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_100px] lg:items-center">
       <div className="min-w-0">
         <p className="truncate font-medium">{row.title}</p>
         <p className="truncate text-muted-foreground">{row.filename}</p>
@@ -160,6 +161,7 @@ function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
       <Field label="Category" value={labelValue(row.category)} />
       <Field label="Source" value={labelValue(row.source)} />
       <Field label="Status" value={labelValue(row.status)} />
+      <Field label="Uploaded by" value={row.actor} />
       <Field label="Updated" value={formatTimestamp(row.createdAt)} />
       <div className="flex justify-start lg:justify-end">
         <Link
