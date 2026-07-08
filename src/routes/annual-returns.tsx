@@ -1,14 +1,18 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import {
   getBlockers,
   getCaseMetrics,
+  getFollowUpDrafts,
   getNextAction,
+  getPacketReadiness,
+  getPacketStatus,
   getReadinessScore,
   getRiskLevel,
   useAnnualReturnCases,
   type AnnualReturnCase,
+  type AnnualReturnPacketStatus,
   type AnnualReturnRiskLevel,
 } from "../lib/annual-return-store";
 import { daysUntil } from "../lib/app-data";
@@ -18,9 +22,12 @@ export const Route = createFileRoute("/annual-returns")({
 });
 
 function AnnualReturnsRoute() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const cases = useAnnualReturnCases();
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "urgent" | "blocked" | "ready" | "filed">("all");
+  const [filter, setFilter] = useState<
+    "all" | "urgent" | "blocked" | "ready" | "packet-ready" | "needs-follow-up" | "filed"
+  >("all");
   const [owner, setOwner] = useState("all");
 
   const metrics = getCaseMetrics(cases);
@@ -30,6 +37,7 @@ function AnnualReturnsRoute() {
     return cases
       .filter((caseItem) => {
         const risk = getRiskLevel(caseItem);
+        const followUps = getFollowUpDrafts(caseItem);
         const matchesQuery = `${caseItem.companyName} ${caseItem.contactName}`
           .toLowerCase()
           .includes(query.toLowerCase());
@@ -39,11 +47,19 @@ function AnnualReturnsRoute() {
           (filter === "urgent" && (risk === "overdue" || risk === "due-soon")) ||
           (filter === "blocked" && getBlockers(caseItem).length > 0 && risk !== "filed") ||
           (filter === "ready" && risk === "ready-to-file") ||
+          (filter === "packet-ready" &&
+            getPacketStatus(caseItem) === "approved" &&
+            risk !== "filed") ||
+          (filter === "needs-follow-up" && followUps.some((draft) => draft.status === "draft")) ||
           (filter === "filed" && risk === "filed");
         return matchesQuery && matchesOwner && matchesFilter;
       })
       .sort((a, b) => riskSortValue(getRiskLevel(a)) - riskSortValue(getRiskLevel(b)));
   }, [cases, filter, owner, query]);
+
+  if (pathname !== "/annual-returns") {
+    return <Outlet />;
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -70,7 +86,17 @@ function AnnualReturnsRoute() {
             onChange={(event) => setQuery(event.target.value)}
           />
           <div className="flex flex-wrap gap-2">
-            {(["all", "urgent", "blocked", "ready", "filed"] as const).map((value) => (
+            {(
+              [
+                "all",
+                "urgent",
+                "blocked",
+                "ready",
+                "packet-ready",
+                "needs-follow-up",
+                "filed",
+              ] as const
+            ).map((value) => (
               <button
                 key={value}
                 className={`rounded-md border px-3 py-2 text-sm ${
@@ -79,7 +105,7 @@ function AnnualReturnsRoute() {
                 onClick={() => setFilter(value)}
                 type="button"
               >
-                {value === "all" ? "All" : value[0].toUpperCase() + value.slice(1)}
+                {filterLabel(value)}
               </button>
             ))}
           </div>
@@ -98,15 +124,17 @@ function AnnualReturnsRoute() {
           </select>
         </div>
 
-        <div className="hidden grid-cols-[minmax(0,1.5fr)_120px_120px_150px_110px_1.1fr_110px_minmax(0,1fr)_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_180px_110px_95px_1fr_95px_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
           <span>Company</span>
           <span>Owner</span>
           <span>Risk</span>
           <span>Due</span>
-          <span>Readiness</span>
+          <span>Case</span>
           <span>Blockers</span>
-          <span>Payment</span>
+          <span>Packet</span>
+          <span>Follow-ups</span>
           <span>Next action</span>
+          <span>Payment</span>
           <span className="text-right">Open</span>
         </div>
 
@@ -147,13 +175,23 @@ function Metric({
 
 function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
   const risk = getRiskLevel(caseItem);
-  const blockers = getBlockers(caseItem);
   const readiness = getReadinessScore(caseItem);
   const nextAction = getNextAction(caseItem);
   const dueInDays = daysUntil(caseItem.dueDate);
+  const packetReadiness = getPacketReadiness(caseItem);
+  const packetStatus = getPacketStatus(caseItem);
+  const followUps = getFollowUpDrafts(caseItem);
+  const openFollowUps = followUps.filter((draft) => draft.status === "draft").length;
+  const blockers = getBlockers(caseItem);
+  const blockerSummary =
+    blockers.length === 0
+      ? "None"
+      : blockers.length === 1
+        ? blockers[0].label
+        : `${blockers[0].label} +${blockers.length - 1}`;
 
   return (
-    <div className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.5fr)_120px_120px_150px_110px_1.1fr_110px_minmax(0,1fr)_72px] lg:items-center">
+    <div className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_180px_110px_95px_1fr_95px_72px] lg:items-center">
       <div className="min-w-0">
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
@@ -162,28 +200,12 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
       <Field label="Owner" value={caseItem.owner} />
       <Field label="Risk" value={<RiskPill risk={risk} />} />
       <Field label="Due" value={formatDue(caseItem.dueDate, dueInDays)} />
-      <Field label="Readiness" value={`${readiness}%`} />
-      <Field
-        label="Blockers"
-        value={
-          blockers.length > 0 ? (
-            <div className="space-y-1">
-              {blockers.slice(0, 2).map((blocker) => (
-                <p key={blocker.id} className="truncate text-sm">
-                  {blocker.label}
-                </p>
-              ))}
-              {blockers.length > 2 ? (
-                <p className="text-xs text-muted-foreground">+{blockers.length - 2} more</p>
-              ) : null}
-            </div>
-          ) : (
-            "None"
-          )
-        }
-      />
-      <Field label="Payment" value={paymentLabel(caseItem.paymentStatus)} />
+      <Field label="Case" value={`${readiness}%`} />
+      <Field label="Blockers" value={blockerSummary} />
+      <Field label="Packet" value={`${packetLabel(packetStatus)} / ${packetReadiness}%`} />
+      <Field label="Follow-ups" value={openFollowUps === 0 ? "None" : `${openFollowUps} open`} />
       <Field label="Next action" value={nextAction} />
+      <Field label="Payment" value={paymentLabel(caseItem.paymentStatus)} />
 
       <div className="flex justify-start lg:justify-end">
         <Link
@@ -230,6 +252,31 @@ function riskLabel(risk: AnnualReturnRiskLevel): string {
     "ready-to-file": "Ready",
     filed: "Filed",
   }[risk];
+}
+
+function filterLabel(
+  filter: "all" | "urgent" | "blocked" | "ready" | "packet-ready" | "needs-follow-up" | "filed",
+): string {
+  return {
+    all: "All",
+    urgent: "Urgent",
+    blocked: "Blocked",
+    ready: "Ready",
+    "packet-ready": "Packet ready",
+    "needs-follow-up": "Needs follow-up",
+    filed: "Filed",
+  }[filter];
+}
+
+function packetLabel(status: AnnualReturnPacketStatus): string {
+  return {
+    "not-started": "Not started",
+    building: "Building",
+    "ready-for-review": "Review",
+    approved: "Approved",
+    submitted: "Submitted",
+    accepted: "Accepted",
+  }[status];
 }
 
 function metricToneClass(tone: "red" | "orange" | "yellow" | "green" | "blue"): string {

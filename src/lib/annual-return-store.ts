@@ -16,6 +16,56 @@ export type AnnualReturnRiskLevel =
 export type AnnualReturnPaymentStatus = "pending" | "paid" | "overdue";
 export type AnnualReturnSignatureStatus = "missing" | "requested" | "received";
 export type AnnualReturnReviewStatus = "not-started" | "in-review" | "approved";
+export type AnnualReturnPacketStatus =
+  "not-started" | "building" | "ready-for-review" | "approved" | "submitted" | "accepted";
+
+export type AnnualReturnPacketRequirement = {
+  id: string;
+  label: string;
+  complete: boolean;
+  required: boolean;
+};
+
+export type AnnualReturnSubmission = {
+  reference: string;
+  submittedAt: string;
+  submittedBy: string;
+};
+
+export type AnnualReturnReceipt = {
+  receiptNumber: string;
+  acceptedAt: string;
+  acceptedBy: string;
+};
+
+export type AnnualReturnFollowUpType =
+  | "missing-document"
+  | "payment-reminder"
+  | "signature-nudge"
+  | "review-escalation"
+  | "packet-reminder";
+
+export type AnnualReturnFollowUpStatus = "draft" | "sent" | "blocked";
+
+export type AnnualReturnFollowUpDraft = {
+  id: string;
+  caseId: string;
+  companyName: string;
+  type: AnnualReturnFollowUpType;
+  recipientName: string;
+  phone: string;
+  suggestedTiming: string;
+  messagePreview: string;
+  status: AnnualReturnFollowUpStatus;
+  blockedReason?: string;
+};
+
+export type AnnualReturnSentFollowUp = Omit<
+  AnnualReturnFollowUpDraft,
+  "status" | "blockedReason"
+> & {
+  sentAt: string;
+};
 
 export type AnnualReturnDocument = {
   id: string;
@@ -60,6 +110,11 @@ export type AnnualReturnCase = {
   signatureStatus: AnnualReturnSignatureStatus;
   paymentStatus: AnnualReturnPaymentStatus;
   reviewStatus: AnnualReturnReviewStatus;
+  packetRequirements: AnnualReturnPacketRequirement[];
+  submission?: AnnualReturnSubmission;
+  receipt?: AnnualReturnReceipt;
+  sentFollowUpIds: string[];
+  sentFollowUps: AnnualReturnSentFollowUp[];
   notes: AnnualReturnNote[];
   timeline: AnnualReturnTimelineEvent[];
 };
@@ -110,6 +165,11 @@ function cloneAnnualReturnCase(caseItem: AnnualReturnCase): AnnualReturnCase {
     ...caseItem,
     documents: caseItem.documents.map((document) => ({ ...document })),
     checklist: caseItem.checklist.map((item) => ({ ...item })),
+    packetRequirements: caseItem.packetRequirements.map((requirement) => ({ ...requirement })),
+    submission: caseItem.submission ? { ...caseItem.submission } : undefined,
+    receipt: caseItem.receipt ? { ...caseItem.receipt } : undefined,
+    sentFollowUpIds: [...caseItem.sentFollowUpIds],
+    sentFollowUps: caseItem.sentFollowUps.map((followUp) => ({ ...followUp })),
     notes: caseItem.notes.map((note) => ({ ...note })),
     timeline: caseItem.timeline.map((event) => ({ ...event })),
   };
@@ -142,6 +202,37 @@ function deriveAnnualReturnStatus(caseItem: AnnualReturnCase): AnnualReturnStatu
 function withDerivedStatus(caseItem: AnnualReturnCase): AnnualReturnCase {
   const status = deriveAnnualReturnStatus(caseItem);
   return status === caseItem.status ? caseItem : { ...caseItem, status };
+}
+
+function createDefaultPacketRequirements(
+  overrides: Partial<Record<string, boolean>> = {},
+): AnnualReturnPacketRequirement[] {
+  const requirements = [
+    ["nar1-draft", "NAR1 draft prepared"],
+    ["company-particulars", "Company particulars checked"],
+    ["scr-confirmed", "Significant controller register confirmed"],
+    ["signed-nar1-attached", "Signed NAR1 attached"],
+    ["payment-proof-checked", "Payment proof checked"],
+    ["internal-filing-review", "Internal filing review approved"],
+  ] as const;
+
+  return requirements.map(([id, label]) => ({
+    id,
+    label,
+    complete: overrides[id] ?? false,
+    required: true,
+  }));
+}
+
+function createReadyPacketRequirements(): AnnualReturnPacketRequirement[] {
+  return createDefaultPacketRequirements({
+    "nar1-draft": true,
+    "company-particulars": true,
+    "scr-confirmed": true,
+    "signed-nar1-attached": true,
+    "payment-proof-checked": true,
+    "internal-filing-review": true,
+  });
 }
 
 function buildCaseFromClient(clientId: string, owner: string): AnnualReturnCase {
@@ -216,6 +307,28 @@ function buildCaseFromClient(clientId: string, owner: string): AnnualReturnCase 
     paymentStatus,
     reviewStatus:
       client.status === "Filed" || client.status === "Ready to file" ? "approved" : "in-review",
+    packetRequirements:
+      client.status === "Filed" || client.status === "Ready to file"
+        ? createReadyPacketRequirements()
+        : createDefaultPacketRequirements(),
+    submission:
+      client.status === "Filed"
+        ? {
+            reference: `NAR1-${client.annualReturnCaseId.toUpperCase()}-2026`,
+            submittedAt: `${client.dueDate}T10:00:00.000Z`,
+            submittedBy: owner,
+          }
+        : undefined,
+    receipt:
+      client.status === "Filed"
+        ? {
+            receiptNumber: `CR-${client.annualReturnCaseId.toUpperCase()}-2026`,
+            acceptedAt: `${client.dueDate}T16:00:00.000Z`,
+            acceptedBy: owner,
+          }
+        : undefined,
+    sentFollowUpIds: [],
+    sentFollowUps: [],
     notes: [],
     timeline: [
       {
@@ -303,6 +416,9 @@ const seedAnnualReturnCases: AnnualReturnCase[] = [
     signatureStatus: "missing",
     paymentStatus: "overdue",
     reviewStatus: "not-started",
+    packetRequirements: createDefaultPacketRequirements(),
+    sentFollowUpIds: [],
+    sentFollowUps: [],
     notes: [],
     timeline: [
       {
@@ -343,6 +459,9 @@ const seedAnnualReturnCases: AnnualReturnCase[] = [
     signatureStatus: "requested",
     paymentStatus: "pending",
     reviewStatus: "not-started",
+    packetRequirements: createDefaultPacketRequirements(),
+    sentFollowUpIds: [],
+    sentFollowUps: [],
     notes: [],
     timeline: [
       {
@@ -542,6 +661,160 @@ export function getCaseTasks(caseItem: AnnualReturnCase, today = new Date()): An
   }));
 }
 
+export function getPacketReadiness(caseItem: AnnualReturnCase): number {
+  const required = caseItem.packetRequirements.filter((requirement) => requirement.required);
+  if (required.length === 0) return 100;
+  const complete = required.filter((requirement) => requirement.complete).length;
+  return Math.round((complete / required.length) * 100);
+}
+
+export function getPacketBlockers(caseItem: AnnualReturnCase): string[] {
+  if (caseItem.status === "filed") return [];
+  return caseItem.packetRequirements
+    .filter((requirement) => requirement.required && !requirement.complete)
+    .map((requirement) => requirement.label);
+}
+
+export function getPacketStatus(caseItem: AnnualReturnCase): AnnualReturnPacketStatus {
+  if (caseItem.receipt) return "accepted";
+  if (caseItem.submission) return "submitted";
+  const readiness = getPacketReadiness(caseItem);
+  if (readiness === 0) return "not-started";
+  if (readiness === 100 && getReadinessScore(caseItem) === 100) return "approved";
+  if (readiness >= 80) return "ready-for-review";
+  return "building";
+}
+
+function followUpTypeForBlocker(blocker: AnnualReturnBlocker): AnnualReturnFollowUpType {
+  if (blocker.type === "payment") return "payment-reminder";
+  if (blocker.type === "signature") return "signature-nudge";
+  if (blocker.type === "review" || blocker.type === "owner") return "review-escalation";
+  return "missing-document";
+}
+
+function followUpTiming(type: AnnualReturnFollowUpType): string {
+  return {
+    "missing-document": "Send today",
+    "payment-reminder": "Send today",
+    "signature-nudge": "Send before 5pm",
+    "review-escalation": "Escalate internally",
+    "packet-reminder": "Review before submission",
+  }[type];
+}
+
+function followUpMessagePreview(
+  caseItem: AnnualReturnCase,
+  type: AnnualReturnFollowUpType,
+  label: string,
+): string {
+  if (type === "review-escalation") {
+    return `${caseItem.owner}, please clear "${label}" for ${caseItem.companyName} before filing.`;
+  }
+
+  return `Hi ${caseItem.contactName}, this is Kossilon. For ${caseItem.companyName}, we still need ${label.toLowerCase()} before we can complete the annual return filing.`;
+}
+
+function hasSentFollowUp(caseItem: AnnualReturnCase, draftId: string): boolean {
+  return (
+    caseItem.sentFollowUpIds.includes(draftId) ||
+    caseItem.sentFollowUps.some((followUp) => followUp.id === draftId)
+  );
+}
+
+function toSentFollowUpDraft(followUp: AnnualReturnSentFollowUp): AnnualReturnFollowUpDraft {
+  return {
+    id: followUp.id,
+    caseId: followUp.caseId,
+    companyName: followUp.companyName,
+    type: followUp.type,
+    recipientName: followUp.recipientName,
+    phone: followUp.phone,
+    suggestedTiming: followUp.suggestedTiming,
+    messagePreview: followUp.messagePreview,
+    status: "sent",
+  };
+}
+
+export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollowUpDraft[] {
+  const sentFollowUpsById = new Map(
+    caseItem.sentFollowUps.map((followUp) => [followUp.id, followUp] as const),
+  );
+
+  const caseBlockerDrafts = getBlockers(caseItem).map((blocker) => {
+    const type = followUpTypeForBlocker(blocker);
+    const id = `follow-up-${caseItem.id}-${blocker.id}`;
+    const sent = hasSentFollowUp(caseItem, id);
+    const blockedReason =
+      caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const sentFollowUp = sentFollowUpsById.get(id);
+
+    return sentFollowUp
+      ? toSentFollowUpDraft(sentFollowUp)
+      : ({
+          id,
+          caseId: caseItem.id,
+          companyName: caseItem.companyName,
+          type,
+          recipientName: type === "review-escalation" ? caseItem.owner : caseItem.contactName,
+          phone: caseItem.phone,
+          suggestedTiming: followUpTiming(type),
+          messagePreview: followUpMessagePreview(caseItem, type, blocker.label),
+          status: sent ? "sent" : blockedReason ? "blocked" : "draft",
+          blockedReason,
+        } satisfies AnnualReturnFollowUpDraft);
+  });
+
+  const packetDrafts = getPacketBlockers(caseItem).map((label) => {
+    const id = `follow-up-${caseItem.id}-packet-${label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`;
+    const sent = hasSentFollowUp(caseItem, id);
+    const blockedReason =
+      caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const sentFollowUp = sentFollowUpsById.get(id);
+
+    return sentFollowUp
+      ? toSentFollowUpDraft(sentFollowUp)
+      : ({
+          id,
+          caseId: caseItem.id,
+          companyName: caseItem.companyName,
+          type: "packet-reminder",
+          recipientName: caseItem.owner,
+          phone: caseItem.phone,
+          suggestedTiming: followUpTiming("packet-reminder"),
+          messagePreview: `${caseItem.owner}, packet item "${label}" is still open for ${caseItem.companyName}.`,
+          status: sent ? "sent" : blockedReason ? "blocked" : "draft",
+          blockedReason,
+        } satisfies AnnualReturnFollowUpDraft);
+  });
+
+  const activeDraftIds = new Set([...caseBlockerDrafts, ...packetDrafts].map((draft) => draft.id));
+  const historicalSentDrafts = caseItem.sentFollowUps
+    .filter((followUp) => !activeDraftIds.has(followUp.id))
+    .map(toSentFollowUpDraft);
+
+  return [...caseBlockerDrafts, ...packetDrafts, ...historicalSentDrafts];
+}
+
+export function canSendFollowUp(
+  caseItem: AnnualReturnCase,
+  draft: AnnualReturnFollowUpDraft,
+): { ok: true } | { ok: false; reason: string } {
+  if (caseItem.status === "filed")
+    return { ok: false, reason: "Filed cases cannot send follow-ups" };
+  if (hasSentFollowUp(caseItem, draft.id) || draft.status === "sent") {
+    return { ok: false, reason: "Follow-up has already been sent" };
+  }
+  const activeDraft = getFollowUpDrafts(caseItem).find((candidate) => candidate.id === draft.id);
+  if (!activeDraft) return { ok: false, reason: "The original blocker has been resolved" };
+  if (activeDraft.status === "blocked") {
+    return { ok: false, reason: activeDraft.blockedReason ?? "Follow-up is blocked" };
+  }
+  return { ok: true };
+}
+
 export function getAnnualReturnAiContext(
   caseItem: AnnualReturnCase,
   today?: Date,
@@ -559,6 +832,21 @@ export function getAnnualReturnAiContext(
     blockers: getBlockers(caseItem),
     nextAction: getNextAction(caseItem, today ?? new Date()),
   };
+}
+
+export function appendClientPortalTimelineEvent(
+  caseId: string,
+  label: string,
+  detail: string,
+): { ok: true } | { ok: false; reason: string } {
+  const caseItem = cases.find((candidate) => candidate.id === caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  if (!label.trim()) return { ok: false, reason: "Timeline label is required" };
+  if (!detail.trim()) return { ok: false, reason: "Timeline detail is required" };
+
+  replaceCase(caseId, (currentCase) => appendTimeline(currentCase, label.trim(), detail.trim()));
+
+  return { ok: true };
 }
 
 export function markDocumentReceived(caseId: string, documentId: string): void {
@@ -684,6 +972,7 @@ export function updateReviewStatus(caseId: string, reviewStatus: AnnualReturnRev
 
 export function assignOwner(caseId: string, owner: string): void {
   replaceCase(caseId, (caseItem) => {
+    if (caseItem.status === "filed") return caseItem;
     if (caseItem.owner === owner) return caseItem;
 
     return appendTimeline(
@@ -696,10 +985,13 @@ export function assignOwner(caseId: string, owner: string): void {
 
 export function addCaseNote(caseId: string, author: string, body: string): void {
   replaceCase(caseId, (caseItem) => {
+    if (caseItem.status === "filed") return caseItem;
+    if (!body.trim()) return caseItem;
+
     const note: AnnualReturnNote = {
       id: `note-${caseItem.id}-${Date.now()}`,
       author,
-      body,
+      body: body.trim(),
       createdAt: nowStamp(),
     };
 
@@ -711,6 +1003,146 @@ export function addCaseNote(caseId: string, author: string, body: string): void 
   });
 }
 
+export function togglePacketRequirement(caseId: string, requirementId: string): void {
+  replaceCase(caseId, (caseItem) => {
+    const requirement = caseItem.packetRequirements.find((item) => item.id === requirementId);
+    if (caseItem.status === "filed" || caseItem.submission) return caseItem;
+    if (!requirement) return caseItem;
+
+    const complete = !requirement.complete;
+
+    return appendTimeline(
+      {
+        ...caseItem,
+        packetRequirements: caseItem.packetRequirements.map((item) =>
+          item.id === requirementId ? { ...item, complete } : item,
+        ),
+      },
+      "Packet requirement updated",
+      `${requirement.label} marked ${complete ? "complete" : "open"}.`,
+    );
+  });
+}
+
+function followUpTypeLabel(type: AnnualReturnFollowUpType): string {
+  return {
+    "missing-document": "Missing document request",
+    "payment-reminder": "Payment reminder",
+    "signature-nudge": "Signature nudge",
+    "review-escalation": "Review escalation",
+    "packet-reminder": "Packet reminder",
+  }[type];
+}
+
+export function sendFollowUpNow(
+  caseId: string,
+  draftId: string,
+): { ok: true } | { ok: false; reason: string } {
+  const caseItem = cases.find((candidate) => candidate.id === caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  if (caseItem.status === "filed")
+    return { ok: false, reason: "Filed cases cannot send follow-ups" };
+
+  const draft = getFollowUpDrafts(caseItem).find((candidate) => candidate.id === draftId);
+  if (!draft) return { ok: false, reason: "The original blocker has been resolved" };
+
+  const eligibility = canSendFollowUp(caseItem, draft);
+  if (!eligibility.ok) return eligibility;
+
+  replaceCase(caseId, (currentCase) =>
+    appendTimeline(
+      {
+        ...currentCase,
+        sentFollowUpIds: [...currentCase.sentFollowUpIds, draft.id],
+        sentFollowUps: [
+          ...currentCase.sentFollowUps,
+          {
+            id: draft.id,
+            caseId: draft.caseId,
+            companyName: draft.companyName,
+            type: draft.type,
+            recipientName: draft.recipientName,
+            phone: draft.phone,
+            suggestedTiming: draft.suggestedTiming,
+            messagePreview: draft.messagePreview,
+            sentAt: nowStamp(),
+          },
+        ],
+      },
+      "WhatsApp reminder sent",
+      `${followUpTypeLabel(draft.type)} sent to ${draft.recipientName}: ${draft.messagePreview}`,
+    ),
+  );
+
+  return { ok: true };
+}
+
+export function submitFilingPacket(
+  caseId: string,
+): { ok: true; reference: string } | { ok: false; reason: string } {
+  const caseItem = cases.find((candidate) => candidate.id === caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  if (caseItem.status === "filed") return { ok: false, reason: "Filed cases cannot be submitted" };
+  if (caseItem.submission) return { ok: false, reason: "Packet has already been submitted" };
+
+  const missing = getPacketBlockers(caseItem);
+  if (getReadinessScore(caseItem) < 100) missing.unshift("case readiness is below 100%");
+  if (missing.length > 0) {
+    return { ok: false, reason: `Packet is not ready: ${missing.join("; ")}` };
+  }
+
+  const reference = `NAR1-${caseItem.id.toUpperCase()}-${Date.now().toString().slice(-6)}`;
+
+  replaceCase(caseId, (currentCase) =>
+    appendTimeline(
+      {
+        ...currentCase,
+        submission: {
+          reference,
+          submittedAt: nowStamp(),
+          submittedBy: currentCase.owner || "Operations",
+        },
+      },
+      "Filing packet submitted",
+      `Mock filing packet submitted with reference ${reference}.`,
+    ),
+  );
+
+  return { ok: true, reference };
+}
+
+export function acceptFilingReceipt(
+  caseId: string,
+): { ok: true; receiptNumber: string } | { ok: false; reason: string } {
+  const caseItem = cases.find((candidate) => candidate.id === caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  if (caseItem.status === "filed" && caseItem.receipt) {
+    return { ok: false, reason: "Receipt has already been accepted" };
+  }
+  if (!caseItem.submission)
+    return { ok: false, reason: "Packet must be submitted before receipt acceptance" };
+
+  const receiptNumber = `CR-${caseItem.id.toUpperCase()}-${Date.now().toString().slice(-6)}`;
+
+  replaceCase(caseId, (currentCase) =>
+    appendTimeline(
+      {
+        ...currentCase,
+        status: "filed",
+        receipt: {
+          receiptNumber,
+          acceptedAt: nowStamp(),
+          acceptedBy: currentCase.owner || "Operations",
+        },
+      },
+      "Filing receipt accepted",
+      `Mock Companies Registry receipt ${receiptNumber} accepted.`,
+    ),
+  );
+
+  return { ok: true, receiptNumber };
+}
+
 export function markFiled(caseId: string): { ok: false; reason: string } | { ok: true } {
   const caseItem = cases.find((candidate) => candidate.id === caseId);
 
@@ -718,8 +1150,16 @@ export function markFiled(caseId: string): { ok: false; reason: string } | { ok:
     return { ok: false, reason: "Case not found" };
   }
 
+  if (caseItem.status === "filed") {
+    return { ok: true };
+  }
+
   if (getReadinessScore(caseItem) < 100) {
     return { ok: false, reason: "Case is not ready to file" };
+  }
+
+  if (!caseItem.receipt) {
+    return { ok: false, reason: "Filing receipt must be accepted before marking filed" };
   }
 
   replaceCase(caseId, (currentCase) =>
