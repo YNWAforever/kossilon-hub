@@ -62,6 +62,8 @@ describe("annual return workflow route regressions", () => {
 
     expect(documentsRouteSource).toContain('createFileRoute("/documents")');
     expect(documentsRouteSource).toContain("caseId");
+    expect(documentsRouteSource).toContain("useEffect");
+    expect(documentsRouteSource).toContain('setCaseFilter(caseId ?? "all")');
     expect(documentsRouteSource).toContain("Filter by source");
     expect(documentsRouteSource).toContain("Filter by category");
     expect(documentsRouteSource).toContain("Filter by status");

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
@@ -28,6 +28,10 @@ function DocumentsRoute() {
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
   const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
+
+  useEffect(() => {
+    setCaseFilter(caseId ?? "all");
+  }, [caseId]);
 
   const rows = useMemo(() => getDocumentArchiveRows(cases, snapshot), [cases, snapshot]);
   const visibleRows = rows.filter((row) => {
