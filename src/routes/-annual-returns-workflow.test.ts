@@ -72,4 +72,19 @@ describe("annual return workflow route regressions", () => {
     expect(documentsRouteSource).toContain("row.actor");
     expect(documentsRouteSource).toContain('to="/annual-returns/$id"');
   });
+
+  it("connects annual-return detail and sidebar to portal activity", () => {
+    const sidebarSource = readFileSync(
+      new URL("../components/app-sidebar.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(annualReturnDetailRouteSource).toContain("Client portal activity");
+    expect(annualReturnDetailRouteSource).toContain('to="/portal"');
+    expect(annualReturnDetailRouteSource).toContain('to="/documents"');
+    expect(annualReturnDetailRouteSource).toContain("getClientPortalRequiredActions");
+    expect(annualReturnDetailRouteSource).toContain("getDocumentArchiveRows");
+    expect(sidebarSource).toContain("Portal Demo");
+    expect(sidebarSource).toContain('to: "/portal"');
+  });
 });

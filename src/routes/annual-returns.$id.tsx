@@ -34,6 +34,12 @@ import {
   updateSignatureStatus,
   useAnnualReturnCase,
 } from "../lib/annual-return-store";
+import {
+  getClientPortalActivity,
+  getClientPortalRequiredActions,
+  getDocumentArchiveRows,
+  useClientPortalSnapshot,
+} from "../lib/client-portal-store";
 
 export const Route = createFileRoute("/annual-returns/$id")({
   component: AnnualReturnDetailRoute,
@@ -115,6 +121,11 @@ function AnnualReturnDetailRoute() {
   const packetStatus = getPacketStatus(caseItem);
   const packetLocked = isFiled || Boolean(caseItem.submission);
   const followUps = getFollowUpDrafts(caseItem);
+  const portalSnapshot = useClientPortalSnapshot();
+  const portalActions = getClientPortalRequiredActions(caseItem, portalSnapshot);
+  const portalActivity = getClientPortalActivity(caseItem.id, portalSnapshot);
+  const archiveRows = getDocumentArchiveRows([caseItem], portalSnapshot);
+  const latestPortalActivity = portalActivity[0];
 
   return (
     <div className="space-y-4 p-6">
@@ -514,29 +525,76 @@ function AnnualReturnDetailRoute() {
           </section>
         </div>
 
-        <section className="rounded-lg border bg-card p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">Timeline</h2>
-              <p className="text-sm text-muted-foreground">Newest case activity appears first.</p>
-            </div>
-            <span className="text-sm text-muted-foreground">{caseItem.timeline.length} events</span>
-          </div>
-
-          <div className="mt-4 space-y-3">
-            {caseItem.timeline.map((event) => (
-              <div key={event.id} className="rounded-md border px-3 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium">{event.label}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatTimestamp(event.createdAt)}
-                  </p>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{event.detail}</p>
+        <div className="space-y-4">
+          <section className="rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Client portal activity</h2>
+                <p className="text-sm text-muted-foreground">
+                  Client-facing actions and archive records for this case.
+                </p>
               </div>
-            ))}
-          </div>
-        </section>
+              <span className="text-sm text-muted-foreground">
+                {portalActions.filter((action) => action.status === "open").length} open
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <DenseStat
+                label="Outstanding"
+                value={`${portalActions.filter((action) => action.status === "open").length}`}
+                tone={portalActions.some((action) => action.status === "open") ? "yellow" : "green"}
+              />
+              <DenseStat label="Archive" value={`${archiveRows.length}`} tone="blue" />
+              <DenseStat
+                label="Latest"
+                value={latestPortalActivity ? formatTimestamp(latestPortalActivity.createdAt) : "None"}
+                tone={latestPortalActivity ? "green" : "blue"}
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <Link
+                className="rounded-md border px-3 py-2 text-sm"
+                to="/documents"
+                search={{ caseId: caseItem.id }}
+              >
+                Open archive
+              </Link>
+              <Link
+                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                to="/portal"
+                search={{ caseId: caseItem.id }}
+              >
+                Open portal
+              </Link>
+            </div>
+          </section>
+
+          <section className="rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Timeline</h2>
+                <p className="text-sm text-muted-foreground">Newest case activity appears first.</p>
+              </div>
+              <span className="text-sm text-muted-foreground">{caseItem.timeline.length} events</span>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {caseItem.timeline.map((event) => (
+                <div key={event.id} className="rounded-md border px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">{event.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatTimestamp(event.createdAt)}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{event.detail}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
