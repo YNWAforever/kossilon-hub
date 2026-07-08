@@ -194,6 +194,12 @@ function PortalActionRow({
 }) {
   const primaryDisabled = action.status !== "open" || (action.kind !== "receipt" && isReadOnly);
   const replaceDisabled = action.status === "blocked" || isReadOnly;
+  const documentPrimaryLabel =
+    action.kind === "document"
+      ? action.documentAction === "replace"
+        ? "Replace"
+        : "Upload"
+      : undefined;
 
   function handlePrimaryAction() {
     onWarning(undefined);
@@ -264,22 +270,23 @@ function PortalActionRow({
             Replace
           </button>
         ) : null}
-        {action.kind !== "document" || action.status !== "complete" ? (
+        {action.kind !== "document" ||
+        (action.status === "open" && action.documentAction) ? (
           <button
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             disabled={primaryDisabled}
             onClick={handlePrimaryAction}
-          type="button"
-        >
-            {action.kind === "document"
-              ? action.documentAction === "replace"
-                ? "Replace"
-                : "Upload"
-              : action.kind === "payment"
+            type="button"
+            aria-label={
+              documentPrimaryLabel ? `${documentPrimaryLabel} ${action.label}` : undefined
+            }
+          >
+            {documentPrimaryLabel ??
+              (action.kind === "payment"
                 ? "Acknowledge payment"
                 : action.kind === "packet"
                   ? "Approve packet"
-                  : "View receipt"}
+                  : "View receipt")}
           </button>
         ) : null}
       </div>

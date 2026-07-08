@@ -63,6 +63,22 @@ function seedRejectedPortalDocument() {
   });
 }
 
+function seedPendingReviewPortalDocument() {
+  resetAnnualReturnCasesForTest();
+  resetClientPortalStoreForTest();
+
+  const caseItem = getAnnualReturnCaseById("ar-delta");
+  if (!caseItem) throw new Error("Missing fixture ar-delta");
+
+  const upload = uploadClientDocument(
+    caseItem,
+    "signed-nar1",
+    "signed-nar1.pdf",
+    "Joanna Poon",
+  );
+  if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+}
+
 describe("annual return workflow route regressions", () => {
   it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
     expect(annualReturnsRouteSource).toContain("<span>Blockers</span>");
@@ -108,7 +124,6 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain("search={{ caseId: selectedCase.id }}");
     expect(portalRouteSource).toContain('action.kind === "receipt"');
     expect(portalRouteSource).toContain('action.kind !== "receipt" && isReadOnly');
-    expect(portalRouteSource).toContain('action.status !== "complete"');
   });
 
   it("renders rejected portal documents as replacements when the store marks them for replace", async () => {
@@ -118,6 +133,17 @@ describe("annual return workflow route regressions", () => {
 
     expect(html).toContain("Replace Signed NAR1");
     expect(html).toMatch(/Replace Signed NAR1[\s\S]*?>Replace<\/button>/);
+  });
+
+  it("does not render an actionable Upload button for pending-review portal documents", async () => {
+    seedPendingReviewPortalDocument();
+
+    const html = await renderRoute("/portal?caseId=ar-delta");
+
+    expect(html).toContain("Signed NAR1");
+    expect(html).toContain("waiting for staff review");
+    expect(html).not.toContain('aria-label="Upload Signed NAR1"');
+    expect(html).not.toContain("Replace Signed NAR1");
   });
 
   it("renders the document archive with source, category, status, and case filters", () => {
