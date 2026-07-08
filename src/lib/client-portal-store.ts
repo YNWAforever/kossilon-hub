@@ -335,7 +335,7 @@ function generatedRowsForCase(
   caseItem: AnnualReturnCase,
   currentSnapshot: ClientPortalSnapshot,
 ): ClientPortalArchiveRow[] {
-  const rows = caseItem.packetRequirements
+  const rows: ClientPortalArchiveRow[] = caseItem.packetRequirements
     .filter((requirement) => requirement.complete)
     .map((requirement) => ({
       id: `archive-${caseItem.id}-packet-${requirement.id}`,
