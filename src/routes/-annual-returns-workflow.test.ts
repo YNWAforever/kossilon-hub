@@ -7,6 +7,12 @@ import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { routeTree } from "../routeTree.gen";
+import { getAnnualReturnCaseById, resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
+import {
+  resetClientPortalStoreForTest,
+  reviewClientDocument,
+  uploadClientDocument,
+} from "../lib/client-portal-store";
 
 const annualReturnsRouteSource = readFileSync(
   new URL("./annual-returns.tsx", import.meta.url),
@@ -34,6 +40,27 @@ async function renderRoute(pathname: string) {
   await router.load();
 
   return renderToString(createElement(RouterProvider, { router }));
+}
+
+function seedRejectedPortalDocument() {
+  resetAnnualReturnCasesForTest();
+  resetClientPortalStoreForTest();
+
+  const caseItem = getAnnualReturnCaseById("ar-delta");
+  if (!caseItem) throw new Error("Missing fixture ar-delta");
+
+  const upload = uploadClientDocument(
+    caseItem,
+    "signed-nar1",
+    "signed-nar1.pdf",
+    "Joanna Poon",
+  );
+  if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+  expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
+    ok: true,
+    documentId: upload.documentId,
+  });
 }
 
 describe("annual return workflow route regressions", () => {
@@ -82,6 +109,15 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain('action.kind === "receipt"');
     expect(portalRouteSource).toContain('action.kind !== "receipt" && isReadOnly');
     expect(portalRouteSource).toContain('action.status !== "complete"');
+  });
+
+  it("renders rejected portal documents as replacements when the store marks them for replace", async () => {
+    seedRejectedPortalDocument();
+
+    const html = await renderRoute("/portal?caseId=ar-delta");
+
+    expect(html).toContain("Replace Signed NAR1");
+    expect(html).toMatch(/Replace Signed NAR1[\s\S]*?>Replace<\/button>/);
   });
 
   it("renders the document archive with source, category, status, and case filters", () => {

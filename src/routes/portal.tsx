@@ -199,11 +199,18 @@ function PortalActionRow({
     onWarning(undefined);
 
     if (action.kind === "document" && action.requirementId) {
-      const result = uploadClientDocument(
-        caseItem,
-        action.requirementId,
-        `${caseItem.id}-${action.requirementId}.pdf`,
-      );
+      const result =
+        action.documentAction === "replace"
+          ? replaceClientDocument(
+              caseItem,
+              action.requirementId,
+              `${caseItem.id}-${action.requirementId}-replacement.pdf`,
+            )
+          : uploadClientDocument(
+              caseItem,
+              action.requirementId,
+              `${caseItem.id}-${action.requirementId}.pdf`,
+            );
       onWarning(result.ok ? undefined : result.reason);
       return;
     }
@@ -262,10 +269,12 @@ function PortalActionRow({
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             disabled={primaryDisabled}
             onClick={handlePrimaryAction}
-            type="button"
-          >
+          type="button"
+        >
             {action.kind === "document"
-              ? "Upload"
+              ? action.documentAction === "replace"
+                ? "Replace"
+                : "Upload"
               : action.kind === "payment"
                 ? "Acknowledge payment"
                 : action.kind === "packet"
