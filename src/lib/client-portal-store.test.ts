@@ -140,6 +140,43 @@ describe("client portal store", () => {
     expect(rows.map((row) => row.status).sort()).toEqual(["superseded", "uploaded"]);
   });
 
+  it("reopens annual-return readiness when a required document is replaced", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(reviewClientDocument(upload.documentId, "accepted", "Operations")).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
+    expect(getAnnualReturnCaseById("ar-delta")?.documents.find((document) => document.id === "signed-nar1")).toMatchObject({
+      received: true,
+    });
+
+    const replacement = replaceClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1-v2.pdf",
+      "Joanna Poon",
+    );
+    if (!replacement.ok) throw new Error("Expected fixture replacement to succeed");
+
+    expect(getAnnualReturnCaseById("ar-delta")?.documents.find((document) => document.id === "signed-nar1")).toMatchObject({
+      received: false,
+    });
+    expect(reviewClientDocument(replacement.documentId, "accepted", "Operations")).toEqual({
+      ok: true,
+      documentId: replacement.documentId,
+    });
+    expect(getAnnualReturnCaseById("ar-delta")?.documents.find((document) => document.id === "signed-nar1")).toMatchObject({
+      received: true,
+    });
+  });
+
   it("scopes client-uploaded archive rows to the requested cases", () => {
     uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
     uploadClientDocument(

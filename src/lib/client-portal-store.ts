@@ -676,6 +676,7 @@ export function replaceClientDocument(
       ),
     ],
   };
+  markDocumentMissing(caseItem.id, requirementId);
   const summary = `${actor} replaced ${requirement.label}.`;
   addAction(caseItem, "replace-document", actor, summary);
   appendClientPortalTimelineEvent(caseItem.id, "Client document replaced", summary);
