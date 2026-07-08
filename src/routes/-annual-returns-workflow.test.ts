@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 
+import { QueryClient } from "@tanstack/react-query";
+import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+
+import { routeTree } from "../routeTree.gen";
 
 const annualReturnsRouteSource = readFileSync(
   new URL("./annual-returns.tsx", import.meta.url),
@@ -17,14 +23,33 @@ const whatsappAutomationRouteSource = readFileSync(
 const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
 
+async function renderRoute(pathname: string) {
+  const router = createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: [pathname] }),
+    context: { queryClient: new QueryClient() },
+    defaultPreloadStaleTime: 0,
+  });
+
+  await router.load();
+
+  return renderToString(createElement(RouterProvider, { router }));
+}
+
 describe("annual return workflow route regressions", () => {
   it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
     expect(annualReturnsRouteSource).toContain("<span>Blockers</span>");
     expect(annualReturnsRouteSource).toContain("<span>Packet</span>");
     expect(annualReturnsRouteSource).toContain("<span>Follow-ups</span>");
     expect(annualReturnsRouteSource).toContain('<Field label="Blockers" value={blockerSummary} />');
-    expect(annualReturnsRouteSource).toContain("Outlet");
-    expect(annualReturnsRouteSource).toContain('pathname !== "/annual-returns"');
+  });
+
+  it("renders the annual-return detail route instead of swallowing it in the parent list route", async () => {
+    const html = await renderRoute("/annual-returns/ar-delta");
+
+    expect(html).toContain("Client portal activity");
+    expect(html).toContain("Delta Bloom Ventures Limited");
+    expect(html).not.toContain("Search company or contact");
   });
 
   it("renders an explicit status column in WhatsApp automation", () => {
