@@ -3,6 +3,7 @@ import { useSyncExternalStore } from "react";
 import {
   type AnnualReturnCase,
   appendClientPortalTimelineEvent,
+  getAnnualReturnCaseById,
   getPacketStatus,
   markDocumentMissing,
   markDocumentReceived,
@@ -400,8 +401,15 @@ export function getClientPortalProgress(
   };
 }
 
-function rowFromDocument(document: ClientPortalDocument): ClientPortalArchiveRow {
-  const reviewable = document.source === "client-portal" && document.status === "uploaded";
+function rowFromDocument(
+  document: ClientPortalDocument,
+  caseItem = getAnnualReturnCaseById(document.caseId),
+): ClientPortalArchiveRow {
+  const reviewable =
+    document.source === "client-portal" &&
+    document.status === "uploaded" &&
+    Boolean(caseItem) &&
+    !isReadOnlyCase(caseItem);
 
   return {
     id: `archive-${document.id}`,
@@ -512,12 +520,13 @@ export function getDocumentArchiveRows(
   cases: AnnualReturnCase[],
   currentSnapshot = snapshot,
 ): ClientPortalArchiveRow[] {
-  const caseIds = new Set(cases.map((caseItem) => caseItem.id));
+  const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
+  const caseIds = new Set(casesById.keys());
 
   return [
     ...currentSnapshot.documents
       .filter((document) => caseIds.has(document.caseId))
-      .map(rowFromDocument),
+      .map((document) => rowFromDocument(document, casesById.get(document.caseId))),
     ...cases.flatMap((caseItem) => generatedRowsForCase(caseItem, currentSnapshot)),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
@@ -588,6 +597,10 @@ export function reviewClientDocument(
   }
   if (document.status !== "uploaded") {
     return { ok: false, reason: "Document is not ready for review" };
+  }
+  const caseItem = getAnnualReturnCaseById(document.caseId);
+  if (caseItem && isReadOnlyCase(caseItem)) {
+    return { ok: false, reason: "Filed cases are read-only in the client portal" };
   }
 
   const reviewedAt = nowStamp();
@@ -667,6 +680,10 @@ export function replaceClientDocument(
   if (!filename.trim()) return { ok: false, reason: "Filename is required" };
 
   const current = getCurrentClientDocument(caseItem.id, requirementId);
+  if (!current) return { ok: false, reason: "No current document is available to replace" };
+  if (current.status !== "rejected") {
+    return { ok: false, reason: "Only rejected documents can be replaced" };
+  }
   const document = createDocument(caseItem, requirementId, filename.trim(), actor, current?.id);
   snapshot = {
     ...snapshot,
@@ -690,6 +707,8 @@ export function acknowledgePaymentInstructions(
   caseItem: AnnualReturnCase,
   actor = caseItem.contactName,
 ): { ok: true } | { ok: false; reason: string } {
+  if (hasCompletedAction(caseItem.id, "acknowledge-payment")) return { ok: true };
+
   const readOnly = blockReadOnlyCase(caseItem);
   if (readOnly) return readOnly;
 
@@ -707,6 +726,8 @@ export function approveClientPacket(
   caseItem: AnnualReturnCase,
   actor = caseItem.contactName,
 ): { ok: true } | { ok: false; reason: string } {
+  if (hasCompletedAction(caseItem.id, "approve-packet")) return { ok: true };
+
   const readOnly = blockReadOnlyCase(caseItem);
   if (readOnly) return readOnly;
 

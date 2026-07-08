@@ -7,7 +7,17 @@ import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { routeTree } from "../routeTree.gen";
-import { getAnnualReturnCaseById, resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
+import {
+  acceptFilingReceipt,
+  completeChecklistItem,
+  getAnnualReturnCaseById,
+  resetAnnualReturnCasesForTest,
+  submitFilingPacket,
+  togglePacketRequirement,
+  updatePaymentStatus,
+  updateReviewStatus,
+  updateSignatureStatus,
+} from "../lib/annual-return-store";
 import {
   getClientPortalSnapshot,
   resetClientPortalStoreForTest,
@@ -74,6 +84,34 @@ function seedPendingReviewPortalDocument() {
   if (!upload.ok) throw new Error("Expected fixture upload to succeed");
 }
 
+function makeDeltaReadyForReceipt() {
+  const caseItem = requireCase("ar-delta");
+  const signed = uploadClientDocument(caseItem, "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
+  const scr = uploadClientDocument(caseItem, "scr", "updated-scr.pdf", "Joanna Poon");
+  if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
+
+  reviewClientDocument(signed.documentId, "accepted", "Operations");
+  reviewClientDocument(scr.documentId, "accepted", "Operations");
+  updatePaymentStatus("ar-delta", "paid");
+  updateSignatureStatus("ar-delta", "received");
+  completeChecklistItem("ar-delta", "collect-signed-nar1");
+  completeChecklistItem("ar-delta", "verify-scr");
+  completeChecklistItem("ar-delta", "confirm-payment");
+  completeChecklistItem("ar-delta", "submit-registry");
+  updateReviewStatus("ar-delta", "approved");
+
+  for (const requirementId of [
+    "nar1-draft",
+    "company-particulars",
+    "scr-confirmed",
+    "signed-nar1-attached",
+    "payment-proof-checked",
+    "internal-filing-review",
+  ]) {
+    togglePacketRequirement("ar-delta", requirementId);
+  }
+}
+
 describe("annual return workflow route regressions", () => {
   beforeEach(() => {
     resetAnnualReturnCasesForTest();
@@ -135,6 +173,13 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Approve packet");
   });
 
+  it("renders the portal not-found state for an unknown case search parameter", async () => {
+    const html = await renderRoute("/portal?caseId=missing-case");
+
+    expect(html).toContain("Portal case not found");
+    expect(html).not.toContain("Delta Bloom Ventures Limited");
+  });
+
   it("renders document archive review controls for pending client uploads", async () => {
     uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
 
@@ -183,6 +228,45 @@ describe("annual return workflow route regressions", () => {
 
     expect(html).toContain("Replace Signed NAR1");
     expect(html).toMatch(/Replace Signed NAR1[\s\S]*?>Replace<\/button>/);
+  });
+
+  it("does not render replace controls for accepted portal documents", async () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    expect(reviewClientDocument(upload.documentId, "accepted", "Operations")).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
+
+    const html = await renderRoute("/portal?caseId=ar-delta");
+
+    expect(html).toContain("signed-nar1.pdf has been accepted by staff.");
+    expect(html).not.toContain("Replace Signed NAR1");
+    expect(html).not.toMatch(/Signed NAR1[\s\S]*?>Replace<\/button>/);
+  });
+
+  it("does not render document review controls for pending uploads once the case receipt is accepted", async () => {
+    makeDeltaReadyForReceipt();
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1-pending.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const html = await renderRoute("/documents?caseId=ar-delta");
+
+    expect(html).toContain("signed-nar1-pending.pdf");
+    expect(html).not.toContain('aria-label="Accept Signed NAR1"');
+    expect(html).not.toContain('aria-label="Reject Signed NAR1"');
   });
 
   it("does not render an actionable Upload button for pending-review portal documents", async () => {

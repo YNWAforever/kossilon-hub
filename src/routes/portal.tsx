@@ -40,10 +40,11 @@ function PortalRoute() {
   const navigate = useNavigate({ from: "/portal" });
   const [warning, setWarning] = useState<string | undefined>();
 
-  const selectedCase = cases.find((caseItem) => caseItem.id === caseId) ?? cases[0];
+  const matchedCase = caseId ? cases.find((caseItem) => caseItem.id === caseId) : undefined;
+  const selectedCase = caseId ? matchedCase : cases[0];
 
   useEffect(() => {
-    if (!selectedCase || caseId === selectedCase.id) return;
+    if (!selectedCase || caseId || caseId === selectedCase.id) return;
 
     void navigate({
       replace: true,
@@ -193,7 +194,8 @@ function PortalActionRow({
   onWarning: (warning: string | undefined) => void;
 }) {
   const primaryDisabled = action.status !== "open" || (action.kind !== "receipt" && isReadOnly);
-  const replaceDisabled = action.status !== "complete" || isReadOnly;
+  const canReplace = action.kind === "document" && action.documentAction === "replace";
+  const replaceDisabled = !canReplace || action.status !== "open" || isReadOnly;
   const documentPrimaryLabel =
     action.kind === "document"
       ? action.documentAction === "replace"
@@ -259,7 +261,7 @@ function PortalActionRow({
         <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        {action.kind === "document" && action.status === "complete" ? (
+        {canReplace ? (
           <button
             className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             disabled={replaceDisabled}

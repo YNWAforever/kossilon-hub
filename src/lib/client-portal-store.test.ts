@@ -120,8 +120,19 @@ describe("client portal store", () => {
     });
   });
 
-  it("replaces documents by superseding the previous upload and keeping both archive rows", () => {
-    uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
+  it("replaces rejected documents by superseding the previous upload and keeping both archive rows", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
+
     const replacement = replaceClientDocument(
       requireCase("ar-delta"),
       "signed-nar1",
@@ -140,7 +151,7 @@ describe("client portal store", () => {
     expect(rows.map((row) => row.status).sort()).toEqual(["superseded", "uploaded"]);
   });
 
-  it("reopens annual-return readiness when a required document is replaced", () => {
+  it("reopens annual-return readiness when a rejected required document is replaced", () => {
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
       "signed-nar1",
@@ -149,7 +160,7 @@ describe("client portal store", () => {
     );
     if (!upload.ok) throw new Error("Expected fixture upload to succeed");
 
-    expect(reviewClientDocument(upload.documentId, "accepted", "Operations")).toEqual({
+    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
       ok: true,
       documentId: upload.documentId,
     });
@@ -157,9 +168,7 @@ describe("client portal store", () => {
       getAnnualReturnCaseById("ar-delta")?.documents.find(
         (document) => document.id === "signed-nar1",
       ),
-    ).toMatchObject({
-      received: true,
-    });
+    ).toMatchObject({ received: false });
 
     const replacement = replaceClientDocument(
       requireCase("ar-delta"),
@@ -321,13 +330,13 @@ describe("client portal store", () => {
 
     const explicitSnapshot = getClientPortalSnapshot();
 
-    const replacement = replaceClientDocument(
+    const secondUpload = uploadClientDocument(
       requireCase("ar-delta"),
       "signed-nar1",
       "signed-nar1-v2.pdf",
       "Joanna Poon",
     );
-    if (!replacement.ok) throw new Error("Expected fixture replacement to succeed");
+    if (!secondUpload.ok) throw new Error("Expected second fixture upload to succeed");
 
     expect(
       getClientPortalRequiredActions(requireCase("ar-delta"), explicitSnapshot).find(
@@ -389,6 +398,35 @@ describe("client portal store", () => {
     expect(recordReceiptViewed(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
   });
 
+  it("blocks reviewing pending portal uploads after receipt acceptance makes the case read-only", () => {
+    makeDeltaReadyForReceipt();
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1-pending.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const row = getDocumentArchiveRows([requireCase("ar-delta")]).find(
+      (candidate) => candidate.documentId === upload.documentId,
+    );
+
+    expect(row).toMatchObject({
+      documentId: upload.documentId,
+      status: "uploaded",
+      reviewable: false,
+      readonly: true,
+    });
+    expect(reviewClientDocument(upload.documentId, "accepted", "Operations")).toEqual({
+      ok: false,
+      reason: "Filed cases are read-only in the client portal",
+    });
+  });
+
   it("blocks portal mutations for filed or receipt-accepted cases", () => {
     const filedCase = requireCase("ar-summit");
 
@@ -401,6 +439,21 @@ describe("client portal store", () => {
       reason: "Filed cases are read-only in the client portal",
     });
     expect(getClientPortalProgress(filedCase)).toMatchObject({ isReadOnly: true });
+  });
+
+  it("keeps one-time actions idempotent after receipt acceptance turns the case read-only", () => {
+    makeDeltaReadyForReceipt();
+    expect(acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: true,
+    });
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    expect(acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: true,
+    });
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
   });
 
   it("keeps payment acknowledgement idempotent without duplicating activity or timeline", () => {
@@ -514,6 +567,84 @@ describe("client portal store", () => {
     });
   });
 
+  it("blocks replacing accepted required documents", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(reviewClientDocument(upload.documentId, "accepted", "Operations")).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
+
+    expect(
+      replaceClientDocument(
+        requireCase("ar-delta"),
+        "signed-nar1",
+        "signed-nar1-v2.pdf",
+        "Joanna Poon",
+      ),
+    ).toEqual({
+      ok: false,
+      reason: "Only rejected documents can be replaced",
+    });
+    expect(
+      getDocumentArchiveRows([requireCase("ar-delta")]).filter(
+        (row) => row.requirementId === "signed-nar1" && row.source === "client-portal",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("allows replacing rejected required documents and supersedes the rejected upload", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
+
+    const replacement = replaceClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1-v2.pdf",
+      "Joanna Poon",
+    );
+
+    expect(replacement).toMatchObject({
+      ok: true,
+      supersededDocumentId: upload.documentId,
+    });
+    expect(getCurrentClientDocument("ar-delta", "signed-nar1")).toMatchObject({
+      filename: "signed-nar1-v2.pdf",
+      status: "uploaded",
+    });
+    expect(
+      getDocumentArchiveRows([requireCase("ar-delta")]).filter(
+        (row) => row.requirementId === "signed-nar1" && row.source === "client-portal",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          documentId: upload.documentId,
+          status: "superseded",
+        }),
+        expect.objectContaining({
+          documentId: replacement.ok ? replacement.documentId : undefined,
+          status: "uploaded",
+        }),
+      ]),
+    );
+  });
+
   it("rejects invalid document review attempts without changing archive state", () => {
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
@@ -522,6 +653,10 @@ describe("client portal store", () => {
       "Joanna Poon",
     );
     if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
 
     const replacement = replaceClientDocument(
       requireCase("ar-delta"),
