@@ -14,6 +14,7 @@ const whatsappAutomationRouteSource = readFileSync(
   new URL("./whatsapp.automation.tsx", import.meta.url),
   "utf8",
 );
+const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
 
 describe("annual return workflow route regressions", () => {
@@ -44,5 +45,15 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain("Acknowledge payment");
     expect(portalRouteSource).toContain("Approve packet");
     expect(portalRouteSource).toContain("View receipt");
+  });
+
+  it("keeps the portal and documents route contract aligned around case search and receipt access", () => {
+    expect(documentsRouteSource).toContain('createFileRoute("/documents")');
+    expect(documentsRouteSource).toContain("validateSearch");
+    expect(documentsRouteSource).toContain("caseId");
+    expect(portalRouteSource).toContain('search={{ caseId: selectedCase.id }}');
+    expect(portalRouteSource).toContain('action.kind === "receipt"');
+    expect(portalRouteSource).toContain('action.kind !== "receipt" && isReadOnly');
+    expect(portalRouteSource).toContain('action.status !== "complete"');
   });
 });

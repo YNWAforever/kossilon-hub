@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, FileUp, ReceiptText } from "lucide-react";
 
 import {
@@ -37,16 +37,20 @@ function PortalRoute() {
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
-  const [selectedCaseId, setSelectedCaseId] = useState(caseId ?? cases[0]?.id ?? "");
+  const navigate = useNavigate({ from: "/portal" });
   const [warning, setWarning] = useState<string | undefined>();
 
-  useEffect(() => {
-    if (caseId && cases.some((caseItem) => caseItem.id === caseId)) {
-      setSelectedCaseId(caseId);
-    }
-  }, [caseId, cases]);
+  const selectedCase =
+    cases.find((caseItem) => caseItem.id === caseId) ?? cases[0];
 
-  const selectedCase = cases.find((caseItem) => caseItem.id === selectedCaseId) ?? cases[0];
+  useEffect(() => {
+    if (!selectedCase || caseId === selectedCase.id) return;
+
+    void navigate({
+      replace: true,
+      search: (previous) => ({ ...previous, caseId: selectedCase.id }),
+    });
+  }, [caseId, navigate, selectedCase]);
 
   if (!selectedCase) {
     return (
@@ -82,7 +86,9 @@ function PortalRoute() {
           value={selectedCase.id}
           onChange={(event) => {
             setWarning(undefined);
-            setSelectedCaseId(event.target.value);
+            void navigate({
+              search: (previous) => ({ ...previous, caseId: event.target.value }),
+            });
           }}
         >
           {cases.map((caseItem) => (
@@ -171,7 +177,7 @@ function PortalRoute() {
         </section>
       </div>
 
-      <ArchivePreview rows={archiveRows} />
+      <ArchivePreview rows={archiveRows} selectedCase={selectedCase} />
     </div>
   );
 }
@@ -187,7 +193,8 @@ function PortalActionRow({
   isReadOnly: boolean;
   onWarning: (warning: string | undefined) => void;
 }) {
-  const disabled = isReadOnly || action.status === "blocked";
+  const primaryDisabled = action.status === "blocked" || (action.kind !== "receipt" && isReadOnly);
+  const replaceDisabled = action.status === "blocked" || isReadOnly;
 
   function handlePrimaryAction() {
     onWarning(undefined);
@@ -240,10 +247,10 @@ function PortalActionRow({
         <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        {action.kind === "document" ? (
+        {action.kind === "document" && action.status === "complete" ? (
           <button
             className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-            disabled={disabled}
+            disabled={replaceDisabled}
             onClick={handleReplace}
             type="button"
           >
@@ -251,26 +258,34 @@ function PortalActionRow({
             Replace
           </button>
         ) : null}
-        <button
-          className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-          disabled={disabled}
-          onClick={handlePrimaryAction}
-          type="button"
-        >
-          {action.kind === "document"
-            ? "Upload"
-            : action.kind === "payment"
-              ? "Acknowledge payment"
-              : action.kind === "packet"
-                ? "Approve packet"
-                : "View receipt"}
-        </button>
+        {action.kind !== "document" || action.status !== "complete" ? (
+          <button
+            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            disabled={primaryDisabled}
+            onClick={handlePrimaryAction}
+            type="button"
+          >
+            {action.kind === "document"
+              ? "Upload"
+              : action.kind === "payment"
+                ? "Acknowledge payment"
+                : action.kind === "packet"
+                  ? "Approve packet"
+                  : "View receipt"}
+          </button>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function ArchivePreview({ rows }: { rows: ClientPortalArchiveRow[] }) {
+function ArchivePreview({
+  rows,
+  selectedCase,
+}: {
+  rows: ClientPortalArchiveRow[];
+  selectedCase: AnnualReturnCase;
+}) {
   const previewRows = useMemo(() => rows.slice(0, 5), [rows]);
 
   return (
@@ -282,7 +297,11 @@ function ArchivePreview({ rows }: { rows: ClientPortalArchiveRow[] }) {
             Portal uploads and generated filing records appear here and in Documents.
           </p>
         </div>
-        <Link className="rounded-md border px-3 py-2 text-sm" to="/documents">
+        <Link
+          className="rounded-md border px-3 py-2 text-sm"
+          to="/documents"
+          search={{ caseId: selectedCase.id }}
+        >
           Open documents
         </Link>
       </div>

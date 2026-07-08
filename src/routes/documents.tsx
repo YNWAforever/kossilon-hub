@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+type DocumentsSearch = {
+  caseId?: string;
+};
+
 export const Route = createFileRoute("/documents")({
+  validateSearch: (search: Record<string, unknown>): DocumentsSearch => ({
+    caseId: typeof search.caseId === "string" ? search.caseId : undefined,
+  }),
   component: () => (
     <SimplePage title="Documents" subtitle="Uploaded registry and client files will appear here." />
   ),
