@@ -19,6 +19,7 @@ import {
   getClientPortalRequiredActions,
   getCurrentClientDocument,
   getDocumentArchiveRows,
+  getClientPortalSnapshot,
   recordReceiptViewed,
   replaceClientDocument,
   resetClientPortalStoreForTest,
@@ -224,6 +225,65 @@ describe("client portal store", () => {
     expect(getClientPortalProgress(requireCase("ar-delta"))).toMatchObject({
       nextAction: "Waiting for staff review",
     });
+  });
+
+  it("keeps pending-review uploads non-actionable in the portal contract", () => {
+    uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
+
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.requirementId === "signed-nar1",
+      ),
+    ).toMatchObject({
+      label: "Signed NAR1",
+      status: "pending-review",
+    });
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.requirementId === "signed-nar1",
+      ),
+    ).not.toHaveProperty("documentAction");
+    expect(getClientPortalRequiredActions(requireCase("ar-delta")).find((action) => action.kind === "document")).toMatchObject({
+      status: "pending-review",
+    });
+  });
+
+  it("uses the explicit snapshot when deriving packet availability", () => {
+    const signed = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    const scr = uploadClientDocument(
+      requireCase("ar-delta"),
+      "scr",
+      "updated-scr.pdf",
+      "Joanna Poon",
+    );
+
+    if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
+    reviewClientDocument(signed.documentId, "accepted", "Operations");
+    reviewClientDocument(scr.documentId, "accepted", "Operations");
+
+    const explicitSnapshot = getClientPortalSnapshot();
+
+    const replacement = replaceClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1-v2.pdf",
+      "Joanna Poon",
+    );
+    if (!replacement.ok) throw new Error("Expected fixture replacement to succeed");
+
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta"), explicitSnapshot).find(
+        (action) => action.kind === "packet",
+      ),
+    ).toMatchObject({ status: "open" });
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find((action) => action.kind === "packet"),
+    ).toMatchObject({ status: "blocked" });
   });
 
   it("approves a packet after portal-visible documents are present", () => {

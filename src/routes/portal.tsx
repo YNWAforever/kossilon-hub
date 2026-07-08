@@ -192,7 +192,7 @@ function PortalActionRow({
   isReadOnly: boolean;
   onWarning: (warning: string | undefined) => void;
 }) {
-  const primaryDisabled = action.status === "blocked" || (action.kind !== "receipt" && isReadOnly);
+  const primaryDisabled = action.status !== "open" || (action.kind !== "receipt" && isReadOnly);
   const replaceDisabled = action.status === "blocked" || isReadOnly;
 
   function handlePrimaryAction() {

@@ -252,8 +252,10 @@ function isAcceptedClientDocument(
 
 function documentActionForCurrentDocument(
   document: ClientPortalDocument | undefined,
-): "upload" | "replace" {
-  return document?.status === "rejected" ? "replace" : "upload";
+): "upload" | "replace" | undefined {
+  if (!document) return "upload";
+  if (document.status === "rejected") return "replace";
+  return undefined;
 }
 
 function requiredDocumentLabel(documentLabel: string, document?: ClientPortalDocument): string {
@@ -310,7 +312,7 @@ export function getClientPortalRequiredActions(
         status,
         detail: requiredDocumentDetail(document.label, currentDocument),
         requirementId: document.id,
-        documentAction,
+        ...(documentAction ? { documentAction } : {}),
       };
     });
 
@@ -337,11 +339,11 @@ export function getClientPortalRequiredActions(
           kind: "packet" as const,
           label: "Approve filing packet",
           status:
-            isReadOnlyCase(caseItem) || getPacketApprovalBlockers(caseItem).length > 0
+            isReadOnlyCase(caseItem) || getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
               ? ("blocked" as const)
               : ("open" as const),
           detail:
-            getPacketApprovalBlockers(caseItem).length > 0
+            getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
               ? "Required documents still need staff review or replacement before packet approval is available."
               : "Confirm the client has reviewed the prepared packet details.",
         },
@@ -549,11 +551,14 @@ function blockReadOnlyCase(caseItem: AnnualReturnCase): { ok: false; reason: str
   return { ok: false, reason: "Filed cases are read-only in the client portal" };
 }
 
-function getPacketApprovalBlockers(caseItem: AnnualReturnCase): string[] {
+function getPacketApprovalBlockers(
+  caseItem: AnnualReturnCase,
+  currentSnapshot = snapshot,
+): string[] {
   return caseItem.documents
     .filter((document) => document.required)
     .flatMap((document) => {
-      const current = getCurrentClientDocument(caseItem.id, document.id);
+      const current = getCurrentClientDocument(caseItem.id, document.id, currentSnapshot);
       if (!current) return [document.label];
       if (current.status === "uploaded") return [`${document.label} pending staff review`];
       if (current.status === "rejected") return [`${document.label} rejected`];
