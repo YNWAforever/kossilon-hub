@@ -56,4 +56,16 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain('action.kind !== "receipt" && isReadOnly');
     expect(portalRouteSource).toContain('action.status !== "complete"');
   });
+
+  it("renders the document archive with source, category, status, and case filters", () => {
+    const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
+
+    expect(documentsRouteSource).toContain('createFileRoute("/documents")');
+    expect(documentsRouteSource).toContain("caseId");
+    expect(documentsRouteSource).toContain("Filter by source");
+    expect(documentsRouteSource).toContain("Filter by category");
+    expect(documentsRouteSource).toContain("Filter by status");
+    expect(documentsRouteSource).toContain("getDocumentArchiveRows");
+    expect(documentsRouteSource).toContain('to="/annual-returns/$id"');
+  });
 });
