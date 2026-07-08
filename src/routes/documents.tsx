@@ -234,6 +234,18 @@ function ReviewCell({
     );
   }
 
+  if (row.reviewSummary || row.reviewedBy || row.reviewedAt) {
+    return (
+      <div className="space-y-1 text-xs text-muted-foreground">
+        <p className="truncate text-sm font-medium text-foreground">
+          {row.reviewSummary ?? "Reviewed"}
+        </p>
+        {row.reviewedBy ? <p>{`Reviewed by ${row.reviewedBy}`}</p> : null}
+        {row.reviewedAt ? <p>{`Reviewed ${formatTimestamp(row.reviewedAt)}`}</p> : null}
+      </div>
+    );
+  }
+
   return (
     <Field
       label="Review"

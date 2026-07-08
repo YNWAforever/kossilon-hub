@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { routeTree } from "../routeTree.gen";
 import { getAnnualReturnCaseById, resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
 import {
+  getClientPortalSnapshot,
   resetClientPortalStoreForTest,
   reviewClientDocument,
   uploadClientDocument,
@@ -166,9 +167,23 @@ describe("annual return workflow route regressions", () => {
 
     reviewClientDocument(upload.documentId, "accepted", "Operations");
     const html = await renderRoute("/documents?caseId=ar-delta");
+    const reviewedDocument = getClientPortalSnapshot().documents.find(
+      (document) => document.id === upload.documentId,
+    );
+    if (!reviewedDocument?.reviewedAt) throw new Error("Expected reviewed timestamp to exist");
+    const reviewedAt = new Date(reviewedDocument.reviewedAt).toLocaleString("en-HK", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-    expect(html).toContain("Accepted by Operations");
+    expect(html).toContain("Reviewed by Operations");
+    expect(html).toContain(reviewedAt);
     expect(html).toContain("signed-nar1.pdf");
+    expect(html).not.toContain('aria-label="Accept Signed NAR1"');
+    expect(html).not.toContain('aria-label="Reject Signed NAR1"');
   });
 
   it("renders rejected portal documents as replacements when the store marks them for replace", async () => {
