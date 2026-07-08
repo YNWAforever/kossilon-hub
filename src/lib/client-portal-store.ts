@@ -219,7 +219,8 @@ function addActionOnce(
   summary: string,
 ): { action: ClientPortalAction; inserted: boolean } {
   const existing = snapshot.actions.find(
-    (action) => action.caseId === caseItem.id && action.type === type && action.status === "completed",
+    (action) =>
+      action.caseId === caseItem.id && action.type === type && action.status === "completed",
   );
   if (existing) return { action: existing, inserted: false };
 
@@ -339,7 +340,8 @@ export function getClientPortalRequiredActions(
           kind: "packet" as const,
           label: "Approve filing packet",
           status:
-            isReadOnlyCase(caseItem) || getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
+            isReadOnlyCase(caseItem) ||
+            getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
               ? ("blocked" as const)
               : ("open" as const),
           detail:
@@ -392,7 +394,8 @@ export function getClientPortalProgress(
     completed,
     total,
     percentage: total === 0 ? 100 : Math.round((completed / total) * 100),
-    nextAction: nextOpen?.label ?? (nextPending ? "Waiting for staff review" : "No client action needed"),
+    nextAction:
+      nextOpen?.label ?? (nextPending ? "Waiting for staff review" : "No client action needed"),
     isReadOnly: isReadOnlyCase(caseItem),
   };
 }
@@ -592,9 +595,7 @@ export function reviewClientDocument(
   const actionType: ClientPortalActionType =
     decision === "accepted" ? "accept-document" : "reject-document";
   const reviewSummary =
-    decision === "accepted"
-      ? `Accepted by ${actor}`
-      : `Rejected by ${actor}; replacement required`;
+    decision === "accepted" ? `Accepted by ${actor}` : `Rejected by ${actor}; replacement required`;
   const summary =
     decision === "accepted"
       ? `${actor} accepted ${document.title}.`

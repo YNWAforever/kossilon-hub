@@ -153,7 +153,11 @@ describe("client portal store", () => {
       ok: true,
       documentId: upload.documentId,
     });
-    expect(getAnnualReturnCaseById("ar-delta")?.documents.find((document) => document.id === "signed-nar1")).toMatchObject({
+    expect(
+      getAnnualReturnCaseById("ar-delta")?.documents.find(
+        (document) => document.id === "signed-nar1",
+      ),
+    ).toMatchObject({
       received: true,
     });
 
@@ -165,14 +169,22 @@ describe("client portal store", () => {
     );
     if (!replacement.ok) throw new Error("Expected fixture replacement to succeed");
 
-    expect(getAnnualReturnCaseById("ar-delta")?.documents.find((document) => document.id === "signed-nar1")).toMatchObject({
+    expect(
+      getAnnualReturnCaseById("ar-delta")?.documents.find(
+        (document) => document.id === "signed-nar1",
+      ),
+    ).toMatchObject({
       received: false,
     });
     expect(reviewClientDocument(replacement.documentId, "accepted", "Operations")).toEqual({
       ok: true,
       documentId: replacement.documentId,
     });
-    expect(getAnnualReturnCaseById("ar-delta")?.documents.find((document) => document.id === "signed-nar1")).toMatchObject({
+    expect(
+      getAnnualReturnCaseById("ar-delta")?.documents.find(
+        (document) => document.id === "signed-nar1",
+      ),
+    ).toMatchObject({
       received: true,
     });
   });
@@ -280,7 +292,11 @@ describe("client portal store", () => {
         (action) => action.requirementId === "signed-nar1",
       ),
     ).not.toHaveProperty("documentAction");
-    expect(getClientPortalRequiredActions(requireCase("ar-delta")).find((action) => action.kind === "document")).toMatchObject({
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.kind === "document",
+      ),
+    ).toMatchObject({
       status: "pending-review",
     });
   });
@@ -319,7 +335,9 @@ describe("client portal store", () => {
       ),
     ).toMatchObject({ status: "open" });
     expect(
-      getClientPortalRequiredActions(requireCase("ar-delta")).find((action) => action.kind === "packet"),
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.kind === "packet",
+      ),
     ).toMatchObject({ status: "blocked" });
   });
 
@@ -394,9 +412,7 @@ describe("client portal store", () => {
     });
 
     expect(
-      getClientPortalActivity("ar-delta").filter(
-        (action) => action.type === "acknowledge-payment",
-      ),
+      getClientPortalActivity("ar-delta").filter((action) => action.type === "acknowledge-payment"),
     ).toHaveLength(1);
     expect(timelineLabels("ar-delta", "Payment instructions acknowledged")).toHaveLength(1);
   });
@@ -414,7 +430,9 @@ describe("client portal store", () => {
     for (const row of getDocumentArchiveRows([requireCase("ar-delta")]).filter(
       (candidate) => candidate.source === "client-portal",
     )) {
-      expect(reviewClientDocument(row.documentId ?? row.id, "accepted", "Operations")).toMatchObject({
+      expect(
+        reviewClientDocument(row.documentId ?? row.id, "accepted", "Operations"),
+      ).toMatchObject({
         ok: true,
       });
     }
@@ -429,7 +447,12 @@ describe("client portal store", () => {
       "signed-nar1.pdf",
       "Joanna Poon",
     );
-    const scr = uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+    const scr = uploadClientDocument(
+      requireCase("ar-delta"),
+      "scr",
+      "updated-scr.pdf",
+      "Joanna Poon",
+    );
 
     if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
 
@@ -514,7 +537,9 @@ describe("client portal store", () => {
       ok: false,
       reason: "Document not found",
     });
-    expect(reviewClientDocument(replacement.supersededDocumentId, "accepted", "Operations")).toEqual({
+    expect(
+      reviewClientDocument(replacement.supersededDocumentId, "accepted", "Operations"),
+    ).toEqual({
       ok: false,
       reason: "Superseded documents cannot be reviewed",
     });

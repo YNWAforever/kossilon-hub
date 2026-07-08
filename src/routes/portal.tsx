@@ -270,8 +270,7 @@ function PortalActionRow({
             Replace
           </button>
         ) : null}
-        {action.kind !== "document" ||
-        (action.status === "open" && action.documentAction) ? (
+        {action.kind !== "document" || (action.status === "open" && action.documentAction) ? (
           <button
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             disabled={primaryDisabled}

@@ -55,12 +55,7 @@ function seedRejectedPortalDocument() {
 
   const caseItem = requireCase("ar-delta");
 
-  const upload = uploadClientDocument(
-    caseItem,
-    "signed-nar1",
-    "signed-nar1.pdf",
-    "Joanna Poon",
-  );
+  const upload = uploadClientDocument(caseItem, "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
   if (!upload.ok) throw new Error("Expected fixture upload to succeed");
 
   expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
@@ -75,12 +70,7 @@ function seedPendingReviewPortalDocument() {
 
   const caseItem = requireCase("ar-delta");
 
-  const upload = uploadClientDocument(
-    caseItem,
-    "signed-nar1",
-    "signed-nar1.pdf",
-    "Joanna Poon",
-  );
+  const upload = uploadClientDocument(caseItem, "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
   if (!upload.ok) throw new Error("Expected fixture upload to succeed");
 }
 
