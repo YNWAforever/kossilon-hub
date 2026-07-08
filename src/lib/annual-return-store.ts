@@ -834,6 +834,23 @@ export function getAnnualReturnAiContext(
   };
 }
 
+export function appendClientPortalTimelineEvent(
+  caseId: string,
+  label: string,
+  detail: string,
+): { ok: true } | { ok: false; reason: string } {
+  const caseItem = cases.find((candidate) => candidate.id === caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  if (!label.trim()) return { ok: false, reason: "Timeline label is required" };
+  if (!detail.trim()) return { ok: false, reason: "Timeline detail is required" };
+
+  replaceCase(caseId, (currentCase) =>
+    appendTimeline(currentCase, label.trim(), detail.trim()),
+  );
+
+  return { ok: true };
+}
+
 export function markDocumentReceived(caseId: string, documentId: string): void {
   replaceCase(caseId, (caseItem) => {
     const document = caseItem.documents.find((item) => item.id === documentId);

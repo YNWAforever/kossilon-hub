@@ -20,6 +20,7 @@ import {
   markDocumentMissing,
   markDocumentReceived,
   markFiled,
+  appendClientPortalTimelineEvent,
   reopenChecklistItem,
   resetAnnualReturnCasesForTest,
   sendFollowUpNow,
@@ -244,6 +245,39 @@ describe("annual return filing packet helpers", () => {
 describe("annual return store mutations", () => {
   beforeEach(() => {
     resetAnnualReturnCasesForTest();
+  });
+
+  it("appends client portal timeline events without changing filing state", () => {
+    const before = getAnnualReturnCaseById("ar-delta");
+
+    expect(
+      appendClientPortalTimelineEvent(
+        "ar-delta",
+        "Client document uploaded",
+        "Joanna Poon uploaded Signed NAR1 from the client portal.",
+      ),
+    ).toEqual({ ok: true });
+
+    const after = getAnnualReturnCaseById("ar-delta");
+
+    expect(after?.status).toBe(before?.status);
+    expect(after?.timeline[0]).toMatchObject({
+      label: "Client document uploaded",
+      detail: "Joanna Poon uploaded Signed NAR1 from the client portal.",
+    });
+  });
+
+  it("returns a stable error for missing client portal timeline cases", () => {
+    expect(
+      appendClientPortalTimelineEvent(
+        "ar-missing",
+        "Client document uploaded",
+        "Missing case should not mutate state.",
+      ),
+    ).toEqual({
+      ok: false,
+      reason: "Case not found",
+    });
   });
 
   it("marks a document as received, appends a timeline event, and emits once", () => {
