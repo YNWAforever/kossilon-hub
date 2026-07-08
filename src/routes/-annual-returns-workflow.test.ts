@@ -14,6 +14,7 @@ const whatsappAutomationRouteSource = readFileSync(
   new URL("./whatsapp.automation.tsx", import.meta.url),
   "utf8",
 );
+const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
 
 describe("annual return workflow route regressions", () => {
   it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
@@ -33,5 +34,15 @@ describe("annual return workflow route regressions", () => {
     expect(annualReturnDetailRouteSource).toContain("disabled={isFiled}");
     expect(annualReturnDetailRouteSource).toContain("readOnly={isFiled}");
     expect(annualReturnDetailRouteSource).toContain("disabled={isFiled || !note.trim()}");
+  });
+
+  it("renders the client portal action center with mocked client actions", () => {
+    expect(portalRouteSource).toContain('createFileRoute("/portal")');
+    expect(portalRouteSource).toContain("caseId");
+    expect(portalRouteSource).toContain("Upload");
+    expect(portalRouteSource).toContain("Replace");
+    expect(portalRouteSource).toContain("Acknowledge payment");
+    expect(portalRouteSource).toContain("Approve packet");
+    expect(portalRouteSource).toContain("View receipt");
   });
 });

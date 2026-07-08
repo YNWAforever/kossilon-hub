@@ -13,6 +13,7 @@ import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EnquiriesRouteImport } from './routes/enquiries'
@@ -43,6 +44,11 @@ const TasksRoute = TasksRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsRoute = PaymentsRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/enquiries': typeof EnquiriesRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
+  '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/teams': typeof TeamsRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/enquiries': typeof EnquiriesRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
+  '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/teams': typeof TeamsRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/enquiries': typeof EnquiriesRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
+  '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/teams': typeof TeamsRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/enquiries'
     | '/login'
     | '/payments'
+    | '/portal'
     | '/settings'
     | '/tasks'
     | '/teams'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/enquiries'
     | '/login'
     | '/payments'
+    | '/portal'
     | '/settings'
     | '/tasks'
     | '/teams'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/enquiries'
     | '/login'
     | '/payments'
+    | '/portal'
     | '/settings'
     | '/tasks'
     | '/teams'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   EnquiriesRoute: typeof EnquiriesRoute
   LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
+  PortalRoute: typeof PortalRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
   TeamsRoute: typeof TeamsRoute
@@ -250,6 +263,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments': {
@@ -376,6 +396,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnquiriesRoute: EnquiriesRoute,
   LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
+  PortalRoute: PortalRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
   TeamsRoute: TeamsRoute,
