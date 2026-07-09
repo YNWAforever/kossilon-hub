@@ -8,21 +8,65 @@ import {
   type AnnualReturnCase,
   type AnnualReturnFollowUpDraft,
 } from "../lib/annual-return-store";
+import {
+  getDocumentReviewFollowUpDrafts,
+  sendDocumentReviewFollowUpNow,
+  useClientPortalSnapshot,
+  type ClientPortalDocumentReviewFollowUpDraft,
+} from "../lib/client-portal-store";
 
 export const Route = createFileRoute("/whatsapp/automation")({
   component: WhatsAppAutomationRoute,
 });
 
+type AutomationQueueRow =
+  | {
+      id: string;
+      source: "annual-return";
+      caseItem: AnnualReturnCase;
+      draft: AnnualReturnFollowUpDraft;
+    }
+  | {
+      id: string;
+      source: "document-review";
+      caseItem: AnnualReturnCase;
+      draft: ClientPortalDocumentReviewFollowUpDraft;
+    };
+
 function WhatsAppAutomationRoute() {
   const cases = useAnnualReturnCases();
+  const portalSnapshot = useClientPortalSnapshot();
   const [filter, setFilter] = useState<"open" | "sent" | "all">("open");
   const [warning, setWarning] = useState<string | undefined>();
 
-  const rows = useMemo(() => {
-    return cases.flatMap((caseItem) =>
-      getFollowUpDrafts(caseItem).map((draft) => ({ caseItem, draft })),
+  const rows = useMemo<AutomationQueueRow[]>(() => {
+    const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
+    const annualReturnRows = cases.flatMap((caseItem) =>
+      getFollowUpDrafts(caseItem).map((draft) => ({
+        id: draft.id,
+        source: "annual-return" as const,
+        caseItem,
+        draft,
+      })),
     );
-  }, [cases]);
+    const documentReviewRows = getDocumentReviewFollowUpDrafts(cases, portalSnapshot).flatMap(
+      (draft) => {
+        const caseItem = casesById.get(draft.caseId);
+        return caseItem
+          ? [
+              {
+                id: draft.id,
+                source: "document-review" as const,
+                caseItem,
+                draft,
+              },
+            ]
+          : [];
+      },
+    );
+
+    return [...annualReturnRows, ...documentReviewRows];
+  }, [cases, portalSnapshot]);
 
   const visibleRows = rows.filter(({ draft }) => {
     if (filter === "open") return draft.status === "draft";
@@ -74,13 +118,15 @@ function WhatsAppAutomationRoute() {
           {visibleRows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">No follow-ups match this filter.</p>
           ) : (
-            visibleRows.map(({ caseItem, draft }) => (
+            visibleRows.map((row) => (
               <AutomationRow
-                key={draft.id}
-                caseItem={caseItem}
-                draft={draft}
+                key={`${row.source}-${row.id}`}
+                row={row}
                 onSend={() => {
-                  const result = sendFollowUpNow(caseItem.id, draft.id);
+                  const result =
+                    row.source === "annual-return"
+                      ? sendFollowUpNow(row.caseItem.id, row.draft.id)
+                      : sendDocumentReviewFollowUpNow(row.draft.id, "Operations");
                   setWarning(result.ok ? undefined : result.reason);
                 }}
               />
@@ -92,15 +138,8 @@ function WhatsAppAutomationRoute() {
   );
 }
 
-function AutomationRow({
-  caseItem,
-  draft,
-  onSend,
-}: {
-  caseItem: AnnualReturnCase;
-  draft: AnnualReturnFollowUpDraft;
-  onSend: () => void;
-}) {
+function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () => void }) {
+  const { caseItem, draft } = row;
   const disabled = draft.status !== "draft";
 
   return (
@@ -116,8 +155,11 @@ function AutomationRow({
         <p className="text-muted-foreground">{caseItem.owner}</p>
       </div>
       <Field label="Recipient" value={`${draft.recipientName} / ${draft.phone}`} />
-      <Field label="Type" value={followUpTypeLabel(draft.type)} />
-      <Field label="Timing" value={draft.suggestedTiming} />
+      <Field label="Type" value={automationTypeLabel(row)} />
+      <Field
+        label="Timing"
+        value={row.source === "document-review" ? draft.reasonLabel : draft.suggestedTiming}
+      />
       <Field
         label="Status"
         value={
@@ -152,6 +194,11 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
       <p className="truncate">{value}</p>
     </div>
   );
+}
+
+function automationTypeLabel(row: AutomationQueueRow): string {
+  if (row.source === "document-review") return "Document replacement";
+  return followUpTypeLabel(row.draft.type);
 }
 
 function followUpTypeLabel(type: AnnualReturnFollowUpDraft["type"]): string {

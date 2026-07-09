@@ -3,9 +3,14 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
+  clientPortalReviewReasons,
   getDocumentArchiveRows,
+  getDocumentReviewFollowUpDrafts,
+  reviewClientDocument,
   useClientPortalSnapshot,
   type ClientPortalArchiveRow,
+  type ClientPortalDocumentReviewDecision,
+  type ClientPortalReviewReasonCode,
 } from "../lib/client-portal-store";
 
 type DocumentsSearch = {
@@ -28,6 +33,7 @@ function DocumentsRoute() {
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
   const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
+  const [warning, setWarning] = useState<string | undefined>();
 
   useEffect(() => {
     setCaseFilter(caseId ?? "all");
@@ -52,6 +58,12 @@ function DocumentsRoute() {
         <p className="text-sm font-medium text-muted-foreground">Workspace</p>
         <h1 className="mt-1 text-3xl font-semibold">Documents</h1>
       </div>
+
+      {warning ? (
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+          {warning}
+        </div>
+      ) : null}
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 xl:grid-cols-[1fr_180px_180px_180px_220px]">
@@ -104,7 +116,7 @@ function DocumentsRoute() {
           </select>
         </div>
 
-        <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
           <span>Document</span>
           <span>Company</span>
           <span>Category</span>
@@ -112,6 +124,7 @@ function DocumentsRoute() {
           <span>Status</span>
           <span>Uploaded by</span>
           <span>Updated</span>
+          <span>Review</span>
           <span className="text-right">Case</span>
         </div>
 
@@ -119,7 +132,15 @@ function DocumentsRoute() {
           {visibleRows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">No documents match these filters.</p>
           ) : (
-            visibleRows.map((row) => <DocumentRow key={row.id} row={row} />)
+            visibleRows.map((row) => (
+              <DocumentRow
+                key={row.id}
+                row={row}
+                cases={cases}
+                snapshot={snapshot}
+                onWarning={setWarning}
+              />
+            ))
           )}
         </div>
       </section>
@@ -155,9 +176,43 @@ function FilterSelect({
   );
 }
 
-function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
+function DocumentRow({
+  row,
+  cases,
+  snapshot,
+  onWarning,
+}: {
+  row: ClientPortalArchiveRow;
+  cases: ReturnType<typeof useAnnualReturnCases>;
+  snapshot: ReturnType<typeof useClientPortalSnapshot>;
+  onWarning: (warning: string | undefined) => void;
+}) {
+  const followUp = getDocumentReviewFollowUpDrafts(cases, snapshot).find(
+    (draft) => draft.documentId === row.documentId,
+  );
+
+  function handleReview(
+    decision: ClientPortalDocumentReviewDecision,
+    options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
+  ) {
+    if (!row.documentId) return;
+    const result =
+      decision === "accepted"
+        ? reviewClientDocument(row.documentId, {
+            decision: "accepted",
+            actor: "Operations",
+          })
+        : reviewClientDocument(row.documentId, {
+            decision: "rejected",
+            reasonCode: options.reasonCode,
+            note: options.note,
+            actor: "Operations",
+          });
+    onWarning(result.ok ? undefined : result.reason);
+  }
+
   return (
-    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_100px] lg:items-center">
+    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] lg:items-center">
       <div className="min-w-0">
         <p className="truncate font-medium">{row.title}</p>
         <p className="truncate text-muted-foreground">{row.filename}</p>
@@ -168,6 +223,7 @@ function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
       <Field label="Status" value={labelValue(row.status)} />
       <Field label="Uploaded by" value={row.actor} />
       <Field label="Updated" value={formatTimestamp(row.createdAt)} />
+      <ReviewCell row={row} followUpStatus={followUp?.status} onReview={handleReview} />
       <div className="flex justify-start lg:justify-end">
         <Link
           className="rounded-md border px-3 py-2 text-sm"
@@ -178,6 +234,102 @@ function DocumentRow({ row }: { row: ClientPortalArchiveRow }) {
         </Link>
       </div>
     </div>
+  );
+}
+
+function ReviewCell({
+  row,
+  followUpStatus,
+  onReview,
+}: {
+  row: ClientPortalArchiveRow;
+  followUpStatus?: string;
+  onReview: (
+    decision: ClientPortalDocumentReviewDecision,
+    options?: { reasonCode?: ClientPortalReviewReasonCode; note?: string },
+  ) => void;
+}) {
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [reasonCode, setReasonCode] = useState<ClientPortalReviewReasonCode>("missing-signature");
+  const [note, setNote] = useState("");
+
+  if (row.reviewable) {
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            aria-label={`Accept ${row.title}`}
+            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+            onClick={() => onReview("accepted")}
+            type="button"
+          >
+            Accept
+          </button>
+          <button
+            aria-label={`Reject ${row.title}`}
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={() => setIsRejecting((current) => !current)}
+            type="button"
+          >
+            Reject
+          </button>
+        </div>
+        {isRejecting ? (
+          <div className="space-y-2">
+            <select
+              aria-label={`Rejection reason for ${row.title}`}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={reasonCode}
+              onChange={(event) =>
+                setReasonCode(event.target.value as ClientPortalReviewReasonCode)
+              }
+            >
+              {clientPortalReviewReasons.map((reason) => (
+                <option key={reason.code} value={reason.code}>
+                  {reason.label}
+                </option>
+              ))}
+            </select>
+            <input
+              aria-label={`Optional review note for ${row.title}`}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Optional review note"
+            />
+            <button
+              className="rounded-md border px-3 py-2 text-sm"
+              onClick={() => onReview("rejected", { reasonCode, note })}
+              type="button"
+            >
+              Confirm rejection
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (row.reviewSummary || row.reviewedBy || row.reviewedAt) {
+    return (
+      <div className="space-y-1 text-xs text-muted-foreground">
+        <p className="truncate text-sm font-medium text-foreground">
+          {row.reviewSummary ?? "Reviewed"}
+        </p>
+        {row.reviewReasonLabel ? <p>{row.reviewReasonLabel}</p> : null}
+        {row.reviewNote ? <p>{row.reviewNote}</p> : null}
+        {followUpStatus ? <p>{`Follow-up: ${followUpStatus}`}</p> : null}
+        {row.reviewedBy ? <p>{`Reviewed by ${row.reviewedBy}`}</p> : null}
+        {row.reviewedAt ? <p>{`Reviewed ${formatTimestamp(row.reviewedAt)}`}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <Field
+      label="Review"
+      value={row.reviewSummary ?? (row.readonly ? "Read-only" : "No review needed")}
+    />
   );
 }
 

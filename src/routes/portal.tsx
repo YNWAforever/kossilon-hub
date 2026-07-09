@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, FileUp, ReceiptText } from "lucide-react";
+import { CheckCircle2, ReceiptText } from "lucide-react";
 
 import {
   type AnnualReturnCase,
@@ -40,10 +40,11 @@ function PortalRoute() {
   const navigate = useNavigate({ from: "/portal" });
   const [warning, setWarning] = useState<string | undefined>();
 
-  const selectedCase = cases.find((caseItem) => caseItem.id === caseId) ?? cases[0];
+  const matchedCase = caseId ? cases.find((caseItem) => caseItem.id === caseId) : undefined;
+  const selectedCase = caseId ? matchedCase : cases[0];
 
   useEffect(() => {
-    if (!selectedCase || caseId === selectedCase.id) return;
+    if (!selectedCase || caseId || caseId === selectedCase.id) return;
 
     void navigate({
       replace: true,
@@ -192,18 +193,30 @@ function PortalActionRow({
   isReadOnly: boolean;
   onWarning: (warning: string | undefined) => void;
 }) {
-  const primaryDisabled = action.status === "blocked" || (action.kind !== "receipt" && isReadOnly);
-  const replaceDisabled = action.status === "blocked" || isReadOnly;
+  const primaryDisabled = action.status !== "open" || (action.kind !== "receipt" && isReadOnly);
+  const documentPrimaryLabel =
+    action.kind === "document"
+      ? action.documentAction === "replace"
+        ? "Replace"
+        : "Upload"
+      : undefined;
 
   function handlePrimaryAction() {
     onWarning(undefined);
 
     if (action.kind === "document" && action.requirementId) {
-      const result = uploadClientDocument(
-        caseItem,
-        action.requirementId,
-        `${caseItem.id}-${action.requirementId}.pdf`,
-      );
+      const result =
+        action.documentAction === "replace"
+          ? replaceClientDocument(
+              caseItem,
+              action.requirementId,
+              `${caseItem.id}-${action.requirementId}-replacement.pdf`,
+            )
+          : uploadClientDocument(
+              caseItem,
+              action.requirementId,
+              `${caseItem.id}-${action.requirementId}.pdf`,
+            );
       onWarning(result.ok ? undefined : result.reason);
       return;
     }
@@ -226,16 +239,6 @@ function PortalActionRow({
     }
   }
 
-  function handleReplace() {
-    if (!action.requirementId) return;
-    const result = replaceClientDocument(
-      caseItem,
-      action.requirementId,
-      `${caseItem.id}-${action.requirementId}-replacement.pdf`,
-    );
-    onWarning(result.ok ? undefined : result.reason);
-  }
-
   return (
     <div className="rounded-md border px-3 py-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -246,31 +249,17 @@ function PortalActionRow({
         <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        {action.kind === "document" && action.status === "complete" ? (
-          <button
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-            disabled={replaceDisabled}
-            onClick={handleReplace}
-            type="button"
-          >
-            <FileUp className="h-4 w-4" />
-            Replace
-          </button>
-        ) : null}
-        {action.kind !== "document" || action.status !== "complete" ? (
+        {action.kind !== "document" || (action.status === "open" && action.documentAction) ? (
           <button
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             disabled={primaryDisabled}
             onClick={handlePrimaryAction}
             type="button"
+            aria-label={
+              documentPrimaryLabel ? `${documentPrimaryLabel} ${action.label}` : undefined
+            }
           >
-            {action.kind === "document"
-              ? "Upload"
-              : action.kind === "payment"
-                ? "Acknowledge payment"
-                : action.kind === "packet"
-                  ? "Approve packet"
-                  : "View receipt"}
+            {primaryActionLabel(action)}
           </button>
         ) : null}
       </div>
@@ -310,7 +299,16 @@ function ArchivePreview({
         ) : (
           previewRows.map((row) => (
             <div key={row.id} className="grid gap-2 py-3 text-sm md:grid-cols-[1fr_140px_120px]">
-              <span className="font-medium">{row.title}</span>
+              <span className="font-medium">
+                {row.title}
+                {row.reviewSummary ? (
+                  <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                    {row.reviewSummary}
+                    {row.reviewReasonLabel ? ` - ${row.reviewReasonLabel}` : ""}
+                    {row.reviewNote ? ` - ${row.reviewNote}` : ""}
+                  </span>
+                ) : null}
+              </span>
               <span>{row.source}</span>
               <span>{row.status}</span>
             </div>
@@ -329,4 +327,11 @@ function formatTimestamp(value: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function primaryActionLabel(action: ClientPortalRequiredAction): string {
+  if (action.kind === "document") return action.documentAction === "replace" ? "Replace" : "Upload";
+  if (action.kind === "payment") return "Acknowledge payment";
+  if (action.kind === "packet") return "Approve packet";
+  return "View receipt";
 }
