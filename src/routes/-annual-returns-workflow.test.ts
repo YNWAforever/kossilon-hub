@@ -22,6 +22,7 @@ import {
   getClientPortalSnapshot,
   resetClientPortalStoreForTest,
   reviewClientDocument,
+  sendDocumentReviewFollowUpNow,
   uploadClientDocument,
 } from "../lib/client-portal-store";
 
@@ -68,7 +69,14 @@ function seedRejectedPortalDocument() {
   const upload = uploadClientDocument(caseItem, "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
   if (!upload.ok) throw new Error("Expected fixture upload to succeed");
 
-  expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
+  expect(
+    reviewClientDocument(upload.documentId, {
+      decision: "rejected",
+      reasonCode: "missing-signature",
+      note: "Director signature is missing on page 2.",
+      actor: "Operations",
+    }),
+  ).toEqual({
     ok: true,
     documentId: upload.documentId,
   });
@@ -191,6 +199,12 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain('aria-label="Reject Signed NAR1"');
   });
 
+  it("keeps structured rejection controls in the documents route source", () => {
+    expect(documentsRouteSource).toContain("clientPortalReviewReasons");
+    expect(documentsRouteSource).toContain("Rejection reason");
+    expect(documentsRouteSource).toContain("Optional review note");
+  });
+
   it("renders document archive review metadata after staff review", async () => {
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
@@ -231,6 +245,17 @@ describe("annual return workflow route regressions", () => {
     expect(html.match(/>Replace<\/button>/g) ?? []).toHaveLength(1);
   });
 
+  it("renders rejected document reason and note in the client portal", async () => {
+    seedRejectedPortalDocument();
+
+    const html = await renderRoute("/portal?caseId=ar-delta");
+
+    expect(html).toContain("Replace Signed NAR1");
+    expect(html).toContain("Required signature is missing");
+    expect(html).toContain("Director signature is missing on page 2.");
+    expect(html).toContain("Please upload a replacement");
+  });
+
   it("does not render replace controls for accepted portal documents", async () => {
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
@@ -249,6 +274,30 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("signed-nar1.pdf has been accepted by staff.");
     expect(html).not.toContain("Replace Signed NAR1");
     expect(html).not.toMatch(/Signed NAR1[\s\S]*?>Replace<\/button>/);
+  });
+
+  it("renders accepted document review metadata in the client portal", async () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "accepted",
+        actor: "Operations",
+      }),
+    ).toEqual({
+      ok: true,
+      documentId: upload.documentId,
+    });
+
+    const html = await renderRoute("/portal?caseId=ar-delta");
+
+    expect(html).toContain("signed-nar1.pdf has been accepted by staff.");
+    expect(html).toContain("Accepted by Operations");
   });
 
   it("does not render document review controls for pending uploads once the case receipt is accepted", async () => {
@@ -279,6 +328,38 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("waiting for staff review");
     expect(html).not.toContain('aria-label="Upload Signed NAR1"');
     expect(html).not.toContain("Replace Signed NAR1");
+  });
+
+  it("renders rejected-document drafts in WhatsApp automation", async () => {
+    seedRejectedPortalDocument();
+
+    const html = await renderRoute("/whatsapp/automation");
+
+    expect(html).toContain("Delta Bloom Ventures Limited");
+    expect(html).toContain("Document replacement");
+    expect(html).toContain("Required signature is missing");
+    expect(html).toContain("Director signature is missing on page 2.");
+    expect(html).toContain("Send now");
+  });
+
+  it("renders sent rejected-document drafts in WhatsApp automation", async () => {
+    seedRejectedPortalDocument();
+    const rejectedDocument = getClientPortalSnapshot().documents.find(
+      (document) => document.status === "rejected",
+    );
+    if (!rejectedDocument) throw new Error("Expected rejected document fixture");
+
+    expect(
+      sendDocumentReviewFollowUpNow(
+        `document-review-follow-up-${rejectedDocument.id}`,
+        "Operations",
+      ),
+    ).toEqual({ ok: true });
+
+    const html = await renderRoute("/whatsapp/automation");
+
+    expect(html).toContain("Document replacement");
+    expect(html).toContain("Sent");
   });
 
   it("renders the document archive with source, category, status, and case filters", () => {

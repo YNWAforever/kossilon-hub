@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { enquiries, findClientForEnquiry } from "../lib/app-data";
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/whatsapp")({
 });
 
 function WhatsAppRoute() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = Route.useSearch();
   const initialId =
     search.enquiry && enquiries.some((enquiry) => enquiry.id === search.enquiry)
@@ -25,6 +26,10 @@ function WhatsAppRoute() {
     () => (selected ? findClientForEnquiry(selected) : undefined),
     [selected],
   );
+
+  if (pathname !== "/whatsapp") {
+    return <Outlet />;
+  }
 
   if (!selected) return null;
 

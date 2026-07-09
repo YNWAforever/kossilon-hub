@@ -353,7 +353,8 @@ function requiredDocumentDetail(documentLabel: string, document?: ClientPortalDo
     return `${document.filename} is uploaded and waiting for staff review.`;
   }
   if (document.status === "accepted") {
-    return `${document.filename} has been accepted by staff.`;
+    const review = document.reviewSummary ? ` ${document.reviewSummary}.` : "";
+    return `${document.filename} has been accepted by staff.${review}`;
   }
   if (document.status === "rejected") {
     const reason = document.reviewReasonLabel ? ` Reason: ${document.reviewReasonLabel}.` : "";

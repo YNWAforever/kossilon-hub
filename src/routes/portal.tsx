@@ -299,7 +299,16 @@ function ArchivePreview({
         ) : (
           previewRows.map((row) => (
             <div key={row.id} className="grid gap-2 py-3 text-sm md:grid-cols-[1fr_140px_120px]">
-              <span className="font-medium">{row.title}</span>
+              <span className="font-medium">
+                {row.title}
+                {row.reviewSummary ? (
+                  <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                    {row.reviewSummary}
+                    {row.reviewReasonLabel ? ` - ${row.reviewReasonLabel}` : ""}
+                    {row.reviewNote ? ` - ${row.reviewNote}` : ""}
+                  </span>
+                ) : null}
+              </span>
               <span>{row.source}</span>
               <span>{row.status}</span>
             </div>
