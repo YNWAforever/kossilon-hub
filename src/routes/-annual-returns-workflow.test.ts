@@ -342,7 +342,7 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Send now");
   });
 
-  it("renders sent rejected-document drafts in WhatsApp automation", async () => {
+  it("keeps sent rejected-document drafts out of the default Open WhatsApp queue", async () => {
     seedRejectedPortalDocument();
     const rejectedDocument = getClientPortalSnapshot().documents.find(
       (document) => document.status === "rejected",
@@ -358,8 +358,18 @@ describe("annual return workflow route regressions", () => {
 
     const html = await renderRoute("/whatsapp/automation");
 
-    expect(html).toContain("Document replacement");
-    expect(html).toContain("Sent");
+    expect(html).not.toContain("Document replacement");
+    expect(html).not.toContain("Required signature is missing");
+    expect(html).not.toContain("Director signature is missing on page 2.");
+  });
+
+  it("keeps the Sent WhatsApp queue filter wired to sent follow-ups in source", () => {
+    expect(whatsappAutomationRouteSource).toContain(
+      'if (filter === "open") return draft.status === "draft";',
+    );
+    expect(whatsappAutomationRouteSource).toContain(
+      'if (filter === "sent") return draft.status === "sent";',
+    );
   });
 
   it("renders the document archive with source, category, status, and case filters", () => {

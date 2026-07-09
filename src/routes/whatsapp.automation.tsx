@@ -69,7 +69,7 @@ function WhatsAppAutomationRoute() {
   }, [cases, portalSnapshot]);
 
   const visibleRows = rows.filter(({ draft }) => {
-    if (filter === "open") return draft.status === "draft" || draft.status === "sent";
+    if (filter === "open") return draft.status === "draft";
     if (filter === "sent") return draft.status === "sent";
     return true;
   });
