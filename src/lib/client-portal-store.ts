@@ -29,6 +29,46 @@ export type ClientPortalActionType =
 
 export type ClientPortalDocumentReviewDecision = "accepted" | "rejected";
 
+export const clientPortalReviewReasons = [
+  { code: "wrong-file", label: "Wrong document uploaded" },
+  { code: "expired", label: "Document is expired or outdated" },
+  { code: "unclear-scan", label: "Scan is unreadable or incomplete" },
+  { code: "name-mismatch", label: "Name or company details do not match" },
+  { code: "missing-signature", label: "Required signature is missing" },
+  { code: "missing-page", label: "Required page or attachment is missing" },
+  { code: "other", label: "Other issue" },
+] as const;
+
+export type ClientPortalReviewReasonCode = (typeof clientPortalReviewReasons)[number]["code"];
+
+export type ClientPortalDocumentReviewRequest =
+  | {
+      decision: "accepted";
+      actor?: string;
+    }
+  | {
+      decision: "rejected";
+      reasonCode?: ClientPortalReviewReasonCode;
+      note?: string;
+      actor?: string;
+    };
+
+type NormalizedClientPortalReviewRequest =
+  | {
+      ok: true;
+      decision: "accepted";
+      actor: string;
+    }
+  | {
+      ok: true;
+      decision: "rejected";
+      actor: string;
+      reasonCode: ClientPortalReviewReasonCode;
+      reasonLabel: string;
+      note?: string;
+    }
+  | { ok: false; reason: string };
+
 export type ClientPortalActionStatus = "completed" | "blocked";
 
 export type ClientPortalDocument = {
@@ -48,6 +88,9 @@ export type ClientPortalDocument = {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewSummary?: string;
+  reviewReasonCode?: ClientPortalReviewReasonCode;
+  reviewReasonLabel?: string;
+  reviewNote?: string;
 };
 
 export type ClientPortalAction = {
@@ -79,6 +122,9 @@ export type ClientPortalArchiveRow = {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewSummary?: string;
+  reviewReasonCode?: ClientPortalReviewReasonCode;
+  reviewReasonLabel?: string;
+  reviewNote?: string;
 };
 
 export type ClientPortalRequiredActionStatus = "open" | "complete" | "blocked" | "pending-review";
@@ -145,6 +191,12 @@ export function useClientPortalSnapshot(): ClientPortalSnapshot {
 
 export function getClientPortalSnapshot(): ClientPortalSnapshot {
   return cloneSnapshot(snapshot);
+}
+
+export function getClientPortalReviewReason(
+  code: ClientPortalReviewReasonCode | string | undefined,
+): { code: ClientPortalReviewReasonCode; label: string } | undefined {
+  return clientPortalReviewReasons.find((reason) => reason.code === code);
 }
 
 export function resetClientPortalStoreForTest(): void {
@@ -277,7 +329,9 @@ function requiredDocumentDetail(documentLabel: string, document?: ClientPortalDo
     return `${document.filename} has been accepted by staff.`;
   }
   if (document.status === "rejected") {
-    return `${document.filename} was rejected by staff. Please upload a replacement.`;
+    const reason = document.reviewReasonLabel ? ` Reason: ${document.reviewReasonLabel}.` : "";
+    const note = document.reviewNote ? ` Note: ${document.reviewNote}` : "";
+    return `${document.filename} was rejected by staff.${reason}${note} Please upload a replacement.`;
   }
   return `${documentLabel} is required before the annual return filing can proceed.`;
 }
@@ -430,6 +484,9 @@ function rowFromDocument(
     reviewedBy: document.reviewedBy,
     reviewedAt: document.reviewedAt,
     reviewSummary: document.reviewSummary,
+    reviewReasonCode: document.reviewReasonCode,
+    reviewReasonLabel: document.reviewReasonLabel,
+    reviewNote: document.reviewNote,
   };
 }
 
@@ -555,6 +612,12 @@ function createDocument(
     actor,
     createdAt: nowStamp(),
     supersedesDocumentId,
+    reviewedBy: undefined,
+    reviewedAt: undefined,
+    reviewSummary: undefined,
+    reviewReasonCode: undefined,
+    reviewReasonLabel: undefined,
+    reviewNote: undefined,
   };
 }
 
@@ -579,11 +642,50 @@ function getPacketApprovalBlockers(
     });
 }
 
+function normalizeReviewInput(
+  review: ClientPortalDocumentReviewDecision | ClientPortalDocumentReviewRequest,
+  actor: string,
+): NormalizedClientPortalReviewRequest {
+  if (typeof review === "string") {
+    if (review === "accepted") {
+      return { ok: true, decision: "accepted", actor };
+    }
+
+    return { ok: false, reason: "Rejection reason is required" };
+  }
+
+  const reviewer = review.actor?.trim() || actor;
+
+  if (review.decision === "accepted") {
+    return { ok: true, decision: "accepted", actor: reviewer };
+  }
+
+  const reason = getClientPortalReviewReason(review.reasonCode);
+  if (!reason) return { ok: false, reason: "Rejection reason is required" };
+
+  const note = review.note?.trim();
+  if (reason.code === "other" && !note) {
+    return { ok: false, reason: "Review note is required when reason is Other" };
+  }
+
+  return {
+    ok: true,
+    decision: "rejected",
+    actor: reviewer,
+    reasonCode: reason.code,
+    reasonLabel: reason.label,
+    note,
+  };
+}
+
 export function reviewClientDocument(
   documentId: string,
-  decision: ClientPortalDocumentReviewDecision,
+  review: ClientPortalDocumentReviewDecision | ClientPortalDocumentReviewRequest,
   actor = "Operations",
 ): { ok: true; documentId: string } | { ok: false; reason: string } {
+  const normalized = normalizeReviewInput(review, actor);
+  if (!normalized.ok) return normalized;
+
   const document = snapshot.documents.find((candidate) => candidate.id === documentId);
   if (!document) return { ok: false, reason: "Document not found" };
   if (document.source !== "client-portal") {
@@ -604,29 +706,42 @@ export function reviewClientDocument(
   }
 
   const reviewedAt = nowStamp();
-  const status = decision;
+  const status = normalized.decision;
   const actionType: ClientPortalActionType =
-    decision === "accepted" ? "accept-document" : "reject-document";
+    normalized.decision === "accepted" ? "accept-document" : "reject-document";
   const reviewSummary =
-    decision === "accepted" ? `Accepted by ${actor}` : `Rejected by ${actor}; replacement required`;
+    normalized.decision === "accepted"
+      ? `Accepted by ${normalized.actor}`
+      : `Rejected by ${normalized.actor}: ${normalized.reasonLabel}`;
   const summary =
-    decision === "accepted"
-      ? `${actor} accepted ${document.title}.`
-      : `${actor} rejected ${document.title}.`;
+    normalized.decision === "accepted"
+      ? `${normalized.actor} accepted ${document.title}.`
+      : `${normalized.actor} rejected ${document.title}: ${normalized.reasonLabel}.`;
 
   snapshot = {
     ...snapshot,
     documents: snapshot.documents.map((candidate) =>
       candidate.id === document.id
-        ? { ...candidate, status, reviewedBy: actor, reviewedAt, reviewSummary }
+        ? {
+            ...candidate,
+            status,
+            reviewedBy: normalized.actor,
+            reviewedAt,
+            reviewSummary,
+            reviewReasonCode:
+              normalized.decision === "rejected" ? normalized.reasonCode : undefined,
+            reviewReasonLabel:
+              normalized.decision === "rejected" ? normalized.reasonLabel : undefined,
+            reviewNote: normalized.decision === "rejected" ? normalized.note : undefined,
+          }
         : candidate,
     ),
   };
 
-  addActionForCase(document.caseId, actionType, actor, summary);
+  addActionForCase(document.caseId, actionType, normalized.actor, summary);
 
   if (document.requirementId) {
-    if (decision === "accepted") {
+    if (normalized.decision === "accepted") {
       markDocumentReceived(document.caseId, document.requirementId);
     } else {
       markDocumentMissing(document.caseId, document.requirementId);
@@ -635,7 +750,7 @@ export function reviewClientDocument(
 
   appendClientPortalTimelineEvent(
     document.caseId,
-    decision === "accepted" ? "Client document accepted" : "Client document rejected",
+    normalized.decision === "accepted" ? "Client document accepted" : "Client document rejected",
     summary,
   );
   emit();

@@ -14,9 +14,11 @@ import {
 import {
   acknowledgePaymentInstructions,
   approveClientPacket,
+  clientPortalReviewReasons,
   getClientPortalActivity,
   getClientPortalProgress,
   getClientPortalRequiredActions,
+  getClientPortalReviewReason,
   getCurrentClientDocument,
   getDocumentArchiveRows,
   getClientPortalSnapshot,
@@ -25,6 +27,7 @@ import {
   resetClientPortalStoreForTest,
   reviewClientDocument,
   uploadClientDocument,
+  type ClientPortalReviewReasonCode,
 } from "./client-portal-store";
 
 function requireCase(caseId: string) {
@@ -128,10 +131,14 @@ describe("client portal store", () => {
       "Joanna Poon",
     );
     if (!upload.ok) throw new Error("Expected fixture upload to succeed");
-    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
-      ok: true,
-      documentId: upload.documentId,
-    });
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "missing-signature",
+        note: "Director signature is missing on page 2.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
 
     const replacement = replaceClientDocument(
       requireCase("ar-delta"),
@@ -160,10 +167,14 @@ describe("client portal store", () => {
     );
     if (!upload.ok) throw new Error("Expected fixture upload to succeed");
 
-    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
-      ok: true,
-      documentId: upload.documentId,
-    });
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "missing-signature",
+        note: "Director signature is missing on page 2.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
     expect(
       getAnnualReturnCaseById("ar-delta")?.documents.find(
         (document) => document.id === "signed-nar1",
@@ -544,10 +555,14 @@ describe("client portal store", () => {
     );
     if (!upload.ok) throw new Error("Expected fixture upload to succeed");
 
-    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
-      ok: true,
-      documentId: upload.documentId,
-    });
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "missing-signature",
+        note: "Director signature is missing on page 2.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
 
     expect(getCurrentClientDocument("ar-delta", "signed-nar1")).toMatchObject({
       status: "rejected",
@@ -607,10 +622,14 @@ describe("client portal store", () => {
       "Joanna Poon",
     );
     if (!upload.ok) throw new Error("Expected fixture upload to succeed");
-    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
-      ok: true,
-      documentId: upload.documentId,
-    });
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "missing-signature",
+        note: "Director signature is missing on page 2.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
 
     const replacement = replaceClientDocument(
       requireCase("ar-delta"),
@@ -653,10 +672,14 @@ describe("client portal store", () => {
       "Joanna Poon",
     );
     if (!upload.ok) throw new Error("Expected fixture upload to succeed");
-    expect(reviewClientDocument(upload.documentId, "rejected", "Operations")).toEqual({
-      ok: true,
-      documentId: upload.documentId,
-    });
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "missing-signature",
+        note: "Director signature is missing on page 2.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
 
     const replacement = replaceClientDocument(
       requireCase("ar-delta"),
@@ -682,9 +705,136 @@ describe("client portal store", () => {
       ok: true,
       documentId: replacement.documentId,
     });
-    expect(reviewClientDocument(replacement.documentId, "rejected", "Operations")).toEqual({
+    expect(
+      reviewClientDocument(replacement.documentId, {
+        decision: "rejected",
+        reasonCode: "missing-signature",
+        note: "Director signature is missing on page 2.",
+        actor: "Operations",
+      }),
+    ).toEqual({
       ok: false,
       reason: "Document has already been reviewed",
     });
+  });
+
+  it("stores structured rejection reason metadata on the document and archive row", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "missing-signature",
+        note: "Director signature is missing on page 2.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
+
+    expect(getCurrentClientDocument("ar-delta", "signed-nar1")).toMatchObject({
+      status: "rejected",
+      reviewedBy: "Operations",
+      reviewReasonCode: "missing-signature",
+      reviewReasonLabel: "Required signature is missing",
+      reviewNote: "Director signature is missing on page 2.",
+      reviewSummary: "Rejected by Operations: Required signature is missing",
+    });
+
+    expect(
+      getDocumentArchiveRows([requireCase("ar-delta")]).find(
+        (row) => row.documentId === upload.documentId,
+      ),
+    ).toMatchObject({
+      reviewReasonCode: "missing-signature",
+      reviewReasonLabel: "Required signature is missing",
+      reviewNote: "Director signature is missing on page 2.",
+      reviewSummary: "Rejected by Operations: Required signature is missing",
+    });
+  });
+
+  it("rejects invalid rejection payloads without reviewing the document", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: false, reason: "Rejection reason is required" });
+
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "other",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: false, reason: "Review note is required when reason is Other" });
+
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "rejected",
+        reasonCode: "not-a-reason" as ClientPortalReviewReasonCode,
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: false, reason: "Rejection reason is required" });
+
+    expect(getCurrentClientDocument("ar-delta", "signed-nar1")).toMatchObject({
+      status: "uploaded",
+      reviewedBy: undefined,
+    });
+  });
+
+  it("keeps accepted review metadata free of rejection reason data", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "accepted",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
+
+    expect(getCurrentClientDocument("ar-delta", "signed-nar1")).toMatchObject({
+      status: "accepted",
+      reviewedBy: "Operations",
+      reviewSummary: "Accepted by Operations",
+      reviewReasonCode: undefined,
+      reviewReasonLabel: undefined,
+      reviewNote: undefined,
+    });
+  });
+
+  it("publishes the supported review reason list", () => {
+    expect(clientPortalReviewReasons.map((reason) => reason.code)).toEqual([
+      "wrong-file",
+      "expired",
+      "unclear-scan",
+      "name-mismatch",
+      "missing-signature",
+      "missing-page",
+      "other",
+    ]);
+    expect(getClientPortalReviewReason("missing-signature")).toEqual({
+      code: "missing-signature",
+      label: "Required signature is missing",
+    });
+    expect(getClientPortalReviewReason(undefined)).toBeUndefined();
   });
 });
