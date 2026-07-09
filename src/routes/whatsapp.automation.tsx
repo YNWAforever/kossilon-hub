@@ -138,13 +138,7 @@ function WhatsAppAutomationRoute() {
   );
 }
 
-function AutomationRow({
-  row,
-  onSend,
-}: {
-  row: AutomationQueueRow;
-  onSend: () => void;
-}) {
+function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () => void }) {
   const { caseItem, draft } = row;
   const disabled = draft.status !== "draft";
 

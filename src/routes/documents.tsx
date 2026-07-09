@@ -280,7 +280,9 @@ function ReviewCell({
               aria-label={`Rejection reason for ${row.title}`}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={reasonCode}
-              onChange={(event) => setReasonCode(event.target.value as ClientPortalReviewReasonCode)}
+              onChange={(event) =>
+                setReasonCode(event.target.value as ClientPortalReviewReasonCode)
+              }
             >
               {clientPortalReviewReasons.map((reason) => (
                 <option key={reason.code} value={reason.code}>

@@ -626,7 +626,10 @@ function isCurrentRejectedDocument(
 ): boolean {
   if (document.status !== "rejected") return false;
   if (!document.requirementId) return false;
-  return getCurrentClientDocument(document.caseId, document.requirementId, currentSnapshot)?.id === document.id;
+  return (
+    getCurrentClientDocument(document.caseId, document.requirementId, currentSnapshot)?.id ===
+    document.id
+  );
 }
 
 function documentReviewFollowUpMessage(
@@ -651,7 +654,9 @@ export function getDocumentReviewFollowUpDrafts(
 ): ClientPortalDocumentReviewFollowUpDraft[] {
   const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
   const sentByDraftId = new Map(
-    currentSnapshot.documentReviewFollowUps.map((followUp) => [followUp.draftId, followUp] as const),
+    currentSnapshot.documentReviewFollowUps.map(
+      (followUp) => [followUp.draftId, followUp] as const,
+    ),
   );
 
   return currentSnapshot.documents
@@ -934,7 +939,9 @@ export function sendDocumentReviewFollowUpNow(
   const caseItem = getAnnualReturnCaseById(document.caseId);
   if (!caseItem) return { ok: false, reason: "Case not found" };
 
-  const draft = getDocumentReviewFollowUpDrafts([caseItem]).find((candidate) => candidate.id === draftId);
+  const draft = getDocumentReviewFollowUpDrafts([caseItem]).find(
+    (candidate) => candidate.id === draftId,
+  );
   if (!draft) return { ok: false, reason: "The rejected document is no longer current" };
   if (draft.status === "sent") return { ok: false, reason: "Follow-up already sent" };
   if (draft.status === "blocked") {
