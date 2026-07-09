@@ -1080,12 +1080,18 @@ In `DocumentRow`, derive draft state and accept structured review input:
     options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
   ) {
     if (!row.documentId) return;
-    const result = reviewClientDocument(row.documentId, {
-      decision,
-      reasonCode: options.reasonCode,
-      note: options.note,
-      actor: "Operations",
-    });
+    const result =
+      decision === "accepted"
+        ? reviewClientDocument(row.documentId, {
+            decision: "accepted",
+            actor: "Operations",
+          })
+        : reviewClientDocument(row.documentId, {
+            decision: "rejected",
+            reasonCode: options.reasonCode,
+            note: options.note,
+            actor: "Operations",
+          });
     onWarning(result.ok ? undefined : result.reason);
   }
 ```
