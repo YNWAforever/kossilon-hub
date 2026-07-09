@@ -25,7 +25,8 @@ export type ClientPortalActionType =
   | "approve-packet"
   | "view-receipt"
   | "accept-document"
-  | "reject-document";
+  | "reject-document"
+  | "send-document-review-follow-up";
 
 export type ClientPortalDocumentReviewDecision = "accepted" | "rejected";
 
@@ -101,6 +102,8 @@ export type ClientPortalAction = {
   status: ClientPortalActionStatus;
   summary: string;
   createdAt: string;
+  documentId?: string;
+  draftId?: string;
 };
 
 export type ClientPortalArchiveRow = {
@@ -148,14 +151,46 @@ export type ClientPortalProgress = {
   isReadOnly: boolean;
 };
 
+export type ClientPortalDocumentReviewFollowUpStatus = "draft" | "sent" | "blocked";
+
+export type ClientPortalDocumentReviewFollowUpDraft = {
+  id: string;
+  caseId: string;
+  documentId: string;
+  requirementId?: string;
+  companyName: string;
+  recipientName: string;
+  phone: string;
+  documentTitle: string;
+  reasonCode: ClientPortalReviewReasonCode;
+  reasonLabel: string;
+  note?: string;
+  suggestedTiming: string;
+  messagePreview: string;
+  status: ClientPortalDocumentReviewFollowUpStatus;
+  blockedReason?: string;
+  sentAt?: string;
+};
+
+export type ClientPortalDocumentReviewFollowUpSend = {
+  id: string;
+  draftId: string;
+  documentId: string;
+  caseId: string;
+  actor: string;
+  sentAt: string;
+};
+
 export type ClientPortalSnapshot = {
   documents: ClientPortalDocument[];
   actions: ClientPortalAction[];
+  documentReviewFollowUps: ClientPortalDocumentReviewFollowUpSend[];
 };
 
 const initialSnapshot: ClientPortalSnapshot = {
   documents: [],
   actions: [],
+  documentReviewFollowUps: [],
 };
 
 let snapshot: ClientPortalSnapshot = cloneSnapshot(initialSnapshot);
@@ -165,6 +200,7 @@ function cloneSnapshot(value: ClientPortalSnapshot): ClientPortalSnapshot {
   return {
     documents: value.documents.map((document) => ({ ...document })),
     actions: value.actions.map((action) => ({ ...action })),
+    documentReviewFollowUps: value.documentReviewFollowUps.map((followUp) => ({ ...followUp })),
   };
 }
 
@@ -231,18 +267,7 @@ function addAction(
   actor: string,
   summary: string,
 ): ClientPortalAction {
-  const action: ClientPortalAction = {
-    id: `portal-action-${caseItem.id}-${type}-${Date.now()}-${snapshot.actions.length + 1}`,
-    caseId: caseItem.id,
-    type,
-    actor,
-    status: "completed",
-    summary,
-    createdAt: nowStamp(),
-  };
-
-  snapshot = { ...snapshot, actions: [action, ...snapshot.actions] };
-  return action;
+  return addActionForCase(caseItem.id, type, actor, summary);
 }
 
 function addActionForCase(
@@ -250,6 +275,7 @@ function addActionForCase(
   type: ClientPortalActionType,
   actor: string,
   summary: string,
+  metadata: Pick<ClientPortalAction, "documentId" | "draftId"> = {},
 ): ClientPortalAction {
   const action: ClientPortalAction = {
     id: `portal-action-${caseId}-${type}-${Date.now()}-${snapshot.actions.length + 1}`,
@@ -259,6 +285,7 @@ function addActionForCase(
     status: "completed",
     summary,
     createdAt: nowStamp(),
+    ...metadata,
   };
 
   snapshot = { ...snapshot, actions: [action, ...snapshot.actions] };
@@ -588,6 +615,83 @@ export function getDocumentArchiveRows(
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+function documentReviewFollowUpId(documentId: string): string {
+  return `document-review-follow-up-${documentId}`;
+}
+
+function isCurrentRejectedDocument(
+  document: ClientPortalDocument,
+  currentSnapshot = snapshot,
+): boolean {
+  if (document.status !== "rejected") return false;
+  if (!document.requirementId) return false;
+  return getCurrentClientDocument(document.caseId, document.requirementId, currentSnapshot)?.id === document.id;
+}
+
+function documentReviewFollowUpMessage(
+  caseItem: AnnualReturnCase,
+  document: ClientPortalDocument,
+): string {
+  const reason = document.reviewReasonLabel
+    ? `the ${document.reviewReasonLabel.charAt(0).toLowerCase()}${document.reviewReasonLabel.slice(1)}`
+    : "the document needs changes";
+  const note = document.reviewNote ? ` Note: ${document.reviewNote}` : "";
+
+  return `Hi ${caseItem.contactName}, we reviewed ${document.title} for ${caseItem.companyName} and need a replacement because ${reason}.${note} Please upload a corrected file in the portal.`;
+}
+
+function followUpBlockedReason(caseItem: AnnualReturnCase): string | undefined {
+  return isReadOnlyCase(caseItem) ? "Filed cases cannot send follow-ups" : undefined;
+}
+
+export function getDocumentReviewFollowUpDrafts(
+  cases: AnnualReturnCase[],
+  currentSnapshot = snapshot,
+): ClientPortalDocumentReviewFollowUpDraft[] {
+  const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
+  const sentByDraftId = new Map(
+    currentSnapshot.documentReviewFollowUps.map((followUp) => [followUp.draftId, followUp] as const),
+  );
+
+  return currentSnapshot.documents
+    .filter((document) => {
+      if (document.source !== "client-portal") return false;
+      if (!document.reviewReasonCode || !document.reviewReasonLabel) return false;
+      if (!casesById.has(document.caseId)) return false;
+      return isCurrentRejectedDocument(document, currentSnapshot);
+    })
+    .map((document) => {
+      const caseItem = casesById.get(document.caseId);
+      if (!caseItem || !document.reviewReasonCode || !document.reviewReasonLabel) {
+        throw new Error("Expected rejected document follow-up inputs to be complete");
+      }
+
+      const id = documentReviewFollowUpId(document.id);
+      const sent = sentByDraftId.get(id);
+      const blockedReason = sent ? undefined : followUpBlockedReason(caseItem);
+
+      return {
+        id,
+        caseId: caseItem.id,
+        documentId: document.id,
+        requirementId: document.requirementId,
+        companyName: caseItem.companyName,
+        recipientName: caseItem.contactName,
+        phone: caseItem.phone,
+        documentTitle: document.title,
+        reasonCode: document.reviewReasonCode,
+        reasonLabel: document.reviewReasonLabel,
+        note: document.reviewNote,
+        suggestedTiming: "Send now",
+        messagePreview: documentReviewFollowUpMessage(caseItem, document),
+        status: sent ? "sent" : blockedReason ? "blocked" : "draft",
+        blockedReason,
+        sentAt: sent?.sentAt,
+      };
+    })
+    .sort((a, b) => a.companyName.localeCompare(b.companyName));
+}
+
 function createDocument(
   caseItem: AnnualReturnCase,
   requirementId: string,
@@ -816,6 +920,50 @@ export function replaceClientDocument(
   emit();
 
   return { ok: true, documentId: document.id, supersededDocumentId: current?.id };
+}
+
+export function sendDocumentReviewFollowUpNow(
+  draftId: string,
+  actor = "Operations",
+): { ok: true } | { ok: false; reason: string } {
+  const documentId = draftId.replace(/^document-review-follow-up-/, "");
+  const document = snapshot.documents.find((candidate) => candidate.id === documentId);
+  if (!document) return { ok: false, reason: "The rejected document is no longer current" };
+
+  const caseItem = getAnnualReturnCaseById(document.caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+
+  const draft = getDocumentReviewFollowUpDrafts([caseItem]).find((candidate) => candidate.id === draftId);
+  if (!draft) return { ok: false, reason: "The rejected document is no longer current" };
+  if (draft.status === "sent") return { ok: false, reason: "Follow-up already sent" };
+  if (draft.status === "blocked") {
+    return { ok: false, reason: draft.blockedReason ?? "Follow-up cannot be sent" };
+  }
+
+  const sentAt = nowStamp();
+  const sendRecord: ClientPortalDocumentReviewFollowUpSend = {
+    id: `document-review-follow-up-send-${document.id}-${Date.now()}-${snapshot.documentReviewFollowUps.length + 1}`,
+    draftId,
+    documentId: document.id,
+    caseId: caseItem.id,
+    actor,
+    sentAt,
+  };
+
+  snapshot = {
+    ...snapshot,
+    documentReviewFollowUps: [sendRecord, ...snapshot.documentReviewFollowUps],
+  };
+
+  const summary = `${actor} sent a document replacement follow-up for ${document.title}.`;
+  addActionForCase(caseItem.id, "send-document-review-follow-up", actor, summary, {
+    documentId: document.id,
+    draftId,
+  });
+  appendClientPortalTimelineEvent(caseItem.id, "Document replacement follow-up sent", summary);
+  emit();
+
+  return { ok: true };
 }
 
 export function acknowledgePaymentInstructions(

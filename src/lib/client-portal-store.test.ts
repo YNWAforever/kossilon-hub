@@ -21,11 +21,13 @@ import {
   getClientPortalReviewReason,
   getCurrentClientDocument,
   getDocumentArchiveRows,
+  getDocumentReviewFollowUpDrafts,
   getClientPortalSnapshot,
   recordReceiptViewed,
   replaceClientDocument,
   resetClientPortalStoreForTest,
   reviewClientDocument,
+  sendDocumentReviewFollowUpNow,
   uploadClientDocument,
   type ClientPortalReviewReasonCode,
 } from "./client-portal-store";
@@ -74,6 +76,26 @@ function makeDeltaReadyForReceipt(): void {
   ]) {
     togglePacketRequirement("ar-delta", requirementId);
   }
+}
+
+function rejectSignedNar1ForFollowUp(note = "Director signature is missing on page 2.") {
+  const upload = uploadClientDocument(
+    requireCase("ar-delta"),
+    "signed-nar1",
+    "signed-nar1.pdf",
+    "Joanna Poon",
+  );
+  if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+  const review = reviewClientDocument(upload.documentId, {
+    decision: "rejected",
+    reasonCode: "missing-signature",
+    note,
+    actor: "Operations",
+  });
+  expect(review).toEqual({ ok: true, documentId: upload.documentId });
+
+  return upload.documentId;
 }
 
 describe("client portal store", () => {
@@ -580,6 +602,108 @@ describe("client portal store", () => {
       status: "open",
       documentAction: "replace",
     });
+  });
+
+  it("derives one rejected-document follow-up draft for a current rejected document", () => {
+    const documentId = rejectSignedNar1ForFollowUp();
+
+    expect(getDocumentReviewFollowUpDrafts([requireCase("ar-delta")])).toEqual([
+      expect.objectContaining({
+        id: `document-review-follow-up-${documentId}`,
+        caseId: "ar-delta",
+        documentId,
+        companyName: "Delta Bloom Ventures Limited",
+        recipientName: "Joanna Poon",
+        phone: "+852 9333 2211",
+        documentTitle: "Signed NAR1",
+        reasonCode: "missing-signature",
+        reasonLabel: "Required signature is missing",
+        note: "Director signature is missing on page 2.",
+        status: "draft",
+        suggestedTiming: "Send now",
+      }),
+    ]);
+
+    expect(getDocumentReviewFollowUpDrafts([requireCase("ar-delta")])[0].messagePreview).toContain(
+      "need a replacement because the required signature is missing",
+    );
+  });
+
+  it("does not derive document review follow-up drafts for accepted documents", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+
+    expect(
+      reviewClientDocument(upload.documentId, {
+        decision: "accepted",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, documentId: upload.documentId });
+
+    expect(getDocumentReviewFollowUpDrafts([requireCase("ar-delta")])).toHaveLength(0);
+  });
+
+  it("mock-sends a rejected-document follow-up once and appends audit history", () => {
+    const documentId = rejectSignedNar1ForFollowUp();
+    const draft = getDocumentReviewFollowUpDrafts([requireCase("ar-delta")])[0];
+
+    expect(sendDocumentReviewFollowUpNow(draft.id, "Operations")).toEqual({ ok: true });
+    expect(sendDocumentReviewFollowUpNow(draft.id, "Operations")).toEqual({
+      ok: false,
+      reason: "Follow-up already sent",
+    });
+
+    expect(getDocumentReviewFollowUpDrafts([requireCase("ar-delta")])[0]).toMatchObject({
+      id: `document-review-follow-up-${documentId}`,
+      status: "sent",
+    });
+    expect(
+      getClientPortalActivity("ar-delta").filter(
+        (action) => action.type === "send-document-review-follow-up",
+      ),
+    ).toHaveLength(1);
+    expect(timelineLabels("ar-delta", "Document replacement follow-up sent")).toHaveLength(1);
+  });
+
+  it("retires the rejected-document draft after the client replaces the rejected document", () => {
+    rejectSignedNar1ForFollowUp();
+    expect(
+      getDocumentReviewFollowUpDrafts([requireCase("ar-delta")]).filter(
+        (draft) => draft.status === "draft",
+      ),
+    ).toHaveLength(1);
+
+    const replacement = replaceClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1-v2.pdf",
+      "Joanna Poon",
+    );
+    expect(replacement).toMatchObject({ ok: true });
+
+    expect(
+      getDocumentReviewFollowUpDrafts([requireCase("ar-delta")]).filter(
+        (draft) => draft.status === "draft",
+      ),
+    ).toHaveLength(0);
+  });
+
+  it("marks rejected-document follow-up drafts blocked when the supplied case is filed", () => {
+    const documentId = rejectSignedNar1ForFollowUp();
+    const filedCase = { ...requireCase("ar-delta"), status: "filed" as const };
+
+    expect(getDocumentReviewFollowUpDrafts([filedCase])).toEqual([
+      expect.objectContaining({
+        id: `document-review-follow-up-${documentId}`,
+        status: "blocked",
+        blockedReason: "Filed cases cannot send follow-ups",
+      }),
+    ]);
   });
 
   it("blocks replacing accepted required documents", () => {
