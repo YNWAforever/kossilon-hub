@@ -63,10 +63,7 @@ export type ClientPortalDocumentReviewRequest =
 export type ClientPortalPaymentProofOrigin = "client-portal" | "staff-payments";
 
 export type ClientPortalPaymentProofStatus =
-  | "pending-review"
-  | "accepted"
-  | "rejected"
-  | "superseded";
+  "pending-review" | "accepted" | "rejected" | "superseded";
 
 export const clientPortalPaymentProofReviewReasons = [
   { code: "unreadable", label: "Proof is unclear, cropped, or incomplete" },
@@ -898,7 +895,10 @@ function isCurrentRejectedPaymentProof(
   proof: ClientPortalPaymentProof,
   currentSnapshot = snapshot,
 ): boolean {
-  return proof.status === "rejected" && getCurrentPaymentProof(proof.caseId, currentSnapshot)?.id === proof.id;
+  return (
+    proof.status === "rejected" &&
+    getCurrentPaymentProof(proof.caseId, currentSnapshot)?.id === proof.id
+  );
 }
 
 function paymentProofFollowUpMessage(
@@ -919,9 +919,7 @@ export function getPaymentProofFollowUpDrafts(
 ): ClientPortalPaymentProofFollowUpDraft[] {
   const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
   const sentByDraftId = new Map(
-    currentSnapshot.paymentProofFollowUps.map(
-      (followUp) => [followUp.draftId, followUp] as const,
-    ),
+    currentSnapshot.paymentProofFollowUps.map((followUp) => [followUp.draftId, followUp] as const),
   );
 
   return currentSnapshot.paymentProofs
@@ -1045,13 +1043,7 @@ function addPaymentProof(
 
   const proofActor =
     actor?.trim() || (origin === "client-portal" ? canonicalCase.contactName : "Operations");
-  const proof = createPaymentProof(
-    canonicalCase,
-    filename.trim(),
-    origin,
-    proofActor,
-    current?.id,
-  );
+  const proof = createPaymentProof(canonicalCase, filename.trim(), origin, proofActor, current?.id);
   snapshot = {
     ...snapshot,
     paymentProofs: [
@@ -1460,7 +1452,9 @@ export function sendPaymentProofFollowUpNow(
   const readOnly = blockReadOnlyCase(caseItem);
   if (readOnly) return readOnly;
 
-  const draft = getPaymentProofFollowUpDrafts([caseItem]).find((candidate) => candidate.id === draftId);
+  const draft = getPaymentProofFollowUpDrafts([caseItem]).find(
+    (candidate) => candidate.id === draftId,
+  );
   if (!draft) return { ok: false, reason: "The rejected payment proof is no longer current" };
   if (draft.status === "blocked") {
     return { ok: false, reason: draft.blockedReason ?? "Follow-up cannot be sent" };

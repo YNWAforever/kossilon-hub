@@ -940,6 +940,41 @@ describe("client portal store", () => {
     ]);
   });
 
+  it("completes reject, follow-up, replacement, and acceptance without losing history", () => {
+    const first = uploadPaymentProof(requireCase("ar-delta"), "cropped.png", "Joanna Poon");
+    if (!first.ok) throw new Error("Expected first proof upload");
+    rejectPaymentProof(first.proofId, {
+      reasonCode: "missing-reference",
+      note: "Please include the FPS reference.",
+      actor: "Operations",
+    });
+
+    const draft = getPaymentProofFollowUpDrafts([requireCase("ar-delta")])[0];
+    expect(sendPaymentProofFollowUpNow(draft.id, "Operations")).toEqual({ ok: true });
+
+    const replacement = uploadPaymentProof(requireCase("ar-delta"), "complete.png", "Joanna Poon");
+    if (!replacement.ok) throw new Error("Expected replacement proof upload");
+    expect(acceptPaymentProof(replacement.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: replacement.proofId,
+    });
+
+    expect(getPaymentProofsForCase("ar-delta")).toEqual([
+      expect.objectContaining({ id: replacement.proofId, status: "accepted" }),
+      expect.objectContaining({ id: first.proofId, status: "superseded" }),
+    ]);
+    expect(getClientPortalSnapshot().paymentProofFollowUps).toHaveLength(1);
+    expect(getPaymentProofFollowUpDrafts([requireCase("ar-delta")])).toEqual([
+      expect.objectContaining({ id: draft.id, status: "sent" }),
+    ]);
+    expect(requireCase("ar-delta").paymentStatus).toBe("paid");
+    expect(
+      requireCase("ar-delta").packetRequirements.find(
+        (requirement) => requirement.id === "payment-proof-checked",
+      )?.complete,
+    ).toBe(true);
+  });
+
   it("keeps the old sent draft idempotent after the rejected proof is replaced", () => {
     const upload = uploadPaymentProof(requireCase("ar-delta"), "old.png", "Joanna Poon");
     if (!upload.ok) throw new Error("Expected proof upload");
@@ -1269,7 +1304,9 @@ describe("client portal store", () => {
   });
 
   it("creates client and staff payment proof with explicit origin metadata", () => {
-    expect(uploadPaymentProof(requireCase("ar-delta"), "fps-client.png", "Joanna Poon")).toMatchObject({
+    expect(
+      uploadPaymentProof(requireCase("ar-delta"), "fps-client.png", "Joanna Poon"),
+    ).toMatchObject({
       ok: true,
     });
     expect(getCurrentPaymentProof("ar-delta")).toMatchObject({
@@ -1279,7 +1316,9 @@ describe("client portal store", () => {
     });
 
     resetClientPortalStoreForTest();
-    expect(attachPaymentProof(requireCase("ar-delta"), "fps-staff.png", "Operations")).toMatchObject({
+    expect(
+      attachPaymentProof(requireCase("ar-delta"), "fps-staff.png", "Operations"),
+    ).toMatchObject({
       ok: true,
     });
     expect(getCurrentPaymentProof("ar-delta")).toMatchObject({
@@ -1326,7 +1365,9 @@ describe("client portal store", () => {
       )?.complete,
     ).toBe(true);
     expect(
-      getClientPortalActivity("ar-delta").filter((action) => action.type === "accept-payment-proof"),
+      getClientPortalActivity("ar-delta").filter(
+        (action) => action.type === "accept-payment-proof",
+      ),
     ).toHaveLength(1);
   });
 
@@ -1354,7 +1395,9 @@ describe("client portal store", () => {
     const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
     if (!upload.ok) throw new Error("Expected proof upload");
 
-    expect(rejectPaymentProof(upload.proofId, { reasonCode: "other", actor: "Operations" })).toEqual({
+    expect(
+      rejectPaymentProof(upload.proofId, { reasonCode: "other", actor: "Operations" }),
+    ).toEqual({
       ok: false,
       reason: "Review note is required when reason is Other",
     });
