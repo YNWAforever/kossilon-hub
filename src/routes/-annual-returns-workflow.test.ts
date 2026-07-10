@@ -140,6 +140,38 @@ describe("annual return workflow route regressions", () => {
     resetClientPortalStoreForTest();
   });
 
+  it("renders the operational workflow routes in labeled desktop and mobile root navigation", async () => {
+    const html = await renderRoute("/portal?caseId=ar-delta");
+    const desktopNavigation = html.match(
+      /<nav[^>]*aria-label="Primary navigation"[^>]*>[\s\S]*?<\/nav>/,
+    )?.[0];
+    const mobileNavigation = html.match(
+      /<nav[^>]*aria-label="Operational navigation"[^>]*>[\s\S]*?<\/nav>/,
+    )?.[0];
+
+    expect(desktopNavigation).toBeDefined();
+    expect(mobileNavigation).toBeDefined();
+
+    for (const [path, label] of [
+      ["/portal", "Portal"],
+      ["/payments", "Payments"],
+      ["/whatsapp/automation", "Automation"],
+      ["/annual-returns", "Annual returns"],
+    ]) {
+      expect(desktopNavigation).toContain(`href="${path}"`);
+      expect(mobileNavigation).toContain(`href="${path}"`);
+      expect(mobileNavigation).toContain(`>${label}</a>`);
+    }
+
+    expect(desktopNavigation?.indexOf('href="/portal"')).toBeLessThan(
+      desktopNavigation?.indexOf('href="/whatsapp/automation"') ?? -1,
+    );
+    expect(desktopNavigation).toContain(">Portal</a>");
+    expect(desktopNavigation).toContain(">WhatsApp Automation</a>");
+    expect(mobileNavigation).toContain("border-border");
+    expect(mobileNavigation).toContain("gap-2");
+  });
+
   it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
     expect(annualReturnsRouteSource).toContain("<span>Blockers</span>");
     expect(annualReturnsRouteSource).toContain("<span>Packet</span>");
