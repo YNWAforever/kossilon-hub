@@ -234,11 +234,38 @@ export type ClientPortalDocumentReviewFollowUpSend = {
   sentAt: string;
 };
 
+export type ClientPortalPaymentProofFollowUpDraft = {
+  id: string;
+  caseId: string;
+  proofId: string;
+  companyName: string;
+  recipientName: string;
+  phone: string;
+  reasonCode: ClientPortalPaymentProofReviewReasonCode;
+  reasonLabel: string;
+  note?: string;
+  suggestedTiming: string;
+  messagePreview: string;
+  status: "draft" | "sent" | "blocked";
+  blockedReason?: string;
+  sentAt?: string;
+};
+
+export type ClientPortalPaymentProofFollowUpSend = {
+  id: string;
+  draftId: string;
+  proofId: string;
+  caseId: string;
+  actor: string;
+  sentAt: string;
+};
+
 export type ClientPortalSnapshot = {
   documents: ClientPortalDocument[];
   paymentProofs: ClientPortalPaymentProof[];
   actions: ClientPortalAction[];
   documentReviewFollowUps: ClientPortalDocumentReviewFollowUpSend[];
+  paymentProofFollowUps: ClientPortalPaymentProofFollowUpSend[];
 };
 
 const initialSnapshot: ClientPortalSnapshot = {
@@ -246,6 +273,7 @@ const initialSnapshot: ClientPortalSnapshot = {
   paymentProofs: [],
   actions: [],
   documentReviewFollowUps: [],
+  paymentProofFollowUps: [],
 };
 
 let snapshot: ClientPortalSnapshot = cloneSnapshot(initialSnapshot);
@@ -257,6 +285,7 @@ function cloneSnapshot(value: ClientPortalSnapshot): ClientPortalSnapshot {
     paymentProofs: value.paymentProofs.map((proof) => ({ ...proof })),
     actions: value.actions.map((action) => ({ ...action })),
     documentReviewFollowUps: value.documentReviewFollowUps.map((followUp) => ({ ...followUp })),
+    paymentProofFollowUps: value.paymentProofFollowUps.map((followUp) => ({ ...followUp })),
   };
 }
 
@@ -770,6 +799,79 @@ export function getDocumentReviewFollowUpDrafts(
     .sort((a, b) => a.companyName.localeCompare(b.companyName));
 }
 
+function paymentProofFollowUpId(proofId: string): string {
+  return `payment-proof-review-follow-up-${proofId}`;
+}
+
+function isCurrentRejectedPaymentProof(
+  proof: ClientPortalPaymentProof,
+  currentSnapshot = snapshot,
+): boolean {
+  return proof.status === "rejected" && getCurrentPaymentProof(proof.caseId, currentSnapshot)?.id === proof.id;
+}
+
+function paymentProofFollowUpMessage(
+  caseItem: AnnualReturnCase,
+  proof: ClientPortalPaymentProof,
+): string {
+  const reason = proof.reviewReasonLabel
+    ? `${proof.reviewReasonLabel.charAt(0).toLowerCase()}${proof.reviewReasonLabel.slice(1)}`
+    : "the payment proof needs changes";
+  const note = proof.reviewNote ? ` Note: ${proof.reviewNote}` : "";
+
+  return `Hi ${caseItem.contactName}, we reviewed the payment proof for ${caseItem.companyName} and need a replacement because ${reason}.${note} Please upload clearer proof in the portal.`;
+}
+
+export function getPaymentProofFollowUpDrafts(
+  cases: AnnualReturnCase[],
+  currentSnapshot = snapshot,
+): ClientPortalPaymentProofFollowUpDraft[] {
+  const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
+  const sentByDraftId = new Map(
+    currentSnapshot.paymentProofFollowUps.map(
+      (followUp) => [followUp.draftId, followUp] as const,
+    ),
+  );
+
+  return currentSnapshot.paymentProofs
+    .filter((proof) => {
+      if (!proof.reviewReasonCode || !proof.reviewReasonLabel) return false;
+      if (!casesById.has(proof.caseId)) return false;
+      return (
+        isCurrentRejectedPaymentProof(proof, currentSnapshot) ||
+        sentByDraftId.has(paymentProofFollowUpId(proof.id))
+      );
+    })
+    .map((proof) => {
+      const caseItem = casesById.get(proof.caseId);
+      if (!caseItem || !proof.reviewReasonCode || !proof.reviewReasonLabel) {
+        throw new Error("Expected rejected payment proof follow-up inputs to be complete");
+      }
+
+      const id = paymentProofFollowUpId(proof.id);
+      const sent = sentByDraftId.get(id);
+      const blockedReason = sent ? undefined : followUpBlockedReason(caseItem);
+
+      return {
+        id,
+        caseId: caseItem.id,
+        proofId: proof.id,
+        companyName: caseItem.companyName,
+        recipientName: caseItem.contactName,
+        phone: caseItem.phone,
+        reasonCode: proof.reviewReasonCode,
+        reasonLabel: proof.reviewReasonLabel,
+        note: proof.reviewNote,
+        suggestedTiming: "Send now",
+        messagePreview: paymentProofFollowUpMessage(caseItem, proof),
+        status: sent ? "sent" : blockedReason ? "blocked" : "draft",
+        blockedReason,
+        sentAt: sent?.sentAt,
+      };
+    })
+    .sort((a, b) => a.companyName.localeCompare(b.companyName));
+}
+
 function createDocument(
   caseItem: AnnualReturnCase,
   requirementId: string,
@@ -1234,6 +1336,56 @@ export function sendDocumentReviewFollowUpNow(
     draftId,
   });
   appendClientPortalTimelineEvent(caseItem.id, "Document replacement follow-up sent", summary);
+  emit();
+
+  return { ok: true };
+}
+
+export function sendPaymentProofFollowUpNow(
+  draftId: string,
+  actor = "Operations",
+): { ok: true } | { ok: false; reason: string } {
+  const sent = snapshot.paymentProofFollowUps.find((followUp) => followUp.draftId === draftId);
+  if (sent) return { ok: false, reason: "Follow-up already sent" };
+
+  const proofId = draftId.replace(/^payment-proof-review-follow-up-/, "");
+  const proof = snapshot.paymentProofs.find((candidate) => candidate.id === proofId);
+  if (!proof || !isCurrentRejectedPaymentProof(proof)) {
+    return { ok: false, reason: "The rejected payment proof is no longer current" };
+  }
+
+  const caseItem = getAnnualReturnCaseById(proof.caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  const readOnly = blockReadOnlyCase(caseItem);
+  if (readOnly) return readOnly;
+
+  const draft = getPaymentProofFollowUpDrafts([caseItem]).find((candidate) => candidate.id === draftId);
+  if (!draft) return { ok: false, reason: "The rejected payment proof is no longer current" };
+  if (draft.status === "blocked") {
+    return { ok: false, reason: draft.blockedReason ?? "Follow-up cannot be sent" };
+  }
+
+  const sentAt = nowStamp();
+  const sendRecord: ClientPortalPaymentProofFollowUpSend = {
+    id: `payment-proof-review-follow-up-send-${proof.id}-${Date.now()}-${snapshot.paymentProofFollowUps.length + 1}`,
+    draftId,
+    proofId: proof.id,
+    caseId: caseItem.id,
+    actor,
+    sentAt,
+  };
+
+  snapshot = {
+    ...snapshot,
+    paymentProofFollowUps: [sendRecord, ...snapshot.paymentProofFollowUps],
+  };
+
+  const summary = `${actor} sent a payment proof replacement follow-up for ${proof.filename}.`;
+  addActionForCase(caseItem.id, "send-payment-proof-review-follow-up", actor, summary, {
+    proofId: proof.id,
+    draftId,
+  });
+  appendClientPortalTimelineEvent(caseItem.id, "Payment proof replacement follow-up sent", summary);
   emit();
 
   return { ok: true };
