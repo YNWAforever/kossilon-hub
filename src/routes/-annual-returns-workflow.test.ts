@@ -19,8 +19,10 @@ import {
   updateSignatureStatus,
 } from "../lib/annual-return-store";
 import {
+  acceptPaymentProof,
   attachPaymentProof,
   getClientPortalSnapshot,
+  rejectPaymentProof,
   resetClientPortalStoreForTest,
   reviewClientDocument,
   sendDocumentReviewFollowUpNow,
@@ -185,11 +187,84 @@ describe("annual return workflow route regressions", () => {
     expect(htmlWithProof).toContain("Reject");
   });
 
+  it("renders only the replacement action for rejected payment proof", async () => {
+    const upload = attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    if (!upload.ok) throw new Error("Expected payment proof attachment to succeed");
+
+    expect(
+      rejectPaymentProof(upload.proofId, {
+        reasonCode: "unreadable",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, proofId: upload.proofId });
+
+    const html = await renderRoute("/payments");
+
+    expect(html).toContain(
+      'aria-label="Attach replacement payment proof for Delta Bloom Ventures Limited"',
+    );
+    expect(html).not.toContain(
+      'aria-label="Attach payment proof for Delta Bloom Ventures Limited"',
+    );
+  });
+
+  it("does not render attachment actions for accepted payment proof", async () => {
+    const upload = attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    if (!upload.ok) throw new Error("Expected payment proof attachment to succeed");
+
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+
+    const html = await renderRoute("/payments");
+
+    expect(html).not.toContain(
+      'aria-label="Attach payment proof for Delta Bloom Ventures Limited"',
+    );
+    expect(html).not.toContain(
+      'aria-label="Attach replacement payment proof for Delta Bloom Ventures Limited"',
+    );
+  });
+
+  it("disables attachment controls for a filed case without payment proof", async () => {
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const html = await renderRoute("/payments");
+
+    expect(html).toMatch(
+      /aria-label="Attach payment proof for Delta Bloom Ventures Limited"[^>]*disabled/,
+    );
+  });
+
+  it("disables payment proof review controls after receipt acceptance", async () => {
+    const upload = attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    if (!upload.ok) throw new Error("Expected payment proof attachment to succeed");
+
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const html = await renderRoute("/payments");
+
+    expect(html).toMatch(
+      /aria-label="Accept payment proof for Delta Bloom Ventures Limited"[^>]*disabled/,
+    );
+    expect(html).toMatch(
+      /aria-label="Reject payment proof for Delta Bloom Ventures Limited"[^>]*disabled/,
+    );
+  });
+
   it("keeps structured payment proof reasons and client-visible notes in the payments route", () => {
     expect(paymentsRouteSource).toContain("clientPortalPaymentProofReviewReasons");
     expect(paymentsRouteSource).toContain("Client-visible note");
     expect(paymentsRouteSource).toContain("acceptPaymentProof");
     expect(paymentsRouteSource).toContain("rejectPaymentProof");
+    expect(paymentsRouteSource).toContain(
+      "aria-label={`Confirm payment proof rejection for ${caseItem.companyName}`}",
+    );
   });
 
   it("renders the selected portal case from the case search parameter", async () => {
