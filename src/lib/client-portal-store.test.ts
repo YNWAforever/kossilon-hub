@@ -119,11 +119,12 @@ describe("client portal store", () => {
       "action-ar-delta-document-signed-nar1",
       "action-ar-delta-document-scr",
       "action-ar-delta-payment-acknowledgement",
+      "action-ar-delta-payment-proof",
       "action-ar-delta-packet-approval",
     ]);
     expect(getClientPortalProgress(requireCase("ar-delta"))).toMatchObject({
       completed: 0,
-      total: 5,
+      total: 6,
       nextAction: "Upload Signed NAR1",
       percentage: 0,
       isReadOnly: false,
@@ -304,6 +305,63 @@ describe("client portal store", () => {
     ).not.toContain("action-ar-delta-payment-acknowledgement");
   });
 
+  it("derives client payment proof actions through upload, review, and replacement", () => {
+    expect(getClientPortalRequiredActions(requireCase("ar-delta"))).toContainEqual(
+      expect.objectContaining({
+        kind: "payment-proof",
+        status: "open",
+        paymentProofAction: "upload",
+      }),
+    );
+
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(getClientPortalRequiredActions(requireCase("ar-delta"))).toContainEqual(
+      expect.objectContaining({ kind: "payment-proof", status: "pending-review" }),
+    );
+
+    rejectPaymentProof(upload.proofId, { reasonCode: "unreadable", actor: "Operations" });
+    expect(getClientPortalRequiredActions(requireCase("ar-delta"))).toContainEqual(
+      expect.objectContaining({
+        kind: "payment-proof",
+        status: "open",
+        paymentProofAction: "replace",
+      }),
+    );
+  });
+
+  it("derives accepted payment proof detail with its reviewer and review time", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+
+    const proof = getCurrentPaymentProof("ar-delta");
+    if (!proof?.reviewedAt) throw new Error("Expected accepted proof review time");
+
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.kind === "payment-proof",
+      ),
+    ).toMatchObject({
+      label: "Payment proof",
+      status: "complete",
+      detail: expect.stringContaining("proof.png"),
+    });
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.kind === "payment-proof",
+      )?.detail,
+    ).toContain("Operations");
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).find(
+        (action) => action.kind === "payment-proof",
+      )?.detail,
+    ).toContain(proof.reviewedAt);
+  });
+
   it("blocks packet approval until portal-visible documents are uploaded", () => {
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
       ok: false,
@@ -315,6 +373,7 @@ describe("client portal store", () => {
     acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon");
     uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
     uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+    uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
 
     expect(
       getClientPortalRequiredActions(requireCase("ar-delta")).find(

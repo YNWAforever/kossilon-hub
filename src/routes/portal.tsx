@@ -14,11 +14,14 @@ import {
   getClientPortalProgress,
   getClientPortalRequiredActions,
   getDocumentArchiveRows,
+  getPaymentProofsForCase,
   recordReceiptViewed,
   replaceClientDocument,
   uploadClientDocument,
+  uploadPaymentProof,
   useClientPortalSnapshot,
   type ClientPortalArchiveRow,
+  type ClientPortalPaymentProof,
   type ClientPortalRequiredAction,
 } from "../lib/client-portal-store";
 
@@ -67,6 +70,7 @@ function PortalRoute() {
   const requiredActions = getClientPortalRequiredActions(selectedCase, snapshot);
   const activity = getClientPortalActivity(selectedCase.id, snapshot);
   const archiveRows = getDocumentArchiveRows([selectedCase], snapshot);
+  const paymentProofs = getPaymentProofsForCase(selectedCase.id, snapshot);
   const packetStatus = getPacketStatus(selectedCase);
   const isReadOnly = progress.isReadOnly;
 
@@ -177,6 +181,8 @@ function PortalRoute() {
         </section>
       </div>
 
+      <PaymentProofHistory proofs={paymentProofs} />
+
       <ArchivePreview rows={archiveRows} selectedCase={selectedCase} />
     </div>
   );
@@ -200,6 +206,12 @@ function PortalActionRow({
         ? "Replace"
         : "Upload"
       : undefined;
+  const showPrimaryAction =
+    action.kind === "document"
+      ? action.status === "open" && Boolean(action.documentAction)
+      : action.kind === "payment-proof"
+        ? action.status === "open" && Boolean(action.paymentProofAction)
+        : true;
 
   function handlePrimaryAction() {
     onWarning(undefined);
@@ -217,6 +229,17 @@ function PortalActionRow({
               action.requirementId,
               `${caseItem.id}-${action.requirementId}.pdf`,
             );
+      onWarning(result.ok ? undefined : result.reason);
+      return;
+    }
+
+    if (action.kind === "payment-proof" && action.paymentProofAction) {
+      const result = uploadPaymentProof(
+        caseItem,
+        action.paymentProofAction === "replace"
+          ? `${caseItem.id}-payment-proof-replacement.png`
+          : `${caseItem.id}-payment-proof.png`,
+      );
       onWarning(result.ok ? undefined : result.reason);
       return;
     }
@@ -249,14 +272,18 @@ function PortalActionRow({
         <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        {action.kind !== "document" || (action.status === "open" && action.documentAction) ? (
+        {showPrimaryAction ? (
           <button
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             disabled={primaryDisabled}
             onClick={handlePrimaryAction}
             type="button"
             aria-label={
-              documentPrimaryLabel ? `${documentPrimaryLabel} ${action.label}` : undefined
+              action.kind === "payment-proof"
+                ? `${primaryActionLabel(action)} for ${caseItem.companyName}`
+                : documentPrimaryLabel
+                  ? `${documentPrimaryLabel} ${action.label}`
+                  : undefined
             }
           >
             {primaryActionLabel(action)}
@@ -264,6 +291,49 @@ function PortalActionRow({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function PaymentProofHistory({ proofs }: { proofs: ClientPortalPaymentProof[] }) {
+  return (
+    <section className="rounded-lg border bg-card p-4">
+      <div>
+        <h2 className="text-lg font-semibold">Payment proof history</h2>
+        <p className="text-sm text-muted-foreground">Uploaded proof and staff review outcomes.</p>
+      </div>
+      <div className="mt-4 divide-y">
+        {proofs.length === 0 ? (
+          <p className="py-3 text-sm text-muted-foreground">No payment proof uploaded yet.</p>
+        ) : (
+          proofs.map((proof) => (
+            <div
+              key={proof.id}
+              className="grid gap-2 py-3 text-sm md:grid-cols-[minmax(0,1fr)_140px_120px]"
+            >
+              <div className="min-w-0">
+                <p className="font-medium">{proof.filename}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Uploaded by {proof.uploadedBy} on {formatTimestamp(proof.uploadedAt)}
+                </p>
+                {proof.reviewedBy && proof.reviewedAt ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Reviewed by {proof.reviewedBy} on {formatTimestamp(proof.reviewedAt)}
+                  </p>
+                ) : null}
+                {proof.reviewReasonLabel ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Reason: {proof.reviewReasonLabel}
+                    {proof.reviewNote ? ` - ${proof.reviewNote}` : ""}
+                  </p>
+                ) : null}
+              </div>
+              <span>{proof.origin}</span>
+              <span>{proof.status}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -331,6 +401,11 @@ function formatTimestamp(value: string): string {
 
 function primaryActionLabel(action: ClientPortalRequiredAction): string {
   if (action.kind === "document") return action.documentAction === "replace" ? "Replace" : "Upload";
+  if (action.kind === "payment-proof") {
+    return action.paymentProofAction === "replace"
+      ? "Replace payment proof"
+      : "Upload payment proof";
+  }
   if (action.kind === "payment") return "Acknowledge payment";
   if (action.kind === "packet") return "Approve packet";
   return "View receipt";

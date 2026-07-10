@@ -27,6 +27,7 @@ import {
   reviewClientDocument,
   sendDocumentReviewFollowUpNow,
   uploadClientDocument,
+  uploadPaymentProof,
 } from "../lib/client-portal-store";
 
 const annualReturnsRouteSource = readFileSync(
@@ -349,6 +350,22 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Required signature is missing");
     expect(html).toContain("Director signature is missing on page 2.");
     expect(html).toContain("Please upload a replacement");
+  });
+
+  it("renders rejected payment proof reason, replacement action, and history", async () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "blurred.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    rejectPaymentProof(upload.proofId, {
+      reasonCode: "unreadable",
+      note: "The transfer reference is cropped.",
+      actor: "Operations",
+    });
+
+    const html = await renderRoute("/portal?caseId=ar-delta");
+    expect(html).toContain("Replace payment proof");
+    expect(html).toContain("Proof is unclear, cropped, or incomplete");
+    expect(html).toContain("The transfer reference is cropped.");
+    expect(html).toContain("Payment proof history");
   });
 
   it("does not render replace controls for accepted portal documents", async () => {

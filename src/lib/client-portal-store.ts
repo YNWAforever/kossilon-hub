@@ -188,12 +188,13 @@ export type ClientPortalRequiredActionStatus = "open" | "complete" | "blocked" |
 export type ClientPortalRequiredAction = {
   id: string;
   caseId: string;
-  kind: "document" | "payment" | "packet" | "receipt";
+  kind: "document" | "payment" | "payment-proof" | "packet" | "receipt";
   label: string;
   status: ClientPortalRequiredActionStatus;
   detail: string;
   requirementId?: string;
   documentAction?: "upload" | "replace";
+  paymentProofAction?: "upload" | "replace";
 };
 
 export type ClientPortalProgress = {
@@ -465,6 +466,38 @@ function requiredDocumentDetail(documentLabel: string, document?: ClientPortalDo
   return `${documentLabel} is required before the annual return filing can proceed.`;
 }
 
+function paymentProofActionForCurrentProof(
+  proof: ClientPortalPaymentProof | undefined,
+): "upload" | "replace" | undefined {
+  if (!proof) return "upload";
+  if (proof.status === "rejected") return "replace";
+  return undefined;
+}
+
+function requiredPaymentProofLabel(proof?: ClientPortalPaymentProof): string {
+  if (!proof) return "Upload payment proof";
+  if (proof.status === "rejected") return "Replace payment proof";
+  return "Payment proof";
+}
+
+function requiredPaymentProofDetail(proof?: ClientPortalPaymentProof): string {
+  if (!proof) {
+    return "Upload payment proof so staff can verify the transfer before the filing proceeds.";
+  }
+  if (proof.status === "pending-review") {
+    return `${proof.filename} is uploaded and waiting for staff review.`;
+  }
+  if (proof.status === "accepted") {
+    return `${proof.filename} was accepted by ${proof.reviewedBy ?? "staff"} on ${proof.reviewedAt ?? "the recorded review time"}.`;
+  }
+  if (proof.status === "rejected") {
+    const reason = proof.reviewReasonLabel ? ` Reason: ${proof.reviewReasonLabel}.` : "";
+    const note = proof.reviewNote ? ` Note: ${proof.reviewNote}` : "";
+    return `${proof.filename} was rejected by ${proof.reviewedBy ?? "staff"}.${reason}${note} Please upload a replacement.`;
+  }
+  return `${proof.filename} is no longer the current payment proof.`;
+}
+
 export function getClientPortalActivity(
   caseId: string,
   currentSnapshot = snapshot,
@@ -515,6 +548,28 @@ export function getClientPortalRequiredActions(
         },
       ];
 
+  const currentPaymentProof = getCurrentPaymentProof(caseItem.id, currentSnapshot);
+  const paymentProofAction = isReadOnlyCase(caseItem)
+    ? undefined
+    : paymentProofActionForCurrentProof(currentPaymentProof);
+  const paymentProofRequiredAction = [
+    {
+      id: `action-${caseItem.id}-payment-proof`,
+      caseId: caseItem.id,
+      kind: "payment-proof" as const,
+      label: requiredPaymentProofLabel(currentPaymentProof),
+      status: isReadOnlyCase(caseItem)
+        ? ("blocked" as const)
+        : currentPaymentProof?.status === "accepted"
+          ? ("complete" as const)
+          : currentPaymentProof?.status === "pending-review"
+            ? ("pending-review" as const)
+            : ("open" as const),
+      detail: requiredPaymentProofDetail(currentPaymentProof),
+      ...(paymentProofAction ? { paymentProofAction } : {}),
+    },
+  ];
+
   const packetAction = hasCompletedAction(caseItem.id, "approve-packet", currentSnapshot)
     ? []
     : [
@@ -549,7 +604,13 @@ export function getClientPortalRequiredActions(
         ]
       : [];
 
-  return [...documentActions, ...paymentAction, ...packetAction, ...receiptAction];
+  return [
+    ...documentActions,
+    ...paymentAction,
+    ...paymentProofRequiredAction,
+    ...packetAction,
+    ...receiptAction,
+  ];
 }
 
 export function getClientPortalProgress(
@@ -561,13 +622,16 @@ export function getClientPortalProgress(
     isAcceptedClientDocument(caseItem.id, document.id, currentSnapshot),
   ).length;
   const paymentComplete = hasCompletedAction(caseItem.id, "acknowledge-payment", currentSnapshot);
+  const paymentProofComplete =
+    getCurrentPaymentProof(caseItem.id, currentSnapshot)?.status === "accepted";
   const packetComplete = hasCompletedAction(caseItem.id, "approve-packet", currentSnapshot);
   const receiptComplete =
     Boolean(caseItem.receipt) && hasCompletedAction(caseItem.id, "view-receipt", currentSnapshot);
-  const total = requiredDocuments.length + 3;
+  const total = requiredDocuments.length + 4;
   const completed =
     completedDocuments +
     (paymentComplete ? 1 : 0) +
+    (paymentProofComplete ? 1 : 0) +
     (packetComplete ? 1 : 0) +
     (receiptComplete ? 1 : 0);
   const requiredActions = getClientPortalRequiredActions(caseItem, currentSnapshot);
