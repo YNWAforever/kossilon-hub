@@ -767,6 +767,78 @@ describe("client portal store", () => {
     ]);
   });
 
+  it("keeps the old sent draft idempotent after the rejected proof is replaced", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "old.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    rejectPaymentProof(upload.proofId, {
+      reasonCode: "unreadable",
+      actor: "Operations",
+    });
+    const draft = getPaymentProofFollowUpDrafts([requireCase("ar-delta")])[0];
+
+    expect(sendPaymentProofFollowUpNow(draft.id, "Operations")).toEqual({ ok: true });
+    expect(uploadPaymentProof(requireCase("ar-delta"), "new.png", "Joanna Poon")).toMatchObject({
+      ok: true,
+      supersededProofId: upload.proofId,
+    });
+
+    expect(sendPaymentProofFollowUpNow(draft.id, "Operations")).toEqual({
+      ok: false,
+      reason: "Follow-up already sent",
+    });
+  });
+
+  it("writes one payment-proof follow-up record, action, and timeline event", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    rejectPaymentProof(upload.proofId, {
+      reasonCode: "missing-reference",
+      actor: "Operations",
+    });
+    const draft = getPaymentProofFollowUpDrafts([requireCase("ar-delta")])[0];
+
+    expect(sendPaymentProofFollowUpNow(draft.id, "Operations")).toEqual({ ok: true });
+    expect(sendPaymentProofFollowUpNow(draft.id, "Operations")).toEqual({
+      ok: false,
+      reason: "Follow-up already sent",
+    });
+
+    expect(getClientPortalSnapshot().paymentProofFollowUps).toHaveLength(1);
+    expect(
+      getClientPortalActivity("ar-delta").filter(
+        (action) => action.type === "send-payment-proof-review-follow-up",
+      ),
+    ).toHaveLength(1);
+    expect(timelineLabels("ar-delta", "Payment proof replacement follow-up sent")).toHaveLength(1);
+  });
+
+  it("blocks payment-proof follow-up sending after receipt acceptance without mutations", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    rejectPaymentProof(upload.proofId, {
+      reasonCode: "unreadable",
+      actor: "Operations",
+    });
+    const draft = getPaymentProofFollowUpDrafts([requireCase("ar-delta")])[0];
+
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const before = getClientPortalSnapshot();
+    const beforeActions = getClientPortalActivity("ar-delta");
+    const beforeTimeline = requireCase("ar-delta").timeline;
+
+    expect(sendPaymentProofFollowUpNow(draft.id, "Operations")).toEqual({
+      ok: false,
+      reason: "Filed cases are read-only in the client portal",
+    });
+
+    expect(getClientPortalSnapshot().paymentProofFollowUps).toEqual(before.paymentProofFollowUps);
+    expect(getClientPortalActivity("ar-delta")).toEqual(beforeActions);
+    expect(requireCase("ar-delta").timeline).toEqual(beforeTimeline);
+  });
+
   it("blocks replacing accepted required documents", () => {
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
