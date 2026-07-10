@@ -833,13 +833,16 @@ function addPaymentProof(
   caseItem: AnnualReturnCase,
   filename: string,
   origin: ClientPortalPaymentProofOrigin,
-  actor: string,
+  actor?: string,
 ): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
-  const readOnly = blockReadOnlyCase(caseItem);
+  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
+  if (!canonicalCase) return { ok: false, reason: "Case not found" };
+
+  const readOnly = blockReadOnlyCase(canonicalCase);
   if (readOnly) return readOnly;
   if (!filename.trim()) return { ok: false, reason: "Filename is required" };
 
-  const current = getCurrentPaymentProof(caseItem.id);
+  const current = getCurrentPaymentProof(canonicalCase.id);
   if (current?.status === "pending-review") {
     return { ok: false, reason: "Current payment proof is still pending review" };
   }
@@ -847,7 +850,15 @@ function addPaymentProof(
     return { ok: false, reason: "Accepted payment proof cannot be replaced" };
   }
 
-  const proof = createPaymentProof(caseItem, filename.trim(), origin, actor, current?.id);
+  const proofActor =
+    actor?.trim() || (origin === "client-portal" ? canonicalCase.contactName : "Operations");
+  const proof = createPaymentProof(
+    canonicalCase,
+    filename.trim(),
+    origin,
+    proofActor,
+    current?.id,
+  );
   snapshot = {
     ...snapshot,
     paymentProofs: [
@@ -861,10 +872,10 @@ function addPaymentProof(
   const actionType: ClientPortalActionType =
     origin === "client-portal" ? "upload-payment-proof" : "attach-payment-proof";
   const actionVerb = origin === "client-portal" ? "uploaded" : "attached";
-  const summary = `${actor} ${actionVerb} payment proof ${proof.filename}.`;
-  addActionForCase(caseItem.id, actionType, actor, summary, { proofId: proof.id });
+  const summary = `${proofActor} ${actionVerb} payment proof ${proof.filename}.`;
+  addActionForCase(canonicalCase.id, actionType, proofActor, summary, { proofId: proof.id });
   appendClientPortalTimelineEvent(
-    caseItem.id,
+    canonicalCase.id,
     origin === "client-portal" ? "Payment proof uploaded" : "Payment proof attached",
     summary,
   );
@@ -882,7 +893,7 @@ export function uploadPaymentProof(
   filename: string,
   actor?: string,
 ): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
-  return addPaymentProof(caseItem, filename, "client-portal", actor?.trim() || caseItem.contactName);
+  return addPaymentProof(caseItem, filename, "client-portal", actor);
 }
 
 export function attachPaymentProof(
@@ -890,7 +901,7 @@ export function attachPaymentProof(
   filename: string,
   actor?: string,
 ): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
-  return addPaymentProof(caseItem, filename, "staff-payments", actor?.trim() || "Operations");
+  return addPaymentProof(caseItem, filename, "staff-payments", actor);
 }
 
 export function acceptPaymentProof(

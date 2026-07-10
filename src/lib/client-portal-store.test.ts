@@ -1063,4 +1063,91 @@ describe("client portal store", () => {
       reason: "Payment proof not found",
     });
   });
+
+  it("blocks a stale retained case from uploading proof after receipt acceptance", () => {
+    const staleCase = requireCase("ar-delta");
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    expect(uploadPaymentProof(staleCase, "stale-upload.png", "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Filed cases are read-only in the client portal",
+    });
+  });
+
+  it("blocks a stale retained case from attaching proof after receipt acceptance", () => {
+    const staleCase = requireCase("ar-delta");
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    expect(attachPaymentProof(staleCase, "stale-attachment.png", "Operations")).toEqual({
+      ok: false,
+      reason: "Filed cases are read-only in the client portal",
+    });
+  });
+
+  it("rejects payment proof creation for a fabricated missing case", () => {
+    const fabricatedCase = {
+      ...requireCase("ar-delta"),
+      id: "ar-missing",
+      companyName: "Fabricated Company Limited",
+    };
+
+    expect(uploadPaymentProof(fabricatedCase, "orphan-upload.png", "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Case not found",
+    });
+    expect(attachPaymentProof(fabricatedCase, "orphan-attachment.png", "Operations")).toEqual({
+      ok: false,
+      reason: "Case not found",
+    });
+    expect(getPaymentProofsForCase("ar-missing")).toEqual([]);
+  });
+
+  it("uses canonical case metadata and default actor for payment proof uploads", () => {
+    const canonicalCase = requireCase("ar-delta");
+    const tamperedCase = {
+      ...canonicalCase,
+      companyName: "Fabricated Company Limited",
+      contactName: "Fabricated Contact",
+    };
+
+    expect(uploadPaymentProof(tamperedCase, "canonical.png")).toMatchObject({ ok: true });
+    expect(getCurrentPaymentProof("ar-delta")).toMatchObject({
+      companyName: canonicalCase.companyName,
+      contactName: canonicalCase.contactName,
+      uploadedBy: canonicalCase.contactName,
+    });
+  });
+
+  it("blocks accepting or rejecting a superseded payment proof", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "blurred.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(
+      rejectPaymentProof(upload.proofId, {
+        reasonCode: "unreadable",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, proofId: upload.proofId });
+
+    expect(uploadPaymentProof(requireCase("ar-delta"), "clear.png", "Joanna Poon")).toMatchObject({
+      ok: true,
+      supersededProofId: upload.proofId,
+    });
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: false,
+      reason: "Payment proof is not current",
+    });
+    expect(
+      rejectPaymentProof(upload.proofId, {
+        reasonCode: "unreadable",
+        actor: "Operations",
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Payment proof is not current",
+    });
+  });
 });
