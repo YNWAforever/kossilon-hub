@@ -12,7 +12,9 @@ import {
   updateSignatureStatus,
 } from "./annual-return-store";
 import {
+  acceptPaymentProof,
   acknowledgePaymentInstructions,
+  attachPaymentProof,
   approveClientPacket,
   clientPortalReviewReasons,
   getClientPortalActivity,
@@ -20,14 +22,18 @@ import {
   getClientPortalRequiredActions,
   getClientPortalReviewReason,
   getCurrentClientDocument,
+  getCurrentPaymentProof,
   getDocumentArchiveRows,
   getDocumentReviewFollowUpDrafts,
+  getPaymentProofsForCase,
   getClientPortalSnapshot,
   recordReceiptViewed,
+  rejectPaymentProof,
   replaceClientDocument,
   resetClientPortalStoreForTest,
   reviewClientDocument,
   sendDocumentReviewFollowUpNow,
+  uploadPaymentProof,
   uploadClientDocument,
   type ClientPortalReviewReasonCode,
 } from "./client-portal-store";
@@ -960,5 +966,101 @@ describe("client portal store", () => {
       label: "Required signature is missing",
     });
     expect(getClientPortalReviewReason(undefined)).toBeUndefined();
+  });
+
+  it("creates client and staff payment proof with explicit origin metadata", () => {
+    expect(uploadPaymentProof(requireCase("ar-delta"), "fps-client.png", "Joanna Poon")).toMatchObject({
+      ok: true,
+    });
+    expect(getCurrentPaymentProof("ar-delta")).toMatchObject({
+      filename: "fps-client.png",
+      origin: "client-portal",
+      status: "pending-review",
+    });
+
+    resetClientPortalStoreForTest();
+    expect(attachPaymentProof(requireCase("ar-delta"), "fps-staff.png", "Operations")).toMatchObject({
+      ok: true,
+    });
+    expect(getCurrentPaymentProof("ar-delta")).toMatchObject({
+      filename: "fps-staff.png",
+      origin: "staff-payments",
+      status: "pending-review",
+    });
+  });
+
+  it("blocks another proof while the current proof is pending or accepted", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "first.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+
+    expect(uploadPaymentProof(requireCase("ar-delta"), "second.png", "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Current payment proof is still pending review",
+    });
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+    expect(attachPaymentProof(requireCase("ar-delta"), "third.png", "Operations")).toEqual({
+      ok: false,
+      reason: "Accepted payment proof cannot be replaced",
+    });
+  });
+
+  it("accepts current proof and synchronizes payment, packet, activity, and history", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "fps.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+    expect(getCurrentPaymentProof("ar-delta")).toMatchObject({
+      status: "accepted",
+      reviewedBy: "Operations",
+    });
+    expect(requireCase("ar-delta").paymentStatus).toBe("paid");
+    expect(
+      requireCase("ar-delta").packetRequirements.find(
+        (requirement) => requirement.id === "payment-proof-checked",
+      )?.complete,
+    ).toBe(true);
+    expect(
+      getClientPortalActivity("ar-delta").filter((action) => action.type === "accept-payment-proof"),
+    ).toHaveLength(1);
+  });
+
+  it("rejects proof with client-visible metadata and replaces it without deleting history", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "blurred.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+
+    expect(
+      rejectPaymentProof(upload.proofId, {
+        reasonCode: "missing-reference",
+        note: "Please include the FPS reference.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, proofId: upload.proofId });
+
+    const replacement = uploadPaymentProof(requireCase("ar-delta"), "clear.png", "Joanna Poon");
+    expect(replacement).toMatchObject({ ok: true, supersededProofId: upload.proofId });
+    expect(getPaymentProofsForCase("ar-delta").map((proof) => proof.status)).toEqual([
+      "pending-review",
+      "superseded",
+    ]);
+  });
+
+  it("validates rejection reasons and stale proof ids", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+
+    expect(rejectPaymentProof(upload.proofId, { reasonCode: "other", actor: "Operations" })).toEqual({
+      ok: false,
+      reason: "Review note is required when reason is Other",
+    });
+    expect(acceptPaymentProof("missing-proof", "Operations")).toEqual({
+      ok: false,
+      reason: "Payment proof not found",
+    });
   });
 });
