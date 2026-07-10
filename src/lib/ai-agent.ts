@@ -1,5 +1,6 @@
 import { checklistTemplates, daysUntil, type ClientCase, type Enquiry } from "./app-data";
 import { type AnnualReturnAiContext } from "./annual-return-store";
+import { type ClientPortalPaymentProofAiContext } from "./client-portal-store";
 import { type FaqEntry, type ReferenceDocument } from "./knowledge-base";
 
 export type RetrievalContext = {
@@ -124,6 +125,7 @@ export function draftReply(
   context: RetrievalContext,
   clientCase?: ClientCase,
   annualReturnContext?: AnnualReturnAiContext,
+  paymentProofContext?: ClientPortalPaymentProofAiContext,
 ): DraftReply {
   const topFaq = context.faqs[0]?.item;
   const topDoc = context.documents[0]?.item;
@@ -133,6 +135,17 @@ export function draftReply(
   const annualReturnPaymentStatusLabel = annualReturnContext
     ? annualReturnPaymentStatusLabels[annualReturnContext.paymentStatus]
     : undefined;
+  const paymentProofLine = paymentProofContext
+    ? paymentProofContext.status === "rejected"
+      ? ` Payment proof **${paymentProofContext.filename ?? "uploaded proof"}** was rejected${paymentProofContext.reasonLabel ? ` because **${paymentProofContext.reasonLabel}**` : ""}.${paymentProofContext.note ? ` Note: ${paymentProofContext.note}` : ""} Please upload a replacement.`
+      : paymentProofContext.status === "pending-review"
+        ? ` Payment proof **${paymentProofContext.filename ?? "uploaded proof"}** is pending staff review.`
+        : paymentProofContext.status === "accepted"
+          ? ` Payment proof **${paymentProofContext.filename ?? "uploaded proof"}** has been accepted.`
+          : paymentProofContext.status === "superseded"
+            ? " The previous payment proof has been superseded."
+            : " Payment proof has not been uploaded yet."
+    : "";
   const existingBasicClientCaseLine = clientCase
     ? `\n\nFor **${clientCase.companyName}**, the current case status is **${clientCase.status}**. The filing due date is **${clientCase.dueDate}** (${daysUntil(clientCase.dueDate)} days from today). ${
         clientCase.missingDocs.length
@@ -145,9 +158,9 @@ export function draftReply(
         annualReturnContext.blockers.length
           ? `Current blockers: **${annualReturnContext.blockers.map((blocker) => blocker.label).join(", ")}**.`
           : "No blockers are currently open."
-      } Payment status: **${annualReturnPaymentStatusLabel}**.`
+      } Payment status: **${annualReturnPaymentStatusLabel}**.${paymentProofLine}`
     : "";
-  const caseLine = enrichedCaseLine || existingBasicClientCaseLine;
+  const caseLine = enrichedCaseLine || `${existingBasicClientCaseLine}${paymentProofLine}`;
 
   const ctaByIntent: Record<Enquiry["intent"], string> = {
     "Annual Return":
@@ -189,6 +202,19 @@ export function draftReply(
           label: blocker.label,
           preview: blocker.action,
         }))
+      : []),
+    ...(paymentProofContext
+      ? [
+          {
+            id: "payment-proof-status",
+            type: "Case" as const,
+            label: "Payment proof",
+            preview:
+              paymentProofContext.status === "rejected"
+                ? `${paymentProofContext.reasonLabel ?? "Payment proof rejected"}${paymentProofContext.note ? `: ${paymentProofContext.note}` : ""}`
+                : `Payment proof status: ${paymentProofContext.status}`,
+          },
+        ]
       : []),
     ...context.caseFields.slice(0, 4).map((field, index) => ({
       id: `case-${index}`,

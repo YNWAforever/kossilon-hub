@@ -6,6 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { draftReply, retrieveContext, suggestedFaqs, type DraftReply } from "../lib/ai-agent";
 import { daysUntil, type ClientCase, type Enquiry } from "../lib/app-data";
 import { getAnnualReturnAiContext, useAnnualReturnCase } from "../lib/annual-return-store";
+import { getPaymentProofAiContext, useClientPortalSnapshot } from "../lib/client-portal-store";
 import { useKnowledgeBase } from "../lib/knowledge-base";
 
 type AiAssistantPanelProps = {
@@ -35,8 +36,12 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
   const [generation, setGeneration] = useState(1);
   const [expandedSource, setExpandedSource] = useState<string | undefined>();
   const annualReturnCase = useAnnualReturnCase(clientCase ? clientCase.annualReturnCaseId : "");
+  const portalSnapshot = useClientPortalSnapshot();
   const annualReturnContext = annualReturnCase
     ? getAnnualReturnAiContext(annualReturnCase)
+    : undefined;
+  const paymentProofContext = clientCase
+    ? getPaymentProofAiContext(clientCase.annualReturnCaseId, portalSnapshot)
     : undefined;
   const liveStatusLabel = annualReturnContext
     ? annualReturnStatusLabels[annualReturnContext.status]
@@ -44,14 +49,29 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
   const livePaymentStatusLabel = annualReturnContext
     ? annualReturnPaymentStatusLabels[annualReturnContext.paymentStatus]
     : clientCase?.paymentStatus;
+  const paymentProofStatusLabel = paymentProofContext
+    ? paymentProofContext.status === "not-uploaded"
+      ? "Not uploaded"
+      : paymentProofContext.status === "rejected"
+        ? `Rejected${paymentProofContext.reasonLabel ? `: ${paymentProofContext.reasonLabel}` : ""}`
+        : paymentProofContext.status === "pending-review"
+          ? "Pending review"
+          : paymentProofContext.status === "accepted"
+            ? "Accepted"
+            : "Superseded"
+    : undefined;
 
   const context = useMemo(
     () => retrieveContext(enquiry, faqs, referenceDocs, clientCase),
     [clientCase, enquiry, faqs, referenceDocs],
   );
   const draft = useMemo(
-    () => tweakDraft(draftReply(enquiry, context, clientCase, annualReturnContext), generation),
-    [annualReturnContext, clientCase, context, enquiry, generation],
+    () =>
+      tweakDraft(
+        draftReply(enquiry, context, clientCase, annualReturnContext, paymentProofContext),
+        generation,
+      ),
+    [annualReturnContext, clientCase, context, enquiry, generation, paymentProofContext],
   );
   const relatedFaqs = useMemo(() => suggestedFaqs(enquiry, faqs), [enquiry, faqs]);
 
@@ -139,6 +159,10 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
             <div>
               <dt className="text-muted-foreground">Payment</dt>
               <dd className="font-medium">{livePaymentStatusLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Payment proof</dt>
+              <dd className="font-medium">{paymentProofStatusLabel}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Blockers</dt>

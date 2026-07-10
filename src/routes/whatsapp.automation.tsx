@@ -10,9 +10,12 @@ import {
 } from "../lib/annual-return-store";
 import {
   getDocumentReviewFollowUpDrafts,
+  getPaymentProofFollowUpDrafts,
   sendDocumentReviewFollowUpNow,
+  sendPaymentProofFollowUpNow,
   useClientPortalSnapshot,
   type ClientPortalDocumentReviewFollowUpDraft,
+  type ClientPortalPaymentProofFollowUpDraft,
 } from "../lib/client-portal-store";
 
 export const Route = createFileRoute("/whatsapp/automation")({
@@ -31,6 +34,12 @@ type AutomationQueueRow =
       source: "document-review";
       caseItem: AnnualReturnCase;
       draft: ClientPortalDocumentReviewFollowUpDraft;
+    }
+  | {
+      id: string;
+      source: "payment-proof-review";
+      caseItem: AnnualReturnCase;
+      draft: ClientPortalPaymentProofFollowUpDraft;
     };
 
 function WhatsAppAutomationRoute() {
@@ -64,8 +73,23 @@ function WhatsAppAutomationRoute() {
           : [];
       },
     );
+    const paymentProofReviewRows = getPaymentProofFollowUpDrafts(cases, portalSnapshot).flatMap(
+      (draft) => {
+        const caseItem = casesById.get(draft.caseId);
+        return caseItem
+          ? [
+              {
+                id: draft.id,
+                source: "payment-proof-review" as const,
+                caseItem,
+                draft,
+              },
+            ]
+          : [];
+      },
+    );
 
-    return [...annualReturnRows, ...documentReviewRows];
+    return [...annualReturnRows, ...documentReviewRows, ...paymentProofReviewRows];
   }, [cases, portalSnapshot]);
 
   const visibleRows = rows.filter(({ draft }) => {
@@ -126,7 +150,9 @@ function WhatsAppAutomationRoute() {
                   const result =
                     row.source === "annual-return"
                       ? sendFollowUpNow(row.caseItem.id, row.draft.id)
-                      : sendDocumentReviewFollowUpNow(row.draft.id, "Operations");
+                      : row.source === "document-review"
+                        ? sendDocumentReviewFollowUpNow(row.draft.id, "Operations")
+                        : sendPaymentProofFollowUpNow(row.draft.id, "Operations");
                   setWarning(result.ok ? undefined : result.reason);
                 }}
               />
@@ -158,7 +184,7 @@ function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () =>
       <Field label="Type" value={automationTypeLabel(row)} />
       <Field
         label="Timing"
-        value={row.source === "document-review" ? draft.reasonLabel : draft.suggestedTiming}
+        value={row.source === "annual-return" ? draft.suggestedTiming : draft.reasonLabel}
       />
       <Field
         label="Status"
@@ -197,6 +223,7 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
 }
 
 function automationTypeLabel(row: AutomationQueueRow): string {
+  if (row.source === "payment-proof-review") return "Payment proof replacement";
   if (row.source === "document-review") return "Document replacement";
   return followUpTypeLabel(row.draft.type);
 }

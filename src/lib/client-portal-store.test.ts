@@ -21,6 +21,7 @@ import {
   getClientPortalProgress,
   getClientPortalRequiredActions,
   getClientPortalReviewReason,
+  getPaymentProofAiContext,
   getCurrentClientDocument,
   getCurrentPaymentProof,
   getDocumentArchiveRows,
@@ -343,6 +344,28 @@ describe("client portal store", () => {
         paymentProofAction: "replace",
       }),
     );
+  });
+
+  it("derives current payment proof state for read-only AI context", () => {
+    expect(getPaymentProofAiContext("ar-delta")).toEqual({ status: "not-uploaded" });
+
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(
+      rejectPaymentProof(upload.proofId, {
+        reasonCode: "missing-reference",
+        note: "Please include the FPS reference.",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, proofId: upload.proofId });
+
+    expect(getPaymentProofAiContext("ar-delta")).toEqual({
+      status: "rejected",
+      filename: "proof.png",
+      origin: "client-portal",
+      reasonLabel: "Transaction reference is missing",
+      note: "Please include the FPS reference.",
+    });
   });
 
   it("derives accepted payment proof detail with its reviewer and review time", () => {

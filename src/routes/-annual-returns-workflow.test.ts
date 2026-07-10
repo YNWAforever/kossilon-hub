@@ -45,6 +45,10 @@ const whatsappAutomationRouteSource = readFileSync(
 const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
 const paymentsRouteSource = readFileSync(new URL("./payments.tsx", import.meta.url), "utf8");
+const aiAssistantPanelSource = readFileSync(
+  new URL("../components/ai-assistant-panel.tsx", import.meta.url),
+  "utf8",
+);
 
 async function renderRoute(pathname: string) {
   const router = createRouter({
@@ -488,6 +492,30 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Required signature is missing");
     expect(html).toContain("Director signature is missing on page 2.");
     expect(html).toContain("Send now");
+  });
+
+  it("renders rejected payment proof drafts in WhatsApp automation", async () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    rejectPaymentProof(upload.proofId, {
+      reasonCode: "missing-reference",
+      note: "Please include the FPS reference.",
+      actor: "Operations",
+    });
+
+    const html = await renderRoute("/whatsapp/automation");
+    expect(html).toContain("Payment proof replacement");
+    expect(html).toContain("Transaction reference is missing");
+    expect(html).toContain("Please include the FPS reference.");
+    expect(html).toContain("Send now");
+  });
+
+  it("exposes payment proof state to AI without state-changing controls", () => {
+    expect(aiAssistantPanelSource).toContain("getPaymentProofAiContext");
+    expect(aiAssistantPanelSource).toContain("Payment proof");
+    expect(aiAssistantPanelSource).not.toContain("acceptPaymentProof(");
+    expect(aiAssistantPanelSource).not.toContain("rejectPaymentProof(");
+    expect(aiAssistantPanelSource).not.toContain("sendPaymentProofFollowUpNow(");
   });
 
   it("keeps sent rejected-document drafts out of the default Open WhatsApp queue", async () => {

@@ -100,6 +100,14 @@ export type ClientPortalPaymentProof = {
   reviewNote?: string;
 };
 
+export type ClientPortalPaymentProofAiContext = {
+  status: ClientPortalPaymentProofStatus | "not-uploaded";
+  filename?: string;
+  origin?: ClientPortalPaymentProofOrigin;
+  reasonLabel?: string;
+  note?: string;
+};
+
 export type ClientPortalPaymentProofReviewRequest = {
   reasonCode?: ClientPortalPaymentProofReviewReasonCode;
   note?: string;
@@ -416,6 +424,22 @@ export function getCurrentPaymentProof(
   return currentSnapshot.paymentProofs
     .filter((proof) => proof.caseId === caseId && proof.status !== "superseded")
     .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))[0];
+}
+
+export function getPaymentProofAiContext(
+  caseId: string,
+  currentSnapshot = snapshot,
+): ClientPortalPaymentProofAiContext {
+  const proof = getCurrentPaymentProof(caseId, currentSnapshot);
+  return proof
+    ? {
+        status: proof.status,
+        filename: proof.filename,
+        origin: proof.origin,
+        reasonLabel: proof.reviewReasonLabel,
+        note: proof.reviewNote,
+      }
+    : { status: "not-uploaded" };
 }
 
 export function getPaymentProofsForCase(
