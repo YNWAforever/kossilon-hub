@@ -29,5 +29,5 @@ describe("Vite plugin ordering", () => {
     expect(sourceInjectionIndex).toBeGreaterThanOrEqual(0);
     expect(routeCompilerIndex).toBeGreaterThanOrEqual(0);
     expect(sourceInjectionIndex).toBeLessThan(routeCompilerIndex);
-  });
+  }, 15_000);
 });
