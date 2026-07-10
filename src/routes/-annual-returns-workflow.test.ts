@@ -121,7 +121,12 @@ function makeDeltaReadyForReceipt() {
     "payment-proof-checked",
     "internal-filing-review",
   ]) {
-    togglePacketRequirement("ar-delta", requirementId);
+    if (
+      !requireCase("ar-delta").packetRequirements.find((item) => item.id === requirementId)
+        ?.complete
+    ) {
+      togglePacketRequirement("ar-delta", requirementId);
+    }
   }
 }
 
@@ -366,6 +371,37 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Proof is unclear, cropped, or incomplete");
     expect(html).toContain("The transfer reference is cropped.");
     expect(html).toContain("Payment proof history");
+  });
+
+  it("keeps accepted payment proof review metadata and history visible after receipt acceptance", async () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "accepted-proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const proof = getClientPortalSnapshot().paymentProofs.find(
+      (item) => item.id === upload.proofId,
+    );
+    if (!proof?.reviewedAt) throw new Error("Expected payment proof review timestamp");
+    const reviewedAt = new Date(proof.reviewedAt).toLocaleString("en-HK", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const html = await renderRoute("/portal?caseId=ar-delta");
+
+    expect(html).toContain("Payment proof history");
+    expect(html).toContain("accepted-proof.png");
+    expect(html).toContain("Reviewed by");
+    expect(html).toContain("Operations");
+    expect(html).toContain(reviewedAt);
   });
 
   it("does not render replace controls for accepted portal documents", async () => {

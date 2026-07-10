@@ -50,6 +50,16 @@ function timelineLabels(caseId: string, label: string) {
   return requireCase(caseId).timeline.filter((event) => event.label === label);
 }
 
+function acceptDeltaPaymentProof(): void {
+  const upload = uploadPaymentProof(requireCase("ar-delta"), "payment-proof.png", "Joanna Poon");
+  if (!upload.ok) throw new Error("Expected payment proof upload to succeed");
+
+  expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+    ok: true,
+    proofId: upload.proofId,
+  });
+}
+
 function makeDeltaReadyForReceipt(): void {
   const signed = uploadClientDocument(
     requireCase("ar-delta"),
@@ -82,7 +92,12 @@ function makeDeltaReadyForReceipt(): void {
     "payment-proof-checked",
     "internal-filing-review",
   ]) {
-    togglePacketRequirement("ar-delta", requirementId);
+    if (
+      !requireCase("ar-delta").packetRequirements.find((item) => item.id === requirementId)
+        ?.complete
+    ) {
+      togglePacketRequirement("ar-delta", requirementId);
+    }
   }
 }
 
@@ -365,7 +380,8 @@ describe("client portal store", () => {
   it("blocks packet approval until portal-visible documents are uploaded", () => {
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
       ok: false,
-      reason: "Packet approval blocked: Signed NAR1; Updated significant controller register",
+      reason:
+        "Packet approval blocked: Signed NAR1; Updated significant controller register; Payment proof required",
     });
   });
 
@@ -427,6 +443,7 @@ describe("client portal store", () => {
     if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
     reviewClientDocument(signed.documentId, "accepted", "Operations");
     reviewClientDocument(scr.documentId, "accepted", "Operations");
+    acceptDeltaPaymentProof();
 
     const explicitSnapshot = getClientPortalSnapshot();
 
@@ -473,6 +490,7 @@ describe("client portal store", () => {
       ok: true,
       documentId: scr.documentId,
     });
+    acceptDeltaPaymentProof();
 
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
     expect(getClientPortalActivity("ar-delta")[0]).toMatchObject({
@@ -542,6 +560,7 @@ describe("client portal store", () => {
   });
 
   it("keeps one-time actions idempotent after receipt acceptance turns the case read-only", () => {
+    acceptDeltaPaymentProof();
     makeDeltaReadyForReceipt();
     expect(acknowledgePaymentInstructions(requireCase("ar-delta"), "Joanna Poon")).toEqual({
       ok: true,
@@ -577,7 +596,7 @@ describe("client portal store", () => {
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
       ok: false,
       reason:
-        "Packet approval blocked: Signed NAR1 pending staff review; Updated significant controller register pending staff review",
+        "Packet approval blocked: Signed NAR1 pending staff review; Updated significant controller register pending staff review; Payment proof required",
     });
 
     for (const row of getDocumentArchiveRows([requireCase("ar-delta")]).filter(
@@ -590,7 +609,78 @@ describe("client portal store", () => {
       });
     }
 
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Packet approval blocked: Payment proof required",
+    });
+  });
+
+  it("blocks packet approval for missing, pending, and rejected payment proof until staff accepts it", () => {
+    const signed = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    const scr = uploadClientDocument(
+      requireCase("ar-delta"),
+      "scr",
+      "updated-scr.pdf",
+      "Joanna Poon",
+    );
+    if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
+    reviewClientDocument(signed.documentId, "accepted", "Operations");
+    reviewClientDocument(scr.documentId, "accepted", "Operations");
+
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Packet approval blocked: Payment proof required",
+    });
+
+    const pendingProof = uploadPaymentProof(
+      requireCase("ar-delta"),
+      "pending-proof.png",
+      "Joanna Poon",
+    );
+    if (!pendingProof.ok) throw new Error("Expected proof upload");
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Packet approval blocked: Payment proof pending staff review",
+    });
+
+    expect(
+      rejectPaymentProof(pendingProof.proofId, { reasonCode: "unreadable", actor: "Operations" }),
+    ).toEqual({ ok: true, proofId: pendingProof.proofId });
+    expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Packet approval blocked: Payment proof rejected",
+    });
+
+    const acceptedProof = uploadPaymentProof(
+      requireCase("ar-delta"),
+      "accepted-proof.png",
+      "Joanna Poon",
+    );
+    if (!acceptedProof.ok) throw new Error("Expected replacement proof upload");
+    expect(acceptPaymentProof(acceptedProof.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: acceptedProof.proofId,
+    });
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
+  });
+
+  it("keeps an earlier document review ahead of later open workflow actions", () => {
+    const document = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!document.ok) throw new Error("Expected document upload");
+
+    expect(getClientPortalProgress(requireCase("ar-delta"))).toMatchObject({
+      nextAction: "Waiting for staff review",
+    });
   });
 
   it("keeps packet approval idempotent after it succeeds", () => {
@@ -611,6 +701,7 @@ describe("client portal store", () => {
 
     reviewClientDocument(signed.documentId, "accepted", "Operations");
     reviewClientDocument(scr.documentId, "accepted", "Operations");
+    acceptDeltaPaymentProof();
 
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });
     expect(approveClientPacket(requireCase("ar-delta"), "Joanna Poon")).toEqual({ ok: true });

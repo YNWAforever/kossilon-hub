@@ -585,7 +585,7 @@ export function getClientPortalRequiredActions(
               : ("open" as const),
           detail:
             getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
-              ? "Required documents still need staff review or replacement before packet approval is available."
+              ? "Required documents or payment proof still need staff review or replacement before packet approval is available."
               : "Confirm the client has reviewed the prepared packet details.",
         },
       ];
@@ -635,15 +635,18 @@ export function getClientPortalProgress(
     (packetComplete ? 1 : 0) +
     (receiptComplete ? 1 : 0);
   const requiredActions = getClientPortalRequiredActions(caseItem, currentSnapshot);
-  const nextOpen = requiredActions.find((action) => action.status === "open");
-  const nextPending = requiredActions.find((action) => action.status === "pending-review");
+  const nextAction = requiredActions.find(
+    (action) => action.status === "open" || action.status === "pending-review",
+  );
 
   return {
     completed,
     total,
     percentage: total === 0 ? 100 : Math.round((completed / total) * 100),
     nextAction:
-      nextOpen?.label ?? (nextPending ? "Waiting for staff review" : "No client action needed"),
+      nextAction?.status === "pending-review"
+        ? "Waiting for staff review"
+        : (nextAction?.label ?? "No client action needed"),
     isReadOnly: isReadOnlyCase(caseItem),
   };
 }
@@ -1171,7 +1174,7 @@ function getPacketApprovalBlockers(
   caseItem: AnnualReturnCase,
   currentSnapshot = snapshot,
 ): string[] {
-  return caseItem.documents
+  const documentBlockers = caseItem.documents
     .filter((document) => document.required)
     .flatMap((document) => {
       const current = getCurrentClientDocument(caseItem.id, document.id, currentSnapshot);
@@ -1181,6 +1184,16 @@ function getPacketApprovalBlockers(
       if (current.status !== "accepted") return [document.label];
       return [];
     });
+  const currentPaymentProof = getCurrentPaymentProof(caseItem.id, currentSnapshot);
+  const paymentProofBlocker = !currentPaymentProof
+    ? "Payment proof required"
+    : currentPaymentProof.status === "pending-review"
+      ? "Payment proof pending staff review"
+      : currentPaymentProof.status === "rejected"
+        ? "Payment proof rejected"
+        : undefined;
+
+  return paymentProofBlocker ? [...documentBlockers, paymentProofBlocker] : documentBlockers;
 }
 
 function normalizeReviewInput(
