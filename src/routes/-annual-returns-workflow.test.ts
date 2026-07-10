@@ -19,6 +19,7 @@ import {
   updateSignatureStatus,
 } from "../lib/annual-return-store";
 import {
+  attachPaymentProof,
   getClientPortalSnapshot,
   resetClientPortalStoreForTest,
   reviewClientDocument,
@@ -40,6 +41,7 @@ const whatsappAutomationRouteSource = readFileSync(
 );
 const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
+const paymentsRouteSource = readFileSync(new URL("./payments.tsx", import.meta.url), "utf8");
 
 async function renderRoute(pathname: string) {
   const router = createRouter({
@@ -170,6 +172,24 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain("search={{ caseId: selectedCase.id }}");
     expect(portalRouteSource).toContain('action.kind === "receipt"');
     expect(portalRouteSource).toContain('action.kind !== "receipt" && isReadOnly');
+  });
+
+  it("renders payment proof attachment and review controls", async () => {
+    const htmlWithoutProof = await renderRoute("/payments");
+    expect(htmlWithoutProof).toContain("Attach proof");
+
+    attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    const htmlWithProof = await renderRoute("/payments");
+    expect(htmlWithProof).toContain("fps-proof.png");
+    expect(htmlWithProof).toContain("Accept");
+    expect(htmlWithProof).toContain("Reject");
+  });
+
+  it("keeps structured payment proof reasons and client-visible notes in the payments route", () => {
+    expect(paymentsRouteSource).toContain("clientPortalPaymentProofReviewReasons");
+    expect(paymentsRouteSource).toContain("Client-visible note");
+    expect(paymentsRouteSource).toContain("acceptPaymentProof");
+    expect(paymentsRouteSource).toContain("rejectPaymentProof");
   });
 
   it("renders the selected portal case from the case search parameter", async () => {
