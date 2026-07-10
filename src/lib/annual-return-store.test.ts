@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
+  acceptPaymentProofForCase,
   acceptFilingReceipt,
   addCaseNote,
   assignOwner,
@@ -312,6 +313,42 @@ describe("annual return store mutations", () => {
     expect(caseItem?.timeline[0]).toMatchObject({
       label: "Payment status updated",
       detail: "Payment status changed to paid.",
+    });
+  });
+
+  it("accepts payment proof by updating payment and packet readiness in one mutation", () => {
+    expect(acceptPaymentProofForCase("ar-delta", "Operations")).toEqual({ ok: true });
+
+    const caseItem = getAnnualReturnCaseById("ar-delta");
+    expect(caseItem?.paymentStatus).toBe("paid");
+    expect(
+      caseItem?.packetRequirements.find((item) => item.id === "payment-proof-checked")?.complete,
+    ).toBe(true);
+    expect(caseItem?.timeline[0]).toMatchObject({
+      label: "Payment proof accepted",
+      detail: "Operations accepted payment proof and confirmed payment.",
+    });
+  });
+
+  it("keeps payment proof acceptance idempotent", () => {
+    acceptPaymentProofForCase("ar-delta", "Operations");
+    const timelineLength = getAnnualReturnCaseById("ar-delta")?.timeline.length;
+
+    expect(acceptPaymentProofForCase("ar-delta", "Operations")).toEqual({ ok: true });
+    expect(getAnnualReturnCaseById("ar-delta")?.timeline).toHaveLength(timelineLength ?? 0);
+  });
+
+  it("rejects payment proof acceptance for missing and filed cases", () => {
+    expect(acceptPaymentProofForCase("missing-case", "Operations")).toEqual({
+      ok: false,
+      reason: "Case not found",
+    });
+
+    const filed = getAnnualReturnCaseById("ar-summit");
+    expect(filed?.status).toBe("filed");
+    expect(acceptPaymentProofForCase("ar-summit", "Operations")).toEqual({
+      ok: false,
+      reason: "Filed cases are read-only",
     });
   });
 

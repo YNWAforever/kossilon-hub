@@ -156,6 +156,8 @@ export type AnnualReturnAiContext = {
   nextAction: string;
 };
 
+export type AnnualReturnMutationResult = { ok: true } | { ok: false; reason: string };
+
 function nowStamp(): string {
   return new Date().toISOString();
 }
@@ -901,6 +903,43 @@ export function updatePaymentStatus(
       `Payment status changed to ${paymentStatus}.`,
     );
   });
+}
+
+export function acceptPaymentProofForCase(
+  caseId: string,
+  actor: string,
+): AnnualReturnMutationResult {
+  const caseItem = cases.find((candidate) => candidate.id === caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  if (caseItem.status === "filed" || getPacketStatus(caseItem) === "accepted") {
+    return { ok: false, reason: "Filed cases are read-only" };
+  }
+
+  const proofRequirement = caseItem.packetRequirements.find(
+    (requirement) => requirement.id === "payment-proof-checked",
+  );
+  if (!proofRequirement) {
+    return { ok: false, reason: "Payment proof packet requirement not found" };
+  }
+  if (caseItem.paymentStatus === "paid" && proofRequirement.complete) return { ok: true };
+
+  replaceCase(caseId, (currentCase) =>
+    appendTimeline(
+      withDerivedStatus({
+        ...currentCase,
+        paymentStatus: "paid",
+        packetRequirements: currentCase.packetRequirements.map((requirement) =>
+          requirement.id === "payment-proof-checked"
+            ? { ...requirement, complete: true }
+            : requirement,
+        ),
+      }),
+      "Payment proof accepted",
+      `${actor} accepted payment proof and confirmed payment.`,
+    ),
+  );
+
+  return { ok: true };
 }
 
 export function completeChecklistItem(caseId: string, checklistItemId: string): void {
