@@ -1,11 +1,22 @@
-import { checklistTemplates, daysUntil, type ClientCase, type Enquiry } from "./app-data";
+import { checklistTemplates, daysUntil, type ClientCase } from "./app-data";
 import { type AnnualReturnAiContext } from "./annual-return-store";
 import { type ClientPortalPaymentProofAiContext } from "./client-portal-store";
-import { type FaqEntry, type ReferenceDocument } from "./knowledge-base";
+import { type FaqEntry, type ReferenceDoc } from "./knowledge-base";
+
+export type AiEnquiry = {
+  name?: string;
+  contactName?: string;
+  phone: string;
+  lastMessage: string;
+  intent: string;
+};
+
+type NormalizedIntent =
+  "Annual Return" | "Incorporation" | "Payment" | "Deregistration" | "KYC" | "General";
 
 export type RetrievalContext = {
   faqs: Array<{ item: FaqEntry; score: number }>;
-  documents: Array<{ item: ReferenceDocument; score: number }>;
+  documents: Array<{ item: ReferenceDoc; score: number }>;
   checklistItems: string[];
   caseFields: string[];
 };
@@ -21,7 +32,7 @@ export type DraftReply = {
   }>;
 };
 
-const categoryBoost: Record<Enquiry["intent"], string[]> = {
+const categoryBoost: Record<NormalizedIntent, string[]> = {
   "Annual Return": ["annual", "return", "nar1", "deadline", "registry"],
   Incorporation: ["incorporation", "company", "setup", "kyc", "fees"],
   Payment: ["payment", "invoice", "fps", "bank", "receipt"],
@@ -29,6 +40,15 @@ const categoryBoost: Record<Enquiry["intent"], string[]> = {
   KYC: ["kyc", "identity", "address", "owner"],
   General: ["company", "secretary", "service", "documents"],
 };
+
+function normalizeIntent(intent: string): NormalizedIntent {
+  if (intent === "Annual Return" || intent === "Deregistration" || intent === "KYC") {
+    return intent;
+  }
+  if (intent === "Incorporation" || intent === "New Incorporation") return "Incorporation";
+  if (intent === "Payment" || intent === "Payment Query") return "Payment";
+  return "General";
+}
 
 const annualReturnStatusLabels: Record<AnnualReturnAiContext["status"], string> = {
   preparing: "Preparing",
@@ -61,13 +81,14 @@ function scoreText(query: string[], target: string, boosts: string[]): number {
 }
 
 export function retrieveContext(
-  enquiry: Enquiry,
+  enquiry: AiEnquiry,
   faqs: FaqEntry[],
-  docs: ReferenceDocument[],
+  docs: ReferenceDoc[],
   clientCase?: ClientCase,
 ): RetrievalContext {
-  const boosts = categoryBoost[enquiry.intent];
-  const query = tokenize(`${enquiry.intent} ${enquiry.lastMessage} ${boosts.join(" ")}`);
+  const normalizedIntent = normalizeIntent(enquiry.intent);
+  const boosts = categoryBoost[normalizedIntent];
+  const query = tokenize(`${normalizedIntent} ${enquiry.lastMessage} ${boosts.join(" ")}`);
 
   const scoredFaqs = faqs
     .filter((faq) => faq.active)
@@ -89,7 +110,7 @@ export function retrieveContext(
       item: doc,
       score: scoreText(
         query,
-        `${doc.title} ${doc.filename} ${doc.category} ${doc.summary}`,
+        `${doc.title} ${doc.filename} ${doc.category} ${doc.summary} ${doc.extractedText ?? ""} ${(doc.chunks ?? []).join(" ")}`,
         boosts,
       ),
     }))
@@ -104,7 +125,7 @@ export function retrieveContext(
       ).slice(0, 4)
     : (checklistTemplates
         .find((template) =>
-          template.name.toLowerCase().includes(enquiry.intent.toLowerCase().split(" ")[0]),
+          template.name.toLowerCase().includes(normalizedIntent.toLowerCase().split(" ")[0]),
         )
         ?.items.slice(0, 3) ?? []);
 
@@ -121,12 +142,13 @@ export function retrieveContext(
 }
 
 export function draftReply(
-  enquiry: Enquiry,
+  enquiry: AiEnquiry,
   context: RetrievalContext,
   clientCase?: ClientCase,
   annualReturnContext?: AnnualReturnAiContext,
   paymentProofContext?: ClientPortalPaymentProofAiContext,
 ): DraftReply {
+  const normalizedIntent = normalizeIntent(enquiry.intent);
   const topFaq = context.faqs[0]?.item;
   const topDoc = context.documents[0]?.item;
   const annualReturnStatusLabel = annualReturnContext
@@ -162,7 +184,7 @@ export function draftReply(
     : "";
   const caseLine = enrichedCaseLine || `${existingBasicClientCaseLine}${paymentProofLine}`;
 
-  const ctaByIntent: Record<Enquiry["intent"], string> = {
+  const ctaByIntent: Record<NormalizedIntent, string> = {
     "Annual Return":
       "Please send the remaining documents or confirm the particulars, and we can continue the NAR1 filing.",
     Incorporation:
@@ -174,7 +196,7 @@ export function draftReply(
     General: "Send us the latest details and we will route this to the right compliance workflow.",
   };
 
-  const markdown = `Hi ${enquiry.name},\n\n${topFaq?.answer ?? "Thanks for your message. We can help review the company record and confirm the next compliance step."}${caseLine}\n\n${topDoc ? `I also checked our **${topDoc.title}** reference for the current handling notes. ` : ""}${ctaByIntent[enquiry.intent]}\n\nRegards,\nKossilon team`;
+  const markdown = `Hi ${enquiry.name ?? enquiry.contactName ?? "there"},\n\n${topFaq?.answer ?? "Thanks for your message. We can help review the company record and confirm the next compliance step."}${caseLine}\n\n${topDoc ? `I also checked our **${topDoc.title}** reference for the current handling notes. ` : ""}${ctaByIntent[normalizedIntent]}\n\nRegards,\nKossilon team`;
 
   const sources: DraftReply["sources"] = [
     ...context.faqs.slice(0, 3).map(({ item }) => ({
@@ -235,7 +257,7 @@ export function draftReply(
   return { markdown, confidence, sources };
 }
 
-export function suggestedFaqs(enquiry: Enquiry, faqs: FaqEntry[]): FaqEntry[] {
+export function suggestedFaqs(enquiry: AiEnquiry, faqs: FaqEntry[]): FaqEntry[] {
   return retrieveContext(enquiry, faqs, [], undefined)
     .faqs.slice(0, 3)
     .map((match) => match.item);

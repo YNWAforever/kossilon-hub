@@ -3,14 +3,20 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Link } from "@tanstack/react-router";
 
-import { draftReply, retrieveContext, suggestedFaqs, type DraftReply } from "../lib/ai-agent";
-import { daysUntil, type ClientCase, type Enquiry } from "../lib/app-data";
+import {
+  draftReply,
+  retrieveContext,
+  suggestedFaqs,
+  type AiEnquiry,
+  type DraftReply,
+} from "../lib/ai-agent";
+import { daysUntil, type ClientCase } from "../lib/app-data";
 import { getAnnualReturnAiContext, useAnnualReturnCase } from "../lib/annual-return-store";
 import { getPaymentProofAiContext, useClientPortalSnapshot } from "../lib/client-portal-store";
 import { useKnowledgeBase } from "../lib/knowledge-base";
 
 type AiAssistantPanelProps = {
-  enquiry: Enquiry;
+  enquiry: AiEnquiry;
   clientCase?: ClientCase;
   onInsert: (draft: string) => void;
   onSend: (draft: string) => void;
@@ -33,6 +39,7 @@ const annualReturnPaymentStatusLabels = {
 
 export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAssistantPanelProps) {
   const { faqs, referenceDocs } = useKnowledgeBase();
+  const contactName = enquiry.name ?? enquiry.contactName ?? "there";
   const [generation, setGeneration] = useState(1);
   const [expandedSource, setExpandedSource] = useState<string | undefined>();
   const annualReturnCase = useAnnualReturnCase(clientCase ? clientCase.annualReturnCaseId : "");
@@ -210,7 +217,7 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
               key={faq.id}
               className="w-full rounded-md border px-3 py-2 text-left text-sm hover:bg-muted"
               onClick={() =>
-                onSend(`Hi ${enquiry.name},\n\n${faq.answer}\n\nRegards,\nKossilon team`)
+                onSend(`Hi ${contactName},\n\n${faq.answer}\n\nRegards,\nKossilon team`)
               }
             >
               {faq.question}

@@ -381,7 +381,7 @@ function replaceCase(
   });
 
   if (changed) {
-    emit();
+    notify();
   }
 
   return updatedCase;
@@ -481,9 +481,20 @@ const seedAnnualReturnCases: AnnualReturnCase[] = [
 
 let cases = seedAnnualReturnCases;
 const listeners = new Set<() => void>();
+let notificationBatchDepth = 0;
+let notificationPending = false;
 
 function emit(): void {
   listeners.forEach((listener) => listener());
+}
+
+function notify(): void {
+  if (notificationBatchDepth > 0) {
+    notificationPending = true;
+    return;
+  }
+
+  emit();
 }
 
 function subscribe(listener: () => void): () => void {
@@ -513,8 +524,26 @@ export function resetAnnualReturnCasesForTest(): void {
   emit();
 }
 
+export function removeAnnualReturnCaseForTest(caseId: string): void {
+  cases = cases.filter((caseItem) => caseItem.id !== caseId);
+  emit();
+}
+
 export function subscribeAnnualReturnCasesForTest(listener: () => void): () => void {
   return subscribe(listener);
+}
+
+export function batchAnnualReturnCaseUpdates<T>(operation: () => T): T {
+  notificationBatchDepth += 1;
+  try {
+    return operation();
+  } finally {
+    notificationBatchDepth -= 1;
+    if (notificationBatchDepth === 0 && notificationPending) {
+      notificationPending = false;
+      emit();
+    }
+  }
 }
 
 export function getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[] {
@@ -923,21 +952,28 @@ export function acceptPaymentProofForCase(
   }
   if (caseItem.paymentStatus === "paid" && proofRequirement.complete) return { ok: true };
 
-  replaceCase(caseId, (currentCase) =>
-    appendTimeline(
-      withDerivedStatus({
-        ...currentCase,
-        paymentStatus: "paid",
-        packetRequirements: currentCase.packetRequirements.map((requirement) =>
-          requirement.id === "payment-proof-checked"
-            ? { ...requirement, complete: true }
-            : requirement,
-        ),
-      }),
-      "Payment proof accepted",
-      `${actor} accepted payment proof and confirmed payment.`,
-    ),
-  );
+  replaceCase(caseId, (currentCase) => {
+    const reconciledCase = withDerivedStatus({
+      ...currentCase,
+      paymentStatus: "paid",
+      packetRequirements: currentCase.packetRequirements.map((requirement) =>
+        requirement.id === "payment-proof-checked"
+          ? { ...requirement, complete: true }
+          : requirement,
+      ),
+    });
+    const hasAcceptanceEvent = currentCase.timeline.some(
+      (event) => event.label === "Payment proof accepted",
+    );
+
+    return hasAcceptanceEvent
+      ? reconciledCase
+      : appendTimeline(
+          reconciledCase,
+          "Payment proof accepted",
+          `${actor} accepted payment proof and confirmed payment.`,
+        );
+  });
 
   return { ok: true };
 }

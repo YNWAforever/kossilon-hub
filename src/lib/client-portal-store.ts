@@ -4,6 +4,7 @@ import {
   type AnnualReturnCase,
   appendClientPortalTimelineEvent,
   acceptPaymentProofForCase,
+  batchAnnualReturnCaseUpdates,
   getAnnualReturnCaseById,
   getPacketStatus,
   markDocumentMissing,
@@ -329,6 +330,10 @@ export function getClientPortalReviewReason(
 export function resetClientPortalStoreForTest(): void {
   snapshot = cloneSnapshot(initialSnapshot);
   emit();
+}
+
+export function subscribeClientPortalStoreForTest(listener: () => void): () => void {
+  return subscribe(listener);
 }
 
 function documentCategoryForRequirement(requirementId: string): ClientPortalDocumentCategory {
@@ -1098,36 +1103,56 @@ export function acceptPaymentProof(
   if (getCurrentPaymentProof(proof.caseId)?.id !== proof.id) {
     return { ok: false, reason: "Payment proof is not current" };
   }
-  if (proof.status !== "pending-review") {
+  const alreadyAccepted = proof.status === "accepted";
+  if (!alreadyAccepted && proof.status !== "pending-review") {
     return { ok: false, reason: "Payment proof is not pending review" };
   }
 
   const caseItem = getAnnualReturnCaseById(proof.caseId);
   if (!caseItem) return { ok: false, reason: "Case not found" };
+  const proofRequirement = caseItem.packetRequirements.find(
+    (requirement) => requirement.id === "payment-proof-checked",
+  );
+  if (alreadyAccepted && caseItem.paymentStatus === "paid" && proofRequirement?.complete) {
+    return { ok: true, proofId: proof.id };
+  }
   const readOnly = blockReadOnlyCase(caseItem);
   if (readOnly) return readOnly;
 
   const reviewer = actor?.trim() || "Operations";
-  const accepted = acceptPaymentProofForCase(proof.caseId, reviewer);
-  if (!accepted.ok) return accepted;
-
-  snapshot = {
-    ...snapshot,
-    paymentProofs: snapshot.paymentProofs.map((candidate) =>
-      candidate.id === proof.id
-        ? {
-            ...candidate,
-            status: "accepted",
-            reviewedBy: reviewer,
-            reviewedAt: nowStamp(),
-            reviewSummary: `Accepted by ${reviewer}`,
-          }
-        : candidate,
-    ),
+  let accepted: ReturnType<typeof acceptPaymentProofForCase> = {
+    ok: false,
+    reason: "Payment proof acceptance failed",
   };
-  const summary = `${reviewer} accepted payment proof ${proof.filename}.`;
-  addActionForCase(proof.caseId, "accept-payment-proof", reviewer, summary, { proofId: proof.id });
-  emit();
+
+  batchAnnualReturnCaseUpdates(() => {
+    accepted = acceptPaymentProofForCase(proof.caseId, reviewer);
+    if (!accepted.ok) return;
+
+    if (!alreadyAccepted) {
+      snapshot = {
+        ...snapshot,
+        paymentProofs: snapshot.paymentProofs.map((candidate) =>
+          candidate.id === proof.id
+            ? {
+                ...candidate,
+                status: "accepted",
+                reviewedBy: reviewer,
+                reviewedAt: nowStamp(),
+                reviewSummary: `Accepted by ${reviewer}`,
+              }
+            : candidate,
+        ),
+      };
+      const summary = `${reviewer} accepted payment proof ${proof.filename}.`;
+      addActionForCase(proof.caseId, "accept-payment-proof", reviewer, summary, {
+        proofId: proof.id,
+      });
+    }
+  });
+
+  if (!accepted.ok) return accepted;
+  if (!alreadyAccepted) emit();
 
   return { ok: true, proofId: proof.id };
 }
@@ -1258,6 +1283,10 @@ export function reviewClientDocument(
 
   const document = snapshot.documents.find((candidate) => candidate.id === documentId);
   if (!document) return { ok: false, reason: "Document not found" };
+  const caseItem = getAnnualReturnCaseById(document.caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  const readOnly = blockReadOnlyCase(caseItem);
+  if (readOnly) return readOnly;
   if (document.source !== "client-portal") {
     return { ok: false, reason: "Only client portal documents can be reviewed" };
   }
@@ -1270,11 +1299,6 @@ export function reviewClientDocument(
   if (document.status !== "uploaded") {
     return { ok: false, reason: "Document is not ready for review" };
   }
-  const caseItem = getAnnualReturnCaseById(document.caseId);
-  if (caseItem && isReadOnlyCase(caseItem)) {
-    return { ok: false, reason: "Filed cases are read-only in the client portal" };
-  }
-
   const reviewedAt = nowStamp();
   const status = normalized.decision;
   const actionType: ClientPortalActionType =
@@ -1332,20 +1356,27 @@ export function uploadClientDocument(
   caseItem: AnnualReturnCase,
   requirementId: string,
   filename: string,
-  actor = caseItem.contactName,
+  actor?: string,
 ): { ok: true; documentId: string } | { ok: false; reason: string } {
-  const readOnly = blockReadOnlyCase(caseItem);
+  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
+  if (!canonicalCase) return { ok: false, reason: "Case not found" };
+
+  const readOnly = blockReadOnlyCase(canonicalCase);
   if (readOnly) return readOnly;
 
-  const requirement = caseItem.documents.find((document) => document.id === requirementId);
+  const requirement = canonicalCase.documents.find((document) => document.id === requirementId);
   if (!requirement) return { ok: false, reason: "Document requirement not found" };
   if (!filename.trim()) return { ok: false, reason: "Filename is required" };
+  if (getCurrentClientDocument(canonicalCase.id, requirementId)) {
+    return { ok: false, reason: "A current document already exists" };
+  }
 
-  const document = createDocument(caseItem, requirementId, filename.trim(), actor);
+  const documentActor = actor?.trim() || canonicalCase.contactName;
+  const document = createDocument(canonicalCase, requirementId, filename.trim(), documentActor);
   snapshot = { ...snapshot, documents: [document, ...snapshot.documents] };
-  const summary = `${actor} uploaded ${requirement.label}.`;
-  addAction(caseItem, "upload-document", actor, summary);
-  appendClientPortalTimelineEvent(caseItem.id, "Client document uploaded", summary);
+  const summary = `${documentActor} uploaded ${requirement.label}.`;
+  addAction(canonicalCase, "upload-document", documentActor, summary);
+  appendClientPortalTimelineEvent(canonicalCase.id, "Client document uploaded", summary);
   emit();
 
   return { ok: true, documentId: document.id };
@@ -1355,21 +1386,31 @@ export function replaceClientDocument(
   caseItem: AnnualReturnCase,
   requirementId: string,
   filename: string,
-  actor = caseItem.contactName,
+  actor?: string,
 ): { ok: true; documentId: string; supersededDocumentId?: string } | { ok: false; reason: string } {
-  const readOnly = blockReadOnlyCase(caseItem);
+  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
+  if (!canonicalCase) return { ok: false, reason: "Case not found" };
+
+  const readOnly = blockReadOnlyCase(canonicalCase);
   if (readOnly) return readOnly;
 
-  const requirement = caseItem.documents.find((document) => document.id === requirementId);
+  const requirement = canonicalCase.documents.find((document) => document.id === requirementId);
   if (!requirement) return { ok: false, reason: "Document requirement not found" };
   if (!filename.trim()) return { ok: false, reason: "Filename is required" };
 
-  const current = getCurrentClientDocument(caseItem.id, requirementId);
+  const current = getCurrentClientDocument(canonicalCase.id, requirementId);
   if (!current) return { ok: false, reason: "No current document is available to replace" };
   if (current.status !== "rejected") {
     return { ok: false, reason: "Only rejected documents can be replaced" };
   }
-  const document = createDocument(caseItem, requirementId, filename.trim(), actor, current?.id);
+  const documentActor = actor?.trim() || canonicalCase.contactName;
+  const document = createDocument(
+    canonicalCase,
+    requirementId,
+    filename.trim(),
+    documentActor,
+    current.id,
+  );
   snapshot = {
     ...snapshot,
     documents: [
@@ -1379,10 +1420,10 @@ export function replaceClientDocument(
       ),
     ],
   };
-  markDocumentMissing(caseItem.id, requirementId);
-  const summary = `${actor} replaced ${requirement.label}.`;
-  addAction(caseItem, "replace-document", actor, summary);
-  appendClientPortalTimelineEvent(caseItem.id, "Client document replaced", summary);
+  markDocumentMissing(canonicalCase.id, requirementId);
+  const summary = `${documentActor} replaced ${requirement.label}.`;
+  addAction(canonicalCase, "replace-document", documentActor, summary);
+  appendClientPortalTimelineEvent(canonicalCase.id, "Client document replaced", summary);
   emit();
 
   return { ok: true, documentId: document.id, supersededDocumentId: current?.id };

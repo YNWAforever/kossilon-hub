@@ -2,9 +2,55 @@ import { readFileSync } from "node:fs";
 
 import { QueryClient } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../styles.css?url", () => ({ default: "/styles.css" }));
+
+vi.mock("@/features/auth/session", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../features/auth/session")>();
+  return {
+    ...actual,
+    getStoredSession: () => ({
+      id: "test-admin",
+      name: "Test Admin",
+      email: "admin@example.com",
+      role: "Admin",
+      initials: "TA",
+      team: "Operations",
+      signedInAt: "2026-07-11T00:00:00.000Z",
+    }),
+  };
+});
+
+vi.mock("@/features/auth/auth-context", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../features/auth/auth-context")>();
+  const session = {
+    id: "test-admin",
+    name: "Test Admin",
+    email: "admin@example.com",
+    role: "Admin" as const,
+    initials: "TA",
+    team: "Operations",
+    signedInAt: "2026-07-11T00:00:00.000Z",
+  };
+
+  return {
+    ...actual,
+    AuthProvider: ({ children }: { children: ReactNode }) => children,
+    useAuth: () => ({
+      session,
+      isHydrated: true,
+      demoUsers: [],
+      isCurrentUserAdmin: true,
+      login: vi.fn(),
+      loginDemo: vi.fn(),
+      loginDemoUser: vi.fn(),
+      signOut: vi.fn(),
+    }),
+  };
+});
 
 import { routeTree } from "../routeTree.gen";
 import {
@@ -166,8 +212,8 @@ describe("annual return workflow route regressions", () => {
     expect(desktopNavigation?.indexOf('href="/portal"')).toBeLessThan(
       desktopNavigation?.indexOf('href="/whatsapp/automation"') ?? -1,
     );
-    expect(desktopNavigation).toContain(">Portal</a>");
-    expect(desktopNavigation).toContain(">WhatsApp Automation</a>");
+    expect(desktopNavigation).toContain(">Portal</span>");
+    expect(desktopNavigation).toContain(">WhatsApp Automation</span>");
     expect(mobileNavigation).toContain("border-border");
     expect(mobileNavigation).toContain("gap-2");
   });
@@ -185,6 +231,65 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Client portal activity");
     expect(html).toContain("Delta Bloom Ventures Limited");
     expect(html).not.toContain("Search company or contact");
+  });
+
+  it("renders the root not-found state for an unknown client id", async () => {
+    const html = await renderRoute("/clients/missing-client");
+
+    expect(html).toContain("Page not found");
+    expect(html).not.toContain("Aurora Peak Trading Limited");
+  });
+
+  it("renders the restored client directory and operational filters", async () => {
+    const html = await renderRoute("/clients");
+
+    expect(html).toContain("companies under management");
+    expect(html).toContain("Search clients");
+    expect(html).toContain("All packages");
+    expect(html).toContain("All teams");
+    expect(html).toContain("Harbour Trading Ltd");
+    expect(html).toContain("60000000");
+  });
+
+  it("renders the restored client profile without routing an unmapped client to another portal case", async () => {
+    const html = await renderRoute("/clients/c-1");
+
+    expect(html).toContain("Harbour Trading Ltd");
+    expect(html).toContain("Contacts");
+    expect(html).toContain("Annual return history");
+    expect(html).toContain("Documents");
+    expect(html).toContain("Payment");
+    expect(html).toContain("Company timeline");
+    expect(html).toContain("Open board");
+    expect(html).not.toContain(">Open portal</a>");
+  });
+
+  it("renders the restored enquiry conversation, triage, conversion, and AI drafting workflow", async () => {
+    const html = await renderRoute("/enquiries");
+
+    expect(html).toContain("Enquiry Inbox");
+    expect(html).toContain("Search conversations");
+    expect(html).toContain("AI triage");
+    expect(html).toContain("Convert to client");
+    expect(html).toContain("Send quote");
+    expect(html).toContain("Type a message");
+    expect(html).toContain("AI draft available");
+  });
+
+  it("marks only WhatsApp Automation active on its nested route", async () => {
+    const html = await renderRoute("/whatsapp/automation");
+    const navigation = html.match(
+      /<nav[^>]*aria-label="Primary navigation"[^>]*>[\s\S]*?<\/nav>/,
+    )?.[0];
+    const inboxLink = navigation?.match(/<a[^>]*href="\/whatsapp"[^>]*>/)?.[0];
+    const automationLink = navigation?.match(/<a[^>]*href="\/whatsapp\/automation"[^>]*>/)?.[0];
+
+    expect(inboxLink).toBeDefined();
+    expect(automationLink).toBeDefined();
+    expect(inboxLink).not.toContain('data-status="active"');
+    expect(inboxLink).not.toContain("bg-sidebar-accent text-sidebar-accent-foreground");
+    expect(automationLink).toContain('data-status="active"');
+    expect(automationLink).toContain("bg-sidebar-accent text-sidebar-accent-foreground");
   });
 
   it("renders an explicit status column in WhatsApp automation", () => {
@@ -486,6 +591,7 @@ describe("annual return workflow route regressions", () => {
 
   it("does not render document review controls for pending uploads once the case receipt is accepted", async () => {
     makeDeltaReadyForReceipt();
+    resetClientPortalStoreForTest();
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
       "signed-nar1",
@@ -607,7 +713,7 @@ describe("annual return workflow route regressions", () => {
     expect(annualReturnDetailRouteSource).toContain('to="/documents"');
     expect(annualReturnDetailRouteSource).toContain("getClientPortalRequiredActions");
     expect(annualReturnDetailRouteSource).toContain("getDocumentArchiveRows");
-    expect(sidebarSource).toContain("Portal Demo");
+    expect(sidebarSource).toContain('label: "Portal"');
     expect(sidebarSource).toContain('to: "/portal"');
   });
 });

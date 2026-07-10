@@ -4,7 +4,9 @@ import {
   acceptFilingReceipt,
   completeChecklistItem,
   getAnnualReturnCaseById,
+  removeAnnualReturnCaseForTest,
   resetAnnualReturnCasesForTest,
+  subscribeAnnualReturnCasesForTest,
   submitFilingPacket,
   togglePacketRequirement,
   updatePaymentStatus,
@@ -36,6 +38,7 @@ import {
   reviewClientDocument,
   sendDocumentReviewFollowUpNow,
   sendPaymentProofFollowUpNow,
+  subscribeClientPortalStoreForTest,
   uploadPaymentProof,
   uploadClientDocument,
   type ClientPortalReviewReasonCode,
@@ -167,6 +170,85 @@ describe("client portal store", () => {
     expect(getClientPortalActivity("ar-delta")[0]).toMatchObject({
       type: "upload-document",
       summary: "Joanna Poon uploaded Signed NAR1.",
+    });
+  });
+
+  it("blocks a second normal upload while a current document exists", () => {
+    expect(
+      uploadClientDocument(
+        requireCase("ar-delta"),
+        "signed-nar1",
+        "signed-nar1.pdf",
+        "Joanna Poon",
+      ),
+    ).toMatchObject({ ok: true });
+
+    expect(
+      uploadClientDocument(
+        requireCase("ar-delta"),
+        "signed-nar1",
+        "signed-nar1-v2.pdf",
+        "Joanna Poon",
+      ),
+    ).toEqual({
+      ok: false,
+      reason: "A current document already exists",
+    });
+    expect(
+      getDocumentArchiveRows([requireCase("ar-delta")]).filter(
+        (row) => row.requirementId === "signed-nar1" && row.source === "client-portal",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("resolves canonical cases before document upload and replacement", () => {
+    const canonicalCase = requireCase("ar-delta");
+    const fabricatedCase = {
+      ...canonicalCase,
+      id: "ar-missing",
+      companyName: "Fabricated Company Limited",
+    };
+
+    expect(
+      uploadClientDocument(fabricatedCase, "signed-nar1", "orphan.pdf", "Fabricated Contact"),
+    ).toEqual({ ok: false, reason: "Case not found" });
+    expect(
+      replaceClientDocument(fabricatedCase, "signed-nar1", "orphan-v2.pdf", "Fabricated Contact"),
+    ).toEqual({ ok: false, reason: "Case not found" });
+    expect(getCurrentClientDocument("ar-missing", "signed-nar1")).toBeUndefined();
+  });
+
+  it("rejects document review when its canonical case is missing", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "signed-nar1.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    removeAnnualReturnCaseForTest("ar-delta");
+    const before = getClientPortalSnapshot();
+
+    expect(reviewClientDocument(upload.documentId, "accepted", "Operations")).toEqual({
+      ok: false,
+      reason: "Case not found",
+    });
+    expect(getClientPortalSnapshot()).toEqual(before);
+  });
+
+  it("rejects stale document mutations after the canonical case becomes read-only", () => {
+    const staleCase = requireCase("ar-delta");
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    expect(uploadClientDocument(staleCase, "signed-nar1", "stale.pdf", "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Filed cases are read-only in the client portal",
+    });
+    expect(replaceClientDocument(staleCase, "signed-nar1", "stale-v2.pdf", "Joanna Poon")).toEqual({
+      ok: false,
+      reason: "Filed cases are read-only in the client portal",
     });
   });
 
@@ -469,14 +551,7 @@ describe("client portal store", () => {
     acceptDeltaPaymentProof();
 
     const explicitSnapshot = getClientPortalSnapshot();
-
-    const secondUpload = uploadClientDocument(
-      requireCase("ar-delta"),
-      "signed-nar1",
-      "signed-nar1-v2.pdf",
-      "Joanna Poon",
-    );
-    if (!secondUpload.ok) throw new Error("Expected second fixture upload to succeed");
+    resetClientPortalStoreForTest();
 
     expect(
       getClientPortalRequiredActions(requireCase("ar-delta"), explicitSnapshot).find(
@@ -541,6 +616,7 @@ describe("client portal store", () => {
 
   it("blocks reviewing pending portal uploads after receipt acceptance makes the case read-only", () => {
     makeDeltaReadyForReceipt();
+    resetClientPortalStoreForTest();
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
       "signed-nar1",
@@ -1364,6 +1440,110 @@ describe("client portal store", () => {
         (requirement) => requirement.id === "payment-proof-checked",
       )?.complete,
     ).toBe(true);
+    expect(
+      getClientPortalActivity("ar-delta").filter(
+        (action) => action.type === "accept-payment-proof",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("commits accepted proof and annual-return readiness before either store notifies", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "fps.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+
+    const observations: Array<{
+      proofStatus: string | undefined;
+      paymentStatus: string | undefined;
+      proofChecked: boolean | undefined;
+    }> = [];
+    const observe = () => {
+      const caseItem = getAnnualReturnCaseById("ar-delta");
+      observations.push({
+        proofStatus: getCurrentPaymentProof("ar-delta")?.status,
+        paymentStatus: caseItem?.paymentStatus,
+        proofChecked: caseItem?.packetRequirements.find(
+          (requirement) => requirement.id === "payment-proof-checked",
+        )?.complete,
+      });
+    };
+    const unsubscribeAnnualReturns = subscribeAnnualReturnCasesForTest(observe);
+    const unsubscribePortal = subscribeClientPortalStoreForTest(observe);
+
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+
+    unsubscribeAnnualReturns();
+    unsubscribePortal();
+    expect(observations.length).toBeGreaterThanOrEqual(2);
+    expect(observations).toEqual(
+      observations.map(() => ({
+        proofStatus: "accepted",
+        paymentStatus: "paid",
+        proofChecked: true,
+      })),
+    );
+  });
+
+  it("treats repeated acceptance of the accepted current proof as a successful no-op", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "fps.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+    const activityCount = getClientPortalActivity("ar-delta").filter(
+      (action) => action.type === "accept-payment-proof",
+    ).length;
+    const timelineCount = requireCase("ar-delta").timeline.filter(
+      (event) => event.label === "Payment proof accepted",
+    ).length;
+
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+    expect(
+      getClientPortalActivity("ar-delta").filter(
+        (action) => action.type === "accept-payment-proof",
+      ),
+    ).toHaveLength(activityCount);
+    expect(
+      requireCase("ar-delta").timeline.filter((event) => event.label === "Payment proof accepted"),
+    ).toHaveLength(timelineCount);
+  });
+
+  it("reconciles annual payment state when the accepted proof is accepted again", () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "fps.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+
+    updatePaymentStatus("ar-delta", "pending");
+    togglePacketRequirement("ar-delta", "payment-proof-checked");
+    expect(requireCase("ar-delta").paymentStatus).toBe("pending");
+    expect(
+      requireCase("ar-delta").packetRequirements.find(
+        (requirement) => requirement.id === "payment-proof-checked",
+      )?.complete,
+    ).toBe(false);
+
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+    expect(requireCase("ar-delta").paymentStatus).toBe("paid");
+    expect(
+      requireCase("ar-delta").packetRequirements.find(
+        (requirement) => requirement.id === "payment-proof-checked",
+      )?.complete,
+    ).toBe(true);
+    expect(
+      requireCase("ar-delta").timeline.filter((event) => event.label === "Payment proof accepted"),
+    ).toHaveLength(1);
     expect(
       getClientPortalActivity("ar-delta").filter(
         (action) => action.type === "accept-payment-proof",

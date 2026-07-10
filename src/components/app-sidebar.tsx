@@ -22,9 +22,10 @@ const nav: NavItem[] = [
   { to: "/clients", label: "Clients", icon: Building2 },
   { to: "/annual-returns", label: "Annual Returns", icon: CalendarClock },
   { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/portal", label: "Portal Demo", icon: ExternalLink },
+  { to: "/portal", label: "Portal", icon: ExternalLink },
   { to: "/payments", label: "Payments", icon: CreditCard },
-  { to: "/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle },
+  { to: "/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle, exact: true },
+  { to: "/whatsapp/automation", label: "WhatsApp Automation", icon: MessageCircle },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/teams", label: "Teams", icon: Users },
   { to: "/admin", label: "Admin", icon: ShieldCheck },
@@ -46,7 +47,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-2">
+      <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto p-2">
         <ul className="space-y-0.5">
           {nav.map((item) => {
             const active = item.exact
@@ -57,6 +58,7 @@ export function AppSidebar() {
               <li key={item.to}>
                 <Link
                   to={item.to as never}
+                  activeOptions={item.exact ? { exact: true } : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition",
                     active
