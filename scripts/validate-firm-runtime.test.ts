@@ -17,12 +17,16 @@ function runValidator(args: string[]) {
   );
 }
 
-function createEnvFile(contents: string): string {
+function createTemporaryFile(name: string, contents: string): string {
   const directory = mkdtempSync(join(tmpdir(), "kossilon-runtime-"));
   temporaryDirectories.push(directory);
-  const path = join(directory, ".env");
+  const path = join(directory, name);
   writeFileSync(path, contents, "utf8");
   return path;
+}
+
+function createEnvFile(contents: string): string {
+  return createTemporaryFile(".env", contents);
 }
 
 afterEach(() => {
@@ -58,20 +62,21 @@ describe("firm runtime deployment validation", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr.trim().split(/\r?\n/).slice(1)).toEqual([
+      "- WORKER_NAME",
       "- FIRM_ID",
       "- NEON_AUTH_URL",
       "- NEON_AUTH_COOKIE_SECRET",
+      "- HYPERDRIVE",
+      "- DOCUMENTS_BUCKET",
       "- WOZTELL_API_BASE_URL",
       "- WOZTELL_ACCESS_TOKEN",
       "- WOZTELL_CHANNEL_ID",
       "- WOZTELL_WEBHOOK_SECRET",
       "- EMAIL_FROM",
     ]);
-    expect(result.stderr).not.toContain("DOCUMENTS_BUCKET");
-    expect(result.stderr).not.toContain("DATABASE_URL");
   });
 
-  it("can validate a complete deployment manifest without printing secrets", () => {
+  it("rejects an unresolved template even when configuration values exist", () => {
     const cookieSecret = "cookie-secret-value-at-least-32-characters";
     const accessToken = "whatsapp-access-token";
     const webhookSecret = "whatsapp-webhook-secret";
@@ -92,6 +97,55 @@ EMAIL_FROM=operations@example.test
       "--wrangler-file",
       "wrangler.template.jsonc",
     ]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("- WORKER_NAME");
+    expect(result.stderr).toContain("- HYPERDRIVE");
+    expect(result.stderr).toContain("- DOCUMENTS_BUCKET");
+  });
+
+  it("validates a rendered deployment manifest without printing secrets", () => {
+    const cookieSecret = "cookie-secret-value-at-least-32-characters";
+    const accessToken = "whatsapp-access-token";
+    const webhookSecret = "whatsapp-webhook-secret";
+    const envFile = createEnvFile(`
+FIRM_ID=firm-a
+NEON_AUTH_URL=https://firm-a.example.neon.tech/auth
+NEON_AUTH_COOKIE_SECRET=${cookieSecret}
+WOZTELL_API_BASE_URL=https://api.example.test
+WOZTELL_ACCESS_TOKEN=${accessToken}
+WOZTELL_CHANNEL_ID=test-channel
+WOZTELL_WEBHOOK_SECRET=${webhookSecret}
+EMAIL_FROM=operations@example.test
+`);
+    const wranglerFile = createTemporaryFile(
+      "wrangler.jsonc",
+      JSON.stringify({
+        name: "firm-a-worker",
+        vars: {
+          FIRM_ID: "firm-a",
+          NEON_AUTH_URL: "https://firm-a.example.neon.tech/auth",
+          WOZTELL_API_BASE_URL: "https://api.example.test",
+          WOZTELL_CHANNEL_ID: "test-channel",
+          EMAIL_FROM: "operations@example.test",
+        },
+        r2_buckets: [
+          {
+            binding: "DOCUMENTS_BUCKET",
+            bucket_name: "firm-a-documents",
+          },
+        ],
+        hyperdrive: [
+          {
+            binding: "HYPERDRIVE",
+            id: "00000000-0000-4000-8000-000000000001",
+          },
+        ],
+        triggers: { crons: ["*/5 * * * *"] },
+      }),
+    );
+
+    const result = runValidator(["--env-file", envFile, "--wrangler-file", wranglerFile]);
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Firm runtime deployment is ready.");

@@ -7,11 +7,35 @@ import { parse as parseJsonc } from "jsonc-parser";
 import { getRuntimeReadiness } from "../src/server/runtime-env.ts";
 
 type WranglerTemplate = {
-  hyperdrive?: Array<{ binding?: string }>;
-  r2_buckets?: Array<{ binding?: string }>;
+  name?: string;
+  vars?: Record<string, unknown>;
+  hyperdrive?: Array<{ binding?: string; id?: string }>;
+  r2_buckets?: Array<{ binding?: string; bucket_name?: string }>;
 };
 
 type CliOptions = { envFile?: string; wranglerFile: string };
+
+const REQUIRED_RENDERED_VARS = [
+  "FIRM_ID",
+  "NEON_AUTH_URL",
+  "WOZTELL_API_BASE_URL",
+  "WOZTELL_CHANNEL_ID",
+  "EMAIL_FROM",
+] as const;
+
+const DEPLOYMENT_REQUIREMENT_ORDER = [
+  "WORKER_NAME",
+  "FIRM_ID",
+  "NEON_AUTH_URL",
+  "NEON_AUTH_COOKIE_SECRET",
+  "HYPERDRIVE",
+  "DOCUMENTS_BUCKET",
+  "WOZTELL_API_BASE_URL",
+  "WOZTELL_ACCESS_TOKEN",
+  "WOZTELL_CHANNEL_ID",
+  "WOZTELL_WEBHOOK_SECRET",
+  "EMAIL_FROM",
+] as const;
 
 function getEnvFileArgument(args: string[]): string | undefined {
   const index = args.indexOf("--env-file");
@@ -46,11 +70,23 @@ function loadWranglerTemplate(path: string): WranglerTemplate {
   return parseJsonc(readFileSync(resolve(path), "utf8")) as WranglerTemplate;
 }
 
-function hasResourceBinding(
-  bindings: Array<{ binding?: string }> | undefined,
-  name: string,
-): boolean {
-  return bindings?.some((item) => item.binding === name) ?? false;
+function isRenderedText(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0 && !value.includes("${");
+}
+
+function hasRenderedR2Binding(template: WranglerTemplate): boolean {
+  return (
+    template.r2_buckets?.some(
+      (item) => item.binding === "DOCUMENTS_BUCKET" && isRenderedText(item.bucket_name),
+    ) ?? false
+  );
+}
+
+function hasRenderedHyperdriveBinding(template: WranglerTemplate): boolean {
+  return (
+    template.hyperdrive?.some((item) => item.binding === "HYPERDRIVE" && isRenderedText(item.id)) ??
+    false
+  );
 }
 
 function deploymentProbe(
@@ -59,7 +95,7 @@ function deploymentProbe(
 ): Record<string, unknown> {
   const probe = { ...env };
 
-  if (hasResourceBinding(template.r2_buckets, "DOCUMENTS_BUCKET")) {
+  if (hasRenderedR2Binding(template)) {
     probe.DOCUMENTS_BUCKET = {
       delete() {},
       get() {},
@@ -67,19 +103,42 @@ function deploymentProbe(
       put() {},
     };
   }
-  if (hasResourceBinding(template.hyperdrive, "HYPERDRIVE")) {
+  if (hasRenderedHyperdriveBinding(template)) {
     probe.HYPERDRIVE = { connectionString: "postgres://declared-hyperdrive-binding" };
   }
 
   return probe;
 }
 
+function deploymentMissing(env: Record<string, unknown>, template: WranglerTemplate): string[] {
+  const missing = new Set<string>();
+
+  if (!isRenderedText(template.name)) missing.add("WORKER_NAME");
+
+  for (const name of REQUIRED_RENDERED_VARS) {
+    const envValue = env[name];
+    const templateValue = template.vars?.[name];
+    if (
+      !isRenderedText(templateValue) ||
+      typeof envValue !== "string" ||
+      templateValue !== envValue.trim()
+    ) {
+      missing.add(name);
+    }
+  }
+
+  for (const name of getRuntimeReadiness(deploymentProbe(env, template)).missing) {
+    missing.add(name === "DATABASE_URL" ? "HYPERDRIVE" : name);
+  }
+
+  return DEPLOYMENT_REQUIREMENT_ORDER.filter((name) => missing.has(name));
+}
+
 try {
   const options = getOptions(process.argv.slice(2));
   const env = loadEnvironment(options.envFile);
   const template = loadWranglerTemplate(options.wranglerFile);
-  const readiness = getRuntimeReadiness(deploymentProbe(env, template));
-  const missing = readiness.missing.map((name) => (name === "DATABASE_URL" ? "HYPERDRIVE" : name));
+  const missing = deploymentMissing(env, template);
 
   if (missing.length > 0) {
     console.error("Runtime is missing required production bindings:");
