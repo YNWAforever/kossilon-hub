@@ -107,6 +107,23 @@ type PaymentIdRow = {
   id: string;
 };
 
+type StaffProfileIdRow = {
+  user_id: string;
+  id: string;
+};
+
+type BusinessCalendarIdRow = {
+  name: string;
+  version: number;
+  id: string;
+};
+
+type SlaPolicyIdRow = {
+  policy_key: string;
+  version: number;
+  id: string;
+};
+
 const FIXTURE_UUID_PREFIXES = {
   teams: "10000000",
   users: "20000000",
@@ -116,6 +133,13 @@ const FIXTURE_UUID_PREFIXES = {
   checklistItems: "60000000",
   payments: "70000000",
   timelineEvents: "80000000",
+  staffProfiles: "90000000",
+  staffSkills: "91000000",
+  memberships: "92000000",
+  businessCalendars: "93000000",
+  calendarHolidays: "94000000",
+  slaPolicies: "95000000",
+  workItems: "96000000",
 } as const;
 
 type FixtureUuidPrefix = (typeof FIXTURE_UUID_PREFIXES)[keyof typeof FIXTURE_UUID_PREFIXES];
@@ -133,6 +157,18 @@ function actualCaseIdFor(caseIdsByFixtureId: Map<string, string>, fixtureCaseId:
   }
 
   return actualCaseId;
+}
+
+function adoptedFixtureId(
+  idsByFixtureId: Map<string, string>,
+  fixtureId: string,
+  label: string,
+): string {
+  const actualId = idsByFixtureId.get(fixtureId);
+  if (!actualId) {
+    throw new Error(`Missing adopted ${label} for fixture ${fixtureId}.`);
+  }
+  return actualId;
 }
 
 const teams: TeamFixture[] = [
@@ -176,6 +212,36 @@ const users: UserFixture[] = [
     email: "priya.singh@kossilon.hk",
     role: "Manager",
     teamId: teams[1].id,
+  },
+];
+
+const staffProfiles = users.map((user, index) => ({
+  id: fixtureId("90000000", index + 1),
+  userId: user.id,
+  authUserId: `neon-auth-staff-${user.email}`,
+  role: user.role,
+  teamId: user.teamId,
+  capacityPoints: user.role === "Staff" ? 80 : 100,
+}));
+
+const staffSkills = [
+  {
+    id: fixtureId("91000000", 1),
+    staffProfileId: staffProfiles[0].id,
+    skillKey: "annual-return",
+    proficiency: 4,
+  },
+  {
+    id: fixtureId("91000000", 2),
+    staffProfileId: staffProfiles[1].id,
+    skillKey: "annual-return-review",
+    proficiency: 5,
+  },
+  {
+    id: fixtureId("91000000", 3),
+    staffProfileId: staffProfiles[2].id,
+    skillKey: "annual-return",
+    proficiency: 5,
   },
 ];
 
@@ -238,6 +304,101 @@ const companies: CompanyFixture[] = [
     confirmationDocumentId: fixtureId("50000000", 340),
   },
 ];
+
+const clientAuthIdentity = {
+  authUserId: "neon-auth-client-harbour",
+  email: "client.harbour@example.test",
+};
+
+const clientCompanyMemberships = [
+  {
+    id: fixtureId("92000000", 1),
+    authUserId: clientAuthIdentity.authUserId,
+    companyId: companies[0].id,
+    invitedBy: users[0].id,
+    acceptedAt: "2026-06-01T09:00:00.000Z",
+  },
+];
+
+const businessCalendars = [
+  {
+    id: fixtureId("93000000", 1),
+    name: "Hong Kong Operations",
+    timezone: "Asia/Hong_Kong",
+    version: 1,
+    weeklySchedule: {
+      monday: [
+        ["09:00", "12:30"],
+        ["13:30", "18:00"],
+      ],
+      tuesday: [
+        ["09:00", "12:30"],
+        ["13:30", "18:00"],
+      ],
+      wednesday: [
+        ["09:00", "12:30"],
+        ["13:30", "18:00"],
+      ],
+      thursday: [
+        ["09:00", "12:30"],
+        ["13:30", "18:00"],
+      ],
+      friday: [
+        ["09:00", "12:30"],
+        ["13:30", "18:00"],
+      ],
+      saturday: [],
+      sunday: [],
+    },
+    effectiveFrom: "2026-01-01",
+    createdBy: users[0].id,
+  },
+];
+
+const businessCalendarHolidays = [
+  {
+    id: fixtureId("94000000", 1),
+    businessCalendarId: businessCalendars[0].id,
+    holidayDate: "2026-07-01",
+    label: "Hong Kong Special Administrative Region Establishment Day",
+  },
+];
+
+const slaPolicies = [
+  {
+    id: fixtureId("95000000", 1),
+    policyKey: "annual-return-case",
+    version: 1,
+    name: "Annual return case response",
+    workType: "annual_return_case",
+    businessCalendarId: businessCalendars[0].id,
+    warningMinutes: 240,
+    dueMinutes: 480,
+    effectiveFrom: "2026-01-01T00:00:00.000Z",
+    createdBy: users[0].id,
+  },
+];
+
+const workItemFixtures = companies.map((company, index) => ({
+  id: fixtureId("96000000", index + 1),
+  company,
+  sourceEventKey: `seed:annual-return:${company.caseId}`,
+  status: company.currentStatus === "Filed" ? "completed" : "open",
+  priority: company.riskLevel === "yellow" ? 70 : 50,
+  slaStartedAt: [
+    "2026-07-02T01:00:00.000Z",
+    "2026-07-03T01:00:00.000Z",
+    "2026-06-28T08:00:00.000Z",
+  ][index],
+  slaWarningAt: [
+    "2026-07-02T06:00:00.000Z",
+    "2026-07-03T06:00:00.000Z",
+    "2026-06-29T05:00:00.000Z",
+  ][index],
+  slaDueAt: ["2026-07-03T03:00:00.000Z", "2026-07-06T03:00:00.000Z", "2026-06-29T09:00:00.000Z"][
+    index
+  ],
+}));
 
 const checklistLabels = [
   "Signed NAR1 form",
@@ -393,26 +554,30 @@ const checklists: ChecklistFixture[] = [
     verifiedAt: null,
     documentId: null,
   },
-  ...checklistLabels.map((label, index): ChecklistFixture => ({
-    id: fixtureId("60000000", 201 + index),
-    caseId: companies[1].caseId,
-    itemLabel: label,
-    required: true,
-    status: "Verified",
-    receivedAt: "2026-06-28T09:00:00.000Z",
-    verifiedAt: "2026-06-29T10:00:00.000Z",
-    documentId: fixtureId("50000000", 200 + index),
-  })),
-  ...checklistLabels.map((label, index): ChecklistFixture => ({
-    id: fixtureId("60000000", 301 + index),
-    caseId: companies[2].caseId,
-    itemLabel: label,
-    required: true,
-    status: "Verified",
-    receivedAt: "2026-06-10T09:00:00.000Z",
-    verifiedAt: "2026-06-11T10:00:00.000Z",
-    documentId: fixtureId("50000000", 300 + index),
-  })),
+  ...checklistLabels.map(
+    (label, index): ChecklistFixture => ({
+      id: fixtureId("60000000", 201 + index),
+      caseId: companies[1].caseId,
+      itemLabel: label,
+      required: true,
+      status: "Verified",
+      receivedAt: "2026-06-28T09:00:00.000Z",
+      verifiedAt: "2026-06-29T10:00:00.000Z",
+      documentId: fixtureId("50000000", 200 + index),
+    }),
+  ),
+  ...checklistLabels.map(
+    (label, index): ChecklistFixture => ({
+      id: fixtureId("60000000", 301 + index),
+      caseId: companies[2].caseId,
+      itemLabel: label,
+      required: true,
+      status: "Verified",
+      receivedAt: "2026-06-10T09:00:00.000Z",
+      verifiedAt: "2026-06-11T10:00:00.000Z",
+      documentId: fixtureId("50000000", 300 + index),
+    }),
+  ),
 ];
 
 const payments: PaymentFixture[] = [
@@ -699,6 +864,280 @@ try {
 
       caseIdsByFixtureId.set(company.caseId, caseRow.id);
     }
+
+    const staffProfileRows = (await tx`
+      insert into staff_profiles ${tx(
+        staffProfiles.map((profile) => ({
+          id: profile.id,
+          user_id: profile.userId,
+          auth_user_id: profile.authUserId,
+          role: profile.role,
+          team_id: profile.teamId,
+          capacity_points: profile.capacityPoints,
+          active: true,
+        })),
+        "id",
+        "user_id",
+        "auth_user_id",
+        "role",
+        "team_id",
+        "capacity_points",
+        "active",
+      )}
+      on conflict (user_id) do update set
+        auth_user_id = excluded.auth_user_id,
+        role = excluded.role,
+        team_id = excluded.team_id,
+        capacity_points = excluded.capacity_points,
+        active = excluded.active,
+        updated_at = now()
+      returning user_id, id
+    `) as StaffProfileIdRow[];
+
+    const staffProfileIdsByFixtureId = new Map<string, string>();
+    for (const profile of staffProfiles) {
+      const row = staffProfileRows.find((candidate) => candidate.user_id === profile.userId);
+      if (!row) {
+        throw new Error(`Missing adopted staff profile for fixture user ${profile.userId}.`);
+      }
+      staffProfileIdsByFixtureId.set(profile.id, row.id);
+    }
+
+    await tx`
+      insert into staff_skills ${tx(
+        staffSkills.map((skill) => ({
+          id: skill.id,
+          staff_profile_id: adoptedFixtureId(
+            staffProfileIdsByFixtureId,
+            skill.staffProfileId,
+            "staff profile",
+          ),
+          skill_key: skill.skillKey,
+          proficiency: skill.proficiency,
+          active: true,
+        })),
+        "id",
+        "staff_profile_id",
+        "skill_key",
+        "proficiency",
+        "active",
+      )}
+      on conflict (staff_profile_id, skill_key) do update set
+        proficiency = excluded.proficiency,
+        active = excluded.active,
+        updated_at = now()
+    `;
+
+    await tx`
+      insert into client_company_memberships ${tx(
+        clientCompanyMemberships.map((membership) => ({
+          id: membership.id,
+          auth_user_id: membership.authUserId,
+          company_id: membership.companyId,
+          role: "Client",
+          active: true,
+          invited_by: membership.invitedBy,
+          invited_at: "2026-05-30T09:00:00.000Z",
+          accepted_at: membership.acceptedAt,
+        })),
+        "id",
+        "auth_user_id",
+        "company_id",
+        "role",
+        "active",
+        "invited_by",
+        "invited_at",
+        "accepted_at",
+      )}
+      on conflict (auth_user_id, company_id) do update set
+        role = excluded.role,
+        active = excluded.active,
+        invited_by = excluded.invited_by,
+        accepted_at = coalesce(client_company_memberships.accepted_at, excluded.accepted_at),
+        updated_at = now()
+    `;
+
+    const businessCalendarRows = (await tx`
+      insert into business_calendars ${tx(
+        businessCalendars.map((calendar) => ({
+          id: calendar.id,
+          name: calendar.name,
+          timezone: calendar.timezone,
+          version: calendar.version,
+          weekly_schedule: tx.json(calendar.weeklySchedule),
+          effective_from: calendar.effectiveFrom,
+          active: true,
+          created_by: calendar.createdBy,
+        })),
+        "id",
+        "name",
+        "timezone",
+        "version",
+        "weekly_schedule",
+        "effective_from",
+        "active",
+        "created_by",
+      )}
+      on conflict (name, version) do update set
+        timezone = excluded.timezone,
+        weekly_schedule = excluded.weekly_schedule,
+        effective_from = excluded.effective_from,
+        active = excluded.active,
+        updated_at = now()
+      returning name, version, id
+    `) as BusinessCalendarIdRow[];
+
+    const businessCalendarIdsByFixtureId = new Map<string, string>();
+    for (const calendar of businessCalendars) {
+      const row = businessCalendarRows.find(
+        (candidate) => candidate.name === calendar.name && candidate.version === calendar.version,
+      );
+      if (!row) {
+        throw new Error(`Missing adopted business calendar ${calendar.name} v${calendar.version}.`);
+      }
+      businessCalendarIdsByFixtureId.set(calendar.id, row.id);
+    }
+
+    await tx`
+      insert into business_calendar_holidays ${tx(
+        businessCalendarHolidays.map((holiday) => ({
+          id: holiday.id,
+          business_calendar_id: adoptedFixtureId(
+            businessCalendarIdsByFixtureId,
+            holiday.businessCalendarId,
+            "business calendar",
+          ),
+          holiday_date: holiday.holidayDate,
+          label: holiday.label,
+          closed: true,
+          working_intervals: null,
+        })),
+        "id",
+        "business_calendar_id",
+        "holiday_date",
+        "label",
+        "closed",
+        "working_intervals",
+      )}
+      on conflict (business_calendar_id, holiday_date) do update set
+        label = excluded.label,
+        closed = excluded.closed,
+        working_intervals = excluded.working_intervals
+    `;
+
+    const slaPolicyRows = (await tx`
+      insert into sla_policies ${tx(
+        slaPolicies.map((policy) => ({
+          id: policy.id,
+          policy_key: policy.policyKey,
+          version: policy.version,
+          name: policy.name,
+          work_type: policy.workType,
+          business_calendar_id: adoptedFixtureId(
+            businessCalendarIdsByFixtureId,
+            policy.businessCalendarId,
+            "business calendar",
+          ),
+          warning_minutes: policy.warningMinutes,
+          due_minutes: policy.dueMinutes,
+          effective_from: policy.effectiveFrom,
+          active: true,
+          created_by: policy.createdBy,
+        })),
+        "id",
+        "policy_key",
+        "version",
+        "name",
+        "work_type",
+        "business_calendar_id",
+        "warning_minutes",
+        "due_minutes",
+        "effective_from",
+        "active",
+        "created_by",
+      )}
+      on conflict (policy_key, version) do update set
+        name = excluded.name,
+        work_type = excluded.work_type,
+        business_calendar_id = excluded.business_calendar_id,
+        warning_minutes = excluded.warning_minutes,
+        due_minutes = excluded.due_minutes,
+        effective_from = excluded.effective_from,
+        active = excluded.active,
+        updated_at = now()
+      returning policy_key, version, id
+    `) as SlaPolicyIdRow[];
+
+    const slaPolicyIdsByFixtureId = new Map<string, string>();
+    for (const policy of slaPolicies) {
+      const row = slaPolicyRows.find(
+        (candidate) =>
+          candidate.policy_key === policy.policyKey && candidate.version === policy.version,
+      );
+      if (!row) {
+        throw new Error(`Missing adopted SLA policy ${policy.policyKey} v${policy.version}.`);
+      }
+      slaPolicyIdsByFixtureId.set(policy.id, row.id);
+    }
+
+    await tx`
+      insert into work_items ${tx(
+        workItemFixtures.map((item) => ({
+          id: item.id,
+          company_id: item.company.id,
+          case_id: actualCaseIdFor(caseIdsByFixtureId, item.company.caseId),
+          source_event_key: item.sourceEventKey,
+          source_event_type: "annual_return_case_seeded",
+          work_type: "annual_return_case",
+          title: `Annual return 2026 - ${item.company.companyName}`,
+          status: item.status,
+          priority: item.priority,
+          owner_id: item.company.ownerId,
+          reviewer_id: item.company.reviewerId,
+          team_id: item.company.teamId,
+          sla_policy_version_id: adoptedFixtureId(
+            slaPolicyIdsByFixtureId,
+            slaPolicies[0].id,
+            "SLA policy",
+          ),
+          sla_started_at: item.slaStartedAt,
+          sla_warning_at: item.slaWarningAt,
+          sla_due_at: item.slaDueAt,
+          sla_breached_at: null,
+          version: 1,
+          completed_at: item.status === "completed" ? "2026-06-28T16:35:00.000Z" : null,
+        })),
+        "id",
+        "company_id",
+        "case_id",
+        "source_event_key",
+        "source_event_type",
+        "work_type",
+        "title",
+        "status",
+        "priority",
+        "owner_id",
+        "reviewer_id",
+        "team_id",
+        "sla_policy_version_id",
+        "sla_started_at",
+        "sla_warning_at",
+        "sla_due_at",
+        "sla_breached_at",
+        "version",
+        "completed_at",
+      )}
+      on conflict (source_event_key) do update set
+        company_id = excluded.company_id,
+        case_id = excluded.case_id,
+        source_event_type = excluded.source_event_type,
+        work_type = excluded.work_type,
+        title = excluded.title,
+        priority = excluded.priority,
+        team_id = excluded.team_id,
+        sla_policy_version_id = excluded.sla_policy_version_id,
+        updated_at = now()
+    `;
 
     await tx`
       insert into documents ${tx(
