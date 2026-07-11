@@ -3,7 +3,7 @@ import { AlertCircle, Building2, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
-import { useAuth } from "@/features/auth/auth-context";
+import { useAuth } from "@/features/auth/auth-context-neon";
 import { consumeRedirectPath, getSafeRedirectPath } from "@/features/auth/route-guard";
 
 export const Route = createFileRoute("/login")({
@@ -22,8 +22,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { session, isHydrated, login, loginDemo, demoUsers } = useAuth();
-  const [email, setEmail] = useState("admin@kossilon.test");
-  const [password, setPassword] = useState("admin-demo");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,14 +35,14 @@ function LoginPage() {
     void navigate({ href: redirectPath, replace: true });
   }, [isHydrated, navigate, session]);
 
-  function submitLogin(event: FormEvent<HTMLFormElement>) {
+  async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = login(email, password);
+    const result = await login(email, password);
     setError(result.ok ? null : result.error);
   }
 
-  function submitDemoLogin(userId: string) {
-    const result = loginDemo(userId);
+  async function submitDemoLogin(userId: string) {
+    const result = await loginDemo(userId);
     setError(result.ok ? null : result.error);
   }
 
@@ -96,10 +96,10 @@ function LoginPage() {
           </div>
 
           <div>
-            <StatusPill tone="blue">Prototype access</StatusPill>
+            <StatusPill tone="blue">Secure access</StatusPill>
             <h1 className="mt-4 font-display text-2xl font-semibold">Sign in to Compliance Core</h1>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Use the default admin credentials or enter with a demo identity.
+              Sign in with your firm's Neon Auth account.
             </p>
           </div>
 
@@ -146,7 +146,8 @@ function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-7 border-t border-border pt-6">
+          {demoUsers.length > 0 && (
+            <div className="mt-7 border-t border-border pt-6">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Demo identities
@@ -182,7 +183,8 @@ function LoginPage() {
                 </button>
               ))}
             </div>
-          </div>
+            </div>
+          )}
         </div>
       </section>
     </main>

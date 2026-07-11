@@ -12,6 +12,10 @@ function browserStorage(): SessionStorageLike | null {
   }
 }
 
+export function isDemoAuthEnabled(value = import.meta.env.VITE_ENABLE_DEMO_AUTH): boolean {
+  return value === "true";
+}
+
 export function isPublicRoute(pathname: string): boolean {
   return pathname === "/login";
 }

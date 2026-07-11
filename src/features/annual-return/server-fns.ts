@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getSqlClient } from "@/server/db/client";
 import {
@@ -95,12 +96,13 @@ export function assertAnnualReturnStatusActionAllowed(
 }
 
 async function withAnnualReturnRepository<T>(
-  handler: (repository: AnnualReturnRepository) => Promise<T>,
+  handler: (repository: AnnualReturnRepository, actorId: string) => Promise<T>,
 ): Promise<T> {
+  const actorId = await getCurrentAnnualReturnActorId(getRequest());
   const repository = createAnnualReturnRepository();
 
   try {
-    return await handler(repository);
+    return await handler(repository, actorId);
   } finally {
     await repository.close();
   }
@@ -119,8 +121,8 @@ export const getAnnualReturnCase = createServerFn({ method: "GET" })
   );
 
 export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" }).handler(async () =>
-  withAnnualReturnRepository((repository) =>
-    repository.dashboardMetrics(hongKongBusinessDate(), getCurrentAnnualReturnActorId()),
+  withAnnualReturnRepository((repository, actorId) =>
+    repository.dashboardMetrics(hongKongBusinessDate(), actorId),
   ),
 );
 
@@ -132,7 +134,7 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) =>
-    withAnnualReturnRepository(async (repository) => {
+    withAnnualReturnRepository(async (repository, actorId) => {
       const current = await repository.getCase(data.caseId);
 
       if (!current) {
@@ -141,7 +143,7 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
 
       assertAnnualReturnStatusActionAllowed(current, data.nextStatus);
 
-      return repository.updateStatus(data.caseId, data.nextStatus, getCurrentAnnualReturnActorId());
+      return repository.updateStatus(data.caseId, data.nextStatus, actorId);
     }),
   );
 
@@ -157,10 +159,10 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
+    withAnnualReturnRepository((repository, actorId) =>
       repository.recordReminder({
         ...data,
-        actorId: getCurrentAnnualReturnActorId(),
+        actorId,
       }),
     ),
   );
@@ -168,6 +170,7 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
 export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
   .validator(queueAnnualReturnWhatsAppReminderSchema)
   .handler(async ({ data }) => {
+    const actorId = await getCurrentAnnualReturnActorId(getRequest());
     const sql = getSqlClient();
 
     return sql.begin(async (tx) => {
@@ -185,7 +188,7 @@ export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method:
           annualReturnRepository,
           whatsAppRepository,
           case_,
-          actorId: getCurrentAnnualReturnActorId(),
+          actorId,
           recipientName: data.recipientName,
           recipientPhone: data.recipientPhone,
         });
@@ -207,10 +210,10 @@ export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method:
 export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" })
   .validator(updateChecklistItemSchema)
   .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
+    withAnnualReturnRepository((repository, actorId) =>
       repository.updateChecklistItem({
         ...data,
-        actorId: getCurrentAnnualReturnActorId(),
+        actorId,
       }),
     ),
   );
@@ -218,10 +221,10 @@ export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" }
 export const updateAnnualReturnPayment = createServerFn({ method: "POST" })
   .validator(updatePaymentSchema)
   .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
+    withAnnualReturnRepository((repository, actorId) =>
       repository.updatePayment({
         ...data,
-        actorId: getCurrentAnnualReturnActorId(),
+        actorId,
       }),
     ),
   );
@@ -235,10 +238,10 @@ export const updateAnnualReturnFilingProof = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
+    withAnnualReturnRepository((repository, actorId) =>
       repository.updateFilingProof({
         ...data,
-        actorId: getCurrentAnnualReturnActorId(),
+        actorId,
       }),
     ),
   );

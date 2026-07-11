@@ -24,8 +24,12 @@ vi.mock("@/features/auth/session", async (importOriginal) => {
   };
 });
 
-vi.mock("@/features/auth/auth-context", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../features/auth/auth-context")>();
+vi.mock("@/features/auth/neon-auth-rpc", () => ({
+  getAuthenticatedActor: () => Promise.resolve({ authUserId: "test-admin" }),
+}));
+
+vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../features/auth/auth-context-neon")>();
   const session = {
     id: "test-admin",
     name: "Test Admin",

@@ -22,9 +22,10 @@ const knowledgeBaseSectionSource = readFileSync(
 describe("final review architecture restorations", () => {
   it("keeps the authenticated query-backed root shell and error boundaries wired", () => {
     expect(rootRouteSource).toContain("createRootRouteWithContext<{ queryClient: QueryClient }>()");
-    expect(rootRouteSource).toContain("beforeLoad: ({ location }) =>");
+    expect(rootRouteSource).toContain("beforeLoad: async ({ location }) =>");
     expect(rootRouteSource).toContain("isPublicRoute(location.pathname)");
-    expect(rootRouteSource).toContain("getStoredSession()");
+    expect(rootRouteSource).toContain("await getAuthenticatedActor()");
+    expect(rootRouteSource).toContain("isDemoAuthEnabled()");
     expect(rootRouteSource).toContain("throw redirect({");
     expect(rootRouteSource).toContain("<QueryClientProvider client={queryClient}>");
     expect(rootRouteSource).toContain("<AuthProvider>");

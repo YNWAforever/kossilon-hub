@@ -16,7 +16,7 @@ import {
 
 import { StatusPill } from "@/components/status-pill";
 import { TopBar } from "@/components/top-bar";
-import { useAuth } from "@/features/auth/auth-context";
+import { useAuth } from "@/features/auth/auth-context-neon";
 import { demoUsers, isAdmin, type AuthRole, type DemoUser } from "@/features/auth/session";
 import { cn } from "@/lib/utils";
 

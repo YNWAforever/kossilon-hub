@@ -16,10 +16,11 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider, useAuth } from "@/features/auth/auth-context";
-import { getStoredSession } from "@/features/auth/session";
+import { AuthProvider, useAuth } from "@/features/auth/auth-context-neon";
+import { getAuthenticatedActor } from "@/features/auth/neon-auth-rpc";
 import {
   getSafeRedirectPath,
+  isDemoAuthEnabled,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
@@ -82,15 +83,19 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  beforeLoad: ({ location }) => {
-    if (isPublicRoute(location.pathname) || getStoredSession()) return;
+  beforeLoad: async ({ location }) => {
+    if (isPublicRoute(location.pathname) || isDemoAuthEnabled()) return;
 
-    const redirectPath = getSafeRedirectPath(location.href);
-    rememberRedirectPath(redirectPath);
-    throw redirect({
-      href: `/login?redirect=${encodeURIComponent(redirectPath)}`,
-      replace: true,
-    });
+    try {
+      await getAuthenticatedActor();
+    } catch {
+      const redirectPath = getSafeRedirectPath(location.href);
+      rememberRedirectPath(redirectPath);
+      throw redirect({
+        href: `/login?redirect=${encodeURIComponent(redirectPath)}`,
+        replace: true,
+      });
+    }
   },
   head: () => ({
     meta: [

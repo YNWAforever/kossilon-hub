@@ -4,6 +4,7 @@ import {
   consumeRedirectPath,
   isPublicRoute,
   rememberRedirectPath,
+  isDemoAuthEnabled,
   getSafeRedirectPath,
 } from "./route-guard";
 
@@ -49,6 +50,12 @@ describe("auth route guard helpers", () => {
     expect(isPublicRoute("/")).toBe(false);
     expect(isPublicRoute("/admin")).toBe(false);
     expect(isPublicRoute("/login/help")).toBe(false);
+  });
+
+  it("keeps demo auth disabled unless explicitly enabled", () => {
+    expect(isDemoAuthEnabled(undefined)).toBe(false);
+    expect(isDemoAuthEnabled("false")).toBe(false);
+    expect(isDemoAuthEnabled("true")).toBe(true);
   });
 
   it("remembers and consumes a safe redirect path", () => {
