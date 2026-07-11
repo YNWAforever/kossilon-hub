@@ -116,12 +116,25 @@ type BusinessCalendarIdRow = {
   name: string;
   version: number;
   id: string;
+  timezone: string;
+  weekly_schedule: unknown;
+  effective_from: string;
+  created_by: string;
 };
 
 type SlaPolicyIdRow = {
   policy_key: string;
   version: number;
   id: string;
+  name: string;
+  work_type: string;
+  business_calendar_id: string;
+  warning_minutes: number;
+  due_minutes: number;
+  escalation_targets: unknown;
+  priority_modifier: number;
+  effective_from: string;
+  created_by: string;
 };
 
 const FIXTURE_UUID_PREFIXES = {
@@ -169,6 +182,52 @@ function adoptedFixtureId(
     throw new Error(`Missing adopted ${label} for fixture ${fixtureId}.`);
   }
   return actualId;
+}
+
+function normalizedJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(normalizedJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${normalizedJson(item)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function assertCalendarFixtureMatches(
+  row: BusinessCalendarIdRow,
+  fixture: (typeof businessCalendars)[number],
+) {
+  if (
+    row.timezone !== fixture.timezone ||
+    row.version !== fixture.version ||
+    normalizedJson(row.weekly_schedule) !== normalizedJson(fixture.weeklySchedule) ||
+    String(row.effective_from).slice(0, 10) !== fixture.effectiveFrom ||
+    row.created_by !== fixture.createdBy
+  ) {
+    throw new Error(`Business calendar ${fixture.name} v${fixture.version} differs from fixture.`);
+  }
+}
+
+function assertSlaPolicyFixtureMatches(
+  row: SlaPolicyIdRow,
+  fixture: (typeof slaPolicies)[number],
+  businessCalendarId: string,
+) {
+  if (
+    row.name !== fixture.name ||
+    row.work_type !== fixture.workType ||
+    row.business_calendar_id !== businessCalendarId ||
+    row.warning_minutes !== fixture.warningMinutes ||
+    row.due_minutes !== fixture.dueMinutes ||
+    normalizedJson(row.escalation_targets) !== normalizedJson(fixture.escalationTargets) ||
+    row.priority_modifier !== fixture.priorityModifier ||
+    new Date(row.effective_from).toISOString() !== fixture.effectiveFrom ||
+    row.created_by !== fixture.createdBy
+  ) {
+    throw new Error(`SLA policy ${fixture.policyKey} v${fixture.version} differs from fixture.`);
+  }
 }
 
 const teams: TeamFixture[] = [
@@ -374,6 +433,8 @@ const slaPolicies = [
     businessCalendarId: businessCalendars[0].id,
     warningMinutes: 240,
     dueMinutes: 480,
+    escalationTargets: ["manager"],
+    priorityModifier: 0,
     effectiveFrom: "2026-01-01T00:00:00.000Z",
     createdBy: users[0].id,
   },
@@ -978,13 +1039,8 @@ try {
         "active",
         "created_by",
       )}
-      on conflict (name, version) do update set
-        timezone = excluded.timezone,
-        weekly_schedule = excluded.weekly_schedule,
-        effective_from = excluded.effective_from,
-        active = excluded.active,
-        updated_at = now()
-      returning name, version, id
+      on conflict (name, version) do update set name = excluded.name
+      returning name, version, id, timezone, weekly_schedule, effective_from, created_by
     `) as BusinessCalendarIdRow[];
 
     const businessCalendarIdsByFixtureId = new Map<string, string>();
@@ -995,6 +1051,7 @@ try {
       if (!row) {
         throw new Error(`Missing adopted business calendar ${calendar.name} v${calendar.version}.`);
       }
+      assertCalendarFixtureMatches(row, calendar);
       businessCalendarIdsByFixtureId.set(calendar.id, row.id);
     }
 
@@ -1040,6 +1097,8 @@ try {
           ),
           warning_minutes: policy.warningMinutes,
           due_minutes: policy.dueMinutes,
+          escalation_targets: tx.json(policy.escalationTargets),
+          priority_modifier: policy.priorityModifier,
           effective_from: policy.effectiveFrom,
           active: true,
           created_by: policy.createdBy,
@@ -1052,20 +1111,16 @@ try {
         "business_calendar_id",
         "warning_minutes",
         "due_minutes",
+        "escalation_targets",
+        "priority_modifier",
         "effective_from",
         "active",
         "created_by",
       )}
-      on conflict (policy_key, version) do update set
-        name = excluded.name,
-        work_type = excluded.work_type,
-        business_calendar_id = excluded.business_calendar_id,
-        warning_minutes = excluded.warning_minutes,
-        due_minutes = excluded.due_minutes,
-        effective_from = excluded.effective_from,
-        active = excluded.active,
-        updated_at = now()
-      returning policy_key, version, id
+      on conflict (policy_key, version) do update set policy_key = excluded.policy_key
+      returning policy_key, version, id, name, work_type, business_calendar_id,
+        warning_minutes, due_minutes, escalation_targets, priority_modifier,
+        effective_from, created_by
     `) as SlaPolicyIdRow[];
 
     const slaPolicyIdsByFixtureId = new Map<string, string>();
@@ -1077,6 +1132,11 @@ try {
       if (!row) {
         throw new Error(`Missing adopted SLA policy ${policy.policyKey} v${policy.version}.`);
       }
+      assertSlaPolicyFixtureMatches(
+        row,
+        policy,
+        adoptedFixtureId(businessCalendarIdsByFixtureId, policy.businessCalendarId, "calendar"),
+      );
       slaPolicyIdsByFixtureId.set(policy.id, row.id);
     }
 
@@ -1089,8 +1149,10 @@ try {
           source_event_key: item.sourceEventKey,
           source_event_type: "annual_return_case_seeded",
           work_type: "annual_return_case",
+          required_skill_key: "annual-return",
           title: `Annual return 2026 - ${item.company.companyName}`,
           status: item.status,
+          escalation_state: "none",
           priority: item.priority,
           owner_id: item.company.ownerId,
           reviewer_id: item.company.reviewerId,
@@ -1113,8 +1175,10 @@ try {
         "source_event_key",
         "source_event_type",
         "work_type",
+        "required_skill_key",
         "title",
         "status",
+        "escalation_state",
         "priority",
         "owner_id",
         "reviewer_id",
