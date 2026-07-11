@@ -329,7 +329,9 @@ create table if not exists assignment_events (
   constraint assignment_events_recommendation_evidence_check check (
     decision = 'manual'
     or (recommendation_rank is not null and recommendation_score is not null
-      and recommendation_factors <> '{}'::jsonb)
+      and jsonb_typeof(recommendation_factors) = 'object'
+      and recommendation_factors <> '{}'::jsonb
+    )
   )
 );
 
@@ -411,15 +413,15 @@ create table if not exists document_upload_intents (
 );
 
 create index if not exists work_items_open_queue_idx
-  on work_items (sla_breached_at desc nulls last, sla_due_at, priority desc, id)
+  on work_items ((sla_breached_at is null), sla_due_at, priority desc, id)
   where status in ('open', 'in_progress', 'blocked');
 
 create index if not exists work_items_owner_idx
-  on work_items (owner_id, sla_breached_at desc nulls last, sla_due_at, priority desc, id)
+  on work_items (owner_id, (sla_breached_at is null), sla_due_at, priority desc, id)
   where status in ('open', 'in_progress', 'blocked');
 
 create index if not exists work_items_team_idx
-  on work_items (team_id, sla_breached_at desc nulls last, sla_due_at, priority desc, id)
+  on work_items (team_id, (sla_breached_at is null), sla_due_at, priority desc, id)
   where status in ('open', 'in_progress', 'blocked');
 
 create index if not exists work_items_sla_warning_idx

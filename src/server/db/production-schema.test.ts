@@ -76,6 +76,9 @@ describe("production workflow schema", () => {
     }
     expect(migrationSql).toContain("assignment_events_override_reason_check");
     expect(migrationSql).toContain("assignment_events_recommendation_evidence_check");
+    expect(compactMigrationSql).toContain(
+      "jsonb_typeof(recommendation_factors) = 'object' and recommendation_factors <> '{}'::jsonb",
+    );
     expect(migrationSql).toContain("notification_outbox_redaction_check");
     expect(migrationSql).toContain("old.business_calendar_id");
     expect(migrationSql).toContain("new.business_calendar_id");
@@ -92,9 +95,9 @@ describe("production workflow schema", () => {
 
   it("defines queue and maintenance indexes in query order", () => {
     for (const definition of [
-      "work_items_open_queue_idx on work_items (sla_breached_at desc nulls last, sla_due_at, priority desc, id)",
-      "work_items_owner_idx on work_items (owner_id, sla_breached_at desc nulls last, sla_due_at, priority desc, id)",
-      "work_items_team_idx on work_items (team_id, sla_breached_at desc nulls last, sla_due_at, priority desc, id)",
+      "work_items_open_queue_idx on work_items ((sla_breached_at is null), sla_due_at, priority desc, id)",
+      "work_items_owner_idx on work_items (owner_id, (sla_breached_at is null), sla_due_at, priority desc, id)",
+      "work_items_team_idx on work_items (team_id, (sla_breached_at is null), sla_due_at, priority desc, id)",
       "work_items_sla_warning_idx on work_items (sla_warning_at, id)",
       "work_items_sla_due_idx on work_items (sla_due_at, id)",
       "notification_outbox_retry_idx on notification_outbox (next_attempt_at, created_at)",
