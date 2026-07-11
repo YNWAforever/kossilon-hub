@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "validate:runtime": "node --experimental-strip-types scripts/validate-firm-runtime.ts",
     "db:migrate": "bun scripts/db-migrate.ts",
     "db:seed": "bun scripts/db-seed-annual-return.ts"
   },

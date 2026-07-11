@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "${FIRM_WORKER_NAME}",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-07-11",
+  "r2_buckets": [
+    {
+      "binding": "DOCUMENTS_BUCKET",
+      "bucket_name": "${FIRM_DOCUMENTS_BUCKET_NAME}",
+    },
+  ],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "${FIRM_HYPERDRIVE_CONFIGURATION_ID}",
+    },
+  ],
+  "triggers": {
+    "crons": ["*/5 * * * *"],
+  },
+}
