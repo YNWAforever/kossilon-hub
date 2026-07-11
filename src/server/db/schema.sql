@@ -322,7 +322,15 @@ create table if not exists assignment_events (
   decision text not null check (decision in ('accepted_recommendation', 'override', 'manual')),
   override_reason text,
   expected_version integer not null check (expected_version > 0),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint assignment_events_override_reason_check check (
+    decision <> 'override' or nullif(btrim(override_reason), '') is not null
+  ),
+  constraint assignment_events_recommendation_evidence_check check (
+    decision = 'manual'
+    or (recommendation_rank is not null and recommendation_score is not null
+      and recommendation_factors <> '{}'::jsonb)
+  )
 );
 
 create table if not exists escalation_events (
@@ -349,8 +357,8 @@ create table if not exists notification_outbox (
   channel text not null check (channel in ('email', 'whatsapp', 'in_app')),
   notification_type text not null,
   idempotency_key text not null unique,
-  recipient text not null,
-  payload jsonb not null,
+  recipient text,
+  payload jsonb,
   status text not null default 'pending' check (
     status in ('pending', 'processing', 'sent', 'failed', 'cancelled')
   ),
@@ -365,7 +373,15 @@ create table if not exists notification_outbox (
   redacted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint notification_outbox_attempts_check check (attempt_count <= max_attempts)
+  constraint notification_outbox_attempts_check check (attempt_count <= max_attempts),
+  constraint notification_outbox_redaction_check check (
+    (redacted_at is null and recipient is not null and payload is not null)
+    or (
+      redacted_at is not null and recipient is null and payload is null
+      and provider_message_id is null and last_error_code is null
+      and last_error_message is null
+    )
+  )
 );
 
 create table if not exists document_upload_intents (
@@ -395,15 +411,15 @@ create table if not exists document_upload_intents (
 );
 
 create index if not exists work_items_open_queue_idx
-  on work_items (sla_due_at, priority desc, id)
+  on work_items (sla_breached_at desc nulls last, sla_due_at, priority desc, id)
   where status in ('open', 'in_progress', 'blocked');
 
 create index if not exists work_items_owner_idx
-  on work_items (owner_id, sla_due_at, priority desc, id)
+  on work_items (owner_id, sla_breached_at desc nulls last, sla_due_at, priority desc, id)
   where status in ('open', 'in_progress', 'blocked');
 
 create index if not exists work_items_team_idx
-  on work_items (team_id, sla_due_at, priority desc, id)
+  on work_items (team_id, sla_breached_at desc nulls last, sla_due_at, priority desc, id)
   where status in ('open', 'in_progress', 'blocked');
 
 create index if not exists work_items_sla_warning_idx
@@ -520,6 +536,12 @@ begin
     calendar_id := old.business_calendar_id;
   else
     calendar_id := new.business_calendar_id;
+  end if;
+  if tg_op = 'UPDATE' and exists (
+    select 1 from sla_policies
+    where business_calendar_id = old.business_calendar_id
+  ) then
+    raise exception 'Holidays for the previous calendar version are immutable';
   end if;
   if tg_op = 'INSERT' and exists (
     select 1 from business_calendar_holidays
