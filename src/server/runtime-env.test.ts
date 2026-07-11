@@ -1,9 +1,19 @@
-import { describe, expect, it } from "vitest";
+import type { R2Bucket } from "@cloudflare/workers-types";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
+import { describe, expect, expectTypeOf, it } from "vitest";
+
+import type { R2BucketLike } from "./runtime-env";
 import { getFirmRuntimeEnv, getRuntimeReadiness } from "./runtime-env";
 
 describe("firm runtime", () => {
-  const fakeR2Bucket = {};
+  const fakeR2Bucket = {
+    delete: async () => undefined,
+    get: async () => null,
+    head: async () => null,
+    put: async () => null,
+  } as unknown as R2BucketLike;
   const validEnv = {
     FIRM_ID: "firm-a",
     NEON_AUTH_URL: "https://firm-a.example.neon.tech/auth",
@@ -41,6 +51,44 @@ describe("firm runtime", () => {
       firmId: "firm-a",
       documentsBucket: fakeR2Bucket,
       emailFrom: "operations@example.test",
+    });
+  });
+
+  it("uses the official Cloudflare R2 method contract", () => {
+    expectTypeOf<R2BucketLike>().toEqualTypeOf<Pick<R2Bucket, "delete" | "get" | "head" | "put">>();
+  });
+
+  it("declares the R2 boundary as an exact Cloudflare method pick", () => {
+    const source = readFileSync(
+      fileURLToPath(new URL("./runtime-env.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(source).toContain('Pick<R2Bucket, "delete" | "get" | "head" | "put">');
+  });
+
+  it("rejects malformed production bindings", () => {
+    expect(
+      getRuntimeReadiness({
+        ...validEnv,
+        FIRM_ID: "Firm A!",
+        NEON_AUTH_URL: "not-a-url",
+        NEON_AUTH_COOKIE_SECRET: "short",
+        DOCUMENTS_BUCKET: {},
+        EMAIL_FROM: "not-an-email",
+      }).missing,
+    ).toEqual([
+      "FIRM_ID",
+      "NEON_AUTH_URL",
+      "NEON_AUTH_COOKIE_SECRET",
+      "DOCUMENTS_BUCKET",
+      "EMAIL_FROM",
+    ]);
+  });
+
+  it("preserves opaque credential values byte-for-byte", () => {
+    const secret = "  opaque-secret-value-at-least-32-characters  ";
+    expect(getFirmRuntimeEnv({ ...validEnv, NEON_AUTH_COOKIE_SECRET: secret })).toMatchObject({
+      neonAuthCookieSecret: secret,
     });
   });
 

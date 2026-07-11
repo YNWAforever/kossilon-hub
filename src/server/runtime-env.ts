@@ -1,13 +1,6 @@
-export type R2BucketLike = {
-  delete(key: string | string[]): Promise<void>;
-  get(key: string, options?: Record<string, unknown>): Promise<unknown>;
-  head(key: string): Promise<unknown>;
-  put(
-    key: string,
-    value: ReadableStream | ArrayBuffer | ArrayBufferView | string | null,
-    options?: Record<string, unknown>,
-  ): Promise<unknown>;
-};
+import type { R2Bucket } from "@cloudflare/workers-types";
+
+export type R2BucketLike = Pick<R2Bucket, "delete" | "get" | "head" | "put">;
 
 export type FirmRuntimeEnv = {
   firmId: string;
@@ -27,17 +20,6 @@ export type RuntimeReadiness = {
   missing: string[];
 };
 
-const REQUIRED_STRING_BINDINGS = [
-  "FIRM_ID",
-  "NEON_AUTH_URL",
-  "NEON_AUTH_COOKIE_SECRET",
-  "WOZTELL_API_BASE_URL",
-  "WOZTELL_ACCESS_TOKEN",
-  "WOZTELL_CHANNEL_ID",
-  "WOZTELL_WEBHOOK_SECRET",
-  "EMAIL_FROM",
-] as const;
-
 const REQUIRED_BINDINGS = [
   "FIRM_ID",
   "NEON_AUTH_URL",
@@ -56,7 +38,7 @@ function hasText(value: unknown): value is string {
 }
 
 function getDatabaseUrl(env: Record<string, unknown>): string | undefined {
-  if (hasText(env.DATABASE_URL)) return env.DATABASE_URL.trim();
+  if (hasText(env.DATABASE_URL)) return env.DATABASE_URL;
 
   const hyperdrive = env.HYPERDRIVE;
   if (
@@ -65,19 +47,55 @@ function getDatabaseUrl(env: Record<string, unknown>): string | undefined {
     "connectionString" in hyperdrive &&
     hasText(hyperdrive.connectionString)
   ) {
-    return hyperdrive.connectionString.trim();
+    return hyperdrive.connectionString;
   }
 
   return undefined;
 }
 
-function hasBinding(env: Record<string, unknown>, name: string): boolean {
-  if (name === "DOCUMENTS_BUCKET") {
-    return typeof env[name] === "object" && env[name] !== null;
-  }
-  if (name === "DATABASE_URL") return getDatabaseUrl(env) !== undefined;
+function isSecureUrl(value: unknown): boolean {
+  if (!hasText(value)) return false;
 
-  return hasText(env[name]);
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isEmail(value: unknown): boolean {
+  return hasText(value) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isR2Bucket(value: unknown): value is R2BucketLike {
+  if (typeof value !== "object" || value === null) return false;
+
+  const bucket = value as Record<string, unknown>;
+  return ["delete", "get", "head", "put"].every((method) => typeof bucket[method] === "function");
+}
+
+function hasBinding(env: Record<string, unknown>, name: string): boolean {
+  switch (name) {
+    case "FIRM_ID":
+      return hasText(env[name]) && /^[a-z0-9][a-z0-9-]{1,62}$/.test(env[name].trim());
+    case "NEON_AUTH_URL":
+    case "WOZTELL_API_BASE_URL":
+      return isSecureUrl(env[name]);
+    case "NEON_AUTH_COOKIE_SECRET":
+      return hasText(env[name]) && env[name].trim().length >= 32;
+    case "DATABASE_URL":
+      return getDatabaseUrl(env) !== undefined;
+    case "DOCUMENTS_BUCKET":
+      return isR2Bucket(env[name]);
+    case "WOZTELL_ACCESS_TOKEN":
+      return hasText(env[name]) && env[name].trim().length >= 8;
+    case "WOZTELL_WEBHOOK_SECRET":
+      return hasText(env[name]) && env[name].trim().length >= 16;
+    case "EMAIL_FROM":
+      return isEmail(env[name]);
+    default:
+      return hasText(env[name]);
+  }
 }
 
 function defaultRuntimeSource(): Record<string, unknown> {
@@ -103,20 +121,16 @@ export function getFirmRuntimeEnv(
     throw new Error(`Missing required firm runtime bindings: ${readiness.missing.join(", ")}`);
   }
 
-  const strings = Object.fromEntries(
-    REQUIRED_STRING_BINDINGS.map((name) => [name, (env[name] as string).trim()]),
-  ) as Record<(typeof REQUIRED_STRING_BINDINGS)[number], string>;
-
   return {
-    firmId: strings.FIRM_ID,
-    neonAuthUrl: strings.NEON_AUTH_URL,
-    neonAuthCookieSecret: strings.NEON_AUTH_COOKIE_SECRET,
+    firmId: (env.FIRM_ID as string).trim(),
+    neonAuthUrl: (env.NEON_AUTH_URL as string).trim(),
+    neonAuthCookieSecret: env.NEON_AUTH_COOKIE_SECRET as string,
     databaseUrl: getDatabaseUrl(env) as string,
     documentsBucket: env.DOCUMENTS_BUCKET as R2BucketLike,
-    woztellApiBaseUrl: strings.WOZTELL_API_BASE_URL,
-    woztellAccessToken: strings.WOZTELL_ACCESS_TOKEN,
-    woztellChannelId: strings.WOZTELL_CHANNEL_ID,
-    woztellWebhookSecret: strings.WOZTELL_WEBHOOK_SECRET,
-    emailFrom: strings.EMAIL_FROM,
+    woztellApiBaseUrl: (env.WOZTELL_API_BASE_URL as string).trim(),
+    woztellAccessToken: env.WOZTELL_ACCESS_TOKEN as string,
+    woztellChannelId: (env.WOZTELL_CHANNEL_ID as string).trim(),
+    woztellWebhookSecret: env.WOZTELL_WEBHOOK_SECRET as string,
+    emailFrom: (env.EMAIL_FROM as string).trim(),
   };
 }
