@@ -147,6 +147,15 @@ async function cleanupAnnualReturnTestFixtures() {
     `;
     await tx`delete from reminder_logs where case_id = any(${caseIds}::uuid[])`;
     await tx`delete from annual_return_audit_events where case_id = any(${caseIds}::uuid[])`;
+    await tx`
+      delete from assignment_events where work_item_id in (
+        select id from work_items where case_id = any(${caseIds}::uuid[])
+      )`;
+    await tx`
+      delete from escalation_events where work_item_id in (
+        select id from work_items where case_id = any(${caseIds}::uuid[])
+      )`;
+    await tx`delete from work_items where case_id = any(${caseIds}::uuid[])`;
     await tx`delete from timeline_events where case_id = any(${caseIds}::uuid[])`;
     await tx`
       delete from payments
@@ -827,20 +836,62 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         confirmationDocumentId: fixture.confirmationDocumentId,
       });
 
+      await repository.updateChecklistItem({
+        caseId: fixture.caseId,
+        itemId: fixture.checklistItemId,
+        status: "Verified",
+        documentId: fixture.evidenceDocumentId,
+        actorId: USER_AMY_ID,
+      });
+      await repository.updateChecklistItem({
+        caseId: fixture.caseId,
+        itemId: fixture.checklistItemId,
+        status: "Missing",
+        documentId: null,
+        actorId: USER_AMY_ID,
+      });
+      await repository.updateChecklistItem({
+        caseId: fixture.caseId,
+        itemId: fixture.checklistItemId,
+        status: "Verified",
+        documentId: fixture.evidenceDocumentId,
+        actorId: USER_AMY_ID,
+      });
+
+      const workItems = await sqlForTests()<
+        {
+          source_event_type: string;
+        }[]
+      >`
+        select source_event_type from work_items
+        where case_id = ${fixture.caseId}
+        order by source_event_type
+      `;
+      expect(workItems.map((item) => item.source_event_type)).toEqual([
+        "annual_return_document_updated",
+        "annual_return_document_updated",
+        "annual_return_document_updated",
+        "annual_return_filing_proof_updated",
+        "annual_return_payment_updated",
+      ]);
+
       const timelineEvents = await sqlForTests()<
         {
           event_type: string;
         }[]
       >`
-      select event_type
-      from timeline_events
-      where case_id = ${fixture.caseId}
-      order by created_at asc
-    `;
+        select event_type
+        from timeline_events
+        where case_id = ${fixture.caseId}
+        order by created_at asc
+      `;
       expect(timelineEvents.map((event) => event.event_type)).toEqual([
         "checklist_item_updated",
         "payment_updated",
         "filing_proof_updated",
+        "checklist_item_updated",
+        "checklist_item_updated",
+        "checklist_item_updated",
       ]);
     },
     INTEGRATION_TEST_TIMEOUT_MS,

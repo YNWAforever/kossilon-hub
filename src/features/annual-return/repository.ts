@@ -4,6 +4,7 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import type postgres from "postgres";
 import { daysBetween, isAllowedStatusTransition, riskForCase } from "./workflow";
 import {
@@ -373,6 +374,31 @@ export function createAnnualReturnRepository(
     }
 
     return options.today ?? hongKongBusinessDate();
+  }
+
+  function ensureAnnualReturnWorkItem(
+    tx: TransactionSqlClient,
+    lockedCase: LockedCaseRow,
+    event: {
+      sourceEventKey: string;
+      sourceEventType: string;
+      title: string;
+      priority?: number;
+    },
+  ) {
+    return ensureWorkItemForEvent(tx, {
+      companyId: lockedCase.company_id,
+      caseId: lockedCase.id,
+      sourceEventKey: event.sourceEventKey,
+      sourceEventType: event.sourceEventType,
+      workType: "annual_return_case",
+      requiredSkillKey: "annual-return",
+      title: event.title,
+      priority: event.priority,
+      ownerId: lockedCase.owner_id,
+      reviewerId: lockedCase.reviewer_id,
+      teamId: lockedCase.company_team_id,
+    });
   }
 
   async function writeAuditEvent(
@@ -803,7 +829,7 @@ export function createAnnualReturnRepository(
         throw new Error(`Cannot move from ${lockedCase.current_status} to ${nextStatus}.`);
       }
 
-      const updatedRows = await tx<{ id: string }[]>`
+      const updatedRows = await tx<{ id: string; updated_at: string | Date }[]>`
         update annual_return_cases
         set current_status = ${nextStatus},
             locked_at = case when ${completing} then coalesce(locked_at, now()) else locked_at end,
@@ -813,10 +839,17 @@ export function createAnnualReturnRepository(
           and locked_at is null
           and completed_at is null
           and current_status <> 'Completed'
-        returning id
+        returning id, updated_at
       `;
 
       assertSingleMutatedRow(updatedRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      await ensureAnnualReturnWorkItem(tx, lockedCase, {
+        sourceEventKey: `annual-return:${caseId}:status:${crypto.randomUUID()}`,
+        sourceEventType: "annual_return_status_changed",
+        title: `Review annual return status: ${nextStatus}`,
+        priority: completing ? 80 : 60,
+      });
 
       await tx`
         insert into timeline_events (
@@ -1001,7 +1034,15 @@ export function createAnnualReturnRepository(
         }
       }
 
-      const updatedRows = await tx<{ id: string; item_label: string }[]>`
+      const currentItemRows = await tx<{ status: ChecklistStatus; document_id: string | null }[]>`
+        select status, document_id from annual_return_checklist_items
+        where id = ${input.itemId} and case_id = ${input.caseId} for update
+      `;
+      if (!currentItemRows[0]) throw new Error("Checklist item not found for annual return case.");
+      const eventChanged =
+        currentItemRows[0].status !== input.status || currentItemRows[0].document_id !== documentId;
+
+      const updatedRows = await tx<{ id: string; item_label: string; updated_at: string | Date }[]>`
         update annual_return_checklist_items
         set status = ${input.status},
             document_id = ${documentId},
@@ -1010,11 +1051,20 @@ export function createAnnualReturnRepository(
             updated_at = now()
         where id = ${input.itemId}
           and case_id = ${input.caseId}
-        returning id, item_label
+        returning id, item_label, updated_at
       `;
 
       if (updatedRows.length !== 1) {
         throw new Error("Checklist item not found for annual return case.");
+      }
+
+      if (eventChanged) {
+        await ensureAnnualReturnWorkItem(tx, lockedCase, {
+          sourceEventKey: `annual-return:${input.caseId}:checklist:${input.itemId}:${crypto.randomUUID()}`,
+          sourceEventType: "annual_return_document_updated",
+          title: `Review document: ${updatedRows[0].item_label}`,
+          priority: input.status === "Verified" ? 55 : 70,
+        });
       }
 
       await tx`
@@ -1103,18 +1153,40 @@ export function createAnnualReturnRepository(
         }
       }
 
-      const updatedRows = await tx<{ id: string; invoice_number: string }[]>`
+      const currentPaymentRows = await tx<
+        { status: PaymentStatus; payment_proof_document_id: string | null }[]
+      >`
+        select status, payment_proof_document_id from payments
+        where case_id = ${input.caseId} for update
+      `;
+      if (!currentPaymentRows[0]) throw new Error("Annual return payment not found.");
+      const eventChanged =
+        currentPaymentRows[0].status !== input.status ||
+        currentPaymentRows[0].payment_proof_document_id !== paymentProofDocumentId;
+
+      const updatedRows = await tx<
+        { id: string; invoice_number: string; updated_at: string | Date }[]
+      >`
         update payments
         set status = ${input.status},
             payment_proof_document_id = ${paymentProofDocumentId},
             paid_at = case when ${isPaymentReceived} then coalesce(paid_at, now()) else null end,
             updated_at = now()
         where case_id = ${input.caseId}
-        returning id, invoice_number
+        returning id, invoice_number, updated_at
       `;
 
       if (updatedRows.length !== 1) {
         throw new Error("Annual return payment not found.");
+      }
+
+      if (eventChanged) {
+        await ensureAnnualReturnWorkItem(tx, lockedCase, {
+          sourceEventKey: `annual-return:${input.caseId}:payment:${updatedRows[0].id}:${crypto.randomUUID()}`,
+          sourceEventType: "annual_return_payment_updated",
+          title: `Review payment: ${updatedRows[0].invoice_number}`,
+          priority: input.status === "Payment received" ? 65 : 75,
+        });
       }
 
       await tx`
@@ -1196,7 +1268,11 @@ export function createAnnualReturnRepository(
         throw new Error("Filing proof requires a same-case verified filing confirmation document.");
       }
 
-      const updatedRows = await tx<{ id: string }[]>`
+      const eventChanged =
+        lockedCase.filing_reference !== input.filingReference ||
+        lockedCase.confirmation_document_id !== input.confirmationDocumentId;
+
+      const updatedRows = await tx<{ id: string; updated_at: string | Date }[]>`
         update annual_return_cases
         set filing_reference = ${input.filingReference},
             confirmation_document_id = ${input.confirmationDocumentId},
@@ -1205,10 +1281,19 @@ export function createAnnualReturnRepository(
           and locked_at is null
           and completed_at is null
           and current_status <> 'Completed'
-        returning id
+        returning id, updated_at
       `;
 
       assertSingleMutatedRow(updatedRows, COMPLETED_CASE_LOCKED_MESSAGE);
+
+      if (eventChanged) {
+        await ensureAnnualReturnWorkItem(tx, lockedCase, {
+          sourceEventKey: `annual-return:${input.caseId}:filing:${crypto.randomUUID()}`,
+          sourceEventType: "annual_return_filing_proof_updated",
+          title: `Review filing proof: ${input.filingReference}`,
+          priority: 85,
+        });
+      }
 
       await tx`
         insert into timeline_events (
