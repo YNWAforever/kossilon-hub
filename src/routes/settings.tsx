@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
 import { useMemo, useState } from "react";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
@@ -45,6 +47,10 @@ type Tab = "documents" | "reminders" | "risks";
 
 function SettingsPage() {
   const templates = useTemplates();
+  const integrationQuery = useQuery({
+    queryKey: ["whatsapp-integration-status"],
+    queryFn: () => getWhatsAppIntegrationStatus(),
+  });
   const [selectedId, setSelectedId] = useState<string>(templates[0]?.id ?? "");
   const [tab, setTab] = useState<Tab>("documents");
   const [query, setQuery] = useState("");
@@ -208,18 +214,22 @@ function SettingsPage() {
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <LabeledInput label="API endpoint" defaultValue="https://api.woztell.com/v3" />
               <LabeledInput label="Channel ID" placeholder="wa-channel-id" />
-              <LabeledInput
-                label="API key"
-                type="password"
-                placeholder="••••••••••••••••"
-                className="md:col-span-2"
-              />
             </div>
             <div className="mt-4 flex items-center justify-between">
-              <StatusPill tone="yellow">Not connected</StatusPill>
-              <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                Test & save
-              </button>
+              {integrationQuery.isPending ? (
+                <StatusPill tone="yellow">Checking</StatusPill>
+              ) : integrationQuery.isError ? (
+                <StatusPill tone="yellow">Unavailable</StatusPill>
+              ) : (
+                <StatusPill tone={integrationQuery.data.liveSendConfigured ? "green" : "yellow"}>
+                  {integrationQuery.data.liveSendConfigured ? "Configured" : "Blocked"}
+                </StatusPill>
+              )}
+              {integrationQuery.data?.missingLiveEnvVars.length ? (
+                <p className="text-xs text-muted-foreground">
+                  Missing bindings: {integrationQuery.data.missingLiveEnvVars.join(", ")}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
