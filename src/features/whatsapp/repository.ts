@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
+import { enqueueNotification } from "@/features/notifications/outbox";
 import type {
   NormalizedInboundWhatsAppMessage,
   WhatsAppMessageDirection,
@@ -13,7 +14,11 @@ import type {
 } from "./types";
 
 export type WhatsAppTemplateCategory =
-  "annual_return" | "payment" | "document" | "signature" | "general";
+  | "annual_return"
+  | "payment"
+  | "document"
+  | "signature"
+  | "general";
 
 export type WhatsAppWebhookProcessingStatus = "received" | "processed" | "ignored" | "failed";
 
@@ -818,6 +823,21 @@ export function createWhatsAppRepository(
         )
       `;
 
+      await enqueueNotification(tx, {
+        companyId: caseRow.company_id,
+        channel: "whatsapp",
+        notificationType: "whatsapp_template",
+        idempotencyKey: `whatsapp-message:${messageRows[0].id}`,
+        recipient: phoneE164,
+        payload: {
+          ...payload,
+          body: input.body,
+          toPhone: phoneE164,
+          toWhatsAppId: input.toWhatsAppId ?? null,
+          caseId: input.caseId,
+          whatsappMessageId: messageRows[0].id,
+        },
+      });
       return mapMessage(messageRows[0]);
     });
   }

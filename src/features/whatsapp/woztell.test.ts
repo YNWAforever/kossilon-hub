@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeWoztellInboundMessage } from "./woztell";
+import { normalizeWoztellInboundMessage, sendWoztellMessage } from "./woztell";
 
 describe("WOZTELL inbound payload normalization", () => {
   it("extracts a text inbound message from common WOZTELL-style fields", () => {
@@ -79,5 +79,30 @@ describe("WOZTELL inbound payload normalization", () => {
         image: { id: "media-001" },
       }),
     ).toThrow("WOZTELL payload is missing message body.");
+  });
+  it("sends normalized outbound messages and returns the provider ID", async () => {
+    const fetchImpl = async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toBe("https://woztell.test/messages");
+      expect(init?.headers).toMatchObject({ authorization: "Bearer token-123" });
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        channelId: "channel-1",
+        to: "+85290000000",
+        text: "Reminder body",
+      });
+      return new Response(JSON.stringify({ data: { messageId: "provider-123" } }), { status: 200 });
+    };
+    await expect(
+      sendWoztellMessage(
+        {
+          provider: "woztell",
+          apiBaseUrl: "https://woztell.test/",
+          accessToken: "token-123",
+          channelId: "channel-1",
+          webhookSecret: "secret-1234567890",
+        },
+        { toPhone: "+85290000000", body: "Reminder body" },
+        fetchImpl,
+      ),
+    ).resolves.toEqual({ providerMessageId: "provider-123" });
   });
 });

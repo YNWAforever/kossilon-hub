@@ -7,6 +7,7 @@ import {
 import type postgres from "postgres";
 import { rankAssignmentCandidates } from "./assignment";
 import { snapshotSla, thresholdFor } from "./sla";
+import { enqueueNotification } from "@/features/notifications/outbox";
 import type {
   AssignmentRecommendation,
   AssignmentRole,
@@ -578,6 +579,19 @@ export function createWorkItemRepository(
                   threshold,
                   occurredAt,
                 })})`;
+            await enqueueNotification(tx, {
+              companyId: item.companyId,
+              workItemId: item.id,
+              channel: "whatsapp",
+              notificationType: `work_item_sla_${threshold}`,
+              payload: {
+                caseId: item.caseId,
+                workItemId: item.id,
+                threshold,
+                occurredAt,
+                body: `Work item SLA ${threshold} reached for ${item.title}.`,
+              },
+            });
           }
         });
       }
