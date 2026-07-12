@@ -227,6 +227,28 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
               .map((entry) => entry.id),
           ).toEqual([breachId, warningId]);
 
+          const mismatchedTeamId = crypto.randomUUID();
+          await expect(
+            repository.recommendAssignees(warningId, { expectedTeamId: mismatchedTeamId }),
+          ).rejects.toThrow("outside the actor's team");
+          await expect(
+            repository.assign({
+              workItemId: warningId,
+              selectedUserId: crypto.randomUUID(),
+              assignedById: crypto.randomUUID(),
+              expectedVersion: 1,
+              expectedTeamId: mismatchedTeamId,
+            }),
+          ).rejects.toThrow("outside the actor's team");
+          await expect(
+            repository.acknowledgeEscalation({
+              workItemId: warningId,
+              actorId: crypto.randomUUID(),
+              note: "Reviewed",
+              expectedTeamId: mismatchedTeamId,
+            }),
+          ).rejects.toThrow("outside the actor's team");
+
           const recommendations = await repository.recommendAssignees(warningId);
           expect(recommendations.length).toBeGreaterThan(0);
           const assigned = await repository.assign({

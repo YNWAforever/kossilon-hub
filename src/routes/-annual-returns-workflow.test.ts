@@ -720,4 +720,13 @@ describe("annual return workflow route regressions", () => {
     expect(sidebarSource).toContain('label: "Portal"');
     expect(sidebarSource).toContain('to: "/portal"');
   });
+
+  it("shows persisted work-item owner and SLA state in annual-return routes", () => {
+    expect(annualReturnsRouteSource).toContain("listWorkQueue");
+    expect(annualReturnsRouteSource).toContain("Work owner");
+    expect(annualReturnsRouteSource).toContain("SLA state");
+    expect(annualReturnDetailRouteSource).toContain("listWorkQueue");
+    expect(annualReturnDetailRouteSource).toContain("Work owner");
+    expect(annualReturnDetailRouteSource).toContain("SLA state");
+  });
 });

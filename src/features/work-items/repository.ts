@@ -84,6 +84,7 @@ export type AssignWorkItemInput = {
   requiredRole?: AssignmentRole;
   separationOfDuties?: boolean;
   overrideReason?: string;
+  expectedTeamId?: string;
 };
 export type AssignmentDecision = {
   decision: "accepted_recommendation" | "override";
@@ -94,6 +95,7 @@ export type AcknowledgeEscalationInput = {
   workItemId: string;
   actorId: string;
   note: string;
+  expectedTeamId?: string;
 };
 export type EnsureWorkItemEvent = {
   companyId: string;
@@ -376,6 +378,7 @@ export type WorkItemRepository = {
       assignmentTarget?: AssignmentTarget;
       requiredRole?: AssignmentRole;
       separationOfDuties?: boolean;
+      expectedTeamId?: string;
     },
   ): Promise<AssignmentRecommendation[]>;
   assign(input: AssignWorkItemInput): Promise<PersistedWorkItem>;
@@ -420,10 +423,18 @@ export function createWorkItemRepository(
     get(id) {
       return getWorkItem(sql, id);
     },
-    async recommendAssignees(id, recommendationOptions = {}) {
-      const item = await getWorkItem(sql, id);
-      if (!item) throw new Error("Work item not found.");
-      return recommendationsFor(sql, item, readNow(), recommendationOptions);
+    recommendAssignees(id, recommendationOptions = {}) {
+      return withTransaction(sql, async (tx) => {
+        const item = await getWorkItem(tx, id, true);
+        if (!item) throw new Error("Work item not found.");
+        if (
+          recommendationOptions.expectedTeamId &&
+          item.teamId !== recommendationOptions.expectedTeamId
+        ) {
+          throw new Error("Forbidden: work item moved outside the actor's team.");
+        }
+        return recommendationsFor(tx, item, readNow(), recommendationOptions);
+      });
     },
     assign(input) {
       return withTransaction(sql, async (tx) => {
@@ -431,6 +442,9 @@ export function createWorkItemRepository(
         if (!item) throw new Error("Work item not found.");
         if (item.version !== input.expectedVersion)
           throw new Error("Work item assignment is stale.");
+        if (input.expectedTeamId && item.teamId !== input.expectedTeamId) {
+          throw new Error("Forbidden: work item moved outside the actor's team.");
+        }
         if (item.status === "completed" || item.status === "cancelled") {
           throw new Error("Closed work items cannot be assigned.");
         }
@@ -492,6 +506,9 @@ export function createWorkItemRepository(
       return withTransaction(sql, async (tx) => {
         const item = await getWorkItem(tx, input.workItemId, true);
         if (!item) throw new Error("Work item not found.");
+        if (input.expectedTeamId && item.teamId !== input.expectedTeamId) {
+          throw new Error("Forbidden: work item moved outside the actor's team.");
+        }
         if (item.escalationState !== "warning" && item.escalationState !== "breach") {
           throw new Error("Work item has no active escalation to acknowledge.");
         }

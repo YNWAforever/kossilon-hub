@@ -26,6 +26,7 @@ import {
 } from "@/features/auth/route-guard";
 
 const mobileNavItems = [
+  { to: "/work-queue", label: "Work queue" },
   { to: "/portal", label: "Portal" },
   { to: "/payments", label: "Payments" },
   { to: "/whatsapp/automation", label: "Automation" },

@@ -12,12 +12,14 @@ import {
   Users,
   ShieldCheck,
   Settings,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const nav: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { to: "/work-queue", label: "Work Queue", icon: ListChecks },
   { to: "/enquiries", label: "Enquiries", icon: Inbox },
   { to: "/clients", label: "Clients", icon: Building2 },
   { to: "/annual-returns", label: "Annual Returns", icon: CalendarClock },

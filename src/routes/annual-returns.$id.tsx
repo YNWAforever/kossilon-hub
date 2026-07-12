@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { daysUntil, findEnquiryForClient } from "../lib/app-data";
@@ -40,6 +41,7 @@ import {
   getDocumentArchiveRows,
   useClientPortalSnapshot,
 } from "../lib/client-portal-store";
+import { listWorkQueue } from "../features/work-items/server-fns";
 
 export const Route = createFileRoute("/annual-returns/$id")({
   component: AnnualReturnDetailRoute,
@@ -86,6 +88,11 @@ const riskToneClasses: Record<AnnualReturnRiskLevel, string> = {
 function AnnualReturnDetailRoute() {
   const { id } = Route.useParams();
   const caseItem = useAnnualReturnCase(id);
+  const workItemsQuery = useQuery({
+    queryKey: ["work-queue", "annual-return-detail", id],
+    queryFn: () => listWorkQueue({ data: { view: "team" } }),
+  });
+  const workItem = (workItemsQuery.data ?? []).find((item) => item.caseId === id);
   const portalSnapshot = useClientPortalSnapshot();
   const [note, setNote] = useState("");
   const [packetWarning, setPacketWarning] = useState<string | undefined>();
@@ -133,15 +140,31 @@ function AnnualReturnDetailRoute() {
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
           Back
         </Link>
-        {enquiry ? (
+        <div className="flex items-center gap-2">
           <Link
             className="rounded-md border px-3 py-2 text-sm"
-            to="/whatsapp"
-            search={{ enquiry: enquiry.id }}
+            to="/work-queue"
+            search={{
+              view: "team",
+              owner: "all",
+              workType: "all",
+              sla: "all",
+              priority: "all",
+              status: "all",
+            }}
           >
-            Ask AI
+            Assignment &amp; SLA
           </Link>
-        ) : null}
+          {enquiry ? (
+            <Link
+              className="rounded-md border px-3 py-2 text-sm"
+              to="/whatsapp"
+              search={{ enquiry: enquiry.id }}
+            >
+              Ask AI
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <section className="rounded-lg border bg-card p-4">
@@ -159,6 +182,30 @@ function AnnualReturnDetailRoute() {
               <p className="mt-1 text-sm text-muted-foreground">
                 {caseItem.contactName} / {caseItem.phone} / Basis date {caseItem.basisDate}
               </p>
+              <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                <p>
+                  <span className="text-muted-foreground">Work owner:</span>{" "}
+                  {workItemsQuery.isPending
+                    ? "Loading"
+                    : workItemsQuery.isError
+                      ? "Unavailable"
+                      : workItem?.ownerId
+                        ? `Staff ${workItem.ownerId.slice(0, 8)}`
+                        : workItem
+                          ? "Unassigned"
+                          : "No work item"}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">SLA state:</span>{" "}
+                  {workItemsQuery.isPending
+                    ? "Loading"
+                    : workItemsQuery.isError
+                      ? "Unavailable"
+                      : workItem
+                        ? workItem.escalationState
+                        : "No work item"}
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
