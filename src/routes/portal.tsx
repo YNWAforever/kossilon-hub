@@ -18,15 +18,11 @@ import {
   useAnnualReturnCases,
 } from "../lib/annual-return-store";
 import {
-  acknowledgePaymentInstructions,
-  approveClientPacket,
   getClientPortalActivity,
   getClientPortalProgress,
   getClientPortalRequiredActions,
   getDocumentArchiveRows,
   getPaymentProofsForCase,
-  recordReceiptViewed,
-  uploadPaymentProof,
   useClientPortalSnapshot,
   type ClientPortalArchiveRow,
   type ClientPortalPaymentProof,
@@ -251,31 +247,24 @@ function PortalActionRow({
     }
 
     if (action.kind === "payment-proof" && action.paymentProofAction) {
-      const result = uploadPaymentProof(
-        caseItem,
-        action.paymentProofAction === "replace"
-          ? `${caseItem.id}-payment-proof-replacement.png`
-          : `${caseItem.id}-payment-proof.png`,
-      );
-      onWarning(result.ok ? undefined : result.reason);
+      onWarning("Use the production document uploader for private proof files.");
       return;
     }
 
     if (action.kind === "payment") {
-      const result = acknowledgePaymentInstructions(caseItem);
-      onWarning(result.ok ? undefined : result.reason);
+      onWarning(
+        "Production payment acknowledgement is handled by the annual-return server action.",
+      );
       return;
     }
 
     if (action.kind === "packet") {
-      const result = approveClientPacket(caseItem);
-      onWarning(result.ok ? undefined : result.reason);
+      onWarning("Production packet approval is handled by the annual-return server action.");
       return;
     }
 
     if (action.kind === "receipt") {
-      const result = recordReceiptViewed(caseItem);
-      onWarning(result.ok ? undefined : result.reason);
+      onWarning("Production receipt viewing is handled by the annual-return server action.");
     }
   }
 

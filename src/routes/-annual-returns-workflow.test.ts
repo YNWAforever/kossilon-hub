@@ -411,8 +411,11 @@ describe("annual return workflow route regressions", () => {
   it("keeps structured payment proof reasons and client-visible notes in the payments route", () => {
     expect(paymentsRouteSource).toContain("clientPortalPaymentProofReviewReasons");
     expect(paymentsRouteSource).toContain("Client-visible note");
-    expect(paymentsRouteSource).toContain("acceptPaymentProof");
-    expect(paymentsRouteSource).toContain("rejectPaymentProof");
+    expect(paymentsRouteSource).toContain(
+      "Production payment proof review uses the annual-return server action.",
+    );
+    expect(paymentsRouteSource).not.toContain("acceptPaymentProof(");
+    expect(paymentsRouteSource).not.toContain("rejectPaymentProof(");
     expect(paymentsRouteSource).toContain(
       "aria-label={`Confirm payment proof rejection for ${caseItem.companyName}`}",
     );

@@ -9,12 +9,9 @@ import {
   useAnnualReturnCases,
 } from "../lib/annual-return-store";
 import {
-  acceptPaymentProof,
-  attachPaymentProof,
   clientPortalPaymentProofReviewReasons,
   getCurrentPaymentProof,
   getPaymentProofsForCase,
-  rejectPaymentProof,
   useClientPortalSnapshot,
   type ClientPortalPaymentProof,
   type ClientPortalPaymentProofReviewReasonCode,
@@ -81,26 +78,16 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
   const isReadOnly = caseItem.status === "filed" || getPacketStatus(caseItem) === "accepted";
   const previousProofs = history.filter((candidate) => candidate.id !== proof?.id);
 
-  function handleAttach(filename: string) {
-    const result = attachPaymentProof(caseItem, filename, "Operations");
-    setWarning(result.ok ? undefined : result.reason);
+  function handleAttach(_filename: string) {
+    setWarning("Production payment proof uploads use the private document workflow.");
   }
 
   function handleAccept() {
-    if (!proof) return;
-    const result = acceptPaymentProof(proof.id, "Operations");
-    setWarning(result.ok ? undefined : result.reason);
+    setWarning("Production payment proof review uses the annual-return server action.");
   }
 
   function handleReject() {
-    if (!proof) return;
-    const result = rejectPaymentProof(proof.id, {
-      reasonCode,
-      note,
-      actor: "Operations",
-    });
-    setWarning(result.ok ? undefined : result.reason);
-    if (result.ok) setIsRejecting(false);
+    setWarning("Production payment proof review uses the annual-return server action.");
   }
 
   return (

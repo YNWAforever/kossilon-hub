@@ -12,11 +12,7 @@ import {
   type AnnualReturnRiskLevel,
   type AnnualReturnSignatureStatus,
   type AnnualReturnStatus,
-  acceptFilingReceipt,
-  addCaseNote,
-  assignOwner,
   canSendFollowUp,
-  completeChecklistItem,
   getBlockers,
   getFollowUpDrafts,
   getNextAction,
@@ -24,15 +20,6 @@ import {
   getPacketStatus,
   getReadinessScore,
   getRiskLevel,
-  markDocumentMissing,
-  markDocumentReceived,
-  reopenChecklistItem,
-  sendFollowUpNow,
-  submitFilingPacket,
-  togglePacketRequirement,
-  updatePaymentStatus,
-  updateReviewStatus,
-  updateSignatureStatus,
   useAnnualReturnCase,
 } from "../lib/annual-return-store";
 import {
@@ -244,7 +231,9 @@ function AnnualReturnDetailRoute() {
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 disabled={isFiled}
                 value={caseItem.owner}
-                onChange={(event) => assignOwner(caseItem.id, event.target.value)}
+                onChange={() =>
+                  setPacketWarning("Production owner actions are handled by the work queue.")
+                }
               >
                 {ownerOptions.map((owner) => (
                   <option key={owner} value={owner}>
@@ -286,9 +275,9 @@ function AnnualReturnDetailRoute() {
                     className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                     disabled={isFiled}
                     onClick={() =>
-                      doc.received
-                        ? markDocumentMissing(caseItem.id, doc.id)
-                        : markDocumentReceived(caseItem.id, doc.id)
+                      setPacketWarning(
+                        "Production document state is managed by the private document workflow.",
+                      )
                     }
                     type="button"
                   >
@@ -307,10 +296,9 @@ function AnnualReturnDetailRoute() {
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={isFiled}
                   value={caseItem.paymentStatus}
-                  onChange={(event) =>
-                    updatePaymentStatus(
-                      caseItem.id,
-                      event.target.value as AnnualReturnPaymentStatus,
+                  onChange={() =>
+                    setPacketWarning(
+                      "Production payment state is managed by the annual-return server action.",
                     )
                   }
                 >
@@ -328,10 +316,9 @@ function AnnualReturnDetailRoute() {
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={isFiled}
                   value={caseItem.signatureStatus}
-                  onChange={(event) =>
-                    updateSignatureStatus(
-                      caseItem.id,
-                      event.target.value as AnnualReturnSignatureStatus,
+                  onChange={() =>
+                    setPacketWarning(
+                      "Production signature state is managed by the annual-return server action.",
                     )
                   }
                 >
@@ -349,8 +336,10 @@ function AnnualReturnDetailRoute() {
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={isFiled}
                   value={caseItem.reviewStatus}
-                  onChange={(event) =>
-                    updateReviewStatus(caseItem.id, event.target.value as AnnualReturnReviewStatus)
+                  onChange={() =>
+                    setPacketWarning(
+                      "Production review state is managed by the annual-return server action.",
+                    )
                   }
                 >
                   <option value="not-started">Not started</option>
@@ -387,10 +376,11 @@ function AnnualReturnDetailRoute() {
                   key={requirement.id}
                   className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled={packetLocked}
-                  onClick={() => {
-                    setPacketWarning(undefined);
-                    togglePacketRequirement(caseItem.id, requirement.id);
-                  }}
+                  onClick={() =>
+                    setPacketWarning(
+                      "Production packet state is managed by the annual-return server action.",
+                    )
+                  }
                   type="button"
                 >
                   <span>{requirement.label}</span>
@@ -423,10 +413,11 @@ function AnnualReturnDetailRoute() {
               <button
                 className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 disabled={isFiled || Boolean(caseItem.submission)}
-                onClick={() => {
-                  const result = submitFilingPacket(caseItem.id);
-                  setPacketWarning(result.ok ? undefined : result.reason);
-                }}
+                onClick={() =>
+                  setPacketWarning(
+                    "Production packet submission is handled by the annual-return server action.",
+                  )
+                }
                 type="button"
               >
                 Submit packet
@@ -434,10 +425,11 @@ function AnnualReturnDetailRoute() {
               <button
                 className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 disabled={isFiled || !caseItem.submission || Boolean(caseItem.receipt)}
-                onClick={() => {
-                  const result = acceptFilingReceipt(caseItem.id);
-                  setPacketWarning(result.ok ? undefined : result.reason);
-                }}
+                onClick={() =>
+                  setPacketWarning(
+                    "Production receipt acceptance is handled by the annual-return server action.",
+                  )
+                }
                 type="button"
               >
                 Accept receipt
@@ -473,10 +465,11 @@ function AnnualReturnDetailRoute() {
                     key={draft.id}
                     caseItem={caseItem}
                     draft={draft}
-                    onSend={() => {
-                      const result = sendFollowUpNow(caseItem.id, draft.id);
-                      setFollowUpWarning(result.ok ? undefined : result.reason);
-                    }}
+                    onSend={() =>
+                      setFollowUpWarning(
+                        "Production follow-ups are dispatched by the notification outbox.",
+                      )
+                    }
                   />
                 ))
               )}
@@ -505,8 +498,12 @@ function AnnualReturnDetailRoute() {
                   disabled={isFiled}
                   onClick={() =>
                     item.complete
-                      ? reopenChecklistItem(caseItem.id, item.id)
-                      : completeChecklistItem(caseItem.id, item.id)
+                      ? setPacketWarning(
+                          "Production checklist state is managed by the annual-return server action.",
+                        )
+                      : setPacketWarning(
+                          "Production checklist state is managed by the annual-return server action.",
+                        )
                   }
                   type="button"
                 >
@@ -542,8 +539,9 @@ function AnnualReturnDetailRoute() {
                   disabled={isFiled || !note.trim()}
                   onClick={() => {
                     if (!note.trim()) return;
-                    addCaseNote(caseItem.id, "Operations", note.trim());
-                    setNote("");
+                    setPacketWarning(
+                      "Production notes are managed by the annual-return server action.",
+                    );
                   }}
                   type="button"
                 >

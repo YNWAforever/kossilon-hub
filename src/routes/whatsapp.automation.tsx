@@ -3,7 +3,6 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import {
   getFollowUpDrafts,
-  sendFollowUpNow,
   useAnnualReturnCases,
   type AnnualReturnCase,
   type AnnualReturnFollowUpDraft,
@@ -11,8 +10,6 @@ import {
 import {
   getDocumentReviewFollowUpDrafts,
   getPaymentProofFollowUpDrafts,
-  sendDocumentReviewFollowUpNow,
-  sendPaymentProofFollowUpNow,
   useClientPortalSnapshot,
   type ClientPortalDocumentReviewFollowUpDraft,
   type ClientPortalPaymentProofFollowUpDraft,
@@ -146,15 +143,9 @@ function WhatsAppAutomationRoute() {
               <AutomationRow
                 key={`${row.source}-${row.id}`}
                 row={row}
-                onSend={() => {
-                  const result =
-                    row.source === "annual-return"
-                      ? sendFollowUpNow(row.caseItem.id, row.draft.id)
-                      : row.source === "document-review"
-                        ? sendDocumentReviewFollowUpNow(row.draft.id, "Operations")
-                        : sendPaymentProofFollowUpNow(row.draft.id, "Operations");
-                  setWarning(result.ok ? undefined : result.reason);
-                }}
+                onSend={() =>
+                  setWarning("Production follow-ups are dispatched by the notification outbox.")
+                }
               />
             ))
           )}
