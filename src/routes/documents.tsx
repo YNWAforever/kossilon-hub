@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Download } from "lucide-react";
+import { downloadDocument, listDocuments, reviewDocument } from "../features/documents/server-fns";
+import type { PrivateDocument } from "../features/documents/repository";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
   clientPortalReviewReasons,
   getDocumentArchiveRows,
   getDocumentReviewFollowUpDrafts,
-  reviewClientDocument,
   useClientPortalSnapshot,
   type ClientPortalArchiveRow,
   type ClientPortalDocumentReviewDecision,
@@ -27,6 +30,7 @@ export const Route = createFileRoute("/documents")({
 function DocumentsRoute() {
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
+  const queryClient = useQueryClient();
   const { caseId } = Route.useSearch();
   const [query, setQuery] = useState("");
   const [source, setSource] = useState("all");
@@ -34,6 +38,35 @@ function DocumentsRoute() {
   const [status, setStatus] = useState("all");
   const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
   const [warning, setWarning] = useState<string | undefined>();
+  const productionCaseId = isUuid(caseFilter) ? caseFilter : undefined;
+  const productionDocumentsQuery = useQuery({
+    queryKey: ["documents", "archive", productionCaseId ?? "all"],
+    queryFn: () => listDocuments({ data: productionCaseId ? { caseId: productionCaseId } : {} }),
+    retry: false,
+  });
+  const reviewMutation = useMutation({
+    mutationFn: (input: {
+      documentId: string;
+      decision: "verified" | "rejected";
+      reason?: string;
+    }) => reviewDocument({ data: input }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["documents"] }),
+  });
+
+  async function handleDownload(documentId: string) {
+    try {
+      const response = await downloadDocument({ data: { documentId } });
+      if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+      const href = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = "document";
+      anchor.click();
+      URL.revokeObjectURL(href);
+    } catch (error) {
+      setWarning(error instanceof Error ? error.message : "Unable to download document.");
+    }
+  }
 
   useEffect(() => {
     setCaseFilter(caseId ?? "all");
@@ -64,6 +97,14 @@ function DocumentsRoute() {
           {warning}
         </div>
       ) : null}
+
+      <ProductionDocumentsSection
+        documents={productionDocumentsQuery.data ?? []}
+        error={productionDocumentsQuery.error}
+        loading={productionDocumentsQuery.isLoading}
+        onDownload={handleDownload}
+        onReview={(input) => reviewMutation.mutate(input)}
+      />
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 xl:grid-cols-[1fr_180px_180px_180px_220px]">
@@ -139,6 +180,7 @@ function DocumentsRoute() {
                 cases={cases}
                 snapshot={snapshot}
                 onWarning={setWarning}
+                onReview={(input) => reviewMutation.mutate(input)}
               />
             ))
           )}
@@ -181,10 +223,16 @@ function DocumentRow({
   cases,
   snapshot,
   onWarning,
+  onReview,
 }: {
   row: ClientPortalArchiveRow;
   cases: ReturnType<typeof useAnnualReturnCases>;
   snapshot: ReturnType<typeof useClientPortalSnapshot>;
+  onReview: (input: {
+    documentId: string;
+    decision: "verified" | "rejected";
+    reason?: string;
+  }) => void;
   onWarning: (warning: string | undefined) => void;
 }) {
   const followUp = getDocumentReviewFollowUpDrafts(cases, snapshot).find(
@@ -195,20 +243,15 @@ function DocumentRow({
     decision: ClientPortalDocumentReviewDecision,
     options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
   ) {
-    if (!row.documentId) return;
-    const result =
-      decision === "accepted"
-        ? reviewClientDocument(row.documentId, {
-            decision: "accepted",
-            actor: "Operations",
-          })
-        : reviewClientDocument(row.documentId, {
-            decision: "rejected",
-            reasonCode: options.reasonCode,
-            note: options.note,
-            actor: "Operations",
-          });
-    onWarning(result.ok ? undefined : result.reason);
+    if (!row.documentId || !isUuid(row.documentId)) {
+      onWarning("Demo archive rows are read-only; production records are reviewed above.");
+      return;
+    }
+    onReview({
+      documentId: row.documentId,
+      decision: decision === "accepted" ? "verified" : "rejected",
+      reason: options.note || options.reasonCode,
+    });
   }
 
   return (
@@ -330,6 +373,106 @@ function ReviewCell({
       label="Review"
       value={row.reviewSummary ?? (row.readonly ? "Read-only" : "No review needed")}
     />
+  );
+}
+
+function ProductionDocumentsSection({
+  documents,
+  error,
+  loading,
+  onDownload,
+  onReview,
+}: {
+  documents: PrivateDocument[];
+  error: Error | null;
+  loading: boolean;
+  onDownload: (documentId: string) => void;
+  onReview: (input: {
+    documentId: string;
+    decision: "verified" | "rejected";
+    reason?: string;
+  }) => void;
+}) {
+  return (
+    <section className="rounded-lg border bg-card p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Production document vault</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Private R2-backed records stay quarantined until staff review.
+          </p>
+        </div>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
+      </div>
+      {error ? (
+        <p className="mt-4 text-sm text-status-yellow">Production records unavailable.</p>
+      ) : null}
+      {loading ? (
+        <p className="mt-4 text-sm text-muted-foreground">Loading production records...</p>
+      ) : null}
+      {!loading && !error && documents.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No production documents match this scope.
+        </p>
+      ) : null}
+      <div className="mt-4 divide-y">
+        {documents.map((document) => (
+          <div
+            key={document.id}
+            className="grid gap-3 py-3 text-sm md:grid-cols-[minmax(0,1fr)_120px_120px_180px] md:items-center"
+          >
+            <div className="min-w-0">
+              <p className="truncate font-medium">{document.fileName}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{labelValue(document.category)}</p>
+            </div>
+            <span>{labelValue(document.uploadStatus)}</span>
+            <span>{labelValue(document.reviewStatus)}</span>
+            <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+              {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
+                <button
+                  className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                  onClick={() => onDownload(document.id)}
+                  type="button"
+                >
+                  <Download className="h-4 w-4" /> Download
+                </button>
+              ) : null}
+              {document.uploadStatus === "available" && document.reviewStatus === "pending" ? (
+                <>
+                  <button
+                    className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                    onClick={() => onReview({ documentId: document.id, decision: "verified" })}
+                    type="button"
+                  >
+                    Verify
+                  </button>
+                  <button
+                    className="rounded-md border px-3 py-2 text-sm"
+                    onClick={() =>
+                      onReview({
+                        documentId: document.id,
+                        decision: "rejected",
+                        reason: "Rejected during staff review",
+                      })
+                    }
+                    type="button"
+                  >
+                    Reject
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function isUuid(value: string | undefined): value is string {
+  return Boolean(
+    value &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
   );
 }
 
