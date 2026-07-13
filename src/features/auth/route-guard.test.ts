@@ -56,6 +56,7 @@ describe("auth route guard helpers", () => {
     expect(isDemoAuthEnabled(undefined)).toBe(false);
     expect(isDemoAuthEnabled("false")).toBe(false);
     expect(isDemoAuthEnabled("true")).toBe(true);
+    expect(isDemoAuthEnabled("true", true)).toBe(false);
   });
 
   it("remembers and consumes a safe redirect path", () => {

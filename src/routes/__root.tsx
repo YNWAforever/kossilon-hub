@@ -18,12 +18,14 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context-neon";
 import { getAuthenticatedActor } from "@/features/auth/neon-auth-rpc";
+import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
-  isDemoAuthEnabled,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
+
+type RouterContext = { queryClient: QueryClient; dataMode: DataMode };
 
 const mobileNavItems = [
   { to: "/work-queue", label: "Work queue" },
@@ -83,19 +85,22 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  beforeLoad: async ({ location }) => {
-    if (isPublicRoute(location.pathname) || isDemoAuthEnabled()) return;
+export const Route = createRootRouteWithContext<RouterContext>()({
+  beforeLoad: async ({ context, location }) => {
+    if (isPublicRoute(location.pathname)) return;
 
-    try {
-      await getAuthenticatedActor();
-    } catch {
-      const redirectPath = getSafeRedirectPath(location.href);
-      rememberRedirectPath(redirectPath);
-      throw redirect({
-        href: `/login?redirect=${encodeURIComponent(redirectPath)}`,
-        replace: true,
-      });
+    const { dataMode } = context;
+    if (dataMode === "production") {
+      try {
+        await getAuthenticatedActor();
+      } catch {
+        const redirectPath = getSafeRedirectPath(location.href);
+        rememberRedirectPath(redirectPath);
+        throw redirect({
+          href: `/login?redirect=${encodeURIComponent(redirectPath)}`,
+          replace: true,
+        });
+      }
     }
   },
   head: () => ({

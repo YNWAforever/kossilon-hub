@@ -53,4 +53,14 @@ describe("production route authorization contract", () => {
     expect(portal).toContain("finalizeDocumentUpload");
     expect(portal).not.toContain("publicUrl");
   });
+
+  it("resolves production data mode without identifier-shape fallbacks", () => {
+    const root = readFileSync(new URL("./__root.tsx", import.meta.url), "utf8");
+    const router = readFileSync(new URL("../router.tsx", import.meta.url), "utf8");
+
+    expect(router).toContain("currentDataMode()");
+    expect(router).toContain("dataMode");
+    expect(root).toContain('dataMode === "production"');
+    expect(root).not.toMatch(/uuid|identifier.*demo|demo.*identifier/i);
+  });
 });
