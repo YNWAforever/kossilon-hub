@@ -427,9 +427,7 @@ describe("annual return workflow route regressions", () => {
   it("keeps structured payment proof reasons and client-visible notes in the payments route", () => {
     expect(paymentsRouteSource).toContain("clientPortalPaymentProofReviewReasons");
     expect(paymentsRouteSource).toContain("Client-visible note");
-    expect(paymentsRouteSource).toContain(
-      "Production payment proof review uses the annual-return server action.",
-    );
+    expect(paymentsRouteSource).toContain("reviewAnnualReturnEvidenceAction");
     expect(paymentsRouteSource).not.toContain("acceptPaymentProof(");
     expect(paymentsRouteSource).not.toContain("rejectPaymentProof(");
     expect(paymentsRouteSource).toContain(
@@ -771,5 +769,19 @@ describe("annual return workflow route regressions", () => {
       expect(productionAnnualReturnActionsSource).toContain(command);
     }
     expect(productionAnnualReturnDetailSource).not.toContain("useAnnualReturnCase(");
+  });
+
+  it("routes production evidence through the annual-return orchestration actions", () => {
+    expect(documentsRouteSource).toContain("reviewAnnualReturnEvidenceAction");
+    expect(documentsRouteSource).not.toContain("reviewDocument");
+    expect(paymentsRouteSource).toContain("reviewAnnualReturnEvidenceAction");
+    expect(paymentsRouteSource).toContain('document.category === "payment"');
+    expect(paymentsRouteSource).not.toContain(
+      "Production payment proof review uses the annual-return server action.",
+    );
+    expect(portalRouteSource).toContain("annualReturnQueryKeys.documents");
+    expect(portalRouteSource).toContain('dataMode !== "demo"');
+    expect(portalRouteSource).toContain("finalizeDocumentUpload");
+    expect(portalRouteSource).not.toContain("publicUrl");
   });
 });

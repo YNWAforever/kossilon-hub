@@ -102,4 +102,16 @@ describe("production route authorization contract", () => {
       expect(serverFunctions).toContain("export const " + command + " = createServerFn");
     }
   });
+
+  it("keeps evidence review and receipt acceptance behind actor-authorized server actions", () => {
+    const evidenceActions = readFileSync(
+      new URL("../features/annual-return/evidence-server-fns.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(evidenceActions).toContain("reviewAnnualReturnEvidenceForActor");
+    expect(evidenceActions).toContain("acceptAnnualReturnFilingReceiptForActor");
+    expect(evidenceActions).toContain("getCurrentAnnualReturnActor(getRequest())");
+    expect(evidenceActions).toContain("assertStaffAccess");
+  });
 });

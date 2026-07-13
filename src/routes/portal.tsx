@@ -1,3 +1,4 @@
+import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import { getAnnualReturnCase } from "../features/annual-return/server-fns";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import { useEffect, useMemo, useState } from "react";
@@ -41,13 +42,14 @@ export const Route = createFileRoute("/portal")({
 });
 
 function PortalRoute() {
+  const { dataMode } = Route.useRouteContext();
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
   const navigate = useNavigate({ from: "/portal" });
   const productionCaseId = caseId && isUuid(caseId) ? caseId : undefined;
   const productionCaseQuery = useQuery({
-    queryKey: ["annual-return", "portal", productionCaseId],
+    queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "portal"),
     queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
     enabled: Boolean(productionCaseId),
     retry: false,
@@ -58,20 +60,37 @@ function PortalRoute() {
   const selectedCase = caseId ? matchedCase : cases[0];
 
   useEffect(() => {
-    if (!selectedCase || caseId || caseId === selectedCase.id) return;
+    if (dataMode !== "demo" || !selectedCase || caseId || caseId === selectedCase.id) return;
 
     void navigate({
       replace: true,
       search: (previous) => ({ ...previous, caseId: selectedCase.id }),
     });
-  }, [caseId, navigate, selectedCase]);
+  }, [caseId, dataMode, navigate, selectedCase]);
 
-  if (!selectedCase && productionCaseQuery.isLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading production portal...</div>;
-  }
-
-  if (!selectedCase && productionCaseQuery.data) {
-    return <ProductionPortalCaseView caseItem={productionCaseQuery.data} />;
+  if (dataMode !== "demo") {
+    if (!productionCaseId) {
+      return (
+        <div className="space-y-3 p-6">
+          <h1 className="text-2xl font-semibold">Production portal</h1>
+          <p className="text-sm text-muted-foreground">Select a UUID-backed annual return case.</p>
+        </div>
+      );
+    }
+    if (productionCaseQuery.isLoading) {
+      return <div className="p-6 text-sm text-muted-foreground">Loading production portal...</div>;
+    }
+    if (productionCaseQuery.data) {
+      return <ProductionPortalCaseView caseItem={productionCaseQuery.data} />;
+    }
+    return (
+      <div className="space-y-3 p-6">
+        <h1 className="text-2xl font-semibold">Portal case unavailable</h1>
+        <p className="text-sm text-destructive">
+          Unable to load the production annual return case.
+        </p>
+      </div>
+    );
   }
 
   if (!selectedCase) {
@@ -428,7 +447,7 @@ function ProductionDocumentPanel({
   const [file, setFile] = useState<File | undefined>();
   const productionReady = isUuid(companyId) && isUuid(caseId);
   const documentsQuery = useQuery({
-    queryKey: ["documents", "portal", companyId, caseId],
+    queryKey: annualReturnQueryKeys.documents(caseId),
     queryFn: () => listDocuments({ data: { companyId, caseId } }),
     enabled: productionReady,
     retry: false,
@@ -456,7 +475,7 @@ function ProductionDocumentPanel({
     onSuccess: () => {
       setFile(undefined);
       onWarning("Document uploaded and quarantined for staff scanning.");
-      void queryClient.invalidateQueries({ queryKey: ["documents", "portal", companyId, caseId] });
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) });
     },
     onError: (error) => onWarning(error instanceof Error ? error.message : "Upload failed."),
   });
