@@ -237,6 +237,37 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     );
   });
 
+  it("disables only the checklist row whose mutation is pending", async () => {
+    const secondItemId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    serverFns.getAnnualReturnCase.mockResolvedValue({
+      ...caseItem,
+      checklist: [
+        ...caseItem.checklist,
+        {
+          ...caseItem.checklist[0],
+          id: secondItemId,
+          itemLabel: "Director details",
+        },
+      ],
+    });
+    let resolveChecklist!: (value: AnnualReturnCase) => void;
+    serverFns.updateAnnualReturnChecklistItem.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveChecklist = resolve;
+        }),
+    );
+
+    renderDetail();
+    await screen.findByRole("heading", { name: "Acme Company Limited" });
+    const checklistButtons = screen.getAllByRole("button", { name: "Mark missing" });
+    fireEvent.click(checklistButtons[0]);
+
+    await waitFor(() => expect((checklistButtons[0] as HTMLButtonElement).disabled).toBe(true));
+    expect((checklistButtons[1] as HTMLButtonElement).disabled).toBe(false);
+
+    await act(async () => resolveChecklist(caseItem));
+  });
   it("retains note text and renders the error after a failed command", async () => {
     serverFns.addAnnualReturnCaseNote.mockRejectedValue(new Error("Unable to save note."));
 

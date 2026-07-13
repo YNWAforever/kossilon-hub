@@ -285,7 +285,11 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     </div>
                     <button
                       className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-                      disabled={locked || checklistMutation.isPending}
+                      disabled={
+                        locked ||
+                        (checklistMutation.isPending &&
+                          checklistMutation.variables?.itemId === item.id)
+                      }
                       onClick={() =>
                         checklistMutation.mutate({
                           itemId: item.id,
