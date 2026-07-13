@@ -10,7 +10,7 @@ import {
   type AnnualReturnRepository,
 } from "./repository";
 import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
-import { getCurrentAnnualReturnActorId } from "./session";
+import { getCurrentAnnualReturnActor, getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
@@ -247,15 +247,6 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
   };
 }
 
-function staffActorFromUserId(userId: string): AuthenticatedActor {
-  return {
-    authUserId: userId,
-    userId,
-    role: "Staff",
-    teamId: null,
-    active: true,
-  };
-}
 export function assertAnnualReturnStatusActionAllowed(
   current: AnnualReturnCase,
   nextStatus: AnnualReturnStatus,
@@ -288,6 +279,18 @@ async function withAnnualReturnRepository<T>(
   }
 }
 
+async function withAnnualReturnActorRepository<T>(
+  handler: (repository: AnnualReturnRepository, actor: AuthenticatedActor) => Promise<T>,
+): Promise<T> {
+  const actor = await getCurrentAnnualReturnActor(getRequest());
+  const repository = createAnnualReturnRepository();
+
+  try {
+    return await handler(repository, actor);
+  } finally {
+    await repository.close();
+  }
+}
 export const listAnnualReturnCases = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
   .handler(async ({ data }) =>
@@ -309,8 +312,8 @@ export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" })
 export const assignAnnualReturnCaseOwner = createServerFn({ method: "POST" })
   .validator(assignOwnerSchema)
   .handler(({ data }) =>
-    withAnnualReturnRepository((repository, actorId) =>
-      assignAnnualReturnCaseOwnerForActor(staffActorFromUserId(actorId), data, { repository }),
+    withAnnualReturnActorRepository((repository, actor) =>
+      assignAnnualReturnCaseOwnerForActor(actor, data, { repository }),
     ),
   );
 export const listAnnualReturnCaseNotes = createServerFn({ method: "GET" })
@@ -322,8 +325,8 @@ export const listAnnualReturnCaseNotes = createServerFn({ method: "GET" })
 export const addAnnualReturnCaseNote = createServerFn({ method: "POST" })
   .validator(addNoteSchema)
   .handler(({ data }) =>
-    withAnnualReturnRepository((repository, actorId) =>
-      addAnnualReturnCaseNoteForActor(staffActorFromUserId(actorId), data, { repository }),
+    withAnnualReturnActorRepository((repository, actor) =>
+      addAnnualReturnCaseNoteForActor(actor, data, { repository }),
     ),
   );
 export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
@@ -334,8 +337,8 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
     }),
   )
   .handler(({ data }) =>
-    withAnnualReturnRepository((repository, actorId) =>
-      updateAnnualReturnStatusForActor(staffActorFromUserId(actorId), data, { repository }),
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnStatusForActor(actor, data, { repository }),
     ),
   );
 export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
@@ -361,7 +364,7 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
 export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
   .validator(queueAnnualReturnWhatsAppReminderSchema)
   .handler(async ({ data }) => {
-    const actorId = await getCurrentAnnualReturnActorId(getRequest());
+    const actor = await getCurrentAnnualReturnActor(getRequest());
     const sql = getSqlClient();
 
     return sql.begin(async (tx) => {
@@ -369,11 +372,10 @@ export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method:
       const whatsAppRepository = createWhatsAppRepository({ sql: tx });
 
       try {
-        return await queueAnnualReturnWhatsAppReminderMessageForActor(
-          staffActorFromUserId(actorId),
-          data,
-          { annualReturnRepository, whatsAppRepository },
-        );
+        return await queueAnnualReturnWhatsAppReminderMessageForActor(actor, data, {
+          annualReturnRepository,
+          whatsAppRepository,
+        });
       } finally {
         await annualReturnRepository.close();
         await whatsAppRepository.close();
@@ -383,22 +385,22 @@ export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method:
 export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" })
   .validator(updateChecklistItemSchema)
   .handler(({ data }) =>
-    withAnnualReturnRepository((repository, actorId) =>
-      updateAnnualReturnChecklistItemForActor(staffActorFromUserId(actorId), data, { repository }),
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnChecklistItemForActor(actor, data, { repository }),
     ),
   );
 export const updateAnnualReturnPayment = createServerFn({ method: "POST" })
   .validator(updatePaymentSchema)
   .handler(({ data }) =>
-    withAnnualReturnRepository((repository, actorId) =>
-      updateAnnualReturnPaymentForActor(staffActorFromUserId(actorId), data, { repository }),
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnPaymentForActor(actor, data, { repository }),
     ),
   );
 export const updateAnnualReturnFilingProof = createServerFn({ method: "POST" })
   .validator(updateFilingProofSchema)
   .handler(({ data }) =>
-    withAnnualReturnRepository((repository, actorId) =>
-      updateAnnualReturnFilingProofForActor(staffActorFromUserId(actorId), data, { repository }),
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnFilingProofForActor(actor, data, { repository }),
     ),
   );
 export const buildAnnualReturnReminderDraft = createServerFn({ method: "GET" })

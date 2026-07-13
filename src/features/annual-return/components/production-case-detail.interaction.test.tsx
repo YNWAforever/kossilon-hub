@@ -250,11 +250,11 @@ describe("ProductionAnnualReturnCaseDetail", () => {
         },
       ],
     });
-    let resolveChecklist!: (value: AnnualReturnCase) => void;
+    const checklistResolvers: Array<(value: AnnualReturnCase) => void> = [];
     serverFns.updateAnnualReturnChecklistItem.mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolveChecklist = resolve;
+          checklistResolvers.push(resolve);
         }),
     );
 
@@ -266,7 +266,16 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     await waitFor(() => expect((checklistButtons[0] as HTMLButtonElement).disabled).toBe(true));
     expect((checklistButtons[1] as HTMLButtonElement).disabled).toBe(false);
 
-    await act(async () => resolveChecklist(caseItem));
+    fireEvent.click(checklistButtons[1]);
+    await waitFor(() => {
+      expect((checklistButtons[0] as HTMLButtonElement).disabled).toBe(true);
+      expect((checklistButtons[1] as HTMLButtonElement).disabled).toBe(true);
+    });
+    expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      checklistResolvers.forEach((resolve) => resolve(caseItem));
+    });
   });
   it("retains note text and renders the error after a failed command", async () => {
     serverFns.addAnnualReturnCaseNote.mockRejectedValue(new Error("Unable to save note."));

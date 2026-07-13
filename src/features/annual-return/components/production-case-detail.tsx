@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   CheckSquare,
@@ -22,6 +22,11 @@ import {
 } from "../types";
 
 type MutationError = Error | null;
+type ChecklistMutationInput = {
+  itemId: string;
+  status: ChecklistStatus;
+  documentId: string | null;
+};
 
 const paymentStatuses: PaymentStatus[] = [
   "Not invoiced",
@@ -64,6 +69,11 @@ function PendingIcon({ pending }: { pending: boolean }) {
 export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   const queryClient = useQueryClient();
   const actions = createProductionCaseActions(caseId);
+  const checklistMutationKey = [...annualReturnQueryKeys.detail(caseId), "checklist-mutation"];
+  const pendingChecklistItemIds = useMutationState({
+    filters: { mutationKey: checklistMutationKey, status: "pending" },
+    select: (mutation) => (mutation.state.variables as ChecklistMutationInput | undefined)?.itemId,
+  });
   const caseQuery = useQuery({
     queryKey: annualReturnQueryKeys.detail(caseId),
     queryFn: () => getAnnualReturnCase({ data: { id: caseId } }),
@@ -97,6 +107,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     onSuccess: updateCaseCache,
   });
   const checklistMutation = useMutation({
+    mutationKey: checklistMutationKey,
     mutationFn: actions.updateChecklist,
     onSuccess: updateCaseCache,
   });
@@ -285,11 +296,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     </div>
                     <button
                       className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-                      disabled={
-                        locked ||
-                        (checklistMutation.isPending &&
-                          checklistMutation.variables?.itemId === item.id)
-                      }
+                      disabled={locked || pendingChecklistItemIds.includes(item.id)}
                       onClick={() =>
                         checklistMutation.mutate({
                           itemId: item.id,
