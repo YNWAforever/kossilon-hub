@@ -4,7 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { createElement, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../styles.css?url", () => ({ default: "/styles.css" }));
 
@@ -84,8 +84,20 @@ const annualReturnsRouteSource = readFileSync(
   new URL("./annual-returns.tsx", import.meta.url),
   "utf8",
 );
-const annualReturnDetailRouteSource = readFileSync(
+const annualReturnDetailRouterSource = readFileSync(
   new URL("./annual-returns.$id.tsx", import.meta.url),
+  "utf8",
+);
+const annualReturnDetailRouteSource = readFileSync(
+  new URL("../features/annual-return/components/demo-case-detail.tsx", import.meta.url),
+  "utf8",
+);
+const productionAnnualReturnDetailSource = readFileSync(
+  new URL("../features/annual-return/components/production-case-detail.tsx", import.meta.url),
+  "utf8",
+);
+const productionAnnualReturnActionsSource = readFileSync(
+  new URL("../features/annual-return/components/production-case-actions.ts", import.meta.url),
   "utf8",
 );
 const whatsappAutomationRouteSource = readFileSync(
@@ -104,7 +116,7 @@ async function renderRoute(pathname: string) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [pathname] }),
-    context: { queryClient: new QueryClient(), dataMode: "production" },
+    context: { queryClient: new QueryClient(), dataMode: "demo" },
     defaultPreloadStaleTime: 0,
   });
 
@@ -188,6 +200,10 @@ describe("annual return workflow route regressions", () => {
   beforeEach(() => {
     resetAnnualReturnCasesForTest();
     resetClientPortalStoreForTest();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("renders the operational workflow routes in labeled desktop and mobile root navigation", async () => {
@@ -731,5 +747,29 @@ describe("annual return workflow route regressions", () => {
     expect(annualReturnDetailRouteSource).toContain("listWorkQueue");
     expect(annualReturnDetailRouteSource).toContain("Work owner");
     expect(annualReturnDetailRouteSource).toContain("SLA state");
+  });
+
+  it("wires the production detail route to server-backed commands", () => {
+    expect(annualReturnDetailRouterSource).toContain("ProductionAnnualReturnCaseDetail");
+    expect(annualReturnDetailRouterSource).toContain("dataMode");
+    expect(annualReturnDetailRouterSource).not.toContain("useAnnualReturnCase(");
+    expect(productionAnnualReturnDetailSource).not.toContain(
+      "Production owner actions are handled",
+    );
+    expect(productionAnnualReturnDetailSource).not.toContain(
+      "Production checklist state is managed",
+    );
+    for (const command of [
+      "assignAnnualReturnCaseOwner",
+      "updateAnnualReturnStatus",
+      "updateAnnualReturnChecklistItem",
+      "updateAnnualReturnPayment",
+      "addAnnualReturnCaseNote",
+      "queueAnnualReturnWhatsAppReminderMessage",
+      "updateAnnualReturnFilingProof",
+    ]) {
+      expect(productionAnnualReturnActionsSource).toContain(command);
+    }
+    expect(productionAnnualReturnDetailSource).not.toContain("useAnnualReturnCase(");
   });
 });
