@@ -933,6 +933,25 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         filingReference: "CR-NAR1-TEST-2",
         confirmationDocumentId: fixture.confirmationDocumentId,
       });
+      await expect(
+        repository.updateFilingProof({
+          caseId: fixture.caseId,
+          filingReference: "CR-NAR1-TEST-2",
+          confirmationDocumentId: fixture.confirmationDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).resolves.toMatchObject({
+        filingReference: "CR-NAR1-TEST-2",
+        confirmationDocumentId: fixture.confirmationDocumentId,
+      });
+      await expect(
+        repository.updateFilingProof({
+          caseId: fixture.caseId,
+          filingReference: "CR-NAR1-REPLACEMENT",
+          confirmationDocumentId: fixture.confirmationDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/already been accepted/i);
 
       await repository.updateChecklistItem({
         caseId: fixture.caseId,
@@ -1171,6 +1190,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           note: "",
         }),
       ).rejects.toThrow(/locked|completed/i);
+
       await expect(
         repository.updateChecklistItem({
           caseId: fixture.caseId,
@@ -1187,6 +1207,9 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           paymentProofDocumentId: null,
           actorId: USER_AMY_ID,
         }),
+      ).rejects.toThrow(/locked|completed/i);
+      await expect(
+        repository.assertCanMutateCase(fixture.caseId, USER_AMY_ID, "update_filing_proof"),
       ).rejects.toThrow(/locked|completed/i);
       await expect(
         repository.updateFilingProof({
@@ -1487,6 +1510,9 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         teamId: TEAM_ANNUAL_RETURN_ID,
       });
       const repository = repositoryFor("2026-07-05");
+      await expect(
+        repository.assertCanMutateCase(fixture.caseId, USER_SAM_ID, "update_checklist"),
+      ).rejects.toThrow(/assigned staff|reviewers|team managers|admins/i);
 
       await expect(
         repository.updateChecklistItem({
@@ -1519,6 +1545,10 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         teamId: TEAM_ANNUAL_RETURN_ID,
       });
       const repository = repositoryFor("2026-07-05");
+
+      await expect(
+        repository.assertCanMutateCase(fixture.caseId, USER_PRIYA_ID, "update_payment"),
+      ).rejects.toThrow(/assigned staff|reviewers|team managers|admins/i);
 
       await expect(
         repository.updatePayment({

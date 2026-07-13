@@ -97,6 +97,7 @@ function createHarness(
   } as unknown as DocumentRepository;
   const annualReturns = {
     getCase: vi.fn(async () => caseItem),
+    assertCanMutateCase: vi.fn(async () => undefined),
     updateChecklistItem: vi.fn(async () => updatedCase),
     updatePayment: vi.fn(async () => updatedCase),
     updateFilingProof: vi.fn(async () => updatedCase),
@@ -288,6 +289,210 @@ describe("annual return evidence service", () => {
     expect(result.caseItem).toBe(baseCase);
     expect(harness.annualReturns.updateChecklistItem).not.toHaveBeenCalled();
     expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
+  });
+
+  it("authorizes the actor before reviewing receipt evidence", async () => {
+    const receipt = {
+      ...baseDocument,
+      category: "receipt" as const,
+      fileName: "receipt.pdf",
+    };
+    const harness = createHarness(receipt);
+    vi.mocked(harness.annualReturns.assertCanMutateCase).mockRejectedValue(
+      new Error("Only assigned staff may update this case."),
+    );
+
+    await expect(
+      harness.service.reviewEvidence({
+        caseId,
+        documentId,
+        decision: "verified",
+        actorId,
+      }),
+    ).rejects.toThrow("Only assigned staff may update this case.");
+
+    expect(harness.annualReturns.assertCanMutateCase).toHaveBeenCalledWith(
+      caseId,
+      actorId,
+      "update_filing_proof",
+    );
+    expect(harness.documents.reviewDocument).not.toHaveBeenCalled();
+  });
+
+  it("locks the document review before changing payment state", async () => {
+    const harness = createHarness();
+
+    await harness.service.reviewEvidence({
+      caseId,
+      documentId,
+      decision: "verified",
+      actorId,
+    });
+
+    const reviewOrder = vi.mocked(harness.documents.reviewDocument).mock.invocationCallOrder[0];
+    const updateOrder = vi.mocked(harness.annualReturns.updatePayment).mock.invocationCallOrder[0];
+    expect(reviewOrder).toBeLessThan(updateOrder);
+  });
+
+  it("allows only one case mutation when concurrent reviews race on the same document", async () => {
+    const harness = createHarness();
+    vi.mocked(harness.documents.reviewDocument)
+      .mockResolvedValueOnce(harness.reviewedDocument)
+      .mockRejectedValueOnce(new Error("Document has already been reviewed."));
+
+    const input = {
+      caseId,
+      documentId,
+      decision: "verified" as const,
+      actorId,
+    };
+    const results = await Promise.allSettled([
+      harness.service.reviewEvidence(input),
+      harness.service.reviewEvidence(input),
+    ]);
+
+    expect(results.map((result) => result.status)).toEqual(["fulfilled", "rejected"]);
+    expect(harness.annualReturns.updatePayment).toHaveBeenCalledOnce();
+  });
+
+  it("preserves a different accepted payment proof when rejecting a replacement", async () => {
+    const acceptedDocumentId = "88888888-8888-4888-8888-888888888888";
+    const caseWithAcceptedProof = {
+      ...baseCase,
+      payment: {
+        ...baseCase.payment!,
+        status: "Payment received" as const,
+        paymentProofDocumentId: acceptedDocumentId,
+      },
+    };
+    const harness = createHarness(baseDocument, caseWithAcceptedProof);
+
+    const result = await harness.service.reviewEvidence({
+      caseId,
+      documentId,
+      decision: "rejected",
+      reason: "Replacement is invalid",
+      actorId,
+    });
+
+    expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
+    expect(result.caseItem).toBe(caseWithAcceptedProof);
+  });
+
+  it("preserves a different verified checklist proof when rejecting a replacement", async () => {
+    const acceptedDocumentId = "88888888-8888-4888-8888-888888888888";
+    const checklistDocument = {
+      ...baseDocument,
+      category: "signature" as const,
+      fileName: "replacement-nar1.pdf",
+    };
+    const caseWithAcceptedProof = {
+      ...baseCase,
+      checklist: [
+        {
+          ...baseCase.checklist[0],
+          status: "Verified" as const,
+          documentId: acceptedDocumentId,
+          verifiedAt: "2026-07-12T01:00:00.000Z",
+        },
+      ],
+    };
+    const harness = createHarness(checklistDocument, caseWithAcceptedProof);
+
+    const result = await harness.service.reviewEvidence({
+      caseId,
+      documentId,
+      checklistItemId,
+      decision: "rejected",
+      reason: "Replacement is invalid",
+      actorId,
+    });
+
+    expect(harness.annualReturns.updateChecklistItem).not.toHaveBeenCalled();
+    expect(result.caseItem).toBe(caseWithAcceptedProof);
+  });
+
+  it("treats accepting the same filing receipt as idempotent", async () => {
+    const receipt = {
+      ...baseDocument,
+      category: "receipt" as const,
+      fileName: "receipt.pdf",
+      reviewStatus: "verified" as const,
+    };
+    const acceptedCase = {
+      ...baseCase,
+      filingReference: "NAR1-2026-001",
+      confirmationDocumentId: documentId,
+    };
+    const harness = createHarness(receipt, acceptedCase);
+
+    const result = await harness.service.acceptFilingReceipt({
+      caseId,
+      documentId,
+      filingReference: " NAR1-2026-001 ",
+      actorId,
+    });
+
+    expect(result).toBe(acceptedCase);
+    expect(harness.annualReturns.updateFilingProof).not.toHaveBeenCalled();
+  });
+
+  it("does not replay an accepted receipt after the case becomes locked", async () => {
+    const receipt = {
+      ...baseDocument,
+      category: "receipt" as const,
+      fileName: "receipt.pdf",
+      reviewStatus: "verified" as const,
+    };
+    const acceptedCase = {
+      ...baseCase,
+      filingReference: "NAR1-2026-001",
+      confirmationDocumentId: documentId,
+      currentStatus: "Completed" as const,
+      lockedAt: "2026-07-12T02:00:00.000Z",
+      completedAt: "2026-07-12T02:00:00.000Z",
+    };
+    const harness = createHarness(receipt, acceptedCase);
+    vi.mocked(harness.annualReturns.assertCanMutateCase).mockRejectedValue(
+      new Error("Completed annual return cases are locked."),
+    );
+
+    await expect(
+      harness.service.acceptFilingReceipt({
+        caseId,
+        documentId,
+        filingReference: "NAR1-2026-001",
+        actorId,
+      }),
+    ).rejects.toThrow("Completed annual return cases are locked.");
+
+    expect(harness.annualReturns.updateFilingProof).not.toHaveBeenCalled();
+  });
+
+  it("rejects replacement of an accepted filing receipt", async () => {
+    const receipt = {
+      ...baseDocument,
+      category: "receipt" as const,
+      fileName: "receipt.pdf",
+      reviewStatus: "verified" as const,
+    };
+    const acceptedCase = {
+      ...baseCase,
+      filingReference: "NAR1-2026-000",
+      confirmationDocumentId: "88888888-8888-4888-8888-888888888888",
+    };
+    const harness = createHarness(receipt, acceptedCase);
+
+    await expect(
+      harness.service.acceptFilingReceipt({
+        caseId,
+        documentId,
+        filingReference: "NAR1-2026-001",
+        actorId,
+      }),
+    ).rejects.toThrow("Filing receipt has already been accepted.");
+
+    expect(harness.annualReturns.updateFilingProof).not.toHaveBeenCalled();
   });
   it("accepts only an available verified receipt for the same case", async () => {
     const receipt = {

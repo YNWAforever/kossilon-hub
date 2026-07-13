@@ -6,7 +6,8 @@ import {
 } from "@/features/documents/repository";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import { createAnnualReturnRepository, type AnnualReturnRepository } from "./repository";
-import type { AnnualReturnCase } from "./types";
+import type { AnnualReturnAction } from "./permissions";
+import type { AnnualReturnCase, AnnualReturnChecklistItem } from "./types";
 
 type EvidenceSqlClient = SqlClient | postgres.TransactionSql;
 type EvidenceTransaction = postgres.TransactionSql;
@@ -123,23 +124,19 @@ export function createAnnualReturnEvidenceService(
             throw new Error("Document has already been reviewed.");
           }
 
-          let updatedCase: AnnualReturnCase;
+          let action: AnnualReturnAction;
+          let checklistItem: AnnualReturnChecklistItem | undefined;
+
           if (validated.document.category === "payment") {
             if (input.checklistItemId) {
               throw new Error("Payment evidence cannot target a checklist item.");
             }
-            const status = input.decision === "verified" ? "Payment received" : "Payment pending";
-            updatedCase = await annualReturns.updatePayment({
-              caseId: input.caseId,
-              status,
-              paymentProofDocumentId: input.decision === "verified" ? input.documentId : null,
-              actorId: input.actorId,
-            });
+            action = "update_payment";
           } else if (validated.document.category === "receipt") {
             if (input.checklistItemId) {
               throw new Error("Receipt evidence cannot target a checklist item.");
             }
-            updatedCase = validated.caseItem;
+            action = "update_filing_proof";
           } else {
             if (!checklistEvidenceCategories.has(validated.document.category)) {
               throw new Error("Document category is not reviewable annual return evidence.");
@@ -147,17 +144,16 @@ export function createAnnualReturnEvidenceService(
             if (!input.checklistItemId) {
               throw new Error("Checklist evidence requires a checklist item.");
             }
-            if (!validated.caseItem.checklist.some((item) => item.id === input.checklistItemId)) {
+            checklistItem = validated.caseItem.checklist.find(
+              (item) => item.id === input.checklistItemId,
+            );
+            if (!checklistItem) {
               throw new Error("Checklist item does not belong to this annual return case.");
             }
-            updatedCase = await annualReturns.updateChecklistItem({
-              caseId: input.caseId,
-              itemId: input.checklistItemId,
-              status: input.decision === "verified" ? "Verified" : "Rejected",
-              documentId: input.documentId,
-              actorId: input.actorId,
-            });
+            action = "update_checklist";
           }
+
+          await annualReturns.assertCanMutateCase(input.caseId, input.actorId, action);
 
           const reviewedDocument = await documents.reviewDocument({
             documentId: input.documentId,
@@ -165,6 +161,41 @@ export function createAnnualReturnEvidenceService(
             decision: input.decision,
             reason: input.reason,
           });
+
+          let updatedCase = validated.caseItem;
+          if (validated.document.category === "payment") {
+            const acceptedProofId = validated.caseItem.payment?.paymentProofDocumentId;
+            const preservesAcceptedProof =
+              input.decision === "rejected" &&
+              acceptedProofId !== null &&
+              acceptedProofId !== undefined &&
+              acceptedProofId !== input.documentId;
+
+            if (!preservesAcceptedProof) {
+              updatedCase = await annualReturns.updatePayment({
+                caseId: input.caseId,
+                status: input.decision === "verified" ? "Payment received" : "Payment pending",
+                paymentProofDocumentId: input.decision === "verified" ? input.documentId : null,
+                actorId: input.actorId,
+              });
+            }
+          } else if (validated.document.category !== "receipt" && checklistItem) {
+            const preservesAcceptedProof =
+              input.decision === "rejected" &&
+              checklistItem.status === "Verified" &&
+              checklistItem.documentId !== null &&
+              checklistItem.documentId !== input.documentId;
+
+            if (!preservesAcceptedProof) {
+              updatedCase = await annualReturns.updateChecklistItem({
+                caseId: input.caseId,
+                itemId: checklistItem.id,
+                status: input.decision === "verified" ? "Verified" : "Rejected",
+                documentId: input.documentId,
+                actorId: input.actorId,
+              });
+            }
+          }
 
           return {
             document: reviewedDocument,
@@ -193,9 +224,30 @@ export function createAnnualReturnEvidenceService(
             throw new Error("Filing receipt must be verified before acceptance.");
           }
 
+          const filingReference = input.filingReference.trim();
+          await annualReturns.assertCanMutateCase(
+            input.caseId,
+            input.actorId,
+            "update_filing_proof",
+          );
+
+          if (
+            validated.caseItem.filingReference !== null ||
+            validated.caseItem.confirmationDocumentId !== null
+          ) {
+            if (
+              validated.caseItem.filingReference === filingReference &&
+              validated.caseItem.confirmationDocumentId === input.documentId
+            ) {
+              return validated.caseItem;
+            }
+
+            throw new Error("Filing receipt has already been accepted.");
+          }
+
           return annualReturns.updateFilingProof({
             caseId: input.caseId,
-            filingReference: input.filingReference.trim(),
+            filingReference,
             confirmationDocumentId: input.documentId,
             actorId: input.actorId,
           });

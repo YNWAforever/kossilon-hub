@@ -173,6 +173,7 @@ export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
   dashboardMetrics(today: string, currentUserId: string): Promise<AnnualReturnDashboardMetrics>;
+  assertCanMutateCase(caseId: string, actorId: string, action: AnnualReturnAction): Promise<void>;
   updateStatus(
     caseId: string,
     nextStatus: AnnualReturnStatus,
@@ -1477,6 +1478,16 @@ export function createAnnualReturnRepository(
         "update_filing_proof",
       );
 
+      if (lockedCase.filing_reference !== null || lockedCase.confirmation_document_id !== null) {
+        if (
+          lockedCase.filing_reference === input.filingReference &&
+          lockedCase.confirmation_document_id === input.confirmationDocumentId
+        ) {
+          return;
+        }
+
+        throw new Error("Filing receipt has already been accepted.");
+      }
       const documentRows = await tx<{ id: string }[]>`
         select id
         from documents
@@ -1505,6 +1516,8 @@ export function createAnnualReturnRepository(
           and locked_at is null
           and completed_at is null
           and current_status <> 'Completed'
+          and filing_reference is null
+          and confirmation_document_id is null
         returning id, updated_at
       `;
 
@@ -1559,6 +1572,24 @@ export function createAnnualReturnRepository(
     return hydratedCaseAfterMutation(input.caseId, "filing proof update");
   }
 
+  async function assertCanMutateCase(
+    caseId: string,
+    actorId: string,
+    action: AnnualReturnAction,
+  ): Promise<void> {
+    const current = await getCase(caseId);
+
+    if (!current) {
+      throw new Error("Annual return case not found.");
+    }
+
+    assertCaseIsWritable(current);
+
+    await withTransaction(sql, async (tx) => {
+      const lockedCase = await lockWritableCase(tx, caseId);
+      await assertActorCanMutateLockedCase(tx, actorId, lockedCase, action);
+    });
+  }
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) {
       await sql.end();
@@ -1569,6 +1600,7 @@ export function createAnnualReturnRepository(
     listCases,
     getCase,
     dashboardMetrics,
+    assertCanMutateCase,
     assignOwner,
     listNotes,
     addNote,
