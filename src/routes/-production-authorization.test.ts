@@ -64,4 +64,42 @@ describe("production route authorization contract", () => {
     expect(root).not.toContain('dataMode === "production"');
     expect(root).not.toMatch(/uuid|identifier.*demo|demo.*identifier/i);
   });
+
+  it("keeps production annual-return actions behind staff server functions", () => {
+    const route = readFileSync(new URL("./annual-returns.$id.tsx", import.meta.url), "utf8");
+    const detail = readFileSync(
+      new URL("../features/annual-return/components/production-case-detail.tsx", import.meta.url),
+      "utf8",
+    );
+    const actions = readFileSync(
+      new URL("../features/annual-return/components/production-case-actions.ts", import.meta.url),
+      "utf8",
+    );
+    const serverFunctions = readFileSync(
+      new URL("../features/annual-return/server-fns.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(route).toContain("ProductionAnnualReturnCaseDetail");
+    expect(route).toContain("dataMode");
+    expect(detail).not.toContain("annual-return-store");
+    expect(detail).not.toContain("client-portal-store");
+    expect(actions).not.toContain("annual-return-store");
+    expect(actions).not.toContain("client-portal-store");
+    expect(serverFunctions).toContain("assertStaffAccess");
+    expect(serverFunctions).toContain("getCurrentAnnualReturnActorId");
+
+    for (const command of [
+      "assignAnnualReturnCaseOwner",
+      "updateAnnualReturnStatus",
+      "updateAnnualReturnChecklistItem",
+      "updateAnnualReturnPayment",
+      "addAnnualReturnCaseNote",
+      "queueAnnualReturnWhatsAppReminderMessage",
+      "updateAnnualReturnFilingProof",
+    ]) {
+      expect(actions).toContain(command);
+      expect(serverFunctions).toContain("export const " + command + " = createServerFn");
+    }
+  });
 });
