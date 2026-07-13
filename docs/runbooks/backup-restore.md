@@ -1,6 +1,6 @@
 # Backup And Restore Runbook
 
-## Rehearsal
+## REQUIRES EXPLICIT APPROVAL: Rehearsal
 
 1. Create a timestamped logical backup from the approved Neon staging branch.
 2. Restore it into an isolated database.
@@ -8,7 +8,7 @@
 4. Run the repository integration tests with `TEST_DATABASE_URL` pointing at the restore.
 5. Record row counts for `companies`, `annual_return_cases`, `documents`, `document_upload_intents`, `work_items`, `notification_outbox`, and `timeline_events`.
 
-`REQUIRES EXPLICIT APPROVAL`: production backup export, restore, destructive cleanup, or changing retention policy.
+Approval is required before any staging or production backup export, restore, destructive cleanup, or retention-policy change.
 
 ## Rollback evidence
 
