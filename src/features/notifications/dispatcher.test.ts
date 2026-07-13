@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { createNotificationDispatcher } from "./dispatcher";
+import { createNotificationDispatcher, createNotificationTransport } from "./dispatcher";
+import {
+  createLocalNotificationTransport,
+  resetLocalNotificationTransportForTest,
+} from "./local-transport";
 import type { NotificationOutboxRecord, NotificationOutboxRepository } from "./types";
 
 function notification(overrides: Partial<NotificationOutboxRecord> = {}): NotificationOutboxRecord {
@@ -37,6 +41,35 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
 }
 
 describe("notification dispatcher", () => {
+  it("selects the local transport only when explicitly requested", async () => {
+    const item = notification();
+    await expect(
+      createNotificationTransport({ providerMode: "local" }).dispatch(item),
+    ).resolves.toEqual({
+      providerMessageId: `local:${item.id}`,
+    });
+  });
+  it("persists deterministic local provider IDs without network dispatch", async () => {
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+    const repo = repository([notification()]);
+
+    await expect(
+      createNotificationDispatcher(repo, createLocalNotificationTransport()).dispatchDue(
+        "2026-07-12T00:00:00.000Z",
+      ),
+    ).resolves.toMatchObject({ claimed: 1, sent: 1 });
+
+    expect(repo.markSent).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      "local:00000000-0000-0000-0000-000000000001",
+      "2026-07-12T00:00:00.000Z",
+    );
+    expect(fetchImpl).not.toHaveBeenCalled();
+    resetLocalNotificationTransportForTest();
+    vi.unstubAllGlobals();
+  });
+
   it("persists provider IDs after a successful dispatch", async () => {
     const repo = repository([notification()]);
     const dispatcher = createNotificationDispatcher(repo, {

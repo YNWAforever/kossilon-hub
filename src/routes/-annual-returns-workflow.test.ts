@@ -784,4 +784,11 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain("finalizeDocumentUpload");
     expect(portalRouteSource).not.toContain("publicUrl");
   });
+  it("keeps automation sends server-backed and demo-only identifiers out of production", () => {
+    expect(whatsappAutomationRouteSource).toContain("queueAnnualReturnWhatsAppReminderMessage");
+    expect(whatsappAutomationRouteSource).toContain("annualReturnQueryKeys.notifications");
+    expect(whatsappAutomationRouteSource).toContain('dataMode === "demo"');
+    expect(whatsappAutomationRouteSource).not.toContain("sendDocumentReviewFollowUpNow(");
+    expect(whatsappAutomationRouteSource).not.toContain("sendPaymentProofFollowUpNow(");
+  });
 });

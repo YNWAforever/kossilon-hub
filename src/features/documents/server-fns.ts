@@ -2,9 +2,23 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import type { ProviderMode } from "@/server/provider-mode";
+import type { R2BucketLike } from "@/server/runtime-env";
+import { getLocalMemoryR2Bucket } from "./local-r2";
 import type { DocumentRepository } from "./repository";
 import { DOCUMENT_CATEGORIES, type DocumentScanner, type DocumentStorage } from "./types";
-import { createOpaqueDocumentKey } from "./storage";
+import { createDocumentStorage, createOpaqueDocumentKey } from "./storage";
+
+export function createDocumentStorageForProviderMode(
+  providerMode: ProviderMode,
+  liveBucket?: R2BucketLike,
+): DocumentStorage {
+  if (providerMode === "local") {
+    return createDocumentStorage(getLocalMemoryR2Bucket());
+  }
+  if (!liveBucket) throw new Error("Live document storage requires an R2 bucket.");
+  return createDocumentStorage(liveBucket);
+}
 
 export type DocumentOperationDependencies = {
   repository: DocumentRepository;
@@ -18,21 +32,25 @@ const loadDefaultDocumentContext = createServerOnlyFn(async () => {
     { getRequest },
     { requireActor, requireClientCompanyAccess },
     { createDocumentRepository },
-    { createDocumentStorage },
     { createDeterministicDocumentScanner },
     { getFirmRuntimeEnv },
+    { currentProviderMode },
   ] = await Promise.all([
     import("@tanstack/react-start/server"),
     import("@/features/auth/neon-auth-server"),
     import("./repository"),
-    import("./storage"),
     import("./scanner"),
     import("@/server/runtime-env"),
+    import("@/server/provider-mode"),
   ]);
   const request = getRequest();
   const actor = await requireActor(request);
   const repository = createDocumentRepository();
-  const storage = createDocumentStorage(getFirmRuntimeEnv().documentsBucket);
+  const providerMode = currentProviderMode();
+  const storage = createDocumentStorageForProviderMode(
+    providerMode,
+    providerMode === "live" ? getFirmRuntimeEnv().documentsBucket : undefined,
+  );
   return {
     actor,
     dependencies: {

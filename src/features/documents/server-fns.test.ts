@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import type { R2BucketLike } from "@/server/runtime-env";
 import type { DocumentRepository, DocumentUploadIntent, PrivateDocument } from "./repository";
 import type { DocumentScanner, DocumentStorage } from "./types";
 import {
+  createDocumentStorageForProviderMode,
   createDocumentUploadIntentForActor,
   downloadDocumentForActor,
   finalizeDocumentUploadForActor,
@@ -103,6 +105,29 @@ function dependencies(
 }
 
 describe("document server orchestration", () => {
+  it("uses the singleton local bucket without touching live bindings in local mode", async () => {
+    const liveBucket = {
+      put: vi.fn(),
+      get: vi.fn(),
+      head: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as R2BucketLike;
+    const storage = createDocumentStorageForProviderMode("local", liveBucket);
+
+    await storage.put({
+      objectKey: "documents/local-provider-selection",
+      body: new Uint8Array([1, 2, 3]),
+      checksum: "c".repeat(64),
+      contentType: "application/pdf",
+      sizeBytes: 3,
+    });
+
+    expect(await storage.head("documents/local-provider-selection")).toEqual(
+      expect.objectContaining({ checksum: "c".repeat(64) }),
+    );
+    expect(liveBucket.put).not.toHaveBeenCalled();
+  });
+
   it("authorizes the target company before creating an opaque upload intent", async () => {
     const deps = dependencies();
     await createDocumentUploadIntentForActor(

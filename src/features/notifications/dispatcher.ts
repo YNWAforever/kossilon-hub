@@ -1,5 +1,7 @@
 import { sendWoztellMessage } from "@/features/whatsapp/woztell";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
+import type { ProviderMode } from "@/server/provider-mode";
+import { createLocalNotificationTransport } from "./local-transport";
 import type {
   DispatchSummary,
   NotificationDispatcher,
@@ -73,6 +75,19 @@ export function createWoztellNotificationTransport(
     },
   };
 }
+
+export function createNotificationTransport(input: {
+  providerMode: ProviderMode;
+  config?: WhatsAppProviderConfig;
+  fetchImpl?: typeof fetch;
+}): NotificationTransport {
+  if (input.providerMode === "local") return createLocalNotificationTransport();
+  if (!input.config) {
+    throw new Error("Live notification transport requires a WhatsApp provider configuration.");
+  }
+  return createWoztellNotificationTransport(input.config, input.fetchImpl);
+}
+
 export function notificationPayload(
   notification: NotificationOutboxRecord,
 ): Record<string, unknown> {
