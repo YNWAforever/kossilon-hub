@@ -90,7 +90,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     if (isPublicRoute(location.pathname)) return;
 
     const { dataMode } = context;
-    if (dataMode === "production") {
+    if (dataMode !== "demo") {
       try {
         await getAuthenticatedActor();
       } catch {

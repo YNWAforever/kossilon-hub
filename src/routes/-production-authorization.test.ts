@@ -60,7 +60,8 @@ describe("production route authorization contract", () => {
 
     expect(router).toContain("currentDataMode()");
     expect(router).toContain("dataMode");
-    expect(root).toContain('dataMode === "production"');
+    expect(root).toContain('dataMode !== "demo"');
+    expect(root).not.toContain('dataMode === "production"');
     expect(root).not.toMatch(/uuid|identifier.*demo|demo.*identifier/i);
   });
 });
