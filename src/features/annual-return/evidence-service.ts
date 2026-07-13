@@ -155,6 +155,20 @@ export function createAnnualReturnEvidenceService(
 
           await annualReturns.assertCanMutateCase(input.caseId, input.actorId, action);
 
+          const lockedCaseItem = await annualReturns.getCase(input.caseId);
+          if (!lockedCaseItem) {
+            throw new Error("Annual return case not found.");
+          }
+          if (lockedCaseItem.companyId !== validated.document.companyId) {
+            throw new Error("Document does not belong to this annual return case.");
+          }
+          if (checklistItem) {
+            checklistItem = lockedCaseItem.checklist.find((item) => item.id === checklistItem?.id);
+            if (!checklistItem) {
+              throw new Error("Checklist item does not belong to this annual return case.");
+            }
+          }
+
           const reviewedDocument = await documents.reviewDocument({
             documentId: input.documentId,
             reviewerId: input.actorId,
@@ -162,9 +176,9 @@ export function createAnnualReturnEvidenceService(
             reason: input.reason,
           });
 
-          let updatedCase = validated.caseItem;
+          let updatedCase = lockedCaseItem;
           if (validated.document.category === "payment") {
-            const acceptedProofId = validated.caseItem.payment?.paymentProofDocumentId;
+            const acceptedProofId = lockedCaseItem.payment?.paymentProofDocumentId;
             const preservesAcceptedProof =
               input.decision === "rejected" &&
               acceptedProofId !== null &&

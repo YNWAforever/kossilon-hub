@@ -355,6 +355,68 @@ describe("annual return evidence service", () => {
     expect(harness.annualReturns.updatePayment).toHaveBeenCalledOnce();
   });
 
+  it("preserves payment evidence accepted while a replacement rejection waits for the case lock", async () => {
+    const acceptedDocumentId = "88888888-8888-4888-8888-888888888888";
+    const caseWithAcceptedProof = {
+      ...baseCase,
+      payment: {
+        ...baseCase.payment!,
+        status: "Payment received" as const,
+        paymentProofDocumentId: acceptedDocumentId,
+      },
+    };
+    const harness = createHarness();
+    vi.mocked(harness.annualReturns.getCase)
+      .mockResolvedValueOnce(baseCase)
+      .mockResolvedValueOnce(caseWithAcceptedProof);
+
+    const result = await harness.service.reviewEvidence({
+      caseId,
+      documentId,
+      decision: "rejected",
+      reason: "Replacement is invalid",
+      actorId,
+    });
+
+    expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
+    expect(result.caseItem).toBe(caseWithAcceptedProof);
+  });
+
+  it("preserves checklist evidence accepted while a replacement rejection waits for the case lock", async () => {
+    const acceptedDocumentId = "88888888-8888-4888-8888-888888888888";
+    const checklistDocument = {
+      ...baseDocument,
+      category: "signature" as const,
+      fileName: "replacement-nar1.pdf",
+    };
+    const caseWithAcceptedProof = {
+      ...baseCase,
+      checklist: [
+        {
+          ...baseCase.checklist[0],
+          status: "Verified" as const,
+          documentId: acceptedDocumentId,
+          verifiedAt: "2026-07-12T01:00:00.000Z",
+        },
+      ],
+    };
+    const harness = createHarness(checklistDocument);
+    vi.mocked(harness.annualReturns.getCase)
+      .mockResolvedValueOnce(baseCase)
+      .mockResolvedValueOnce(caseWithAcceptedProof);
+
+    const result = await harness.service.reviewEvidence({
+      caseId,
+      documentId,
+      checklistItemId,
+      decision: "rejected",
+      reason: "Replacement is invalid",
+      actorId,
+    });
+
+    expect(harness.annualReturns.updateChecklistItem).not.toHaveBeenCalled();
+    expect(result.caseItem).toBe(caseWithAcceptedProof);
+  });
   it("preserves a different accepted payment proof when rejecting a replacement", async () => {
     const acceptedDocumentId = "88888888-8888-4888-8888-888888888888";
     const caseWithAcceptedProof = {
