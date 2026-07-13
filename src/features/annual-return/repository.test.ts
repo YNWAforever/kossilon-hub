@@ -22,7 +22,7 @@ const TEST_DOCUMENT_UUID_PREFIX = "92000000";
 const TEST_CHECKLIST_UUID_PREFIX = "93000000";
 const TEST_PAYMENT_UUID_PREFIX = "94000000";
 const TEST_FIXTURE_SEQUENCES = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
 ] as const;
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 
@@ -453,6 +453,17 @@ describe("annual return repository configuration", () => {
     expect(hongKongBusinessDate(new Date("2026-07-04T16:00:00.000Z"))).toBe("2026-07-05");
   });
 
+  it("exposes owner assignment and case note commands", async () => {
+    const unusedSql = (() => {
+      throw new Error("SQL client should not be called by this test.");
+    }) as unknown as SqlClient;
+    const repository = createAnnualReturnRepository({ sql: unusedSql });
+    repositories.push(repository);
+
+    expect(repository.assignOwner).toBeTypeOf("function");
+    expect(repository.listNotes).toBeTypeOf("function");
+    expect(repository.addNote).toBeTypeOf("function");
+  });
   it("honors options when the database URL argument is explicitly undefined", async () => {
     vi.stubEnv("DATABASE_URL", "");
 
@@ -479,6 +490,93 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     await cleanupAnnualReturnTestFixtures();
   });
 
+  it(
+    "updates the case and active work items in one owner assignment",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 22 });
+      const repository = repositoryFor("2026-07-05");
+      await repository.updateStatus(fixture.caseId, "Client reminder sent", USER_AMY_ID);
+
+      const updated = await repository.assignOwner({
+        caseId: fixture.caseId,
+        ownerId: USER_MEI_ID,
+        actorId: USER_KEN_ID,
+      });
+
+      expect(updated.ownerId).toBe(USER_MEI_ID);
+
+      const sql = sqlForTests();
+      const workItems = await sql<{ owner_id: string | null; status: string }[]>`
+        select owner_id, status
+        from work_items
+        where case_id = ${fixture.caseId}
+          and status in ('open', 'in_progress', 'blocked')
+      `;
+      expect(workItems.length).toBeGreaterThan(0);
+      expect(workItems.every((item) => item.owner_id === USER_MEI_ID)).toBe(true);
+
+      const assignmentEvents = await sql<{ assigned_to_id: string; assigned_by_id: string }[]>`
+        select assigned_to_id, assigned_by_id
+        from assignment_events
+        where work_item_id in (
+          select id from work_items where case_id = ${fixture.caseId}
+        )
+      `;
+      expect(assignmentEvents).toContainEqual({
+        assigned_to_id: USER_MEI_ID,
+        assigned_by_id: USER_KEN_ID,
+      });
+
+      const timelineEvents = await sql<{ event_type: string }[]>`
+        select event_type
+        from timeline_events
+        where case_id = ${fixture.caseId}
+      `;
+      expect(timelineEvents).toContainEqual({
+        event_type: "annual_return_owner_assigned",
+      });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "persists and lists case notes in chronological order",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });
+      const repository = repositoryFor("2026-07-05");
+
+      await repository.addNote({
+        caseId: fixture.caseId,
+        body: "Client confirmed the address.",
+        actorId: USER_AMY_ID,
+      });
+      await repository.addNote({
+        caseId: fixture.caseId,
+        body: "Ready for reviewer follow-up.",
+        actorId: USER_KEN_ID,
+      });
+
+      expect(await repository.listNotes(fixture.caseId)).toEqual([
+        expect.objectContaining({
+          body: "Client confirmed the address.",
+          authorId: USER_AMY_ID,
+        }),
+        expect.objectContaining({
+          body: "Ready for reviewer follow-up.",
+          authorId: USER_KEN_ID,
+        }),
+      ]);
+
+      const sql = sqlForTests();
+      const events = await sql<{ event_type: string }[]>`
+        select event_type
+        from timeline_events
+        where case_id = ${fixture.caseId}
+      `;
+      expect(events.filter((event) => event.event_type === "case_note_added")).toHaveLength(2);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
   it("lists annual return cases with company, owner, reviewer, checklist, payment, and recalculated risk", async () => {
     const repository = repositoryFor("2026-07-05");
 

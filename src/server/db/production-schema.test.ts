@@ -160,4 +160,10 @@ describe("production workflow schema", () => {
       "on conflict (policy_key, version) do update set policy_key = excluded.policy_key",
     );
   });
+
+  it("keeps durable annual-return case notes with author and chronological lookup", () => {
+    expect(schemaSql).toContain("create table if not exists case_notes");
+    expect(schemaSql).toContain("author_id uuid not null references users(id)");
+    expect(schemaSql).toContain("case_notes_case_idx on case_notes (case_id)");
+  });
 });

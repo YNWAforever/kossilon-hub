@@ -90,3 +90,11 @@ export type CompletionBlocker = {
     | "confirmation_document_missing";
   message: string;
 };
+
+export type AnnualReturnCaseNote = {
+  id: string;
+  caseId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+};

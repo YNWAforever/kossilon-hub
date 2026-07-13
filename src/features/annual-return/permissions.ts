@@ -1,4 +1,6 @@
 export type AnnualReturnAction =
+  | "assign_owner"
+  | "add_note"
   | "record_reminder"
   | "update_checklist"
   | "update_payment"

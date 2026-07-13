@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { assertStaffAccess } from "@/features/auth/authorization";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import { getSqlClient } from "@/server/db/client";
 import {
   createAnnualReturnRepository,
@@ -39,6 +41,18 @@ const listAnnualReturnCasesSchema = z
 const annualReturnCaseIdSchema = z.object({
   caseId: z.string().uuid(),
 });
+const assignOwnerSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    ownerId: z.string().uuid(),
+  })
+  .strict();
+const addNoteSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    body: z.string().trim().min(1).max(2000),
+  })
+  .strict();
 export const queueAnnualReturnWhatsAppReminderSchema = z.object({
   caseId: z.string().uuid(),
   recipientName: z.string().min(1),
@@ -76,6 +90,43 @@ const updatePaymentSchema = z
     }
   });
 
+export type AnnualReturnCaseCommandDependencies = {
+  repository: AnnualReturnRepository;
+};
+
+function requireStaffUserId(actor: AuthenticatedActor): string {
+  const staff = assertStaffAccess(actor);
+
+  if (!staff.userId) {
+    throw new Error("Forbidden: a staff database identity is required.");
+  }
+
+  return staff.userId;
+}
+
+export async function assignAnnualReturnCaseOwnerForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; ownerId: string },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = assignOwnerSchema.parse(input);
+  return dependencies.repository.assignOwner({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
+}
+
+export async function addAnnualReturnCaseNoteForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; body: string },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = addNoteSchema.parse(input);
+  return dependencies.repository.addNote({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
+}
 export function assertAnnualReturnStatusActionAllowed(
   current: AnnualReturnCase,
   nextStatus: AnnualReturnStatus,
@@ -126,6 +177,33 @@ export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" })
   ),
 );
 
+export const assignAnnualReturnCaseOwner = createServerFn({ method: "POST" })
+  .validator(assignOwnerSchema)
+  .handler(({ data }) =>
+    withAnnualReturnRepository((repository, actorId) =>
+      repository.assignOwner({
+        ...data,
+        actorId,
+      }),
+    ),
+  );
+
+export const listAnnualReturnCaseNotes = createServerFn({ method: "GET" })
+  .validator(annualReturnCaseIdSchema)
+  .handler(({ data }) =>
+    withAnnualReturnRepository((repository) => repository.listNotes(data.caseId)),
+  );
+
+export const addAnnualReturnCaseNote = createServerFn({ method: "POST" })
+  .validator(addNoteSchema)
+  .handler(({ data }) =>
+    withAnnualReturnRepository((repository, actorId) =>
+      repository.addNote({
+        ...data,
+        actorId,
+      }),
+    ),
+  );
 export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
   .validator(
     z.object({
