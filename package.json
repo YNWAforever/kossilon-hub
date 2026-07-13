@@ -10,11 +10,13 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --exclude .worktrees/**",
+    "test:watch": "vitest --exclude .worktrees/**",
     "validate:runtime": "node --experimental-strip-types scripts/validate-firm-runtime.ts",
     "db:migrate": "bun scripts/db-migrate.ts",
-    "db:seed": "bun scripts/db-seed-annual-return.ts"
+    "db:seed": "bun scripts/db-seed-annual-return.ts",
+    "check:production-imports": "node --experimental-strip-types scripts/check-production-route-imports.ts",
+    "verify:firm": "node --experimental-strip-types scripts/verify-firm-deployment.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",
