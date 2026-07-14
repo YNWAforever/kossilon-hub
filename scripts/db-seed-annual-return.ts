@@ -278,9 +278,9 @@ export type SeedAnnualReturnOptions = {
 };
 
 export function buildStaffProfiles(options: SeedAnnualReturnOptions = {}) {
-  const adminAuthUserId = options.adminAuthUserId?.trim();
+  const normalizedAdminAuthUserId = options.adminAuthUserId?.trim();
 
-  if (options.adminAuthUserId !== undefined && !adminAuthUserId) {
+  if (options.adminAuthUserId !== undefined && !normalizedAdminAuthUserId) {
     throw new Error("adminAuthUserId must be a non-empty string.");
   }
 
@@ -288,8 +288,8 @@ export function buildStaffProfiles(options: SeedAnnualReturnOptions = {}) {
     id: fixtureId("90000000", index + 1),
     userId: user.id,
     authUserId:
-      user.email === "amy.chan@kossilon.hk" && adminAuthUserId !== undefined
-        ? adminAuthUserId
+      user.email === "amy.chan@kossilon.hk" && normalizedAdminAuthUserId !== undefined
+        ? normalizedAdminAuthUserId
         : `neon-auth-staff-${user.email}`,
     role: user.role,
     teamId: user.teamId,
@@ -806,7 +806,10 @@ const timelineEvents: TimelineFixture[] = [
   },
 ];
 
-export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturnOptions = {}) {
+export async function seedAnnualReturn(
+  sql: SqlClient,
+  options: SeedAnnualReturnOptions = {},
+) {
   const { staffProfiles, clientCompanyMemberships } = buildAnnualReturnSeedFixtures(options);
 
   await sql.begin(async (tx) => {
