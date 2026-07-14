@@ -28,6 +28,7 @@ import {
   getCurrentPaymentProof,
   getDocumentArchiveRows,
   getDocumentReviewFollowUpDrafts,
+  rowFromDocument,
   getPaymentProofFollowUpDrafts,
   getPaymentProofsForCase,
   getClientPortalSnapshot,
@@ -338,10 +339,24 @@ describe("client portal store", () => {
     });
   });
 
-  it("marks archive rows read-only when their annual-return case is absent", () => {
-    const rows = getDocumentArchiveRows([]);
+  it("marks an archive row read-only when its annual-return case is absent", () => {
+    const upload = uploadClientDocument(
+      requireCase("ar-delta"),
+      "signed-nar1",
+      "missing-case.pdf",
+      "Joanna Poon",
+    );
+    if (!upload.ok) throw new Error("Expected fixture upload to succeed");
+    const document = getClientPortalSnapshot().documents.find(
+      (candidate) => candidate.id === upload.documentId,
+    );
+    if (!document) throw new Error("Expected uploaded document fixture");
 
-    expect(rows.every((row) => !row.reviewable && row.readonly)).toBe(true);
+    expect(rowFromDocument(document, undefined)).toMatchObject({
+      documentId: upload.documentId,
+      reviewable: false,
+      readonly: true,
+    });
   });
 
   it("scopes client-uploaded archive rows to the requested cases", () => {

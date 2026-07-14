@@ -695,9 +695,9 @@ export function getClientPortalProgress(
   };
 }
 
-function rowFromDocument(
+export function rowFromDocument(
   document: ClientPortalDocument,
-  caseItem = getAnnualReturnCaseById(document.caseId),
+  caseItem?: AnnualReturnCase,
 ): ClientPortalArchiveRow {
   const reviewable =
     caseItem !== undefined &&
