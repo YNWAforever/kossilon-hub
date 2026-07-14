@@ -1,7 +1,7 @@
 # Neon Auth Isolated Demo Design
 
-**Date:** 2026-07-15  
-**Status:** Approved design, pending written-spec review  
+**Date:** 2026-07-15
+**Status:** Approved design, pending written-spec review
 **Scope:** Deployed Kossilon demo backed by a separate Neon project and Neon Auth instance
 
 ## Goal
