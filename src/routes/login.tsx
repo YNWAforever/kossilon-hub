@@ -3,7 +3,7 @@ import { AlertCircle, Building2, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
-import { useAuth } from "@/features/auth/auth-context";
+import { useAuth } from "@/features/auth/auth-context-neon";
 import { consumeRedirectPath, getSafeRedirectPath } from "@/features/auth/route-guard";
 
 export const Route = createFileRoute("/login")({
@@ -22,8 +22,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { session, isHydrated, login, loginDemo, demoUsers } = useAuth();
-  const [email, setEmail] = useState("admin@kossilon.test");
-  const [password, setPassword] = useState("admin-demo");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,14 +35,14 @@ function LoginPage() {
     void navigate({ href: redirectPath, replace: true });
   }, [isHydrated, navigate, session]);
 
-  function submitLogin(event: FormEvent<HTMLFormElement>) {
+  async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = login(email, password);
+    const result = await login(email, password);
     setError(result.ok ? null : result.error);
   }
 
-  function submitDemoLogin(userId: string) {
-    const result = loginDemo(userId);
+  async function submitDemoLogin(userId: string) {
+    const result = await loginDemo(userId);
     setError(result.ok ? null : result.error);
   }
 
@@ -96,10 +96,10 @@ function LoginPage() {
           </div>
 
           <div>
-            <StatusPill tone="blue">Prototype access</StatusPill>
+            <StatusPill tone="blue">Secure access</StatusPill>
             <h1 className="mt-4 font-display text-2xl font-semibold">Sign in to Compliance Core</h1>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Use the default admin credentials or enter with a demo identity.
+              Sign in with your firm's Neon Auth account.
             </p>
           </div>
 
@@ -146,43 +146,45 @@ function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-7 border-t border-border pt-6">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Demo identities
-              </p>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </div>
+          {demoUsers.length > 0 && (
+            <div className="mt-7 border-t border-border pt-6">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Demo identities
+                </p>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </div>
 
-            <div className="mt-3 space-y-2">
-              {demoUsers.map((user) => (
-                <button
-                  key={user.id}
-                  type="button"
-                  onClick={() => submitDemoLogin(user.id)}
-                  disabled={!isHydrated}
-                  className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-left transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-xs font-semibold text-white">
-                      {user.initials}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{user.name}</span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
-                        {user.email}
+              <div className="mt-3 space-y-2">
+                {demoUsers.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => submitDemoLogin(user.id)}
+                    disabled={!isHydrated}
+                    className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-left transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-xs font-semibold text-white">
+                        {user.initials}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">{user.name}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground">
+                          {user.email}
+                        </span>
                       </span>
                     </span>
-                  </span>
 
-                  <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                    <UserRound className="h-3.5 w-3.5" />
-                    {user.role}
-                  </span>
-                </button>
-              ))}
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                      <UserRound className="h-3.5 w-3.5" />
+                      {user.role}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
     </main>

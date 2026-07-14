@@ -2,9 +2,59 @@ import { readFileSync } from "node:fs";
 
 import { QueryClient } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../styles.css?url", () => ({ default: "/styles.css" }));
+
+vi.mock("@/features/auth/session", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../features/auth/session")>();
+  return {
+    ...actual,
+    getStoredSession: () => ({
+      id: "test-admin",
+      name: "Test Admin",
+      email: "admin@example.com",
+      role: "Admin",
+      initials: "TA",
+      team: "Operations",
+      signedInAt: "2026-07-11T00:00:00.000Z",
+    }),
+  };
+});
+
+vi.mock("@/features/auth/neon-auth-rpc", () => ({
+  getAuthenticatedActor: () => Promise.resolve({ authUserId: "test-admin" }),
+}));
+
+vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../features/auth/auth-context-neon")>();
+  const session = {
+    id: "test-admin",
+    name: "Test Admin",
+    email: "admin@example.com",
+    role: "Admin" as const,
+    initials: "TA",
+    team: "Operations",
+    signedInAt: "2026-07-11T00:00:00.000Z",
+  };
+
+  return {
+    ...actual,
+    AuthProvider: ({ children }: { children: ReactNode }) => children,
+    useAuth: () => ({
+      session,
+      isHydrated: true,
+      demoUsers: [],
+      isCurrentUserAdmin: true,
+      login: vi.fn(),
+      loginDemo: vi.fn(),
+      loginDemoUser: vi.fn(),
+      signOut: vi.fn(),
+    }),
+  };
+});
 
 import { routeTree } from "../routeTree.gen";
 import {
@@ -19,33 +69,65 @@ import {
   updateSignatureStatus,
 } from "../lib/annual-return-store";
 import {
+  acceptPaymentProof,
+  attachPaymentProof,
   getClientPortalSnapshot,
+  rejectPaymentProof,
   resetClientPortalStoreForTest,
   reviewClientDocument,
   sendDocumentReviewFollowUpNow,
   uploadClientDocument,
+  uploadPaymentProof,
 } from "../lib/client-portal-store";
 
 const annualReturnsRouteSource = readFileSync(
   new URL("./annual-returns.tsx", import.meta.url),
   "utf8",
 );
-const annualReturnDetailRouteSource = readFileSync(
+const annualReturnDetailRouterSource = readFileSync(
   new URL("./annual-returns.$id.tsx", import.meta.url),
+  "utf8",
+);
+const annualReturnDetailRouteSource = readFileSync(
+  new URL("../features/annual-return/components/demo-case-detail.tsx", import.meta.url),
+  "utf8",
+);
+const productionAnnualReturnDetailSource = readFileSync(
+  new URL("../features/annual-return/components/production-case-detail.tsx", import.meta.url),
+  "utf8",
+);
+const productionAnnualReturnActionsSource = readFileSync(
+  new URL("../features/annual-return/components/production-case-actions.ts", import.meta.url),
   "utf8",
 );
 const whatsappAutomationRouteSource = readFileSync(
   new URL("./whatsapp.automation.tsx", import.meta.url),
   "utf8",
 );
+const productionAutomationSource = readFileSync(
+  new URL(
+    "../features/annual-return/components/production-whatsapp-automation.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const productionFollowUpServerSource = readFileSync(
+  new URL("../features/annual-return/follow-up-server-fns.ts", import.meta.url),
+  "utf8",
+);
 const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
+const paymentsRouteSource = readFileSync(new URL("./payments.tsx", import.meta.url), "utf8");
+const aiAssistantPanelSource = readFileSync(
+  new URL("../components/ai-assistant-panel.tsx", import.meta.url),
+  "utf8",
+);
 
 async function renderRoute(pathname: string) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [pathname] }),
-    context: { queryClient: new QueryClient() },
+    context: { queryClient: new QueryClient(), dataMode: "demo" },
     defaultPreloadStaleTime: 0,
   });
 
@@ -116,7 +198,12 @@ function makeDeltaReadyForReceipt() {
     "payment-proof-checked",
     "internal-filing-review",
   ]) {
-    togglePacketRequirement("ar-delta", requirementId);
+    if (
+      !requireCase("ar-delta").packetRequirements.find((item) => item.id === requirementId)
+        ?.complete
+    ) {
+      togglePacketRequirement("ar-delta", requirementId);
+    }
   }
 }
 
@@ -124,6 +211,42 @@ describe("annual return workflow route regressions", () => {
   beforeEach(() => {
     resetAnnualReturnCasesForTest();
     resetClientPortalStoreForTest();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("renders the operational workflow routes in labeled desktop and mobile root navigation", async () => {
+    const html = await renderRoute("/portal?caseId=ar-delta");
+    const desktopNavigation = html.match(
+      /<nav[^>]*aria-label="Primary navigation"[^>]*>[\s\S]*?<\/nav>/,
+    )?.[0];
+    const mobileNavigation = html.match(
+      /<nav[^>]*aria-label="Operational navigation"[^>]*>[\s\S]*?<\/nav>/,
+    )?.[0];
+
+    expect(desktopNavigation).toBeDefined();
+    expect(mobileNavigation).toBeDefined();
+
+    for (const [path, label] of [
+      ["/portal", "Portal"],
+      ["/payments", "Payments"],
+      ["/whatsapp/automation", "Automation"],
+      ["/annual-returns", "Annual returns"],
+    ]) {
+      expect(desktopNavigation).toContain(`href="${path}"`);
+      expect(mobileNavigation).toContain(`href="${path}"`);
+      expect(mobileNavigation).toContain(`>${label}</a>`);
+    }
+
+    expect(desktopNavigation?.indexOf('href="/portal"')).toBeLessThan(
+      desktopNavigation?.indexOf('href="/whatsapp/automation"') ?? -1,
+    );
+    expect(desktopNavigation).toContain(">Portal</span>");
+    expect(desktopNavigation).toContain(">WhatsApp Automation</span>");
+    expect(mobileNavigation).toContain("border-border");
+    expect(mobileNavigation).toContain("gap-2");
   });
 
   it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
@@ -139,6 +262,65 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Client portal activity");
     expect(html).toContain("Delta Bloom Ventures Limited");
     expect(html).not.toContain("Search company or contact");
+  });
+
+  it("renders the root not-found state for an unknown client id", async () => {
+    const html = await renderRoute("/clients/missing-client");
+
+    expect(html).toContain("Page not found");
+    expect(html).not.toContain("Aurora Peak Trading Limited");
+  });
+
+  it("renders the restored client directory and operational filters", async () => {
+    const html = await renderRoute("/clients");
+
+    expect(html).toContain("companies under management");
+    expect(html).toContain("Search clients");
+    expect(html).toContain("All packages");
+    expect(html).toContain("All teams");
+    expect(html).toContain("Harbour Trading Ltd");
+    expect(html).toContain("60000000");
+  });
+
+  it("renders the restored client profile without routing an unmapped client to another portal case", async () => {
+    const html = await renderRoute("/clients/c-1");
+
+    expect(html).toContain("Harbour Trading Ltd");
+    expect(html).toContain("Contacts");
+    expect(html).toContain("Annual return history");
+    expect(html).toContain("Documents");
+    expect(html).toContain("Payment");
+    expect(html).toContain("Company timeline");
+    expect(html).toContain("Open board");
+    expect(html).not.toContain(">Open portal</a>");
+  });
+
+  it("renders the restored enquiry conversation, triage, conversion, and AI drafting workflow", async () => {
+    const html = await renderRoute("/enquiries");
+
+    expect(html).toContain("Enquiry Inbox");
+    expect(html).toContain("Search conversations");
+    expect(html).toContain("AI triage");
+    expect(html).toContain("Convert to client");
+    expect(html).toContain("Send quote");
+    expect(html).toContain("Type a message");
+    expect(html).toContain("AI draft available");
+  });
+
+  it("marks only WhatsApp Automation active on its nested route", async () => {
+    const html = await renderRoute("/whatsapp/automation");
+    const navigation = html.match(
+      /<nav[^>]*aria-label="Primary navigation"[^>]*>[\s\S]*?<\/nav>/,
+    )?.[0];
+    const inboxLink = navigation?.match(/<a[^>]*href="\/whatsapp"[^>]*>/)?.[0];
+    const automationLink = navigation?.match(/<a[^>]*href="\/whatsapp\/automation"[^>]*>/)?.[0];
+
+    expect(inboxLink).toBeDefined();
+    expect(automationLink).toBeDefined();
+    expect(inboxLink).not.toContain('data-status="active"');
+    expect(inboxLink).not.toContain("bg-sidebar-accent text-sidebar-accent-foreground");
+    expect(automationLink).toContain('data-status="active"');
+    expect(automationLink).toContain("bg-sidebar-accent text-sidebar-accent-foreground");
   });
 
   it("renders an explicit status column in WhatsApp automation", () => {
@@ -170,6 +352,98 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain("search={{ caseId: selectedCase.id }}");
     expect(portalRouteSource).toContain('action.kind === "receipt"');
     expect(portalRouteSource).toContain('action.kind !== "receipt" && isReadOnly');
+  });
+
+  it("renders payment proof attachment and review controls", async () => {
+    const htmlWithoutProof = await renderRoute("/payments");
+    expect(htmlWithoutProof).toContain("Attach proof");
+
+    attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    const htmlWithProof = await renderRoute("/payments");
+    expect(htmlWithProof).toContain("fps-proof.png");
+    expect(htmlWithProof).toContain("Accept");
+    expect(htmlWithProof).toContain("Reject");
+  });
+
+  it("renders only the replacement action for rejected payment proof", async () => {
+    const upload = attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    if (!upload.ok) throw new Error("Expected payment proof attachment to succeed");
+
+    expect(
+      rejectPaymentProof(upload.proofId, {
+        reasonCode: "unreadable",
+        actor: "Operations",
+      }),
+    ).toEqual({ ok: true, proofId: upload.proofId });
+
+    const html = await renderRoute("/payments");
+
+    expect(html).toContain(
+      'aria-label="Attach replacement payment proof for Delta Bloom Ventures Limited"',
+    );
+    expect(html).not.toContain(
+      'aria-label="Attach payment proof for Delta Bloom Ventures Limited"',
+    );
+  });
+
+  it("does not render attachment actions for accepted payment proof", async () => {
+    const upload = attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    if (!upload.ok) throw new Error("Expected payment proof attachment to succeed");
+
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+
+    const html = await renderRoute("/payments");
+
+    expect(html).not.toContain(
+      'aria-label="Attach payment proof for Delta Bloom Ventures Limited"',
+    );
+    expect(html).not.toContain(
+      'aria-label="Attach replacement payment proof for Delta Bloom Ventures Limited"',
+    );
+  });
+
+  it("disables attachment controls for a filed case without payment proof", async () => {
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const html = await renderRoute("/payments");
+
+    expect(html).toMatch(
+      /aria-label="Attach payment proof for Delta Bloom Ventures Limited"[^>]*disabled/,
+    );
+  });
+
+  it("disables payment proof review controls after receipt acceptance", async () => {
+    const upload = attachPaymentProof(requireCase("ar-delta"), "fps-proof.png", "Operations");
+    if (!upload.ok) throw new Error("Expected payment proof attachment to succeed");
+
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const html = await renderRoute("/payments");
+
+    expect(html).toMatch(
+      /aria-label="Accept payment proof for Delta Bloom Ventures Limited"[^>]*disabled/,
+    );
+    expect(html).toMatch(
+      /aria-label="Reject payment proof for Delta Bloom Ventures Limited"[^>]*disabled/,
+    );
+  });
+
+  it("keeps structured payment proof reasons and client-visible notes in the payments route", () => {
+    expect(paymentsRouteSource).toContain("clientPortalPaymentProofReviewReasons");
+    expect(paymentsRouteSource).toContain("Client-visible note");
+    expect(paymentsRouteSource).toContain("reviewAnnualReturnEvidenceAction");
+    expect(paymentsRouteSource).not.toContain("acceptPaymentProof(");
+    expect(paymentsRouteSource).not.toContain("rejectPaymentProof(");
+    expect(paymentsRouteSource).toContain(
+      "aria-label={`Confirm payment proof rejection for ${caseItem.companyName}`}",
+    );
   });
 
   it("renders the selected portal case from the case search parameter", async () => {
@@ -256,6 +530,53 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Please upload a replacement");
   });
 
+  it("renders rejected payment proof reason, replacement action, and history", async () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "blurred.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    rejectPaymentProof(upload.proofId, {
+      reasonCode: "unreadable",
+      note: "The transfer reference is cropped.",
+      actor: "Operations",
+    });
+
+    const html = await renderRoute("/portal?caseId=ar-delta");
+    expect(html).toContain("Replace payment proof");
+    expect(html).toContain("Proof is unclear, cropped, or incomplete");
+    expect(html).toContain("The transfer reference is cropped.");
+    expect(html).toContain("Payment proof history");
+  });
+
+  it("keeps accepted payment proof review metadata and history visible after receipt acceptance", async () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "accepted-proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    expect(acceptPaymentProof(upload.proofId, "Operations")).toEqual({
+      ok: true,
+      proofId: upload.proofId,
+    });
+    makeDeltaReadyForReceipt();
+    expect(submitFilingPacket("ar-delta").ok).toBe(true);
+    expect(acceptFilingReceipt("ar-delta").ok).toBe(true);
+
+    const proof = getClientPortalSnapshot().paymentProofs.find(
+      (item) => item.id === upload.proofId,
+    );
+    if (!proof?.reviewedAt) throw new Error("Expected payment proof review timestamp");
+    const reviewedAt = new Date(proof.reviewedAt).toLocaleString("en-HK", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const html = await renderRoute("/portal?caseId=ar-delta");
+
+    expect(html).toContain("Payment proof history");
+    expect(html).toContain("accepted-proof.png");
+    expect(html).toContain("Reviewed by");
+    expect(html).toContain("Operations");
+    expect(html).toContain(reviewedAt);
+  });
+
   it("does not render replace controls for accepted portal documents", async () => {
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
@@ -302,6 +623,7 @@ describe("annual return workflow route regressions", () => {
 
   it("does not render document review controls for pending uploads once the case receipt is accepted", async () => {
     makeDeltaReadyForReceipt();
+    resetClientPortalStoreForTest();
     const upload = uploadClientDocument(
       requireCase("ar-delta"),
       "signed-nar1",
@@ -340,6 +662,30 @@ describe("annual return workflow route regressions", () => {
     expect(html).toContain("Required signature is missing");
     expect(html).toContain("Director signature is missing on page 2.");
     expect(html).toContain("Send now");
+  });
+
+  it("renders rejected payment proof drafts in WhatsApp automation", async () => {
+    const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
+    if (!upload.ok) throw new Error("Expected proof upload");
+    rejectPaymentProof(upload.proofId, {
+      reasonCode: "missing-reference",
+      note: "Please include the FPS reference.",
+      actor: "Operations",
+    });
+
+    const html = await renderRoute("/whatsapp/automation");
+    expect(html).toContain("Payment proof replacement");
+    expect(html).toContain("Transaction reference is missing");
+    expect(html).toContain("Please include the FPS reference.");
+    expect(html).toContain("Send now");
+  });
+
+  it("exposes payment proof state to AI without state-changing controls", () => {
+    expect(aiAssistantPanelSource).toContain("getPaymentProofAiContext");
+    expect(aiAssistantPanelSource).toContain("Payment proof");
+    expect(aiAssistantPanelSource).not.toContain("acceptPaymentProof(");
+    expect(aiAssistantPanelSource).not.toContain("rejectPaymentProof(");
+    expect(aiAssistantPanelSource).not.toContain("sendPaymentProofFollowUpNow(");
   });
 
   it("keeps sent rejected-document drafts out of the default Open WhatsApp queue", async () => {
@@ -399,7 +745,66 @@ describe("annual return workflow route regressions", () => {
     expect(annualReturnDetailRouteSource).toContain('to="/documents"');
     expect(annualReturnDetailRouteSource).toContain("getClientPortalRequiredActions");
     expect(annualReturnDetailRouteSource).toContain("getDocumentArchiveRows");
-    expect(sidebarSource).toContain("Portal Demo");
+    expect(sidebarSource).toContain('label: "Portal"');
     expect(sidebarSource).toContain('to: "/portal"');
+  });
+
+  it("shows persisted work-item owner and SLA state in annual-return routes", () => {
+    expect(annualReturnsRouteSource).toContain("listWorkQueue");
+    expect(annualReturnsRouteSource).toContain("Work owner");
+    expect(annualReturnsRouteSource).toContain("SLA state");
+    expect(annualReturnDetailRouteSource).toContain("listWorkQueue");
+    expect(annualReturnDetailRouteSource).toContain("Work owner");
+    expect(annualReturnDetailRouteSource).toContain("SLA state");
+  });
+
+  it("wires the production detail route to server-backed commands", () => {
+    expect(annualReturnDetailRouterSource).toContain("ProductionAnnualReturnCaseDetail");
+    expect(annualReturnDetailRouterSource).toContain("dataMode");
+    expect(annualReturnDetailRouterSource).not.toContain("useAnnualReturnCase(");
+    expect(productionAnnualReturnDetailSource).not.toContain(
+      "Production owner actions are handled",
+    );
+    expect(productionAnnualReturnDetailSource).not.toContain(
+      "Production checklist state is managed",
+    );
+    for (const command of [
+      "assignAnnualReturnCaseOwner",
+      "updateAnnualReturnStatus",
+      "updateAnnualReturnChecklistItem",
+      "updateAnnualReturnPayment",
+      "addAnnualReturnCaseNote",
+      "queueAnnualReturnWhatsAppReminderMessage",
+      "updateAnnualReturnFilingProof",
+    ]) {
+      expect(productionAnnualReturnActionsSource).toContain(command);
+    }
+    expect(productionAnnualReturnDetailSource).not.toContain("useAnnualReturnCase(");
+  });
+
+  it("routes production evidence through the annual-return orchestration actions", () => {
+    expect(documentsRouteSource).toContain("reviewAnnualReturnEvidenceAction");
+    expect(documentsRouteSource).not.toContain("reviewDocument");
+    expect(paymentsRouteSource).toContain("reviewAnnualReturnEvidenceAction");
+    expect(paymentsRouteSource).toContain('document.category === "payment"');
+    expect(paymentsRouteSource).not.toContain(
+      "Production payment proof review uses the annual-return server action.",
+    );
+    expect(portalRouteSource).toContain("annualReturnQueryKeys.documents");
+    expect(portalRouteSource).toContain('dataMode !== "demo"');
+    expect(portalRouteSource).toContain("finalizeDocumentUpload");
+    expect(portalRouteSource).not.toContain("publicUrl");
+  });
+  it("keeps production automation server-backed and demo mutations out of production", () => {
+    expect(whatsappAutomationRouteSource).toContain("ProductionWhatsAppAutomation");
+    expect(whatsappAutomationRouteSource).toContain('dataMode === "demo"');
+    expect(productionAutomationSource).toContain("listProductionFollowUpDrafts");
+    expect(productionAutomationSource).toContain("sendProductionFollowUp");
+    expect(productionAutomationSource).toContain("annualReturnQueryKeys.automationNotifications");
+    expect(productionFollowUpServerSource).toContain("sendAnnualReturnFollowUpForActor");
+    expect(productionFollowUpServerSource).toContain("sendDocumentReviewFollowUpForActor");
+    expect(productionFollowUpServerSource).toContain("sendPaymentProofFollowUpForActor");
+    expect(productionAutomationSource).not.toContain("annual-return-store");
+    expect(productionAutomationSource).not.toContain("client-portal-store");
   });
 });

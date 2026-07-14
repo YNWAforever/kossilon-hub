@@ -2,7 +2,11 @@ import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { normalizeWoztellInboundMessage } from "./woztell";
-import { createWhatsAppRepository, planContactIdentityMerge } from "./repository";
+import {
+  createWhatsAppRepository,
+  planContactIdentityMerge,
+  resolveWhatsAppReplayMessageId,
+} from "./repository";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -38,6 +42,11 @@ async function cleanupWhatsAppFixtures() {
   const sql = sqlForTests();
 
   await sql.begin(async (tx) => {
+    await tx`
+      delete from notification_outbox
+      where company_id = ${TEST_COMPANY_ID}
+        or idempotency_key like 'follow-up:phase2-test:%'
+    `;
     await tx`
       delete from whatsapp_webhook_events
       where provider_event_id like 'phase2-test-%'
@@ -172,6 +181,23 @@ afterEach(async () => {
 
 afterAll(async () => {
   await testSql?.end();
+});
+
+describe("WhatsApp follow-up replay metadata", () => {
+  it("fails closed when an existing idempotency row has no usable message reference", () => {
+    expect(resolveWhatsAppReplayMessageId(undefined)).toBeNull();
+    expect(
+      resolveWhatsAppReplayMessageId({
+        payload: { whatsappMessageId: "11111111-1111-4111-8111-111111111111" },
+      }),
+    ).toBe("11111111-1111-4111-8111-111111111111");
+    expect(() => resolveWhatsAppReplayMessageId({ payload: {} })).toThrow(
+      /existing WhatsApp follow-up cannot be replayed/i,
+    );
+    expect(() => resolveWhatsAppReplayMessageId({ payload: null })).toThrow(
+      /existing WhatsApp follow-up cannot be replayed/i,
+    );
+  });
 });
 
 describe("WhatsApp contact identity reconciliation", () => {
@@ -333,6 +359,56 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  it(
+    "replays stable follow-up keys without duplicating messages, outbox, or timeline",
+    async () => {
+      const repository = repositoryFor();
+      const input = {
+        actorId: TEST_USER_ID,
+        caseId: TEST_CASE_ID,
+        toPhone: "+852 6999 0001",
+        contactName: "Phase 2 Director",
+        templateName: "phase2_test_follow_up",
+        languageCode: "en",
+        category: "document" as const,
+        body: "Phase 2 test replacement request.",
+        idempotencyKey: `follow-up:phase2-test:${TEST_CASE_ID}:${TEST_CASE_ID}`,
+        followUpId: TEST_CASE_ID,
+        metadata: { source: "phase2-test", entityId: TEST_CASE_ID },
+      };
+      const first = await repository.queueOutboundTemplateMessage(input);
+      const replay = await repository.queueOutboundTemplateMessage(input);
+      expect(first.idempotentReplay).toBe(false);
+      expect(replay).toMatchObject({ id: first.id, idempotentReplay: true });
+      const sql = sqlForTests();
+      await sql`
+        update notification_outbox
+        set payload = '{}'::jsonb
+        where idempotency_key = \${input.idempotencyKey}
+      `;
+      await expect(repository.queueOutboundTemplateMessage(input)).rejects.toThrow(
+        /existing WhatsApp follow-up cannot be replayed/i,
+      );
+      const messages = await sql<{ count: number }[]>`
+        select count(*)::int as count from whatsapp_messages
+        where case_id = ${TEST_CASE_ID} and body = ${input.body}
+      `;
+      const outbox = await sql<{ count: number }[]>`
+        select count(*)::int as count from notification_outbox
+        where idempotency_key = ${input.idempotencyKey}
+      `;
+      const timeline = await sql<{ count: number }[]>`
+        select count(*)::int as count from timeline_events
+        where case_id = ${TEST_CASE_ID}
+          and event_type = 'whatsapp_message_queued'
+          and metadata ->> 'followUpId' = ${TEST_CASE_ID}
+      `;
+      expect(messages[0].count).toBe(1);
+      expect(outbox[0].count).toBe(1);
+      expect(timeline[0].count).toBe(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
   it(
     "matches inbound replies to a prior outbound annual return case and records timeline",
     async () => {

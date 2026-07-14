@@ -1,15 +1,7 @@
 // Real client-side document parsing + chunking for the knowledge base.
 // Supports TXT/MD, PDF (via pdfjs-dist), and DOCX (via mammoth).
 
-import * as pdfjsLib from "pdfjs-dist";
-// Vite serves this worker at a URL we hand to pdfjs.
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import mammoth from "mammoth";
-
-// Register worker exactly once.
-if (typeof window !== "undefined") {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-}
 
 export type ParsedDoc = {
   text: string;
@@ -61,6 +53,12 @@ export async function parseFile(file: File): Promise<ParsedDoc> {
 }
 
 async function parsePdf(file: File): Promise<{ text: string; pageCount: number }> {
+  const pdfjsLib = await import("pdfjs-dist");
+  if (typeof window !== "undefined") {
+    const { default: pdfWorkerUrl } = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+  }
+
   const data = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjsLib.getDocument({ data }).promise;
   const pages: string[] = [];

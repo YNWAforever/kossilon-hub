@@ -1,5 +1,5 @@
 import { Search, Bell, HelpCircle, LogOut } from "lucide-react";
-import { useAuth } from "@/features/auth/auth-context";
+import { useAuth } from "@/features/auth/auth-context-neon";
 
 export function TopBar({
   title,

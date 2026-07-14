@@ -1,309 +1,444 @@
+// Knowledge base store for FAQs and reference documents used by the mocked AI agent.
 import { useSyncExternalStore } from "react";
 
-export type KnowledgeCategory =
-  "Incorporation" | "Annual Return" | "Payments" | "Deregistration" | "General";
+export type FaqCategory =
+  | "Incorporation"
+  | "Annual Return"
+  | "Payments"
+  | "Deregistration"
+  | "General";
+
+export const FAQ_CATEGORIES: FaqCategory[] = [
+  "Incorporation",
+  "Annual Return",
+  "Payments",
+  "Deregistration",
+  "General",
+];
 
 export type FaqEntry = {
   id: string;
   question: string;
-  answer: string;
-  category: KnowledgeCategory;
+  answer: string; // markdown
+  category: FaqCategory;
   tags: string[];
   active: boolean;
+  updatedAt: string;
 };
 
-export type ReferenceDocument = {
+export type ReferenceDoc = {
   id: string;
   title: string;
   filename: string;
-  category: KnowledgeCategory;
+  category: FaqCategory;
   summary: string;
   updatedAt: string;
   active: boolean;
+  sizeKb: number;
+  mime?: string;
+  pageCount?: number;
+  // Real extracted content — present when the doc was uploaded (not seeded).
+  extractedText?: string;
+  chunks?: string[];
+  indexedAt?: string;
 };
 
-type KnowledgeBaseState = {
-  faqs: FaqEntry[];
-  referenceDocs: ReferenceDocument[];
-};
+const nowIso = () => new Date("2026-07-04T09:00:00+08:00").toISOString();
+const rid = () => Math.random().toString(36).slice(2, 10);
 
 const seedFaqs: FaqEntry[] = [
   {
-    id: "faq-nar1-deadline",
-    question: "When is the NAR1 annual return due?",
+    id: "faq-fees",
+    question: "What are your fees for annual return filing?",
     answer:
-      "For a private Hong Kong company, the NAR1 is generally due within 42 days after the anniversary of incorporation. We prepare the filing from the latest company particulars, collect signatures where needed, and submit once the filing fee is settled.",
+      "Our **Annual Return** filing fees are:\n\n- **Basic** — HKD 2,800 (filing only)\n- **Standard** — HKD 3,800 (filing + 1 change)\n- **Premium** — HKD 5,200 (full-service + advisory)\n\nGovernment fee HKD 105 is billed separately.",
+    category: "Payments",
+    tags: ["fees", "annual return", "pricing", "package"],
+    active: true,
+    updatedAt: nowIso(),
+  },
+  {
+    id: "faq-nar1-timing",
+    question: "When must the NAR1 be filed?",
+    answer:
+      "The NAR1 must be filed within **42 days after the anniversary of incorporation**. Late filing triggers escalating penalties from HKD 870 up to HKD 3,480.",
     category: "Annual Return",
-    tags: ["NAR1", "deadline", "annual return"],
+    tags: ["NAR1", "deadline", "42 days", "penalty"],
     active: true,
+    updatedAt: nowIso(),
   },
   {
-    id: "faq-nar1-penalty",
-    question: "What happens if an annual return is late?",
+    id: "faq-ar-docs",
+    question: "What documents do you need to file our annual return?",
     answer:
-      "Late annual returns can attract higher registration fees and potential prosecution risk. The safest next step is to confirm the anniversary date, prepare the NAR1 immediately, and file as soon as the company records are complete.",
+      "We need:\n\n1. Signed **NAR1** form\n2. Updated **register of members**\n3. Register of **directors** and **secretaries**\n4. Copy of your **BR certificate**\n5. Proof of registered office address\n6. ID copies of all directors\n\nWe'll send a WhatsApp checklist so you can upload each file.",
     category: "Annual Return",
-    tags: ["late", "penalty", "Companies Registry"],
+    tags: ["documents", "checklist", "nar1", "kyc"],
     active: true,
+    updatedAt: nowIso(),
   },
   {
-    id: "faq-inc-fees",
-    question: "What are your Hong Kong incorporation fees?",
+    id: "faq-incorp",
+    question: "How much does it cost to open a HK Limited company?",
     answer:
-      "Our incorporation package can include company secretary, registered office, incorporation filing, company kit, and first-year compliance setup. Final pricing depends on whether nominee, bank support, or expedited handling is needed.",
+      "Our incorporation package is **HKD 4,800** all-in and includes:\n\n- NNC1 filing with Companies Registry\n- Business Registration certificate (1 year)\n- Company kit (chop, common seal, share certificates)\n- Registered office for 3 months\n\nTurnaround is **2–3 working days** once we have KYC docs.",
     category: "Incorporation",
-    tags: ["fees", "incorporation", "quote"],
+    tags: ["incorporation", "cost", "hk ltd", "new company"],
     active: true,
+    updatedAt: nowIso(),
   },
   {
-    id: "faq-inc-timeline",
-    question: "How long does incorporation take?",
+    id: "faq-incorp-docs",
+    question: "What do you need to incorporate a new company?",
     answer:
-      "A standard Hong Kong limited company setup is usually ready within 1-3 working days after KYC documents, company name, director/shareholder details, and payment are complete.",
+      "For each director and shareholder we need:\n\n- HKID or passport copy\n- Proof of residential address (within 3 months)\n- Proposed company name (English + Chinese optional)\n\nWe'll draft the **NNC1**, **Articles of Association**, and **IRBR1** for signature.",
     category: "Incorporation",
-    tags: ["timeline", "setup", "KYC"],
+    tags: ["kyc", "documents", "incorporation"],
     active: true,
+    updatedAt: nowIso(),
   },
   {
-    id: "faq-kyc-docs",
-    question: "What KYC documents are required?",
+    id: "faq-change-director",
+    question: "How do I change a director?",
     answer:
-      "We normally request identification, residential address proof, contact details, and ownership/control information for directors, shareholders, and ultimate beneficial owners.",
+      "You must notify the Companies Registry within **15 days** of the change by filing **ND2A** (appointment) or **ND2B** (cessation). We charge HKD 1,200 per change and turnaround is 1–2 working days.",
     category: "General",
-    tags: ["KYC", "documents", "onboarding"],
+    tags: ["director", "change", "nd2a", "nd2b"],
     active: true,
+    updatedAt: nowIso(),
+  },
+  {
+    id: "faq-dereg",
+    question: "How do I deregister a dormant company?",
+    answer:
+      "Voluntary deregistration requires:\n\n1. **IRD Notice of No Objection** (takes ~4 weeks)\n2. **DR1** form with written consent from all directors\n3. Company must be solvent and inactive\n\nOur fee: HKD 3,800 (excl. HKD 420 gov fee). Full process takes **6–9 months**.",
+    category: "Deregistration",
+    tags: ["deregistration", "dr1", "ird", "dormant"],
+    active: true,
+    updatedAt: nowIso(),
   },
   {
     id: "faq-payment-methods",
-    question: "Which payment methods are accepted?",
+    question: "How can I pay the invoice?",
     answer:
-      "Clients may settle invoices by FPS, bank transfer, or cheque. Please include the company name or invoice number in the payment reference so our team can match the receipt quickly.",
+      "We accept:\n\n- **FPS** (fastest, free)\n- **Bank transfer** (HSBC, HKD account)\n- **Credit card** via Stripe link (+2.9% surcharge)\n\nInvoices are payable within **14 days**.",
     category: "Payments",
-    tags: ["FPS", "bank transfer", "invoice"],
+    tags: ["payment", "fps", "bank", "invoice", "credit card"],
     active: true,
-  },
-  {
-    id: "faq-payment-receipt",
-    question: "How do I confirm payment?",
-    answer:
-      "After payment, send us the transfer slip or FPS confirmation screenshot. We will mark the invoice as received and continue the filing or service workflow.",
-    category: "Payments",
-    tags: ["receipt", "confirmation", "invoice"],
-    active: true,
+    updatedAt: nowIso(),
   },
   {
     id: "faq-share-transfer",
-    question: "Can Kossilon help with share transfer?",
+    question: "Is stamp duty required for share transfer?",
     answer:
-      "Yes. We can prepare share transfer instruments, board minutes, bought and sold notes, and stamp duty submission materials once the transfer terms and parties are confirmed.",
+      "Yes — HK charges **0.2%** stamp duty on the higher of consideration or net asset value, split between buyer and seller. We prepare Bought & Sold Notes and Contract Note for HKD 2,500.",
     category: "General",
-    tags: ["share transfer", "stamp duty", "board minutes"],
+    tags: ["share transfer", "stamp duty", "ird"],
     active: true,
-  },
-  {
-    id: "faq-dereg-start",
-    question: "What is needed to deregister a Hong Kong company?",
-    answer:
-      "The company should have no outstanding liabilities, no ongoing business, and no unresolved tax matters. We usually start with tax clearance, then prepare the Companies Registry deregistration filing.",
-    category: "Deregistration",
-    tags: ["deregistration", "tax clearance", "NDR1"],
-    active: true,
-  },
-  {
-    id: "faq-dereg-timeline",
-    question: "How long does deregistration take?",
-    answer:
-      "Deregistration commonly takes several months because Inland Revenue tax clearance is required before the Companies Registry step can complete.",
-    category: "Deregistration",
-    tags: ["timeline", "tax", "close company"],
-    active: true,
+    updatedAt: nowIso(),
   },
   {
     id: "faq-registered-office",
-    question: "Do we need a Hong Kong registered office?",
+    question: "Do you provide a registered office address?",
     answer:
-      "A Hong Kong company must maintain a local registered office address and a company secretary. Kossilon can provide both as part of an annual compliance package.",
+      "Yes. Our Central office can be used as your **registered address** for HKD 2,400/year, including mail scanning and forwarding.",
     category: "General",
-    tags: ["registered office", "company secretary"],
+    tags: ["registered office", "address", "mail"],
     active: true,
+    updatedAt: nowIso(),
+  },
+  {
+    id: "faq-nominee",
+    question: "Do you provide nominee director services?",
+    answer:
+      "We do **not** offer nominee director services — they carry compliance risk under HK's SCR requirements. We can introduce you to a licensed TCSP partner if needed.",
+    category: "General",
+    tags: ["nominee", "director", "scr", "compliance"],
+    active: true,
+    updatedAt: nowIso(),
   },
   {
     id: "faq-turnaround",
-    question: "What is the usual turnaround time for compliance requests?",
+    question: "How long does annual return filing take?",
     answer:
-      "Simple document updates are often handled within 1-2 working days after complete information is received. Registry filings may take longer depending on signatures, payment, and official processing.",
-    category: "General",
-    tags: ["turnaround", "SOP", "processing"],
+      "Once we receive all signed documents, filing with the Companies Registry takes **1 working day**. We'll confirm via WhatsApp with the stamped NAR1 receipt.",
+    category: "Annual Return",
+    tags: ["turnaround", "annual return", "filing"],
     active: true,
+    updatedAt: nowIso(),
   },
 ];
 
-const seedReferenceDocs: ReferenceDocument[] = [
+const seedDocs: ReferenceDoc[] = [
   {
-    id: "doc-fee-2026",
-    title: "Fee schedule 2026",
-    filename: "kossilon-fee-schedule-2026.pdf",
+    id: "doc-fees-2026",
+    title: "Kossilon Fee Schedule 2026",
+    filename: "kossilon-fees-2026.pdf",
     category: "Payments",
-    summary:
-      "Current service packages, government disbursements, payment methods, and expedited handling notes.",
-    updatedAt: "2026-01-05",
+    summary: "All service packages, government fees, and add-on charges effective January 2026.",
+    updatedAt: nowIso(),
     active: true,
+    sizeKb: 218,
   },
   {
     id: "doc-sop",
-    title: "HK CoSec SOP",
-    filename: "hk-cosec-operating-sop.docx",
+    title: "HK Company Secretary SOP",
+    filename: "cosec-sop-v3.pdf",
     category: "General",
     summary:
-      "Internal service levels, handoff rules, escalation steps, and standard client messaging.",
-    updatedAt: "2026-02-14",
+      "Internal standard operating procedures for onboarding, annual filings, and client communication.",
+    updatedAt: nowIso(),
     active: true,
+    sizeKb: 812,
   },
   {
-    id: "doc-nar1",
-    title: "NAR1 filing guide",
-    filename: "nar1-filing-guide-2026.pdf",
+    id: "doc-nar1-guide",
+    title: "NAR1 Filing Guide",
+    filename: "nar1-filing-guide.pdf",
     category: "Annual Return",
     summary:
-      "Annual return workflow, due date calculation, signing checks, and Companies Registry filing sequence.",
-    updatedAt: "2026-03-02",
+      "Step-by-step walkthrough of preparing and filing the NAR1 form with the Companies Registry.",
+    updatedAt: nowIso(),
     active: true,
+    sizeKb: 356,
   },
   {
     id: "doc-kyc",
-    title: "KYC checklist",
-    filename: "client-kyc-checklist.xlsx",
-    category: "General",
+    title: "KYC Document Checklist",
+    filename: "kyc-checklist.pdf",
+    category: "Incorporation",
     summary:
-      "Identity, address, ownership, and control evidence required for new and existing clients.",
-    updatedAt: "2026-04-22",
+      "Complete list of KYC documents required per director and shareholder for HK incorporations.",
+    updatedAt: nowIso(),
     active: true,
+    sizeKb: 92,
   },
   {
-    id: "doc-payment",
-    title: "Payment terms",
-    filename: "payment-terms-and-receipts.pdf",
+    id: "doc-payment-terms",
+    title: "Payment Terms & Conditions",
+    filename: "payment-terms.pdf",
     category: "Payments",
-    summary:
-      "FPS and bank transfer instructions, receipt matching, invoice references, and overdue handling.",
-    updatedAt: "2026-05-11",
+    summary: "Invoice terms, accepted payment methods, late-payment policy, and refund conditions.",
+    updatedAt: nowIso(),
     active: true,
+    sizeKb: 145,
   },
   {
-    id: "doc-dereg",
-    title: "Deregistration playbook",
+    id: "doc-dereg-play",
+    title: "Deregistration Playbook",
     filename: "deregistration-playbook.pdf",
     category: "Deregistration",
     summary:
-      "Tax clearance, no-liability confirmation, board approval, NDR1 filing, and client status updates.",
-    updatedAt: "2026-06-08",
+      "End-to-end playbook covering IRD clearance, DR1 preparation, and 6-month wait period.",
+    updatedAt: nowIso(),
     active: true,
+    sizeKb: 274,
   },
 ];
 
-let state: KnowledgeBaseState = {
-  faqs: seedFaqs,
-  referenceDocs: seedReferenceDocs,
+// ---------- store ----------
+type State = { faqs: FaqEntry[]; docs: ReferenceDoc[] };
+
+const STORAGE_KEY = "kossilon.kb.v1";
+
+function loadPersisted(): Partial<State> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Partial<State>;
+  } catch {
+    return {};
+  }
+}
+
+const persisted = loadPersisted();
+const state: State = {
+  faqs: persisted.faqs ?? seedFaqs,
+  docs: persisted.docs ?? seedDocs,
 };
 
 const listeners = new Set<() => void>();
+const emit = () => {
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* quota — ignore */
+    }
+  }
+  listeners.forEach((l) => l());
+};
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+const getSnapshot = () => state;
+const touch = () => new Date().toISOString();
 
-function emit(): void {
-  listeners.forEach((listener) => listener());
-}
+export const kbStore = {
+  get: () => state,
 
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+  // ----- FAQs -----
+  addFaq: () => {
+    const f: FaqEntry = {
+      id: `faq-${rid()}`,
+      question: "New question",
+      answer: "New answer…",
+      category: "General",
+      tags: [],
+      active: true,
+      updatedAt: touch(),
+    };
+    state.faqs = [f, ...state.faqs];
+    emit();
+    return f.id;
+  },
+  updateFaq: (id: string, patch: Partial<FaqEntry>) => {
+    state.faqs = state.faqs.map((f) => (f.id === id ? { ...f, ...patch, updatedAt: touch() } : f));
+    emit();
+  },
+  duplicateFaq: (id: string) => {
+    const src = state.faqs.find((f) => f.id === id);
+    if (!src) return;
+    state.faqs = [
+      { ...src, id: `faq-${rid()}`, question: `${src.question} (copy)`, updatedAt: touch() },
+      ...state.faqs,
+    ];
+    emit();
+  },
+  removeFaq: (id: string) => {
+    state.faqs = state.faqs.filter((f) => f.id !== id);
+    emit();
+  },
+  importFaqs: (rows: Array<Partial<FaqEntry> & { question: string; answer: string }>) => {
+    const now = touch();
+    const existing = new Map(state.faqs.map((f) => [f.question.trim().toLowerCase(), f]));
+    let added = 0;
+    let updated = 0;
+    for (const r of rows) {
+      const key = r.question.trim().toLowerCase();
+      const cat = (FAQ_CATEGORIES as string[]).includes(r.category as string)
+        ? (r.category as FaqCategory)
+        : "General";
+      const tags = Array.isArray(r.tags)
+        ? r.tags
+            .map(String)
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
+      const active = r.active === undefined ? true : Boolean(r.active);
+      const dup = existing.get(key);
+      if (dup) {
+        Object.assign(dup, {
+          answer: r.answer,
+          category: cat,
+          tags: tags.length ? tags : dup.tags,
+          active,
+          updatedAt: now,
+        });
+        updated++;
+      } else {
+        const f: FaqEntry = {
+          id: `faq-${rid()}`,
+          question: r.question.trim(),
+          answer: r.answer,
+          category: cat,
+          tags,
+          active,
+          updatedAt: now,
+        };
+        state.faqs = [f, ...state.faqs];
+        existing.set(key, f);
+        added++;
+      }
+    }
+    emit();
+    return { added, updated };
+  },
 
-function getSnapshot(): KnowledgeBaseState {
-  return state;
-}
-
-export function useKnowledgeBase(): KnowledgeBaseState {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
+  // ----- Documents -----
+  addDoc: (partial?: Partial<ReferenceDoc>) => {
+    const d: ReferenceDoc = {
+      id: `doc-${rid()}`,
+      title: partial?.title ?? "New reference document",
+      filename: partial?.filename ?? `reference-${rid()}.pdf`,
+      category: partial?.category ?? "General",
+      summary: partial?.summary ?? "Add a short summary the AI can cite…",
+      updatedAt: touch(),
+      active: true,
+      sizeKb: partial?.sizeKb ?? Math.floor(50 + Math.random() * 500),
+    };
+    state.docs = [d, ...state.docs];
+    emit();
+    return d.id;
+  },
+  updateDoc: (id: string, patch: Partial<ReferenceDoc>) => {
+    state.docs = state.docs.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: touch() } : d));
+    emit();
+  },
+  removeDoc: (id: string) => {
+    state.docs = state.docs.filter((d) => d.id !== id);
+    emit();
+  },
+  uploadDoc: async (file: File, opts?: { category?: FaqCategory; title?: string }) => {
+    const { parseFile } = await import("@/lib/doc-parser");
+    const parsed = await parseFile(file);
+    const now = touch();
+    const d: ReferenceDoc = {
+      id: `doc-${rid()}`,
+      title: opts?.title ?? file.name.replace(/\.[^.]+$/, ""),
+      filename: file.name,
+      category: opts?.category ?? "General",
+      summary: parsed.summary,
+      updatedAt: now,
+      active: true,
+      sizeKb: Math.max(1, Math.round(file.size / 1024)),
+      mime: file.type || undefined,
+      pageCount: parsed.pageCount,
+      extractedText: parsed.text,
+      chunks: parsed.chunks,
+      indexedAt: now,
+    };
+    state.docs = [d, ...state.docs];
+    emit();
+    return d.id;
+  },
+};
 
 export function useFaqs(): FaqEntry[] {
-  return useKnowledgeBase().faqs;
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return s.faqs;
+}
+export function useReferenceDocs(): ReferenceDoc[] {
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return s.docs;
 }
 
-export function useReferenceDocs(): ReferenceDocument[] {
-  return useKnowledgeBase().referenceDocs;
-}
-
-export function addFaq(): void {
-  const id = `faq-${Date.now()}`;
-  state = {
-    ...state,
-    faqs: [
-      {
-        id,
-        question: "New FAQ question",
-        answer: "Draft the answer staff should use for this scenario.",
-        category: "General",
-        tags: ["new"],
-        active: true,
-      },
-      ...state.faqs,
-    ],
+export function useKnowledgeBase() {
+  return {
+    faqs: useFaqs(),
+    referenceDocs: useReferenceDocs(),
   };
-  emit();
 }
 
-export function updateFaq(id: string, patch: Partial<FaqEntry>): void {
-  state = {
-    ...state,
-    faqs: state.faqs.map((faq) => (faq.id === id ? { ...faq, ...patch } : faq)),
-  };
-  emit();
+export function filterFaqEntries(
+  faqs: FaqEntry[],
+  query: string,
+  category: FaqCategory | "All" = "All",
+): FaqEntry[] {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return faqs.filter(
+    (faq) =>
+      (category === "All" || faq.category === category) &&
+      (normalizedQuery === "" ||
+        faq.question.toLowerCase().includes(normalizedQuery) ||
+        faq.answer.toLowerCase().includes(normalizedQuery) ||
+        faq.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery))),
+  );
 }
 
-export function duplicateFaq(id: string): void {
-  const faq = state.faqs.find((entry) => entry.id === id);
-  if (!faq) return;
-  state = {
-    ...state,
-    faqs: [{ ...faq, id: `faq-${Date.now()}`, question: `${faq.question} copy` }, ...state.faqs],
-  };
-  emit();
-}
-
-export function deleteFaq(id: string): void {
-  state = { ...state, faqs: state.faqs.filter((faq) => faq.id !== id) };
-  emit();
-}
-
-export function addReferenceDoc(): void {
-  const sequence = state.referenceDocs.length + 1;
-  state = {
-    ...state,
-    referenceDocs: [
-      {
-        id: `doc-${Date.now()}`,
-        title: `Simulated upload ${sequence}`,
-        filename: `mock-reference-${sequence}.pdf`,
-        category: "General",
-        summary: "New mock reference document for AI retrieval demos.",
-        updatedAt: new Date().toISOString().slice(0, 10),
-        active: true,
-      },
-      ...state.referenceDocs,
-    ],
-  };
-  emit();
-}
-
-export function updateReferenceDoc(id: string, patch: Partial<ReferenceDocument>): void {
-  state = {
-    ...state,
-    referenceDocs: state.referenceDocs.map((doc) => (doc.id === id ? { ...doc, ...patch } : doc)),
-  };
-  emit();
-}
-
-export function deleteReferenceDoc(id: string): void {
-  state = { ...state, referenceDocs: state.referenceDocs.filter((doc) => doc.id !== id) };
-  emit();
-}
+// Non-hook accessors for the AI agent module (deterministic, no re-render tie).
+export const getActiveFaqs = () => state.faqs.filter((f) => f.active);
+export const getActiveDocs = () => state.docs.filter((d) => d.active);

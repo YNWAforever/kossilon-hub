@@ -1,11 +1,22 @@
-const ACTOR_ID_ENV_KEY = "KOSSILON_ANNUAL_RETURN_ACTOR_ID";
+import { requireStaffActor, type AuthDependencies } from "@/features/auth/neon-auth-server";
+import type { AuthenticatedActor } from "@/features/auth/types";
 
-export function getCurrentAnnualReturnActorId(): string {
-  const actorId = process.env[ACTOR_ID_ENV_KEY]?.trim();
+export async function getCurrentAnnualReturnActor(
+  request: Request,
+  dependencies: AuthDependencies = {},
+): Promise<AuthenticatedActor> {
+  return requireStaffActor(request, dependencies);
+}
 
-  if (!actorId) {
-    throw new Error(`${ACTOR_ID_ENV_KEY} actor is not configured.`);
+export async function getCurrentAnnualReturnActorId(
+  request: Request,
+  dependencies: AuthDependencies = {},
+): Promise<string> {
+  const actor = await getCurrentAnnualReturnActor(request, dependencies);
+
+  if (!actor.userId) {
+    throw new Error("Forbidden: a staff database identity is required.");
   }
 
-  return actorId;
+  return actor.userId;
 }

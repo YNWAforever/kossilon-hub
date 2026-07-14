@@ -114,8 +114,15 @@ export function useAllCompanies(): Company[] {
 }
 
 export function useCompanyById(id: string): Company | undefined {
-  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return s.added.find((c) => c.id === id) ?? seedCompanies.find((c) => c.id === id);
+  useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return getCompanyById(id);
+}
+
+export function getCompanyById(id: string): Company | undefined {
+  return (
+    state.added.find((company) => company.id === id) ??
+    seedCompanies.find((company) => company.id === id)
+  );
 }
 
 export function useEnquiryConversion(enquiryId: string): string | undefined {

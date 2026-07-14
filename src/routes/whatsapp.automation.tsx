@@ -3,17 +3,18 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import {
   getFollowUpDrafts,
-  sendFollowUpNow,
   useAnnualReturnCases,
   type AnnualReturnCase,
   type AnnualReturnFollowUpDraft,
 } from "../lib/annual-return-store";
 import {
   getDocumentReviewFollowUpDrafts,
-  sendDocumentReviewFollowUpNow,
+  getPaymentProofFollowUpDrafts,
   useClientPortalSnapshot,
   type ClientPortalDocumentReviewFollowUpDraft,
+  type ClientPortalPaymentProofFollowUpDraft,
 } from "../lib/client-portal-store";
+import { ProductionWhatsAppAutomation } from "../features/annual-return/components/production-whatsapp-automation";
 
 export const Route = createFileRoute("/whatsapp/automation")({
   component: WhatsAppAutomationRoute,
@@ -31,9 +32,20 @@ type AutomationQueueRow =
       source: "document-review";
       caseItem: AnnualReturnCase;
       draft: ClientPortalDocumentReviewFollowUpDraft;
+    }
+  | {
+      id: string;
+      source: "payment-proof-review";
+      caseItem: AnnualReturnCase;
+      draft: ClientPortalPaymentProofFollowUpDraft;
     };
 
 function WhatsAppAutomationRoute() {
+  const { dataMode } = Route.useRouteContext();
+  return dataMode === "demo" ? <DemoWhatsAppAutomationRoute /> : <ProductionWhatsAppAutomation />;
+}
+
+function DemoWhatsAppAutomationRoute() {
   const cases = useAnnualReturnCases();
   const portalSnapshot = useClientPortalSnapshot();
   const [filter, setFilter] = useState<"open" | "sent" | "all">("open");
@@ -64,8 +76,23 @@ function WhatsAppAutomationRoute() {
           : [];
       },
     );
+    const paymentProofReviewRows = getPaymentProofFollowUpDrafts(cases, portalSnapshot).flatMap(
+      (draft) => {
+        const caseItem = casesById.get(draft.caseId);
+        return caseItem
+          ? [
+              {
+                id: draft.id,
+                source: "payment-proof-review" as const,
+                caseItem,
+                draft,
+              },
+            ]
+          : [];
+      },
+    );
 
-    return [...annualReturnRows, ...documentReviewRows];
+    return [...annualReturnRows, ...documentReviewRows, ...paymentProofReviewRows];
   }, [cases, portalSnapshot]);
 
   const visibleRows = rows.filter(({ draft }) => {
@@ -122,13 +149,9 @@ function WhatsAppAutomationRoute() {
               <AutomationRow
                 key={`${row.source}-${row.id}`}
                 row={row}
-                onSend={() => {
-                  const result =
-                    row.source === "annual-return"
-                      ? sendFollowUpNow(row.caseItem.id, row.draft.id)
-                      : sendDocumentReviewFollowUpNow(row.draft.id, "Operations");
-                  setWarning(result.ok ? undefined : result.reason);
-                }}
+                onSend={() =>
+                  setWarning("Production follow-ups are dispatched by the notification outbox.")
+                }
               />
             ))
           )}
@@ -141,6 +164,7 @@ function WhatsAppAutomationRoute() {
 function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () => void }) {
   const { caseItem, draft } = row;
   const disabled = draft.status !== "draft";
+  const reasonLabel = "reasonLabel" in draft ? draft.reasonLabel : "Annual return follow-up";
 
   return (
     <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_140px_120px_110px_minmax(0,1.5fr)_120px] lg:items-center">
@@ -158,7 +182,7 @@ function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () =>
       <Field label="Type" value={automationTypeLabel(row)} />
       <Field
         label="Timing"
-        value={row.source === "document-review" ? draft.reasonLabel : draft.suggestedTiming}
+        value={row.source === "annual-return" ? draft.suggestedTiming : reasonLabel}
       />
       <Field
         label="Status"
@@ -197,6 +221,7 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
 }
 
 function automationTypeLabel(row: AutomationQueueRow): string {
+  if (row.source === "payment-proof-review") return "Payment proof replacement";
   if (row.source === "document-review") return "Document replacement";
   return followUpTypeLabel(row.draft.type);
 }

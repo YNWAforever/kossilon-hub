@@ -1,5 +1,10 @@
 export type EnquiryIntent =
-  "Annual Return" | "Incorporation" | "Payment" | "Deregistration" | "KYC" | "General";
+  | "Annual Return"
+  | "Incorporation"
+  | "Payment"
+  | "Deregistration"
+  | "KYC"
+  | "General";
 
 export type Enquiry = {
   id: string;

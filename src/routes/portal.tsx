@@ -1,6 +1,17 @@
+import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
+import { getAnnualReturnCase } from "../features/annual-return/server-fns";
+import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, ReceiptText } from "lucide-react";
+import { CheckCircle2, Download, ReceiptText } from "lucide-react";
+import {
+  createDocumentUploadIntent,
+  downloadDocument,
+  finalizeDocumentUpload,
+  listDocuments,
+} from "../features/documents/server-fns";
+import { DOCUMENT_CATEGORIES, type DocumentCategory } from "../features/documents/types";
 
 import {
   type AnnualReturnCase,
@@ -8,17 +19,14 @@ import {
   useAnnualReturnCases,
 } from "../lib/annual-return-store";
 import {
-  acknowledgePaymentInstructions,
-  approveClientPacket,
   getClientPortalActivity,
   getClientPortalProgress,
   getClientPortalRequiredActions,
   getDocumentArchiveRows,
-  recordReceiptViewed,
-  replaceClientDocument,
-  uploadClientDocument,
+  getPaymentProofsForCase,
   useClientPortalSnapshot,
   type ClientPortalArchiveRow,
+  type ClientPortalPaymentProof,
   type ClientPortalRequiredAction,
 } from "../lib/client-portal-store";
 
@@ -34,23 +42,56 @@ export const Route = createFileRoute("/portal")({
 });
 
 function PortalRoute() {
+  const { dataMode } = Route.useRouteContext();
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
   const navigate = useNavigate({ from: "/portal" });
+  const productionCaseId = caseId && isUuid(caseId) ? caseId : undefined;
+  const productionCaseQuery = useQuery({
+    queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "portal"),
+    queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
+    enabled: Boolean(productionCaseId),
+    retry: false,
+  });
   const [warning, setWarning] = useState<string | undefined>();
 
   const matchedCase = caseId ? cases.find((caseItem) => caseItem.id === caseId) : undefined;
   const selectedCase = caseId ? matchedCase : cases[0];
 
   useEffect(() => {
-    if (!selectedCase || caseId || caseId === selectedCase.id) return;
+    if (dataMode !== "demo" || !selectedCase || caseId || caseId === selectedCase.id) return;
 
     void navigate({
       replace: true,
       search: (previous) => ({ ...previous, caseId: selectedCase.id }),
     });
-  }, [caseId, navigate, selectedCase]);
+  }, [caseId, dataMode, navigate, selectedCase]);
+
+  if (dataMode !== "demo") {
+    if (!productionCaseId) {
+      return (
+        <div className="space-y-3 p-6">
+          <h1 className="text-2xl font-semibold">Production portal</h1>
+          <p className="text-sm text-muted-foreground">Select a UUID-backed annual return case.</p>
+        </div>
+      );
+    }
+    if (productionCaseQuery.isLoading) {
+      return <div className="p-6 text-sm text-muted-foreground">Loading production portal...</div>;
+    }
+    if (productionCaseQuery.data) {
+      return <ProductionPortalCaseView caseItem={productionCaseQuery.data} />;
+    }
+    return (
+      <div className="space-y-3 p-6">
+        <h1 className="text-2xl font-semibold">Portal case unavailable</h1>
+        <p className="text-sm text-destructive">
+          Unable to load the production annual return case.
+        </p>
+      </div>
+    );
+  }
 
   if (!selectedCase) {
     return (
@@ -67,6 +108,7 @@ function PortalRoute() {
   const requiredActions = getClientPortalRequiredActions(selectedCase, snapshot);
   const activity = getClientPortalActivity(selectedCase.id, snapshot);
   const archiveRows = getDocumentArchiveRows([selectedCase], snapshot);
+  const paymentProofs = getPaymentProofsForCase(selectedCase.id, snapshot);
   const packetStatus = getPacketStatus(selectedCase);
   const isReadOnly = progress.isReadOnly;
 
@@ -177,7 +219,15 @@ function PortalRoute() {
         </section>
       </div>
 
+      <PaymentProofHistory proofs={paymentProofs} />
+
       <ArchivePreview rows={archiveRows} selectedCase={selectedCase} />
+
+      <ProductionDocumentPanel
+        companyId={selectedCase.clientId}
+        caseId={selectedCase.id}
+        onWarning={setWarning}
+      />
     </div>
   );
 }
@@ -200,42 +250,40 @@ function PortalActionRow({
         ? "Replace"
         : "Upload"
       : undefined;
+  const showPrimaryAction =
+    action.kind === "document"
+      ? action.status === "open" && Boolean(action.documentAction)
+      : action.kind === "payment-proof"
+        ? action.status === "open" && Boolean(action.paymentProofAction)
+        : true;
 
   function handlePrimaryAction() {
     onWarning(undefined);
 
-    if (action.kind === "document" && action.requirementId) {
-      const result =
-        action.documentAction === "replace"
-          ? replaceClientDocument(
-              caseItem,
-              action.requirementId,
-              `${caseItem.id}-${action.requirementId}-replacement.pdf`,
-            )
-          : uploadClientDocument(
-              caseItem,
-              action.requirementId,
-              `${caseItem.id}-${action.requirementId}.pdf`,
-            );
-      onWarning(result.ok ? undefined : result.reason);
+    if (action.kind === "document") {
+      onWarning("Use the production document uploader below to submit this file.");
+      return;
+    }
+
+    if (action.kind === "payment-proof" && action.paymentProofAction) {
+      onWarning("Use the production document uploader for private proof files.");
       return;
     }
 
     if (action.kind === "payment") {
-      const result = acknowledgePaymentInstructions(caseItem);
-      onWarning(result.ok ? undefined : result.reason);
+      onWarning(
+        "Production payment acknowledgement is handled by the annual-return server action.",
+      );
       return;
     }
 
     if (action.kind === "packet") {
-      const result = approveClientPacket(caseItem);
-      onWarning(result.ok ? undefined : result.reason);
+      onWarning("Production packet approval is handled by the annual-return server action.");
       return;
     }
 
     if (action.kind === "receipt") {
-      const result = recordReceiptViewed(caseItem);
-      onWarning(result.ok ? undefined : result.reason);
+      onWarning("Production receipt viewing is handled by the annual-return server action.");
     }
   }
 
@@ -249,14 +297,18 @@ function PortalActionRow({
         <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        {action.kind !== "document" || (action.status === "open" && action.documentAction) ? (
+        {showPrimaryAction ? (
           <button
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             disabled={primaryDisabled}
             onClick={handlePrimaryAction}
             type="button"
             aria-label={
-              documentPrimaryLabel ? `${documentPrimaryLabel} ${action.label}` : undefined
+              action.kind === "payment-proof"
+                ? `${primaryActionLabel(action)} for ${caseItem.companyName}`
+                : documentPrimaryLabel
+                  ? `${documentPrimaryLabel} ${action.label}`
+                  : undefined
             }
           >
             {primaryActionLabel(action)}
@@ -264,6 +316,49 @@ function PortalActionRow({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function PaymentProofHistory({ proofs }: { proofs: ClientPortalPaymentProof[] }) {
+  return (
+    <section className="rounded-lg border bg-card p-4">
+      <div>
+        <h2 className="text-lg font-semibold">Payment proof history</h2>
+        <p className="text-sm text-muted-foreground">Uploaded proof and staff review outcomes.</p>
+      </div>
+      <div className="mt-4 divide-y">
+        {proofs.length === 0 ? (
+          <p className="py-3 text-sm text-muted-foreground">No payment proof uploaded yet.</p>
+        ) : (
+          proofs.map((proof) => (
+            <div
+              key={proof.id}
+              className="grid gap-2 py-3 text-sm md:grid-cols-[minmax(0,1fr)_140px_120px]"
+            >
+              <div className="min-w-0">
+                <p className="font-medium">{proof.filename}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Uploaded by {proof.uploadedBy} on {formatTimestamp(proof.uploadedAt)}
+                </p>
+                {proof.reviewedBy && proof.reviewedAt ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Reviewed by {proof.reviewedBy} on {formatTimestamp(proof.reviewedAt)}
+                  </p>
+                ) : null}
+                {proof.reviewReasonLabel ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Reason: {proof.reviewReasonLabel}
+                    {proof.reviewNote ? ` - ${proof.reviewNote}` : ""}
+                  </p>
+                ) : null}
+              </div>
+              <span>{proof.origin}</span>
+              <span>{proof.status}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -319,6 +414,200 @@ function ArchivePreview({
   );
 }
 
+function ProductionPortalCaseView({ caseItem }: { caseItem: ProductionAnnualReturnCase }) {
+  const [, setWarning] = useState<string | undefined>();
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <p className="text-sm font-medium text-muted-foreground">Client portal</p>
+        <h1 className="mt-1 text-3xl font-semibold">{caseItem.companyName}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Production annual return {caseItem.returnYear}
+        </p>
+      </div>
+      <ProductionDocumentPanel
+        companyId={caseItem.companyId}
+        caseId={caseItem.id}
+        onWarning={setWarning}
+      />
+    </div>
+  );
+}
+function ProductionDocumentPanel({
+  companyId,
+  caseId,
+  onWarning,
+}: {
+  companyId: string;
+  caseId: string;
+  onWarning: (warning: string | undefined) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [category, setCategory] = useState<DocumentCategory>("other");
+  const [file, setFile] = useState<File | undefined>();
+  const productionReady = isUuid(companyId) && isUuid(caseId);
+  const documentsQuery = useQuery({
+    queryKey: annualReturnQueryKeys.documents(caseId),
+    queryFn: () => listDocuments({ data: { companyId, caseId } }),
+    enabled: productionReady,
+    retry: false,
+  });
+  const uploadMutation = useMutation({
+    mutationFn: async () => {
+      if (!file) throw new Error("Choose a document first.");
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const checksum = await sha256Hex(bytes);
+      const intent = await createDocumentUploadIntent({
+        data: {
+          companyId,
+          caseId,
+          category,
+          fileName: file.name,
+          contentType: file.type,
+          sizeBytes: file.size,
+          checksum,
+        },
+      });
+      return finalizeDocumentUpload({
+        data: { intentId: intent.id, bodyBase64: bytesToBase64(bytes) },
+      });
+    },
+    onSuccess: () => {
+      setFile(undefined);
+      onWarning("Document uploaded and quarantined for staff scanning.");
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) });
+    },
+    onError: (error) => onWarning(error instanceof Error ? error.message : "Upload failed."),
+  });
+
+  async function handleDownload(documentId: string) {
+    try {
+      const response = await downloadDocument({ data: { documentId } });
+      if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+      const href = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = "document";
+      anchor.click();
+      URL.revokeObjectURL(href);
+    } catch (error) {
+      onWarning(error instanceof Error ? error.message : "Unable to download document.");
+    }
+  }
+
+  return (
+    <section className="rounded-lg border bg-card p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Production document upload</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Files are uploaded to private storage and remain quarantined until staff scanning.
+          </p>
+        </div>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Private upload</span>
+      </div>
+      {!productionReady ? (
+        <p className="mt-4 rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
+          This demo case is not connected to production company and case IDs yet.
+        </p>
+      ) : (
+        <>
+          <div className="mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end">
+            <label className="grid gap-1 text-sm">
+              Category
+              <select
+                className="rounded-md border bg-background px-3 py-2"
+                value={category}
+                onChange={(event) => setCategory(event.target.value as DocumentCategory)}
+              >
+                {DOCUMENT_CATEGORIES.map((item) => (
+                  <option key={item} value={item}>
+                    {labelValue(item)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm">
+              File
+              <input
+                className="rounded-md border bg-background px-3 py-2"
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                onChange={(event) => setFile(event.target.files?.[0])}
+              />
+            </label>
+            <button
+              className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              disabled={!file || uploadMutation.isPending}
+              onClick={() => uploadMutation.mutate()}
+              type="button"
+            >
+              {uploadMutation.isPending ? "Uploading..." : "Upload securely"}
+            </button>
+          </div>
+          <div className="mt-4 divide-y">
+            {documentsQuery.error ? (
+              <p className="py-3 text-sm text-status-yellow">Production documents unavailable.</p>
+            ) : null}
+            {!documentsQuery.isLoading &&
+            !documentsQuery.error &&
+            (documentsQuery.data?.length ?? 0) === 0 ? (
+              <p className="py-3 text-sm text-muted-foreground">No production documents yet.</p>
+            ) : null}
+            {documentsQuery.data?.map((document) => (
+              <div
+                key={document.id}
+                className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+              >
+                <div>
+                  <p className="font-medium">{document.fileName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {labelValue(document.uploadStatus)} / {labelValue(document.reviewStatus)}
+                  </p>
+                </div>
+                {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
+                  <button
+                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2"
+                    onClick={() => handleDownload(document.id)}
+                    type="button"
+                  >
+                    <Download className="h-4 w-4" /> Download
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes).buffer);
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join(
+    "",
+  );
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  }
+  return btoa(binary);
+}
+function labelValue(value: string): string {
+  return value
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function formatTimestamp(value: string): string {
   return new Date(value).toLocaleString("en-HK", {
     year: "numeric",
@@ -331,6 +620,11 @@ function formatTimestamp(value: string): string {
 
 function primaryActionLabel(action: ClientPortalRequiredAction): string {
   if (action.kind === "document") return action.documentAction === "replace" ? "Replace" : "Upload";
+  if (action.kind === "payment-proof") {
+    return action.paymentProofAction === "replace"
+      ? "Replace payment proof"
+      : "Upload payment proof";
+  }
   if (action.kind === "payment") return "Acknowledge payment";
   if (action.kind === "packet") return "Approve packet";
   return "View receipt";

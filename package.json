@@ -8,12 +8,15 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "lint": "eslint .",
+    "lint": "eslint . --ignore-pattern .worktrees/**",
     "format": "prettier --write .",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --exclude .worktrees/**",
+    "test:watch": "vitest --exclude .worktrees/**",
+    "validate:runtime": "node --experimental-strip-types scripts/validate-firm-runtime.ts",
     "db:migrate": "bun scripts/db-migrate.ts",
-    "db:seed": "bun scripts/db-seed-annual-return.ts"
+    "db:seed": "bun scripts/db-seed-annual-return.ts",
+    "check:production-imports": "node --experimental-strip-types scripts/check-production-route-imports.ts",
+    "verify:firm": "node --experimental-strip-types scripts/verify-firm-deployment.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.2.8",
@@ -50,6 +53,7 @@
     "@tanstack/react-router": "^1.170.16",
     "@tanstack/react-start": "^1.168.26",
     "@tanstack/router-plugin": "^1.168.18",
+    "better-auth": "1.6.23",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -77,8 +81,10 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260708.1",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.7.0",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -90,6 +96,8 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "jsdom": "^29.1.1",
+    "jsonc-parser": "^3.3.1",
     "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",

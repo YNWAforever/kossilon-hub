@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
+import { enqueueNotification } from "@/features/notifications/outbox";
 import type {
   NormalizedInboundWhatsAppMessage,
   WhatsAppMessageDirection,
@@ -13,7 +14,11 @@ import type {
 } from "./types";
 
 export type WhatsAppTemplateCategory =
-  "annual_return" | "payment" | "document" | "signature" | "general";
+  | "annual_return"
+  | "payment"
+  | "document"
+  | "signature"
+  | "general";
 
 export type WhatsAppWebhookProcessingStatus = "received" | "processed" | "ignored" | "failed";
 
@@ -35,6 +40,7 @@ export type WhatsAppMessageRecord = {
   receivedAt: string | null;
   sentAt: string | null;
   createdAt: string;
+  idempotentReplay?: boolean;
 };
 
 export type InboundWhatsAppMessageRecord = WhatsAppMessageRecord & {
@@ -64,7 +70,29 @@ export type QueueOutboundTemplateMessageInput = {
   languageCode?: string;
   category: WhatsAppTemplateCategory;
   body: string;
+  idempotencyKey?: string;
+  followUpId?: string;
+  metadata?: Record<string, postgres.JSONValue>;
 };
+
+export function resolveWhatsAppReplayMessageId(
+  existingOutbox: { payload: postgres.JSONValue | null } | undefined,
+): string | null {
+  if (!existingOutbox) return null;
+
+  const payload = existingOutbox.payload;
+  if (
+    payload &&
+    typeof payload === "object" &&
+    !Array.isArray(payload) &&
+    "whatsappMessageId" in payload &&
+    typeof payload.whatsappMessageId === "string"
+  ) {
+    return payload.whatsappMessageId;
+  }
+
+  throw new Error("Existing WhatsApp follow-up cannot be replayed safely.");
+}
 
 export type RecordWebhookEventInput = {
   providerEventId: string | null;
@@ -727,6 +755,38 @@ export function createWhatsAppRepository(
         throw new Error("Annual return case not found for WhatsApp template message.");
       }
 
+      if (input.idempotencyKey) {
+        await tx`
+          select pg_advisory_xact_lock(
+            hashtext('whatsapp_follow_up'),
+            hashtext(${input.idempotencyKey})
+          )
+        `;
+        const existingOutbox = await tx<{ payload: postgres.JSONValue | null }[]>`
+          select payload
+          from notification_outbox
+          where idempotency_key = ${input.idempotencyKey}
+          limit 1
+        `;
+        const existingMessageId = resolveWhatsAppReplayMessageId(existingOutbox[0]);
+        if (existingMessageId) {
+          const existingMessages = await tx<MessageRow[]>`
+            select
+              id, provider, provider_message_id, direction, status, contact_id, company_id,
+              case_id, template_id, phone_e164, whatsapp_id, body, payload, sent_by,
+              received_at::text as received_at, sent_at::text as sent_at,
+              created_at::text as created_at
+            from whatsapp_messages
+            where id = ${existingMessageId}
+            limit 1
+          `;
+          if (existingMessages[0]) {
+            return { ...mapMessage(existingMessages[0]), idempotentReplay: true };
+          }
+          throw new Error("Existing WhatsApp follow-up cannot be replayed safely.");
+        }
+      }
+
       const phoneE164 = normalizePhone(input.toPhone);
       const contact = await upsertContact(tx, {
         whatsAppId: input.toWhatsAppId ?? null,
@@ -746,6 +806,8 @@ export function createWhatsAppRepository(
         templateName: input.templateName,
         languageCode: input.languageCode ?? "en",
         category: input.category,
+        followUpId: input.followUpId ?? null,
+        ...input.metadata,
       };
       const messageRows = await tx<MessageRow[]>`
         insert into whatsapp_messages (
@@ -818,7 +880,22 @@ export function createWhatsAppRepository(
         )
       `;
 
-      return mapMessage(messageRows[0]);
+      await enqueueNotification(tx, {
+        companyId: caseRow.company_id,
+        channel: "whatsapp",
+        notificationType: "whatsapp_template",
+        idempotencyKey: input.idempotencyKey ?? `whatsapp-message:${messageRows[0].id}`,
+        recipient: phoneE164,
+        payload: {
+          ...payload,
+          body: input.body,
+          toPhone: phoneE164,
+          toWhatsAppId: input.toWhatsAppId ?? null,
+          caseId: input.caseId,
+          whatsappMessageId: messageRows[0].id,
+        },
+      });
+      return { ...mapMessage(messageRows[0]), idempotentReplay: false };
     });
   }
 

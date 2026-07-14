@@ -1,0 +1,27 @@
+{
+  "name": "${FIRM_WORKER_NAME}",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-07-11",
+  "vars": {
+    "FIRM_ID": "${FIRM_ID}",
+    "NEON_AUTH_URL": "${NEON_AUTH_URL}",
+    "WOZTELL_API_BASE_URL": "${WOZTELL_API_BASE_URL}",
+    "WOZTELL_CHANNEL_ID": "${WOZTELL_CHANNEL_ID}",
+    "EMAIL_FROM": "${EMAIL_FROM}",
+  },
+  "r2_buckets": [
+    {
+      "binding": "DOCUMENTS_BUCKET",
+      "bucket_name": "${FIRM_DOCUMENTS_BUCKET_NAME}",
+    },
+  ],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "${FIRM_HYPERDRIVE_CONFIGURATION_ID}",
+    },
+  ],
+  "triggers": {
+    "crons": ["*/5 * * * *"],
+  },
+}

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WorkQueueRouteImport } from './routes/work-queue'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as TasksRouteImport } from './routes/tasks'
@@ -26,6 +27,11 @@ import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automa
 import { Route as ClientsIdRouteImport } from './routes/clients.$id'
 import { Route as AnnualReturnsIdRouteImport } from './routes/annual-returns.$id'
 
+const WorkQueueRoute = WorkQueueRouteImport.update({
+  id: '/work-queue',
+  path: '/work-queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WhatsappRoute = WhatsappRouteImport.update({
   id: '/whatsapp',
   path: '/whatsapp',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/teams': typeof TeamsRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
+  '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
   '/clients/$id': typeof ClientsIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/teams': typeof TeamsRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
+  '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
   '/clients/$id': typeof ClientsIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/teams': typeof TeamsRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
+  '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
   '/clients/$id': typeof ClientsIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/teams'
     | '/whatsapp'
+    | '/work-queue'
     | '/annual-returns/$id'
     | '/clients/$id'
     | '/whatsapp/automation'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/teams'
     | '/whatsapp'
+    | '/work-queue'
     | '/annual-returns/$id'
     | '/clients/$id'
     | '/whatsapp/automation'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/teams'
     | '/whatsapp'
+    | '/work-queue'
     | '/annual-returns/$id'
     | '/clients/$id'
     | '/whatsapp/automation'
@@ -233,10 +245,18 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   TeamsRoute: typeof TeamsRoute
   WhatsappRoute: typeof WhatsappRouteWithChildren
+  WorkQueueRoute: typeof WorkQueueRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/work-queue': {
+      id: '/work-queue'
+      path: '/work-queue'
+      fullPath: '/work-queue'
+      preLoaderRoute: typeof WorkQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/whatsapp': {
       id: '/whatsapp'
       path: '/whatsapp'
@@ -401,6 +421,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   TeamsRoute: TeamsRoute,
   WhatsappRoute: WhatsappRouteWithChildren,
+  WorkQueueRoute: WorkQueueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

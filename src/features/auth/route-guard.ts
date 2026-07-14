@@ -1,3 +1,5 @@
+import { resolveDataMode } from "../runtime/data-mode";
+
 export const AUTH_REDIRECT_STORAGE_KEY = "kossilon.auth.redirect.v1";
 
 type SessionStorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -10,6 +12,18 @@ function browserStorage(): SessionStorageLike | null {
   } catch {
     return null;
   }
+}
+
+export function isDemoAuthEnabled(
+  value = import.meta.env.VITE_ENABLE_DEMO_AUTH,
+  isProductionBuild = import.meta.env.PROD,
+): boolean {
+  return (
+    resolveDataMode({
+      demoEnabled: value === "true",
+      isProductionBuild,
+    }) === "demo"
+  );
 }
 
 export function isPublicRoute(pathname: string): boolean {

@@ -1,4 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import {
@@ -16,6 +17,8 @@ import {
   type AnnualReturnRiskLevel,
 } from "../lib/annual-return-store";
 import { daysUntil } from "../lib/app-data";
+import { listWorkQueue } from "../features/work-items/server-fns";
+import type { PersistedWorkItem } from "../features/work-items/repository";
 
 export const Route = createFileRoute("/annual-returns")({
   component: AnnualReturnsRoute,
@@ -24,6 +27,17 @@ export const Route = createFileRoute("/annual-returns")({
 function AnnualReturnsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const cases = useAnnualReturnCases();
+  const workItemsQuery = useQuery({
+    queryKey: ["work-queue", "annual-return-list"],
+    queryFn: () => listWorkQueue({ data: { view: "team" } }),
+  });
+  const workItemsByCase = useMemo(() => {
+    const map = new Map<string, PersistedWorkItem>();
+    for (const item of workItemsQuery.data ?? []) {
+      if (!map.has(item.caseId)) map.set(item.caseId, item);
+    }
+    return map;
+  }, [workItemsQuery.data]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<
     "all" | "urgent" | "blocked" | "ready" | "packet-ready" | "needs-follow-up" | "filed"
@@ -63,9 +77,25 @@ function AnnualReturnsRoute() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Cases</p>
-        <h1 className="mt-1 text-3xl font-semibold">Annual returns</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">Cases</p>
+          <h1 className="mt-1 text-3xl font-semibold">Annual returns</h1>
+        </div>
+        <Link
+          to="/work-queue"
+          search={{
+            view: "team",
+            owner: "all",
+            workType: "all",
+            sla: "all",
+            priority: "all",
+            status: "all",
+          }}
+          className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+        >
+          Open work queue
+        </Link>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -140,7 +170,14 @@ function AnnualReturnsRoute() {
 
         <div className="divide-y">
           {visibleCases.map((caseItem) => (
-            <CaseRow key={caseItem.id} caseItem={caseItem} />
+            <CaseRow
+              key={caseItem.id}
+              caseItem={caseItem}
+              workItem={workItemsByCase.get(caseItem.id)}
+              workItemQueryState={
+                workItemsQuery.isPending ? "loading" : workItemsQuery.isError ? "error" : "ready"
+              }
+            />
           ))}
           {visibleCases.length === 0 ? (
             <div className="px-4 py-8 text-sm text-muted-foreground">
@@ -173,7 +210,15 @@ function Metric({
   );
 }
 
-function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
+function CaseRow({
+  caseItem,
+  workItem,
+  workItemQueryState,
+}: {
+  caseItem: AnnualReturnCase;
+  workItem?: PersistedWorkItem;
+  workItemQueryState: "loading" | "error" | "ready";
+}) {
   const risk = getRiskLevel(caseItem);
   const readiness = getReadinessScore(caseItem);
   const nextAction = getNextAction(caseItem);
@@ -195,6 +240,28 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
       <div className="min-w-0">
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Work owner:{" "}
+          {workItemQueryState === "loading"
+            ? "Loading"
+            : workItemQueryState === "error"
+              ? "Unavailable"
+              : workItem?.ownerId
+                ? `Staff ${workItem.ownerId.slice(0, 8)}`
+                : workItem
+                  ? "Unassigned"
+                  : "No work item"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          SLA state:{" "}
+          {workItemQueryState === "loading"
+            ? "Loading"
+            : workItemQueryState === "error"
+              ? "Unavailable"
+              : workItem
+                ? workItem.escalationState
+                : "No work item"}
+        </p>
       </div>
 
       <Field label="Owner" value={caseItem.owner} />

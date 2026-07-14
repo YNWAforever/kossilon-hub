@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Download } from "lucide-react";
+import { downloadDocument, listDocuments } from "../features/documents/server-fns";
+import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
+import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
+import { getAnnualReturnCase } from "../features/annual-return/server-fns";
+import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
+import type { PrivateDocument } from "../features/documents/repository";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
   clientPortalReviewReasons,
   getDocumentArchiveRows,
   getDocumentReviewFollowUpDrafts,
-  reviewClientDocument,
   useClientPortalSnapshot,
   type ClientPortalArchiveRow,
   type ClientPortalDocumentReviewDecision,
@@ -27,6 +34,7 @@ export const Route = createFileRoute("/documents")({
 function DocumentsRoute() {
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
+  const queryClient = useQueryClient();
   const { caseId } = Route.useSearch();
   const [query, setQuery] = useState("");
   const [source, setSource] = useState("all");
@@ -34,6 +42,53 @@ function DocumentsRoute() {
   const [status, setStatus] = useState("all");
   const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
   const [warning, setWarning] = useState<string | undefined>();
+  const productionCaseId = isUuid(caseFilter) ? caseFilter : undefined;
+  const productionDocumentsQuery = useQuery({
+    queryKey: ["documents", "archive", productionCaseId ?? "all"],
+    queryFn: () => listDocuments({ data: productionCaseId ? { caseId: productionCaseId } : {} }),
+    retry: false,
+  });
+  const productionCaseQuery = useQuery({
+    queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "all"),
+    queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
+    enabled: Boolean(productionCaseId),
+    retry: false,
+  });
+  const evidenceMutationKey = [...annualReturnQueryKeys.all, "evidence-review"];
+  const pendingEvidenceIds = useMutationState({
+    filters: { mutationKey: evidenceMutationKey, status: "pending" },
+    select: (mutation) =>
+      (mutation.state.variables as { data?: { documentId?: string } } | undefined)?.data
+        ?.documentId,
+  });
+  const reviewMutation = useMutation({
+    mutationKey: evidenceMutationKey,
+    mutationFn: reviewAnnualReturnEvidenceAction,
+    onSuccess: ({ caseItem }) => {
+      queryClient.setQueryData(annualReturnQueryKeys.detail(caseItem.id), caseItem);
+      void queryClient.invalidateQueries({
+        queryKey: annualReturnQueryKeys.documents(caseItem.id),
+      });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+    onError: (error) =>
+      setWarning(error instanceof Error ? error.message : "Unable to review document."),
+  });
+
+  async function handleDownload(documentId: string) {
+    try {
+      const response = await downloadDocument({ data: { documentId } });
+      if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+      const href = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = "document";
+      anchor.click();
+      URL.revokeObjectURL(href);
+    } catch (error) {
+      setWarning(error instanceof Error ? error.message : "Unable to download document.");
+    }
+  }
 
   useEffect(() => {
     setCaseFilter(caseId ?? "all");
@@ -64,6 +119,16 @@ function DocumentsRoute() {
           {warning}
         </div>
       ) : null}
+
+      <ProductionDocumentsSection
+        caseItem={productionCaseQuery.data ?? undefined}
+        documents={productionDocumentsQuery.data ?? []}
+        error={productionDocumentsQuery.error}
+        loading={productionDocumentsQuery.isLoading}
+        onDownload={handleDownload}
+        onReview={(input) => reviewMutation.mutate({ data: input })}
+        pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
+      />
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 xl:grid-cols-[1fr_180px_180px_180px_220px]">
@@ -139,6 +204,7 @@ function DocumentsRoute() {
                 cases={cases}
                 snapshot={snapshot}
                 onWarning={setWarning}
+                onReview={(input) => reviewMutation.mutate({ data: input })}
               />
             ))
           )}
@@ -181,10 +247,17 @@ function DocumentRow({
   cases,
   snapshot,
   onWarning,
+  onReview,
 }: {
   row: ClientPortalArchiveRow;
   cases: ReturnType<typeof useAnnualReturnCases>;
   snapshot: ReturnType<typeof useClientPortalSnapshot>;
+  onReview: (input: {
+    caseId: string;
+    documentId: string;
+    decision: "verified" | "rejected";
+    reason?: string;
+  }) => void;
   onWarning: (warning: string | undefined) => void;
 }) {
   const followUp = getDocumentReviewFollowUpDrafts(cases, snapshot).find(
@@ -195,20 +268,16 @@ function DocumentRow({
     decision: ClientPortalDocumentReviewDecision,
     options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
   ) {
-    if (!row.documentId) return;
-    const result =
-      decision === "accepted"
-        ? reviewClientDocument(row.documentId, {
-            decision: "accepted",
-            actor: "Operations",
-          })
-        : reviewClientDocument(row.documentId, {
-            decision: "rejected",
-            reasonCode: options.reasonCode,
-            note: options.note,
-            actor: "Operations",
-          });
-    onWarning(result.ok ? undefined : result.reason);
+    if (!row.documentId || !isUuid(row.documentId) || !isUuid(row.caseId)) {
+      onWarning("Demo archive rows are read-only; production records are reviewed above.");
+      return;
+    }
+    onReview({
+      caseId: row.caseId,
+      documentId: row.documentId,
+      decision: decision === "accepted" ? "verified" : "rejected",
+      reason: options.note || options.reasonCode,
+    });
   }
 
   return (
@@ -330,6 +399,167 @@ function ReviewCell({
       label="Review"
       value={row.reviewSummary ?? (row.readonly ? "Read-only" : "No review needed")}
     />
+  );
+}
+
+function ProductionDocumentsSection({
+  caseItem,
+  documents,
+  error,
+  loading,
+  onDownload,
+  onReview,
+  pendingDocumentIds,
+}: {
+  caseItem?: ProductionAnnualReturnCase;
+  documents: PrivateDocument[];
+  error: Error | null;
+  loading: boolean;
+  onDownload: (documentId: string) => void;
+  onReview: (input: {
+    caseId: string;
+    documentId: string;
+    checklistItemId?: string;
+    decision: "verified" | "rejected";
+    reason?: string;
+  }) => void;
+  pendingDocumentIds: string[];
+}) {
+  const [checklistItemIds, setChecklistItemIds] = useState<Record<string, string>>({});
+  const checklistCategories = new Set(["identity", "registry", "signature", "other"]);
+
+  return (
+    <section className="rounded-lg border bg-card p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Production document vault</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Private records stay quarantined until scanning and case-aware staff review.
+          </p>
+        </div>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
+      </div>
+      {error ? (
+        <p className="mt-4 text-sm text-status-yellow">Production records unavailable.</p>
+      ) : null}
+      {loading ? (
+        <p className="mt-4 text-sm text-muted-foreground">Loading production records...</p>
+      ) : null}
+      {!loading && !error && documents.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No production documents match this scope.
+        </p>
+      ) : null}
+      <div className="mt-4 divide-y">
+        {documents.map((document) => {
+          const isChecklistEvidence = checklistCategories.has(document.category);
+          const matchedChecklistItem = caseItem?.checklist.find(
+            (item) => item.documentId === document.id,
+          );
+          const checklistItemId = checklistItemIds[document.id] ?? matchedChecklistItem?.id ?? "";
+          const canReview =
+            isUuid(document.caseId ?? undefined) &&
+            (!isChecklistEvidence || isUuid(checklistItemId));
+          const pending = pendingDocumentIds.includes(document.id);
+
+          return (
+            <div
+              key={document.id}
+              className="grid gap-3 py-3 text-sm md:grid-cols-[minmax(0,1fr)_120px_180px_minmax(220px,1fr)] md:items-center"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium">{document.fileName}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {labelValue(document.category)}
+                </p>
+              </div>
+              <span>{labelValue(document.uploadStatus)}</span>
+              <div>
+                <span>{labelValue(document.reviewStatus)}</span>
+                {isChecklistEvidence && document.reviewStatus === "pending" ? (
+                  caseItem ? (
+                    <select
+                      aria-label={"Checklist item for " + document.fileName}
+                      className="mt-2 w-full rounded-md border bg-background px-2 py-1 text-xs"
+                      value={checklistItemId}
+                      onChange={(event) =>
+                        setChecklistItemIds((current) => ({
+                          ...current,
+                          [document.id]: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select checklist item</option>
+                      {caseItem.checklist.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.itemLabel}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Filter to one production case to review checklist evidence.
+                    </p>
+                  )
+                ) : null}
+              </div>
+              <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+                {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
+                  <button
+                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                    onClick={() => onDownload(document.id)}
+                    type="button"
+                  >
+                    <Download className="h-4 w-4" /> Download
+                  </button>
+                ) : null}
+                {document.uploadStatus === "available" && document.reviewStatus === "pending" ? (
+                  <>
+                    <button
+                      className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+                      disabled={!canReview || pending}
+                      onClick={() =>
+                        onReview({
+                          caseId: document.caseId!,
+                          documentId: document.id,
+                          checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
+                          decision: "verified",
+                        })
+                      }
+                      type="button"
+                    >
+                      {pending ? "Reviewing..." : "Verify"}
+                    </button>
+                    <button
+                      className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                      disabled={!canReview || pending}
+                      onClick={() =>
+                        onReview({
+                          caseId: document.caseId!,
+                          documentId: document.id,
+                          checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
+                          decision: "rejected",
+                          reason: "Rejected during staff review",
+                        })
+                      }
+                      type="button"
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+function isUuid(value: string | undefined): value is string {
+  return Boolean(
+    value &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
   );
 }
 

@@ -1,4 +1,54 @@
-import type { NormalizedInboundWhatsAppMessage } from "./types";
+import type { NormalizedInboundWhatsAppMessage, WhatsAppProviderConfig } from "./types";
+
+export type WoztellOutboundMessage = {
+  toPhone: string;
+  toWhatsAppId?: string | null;
+  body: string;
+  templateName?: string;
+  languageCode?: string;
+};
+
+export async function sendWoztellMessage(
+  config: WhatsAppProviderConfig,
+  input: WoztellOutboundMessage,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ providerMessageId: string }> {
+  const response = await fetchImpl(`${config.apiBaseUrl.replace(/\/+$/, "")}/messages`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${config.accessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      channelId: config.channelId,
+      to: input.toPhone,
+      whatsappId: input.toWhatsAppId ?? undefined,
+      type: "text",
+      text: input.body,
+      templateName: input.templateName,
+      languageCode: input.languageCode,
+    }),
+  });
+  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok) {
+    const error = new Error(
+      typeof payload.error === "string"
+        ? payload.error
+        : `WOZTELL request failed with ${response.status}.`,
+    );
+    Object.assign(error, { code: `woztell_${response.status}` });
+    throw error;
+  }
+  const data =
+    typeof payload.data === "object" && payload.data !== null
+      ? (payload.data as Record<string, unknown>)
+      : undefined;
+  const providerMessageId = [payload.messageId, payload.id, data?.messageId].find(
+    (value): value is string => typeof value === "string" && value.length > 0,
+  );
+  if (!providerMessageId) throw new Error("WOZTELL response is missing a provider message ID.");
+  return { providerMessageId };
+}
 
 type JsonRecord = Record<string, unknown>;
 type Path = readonly string[];

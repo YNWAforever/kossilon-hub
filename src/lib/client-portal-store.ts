@@ -3,6 +3,8 @@ import { useSyncExternalStore } from "react";
 import {
   type AnnualReturnCase,
   appendClientPortalTimelineEvent,
+  acceptPaymentProofForCase,
+  batchAnnualReturnCaseUpdates,
   getAnnualReturnCaseById,
   getPacketStatus,
   markDocumentMissing,
@@ -10,13 +12,28 @@ import {
 } from "./annual-return-store";
 
 export type ClientPortalDocumentCategory =
-  "identity" | "registry" | "signature" | "payment" | "packet" | "submission" | "receipt" | "other";
+  | "identity"
+  | "registry"
+  | "signature"
+  | "payment"
+  | "packet"
+  | "submission"
+  | "receipt"
+  | "other";
 
 export type ClientPortalDocumentSource =
-  "client-portal" | "staff-packet" | "filing-submission" | "filing-receipt";
+  | "client-portal"
+  | "staff-packet"
+  | "filing-submission"
+  | "filing-receipt";
 
 export type ClientPortalDocumentStatus =
-  "required" | "uploaded" | "superseded" | "accepted" | "rejected" | "generated";
+  | "required"
+  | "uploaded"
+  | "superseded"
+  | "accepted"
+  | "rejected"
+  | "generated";
 
 export type ClientPortalActionType =
   | "upload-document"
@@ -26,7 +43,12 @@ export type ClientPortalActionType =
   | "view-receipt"
   | "accept-document"
   | "reject-document"
-  | "send-document-review-follow-up";
+  | "send-document-review-follow-up"
+  | "upload-payment-proof"
+  | "attach-payment-proof"
+  | "accept-payment-proof"
+  | "reject-payment-proof"
+  | "send-payment-proof-review-follow-up";
 
 export type ClientPortalDocumentReviewDecision = "accepted" | "rejected";
 
@@ -53,6 +75,60 @@ export type ClientPortalDocumentReviewRequest =
       note?: string;
       actor?: string;
     };
+
+export type ClientPortalPaymentProofOrigin = "client-portal" | "staff-payments";
+
+export type ClientPortalPaymentProofStatus =
+  | "pending-review"
+  | "accepted"
+  | "rejected"
+  | "superseded";
+
+export const clientPortalPaymentProofReviewReasons = [
+  { code: "unreadable", label: "Proof is unclear, cropped, or incomplete" },
+  { code: "amount-mismatch", label: "Paid amount does not match" },
+  { code: "payer-mismatch", label: "Payer or company details do not match" },
+  { code: "missing-reference", label: "Transaction reference is missing" },
+  { code: "wrong-case", label: "Proof belongs to another company or filing" },
+  { code: "duplicate-proof", label: "Proof repeats a reviewed transaction" },
+  { code: "other", label: "Other issue" },
+] as const;
+
+export type ClientPortalPaymentProofReviewReasonCode =
+  (typeof clientPortalPaymentProofReviewReasons)[number]["code"];
+
+export type ClientPortalPaymentProof = {
+  id: string;
+  caseId: string;
+  companyName: string;
+  contactName: string;
+  filename: string;
+  origin: ClientPortalPaymentProofOrigin;
+  status: ClientPortalPaymentProofStatus;
+  uploadedBy: string;
+  uploadedAt: string;
+  supersedesProofId?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewSummary?: string;
+  reviewReasonCode?: ClientPortalPaymentProofReviewReasonCode;
+  reviewReasonLabel?: string;
+  reviewNote?: string;
+};
+
+export type ClientPortalPaymentProofAiContext = {
+  status: ClientPortalPaymentProofStatus | "not-uploaded";
+  filename?: string;
+  origin?: ClientPortalPaymentProofOrigin;
+  reasonLabel?: string;
+  note?: string;
+};
+
+export type ClientPortalPaymentProofReviewRequest = {
+  reasonCode?: ClientPortalPaymentProofReviewReasonCode;
+  note?: string;
+  actor?: string;
+};
 
 type NormalizedClientPortalReviewRequest =
   | {
@@ -103,6 +179,7 @@ export type ClientPortalAction = {
   summary: string;
   createdAt: string;
   documentId?: string;
+  proofId?: string;
   draftId?: string;
 };
 
@@ -135,12 +212,13 @@ export type ClientPortalRequiredActionStatus = "open" | "complete" | "blocked" |
 export type ClientPortalRequiredAction = {
   id: string;
   caseId: string;
-  kind: "document" | "payment" | "packet" | "receipt";
+  kind: "document" | "payment" | "payment-proof" | "packet" | "receipt";
   label: string;
   status: ClientPortalRequiredActionStatus;
   detail: string;
   requirementId?: string;
   documentAction?: "upload" | "replace";
+  paymentProofAction?: "upload" | "replace";
 };
 
 export type ClientPortalProgress = {
@@ -181,16 +259,46 @@ export type ClientPortalDocumentReviewFollowUpSend = {
   sentAt: string;
 };
 
+export type ClientPortalPaymentProofFollowUpDraft = {
+  id: string;
+  caseId: string;
+  proofId: string;
+  companyName: string;
+  recipientName: string;
+  phone: string;
+  reasonCode: ClientPortalPaymentProofReviewReasonCode;
+  reasonLabel: string;
+  note?: string;
+  suggestedTiming: string;
+  messagePreview: string;
+  status: "draft" | "sent" | "blocked";
+  blockedReason?: string;
+  sentAt?: string;
+};
+
+export type ClientPortalPaymentProofFollowUpSend = {
+  id: string;
+  draftId: string;
+  proofId: string;
+  caseId: string;
+  actor: string;
+  sentAt: string;
+};
+
 export type ClientPortalSnapshot = {
   documents: ClientPortalDocument[];
+  paymentProofs: ClientPortalPaymentProof[];
   actions: ClientPortalAction[];
   documentReviewFollowUps: ClientPortalDocumentReviewFollowUpSend[];
+  paymentProofFollowUps: ClientPortalPaymentProofFollowUpSend[];
 };
 
 const initialSnapshot: ClientPortalSnapshot = {
   documents: [],
+  paymentProofs: [],
   actions: [],
   documentReviewFollowUps: [],
+  paymentProofFollowUps: [],
 };
 
 let snapshot: ClientPortalSnapshot = cloneSnapshot(initialSnapshot);
@@ -199,8 +307,10 @@ const listeners = new Set<() => void>();
 function cloneSnapshot(value: ClientPortalSnapshot): ClientPortalSnapshot {
   return {
     documents: value.documents.map((document) => ({ ...document })),
+    paymentProofs: value.paymentProofs.map((proof) => ({ ...proof })),
     actions: value.actions.map((action) => ({ ...action })),
     documentReviewFollowUps: value.documentReviewFollowUps.map((followUp) => ({ ...followUp })),
+    paymentProofFollowUps: value.paymentProofFollowUps.map((followUp) => ({ ...followUp })),
   };
 }
 
@@ -240,6 +350,10 @@ export function resetClientPortalStoreForTest(): void {
   emit();
 }
 
+export function subscribeClientPortalStoreForTest(listener: () => void): () => void {
+  return subscribe(listener);
+}
+
 function documentCategoryForRequirement(requirementId: string): ClientPortalDocumentCategory {
   if (requirementId.includes("payment")) return "payment";
   if (requirementId.includes("signed") || requirementId.includes("nar1")) return "signature";
@@ -275,7 +389,7 @@ function addActionForCase(
   type: ClientPortalActionType,
   actor: string,
   summary: string,
-  metadata: Pick<ClientPortalAction, "documentId" | "draftId"> = {},
+  metadata: Pick<ClientPortalAction, "documentId" | "proofId" | "draftId"> = {},
 ): ClientPortalAction {
   const action: ClientPortalAction = {
     id: `portal-action-${caseId}-${type}-${Date.now()}-${snapshot.actions.length + 1}`,
@@ -323,6 +437,38 @@ export function getCurrentClientDocument(
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 }
 
+export function getCurrentPaymentProof(
+  caseId: string,
+  currentSnapshot = snapshot,
+): ClientPortalPaymentProof | undefined {
+  return currentSnapshot.paymentProofs
+    .filter((proof) => proof.caseId === caseId && proof.status !== "superseded")
+    .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))[0];
+}
+
+export function getPaymentProofAiContext(
+  caseId: string,
+  currentSnapshot = snapshot,
+): ClientPortalPaymentProofAiContext {
+  const proof = getCurrentPaymentProof(caseId, currentSnapshot);
+  return proof
+    ? {
+        status: proof.status,
+        filename: proof.filename,
+        origin: proof.origin,
+        reasonLabel: proof.reviewReasonLabel,
+        note: proof.reviewNote,
+      }
+    : { status: "not-uploaded" };
+}
+
+export function getPaymentProofsForCase(
+  caseId: string,
+  currentSnapshot = snapshot,
+): ClientPortalPaymentProof[] {
+  return currentSnapshot.paymentProofs.filter((proof) => proof.caseId === caseId);
+}
+
 function isAcceptedClientDocument(
   caseId: string,
   requirementId: string,
@@ -362,6 +508,38 @@ function requiredDocumentDetail(documentLabel: string, document?: ClientPortalDo
     return `${document.filename} was rejected by staff.${reason}${note} Please upload a replacement.`;
   }
   return `${documentLabel} is required before the annual return filing can proceed.`;
+}
+
+function paymentProofActionForCurrentProof(
+  proof: ClientPortalPaymentProof | undefined,
+): "upload" | "replace" | undefined {
+  if (!proof) return "upload";
+  if (proof.status === "rejected") return "replace";
+  return undefined;
+}
+
+function requiredPaymentProofLabel(proof?: ClientPortalPaymentProof): string {
+  if (!proof) return "Upload payment proof";
+  if (proof.status === "rejected") return "Replace payment proof";
+  return "Payment proof";
+}
+
+function requiredPaymentProofDetail(proof?: ClientPortalPaymentProof): string {
+  if (!proof) {
+    return "Upload payment proof so staff can verify the transfer before the filing proceeds.";
+  }
+  if (proof.status === "pending-review") {
+    return `${proof.filename} is uploaded and waiting for staff review.`;
+  }
+  if (proof.status === "accepted") {
+    return `${proof.filename} was accepted by ${proof.reviewedBy ?? "staff"} on ${proof.reviewedAt ?? "the recorded review time"}.`;
+  }
+  if (proof.status === "rejected") {
+    const reason = proof.reviewReasonLabel ? ` Reason: ${proof.reviewReasonLabel}.` : "";
+    const note = proof.reviewNote ? ` Note: ${proof.reviewNote}` : "";
+    return `${proof.filename} was rejected by ${proof.reviewedBy ?? "staff"}.${reason}${note} Please upload a replacement.`;
+  }
+  return `${proof.filename} is no longer the current payment proof.`;
 }
 
 export function getClientPortalActivity(
@@ -414,6 +592,28 @@ export function getClientPortalRequiredActions(
         },
       ];
 
+  const currentPaymentProof = getCurrentPaymentProof(caseItem.id, currentSnapshot);
+  const paymentProofAction = isReadOnlyCase(caseItem)
+    ? undefined
+    : paymentProofActionForCurrentProof(currentPaymentProof);
+  const paymentProofRequiredAction = [
+    {
+      id: `action-${caseItem.id}-payment-proof`,
+      caseId: caseItem.id,
+      kind: "payment-proof" as const,
+      label: requiredPaymentProofLabel(currentPaymentProof),
+      status: isReadOnlyCase(caseItem)
+        ? ("blocked" as const)
+        : currentPaymentProof?.status === "accepted"
+          ? ("complete" as const)
+          : currentPaymentProof?.status === "pending-review"
+            ? ("pending-review" as const)
+            : ("open" as const),
+      detail: requiredPaymentProofDetail(currentPaymentProof),
+      ...(paymentProofAction ? { paymentProofAction } : {}),
+    },
+  ];
+
   const packetAction = hasCompletedAction(caseItem.id, "approve-packet", currentSnapshot)
     ? []
     : [
@@ -429,7 +629,7 @@ export function getClientPortalRequiredActions(
               : ("open" as const),
           detail:
             getPacketApprovalBlockers(caseItem, currentSnapshot).length > 0
-              ? "Required documents still need staff review or replacement before packet approval is available."
+              ? "Required documents or payment proof still need staff review or replacement before packet approval is available."
               : "Confirm the client has reviewed the prepared packet details.",
         },
       ];
@@ -448,7 +648,13 @@ export function getClientPortalRequiredActions(
         ]
       : [];
 
-  return [...documentActions, ...paymentAction, ...packetAction, ...receiptAction];
+  return [
+    ...documentActions,
+    ...paymentAction,
+    ...paymentProofRequiredAction,
+    ...packetAction,
+    ...receiptAction,
+  ];
 }
 
 export function getClientPortalProgress(
@@ -460,37 +666,43 @@ export function getClientPortalProgress(
     isAcceptedClientDocument(caseItem.id, document.id, currentSnapshot),
   ).length;
   const paymentComplete = hasCompletedAction(caseItem.id, "acknowledge-payment", currentSnapshot);
+  const paymentProofComplete =
+    getCurrentPaymentProof(caseItem.id, currentSnapshot)?.status === "accepted";
   const packetComplete = hasCompletedAction(caseItem.id, "approve-packet", currentSnapshot);
   const receiptComplete =
     Boolean(caseItem.receipt) && hasCompletedAction(caseItem.id, "view-receipt", currentSnapshot);
-  const total = requiredDocuments.length + 3;
+  const total = requiredDocuments.length + 4;
   const completed =
     completedDocuments +
     (paymentComplete ? 1 : 0) +
+    (paymentProofComplete ? 1 : 0) +
     (packetComplete ? 1 : 0) +
     (receiptComplete ? 1 : 0);
   const requiredActions = getClientPortalRequiredActions(caseItem, currentSnapshot);
-  const nextOpen = requiredActions.find((action) => action.status === "open");
-  const nextPending = requiredActions.find((action) => action.status === "pending-review");
+  const nextAction = requiredActions.find(
+    (action) => action.status === "open" || action.status === "pending-review",
+  );
 
   return {
     completed,
     total,
     percentage: total === 0 ? 100 : Math.round((completed / total) * 100),
     nextAction:
-      nextOpen?.label ?? (nextPending ? "Waiting for staff review" : "No client action needed"),
+      nextAction?.status === "pending-review"
+        ? "Waiting for staff review"
+        : (nextAction?.label ?? "No client action needed"),
     isReadOnly: isReadOnlyCase(caseItem),
   };
 }
 
-function rowFromDocument(
+export function rowFromDocument(
   document: ClientPortalDocument,
-  caseItem = getAnnualReturnCaseById(document.caseId),
+  caseItem?: AnnualReturnCase,
 ): ClientPortalArchiveRow {
   const reviewable =
+    caseItem !== undefined &&
     document.source === "client-portal" &&
     document.status === "uploaded" &&
-    Boolean(caseItem) &&
     !isReadOnlyCase(caseItem);
 
   return {
@@ -666,7 +878,7 @@ export function getDocumentReviewFollowUpDrafts(
       if (!casesById.has(document.caseId)) return false;
       return isCurrentRejectedDocument(document, currentSnapshot);
     })
-    .map((document) => {
+    .map((document): ClientPortalDocumentReviewFollowUpDraft => {
       const caseItem = casesById.get(document.caseId);
       if (!caseItem || !document.reviewReasonCode || !document.reviewReasonLabel) {
         throw new Error("Expected rejected document follow-up inputs to be complete");
@@ -690,6 +902,80 @@ export function getDocumentReviewFollowUpDrafts(
         note: document.reviewNote,
         suggestedTiming: "Send now",
         messagePreview: documentReviewFollowUpMessage(caseItem, document),
+        status: sent ? "sent" : blockedReason ? "blocked" : "draft",
+        blockedReason,
+        sentAt: sent?.sentAt,
+      };
+    })
+    .sort((a, b) => a.companyName.localeCompare(b.companyName));
+}
+
+function paymentProofFollowUpId(proofId: string): string {
+  return `payment-proof-review-follow-up-${proofId}`;
+}
+
+function isCurrentRejectedPaymentProof(
+  proof: ClientPortalPaymentProof,
+  currentSnapshot = snapshot,
+): boolean {
+  return (
+    proof.status === "rejected" &&
+    getCurrentPaymentProof(proof.caseId, currentSnapshot)?.id === proof.id
+  );
+}
+
+function paymentProofFollowUpMessage(
+  caseItem: AnnualReturnCase,
+  proof: ClientPortalPaymentProof,
+): string {
+  const reason = proof.reviewReasonLabel
+    ? `${proof.reviewReasonLabel.charAt(0).toLowerCase()}${proof.reviewReasonLabel.slice(1)}`
+    : "the payment proof needs changes";
+  const note = proof.reviewNote ? ` Note: ${proof.reviewNote}` : "";
+
+  return `Hi ${caseItem.contactName}, we reviewed the payment proof for ${caseItem.companyName} and need a replacement because ${reason}.${note} Please upload clearer proof in the portal.`;
+}
+
+export function getPaymentProofFollowUpDrafts(
+  cases: AnnualReturnCase[],
+  currentSnapshot = snapshot,
+): ClientPortalPaymentProofFollowUpDraft[] {
+  const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
+  const sentByDraftId = new Map(
+    currentSnapshot.paymentProofFollowUps.map((followUp) => [followUp.draftId, followUp] as const),
+  );
+
+  return currentSnapshot.paymentProofs
+    .filter((proof) => {
+      if (!proof.reviewReasonCode || !proof.reviewReasonLabel) return false;
+      if (!casesById.has(proof.caseId)) return false;
+      return (
+        isCurrentRejectedPaymentProof(proof, currentSnapshot) ||
+        sentByDraftId.has(paymentProofFollowUpId(proof.id))
+      );
+    })
+    .map((proof): ClientPortalPaymentProofFollowUpDraft => {
+      const caseItem = casesById.get(proof.caseId);
+      if (!caseItem || !proof.reviewReasonCode || !proof.reviewReasonLabel) {
+        throw new Error("Expected rejected payment proof follow-up inputs to be complete");
+      }
+
+      const id = paymentProofFollowUpId(proof.id);
+      const sent = sentByDraftId.get(id);
+      const blockedReason = sent ? undefined : followUpBlockedReason(caseItem);
+
+      return {
+        id,
+        caseId: caseItem.id,
+        proofId: proof.id,
+        companyName: caseItem.companyName,
+        recipientName: caseItem.contactName,
+        phone: caseItem.phone,
+        reasonCode: proof.reviewReasonCode,
+        reasonLabel: proof.reviewReasonLabel,
+        note: proof.reviewNote,
+        suggestedTiming: "Send now",
+        messagePreview: paymentProofFollowUpMessage(caseItem, proof),
         status: sent ? "sent" : blockedReason ? "blocked" : "draft",
         blockedReason,
         sentAt: sent?.sentAt,
@@ -731,16 +1017,223 @@ function createDocument(
   };
 }
 
+function createPaymentProof(
+  caseItem: AnnualReturnCase,
+  filename: string,
+  origin: ClientPortalPaymentProofOrigin,
+  actor: string,
+  supersedesProofId?: string,
+): ClientPortalPaymentProof {
+  return {
+    id: `payment-proof-${caseItem.id}-${Date.now()}-${snapshot.paymentProofs.length + 1}`,
+    caseId: caseItem.id,
+    companyName: caseItem.companyName,
+    contactName: caseItem.contactName,
+    filename,
+    origin,
+    status: "pending-review",
+    uploadedBy: actor,
+    uploadedAt: nowStamp(),
+    supersedesProofId,
+  };
+}
+
 function blockReadOnlyCase(caseItem: AnnualReturnCase): { ok: false; reason: string } | undefined {
   if (!isReadOnlyCase(caseItem)) return undefined;
   return { ok: false, reason: "Filed cases are read-only in the client portal" };
+}
+
+function addPaymentProof(
+  caseItem: AnnualReturnCase,
+  filename: string,
+  origin: ClientPortalPaymentProofOrigin,
+  actor?: string,
+): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
+  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
+  if (!canonicalCase) return { ok: false, reason: "Case not found" };
+
+  const readOnly = blockReadOnlyCase(canonicalCase);
+  if (readOnly) return readOnly;
+  if (!filename.trim()) return { ok: false, reason: "Filename is required" };
+
+  const current = getCurrentPaymentProof(canonicalCase.id);
+  if (current?.status === "pending-review") {
+    return { ok: false, reason: "Current payment proof is still pending review" };
+  }
+  if (current?.status === "accepted") {
+    return { ok: false, reason: "Accepted payment proof cannot be replaced" };
+  }
+
+  const proofActor =
+    actor?.trim() || (origin === "client-portal" ? canonicalCase.contactName : "Operations");
+  const proof = createPaymentProof(canonicalCase, filename.trim(), origin, proofActor, current?.id);
+  snapshot = {
+    ...snapshot,
+    paymentProofs: [
+      proof,
+      ...snapshot.paymentProofs.map((candidate) =>
+        candidate.id === current?.id ? { ...candidate, status: "superseded" as const } : candidate,
+      ),
+    ],
+  };
+
+  const actionType: ClientPortalActionType =
+    origin === "client-portal" ? "upload-payment-proof" : "attach-payment-proof";
+  const actionVerb = origin === "client-portal" ? "uploaded" : "attached";
+  const summary = `${proofActor} ${actionVerb} payment proof ${proof.filename}.`;
+  addActionForCase(canonicalCase.id, actionType, proofActor, summary, { proofId: proof.id });
+  appendClientPortalTimelineEvent(
+    canonicalCase.id,
+    origin === "client-portal" ? "Payment proof uploaded" : "Payment proof attached",
+    summary,
+  );
+  emit();
+
+  return {
+    ok: true,
+    proofId: proof.id,
+    ...(current ? { supersededProofId: current.id } : {}),
+  };
+}
+
+export function uploadPaymentProof(
+  caseItem: AnnualReturnCase,
+  filename: string,
+  actor?: string,
+): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
+  return addPaymentProof(caseItem, filename, "client-portal", actor);
+}
+
+export function attachPaymentProof(
+  caseItem: AnnualReturnCase,
+  filename: string,
+  actor?: string,
+): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
+  return addPaymentProof(caseItem, filename, "staff-payments", actor);
+}
+
+export function acceptPaymentProof(
+  proofId: string,
+  actor?: string,
+): { ok: true; proofId: string } | { ok: false; reason: string } {
+  const proof = snapshot.paymentProofs.find((candidate) => candidate.id === proofId);
+  if (!proof) return { ok: false, reason: "Payment proof not found" };
+  if (getCurrentPaymentProof(proof.caseId)?.id !== proof.id) {
+    return { ok: false, reason: "Payment proof is not current" };
+  }
+  const alreadyAccepted = proof.status === "accepted";
+  if (!alreadyAccepted && proof.status !== "pending-review") {
+    return { ok: false, reason: "Payment proof is not pending review" };
+  }
+
+  const caseItem = getAnnualReturnCaseById(proof.caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  const proofRequirement = caseItem.packetRequirements.find(
+    (requirement) => requirement.id === "payment-proof-checked",
+  );
+  if (alreadyAccepted && caseItem.paymentStatus === "paid" && proofRequirement?.complete) {
+    return { ok: true, proofId: proof.id };
+  }
+  const readOnly = blockReadOnlyCase(caseItem);
+  if (readOnly) return readOnly;
+
+  const reviewer = actor?.trim() || "Operations";
+  let accepted: ReturnType<typeof acceptPaymentProofForCase> = {
+    ok: false,
+    reason: "Payment proof acceptance failed",
+  };
+
+  batchAnnualReturnCaseUpdates(() => {
+    accepted = acceptPaymentProofForCase(proof.caseId, reviewer);
+    if (!accepted.ok) return;
+
+    if (!alreadyAccepted) {
+      snapshot = {
+        ...snapshot,
+        paymentProofs: snapshot.paymentProofs.map((candidate) =>
+          candidate.id === proof.id
+            ? {
+                ...candidate,
+                status: "accepted",
+                reviewedBy: reviewer,
+                reviewedAt: nowStamp(),
+                reviewSummary: `Accepted by ${reviewer}`,
+              }
+            : candidate,
+        ),
+      };
+      const summary = `${reviewer} accepted payment proof ${proof.filename}.`;
+      addActionForCase(proof.caseId, "accept-payment-proof", reviewer, summary, {
+        proofId: proof.id,
+      });
+    }
+  });
+
+  if (!accepted.ok) return accepted;
+  if (!alreadyAccepted) emit();
+
+  return { ok: true, proofId: proof.id };
+}
+
+export function rejectPaymentProof(
+  proofId: string,
+  review: ClientPortalPaymentProofReviewRequest,
+  actor?: string,
+): { ok: true; proofId: string } | { ok: false; reason: string } {
+  const proof = snapshot.paymentProofs.find((candidate) => candidate.id === proofId);
+  if (!proof) return { ok: false, reason: "Payment proof not found" };
+  if (getCurrentPaymentProof(proof.caseId)?.id !== proof.id) {
+    return { ok: false, reason: "Payment proof is not current" };
+  }
+  if (proof.status !== "pending-review") {
+    return { ok: false, reason: "Payment proof is not pending review" };
+  }
+
+  const caseItem = getAnnualReturnCaseById(proof.caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  const readOnly = blockReadOnlyCase(caseItem);
+  if (readOnly) return readOnly;
+
+  const reason = clientPortalPaymentProofReviewReasons.find(
+    (candidate) => candidate.code === review.reasonCode,
+  );
+  if (!reason) return { ok: false, reason: "Rejection reason is required" };
+  const note = review.note?.trim();
+  if (reason.code === "other" && !note) {
+    return { ok: false, reason: "Review note is required when reason is Other" };
+  }
+
+  const reviewer = review.actor?.trim() || actor?.trim() || "Operations";
+  const summary = `${reviewer} rejected payment proof ${proof.filename}: ${reason.label}.`;
+  snapshot = {
+    ...snapshot,
+    paymentProofs: snapshot.paymentProofs.map((candidate) =>
+      candidate.id === proof.id
+        ? {
+            ...candidate,
+            status: "rejected",
+            reviewedBy: reviewer,
+            reviewedAt: nowStamp(),
+            reviewSummary: `Rejected by ${reviewer}: ${reason.label}`,
+            reviewReasonCode: reason.code,
+            reviewReasonLabel: reason.label,
+            reviewNote: note,
+          }
+        : candidate,
+    ),
+  };
+  addActionForCase(proof.caseId, "reject-payment-proof", reviewer, summary, { proofId: proof.id });
+  appendClientPortalTimelineEvent(proof.caseId, "Payment proof rejected", summary);
+  emit();
+
+  return { ok: true, proofId: proof.id };
 }
 
 function getPacketApprovalBlockers(
   caseItem: AnnualReturnCase,
   currentSnapshot = snapshot,
 ): string[] {
-  return caseItem.documents
+  const documentBlockers = caseItem.documents
     .filter((document) => document.required)
     .flatMap((document) => {
       const current = getCurrentClientDocument(caseItem.id, document.id, currentSnapshot);
@@ -750,6 +1243,16 @@ function getPacketApprovalBlockers(
       if (current.status !== "accepted") return [document.label];
       return [];
     });
+  const currentPaymentProof = getCurrentPaymentProof(caseItem.id, currentSnapshot);
+  const paymentProofBlocker = !currentPaymentProof
+    ? "Payment proof required"
+    : currentPaymentProof.status === "pending-review"
+      ? "Payment proof pending staff review"
+      : currentPaymentProof.status === "rejected"
+        ? "Payment proof rejected"
+        : undefined;
+
+  return paymentProofBlocker ? [...documentBlockers, paymentProofBlocker] : documentBlockers;
 }
 
 function normalizeReviewInput(
@@ -798,6 +1301,10 @@ export function reviewClientDocument(
 
   const document = snapshot.documents.find((candidate) => candidate.id === documentId);
   if (!document) return { ok: false, reason: "Document not found" };
+  const caseItem = getAnnualReturnCaseById(document.caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  const readOnly = blockReadOnlyCase(caseItem);
+  if (readOnly) return readOnly;
   if (document.source !== "client-portal") {
     return { ok: false, reason: "Only client portal documents can be reviewed" };
   }
@@ -810,11 +1317,6 @@ export function reviewClientDocument(
   if (document.status !== "uploaded") {
     return { ok: false, reason: "Document is not ready for review" };
   }
-  const caseItem = getAnnualReturnCaseById(document.caseId);
-  if (caseItem && isReadOnlyCase(caseItem)) {
-    return { ok: false, reason: "Filed cases are read-only in the client portal" };
-  }
-
   const reviewedAt = nowStamp();
   const status = normalized.decision;
   const actionType: ClientPortalActionType =
@@ -872,20 +1374,27 @@ export function uploadClientDocument(
   caseItem: AnnualReturnCase,
   requirementId: string,
   filename: string,
-  actor = caseItem.contactName,
+  actor?: string,
 ): { ok: true; documentId: string } | { ok: false; reason: string } {
-  const readOnly = blockReadOnlyCase(caseItem);
+  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
+  if (!canonicalCase) return { ok: false, reason: "Case not found" };
+
+  const readOnly = blockReadOnlyCase(canonicalCase);
   if (readOnly) return readOnly;
 
-  const requirement = caseItem.documents.find((document) => document.id === requirementId);
+  const requirement = canonicalCase.documents.find((document) => document.id === requirementId);
   if (!requirement) return { ok: false, reason: "Document requirement not found" };
   if (!filename.trim()) return { ok: false, reason: "Filename is required" };
+  if (getCurrentClientDocument(canonicalCase.id, requirementId)) {
+    return { ok: false, reason: "A current document already exists" };
+  }
 
-  const document = createDocument(caseItem, requirementId, filename.trim(), actor);
+  const documentActor = actor?.trim() || canonicalCase.contactName;
+  const document = createDocument(canonicalCase, requirementId, filename.trim(), documentActor);
   snapshot = { ...snapshot, documents: [document, ...snapshot.documents] };
-  const summary = `${actor} uploaded ${requirement.label}.`;
-  addAction(caseItem, "upload-document", actor, summary);
-  appendClientPortalTimelineEvent(caseItem.id, "Client document uploaded", summary);
+  const summary = `${documentActor} uploaded ${requirement.label}.`;
+  addAction(canonicalCase, "upload-document", documentActor, summary);
+  appendClientPortalTimelineEvent(canonicalCase.id, "Client document uploaded", summary);
   emit();
 
   return { ok: true, documentId: document.id };
@@ -895,21 +1404,31 @@ export function replaceClientDocument(
   caseItem: AnnualReturnCase,
   requirementId: string,
   filename: string,
-  actor = caseItem.contactName,
+  actor?: string,
 ): { ok: true; documentId: string; supersededDocumentId?: string } | { ok: false; reason: string } {
-  const readOnly = blockReadOnlyCase(caseItem);
+  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
+  if (!canonicalCase) return { ok: false, reason: "Case not found" };
+
+  const readOnly = blockReadOnlyCase(canonicalCase);
   if (readOnly) return readOnly;
 
-  const requirement = caseItem.documents.find((document) => document.id === requirementId);
+  const requirement = canonicalCase.documents.find((document) => document.id === requirementId);
   if (!requirement) return { ok: false, reason: "Document requirement not found" };
   if (!filename.trim()) return { ok: false, reason: "Filename is required" };
 
-  const current = getCurrentClientDocument(caseItem.id, requirementId);
+  const current = getCurrentClientDocument(canonicalCase.id, requirementId);
   if (!current) return { ok: false, reason: "No current document is available to replace" };
   if (current.status !== "rejected") {
     return { ok: false, reason: "Only rejected documents can be replaced" };
   }
-  const document = createDocument(caseItem, requirementId, filename.trim(), actor, current?.id);
+  const documentActor = actor?.trim() || canonicalCase.contactName;
+  const document = createDocument(
+    canonicalCase,
+    requirementId,
+    filename.trim(),
+    documentActor,
+    current.id,
+  );
   snapshot = {
     ...snapshot,
     documents: [
@@ -919,10 +1438,10 @@ export function replaceClientDocument(
       ),
     ],
   };
-  markDocumentMissing(caseItem.id, requirementId);
-  const summary = `${actor} replaced ${requirement.label}.`;
-  addAction(caseItem, "replace-document", actor, summary);
-  appendClientPortalTimelineEvent(caseItem.id, "Client document replaced", summary);
+  markDocumentMissing(canonicalCase.id, requirementId);
+  const summary = `${documentActor} replaced ${requirement.label}.`;
+  addAction(canonicalCase, "replace-document", documentActor, summary);
+  appendClientPortalTimelineEvent(canonicalCase.id, "Client document replaced", summary);
   emit();
 
   return { ok: true, documentId: document.id, supersededDocumentId: current?.id };
@@ -969,6 +1488,58 @@ export function sendDocumentReviewFollowUpNow(
     draftId,
   });
   appendClientPortalTimelineEvent(caseItem.id, "Document replacement follow-up sent", summary);
+  emit();
+
+  return { ok: true };
+}
+
+export function sendPaymentProofFollowUpNow(
+  draftId: string,
+  actor = "Operations",
+): { ok: true } | { ok: false; reason: string } {
+  const sent = snapshot.paymentProofFollowUps.find((followUp) => followUp.draftId === draftId);
+  if (sent) return { ok: false, reason: "Follow-up already sent" };
+
+  const proofId = draftId.replace(/^payment-proof-review-follow-up-/, "");
+  const proof = snapshot.paymentProofs.find((candidate) => candidate.id === proofId);
+  if (!proof || !isCurrentRejectedPaymentProof(proof)) {
+    return { ok: false, reason: "The rejected payment proof is no longer current" };
+  }
+
+  const caseItem = getAnnualReturnCaseById(proof.caseId);
+  if (!caseItem) return { ok: false, reason: "Case not found" };
+  const readOnly = blockReadOnlyCase(caseItem);
+  if (readOnly) return readOnly;
+
+  const draft = getPaymentProofFollowUpDrafts([caseItem]).find(
+    (candidate) => candidate.id === draftId,
+  );
+  if (!draft) return { ok: false, reason: "The rejected payment proof is no longer current" };
+  if (draft.status === "blocked") {
+    return { ok: false, reason: draft.blockedReason ?? "Follow-up cannot be sent" };
+  }
+
+  const sentAt = nowStamp();
+  const sendRecord: ClientPortalPaymentProofFollowUpSend = {
+    id: `payment-proof-review-follow-up-send-${proof.id}-${Date.now()}-${snapshot.paymentProofFollowUps.length + 1}`,
+    draftId,
+    proofId: proof.id,
+    caseId: caseItem.id,
+    actor,
+    sentAt,
+  };
+
+  snapshot = {
+    ...snapshot,
+    paymentProofFollowUps: [sendRecord, ...snapshot.paymentProofFollowUps],
+  };
+
+  const summary = `${actor} sent a payment proof replacement follow-up for ${proof.filename}.`;
+  addActionForCase(caseItem.id, "send-payment-proof-review-follow-up", actor, summary, {
+    proofId: proof.id,
+    draftId,
+  });
+  appendClientPortalTimelineEvent(caseItem.id, "Payment proof replacement follow-up sent", summary);
   emit();
 
   return { ok: true };

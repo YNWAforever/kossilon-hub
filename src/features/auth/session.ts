@@ -1,6 +1,7 @@
-export const AUTH_SESSION_STORAGE_KEY = "kossilon.auth.session.v1";
+import type { AuthRole } from "./types";
+export type { AuthRole } from "./types";
 
-export type AuthRole = "Admin" | "Manager" | "Staff";
+export const AUTH_SESSION_STORAGE_KEY = "kossilon.auth.session.v1";
 
 export type DemoUser = {
   id: string;
@@ -97,7 +98,10 @@ function isAuthSession(value: unknown): value is AuthSession {
     typeof session.id === "string" &&
     typeof session.name === "string" &&
     typeof session.email === "string" &&
-    (session.role === "Admin" || session.role === "Manager" || session.role === "Staff") &&
+    (session.role === "Admin" ||
+      session.role === "Manager" ||
+      session.role === "Staff" ||
+      session.role === "Client") &&
     typeof session.initials === "string" &&
     typeof session.team === "string" &&
     typeof session.signedInAt === "string"

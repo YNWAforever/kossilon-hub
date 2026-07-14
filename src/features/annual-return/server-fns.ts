@@ -1,13 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { assertStaffAccess } from "@/features/auth/authorization";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import { getSqlClient } from "@/server/db/client";
 import {
   createAnnualReturnRepository,
   hongKongBusinessDate,
   type AnnualReturnRepository,
 } from "./repository";
-import { createWhatsAppRepository } from "@/features/whatsapp/repository";
-import { getCurrentAnnualReturnActorId } from "./session";
+import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
+import { getCurrentAnnualReturnActor, getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
@@ -38,6 +41,18 @@ const listAnnualReturnCasesSchema = z
 const annualReturnCaseIdSchema = z.object({
   caseId: z.string().uuid(),
 });
+const assignOwnerSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    ownerId: z.string().uuid(),
+  })
+  .strict();
+const addNoteSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    body: z.string().trim().min(1).max(2000),
+  })
+  .strict();
 export const queueAnnualReturnWhatsAppReminderSchema = z.object({
   caseId: z.string().uuid(),
   recipientName: z.string().min(1),
@@ -59,6 +74,14 @@ const updateChecklistItemSchema = z
       });
     }
   });
+const updateFilingProofSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    filingReference: z.string().trim().min(1),
+    confirmationDocumentId: z.string().uuid(),
+  })
+  .strict();
+
 const updatePaymentSchema = z
   .object({
     caseId: z.string().uuid(),
@@ -74,6 +97,155 @@ const updatePaymentSchema = z
       });
     }
   });
+
+export type AnnualReturnCaseCommandDependencies = {
+  repository: AnnualReturnRepository;
+};
+
+function requireStaffUserId(actor: AuthenticatedActor): string {
+  const staff = assertStaffAccess(actor);
+
+  if (!staff.userId) {
+    throw new Error("Forbidden: a staff database identity is required.");
+  }
+
+  return staff.userId;
+}
+
+export async function assignAnnualReturnCaseOwnerForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; ownerId: string },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = assignOwnerSchema.parse(input);
+  return dependencies.repository.assignOwner({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
+}
+
+export async function addAnnualReturnCaseNoteForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; body: string },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = addNoteSchema.parse(input);
+  return dependencies.repository.addNote({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
+}
+
+export async function updateAnnualReturnStatusForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; nextStatus: AnnualReturnStatus },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = z
+    .object({
+      caseId: z.string().uuid(),
+      nextStatus: annualReturnStatusSchema,
+    })
+    .parse(input);
+  const actorId = requireStaffUserId(actor);
+  const current = await dependencies.repository.getCase(data.caseId);
+
+  if (!current) {
+    throw new Error("Annual return case not found.");
+  }
+
+  assertAnnualReturnStatusActionAllowed(current, data.nextStatus);
+  return dependencies.repository.updateStatus(data.caseId, data.nextStatus, actorId);
+}
+
+export async function updateAnnualReturnChecklistItemForActor(
+  actor: AuthenticatedActor,
+  input: {
+    caseId: string;
+    itemId: string;
+    status: (typeof CHECKLIST_STATUSES)[number];
+    documentId: string | null;
+  },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = updateChecklistItemSchema.parse(input);
+  return dependencies.repository.updateChecklistItem({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
+}
+
+export async function updateAnnualReturnPaymentForActor(
+  actor: AuthenticatedActor,
+  input: {
+    caseId: string;
+    status: (typeof PAYMENT_STATUSES)[number];
+    paymentProofDocumentId: string | null;
+  },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = updatePaymentSchema.parse(input);
+  return dependencies.repository.updatePayment({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
+}
+
+export async function updateAnnualReturnFilingProofForActor(
+  actor: AuthenticatedActor,
+  input: {
+    caseId: string;
+    filingReference: string;
+    confirmationDocumentId: string;
+  },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = updateFilingProofSchema.parse(input);
+  return dependencies.repository.updateFilingProof({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
+}
+
+export type AnnualReturnReminderCommandDependencies = {
+  annualReturnRepository: AnnualReturnRepository;
+  whatsAppRepository: WhatsAppRepository;
+};
+
+export async function queueAnnualReturnWhatsAppReminderMessageForActor(
+  actor: AuthenticatedActor,
+  input: {
+    caseId: string;
+    recipientName: string;
+    recipientPhone: string;
+  },
+  dependencies: AnnualReturnReminderCommandDependencies,
+) {
+  const data = queueAnnualReturnWhatsAppReminderSchema.parse(input);
+  const actorId = requireStaffUserId(actor);
+  const caseItem = await dependencies.annualReturnRepository.getCase(data.caseId);
+
+  if (!caseItem) {
+    throw new Error("Annual return case not found.");
+  }
+
+  const result = await queueAnnualReturnWhatsAppReminder({
+    annualReturnRepository: dependencies.annualReturnRepository,
+    whatsAppRepository: dependencies.whatsAppRepository,
+    case_: caseItem,
+    actorId,
+    recipientName: data.recipientName,
+    recipientPhone: data.recipientPhone,
+  });
+
+  return {
+    caseId: result.case.id,
+    remindersSent: result.case.remindersSent,
+    currentStatus: result.case.currentStatus,
+    messageId: result.message.id,
+    messageStatus: result.message.status,
+  };
+}
 
 export function assertAnnualReturnStatusActionAllowed(
   current: AnnualReturnCase,
@@ -95,17 +267,30 @@ export function assertAnnualReturnStatusActionAllowed(
 }
 
 async function withAnnualReturnRepository<T>(
-  handler: (repository: AnnualReturnRepository) => Promise<T>,
+  handler: (repository: AnnualReturnRepository, actorId: string) => Promise<T>,
 ): Promise<T> {
+  const actorId = await getCurrentAnnualReturnActorId(getRequest());
   const repository = createAnnualReturnRepository();
 
   try {
-    return await handler(repository);
+    return await handler(repository, actorId);
   } finally {
     await repository.close();
   }
 }
 
+async function withAnnualReturnActorRepository<T>(
+  handler: (repository: AnnualReturnRepository, actor: AuthenticatedActor) => Promise<T>,
+): Promise<T> {
+  const actor = await getCurrentAnnualReturnActor(getRequest());
+  const repository = createAnnualReturnRepository();
+
+  try {
+    return await handler(repository, actor);
+  } finally {
+    await repository.close();
+  }
+}
 export const listAnnualReturnCases = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
   .handler(async ({ data }) =>
@@ -119,11 +304,31 @@ export const getAnnualReturnCase = createServerFn({ method: "GET" })
   );
 
 export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" }).handler(async () =>
-  withAnnualReturnRepository((repository) =>
-    repository.dashboardMetrics(hongKongBusinessDate(), getCurrentAnnualReturnActorId()),
+  withAnnualReturnRepository((repository, actorId) =>
+    repository.dashboardMetrics(hongKongBusinessDate(), actorId),
   ),
 );
 
+export const assignAnnualReturnCaseOwner = createServerFn({ method: "POST" })
+  .validator(assignOwnerSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      assignAnnualReturnCaseOwnerForActor(actor, data, { repository }),
+    ),
+  );
+export const listAnnualReturnCaseNotes = createServerFn({ method: "GET" })
+  .validator(annualReturnCaseIdSchema)
+  .handler(({ data }) =>
+    withAnnualReturnRepository((repository) => repository.listNotes(data.caseId)),
+  );
+
+export const addAnnualReturnCaseNote = createServerFn({ method: "POST" })
+  .validator(addNoteSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      addAnnualReturnCaseNoteForActor(actor, data, { repository }),
+    ),
+  );
 export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
   .validator(
     z.object({
@@ -131,20 +336,11 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
       nextStatus: annualReturnStatusSchema,
     }),
   )
-  .handler(async ({ data }) =>
-    withAnnualReturnRepository(async (repository) => {
-      const current = await repository.getCase(data.caseId);
-
-      if (!current) {
-        throw new Error("Annual return case not found.");
-      }
-
-      assertAnnualReturnStatusActionAllowed(current, data.nextStatus);
-
-      return repository.updateStatus(data.caseId, data.nextStatus, getCurrentAnnualReturnActorId());
-    }),
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnStatusForActor(actor, data, { repository }),
+    ),
   );
-
 export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
   .validator(
     z.object({
@@ -157,10 +353,10 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
+    withAnnualReturnRepository((repository, actorId) =>
       repository.recordReminder({
         ...data,
-        actorId: getCurrentAnnualReturnActorId(),
+        actorId,
       }),
     ),
   );
@@ -168,6 +364,7 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
 export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
   .validator(queueAnnualReturnWhatsAppReminderSchema)
   .handler(async ({ data }) => {
+    const actor = await getCurrentAnnualReturnActor(getRequest());
     const sql = getSqlClient();
 
     return sql.begin(async (tx) => {
@@ -175,74 +372,37 @@ export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method:
       const whatsAppRepository = createWhatsAppRepository({ sql: tx });
 
       try {
-        const case_ = await annualReturnRepository.getCase(data.caseId);
-
-        if (!case_) {
-          throw new Error("Annual return case not found.");
-        }
-
-        const result = await queueAnnualReturnWhatsAppReminder({
+        return await queueAnnualReturnWhatsAppReminderMessageForActor(actor, data, {
           annualReturnRepository,
           whatsAppRepository,
-          case_,
-          actorId: getCurrentAnnualReturnActorId(),
-          recipientName: data.recipientName,
-          recipientPhone: data.recipientPhone,
         });
-
-        return {
-          caseId: result.case.id,
-          remindersSent: result.case.remindersSent,
-          currentStatus: result.case.currentStatus,
-          messageId: result.message.id,
-          messageStatus: result.message.status,
-        };
       } finally {
         await annualReturnRepository.close();
         await whatsAppRepository.close();
       }
     });
   });
-
 export const updateAnnualReturnChecklistItem = createServerFn({ method: "POST" })
   .validator(updateChecklistItemSchema)
-  .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
-      repository.updateChecklistItem({
-        ...data,
-        actorId: getCurrentAnnualReturnActorId(),
-      }),
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnChecklistItemForActor(actor, data, { repository }),
     ),
   );
-
 export const updateAnnualReturnPayment = createServerFn({ method: "POST" })
   .validator(updatePaymentSchema)
-  .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
-      repository.updatePayment({
-        ...data,
-        actorId: getCurrentAnnualReturnActorId(),
-      }),
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnPaymentForActor(actor, data, { repository }),
     ),
   );
-
 export const updateAnnualReturnFilingProof = createServerFn({ method: "POST" })
-  .validator(
-    z.object({
-      caseId: z.string().uuid(),
-      filingReference: z.string().min(1),
-      confirmationDocumentId: z.string().uuid(),
-    }),
-  )
-  .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) =>
-      repository.updateFilingProof({
-        ...data,
-        actorId: getCurrentAnnualReturnActorId(),
-      }),
+  .validator(updateFilingProofSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      updateAnnualReturnFilingProofForActor(actor, data, { repository }),
     ),
   );
-
 export const buildAnnualReturnReminderDraft = createServerFn({ method: "GET" })
   .validator(annualReturnCaseIdSchema)
   .handler(async ({ data }) =>
