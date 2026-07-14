@@ -12,7 +12,12 @@ export type AiEnquiry = {
 };
 
 type NormalizedIntent =
-  "Annual Return" | "Incorporation" | "Payment" | "Deregistration" | "KYC" | "General";
+  | "Annual Return"
+  | "Incorporation"
+  | "Payment"
+  | "Deregistration"
+  | "KYC"
+  | "General";
 
 export type RetrievalContext = {
   faqs: Array<{ item: FaqEntry; score: number }>;

@@ -46,7 +46,6 @@ describe("business calendar arithmetic", () => {
     );
   });
 
-
   it("skips closed holidays and honors exceptional working intervals", () => {
     const calendar: BusinessCalendar = {
       ...hkCalendar,

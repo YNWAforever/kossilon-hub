@@ -3,7 +3,6 @@ export type { AuthRole } from "./types";
 
 export const AUTH_SESSION_STORAGE_KEY = "kossilon.auth.session.v1";
 
-
 export type DemoUser = {
   id: string;
   name: string;

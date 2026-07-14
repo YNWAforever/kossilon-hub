@@ -26,8 +26,7 @@ function eligible(candidate: StaffCandidate, input: AssignmentInput): boolean {
   if (!candidate.teamIds.includes(input.teamId)) return false;
   if (!candidate.skills.some((skill) => skill.key === input.requiredSkillKey)) return false;
   if (input.separationOfDuties) {
-    const conflictingUserId =
-      input.assignmentTarget === "owner" ? input.reviewerId : input.ownerId;
+    const conflictingUserId = input.assignmentTarget === "owner" ? input.reviewerId : input.ownerId;
     if (candidate.userId === conflictingUserId) return false;
   }
   return true;
@@ -50,8 +49,7 @@ function recommendationFor(
       ? Math.round((rawWorkload / candidate.capacityPoints) * 100)
       : 1_000;
   const continuityBonus = candidate.caseIds.includes(input.caseId) ? 30 : 0;
-  const score =
-    skill.proficiency * 100 - weightedWorkload - capacityUtilization + continuityBonus;
+  const score = skill.proficiency * 100 - weightedWorkload - capacityUtilization + continuityBonus;
 
   return {
     staffId: candidate.staffId,
@@ -71,13 +69,13 @@ function compareStaffIds(left: string, right: string): number {
   return left < right ? -1 : 1;
 }
 
-export function rankAssignmentCandidates(
-  input: AssignmentInput,
-): AssignmentRecommendation[] {
+export function rankAssignmentCandidates(input: AssignmentInput): AssignmentRecommendation[] {
   const ranked = input.candidates
     .filter((candidate) => eligible(candidate, input))
     .map((candidate) => recommendationFor(candidate, input))
-    .sort((left, right) => right.score - left.score || compareStaffIds(left.staffId, right.staffId));
+    .sort(
+      (left, right) => right.score - left.score || compareStaffIds(left.staffId, right.staffId),
+    );
 
   return ranked.map((recommendation, index) => ({
     ...recommendation,

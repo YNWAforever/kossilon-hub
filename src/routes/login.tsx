@@ -148,41 +148,41 @@ function LoginPage() {
 
           {demoUsers.length > 0 && (
             <div className="mt-7 border-t border-border pt-6">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Demo identities
-              </p>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </div>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Demo identities
+                </p>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </div>
 
-            <div className="mt-3 space-y-2">
-              {demoUsers.map((user) => (
-                <button
-                  key={user.id}
-                  type="button"
-                  onClick={() => submitDemoLogin(user.id)}
-                  disabled={!isHydrated}
-                  className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-left transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-xs font-semibold text-white">
-                      {user.initials}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{user.name}</span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
-                        {user.email}
+              <div className="mt-3 space-y-2">
+                {demoUsers.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => submitDemoLogin(user.id)}
+                    disabled={!isHydrated}
+                    className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-left transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-xs font-semibold text-white">
+                        {user.initials}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">{user.name}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground">
+                          {user.email}
+                        </span>
                       </span>
                     </span>
-                  </span>
 
-                  <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                    <UserRound className="h-3.5 w-3.5" />
-                    {user.role}
-                  </span>
-                </button>
-              ))}
-            </div>
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                      <UserRound className="h-3.5 w-3.5" />
+                      {user.role}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -14,7 +14,12 @@ export type WhatsAppProviderConfig = WhatsAppWebhookConfig & {
 export type WhatsAppMessageDirection = "inbound" | "outbound";
 
 export type WhatsAppMessageStatus =
-  "received" | "queued" | "sent" | "delivered" | "read" | "failed";
+  | "received"
+  | "queued"
+  | "sent"
+  | "delivered"
+  | "read"
+  | "failed";
 
 export type NormalizedInboundWhatsAppMessage = {
   provider: "woztell";

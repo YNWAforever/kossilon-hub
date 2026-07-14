@@ -2,7 +2,11 @@
 import { useSyncExternalStore } from "react";
 
 export type FaqCategory =
-  "Incorporation" | "Annual Return" | "Payments" | "Deregistration" | "General";
+  | "Incorporation"
+  | "Annual Return"
+  | "Payments"
+  | "Deregistration"
+  | "General";
 
 export const FAQ_CATEGORIES: FaqCategory[] = [
   "Incorporation",

@@ -1,17 +1,22 @@
 import { describe, expect, it } from "vitest";
-import type { ConfigEnv, Plugin, PluginOption } from "vite";
+import type { ConfigEnv, PluginOption } from "vite";
 
-import createViteConfig from "./vite.config";
-
-function flattenPlugins(plugins: PluginOption[]): Plugin[] {
-  return plugins.flatMap((plugin) => {
-    if (!plugin) return [];
-    if (Array.isArray(plugin)) return flattenPlugins(plugin);
-    return [plugin];
-  });
-}
+import createViteConfig, { flattenPlugins } from "./vite.config";
 
 describe("Vite plugin ordering", () => {
+  it("flattens promised plugin options without changing their order", async () => {
+    const plugins: PluginOption[] = [
+      { name: "first" },
+      Promise.resolve([{ name: "second" }, false, [{ name: "third" }]]),
+    ];
+
+    await expect(flattenPlugins(plugins)).resolves.toEqual([
+      expect.objectContaining({ name: "first" }),
+      expect.objectContaining({ name: "second" }),
+      expect.objectContaining({ name: "third" }),
+    ]);
+  });
+
   it("injects source locations before TanStack recompiles route files", async () => {
     const env: ConfigEnv = {
       command: "serve",
@@ -20,7 +25,7 @@ describe("Vite plugin ordering", () => {
       isPreview: false,
     };
     const config = await createViteConfig(env);
-    const pluginNames = flattenPlugins(config.plugins ?? []).map((plugin) => plugin.name);
+    const pluginNames = (await flattenPlugins(config.plugins ?? [])).map((plugin) => plugin.name);
     const sourceInjectionIndex = pluginNames.indexOf("@tanstack/devtools:inject-source");
     const routeCompilerIndex = pluginNames.indexOf(
       "tanstack-router:code-splitter:compile-reference-file",

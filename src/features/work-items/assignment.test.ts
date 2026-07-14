@@ -90,7 +90,6 @@ describe("assignment recommendations", () => {
     ).toEqual(["independent"]);
   });
 
-
   it("weights breached and at-risk work more heavily than ordinary work", () => {
     const ordinary: StaffCandidate = {
       ...baseCandidate,

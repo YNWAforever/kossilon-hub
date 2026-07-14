@@ -338,6 +338,12 @@ describe("client portal store", () => {
     });
   });
 
+  it("marks archive rows read-only when their annual-return case is absent", () => {
+    const rows = getDocumentArchiveRows([]);
+
+    expect(rows.every((row) => !row.reviewable && row.readonly)).toBe(true);
+  });
+
   it("scopes client-uploaded archive rows to the requested cases", () => {
     uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
     uploadClientDocument(

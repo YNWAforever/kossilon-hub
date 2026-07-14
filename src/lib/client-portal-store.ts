@@ -12,13 +12,28 @@ import {
 } from "./annual-return-store";
 
 export type ClientPortalDocumentCategory =
-  "identity" | "registry" | "signature" | "payment" | "packet" | "submission" | "receipt" | "other";
+  | "identity"
+  | "registry"
+  | "signature"
+  | "payment"
+  | "packet"
+  | "submission"
+  | "receipt"
+  | "other";
 
 export type ClientPortalDocumentSource =
-  "client-portal" | "staff-packet" | "filing-submission" | "filing-receipt";
+  | "client-portal"
+  | "staff-packet"
+  | "filing-submission"
+  | "filing-receipt";
 
 export type ClientPortalDocumentStatus =
-  "required" | "uploaded" | "superseded" | "accepted" | "rejected" | "generated";
+  | "required"
+  | "uploaded"
+  | "superseded"
+  | "accepted"
+  | "rejected"
+  | "generated";
 
 export type ClientPortalActionType =
   | "upload-document"
@@ -64,7 +79,10 @@ export type ClientPortalDocumentReviewRequest =
 export type ClientPortalPaymentProofOrigin = "client-portal" | "staff-payments";
 
 export type ClientPortalPaymentProofStatus =
-  "pending-review" | "accepted" | "rejected" | "superseded";
+  | "pending-review"
+  | "accepted"
+  | "rejected"
+  | "superseded";
 
 export const clientPortalPaymentProofReviewReasons = [
   { code: "unreadable", label: "Proof is unclear, cropped, or incomplete" },
@@ -682,9 +700,9 @@ function rowFromDocument(
   caseItem = getAnnualReturnCaseById(document.caseId),
 ): ClientPortalArchiveRow {
   const reviewable =
+    caseItem !== undefined &&
     document.source === "client-portal" &&
     document.status === "uploaded" &&
-    Boolean(caseItem) &&
     !isReadOnlyCase(caseItem);
 
   return {
@@ -860,7 +878,7 @@ export function getDocumentReviewFollowUpDrafts(
       if (!casesById.has(document.caseId)) return false;
       return isCurrentRejectedDocument(document, currentSnapshot);
     })
-    .map((document) => {
+    .map((document): ClientPortalDocumentReviewFollowUpDraft => {
       const caseItem = casesById.get(document.caseId);
       if (!caseItem || !document.reviewReasonCode || !document.reviewReasonLabel) {
         throw new Error("Expected rejected document follow-up inputs to be complete");
@@ -936,7 +954,7 @@ export function getPaymentProofFollowUpDrafts(
         sentByDraftId.has(paymentProofFollowUpId(proof.id))
       );
     })
-    .map((proof) => {
+    .map((proof): ClientPortalPaymentProofFollowUpDraft => {
       const caseItem = casesById.get(proof.caseId);
       if (!caseItem || !proof.reviewReasonCode || !proof.reviewReasonLabel) {
         throw new Error("Expected rejected payment proof follow-up inputs to be complete");

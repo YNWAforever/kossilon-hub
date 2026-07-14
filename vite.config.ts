@@ -15,17 +15,20 @@ const createConfig = defineConfig({
   },
 });
 
-function flattenPlugins(plugins: PluginOption[]): Plugin[] {
-  return plugins.flatMap((plugin) => {
-    if (!plugin) return [];
-    if (Array.isArray(plugin)) return flattenPlugins(plugin);
-    return [plugin];
-  });
+export async function flattenPlugins(plugins: PluginOption[]): Promise<Plugin[]> {
+  const groups = await Promise.all(
+    plugins.map(async (candidate) => {
+      const plugin = await candidate;
+      if (!plugin) return [];
+      return Array.isArray(plugin) ? flattenPlugins(plugin) : [plugin];
+    }),
+  );
+  return groups.flat();
 }
 
 export default async function config(env: ConfigEnv) {
   const resolved = await createConfig(env);
-  const plugins = flattenPlugins(resolved.plugins ?? []);
+  const plugins = await flattenPlugins(resolved.plugins ?? []);
   const sourceInjectionIndex = plugins.findIndex(
     (plugin) => plugin.name === "@tanstack/devtools:inject-source",
   );

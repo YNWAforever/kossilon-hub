@@ -164,6 +164,7 @@ function DemoWhatsAppAutomationRoute() {
 function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () => void }) {
   const { caseItem, draft } = row;
   const disabled = draft.status !== "draft";
+  const reasonLabel = "reasonLabel" in draft ? draft.reasonLabel : "Annual return follow-up";
 
   return (
     <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_140px_120px_110px_minmax(0,1.5fr)_120px] lg:items-center">
@@ -181,7 +182,7 @@ function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () =>
       <Field label="Type" value={automationTypeLabel(row)} />
       <Field
         label="Timing"
-        value={row.source === "annual-return" ? draft.suggestedTiming : draft.reasonLabel}
+        value={row.source === "annual-return" ? draft.suggestedTiming : reasonLabel}
       />
       <Field
         label="Status"

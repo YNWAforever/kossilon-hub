@@ -319,7 +319,11 @@ function DashboardPage() {
                 </h2>
                 <p className="text-xs text-muted-foreground">AI-classified intent</p>
               </div>
-              <Link to="/whatsapp" className="text-xs font-medium text-primary hover:underline">
+              <Link
+                to="/whatsapp"
+                search={{ enquiry: undefined }}
+                className="text-xs font-medium text-primary hover:underline"
+              >
                 Open inbox →
               </Link>
             </div>

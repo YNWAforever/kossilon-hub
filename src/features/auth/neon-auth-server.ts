@@ -67,7 +67,11 @@ export function createNeonSessionAdapter(
       if (!response.ok) throw new Error("Neon Auth session verification failed.");
 
       const value = (await response.json()) as Partial<NeonSession> | null;
-      if (!value?.user || typeof value.user.id !== "string" || typeof value.user.email !== "string") {
+      if (
+        !value?.user ||
+        typeof value.user.id !== "string" ||
+        typeof value.user.email !== "string"
+      ) {
         return null;
       }
 

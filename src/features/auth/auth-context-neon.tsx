@@ -9,10 +9,7 @@ import {
 } from "react";
 
 import { createNeonAuthClient } from "./neon-auth-client";
-import {
-  getAuthenticatedActor,
-  getNeonAuthClientConfiguration,
-} from "./neon-auth-rpc";
+import { getAuthenticatedActor, getNeonAuthClientConfiguration } from "./neon-auth-rpc";
 import { isDemoAuthEnabled } from "./route-guard";
 import {
   demoUsers,
@@ -63,7 +60,9 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
       })
       .catch((error: unknown) => {
         if (active) {
-          setConfigurationError(error instanceof Error ? error.message : "Authentication unavailable.");
+          setConfigurationError(
+            error instanceof Error ? error.message : "Authentication unavailable.",
+          );
         }
       });
 
@@ -157,10 +156,13 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     },
     [client, refreshSession],
   );
-  const demoUnavailable = useCallback(async (): Promise<AuthActionResult> => ({
-    ok: false,
-    error: "Demo authentication is disabled.",
-  }), []);
+  const demoUnavailable = useCallback(
+    async (): Promise<AuthActionResult> => ({
+      ok: false,
+      error: "Demo authentication is disabled.",
+    }),
+    [],
+  );
   const signOut = useCallback(async () => {
     await client.signOut();
     setSession(null);
