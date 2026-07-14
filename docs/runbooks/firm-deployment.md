@@ -34,3 +34,11 @@ Approval is required before provisioning or changing Neon Auth, R2, Hyperdrive, 
 4. Verify the firm integration health page exposes status only, never secret values.
 
 Use local fixtures by default. Approval is required before sending a real provider webhook, inviting external users, or sending a real WhatsApp message.
+## Named verification gates
+
+The dry-run verifier emits a stable check list with pass, fail, or blocked status:
+
+- Local pass gates: strict-data-mode, route-import-guard, local-provider-mode, migration-schema, neon-auth-capability, and cron.
+- Live blocked gates: database, storage, malware-scanner, whatsapp, email, backups, and browser-evidence.
+
+A blocked gate is evidence that the integration still needs an approved environment or an observed verification artifact. It is not a request to place a secret in source control or in the verifier result. The verifier must remain offline and must not provision resources.

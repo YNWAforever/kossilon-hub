@@ -17,3 +17,6 @@ Use deterministic local storage and scanning by default. Approval is required be
 - Try a public or metadata-less object; download must be rejected.
 - Try a mismatched checksum or MIME; finalization must not advance state.
 - Repeat a rejected replacement and verify accepted documents remain immutable.
+## Pre-pilot blocker
+
+Malware-scanner readiness remains blocked until the separately approved provider validation flow is available. Local deterministic scanning and private-storage behavior can be verified offline; the dry-run verifier does not upload documents, call a scanner, or mutate R2.

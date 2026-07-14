@@ -56,21 +56,65 @@ export async function verifyFirmDeployment(
   if (!input.dryRun) throw new Error("Firm deployment verification requires --dry-run");
 
   const checks: FirmDeploymentVerificationResult["checks"] = [];
+  const allFilesExist = async (files: readonly string[]) =>
+    (await Promise.all(files.map((file) => input.fileExists(file)))).every(Boolean);
+  const structureReady = await allFilesExist(REQUIRED_FILES);
+  const schema = await input.readSchema();
+  const migrationReady = REQUIRED_TABLES.every((table) =>
+    schema.includes("create table if not exists " + table),
+  );
+  const localProviderReady = await allFilesExist([
+    "src/server/provider-mode.ts",
+    "src/features/documents/local-r2.ts",
+    "src/features/notifications/local-transport.ts",
+  ]);
+
   for (const file of REQUIRED_FILES) {
     checks.push({
-      name: `structure ${file}`,
+      name: "structure " + file,
       status: (await input.fileExists(file)) ? "pass" : "fail",
     });
   }
 
-  const schema = await input.readSchema();
   for (const table of REQUIRED_TABLES) {
     checks.push({
-      name: `migration table ${table}`,
-      status: schema.includes(`create table if not exists ${table}`) ? "pass" : "fail",
+      name: "migration table " + table,
+      status: schema.includes("create table if not exists " + table) ? "pass" : "fail",
     });
   }
 
+  checks.push(
+    {
+      name: "strict-data-mode",
+      status:
+        structureReady && (await input.fileExists("src/features/runtime/data-mode.ts"))
+          ? "pass"
+          : "fail",
+    },
+    {
+      name: "route-import-guard",
+      status: (await input.fileExists("scripts/check-production-route-imports.ts"))
+        ? "pass"
+        : "fail",
+    },
+    { name: "local-provider-mode", status: localProviderReady ? "pass" : "fail" },
+    { name: "migration-schema", status: migrationReady ? "pass" : "fail" },
+    {
+      name: "neon-auth-capability",
+      status: (await input.fileExists("src/features/auth/neon-auth-server.ts")) ? "pass" : "fail",
+    },
+    {
+      name: "cron",
+      status: (await input.fileExists("src/server/cron.ts")) ? "pass" : "fail",
+    },
+    { name: "database", status: "blocked" },
+    { name: "storage", status: "blocked" },
+    { name: "malware-scanner", status: "blocked" },
+    { name: "whatsapp", status: "blocked" },
+    { name: "email", status: "blocked" },
+    { name: "backups", status: "blocked" },
+    { name: "browser-evidence", status: "blocked" },
+  );
   return {
     checks,
     blockedBindings: [...REQUIRED_BINDINGS],
