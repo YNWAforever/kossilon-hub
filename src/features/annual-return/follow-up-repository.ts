@@ -27,6 +27,7 @@ type EvidenceRow = {
   document_id: string;
   case_id: string;
   company_id: string;
+  source: PersistedFollowUpEvidence["source"];
   category: DocumentCategory;
   file_name: string;
   review_status: PersistedFollowUpEvidence["reviewStatus"];
@@ -74,29 +75,57 @@ export function createProductionFollowUpRepository(
         order by case_id, recorded_sent_at desc, created_at desc, id desc
       `;
       const evidence = await sql<EvidenceRow[]>`
+        with referenced_evidence as (
+          select distinct
+            d.id as document_id,
+            d.case_id,
+            d.company_id,
+            'document-review'::text as source,
+            d.file_type as category,
+            d.file_name,
+            d.verification_status as review_status,
+            d.uploaded_at
+          from documents d
+          join annual_return_checklist_items checklist
+            on checklist.document_id = d.id
+            and checklist.case_id = d.case_id
+          join document_upload_intents intent on intent.document_id = d.id
+          where d.case_id = any(${caseIds}::uuid[])
+            and intent.status = 'available'
+
+          union
+
+          select distinct
+            d.id as document_id,
+            d.case_id,
+            d.company_id,
+            'payment-proof-review'::text as source,
+            d.file_type as category,
+            d.file_name,
+            d.verification_status as review_status,
+            d.uploaded_at
+          from documents d
+          join payments payment
+            on payment.payment_proof_document_id = d.id
+            and payment.case_id = d.case_id
+          join document_upload_intents intent on intent.document_id = d.id
+          where d.case_id = any(${caseIds}::uuid[])
+            and intent.status = 'available'
+        )
         select
-          d.id as document_id,
-          d.case_id,
-          d.company_id,
-          d.file_type as category,
-          d.file_name,
-          d.verification_status as review_status,
-          d.uploaded_at,
+          evidence.*,
           review.rejection_reason
-        from documents d
-        join document_upload_intents intent on intent.document_id = d.id
+        from referenced_evidence evidence
         left join lateral (
           select timeline.metadata ->> 'reason' as rejection_reason
           from timeline_events timeline
-          where timeline.case_id = d.case_id
+          where timeline.case_id = evidence.case_id
             and timeline.event_type = 'document_reviewed'
-            and timeline.metadata ->> 'documentId' = d.id::text
+            and timeline.metadata ->> 'documentId' = evidence.document_id::text
           order by timeline.created_at desc, timeline.id desc
           limit 1
         ) review on true
-        where d.case_id = any(${caseIds}::uuid[])
-          and intent.status = 'available'
-        order by d.uploaded_at asc, d.id asc
+        order by evidence.uploaded_at asc, evidence.document_id asc
       `;
       const deliveries = await sql<DeliveryRow[]>`
         select idempotency_key, status
@@ -116,6 +145,7 @@ export function createProductionFollowUpRepository(
           documentId: row.document_id,
           caseId: row.case_id,
           companyId: row.company_id,
+          source: row.source,
           category: row.category,
           fileName: row.file_name,
           reviewStatus: row.review_status,

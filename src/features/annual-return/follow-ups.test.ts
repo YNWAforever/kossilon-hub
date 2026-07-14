@@ -50,6 +50,7 @@ function state(overrides: Partial<PersistedFollowUpState> = {}): PersistedFollow
         documentId: oldDocumentId,
         caseId,
         companyId,
+        source: "document-review",
         category: "identity",
         fileName: "old-passport.pdf",
         reviewStatus: "rejected",
@@ -61,6 +62,7 @@ function state(overrides: Partial<PersistedFollowUpState> = {}): PersistedFollow
         documentId: currentDocumentId,
         caseId,
         companyId,
+        source: "document-review",
         category: "identity",
         fileName: "passport.pdf",
         reviewStatus: "rejected",
@@ -72,6 +74,7 @@ function state(overrides: Partial<PersistedFollowUpState> = {}): PersistedFollow
         documentId: paymentDocumentId,
         caseId,
         companyId,
+        source: "payment-proof-review",
         category: "payment",
         fileName: "payment-proof.pdf",
         reviewStatus: "rejected",
@@ -86,18 +89,16 @@ function state(overrides: Partial<PersistedFollowUpState> = {}): PersistedFollow
 }
 
 describe("production follow-up draft derivation", () => {
-  it("derives UUID-backed annual, current document, and payment drafts from persisted state", () => {
+  it("derives each authoritative linked document and payment draft from persisted state", () => {
     const drafts = deriveProductionFollowUpDrafts([caseItem], state());
 
     expect(drafts.map(({ source, id }) => ({ source, id }))).toEqual([
       { source: "annual-return", id: caseId },
+      { source: "document-review", id: oldDocumentId },
       { source: "document-review", id: currentDocumentId },
       { source: "payment-proof-review", id: paymentDocumentId },
     ]);
-    expect(drafts).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: oldDocumentId })]),
-    );
-    expect(drafts[1]).toMatchObject({
+    expect(drafts[2]).toMatchObject({
       recipientName: "Chris Client",
       phone: "+85291234567",
       reasonLabel: "Photo page is cropped.",
@@ -108,7 +109,7 @@ describe("production follow-up draft derivation", () => {
   it("marks rows blocked without a persisted reminder recipient", () => {
     const drafts = deriveProductionFollowUpDrafts([caseItem], state({ recipients: [] }));
 
-    expect(drafts).toHaveLength(3);
+    expect(drafts).toHaveLength(4);
     expect(drafts.every((draft) => draft.status === "blocked")).toBe(true);
     expect(drafts.every((draft) => draft.recipientName === null && draft.phone === null)).toBe(
       true,
@@ -148,6 +149,7 @@ describe("production follow-up draft derivation", () => {
 
     expect(drafts.map(({ source, status }) => ({ source, status }))).toEqual([
       { source: "annual-return", status: "sent" },
+      { source: "document-review", status: "draft" },
       { source: "document-review", status: "sent" },
       { source: "payment-proof-review", status: "blocked" },
     ]);

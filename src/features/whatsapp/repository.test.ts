@@ -2,7 +2,11 @@ import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { normalizeWoztellInboundMessage } from "./woztell";
-import { createWhatsAppRepository, planContactIdentityMerge } from "./repository";
+import {
+  createWhatsAppRepository,
+  planContactIdentityMerge,
+  resolveWhatsAppReplayMessageId,
+} from "./repository";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -177,6 +181,23 @@ afterEach(async () => {
 
 afterAll(async () => {
   await testSql?.end();
+});
+
+describe("WhatsApp follow-up replay metadata", () => {
+  it("fails closed when an existing idempotency row has no usable message reference", () => {
+    expect(resolveWhatsAppReplayMessageId(undefined)).toBeNull();
+    expect(
+      resolveWhatsAppReplayMessageId({
+        payload: { whatsappMessageId: "11111111-1111-4111-8111-111111111111" },
+      }),
+    ).toBe("11111111-1111-4111-8111-111111111111");
+    expect(() => resolveWhatsAppReplayMessageId({ payload: {} })).toThrow(
+      /existing WhatsApp follow-up cannot be replayed/i,
+    );
+    expect(() => resolveWhatsAppReplayMessageId({ payload: null })).toThrow(
+      /existing WhatsApp follow-up cannot be replayed/i,
+    );
+  });
 });
 
 describe("WhatsApp contact identity reconciliation", () => {
@@ -360,6 +381,14 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       expect(first.idempotentReplay).toBe(false);
       expect(replay).toMatchObject({ id: first.id, idempotentReplay: true });
       const sql = sqlForTests();
+      await sql`
+        update notification_outbox
+        set payload = '{}'::jsonb
+        where idempotency_key = \${input.idempotencyKey}
+      `;
+      await expect(repository.queueOutboundTemplateMessage(input)).rejects.toThrow(
+        /existing WhatsApp follow-up cannot be replayed/i,
+      );
       const messages = await sql<{ count: number }[]>`
         select count(*)::int as count from whatsapp_messages
         where case_id = ${TEST_CASE_ID} and body = ${input.body}

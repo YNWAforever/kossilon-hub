@@ -24,10 +24,15 @@ export function ProductionWhatsAppAutomation() {
       sendProductionFollowUp({
         data: { source: draft.source, caseId: draft.caseId, entityId: draft.entityId },
       }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: annualReturnQueryKeys.automationNotifications,
-      }),
+    onSuccess: (_result, draft) =>
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: annualReturnQueryKeys.automationNotifications,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: annualReturnQueryKeys.notifications(draft.caseId),
+        }),
+      ]),
   });
 
   const drafts = draftsQuery.data ?? [];

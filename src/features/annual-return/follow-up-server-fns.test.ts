@@ -91,6 +91,7 @@ function dependencies(overrides: Record<string, unknown> = {}) {
           documentId,
           caseId,
           companyId,
+          source: "document-review",
           category: "identity",
           fileName: "passport.pdf",
           reviewStatus: "rejected",
@@ -102,6 +103,7 @@ function dependencies(overrides: Record<string, unknown> = {}) {
           documentId: paymentDocumentId,
           caseId,
           companyId,
+          source: "payment-proof-review",
           category: "payment",
           fileName: "payment-proof.pdf",
           reviewStatus: "rejected",
@@ -208,6 +210,20 @@ describe("production follow-up server orchestration", () => {
         deps,
       ),
     ).rejects.toThrow(/current document-review follow-up/i);
+    expect(deps.whatsAppRepository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
+    expect(deps.annualReturnRepository.recordReminder).not.toHaveBeenCalled();
+  });
+
+  it("rechecks the case after the mutation guard and refuses a concurrently filed case", async () => {
+    const deps = dependencies();
+    vi.mocked(deps.annualReturnRepository.getCase)
+      .mockResolvedValueOnce(caseItem)
+      .mockResolvedValueOnce({ ...caseItem, currentStatus: "Filed" });
+
+    await expect(
+      sendAnnualReturnFollowUpForActor(actor, { caseId, entityId: caseId }, deps),
+    ).rejects.toThrow(/current annual-return follow-up/i);
+    expect(deps.annualReturnRepository.getCase).toHaveBeenCalledTimes(2);
     expect(deps.whatsAppRepository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
     expect(deps.annualReturnRepository.recordReminder).not.toHaveBeenCalled();
   });

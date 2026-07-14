@@ -108,8 +108,10 @@ async function sendFollowUpForActor(
     staff.id,
     "record_reminder",
   );
+  const currentCase = await dependencies.annualReturnRepository.getCase(identity.caseId);
+  if (!currentCase) throw new Error("Annual return case not found.");
   const state = await dependencies.followUpRepository.listPersistedState([identity.caseId]);
-  const draft = deriveProductionFollowUpDrafts([caseItem], state).find(
+  const draft = deriveProductionFollowUpDrafts([currentCase], state).find(
     (candidate) => candidate.source === identity.source && candidate.entityId === identity.entityId,
   );
   if (!draft) {

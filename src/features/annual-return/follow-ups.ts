@@ -28,6 +28,7 @@ export type PersistedFollowUpEvidence = {
   documentId: string;
   caseId: string;
   companyId: string;
+  source: "document-review" | "payment-proof-review";
   category: DocumentCategory;
   fileName: string;
   reviewStatus: "pending" | "verified" | "rejected";
@@ -84,15 +85,8 @@ function currentEvidence(
 ): PersistedFollowUpEvidence[] {
   const current = new Map<string, PersistedFollowUpEvidence>();
   for (const document of evidence) {
-    const key = `${document.caseId}:${document.category}`;
-    const candidate = current.get(key);
-    if (
-      !candidate ||
-      Date.parse(document.uploadedAt) > Date.parse(candidate.uploadedAt) ||
-      (document.uploadedAt === candidate.uploadedAt && document.documentId > candidate.documentId)
-    ) {
-      current.set(key, document);
-    }
+    const key = `${document.source}:${document.caseId}:${document.documentId}`;
+    if (!current.has(key)) current.set(key, document);
   }
   return [...current.values()].filter((document) => document.reviewStatus === "rejected");
 }
@@ -160,7 +154,7 @@ export function deriveProductionFollowUpDrafts(
   for (const evidence of currentEvidence(state.evidence)) {
     const caseItem = casesById.get(evidence.caseId);
     if (!caseItem || evidence.companyId !== caseItem.companyId) continue;
-    const source = evidence.category === "payment" ? "payment-proof-review" : "document-review";
+    const source = evidence.source;
     const identity: ProductionFollowUpIdentity = {
       source,
       caseId: caseItem.id,

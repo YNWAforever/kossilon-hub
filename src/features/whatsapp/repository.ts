@@ -75,6 +75,25 @@ export type QueueOutboundTemplateMessageInput = {
   metadata?: Record<string, postgres.JSONValue>;
 };
 
+export function resolveWhatsAppReplayMessageId(
+  existingOutbox: { payload: postgres.JSONValue | null } | undefined,
+): string | null {
+  if (!existingOutbox) return null;
+
+  const payload = existingOutbox.payload;
+  if (
+    payload &&
+    typeof payload === "object" &&
+    !Array.isArray(payload) &&
+    "whatsappMessageId" in payload &&
+    typeof payload.whatsappMessageId === "string"
+  ) {
+    return payload.whatsappMessageId;
+  }
+
+  throw new Error("Existing WhatsApp follow-up cannot be replayed safely.");
+}
+
 export type RecordWebhookEventInput = {
   providerEventId: string | null;
   signatureValid: boolean;
@@ -749,15 +768,7 @@ export function createWhatsAppRepository(
           where idempotency_key = ${input.idempotencyKey}
           limit 1
         `;
-        const outboxPayload = existingOutbox[0]?.payload;
-        const existingMessageId =
-          outboxPayload &&
-          typeof outboxPayload === "object" &&
-          !Array.isArray(outboxPayload) &&
-          "whatsappMessageId" in outboxPayload &&
-          typeof outboxPayload.whatsappMessageId === "string"
-            ? outboxPayload.whatsappMessageId
-            : null;
+        const existingMessageId = resolveWhatsAppReplayMessageId(existingOutbox[0]);
         if (existingMessageId) {
           const existingMessages = await tx<MessageRow[]>`
             select
@@ -772,6 +783,7 @@ export function createWhatsAppRepository(
           if (existingMessages[0]) {
             return { ...mapMessage(existingMessages[0]), idempotentReplay: true };
           }
+          throw new Error("Existing WhatsApp follow-up cannot be replayed safely.");
         }
       }
 

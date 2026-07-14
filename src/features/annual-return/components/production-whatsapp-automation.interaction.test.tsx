@@ -98,7 +98,15 @@ describe("ProductionWhatsAppAutomation", () => {
         data: { source: draft.source, caseId: draft.caseId, entityId: draft.entityId },
       })),
     );
-    expect(invalidateSpy).toHaveBeenCalled();
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(6));
+    expect(invalidateSpy.mock.calls.map(([options]) => options)).toEqual([
+      { queryKey: ["annual-returns", "notifications", "automation"] },
+      { queryKey: ["annual-returns", "notifications", caseId] },
+      { queryKey: ["annual-returns", "notifications", "automation"] },
+      { queryKey: ["annual-returns", "notifications", caseId] },
+      { queryKey: ["annual-returns", "notifications", "automation"] },
+      { queryKey: ["annual-returns", "notifications", caseId] },
+    ]);
   });
 
   it("disables only the active row and surfaces mutation errors", async () => {
