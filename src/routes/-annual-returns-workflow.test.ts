@@ -104,6 +104,17 @@ const whatsappAutomationRouteSource = readFileSync(
   new URL("./whatsapp.automation.tsx", import.meta.url),
   "utf8",
 );
+const productionAutomationSource = readFileSync(
+  new URL(
+    "../features/annual-return/components/production-whatsapp-automation.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const productionFollowUpServerSource = readFileSync(
+  new URL("../features/annual-return/follow-up-server-fns.ts", import.meta.url),
+  "utf8",
+);
 const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
 const paymentsRouteSource = readFileSync(new URL("./payments.tsx", import.meta.url), "utf8");
@@ -784,11 +795,16 @@ describe("annual return workflow route regressions", () => {
     expect(portalRouteSource).toContain("finalizeDocumentUpload");
     expect(portalRouteSource).not.toContain("publicUrl");
   });
-  it("keeps automation sends server-backed and demo-only identifiers out of production", () => {
-    expect(whatsappAutomationRouteSource).toContain("queueAnnualReturnWhatsAppReminderMessage");
-    expect(whatsappAutomationRouteSource).toContain("annualReturnQueryKeys.notifications");
+  it("keeps production automation server-backed and demo mutations out of production", () => {
+    expect(whatsappAutomationRouteSource).toContain("ProductionWhatsAppAutomation");
     expect(whatsappAutomationRouteSource).toContain('dataMode === "demo"');
-    expect(whatsappAutomationRouteSource).not.toContain("sendDocumentReviewFollowUpNow(");
-    expect(whatsappAutomationRouteSource).not.toContain("sendPaymentProofFollowUpNow(");
+    expect(productionAutomationSource).toContain("listProductionFollowUpDrafts");
+    expect(productionAutomationSource).toContain("sendProductionFollowUp");
+    expect(productionAutomationSource).toContain("annualReturnQueryKeys.automationNotifications");
+    expect(productionFollowUpServerSource).toContain("sendAnnualReturnFollowUpForActor");
+    expect(productionFollowUpServerSource).toContain("sendDocumentReviewFollowUpForActor");
+    expect(productionFollowUpServerSource).toContain("sendPaymentProofFollowUpForActor");
+    expect(productionAutomationSource).not.toContain("annual-return-store");
+    expect(productionAutomationSource).not.toContain("client-portal-store");
   });
 });

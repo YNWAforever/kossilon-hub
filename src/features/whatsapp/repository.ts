@@ -40,6 +40,7 @@ export type WhatsAppMessageRecord = {
   receivedAt: string | null;
   sentAt: string | null;
   createdAt: string;
+  idempotentReplay?: boolean;
 };
 
 export type InboundWhatsAppMessageRecord = WhatsAppMessageRecord & {
@@ -69,6 +70,9 @@ export type QueueOutboundTemplateMessageInput = {
   languageCode?: string;
   category: WhatsAppTemplateCategory;
   body: string;
+  idempotencyKey?: string;
+  followUpId?: string;
+  metadata?: Record<string, postgres.JSONValue>;
 };
 
 export type RecordWebhookEventInput = {
@@ -732,6 +736,45 @@ export function createWhatsAppRepository(
         throw new Error("Annual return case not found for WhatsApp template message.");
       }
 
+      if (input.idempotencyKey) {
+        await tx`
+          select pg_advisory_xact_lock(
+            hashtext('whatsapp_follow_up'),
+            hashtext(${input.idempotencyKey})
+          )
+        `;
+        const existingOutbox = await tx<{ payload: postgres.JSONValue | null }[]>`
+          select payload
+          from notification_outbox
+          where idempotency_key = ${input.idempotencyKey}
+          limit 1
+        `;
+        const outboxPayload = existingOutbox[0]?.payload;
+        const existingMessageId =
+          outboxPayload &&
+          typeof outboxPayload === "object" &&
+          !Array.isArray(outboxPayload) &&
+          "whatsappMessageId" in outboxPayload &&
+          typeof outboxPayload.whatsappMessageId === "string"
+            ? outboxPayload.whatsappMessageId
+            : null;
+        if (existingMessageId) {
+          const existingMessages = await tx<MessageRow[]>`
+            select
+              id, provider, provider_message_id, direction, status, contact_id, company_id,
+              case_id, template_id, phone_e164, whatsapp_id, body, payload, sent_by,
+              received_at::text as received_at, sent_at::text as sent_at,
+              created_at::text as created_at
+            from whatsapp_messages
+            where id = ${existingMessageId}
+            limit 1
+          `;
+          if (existingMessages[0]) {
+            return { ...mapMessage(existingMessages[0]), idempotentReplay: true };
+          }
+        }
+      }
+
       const phoneE164 = normalizePhone(input.toPhone);
       const contact = await upsertContact(tx, {
         whatsAppId: input.toWhatsAppId ?? null,
@@ -751,6 +794,8 @@ export function createWhatsAppRepository(
         templateName: input.templateName,
         languageCode: input.languageCode ?? "en",
         category: input.category,
+        followUpId: input.followUpId ?? null,
+        ...input.metadata,
       };
       const messageRows = await tx<MessageRow[]>`
         insert into whatsapp_messages (
@@ -827,7 +872,7 @@ export function createWhatsAppRepository(
         companyId: caseRow.company_id,
         channel: "whatsapp",
         notificationType: "whatsapp_template",
-        idempotencyKey: `whatsapp-message:${messageRows[0].id}`,
+        idempotencyKey: input.idempotencyKey ?? `whatsapp-message:${messageRows[0].id}`,
         recipient: phoneE164,
         payload: {
           ...payload,
@@ -838,7 +883,7 @@ export function createWhatsAppRepository(
           whatsappMessageId: messageRows[0].id,
         },
       });
-      return mapMessage(messageRows[0]);
+      return { ...mapMessage(messageRows[0]), idempotentReplay: false };
     });
   }
 

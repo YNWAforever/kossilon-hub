@@ -6,4 +6,5 @@ export const annualReturnQueryKeys = {
   documents: (caseId: string) => ["annual-returns", "documents", caseId] as const,
   payment: (caseId: string) => ["annual-returns", "payment", caseId] as const,
   notifications: (caseId: string) => ["annual-returns", "notifications", caseId] as const,
+  automationNotifications: ["annual-returns", "notifications", "automation"] as const,
 };

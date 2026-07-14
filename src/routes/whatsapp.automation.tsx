@@ -1,5 +1,4 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import {
@@ -15,8 +14,7 @@ import {
   type ClientPortalDocumentReviewFollowUpDraft,
   type ClientPortalPaymentProofFollowUpDraft,
 } from "../lib/client-portal-store";
-import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
-import { queueAnnualReturnWhatsAppReminderMessage } from "../features/annual-return/server-fns";
+import { ProductionWhatsAppAutomation } from "../features/annual-return/components/production-whatsapp-automation";
 
 export const Route = createFileRoute("/whatsapp/automation")({
   component: WhatsAppAutomationRoute,
@@ -45,33 +43,6 @@ type AutomationQueueRow =
 function WhatsAppAutomationRoute() {
   const { dataMode } = Route.useRouteContext();
   return dataMode === "demo" ? <DemoWhatsAppAutomationRoute /> : <ProductionWhatsAppAutomation />;
-}
-
-function ProductionWhatsAppAutomation() {
-  const queryClient = useQueryClient();
-  const sendMutation = useMutation({
-    mutationFn: (draft: AnnualReturnFollowUpDraft) =>
-      queueAnnualReturnWhatsAppReminderMessage({
-        data: {
-          caseId: draft.caseId,
-          recipientName: draft.recipientName,
-          recipientPhone: draft.phone,
-        },
-      }),
-    onSuccess: (_caseItem, draft) =>
-      queryClient.invalidateQueries({
-        queryKey: annualReturnQueryKeys.notifications(draft.caseId),
-      }),
-  });
-
-  return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-3xl font-semibold">Automation</h1>
-      <p className="text-sm text-muted-foreground">
-        {sendMutation.isPending ? "Sending follow-up" : "No production follow-ups are queued."}
-      </p>
-    </div>
-  );
 }
 
 function DemoWhatsAppAutomationRoute() {

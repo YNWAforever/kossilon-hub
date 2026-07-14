@@ -39,6 +39,11 @@ async function cleanupWhatsAppFixtures() {
 
   await sql.begin(async (tx) => {
     await tx`
+      delete from notification_outbox
+      where company_id = ${TEST_COMPANY_ID}
+        or idempotency_key like 'follow-up:phase2-test:%'
+    `;
+    await tx`
       delete from whatsapp_webhook_events
       where provider_event_id like 'phase2-test-%'
         or normalized_message_id in (
@@ -333,6 +338,48 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  it(
+    "replays stable follow-up keys without duplicating messages, outbox, or timeline",
+    async () => {
+      const repository = repositoryFor();
+      const input = {
+        actorId: TEST_USER_ID,
+        caseId: TEST_CASE_ID,
+        toPhone: "+852 6999 0001",
+        contactName: "Phase 2 Director",
+        templateName: "phase2_test_follow_up",
+        languageCode: "en",
+        category: "document" as const,
+        body: "Phase 2 test replacement request.",
+        idempotencyKey: `follow-up:phase2-test:${TEST_CASE_ID}:${TEST_CASE_ID}`,
+        followUpId: TEST_CASE_ID,
+        metadata: { source: "phase2-test", entityId: TEST_CASE_ID },
+      };
+      const first = await repository.queueOutboundTemplateMessage(input);
+      const replay = await repository.queueOutboundTemplateMessage(input);
+      expect(first.idempotentReplay).toBe(false);
+      expect(replay).toMatchObject({ id: first.id, idempotentReplay: true });
+      const sql = sqlForTests();
+      const messages = await sql<{ count: number }[]>`
+        select count(*)::int as count from whatsapp_messages
+        where case_id = ${TEST_CASE_ID} and body = ${input.body}
+      `;
+      const outbox = await sql<{ count: number }[]>`
+        select count(*)::int as count from notification_outbox
+        where idempotency_key = ${input.idempotencyKey}
+      `;
+      const timeline = await sql<{ count: number }[]>`
+        select count(*)::int as count from timeline_events
+        where case_id = ${TEST_CASE_ID}
+          and event_type = 'whatsapp_message_queued'
+          and metadata ->> 'followUpId' = ${TEST_CASE_ID}
+      `;
+      expect(messages[0].count).toBe(1);
+      expect(outbox[0].count).toBe(1);
+      expect(timeline[0].count).toBe(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
   it(
     "matches inbound replies to a prior outbound annual return case and records timeline",
     async () => {
