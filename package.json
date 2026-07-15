@@ -15,6 +15,7 @@
     "validate:runtime": "node --experimental-strip-types scripts/validate-firm-runtime.ts",
     "db:migrate": "bun scripts/db-migrate.ts",
     "db:seed": "bun scripts/db-seed-annual-return.ts",
+    "db:seed:neon-auth-demo": "bun scripts/db-seed-neon-auth-demo.ts",
     "check:production-imports": "node --experimental-strip-types scripts/check-production-route-imports.ts",
     "verify:firm": "node --experimental-strip-types scripts/verify-firm-deployment.ts"
   },
