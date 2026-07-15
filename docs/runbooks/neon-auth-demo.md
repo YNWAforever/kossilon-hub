@@ -41,14 +41,28 @@ provider consoles only for the approved demo scope.
    | `NEON_AUTH_COOKIE_SECRET` | Demo Neon Auth cookie signing secret        |
    | `FIRM_ID=kossilon-demo`   | Isolates the deployment to the demo firm    |
 
+   The approved operator-local environment file must also contain
+   `PRODUCTION_DATABASE_URL` and `PRODUCTION_NEON_AUTH_URL` solely for the
+   mandatory isolation comparison. These operator-only values must never be
+   written to the demo Vercel project or any other demo runtime configuration.
    Keep `VITE_ENABLE_DEMO_AUTH` unset or `false`. For the deployed client
    build, `VITE_PROVIDER_MODE` must not be `local`. Leave live WhatsApp, email,
    storage, scanner, and backup bindings unset unless they receive separate
    explicit approval.
 
-5. Validate the demo configuration through the provider's redacted environment
-   view. Production remains `https://kossilon-hub.vercel.app`; demo setup and
-   seeding never target it.
+5. Before any migration, seed, or deployment, validate the approved local demo
+   environment file. The production database comparison is mandatory. Run
+   exactly:
+
+   ```powershell
+   npm run validate:neon-auth-demo -- --env-file <approved-demo-env-file>
+   ```
+
+   The approved local file must contain the two operator-only production identity
+   values above. Never write either value to demo Vercel. Validate deployment
+   bindings only through the provider's redacted environment view. Production
+   remains `https://kossilon-hub.vercel.app`; demo setup and seeding never target it.
+
 6. Obtain fresh explicit approval immediately before the remote migration. In
    an approved operator environment configured for the demo database only, run:
 
@@ -63,15 +77,16 @@ provider consoles only for the approved demo scope.
    Do not place an auth ID in this runbook, command history, or logs.
 9. Obtain fresh explicit approval immediately before the remote seed. In an
    approved operator environment with `DEMO_DATABASE_URL`, `DEMO_AUTH_USER_ID`,
-   and `DEMO_FIRM_ID` already set for the demo, run:
+   `DEMO_FIRM_ID`, `PRODUCTION_DATABASE_URL`, and `PRODUCTION_NEON_AUTH_URL`
+   already set in the approved local environment file, run:
 
    ```powershell
    npm.cmd run db:seed:neon-auth-demo
    ```
 
-   If the operator needs the production-target guard, `PRODUCTION_DATABASE_URL`
-   may be set only in that operator environment. Never echo any of these
-   values. The password is entered only through Neon Auth or the login UI; it
+   The production-target guard is mandatory: both production identity values
+   remain only in that approved local operator environment. Never echo any of
+   these values. The password is entered only through Neon Auth or the login UI; it
    is never passed to the seed command or stored in the repository, documents,
    or logs.
 

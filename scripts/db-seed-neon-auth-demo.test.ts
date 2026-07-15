@@ -28,11 +28,20 @@ function demoEnv(overrides: Record<string, string | undefined> = {}) {
     DEMO_DATABASE_URL: databaseUrl(),
     DEMO_AUTH_USER_ID: demoAuthUserId(),
     DEMO_FIRM_ID: demoFirmId,
+    PRODUCTION_DATABASE_URL: databaseUrl(demoProtocol, "production.example.test", demoDatabaseName),
     ...overrides,
   };
 }
 
 describe("Neon Auth demo seed configuration", () => {
+  it("requires the operator-only production database identity before a demo database can be used", () => {
+    expect(() =>
+      readDemoSeedConfig(demoEnv({ PRODUCTION_DATABASE_URL: undefined })).toThrow(
+        "PRODUCTION_DATABASE_URL is required.",
+      ),
+    );
+  });
+
   it.each(["DEMO_DATABASE_URL", "DEMO_AUTH_USER_ID", "DEMO_FIRM_ID"] as const)(
     "rejects a missing required %s value without disclosing configuration values",
     (variableName) => {
@@ -109,6 +118,50 @@ describe("Neon Auth demo seed configuration", () => {
     ).toThrow("DEMO_DATABASE_URL must not identify the configured production database.");
   });
 
+  it.each([
+    [
+      "same Neon direct and pooler endpoints",
+      databaseUrl(demoProtocol, "demo-project-pooler.neon.tech", demoDatabaseName),
+      databaseUrl(demoProtocol, "demo-project.neon.tech", demoDatabaseName),
+    ],
+    [
+      "an omitted and explicit default port",
+      databaseUrl(demoProtocol, demoHost, demoDatabaseName),
+      databaseUrl(demoProtocol, `${demoHost}:5432`, demoDatabaseName),
+    ],
+    [
+      "encoded and decoded database paths",
+      databaseUrl(demoProtocol, demoHost, "kossilon%5Fdemo"),
+      databaseUrl(demoProtocol, demoHost, demoDatabaseName),
+    ],
+  ])(
+    "rejects %s after canonical database identity comparison",
+    (_description, demoUrl, productionUrl) => {
+      expect(() =>
+        readDemoSeedConfig(
+          demoEnv({
+            DEMO_DATABASE_URL: demoUrl,
+            PRODUCTION_DATABASE_URL: productionUrl,
+          }),
+        ),
+      ).toThrow("DEMO_DATABASE_URL must not identify the configured production database.");
+    },
+  );
+
+  it("allows a distinct Neon database project", () => {
+    expect(() =>
+      readDemoSeedConfig(
+        demoEnv({
+          DEMO_DATABASE_URL: databaseUrl(demoProtocol, "demo-project.neon.tech", demoDatabaseName),
+          PRODUCTION_DATABASE_URL: databaseUrl(
+            demoProtocol,
+            "production-project.neon.tech",
+            demoDatabaseName,
+          ),
+        }),
+      ),
+    ).not.toThrow();
+  });
   it("returns internal seed values with a separate redacted summary", () => {
     const config = readDemoSeedConfig(demoEnv());
 
@@ -122,7 +175,7 @@ describe("Neon Auth demo seed configuration", () => {
         DEMO_DATABASE_URL: "configured",
         DEMO_AUTH_USER_ID: "configured",
         DEMO_FIRM_ID: "configured",
-        PRODUCTION_DATABASE_URL: "not provided",
+        PRODUCTION_DATABASE_URL: "configured",
       },
     });
     expect(Object.keys(config)).not.toContain("password");

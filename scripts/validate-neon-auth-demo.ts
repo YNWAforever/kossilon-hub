@@ -7,8 +7,49 @@ export const FIRM_ID = "FIRM_ID";
 export const NEON_AUTH_URL = "NEON_AUTH_URL";
 export const NEON_AUTH_COOKIE_SECRET = "NEON_AUTH_COOKIE_SECRET";
 export const DATABASE_URL = "DATABASE_URL";
+export const PRODUCTION_DATABASE_URL = "PRODUCTION_DATABASE_URL";
+export const PRODUCTION_NEON_AUTH_URL = "PRODUCTION_NEON_AUTH_URL";
 
 type Environment = Readonly<Record<string, string | undefined>>;
+
+export function canonicalPostgresIdentity(value: string, variableName: string): string {
+  let url: URL;
+
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${variableName} must be a valid PostgreSQL URL.`);
+  }
+
+  if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") {
+    throw new Error(`${variableName} must use the postgres: or postgresql: scheme.`);
+  }
+
+  if (!url.hostname) {
+    throw new Error(`${variableName} must be a valid PostgreSQL URL.`);
+  }
+
+  let databaseName: string;
+  try {
+    databaseName = decodeURIComponent(url.pathname)
+      .replace(/^\/+|\/+$/g, "")
+      .toLowerCase();
+  } catch {
+    throw new Error(`${variableName} must be a valid PostgreSQL URL.`);
+  }
+
+  if (!databaseName) {
+    throw new Error(`${variableName} must include a non-empty database path.`);
+  }
+
+  const hostname = url.hostname.toLowerCase();
+  const [firstLabel, ...remainingLabels] = hostname.split(".");
+  const normalizedHostname = hostname.endsWith(".neon.tech")
+    ? [firstLabel.replace(/-pooler$/, ""), ...remainingLabels].join(".")
+    : hostname;
+
+  return `${normalizedHostname}:${url.port || "5432"}/${databaseName}`;
+}
 type CheckStatus = "pass" | "fail" | "missing";
 
 export type ValidationCheck = {
@@ -24,7 +65,14 @@ export type CliOptions = {
   envFile?: string;
 };
 
-const REQUIRED_BINDINGS = [FIRM_ID, NEON_AUTH_URL, NEON_AUTH_COOKIE_SECRET, DATABASE_URL] as const;
+const REQUIRED_BINDINGS = [
+  FIRM_ID,
+  NEON_AUTH_URL,
+  NEON_AUTH_COOKIE_SECRET,
+  DATABASE_URL,
+  PRODUCTION_DATABASE_URL,
+  PRODUCTION_NEON_AUTH_URL,
+] as const;
 const ENVIRONMENT_LOAD_FAILURE_MESSAGE = "Unable to load environment configuration.";
 
 function trimmedValue(environment: Environment, name: string): string | undefined {
@@ -32,23 +80,50 @@ function trimmedValue(environment: Environment, name: string): string | undefine
   return value || undefined;
 }
 
-function isHttpsUrl(value: string): boolean {
+function canonicalAuthIdentity(value: string): string | undefined {
+  let url: URL;
+
   try {
-    return new URL(value).protocol === "https:";
+    url = new URL(value);
+  } catch {
+    return undefined;
+  }
+
+  if (url.protocol !== "https:" || !url.hostname) return undefined;
+
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(url.pathname).replace(/\/+$/, "");
+  } catch {
+    return undefined;
+  }
+
+  return `${url.hostname.toLowerCase()}:${url.port || "443"}${pathname}`;
+}
+
+function isHttpsUrl(value: string): boolean {
+  return canonicalAuthIdentity(value) !== undefined;
+}
+
+function isValidPostgresUrl(value: string, variableName: string): boolean {
+  try {
+    canonicalPostgresIdentity(value, variableName);
+    return true;
   } catch {
     return false;
   }
 }
 
-function isPlaceholderFirmId(value: string): boolean {
-  const normalized = value.toLowerCase();
+function identitiesMatch(
+  firstValue: string | undefined,
+  secondValue: string | undefined,
+  canonicalize: (value: string) => string | undefined,
+): boolean {
+  if (!firstValue || !secondValue) return false;
 
-  return (
-    value.includes("${") ||
-    value.includes("{{") ||
-    value.includes("<%") ||
-    /placeholder|change[-_ ]?me|your[-_ ]?firm(?:[-_ ]?id)?/.test(normalized)
-  );
+  const firstIdentity = canonicalize(firstValue);
+  const secondIdentity = canonicalize(secondValue);
+  return firstIdentity !== undefined && firstIdentity === secondIdentity;
 }
 
 function requiredCheck(
@@ -58,8 +133,16 @@ function requiredCheck(
   const value = trimmedValue(environment, name);
   if (!value) return { name, status: "missing" };
 
-  if (name === FIRM_ID && isPlaceholderFirmId(value)) return { name, status: "fail" };
-  if (name === NEON_AUTH_URL && !isHttpsUrl(value)) return { name, status: "fail" };
+  if (name === FIRM_ID && value !== "kossilon-demo") return { name, status: "fail" };
+  if ((name === NEON_AUTH_URL || name === PRODUCTION_NEON_AUTH_URL) && !isHttpsUrl(value)) {
+    return { name, status: "fail" };
+  }
+  if (
+    (name === DATABASE_URL || name === PRODUCTION_DATABASE_URL) &&
+    !isValidPostgresUrl(value, name)
+  ) {
+    return { name, status: "fail" };
+  }
 
   return { name, status: "pass" };
 }
@@ -75,8 +158,35 @@ export function validateNeonAuthDemoEnvironment(environment: Environment): Valid
     flagCheck(environment, "VITE_ENABLE_DEMO_AUTH", "true"),
     flagCheck(environment, "VITE_PROVIDER_MODE", "local"),
   ];
+  const demoDatabaseUrl = trimmedValue(environment, DATABASE_URL);
+  const productionDatabaseUrl = trimmedValue(environment, PRODUCTION_DATABASE_URL);
+  const demoAuthUrl = trimmedValue(environment, NEON_AUTH_URL);
+  const productionAuthUrl = trimmedValue(environment, PRODUCTION_NEON_AUTH_URL);
+  const databaseIdentitiesMatch = identitiesMatch(
+    demoDatabaseUrl,
+    productionDatabaseUrl,
+    (value) => {
+      try {
+        return canonicalPostgresIdentity(value, DATABASE_URL);
+      } catch {
+        return undefined;
+      }
+    },
+  );
+  const authIdentitiesMatch = identitiesMatch(
+    demoAuthUrl,
+    productionAuthUrl,
+    canonicalAuthIdentity,
+  );
 
-  return { checks };
+  return {
+    checks: checks.map((check) =>
+      (check.name === DATABASE_URL && databaseIdentitiesMatch) ||
+      (check.name === NEON_AUTH_URL && authIdentitiesMatch)
+        ? { ...check, status: "fail" }
+        : check,
+    ),
+  };
 }
 
 function isReady(result: ValidationResult): boolean {
