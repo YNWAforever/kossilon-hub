@@ -18,6 +18,88 @@ import {
   type SeedAnnualReturnOptions,
 } from "./db-seed-annual-return";
 
+type SeedRow = Record<string, unknown>;
+const passwordLikeKeyNames = new Set([
+  "password",
+  "passwordhash",
+  "secret",
+  "secretkey",
+  "token",
+  "tokenhash",
+]);
+
+function createSeedSqlCapture() {
+  const capturedInsertRows: SeedRow[] = [];
+  const capturedInsertQueries: string[] = [];
+  const tx = vi.fn((first: unknown, ...args: unknown[]) => {
+    if (Array.isArray(first) && !Object.hasOwn(first, "raw")) {
+      if (
+        first.every((row) => row !== null && typeof row === "object" && !Array.isArray(row))
+      ) {
+        capturedInsertRows.push(...(first as SeedRow[]));
+      }
+      return first;
+    }
+
+    const query = Array.isArray(first) ? first.join(" ") : "";
+    if (/insert into/i.test(query)) capturedInsertQueries.push(query);
+    const rows = args.find(
+      (value): value is SeedRow[] =>
+        Array.isArray(value) &&
+        value.every((row) => row !== null && typeof row === "object" && !Array.isArray(row)),
+    );
+
+    if (!rows) return undefined;
+    if (query.includes("annual_return_cases")) {
+      return rows.map((row) => ({ company_id: row.company_id, id: row.id }));
+    }
+    if (query.includes("staff_profiles")) {
+      return rows.map((row) => ({ user_id: row.user_id, id: row.id }));
+    }
+    if (query.includes("business_calendars")) {
+      return rows.map((row) => ({
+        name: row.name,
+        version: row.version,
+        id: row.id,
+        timezone: row.timezone,
+        weekly_schedule: row.weekly_schedule,
+        effective_from: row.effective_from,
+        created_by: row.created_by,
+      }));
+    }
+    if (query.includes("sla_policies")) {
+      return rows.map((row) => ({
+        policy_key: row.policy_key,
+        version: row.version,
+        id: row.id,
+        name: row.name,
+        work_type: row.work_type,
+        business_calendar_id: row.business_calendar_id,
+        warning_minutes: row.warning_minutes,
+        due_minutes: row.due_minutes,
+        escalation_targets: row.escalation_targets,
+        priority_modifier: row.priority_modifier,
+        effective_from: row.effective_from,
+        created_by: row.created_by,
+      }));
+    }
+    if (query.includes("payments")) {
+      return rows.map((row) => ({ case_id: row.case_id, id: row.id }));
+    }
+    return undefined;
+  });
+
+  Object.assign(tx, { json: (value: unknown) => value });
+
+  return {
+    capturedInsertRows,
+    capturedInsertQueries,
+    sql: {
+      begin: vi.fn(async (callback: (transaction: typeof tx) => unknown) => callback(tx)),
+    },
+  };
+}
+
 describe("annual return seed fixtures", () => {
   it("preserves the default synthetic staff and client identities", () => {
     expect(buildAnnualReturnSeedFixtures()).toEqual({
@@ -117,6 +199,24 @@ describe("annual return seed fixtures", () => {
       expect(Object.keys(row)).not.toContain("password");
       expect(Object.keys(row)).not.toContain("passwordHash");
     }
+  });
+
+  it("excludes password-like keys from every generated insert row", async () => {
+    const { capturedInsertRows, capturedInsertQueries, sql } = createSeedSqlCapture();
+
+    await seedAnnualReturn(sql as never);
+
+    const generatedInsertKeys = [
+      ...capturedInsertRows.flatMap((row) => Object.keys(row)),
+      ...capturedInsertQueries.flatMap((query) => query.match(/[a-z_]+/g) ?? []),
+    ];
+    const passwordLikeKeys = generatedInsertKeys.filter((key) =>
+      passwordLikeKeyNames.has(key.replaceAll("_", "").toLowerCase()),
+    );
+
+    expect(capturedInsertRows.length).toBeGreaterThan(0);
+    expect(capturedInsertQueries.length).toBeGreaterThan(0);
+    expect(passwordLikeKeys).toEqual([]);
   });
 
   it("does not start the seed transaction when the module is imported", () => {
