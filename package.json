@@ -13,6 +13,7 @@
     "test": "vitest run --exclude .worktrees/**",
     "test:watch": "vitest --exclude .worktrees/**",
     "validate:runtime": "node --experimental-strip-types scripts/validate-firm-runtime.ts",
+    "validate:neon-auth-demo": "node --experimental-strip-types scripts/validate-neon-auth-demo.ts",
     "db:migrate": "bun scripts/db-migrate.ts",
     "db:seed": "bun scripts/db-seed-annual-return.ts",
     "db:seed:neon-auth-demo": "bun scripts/db-seed-neon-auth-demo.ts",
