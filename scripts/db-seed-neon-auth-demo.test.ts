@@ -1,6 +1,14 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
-import { readDemoSeedConfig, runDemoSeed, type DemoSeedConfig } from "./db-seed-neon-auth-demo";
+import {
+  DEMO_SEED_CLI_FAILURE_MESSAGE,
+  readDemoSeedConfig,
+  runDemoSeed,
+  runDemoSeedCli,
+  type DemoSeedConfig,
+} from "./db-seed-neon-auth-demo";
 
 const demoHost = "demo.example.test";
 const demoDatabaseName = "kossilon_demo";
@@ -219,5 +227,89 @@ describe("Neon Auth demo seed runner", () => {
       }),
     ).rejects.toThrow(seedFailure);
     expect(client.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("propagates cleanup failures after a successful reusable seed", async () => {
+    const cleanupFailure = new Error("cleanup failed");
+    const client = { end: vi.fn().mockRejectedValue(cleanupFailure) };
+
+    await expect(
+      runDemoSeed(readDemoSeedConfig(demoEnv()), {
+        createSqlClient: vi.fn().mockReturnValue(client),
+        seedAnnualReturn: vi.fn().mockResolvedValue(undefined),
+        writeSuccess: vi.fn(),
+      }),
+    ).rejects.toThrow(cleanupFailure);
+    expect(client.end).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Neon Auth demo seed CLI boundary", () => {
+  it("returns success without writing an error when the seed succeeds", async () => {
+    const writeFailure = vi.fn();
+    const runSeed = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      runDemoSeedCli({
+        loadEnvironment: vi.fn().mockResolvedValue(demoEnv()),
+        readConfig: vi.fn().mockReturnValue(readDemoSeedConfig(demoEnv())),
+        runSeed,
+        writeFailure,
+      }),
+    ).resolves.toBe(0);
+    expect(runSeed).toHaveBeenCalledTimes(1);
+    expect(writeFailure).not.toHaveBeenCalled();
+  });
+
+  it("redacts a provider failure containing database and Auth identities", async () => {
+    const writeFailure = vi.fn();
+    const providerFailure = new Error(
+      `Provider rejected ${databaseUrl()} for Auth user ${demoAuthUserId()}.`,
+    );
+
+    await expect(
+      runDemoSeedCli({
+        loadEnvironment: vi.fn().mockResolvedValue(demoEnv()),
+        readConfig: vi.fn().mockReturnValue(readDemoSeedConfig(demoEnv())),
+        runSeed: vi.fn().mockRejectedValue(providerFailure),
+        writeFailure,
+      }),
+    ).resolves.toBe(1);
+    expect(writeFailure).toHaveBeenCalledWith(DEMO_SEED_CLI_FAILURE_MESSAGE);
+    expect(writeFailure.mock.calls.flat().join(" ")).not.toContain(databaseUrl());
+    expect(writeFailure.mock.calls.flat().join(" ")).not.toContain(demoAuthUserId());
+  });
+
+  it("redacts a cleanup failure", async () => {
+    const writeFailure = vi.fn();
+
+    await expect(
+      runDemoSeedCli({
+        loadEnvironment: vi.fn().mockResolvedValue(demoEnv()),
+        readConfig: vi.fn().mockReturnValue(readDemoSeedConfig(demoEnv())),
+        runSeed: vi.fn().mockRejectedValue(new Error("cleanup failed")),
+        writeFailure,
+      }),
+    ).resolves.toBe(1);
+    expect(writeFailure).toHaveBeenCalledTimes(1);
+    expect(writeFailure).toHaveBeenCalledWith(DEMO_SEED_CLI_FAILURE_MESSAGE);
+  });
+});
+
+describe("Neon Auth demo runbook", () => {
+  it("binds validation, migration, and seed to the same approved environment file", async () => {
+    const runbook = await readFile(
+      fileURLToPath(new URL("../docs/runbooks/neon-auth-demo.md", import.meta.url)),
+      "utf8",
+    );
+    const approvedEnvFile = "<approved-demo-env-file>";
+
+    expect(runbook).toContain(`npm run validate:neon-auth-demo -- --env-file ${approvedEnvFile}`);
+    expect(runbook).toContain(`bun --env-file="${approvedEnvFile}" scripts/db-migrate.ts`);
+    expect(runbook).toContain(
+      `bun --env-file="${approvedEnvFile}" scripts/db-seed-neon-auth-demo.ts`,
+    );
+    expect(runbook).not.toContain("npm.cmd run db:migrate");
+    expect(runbook).not.toContain("npm.cmd run db:seed:neon-auth-demo");
   });
 });

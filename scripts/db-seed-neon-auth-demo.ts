@@ -79,11 +79,39 @@ export async function runDemoSeed(
   }
 }
 
-async function runCli() {
-  await import("dotenv/config");
-  await runDemoSeed(readDemoSeedConfig(process.env));
+export type DemoSeedCliDependencies = {
+  loadEnvironment: () => Promise<Environment>;
+  readConfig: (environment: Environment) => DemoSeedConfig;
+  runSeed: (config: DemoSeedConfig) => Promise<void>;
+  writeFailure: (message: string) => void;
+};
+
+export const DEMO_SEED_CLI_FAILURE_MESSAGE = "Neon Auth demo seed failed.";
+
+const defaultCliDependencies: DemoSeedCliDependencies = {
+  loadEnvironment: async () => {
+    await import("dotenv/config");
+    return process.env;
+  },
+  readConfig: readDemoSeedConfig,
+  runSeed: runDemoSeed,
+  writeFailure: (message) => console.error(message),
+};
+
+export async function runDemoSeedCli(
+  dependencies: DemoSeedCliDependencies = defaultCliDependencies,
+): Promise<number> {
+  try {
+    const environment = await dependencies.loadEnvironment();
+    const config = dependencies.readConfig(environment);
+    await dependencies.runSeed(config);
+    return 0;
+  } catch {
+    dependencies.writeFailure(DEMO_SEED_CLI_FAILURE_MESSAGE);
+    return 1;
+  }
 }
 
 if (import.meta.main) {
-  await runCli();
+  process.exitCode = await runDemoSeedCli();
 }

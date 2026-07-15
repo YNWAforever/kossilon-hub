@@ -63,11 +63,12 @@ provider consoles only for the approved demo scope.
    bindings only through the provider's redacted environment view. Production
    remains `https://kossilon-hub.vercel.app`; demo setup and seeding never target it.
 
-6. Obtain fresh explicit approval immediately before the remote migration. In
-   an approved operator environment configured for the demo database only, run:
+6. Obtain fresh explicit approval immediately before the remote migration. Use
+   the identical approved local environment file that just passed the validator;
+   do not fall back to ambient or default dotenv values. Run:
 
    ```powershell
-   npm.cmd run db:migrate
+   bun --env-file="<approved-demo-env-file>" scripts/db-migrate.ts
    ```
 
 7. Obtain fresh explicit approval immediately before account creation. In the
@@ -75,13 +76,14 @@ provider consoles only for the approved demo scope.
    `willylai@fimmick.com` through the approved provider UI/workflow.
 8. Retrieve that account's user ID through the approved provider UI/workflow.
    Do not place an auth ID in this runbook, command history, or logs.
-9. Obtain fresh explicit approval immediately before the remote seed. In an
-   approved operator environment with `DEMO_DATABASE_URL`, `DEMO_AUTH_USER_ID`,
-   `DEMO_FIRM_ID`, `PRODUCTION_DATABASE_URL`, and `PRODUCTION_NEON_AUTH_URL`
-   already set in the approved local environment file, run:
+9. Obtain fresh explicit approval immediately before the remote seed. The
+   identical approved local environment file that just passed the validator
+   must contain `DEMO_DATABASE_URL`, `DEMO_AUTH_USER_ID`, `DEMO_FIRM_ID`,
+   `PRODUCTION_DATABASE_URL`, and `PRODUCTION_NEON_AUTH_URL`; do not fall back
+   to ambient or default dotenv values. Run:
 
    ```powershell
-   npm.cmd run db:seed:neon-auth-demo
+   bun --env-file="<approved-demo-env-file>" scripts/db-seed-neon-auth-demo.ts
    ```
 
    The production-target guard is mandatory: both production identity values
