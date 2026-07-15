@@ -26,6 +26,8 @@ Verify the following bindings through the deployment provider's redacted environ
 
 Approval is required before provisioning or changing Neon Auth, R2, Hyperdrive, email, WOZTELL, or malware-scanning resources.
 
+For the planned isolated Neon Auth demo workflow, see [the Neon Auth demo runbook](neon-auth-demo.md).
+
 ## REQUIRES EXPLICIT APPROVAL: Webhook and auth probes
 
 1. Verify Neon Auth invite and magic-link login for a staff user and a client user.
@@ -34,6 +36,7 @@ Approval is required before provisioning or changing Neon Auth, R2, Hyperdrive, 
 4. Verify the firm integration health page exposes status only, never secret values.
 
 Use local fixtures by default. Approval is required before sending a real provider webhook, inviting external users, or sending a real WhatsApp message.
+
 ## Named verification gates
 
 The dry-run verifier emits a stable check list with pass, fail, or blocked status:

@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { calculateFilingDueDate } from "../src/features/annual-return/workflow";
 import type {
   AnnualReturnStatus,
@@ -6,7 +5,7 @@ import type {
   PaymentStatus,
   RiskLevel,
 } from "../src/features/annual-return/types";
-import { createSqlClient } from "../src/server/db/client";
+import { createSqlClient, type SqlClient } from "../src/server/db/client";
 
 type UserRole = "Admin" | "Manager" | "Staff";
 type UploadSource = "staff" | "client" | "system";
@@ -274,31 +273,46 @@ const users: UserFixture[] = [
   },
 ];
 
-const staffProfiles = users.map((user, index) => ({
-  id: fixtureId("90000000", index + 1),
-  userId: user.id,
-  authUserId: `neon-auth-staff-${user.email}`,
-  role: user.role,
-  teamId: user.teamId,
-  capacityPoints: user.role === "Staff" ? 80 : 100,
-}));
+export type SeedAnnualReturnOptions = {
+  adminAuthUserId?: string;
+};
+
+export function buildStaffProfiles(options: SeedAnnualReturnOptions = {}) {
+  const normalizedAdminAuthUserId = options.adminAuthUserId?.trim();
+
+  if (options.adminAuthUserId !== undefined && !normalizedAdminAuthUserId) {
+    throw new Error("adminAuthUserId must be a non-empty string.");
+  }
+
+  return users.map((user, index) => ({
+    id: fixtureId("90000000", index + 1),
+    userId: user.id,
+    authUserId:
+      user.email === "amy.chan@kossilon.hk" && normalizedAdminAuthUserId !== undefined
+        ? normalizedAdminAuthUserId
+        : `neon-auth-staff-${user.email}`,
+    role: user.role,
+    teamId: user.teamId,
+    capacityPoints: user.role === "Staff" ? 80 : 100,
+  }));
+}
 
 const staffSkills = [
   {
     id: fixtureId("91000000", 1),
-    staffProfileId: staffProfiles[0].id,
+    staffProfileId: fixtureId("90000000", 1),
     skillKey: "annual-return",
     proficiency: 4,
   },
   {
     id: fixtureId("91000000", 2),
-    staffProfileId: staffProfiles[1].id,
+    staffProfileId: fixtureId("90000000", 2),
     skillKey: "annual-return-review",
     proficiency: 5,
   },
   {
     id: fixtureId("91000000", 3),
-    staffProfileId: staffProfiles[2].id,
+    staffProfileId: fixtureId("90000000", 3),
     skillKey: "annual-return",
     proficiency: 5,
   },
@@ -378,6 +392,19 @@ const clientCompanyMemberships = [
     acceptedAt: "2026-06-01T09:00:00.000Z",
   },
 ];
+export function buildAnnualReturnSeedFixtures(options: SeedAnnualReturnOptions = {}) {
+  const staffProfiles = buildStaffProfiles(options);
+  const clientIdentity = { ...clientAuthIdentity };
+
+  return {
+    staffProfiles,
+    clientAuthIdentity: clientIdentity,
+    clientCompanyMemberships: clientCompanyMemberships.map((membership) => ({
+      ...membership,
+      authUserId: clientIdentity.authUserId,
+    })),
+  };
+}
 
 const businessCalendars = [
   {
@@ -779,9 +806,9 @@ const timelineEvents: TimelineFixture[] = [
   },
 ];
 
-const sql = createSqlClient(undefined, { max: 1 });
+export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturnOptions = {}) {
+  const { staffProfiles, clientCompanyMemberships } = buildAnnualReturnSeedFixtures(options);
 
-try {
   await sql.begin(async (tx) => {
     await tx`
       insert into teams ${tx(
@@ -1376,6 +1403,19 @@ try {
   });
 
   console.log(`Seeded ${companies.length} companies and annual return cases.`);
-} finally {
-  await sql.end();
+}
+
+async function runCli() {
+  await import("dotenv/config");
+  const sql = createSqlClient(undefined, { max: 1 });
+
+  try {
+    await seedAnnualReturn(sql);
+  } finally {
+    await sql.end();
+  }
+}
+
+if (import.meta.main) {
+  await runCli();
 }
