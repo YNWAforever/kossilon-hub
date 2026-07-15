@@ -19,14 +19,34 @@ import {
 } from "./db-seed-annual-return";
 
 type SeedRow = Record<string, unknown>;
-const passwordLikeKeyNames = new Set([
+const credentialWords = new Set([
   "password",
-  "passwordhash",
+  "passwd",
+  "pwd",
   "secret",
-  "secretkey",
   "token",
-  "tokenhash",
+  "salt",
+  "credential",
+  "credentials",
 ]);
+
+function tokenizeCredentialKey(key: string) {
+  return key
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+    .split(/[^a-zA-Z\d]+/)
+    .filter(Boolean)
+    .map((word) => word.toLowerCase());
+}
+
+function isCredentialLikeKey(key: string) {
+  const words = tokenizeCredentialKey(key);
+
+  return (
+    words.some((word) => credentialWords.has(word)) ||
+    (words.includes("key") && words.some((word) => ["api", "access", "private"].includes(word)))
+  );
+}
 
 function createSeedSqlCapture() {
   const capturedInsertRows: SeedRow[] = [];
@@ -201,6 +221,27 @@ describe("annual return seed fixtures", () => {
     }
   });
 
+  it("detects credential-like key names without substring false positives", () => {
+    for (const key of [
+      "password",
+      "passwd_hash",
+      "pwd-salt",
+      "authToken",
+      "refresh token",
+      "passwordSalt",
+      "credential_id",
+      "apiKey",
+      "access-key",
+      "private key",
+    ]) {
+      expect(isCredentialLikeKey(key)).toBe(true);
+    }
+
+    for (const key of ["company_secretary", "tokenized_status", "key", "secretary_name"]) {
+      expect(isCredentialLikeKey(key)).toBe(false);
+    }
+  });
+
   it("excludes password-like keys from every generated insert row", async () => {
     const { capturedInsertRows, capturedInsertQueries, sql } = createSeedSqlCapture();
 
@@ -210,9 +251,7 @@ describe("annual return seed fixtures", () => {
       ...capturedInsertRows.flatMap((row) => Object.keys(row)),
       ...capturedInsertQueries.flatMap((query) => query.match(/[a-z_]+/g) ?? []),
     ];
-    const passwordLikeKeys = generatedInsertKeys.filter((key) =>
-      passwordLikeKeyNames.has(key.replaceAll("_", "").toLowerCase()),
-    );
+    const passwordLikeKeys = generatedInsertKeys.filter(isCredentialLikeKey);
 
     expect(capturedInsertRows.length).toBeGreaterThan(0);
     expect(capturedInsertQueries.length).toBeGreaterThan(0);
