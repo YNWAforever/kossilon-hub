@@ -51,7 +51,10 @@ function isPlaceholderFirmId(value: string): boolean {
   );
 }
 
-function requiredCheck(environment: Environment, name: (typeof REQUIRED_BINDINGS)[number]): ValidationCheck {
+function requiredCheck(
+  environment: Environment,
+  name: (typeof REQUIRED_BINDINGS)[number],
+): ValidationCheck {
   const value = trimmedValue(environment, name);
   if (!value) return { name, status: "missing" };
 

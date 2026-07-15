@@ -806,10 +806,7 @@ const timelineEvents: TimelineFixture[] = [
   },
 ];
 
-export async function seedAnnualReturn(
-  sql: SqlClient,
-  options: SeedAnnualReturnOptions = {},
-) {
+export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturnOptions = {}) {
   const { staffProfiles, clientCompanyMemberships } = buildAnnualReturnSeedFixtures(options);
 
   await sql.begin(async (tx) => {

@@ -62,7 +62,9 @@ function parsePostgresUrl(value: string, variableName: string): URL {
 }
 
 function normalizedDatabaseIdentity(url: URL): string {
-  const databaseName = decodeURIComponent(url.pathname).replace(/^\/+|\/+$/g, "").toLowerCase();
+  const databaseName = decodeURIComponent(url.pathname)
+    .replace(/^\/+|\/+$/g, "")
+    .toLowerCase();
   const port = url.port || "5432";
 
   return `${url.hostname.toLowerCase()}:${port}/${databaseName}`;
@@ -77,7 +79,9 @@ export function readDemoSeedConfig(environment: Environment): DemoSeedConfig {
 
   if (productionDatabaseUrl) {
     const parsedProductionUrl = parsePostgresUrl(productionDatabaseUrl, "PRODUCTION_DATABASE_URL");
-    if (normalizedDatabaseIdentity(parsedDemoUrl) === normalizedDatabaseIdentity(parsedProductionUrl)) {
+    if (
+      normalizedDatabaseIdentity(parsedDemoUrl) === normalizedDatabaseIdentity(parsedProductionUrl)
+    ) {
       throw new Error("DEMO_DATABASE_URL must not identify the configured production database.");
     }
   }

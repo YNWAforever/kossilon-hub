@@ -40,7 +40,13 @@ function runCliWithEnvFile(envFile: string): string {
   try {
     execFileSync(
       process.execPath,
-      ["--experimental-strip-types", "scripts/validate-neon-auth-demo.ts", "--", "--env-file", envFile],
+      [
+        "--experimental-strip-types",
+        "scripts/validate-neon-auth-demo.ts",
+        "--",
+        "--env-file",
+        envFile,
+      ],
       { cwd: process.cwd(), encoding: "utf8", stdio: "pipe" },
     );
     return "";
@@ -102,7 +108,7 @@ describe("Neon Auth demo runtime validation", () => {
     });
   });
 
-  it.each(["", "${FIRM_ID}", "placeholder", "changeme", "your-firm-id"]) (
+  it.each(["", "${FIRM_ID}", "placeholder", "changeme", "your-firm-id"])(
     "rejects an unsafe firm ID: %s",
     (firmId) => {
       const environment = validEnvironment();

@@ -1,10 +1,6 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
-import {
-  readDemoSeedConfig,
-  runDemoSeed,
-  type DemoSeedConfig,
-} from "./db-seed-neon-auth-demo";
+import { readDemoSeedConfig, runDemoSeed, type DemoSeedConfig } from "./db-seed-neon-auth-demo";
 
 const demoHost = "demo.example.test";
 const demoDatabaseName = "kossilon_demo";
@@ -46,7 +42,9 @@ describe("Neon Auth demo seed configuration", () => {
       expect(() => readDemoSeedConfig({ ...environment, UNUSED_SECRET: secret })).toThrow(
         `${variableName} is required.`,
       );
-      expect(() => readDemoSeedConfig({ ...environment, UNUSED_SECRET: secret })).not.toThrow(secret);
+      expect(() => readDemoSeedConfig({ ...environment, UNUSED_SECRET: secret })).not.toThrow(
+        secret,
+      );
     },
   );
 
@@ -65,7 +63,9 @@ describe("Neon Auth demo seed configuration", () => {
     expect(() => readDemoSeedConfig(demoEnv({ DEMO_DATABASE_URL: unsafeUrl }))).toThrow(
       "DEMO_DATABASE_URL must use the postgres: or postgresql: scheme.",
     );
-    expect(() => readDemoSeedConfig(demoEnv({ DEMO_DATABASE_URL: unsafeUrl }))).not.toThrow(unsafeUrl);
+    expect(() => readDemoSeedConfig(demoEnv({ DEMO_DATABASE_URL: unsafeUrl }))).not.toThrow(
+      unsafeUrl,
+    );
   });
 
   it.each([
@@ -75,7 +75,9 @@ describe("Neon Auth demo seed configuration", () => {
     expect(() => readDemoSeedConfig(demoEnv({ DEMO_DATABASE_URL: unsafeUrl }))).toThrow(
       "DEMO_DATABASE_URL must be a valid PostgreSQL URL.",
     );
-    expect(() => readDemoSeedConfig(demoEnv({ DEMO_DATABASE_URL: unsafeUrl }))).not.toThrow(unsafeUrl);
+    expect(() => readDemoSeedConfig(demoEnv({ DEMO_DATABASE_URL: unsafeUrl }))).not.toThrow(
+      unsafeUrl,
+    );
   });
 
   it.each([

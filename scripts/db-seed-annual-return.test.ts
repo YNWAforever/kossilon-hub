@@ -53,9 +53,7 @@ function createSeedSqlCapture() {
   const capturedInsertQueries: string[] = [];
   const tx = vi.fn((first: unknown, ...args: unknown[]) => {
     if (Array.isArray(first) && !Object.hasOwn(first, "raw")) {
-      if (
-        first.every((row) => row !== null && typeof row === "object" && !Array.isArray(row))
-      ) {
+      if (first.every((row) => row !== null && typeof row === "object" && !Array.isArray(row))) {
         capturedInsertRows.push(...(first as SeedRow[]));
       }
       return first;
@@ -201,9 +199,9 @@ describe("annual return seed fixtures", () => {
   it("validates an override before starting the seed transaction", async () => {
     begin.mockClear();
 
-    await expect(
-      seedAnnualReturn({ begin } as never, { adminAuthUserId: "   " }),
-    ).rejects.toThrow("adminAuthUserId must be a non-empty string.");
+    await expect(seedAnnualReturn({ begin } as never, { adminAuthUserId: "   " })).rejects.toThrow(
+      "adminAuthUserId must be a non-empty string.",
+    );
     expect(begin).not.toHaveBeenCalled();
   });
 
