@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { NotificationOutboxRecord, NotificationOutboxRepository } from "./types";
+import { createSimulatedNotificationTransport } from "./simulated-transport";
 import { dispatchDueNotificationsWithDependencies } from "./runtime-dispatch";
 
 const row: NotificationOutboxRecord = {
@@ -67,6 +68,42 @@ describe("runtime notification dispatch", () => {
       ),
     ).resolves.toMatchObject({ claimed: 0, sent: 0 });
     expect(repo.markSent).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
+  });
+
+  it("selects simulated mode without requesting live configuration", async () => {
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+    const repo = repository([row]);
+    const getLiveConfig = vi.fn(() => ({
+      provider: "woztell" as const,
+      apiBaseUrl: "https://example.test",
+      accessToken: "test-token",
+      channelId: "channel-1",
+      webhookSecret: "test-secret-value",
+    }));
+    const createTransport = vi.fn(() => createSimulatedNotificationTransport());
+
+    await expect(
+      dispatchDueNotificationsWithDependencies(
+        { now: "2026-07-14T09:00:00.000Z" },
+        {
+          currentProviderMode: () => "simulated",
+          createRepository: () => repo,
+          createTransport,
+          getLiveConfig,
+        },
+      ),
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0 });
+
+    expect(repo.markSent).toHaveBeenCalledWith(
+      row.id,
+      "simulated:whatsapp:" + row.id,
+      "2026-07-14T09:00:00.000Z",
+    );
+    expect(createTransport).toHaveBeenCalledWith({ providerMode: "simulated", config: undefined });
+    expect(getLiveConfig).not.toHaveBeenCalled();
+    expect(fetchImpl).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 

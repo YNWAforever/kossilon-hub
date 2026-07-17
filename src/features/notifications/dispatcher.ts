@@ -2,6 +2,7 @@ import { sendWoztellMessage } from "@/features/whatsapp/woztell";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import { createLocalNotificationTransport } from "./local-transport";
+import { createSimulatedNotificationTransport } from "./simulated-transport";
 import type {
   DispatchSummary,
   NotificationDispatcher,
@@ -82,6 +83,7 @@ export function createNotificationTransport(input: {
   fetchImpl?: typeof fetch;
 }): NotificationTransport {
   if (input.providerMode === "local") return createLocalNotificationTransport();
+  if (input.providerMode === "simulated") return createSimulatedNotificationTransport();
   if (!input.config) {
     throw new Error("Live notification transport requires a WhatsApp provider configuration.");
   }
