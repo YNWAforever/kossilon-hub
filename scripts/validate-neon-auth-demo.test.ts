@@ -8,6 +8,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   DATABASE_URL,
+  DEMO_AUTH_USER_ID,
+  DEMO_DATABASE_URL,
+  DEMO_FIRM_ID,
   FIRM_ID,
   NEON_AUTH_COOKIE_SECRET,
   NEON_AUTH_URL,
@@ -24,9 +27,12 @@ const temporaryDirectories: string[] = [];
 function validEnvironment(): Record<string, string> {
   return {
     [FIRM_ID]: "kossilon-demo",
+    [DEMO_FIRM_ID]: "kossilon-demo",
+    [DEMO_AUTH_USER_ID]: "demo-auth-user-id",
     [NEON_AUTH_URL]: ["https:", "//", "auth.example.test"].join(""),
     [NEON_AUTH_COOKIE_SECRET]: randomUUID(),
     [DATABASE_URL]: ["postgresql:", "//", "demo.example.test/kossilon_demo"].join(""),
+    [DEMO_DATABASE_URL]: ["postgresql:", "//", "demo.example.test/kossilon_demo"].join(""),
     [PRODUCTION_DATABASE_URL]: ["postgresql:", "//", "production.example.test/kossilon_demo"].join(
       "",
     ),
@@ -84,9 +90,12 @@ describe("Neon Auth demo runtime validation", () => {
     expect(result).toEqual({
       checks: [
         { name: FIRM_ID, status: "missing" },
+        { name: DEMO_FIRM_ID, status: "missing" },
+        { name: DEMO_AUTH_USER_ID, status: "missing" },
         { name: NEON_AUTH_URL, status: "missing" },
         { name: NEON_AUTH_COOKIE_SECRET, status: "missing" },
         { name: DATABASE_URL, status: "missing" },
+        { name: DEMO_DATABASE_URL, status: "missing" },
         { name: PRODUCTION_DATABASE_URL, status: "missing" },
         { name: PRODUCTION_NEON_AUTH_URL, status: "missing" },
         { name: "VITE_ENABLE_DEMO_AUTH", status: "pass" },
@@ -106,9 +115,12 @@ describe("Neon Auth demo runtime validation", () => {
     expect(result).toEqual({
       checks: [
         { name: FIRM_ID, status: "pass" },
+        { name: DEMO_FIRM_ID, status: "pass" },
+        { name: DEMO_AUTH_USER_ID, status: "pass" },
         { name: NEON_AUTH_URL, status: "pass" },
         { name: NEON_AUTH_COOKIE_SECRET, status: "pass" },
         { name: DATABASE_URL, status: "pass" },
+        { name: DEMO_DATABASE_URL, status: "pass" },
         { name: PRODUCTION_DATABASE_URL, status: "pass" },
         { name: PRODUCTION_NEON_AUTH_URL, status: "pass" },
         { name: "VITE_ENABLE_DEMO_AUTH", status: "pass" },
@@ -201,6 +213,18 @@ describe("Neon Auth demo runtime validation", () => {
       name: NEON_AUTH_URL,
       status: "fail",
     });
+  });
+
+  it("rejects mismatched migration and seed database identities", () => {
+    const environment = {
+      ...validEnvironment(),
+      [DEMO_DATABASE_URL]: ["postgresql:", "//", "other.example.test/kossilon_demo"].join(""),
+    };
+
+    const checks = validateNeonAuthDemoEnvironment(environment).checks;
+
+    expect(checks).toContainEqual({ name: DATABASE_URL, status: "fail" });
+    expect(checks).toContainEqual({ name: DEMO_DATABASE_URL, status: "fail" });
   });
 
   it("requires a valid HTTPS production Neon Auth URL", () => {

@@ -42,6 +42,7 @@ describe("Neon Auth demo reset confirmation", () => {
 describe("Neon Auth demo reset boundary", () => {
   it("truncates only public application tables, then reapplies the Admin seed", async () => {
     const config = readDemoSeedConfig({
+      DATABASE_URL: "postgresql://demo.example.test/kossilon_demo",
       DEMO_DATABASE_URL: "postgresql://demo.example.test/kossilon_demo",
       DEMO_AUTH_USER_ID: "demo-admin-user",
       DEMO_FIRM_ID: "kossilon-demo",

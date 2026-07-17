@@ -29,7 +29,7 @@ and deployment preparation. Enter its path privately:
 $demoEnvFile = Read-Host "Approved demo environment file path"
 ```
 
-The file contains these names only; values are never committed:
+The file contains these names only; values are never committed. `VITE_ENABLE_DEMO_AUTH` may be absent, and if present it must be false.
 
 - `DATABASE_URL`
 - `DEMO_DATABASE_URL`
@@ -64,6 +64,9 @@ mode is not selected.
    `VITE_PROVIDER_MODE=simulated`. Keep
    `PRODUCTION_DATABASE_URL` and `PRODUCTION_NEON_AUTH_URL` in the
    operator-local file only. Keep `VITE_ENABLE_DEMO_AUTH` unset or false.
+
+   Treat `$demoEnvFile` as the only source of truth for deployment. Before deploying, compare the separate Vercel project binding names and values with that file and rerun the validator against the same file; abort if they differ. Do not hand-type a second configuration.
+
 5. Validate the exact operator-local file before any remote operation:
 
    ```powershell
@@ -144,10 +147,9 @@ Record only booleans, counts, deployment IDs, HTTP status codes, and route names
 - Seeded companies and annual-return cases appear only for `kossilon-demo`.
 - One reversible workflow mutation persists after reload.
 - WhatsApp Automation shows the two exact simulated-delivery strings.
-- One `Send now` action records a provider ID beginning with `simulated:`.
+- One `Send now` action records a simulated provider ID: true.
 - No WhatsApp or email provider request is made.
-- Production `https://kossilon-hub.vercel.app` has the same read-only counts or
-  checksums before and after demo verification.
+- Production `https://kossilon-hub.vercel.app` read-only counts/checksums match before and after demo verification: true.
 - No migration, seed, reset, or write query is run against production.
 
 Do not record credentials, reset URLs, connection strings, Auth user IDs, cookies,
