@@ -146,7 +146,7 @@ Record only booleans, counts, deployment IDs, HTTP status codes, and route names
 - The authenticated account resolves to the `Admin` role.
 - Seeded companies and annual-return cases appear only for `kossilon-demo`.
 - One reversible workflow mutation persists after reload.
-- WhatsApp Automation shows the two exact simulated-delivery strings.
+- Simulated-delivery UI copy matches the two exact expected strings: true.
 - One `Send now` action records a simulated provider ID: true.
 - No WhatsApp or email provider request is made.
 - Production `https://kossilon-hub.vercel.app` read-only counts/checksums match before and after demo verification: true.

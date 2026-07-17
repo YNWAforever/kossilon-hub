@@ -40,6 +40,27 @@ describe("Neon Auth demo reset confirmation", () => {
 });
 
 describe("Neon Auth demo reset boundary", () => {
+  it("rejects mismatched database bindings before invoking reset", async () => {
+    const runReset = vi.fn();
+    const writeFailure = vi.fn();
+    const result = await runDemoResetCli(["--confirm-firm", "kossilon-demo"], {
+      loadEnvironment: vi.fn().mockResolvedValue({
+        DATABASE_URL: "postgresql://other.example.test/kossilon_demo",
+        DEMO_DATABASE_URL: "postgresql://demo.example.test/kossilon_demo",
+        DEMO_AUTH_USER_ID: "demo-admin-user",
+        DEMO_FIRM_ID: "kossilon-demo",
+        PRODUCTION_DATABASE_URL: "postgresql://production.example.test/kossilon_production",
+      }),
+      readConfig: readDemoSeedConfig,
+      readOptions: readDemoResetOptions,
+      runReset,
+      writeFailure,
+    });
+
+    expect(result).toBe(1);
+    expect(runReset).not.toHaveBeenCalled();
+    expect(writeFailure).toHaveBeenCalledWith(DEMO_RESET_CLI_FAILURE_MESSAGE);
+  });
   it("truncates only public application tables, then reapplies the Admin seed", async () => {
     const config = readDemoSeedConfig({
       DATABASE_URL: "postgresql://demo.example.test/kossilon_demo",
