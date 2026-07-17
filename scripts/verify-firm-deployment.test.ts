@@ -9,7 +9,7 @@ describe("verifyFirmDeployment", () => {
     ],
     [
       "src/server/provider-mode.ts",
-      'export function resolveProviderMode() { throw new Error("Local providers are unavailable in production builds."); } VITE_PROVIDER_MODE === "local";',
+      'export function resolveProviderMode() { throw new Error("Local providers are unavailable in production builds."); } const requested: ProviderMode = configured === "local" || configured === "simulated" ? configured : "live";',
     ],
     [
       "src/features/documents/local-r2.ts",
