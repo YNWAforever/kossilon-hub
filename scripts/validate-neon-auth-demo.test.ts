@@ -90,7 +90,7 @@ describe("Neon Auth demo runtime validation", () => {
         { name: PRODUCTION_DATABASE_URL, status: "missing" },
         { name: PRODUCTION_NEON_AUTH_URL, status: "missing" },
         { name: "VITE_ENABLE_DEMO_AUTH", status: "pass" },
-        { name: "VITE_PROVIDER_MODE", status: "pass" },
+        { name: "VITE_PROVIDER_MODE", status: "missing" },
       ],
     });
     expect(Object.keys(result)).toEqual(["checks"]);
@@ -112,10 +112,30 @@ describe("Neon Auth demo runtime validation", () => {
         { name: PRODUCTION_DATABASE_URL, status: "pass" },
         { name: PRODUCTION_NEON_AUTH_URL, status: "pass" },
         { name: "VITE_ENABLE_DEMO_AUTH", status: "pass" },
-        { name: "VITE_PROVIDER_MODE", status: "pass" },
+        { name: "VITE_PROVIDER_MODE", status: "missing" },
       ],
     });
     expect(Object.keys(result)).toEqual(["checks"]);
+  });
+
+  it("requires simulated provider mode for the isolated demo", () => {
+    const missing = validEnvironment();
+    expect(validateNeonAuthDemoEnvironment(missing).checks).toContainEqual({
+      name: "VITE_PROVIDER_MODE",
+      status: "missing",
+    });
+
+    const live = { ...validEnvironment(), VITE_PROVIDER_MODE: "live" };
+    expect(validateNeonAuthDemoEnvironment(live).checks).toContainEqual({
+      name: "VITE_PROVIDER_MODE",
+      status: "fail",
+    });
+
+    const simulated = { ...validEnvironment(), VITE_PROVIDER_MODE: "simulated" };
+    expect(validateNeonAuthDemoEnvironment(simulated).checks).toContainEqual({
+      name: "VITE_PROVIDER_MODE",
+      status: "pass",
+    });
   });
 
   it("requires a valid HTTPS Neon Auth URL", () => {

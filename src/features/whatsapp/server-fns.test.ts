@@ -152,6 +152,21 @@ describe("WhatsApp server function validation", () => {
     });
   });
 
+  it("reports simulated delivery without requiring WOZTELL secrets", () => {
+    expect(getWhatsAppIntegrationStatusForEnv({}, "simulated")).toEqual({
+      provider: "simulated",
+      deliveryMode: "simulated",
+      webhookConfigured: false,
+      liveSendConfigured: false,
+      missingLiveEnvVars: [
+        "WOZTELL_API_BASE_URL",
+        "WOZTELL_ACCESS_TOKEN",
+        "WOZTELL_CHANNEL_ID",
+        "WOZTELL_WEBHOOK_SECRET",
+      ],
+    });
+  });
+
   it("reports webhook and live-send readiness from env vars", () => {
     expect(
       getWhatsAppIntegrationStatusForEnv({
@@ -160,6 +175,7 @@ describe("WhatsApp server function validation", () => {
       }),
     ).toEqual({
       provider: "woztell",
+      deliveryMode: "blocked",
       webhookConfigured: true,
       liveSendConfigured: false,
       missingLiveEnvVars: ["WOZTELL_API_BASE_URL", "WOZTELL_CHANNEL_ID"],
@@ -174,6 +190,7 @@ describe("WhatsApp server function validation", () => {
       }),
     ).toEqual({
       provider: "woztell",
+      deliveryMode: "live",
       webhookConfigured: true,
       liveSendConfigured: true,
       missingLiveEnvVars: [],

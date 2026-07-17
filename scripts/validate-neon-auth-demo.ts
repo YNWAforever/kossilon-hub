@@ -152,11 +152,20 @@ function flagCheck(environment: Environment, name: string, unsafeValue: string):
   return { name, status: value === unsafeValue ? "fail" : "pass" };
 }
 
+function demoProviderModeCheck(environment: Environment): ValidationCheck {
+  const value = trimmedValue(environment, "VITE_PROVIDER_MODE")?.toLowerCase();
+  if (!value) return { name: "VITE_PROVIDER_MODE", status: "missing" };
+  return {
+    name: "VITE_PROVIDER_MODE",
+    status: value === "simulated" ? "pass" : "fail",
+  };
+}
+
 export function validateNeonAuthDemoEnvironment(environment: Environment): ValidationResult {
   const checks = [
     ...REQUIRED_BINDINGS.map((name) => requiredCheck(environment, name)),
     flagCheck(environment, "VITE_ENABLE_DEMO_AUTH", "true"),
-    flagCheck(environment, "VITE_PROVIDER_MODE", "local"),
+    demoProviderModeCheck(environment),
   ];
   const demoDatabaseUrl = trimmedValue(environment, DATABASE_URL);
   const productionDatabaseUrl = trimmedValue(environment, PRODUCTION_DATABASE_URL);

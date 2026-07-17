@@ -220,12 +220,25 @@ function SettingsPage() {
                 <StatusPill tone="yellow">Checking</StatusPill>
               ) : integrationQuery.isError ? (
                 <StatusPill tone="yellow">Unavailable</StatusPill>
-              ) : (
-                <StatusPill tone={integrationQuery.data.liveSendConfigured ? "green" : "yellow"}>
-                  {integrationQuery.data.liveSendConfigured ? "Configured" : "Blocked"}
+              ) : integrationQuery.data ? (
+                <StatusPill
+                  tone={integrationQuery.data.deliveryMode === "live" ? "green" : "yellow"}
+                >
+                  {integrationQuery.data.deliveryMode === "live"
+                    ? "Configured"
+                    : integrationQuery.data.deliveryMode === "simulated"
+                      ? "Demo simulation"
+                      : "Blocked"}
                 </StatusPill>
+              ) : (
+                <StatusPill tone="yellow">Unavailable</StatusPill>
               )}
-              {integrationQuery.data?.missingLiveEnvVars.length ? (
+              {integrationQuery.data?.deliveryMode === "simulated" ? (
+                <p className="text-xs text-muted-foreground">
+                  No external WhatsApp or email message is sent.
+                </p>
+              ) : integrationQuery.data?.deliveryMode === "blocked" &&
+                integrationQuery.data.missingLiveEnvVars.length ? (
                 <p className="text-xs text-muted-foreground">
                   Missing bindings: {integrationQuery.data.missingLiveEnvVars.join(", ")}
                 </p>
