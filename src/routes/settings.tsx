@@ -221,33 +221,43 @@ function SettingsPage() {
               ) : integrationQuery.isError ? (
                 <StatusPill tone="yellow">Unavailable</StatusPill>
               ) : integrationQuery.data ? (
-                <StatusPill
-                  tone={integrationQuery.data.deliveryMode === "live" ? "green" : "yellow"}
-                >
-                  {integrationQuery.data.deliveryMode === "live"
-                    ? "Configured"
-                    : integrationQuery.data.deliveryMode === "simulated"
-                      ? "Demo simulation"
-                      : "Blocked"}
-                </StatusPill>
+                <WhatsAppIntegrationStatus status={integrationQuery.data} />
               ) : (
                 <StatusPill tone="yellow">Unavailable</StatusPill>
               )}
-              {integrationQuery.data?.deliveryMode === "simulated" ? (
-                <p className="text-xs text-muted-foreground">
-                  No external WhatsApp or email message is sent.
-                </p>
-              ) : integrationQuery.data?.deliveryMode === "blocked" &&
-                integrationQuery.data.missingLiveEnvVars.length ? (
-                <p className="text-xs text-muted-foreground">
-                  Missing bindings: {integrationQuery.data.missingLiveEnvVars.join(", ")}
-                </p>
-              ) : null}
             </div>
           </div>
         </div>
       </main>
     </>
+  );
+}
+
+type WhatsAppIntegrationStatusData = {
+  deliveryMode: "live" | "simulated" | "blocked";
+  missingLiveEnvVars: string[];
+};
+
+export function WhatsAppIntegrationStatus({ status }: { status: WhatsAppIntegrationStatusData }) {
+  return (
+    <div className="flex items-center justify-between">
+      <StatusPill tone={status.deliveryMode === "live" ? "green" : "yellow"}>
+        {status.deliveryMode === "live"
+          ? "Configured"
+          : status.deliveryMode === "simulated"
+            ? "Demo simulation"
+            : "Blocked"}
+      </StatusPill>
+      {status.deliveryMode === "simulated" ? (
+        <p className="text-xs text-muted-foreground">
+          No external WhatsApp or email message is sent.
+        </p>
+      ) : status.deliveryMode === "blocked" && status.missingLiveEnvVars.length ? (
+        <p className="text-xs text-muted-foreground">
+          Missing bindings: {status.missingLiveEnvVars.join(", ")}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
