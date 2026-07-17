@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 import { readDemoSeedConfig } from "./db-seed-neon-auth-demo";
@@ -76,5 +78,44 @@ describe("Neon Auth demo reset boundary", () => {
     expect(writeSuccess).toHaveBeenCalledWith(
       "Reset Neon Auth demo data for DEMO_FIRM_ID=kossilon-demo.",
     );
+  });
+});
+
+describe("Neon Auth demo reset runbook", () => {
+  it("documents persistent simulated delivery and the guarded reset procedure", async () => {
+    const runbook = await readFile(
+      fileURLToPath(new URL("../docs/runbooks/neon-auth-demo.md", import.meta.url)),
+      "utf8",
+    );
+
+    expect(runbook).toContain(
+      'bun --env-file="$demoEnvFile" scripts/db-reset-neon-auth-demo.ts --confirm-firm kossilon-demo',
+    );
+    expect(runbook).toContain("Demo changes persist until an operator runs the guarded reset.");
+    expect(runbook).toContain("No external WhatsApp or email message is sent.");
+    expect(runbook).toContain("preserves `schema_migrations` and Neon Auth records");
+    expect(runbook).toContain("reapplies deterministic seed data");
+    expect(runbook).toContain("reuses `DEMO_AUTH_USER_ID` for the Admin mapping");
+  });
+
+  it("limits acceptance evidence to non-secret operational facts", async () => {
+    const runbook = await readFile(
+      fileURLToPath(new URL("../docs/runbooks/neon-auth-demo.md", import.meta.url)),
+      "utf8",
+    );
+
+    expect(runbook).toContain(
+      "Record only booleans, counts, deployment IDs, HTTP status codes, and route names.",
+    );
+    for (const forbiddenEvidence of [
+      "credentials",
+      "reset URLs",
+      "connection strings",
+      "Auth user IDs",
+      "cookies",
+      "request authorization headers",
+    ]) {
+      expect(runbook).toContain(forbiddenEvidence);
+    }
   });
 });

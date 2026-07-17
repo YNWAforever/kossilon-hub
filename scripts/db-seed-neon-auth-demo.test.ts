@@ -297,18 +297,36 @@ describe("Neon Auth demo seed CLI boundary", () => {
 });
 
 describe("Neon Auth demo runbook", () => {
-  it("binds validation, migration, and seed to the same approved environment file", async () => {
+  it("binds validation, migration, seed, reset, and deployment configuration to one approved environment file", async () => {
     const runbook = await readFile(
       fileURLToPath(new URL("../docs/runbooks/neon-auth-demo.md", import.meta.url)),
       "utf8",
     );
-    const approvedEnvFile = "<approved-demo-env-file>";
+    const approvedEnvironmentNames = [
+      "DATABASE_URL",
+      "DEMO_DATABASE_URL",
+      "PRODUCTION_DATABASE_URL",
+      "NEON_AUTH_URL",
+      "PRODUCTION_NEON_AUTH_URL",
+      "NEON_AUTH_COOKIE_SECRET",
+      "FIRM_ID",
+      "DEMO_FIRM_ID",
+      "DEMO_AUTH_USER_ID",
+      "VITE_PROVIDER_MODE",
+    ];
 
-    expect(runbook).toContain(`npm run validate:neon-auth-demo -- --env-file ${approvedEnvFile}`);
-    expect(runbook).toContain(`bun --env-file="${approvedEnvFile}" scripts/db-migrate.ts`);
-    expect(runbook).toContain(
-      `bun --env-file="${approvedEnvFile}" scripts/db-seed-neon-auth-demo.ts`,
-    );
+    for (const environmentName of approvedEnvironmentNames) {
+      expect(runbook).toContain(`\`${environmentName}\``);
+    }
+    expect(runbook).toContain('$demoEnvFile = Read-Host "Approved demo environment file path"');
+    expect(runbook).toContain("npm run validate:neon-auth-demo -- --env-file $demoEnvFile");
+    expect(runbook).toContain('bun --env-file="$demoEnvFile" scripts/db-migrate.ts');
+    expect(runbook).toContain('bun --env-file="$demoEnvFile" scripts/db-seed-neon-auth-demo.ts');
+    expect(runbook).toContain("VITE_PROVIDER_MODE=simulated");
+    expect(runbook).not.toContain("VITE_PROVIDER_MODE=local");
+    expect(runbook).toContain("DATABASE_URL and DEMO_DATABASE_URL identify the same demo database");
+    expect(runbook).toContain("FIRM_ID and DEMO_FIRM_ID are both kossilon-demo");
+    expect(runbook).toContain("Production identity values remain only in the operator-local file.");
     expect(runbook).not.toContain("npm.cmd run db:migrate");
     expect(runbook).not.toContain("npm.cmd run db:seed:neon-auth-demo");
   });
