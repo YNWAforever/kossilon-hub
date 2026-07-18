@@ -110,7 +110,10 @@ describe("LoginPage", () => {
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Unable to complete sign-in request. Please try again.",
     );
-    expect(screen.getByRole("button", { name: "Email me a magic link" }).disabled).toBe(false);
+    const submitButton = screen.getByRole("button", {
+      name: "Email me a magic link",
+    }) as HTMLButtonElement;
+    expect(submitButton.disabled).toBe(false);
   });
 
   it("links invitation requests to the firm contact", () => {
