@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/client";
+import { magicLinkClient } from "better-auth/client/plugins";
 
 export function createNeonAuthClient(url: string) {
   const normalizedUrl = new URL(url);
@@ -9,6 +10,7 @@ export function createNeonAuthClient(url: string) {
 
   return createAuthClient({
     baseURL: normalizedUrl.toString().replace(/\/$/, ""),
+    plugins: [magicLinkClient()],
   });
 }
 

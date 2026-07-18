@@ -24,7 +24,7 @@ import {
 } from "./session";
 import type { AuthenticatedActor, VerifiedAuthUser } from "./types";
 
-type AuthActionResult = { ok: true } | { ok: false; error: string };
+type AuthActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
 type AuthContextValue = {
   session: AuthSession | null;
@@ -32,6 +32,7 @@ type AuthContextValue = {
   demoUsers: readonly DemoUser[];
   isCurrentUserAdmin: boolean;
   login: (email: string, password: string) => Promise<AuthActionResult>;
+  loginWithMagicLink: (email: string) => Promise<AuthActionResult>;
   loginDemo: (userId: string) => Promise<AuthActionResult>;
   loginDemoUser: (user: DemoUser) => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
@@ -85,6 +86,7 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
     demoUsers: [],
     isCurrentUserAdmin: false,
     login: unavailable,
+    loginWithMagicLink: unavailable,
     loginDemo: unavailable,
     loginDemoUser: unavailable,
     signOut: async () => undefined,
@@ -156,6 +158,23 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     },
     [client, refreshSession],
   );
+  const loginWithMagicLink = useCallback(
+    async (email: string): Promise<AuthActionResult> => {
+      const normalizedEmail = email.trim().toLowerCase();
+      const result = await client.signIn.magicLink({
+        email: normalizedEmail,
+        callbackURL: `${window.location.origin}/login`,
+        newUserCallbackURL: `${window.location.origin}/login`,
+      });
+
+      if (result.error) {
+        return { ok: false, error: result.error.message ?? "Magic link request failed." };
+      }
+
+      return { ok: true, message: "Check your email for a magic link." };
+    },
+    [client],
+  );
   const demoUnavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
@@ -175,11 +194,12 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
       demoUsers: [],
       isCurrentUserAdmin: isAdmin(session),
       login,
+      loginWithMagicLink,
       loginDemo: demoUnavailable,
       loginDemoUser: demoUnavailable,
       signOut,
     }),
-    [demoUnavailable, isHydrated, login, session, signOut],
+    [demoUnavailable, isHydrated, login, loginWithMagicLink, session, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -208,6 +228,13 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
     (user: DemoUser) => wrapResult(loginWithDemoUser(user)),
     [wrapResult],
   );
+  const magicLinkUnavailable = useCallback(
+    async (): Promise<AuthActionResult> => ({
+      ok: false,
+      error: "Demo authentication is disabled.",
+    }),
+    [],
+  );
   const signOut = useCallback(async () => {
     logout();
     setSession(null);
@@ -220,11 +247,12 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
       demoUsers,
       isCurrentUserAdmin: isAdmin(session),
       login,
+      loginWithMagicLink: magicLinkUnavailable,
       loginDemo,
       loginDemoUser,
       signOut,
     }),
-    [login, loginDemo, loginDemoUser, session, signOut],
+    [login, loginDemo, loginDemoUser, magicLinkUnavailable, session, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
