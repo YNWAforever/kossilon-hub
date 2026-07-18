@@ -83,8 +83,10 @@ describe("Neon Auth demo runtime validation", () => {
     expect(runbook).toContain("magic-link");
     expect(runbook).toContain("disable_sign_up=true");
     expect(runbook).toContain("Request an invitation");
-    expect(runbook).toContain("/login");
-    expect(runbook).toContain("Production remains");
+    expect(runbook).toContain(
+      "Verify that accepted magic-link requests return to the same-origin `/login` callback.",
+    );
+    expect(runbook).toContain("Production login remains password-only with no invitation CTA.");
   });
 
   it("requires operator-only production identities", () => {
