@@ -15,11 +15,11 @@ Add a demo-only magic-link login path and a clear invitation-request action to t
 
 `createNeonAuthClient` enables Better Auth's `magicLinkClient` plugin. The Neon Auth context exposes a magic-link action alongside the existing password action. The login route owns mode selection, form submission, pending state, and user-facing success/error messages. Returning from the Auth provider to `/login` reuses the existing session bootstrap and redirect behavior.
 
-The demo Auth branch must enable magic-link delivery while retaining email/password authentication and disabled open signup. If the provider does not expose the required magic-link capability, the UI reports the provider error and does not pretend that a link was sent.
+The demo Auth branch must enable magic-link delivery while retaining email/password authentication and disabled open signup. The login UI is additionally guarded by `VITE_ENABLE_NEON_AUTH_DEMO=true` and `VITE_PROVIDER_MODE=simulated`; production leaves the public feature flag unset or false. If the provider does not expose the required magic-link capability, the UI reports the provider error and does not pretend that a link was sent.
 
 ## User Flow
 
-1. The user opens `/login` and sees Password and Magic link modes.
+1. On the isolated demo build, the user opens `/login` and sees Password and Magic link modes. Production remains password-only.
 2. Password mode continues to call `signIn.email`.
 3. Magic link mode accepts an email and calls `signIn.magicLink` with a safe `/login` callback URL.
 4. The user sees a neutral confirmation to check the email inbox. No password is collected in this mode.

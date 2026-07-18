@@ -12,6 +12,7 @@ export const NEON_AUTH_COOKIE_SECRET = "NEON_AUTH_COOKIE_SECRET";
 export const DATABASE_URL = "DATABASE_URL";
 export const PRODUCTION_DATABASE_URL = "PRODUCTION_DATABASE_URL";
 export const PRODUCTION_NEON_AUTH_URL = "PRODUCTION_NEON_AUTH_URL";
+export const VITE_ENABLE_NEON_AUTH_DEMO = "VITE_ENABLE_NEON_AUTH_DEMO";
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
@@ -159,6 +160,15 @@ function flagCheck(environment: Environment, name: string, unsafeValue: string):
   return { name, status: value === unsafeValue ? "fail" : "pass" };
 }
 
+function demoAuthFeatureCheck(environment: Environment): ValidationCheck {
+  const value = trimmedValue(environment, VITE_ENABLE_NEON_AUTH_DEMO)?.toLowerCase();
+  if (!value) return { name: VITE_ENABLE_NEON_AUTH_DEMO, status: "missing" };
+  return {
+    name: VITE_ENABLE_NEON_AUTH_DEMO,
+    status: value === "true" ? "pass" : "fail",
+  };
+}
+
 function demoProviderModeCheck(environment: Environment): ValidationCheck {
   const value = trimmedValue(environment, "VITE_PROVIDER_MODE")?.toLowerCase();
   if (!value) return { name: "VITE_PROVIDER_MODE", status: "missing" };
@@ -172,6 +182,7 @@ export function validateNeonAuthDemoEnvironment(environment: Environment): Valid
   const checks = [
     ...REQUIRED_BINDINGS.map((name) => requiredCheck(environment, name)),
     flagCheck(environment, "VITE_ENABLE_DEMO_AUTH", "true"),
+    demoAuthFeatureCheck(environment),
     demoProviderModeCheck(environment),
   ];
   const demoDatabaseUrl = trimmedValue(environment, DEMO_DATABASE_URL);

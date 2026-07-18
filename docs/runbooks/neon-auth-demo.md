@@ -29,7 +29,7 @@ and deployment preparation. Enter its path privately:
 $demoEnvFile = Read-Host "Approved demo environment file path"
 ```
 
-The file contains these names only; values are never committed. `VITE_ENABLE_DEMO_AUTH` may be absent, and if present it must be false.
+The file contains these names only; values are never committed. `VITE_ENABLE_DEMO_AUTH` may be absent, and if present it must be false. The public `VITE_ENABLE_NEON_AUTH_DEMO` flag is true only for the isolated demo build.
 
 - `DATABASE_URL`
 - `DEMO_DATABASE_URL`
@@ -41,10 +41,11 @@ The file contains these names only; values are never committed. `VITE_ENABLE_DEM
 - `DEMO_FIRM_ID`
 - `DEMO_AUTH_USER_ID`
 - `VITE_PROVIDER_MODE`
+- `VITE_ENABLE_NEON_AUTH_DEMO`
 
 DATABASE_URL and DEMO_DATABASE_URL identify the same demo database.
 FIRM_ID and DEMO_FIRM_ID are both kossilon-demo.
-`VITE_PROVIDER_MODE=simulated` is required for the demo. Production identity values remain only in the operator-local file. They never enter the demo Vercel bindings.
+`VITE_PROVIDER_MODE=simulated` and `VITE_ENABLE_NEON_AUTH_DEMO=true` are required for the demo login experience. Keep the flag unset or false in production. Production identity values remain only in the operator-local file. They never enter the demo Vercel bindings.
 
 The validator compares the demo database/Auth identities against the
 operator-only production identities. It fails if the identities match, if the
@@ -61,9 +62,9 @@ mode is not selected.
 4. Obtain fresh approval, write only demo runtime bindings to the separate
    Vercel project: `DATABASE_URL`, `NEON_AUTH_URL`,
    `NEON_AUTH_COOKIE_SECRET`, `FIRM_ID`, and
-   `VITE_PROVIDER_MODE=simulated`. Keep
+   `VITE_PROVIDER_MODE=simulated` and `VITE_ENABLE_NEON_AUTH_DEMO=true`. Keep
    `PRODUCTION_DATABASE_URL` and `PRODUCTION_NEON_AUTH_URL` in the
-   operator-local file only. Keep `VITE_ENABLE_DEMO_AUTH` unset or false.
+   operator-local file only. Keep `VITE_ENABLE_DEMO_AUTH` unset or false in the demo, and keep `VITE_ENABLE_NEON_AUTH_DEMO` unset or false in production.
 
    Treat `$demoEnvFile` as the only source of truth for deployment. Before deploying, compare the separate Vercel project binding names and values with that file and rerun the validator against the same file; abort if they differ. Do not hand-type a second configuration.
 
@@ -98,6 +99,21 @@ mode is not selected.
 10. Obtain fresh approval, then deploy the verified commit to the separate
     Vercel demo project. Record only the deployment ID, ready state, and demo
     hostname.
+
+## Neon Auth login configuration
+
+Obtain fresh, explicit approval immediately before changing managed Neon Auth settings. On the isolated demo Auth branch:
+
+1. Enable the managed magic-link capability and its email delivery.
+2. Keep email/password authentication enabled.
+3. Keep open signup disabled with `disable_sign_up=true`. This is invite-only; do not enable public `signUp.email` registration.
+4. Invite users through the demo Neon Auth workflow. The `Request an invitation` action is a contact mailto for the firm administrator; it is not registration and does not create an Auth account.
+5. Verify that accepted magic-link requests return to the same-origin `/login` callback. Do not copy tokens, passwords, or provider response bodies into Kossilon code, logs, or this runbook.
+
+The login page exposes the magic-link mode and invitation CTA only when both
+`VITE_ENABLE_NEON_AUTH_DEMO=true` and `VITE_PROVIDER_MODE=simulated` are set on
+the isolated demo build. Production leaves the feature flag unset or false and
+remains password-only.
 
 ## Persistent data and guarded reset
 
@@ -143,6 +159,9 @@ Record only booleans, counts, deployment IDs, HTTP status codes, and route names
 - `/login` responds with HTTP 200.
 - An unauthenticated protected route redirects to `/login`.
 - The invited account can log in and log out through Neon Auth.
+- The demo login shows Password and Magic link modes only when both demo flags are enabled.
+- The accepted magic-link callback returns to `/login`.
+- Production login remains password-only with no invitation CTA.
 - The authenticated account resolves to the `Admin` role.
 - Seeded companies and annual-return cases appear only for `kossilon-demo`.
 - One reversible workflow mutation persists after reload.

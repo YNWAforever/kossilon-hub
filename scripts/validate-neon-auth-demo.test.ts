@@ -1,8 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -16,6 +16,7 @@ import {
   NEON_AUTH_URL,
   PRODUCTION_DATABASE_URL,
   PRODUCTION_NEON_AUTH_URL,
+  VITE_ENABLE_NEON_AUTH_DEMO,
   formatValidationOutput,
   getCliOptions,
   loadEnvironment,
@@ -37,6 +38,7 @@ function validEnvironment(): Record<string, string> {
       "",
     ),
     [PRODUCTION_NEON_AUTH_URL]: ["https:", "//", "production-auth.example.test"].join(""),
+    [VITE_ENABLE_NEON_AUTH_DEMO]: "true",
   };
 }
 
@@ -74,6 +76,17 @@ afterEach(() => {
 });
 
 describe("Neon Auth demo runtime validation", () => {
+  it("documents invite-only Neon magic-link activation", () => {
+    const runbook = readFileSync(resolve(process.cwd(), "docs/runbooks/neon-auth-demo.md"), "utf8");
+
+    expect(runbook).toContain("VITE_ENABLE_NEON_AUTH_DEMO=true");
+    expect(runbook).toContain("magic-link");
+    expect(runbook).toContain("disable_sign_up=true");
+    expect(runbook).toContain("Request an invitation");
+    expect(runbook).toContain("/login");
+    expect(runbook).toContain("Production remains");
+  });
+
   it("requires operator-only production identities", () => {
     const environment = validEnvironment();
     delete environment[PRODUCTION_DATABASE_URL];
@@ -99,6 +112,7 @@ describe("Neon Auth demo runtime validation", () => {
         { name: PRODUCTION_DATABASE_URL, status: "missing" },
         { name: PRODUCTION_NEON_AUTH_URL, status: "missing" },
         { name: "VITE_ENABLE_DEMO_AUTH", status: "pass" },
+        { name: VITE_ENABLE_NEON_AUTH_DEMO, status: "missing" },
         { name: "VITE_PROVIDER_MODE", status: "missing" },
       ],
     });
@@ -124,10 +138,26 @@ describe("Neon Auth demo runtime validation", () => {
         { name: PRODUCTION_DATABASE_URL, status: "pass" },
         { name: PRODUCTION_NEON_AUTH_URL, status: "pass" },
         { name: "VITE_ENABLE_DEMO_AUTH", status: "pass" },
+        { name: VITE_ENABLE_NEON_AUTH_DEMO, status: "pass" },
         { name: "VITE_PROVIDER_MODE", status: "missing" },
       ],
     });
     expect(Object.keys(result)).toEqual(["checks"]);
+  });
+
+  it("requires the explicit demo Neon Auth feature flag", () => {
+    const missing = validEnvironment();
+    delete missing[VITE_ENABLE_NEON_AUTH_DEMO];
+    expect(validateNeonAuthDemoEnvironment(missing).checks).toContainEqual({
+      name: VITE_ENABLE_NEON_AUTH_DEMO,
+      status: "missing",
+    });
+
+    const disabled = { ...validEnvironment(), [VITE_ENABLE_NEON_AUTH_DEMO]: "false" };
+    expect(validateNeonAuthDemoEnvironment(disabled).checks).toContainEqual({
+      name: VITE_ENABLE_NEON_AUTH_DEMO,
+      status: "fail",
+    });
   });
 
   it("requires simulated provider mode for the isolated demo", () => {
