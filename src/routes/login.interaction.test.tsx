@@ -44,6 +44,7 @@ afterEach(() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("VITE_ENABLE_NEON_AUTH_DEMO", "true");
   vi.stubEnv("VITE_PROVIDER_MODE", "simulated");
   login.mockResolvedValue({ ok: true });
   loginWithMagicLink.mockResolvedValue({
@@ -55,10 +56,12 @@ beforeEach(() => {
 
 describe("LoginPage", () => {
   it("hides magic-link mode outside the demo provider", () => {
+    vi.stubEnv("VITE_ENABLE_NEON_AUTH_DEMO", "false");
     vi.stubEnv("VITE_PROVIDER_MODE", "live");
     render(<LoginPage />);
 
     expect(screen.queryByRole("button", { name: "Magic link" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Request an invitation" })).toBeNull();
   });
 
   it("switches to magic-link mode and requests a link", async () => {

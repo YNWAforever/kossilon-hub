@@ -22,7 +22,10 @@ export const Route = createFileRoute("/login")({
 type LoginMode = "password" | "magic-link";
 
 function isDemoMagicLinkEnabled(): boolean {
-  return import.meta.env.VITE_PROVIDER_MODE === "simulated";
+  return (
+    import.meta.env.VITE_ENABLE_NEON_AUTH_DEMO === "true" &&
+    import.meta.env.VITE_PROVIDER_MODE === "simulated"
+  );
 }
 
 export function LoginPage() {
@@ -238,15 +241,17 @@ export function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
-            Access is invite-only. Contact the firm administrator to request access.{" "}
-            <a
-              href="mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request"
-              className="font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Request an invitation
-            </a>
-          </p>
+          {magicLinkEnabled && (
+            <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
+              Access is invite-only. Contact the firm administrator to request access.{" "}
+              <a
+                href="mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Request an invitation
+              </a>
+            </p>
+          )}
 
           {demoUsers.length > 0 && (
             <div className="mt-7 border-t border-border pt-6">
