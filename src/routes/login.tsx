@@ -21,8 +21,13 @@ export const Route = createFileRoute("/login")({
 
 type LoginMode = "password" | "magic-link";
 
+function isDemoMagicLinkEnabled(): boolean {
+  return import.meta.env.VITE_PROVIDER_MODE === "simulated";
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const magicLinkEnabled = isDemoMagicLinkEnabled();
   const { session, isHydrated, login, loginWithMagicLink, loginDemo, demoUsers } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,6 +46,8 @@ export function LoginPage() {
   }, [isHydrated, navigate, session]);
 
   function changeMode(nextMode: LoginMode) {
+    if (nextMode === "magic-link" && !magicLinkEnabled) return;
+
     setMode(nextMode);
     setError(null);
     setSuccess(null);
@@ -52,7 +59,9 @@ export function LoginPage() {
 
     try {
       const result =
-        mode === "password" ? await login(email, password) : await loginWithMagicLink(email);
+        mode === "magic-link" && magicLinkEnabled
+          ? await loginWithMagicLink(email)
+          : await login(email, password);
 
       if (result.ok) {
         setError(null);
@@ -133,32 +142,34 @@ export function LoginPage() {
             </p>
           </div>
 
-          <div
-            className="mt-6 grid grid-cols-2 rounded-md border border-border bg-muted/40 p-1"
-            role="group"
-            aria-label="Sign-in method"
-          >
-            <button
-              type="button"
-              aria-pressed={mode === "password"}
-              onClick={() => changeMode("password")}
-              disabled={isSubmitting || !isHydrated}
-              className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+          {magicLinkEnabled && (
+            <div
+              className="mt-6 grid grid-cols-2 rounded-md border border-border bg-muted/40 p-1"
+              role="group"
+              aria-label="Sign-in method"
             >
-              <KeyRound className="h-3.5 w-3.5" />
-              Password
-            </button>
-            <button
-              type="button"
-              aria-pressed={mode === "magic-link"}
-              onClick={() => changeMode("magic-link")}
-              disabled={isSubmitting || !isHydrated}
-              className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Mail className="h-3.5 w-3.5" />
-              Magic link
-            </button>
-          </div>
+              <button
+                type="button"
+                aria-pressed={mode === "password"}
+                onClick={() => changeMode("password")}
+                disabled={isSubmitting || !isHydrated}
+                className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                Password
+              </button>
+              <button
+                type="button"
+                aria-pressed={mode === "magic-link"}
+                onClick={() => changeMode("magic-link")}
+                disabled={isSubmitting || !isHydrated}
+                className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Magic link
+              </button>
+            </div>
+          )}
 
           <form onSubmit={submitLogin} className="mt-4 space-y-4">
             <label className="block">

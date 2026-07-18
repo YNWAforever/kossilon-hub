@@ -37,10 +37,14 @@ function enterEmail(email: string) {
   fireEvent.change(screen.getByLabelText("Email"), { target: { value: email } });
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("VITE_PROVIDER_MODE", "simulated");
   login.mockResolvedValue({ ok: true });
   loginWithMagicLink.mockResolvedValue({
     ok: true,
@@ -50,6 +54,13 @@ beforeEach(() => {
 });
 
 describe("LoginPage", () => {
+  it("hides magic-link mode outside the demo provider", () => {
+    vi.stubEnv("VITE_PROVIDER_MODE", "live");
+    render(<LoginPage />);
+
+    expect(screen.queryByRole("button", { name: "Magic link" })).toBeNull();
+  });
+
   it("switches to magic-link mode and requests a link", async () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByRole("button", { name: "Magic link" }));
