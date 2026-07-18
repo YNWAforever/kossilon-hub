@@ -86,6 +86,19 @@ describe("LoginPage", () => {
     await waitFor(() => expect(login).toHaveBeenCalledWith("staff@example.com", "secret"));
   });
 
+  it("recovers controls after a rejected magic-link request", async () => {
+    loginWithMagicLink.mockRejectedValueOnce(new Error("Network unavailable"));
+    render(<LoginPage />);
+    fireEvent.click(screen.getByRole("button", { name: "Magic link" }));
+    enterEmail("staff@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Email me a magic link" }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Unable to complete sign-in request. Please try again.",
+    );
+    expect(screen.getByRole("button", { name: "Email me a magic link" }).disabled).toBe(false);
+  });
+
   it("links invitation requests to the firm contact", () => {
     render(<LoginPage />);
 

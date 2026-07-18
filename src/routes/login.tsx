@@ -50,20 +50,25 @@ export function LoginPage() {
     event.preventDefault();
     setIsSubmitting(true);
 
-    const result =
-      mode === "password" ? await login(email, password) : await loginWithMagicLink(email);
+    try {
+      const result =
+        mode === "password" ? await login(email, password) : await loginWithMagicLink(email);
 
-    if (result.ok) {
-      setError(null);
-      setSuccess(
-        mode === "magic-link" ? (result.message ?? "Check your email for a magic link.") : null,
-      );
-    } else {
-      setError(result.error);
+      if (result.ok) {
+        setError(null);
+        setSuccess(
+          mode === "magic-link" ? (result.message ?? "Check your email for a magic link.") : null,
+        );
+      } else {
+        setError(result.error);
+        setSuccess(null);
+      }
+    } catch {
+      setError("Unable to complete sign-in request. Please try again.");
       setSuccess(null);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   }
 
   async function submitDemoLogin(userId: string) {
