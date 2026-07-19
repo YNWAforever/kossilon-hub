@@ -9,11 +9,11 @@ vi.mock("better-auth/client/plugins", () => ({ magicLinkClient }));
 import { createNeonAuthClient } from "./neon-auth-client";
 
 describe("createNeonAuthClient", () => {
-  it("configures Better Auth with a normalized HTTPS URL and magic-link plugin", () => {
-    createNeonAuthClient("https://auth.example.test/");
+  it("routes Better Auth through the app origin and keeps the magic-link plugin", () => {
+    createNeonAuthClient("https://auth.example.test/", "https://app.example.test/");
 
     expect(createAuthClient).toHaveBeenCalledWith({
-      baseURL: "https://auth.example.test",
+      baseURL: "https://app.example.test/api/auth",
       plugins: [{ id: "magic-link" }],
     });
     expect(magicLinkClient).toHaveBeenCalledOnce();
