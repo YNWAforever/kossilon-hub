@@ -65,11 +65,15 @@ export default {
             : process.env.NEON_AUTH_COOKIE_SECRET) ?? "";
 
         if (!authUrl.trim()) throw new Error("NEON_AUTH_URL is required.");
-        if (cookieSecret.trim().length < 32) {
-          throw new Error("NEON_AUTH_COOKIE_SECRET must be at least 32 characters.");
-        }
 
+        // NEON_AUTH_COOKIE_SECRET only encrypts magic-link tickets. Password
+        // sign-in and session refresh (the plain /api/auth/* proxy at the bottom)
+        // never use it, so it is required only on the magic-link routes below —
+        // a missing secret must not take down password login.
         if (isMagicLinkConfirmation) {
+          if (cookieSecret.trim().length < 32) {
+            throw new Error("NEON_AUTH_COOKIE_SECRET must be at least 32 characters.");
+          }
           const { createMagicLinkConfirmationHandler } =
             await import("./features/auth/neon-auth-magic-link");
           return createMagicLinkConfirmationHandler({
@@ -79,6 +83,9 @@ export default {
         }
 
         if (isMagicLinkWebhook) {
+          if (cookieSecret.trim().length < 32) {
+            throw new Error("NEON_AUTH_COOKIE_SECRET must be at least 32 characters.");
+          }
           const resendApiKey =
             (typeof runtimeEnv.RESEND_API_KEY === "string"
               ? runtimeEnv.RESEND_API_KEY
