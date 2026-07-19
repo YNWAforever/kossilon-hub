@@ -47,7 +47,12 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      if (new URL(request.url).pathname.startsWith("/api/auth/")) {
+      const pathname = new URL(request.url).pathname;
+      const isAuthProxyRequest = pathname.startsWith("/api/auth/");
+      const isMagicLinkWebhook = pathname === "/api/webhooks/neon-auth";
+      const isMagicLinkConfirmation = pathname === "/auth/magic-link/confirm";
+
+      if (isAuthProxyRequest || isMagicLinkWebhook || isMagicLinkConfirmation) {
         const { createNeonAuthProxy } = await import("./features/auth/neon-auth-proxy");
         const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
         const authUrl =
@@ -62,6 +67,36 @@ export default {
         if (!authUrl.trim()) throw new Error("NEON_AUTH_URL is required.");
         if (cookieSecret.trim().length < 32) {
           throw new Error("NEON_AUTH_COOKIE_SECRET must be at least 32 characters.");
+        }
+
+        if (isMagicLinkConfirmation) {
+          const { createMagicLinkConfirmationHandler } =
+            await import("./features/auth/neon-auth-magic-link");
+          return createMagicLinkConfirmationHandler({
+            neonAuthUrl: authUrl.trim(),
+            cookieSecret: cookieSecret.trim(),
+          })(request);
+        }
+
+        if (isMagicLinkWebhook) {
+          const resendApiKey =
+            (typeof runtimeEnv.RESEND_API_KEY === "string"
+              ? runtimeEnv.RESEND_API_KEY
+              : process.env.RESEND_API_KEY) ?? "";
+          const resendFrom =
+            (typeof runtimeEnv.RESEND_FROM === "string"
+              ? runtimeEnv.RESEND_FROM
+              : process.env.RESEND_FROM) ?? "Kossilon Hub <auth@fimmick.com>";
+          if (!resendApiKey.trim()) throw new Error("RESEND_API_KEY is required.");
+
+          const { createNeonMagicLinkWebhookHandler } =
+            await import("./features/auth/neon-auth-magic-link");
+          return createNeonMagicLinkWebhookHandler({
+            neonAuthUrl: authUrl.trim(),
+            cookieSecret: cookieSecret.trim(),
+            resendApiKey: resendApiKey.trim(),
+            resendFrom: resendFrom.trim(),
+          })(request);
         }
 
         return createNeonAuthProxy({

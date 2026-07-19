@@ -40,6 +40,8 @@ The file contains these names only; values are never committed. `VITE_ENABLE_DEM
 - `FIRM_ID`
 - `DEMO_FIRM_ID`
 - `DEMO_AUTH_USER_ID`
+- `RESEND_API_KEY`
+- `RESEND_FROM`
 - `VITE_PROVIDER_MODE`
 - `VITE_ENABLE_NEON_AUTH_DEMO`
 
@@ -61,7 +63,7 @@ mode is not selected.
 3. Obtain fresh approval, create a separate Vercel project and demo hostname.
 4. Obtain fresh approval, write only demo runtime bindings to the separate
    Vercel project: `DATABASE_URL`, `NEON_AUTH_URL`,
-   `NEON_AUTH_COOKIE_SECRET`, `FIRM_ID`, and
+   `NEON_AUTH_COOKIE_SECRET`, `FIRM_ID`, `RESEND_API_KEY`, `RESEND_FROM`, and
    `VITE_PROVIDER_MODE=simulated` and `VITE_ENABLE_NEON_AUTH_DEMO=true`. Keep
    `PRODUCTION_DATABASE_URL` and `PRODUCTION_NEON_AUTH_URL` in the
    operator-local file only. Keep `VITE_ENABLE_DEMO_AUTH` unset or false in the demo, and keep `VITE_ENABLE_NEON_AUTH_DEMO` unset or false in production.
@@ -104,11 +106,15 @@ mode is not selected.
 
 Obtain fresh, explicit approval immediately before changing managed Neon Auth settings. On the isolated demo Auth branch:
 
-1. Enable the managed magic-link capability and its email delivery.
-2. Keep email/password authentication enabled.
-3. Keep open signup disabled with `disable_sign_up=true`. This is invite-only; do not enable public `signUp.email` registration.
-4. Invite users through the demo Neon Auth workflow. The `Request an invitation` action is a contact mailto for the firm administrator; it is not registration and does not create an Auth account.
-5. Verify that accepted magic-link requests return to the same-origin `/login` callback. Do not copy tokens, passwords, or provider response bodies into Kossilon code, logs, or this runbook.
+1. Enable the managed magic-link capability and keep email/password authentication enabled.
+2. Add a Resend sending-only API key as `RESEND_API_KEY`. Set `RESEND_FROM` to a sender on a verified domain; never expose either value in logs or Git.
+3. Deploy and verify that `/api/webhooks/neon-auth` accepts only signed Neon POST requests and that `/auth/magic-link/confirm` returns the confirmation page without a Neon URL or token in its HTML.
+4. Configure the demo branch webhook at `https://kossilon-hub-demo.vercel.app/api/webhooks/neon-auth`, subscribe only to `send.magic_link`, and use a ten-second timeout. Enabling this event replaces Neon's built-in magic-link delivery, so do it only after the deployed handler and Resend binding are ready.
+5. Keep open signup disabled with `disable_sign_up=true`. This is invite-only; do not enable public `signUp.email` registration.
+6. Invite users through the demo Neon Auth workflow. The `Request an invitation` action is a contact mailto for the firm administrator; it is not registration and does not create an Auth account.
+7. Verify that accepted magic-link requests return to the same-origin `/login` callback. Do not copy tokens, passwords, or provider response bodies into Kossilon code, logs, or this runbook.
+
+The webhook emails an encrypted app confirmation ticket instead of the one-time Neon verification URL. Automated GET requests can load `/auth/magic-link/confirm` but cannot see or consume the Neon token. Only the confirmation form POST decrypts the ticket and redirects once to Neon's verification endpoint. If delivery fails during activation, disable the webhook to restore Neon's built-in email delivery while investigating.
 
 The login page exposes the magic-link mode and invitation CTA only when both
 `VITE_ENABLE_NEON_AUTH_DEMO=true` and `VITE_PROVIDER_MODE=simulated` are set on
@@ -160,7 +166,8 @@ Record only booleans, counts, deployment IDs, HTTP status codes, and route names
 - An unauthenticated protected route redirects to `/login`.
 - The invited account can log in and log out through Neon Auth.
 - The demo login shows Password and Magic link modes only when both demo flags are enabled.
-- The accepted magic-link callback returns to `/login`.
+- The emailed URL opens `/auth/magic-link/confirm` without consuming the Neon token.
+- The confirmation form POST completes the one-time verification and returns to `/login`.
 - Production login remains password-only with no invitation CTA.
 - The authenticated account resolves to the `Admin` role.
 - Seeded companies and annual-return cases appear only for `kossilon-demo`.

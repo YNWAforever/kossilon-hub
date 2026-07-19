@@ -86,6 +86,9 @@ describe("Neon Auth demo runtime validation", () => {
     expect(runbook).toContain(
       "Verify that accepted magic-link requests return to the same-origin `/login` callback.",
     );
+    expect(runbook).toContain("/api/webhooks/neon-auth");
+    expect(runbook).toContain("/auth/magic-link/confirm");
+    expect(runbook).toContain("Only the confirmation form POST");
     expect(runbook).toContain("Production login remains password-only with no invitation CTA.");
   });
 
