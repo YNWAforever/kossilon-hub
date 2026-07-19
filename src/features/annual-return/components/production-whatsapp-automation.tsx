@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { annualReturnQueryKeys } from "../query-keys";
 import type { ProductionFollowUpDraft } from "../follow-ups";
 import { listProductionFollowUpDrafts, sendProductionFollowUp } from "../follow-up-server-fns";
+import { getWhatsAppIntegrationStatus } from "@/features/whatsapp/server-fns";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to queue follow-up.";
@@ -18,6 +19,10 @@ export function ProductionWhatsAppAutomation() {
   const draftsQuery = useQuery({
     queryKey: annualReturnQueryKeys.automationNotifications,
     queryFn: () => listProductionFollowUpDrafts(),
+  });
+  const integrationQuery = useQuery({
+    queryKey: ["whatsapp-integration-status"],
+    queryFn: () => getWhatsAppIntegrationStatus(),
   });
   const sendMutation = useMutation({
     mutationFn: (draft: ProductionFollowUpDraft) =>
@@ -36,7 +41,7 @@ export function ProductionWhatsAppAutomation() {
   });
 
   const drafts = draftsQuery.data ?? [];
-  const error = draftsQuery.error ?? sendMutation.error;
+  const error = draftsQuery.error ?? sendMutation.error ?? integrationQuery.error;
 
   return (
     <div className="space-y-6 p-6">
@@ -44,6 +49,16 @@ export function ProductionWhatsAppAutomation() {
         <p className="text-sm font-medium text-muted-foreground">WhatsApp</p>
         <h1 className="mt-1 text-3xl font-semibold">Automation</h1>
       </div>
+
+      {integrationQuery.data?.deliveryMode === "simulated" ? (
+        <div
+          className="border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"
+          role="status"
+        >
+          <p className="font-medium">Demo simulation</p>
+          <p>No external WhatsApp or email message is sent.</p>
+        </div>
+      ) : null}
 
       {error ? (
         <div

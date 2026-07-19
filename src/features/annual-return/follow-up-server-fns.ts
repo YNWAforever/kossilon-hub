@@ -3,6 +3,8 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import type { DispatchSummary } from "@/features/notifications/types";
+import type { ProviderMode } from "@/server/provider-mode";
 import { getSqlClient } from "@/server/db/client";
 import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
 import { getAnnualReturnActionPermission } from "./permissions";
@@ -163,6 +165,23 @@ async function sendFollowUpForActor(
   };
 }
 
+export type SimulatedFollowUpDispatchDependencies = {
+  currentProviderMode(): ProviderMode;
+  dispatchDue(input: { now: string; limit: number }): Promise<DispatchSummary>;
+  now(): Date;
+};
+
+export async function dispatchSimulatedFollowUpIfNeeded(
+  dependencies: SimulatedFollowUpDispatchDependencies,
+): Promise<DispatchSummary | null> {
+  if (dependencies.currentProviderMode() !== "simulated") return null;
+
+  return dependencies.dispatchDue({
+    now: dependencies.now().toISOString(),
+    limit: 50,
+  });
+}
+
 type SourceIdentityInput = { caseId: string; entityId: string };
 
 export function sendAnnualReturnFollowUpForActor(
@@ -232,7 +251,7 @@ export const sendProductionFollowUp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const actor = await getCurrentAnnualReturnActor(getRequest());
     const sql = getSqlClient();
-    return sql.begin(async (tx) => {
+    const result = await sql.begin(async (tx) => {
       const annualReturnRepository = createAnnualReturnRepository({ sql: tx });
       const followUpRepository = createProductionFollowUpRepository({ sql: tx });
       const whatsAppRepository = createWhatsAppRepository({ sql: tx });
@@ -250,6 +269,16 @@ export const sendProductionFollowUp = createServerFn({ method: "POST" })
         ]);
       }
     });
+    const [{ currentProviderMode }, { dispatchDueNotificationsOnServer }] = await Promise.all([
+      import("@/server/provider-mode"),
+      import("@/features/notifications/runtime-dispatch"),
+    ]);
+    await dispatchSimulatedFollowUpIfNeeded({
+      currentProviderMode,
+      dispatchDue: dispatchDueNotificationsOnServer,
+      now: () => new Date(),
+    });
+    return result;
   });
 
 export { PRODUCTION_FOLLOW_UP_SOURCES };

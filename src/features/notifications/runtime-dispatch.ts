@@ -44,7 +44,7 @@ export async function dispatchDueNotificationsWithDependencies(
   }
 }
 
-const dispatchDueNotificationsOnServer = createServerOnlyFn(
+export const dispatchDueNotificationsOnServer = createServerOnlyFn(
   async (input: { now: string; limit?: number }) => {
     const [providerModeModule, outboxModule, runtimeEnvModule] = await Promise.all([
       import("@/server/provider-mode"),

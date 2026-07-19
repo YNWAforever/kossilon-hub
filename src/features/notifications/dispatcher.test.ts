@@ -49,6 +49,21 @@ describe("notification dispatcher", () => {
       providerMessageId: `local:${item.id}`,
     });
   });
+  it("selects the simulated transport without requiring live configuration", async () => {
+    const item = notification({ channel: "email" });
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+
+    await expect(
+      createNotificationTransport({ providerMode: "simulated" }).dispatch(item),
+    ).resolves.toEqual({
+      providerMessageId: "simulated:email:" + item.id,
+    });
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
   it("persists deterministic local provider IDs without network dispatch", async () => {
     const fetchImpl = vi.fn();
     vi.stubGlobal("fetch", fetchImpl);

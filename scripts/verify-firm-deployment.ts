@@ -50,7 +50,7 @@ const LOCAL_GATE_CONTRACTS = {
       file: "src/server/provider-mode.ts",
       snippets: [
         "export function resolveProviderMode",
-        'VITE_PROVIDER_MODE === "local"',
+        'configured === "local" || configured === "simulated"',
         "Local providers are unavailable in production builds.",
       ],
     },

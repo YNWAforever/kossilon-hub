@@ -10,6 +10,7 @@ export type DemoSeedConfig = {
   authUserId: string;
   firmId: string;
   redactedSummary: {
+    DATABASE_URL: RedactedStatus;
     DEMO_DATABASE_URL: RedactedStatus;
     DEMO_AUTH_USER_ID: RedactedStatus;
     DEMO_FIRM_ID: RedactedStatus;
@@ -33,14 +34,23 @@ function requiredValue(environment: Environment, variableName: string): string {
 
 export function readDemoSeedConfig(environment: Environment): DemoSeedConfig {
   const databaseUrl = requiredValue(environment, "DEMO_DATABASE_URL");
+  const configuredDatabaseUrl = requiredValue(environment, "DATABASE_URL");
   const authUserId = requiredValue(environment, "DEMO_AUTH_USER_ID");
   const firmId = requiredValue(environment, "DEMO_FIRM_ID");
   const productionDatabaseUrl = requiredValue(environment, "PRODUCTION_DATABASE_URL");
   const demoDatabaseIdentity = canonicalPostgresIdentity(databaseUrl, "DEMO_DATABASE_URL");
+  const configuredDatabaseIdentity = canonicalPostgresIdentity(
+    configuredDatabaseUrl,
+    "DATABASE_URL",
+  );
   const productionDatabaseIdentity = canonicalPostgresIdentity(
     productionDatabaseUrl,
     "PRODUCTION_DATABASE_URL",
   );
+
+  if (demoDatabaseIdentity !== configuredDatabaseIdentity) {
+    throw new Error("DATABASE_URL and DEMO_DATABASE_URL must identify the same demo database.");
+  }
 
   if (demoDatabaseIdentity === productionDatabaseIdentity) {
     throw new Error("DEMO_DATABASE_URL must not identify the configured production database.");
@@ -51,6 +61,7 @@ export function readDemoSeedConfig(environment: Environment): DemoSeedConfig {
     authUserId,
     firmId,
     redactedSummary: {
+      DATABASE_URL: "configured",
       DEMO_DATABASE_URL: "configured",
       DEMO_AUTH_USER_ID: "configured",
       DEMO_FIRM_ID: "configured",

@@ -11,7 +11,12 @@ const serverFns = vi.hoisted(() => ({
   sendProductionFollowUp: vi.fn(),
 }));
 
+const whatsAppServerFns = vi.hoisted(() => ({
+  getWhatsAppIntegrationStatus: vi.fn(),
+}));
+
 vi.mock("../follow-up-server-fns", () => serverFns);
+vi.mock("@/features/whatsapp/server-fns", () => whatsAppServerFns);
 
 const caseId = "11111111-1111-4111-8111-111111111111";
 const drafts: ProductionFollowUpDraft[] = [
@@ -76,11 +81,54 @@ beforeEach(() => {
   vi.clearAllMocks();
   serverFns.listProductionFollowUpDrafts.mockResolvedValue(drafts);
   serverFns.sendProductionFollowUp.mockResolvedValue({ replayed: false });
+  whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue({
+    provider: "simulated",
+    deliveryMode: "simulated",
+    webhookConfigured: false,
+    liveSendConfigured: false,
+    missingLiveEnvVars: [
+      "WOZTELL_API_BASE_URL",
+      "WOZTELL_ACCESS_TOKEN",
+      "WOZTELL_CHANNEL_ID",
+      "WOZTELL_WEBHOOK_SECRET",
+    ],
+  });
 });
 
 afterEach(cleanup);
 
 describe("ProductionWhatsAppAutomation", () => {
+  it("renders the explicit demo notice and invokes durable actions for all three sources", async () => {
+    const invalidateSpy = renderAutomation();
+    expect(await screen.findByText("Demo simulation")).toBeTruthy();
+    expect(screen.getByText("No external WhatsApp or email message is sent.")).toBeTruthy();
+
+    const buttons = await screen.findAllByRole("button", { name: "Send now" });
+    expect(buttons).toHaveLength(3);
+
+    for (const button of buttons) {
+      fireEvent.click(button);
+      await waitFor(() =>
+        expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(buttons.indexOf(button) + 1),
+      );
+    }
+
+    expect(serverFns.sendProductionFollowUp.mock.calls.map(([call]) => call)).toEqual(
+      drafts.map((draft) => ({
+        data: { source: draft.source, caseId: draft.caseId, entityId: draft.entityId },
+      })),
+    );
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(6));
+    expect(invalidateSpy.mock.calls.map(([options]) => options)).toEqual([
+      { queryKey: ["annual-returns", "notifications", "automation"] },
+      { queryKey: ["annual-returns", "notifications", caseId] },
+      { queryKey: ["annual-returns", "notifications", "automation"] },
+      { queryKey: ["annual-returns", "notifications", caseId] },
+      { queryKey: ["annual-returns", "notifications", "automation"] },
+      { queryKey: ["annual-returns", "notifications", caseId] },
+    ]);
+  });
+
   it("renders persisted rows and invokes the durable action for all three sources", async () => {
     const invalidateSpy = renderAutomation();
     const buttons = await screen.findAllByRole("button", { name: "Send now" });

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Building2, ShieldCheck, UserRound } from "lucide-react";
+import { AlertCircle, Building2, KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
@@ -19,12 +19,25 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-function LoginPage() {
+type LoginMode = "password" | "magic-link";
+
+function isDemoMagicLinkEnabled(): boolean {
+  return (
+    import.meta.env.VITE_ENABLE_NEON_AUTH_DEMO === "true" &&
+    import.meta.env.VITE_PROVIDER_MODE === "simulated"
+  );
+}
+
+export function LoginPage() {
   const navigate = useNavigate();
-  const { session, isHydrated, login, loginDemo, demoUsers } = useAuth();
+  const magicLinkEnabled = isDemoMagicLinkEnabled();
+  const { session, isHydrated, login, loginWithMagicLink, loginDemo, demoUsers } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<LoginMode>("password");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isHydrated || !session) return;
@@ -35,10 +48,39 @@ function LoginPage() {
     void navigate({ href: redirectPath, replace: true });
   }, [isHydrated, navigate, session]);
 
+  function changeMode(nextMode: LoginMode) {
+    if (nextMode === "magic-link" && !magicLinkEnabled) return;
+
+    setMode(nextMode);
+    setError(null);
+    setSuccess(null);
+  }
+
   async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = await login(email, password);
-    setError(result.ok ? null : result.error);
+    setIsSubmitting(true);
+
+    try {
+      const result =
+        mode === "magic-link" && magicLinkEnabled
+          ? await loginWithMagicLink(email)
+          : await login(email, password);
+
+      if (result.ok) {
+        setError(null);
+        setSuccess(
+          mode === "magic-link" ? (result.message ?? "Check your email for a magic link.") : null,
+        );
+      } else {
+        setError(result.error);
+        setSuccess(null);
+      }
+    } catch {
+      setError("Unable to complete sign-in request. Please try again.");
+      setSuccess(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function submitDemoLogin(userId: string) {
@@ -103,28 +145,63 @@ function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={submitLogin} className="mt-6 space-y-4">
+          {magicLinkEnabled && (
+            <div
+              className="mt-6 grid grid-cols-2 rounded-md border border-border bg-muted/40 p-1"
+              role="group"
+              aria-label="Sign-in method"
+            >
+              <button
+                type="button"
+                aria-pressed={mode === "password"}
+                onClick={() => changeMode("password")}
+                disabled={isSubmitting || !isHydrated}
+                className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                Password
+              </button>
+              <button
+                type="button"
+                aria-pressed={mode === "magic-link"}
+                onClick={() => changeMode("magic-link")}
+                disabled={isSubmitting || !isHydrated}
+                className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Magic link
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={submitLogin} className="mt-4 space-y-4">
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">Email</span>
               <input
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setError(null);
+                  setSuccess(null);
+                }}
                 type="email"
                 autoComplete="email"
                 className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
               />
             </label>
 
-            <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">Password</span>
-              <input
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                type="password"
-                autoComplete="current-password"
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-              />
-            </label>
+            {mode === "password" && (
+              <label className="block">
+                <span className="text-xs font-medium text-muted-foreground">Password</span>
+                <input
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  type="password"
+                  autoComplete="current-password"
+                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                />
+              </label>
+            )}
 
             {error && (
               <div
@@ -136,15 +213,45 @@ function LoginPage() {
               </div>
             )}
 
+            {success && (
+              <div
+                className="rounded-md border border-status-green/30 bg-status-green-soft px-3 py-2 text-xs text-status-green"
+                role="status"
+              >
+                {success}
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={!isHydrated}
+              disabled={!isHydrated || isSubmitting}
               className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <ShieldCheck className="h-4 w-4" />
-              Sign in
+              {mode === "password" ? (
+                <>
+                  <ShieldCheck className="h-4 w-4" />
+                  Sign in
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4" />
+                  Email me a magic link
+                </>
+              )}
             </button>
           </form>
+
+          {magicLinkEnabled && (
+            <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
+              Access is invite-only. Contact the firm administrator to request access.{" "}
+              <a
+                href="mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Request an invitation
+              </a>
+            </p>
+          )}
 
           {demoUsers.length > 0 && (
             <div className="mt-7 border-t border-border pt-6">

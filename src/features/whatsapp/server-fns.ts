@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { ProviderMode } from "@/server/provider-mode";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
 import {
   createWhatsAppRepository,
@@ -62,13 +63,26 @@ async function withWhatsAppRepository<T>(
   }
 }
 
-export function getWhatsAppIntegrationStatusForEnv(env: Env = process.env) {
+export type WhatsAppDeliveryMode = "live" | "simulated" | "blocked";
+
+export function getWhatsAppIntegrationStatusForEnv(
+  env: Env = process.env,
+  providerMode: ProviderMode = "live",
+) {
   const missingLiveEnvVars = missingWhatsAppEnvVars(env, WHATSAPP_LIVE_PROVIDER_ENV_KEYS);
+  const deliveryMode: WhatsAppDeliveryMode =
+    providerMode === "simulated"
+      ? "simulated"
+      : missingLiveEnvVars.length === 0
+        ? "live"
+        : "blocked";
 
   return {
-    provider: "woztell" as const,
-    webhookConfigured: !missingLiveEnvVars.includes("WOZTELL_WEBHOOK_SECRET"),
-    liveSendConfigured: missingLiveEnvVars.length === 0,
+    provider: providerMode === "simulated" ? ("simulated" as const) : ("woztell" as const),
+    deliveryMode,
+    webhookConfigured:
+      providerMode === "live" && !missingLiveEnvVars.includes("WOZTELL_WEBHOOK_SECRET"),
+    liveSendConfigured: deliveryMode === "live",
     missingLiveEnvVars,
   };
 }
@@ -167,9 +181,10 @@ export async function processWhatsAppInboundWebhookWithRepository(
   }
 }
 
-export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () =>
-  getWhatsAppIntegrationStatusForEnv(),
-);
+export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const { currentProviderMode } = await import("@/server/provider-mode");
+  return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
+});
 
 export const processWhatsAppInboundWebhook = createServerFn({ method: "POST" })
   .validator(processWhatsAppInboundWebhookInputSchema)

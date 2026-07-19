@@ -4,11 +4,15 @@ import { resolve } from "node:path";
 import { parse } from "dotenv";
 
 export const FIRM_ID = "FIRM_ID";
+export const DEMO_FIRM_ID = "DEMO_FIRM_ID";
+export const DEMO_AUTH_USER_ID = "DEMO_AUTH_USER_ID";
+export const DEMO_DATABASE_URL = "DEMO_DATABASE_URL";
 export const NEON_AUTH_URL = "NEON_AUTH_URL";
 export const NEON_AUTH_COOKIE_SECRET = "NEON_AUTH_COOKIE_SECRET";
 export const DATABASE_URL = "DATABASE_URL";
 export const PRODUCTION_DATABASE_URL = "PRODUCTION_DATABASE_URL";
 export const PRODUCTION_NEON_AUTH_URL = "PRODUCTION_NEON_AUTH_URL";
+export const VITE_ENABLE_NEON_AUTH_DEMO = "VITE_ENABLE_NEON_AUTH_DEMO";
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
@@ -67,9 +71,12 @@ export type CliOptions = {
 
 const REQUIRED_BINDINGS = [
   FIRM_ID,
+  DEMO_FIRM_ID,
+  DEMO_AUTH_USER_ID,
   NEON_AUTH_URL,
   NEON_AUTH_COOKIE_SECRET,
   DATABASE_URL,
+  DEMO_DATABASE_URL,
   PRODUCTION_DATABASE_URL,
   PRODUCTION_NEON_AUTH_URL,
 ] as const;
@@ -133,12 +140,13 @@ function requiredCheck(
   const value = trimmedValue(environment, name);
   if (!value) return { name, status: "missing" };
 
-  if (name === FIRM_ID && value !== "kossilon-demo") return { name, status: "fail" };
+  if ((name === FIRM_ID || name === DEMO_FIRM_ID) && value !== "kossilon-demo")
+    return { name, status: "fail" };
   if ((name === NEON_AUTH_URL || name === PRODUCTION_NEON_AUTH_URL) && !isHttpsUrl(value)) {
     return { name, status: "fail" };
   }
   if (
-    (name === DATABASE_URL || name === PRODUCTION_DATABASE_URL) &&
+    (name === DATABASE_URL || name === DEMO_DATABASE_URL || name === PRODUCTION_DATABASE_URL) &&
     !isValidPostgresUrl(value, name)
   ) {
     return { name, status: "fail" };
@@ -152,19 +160,39 @@ function flagCheck(environment: Environment, name: string, unsafeValue: string):
   return { name, status: value === unsafeValue ? "fail" : "pass" };
 }
 
+function demoAuthFeatureCheck(environment: Environment): ValidationCheck {
+  const value = trimmedValue(environment, VITE_ENABLE_NEON_AUTH_DEMO)?.toLowerCase();
+  if (!value) return { name: VITE_ENABLE_NEON_AUTH_DEMO, status: "missing" };
+  return {
+    name: VITE_ENABLE_NEON_AUTH_DEMO,
+    status: value === "true" ? "pass" : "fail",
+  };
+}
+
+function demoProviderModeCheck(environment: Environment): ValidationCheck {
+  const value = trimmedValue(environment, "VITE_PROVIDER_MODE")?.toLowerCase();
+  if (!value) return { name: "VITE_PROVIDER_MODE", status: "missing" };
+  return {
+    name: "VITE_PROVIDER_MODE",
+    status: value === "simulated" ? "pass" : "fail",
+  };
+}
+
 export function validateNeonAuthDemoEnvironment(environment: Environment): ValidationResult {
   const checks = [
     ...REQUIRED_BINDINGS.map((name) => requiredCheck(environment, name)),
     flagCheck(environment, "VITE_ENABLE_DEMO_AUTH", "true"),
-    flagCheck(environment, "VITE_PROVIDER_MODE", "local"),
+    demoAuthFeatureCheck(environment),
+    demoProviderModeCheck(environment),
   ];
-  const demoDatabaseUrl = trimmedValue(environment, DATABASE_URL);
+  const demoDatabaseUrl = trimmedValue(environment, DEMO_DATABASE_URL);
+  const configuredDatabaseUrl = trimmedValue(environment, DATABASE_URL);
   const productionDatabaseUrl = trimmedValue(environment, PRODUCTION_DATABASE_URL);
   const demoAuthUrl = trimmedValue(environment, NEON_AUTH_URL);
   const productionAuthUrl = trimmedValue(environment, PRODUCTION_NEON_AUTH_URL);
-  const databaseIdentitiesMatch = identitiesMatch(
+  const demoDatabaseBindingsMatch = identitiesMatch(
+    configuredDatabaseUrl,
     demoDatabaseUrl,
-    productionDatabaseUrl,
     (value) => {
       try {
         return canonicalPostgresIdentity(value, DATABASE_URL);
@@ -173,6 +201,21 @@ export function validateNeonAuthDemoEnvironment(environment: Environment): Valid
       }
     },
   );
+  const demoDatabaseMatchesProduction =
+    identitiesMatch(configuredDatabaseUrl, productionDatabaseUrl, (value) => {
+      try {
+        return canonicalPostgresIdentity(value, DATABASE_URL);
+      } catch {
+        return undefined;
+      }
+    }) ||
+    identitiesMatch(demoDatabaseUrl, productionDatabaseUrl, (value) => {
+      try {
+        return canonicalPostgresIdentity(value, DEMO_DATABASE_URL);
+      } catch {
+        return undefined;
+      }
+    });
   const authIdentitiesMatch = identitiesMatch(
     demoAuthUrl,
     productionAuthUrl,
@@ -180,12 +223,19 @@ export function validateNeonAuthDemoEnvironment(environment: Environment): Valid
   );
 
   return {
-    checks: checks.map((check) =>
-      (check.name === DATABASE_URL && databaseIdentitiesMatch) ||
-      (check.name === NEON_AUTH_URL && authIdentitiesMatch)
-        ? { ...check, status: "fail" }
-        : check,
-    ),
+    checks: checks.map((check) => {
+      if (check.status !== "pass") return check;
+      if (
+        (check.name === DATABASE_URL || check.name === DEMO_DATABASE_URL) &&
+        (!demoDatabaseBindingsMatch || demoDatabaseMatchesProduction)
+      ) {
+        return { ...check, status: "fail" };
+      }
+      if (check.name === NEON_AUTH_URL && authIdentitiesMatch) {
+        return { ...check, status: "fail" };
+      }
+      return check;
+    }),
   };
 }
 

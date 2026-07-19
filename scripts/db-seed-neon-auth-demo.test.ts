@@ -33,6 +33,7 @@ function demoAuthUserId() {
 
 function demoEnv(overrides: Record<string, string | undefined> = {}) {
   return {
+    DATABASE_URL: databaseUrl(),
     DEMO_DATABASE_URL: databaseUrl(),
     DEMO_AUTH_USER_ID: demoAuthUserId(),
     DEMO_FIRM_ID: demoFirmId,
@@ -50,7 +51,7 @@ describe("Neon Auth demo seed configuration", () => {
     );
   });
 
-  it.each(["DEMO_DATABASE_URL", "DEMO_AUTH_USER_ID", "DEMO_FIRM_ID"] as const)(
+  it.each(["DATABASE_URL", "DEMO_DATABASE_URL", "DEMO_AUTH_USER_ID", "DEMO_FIRM_ID"] as const)(
     "rejects a missing required %s value without disclosing configuration values",
     (variableName) => {
       const secret = "secret-value-that-must-not-leak";
@@ -65,7 +66,7 @@ describe("Neon Auth demo seed configuration", () => {
     },
   );
 
-  it.each(["DEMO_DATABASE_URL", "DEMO_AUTH_USER_ID", "DEMO_FIRM_ID"] as const)(
+  it.each(["DATABASE_URL", "DEMO_DATABASE_URL", "DEMO_AUTH_USER_ID", "DEMO_FIRM_ID"] as const)(
     "rejects a whitespace-only %s value",
     (variableName) => {
       expect(() => readDemoSeedConfig(demoEnv({ [variableName]: "   " }))).toThrow(
@@ -74,6 +75,15 @@ describe("Neon Auth demo seed configuration", () => {
     },
   );
 
+  it("rejects mismatched migration and seed database identities", () => {
+    expect(() =>
+      readDemoSeedConfig(
+        demoEnv({
+          DATABASE_URL: databaseUrl(demoProtocol, "other.example.test", demoDatabaseName),
+        }),
+      ),
+    ).toThrow("DATABASE_URL and DEMO_DATABASE_URL must identify the same demo database.");
+  });
   it("rejects a non-Postgres demo database URL without exposing it", () => {
     const unsafeUrl = databaseUrl("https");
 
@@ -98,6 +108,7 @@ describe("Neon Auth demo seed configuration", () => {
   });
 
   it.each([
+    ["DATABASE_URL", databaseUrl(demoProtocol, demoHost, "", "", true)],
     ["DEMO_DATABASE_URL", databaseUrl(demoProtocol, demoHost, "", "", true)],
     ["DEMO_DATABASE_URL", databaseUrl(demoProtocol, demoHost, "")],
     ["PRODUCTION_DATABASE_URL", databaseUrl("postgres", demoHost, "", "", true)],
@@ -148,6 +159,7 @@ describe("Neon Auth demo seed configuration", () => {
       expect(() =>
         readDemoSeedConfig(
           demoEnv({
+            DATABASE_URL: demoUrl,
             DEMO_DATABASE_URL: demoUrl,
             PRODUCTION_DATABASE_URL: productionUrl,
           }),
@@ -160,6 +172,7 @@ describe("Neon Auth demo seed configuration", () => {
     expect(() =>
       readDemoSeedConfig(
         demoEnv({
+          DATABASE_URL: databaseUrl(demoProtocol, "demo-project.neon.tech", demoDatabaseName),
           DEMO_DATABASE_URL: databaseUrl(demoProtocol, "demo-project.neon.tech", demoDatabaseName),
           PRODUCTION_DATABASE_URL: databaseUrl(
             demoProtocol,
@@ -180,6 +193,7 @@ describe("Neon Auth demo seed configuration", () => {
       authUserId: demoAuthUserId(),
       firmId: demoFirmId,
       redactedSummary: {
+        DATABASE_URL: "configured",
         DEMO_DATABASE_URL: "configured",
         DEMO_AUTH_USER_ID: "configured",
         DEMO_FIRM_ID: "configured",
@@ -297,17 +311,39 @@ describe("Neon Auth demo seed CLI boundary", () => {
 });
 
 describe("Neon Auth demo runbook", () => {
-  it("binds validation, migration, and seed to the same approved environment file", async () => {
+  it("binds validation, migration, seed, reset, and deployment configuration to one approved environment file", async () => {
     const runbook = await readFile(
       fileURLToPath(new URL("../docs/runbooks/neon-auth-demo.md", import.meta.url)),
       "utf8",
     );
-    const approvedEnvFile = "<approved-demo-env-file>";
+    const approvedEnvironmentNames = [
+      "DATABASE_URL",
+      "DEMO_DATABASE_URL",
+      "PRODUCTION_DATABASE_URL",
+      "NEON_AUTH_URL",
+      "PRODUCTION_NEON_AUTH_URL",
+      "NEON_AUTH_COOKIE_SECRET",
+      "FIRM_ID",
+      "DEMO_FIRM_ID",
+      "DEMO_AUTH_USER_ID",
+      "VITE_PROVIDER_MODE",
+    ];
 
-    expect(runbook).toContain(`npm run validate:neon-auth-demo -- --env-file ${approvedEnvFile}`);
-    expect(runbook).toContain(`bun --env-file="${approvedEnvFile}" scripts/db-migrate.ts`);
+    for (const environmentName of approvedEnvironmentNames) {
+      expect(runbook).toContain(`\`${environmentName}\``);
+    }
+    expect(runbook).toContain('$demoEnvFile = Read-Host "Approved demo environment file path"');
+    expect(runbook).toContain("npm run validate:neon-auth-demo -- --env-file $demoEnvFile");
+    expect(runbook).toContain('bun --env-file="$demoEnvFile" scripts/db-migrate.ts');
+    expect(runbook).toContain('bun --env-file="$demoEnvFile" scripts/db-seed-neon-auth-demo.ts');
+    expect(runbook).toContain("VITE_PROVIDER_MODE=simulated");
+    expect(runbook).not.toContain("VITE_PROVIDER_MODE=local");
+    expect(runbook).toContain("DATABASE_URL and DEMO_DATABASE_URL identify the same demo database");
+    expect(runbook).toContain("FIRM_ID and DEMO_FIRM_ID are both kossilon-demo");
+    expect(runbook).toContain("Production identity values remain only in the operator-local file.");
+    expect(runbook).toContain("source of truth for deployment");
     expect(runbook).toContain(
-      `bun --env-file="${approvedEnvFile}" scripts/db-seed-neon-auth-demo.ts`,
+      "read-only counts/checksums match before and after demo verification: true.",
     );
     expect(runbook).not.toContain("npm.cmd run db:migrate");
     expect(runbook).not.toContain("npm.cmd run db:seed:neon-auth-demo");

@@ -5,6 +5,7 @@ import type { AnnualReturnRepository } from "./repository";
 import type { AnnualReturnCase } from "./types";
 import type { ProductionFollowUpRepository } from "./follow-up-repository";
 import {
+  dispatchSimulatedFollowUpIfNeeded,
   listProductionFollowUpDraftsForActor,
   sendAnnualReturnFollowUpForActor,
   sendDocumentReviewFollowUpForActor,
@@ -126,6 +127,40 @@ function dependencies(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+describe("simulated follow-up dispatch gate", () => {
+  it("dispatches only in simulated mode", async () => {
+    const dispatchDue = vi.fn().mockResolvedValue({
+      claimed: 1,
+      sent: 1,
+      retried: 0,
+      permanentlyFailed: 0,
+    });
+    const now = vi.fn(() => new Date("2026-07-16T09:00:00.000Z"));
+
+    await expect(
+      dispatchSimulatedFollowUpIfNeeded({
+        currentProviderMode: () => "simulated",
+        dispatchDue,
+        now,
+      }),
+    ).resolves.toMatchObject({ sent: 1 });
+    expect(dispatchDue).toHaveBeenCalledWith({
+      now: "2026-07-16T09:00:00.000Z",
+      limit: 50,
+    });
+
+    dispatchDue.mockClear();
+    await expect(
+      dispatchSimulatedFollowUpIfNeeded({
+        currentProviderMode: () => "live",
+        dispatchDue,
+        now,
+      }),
+    ).resolves.toBeNull();
+    expect(dispatchDue).not.toHaveBeenCalled();
+  });
+});
 
 describe("production follow-up server orchestration", () => {
   it("lists only staff-authorized production drafts", async () => {
