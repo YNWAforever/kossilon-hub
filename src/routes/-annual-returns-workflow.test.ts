@@ -239,10 +239,14 @@ describe("annual return workflow route regressions", () => {
     expect(whatsappAutomationRouteSource).toContain("statusToneClass(draft.status)");
   });
 
-  it("marks filed-case owner and notes controls as read-only in the detail view", () => {
-    expect(annualReturnDetailRouteSource).toContain("disabled={isFiled}");
-    expect(annualReturnDetailRouteSource).toContain("readOnly={isFiled}");
-    expect(annualReturnDetailRouteSource).toContain("disabled={isFiled || !note.trim()}");
+  // Superseded by demo-case-detail.interaction.test.tsx, which renders the screen
+  // and asserts that every control is disabled — not just the filed-case ones this
+  // used to check by matching `disabled={isFiled}` in the source.
+  it("leaves the demo detail view with no live control and no stranded warning state", () => {
+    expect(annualReturnDetailRouteSource).not.toContain("setPacketWarning");
+    expect(annualReturnDetailRouteSource).not.toContain("setFollowUpWarning");
+    expect(annualReturnDetailRouteSource).not.toContain("onChange");
+    expect(annualReturnDetailRouteSource).not.toContain("onClick");
   });
 
   it("renders the client portal action center with mocked client actions", () => {
