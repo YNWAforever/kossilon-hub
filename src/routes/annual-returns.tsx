@@ -155,41 +155,67 @@ function AnnualReturnsRoute() {
           </select>
         </div>
 
-        <div className="hidden grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_180px_110px_95px_1fr_95px_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
-          <span>Company</span>
-          <span>Owner</span>
-          <span>Risk</span>
-          <span>Due</span>
-          <span>Case</span>
-          <span>Blockers</span>
-          <span>Packet</span>
-          <span>Follow-ups</span>
-          <span>Next action</span>
-          <span>Payment</span>
-          <span className="text-right">Open</span>
-        </div>
-
-        <div className="divide-y">
-          {visibleCases.map((caseItem) => (
-            <CaseRow
-              key={caseItem.id}
-              caseItem={caseItem}
-              workItem={workItemsByCase.get(caseItem.id)}
-              workItemQueryState={
-                workItemsQuery.isPending ? "loading" : workItemsQuery.isError ? "error" : "ready"
-              }
-            />
-          ))}
-          {visibleCases.length === 0 ? (
-            <div className="px-4 py-8 text-sm text-muted-foreground">
-              No annual return cases match the current filters.
+        <div className="overflow-x-auto">
+          <div className={CASE_GRID_MIN_WIDTH}>
+            <div
+              className={`hidden gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid ${CASE_GRID_COLUMNS}`}
+            >
+              <span>Company</span>
+              <span>Owner</span>
+              <span>Risk</span>
+              <span>Due</span>
+              <span>Case</span>
+              <span>Blockers</span>
+              <span>Packet</span>
+              <span>Follow-ups</span>
+              <span>Next action</span>
+              <span>Payment</span>
+              <span className="text-right">Open</span>
             </div>
-          ) : null}
+
+            <div className="divide-y">
+              {visibleCases.map((caseItem) => (
+                <CaseRow
+                  key={caseItem.id}
+                  caseItem={caseItem}
+                  workItem={workItemsByCase.get(caseItem.id)}
+                  workItemQueryState={
+                    workItemsQuery.isPending
+                      ? "loading"
+                      : workItemsQuery.isError
+                        ? "error"
+                        : "ready"
+                  }
+                />
+              ))}
+              {visibleCases.length === 0 ? (
+                <div className="px-4 py-8 text-sm text-muted-foreground">
+                  No annual return cases match the current filters.
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
       </section>
     </main>
   );
 }
+
+// One template shared by the header row and every data row — maintained as two
+// separate literals they drifted, and the columns stopped lining up.
+//
+// The nine fixed tracks (886px) plus ten 12px gaps plus the two minmax floors
+// come to ~1356px, which is wider than the content area on a 1280-1440px
+// laptop once the 300px sidebar and the p-6 padding are taken out. That is why
+// the rows live inside an `overflow-x-auto` container: the board scrolls
+// sideways rather than overflowing and drawing its cells on top of each other.
+//
+// The floors matter as much as the fixed widths. With `minmax(0, 1.4fr)` the
+// company and next-action columns could be squeezed to nothing, which is what
+// let their text escape the grid in the first place.
+const CASE_GRID_COLUMNS =
+  "lg:grid-cols-[minmax(220px,1.4fr)_110px_96px_130px_64px_140px_110px_80px_minmax(130px,1fr)_84px_72px]";
+const CASE_GRID_MIN_WIDTH = "lg:min-w-[1356px]";
 
 function Metric({
   label,
@@ -237,7 +263,7 @@ function CaseRow({
         : `${blockers[0].label} +${blockers.length - 1}`;
 
   return (
-    <div className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.4fr)_110px_110px_130px_95px_180px_110px_95px_1fr_95px_72px] lg:items-center">
+    <div className={`grid gap-3 px-4 py-4 lg:items-center ${CASE_GRID_COLUMNS}`}>
       <div className="min-w-0">
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
