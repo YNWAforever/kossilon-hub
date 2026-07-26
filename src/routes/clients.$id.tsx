@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { TopBar } from "@/components/top-bar";
+import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Timeline } from "@/components/timeline";
@@ -39,13 +39,14 @@ function ClientProfilePage() {
   const portalCaseId = getPortalCaseId(company);
 
   return (
-    <>
-      <TopBar
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Clients"
         title={company.name}
         subtitle={`BR ${company.brNumber} · CR ${company.crNumber} · Incorporated ${formatDate(company.incorporated)}`}
       />
 
-      <main className="grid flex-1 grid-cols-1 gap-6 p-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           {/* Header card */}
           <div className="rounded-xl border border-border bg-card p-5">
@@ -239,8 +240,8 @@ function ClientProfilePage() {
         <div>
           <Timeline events={company.timeline} title="Company timeline" />
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
 

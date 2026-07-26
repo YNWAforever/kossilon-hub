@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
+import { PageHeader } from "@/components/page-header";
 import { enquiries, findClientForEnquiry } from "../lib/app-data";
 
 export const Route = createFileRoute("/whatsapp")({
@@ -41,9 +42,10 @@ function WhatsAppRoute() {
   return (
     <div className="grid min-h-screen lg:grid-cols-[320px_minmax(0,1fr)_420px]">
       <section className="border-r bg-card">
+        {/* The conversation rail is this screen's header — an inbox has no room
+            for a page title above it, so PageHeader sits inside the rail. */}
         <div className="border-b p-4">
-          <p className="text-sm font-medium text-muted-foreground">Inbox</p>
-          <h1 className="mt-1 text-2xl font-semibold">WhatsApp</h1>
+          <PageHeader eyebrow="Messaging" title="WhatsApp Inbox" />
         </div>
         <div className="divide-y">
           {enquiries.map((enquiry) => (

@@ -105,6 +105,44 @@ describe("firm runtime", () => {
     expect(getFirmRuntimeEnv(env).databaseUrl).toBe("postgres://hyperdrive.example.test/database");
   });
 
+  it("accepts R2 S3 credentials when no Workers binding is available", () => {
+    const { DOCUMENTS_BUCKET: _binding, ...env } = validEnv;
+    const withCredentials = {
+      ...env,
+      R2_ACCOUNT_ID: "acct123",
+      R2_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE",
+      R2_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      R2_BUCKET_NAME: "firm-documents",
+    };
+
+    expect(getRuntimeReadiness(withCredentials)).toEqual({ ready: true, missing: [] });
+
+    const bucket = getFirmRuntimeEnv(withCredentials).documentsBucket;
+    for (const method of ["get", "put", "head", "delete"] as const) {
+      expect(typeof bucket[method]).toBe("function");
+    }
+  });
+
+  it("reports the documents bucket missing when R2 credentials are incomplete", () => {
+    const { DOCUMENTS_BUCKET: _binding, ...env } = validEnv;
+
+    expect(
+      getRuntimeReadiness({ ...env, R2_ACCOUNT_ID: "acct123", R2_BUCKET_NAME: "firm-documents" }),
+    ).toEqual({ ready: false, missing: ["DOCUMENTS_BUCKET"] });
+  });
+
+  it("prefers the Workers binding when both a binding and credentials are present", () => {
+    const bucket = getFirmRuntimeEnv({
+      ...validEnv,
+      R2_ACCOUNT_ID: "acct123",
+      R2_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE",
+      R2_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      R2_BUCKET_NAME: "firm-documents",
+    }).documentsBucket;
+
+    expect(bucket).toBe(fakeR2Bucket);
+  });
+
   it("does not expose a request-controlled tenant field", () => {
     expect(Object.keys(getFirmRuntimeEnv(validEnv))).not.toContain("tenantId");
   });

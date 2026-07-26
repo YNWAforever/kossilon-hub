@@ -15,6 +15,7 @@ import {
   type ClientPortalPaymentProofFollowUpDraft,
 } from "../lib/client-portal-store";
 import { ProductionWhatsAppAutomation } from "../features/annual-return/components/production-whatsapp-automation";
+import { PageHeader } from "@/components/page-header";
 
 export const Route = createFileRoute("/whatsapp/automation")({
   component: WhatsAppAutomationRoute,
@@ -102,27 +103,23 @@ function DemoWhatsAppAutomationRoute() {
   });
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">WhatsApp</p>
-          <h1 className="mt-1 text-3xl font-semibold">Automation</h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {(["open", "sent", "all"] as const).map((value) => (
-            <button
-              key={value}
-              className={`rounded-md border px-3 py-2 text-sm ${
-                filter === value ? "bg-primary text-primary-foreground" : "bg-background"
-              }`}
-              onClick={() => setFilter(value)}
-              type="button"
-            >
-              {value === "open" ? "Open" : value === "sent" ? "Sent" : "All"}
-            </button>
-          ))}
-        </div>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Messaging"
+        title="WhatsApp Automation"
+        actions={(["open", "sent", "all"] as const).map((value) => (
+          <button
+            key={value}
+            className={`rounded-md border px-3 py-2 text-sm ${
+              filter === value ? "bg-primary text-primary-foreground" : "bg-background"
+            }`}
+            onClick={() => setFilter(value)}
+            type="button"
+          >
+            {value === "open" ? "Open" : value === "sent" ? "Sent" : "All"}
+          </button>
+        ))}
+      />
 
       {warning ? (
         <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
@@ -157,7 +154,7 @@ function DemoWhatsAppAutomationRoute() {
           )}
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 

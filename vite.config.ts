@@ -39,5 +39,15 @@ export default async function config(env: ConfigEnv) {
     plugins.unshift(sourceInjection);
   }
 
-  return { ...resolved, plugins };
+  return {
+    ...resolved,
+    plugins,
+    test: {
+      // The validator/CLI suites spawn `node --experimental-strip-types`
+      // subprocesses that take ~5s to boot, which sits right on Vitest's 5000ms
+      // default and made them fail intermittently under load.
+      ...(resolved as { test?: Record<string, unknown> }).test,
+      testTimeout: 30_000,
+    },
+  };
 }

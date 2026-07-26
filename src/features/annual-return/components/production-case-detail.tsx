@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+
+import { PageHeader } from "@/components/page-header";
 import {
   CheckSquare,
   FileCheck2,
@@ -163,26 +165,26 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
   if (caseQuery.isError) {
     return (
-      <div className="space-y-3 p-6">
-        <h1 className="text-xl font-semibold">Annual return case unavailable</h1>
+      <main className="flex-1 space-y-3 p-6">
+        <PageHeader eyebrow="Annual return case" title="Annual return case unavailable" />
         <p role="alert" className="text-sm text-destructive">
           {caseQuery.error.message}
         </p>
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
           Back to annual returns
         </Link>
-      </div>
+      </main>
     );
   }
 
   if (!caseItem) {
     return (
-      <div className="space-y-3 p-6">
-        <h1 className="text-xl font-semibold">Case not found</h1>
+      <main className="flex-1 space-y-3 p-6">
+        <PageHeader eyebrow="Annual return case" title="Case not found" />
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
           Back to annual returns
         </Link>
-      </div>
+      </main>
     );
   }
 
@@ -190,28 +192,23 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
   const locked = caseItem.currentStatus === "Completed";
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
-        <div>
-          <Link
-            className="text-sm text-muted-foreground hover:text-foreground"
-            to="/annual-returns"
-          >
-            Annual returns
-          </Link>
-          <h1 className="mt-1 text-2xl font-semibold">{caseItem.companyName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Return year {caseItem.returnYear} / Due {caseItem.filingDueDate}
-          </p>
-        </div>
-        <div className="text-right text-sm">
-          <p className="font-medium">{caseItem.currentStatus}</p>
-          <p className="text-muted-foreground">{caseItem.riskLevel} risk</p>
-        </div>
-      </header>
+    <main className="flex-1 space-y-4 p-4 md:p-6">
+      <div className="border-b pb-4">
+        <PageHeader
+          eyebrow="Annual return case"
+          title={caseItem.companyName}
+          subtitle={`Return year ${caseItem.returnYear} / Due ${caseItem.filingDueDate}`}
+          actions={
+            <div className="text-right text-sm">
+              <p className="font-medium">{caseItem.currentStatus}</p>
+              <p className="text-muted-foreground">{caseItem.riskLevel} risk</p>
+            </div>
+          }
+        />
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <main className="space-y-4">
+        <div className="space-y-4">
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Case controls</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -423,7 +420,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             </div>
             <MutationMessage error={receiptMutation.error} />
           </section>
-        </main>
+        </div>
 
         <aside className="space-y-4 border-t pt-4 xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
           <section className="border-b pb-4">
@@ -509,6 +506,6 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           </section>
         </aside>
       </div>
-    </div>
+    </main>
   );
 }

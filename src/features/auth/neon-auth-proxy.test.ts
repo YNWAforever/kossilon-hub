@@ -45,6 +45,36 @@ describe("Neon Auth same-origin proxy", () => {
     expect(response.headers.get("set-cookie")).not.toContain("Domain=");
   });
 
+  it("omits the cookie header entirely when the request carries no Neon cookies", async () => {
+    // Better Auth gates its trusted-origin CSRF check on `headers.has("cookie")`
+    // (validateOrigin: `const useCookies = headers.has("cookie")`), so an empty cookie
+    // header forces that check onto cookie-less first sign-in requests.
+    const fetcher = vi.fn(async () => new Response("{}", { status: 200 }));
+    const proxy = createNeonAuthProxy({
+      baseUrl: "https://auth.example.test/tenant/auth",
+      fetcher,
+    });
+
+    for (const cookie of [undefined, "theme=dark; sidebar=open"]) {
+      fetcher.mockClear();
+      const request = new Request("https://app.example.test/api/auth/sign-in/email", {
+        method: "POST",
+        headers: {
+          ...(cookie ? { cookie } : {}),
+          origin: "https://app.example.test",
+          "content-type": "application/json",
+        },
+        body: '{"email":"admin@example.test","password":"secret"}',
+      });
+
+      await proxy(request);
+
+      const [[, init]] = fetcher.mock.calls as unknown as [[URL, RequestInit]];
+      const headers = init?.headers as Headers;
+      expect(headers.has("cookie")).toBe(false);
+    }
+  });
+
   it("rejects requests outside the auth proxy path", async () => {
     const proxy = createNeonAuthProxy({
       baseUrl: "https://auth.example.test/tenant/auth",

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
-import { TopBar } from "@/components/top-bar";
+import { PageHeader } from "@/components/page-header";
 import {
   Dialog,
   DialogContent,
@@ -120,9 +120,13 @@ function WorkQueueRoute() {
 
   return (
     <>
-      <TopBar title="Work queue" subtitle="Assignment, capacity, and SLA control" />
       <main className="min-w-0 flex-1 p-4 md:p-6">
-        <div className="grid grid-cols-2 border-y border-border md:grid-cols-4">
+        <PageHeader
+          eyebrow="Operations"
+          title="Work queue"
+          subtitle="Assignment, capacity, and SLA control"
+        />
+        <div className="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4">
           <Counter label="Due today" value={metrics.dueToday} />
           <Counter label="At risk" value={metrics.atRisk} tone="warning" />
           <Counter label="Breached" value={metrics.breached} tone="danger" />

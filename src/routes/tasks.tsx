@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { PageHeader } from "@/components/page-header";
 import {
   type AnnualReturnRiskLevel,
   getCaseTasks,
@@ -24,11 +25,8 @@ function TasksRoute() {
   const tasks = cases.flatMap((caseItem) => getCaseTasks(caseItem));
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Work queue</p>
-        <h1 className="mt-1 text-3xl font-semibold">Tasks</h1>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader eyebrow="Operations" title="Tasks" />
       <div className="rounded-lg border bg-card">
         {tasks.length ? (
           tasks.map((task) => (
@@ -48,6 +46,6 @@ function TasksRoute() {
           <p className="p-4 text-sm text-muted-foreground">No open tasks.</p>
         )}
       </div>
-    </div>
+    </main>
   );
 }

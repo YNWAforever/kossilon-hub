@@ -5,6 +5,7 @@ import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evid
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import { listAnnualReturnCases } from "../features/annual-return/server-fns";
 import { listDocuments } from "../features/documents/server-fns";
+import { PageHeader } from "@/components/page-header";
 
 import {
   type AnnualReturnCase,
@@ -76,11 +77,8 @@ function ProductionPaymentsRoute() {
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Finance</p>
-        <h1 className="mt-1 text-3xl font-semibold">Payments</h1>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader eyebrow="Operations" title="Payments" />
 
       {casesQuery.error || documentsQuery.error ? (
         <p role="alert" className="text-sm text-destructive">
@@ -172,19 +170,17 @@ function ProductionPaymentsRoute() {
           {reviewMutation.error.message}
         </p>
       ) : null}
-    </div>
+    </main>
   );
 }
+
 function DemoPaymentsRoute() {
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Finance</p>
-        <h1 className="mt-1 text-3xl font-semibold">Payments</h1>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader eyebrow="Operations" title="Payments" />
 
       <section className="rounded-lg border bg-card">
         <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
@@ -207,7 +203,7 @@ function DemoPaymentsRoute() {
           ))}
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 

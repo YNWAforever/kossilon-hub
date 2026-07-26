@@ -222,31 +222,32 @@ describe("annual return workflow route regressions", () => {
     const desktopNavigation = html.match(
       /<nav[^>]*aria-label="Primary navigation"[^>]*>[\s\S]*?<\/nav>/,
     )?.[0];
-    const mobileNavigation = html.match(
-      /<nav[^>]*aria-label="Operational navigation"[^>]*>[\s\S]*?<\/nav>/,
+    // Mobile navigation is now a drawer: its contents mount on open, so the shell
+    // renders the trigger rather than a second inline <nav>.
+    const mobileNavigationTrigger = html.match(
+      /<button[^>]*aria-label="Open navigation menu"[^>]*>/,
     )?.[0];
 
     expect(desktopNavigation).toBeDefined();
-    expect(mobileNavigation).toBeDefined();
+    expect(mobileNavigationTrigger).toBeDefined();
 
     for (const [path, label] of [
       ["/portal", "Portal"],
       ["/payments", "Payments"],
-      ["/whatsapp/automation", "Automation"],
-      ["/annual-returns", "Annual returns"],
+      ["/whatsapp/automation", "WhatsApp Automation"],
+      ["/annual-returns", "Annual Returns"],
     ]) {
       expect(desktopNavigation).toContain(`href="${path}"`);
-      expect(mobileNavigation).toContain(`href="${path}"`);
-      expect(mobileNavigation).toContain(`>${label}</a>`);
+      expect(desktopNavigation).toContain(`>${label}</span>`);
     }
 
     expect(desktopNavigation?.indexOf('href="/portal"')).toBeLessThan(
       desktopNavigation?.indexOf('href="/whatsapp/automation"') ?? -1,
     );
-    expect(desktopNavigation).toContain(">Portal</span>");
-    expect(desktopNavigation).toContain(">WhatsApp Automation</span>");
-    expect(mobileNavigation).toContain("border-border");
-    expect(mobileNavigation).toContain("gap-2");
+    // Destinations are grouped rather than presented as one flat list.
+    expect(desktopNavigation).toContain(">Operations<");
+    expect(desktopNavigation).toContain(">Messaging<");
+    expect(desktopNavigation).toContain(">Administration<");
   });
 
   it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
@@ -736,7 +737,7 @@ describe("annual return workflow route regressions", () => {
 
   it("connects annual-return detail and sidebar to portal activity", () => {
     const sidebarSource = readFileSync(
-      new URL("../components/app-sidebar.tsx", import.meta.url),
+      new URL("../components/navigation.ts", import.meta.url),
       "utf8",
     );
 

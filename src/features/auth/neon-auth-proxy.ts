@@ -64,7 +64,13 @@ function upstreamHeaders(request: Request): Headers {
     request.headers.get("referer")?.split("/").slice(0, 3).join("/") ??
     new URL(request.url).origin;
   headers.set("origin", origin);
-  headers.set("cookie", neonCookies(request.headers.get("cookie")));
+  // Only send a cookie header when Neon cookies are actually present. Better Auth gates
+  // its trusted-origin CSRF check on `headers.has("cookie")`, so an empty cookie header
+  // forces that check onto cookie-less first sign-in requests. (On runtimes whose fetch
+  // adds Sec-Fetch-* headers, such as undici, the check is forced regardless — but the
+  // Workers runtime does not, so this still matters for the Cloudflare target.)
+  const cookie = neonCookies(request.headers.get("cookie"));
+  if (cookie) headers.set("cookie", cookie);
   headers.set("x-neon-auth-middleware", "true");
   return headers;
 }

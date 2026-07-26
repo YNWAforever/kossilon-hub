@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   HeadContent,
-  Link,
   Outlet,
   Scripts,
   createRootRouteWithContext,
@@ -15,6 +14,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AppMobileNav } from "@/components/app-mobile-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context-neon";
 import { getAuthenticatedActor } from "@/features/auth/neon-auth-rpc";
@@ -26,14 +26,6 @@ import {
 } from "@/features/auth/route-guard";
 
 type RouterContext = { queryClient: QueryClient; dataMode: DataMode };
-
-const mobileNavItems = [
-  { to: "/work-queue", label: "Work queue" },
-  { to: "/portal", label: "Portal" },
-  { to: "/payments", label: "Payments" },
-  { to: "/whatsapp/automation", label: "Automation" },
-  { to: "/annual-returns", label: "Annual returns" },
-] as const;
 
 function NotFoundComponent() {
   return (
@@ -195,26 +187,7 @@ function ProtectedAppShell() {
     <div className="flex min-h-screen w-full bg-background">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-b border-border bg-background px-3 py-2 md:hidden">
-          <nav
-            aria-label="Operational navigation"
-            className="flex min-w-0 flex-wrap items-center gap-2"
-          >
-            {mobileNavItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="rounded-md border border-border px-3 py-2 text-sm text-foreground hover:bg-muted"
-                activeProps={{
-                  className:
-                    "rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium text-foreground",
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </header>
+        <AppMobileNav />
         <Outlet />
       </div>
     </div>

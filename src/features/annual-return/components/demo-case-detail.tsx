@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
+import { PageHeader } from "@/components/page-header";
 import { daysUntil, findEnquiryForClient } from "@/lib/app-data";
 import {
   type AnnualReturnCase,
@@ -89,15 +90,15 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
 
   if (!caseItem) {
     return (
-      <div className="space-y-4 p-6">
-        <h1 className="text-2xl font-semibold">Case not found</h1>
+      <main className="flex-1 space-y-4 p-6">
+        <PageHeader eyebrow="Annual return case" title="Case not found" />
         <p className="text-sm text-muted-foreground">
           This annual return case does not exist in the mocked workspace.
         </p>
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
           Back to command center
         </Link>
-      </div>
+      </main>
     );
   }
 
@@ -118,53 +119,54 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   const latestPortalActivity = portalActivity[0];
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          Back
-        </Link>
-        <div className="flex items-center gap-2">
-          <Link
-            className="rounded-md border px-3 py-2 text-sm"
-            to="/work-queue"
-            search={{
-              view: "team",
-              owner: "all",
-              workType: "all",
-              sla: "all",
-              priority: "all",
-              status: "all",
-            }}
-          >
-            Assignment &amp; SLA
-          </Link>
-          {enquiry ? (
+    <main className="flex-1 space-y-4 p-6">
+      <PageHeader
+        eyebrow="Annual return case"
+        title={caseItem.companyName}
+        subtitle={`${caseItem.contactName} / ${caseItem.phone} / Basis date ${caseItem.basisDate}`}
+        actions={
+          <>
+            <Link className="rounded-md border px-3 py-2 text-sm" to="/annual-returns">
+              Back
+            </Link>
             <Link
               className="rounded-md border px-3 py-2 text-sm"
-              to="/whatsapp"
-              search={{ enquiry: enquiry.id }}
+              to="/work-queue"
+              search={{
+                view: "team",
+                owner: "all",
+                workType: "all",
+                sla: "all",
+                priority: "all",
+                status: "all",
+              }}
             >
-              Ask AI
+              Assignment &amp; SLA
             </Link>
-          ) : null}
-        </div>
-      </div>
+            {enquiry ? (
+              <Link
+                className="rounded-md border px-3 py-2 text-sm"
+                to="/whatsapp"
+                search={{ enquiry: enquiry.id }}
+              >
+                Ask AI
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
       <section className="rounded-lg border bg-card p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0 space-y-3">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Annual return case</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-semibold">{caseItem.companyName}</h1>
+              {/* Company name, contact and basis date are in the page header. */}
+              <div className="flex flex-wrap items-center gap-2">
                 <RiskPill risk={risk} />
                 <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium">
                   {statusLabel(caseItem.status)}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {caseItem.contactName} / {caseItem.phone} / Basis date {caseItem.basisDate}
-              </p>
               <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                 <p>
                   <span className="text-muted-foreground">Work owner:</span>{" "}
@@ -641,7 +643,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
