@@ -7,6 +7,16 @@ const sidebarSource = readFileSync(
   new URL("../components/app-sidebar.tsx", import.meta.url),
   "utf8",
 );
+// Destinations are defined once here and rendered by both the desktop sidebar and
+// the mobile drawer, so the two can no longer expose different routes or labels.
+const navigationSource = readFileSync(
+  new URL("../components/navigation.ts", import.meta.url),
+  "utf8",
+);
+const mobileNavSource = readFileSync(
+  new URL("../components/app-mobile-nav.tsx", import.meta.url),
+  "utf8",
+);
 const startSource = readFileSync(new URL("../start.ts", import.meta.url), "utf8");
 const dashboardSource = readFileSync(new URL("./index.tsx", import.meta.url), "utf8");
 const settingsSource = readFileSync(new URL("./settings.tsx", import.meta.url), "utf8");
@@ -40,20 +50,26 @@ describe("final review architecture restorations", () => {
 
   it("exposes the operational routes in labeled desktop and mobile navigation", () => {
     expect(sidebarSource).toContain('<nav aria-label="Primary navigation"');
-    expect(rootRouteSource).toContain('aria-label="Operational navigation"');
+    expect(mobileNavSource).toContain('aria-label="Open navigation menu"');
+    expect(mobileNavSource).toContain('<nav aria-label="Primary navigation"');
+    expect(rootRouteSource).toContain("<AppMobileNav />");
 
-    for (const [path, desktopLabel, mobileLabel] of [
-      ["/portal", "Portal", "Portal"],
-      ["/payments", "Payments", "Payments"],
-      ["/whatsapp/automation", "WhatsApp Automation", "Automation"],
-      ["/annual-returns", "Annual Returns", "Annual returns"],
+    // Desktop and mobile render the same NavList, so the shared config is the
+    // only place a destination or label can be defined.
+    expect(sidebarSource).toContain("<NavList");
+    expect(mobileNavSource).toContain("<NavList");
+
+    for (const [path, label] of [
+      ["/portal", "Portal"],
+      ["/payments", "Payments"],
+      ["/whatsapp/automation", "WhatsApp Automation"],
+      ["/annual-returns", "Annual Returns"],
     ]) {
-      expect(sidebarSource).toContain(`{ to: "${path}", label: "${desktopLabel}"`);
-      expect(rootRouteSource).toContain(`{ to: "${path}", label: "${mobileLabel}" }`);
+      expect(navigationSource).toContain(`to: "${path}", label: "${label}"`);
     }
 
-    expect(sidebarSource.indexOf('to: "/portal"')).toBeLessThan(
-      sidebarSource.indexOf('to: "/whatsapp/automation"'),
+    expect(navigationSource.indexOf('to: "/portal"')).toBeLessThan(
+      navigationSource.indexOf('to: "/whatsapp/automation"'),
     );
   });
 

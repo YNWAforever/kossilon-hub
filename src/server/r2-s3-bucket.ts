@@ -36,13 +36,15 @@ function toHex(buffer: ArrayBuffer): string {
 }
 
 export async function sha256Hex(data: Uint8Array): Promise<string> {
-  return toHex(await crypto.subtle.digest("SHA-256", data));
+  // `as BufferSource`: TS 5.7 made Uint8Array generic over ArrayBufferLike, which no
+  // longer matches BufferSource even though every runtime value here is ArrayBuffer-backed.
+  return toHex(await crypto.subtle.digest("SHA-256", data as BufferSource));
 }
 
 async function hmacSha256(key: Uint8Array, data: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
-    key,
+    key as BufferSource,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -201,7 +203,7 @@ export function createR2S3Bucket(config: R2S3BucketConfig): R2BucketLike {
       amzDate: amzTimestamp(now()),
     });
 
-    return fetcher(url, { method, headers, body });
+    return fetcher(url, { method, headers, body: body as BodyInit | undefined });
   }
 
   // Error text carries the status only — never the signature, key, or response body.

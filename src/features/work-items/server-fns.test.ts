@@ -93,8 +93,10 @@ describe("work queue server authorization", () => {
 describe("work queue route contract", () => {
   const routePath = new URL("../../routes/work-queue.tsx", import.meta.url);
   const routeSource = existsSync(routePath) ? readFileSync(routePath, "utf8") : "";
+  // Destinations moved out of app-sidebar.tsx into the shared navigation config
+  // that both the desktop sidebar and the mobile drawer render.
   const sidebarSource = readFileSync(
-    new URL("../../components/app-sidebar.tsx", import.meta.url),
+    new URL("../../components/navigation.ts", import.meta.url),
     "utf8",
   );
   const repositorySource = readFileSync(new URL("./repository.ts", import.meta.url), "utf8");
