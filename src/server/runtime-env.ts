@@ -1,5 +1,9 @@
 import type { R2Bucket } from "@cloudflare/workers-types";
 
+// Explicit .ts extension: scripts/validate-firm-runtime.ts loads this module under raw
+// Node ESM, which does not resolve extensionless relative specifiers.
+import { createR2S3Bucket } from "./r2-s3-bucket.ts";
+
 export type R2BucketLike = Pick<R2Bucket, "delete" | "get" | "head" | "put">;
 
 export type FirmRuntimeEnv = {
@@ -67,6 +71,38 @@ function isEmail(value: unknown): boolean {
   return hasText(value) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+// Workers exposes R2 as a binding object. Every other runtime (Vercel, Node) reaches the
+// same bucket over R2's S3-compatible API, so either form satisfies DOCUMENTS_BUCKET.
+const R2_S3_CREDENTIAL_KEYS = [
+  "R2_ACCOUNT_ID",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "R2_BUCKET_NAME",
+] as const;
+
+function r2S3Config(env: Record<string, unknown>) {
+  if (!R2_S3_CREDENTIAL_KEYS.every((key) => hasText(env[key]))) return undefined;
+
+  return {
+    accountId: (env.R2_ACCOUNT_ID as string).trim(),
+    accessKeyId: (env.R2_ACCESS_KEY_ID as string).trim(),
+    secretAccessKey: (env.R2_SECRET_ACCESS_KEY as string).trim(),
+    bucketName: (env.R2_BUCKET_NAME as string).trim(),
+    endpoint: hasText(env.R2_ENDPOINT) ? env.R2_ENDPOINT.trim() : undefined,
+  };
+}
+
+function resolveDocumentsBucket(env: Record<string, unknown>): R2BucketLike {
+  if (isR2Bucket(env.DOCUMENTS_BUCKET)) return env.DOCUMENTS_BUCKET;
+
+  const config = r2S3Config(env);
+  if (!config) {
+    throw new Error("DOCUMENTS_BUCKET requires a Workers R2 binding or R2 S3 credentials.");
+  }
+
+  return createR2S3Bucket(config);
+}
+
 function isR2Bucket(value: unknown): value is R2BucketLike {
   if (typeof value !== "object" || value === null) return false;
 
@@ -86,7 +122,7 @@ function hasBinding(env: Record<string, unknown>, name: string): boolean {
     case "DATABASE_URL":
       return getDatabaseUrl(env) !== undefined;
     case "DOCUMENTS_BUCKET":
-      return isR2Bucket(env[name]);
+      return isR2Bucket(env[name]) || r2S3Config(env) !== undefined;
     case "WOZTELL_ACCESS_TOKEN":
       return hasText(env[name]) && env[name].trim().length >= 8;
     case "WOZTELL_WEBHOOK_SECRET":
@@ -126,7 +162,7 @@ export function getFirmRuntimeEnv(
     neonAuthUrl: (env.NEON_AUTH_URL as string).trim(),
     neonAuthCookieSecret: env.NEON_AUTH_COOKIE_SECRET as string,
     databaseUrl: getDatabaseUrl(env) as string,
-    documentsBucket: env.DOCUMENTS_BUCKET as R2BucketLike,
+    documentsBucket: resolveDocumentsBucket(env),
     woztellApiBaseUrl: (env.WOZTELL_API_BASE_URL as string).trim(),
     woztellAccessToken: env.WOZTELL_ACCESS_TOKEN as string,
     woztellChannelId: (env.WOZTELL_CHANNEL_ID as string).trim(),
