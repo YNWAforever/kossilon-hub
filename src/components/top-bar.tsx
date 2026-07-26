@@ -1,6 +1,12 @@
-import { Search, Bell, HelpCircle, LogOut } from "lucide-react";
-import { useAuth } from "@/features/auth/auth-context-neon";
+import { Search, Bell, HelpCircle } from "lucide-react";
 
+/**
+ * Page header: title, subtitle, and per-page actions.
+ *
+ * Signed-in identity and sign-out deliberately live in the sidebar and mobile
+ * drawer instead of here — TopBar is only rendered by some routes, so anything
+ * placed in it disappears on the rest.
+ */
 export function TopBar({
   title,
   subtitle,
@@ -10,8 +16,6 @@ export function TopBar({
   subtitle?: string;
   actions?: React.ReactNode;
 }) {
-  const { session, signOut } = useAuth();
-
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
       <div className="flex h-14 items-center gap-4 px-6">
@@ -47,27 +51,6 @@ export function TopBar({
         >
           <Bell className="h-4 w-4" />
           <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-status-red" />
-        </button>
-
-        <div className="flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sand text-xs font-semibold text-white">
-            {session?.initials ?? "--"}
-          </div>
-          <div className="hidden text-right leading-tight md:block">
-            <div className="text-xs font-semibold text-foreground">
-              {session?.name ?? "Signed in"}
-            </div>
-            <div className="text-[10px] text-muted-foreground">{session?.role ?? "User"}</div>
-          </div>
-        </div>
-
-        <button
-          onClick={signOut}
-          className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label="Sign out"
-          title="Sign out"
-        >
-          <LogOut className="h-4 w-4" />
         </button>
       </div>
     </header>
