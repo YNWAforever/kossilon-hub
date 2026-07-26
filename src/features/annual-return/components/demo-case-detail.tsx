@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
@@ -78,15 +77,6 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   });
   const workItem = (workItemsQuery.data ?? []).find((item) => item.caseId === id);
   const portalSnapshot = useClientPortalSnapshot();
-  const [note, setNote] = useState("");
-  const [packetWarning, setPacketWarning] = useState<string | undefined>();
-  const [followUpWarning, setFollowUpWarning] = useState<string | undefined>();
-
-  useEffect(() => {
-    setNote("");
-    setPacketWarning(undefined);
-    setFollowUpWarning(undefined);
-  }, [id]);
 
   if (!caseItem) {
     return (
@@ -108,10 +98,8 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   const blockers = getBlockers(caseItem);
   const nextAction = getNextAction(caseItem);
   const dueInDays = daysUntil(caseItem.dueDate);
-  const isFiled = caseItem.status === "filed";
   const packetReadiness = getPacketReadiness(caseItem);
   const packetStatus = getPacketStatus(caseItem);
-  const packetLocked = isFiled || Boolean(caseItem.submission);
   const followUps = getFollowUpDrafts(caseItem);
   const portalActions = getClientPortalRequiredActions(caseItem, portalSnapshot);
   const portalActivity = getClientPortalActivity(caseItem.id, portalSnapshot);
@@ -155,6 +143,18 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           </>
         }
       />
+
+      {/* Every control below is disabled on purpose. The demo stores expose no
+          write path at all (docs/adr/0001-demo-mode-is-read-only.md), so saying
+          so once here is more honest than letting each control look live and
+          then explaining itself after the click. */}
+      <p
+        className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        role="status"
+      >
+        Read-only demo. Case state is changed in production, through the annual-return server
+        actions.
+      </p>
 
       <section className="rounded-lg border bg-card p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -227,11 +227,8 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               <select
                 aria-label="Assign owner"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                disabled={isFiled}
+                disabled
                 value={caseItem.owner}
-                onChange={() =>
-                  setPacketWarning("Production owner actions are handled by the work queue.")
-                }
               >
                 {ownerOptions.map((owner) => (
                   <option key={owner} value={owner}>
@@ -251,7 +248,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               <div>
                 <h2 className="text-lg font-semibold">Blockers</h2>
                 <p className="text-sm text-muted-foreground">
-                  Clear document, payment, signature, and review blockers to raise readiness.
+                  Document, payment, signature, and review blockers holding readiness down.
                 </p>
               </div>
               <span className="text-sm text-muted-foreground">{blockers.length} open</span>
@@ -271,12 +268,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   </div>
                   <button
                     className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                    disabled={isFiled}
-                    onClick={() =>
-                      setPacketWarning(
-                        "Production document state is managed by the private document workflow.",
-                      )
-                    }
+                    disabled
                     type="button"
                   >
                     {doc.received ? "Mark missing" : "Mark received"}
@@ -292,13 +284,8 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 </span>
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled={isFiled}
+                  disabled
                   value={caseItem.paymentStatus}
-                  onChange={() =>
-                    setPacketWarning(
-                      "Production payment state is managed by the annual-return server action.",
-                    )
-                  }
                 >
                   <option value="pending">Pending</option>
                   <option value="paid">Paid</option>
@@ -312,13 +299,8 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 </span>
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled={isFiled}
+                  disabled
                   value={caseItem.signatureStatus}
-                  onChange={() =>
-                    setPacketWarning(
-                      "Production signature state is managed by the annual-return server action.",
-                    )
-                  }
                 >
                   <option value="missing">Missing</option>
                   <option value="requested">Requested</option>
@@ -332,13 +314,8 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 </span>
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled={isFiled}
+                  disabled
                   value={caseItem.reviewStatus}
-                  onChange={() =>
-                    setPacketWarning(
-                      "Production review state is managed by the annual-return server action.",
-                    )
-                  }
                 >
                   <option value="not-started">Not started</option>
                   <option value="in-review">In review</option>
@@ -353,7 +330,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               <div>
                 <h2 className="text-lg font-semibold">Filing packet</h2>
                 <p className="text-sm text-muted-foreground">
-                  Assemble the mocked NAR1 packet before submission.
+                  The mocked NAR1 packet as it stands before submission.
                 </p>
               </div>
               <div className="text-right">
@@ -373,12 +350,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 <button
                   key={requirement.id}
                   className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled={packetLocked}
-                  onClick={() =>
-                    setPacketWarning(
-                      "Production packet state is managed by the annual-return server action.",
-                    )
-                  }
+                  disabled
                   type="button"
                 >
                   <span>{requirement.label}</span>
@@ -401,33 +373,17 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               </div>
             ) : null}
 
-            {packetWarning ? (
-              <div className="mt-4 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
-                {packetWarning}
-              </div>
-            ) : null}
-
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button
                 className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                disabled={isFiled || Boolean(caseItem.submission)}
-                onClick={() =>
-                  setPacketWarning(
-                    "Production packet submission is handled by the annual-return server action.",
-                  )
-                }
+                disabled
                 type="button"
               >
                 Submit packet
               </button>
               <button
                 className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                disabled={isFiled || !caseItem.submission || Boolean(caseItem.receipt)}
-                onClick={() =>
-                  setPacketWarning(
-                    "Production receipt acceptance is handled by the annual-return server action.",
-                  )
-                }
+                disabled
                 type="button"
               >
                 Accept receipt
@@ -448,27 +404,12 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               </span>
             </div>
 
-            {followUpWarning ? (
-              <div className="mt-4 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
-                {followUpWarning}
-              </div>
-            ) : null}
-
             <div className="mt-4 space-y-3">
               {followUps.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No follow-ups are needed.</p>
               ) : (
                 followUps.map((draft) => (
-                  <FollowUpCard
-                    key={draft.id}
-                    caseItem={caseItem}
-                    draft={draft}
-                    onSend={() =>
-                      setFollowUpWarning(
-                        "Production follow-ups are dispatched by the notification outbox.",
-                      )
-                    }
-                  />
+                  <FollowUpCard key={draft.id} caseItem={caseItem} draft={draft} />
                 ))
               )}
             </div>
@@ -479,7 +420,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               <div>
                 <h2 className="text-lg font-semibold">Checklist</h2>
                 <p className="text-sm text-muted-foreground">
-                  Toggle each operator task as work moves forward or reopens.
+                  Operator tasks, ticked off as work moves forward or reopens.
                 </p>
               </div>
               <span className="text-sm text-muted-foreground">
@@ -493,16 +434,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 <button
                   key={item.id}
                   className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled={isFiled}
-                  onClick={() =>
-                    item.complete
-                      ? setPacketWarning(
-                          "Production checklist state is managed by the annual-return server action.",
-                        )
-                      : setPacketWarning(
-                          "Production checklist state is managed by the annual-return server action.",
-                        )
-                  }
+                  disabled
                   type="button"
                 >
                   <span>{item.label}</span>
@@ -517,7 +449,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               <div>
                 <h2 className="text-lg font-semibold">Notes</h2>
                 <p className="text-sm text-muted-foreground">
-                  Capture operator context without leaving the case.
+                  Operator context captured against the case.
                 </p>
               </div>
               <span className="text-sm text-muted-foreground">{caseItem.notes.length} notes</span>
@@ -525,22 +457,16 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
 
             <div className="mt-4 space-y-3">
               <textarea
-                aria-readonly={isFiled}
+                aria-label="New note"
+                aria-readonly
                 className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm read-only:cursor-not-allowed read-only:bg-muted read-only:text-muted-foreground"
-                readOnly={isFiled}
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
+                readOnly
+                value=""
               />
               <div className="flex justify-end">
                 <button
                   className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled={isFiled || !note.trim()}
-                  onClick={() => {
-                    if (!note.trim()) return;
-                    setPacketWarning(
-                      "Production notes are managed by the annual-return server action.",
-                    );
-                  }}
+                  disabled
                   type="button"
                 >
                   Add note
@@ -704,14 +630,14 @@ function riskToneClass(risk: AnnualReturnRiskLevel): string {
 function FollowUpCard({
   caseItem,
   draft,
-  onSend,
 }: {
   caseItem: AnnualReturnCase;
   draft: AnnualReturnFollowUpDraft;
-  onSend: () => void;
 }) {
+  // The send button is disabled either way; the eligibility reason still earns
+  // its place, because "filed cases cannot send follow-ups" is domain truth
+  // rather than a demo limitation.
   const eligibility = canSendFollowUp(caseItem, draft);
-  const disabled = !eligibility.ok;
 
   return (
     <div className="rounded-md border px-3 py-3">
@@ -727,12 +653,11 @@ function FollowUpCard({
       <p className="mt-3 text-sm">{draft.messagePreview}</p>
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          {disabled ? eligibility.reason : "Ready to mock-send"}
+          {eligibility.ok ? "Drafted from the current blockers" : eligibility.reason}
         </p>
         <button
           className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-          disabled={disabled}
-          onClick={onSend}
+          disabled
           type="button"
         >
           Send now
