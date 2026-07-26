@@ -1,49 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const routeFiles = [
-  "annual-returns.$id.tsx",
-  "documents.tsx",
-  "payments.tsx",
-  "portal.tsx",
-  "whatsapp.automation.tsx",
-  "settings.tsx",
-];
-
-const forbiddenBrowserMutations = [
-  "assignOwner(",
-  "markDocumentMissing(",
-  "markDocumentReceived(",
-  "updatePaymentStatus(",
-  "updateSignatureStatus(",
-  "updateReviewStatus(",
-  "completeChecklistItem(",
-  "reopenChecklistItem(",
-  "togglePacketRequirement(",
-  "submitFilingPacket(",
-  "acceptFilingReceipt(",
-  "addCaseNote(",
-  "sendFollowUpNow(",
-  "uploadClientDocument(",
-  "replaceClientDocument(",
-  "reviewClientDocument(",
-  "uploadPaymentProof(",
-  "acceptPaymentProof(",
-  "rejectPaymentProof(",
-  "sendDocumentReviewFollowUpNow(",
-  "sendPaymentProofFollowUpNow(",
-];
-
+// The name-by-name denylist that used to live here is gone: the demo stores no
+// longer export a write path, so there is nothing for a production route to
+// import. The invariant is structural now, not a list to keep in sync — which
+// is just as well, because this copy had already drifted out of step with the
+// build gate it mirrored.
 describe("production route authorization contract", () => {
-  it("does not let production routes mutate browser-owned stores", () => {
-    for (const file of routeFiles) {
-      const source = readFileSync(new URL(`./${file}`, import.meta.url), "utf8");
-      for (const mutation of forbiddenBrowserMutations) {
-        expect(source, `${file} still owns ${mutation}`).not.toContain(mutation);
-      }
-    }
-  });
-
   it("keeps document routes on private server functions", () => {
     const documents = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
     const portal = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");

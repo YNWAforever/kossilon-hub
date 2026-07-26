@@ -2,13 +2,8 @@ import { useSyncExternalStore } from "react";
 
 import {
   type AnnualReturnCase,
-  appendClientPortalTimelineEvent,
-  acceptPaymentProofForCase,
-  batchAnnualReturnCaseUpdates,
   getAnnualReturnCaseById,
   getPacketStatus,
-  markDocumentMissing,
-  markDocumentReceived,
 } from "./annual-return-store";
 
 export type ClientPortalDocumentCategory =
@@ -293,9 +288,87 @@ export type ClientPortalSnapshot = {
   paymentProofFollowUps: ClientPortalPaymentProofFollowUpSend[];
 };
 
+// The portal snapshot used to start empty and was filled in only by the store's
+// write functions. Those were unreachable from the app well before they were
+// deleted, so in practice the demo portal has shown no documents and no payment
+// proofs at all. These fixtures put the review states back on screen — rejected,
+// accepted and superseded — so the portal and payments screens demonstrate the
+// range they were built for, and so the derivations over them stay covered
+// without a write path.
 const initialSnapshot: ClientPortalSnapshot = {
-  documents: [],
-  paymentProofs: [],
+  documents: [
+    {
+      id: "doc-delta-signed-nar1-rejected",
+      caseId: "ar-delta",
+      requirementId: "signed-nar1",
+      companyName: "Delta Bloom Ventures Limited",
+      contactName: "Joanna Poon",
+      title: "Signed NAR1",
+      filename: "signed-nar1.pdf",
+      category: "signature",
+      source: "client-portal",
+      status: "rejected",
+      actor: "Joanna Poon",
+      createdAt: "2026-07-08T02:15:00.000Z",
+      reviewedBy: "Operations",
+      reviewedAt: "2026-07-08T06:40:00.000Z",
+      reviewSummary: "Rejected by Operations",
+      reviewReasonCode: "missing-signature",
+      reviewReasonLabel: "Required signature is missing",
+      reviewNote: "Director signature is missing on page 2.",
+    },
+    {
+      id: "doc-delta-scr-accepted",
+      caseId: "ar-delta",
+      requirementId: "scr",
+      companyName: "Delta Bloom Ventures Limited",
+      contactName: "Joanna Poon",
+      title: "Updated significant controller register",
+      filename: "updated-scr.pdf",
+      category: "registry",
+      source: "client-portal",
+      status: "accepted",
+      actor: "Joanna Poon",
+      createdAt: "2026-07-08T02:18:00.000Z",
+      reviewedBy: "Operations",
+      reviewedAt: "2026-07-08T06:42:00.000Z",
+      reviewSummary: "Accepted by Operations",
+    },
+  ],
+  paymentProofs: [
+    {
+      id: "proof-delta-superseded",
+      caseId: "ar-delta",
+      companyName: "Delta Bloom Ventures Limited",
+      contactName: "Joanna Poon",
+      filename: "fps-receipt-blurred.png",
+      origin: "client-portal",
+      status: "superseded",
+      uploadedBy: "Joanna Poon",
+      uploadedAt: "2026-07-09T01:05:00.000Z",
+      reviewedBy: "Operations",
+      reviewedAt: "2026-07-09T03:20:00.000Z",
+      reviewSummary: "Rejected by Operations",
+      reviewReasonCode: "unreadable",
+      reviewReasonLabel: "Proof is unclear, cropped, or incomplete",
+      reviewNote: "The reference number is not legible.",
+    },
+    {
+      id: "proof-delta-current",
+      caseId: "ar-delta",
+      companyName: "Delta Bloom Ventures Limited",
+      contactName: "Joanna Poon",
+      filename: "fps-receipt.png",
+      origin: "client-portal",
+      status: "accepted",
+      uploadedBy: "Joanna Poon",
+      uploadedAt: "2026-07-09T04:10:00.000Z",
+      supersedesProofId: "proof-delta-superseded",
+      reviewedBy: "Operations",
+      reviewedAt: "2026-07-09T05:00:00.000Z",
+      reviewSummary: "Accepted by Operations",
+    },
+  ],
   actions: [],
   documentReviewFollowUps: [],
   paymentProofFollowUps: [],
@@ -354,13 +427,6 @@ export function subscribeClientPortalStoreForTest(listener: () => void): () => v
   return subscribe(listener);
 }
 
-function documentCategoryForRequirement(requirementId: string): ClientPortalDocumentCategory {
-  if (requirementId.includes("payment")) return "payment";
-  if (requirementId.includes("signed") || requirementId.includes("nar1")) return "signature";
-  if (requirementId.includes("scr")) return "registry";
-  return "registry";
-}
-
 function isReadOnlyCase(caseItem: AnnualReturnCase): boolean {
   return caseItem.status === "filed" || getPacketStatus(caseItem) === "accepted";
 }
@@ -373,52 +439,6 @@ function hasCompletedAction(
   return currentSnapshot.actions.some(
     (action) => action.caseId === caseId && action.type === type && action.status === "completed",
   );
-}
-
-function addAction(
-  caseItem: AnnualReturnCase,
-  type: ClientPortalActionType,
-  actor: string,
-  summary: string,
-): ClientPortalAction {
-  return addActionForCase(caseItem.id, type, actor, summary);
-}
-
-function addActionForCase(
-  caseId: string,
-  type: ClientPortalActionType,
-  actor: string,
-  summary: string,
-  metadata: Pick<ClientPortalAction, "documentId" | "proofId" | "draftId"> = {},
-): ClientPortalAction {
-  const action: ClientPortalAction = {
-    id: `portal-action-${caseId}-${type}-${Date.now()}-${snapshot.actions.length + 1}`,
-    caseId,
-    type,
-    actor,
-    status: "completed",
-    summary,
-    createdAt: nowStamp(),
-    ...metadata,
-  };
-
-  snapshot = { ...snapshot, actions: [action, ...snapshot.actions] };
-  return action;
-}
-
-function addActionOnce(
-  caseItem: AnnualReturnCase,
-  type: ClientPortalActionType,
-  actor: string,
-  summary: string,
-): { action: ClientPortalAction; inserted: boolean } {
-  const existing = snapshot.actions.find(
-    (action) =>
-      action.caseId === caseItem.id && action.type === type && action.status === "completed",
-  );
-  if (existing) return { action: existing, inserted: false };
-
-  return { action: addActionForCase(caseItem.id, type, actor, summary), inserted: true };
 }
 
 export function getCurrentClientDocument(
@@ -984,251 +1004,6 @@ export function getPaymentProofFollowUpDrafts(
     .sort((a, b) => a.companyName.localeCompare(b.companyName));
 }
 
-function createDocument(
-  caseItem: AnnualReturnCase,
-  requirementId: string,
-  filename: string,
-  actor: string,
-  supersedesDocumentId?: string,
-): ClientPortalDocument {
-  const requirement = caseItem.documents.find((document) => document.id === requirementId);
-  const title = requirement?.label ?? "Client document";
-
-  return {
-    id: `portal-doc-${caseItem.id}-${requirementId}-${Date.now()}-${snapshot.documents.length + 1}`,
-    caseId: caseItem.id,
-    requirementId,
-    companyName: caseItem.companyName,
-    contactName: caseItem.contactName,
-    title,
-    filename,
-    category: documentCategoryForRequirement(requirementId),
-    source: "client-portal",
-    status: "uploaded",
-    actor,
-    createdAt: nowStamp(),
-    supersedesDocumentId,
-    reviewedBy: undefined,
-    reviewedAt: undefined,
-    reviewSummary: undefined,
-    reviewReasonCode: undefined,
-    reviewReasonLabel: undefined,
-    reviewNote: undefined,
-  };
-}
-
-function createPaymentProof(
-  caseItem: AnnualReturnCase,
-  filename: string,
-  origin: ClientPortalPaymentProofOrigin,
-  actor: string,
-  supersedesProofId?: string,
-): ClientPortalPaymentProof {
-  return {
-    id: `payment-proof-${caseItem.id}-${Date.now()}-${snapshot.paymentProofs.length + 1}`,
-    caseId: caseItem.id,
-    companyName: caseItem.companyName,
-    contactName: caseItem.contactName,
-    filename,
-    origin,
-    status: "pending-review",
-    uploadedBy: actor,
-    uploadedAt: nowStamp(),
-    supersedesProofId,
-  };
-}
-
-function blockReadOnlyCase(caseItem: AnnualReturnCase): { ok: false; reason: string } | undefined {
-  if (!isReadOnlyCase(caseItem)) return undefined;
-  return { ok: false, reason: "Filed cases are read-only in the client portal" };
-}
-
-function addPaymentProof(
-  caseItem: AnnualReturnCase,
-  filename: string,
-  origin: ClientPortalPaymentProofOrigin,
-  actor?: string,
-): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
-  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
-  if (!canonicalCase) return { ok: false, reason: "Case not found" };
-
-  const readOnly = blockReadOnlyCase(canonicalCase);
-  if (readOnly) return readOnly;
-  if (!filename.trim()) return { ok: false, reason: "Filename is required" };
-
-  const current = getCurrentPaymentProof(canonicalCase.id);
-  if (current?.status === "pending-review") {
-    return { ok: false, reason: "Current payment proof is still pending review" };
-  }
-  if (current?.status === "accepted") {
-    return { ok: false, reason: "Accepted payment proof cannot be replaced" };
-  }
-
-  const proofActor =
-    actor?.trim() || (origin === "client-portal" ? canonicalCase.contactName : "Operations");
-  const proof = createPaymentProof(canonicalCase, filename.trim(), origin, proofActor, current?.id);
-  snapshot = {
-    ...snapshot,
-    paymentProofs: [
-      proof,
-      ...snapshot.paymentProofs.map((candidate) =>
-        candidate.id === current?.id ? { ...candidate, status: "superseded" as const } : candidate,
-      ),
-    ],
-  };
-
-  const actionType: ClientPortalActionType =
-    origin === "client-portal" ? "upload-payment-proof" : "attach-payment-proof";
-  const actionVerb = origin === "client-portal" ? "uploaded" : "attached";
-  const summary = `${proofActor} ${actionVerb} payment proof ${proof.filename}.`;
-  addActionForCase(canonicalCase.id, actionType, proofActor, summary, { proofId: proof.id });
-  appendClientPortalTimelineEvent(
-    canonicalCase.id,
-    origin === "client-portal" ? "Payment proof uploaded" : "Payment proof attached",
-    summary,
-  );
-  emit();
-
-  return {
-    ok: true,
-    proofId: proof.id,
-    ...(current ? { supersededProofId: current.id } : {}),
-  };
-}
-
-export function uploadPaymentProof(
-  caseItem: AnnualReturnCase,
-  filename: string,
-  actor?: string,
-): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
-  return addPaymentProof(caseItem, filename, "client-portal", actor);
-}
-
-export function attachPaymentProof(
-  caseItem: AnnualReturnCase,
-  filename: string,
-  actor?: string,
-): { ok: true; proofId: string; supersededProofId?: string } | { ok: false; reason: string } {
-  return addPaymentProof(caseItem, filename, "staff-payments", actor);
-}
-
-export function acceptPaymentProof(
-  proofId: string,
-  actor?: string,
-): { ok: true; proofId: string } | { ok: false; reason: string } {
-  const proof = snapshot.paymentProofs.find((candidate) => candidate.id === proofId);
-  if (!proof) return { ok: false, reason: "Payment proof not found" };
-  if (getCurrentPaymentProof(proof.caseId)?.id !== proof.id) {
-    return { ok: false, reason: "Payment proof is not current" };
-  }
-  const alreadyAccepted = proof.status === "accepted";
-  if (!alreadyAccepted && proof.status !== "pending-review") {
-    return { ok: false, reason: "Payment proof is not pending review" };
-  }
-
-  const caseItem = getAnnualReturnCaseById(proof.caseId);
-  if (!caseItem) return { ok: false, reason: "Case not found" };
-  const proofRequirement = caseItem.packetRequirements.find(
-    (requirement) => requirement.id === "payment-proof-checked",
-  );
-  if (alreadyAccepted && caseItem.paymentStatus === "paid" && proofRequirement?.complete) {
-    return { ok: true, proofId: proof.id };
-  }
-  const readOnly = blockReadOnlyCase(caseItem);
-  if (readOnly) return readOnly;
-
-  const reviewer = actor?.trim() || "Operations";
-  let accepted: ReturnType<typeof acceptPaymentProofForCase> = {
-    ok: false,
-    reason: "Payment proof acceptance failed",
-  };
-
-  batchAnnualReturnCaseUpdates(() => {
-    accepted = acceptPaymentProofForCase(proof.caseId, reviewer);
-    if (!accepted.ok) return;
-
-    if (!alreadyAccepted) {
-      snapshot = {
-        ...snapshot,
-        paymentProofs: snapshot.paymentProofs.map((candidate) =>
-          candidate.id === proof.id
-            ? {
-                ...candidate,
-                status: "accepted",
-                reviewedBy: reviewer,
-                reviewedAt: nowStamp(),
-                reviewSummary: `Accepted by ${reviewer}`,
-              }
-            : candidate,
-        ),
-      };
-      const summary = `${reviewer} accepted payment proof ${proof.filename}.`;
-      addActionForCase(proof.caseId, "accept-payment-proof", reviewer, summary, {
-        proofId: proof.id,
-      });
-    }
-  });
-
-  if (!accepted.ok) return accepted;
-  if (!alreadyAccepted) emit();
-
-  return { ok: true, proofId: proof.id };
-}
-
-export function rejectPaymentProof(
-  proofId: string,
-  review: ClientPortalPaymentProofReviewRequest,
-  actor?: string,
-): { ok: true; proofId: string } | { ok: false; reason: string } {
-  const proof = snapshot.paymentProofs.find((candidate) => candidate.id === proofId);
-  if (!proof) return { ok: false, reason: "Payment proof not found" };
-  if (getCurrentPaymentProof(proof.caseId)?.id !== proof.id) {
-    return { ok: false, reason: "Payment proof is not current" };
-  }
-  if (proof.status !== "pending-review") {
-    return { ok: false, reason: "Payment proof is not pending review" };
-  }
-
-  const caseItem = getAnnualReturnCaseById(proof.caseId);
-  if (!caseItem) return { ok: false, reason: "Case not found" };
-  const readOnly = blockReadOnlyCase(caseItem);
-  if (readOnly) return readOnly;
-
-  const reason = clientPortalPaymentProofReviewReasons.find(
-    (candidate) => candidate.code === review.reasonCode,
-  );
-  if (!reason) return { ok: false, reason: "Rejection reason is required" };
-  const note = review.note?.trim();
-  if (reason.code === "other" && !note) {
-    return { ok: false, reason: "Review note is required when reason is Other" };
-  }
-
-  const reviewer = review.actor?.trim() || actor?.trim() || "Operations";
-  const summary = `${reviewer} rejected payment proof ${proof.filename}: ${reason.label}.`;
-  snapshot = {
-    ...snapshot,
-    paymentProofs: snapshot.paymentProofs.map((candidate) =>
-      candidate.id === proof.id
-        ? {
-            ...candidate,
-            status: "rejected",
-            reviewedBy: reviewer,
-            reviewedAt: nowStamp(),
-            reviewSummary: `Rejected by ${reviewer}: ${reason.label}`,
-            reviewReasonCode: reason.code,
-            reviewReasonLabel: reason.label,
-            reviewNote: note,
-          }
-        : candidate,
-    ),
-  };
-  addActionForCase(proof.caseId, "reject-payment-proof", reviewer, summary, { proofId: proof.id });
-  appendClientPortalTimelineEvent(proof.caseId, "Payment proof rejected", summary);
-  emit();
-
-  return { ok: true, proofId: proof.id };
-}
-
 function getPacketApprovalBlockers(
   caseItem: AnnualReturnCase,
   currentSnapshot = snapshot,
@@ -1253,353 +1028,4 @@ function getPacketApprovalBlockers(
         : undefined;
 
   return paymentProofBlocker ? [...documentBlockers, paymentProofBlocker] : documentBlockers;
-}
-
-function normalizeReviewInput(
-  review: ClientPortalDocumentReviewDecision | ClientPortalDocumentReviewRequest,
-  actor: string,
-): NormalizedClientPortalReviewRequest {
-  if (typeof review === "string") {
-    if (review === "accepted") {
-      return { ok: true, decision: "accepted", actor };
-    }
-
-    return { ok: false, reason: "Rejection reason is required" };
-  }
-
-  const reviewer = review.actor?.trim() || actor;
-
-  if (review.decision === "accepted") {
-    return { ok: true, decision: "accepted", actor: reviewer };
-  }
-
-  const reason = getClientPortalReviewReason(review.reasonCode);
-  if (!reason) return { ok: false, reason: "Rejection reason is required" };
-
-  const note = review.note?.trim();
-  if (reason.code === "other" && !note) {
-    return { ok: false, reason: "Review note is required when reason is Other" };
-  }
-
-  return {
-    ok: true,
-    decision: "rejected",
-    actor: reviewer,
-    reasonCode: reason.code,
-    reasonLabel: reason.label,
-    note,
-  };
-}
-
-export function reviewClientDocument(
-  documentId: string,
-  review: ClientPortalDocumentReviewDecision | ClientPortalDocumentReviewRequest,
-  actor = "Operations",
-): { ok: true; documentId: string } | { ok: false; reason: string } {
-  const normalized = normalizeReviewInput(review, actor);
-  if (!normalized.ok) return normalized;
-
-  const document = snapshot.documents.find((candidate) => candidate.id === documentId);
-  if (!document) return { ok: false, reason: "Document not found" };
-  const caseItem = getAnnualReturnCaseById(document.caseId);
-  if (!caseItem) return { ok: false, reason: "Case not found" };
-  const readOnly = blockReadOnlyCase(caseItem);
-  if (readOnly) return readOnly;
-  if (document.source !== "client-portal") {
-    return { ok: false, reason: "Only client portal documents can be reviewed" };
-  }
-  if (document.status === "superseded") {
-    return { ok: false, reason: "Superseded documents cannot be reviewed" };
-  }
-  if (document.status === "accepted" || document.status === "rejected") {
-    return { ok: false, reason: "Document has already been reviewed" };
-  }
-  if (document.status !== "uploaded") {
-    return { ok: false, reason: "Document is not ready for review" };
-  }
-  const reviewedAt = nowStamp();
-  const status = normalized.decision;
-  const actionType: ClientPortalActionType =
-    normalized.decision === "accepted" ? "accept-document" : "reject-document";
-  const reviewSummary =
-    normalized.decision === "accepted"
-      ? `Accepted by ${normalized.actor}`
-      : `Rejected by ${normalized.actor}: ${normalized.reasonLabel}`;
-  const summary =
-    normalized.decision === "accepted"
-      ? `${normalized.actor} accepted ${document.title}.`
-      : `${normalized.actor} rejected ${document.title}: ${normalized.reasonLabel}.`;
-
-  snapshot = {
-    ...snapshot,
-    documents: snapshot.documents.map((candidate) =>
-      candidate.id === document.id
-        ? {
-            ...candidate,
-            status,
-            reviewedBy: normalized.actor,
-            reviewedAt,
-            reviewSummary,
-            reviewReasonCode:
-              normalized.decision === "rejected" ? normalized.reasonCode : undefined,
-            reviewReasonLabel:
-              normalized.decision === "rejected" ? normalized.reasonLabel : undefined,
-            reviewNote: normalized.decision === "rejected" ? normalized.note : undefined,
-          }
-        : candidate,
-    ),
-  };
-
-  addActionForCase(document.caseId, actionType, normalized.actor, summary);
-
-  if (document.requirementId) {
-    if (normalized.decision === "accepted") {
-      markDocumentReceived(document.caseId, document.requirementId);
-    } else {
-      markDocumentMissing(document.caseId, document.requirementId);
-    }
-  }
-
-  appendClientPortalTimelineEvent(
-    document.caseId,
-    normalized.decision === "accepted" ? "Client document accepted" : "Client document rejected",
-    summary,
-  );
-  emit();
-
-  return { ok: true, documentId: document.id };
-}
-
-export function uploadClientDocument(
-  caseItem: AnnualReturnCase,
-  requirementId: string,
-  filename: string,
-  actor?: string,
-): { ok: true; documentId: string } | { ok: false; reason: string } {
-  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
-  if (!canonicalCase) return { ok: false, reason: "Case not found" };
-
-  const readOnly = blockReadOnlyCase(canonicalCase);
-  if (readOnly) return readOnly;
-
-  const requirement = canonicalCase.documents.find((document) => document.id === requirementId);
-  if (!requirement) return { ok: false, reason: "Document requirement not found" };
-  if (!filename.trim()) return { ok: false, reason: "Filename is required" };
-  if (getCurrentClientDocument(canonicalCase.id, requirementId)) {
-    return { ok: false, reason: "A current document already exists" };
-  }
-
-  const documentActor = actor?.trim() || canonicalCase.contactName;
-  const document = createDocument(canonicalCase, requirementId, filename.trim(), documentActor);
-  snapshot = { ...snapshot, documents: [document, ...snapshot.documents] };
-  const summary = `${documentActor} uploaded ${requirement.label}.`;
-  addAction(canonicalCase, "upload-document", documentActor, summary);
-  appendClientPortalTimelineEvent(canonicalCase.id, "Client document uploaded", summary);
-  emit();
-
-  return { ok: true, documentId: document.id };
-}
-
-export function replaceClientDocument(
-  caseItem: AnnualReturnCase,
-  requirementId: string,
-  filename: string,
-  actor?: string,
-): { ok: true; documentId: string; supersededDocumentId?: string } | { ok: false; reason: string } {
-  const canonicalCase = getAnnualReturnCaseById(caseItem.id);
-  if (!canonicalCase) return { ok: false, reason: "Case not found" };
-
-  const readOnly = blockReadOnlyCase(canonicalCase);
-  if (readOnly) return readOnly;
-
-  const requirement = canonicalCase.documents.find((document) => document.id === requirementId);
-  if (!requirement) return { ok: false, reason: "Document requirement not found" };
-  if (!filename.trim()) return { ok: false, reason: "Filename is required" };
-
-  const current = getCurrentClientDocument(canonicalCase.id, requirementId);
-  if (!current) return { ok: false, reason: "No current document is available to replace" };
-  if (current.status !== "rejected") {
-    return { ok: false, reason: "Only rejected documents can be replaced" };
-  }
-  const documentActor = actor?.trim() || canonicalCase.contactName;
-  const document = createDocument(
-    canonicalCase,
-    requirementId,
-    filename.trim(),
-    documentActor,
-    current.id,
-  );
-  snapshot = {
-    ...snapshot,
-    documents: [
-      document,
-      ...snapshot.documents.map((candidate) =>
-        candidate.id === current?.id ? { ...candidate, status: "superseded" as const } : candidate,
-      ),
-    ],
-  };
-  markDocumentMissing(canonicalCase.id, requirementId);
-  const summary = `${documentActor} replaced ${requirement.label}.`;
-  addAction(canonicalCase, "replace-document", documentActor, summary);
-  appendClientPortalTimelineEvent(canonicalCase.id, "Client document replaced", summary);
-  emit();
-
-  return { ok: true, documentId: document.id, supersededDocumentId: current?.id };
-}
-
-export function sendDocumentReviewFollowUpNow(
-  draftId: string,
-  actor = "Operations",
-): { ok: true } | { ok: false; reason: string } {
-  const documentId = draftId.replace(/^document-review-follow-up-/, "");
-  const document = snapshot.documents.find((candidate) => candidate.id === documentId);
-  if (!document) return { ok: false, reason: "The rejected document is no longer current" };
-
-  const caseItem = getAnnualReturnCaseById(document.caseId);
-  if (!caseItem) return { ok: false, reason: "Case not found" };
-
-  const draft = getDocumentReviewFollowUpDrafts([caseItem]).find(
-    (candidate) => candidate.id === draftId,
-  );
-  if (!draft) return { ok: false, reason: "The rejected document is no longer current" };
-  if (draft.status === "sent") return { ok: false, reason: "Follow-up already sent" };
-  if (draft.status === "blocked") {
-    return { ok: false, reason: draft.blockedReason ?? "Follow-up cannot be sent" };
-  }
-
-  const sentAt = nowStamp();
-  const sendRecord: ClientPortalDocumentReviewFollowUpSend = {
-    id: `document-review-follow-up-send-${document.id}-${Date.now()}-${snapshot.documentReviewFollowUps.length + 1}`,
-    draftId,
-    documentId: document.id,
-    caseId: caseItem.id,
-    actor,
-    sentAt,
-  };
-
-  snapshot = {
-    ...snapshot,
-    documentReviewFollowUps: [sendRecord, ...snapshot.documentReviewFollowUps],
-  };
-
-  const summary = `${actor} sent a document replacement follow-up for ${document.title}.`;
-  addActionForCase(caseItem.id, "send-document-review-follow-up", actor, summary, {
-    documentId: document.id,
-    draftId,
-  });
-  appendClientPortalTimelineEvent(caseItem.id, "Document replacement follow-up sent", summary);
-  emit();
-
-  return { ok: true };
-}
-
-export function sendPaymentProofFollowUpNow(
-  draftId: string,
-  actor = "Operations",
-): { ok: true } | { ok: false; reason: string } {
-  const sent = snapshot.paymentProofFollowUps.find((followUp) => followUp.draftId === draftId);
-  if (sent) return { ok: false, reason: "Follow-up already sent" };
-
-  const proofId = draftId.replace(/^payment-proof-review-follow-up-/, "");
-  const proof = snapshot.paymentProofs.find((candidate) => candidate.id === proofId);
-  if (!proof || !isCurrentRejectedPaymentProof(proof)) {
-    return { ok: false, reason: "The rejected payment proof is no longer current" };
-  }
-
-  const caseItem = getAnnualReturnCaseById(proof.caseId);
-  if (!caseItem) return { ok: false, reason: "Case not found" };
-  const readOnly = blockReadOnlyCase(caseItem);
-  if (readOnly) return readOnly;
-
-  const draft = getPaymentProofFollowUpDrafts([caseItem]).find(
-    (candidate) => candidate.id === draftId,
-  );
-  if (!draft) return { ok: false, reason: "The rejected payment proof is no longer current" };
-  if (draft.status === "blocked") {
-    return { ok: false, reason: draft.blockedReason ?? "Follow-up cannot be sent" };
-  }
-
-  const sentAt = nowStamp();
-  const sendRecord: ClientPortalPaymentProofFollowUpSend = {
-    id: `payment-proof-review-follow-up-send-${proof.id}-${Date.now()}-${snapshot.paymentProofFollowUps.length + 1}`,
-    draftId,
-    proofId: proof.id,
-    caseId: caseItem.id,
-    actor,
-    sentAt,
-  };
-
-  snapshot = {
-    ...snapshot,
-    paymentProofFollowUps: [sendRecord, ...snapshot.paymentProofFollowUps],
-  };
-
-  const summary = `${actor} sent a payment proof replacement follow-up for ${proof.filename}.`;
-  addActionForCase(caseItem.id, "send-payment-proof-review-follow-up", actor, summary, {
-    proofId: proof.id,
-    draftId,
-  });
-  appendClientPortalTimelineEvent(caseItem.id, "Payment proof replacement follow-up sent", summary);
-  emit();
-
-  return { ok: true };
-}
-
-export function acknowledgePaymentInstructions(
-  caseItem: AnnualReturnCase,
-  actor = caseItem.contactName,
-): { ok: true } | { ok: false; reason: string } {
-  if (hasCompletedAction(caseItem.id, "acknowledge-payment")) return { ok: true };
-
-  const readOnly = blockReadOnlyCase(caseItem);
-  if (readOnly) return readOnly;
-
-  const summary = `${actor} acknowledged payment instructions.`;
-  const { inserted } = addActionOnce(caseItem, "acknowledge-payment", actor, summary);
-  if (!inserted) return { ok: true };
-
-  appendClientPortalTimelineEvent(caseItem.id, "Payment instructions acknowledged", summary);
-  emit();
-
-  return { ok: true };
-}
-
-export function approveClientPacket(
-  caseItem: AnnualReturnCase,
-  actor = caseItem.contactName,
-): { ok: true } | { ok: false; reason: string } {
-  if (hasCompletedAction(caseItem.id, "approve-packet")) return { ok: true };
-
-  const readOnly = blockReadOnlyCase(caseItem);
-  if (readOnly) return readOnly;
-
-  const missingDocuments = getPacketApprovalBlockers(caseItem);
-  if (missingDocuments.length > 0) {
-    return { ok: false, reason: `Packet approval blocked: ${missingDocuments.join("; ")}` };
-  }
-
-  const summary = `${actor} approved the filing packet.`;
-  const { inserted } = addActionOnce(caseItem, "approve-packet", actor, summary);
-  if (!inserted) return { ok: true };
-
-  appendClientPortalTimelineEvent(caseItem.id, "Client packet approved", summary);
-  emit();
-
-  return { ok: true };
-}
-
-export function recordReceiptViewed(
-  caseItem: AnnualReturnCase,
-  actor = caseItem.contactName,
-): { ok: true } | { ok: false; reason: string } {
-  if (!caseItem.receipt) return { ok: false, reason: "No filing receipt is available" };
-
-  const summary = `${actor} viewed filing receipt ${caseItem.receipt.receiptNumber}.`;
-  const { inserted } = addActionOnce(caseItem, "view-receipt", actor, summary);
-  if (!inserted) return { ok: true };
-
-  appendClientPortalTimelineEvent(caseItem.id, "Client viewed receipt", summary);
-  emit();
-
-  return { ok: true };
 }
