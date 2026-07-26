@@ -4,10 +4,8 @@ import {
   AlertTriangle,
   FileWarning,
   CreditCard,
-  MessageCircle,
   UserCheck,
   Flame,
-  Users,
   Sparkles,
   ArrowRight,
 } from "lucide-react";
@@ -20,7 +18,7 @@ import { useAuth } from "@/features/auth/auth-context-neon";
 import { loadDashboardData, type DashboardData } from "@/features/dashboard/dashboard-data";
 import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
 import type { StatusTone } from "@/lib/status";
-import { dashboardMetrics, teamWorkloadRows, enquiries, tasks, formatDate } from "@/lib/mock-data";
+import { formatDate } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
   loader: () => loadDashboardData(),
@@ -30,7 +28,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Deadlines, overdue cases, pending documents, payments, WhatsApp enquiries, and team workload at a glance.",
+          "Annual return deadlines, overdue cases, missing documents, and payments at a glance.",
       },
     ],
   }),
@@ -45,7 +43,6 @@ function DashboardPage() {
     annualReturnDataAvailable,
   } = Route.useLoaderData() as DashboardData;
   const m = {
-    ...dashboardMetrics(),
     dueIn7: realMetrics.dueIn7,
     dueIn30: realMetrics.dueIn30,
     overdue: realMetrics.overdue,
@@ -54,12 +51,14 @@ function DashboardPage() {
     myCases: realMetrics.assignedToMe,
   };
   const upcoming = upcomingAnnualReturns;
-  const workload = teamWorkloadRows();
-  const todaysEnquiries = enquiries.slice(0, 5);
+  // Enquiries and tasks still come from lib/mock-data, so they are withheld from the
+  // digest: invented priority items on the landing page are worse than fewer real
+  // ones, and their action links pointed at screens no longer in the navigation.
+  // Restore these inputs once both read live data.
   const digest = buildDailyDigest({
     annualReturnCases: upcoming,
-    enquiries,
-    tasks,
+    enquiries: [],
+    tasks: [],
     maxItems: 4,
   });
 
@@ -80,8 +79,7 @@ function DashboardPage() {
                   Annual return data is temporarily unavailable
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Showing fallback annual-return KPI totals while enquiries and team workload remain
-                  available.
+                  Showing fallback annual-return KPI totals until the live query recovers.
                 </p>
               </div>
             </div>
@@ -126,25 +124,11 @@ function DashboardPage() {
             tone="orange"
           />
           <KpiCard
-            label="WhatsApp today"
-            value={m.whatsappToday}
-            hint="Enquiries + replies"
-            icon={MessageCircle}
-            tone="green"
-          />
-          <KpiCard
             label="Assigned to me"
             value={m.myCases}
             hint="Open cases"
             icon={UserCheck}
             tone="blue"
-          />
-          <KpiCard
-            label="Team workload"
-            value={m.teamWorkload}
-            hint="Clients across team"
-            icon={Users}
-            tone="neutral"
           />
         </section>
 
@@ -176,7 +160,7 @@ function DashboardPage() {
 
           {digest.items.length === 0 ? (
             <div className="px-5 py-4 text-sm text-muted-foreground">
-              No priority work detected from annual returns, WhatsApp enquiries, or open tasks.
+              No priority work detected from annual returns.
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -202,8 +186,8 @@ function DashboardPage() {
         </section>
 
         {/* Upcoming AR table */}
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-xl border border-border bg-card">
+        <section className="grid grid-cols-1 gap-6">
+          <div className="rounded-xl border border-border bg-card">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
                 <h2 className="font-display text-base font-semibold text-foreground">
@@ -262,99 +246,10 @@ function DashboardPage() {
               </table>
             </div>
           </div>
-
-          {/* Team workload panel */}
-          <div className="rounded-xl border border-border bg-card">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="font-display text-base font-semibold text-foreground">
-                Team workload
-              </h2>
-              <p className="text-xs text-muted-foreground">Active cases & overdue</p>
-            </div>
-            <ul className="divide-y divide-border">
-              {workload.map((m) => {
-                const pct = Math.min(100, (m.activeCases / 6) * 100);
-                return (
-                  <li key={m.id} className="px-5 py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sand text-xs font-semibold text-white">
-                          {m.initials}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{m.name}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {m.role} · {m.team}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold tabular-nums text-foreground">
-                          {m.activeCases}
-                        </p>
-                        {m.overdue > 0 && (
-                          <p className="text-[11px] font-medium text-status-red">
-                            {m.overdue} overdue
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-taupe" style={{ width: `${pct}%` }} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
         </section>
 
-        {/* Today's enquiries + overdue banner */}
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-xl border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <div>
-                <h2 className="font-display text-base font-semibold text-foreground">
-                  WhatsApp enquiries today
-                </h2>
-                <p className="text-xs text-muted-foreground">AI-classified intent</p>
-              </div>
-              <Link
-                to="/whatsapp"
-                search={{ enquiry: undefined }}
-                className="text-xs font-medium text-primary hover:underline"
-              >
-                Open inbox →
-              </Link>
-            </div>
-            <ul className="divide-y divide-border">
-              {todaysEnquiries.map((e) => (
-                <li key={e.id} className="flex items-start gap-3 px-5 py-3 hover:bg-muted/30">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-status-green-soft text-xs font-semibold text-status-green">
-                    {e.contactName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{e.contactName}</p>
-                      <StatusPill tone="blue" className="!py-0.5 !text-[10px]">
-                        {e.intent}
-                      </StatusPill>
-                      {e.unread > 0 && (
-                        <span className="rounded-full bg-status-green px-1.5 text-[10px] font-semibold text-white">
-                          {e.unread}
-                        </span>
-                      )}
-                    </div>
-                    <p className="truncate text-xs text-muted-foreground">{e.lastMessage}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
+        {/* Overdue banner */}
+        <section>
           <div className="rounded-xl border border-status-red/30 bg-status-red-soft p-5">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-status-red" />
