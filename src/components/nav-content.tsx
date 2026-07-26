@@ -59,9 +59,9 @@ export function NavList({ pathname, onNavigate }: { pathname: string; onNavigate
 }
 
 /**
- * Signed-in identity plus sign-out. Lives in the sidebar and drawer rather than
- * in TopBar, because TopBar is only rendered by some routes — which previously
- * left users with no way to sign out on the rest.
+ * Signed-in identity plus sign-out. Lives in the sidebar and drawer, which every
+ * authenticated screen renders, rather than in a per-page header — that is what
+ * previously left users with no way to sign out on most routes.
  */
 export function AccountBlock() {
   const { session, signOut } = useAuth();

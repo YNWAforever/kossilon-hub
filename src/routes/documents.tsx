@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { downloadDocument, listDocuments } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
@@ -108,11 +109,8 @@ function DocumentsRoute() {
   });
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Workspace</p>
-        <h1 className="mt-1 text-3xl font-semibold">Documents</h1>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader eyebrow="Operations" title="Documents" />
 
       {warning ? (
         <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
@@ -210,7 +208,7 @@ function DocumentsRoute() {
           )}
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 

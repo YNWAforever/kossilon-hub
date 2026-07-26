@@ -17,6 +17,7 @@ import {
   type AnnualReturnRiskLevel,
 } from "../lib/annual-return-store";
 import { daysUntil } from "../lib/app-data";
+import { PageHeader } from "@/components/page-header";
 import { listWorkQueue } from "../features/work-items/server-fns";
 import type { PersistedWorkItem } from "../features/work-items/repository";
 
@@ -76,27 +77,27 @@ function AnnualReturnsRoute() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Cases</p>
-          <h1 className="mt-1 text-3xl font-semibold">Annual returns</h1>
-        </div>
-        <Link
-          to="/work-queue"
-          search={{
-            view: "team",
-            owner: "all",
-            workType: "all",
-            sla: "all",
-            priority: "all",
-            status: "all",
-          }}
-          className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-        >
-          Open work queue
-        </Link>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Operations"
+        title="Annual returns"
+        actions={
+          <Link
+            to="/work-queue"
+            search={{
+              view: "team",
+              owner: "all",
+              workType: "all",
+              sla: "all",
+              priority: "all",
+              status: "all",
+            }}
+            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Open work queue
+          </Link>
+        }
+      />
 
       <div className="grid gap-3 md:grid-cols-5">
         <Metric label="Overdue" value={metrics.overdue} tone="red" />
@@ -186,7 +187,7 @@ function AnnualReturnsRoute() {
           ) : null}
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 

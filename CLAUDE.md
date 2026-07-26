@@ -71,6 +71,9 @@ repository executes tagged-template SQL → repository `close()` in a `finally`.
   `describe.skipIf(!databaseUrl)`; they only run when `DATABASE_URL` is set.
 - **Route-dir tests** must be prefixed with `-` (e.g. `-settings.interaction.test.tsx`) or the
   router tries to treat them as routes.
+- **Page headers**: every screen renders `<PageHeader>` as the first child of its `<main>`, and
+  that component owns the app's only `<h1>`. `src/components/page-header.convention.test.ts`
+  enforces both. Navigation identity and sign-out live in the sidebar/drawer, not the header.
 - **Errors**: throw `Error` with a `Forbidden: ` / `Unauthorized: ` prefix for authz. Never swallow.
 - **Secrets**: validators and verifiers report binding *names* only, never values, and perform no
   network calls. Keep it that way. `.env*` is gitignored except `.env.example` (which holds no values).

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { StatusPill } from "@/components/status-pill";
-import { TopBar } from "@/components/top-bar";
+import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import { demoUsers, isAdmin, type AuthRole, type DemoUser } from "@/features/auth/session";
 import { cn } from "@/lib/utils";
@@ -92,88 +92,84 @@ function AdminPage() {
 
   if (!canAdmin) {
     return (
-      <>
-        <TopBar title="Admin" subtitle="Restricted area" />
-        <main className="flex-1 p-6">
-          <section className="rounded-xl border border-border bg-card p-6">
-            <div className="flex max-w-2xl items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
-                <LockKeyhole className="h-5 w-5 text-status-orange" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="font-display text-lg font-semibold text-foreground">
-                  Admin access required
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {session?.name ?? "This user"} is signed in as {session?.role ?? "User"}.
-                  Prototype user and system controls are limited to Admin users.
-                </p>
-                <Link
-                  to="/"
-                  className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-                >
-                  Back to dashboard
-                </Link>
-              </div>
+      <main className="flex-1 space-y-6 p-6">
+        <PageHeader eyebrow="Administration" title="Admin" subtitle="Restricted area" />
+        <section className="rounded-xl border border-border bg-card p-6">
+          <div className="flex max-w-2xl items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
+              <LockKeyhole className="h-5 w-5 text-status-orange" />
             </div>
-          </section>
-        </main>
-      </>
+            <div className="min-w-0">
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Admin access required
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {session?.name ?? "This user"} is signed in as {session?.role ?? "User"}. Prototype
+                user and system controls are limited to Admin users.
+              </p>
+              <Link
+                to="/"
+                className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+              >
+                Back to dashboard
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
     );
   }
 
   return (
-    <>
-      <TopBar title="Admin" subtitle="Users, roles, system settings" />
-      <main className="flex-1 space-y-6 p-6">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <AdminMetric icon={Users} label="Demo users" value={localUsers.length} />
-          <AdminMetric icon={CheckCircle2} label="Active users" value={activeUsers} />
-          <AdminMetric icon={ShieldCheck} label="Admin users" value={adminUsers} />
-        </section>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader eyebrow="Administration" title="Admin" subtitle="Users, roles, system settings" />
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <AdminMetric icon={Users} label="Demo users" value={localUsers.length} />
+        <AdminMetric icon={CheckCircle2} label="Active users" value={activeUsers} />
+        <AdminMetric icon={ShieldCheck} label="Admin users" value={adminUsers} />
+      </section>
 
-        <section className="rounded-xl border border-border bg-card">
-          <div
-            className="flex flex-wrap gap-2 border-b border-border px-5 py-4"
-            aria-label="Admin sections"
-          >
-            {adminTabs.map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setTab(value)}
-                aria-pressed={tab === value}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition",
-                  tab === value
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border text-muted-foreground hover:bg-accent hover:text-foreground",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
+      <section className="rounded-xl border border-border bg-card">
+        <div
+          className="flex flex-wrap gap-2 border-b border-border px-5 py-4"
+          aria-label="Admin sections"
+        >
+          {adminTabs.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setTab(value)}
+              aria-pressed={tab === value}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition",
+                tab === value
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
 
-          <div className="p-5">
-            {tab === "users" && (
-              <UsersPanel
-                users={localUsers}
-                onToggleActive={toggleActive}
-                onRoleChange={changeRole}
-                onSwitchUser={(userId) => {
-                  const user = localUsers.find((candidate) => candidate.id === userId);
-                  if (user?.active) loginDemoUser(user);
-                }}
-              />
-            )}
-            {tab === "system" && <SystemPanel />}
-            {tab === "audit" && <AuditPanel />}
-          </div>
-        </section>
-      </main>
-    </>
+        <div className="p-5">
+          {tab === "users" && (
+            <UsersPanel
+              users={localUsers}
+              onToggleActive={toggleActive}
+              onRoleChange={changeRole}
+              onSwitchUser={(userId) => {
+                const user = localUsers.find((candidate) => candidate.id === userId);
+                if (user?.active) loginDemoUser(user);
+              }}
+            />
+          )}
+          {tab === "system" && <SystemPanel />}
+          {tab === "audit" && <AuditPanel />}
+        </div>
+      </section>
+    </main>
   );
 }
 

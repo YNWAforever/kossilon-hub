@@ -3,6 +3,7 @@ import { annualReturnQueryKeys } from "../query-keys";
 import type { ProductionFollowUpDraft } from "../follow-ups";
 import { listProductionFollowUpDrafts, sendProductionFollowUp } from "../follow-up-server-fns";
 import { getWhatsAppIntegrationStatus } from "@/features/whatsapp/server-fns";
+import { PageHeader } from "@/components/page-header";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to queue follow-up.";
@@ -44,11 +45,8 @@ export function ProductionWhatsAppAutomation() {
   const error = draftsQuery.error ?? sendMutation.error ?? integrationQuery.error;
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">WhatsApp</p>
-        <h1 className="mt-1 text-3xl font-semibold">Automation</h1>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader eyebrow="Messaging" title="WhatsApp Automation" />
 
       {integrationQuery.data?.deliveryMode === "simulated" ? (
         <div
@@ -101,7 +99,7 @@ export function ProductionWhatsAppAutomation() {
           )}
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 

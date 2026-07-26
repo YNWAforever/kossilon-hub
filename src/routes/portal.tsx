@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import {
   createDocumentUploadIntent,
   downloadDocument,
@@ -71,10 +72,10 @@ function PortalRoute() {
   if (dataMode !== "demo") {
     if (!productionCaseId) {
       return (
-        <div className="space-y-3 p-6">
-          <h1 className="text-2xl font-semibold">Production portal</h1>
+        <main className="flex-1 space-y-3 p-6">
+          <PageHeader eyebrow="Operations" title="Production portal" />
           <p className="text-sm text-muted-foreground">Select a UUID-backed annual return case.</p>
-        </div>
+        </main>
       );
     }
     if (productionCaseQuery.isLoading) {
@@ -84,23 +85,23 @@ function PortalRoute() {
       return <ProductionPortalCaseView caseItem={productionCaseQuery.data} />;
     }
     return (
-      <div className="space-y-3 p-6">
-        <h1 className="text-2xl font-semibold">Portal case unavailable</h1>
+      <main className="flex-1 space-y-3 p-6">
+        <PageHeader eyebrow="Operations" title="Portal case unavailable" />
         <p className="text-sm text-destructive">
           Unable to load the production annual return case.
         </p>
-      </div>
+      </main>
     );
   }
 
   if (!selectedCase) {
     return (
-      <div className="space-y-4 p-6">
-        <h1 className="text-2xl font-semibold">Portal case not found</h1>
+      <main className="flex-1 space-y-4 p-6">
+        <PageHeader eyebrow="Operations" title="Portal case not found" />
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
           Back to staff app
         </Link>
-      </div>
+      </main>
     );
   }
 
@@ -113,33 +114,31 @@ function PortalRoute() {
   const isReadOnly = progress.isReadOnly;
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Client portal demo</p>
-          <h1 className="mt-1 text-3xl font-semibold">{selectedCase.companyName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Annual return due {selectedCase.dueDate} / Packet {packetStatus}
-          </p>
-        </div>
-        <select
-          aria-label="Select portal case"
-          className="rounded-md border bg-background px-3 py-2 text-sm"
-          value={selectedCase.id}
-          onChange={(event) => {
-            setWarning(undefined);
-            void navigate({
-              search: (previous) => ({ ...previous, caseId: event.target.value }),
-            });
-          }}
-        >
-          {cases.map((caseItem) => (
-            <option key={caseItem.id} value={caseItem.id}>
-              {caseItem.companyName}
-            </option>
-          ))}
-        </select>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Client portal demo"
+        title={selectedCase.companyName}
+        subtitle={`Annual return due ${selectedCase.dueDate} / Packet ${packetStatus}`}
+        actions={
+          <select
+            aria-label="Select portal case"
+            className="rounded-md border bg-background px-3 py-2 text-sm"
+            value={selectedCase.id}
+            onChange={(event) => {
+              setWarning(undefined);
+              void navigate({
+                search: (previous) => ({ ...previous, caseId: event.target.value }),
+              });
+            }}
+          >
+            {cases.map((caseItem) => (
+              <option key={caseItem.id} value={caseItem.id}>
+                {caseItem.companyName}
+              </option>
+            ))}
+          </select>
+        }
+      />
 
       {warning ? (
         <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
@@ -228,7 +227,7 @@ function PortalRoute() {
         caseId={selectedCase.id}
         onWarning={setWarning}
       />
-    </div>
+    </main>
   );
 }
 
@@ -417,20 +416,18 @@ function ArchivePreview({
 function ProductionPortalCaseView({ caseItem }: { caseItem: ProductionAnnualReturnCase }) {
   const [, setWarning] = useState<string | undefined>();
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Client portal</p>
-        <h1 className="mt-1 text-3xl font-semibold">{caseItem.companyName}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Production annual return {caseItem.returnYear}
-        </p>
-      </div>
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Client portal"
+        title={caseItem.companyName}
+        subtitle={`Production annual return ${caseItem.returnYear}`}
+      />
       <ProductionDocumentPanel
         companyId={caseItem.companyId}
         caseId={caseItem.id}
         onWarning={setWarning}
       />
-    </div>
+    </main>
   );
 }
 function ProductionDocumentPanel({

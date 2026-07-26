@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
 import { useMemo, useState } from "react";
-import { TopBar } from "@/components/top-bar";
+import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import {
   ClipboardList,
@@ -67,169 +67,171 @@ function SettingsPage() {
   );
 
   return (
-    <>
-      <TopBar title="Settings" subtitle="Checklist templates, packages, integrations" />
-      <main className="flex-1 space-y-6 p-6">
-        {/* Checklist templates section */}
-        <section className="rounded-xl border border-border bg-card">
-          <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-primary" />
-                <h2 className="font-display text-base font-semibold text-foreground">
-                  Checklist templates
-                </h2>
-              </div>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Each new case preloads required documents, reminder cadence, and risk rules from the
-                active template for its service type.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                const id = templatesStore.create();
-                setSelectedId(id);
-                setTab("documents");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus className="h-3.5 w-3.5" /> New template
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
-            {/* Left: template list */}
-            <aside className="border-b border-border lg:border-b-0 lg:border-r">
-              <div className="p-3">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search templates"
-                    className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-2 text-xs outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-              </div>
-              <ul className="max-h-[520px] overflow-y-auto pb-2">
-                {filtered.map((t) => {
-                  const active = selected?.id === t.id;
-                  const usage = cases.filter(
-                    (c) =>
-                      t.serviceType.startsWith("Annual Return") &&
-                      // simplistic: assume all AR cases use the AR template
-                      t.serviceType === "Annual Return — Private Ltd",
-                  ).length;
-                  return (
-                    <li key={t.id}>
-                      <button
-                        onClick={() => setSelectedId(t.id)}
-                        className={cn(
-                          "w-full border-l-2 px-4 py-2.5 text-left transition-colors",
-                          active
-                            ? "border-primary bg-accent"
-                            : "border-transparent hover:bg-muted/50",
-                        )}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-medium text-foreground">
-                            {t.name}
-                          </span>
-                          <StatusPill tone={t.active ? "green" : "yellow"}>
-                            {t.active ? "Active" : "Draft"}
-                          </StatusPill>
-                        </div>
-                        <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                          {t.serviceType}
-                          {usage > 0 && ` · ${usage} cases`}
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </aside>
-
-            {/* Right: editor */}
-            <div className="p-5">
-              {selected ? (
-                <TemplateEditor
-                  key={selected.id}
-                  t={selected}
-                  tab={tab}
-                  setTab={setTab}
-                  onDuplicate={() => {
-                    const id = templatesStore.duplicate(selected.id);
-                    if (id) setSelectedId(id);
-                  }}
-                  onDelete={() => {
-                    templatesStore.remove(selected.id);
-                    const next = templates.find((t) => t.id !== selected.id);
-                    if (next) setSelectedId(next.id);
-                  }}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No templates yet. Create one to get started.
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Knowledge base for the AI assistant */}
-        <KnowledgeBaseSection />
-
-        {/* Secondary settings */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <SimpleCard
-            icon={<Package className="h-4 w-4 text-primary" />}
-            title="Service packages"
-            desc="Fee structure by tier"
-          >
-            <Row
-              label="Basic — HKD 2,800"
-              right={<span className="text-xs text-muted-foreground">Filing only</span>}
-            />
-            <Row
-              label="Standard — HKD 3,800"
-              right={<span className="text-xs text-muted-foreground">Filing + 1 change</span>}
-            />
-            <Row
-              label="Premium — HKD 5,200"
-              right={<span className="text-xs text-muted-foreground">Full-service + advisory</span>}
-            />
-          </SimpleCard>
-
-          <div className="rounded-xl border border-border bg-card p-5">
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Administration"
+        title="Settings"
+        subtitle="Checklist templates, packages, integrations"
+      />
+      {/* Checklist templates section */}
+      <section className="rounded-xl border border-border bg-card">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+          <div>
             <div className="flex items-center gap-2">
-              <Plug className="h-4 w-4 text-primary" />
+              <ClipboardList className="h-4 w-4 text-primary" />
               <h2 className="font-display text-base font-semibold text-foreground">
-                WOZTELL WhatsApp API
+                Checklist templates
               </h2>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Connect your WOZTELL account to enable two-way WhatsApp messaging and automation.
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Each new case preloads required documents, reminder cadence, and risk rules from the
+              active template for its service type.
             </p>
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <LabeledInput label="API endpoint" defaultValue="https://api.woztell.com/v3" />
-              <LabeledInput label="Channel ID" placeholder="wa-channel-id" />
+          </div>
+          <button
+            onClick={() => {
+              const id = templatesStore.create();
+              setSelectedId(id);
+              setTab("documents");
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="h-3.5 w-3.5" /> New template
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
+          {/* Left: template list */}
+          <aside className="border-b border-border lg:border-b-0 lg:border-r">
+            <div className="p-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search templates"
+                  className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
             </div>
-            <div className="mt-4 flex items-center justify-between">
-              {integrationQuery.isPending ? (
-                <StatusPill tone="yellow">Checking</StatusPill>
-              ) : integrationQuery.isError ? (
-                <StatusPill tone="yellow">Unavailable</StatusPill>
-              ) : integrationQuery.data ? (
-                <WhatsAppIntegrationStatus status={integrationQuery.data} />
-              ) : (
-                <StatusPill tone="yellow">Unavailable</StatusPill>
-              )}
-            </div>
+            <ul className="max-h-[520px] overflow-y-auto pb-2">
+              {filtered.map((t) => {
+                const active = selected?.id === t.id;
+                const usage = cases.filter(
+                  (c) =>
+                    t.serviceType.startsWith("Annual Return") &&
+                    // simplistic: assume all AR cases use the AR template
+                    t.serviceType === "Annual Return — Private Ltd",
+                ).length;
+                return (
+                  <li key={t.id}>
+                    <button
+                      onClick={() => setSelectedId(t.id)}
+                      className={cn(
+                        "w-full border-l-2 px-4 py-2.5 text-left transition-colors",
+                        active
+                          ? "border-primary bg-accent"
+                          : "border-transparent hover:bg-muted/50",
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-medium text-foreground">
+                          {t.name}
+                        </span>
+                        <StatusPill tone={t.active ? "green" : "yellow"}>
+                          {t.active ? "Active" : "Draft"}
+                        </StatusPill>
+                      </div>
+                      <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                        {t.serviceType}
+                        {usage > 0 && ` · ${usage} cases`}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
+
+          {/* Right: editor */}
+          <div className="p-5">
+            {selected ? (
+              <TemplateEditor
+                key={selected.id}
+                t={selected}
+                tab={tab}
+                setTab={setTab}
+                onDuplicate={() => {
+                  const id = templatesStore.duplicate(selected.id);
+                  if (id) setSelectedId(id);
+                }}
+                onDelete={() => {
+                  templatesStore.remove(selected.id);
+                  const next = templates.find((t) => t.id !== selected.id);
+                  if (next) setSelectedId(next.id);
+                }}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No templates yet. Create one to get started.
+              </p>
+            )}
           </div>
         </div>
-      </main>
-    </>
+      </section>
+
+      {/* Knowledge base for the AI assistant */}
+      <KnowledgeBaseSection />
+
+      {/* Secondary settings */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SimpleCard
+          icon={<Package className="h-4 w-4 text-primary" />}
+          title="Service packages"
+          desc="Fee structure by tier"
+        >
+          <Row
+            label="Basic — HKD 2,800"
+            right={<span className="text-xs text-muted-foreground">Filing only</span>}
+          />
+          <Row
+            label="Standard — HKD 3,800"
+            right={<span className="text-xs text-muted-foreground">Filing + 1 change</span>}
+          />
+          <Row
+            label="Premium — HKD 5,200"
+            right={<span className="text-xs text-muted-foreground">Full-service + advisory</span>}
+          />
+        </SimpleCard>
+
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2">
+            <Plug className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-base font-semibold text-foreground">
+              WOZTELL WhatsApp API
+            </h2>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Connect your WOZTELL account to enable two-way WhatsApp messaging and automation.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <LabeledInput label="API endpoint" defaultValue="https://api.woztell.com/v3" />
+            <LabeledInput label="Channel ID" placeholder="wa-channel-id" />
+          </div>
+          <div className="mt-4 flex items-center justify-between">
+            {integrationQuery.isPending ? (
+              <StatusPill tone="yellow">Checking</StatusPill>
+            ) : integrationQuery.isError ? (
+              <StatusPill tone="yellow">Unavailable</StatusPill>
+            ) : integrationQuery.data ? (
+              <WhatsAppIntegrationStatus status={integrationQuery.data} />
+            ) : (
+              <StatusPill tone="yellow">Unavailable</StatusPill>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
 
