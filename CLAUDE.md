@@ -18,22 +18,22 @@ Neon Auth via `better-auth/client` · Cloudflare Workers + R2 + Hyperdrive · Vi
 - Dev: `npm run dev` · Build: `npm run build` · Preview: `npm run preview`
 - Lint: `npm run lint` · Format: `npm run format` (Prettier, 100 cols, double quotes)
 - Test: `npm run test` (Vitest; no separate vitest config — Vite config is reused)
-- Pre-deploy gates: `npm run check:production-imports` then `npm run verify:firm -- --dry-run`
+- Pre-deploy gate: `npm run verify:firm -- --dry-run`
 - DB: `npm run db:migrate` (Bun) — **requires explicit approval for any non-local `DATABASE_URL`**
 
 ## The Two-Mode Split (most important thing to know)
 
 Every feature exists twice, selected by router context `dataMode` (`src/features/runtime/data-mode.ts`):
 
-- **demo** — `VITE_ENABLE_DEMO_AUTH=true` in a non-production build. Data lives in
-  browser stores under `src/lib/*-store.ts` (`useSyncExternalStore` + module-level state).
+- **demo** — `VITE_ENABLE_DEMO_AUTH=true` in a non-production build. **Read-only.** Data comes
+  from fixtures in `src/lib/*-store.ts` (`useSyncExternalStore` + module-level state) that
+  expose derivations and hooks but no write path. See `docs/adr/0001-demo-mode-is-read-only.md`.
 - **production** — anything else. Data comes from server functions in
-  `src/features/*/server-fns.ts` → repository → Postgres.
+  `src/features/*/server-fns.ts` → repository → Postgres, and is the only way to write anything.
 
 Routes branch with `const { dataMode } = Route.useRouteContext()`.
-`scripts/check-production-route-imports.ts` fails the build if a route imports a **mutation**
-from a demo store (read-only helpers are allowed). Add new mutations to that script's
-`PROTECTED_STORE_MUTATIONS` map.
+A production route cannot mutate a demo store because the demo stores export no mutations —
+don't add one. This replaced a build-time import scanner and a hand-maintained denylist.
 
 ## Project Structure
 
@@ -75,7 +75,7 @@ repository executes tagged-template SQL → repository `close()` in a `finally`.
   that component owns the app's only `<h1>`. `src/components/page-header.convention.test.ts`
   enforces both. Navigation identity and sign-out live in the sidebar/drawer, not the header.
 - **Errors**: throw `Error` with a `Forbidden: ` / `Unauthorized: ` prefix for authz. Never swallow.
-- **Secrets**: validators and verifiers report binding *names* only, never values, and perform no
+- **Secrets**: validators and verifiers report binding _names_ only, never values, and perform no
   network calls. Keep it that way. `.env*` is gitignored except `.env.example` (which holds no values).
 - **Imports**: `@/*` → `src/*`. Never import `server-only` (see the ESLint rule); use
   `*.server.ts` or `createServerOnlyFn` instead.

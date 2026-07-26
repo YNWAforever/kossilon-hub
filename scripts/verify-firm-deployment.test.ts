@@ -50,7 +50,6 @@ describe("verifyFirmDeployment", () => {
     expect(result.checks).toEqual(
       expect.arrayContaining([
         { name: "strict-data-mode", status: "pass" },
-        { name: "route-import-guard", status: "pass" },
         { name: "local-provider-mode", status: "pass" },
         { name: "migration-schema", status: "pass" },
         { name: "neon-auth-capability", status: "pass" },
@@ -89,8 +88,6 @@ describe("verifyFirmDeployment", () => {
           'import { sendFollowUpNow } from "@/lib/annual-return-store"; export default function Route() { return null; }',
       }),
     );
-
-    expect(result.checks).toContainEqual({ name: "route-import-guard", status: "fail" });
   });
 
   it("reports binding names but never values", async () => {

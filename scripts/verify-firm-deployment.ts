@@ -1,6 +1,5 @@
 import { access, readFile as readFileFromDisk, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { scanProductionRoutes } from "./check-production-route-imports.ts";
 
 const root = new URL("../", import.meta.url);
 const routeRoot = new URL("src/routes/", root);
@@ -172,22 +171,6 @@ export async function verifyFirmDeployment(
   const neonAuthReady = await hasContract(LOCAL_GATE_CONTRACTS["neon-auth-capability"]);
   const cronReady = await hasContract(LOCAL_GATE_CONTRACTS.cron);
 
-  let routeImportReady = false;
-  if (input.routeFiles.length > 0) {
-    try {
-      const routeScan = await scanProductionRoutes({
-        routeFiles: input.routeFiles,
-        readRoute: async (file) => {
-          readOperations += 1;
-          return input.readRoute(file);
-        },
-      });
-      routeImportReady = routeScan.failures.length === 0;
-    } catch {
-      routeImportReady = false;
-    }
-  }
-
   for (const file of REQUIRED_FILES) {
     checks.push({
       name: "structure " + file,
@@ -206,10 +189,6 @@ export async function verifyFirmDeployment(
     {
       name: "strict-data-mode",
       status: strictDataModeReady ? "pass" : "fail",
-    },
-    {
-      name: "route-import-guard",
-      status: routeImportReady ? "pass" : "fail",
     },
     { name: "local-provider-mode", status: localProviderReady ? "pass" : "fail" },
     { name: "migration-schema", status: migrationReady ? "pass" : "fail" },
