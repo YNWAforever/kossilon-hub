@@ -6,6 +6,7 @@ import {
   buildReminderDraft,
   calculateFilingDueDate,
   completionBlockers,
+  hongKongBusinessDate,
   isAllowedStatusTransition,
   riskForCase,
   shouldGenerateCase,
@@ -200,6 +201,22 @@ describe("annual return workflow", () => {
 
   it("does not ask for outstanding items when required documents are complete", () => {
     expect(buildReminderDraft(readyCase)).not.toContain("outstanding items");
+  });
+});
+
+describe("hongKongBusinessDate", () => {
+  it("returns the Hong Kong calendar date regardless of the caller's timezone", () => {
+    // 2026-07-30T17:30:00Z is 2026-07-31 01:30 in Hong Kong (UTC+8).
+    expect(hongKongBusinessDate(new Date("2026-07-30T17:30:00.000Z"))).toBe("2026-07-31");
+  });
+
+  it("does not roll over before Hong Kong midnight", () => {
+    // 2026-07-30T15:59:00Z is 2026-07-30 23:59 in Hong Kong.
+    expect(hongKongBusinessDate(new Date("2026-07-30T15:59:00.000Z"))).toBe("2026-07-30");
+  });
+
+  it("zero-pads single-digit months and days", () => {
+    expect(hongKongBusinessDate(new Date("2026-01-05T04:00:00.000Z"))).toBe("2026-01-05");
   });
 });
 

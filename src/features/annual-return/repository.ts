@@ -6,7 +6,15 @@ import {
 } from "@/server/db/client";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import type postgres from "postgres";
-import { daysBetween, isAllowedStatusTransition, riskForCase } from "./workflow";
+import {
+  daysBetween,
+  hongKongBusinessDate,
+  isAllowedStatusTransition,
+  riskForCase,
+} from "./workflow";
+
+// Re-exported so existing importers (server-fns.ts) keep working unchanged.
+export { hongKongBusinessDate };
 import {
   assertAnnualReturnActionAllowed,
   type AnnualReturnAction,
@@ -190,32 +198,10 @@ export type AnnualReturnRepository = {
 };
 
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
-const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
 const CHECKLIST_EVIDENCE_FILE_TYPE = "annual-return-evidence";
 const PAYMENT_PROOF_FILE_TYPE = "payment-proof";
 const FILING_CONFIRMATION_FILE_TYPE = "filing-confirmation";
-
-function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-  const part = parts.find((candidate) => candidate.type === type);
-
-  if (!part) {
-    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
-  }
-
-  return part.value;
-}
-
-export function hongKongBusinessDate(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: HONG_KONG_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-
-  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
-}
 
 function dateOnly(value: string | Date): string {
   if (value instanceof Date) {
