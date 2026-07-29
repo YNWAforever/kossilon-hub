@@ -12,9 +12,6 @@ import {
   isAllowedStatusTransition,
   riskForCase,
 } from "./workflow";
-
-// Re-exported so existing importers (server-fns.ts) keep working unchanged.
-export { hongKongBusinessDate };
 import {
   assertAnnualReturnActionAllowed,
   type AnnualReturnAction,
@@ -196,6 +193,11 @@ export type AnnualReturnRepository = {
   updateFilingProof(input: UpdateAnnualReturnFilingProofInput): Promise<AnnualReturnCase>;
   close(): Promise<void>;
 };
+
+// Re-exported so existing importers (server-fns.ts) keep working unchanged. The
+// definition lives in ./workflow because that module imports nothing but ./types,
+// which is what lets a browser component derive the same operational "today".
+export { hongKongBusinessDate };
 
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
