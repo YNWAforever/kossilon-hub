@@ -38,7 +38,9 @@ function PaymentsRoute() {
   return dataMode === "demo" ? <DemoPaymentsRoute /> : <ProductionPaymentsRoute />;
 }
 
-function ProductionPaymentsRoute() {
+// Exported for -payments.interaction.test.tsx. The dataMode branch lives in the
+// parent PaymentsRoute, so this component never touches Route itself.
+export function ProductionPaymentsRoute() {
   const queryClient = useQueryClient();
   const casesQuery = useQuery({
     queryKey: annualReturnQueryKeys.list({ paymentEvidence: true }),
@@ -62,12 +64,10 @@ function ProductionPaymentsRoute() {
     mutationFn: reviewAnnualReturnEvidenceAction,
     onSuccess: ({ caseItem }) => {
       queryClient.setQueryData(annualReturnQueryKeys.detail(caseItem.id), caseItem);
-      void queryClient.invalidateQueries({
-        queryKey: annualReturnQueryKeys.documents(caseItem.id),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: annualReturnQueryKeys.payment(caseItem.id),
-      });
+      // .all is ["annual-returns"], so this covers documents, payment and every
+      // list key by prefix -- including the command center board, which this
+      // previously left stale after a review.
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
     },
   });
 
@@ -157,7 +157,14 @@ function ProductionPaymentsRoute() {
               </div>
             );
           })}
-          {!casesQuery.isLoading && !documentsQuery.isLoading && paymentDocuments.length === 0 ? (
+          {/* Gated on isError too. Without that, a failed query leaves data
+              undefined so the list is empty while isLoading is already false,
+              and the screen says both "unavailable" and "nothing to review". */}
+          {!casesQuery.isLoading &&
+          !documentsQuery.isLoading &&
+          !casesQuery.isError &&
+          !documentsQuery.isError &&
+          paymentDocuments.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">
               No production payment evidence is awaiting review.
             </p>
