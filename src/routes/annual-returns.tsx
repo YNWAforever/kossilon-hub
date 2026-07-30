@@ -19,6 +19,7 @@ import {
 import { daysUntil } from "../lib/app-data";
 import { PageHeader } from "@/components/page-header";
 import { listWorkQueue } from "../features/work-items/server-fns";
+import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
 import type { PersistedWorkItem } from "../features/work-items/repository";
 
 export const Route = createFileRoute("/annual-returns")({
@@ -27,6 +28,25 @@ export const Route = createFileRoute("/annual-returns")({
 
 function AnnualReturnsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { dataMode } = Route.useRouteContext();
+
+  // Hoisted above both the branch and every hook. /annual-returns/$id is a child
+  // route and renders only through this outlet, so a branch placed before it
+  // would silently stop the detail screen from rendering. Keeping it above the
+  // hooks also stops the board's queries and filter pipeline running while the
+  // detail screen is on screen, which is what happened before.
+  if (pathname !== "/annual-returns") {
+    return <Outlet />;
+  }
+
+  return dataMode === "demo" ? (
+    <DemoAnnualReturnCommandCenter />
+  ) : (
+    <ProductionAnnualReturnCommandCenter search={{}} />
+  );
+}
+
+function DemoAnnualReturnCommandCenter() {
   const cases = useAnnualReturnCases();
   const workItemsQuery = useQuery({
     queryKey: ["work-queue", "annual-return-list"],
@@ -71,10 +91,6 @@ function AnnualReturnsRoute() {
       })
       .sort((a, b) => riskSortValue(getRiskLevel(a)) - riskSortValue(getRiskLevel(b)));
   }, [cases, filter, owner, query]);
-
-  if (pathname !== "/annual-returns") {
-    return <Outlet />;
-  }
 
   return (
     <main className="flex-1 space-y-6 p-6">
