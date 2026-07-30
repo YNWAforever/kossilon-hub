@@ -91,6 +91,7 @@ describe("annual returns route across data modes", () => {
   beforeEach(() => {
     resetAnnualReturnCasesForTest();
     resetClientPortalStoreForTest();
+    serverFns.listAnnualReturnCases.mockClear();
   });
 
   // The regression guard. /annual-returns/$id is a CHILD of /annual-returns and
@@ -123,6 +124,16 @@ describe("annual returns route across data modes", () => {
     expect(html).toContain("Search company");
     expect(html).not.toContain("Search company or contact");
     expect(html).not.toContain("Delta Bloom Ventures Limited");
+  });
+
+  it("carries board filters from the URL into the rendered screen", async () => {
+    // renderToString does not run TanStack Query, so this asserts the params reach
+    // the component rather than the server call. board-filters.test.ts covers the
+    // mapping onto the query itself.
+    const html = await renderRoute("/annual-returns?q=Harbour&status=Filed", "production");
+
+    expect(html).toContain('value="Harbour"');
+    expect(html).toContain('value="Filed" selected');
   });
 
   it("renders the demo board at /annual-returns in demo mode", async () => {

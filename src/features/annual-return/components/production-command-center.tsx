@@ -5,10 +5,16 @@ import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
 import { listWorkQueue } from "@/features/work-items/server-fns";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
+import { boardFiltersFromSearch, type AnnualReturnBoardSearch } from "../board-filters";
 import { boardMetrics } from "../board-metrics";
 import { annualReturnQueryKeys } from "../query-keys";
 import { listAnnualReturnCases } from "../server-fns";
-import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type RiskLevel } from "../types";
+import {
+  ANNUAL_RETURN_STATUSES,
+  type AnnualReturnCase,
+  type AnnualReturnStatus,
+  type RiskLevel,
+} from "../types";
 import { daysBetween, hongKongBusinessDate } from "../workflow";
 
 const BOARD_PAGE_SIZE = 200;
@@ -27,40 +33,20 @@ const riskToneClasses: Record<RiskLevel, string> = {
   green: "bg-green-100 text-green-700",
 };
 
-export type ProductionBoardSearch = {
-  q?: string;
-  status?: string;
-  risk?: string;
-  ownerId?: string;
-  overdueOnly?: boolean;
-};
-
 export function ProductionAnnualReturnCommandCenter({
   search,
   onSearchChange,
 }: {
-  search: ProductionBoardSearch;
-  onSearchChange?: (next: ProductionBoardSearch) => void;
+  search: AnnualReturnBoardSearch;
+  onSearchChange?: (next: AnnualReturnBoardSearch) => void;
 }) {
   const today = hongKongBusinessDate();
 
+  const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
+
   const casesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list({
-      status: search.status,
-      risk: search.risk,
-      ownerId: search.ownerId,
-      overdueOnly: search.overdueOnly,
-    }),
-    queryFn: () =>
-      listAnnualReturnCases({
-        data: {
-          limit: BOARD_PAGE_SIZE,
-          ...(search.status ? { status: search.status as AnnualReturnCase["currentStatus"] } : {}),
-          ...(search.risk ? { risk: search.risk as RiskLevel } : {}),
-          ...(search.ownerId ? { ownerId: search.ownerId } : {}),
-          ...(search.overdueOnly ? { overdueOnly: true } : {}),
-        },
-      }),
+    queryKey: annualReturnQueryKeys.list(filters),
+    queryFn: () => listAnnualReturnCases({ data: filters }),
     retry: false,
   });
 
@@ -99,7 +85,7 @@ export function ProductionAnnualReturnCommandCenter({
   const metrics = boardMetrics(cases, today);
   const capped = cases.length === BOARD_PAGE_SIZE;
 
-  function update(patch: Partial<ProductionBoardSearch>) {
+  function update(patch: Partial<AnnualReturnBoardSearch>) {
     onSearchChange?.({ ...search, ...patch });
   }
 
@@ -183,7 +169,9 @@ export function ProductionAnnualReturnCommandCenter({
             aria-label="Filter by status"
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={search.status ?? ""}
-            onChange={(event) => update({ status: event.target.value || undefined })}
+            onChange={(event) =>
+              update({ status: (event.target.value as AnnualReturnStatus) || undefined })
+            }
           >
             <option value="">All statuses</option>
             {ANNUAL_RETURN_STATUSES.map((status) => (
@@ -196,7 +184,7 @@ export function ProductionAnnualReturnCommandCenter({
             aria-label="Filter by risk"
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={search.risk ?? ""}
-            onChange={(event) => update({ risk: event.target.value || undefined })}
+            onChange={(event) => update({ risk: (event.target.value as RiskLevel) || undefined })}
           >
             <option value="">All risk levels</option>
             <option value="red">Red</option>

@@ -20,15 +20,22 @@ import { daysUntil } from "../lib/app-data";
 import { PageHeader } from "@/components/page-header";
 import { listWorkQueue } from "../features/work-items/server-fns";
 import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
+import { boardSearchFromUrl } from "../features/annual-return/board-filters";
 import type { PersistedWorkItem } from "../features/work-items/repository";
 
 export const Route = createFileRoute("/annual-returns")({
+  // Board filters live in the URL so they survive a reload and a return from a
+  // detail screen. The sanitiser is in board-filters.ts so it can be unit-tested;
+  // a route file cannot export a non-component without tripping react-refresh.
+  validateSearch: boardSearchFromUrl,
   component: AnnualReturnsRoute,
 });
 
 function AnnualReturnsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { dataMode } = Route.useRouteContext();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   // Hoisted above both the branch and every hook. /annual-returns/$id is a child
   // route and renders only through this outlet, so a branch placed before it
@@ -42,7 +49,10 @@ function AnnualReturnsRoute() {
   return dataMode === "demo" ? (
     <DemoAnnualReturnCommandCenter />
   ) : (
-    <ProductionAnnualReturnCommandCenter search={{}} />
+    <ProductionAnnualReturnCommandCenter
+      search={search}
+      onSearchChange={(next) => void navigate({ search: next, replace: true })}
+    />
   );
 }
 
