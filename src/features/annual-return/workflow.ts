@@ -52,7 +52,7 @@ function hasText(value: string | null): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function hasRequiredChecklistEvidence(item: AnnualReturnChecklistItem): boolean {
+export function hasRequiredChecklistEvidence(item: AnnualReturnChecklistItem): boolean {
   return (
     item.status === "Verified" &&
     hasText(item.receivedAt) &&
