@@ -135,6 +135,12 @@ export function caseFiltersForActor(actor: AnnualReturnBoardActor): AnnualReturn
     return {};
   }
 
+  // Role first: a Client is refused for being a Client, not incidentally for
+  // having no staff row.
+  if (actor.role !== "Manager" && actor.role !== "Staff") {
+    throw new Error("Forbidden: staff access is required.");
+  }
+
   if (!actor.id) {
     throw new Error("Forbidden: a staff database identity is required.");
   }
@@ -147,9 +153,5 @@ export function caseFiltersForActor(actor: AnnualReturnBoardActor): AnnualReturn
     return { teamId: actor.teamId };
   }
 
-  if (actor.role === "Staff") {
-    return { teamId: actor.teamId, visibleToUserId: actor.id };
-  }
-
-  throw new Error("Forbidden: staff access is required.");
+  return { teamId: actor.teamId, visibleToUserId: actor.id };
 }
