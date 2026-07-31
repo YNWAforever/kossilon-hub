@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
+import { sortConversationMessagesOldestFirst } from "./conversations";
 import { normalizeWoztellInboundMessage } from "./woztell";
 import {
   createWhatsAppRepository,
@@ -629,6 +630,154 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       });
       expect(event.payload).toEqual(payload);
       expect(event.processedAt).not.toBeNull();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  function inboundFixture(input: {
+    waId: string;
+    phone: string;
+    name: string;
+    messageId: string;
+    body: string;
+    timestamp: string;
+  }) {
+    return normalizeWoztellInboundMessage({
+      event: "message",
+      channel: { id: "kossilon-whatsapp-channel" },
+      contact: {
+        wa_id: input.waId,
+        phone: input.phone,
+        profile: { name: input.name },
+      },
+      message: {
+        id: input.messageId,
+        type: "text",
+        text: { body: input.body },
+        timestamp: input.timestamp,
+      },
+    });
+  }
+
+  it(
+    "lists conversations newest first, each showing its own latest message",
+    async () => {
+      const repository = repositoryFor();
+
+      await repository.recordInboundMessage(
+        inboundFixture({
+          waId: "phase2-inbox-a",
+          phone: "+852 6100 0001",
+          name: "Contact A",
+          messageId: "phase2-inbox-a-1",
+          body: "First question from A",
+          timestamp: "2026-07-05T09:00:00.000Z",
+        }),
+      );
+      await repository.recordInboundMessage(
+        inboundFixture({
+          waId: "phase2-inbox-b",
+          phone: "+852 6100 0002",
+          name: "Contact B",
+          messageId: "phase2-inbox-b-1",
+          body: "Only question from B",
+          timestamp: "2026-07-05T10:00:00.000Z",
+        }),
+      );
+      await repository.recordInboundMessage(
+        inboundFixture({
+          waId: "phase2-inbox-a",
+          phone: "+852 6100 0001",
+          name: "Contact A",
+          messageId: "phase2-inbox-a-2",
+          body: "Latest question from A",
+          timestamp: "2026-07-05T11:00:00.000Z",
+        }),
+      );
+
+      const conversations = await repository.listConversations();
+
+      // A ahead of B because A's newest is 11:00, and A's preview is that newest
+      // message rather than its first — the `distinct on` has to pick the latest.
+      expect(conversations.map((entry) => [entry.displayName, entry.lastMessageBody])).toEqual([
+        ["Contact A", "Latest question from A"],
+        ["Contact B", "Only question from B"],
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reads a thread newest first so a limit keeps the most recent messages",
+    async () => {
+      const repository = repositoryFor();
+      const oldest = await repository.recordInboundMessage(
+        inboundFixture({
+          waId: "phase2-thread",
+          phone: "+852 6100 0004",
+          name: "Thread Contact",
+          messageId: "phase2-thread-1",
+          body: "one",
+          timestamp: "2026-07-05T09:00:00.000Z",
+        }),
+      );
+      for (const [index, timestamp] of [
+        "2026-07-05T10:00:00.000Z",
+        "2026-07-05T11:00:00.000Z",
+      ].entries()) {
+        await repository.recordInboundMessage(
+          inboundFixture({
+            waId: "phase2-thread",
+            phone: "+852 6100 0004",
+            name: "Thread Contact",
+            messageId: `phase2-thread-${index + 2}`,
+            body: index === 0 ? "two" : "three",
+            timestamp,
+          }),
+        );
+      }
+
+      const limited = await repository.listConversationMessages({
+        contactId: oldest.contactId!,
+        limit: 2,
+      });
+
+      // Ascending order here would hand back the two oldest and silently drop the
+      // messages a reader actually wants.
+      expect(limited.map((entry) => entry.body)).toEqual(["three", "two"]);
+      expect(sortConversationMessagesOldestFirst(limited).map((entry) => entry.body)).toEqual([
+        "two",
+        "three",
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "carries the company and case a queued template message was sent against",
+    async () => {
+      const repository = repositoryFor();
+      await repository.queueOutboundTemplateMessage({
+        actorId: TEST_USER_ID,
+        caseId: TEST_CASE_ID,
+        toPhone: "+852 6100 0003",
+        contactName: "Template Recipient",
+        templateName: "annual-return-reminder",
+        category: "annual_return",
+        body: "Reminder body",
+      });
+
+      const [conversation] = await repository.listConversations();
+
+      // Exercises the companies join and the coalesce that prefers the message's
+      // own company over the contact's.
+      expect(conversation).toMatchObject({
+        companyId: TEST_COMPANY_ID,
+        companyName: "Phase 2 WhatsApp Test Ltd",
+        caseId: TEST_CASE_ID,
+        lastMessageDirection: "outbound",
+        lastMessageBody: "Reminder body",
+      });
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
