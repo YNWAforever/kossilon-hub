@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { assertStaffAccess } from "@/features/auth/authorization";
+import { requireStaffActor } from "@/features/auth/neon-auth-server";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
+import type { WhatsAppConversation, WhatsAppConversationMessage } from "./conversations";
 import {
   createWhatsAppRepository,
   type InboundWhatsAppMessageRecord,
@@ -37,6 +42,15 @@ export const processWhatsAppInboundWebhookInputSchema = z.object({
   providerEventId: z.string().min(1).nullable().default(null),
   signatureValid: z.boolean(),
   payload: jsonObjectSchema,
+});
+
+export const listWhatsAppConversationsInputSchema = z.object({
+  limit: z.number().int().min(1).max(500).optional(),
+});
+
+export const listWhatsAppConversationMessagesInputSchema = z.object({
+  contactId: z.string().uuid(),
+  limit: z.number().int().min(1).max(500).optional(),
 });
 
 export const queueWhatsAppTemplateMessageInputSchema = z.object({
@@ -180,6 +194,64 @@ export async function processWhatsAppInboundWebhookWithRepository(
     return buildFailedWhatsAppInboundWebhookResponse(event);
   }
 }
+
+export type WhatsAppInboxDependencies = {
+  repository: Pick<WhatsAppRepository, "listConversations" | "listConversationMessages">;
+};
+
+/**
+ * Staff-only, and scoped no further than that on purpose:
+ * `whatsapp_contacts.company_id` is nullable, so an inbound message the matcher
+ * could not attach to a company belongs to no company at all. There is no client
+ * scope to fall back on, which is exactly why a Client actor is refused outright
+ * rather than shown a filtered view.
+ */
+export async function listWhatsAppConversationsForActor(
+  actor: AuthenticatedActor,
+  input: { limit?: number },
+  dependencies: WhatsAppInboxDependencies,
+): Promise<WhatsAppConversation[]> {
+  assertStaffAccess(actor);
+  return dependencies.repository.listConversations(input);
+}
+
+export async function listWhatsAppConversationMessagesForActor(
+  actor: AuthenticatedActor,
+  input: { contactId: string; limit?: number },
+  dependencies: WhatsAppInboxDependencies,
+): Promise<WhatsAppConversationMessage[]> {
+  assertStaffAccess(actor);
+  return dependencies.repository.listConversationMessages(input);
+}
+
+async function withWhatsAppStaffRepository<T>(
+  handler: (repository: WhatsAppRepository, actor: AuthenticatedActor) => Promise<T>,
+): Promise<T> {
+  const actor = await requireStaffActor(getRequest());
+  const repository = createWhatsAppRepository();
+
+  try {
+    return await handler(repository, actor);
+  } finally {
+    await repository.close();
+  }
+}
+
+export const listWhatsAppConversations = createServerFn({ method: "GET" })
+  .validator(listWhatsAppConversationsInputSchema)
+  .handler(({ data }) =>
+    withWhatsAppStaffRepository((repository, actor) =>
+      listWhatsAppConversationsForActor(actor, data, { repository }),
+    ),
+  );
+
+export const listWhatsAppConversationMessages = createServerFn({ method: "GET" })
+  .validator(listWhatsAppConversationMessagesInputSchema)
+  .handler(({ data }) =>
+    withWhatsAppStaffRepository((repository, actor) =>
+      listWhatsAppConversationMessagesForActor(actor, data, { repository }),
+    ),
+  );
 
 export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { currentProviderMode } = await import("@/server/provider-mode");
