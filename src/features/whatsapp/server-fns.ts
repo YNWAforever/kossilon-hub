@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
-import { requireStaffActor } from "@/features/auth/neon-auth-server";
+import { requireActor, requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
@@ -224,10 +224,13 @@ export async function listWhatsAppConversationMessagesForActor(
   return dependencies.repository.listConversationMessages(input);
 }
 
-async function withWhatsAppStaffRepository<T>(
+// Resolves the actor but does not judge it: the staff check belongs to the
+// *ForActor functions, which are the seam the unit tests exercise. Asserting here
+// too would leave a future reader free to delete the only enforced copy.
+async function withWhatsAppInboxRepository<T>(
   handler: (repository: WhatsAppRepository, actor: AuthenticatedActor) => Promise<T>,
 ): Promise<T> {
-  const actor = await requireStaffActor(getRequest());
+  const actor = await requireActor(getRequest());
   const repository = createWhatsAppRepository();
 
   try {
@@ -240,7 +243,7 @@ async function withWhatsAppStaffRepository<T>(
 export const listWhatsAppConversations = createServerFn({ method: "GET" })
   .validator(listWhatsAppConversationsInputSchema)
   .handler(({ data }) =>
-    withWhatsAppStaffRepository((repository, actor) =>
+    withWhatsAppInboxRepository((repository, actor) =>
       listWhatsAppConversationsForActor(actor, data, { repository }),
     ),
   );
@@ -248,12 +251,16 @@ export const listWhatsAppConversations = createServerFn({ method: "GET" })
 export const listWhatsAppConversationMessages = createServerFn({ method: "GET" })
   .validator(listWhatsAppConversationMessagesInputSchema)
   .handler(({ data }) =>
-    withWhatsAppStaffRepository((repository, actor) =>
+    withWhatsAppInboxRepository((repository, actor) =>
       listWhatsAppConversationMessagesForActor(actor, data, { repository }),
     ),
   );
 
+// Staff-only: the response names the firm's unconfigured bindings and its
+// provider mode. No values leak, but that is internal infrastructure state and a
+// client portal session has no business reading it.
 export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () => {
+  await requireStaffActor(getRequest());
   const { currentProviderMode } = await import("@/server/provider-mode");
   return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
 });

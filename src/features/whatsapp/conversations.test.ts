@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   conversationContactLabel,
   conversationMessageOccurredAt,
+  formatHongKongTimestamp,
   sortConversationMessagesOldestFirst,
   type WhatsAppConversationMessage,
 } from "./conversations";
@@ -108,5 +109,38 @@ describe("conversationContactLabel", () => {
     expect(conversationContactLabel({ displayName: null, phoneE164: null })).toBe(
       "Unknown contact",
     );
+  });
+});
+
+describe("formatHongKongTimestamp", () => {
+  it("renders UTC instants in Hong Kong time", () => {
+    // 02:00Z is 10:00 the same day in HKT. Rendering it as "02:00" made every
+    // timestamp on the inbox eight hours wrong.
+    expect(formatHongKongTimestamp("2026-07-30T02:00:00.000Z")).toBe("2026-07-30 10:00");
+  });
+
+  it("accepts the Postgres timestamptz text the repository returns", () => {
+    expect(formatHongKongTimestamp("2026-07-30 02:00:00+00")).toBe("2026-07-30 10:00");
+  });
+
+  it("rolls the date over rather than showing a 24th hour", () => {
+    expect(formatHongKongTimestamp("2026-07-29T16:00:00.000Z")).toBe("2026-07-30 00:00");
+  });
+
+  it("passes unparseable input through instead of inventing a date", () => {
+    expect(formatHongKongTimestamp("not a timestamp")).toBe("not a timestamp");
+  });
+});
+
+describe("sortConversationMessagesOldestFirst with Postgres timestamps", () => {
+  it("orders fractional and whole seconds chronologically", () => {
+    // "+" sorts before "." by code unit, and locale collation can discount
+    // punctuation entirely, so the whole-second row must not jump ahead.
+    const sorted = sortConversationMessagesOldestFirst([
+      message({ id: "fractional", sentAt: "2026-07-30 02:00:00.123+00" }),
+      message({ id: "whole", sentAt: "2026-07-30 02:00:00+00" }),
+    ]);
+
+    expect(sorted.map((entry) => entry.id)).toEqual(["whole", "fractional"]);
   });
 });

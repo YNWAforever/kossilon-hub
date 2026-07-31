@@ -56,11 +56,51 @@ export function sortConversationMessagesOldestFirst<T extends WhatsAppConversati
   messages: readonly T[],
 ): T[] {
   return [...messages].sort((left, right) => {
-    const difference = conversationMessageOccurredAt(left).localeCompare(
-      conversationMessageOccurredAt(right),
-    );
-    return difference !== 0 ? difference : left.id.localeCompare(right.id);
+    // Plain relational comparison, not localeCompare: ICU collation gives
+    // punctuation variable weight, and the repository returns Postgres
+    // `timestamptz::text` ("2026-07-30 02:00:00+00"), where two rows in the same
+    // second differ only by a "." versus a "+".
+    const leftAt = conversationMessageOccurredAt(left);
+    const rightAt = conversationMessageOccurredAt(right);
+    if (leftAt !== rightAt) return leftAt < rightAt ? -1 : 1;
+    if (left.id === right.id) return 0;
+    return left.id < right.id ? -1 : 1;
   });
+}
+
+/**
+ * Row caps for the inbox reads, shared by the repository defaults and the screen
+ * that requests them. They live here rather than in `repository.ts` because that
+ * module pulls in the database client and cannot be imported from the browser.
+ */
+export const CONVERSATION_PAGE_SIZE = 100;
+export const CONVERSATION_MESSAGE_PAGE_SIZE = 200;
+
+const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
+
+const hongKongTimestampFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: HONG_KONG_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  // h23 rather than hour12:false — the latter renders midnight as "24:00" under
+  // some ICU builds.
+  hourCycle: "h23",
+});
+
+/**
+ * Renders a timestamp in Hong Kong time. The firm, its clients and every filing
+ * deadline are in HKT, so a UTC rendering is eight hours wrong on every row.
+ * Unparseable input is passed through rather than replaced with a wrong date.
+ */
+export function formatHongKongTimestamp(value: string): string {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  return hongKongTimestampFormat.format(parsed).replace(",", "");
 }
 
 /**

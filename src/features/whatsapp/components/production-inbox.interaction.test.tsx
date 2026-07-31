@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WhatsAppConversation } from "../conversations";
@@ -20,6 +20,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const contactId = "11111111-1111-4111-8111-111111111111";
+const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations have been received yet.";
 
 function makeConversation(overrides: Partial<WhatsAppConversation> = {}): WhatsAppConversation {
   return {
@@ -103,7 +104,7 @@ describe("production WhatsApp inbox", () => {
 
     await screen.findByRole("alert");
 
-    expect(screen.queryByText("No WhatsApp conversations have been received yet.")).toBeNull();
+    expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
   });
 
   it("says the provider is not connected instead of showing an empty inbox", async () => {
@@ -115,16 +116,77 @@ describe("production WhatsApp inbox", () => {
     renderInbox();
 
     expect(await screen.findByText(/WhatsApp is not connected/i)).toBeTruthy();
-    expect(screen.queryByText("No WhatsApp conversations have been received yet.")).toBeNull();
+    expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
+  });
+
+  it("does not claim the inbox is empty when the connection state is unknown", async () => {
+    // The status query is the screen's evidence that an empty list means "nothing
+    // arrived". If that query fails there is no evidence, and treating unknown as
+    // connected reinstates exactly the claim this screen exists to avoid.
+    serverFns.listWhatsAppConversations.mockResolvedValue([]);
+    serverFns.getWhatsAppIntegrationStatus.mockRejectedValue(new Error("status boom"));
+    renderInbox();
+
+    await screen.findByRole("alert");
+
+    expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
+  });
+
+  it("surfaces the failure when the connection state cannot be checked", async () => {
+    serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
+    serverFns.getWhatsAppIntegrationStatus.mockRejectedValue(new Error("status boom"));
+    renderInbox();
+
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
+      expect.stringContaining("status boom"),
+    );
+  });
+
+  it("names simulated delivery instead of reporting an empty inbox", async () => {
+    // No external message is sent or received in simulated mode, so nothing is
+    // recorded — the sibling automation screen says so and this one must agree.
+    serverFns.listWhatsAppConversations.mockResolvedValue([]);
+    serverFns.getWhatsAppIntegrationStatus.mockResolvedValue({
+      ...connected,
+      provider: "simulated",
+      deliveryMode: "simulated",
+      liveSendConfigured: false,
+    });
+    renderInbox();
+
+    expect(await screen.findByText("Demo simulation")).toBeTruthy();
+    expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
+  });
+
+  it("keeps a dropped selection visible instead of swapping in another client", async () => {
+    serverFns.listWhatsAppConversations.mockResolvedValue([
+      makeConversation(),
+      makeConversation({ contactId: "44444444-4444-4444-8444-444444444444", displayName: "Bo Ng" }),
+    ]);
+    const { rerender } = renderInbox();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Bo Ng/ }));
+    expect(await screen.findByRole("heading", { name: "Bo Ng" })).toBeTruthy();
+
+    // Bo Ng falls off the refreshed page.
+    serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
+    rerender(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <ProductionWhatsAppInbox />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.queryByRole("heading", { name: "Ada Wong" })).toBeNull();
   });
 
   it("still shows the empty state when the provider is connected and nothing has arrived", async () => {
     serverFns.listWhatsAppConversations.mockResolvedValue([]);
     renderInbox();
 
-    expect(
-      await screen.findByText("No WhatsApp conversations have been received yet."),
-    ).toBeTruthy();
+    expect(await screen.findByText(EMPTY_INBOX_MESSAGE)).toBeTruthy();
   });
 
   it("names the missing bindings without printing their values", async () => {

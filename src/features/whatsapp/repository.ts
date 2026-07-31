@@ -6,7 +6,14 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { enqueueNotification } from "@/features/notifications/outbox";
-import type { WhatsAppConversation, WhatsAppConversationMessage } from "./conversations";
+// Both caps are bounded because a WhatsApp history has no natural end: an
+// unbounded thread query would grow as the provider keeps delivering.
+import {
+  CONVERSATION_MESSAGE_PAGE_SIZE,
+  CONVERSATION_PAGE_SIZE,
+  type WhatsAppConversation,
+  type WhatsAppConversationMessage,
+} from "./conversations";
 import type {
   NormalizedInboundWhatsAppMessage,
   WhatsAppMessageDirection,
@@ -103,14 +110,6 @@ export type RecordWebhookEventInput = {
   normalizedMessageId: string | null;
   errorMessage: string | null;
 };
-
-/**
- * Row caps for the inbox reads. Both are bounded because a WhatsApp history has no
- * natural end: an unbounded thread query would grow without limit as the provider
- * keeps delivering.
- */
-export const DEFAULT_CONVERSATION_LIMIT = 100;
-export const DEFAULT_CONVERSATION_MESSAGE_LIMIT = 200;
 
 export type ListConversationsInput = {
   limit?: number;
@@ -1026,7 +1025,7 @@ export function createWhatsAppRepository(
   async function listConversations(
     input: ListConversationsInput = {},
   ): Promise<WhatsAppConversation[]> {
-    const limit = input.limit ?? DEFAULT_CONVERSATION_LIMIT;
+    const limit = input.limit ?? CONVERSATION_PAGE_SIZE;
     const rows = await sql<ConversationRow[]>`
       with latest as (
         select distinct on (m.contact_id)
@@ -1034,10 +1033,20 @@ export function createWhatsAppRepository(
           m.body,
           m.direction,
           m.company_id,
-          m.case_id,
           coalesce(m.sent_at, m.received_at, m.created_at) as occurred_at
         from whatsapp_messages m
         where m.contact_id is not null
+        order by m.contact_id, coalesce(m.sent_at, m.received_at, m.created_at) desc, m.id desc
+      ),
+      -- Deliberately the most recent message that HAS a case, not the case of the
+      -- most recent message: one unmatched inbound reply must not make the link to
+      -- an annual return disappear from a thread that is plainly about it.
+      latest_case as (
+        select distinct on (m.contact_id)
+          m.contact_id,
+          m.case_id
+        from whatsapp_messages m
+        where m.contact_id is not null and m.case_id is not null
         order by m.contact_id, coalesce(m.sent_at, m.received_at, m.created_at) desc, m.id desc
       )
       select
@@ -1046,12 +1055,13 @@ export function createWhatsAppRepository(
         contact.phone_e164,
         coalesce(latest.company_id, contact.company_id) as company_id,
         company.company_name,
-        latest.case_id,
+        latest_case.case_id,
         latest.body as last_message_body,
         latest.direction as last_message_direction,
         latest.occurred_at::text as last_message_at
       from latest
       join whatsapp_contacts contact on contact.id = latest.contact_id
+      left join latest_case on latest_case.contact_id = latest.contact_id
       left join companies company on company.id = coalesce(latest.company_id, contact.company_id)
       order by latest.occurred_at desc, contact.id asc
       limit ${limit}
@@ -1063,7 +1073,7 @@ export function createWhatsAppRepository(
   async function listConversationMessages(
     input: ListConversationMessagesInput,
   ): Promise<WhatsAppConversationMessage[]> {
-    const limit = input.limit ?? DEFAULT_CONVERSATION_MESSAGE_LIMIT;
+    const limit = input.limit ?? CONVERSATION_MESSAGE_PAGE_SIZE;
     // Newest first so the limit keeps the most recent slice of a long thread;
     // sortConversationMessagesOldestFirst() restores reading order for display.
     const rows = await sql<ConversationMessageRow[]>`
