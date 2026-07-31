@@ -320,10 +320,7 @@ expect(snapshotSla(policyV3, startedAt, hkCalendar)).toEqual({
   warningAt: expect.any(String),
   dueAt: expect.any(String),
 });
-expect(rankAssignmentCandidates(input).map((item) => item.staffId)).toEqual([
-  "amy-id",
-  "mei-id",
-]);
+expect(rankAssignmentCandidates(input).map((item) => item.staffId)).toEqual(["amy-id", "mei-id"]);
 ```
 
 Cover lunch/closed intervals if configured, weekends, holidays, warning thresholds, deterministic tie-breaking by staff ID, skill exclusion, owner/reviewer conflict, capacity penalties, and workload weighted by breached/at-risk items.
@@ -337,8 +334,16 @@ Expected: FAIL because the modules do not exist.
 - [ ] **Step 3: Implement the pure interfaces**
 
 ```ts
-export function addBusinessMinutes(startedAt: string, minutes: number, calendar: BusinessCalendar): string;
-export function snapshotSla(policy: SlaPolicyVersion, startedAt: string, calendar: BusinessCalendar): SlaSnapshot;
+export function addBusinessMinutes(
+  startedAt: string,
+  minutes: number,
+  calendar: BusinessCalendar,
+): string;
+export function snapshotSla(
+  policy: SlaPolicyVersion,
+  startedAt: string,
+  calendar: BusinessCalendar,
+): SlaSnapshot;
 export function rankAssignmentCandidates(input: AssignmentInput): AssignmentRecommendation[];
 export function thresholdFor(workItem: WorkItem, now: string): "none" | "warning" | "breach";
 ```
@@ -445,7 +450,9 @@ expect(workQueueSource).toContain('createFileRoute("/work-queue")');
 expect(workQueueSource).toContain("My work");
 expect(workQueueSource).toContain("Team queue");
 expect(workQueueSource).toContain("Breached");
-expect(assignInputSchema.safeParse({ workItemId, assigneeId, expectedVersion: 3 }).success).toBe(true);
+expect(assignInputSchema.safeParse({ workItemId, assigneeId, expectedVersion: 3 }).success).toBe(
+  true,
+);
 ```
 
 Test that Staff cannot assign, Manager can assign within team, Admin can assign across teams, and every mutation derives the actor from the verified session rather than input.
@@ -520,7 +527,11 @@ export type DocumentScanResult =
   | { status: "failed"; retryable: boolean; errorCode: string };
 
 export type DocumentScanner = {
-  scan(input: { objectKey: string; checksum: string; contentType: string }): Promise<DocumentScanResult>;
+  scan(input: {
+    objectKey: string;
+    checksum: string;
+    contentType: string;
+  }): Promise<DocumentScanResult>;
 };
 ```
 

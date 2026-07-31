@@ -32,6 +32,7 @@
 ## Task 1: Add Test And Database Tooling
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `src/features/annual-return/types.ts`
 - Create: `src/features/annual-return/workflow.ts`
@@ -382,7 +383,8 @@ export function riskForCase(case_: AnnualReturnCase, today: string): RiskLevel {
     (item) => item.required && !hasRequiredChecklistEvidence(item),
   );
   const paymentIncomplete = case_.payment?.status !== "Payment received";
-  const filingIncomplete = !hasText(case_.filingReference) || !hasText(case_.confirmationDocumentId);
+  const filingIncomplete =
+    !hasText(case_.filingReference) || !hasText(case_.confirmationDocumentId);
 
   if (daysLeft < 0) return "red";
   if (daysLeft <= 7 && (missingRequired || paymentIncomplete || filingIncomplete)) return "red";
@@ -440,7 +442,9 @@ export function completionBlockers(case_: AnnualReturnCase): CompletionBlocker[]
 }
 
 export function buildReminderDraft(case_: AnnualReturnCase): string {
-  const missingItems = case_.checklist.filter((item) => item.required && item.status !== "Verified");
+  const missingItems = case_.checklist.filter(
+    (item) => item.required && item.status !== "Verified",
+  );
   const missingItemList = missingItems.map((item) => `- ${item.itemLabel}`).join("\n");
 
   const missingSection =
@@ -482,6 +486,7 @@ git commit -m "feat: add annual return workflow rules"
 ## Task 2: Add Database Schema And Migration Runner
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `db/migrations/0001_annual_return_control_center.sql`
 - Create: `db/migrations/0002_harden_annual_return_schema.sql`
@@ -761,9 +766,7 @@ await sql`
   )
 `;
 
-const files = (await readdir(migrationsDir))
-  .filter((file) => file.endsWith(".sql"))
-  .sort();
+const files = (await readdir(migrationsDir)).filter((file) => file.endsWith(".sql")).sort();
 
 for (const file of files) {
   const applied = await sql`
@@ -818,6 +821,7 @@ git commit -m "feat: add annual return database schema"
 ## Task 3: Seed Annual Return Data
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `scripts/db-seed-annual-return.ts`
 
@@ -1101,6 +1105,7 @@ git commit -m "feat: seed annual return control data"
 ## Task 4: Add Repository Reads And Dashboard Metrics
 
 **Files:**
+
 - Create: `src/features/annual-return/repository.ts`
 - Create: `src/features/annual-return/repository.test.ts`
 
@@ -1126,7 +1131,10 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
   it("returns dashboard metrics", async () => {
     const repo = createAnnualReturnRepository(databaseUrl!);
-    const metrics = await repo.dashboardMetrics("2026-07-05", "20000000-0000-0000-0000-000000000001");
+    const metrics = await repo.dashboardMetrics(
+      "2026-07-05",
+      "20000000-0000-0000-0000-000000000001",
+    );
     expect(metrics).toHaveProperty("dueIn7");
     expect(metrics).toHaveProperty("dueIn30");
     expect(metrics).toHaveProperty("overdue");
@@ -1404,15 +1412,16 @@ export function createAnnualReturnRepository(databaseUrl?: string) {
     `;
 
     return rows.map((row) => {
-      const checklist = checklistRows
-        .filter((item) => item.case_id === row.id)
-        .map(mapChecklist);
+      const checklist = checklistRows.filter((item) => item.case_id === row.id).map(mapChecklist);
       const paymentRow = paymentRows.find((payment) => payment.case_id === row.id);
       return hydrateCase(row, checklist, paymentRow ? mapPayment(paymentRow) : null);
     });
   }
 
-  async function dashboardMetrics(today: string, currentUserId: string): Promise<AnnualReturnDashboardMetrics> {
+  async function dashboardMetrics(
+    today: string,
+    currentUserId: string,
+  ): Promise<AnnualReturnDashboardMetrics> {
     const cases = await listCases({});
     return {
       dueIn7: cases.filter((case_) => {
@@ -1426,7 +1435,9 @@ export function createAnnualReturnRepository(databaseUrl?: string) {
       overdue: cases.filter((case_) => case_.filingDueDate < today).length,
       highRisk: cases.filter((case_) => case_.riskLevel === "red").length,
       missingDocuments: cases.reduce(
-        (sum, case_) => sum + case_.checklist.filter((item) => item.required && item.status !== "Verified").length,
+        (sum, case_) =>
+          sum +
+          case_.checklist.filter((item) => item.required && item.status !== "Verified").length,
         0,
       ),
       paymentPending: cases.filter((case_) => case_.payment?.status !== "Payment received").length,
@@ -1464,6 +1475,7 @@ Completed in commits `c1145de`, `76fa255`, and `c65802d`. Final Task 4 verificat
 ## Task 5: Add Server Functions For Case Actions
 
 **Files:**
+
 - Create: `src/features/annual-return/server-fns.ts`
 - Modify: `src/features/annual-return/repository.ts`
 - Modify: `src/features/annual-return/repository.test.ts`
@@ -1473,19 +1485,23 @@ Completed in commits `c1145de`, `76fa255`, and `c65802d`. Final Task 4 verificat
 Add these methods inside `createAnnualReturnRepository` before the `return` statement:
 
 ```ts
-  async function updateStatus(caseId: string, nextStatus: AnnualReturnStatus, actorId: string): Promise<AnnualReturnCase> {
-    const current = await getCase(caseId);
-    if (!current) throw new Error("Annual return case not found.");
-    if (current.lockedAt) throw new Error("Completed cases are locked.");
+async function updateStatus(
+  caseId: string,
+  nextStatus: AnnualReturnStatus,
+  actorId: string,
+): Promise<AnnualReturnCase> {
+  const current = await getCase(caseId);
+  if (!current) throw new Error("Annual return case not found.");
+  if (current.lockedAt) throw new Error("Completed cases are locked.");
 
-    await sql.begin(async (tx) => {
-      await tx`
+  await sql.begin(async (tx) => {
+    await tx`
         update annual_return_cases
         set current_status = ${nextStatus}, updated_at = now()
         where id = ${caseId}
       `;
 
-      await tx`
+    await tx`
         insert into timeline_events (company_id, case_id, event_type, actor_type, actor_id, description, metadata)
         values (
           ${current.companyId},
@@ -1497,28 +1513,28 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
           ${JSON.stringify({ from: current.currentStatus, to: nextStatus })}::jsonb
         )
       `;
-    });
+  });
 
-    const updated = await getCase(caseId);
-    if (!updated) throw new Error("Annual return case disappeared after status update.");
-    return updated;
-  }
+  const updated = await getCase(caseId);
+  if (!updated) throw new Error("Annual return case disappeared after status update.");
+  return updated;
+}
 
-  async function recordReminder(input: {
-    caseId: string;
-    actorId: string;
-    templateLabel: string;
-    recipientName: string;
-    recipientPhone: string;
-    draftBody: string;
-    note: string;
-  }): Promise<AnnualReturnCase> {
-    const current = await getCase(input.caseId);
-    if (!current) throw new Error("Annual return case not found.");
-    if (current.lockedAt) throw new Error("Completed cases are locked.");
+async function recordReminder(input: {
+  caseId: string;
+  actorId: string;
+  templateLabel: string;
+  recipientName: string;
+  recipientPhone: string;
+  draftBody: string;
+  note: string;
+}): Promise<AnnualReturnCase> {
+  const current = await getCase(input.caseId);
+  if (!current) throw new Error("Annual return case not found.");
+  if (current.lockedAt) throw new Error("Completed cases are locked.");
 
-    await sql.begin(async (tx) => {
-      await tx`
+  await sql.begin(async (tx) => {
+    await tx`
         insert into reminder_logs (
           case_id,
           channel,
@@ -1543,7 +1559,7 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
         )
       `;
 
-      await tx`
+    await tx`
         update annual_return_cases
         set reminders_sent = reminders_sent + 1,
             current_status = case
@@ -1554,7 +1570,7 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
         where id = ${input.caseId}
       `;
 
-      await tx`
+    await tx`
         insert into timeline_events (company_id, case_id, event_type, actor_type, actor_id, description, metadata)
         values (
           ${current.companyId},
@@ -1566,26 +1582,26 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
           ${JSON.stringify({ templateLabel: input.templateLabel, recipientPhone: input.recipientPhone })}::jsonb
         )
       `;
-    });
+  });
 
-    const updated = await getCase(input.caseId);
-    if (!updated) throw new Error("Annual return case disappeared after reminder logging.");
-    return updated;
-  }
+  const updated = await getCase(input.caseId);
+  if (!updated) throw new Error("Annual return case disappeared after reminder logging.");
+  return updated;
+}
 
-  async function updateChecklistItem(input: {
-    caseId: string;
-    itemId: string;
-    status: ChecklistStatus;
-    documentId: string | null;
-    actorId: string;
-  }): Promise<AnnualReturnCase> {
-    const current = await getCase(input.caseId);
-    if (!current) throw new Error("Annual return case not found.");
-    if (current.lockedAt) throw new Error("Completed cases are locked.");
+async function updateChecklistItem(input: {
+  caseId: string;
+  itemId: string;
+  status: ChecklistStatus;
+  documentId: string | null;
+  actorId: string;
+}): Promise<AnnualReturnCase> {
+  const current = await getCase(input.caseId);
+  if (!current) throw new Error("Annual return case not found.");
+  if (current.lockedAt) throw new Error("Completed cases are locked.");
 
-    await sql.begin(async (tx) => {
-      await tx`
+  await sql.begin(async (tx) => {
+    await tx`
         update annual_return_checklist_items
         set status = ${input.status},
             document_id = ${input.documentId},
@@ -1595,7 +1611,7 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
         where id = ${input.itemId} and case_id = ${input.caseId}
       `;
 
-      await tx`
+    await tx`
         insert into timeline_events (company_id, case_id, event_type, actor_type, actor_id, description, metadata)
         values (
           ${current.companyId},
@@ -1607,25 +1623,25 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
           ${JSON.stringify({ itemId: input.itemId, status: input.status, documentId: input.documentId })}::jsonb
         )
       `;
-    });
+  });
 
-    const updated = await getCase(input.caseId);
-    if (!updated) throw new Error("Annual return case disappeared after checklist update.");
-    return updated;
-  }
+  const updated = await getCase(input.caseId);
+  if (!updated) throw new Error("Annual return case disappeared after checklist update.");
+  return updated;
+}
 
-  async function updatePayment(input: {
-    caseId: string;
-    status: PaymentStatus;
-    paymentProofDocumentId: string | null;
-    actorId: string;
-  }): Promise<AnnualReturnCase> {
-    const current = await getCase(input.caseId);
-    if (!current) throw new Error("Annual return case not found.");
-    if (current.lockedAt) throw new Error("Completed cases are locked.");
+async function updatePayment(input: {
+  caseId: string;
+  status: PaymentStatus;
+  paymentProofDocumentId: string | null;
+  actorId: string;
+}): Promise<AnnualReturnCase> {
+  const current = await getCase(input.caseId);
+  if (!current) throw new Error("Annual return case not found.");
+  if (current.lockedAt) throw new Error("Completed cases are locked.");
 
-    await sql.begin(async (tx) => {
-      await tx`
+  await sql.begin(async (tx) => {
+    await tx`
         update payments
         set status = ${input.status},
             payment_proof_document_id = ${input.paymentProofDocumentId},
@@ -1634,7 +1650,7 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
         where case_id = ${input.caseId}
       `;
 
-      await tx`
+    await tx`
         insert into timeline_events (company_id, case_id, event_type, actor_type, actor_id, description, metadata)
         values (
           ${current.companyId},
@@ -1646,25 +1662,25 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
           ${JSON.stringify({ status: input.status, paymentProofDocumentId: input.paymentProofDocumentId })}::jsonb
         )
       `;
-    });
+  });
 
-    const updated = await getCase(input.caseId);
-    if (!updated) throw new Error("Annual return case disappeared after payment update.");
-    return updated;
-  }
+  const updated = await getCase(input.caseId);
+  if (!updated) throw new Error("Annual return case disappeared after payment update.");
+  return updated;
+}
 
-  async function updateFilingProof(input: {
-    caseId: string;
-    filingReference: string;
-    confirmationDocumentId: string;
-    actorId: string;
-  }): Promise<AnnualReturnCase> {
-    const current = await getCase(input.caseId);
-    if (!current) throw new Error("Annual return case not found.");
-    if (current.lockedAt) throw new Error("Completed cases are locked.");
+async function updateFilingProof(input: {
+  caseId: string;
+  filingReference: string;
+  confirmationDocumentId: string;
+  actorId: string;
+}): Promise<AnnualReturnCase> {
+  const current = await getCase(input.caseId);
+  if (!current) throw new Error("Annual return case not found.");
+  if (current.lockedAt) throw new Error("Completed cases are locked.");
 
-    await sql.begin(async (tx) => {
-      await tx`
+  await sql.begin(async (tx) => {
+    await tx`
         update annual_return_cases
         set filing_reference = ${input.filingReference},
             confirmation_document_id = ${input.confirmationDocumentId},
@@ -1672,7 +1688,7 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
         where id = ${input.caseId}
       `;
 
-      await tx`
+    await tx`
         insert into timeline_events (company_id, case_id, event_type, actor_type, actor_id, description, metadata)
         values (
           ${current.companyId},
@@ -1684,27 +1700,27 @@ Add these methods inside `createAnnualReturnRepository` before the `return` stat
           ${JSON.stringify({ filingReference: input.filingReference, confirmationDocumentId: input.confirmationDocumentId })}::jsonb
         )
       `;
-    });
+  });
 
-    const updated = await getCase(input.caseId);
-    if (!updated) throw new Error("Annual return case disappeared after filing proof update.");
-    return updated;
-  }
+  const updated = await getCase(input.caseId);
+  if (!updated) throw new Error("Annual return case disappeared after filing proof update.");
+  return updated;
+}
 ```
 
 Update the returned object:
 
 ```ts
-  return {
-    listCases,
-    getCase,
-    dashboardMetrics,
-    updateStatus,
-    recordReminder,
-    updateChecklistItem,
-    updatePayment,
-    updateFilingProof,
-  };
+return {
+  listCases,
+  getCase,
+  dashboardMetrics,
+  updateStatus,
+  recordReminder,
+  updateChecklistItem,
+  updatePayment,
+  updateFilingProof,
+};
 ```
 
 - [x] **Step 2: Add server functions**
@@ -1731,7 +1747,9 @@ export const listAnnualReturnCases = createServerFn({ method: "GET" })
         reviewerId: z.string().optional(),
         risk: z.enum(["green", "yellow", "orange", "red"]).optional(),
         status: statusSchema.optional(),
-        paymentStatus: z.enum(["Not invoiced", "Payment pending", "Payment received", "Overdue"]).optional(),
+        paymentStatus: z
+          .enum(["Not invoiced", "Payment pending", "Payment received", "Overdue"])
+          .optional(),
         overdueOnly: z.boolean().optional(),
       })
       .parse(data ?? {}),
@@ -1746,13 +1764,14 @@ export const getAnnualReturnCase = createServerFn({ method: "GET" })
     return createAnnualReturnRepository().getCase(data.id);
   });
 
-export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" })
-  .handler(async () => {
+export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" }).handler(
+  async () => {
     return createAnnualReturnRepository().dashboardMetrics(
       new Date().toISOString().slice(0, 10),
       CURRENT_USER_ID,
     );
-  });
+  },
+);
 
 export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
   .validator((data: unknown) =>
@@ -1875,6 +1894,7 @@ git commit -m "feat: add annual return server actions"
 ## Task 6: Convert Annual Returns List To Deadline-First Data
 
 **Files:**
+
 - Modify: `src/routes/annual-returns.tsx`
 
 - [ ] **Step 1: Replace mock loader with server loader**
@@ -1902,7 +1922,10 @@ export const Route = createFileRoute("/annual-returns")({
   head: () => ({
     meta: [
       { title: "Annual Returns Board — Kossilon CoSec OS" },
-      { name: "description", content: "Deadline-first annual return control center with status board view." },
+      {
+        name: "description",
+        content: "Deadline-first annual return control center with status board view.",
+      },
     ],
   }),
   component: AnnualReturnsPage,
@@ -1932,27 +1955,52 @@ function AnnualReturnsPage() {
 
   return (
     <>
-      <TopBar title="Annual Return Control Center" subtitle={`${filtered.length} cases sorted by statutory deadline`} />
+      <TopBar
+        title="Annual Return Control Center"
+        subtitle={`${filtered.length} cases sorted by statutory deadline`}
+      />
       <main className="flex-1 space-y-4 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <select value={risk} onChange={(event) => setRisk(event.target.value)} className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">
+            <select
+              value={risk}
+              onChange={(event) => setRisk(event.target.value)}
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+            >
               <option value="all">All risks</option>
               <option value="red">Red risk</option>
               <option value="orange">Orange risk</option>
               <option value="yellow">Yellow risk</option>
               <option value="green">Green risk</option>
             </select>
-            <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+            >
               <option value="all">All statuses</option>
               {ANNUAL_RETURN_STATUSES.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
           </div>
           <div className="inline-flex rounded-md border border-border bg-card p-1">
-            <Button variant={view === "deadline" ? "default" : "ghost"} size="sm" onClick={() => setView("deadline")}>Deadline list</Button>
-            <Button variant={view === "board" ? "default" : "ghost"} size="sm" onClick={() => setView("board")}>Status board</Button>
+            <Button
+              variant={view === "deadline" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setView("deadline")}
+            >
+              Deadline list
+            </Button>
+            <Button
+              variant={view === "board" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setView("board")}
+            >
+              Status board
+            </Button>
           </div>
         </div>
         {view === "deadline" ? <DeadlineList cases={filtered} /> : <StatusBoard cases={filtered} />}
@@ -1982,20 +2030,42 @@ function DeadlineList({ cases }: { cases: AnnualReturnCase[] }) {
         </thead>
         <tbody className="divide-y divide-border">
           {cases.map((case_) => {
-            const missing = case_.checklist.filter((item) => item.required && item.status !== "Verified").length;
+            const missing = case_.checklist.filter(
+              (item) => item.required && item.status !== "Verified",
+            ).length;
             return (
               <tr key={case_.id} className="hover:bg-muted/30">
                 <td className="px-5 py-3">
-                  <Link to="/annual-returns/$id" params={{ id: case_.id }} className="font-medium text-foreground hover:text-primary">
+                  <Link
+                    to="/annual-returns/$id"
+                    params={{ id: case_.id }}
+                    className="font-medium text-foreground hover:text-primary"
+                  >
                     {case_.companyName}
                   </Link>
-                  <div className="text-xs text-muted-foreground">Return year {case_.returnYear}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Return year {case_.returnYear}
+                  </div>
                 </td>
-                <td className="px-5 py-3"><DeadlinePill dueDate={case_.filingDueDate} /></td>
-                <td className="px-5 py-3"><RiskPill risk={case_.riskLevel} /></td>
-                <td className="px-5 py-3"><StatusPill tone={caseStatusTone(case_.currentStatus)}>{case_.currentStatus}</StatusPill></td>
+                <td className="px-5 py-3">
+                  <DeadlinePill dueDate={case_.filingDueDate} />
+                </td>
+                <td className="px-5 py-3">
+                  <RiskPill risk={case_.riskLevel} />
+                </td>
+                <td className="px-5 py-3">
+                  <StatusPill tone={caseStatusTone(case_.currentStatus)}>
+                    {case_.currentStatus}
+                  </StatusPill>
+                </td>
                 <td className="px-5 py-3 text-muted-foreground">{missing}</td>
-                <td className="px-5 py-3"><StatusPill tone={case_.payment?.status === "Payment received" ? "green" : "yellow"}>{case_.payment?.status ?? "Not invoiced"}</StatusPill></td>
+                <td className="px-5 py-3">
+                  <StatusPill
+                    tone={case_.payment?.status === "Payment received" ? "green" : "yellow"}
+                  >
+                    {case_.payment?.status ?? "Not invoiced"}
+                  </StatusPill>
+                </td>
                 <td className="px-5 py-3 text-muted-foreground">{case_.ownerName}</td>
               </tr>
             );
@@ -2021,11 +2091,15 @@ function StatusBoard({ cases }: { cases: AnnualReturnCase[] }) {
                   <span className={cn("h-2 w-2 rounded-full", t.dot)} />
                   <h2 className="text-sm font-semibold text-foreground">{status}</h2>
                 </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{items.length}</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+                  {items.length}
+                </span>
               </div>
               <div className="space-y-2">
                 {items.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">No cases</div>
+                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                    No cases
+                  </div>
                 ) : (
                   items.map((case_) => <BoardCaseCard key={case_.id} case_={case_} />)
                 )}
@@ -2039,14 +2113,21 @@ function StatusBoard({ cases }: { cases: AnnualReturnCase[] }) {
 }
 
 function RiskPill({ risk }: { risk: AnnualReturnCase["riskLevel"] }) {
-  const tone = risk === "red" ? "red" : risk === "orange" ? "orange" : risk === "yellow" ? "yellow" : "green";
+  const tone =
+    risk === "red" ? "red" : risk === "orange" ? "orange" : risk === "yellow" ? "yellow" : "green";
   return <StatusPill tone={tone}>{risk} risk</StatusPill>;
 }
 
 function BoardCaseCard({ case_ }: { case_: AnnualReturnCase }) {
-  const missing = case_.checklist.filter((item) => item.required && item.status !== "Verified").length;
+  const missing = case_.checklist.filter(
+    (item) => item.required && item.status !== "Verified",
+  ).length;
   return (
-    <Link to="/annual-returns/$id" params={{ id: case_.id }} className="block rounded-lg border border-border bg-card p-3 hover:bg-accent">
+    <Link
+      to="/annual-returns/$id"
+      params={{ id: case_.id }}
+      className="block rounded-lg border border-border bg-card p-3 hover:bg-accent"
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-foreground">{case_.companyName}</p>
@@ -2083,6 +2164,7 @@ git commit -m "feat: make annual returns deadline first"
 ## Task 7: Convert Case Detail To Real Data And Manual Reminder Logging
 
 **Files:**
+
 - Modify: `src/routes/annual-returns.$id.tsx`
 - Modify: `src/routes/annual-returns.tsx`
 - Modify: `src/components/deadline-pill.tsx`
@@ -2151,7 +2233,10 @@ async function recordReminder() {
 Use it on the reminder button:
 
 ```tsx
-<button onClick={recordReminder} className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+<button
+  onClick={recordReminder}
+  className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+>
   Copy draft & record reminder
 </button>
 ```
@@ -2214,11 +2299,16 @@ Add these buttons near the relevant panels:
 For each checklist row, add this action when the item is not verified:
 
 ```tsx
-{i.status !== "Verified" && (
-  <button onClick={() => markChecklistItemVerified(i)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] hover:bg-accent">
-    Mark verified
-  </button>
-)}
+{
+  i.status !== "Verified" && (
+    <button
+      onClick={() => markChecklistItemVerified(i)}
+      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] hover:bg-accent"
+    >
+      Mark verified
+    </button>
+  );
+}
 ```
 
 - [x] **Step 5: Add completion blocker panel**
@@ -2226,21 +2316,25 @@ For each checklist row, add this action when the item is not verified:
 Add this panel near the top summary:
 
 ```tsx
-{blockers.length > 0 ? (
-  <div className="rounded-xl border border-status-orange/30 bg-status-orange-soft p-4">
-    <p className="font-display text-sm font-semibold text-foreground">Completion blockers</p>
-    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-      {blockers.map((blocker) => (
-        <li key={blocker.code}>{blocker.message}</li>
-      ))}
-    </ul>
-  </div>
-) : (
-  <div className="rounded-xl border border-status-green/30 bg-status-green-soft p-4">
-    <p className="font-display text-sm font-semibold text-foreground">Ready to complete</p>
-    <p className="mt-1 text-xs text-muted-foreground">All required checklist items, payment, filing reference, and confirmation proof are present.</p>
-  </div>
-)}
+{
+  blockers.length > 0 ? (
+    <div className="rounded-xl border border-status-orange/30 bg-status-orange-soft p-4">
+      <p className="font-display text-sm font-semibold text-foreground">Completion blockers</p>
+      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+        {blockers.map((blocker) => (
+          <li key={blocker.code}>{blocker.message}</li>
+        ))}
+      </ul>
+    </div>
+  ) : (
+    <div className="rounded-xl border border-status-green/30 bg-status-green-soft p-4">
+      <p className="font-display text-sm font-semibold text-foreground">Ready to complete</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        All required checklist items, payment, filing reference, and confirmation proof are present.
+      </p>
+    </div>
+  );
+}
 ```
 
 - [x] **Step 6: Add guarded status advance**
@@ -2286,6 +2380,7 @@ git commit -m "feat: connect annual return case detail"
 ## Task 8: Wire Dashboard Metrics To Real Annual Return Counts
 
 **Files:**
+
 - Modify: `src/routes/index.tsx`
 
 - [ ] **Step 1: Add loader**
@@ -2304,7 +2399,11 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Dashboard — Kossilon CoSec OS" },
-      { name: "description", content: "Deadlines, overdue cases, pending documents, payments, WhatsApp enquiries, and team workload at a glance." },
+      {
+        name: "description",
+        content:
+          "Deadlines, overdue cases, pending documents, payments, WhatsApp enquiries, and team workload at a glance.",
+      },
     ],
   }),
   component: DashboardPage,
@@ -2316,7 +2415,9 @@ export const Route = createFileRoute("/")({
 Inside `DashboardPage`, replace `const m = dashboardMetrics();` with:
 
 ```ts
-const realMetrics = Route.useLoaderData() as Awaited<ReturnType<typeof getAnnualReturnDashboardMetrics>>;
+const realMetrics = Route.useLoaderData() as Awaited<
+  ReturnType<typeof getAnnualReturnDashboardMetrics>
+>;
 const m = {
   ...dashboardMetrics(),
   dueIn7: realMetrics.dueIn7,
@@ -2348,6 +2449,7 @@ git commit -m "feat: show real annual return dashboard metrics"
 ## Task 9: Final Verification
 
 **Files:**
+
 - Modify only if verification exposes defects in files changed by earlier tasks.
 
 - [ ] **Step 1: Run all unit tests**

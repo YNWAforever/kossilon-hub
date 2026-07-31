@@ -45,10 +45,12 @@
 ### Task 1: Annual Return Portal Timeline Helper
 
 **Files:**
+
 - Modify: `src/lib/annual-return-store.ts`
 - Modify: `src/lib/annual-return-store.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - Existing `replaceCase(caseId, updater)` internal helper.
   - Existing `appendTimeline(caseItem, label, detail)` internal helper.
@@ -67,38 +69,38 @@ Add `appendClientPortalTimelineEvent` to the import block in `src/lib/annual-ret
 Append these tests inside `describe("annual return store mutations", () => { ... })` after the `beforeEach`:
 
 ```ts
-  it("appends client portal timeline events without changing filing state", () => {
-    const before = getAnnualReturnCaseById("ar-delta");
+it("appends client portal timeline events without changing filing state", () => {
+  const before = getAnnualReturnCaseById("ar-delta");
 
-    expect(
-      appendClientPortalTimelineEvent(
-        "ar-delta",
-        "Client document uploaded",
-        "Joanna Poon uploaded Signed NAR1 from the client portal.",
-      ),
-    ).toEqual({ ok: true });
+  expect(
+    appendClientPortalTimelineEvent(
+      "ar-delta",
+      "Client document uploaded",
+      "Joanna Poon uploaded Signed NAR1 from the client portal.",
+    ),
+  ).toEqual({ ok: true });
 
-    const after = getAnnualReturnCaseById("ar-delta");
+  const after = getAnnualReturnCaseById("ar-delta");
 
-    expect(after?.status).toBe(before?.status);
-    expect(after?.timeline[0]).toMatchObject({
-      label: "Client document uploaded",
-      detail: "Joanna Poon uploaded Signed NAR1 from the client portal.",
-    });
+  expect(after?.status).toBe(before?.status);
+  expect(after?.timeline[0]).toMatchObject({
+    label: "Client document uploaded",
+    detail: "Joanna Poon uploaded Signed NAR1 from the client portal.",
   });
+});
 
-  it("returns a stable error for missing client portal timeline cases", () => {
-    expect(
-      appendClientPortalTimelineEvent(
-        "ar-missing",
-        "Client document uploaded",
-        "Missing case should not mutate state.",
-      ),
-    ).toEqual({
-      ok: false,
-      reason: "Case not found",
-    });
+it("returns a stable error for missing client portal timeline cases", () => {
+  expect(
+    appendClientPortalTimelineEvent(
+      "ar-missing",
+      "Client document uploaded",
+      "Missing case should not mutate state.",
+    ),
+  ).toEqual({
+    ok: false,
+    reason: "Case not found",
   });
+});
 ```
 
 - [ ] **Step 2: Run the focused failing test**
@@ -127,9 +129,7 @@ export function appendClientPortalTimelineEvent(
   if (!label.trim()) return { ok: false, reason: "Timeline label is required" };
   if (!detail.trim()) return { ok: false, reason: "Timeline detail is required" };
 
-  replaceCase(caseId, (currentCase) =>
-    appendTimeline(currentCase, label.trim(), detail.trim()),
-  );
+  replaceCase(caseId, (currentCase) => appendTimeline(currentCase, label.trim(), detail.trim()));
 
   return { ok: true };
 }
@@ -162,11 +162,13 @@ Expected: commit succeeds.
 ### Task 2: Client Portal Store And Domain Tests
 
 **Files:**
+
 - Create: `src/lib/client-portal-store.ts`
 - Create: `src/lib/client-portal-store.test.ts`
 - Review: `src/lib/annual-return-store.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `type AnnualReturnCase`
   - `getPacketStatus(caseItem: AnnualReturnCase): AnnualReturnPacketStatus`
@@ -238,12 +240,7 @@ function requireCase(caseId: string) {
 
 function makeDeltaReadyForReceipt(): void {
   uploadClientDocument(requireCase("ar-delta"), "signed-nar1", "signed-nar1.pdf", "Joanna Poon");
-  uploadClientDocument(
-    requireCase("ar-delta"),
-    "scr",
-    "updated-scr.pdf",
-    "Joanna Poon",
-  );
+  uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
   updatePaymentStatus("ar-delta", "paid");
   updateSignatureStatus("ar-delta", "received");
   completeChecklistItem("ar-delta", "collect-signed-nar1");
@@ -337,9 +334,9 @@ describe("client portal store", () => {
     });
 
     expect(requireCase("ar-delta").paymentStatus).toBe("pending");
-    expect(getClientPortalRequiredActions(requireCase("ar-delta")).map((action) => action.id)).not.toContain(
-      "action-ar-delta-payment-acknowledgement",
-    );
+    expect(
+      getClientPortalRequiredActions(requireCase("ar-delta")).map((action) => action.id),
+    ).not.toContain("action-ar-delta-payment-acknowledgement");
   });
 
   it("blocks packet approval until portal-visible documents are uploaded", () => {
@@ -358,7 +355,11 @@ describe("client portal store", () => {
       type: "approve-packet",
       summary: "Joanna Poon approved the filing packet.",
     });
-    expect(getDocumentArchiveRows([requireCase("ar-delta")]).some((row) => row.id === "archive-ar-delta-client-packet-approval")).toBe(true);
+    expect(
+      getDocumentArchiveRows([requireCase("ar-delta")]).some(
+        (row) => row.id === "archive-ar-delta-client-packet-approval",
+      ),
+    ).toBe(true);
   });
 
   it("derives generated submission and receipt archive rows", () => {
@@ -641,21 +642,21 @@ export function getClientPortalRequiredActions(
     .map((document) => {
       const currentDocument = getCurrentClientDocument(caseItem.id, document.id, currentSnapshot);
       return {
-      id: `action-${caseItem.id}-document-${document.id}`,
-      caseId: caseItem.id,
-      kind: "document" as const,
-      label: currentDocument ? `Replace ${document.label}` : `Upload ${document.label}`,
-      status: isReadOnlyCase(caseItem)
-        ? ("blocked" as const)
-        : currentDocument
-          ? ("complete" as const)
-          : ("open" as const),
-      detail: currentDocument
-        ? `${currentDocument.filename} is the current uploaded file.`
-        : `${document.label} is required before the annual return filing can proceed.`,
-      requirementId: document.id,
-    };
-  });
+        id: `action-${caseItem.id}-document-${document.id}`,
+        caseId: caseItem.id,
+        kind: "document" as const,
+        label: currentDocument ? `Replace ${document.label}` : `Upload ${document.label}`,
+        status: isReadOnlyCase(caseItem)
+          ? ("blocked" as const)
+          : currentDocument
+            ? ("complete" as const)
+            : ("open" as const),
+        detail: currentDocument
+          ? `${currentDocument.filename} is the current uploaded file.`
+          : `${document.label} is required before the annual return filing can proceed.`,
+        requirementId: document.id,
+      };
+    });
 
   const paymentAction = hasCompletedAction(caseItem.id, "acknowledge-payment", currentSnapshot)
     ? []
@@ -666,7 +667,8 @@ export function getClientPortalRequiredActions(
           kind: "payment" as const,
           label: "Acknowledge payment instructions",
           status: isReadOnlyCase(caseItem) ? ("blocked" as const) : ("open" as const),
-          detail: "Confirm the client has seen the payment instructions. Staff still controls payment status.",
+          detail:
+            "Confirm the client has seen the payment instructions. Staff still controls payment status.",
         },
       ];
 
@@ -710,9 +712,14 @@ export function getClientPortalProgress(
   ).length;
   const paymentComplete = hasCompletedAction(caseItem.id, "acknowledge-payment", currentSnapshot);
   const packetComplete = hasCompletedAction(caseItem.id, "approve-packet", currentSnapshot);
-  const receiptComplete = Boolean(caseItem.receipt) && hasCompletedAction(caseItem.id, "view-receipt", currentSnapshot);
+  const receiptComplete =
+    Boolean(caseItem.receipt) && hasCompletedAction(caseItem.id, "view-receipt", currentSnapshot);
   const total = requiredDocuments.length + 3;
-  const completed = completedDocuments + (paymentComplete ? 1 : 0) + (packetComplete ? 1 : 0) + (receiptComplete ? 1 : 0);
+  const completed =
+    completedDocuments +
+    (paymentComplete ? 1 : 0) +
+    (packetComplete ? 1 : 0) +
+    (receiptComplete ? 1 : 0);
   const nextOpen = getClientPortalRequiredActions(caseItem, currentSnapshot).find(
     (action) => action.status === "open",
   );
@@ -1009,11 +1016,13 @@ Expected: commit succeeds.
 ### Task 3: Client Portal Route
 
 **Files:**
+
 - Create: `src/routes/portal.tsx`
 - Modify: `src/routes/-annual-returns-workflow.test.ts`
 - Generated by build: `src/routeTree.gen.ts`
 
 **Interfaces:**
+
 - Consumes from Task 2:
   - `useClientPortalSnapshot`
   - `getClientPortalProgress`
@@ -1043,15 +1052,15 @@ const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url),
 Append this test:
 
 ```ts
-  it("renders the client portal action center with mocked client actions", () => {
-    expect(portalRouteSource).toContain('createFileRoute("/portal")');
-    expect(portalRouteSource).toContain("caseId");
-    expect(portalRouteSource).toContain("Upload");
-    expect(portalRouteSource).toContain("Replace");
-    expect(portalRouteSource).toContain("Acknowledge payment");
-    expect(portalRouteSource).toContain("Approve packet");
-    expect(portalRouteSource).toContain("View receipt");
-  });
+it("renders the client portal action center with mocked client actions", () => {
+  expect(portalRouteSource).toContain('createFileRoute("/portal")');
+  expect(portalRouteSource).toContain("caseId");
+  expect(portalRouteSource).toContain("Upload");
+  expect(portalRouteSource).toContain("Replace");
+  expect(portalRouteSource).toContain("Acknowledge payment");
+  expect(portalRouteSource).toContain("Approve packet");
+  expect(portalRouteSource).toContain("View receipt");
+});
 ```
 
 - [ ] **Step 2: Run the failing route regression test**
@@ -1430,10 +1439,12 @@ Expected: commit succeeds.
 ### Task 4: Documents Archive Route
 
 **Files:**
+
 - Replace: `src/routes/documents.tsx`
 - Modify: `src/routes/-annual-returns-workflow.test.ts`
 
 **Interfaces:**
+
 - Consumes from Task 2:
   - `useClientPortalSnapshot`
   - `getDocumentArchiveRows`
@@ -1449,17 +1460,17 @@ Expected: commit succeeds.
 Append this test to `src/routes/-annual-returns-workflow.test.ts`:
 
 ```ts
-  it("renders the document archive with source, category, status, and case filters", () => {
-    const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
+it("renders the document archive with source, category, status, and case filters", () => {
+  const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 
-    expect(documentsRouteSource).toContain('createFileRoute("/documents")');
-    expect(documentsRouteSource).toContain("caseId");
-    expect(documentsRouteSource).toContain("Filter by source");
-    expect(documentsRouteSource).toContain("Filter by category");
-    expect(documentsRouteSource).toContain("Filter by status");
-    expect(documentsRouteSource).toContain("getDocumentArchiveRows");
-    expect(documentsRouteSource).toContain('to="/annual-returns/$id"');
-  });
+  expect(documentsRouteSource).toContain('createFileRoute("/documents")');
+  expect(documentsRouteSource).toContain("caseId");
+  expect(documentsRouteSource).toContain("Filter by source");
+  expect(documentsRouteSource).toContain("Filter by category");
+  expect(documentsRouteSource).toContain("Filter by status");
+  expect(documentsRouteSource).toContain("getDocumentArchiveRows");
+  expect(documentsRouteSource).toContain('to="/annual-returns/$id"');
+});
 ```
 
 - [ ] **Step 2: Run the failing archive source test**
@@ -1511,7 +1522,8 @@ function DocumentsRoute() {
 
   const rows = useMemo(() => getDocumentArchiveRows(cases, snapshot), [cases, snapshot]);
   const visibleRows = rows.filter((row) => {
-    const queryText = `${row.companyName} ${row.contactName} ${row.title} ${row.filename}`.toLowerCase();
+    const queryText =
+      `${row.companyName} ${row.contactName} ${row.title} ${row.filename}`.toLowerCase();
     return (
       queryText.includes(query.toLowerCase()) &&
       (source === "all" || row.source === source) &&
@@ -1537,9 +1549,33 @@ function DocumentsRoute() {
             placeholder="Search company, contact, title, or filename"
             value={query}
           />
-          <FilterSelect label="Filter by source" value={source} onChange={setSource} values={["client-portal", "staff-packet", "filing-submission", "filing-receipt"]} />
-          <FilterSelect label="Filter by category" value={category} onChange={setCategory} values={["identity", "registry", "signature", "payment", "packet", "submission", "receipt", "other"]} />
-          <FilterSelect label="Filter by status" value={status} onChange={setStatus} values={["required", "uploaded", "superseded", "accepted", "rejected", "generated"]} />
+          <FilterSelect
+            label="Filter by source"
+            value={source}
+            onChange={setSource}
+            values={["client-portal", "staff-packet", "filing-submission", "filing-receipt"]}
+          />
+          <FilterSelect
+            label="Filter by category"
+            value={category}
+            onChange={setCategory}
+            values={[
+              "identity",
+              "registry",
+              "signature",
+              "payment",
+              "packet",
+              "submission",
+              "receipt",
+              "other",
+            ]}
+          />
+          <FilterSelect
+            label="Filter by status"
+            value={status}
+            onChange={setStatus}
+            values={["required", "uploaded", "superseded", "accepted", "rejected", "generated"]}
+          />
           <select
             aria-label="Filter by case"
             className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -1703,6 +1739,7 @@ Expected: commit succeeds.
 ### Task 5: Staff Integration, Verification, And PR Update
 
 **Files:**
+
 - Modify: `src/routes/annual-returns.$id.tsx`
 - Modify: `src/components/app-sidebar.tsx`
 - Modify: `src/routes/-annual-returns-workflow.test.ts`
@@ -1712,6 +1749,7 @@ Expected: commit succeeds.
 - Generated by build: `src/routeTree.gen.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `useClientPortalSnapshot`
   - `getClientPortalActivity`
@@ -1728,17 +1766,20 @@ Expected: commit succeeds.
 Append this test to `src/routes/-annual-returns-workflow.test.ts`:
 
 ```ts
-  it("connects annual-return detail and sidebar to portal activity", () => {
-    const sidebarSource = readFileSync(new URL("../components/app-sidebar.tsx", import.meta.url), "utf8");
+it("connects annual-return detail and sidebar to portal activity", () => {
+  const sidebarSource = readFileSync(
+    new URL("../components/app-sidebar.tsx", import.meta.url),
+    "utf8",
+  );
 
-    expect(annualReturnDetailRouteSource).toContain("Client portal activity");
-    expect(annualReturnDetailRouteSource).toContain('to="/portal"');
-    expect(annualReturnDetailRouteSource).toContain('to="/documents"');
-    expect(annualReturnDetailRouteSource).toContain("getClientPortalRequiredActions");
-    expect(annualReturnDetailRouteSource).toContain("getDocumentArchiveRows");
-    expect(sidebarSource).toContain("Portal Demo");
-    expect(sidebarSource).toContain('to: "/portal"');
-  });
+  expect(annualReturnDetailRouteSource).toContain("Client portal activity");
+  expect(annualReturnDetailRouteSource).toContain('to="/portal"');
+  expect(annualReturnDetailRouteSource).toContain('to="/documents"');
+  expect(annualReturnDetailRouteSource).toContain("getClientPortalRequiredActions");
+  expect(annualReturnDetailRouteSource).toContain("getDocumentArchiveRows");
+  expect(sidebarSource).toContain("Portal Demo");
+  expect(sidebarSource).toContain('to: "/portal"');
+});
 ```
 
 - [ ] **Step 2: Run failing integration test**
@@ -1768,11 +1809,11 @@ import {
 Inside `AnnualReturnDetailRoute`, after `const followUps = getFollowUpDrafts(caseItem);`, add:
 
 ```ts
-  const portalSnapshot = useClientPortalSnapshot();
-  const portalActions = getClientPortalRequiredActions(caseItem, portalSnapshot);
-  const portalActivity = getClientPortalActivity(caseItem.id, portalSnapshot);
-  const archiveRows = getDocumentArchiveRows([caseItem], portalSnapshot);
-  const latestPortalActivity = portalActivity[0];
+const portalSnapshot = useClientPortalSnapshot();
+const portalActions = getClientPortalRequiredActions(caseItem, portalSnapshot);
+const portalActivity = getClientPortalActivity(caseItem.id, portalSnapshot);
+const archiveRows = getDocumentArchiveRows([caseItem], portalSnapshot);
+const latestPortalActivity = portalActivity[0];
 ```
 
 - [ ] **Step 4: Add the Client Portal Activity panel**

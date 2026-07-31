@@ -41,10 +41,12 @@
 ### Task 1: Atomic Annual-Return Payment Acceptance
 
 **Files:**
+
 - Modify: `src/lib/annual-return-store.ts:16-149, 827-958`
 - Test: `src/lib/annual-return-store.test.ts:245-335`
 
 **Interfaces:**
+
 - Consumes: existing `getPacketStatus`, `replaceCase`, `withDerivedStatus`, and `appendTimeline` helpers.
 - Produces: `AnnualReturnMutationResult` and `acceptPaymentProofForCase(caseId: string, actor: string): AnnualReturnMutationResult`.
 
@@ -163,10 +165,12 @@ git commit -m "feat: accept payment proof into filing readiness"
 ### Task 2: Payment-Proof Records, Uploads, And Reviews
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.ts:1-460, 791-1020`
 - Test: `src/lib/client-portal-store.test.ts:1-110, 948-end`
 
 **Interfaces:**
+
 - Consumes: `acceptPaymentProofForCase(caseId, actor)` from Task 1 and existing portal action/timeline helpers.
 - Produces: `ClientPortalPaymentProof`, `ClientPortalPaymentProofReviewReasonCode`, `uploadPaymentProof`, `attachPaymentProof`, `getCurrentPaymentProof`, `getPaymentProofsForCase`, `acceptPaymentProof`, and `rejectPaymentProof`.
 
@@ -185,7 +189,9 @@ import {
 } from "./client-portal-store";
 
 it("creates client and staff payment proof with explicit origin metadata", () => {
-  expect(uploadPaymentProof(requireCase("ar-delta"), "fps-client.png", "Joanna Poon")).toMatchObject({
+  expect(
+    uploadPaymentProof(requireCase("ar-delta"), "fps-client.png", "Joanna Poon"),
+  ).toMatchObject({
     ok: true,
   });
   expect(getCurrentPaymentProof("ar-delta")).toMatchObject({
@@ -417,10 +423,12 @@ git commit -m "feat: add payment proof review lifecycle"
 ### Task 3: Rejected-Proof WhatsApp Drafts And Mock Send
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.ts:154-220, 604-700, 931-977`
 - Test: `src/lib/client-portal-store.test.ts:607-708`
 
 **Interfaces:**
+
 - Consumes: payment-proof records and review metadata from Task 2.
 - Produces: `ClientPortalPaymentProofFollowUpDraft`, `getPaymentProofFollowUpDrafts`, and `sendPaymentProofFollowUpNow`.
 
@@ -561,10 +569,12 @@ git commit -m "feat: add rejected payment proof follow-ups"
 ### Task 4: Staff Payments Review Workspace
 
 **Files:**
+
 - Modify: `src/routes/payments.tsx:1-47`
 - Test: `src/routes/-annual-returns-workflow.test.ts:1-45, 123-end`
 
 **Interfaces:**
+
 - Consumes: `useClientPortalSnapshot`, `getCurrentPaymentProof`, `getPaymentProofsForCase`, `attachPaymentProof`, `acceptPaymentProof`, `rejectPaymentProof`, and `clientPortalPaymentProofReviewReasons`.
 - Produces: a dense staff workspace with proof status, attach, accept, reject, reason, note, and history states.
 
@@ -640,12 +650,14 @@ git commit -m "feat: add payment proof review workspace"
 ### Task 5: Client Portal Payment-Proof Action And History
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.ts:327-500`
 - Modify: `src/routes/portal.tsx:1-380`
 - Test: `src/lib/client-portal-store.test.ts:107-386`
 - Test: `src/routes/-annual-returns-workflow.test.ts:156-332`
 
 **Interfaces:**
+
 - Consumes: proof selectors and entry mutations from Task 2.
 - Produces: `payment-proof` required-action derivation plus portal upload, pending, rejected replacement, accepted, and history states.
 
@@ -654,7 +666,11 @@ git commit -m "feat: add payment proof review workspace"
 ```ts
 it("derives client payment proof actions through upload, review, and replacement", () => {
   expect(getClientPortalRequiredActions(requireCase("ar-delta"))).toContainEqual(
-    expect.objectContaining({ kind: "payment-proof", status: "open", paymentProofAction: "upload" }),
+    expect.objectContaining({
+      kind: "payment-proof",
+      status: "open",
+      paymentProofAction: "upload",
+    }),
   );
 
   const upload = uploadPaymentProof(requireCase("ar-delta"), "proof.png", "Joanna Poon");
@@ -665,7 +681,11 @@ it("derives client payment proof actions through upload, review, and replacement
 
   rejectPaymentProof(upload.proofId, { reasonCode: "unreadable", actor: "Operations" });
   expect(getClientPortalRequiredActions(requireCase("ar-delta"))).toContainEqual(
-    expect.objectContaining({ kind: "payment-proof", status: "open", paymentProofAction: "replace" }),
+    expect.objectContaining({
+      kind: "payment-proof",
+      status: "open",
+      paymentProofAction: "replace",
+    }),
   );
 });
 
@@ -755,6 +775,7 @@ git commit -m "feat: add client payment proof portal flow"
 ### Task 6: WhatsApp Queue And Read-Only AI Context
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.ts:604-700`
 - Modify: `src/routes/whatsapp.automation.tsx:1-220`
 - Modify: `src/lib/ai-agent.ts:1-216`
@@ -763,6 +784,7 @@ git commit -m "feat: add client payment proof portal flow"
 - Test: `src/routes/-annual-returns-workflow.test.ts:333-374`
 
 **Interfaces:**
+
 - Consumes: proof records and follow-up helpers from Tasks 2 and 3.
 - Produces: `ClientPortalPaymentProofAiContext`, `getPaymentProofAiContext`, payment-proof automation queue rows, and AI draft context.
 
@@ -869,11 +891,13 @@ git commit -m "feat: connect payment proof follow-ups to whatsapp and ai"
 ### Task 7: Full Workflow Regression And Verification
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.test.ts`
 - Modify: `src/routes/-annual-returns-workflow.test.ts`
 - Modify only if generated by the existing build: `src/routeTree.gen.ts`
 
 **Interfaces:**
+
 - Consumes: all public interfaces from Tasks 1-6.
 - Produces: end-to-end regression coverage and a verified branch ready for code review.
 

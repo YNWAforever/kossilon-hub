@@ -29,6 +29,7 @@
 ### Task 1: Auth Session Adapter
 
 **Files:**
+
 - Create: `src/features/auth/session.test.ts`
 - Create: `src/features/auth/session.ts`
 
@@ -184,9 +185,7 @@ export type AuthSession = {
   signedInAt: string;
 };
 
-export type AuthResult =
-  | { ok: true; session: AuthSession }
-  | { ok: false; error: string };
+export type AuthResult = { ok: true; session: AuthSession } | { ok: false; error: string };
 
 type SessionStorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 type NowProvider = () => string;
@@ -366,6 +365,7 @@ git commit -m "feat: add demo auth session adapter"
 ### Task 2: Redirect and Public Route Helpers
 
 **Files:**
+
 - Create: `src/features/auth/route-guard.test.ts`
 - Create: `src/features/auth/route-guard.ts`
 
@@ -507,6 +507,7 @@ git commit -m "feat: add auth route guard helpers"
 ### Task 3: Auth Context and Protected App Shell
 
 **Files:**
+
 - Create: `src/features/auth/auth-context.tsx`
 - Modify: `src/routes/__root.tsx`
 - Modify: `src/components/top-bar.tsx`
@@ -750,7 +751,9 @@ export function TopBar({
             {session?.initials ?? "--"}
           </div>
           <div className="hidden text-right leading-tight md:block">
-            <div className="text-xs font-semibold text-foreground">{session?.name ?? "Signed in"}</div>
+            <div className="text-xs font-semibold text-foreground">
+              {session?.name ?? "Signed in"}
+            </div>
             <div className="text-[10px] text-muted-foreground">{session?.role ?? "User"}</div>
           </div>
         </div>
@@ -795,6 +798,7 @@ git commit -m "feat: protect app shell with demo session"
 ### Task 4: Login Route
 
 **Files:**
+
 - Create: `src/routes/login.tsx`
 
 - [ ] **Step 1: Create the login route**
@@ -989,6 +993,7 @@ If `src/routeTree.gen.ts` is not modified, omit it from `git add`.
 ### Task 5: Admin Route and Sidebar Link
 
 **Files:**
+
 - Modify: `src/components/app-sidebar.tsx`
 - Create: `src/routes/admin.tsx`
 
@@ -1088,10 +1093,7 @@ function AdminPage() {
   if (!canAdmin) {
     return (
       <>
-        <TopBar
-          title="Admin"
-          subtitle="Restricted area"
-        />
+        <TopBar title="Admin" subtitle="Restricted area" />
         <main className="flex-1 p-6">
           <section className="rounded-xl border border-border bg-card p-6">
             <div className="flex max-w-2xl items-start gap-4">
@@ -1103,8 +1105,8 @@ function AdminPage() {
                   Admin access required
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {session?.name ?? "This user"} is signed in as {session?.role ?? "User"}.
-                  Admin tools are limited to prototype Admin users.
+                  {session?.name ?? "This user"} is signed in as {session?.role ?? "User"}. Admin
+                  tools are limited to prototype Admin users.
                 </p>
                 <Link
                   to="/"
@@ -1122,15 +1124,16 @@ function AdminPage() {
 
   return (
     <>
-      <TopBar
-        title="Admin"
-        subtitle="Users, roles, system settings"
-      />
+      <TopBar title="Admin" subtitle="Users, roles, system settings" />
       <main className="flex-1 space-y-6 p-6">
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <AdminMetric icon={Users} label="Demo users" value={localUsers.length} />
           <AdminMetric icon={CheckCircle2} label="Active users" value={activeUsers} />
-          <AdminMetric icon={ShieldCheck} label="Admin users" value={localUsers.filter((user) => user.role === "Admin").length} />
+          <AdminMetric
+            icon={ShieldCheck}
+            label="Admin users"
+            value={localUsers.filter((user) => user.role === "Admin").length}
+          />
         </section>
 
         <section className="rounded-xl border border-border bg-card">
@@ -1180,7 +1183,15 @@ function AdminPage() {
   );
 }
 
-function AdminMetric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number }) {
+function AdminMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+}) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between">
@@ -1282,10 +1293,30 @@ function UsersPanel({
 function SystemPanel() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <SystemCard icon={Building2} title="Firm profile" value="Kossilon" detail="Company secretary operations workspace" />
-      <SystemCard icon={Package} title="Service packages" value="3 active packages" detail="Basic, Standard, Premium annual-return services" />
-      <SystemCard icon={MessageCircle} title="WhatsApp API" value="WOZTELL configured in Settings" detail="Use Settings for channel and API key management" />
-      <SystemCard icon={KeyRound} title="Annual-return actor" value="Server env required" detail="Prototype login does not configure KOSSILON_ANNUAL_RETURN_ACTOR_ID for server-side annual-return actions" />
+      <SystemCard
+        icon={Building2}
+        title="Firm profile"
+        value="Kossilon"
+        detail="Company secretary operations workspace"
+      />
+      <SystemCard
+        icon={Package}
+        title="Service packages"
+        value="3 active packages"
+        detail="Basic, Standard, Premium annual-return services"
+      />
+      <SystemCard
+        icon={MessageCircle}
+        title="WhatsApp API"
+        value="WOZTELL configured in Settings"
+        detail="Use Settings for channel and API key management"
+      />
+      <SystemCard
+        icon={KeyRound}
+        title="Annual-return actor"
+        value="Server env required"
+        detail="Prototype login does not configure KOSSILON_ANNUAL_RETURN_ACTOR_ID for server-side annual-return actions"
+      />
     </div>
   );
 }
@@ -1323,7 +1354,10 @@ function AuditPanel() {
   return (
     <ul className="divide-y divide-border rounded-lg border border-border">
       {rows.map(([actor, action, time]) => (
-        <li key={`${actor}-${action}-${time}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <li
+          key={`${actor}-${action}-${time}`}
+          className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+        >
           <div>
             <p className="text-sm font-medium text-foreground">{action}</p>
             <p className="text-xs text-muted-foreground">{actor}</p>
@@ -1363,6 +1397,7 @@ If `src/routeTree.gen.ts` is not modified, omit it from `git add`.
 ### Task 6: Final Verification and Browser Smoke Test
 
 **Files:**
+
 - Verify all files changed in Tasks 1-5.
 
 - [ ] **Step 1: Run all automated checks**

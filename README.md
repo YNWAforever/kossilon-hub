@@ -10,6 +10,7 @@ npm.cmd run verify:firm -- --dry-run
 ```
 
 The firm verification command reports required binding and provider names only. It does not read secret values, call external services, or provision resources.
+
 ## Pre-pilot readiness evidence
 
 The offline verifier is the required first gate:

@@ -37,10 +37,12 @@
 ### Task 1: Annual Return Packet Domain And Tests
 
 **Files:**
+
 - Modify: `src/lib/annual-return-store.ts`
 - Modify: `src/lib/annual-return-store.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - Existing `AnnualReturnCase`
   - Existing `getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[]`
@@ -182,125 +184,125 @@ describe("annual return filing packet helpers", () => {
 Append this test block inside the existing `annual return store mutations` describe block:
 
 ```ts
-  it("toggles packet requirements, updates readiness, and appends timeline events", () => {
-    togglePacketRequirement("ar-delta", "nar1-draft");
+it("toggles packet requirements, updates readiness, and appends timeline events", () => {
+  togglePacketRequirement("ar-delta", "nar1-draft");
 
-    const caseItem = getAnnualReturnCaseById("ar-delta");
+  const caseItem = getAnnualReturnCaseById("ar-delta");
 
-    expect(caseItem?.packetRequirements.find((item) => item.id === "nar1-draft")?.complete).toBe(
-      true,
-    );
-    expect(caseItem && getPacketReadiness(caseItem)).toBeGreaterThan(0);
-    expect(caseItem?.timeline[0]).toMatchObject({
-      label: "Packet requirement updated",
-      detail: "NAR1 draft prepared marked complete.",
-    });
+  expect(caseItem?.packetRequirements.find((item) => item.id === "nar1-draft")?.complete).toBe(
+    true,
+  );
+  expect(caseItem && getPacketReadiness(caseItem)).toBeGreaterThan(0);
+  expect(caseItem?.timeline[0]).toMatchObject({
+    label: "Packet requirement updated",
+    detail: "NAR1 draft prepared marked complete.",
   });
+});
 
-  it("mock-sends a follow-up and appends a timeline event", () => {
-    const before = getAnnualReturnCaseById("ar-delta");
-    const draft = before ? getFollowUpDrafts(before)[0] : undefined;
+it("mock-sends a follow-up and appends a timeline event", () => {
+  const before = getAnnualReturnCaseById("ar-delta");
+  const draft = before ? getFollowUpDrafts(before)[0] : undefined;
 
-    expect(draft).toBeDefined();
-    expect(draft && sendFollowUpNow("ar-delta", draft.id)).toEqual({ ok: true });
+  expect(draft).toBeDefined();
+  expect(draft && sendFollowUpNow("ar-delta", draft.id)).toEqual({ ok: true });
 
-    const after = getAnnualReturnCaseById("ar-delta");
+  const after = getAnnualReturnCaseById("ar-delta");
 
-    expect(after?.sentFollowUpIds).toContain(draft?.id);
-    expect(after?.timeline[0]?.label).toBe("WhatsApp reminder sent");
+  expect(after?.sentFollowUpIds).toContain(draft?.id);
+  expect(after?.timeline[0]?.label).toBe("WhatsApp reminder sent");
+});
+
+it("refuses to send the same follow-up twice", () => {
+  const before = getAnnualReturnCaseById("ar-delta");
+  const draft = before ? getFollowUpDrafts(before)[0] : undefined;
+
+  expect(draft).toBeDefined();
+  expect(draft && sendFollowUpNow("ar-delta", draft.id)).toEqual({ ok: true });
+  expect(draft && sendFollowUpNow("ar-delta", draft.id)).toEqual({
+    ok: false,
+    reason: "Follow-up has already been sent",
   });
+});
 
-  it("refuses to send the same follow-up twice", () => {
-    const before = getAnnualReturnCaseById("ar-delta");
-    const draft = before ? getFollowUpDrafts(before)[0] : undefined;
-
-    expect(draft).toBeDefined();
-    expect(draft && sendFollowUpNow("ar-delta", draft.id)).toEqual({ ok: true });
-    expect(draft && sendFollowUpNow("ar-delta", draft.id)).toEqual({
-      ok: false,
-      reason: "Follow-up has already been sent",
-    });
+it("blocks packet submission until case and packet are complete", () => {
+  expect(submitFilingPacket("ar-delta")).toEqual({
+    ok: false,
+    reason:
+      "Packet is not ready: case readiness is below 100%; NAR1 draft prepared; Company particulars checked; Significant controller register confirmed; Signed NAR1 attached; Payment proof checked; Internal filing review approved",
   });
+});
 
-  it("blocks packet submission until case and packet are complete", () => {
-    expect(submitFilingPacket("ar-delta")).toEqual({
-      ok: false,
-      reason:
-        "Packet is not ready: case readiness is below 100%; NAR1 draft prepared; Company particulars checked; Significant controller register confirmed; Signed NAR1 attached; Payment proof checked; Internal filing review approved",
-    });
+it("submits a complete packet, accepts the receipt, and marks the case filed", () => {
+  markDocumentReceived("ar-delta", "signed-nar1");
+  markDocumentReceived("ar-delta", "scr");
+  updatePaymentStatus("ar-delta", "paid");
+  updateSignatureStatus("ar-delta", "received");
+  completeChecklistItem("ar-delta", "collect-signed-nar1");
+  completeChecklistItem("ar-delta", "verify-scr");
+  completeChecklistItem("ar-delta", "confirm-payment");
+  completeChecklistItem("ar-delta", "submit-registry");
+  updateReviewStatus("ar-delta", "approved");
+
+  for (const requirementId of [
+    "nar1-draft",
+    "company-particulars",
+    "scr-confirmed",
+    "signed-nar1-attached",
+    "payment-proof-checked",
+    "internal-filing-review",
+  ]) {
+    togglePacketRequirement("ar-delta", requirementId);
+  }
+
+  const submitted = submitFilingPacket("ar-delta");
+  expect(submitted.ok).toBe(true);
+
+  const submittedCase = getAnnualReturnCaseById("ar-delta");
+  expect(submittedCase && getPacketStatus(submittedCase)).toBe("submitted");
+
+  const accepted = acceptFilingReceipt("ar-delta");
+  expect(accepted.ok).toBe(true);
+
+  const filedCase = getAnnualReturnCaseById("ar-delta");
+  expect(filedCase?.status).toBe("filed");
+  expect(filedCase && getPacketStatus(filedCase)).toBe("accepted");
+  expect(filedCase?.timeline[0]).toMatchObject({
+    label: "Filing receipt accepted",
   });
+});
 
-  it("submits a complete packet, accepts the receipt, and marks the case filed", () => {
-    markDocumentReceived("ar-delta", "signed-nar1");
-    markDocumentReceived("ar-delta", "scr");
-    updatePaymentStatus("ar-delta", "paid");
-    updateSignatureStatus("ar-delta", "received");
-    completeChecklistItem("ar-delta", "collect-signed-nar1");
-    completeChecklistItem("ar-delta", "verify-scr");
-    completeChecklistItem("ar-delta", "confirm-payment");
-    completeChecklistItem("ar-delta", "submit-registry");
-    updateReviewStatus("ar-delta", "approved");
+it("ignores packet and follow-up mutations after a case is filed", () => {
+  markDocumentReceived("ar-delta", "signed-nar1");
+  markDocumentReceived("ar-delta", "scr");
+  updatePaymentStatus("ar-delta", "paid");
+  updateSignatureStatus("ar-delta", "received");
+  completeChecklistItem("ar-delta", "collect-signed-nar1");
+  completeChecklistItem("ar-delta", "verify-scr");
+  completeChecklistItem("ar-delta", "confirm-payment");
+  completeChecklistItem("ar-delta", "submit-registry");
+  updateReviewStatus("ar-delta", "approved");
+  markFiled("ar-delta");
 
-    for (const requirementId of [
-      "nar1-draft",
-      "company-particulars",
-      "scr-confirmed",
-      "signed-nar1-attached",
-      "payment-proof-checked",
-      "internal-filing-review",
-    ]) {
-      togglePacketRequirement("ar-delta", requirementId);
-    }
+  const before = getAnnualReturnCaseById("ar-delta");
+  const timelineLength = before?.timeline.length;
 
-    const submitted = submitFilingPacket("ar-delta");
-    expect(submitted.ok).toBe(true);
+  togglePacketRequirement("ar-delta", "nar1-draft");
+  const draft = before ? getFollowUpDrafts(before)[0] : undefined;
+  const sendResult = draft ? sendFollowUpNow("ar-delta", draft.id) : undefined;
+  const submitResult = submitFilingPacket("ar-delta");
 
-    const submittedCase = getAnnualReturnCaseById("ar-delta");
-    expect(submittedCase && getPacketStatus(submittedCase)).toBe("submitted");
+  const after = getAnnualReturnCaseById("ar-delta");
 
-    const accepted = acceptFilingReceipt("ar-delta");
-    expect(accepted.ok).toBe(true);
-
-    const filedCase = getAnnualReturnCaseById("ar-delta");
-    expect(filedCase?.status).toBe("filed");
-    expect(filedCase && getPacketStatus(filedCase)).toBe("accepted");
-    expect(filedCase?.timeline[0]).toMatchObject({
-      label: "Filing receipt accepted",
-    });
+  expect(sendResult).toEqual({
+    ok: false,
+    reason: "Filed cases cannot send follow-ups",
   });
-
-  it("ignores packet and follow-up mutations after a case is filed", () => {
-    markDocumentReceived("ar-delta", "signed-nar1");
-    markDocumentReceived("ar-delta", "scr");
-    updatePaymentStatus("ar-delta", "paid");
-    updateSignatureStatus("ar-delta", "received");
-    completeChecklistItem("ar-delta", "collect-signed-nar1");
-    completeChecklistItem("ar-delta", "verify-scr");
-    completeChecklistItem("ar-delta", "confirm-payment");
-    completeChecklistItem("ar-delta", "submit-registry");
-    updateReviewStatus("ar-delta", "approved");
-    markFiled("ar-delta");
-
-    const before = getAnnualReturnCaseById("ar-delta");
-    const timelineLength = before?.timeline.length;
-
-    togglePacketRequirement("ar-delta", "nar1-draft");
-    const draft = before ? getFollowUpDrafts(before)[0] : undefined;
-    const sendResult = draft ? sendFollowUpNow("ar-delta", draft.id) : undefined;
-    const submitResult = submitFilingPacket("ar-delta");
-
-    const after = getAnnualReturnCaseById("ar-delta");
-
-    expect(sendResult).toEqual({
-      ok: false,
-      reason: "Filed cases cannot send follow-ups",
-    });
-    expect(submitResult).toEqual({
-      ok: false,
-      reason: "Filed cases cannot be submitted",
-    });
-    expect(after?.timeline.length).toBe(timelineLength);
+  expect(submitResult).toEqual({
+    ok: false,
+    reason: "Filed cases cannot be submitted",
   });
+  expect(after?.timeline.length).toBe(timelineLength);
+});
 ```
 
 - [ ] **Step 3: Run tests and verify they fail**
@@ -413,7 +415,6 @@ function createReadyPacketRequirements(): AnnualReturnPacketRequirement[] {
     "internal-filing-review": true,
   });
 }
-
 ```
 
 - [ ] **Step 6: Update clone and seed construction**
@@ -521,7 +522,8 @@ export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollo
     const type = followUpTypeForBlocker(blocker);
     const id = `follow-up-${caseItem.id}-${blocker.id}`;
     const sent = caseItem.sentFollowUpIds.includes(id);
-    const blockedReason = caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const blockedReason =
+      caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
 
     return {
       id,
@@ -543,7 +545,8 @@ export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollo
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")}`;
     const sent = caseItem.sentFollowUpIds.includes(id);
-    const blockedReason = caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const blockedReason =
+      caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
 
     return {
       id,
@@ -566,7 +569,8 @@ export function canSendFollowUp(
   caseItem: AnnualReturnCase,
   draft: AnnualReturnFollowUpDraft,
 ): { ok: true } | { ok: false; reason: string } {
-  if (caseItem.status === "filed") return { ok: false, reason: "Filed cases cannot send follow-ups" };
+  if (caseItem.status === "filed")
+    return { ok: false, reason: "Filed cases cannot send follow-ups" };
   if (caseItem.sentFollowUpIds.includes(draft.id) || draft.status === "sent") {
     return { ok: false, reason: "Follow-up has already been sent" };
   }
@@ -684,7 +688,8 @@ export function acceptFilingReceipt(
   if (caseItem.status === "filed" && caseItem.receipt) {
     return { ok: false, reason: "Receipt has already been accepted" };
   }
-  if (!caseItem.submission) return { ok: false, reason: "Packet must be submitted before receipt acceptance" };
+  if (!caseItem.submission)
+    return { ok: false, reason: "Packet must be submitted before receipt acceptance" };
 
   const receiptNumber = `CR-${caseItem.id.toUpperCase()}-${Date.now().toString().slice(-6)}`;
 
@@ -735,10 +740,12 @@ Expected: commit succeeds.
 ### Task 2: Command Center And Case Detail Packet UI
 
 **Files:**
+
 - Modify: `src/routes/annual-returns.tsx`
 - Modify: `src/routes/annual-returns.$id.tsx`
 
 **Interfaces:**
+
 - Consumes from Task 1:
   - `acceptFilingReceipt`
   - `canSendFollowUp`
@@ -785,31 +792,30 @@ const matchesFilter =
   (filter === "urgent" && (risk === "overdue" || risk === "due-soon")) ||
   (filter === "blocked" && getBlockers(caseItem).length > 0 && risk !== "filed") ||
   (filter === "ready" && risk === "ready-to-file") ||
-  (filter === "packet-ready" &&
-    getPacketStatus(caseItem) === "approved" &&
-    risk !== "filed") ||
-  (filter === "needs-follow-up" &&
-    followUps.some((draft) => draft.status === "draft")) ||
+  (filter === "packet-ready" && getPacketStatus(caseItem) === "approved" && risk !== "filed") ||
+  (filter === "needs-follow-up" && followUps.some((draft) => draft.status === "draft")) ||
   (filter === "filed" && risk === "filed");
 ```
 
 Update the filter button list:
 
 ```tsx
-{(["all", "urgent", "blocked", "ready", "packet-ready", "needs-follow-up", "filed"] as const).map(
-  (value) => (
-    <button
-      key={value}
-      className={`rounded-md border px-3 py-2 text-sm ${
-        filter === value ? "bg-primary text-primary-foreground" : "bg-background"
-      }`}
-      onClick={() => setFilter(value)}
-      type="button"
-    >
-      {filterLabel(value)}
-    </button>
-  ),
-)}
+{
+  (["all", "urgent", "blocked", "ready", "packet-ready", "needs-follow-up", "filed"] as const).map(
+    (value) => (
+      <button
+        key={value}
+        className={`rounded-md border px-3 py-2 text-sm ${
+          filter === value ? "bg-primary text-primary-foreground" : "bg-background"
+        }`}
+        onClick={() => setFilter(value)}
+        type="button"
+      >
+        {filterLabel(value)}
+      </button>
+    ),
+  );
+}
 ```
 
 Add this helper near `riskLabel`:
@@ -941,7 +947,9 @@ Place this section after the existing Blockers section and before Checklist:
       </p>
     </div>
     <div className="text-right">
-      <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${packetToneClass(packetStatus)}`}>
+      <span
+        className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${packetToneClass(packetStatus)}`}
+      >
         {packetStatusLabel(packetStatus)}
       </span>
       <p className="mt-1 text-sm text-muted-foreground">{packetReadiness}% packet ready</p>
@@ -1081,9 +1089,7 @@ function FollowUpCard({
             {draft.recipientName} / {draft.phone} / {draft.suggestedTiming}
           </p>
         </div>
-        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">
-          {draft.status}
-        </span>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{draft.status}</span>
       </div>
       <p className="mt-3 text-sm">{draft.messagePreview}</p>
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -1174,12 +1180,14 @@ Expected: commit succeeds.
 ### Task 3: WhatsApp Automation Queue And Verification
 
 **Files:**
+
 - Modify: `src/routes/whatsapp.automation.tsx`
 - Review: `src/lib/annual-return-store.ts`
 - Review: `src/routes/annual-returns.tsx`
 - Review: `src/routes/annual-returns.$id.tsx`
 
 **Interfaces:**
+
 - Consumes from Task 1:
   - `getFollowUpDrafts`
   - `sendFollowUpNow`
@@ -1446,6 +1454,7 @@ Expected: commit succeeds.
 ### Task 4: Final Review And PR Update
 
 **Files:**
+
 - Review: `src/lib/annual-return-store.ts`
 - Review: `src/lib/annual-return-store.test.ts`
 - Review: `src/routes/annual-returns.tsx`
@@ -1455,6 +1464,7 @@ Expected: commit succeeds.
 - Review: `docs/superpowers/plans/2026-07-08-filing-packet-follow-up-automation.md`
 
 **Interfaces:**
+
 - Consumes all prior task outputs.
 - Produces a verified branch ready to push onto the existing PR branch.
 
