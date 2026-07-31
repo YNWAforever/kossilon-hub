@@ -3,9 +3,12 @@ import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-r
 
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { PageHeader } from "@/components/page-header";
+import { ProductionWhatsAppInbox } from "../features/whatsapp/components/production-inbox";
 import { enquiries, findClientForEnquiry } from "../lib/app-data";
 
 export const Route = createFileRoute("/whatsapp")({
+  // `enquiry` addresses a demo fixture. Production conversations are keyed by
+  // whatsapp_contacts.id and are selected in-page, so it is ignored there.
   validateSearch: (search: Record<string, unknown>) => ({
     enquiry: typeof search.enquiry === "string" ? search.enquiry : undefined,
   }),
@@ -14,6 +17,18 @@ export const Route = createFileRoute("/whatsapp")({
 
 function WhatsAppRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { dataMode } = Route.useRouteContext();
+
+  // Must stay above the data-mode branch: /whatsapp/automation renders through
+  // this Outlet, and a branch that returns a screen unconditionally would blank it.
+  if (pathname !== "/whatsapp") {
+    return <Outlet />;
+  }
+
+  return dataMode === "demo" ? <DemoWhatsAppInbox /> : <ProductionWhatsAppInbox />;
+}
+
+function DemoWhatsAppInbox() {
   const search = Route.useSearch();
   const initialId =
     search.enquiry && enquiries.some((enquiry) => enquiry.id === search.enquiry)
@@ -27,10 +42,6 @@ function WhatsAppRoute() {
     () => (selected ? findClientForEnquiry(selected) : undefined),
     [selected],
   );
-
-  if (pathname !== "/whatsapp") {
-    return <Outlet />;
-  }
 
   if (!selected) return null;
 
