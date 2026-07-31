@@ -68,7 +68,14 @@ async function cleanupWhatsAppFixtures() {
     await tx`
       delete from whatsapp_contacts
       where whatsapp_id like 'phase2-test-%'
-        or phone_e164 in ('+85261234567', '+85269990001')
+        or phone_e164 in (
+          '+85261234567',
+          '+85269990001',
+          '+85261000001',
+          '+85261000002',
+          '+85261000003',
+          '+85261000004'
+        )
     `;
     await tx`
       delete from timeline_events
@@ -385,7 +392,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       await sql`
         update notification_outbox
         set payload = '{}'::jsonb
-        where idempotency_key = \${input.idempotencyKey}
+        where idempotency_key = ${input.idempotencyKey}
       `;
       await expect(repository.queueOutboundTemplateMessage(input)).rejects.toThrow(
         /existing WhatsApp follow-up cannot be replayed/i,
@@ -666,30 +673,30 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
 
       await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-inbox-a",
+          waId: "phase2-test-inbox-a",
           phone: "+852 6100 0001",
           name: "Contact A",
-          messageId: "phase2-inbox-a-1",
+          messageId: "phase2-test-inbox-a-1",
           body: "First question from A",
           timestamp: "2026-07-05T09:00:00.000Z",
         }),
       );
       await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-inbox-b",
+          waId: "phase2-test-inbox-b",
           phone: "+852 6100 0002",
           name: "Contact B",
-          messageId: "phase2-inbox-b-1",
+          messageId: "phase2-test-inbox-b-1",
           body: "Only question from B",
           timestamp: "2026-07-05T10:00:00.000Z",
         }),
       );
       await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-inbox-a",
+          waId: "phase2-test-inbox-a",
           phone: "+852 6100 0001",
           name: "Contact A",
-          messageId: "phase2-inbox-a-2",
+          messageId: "phase2-test-inbox-a-2",
           body: "Latest question from A",
           timestamp: "2026-07-05T11:00:00.000Z",
         }),
@@ -713,10 +720,10 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       const repository = repositoryFor();
       const oldest = await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-thread",
+          waId: "phase2-test-thread",
           phone: "+852 6100 0004",
           name: "Thread Contact",
-          messageId: "phase2-thread-1",
+          messageId: "phase2-test-thread-1",
           body: "one",
           timestamp: "2026-07-05T09:00:00.000Z",
         }),
@@ -727,10 +734,10 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       ].entries()) {
         await repository.recordInboundMessage(
           inboundFixture({
-            waId: "phase2-thread",
+            waId: "phase2-test-thread",
             phone: "+852 6100 0004",
             name: "Thread Contact",
-            messageId: `phase2-thread-${index + 2}`,
+            messageId: `phase2-test-thread-${index + 2}`,
             body: index === 0 ? "two" : "three",
             timestamp,
           }),

@@ -9,8 +9,16 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to run migrations.");
 }
 
+// Same policy as the app's own client (src/server/db/client.ts): TLS is required
+// unless DATABASE_SSL/PGSSLMODE explicitly disables it. Hardcoding "require" here
+// made the runner unable to target a local Postgres at all, which is why nothing
+// could verify a migration before it reached a hosted database.
+const SSL_DISABLED_VALUES = new Set(["disable", "disabled", "false", "off", "0", "no"]);
+const configuredSsl = (process.env.DATABASE_SSL ?? process.env.PGSSLMODE)?.trim().toLowerCase();
+const ssl = configuredSsl && SSL_DISABLED_VALUES.has(configuredSsl) ? false : "require";
+
 const sql = postgres(databaseUrl, {
-  ssl: "require",
+  ssl,
   max: 1,
   onnotice: () => undefined,
 });
