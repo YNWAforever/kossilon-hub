@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WhatsAppConversation } from "../conversations";
@@ -164,22 +164,50 @@ describe("production WhatsApp inbox", () => {
       makeConversation(),
       makeConversation({ contactId: "44444444-4444-4444-8444-444444444444", displayName: "Bo Ng" }),
     ]);
-    const { rerender } = renderInbox();
-
-    fireEvent.click(await screen.findByRole("button", { name: /Bo Ng/ }));
-    expect(await screen.findByRole("heading", { name: "Bo Ng" })).toBeTruthy();
-
-    // Bo Ng falls off the refreshed page.
-    serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
-    rerender(
-      <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-      >
+    // Deliberately ONE client held across the refetch. Handing the provider a new
+    // QueryClient empties the cache, so the list is briefly empty and `?? [0]`
+    // yields undefined too — the assertion below would then hold either way.
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
         <ProductionWhatsAppInbox />
       </QueryClientProvider>,
     );
 
+    fireEvent.click(await screen.findByRole("button", { name: /Bo Ng/ }));
+    expect(await screen.findByRole("heading", { name: "Bo Ng" })).toBeTruthy();
+
+    // Bo Ng falls off the refreshed page while Ada Wong stays, so a fallback to
+    // the first conversation would be plainly visible.
+    serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
+    await act(() => client.refetchQueries({ queryKey: ["whatsapp-conversations"] }));
+
+    // Awaited, not read synchronously: if the refetch has not propagated yet the
+    // pane still shows Bo Ng, and the "Ada Wong" assertion below would pass for
+    // the wrong reason.
+    expect(await screen.findByText(/no longer in this page/i)).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Ada Wong" })).toBeNull();
+  });
+
+  it("can recover from a dropped selection without a reload", async () => {
+    serverFns.listWhatsAppConversations.mockResolvedValue([
+      makeConversation(),
+      makeConversation({ contactId: "44444444-4444-4444-8444-444444444444", displayName: "Bo Ng" }),
+    ]);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ProductionWhatsAppInbox />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /Bo Ng/ }));
+    serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
+    await act(() => client.refetchQueries({ queryKey: ["whatsapp-conversations"] }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Show the newest conversation" }));
+
+    expect(await screen.findByRole("heading", { name: "Ada Wong" })).toBeTruthy();
   });
 
   it("still shows the empty state when the provider is connected and nothing has arrived", async () => {

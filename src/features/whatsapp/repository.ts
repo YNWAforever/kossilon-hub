@@ -1027,27 +1027,55 @@ export function createWhatsAppRepository(
   ): Promise<WhatsAppConversation[]> {
     const limit = input.limit ?? CONVERSATION_PAGE_SIZE;
     const rows = await sql<ConversationRow[]>`
-      with latest as (
-        select distinct on (m.contact_id)
+      -- One pass over whatsapp_messages. Two distinct-on CTEs read the same rows
+      -- twice, and the ordering expression is not cheap.
+      with ranked as (
+        select
           m.contact_id,
           m.body,
           m.direction,
           m.company_id,
-          coalesce(m.sent_at, m.received_at, m.created_at) as occurred_at
+          coalesce(m.sent_at, m.received_at, m.created_at) as occurred_at,
+          row_number() over (
+            partition by m.contact_id
+            order by coalesce(m.sent_at, m.received_at, m.created_at) desc, m.id desc
+          ) as recency,
+          -- The case of the most recent message that HAS one, so a single
+          -- unmatched inbound reply cannot make the annual-return link vanish
+          -- from a thread that is plainly about it. A null case sorts last, so
+          -- rows carrying a case win the window regardless of recency.
+          first_value(m.case_id) over (
+            partition by m.contact_id
+            order by
+              (m.case_id is null),
+              coalesce(m.sent_at, m.received_at, m.created_at) desc,
+              m.id desc
+          ) as case_id,
+          -- Taken from that same row, so the company shown never belongs to a
+          -- different case than the one the link points at.
+          first_value(m.company_id) over (
+            partition by m.contact_id
+            order by
+              (m.case_id is null),
+              coalesce(m.sent_at, m.received_at, m.created_at) desc,
+              m.id desc
+          ) as case_company_id
         from whatsapp_messages m
         where m.contact_id is not null
-        order by m.contact_id, coalesce(m.sent_at, m.received_at, m.created_at) desc, m.id desc
       ),
-      -- Deliberately the most recent message that HAS a case, not the case of the
-      -- most recent message: one unmatched inbound reply must not make the link to
-      -- an annual return disappear from a thread that is plainly about it.
-      latest_case as (
-        select distinct on (m.contact_id)
-          m.contact_id,
-          m.case_id
-        from whatsapp_messages m
-        where m.contact_id is not null and m.case_id is not null
-        order by m.contact_id, coalesce(m.sent_at, m.received_at, m.created_at) desc, m.id desc
+      latest as (
+        select
+          contact_id,
+          body,
+          direction,
+          occurred_at,
+          case_id,
+          coalesce(
+            case when case_id is not null then case_company_id end,
+            company_id
+          ) as company_id
+        from ranked
+        where recency = 1
       )
       select
         contact.id as contact_id,
@@ -1055,13 +1083,12 @@ export function createWhatsAppRepository(
         contact.phone_e164,
         coalesce(latest.company_id, contact.company_id) as company_id,
         company.company_name,
-        latest_case.case_id,
+        latest.case_id,
         latest.body as last_message_body,
         latest.direction as last_message_direction,
         latest.occurred_at::text as last_message_at
       from latest
       join whatsapp_contacts contact on contact.id = latest.contact_id
-      left join latest_case on latest_case.contact_id = latest.contact_id
       left join companies company on company.id = coalesce(latest.company_id, contact.company_id)
       order by latest.occurred_at desc, contact.id asc
       limit ${limit}

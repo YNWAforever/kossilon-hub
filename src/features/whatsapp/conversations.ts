@@ -56,13 +56,23 @@ export function sortConversationMessagesOldestFirst<T extends WhatsAppConversati
   messages: readonly T[],
 ): T[] {
   return [...messages].sort((left, right) => {
-    // Plain relational comparison, not localeCompare: ICU collation gives
-    // punctuation variable weight, and the repository returns Postgres
-    // `timestamptz::text` ("2026-07-30 02:00:00+00"), where two rows in the same
-    // second differ only by a "." versus a "+".
+    // Compared as instants, not as text. Two rows can legitimately carry different
+    // spellings of the same moment — `timestampString` yields an ISO string for a
+    // Date but the raw column text for a string — and "2026-07-30 02:00:00+00"
+    // sorts before "2026-07-30T02:00:00.000Z" on the separator alone.
     const leftAt = conversationMessageOccurredAt(left);
     const rightAt = conversationMessageOccurredAt(right);
-    if (leftAt !== rightAt) return leftAt < rightAt ? -1 : 1;
+    const leftMs = parseTimestamp(leftAt).getTime();
+    const rightMs = parseTimestamp(rightAt).getTime();
+
+    if (!Number.isNaN(leftMs) && !Number.isNaN(rightMs)) {
+      if (leftMs !== rightMs) return leftMs - rightMs;
+    } else if (leftAt !== rightAt) {
+      // Neither is a usable instant; fall back to a stable textual order rather
+      // than declaring them equal and letting sort order drift.
+      return leftAt < rightAt ? -1 : 1;
+    }
+
     if (left.id === right.id) return 0;
     return left.id < right.id ? -1 : 1;
   });
@@ -77,6 +87,25 @@ export const CONVERSATION_PAGE_SIZE = 100;
 export const CONVERSATION_MESSAGE_PAGE_SIZE = 200;
 
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
+
+/**
+ * Parses the timestamp spellings this feature actually sees.
+ *
+ * Postgres renders `timestamptz::text` as "2026-07-30 02:00:00+00" — a space
+ * separator and a two-digit offset, neither of which is ISO 8601. V8 accepts it
+ * through its lenient fallback parser; JavaScriptCore does not, so on Safari a
+ * plain `new Date(value)` yields Invalid Date for every row the repository
+ * returns. Normalising first keeps the browsers in agreement.
+ */
+export function normalizeTimestampText(value: string): string {
+  return value.replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00");
+}
+
+function parseTimestamp(value: string): Date {
+  const normalized = new Date(normalizeTimestampText(value));
+
+  return Number.isNaN(normalized.getTime()) ? new Date(value) : normalized;
+}
 
 const hongKongTimestampFormat = new Intl.DateTimeFormat("en-CA", {
   timeZone: HONG_KONG_TIME_ZONE,
@@ -96,11 +125,25 @@ const hongKongTimestampFormat = new Intl.DateTimeFormat("en-CA", {
  * Unparseable input is passed through rather than replaced with a wrong date.
  */
 export function formatHongKongTimestamp(value: string): string {
-  const parsed = new Date(value);
+  const parsed = parseTimestamp(value);
 
   if (Number.isNaN(parsed.getTime())) return value;
 
-  return hongKongTimestampFormat.format(parsed).replace(",", "");
+  // Assembled from parts rather than string-surgeried out of format(): the
+  // pattern a locale produces is an ICU implementation detail, so a runtime
+  // without full en-CA data would silently emit US-order dates instead.
+  const parts = new Map(
+    hongKongTimestampFormat.formatToParts(parsed).map((part) => [part.type, part.value]),
+  );
+  const year = parts.get("year");
+  const month = parts.get("month");
+  const day = parts.get("day");
+  const hour = parts.get("hour");
+  const minute = parts.get("minute");
+
+  if (!year || !month || !day || !hour || !minute) return value;
+
+  return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
 /**

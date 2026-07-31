@@ -44,6 +44,10 @@ export const processWhatsAppInboundWebhookInputSchema = z.object({
   payload: jsonObjectSchema,
 });
 
+// CLAUDE.md: "every one validates with a Zod schema". This server fn takes no
+// input, so the schema states exactly that rather than the rule being skipped.
+export const noInputSchema = z.undefined().or(z.object({}).strict());
+
 export const listWhatsAppConversationsInputSchema = z.object({
   limit: z.number().int().min(1).max(500).optional(),
 });
@@ -224,13 +228,14 @@ export async function listWhatsAppConversationMessagesForActor(
   return dependencies.repository.listConversationMessages(input);
 }
 
-// Resolves the actor but does not judge it: the staff check belongs to the
-// *ForActor functions, which are the seam the unit tests exercise. Asserting here
-// too would leave a future reader free to delete the only enforced copy.
+// Staff is asserted before a connection is acquired, so an unauthorised caller
+// never reaches the pool. The *ForActor functions assert again on the actor they
+// are handed — they are the seam the unit tests drive, and have to stand on their
+// own rather than inherit a guarantee from this wrapper.
 async function withWhatsAppInboxRepository<T>(
   handler: (repository: WhatsAppRepository, actor: AuthenticatedActor) => Promise<T>,
 ): Promise<T> {
-  const actor = await requireActor(getRequest());
+  const actor = assertStaffAccess(await requireActor(getRequest()));
   const repository = createWhatsAppRepository();
 
   try {
@@ -259,11 +264,13 @@ export const listWhatsAppConversationMessages = createServerFn({ method: "GET" }
 // Staff-only: the response names the firm's unconfigured bindings and its
 // provider mode. No values leak, but that is internal infrastructure state and a
 // client portal session has no business reading it.
-export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () => {
-  await requireStaffActor(getRequest());
-  const { currentProviderMode } = await import("@/server/provider-mode");
-  return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
-});
+export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" })
+  .validator(noInputSchema)
+  .handler(async () => {
+    await requireStaffActor(getRequest());
+    const { currentProviderMode } = await import("@/server/provider-mode");
+    return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
+  });
 
 export const processWhatsAppInboundWebhook = createServerFn({ method: "POST" })
   .validator(processWhatsAppInboundWebhookInputSchema)

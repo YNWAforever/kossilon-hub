@@ -4,6 +4,7 @@ import {
   conversationContactLabel,
   conversationMessageOccurredAt,
   formatHongKongTimestamp,
+  normalizeTimestampText,
   sortConversationMessagesOldestFirst,
   type WhatsAppConversationMessage,
 } from "./conversations";
@@ -142,5 +143,28 @@ describe("sortConversationMessagesOldestFirst with Postgres timestamps", () => {
     ]);
 
     expect(sorted.map((entry) => entry.id)).toEqual(["whole", "fractional"]);
+  });
+});
+
+describe("normalizeTimestampText", () => {
+  // The Safari-facing half of the fix, and the only part Node can prove: V8
+  // accepts the raw Postgres spelling either way, so a test that just calls
+  // formatHongKongTimestamp passes with the normalisation deleted.
+  it("turns Postgres timestamptz text into strict ISO 8601", () => {
+    expect(normalizeTimestampText("2026-07-30 02:00:00+00")).toBe("2026-07-30T02:00:00+00:00");
+  });
+
+  it("pads a two-digit offset on a fractional-second timestamp", () => {
+    expect(normalizeTimestampText("2026-07-30 02:00:00.123+08")).toBe(
+      "2026-07-30T02:00:00.123+08:00",
+    );
+  });
+
+  it("leaves an already-ISO string untouched", () => {
+    expect(normalizeTimestampText("2026-07-30T02:00:00.000Z")).toBe("2026-07-30T02:00:00.000Z");
+  });
+
+  it("leaves an offset that already has minutes untouched", () => {
+    expect(normalizeTimestampText("2026-07-30 02:00:00+05:30")).toBe("2026-07-30T02:00:00+05:30");
   });
 });

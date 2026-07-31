@@ -106,6 +106,13 @@ describe("production route authorization contract", () => {
     }
     expect(serverFunctions).toContain("requireStaffActor");
     expect(serverFunctions).toContain("assertStaffAccess");
+
+    // The status response names the firm's unconfigured bindings and its provider
+    // mode. Without this the guard is enforced only by inspection: deleting the
+    // requireStaffActor call leaves every other test green.
+    expect(serverFunctions).toMatch(
+      /getWhatsAppIntegrationStatus = createServerFn[\s\S]{0,300}?requireStaffActor\(getRequest\(\)\)/,
+    );
   });
 
   it("keeps evidence review and receipt acceptance behind actor-authorized server actions", () => {

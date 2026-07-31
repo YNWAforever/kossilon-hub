@@ -148,9 +148,18 @@ export function ProductionWhatsAppInbox() {
         ) : null}
 
         {selectionDropped ? (
-          <p className="border-b p-4 text-sm text-muted-foreground" role="status">
-            That conversation is no longer in this page of the inbox.
-          </p>
+          <div className="border-b p-4 text-sm text-muted-foreground" role="status">
+            <p>That conversation is no longer in this page of the inbox.</p>
+            {/* Without this the notice is a dead end: selectedContactId is only
+                otherwise reassigned by clicking a row, and the list may be empty. */}
+            <button
+              type="button"
+              className="mt-1 underline"
+              onClick={() => setSelectedContactId(undefined)}
+            >
+              Show the newest conversation
+            </button>
+          </div>
         ) : null}
 
         <div className="divide-y">
