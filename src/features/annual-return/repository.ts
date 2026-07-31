@@ -6,7 +6,12 @@ import {
 } from "@/server/db/client";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import type postgres from "postgres";
-import { daysBetween, isAllowedStatusTransition, riskForCase } from "./workflow";
+import {
+  daysBetween,
+  hongKongBusinessDate,
+  isAllowedStatusTransition,
+  riskForCase,
+} from "./workflow";
 import {
   assertAnnualReturnActionAllowed,
   type AnnualReturnAction,
@@ -108,6 +113,12 @@ export type CaseFilters = {
   missingDocuments?: boolean;
   paymentStatus?: PaymentStatus;
   overdueOnly?: boolean;
+  /**
+   * Cases this user owns OR reviews. Not expressible through ownerId + reviewerId,
+   * which are separate AND-ed clauses.
+   */
+  visibleToUserId?: string;
+  limit?: number;
 };
 
 export type AnnualReturnDashboardMetrics = {
@@ -189,33 +200,23 @@ export type AnnualReturnRepository = {
   close(): Promise<void>;
 };
 
+// Re-exported so existing importers (server-fns.ts) keep working unchanged. The
+// definition lives in ./workflow because that module imports nothing but ./types,
+// which is what lets a browser component derive the same operational "today".
+export { hongKongBusinessDate };
+
+/**
+ * Applied as a SQL LIMIT rather than a client-side slice, so hydrateCases loads
+ * checklist and payment children for at most this many cases instead of for the
+ * whole table.
+ */
+export const DEFAULT_CASE_LIMIT = 200;
+
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
-const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
 const CHECKLIST_EVIDENCE_FILE_TYPE = "annual-return-evidence";
 const PAYMENT_PROOF_FILE_TYPE = "payment-proof";
 const FILING_CONFIRMATION_FILE_TYPE = "filing-confirmation";
-
-function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-  const part = parts.find((candidate) => candidate.type === type);
-
-  if (!part) {
-    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
-  }
-
-  return part.value;
-}
-
-export function hongKongBusinessDate(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: HONG_KONG_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-
-  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
-}
 
 function dateOnly(value: string | Date): string {
   if (value instanceof Date) {
@@ -541,6 +542,8 @@ export function createAnnualReturnRepository(
     const reviewerId = filters.reviewerId ?? null;
     const status = filters.status ?? null;
     const paymentStatus = filters.paymentStatus ?? null;
+    const visibleToUserId = filters.visibleToUserId ?? null;
+    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
 
     return sql<CaseRow[]>`
       select
@@ -579,7 +582,13 @@ export function createAnnualReturnRepository(
               and p.status = ${paymentStatus}
           )
         )
+        and (
+          ${visibleToUserId}::uuid is null
+          or arc.owner_id = ${visibleToUserId}::uuid
+          or arc.reviewer_id = ${visibleToUserId}::uuid
+        )
       order by arc.filing_due_date asc, c.company_name asc
+      limit ${limit}
     `;
   }
 

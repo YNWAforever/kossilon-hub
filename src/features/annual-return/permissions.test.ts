@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assertAnnualReturnActionAllowed,
+  caseFiltersForActor,
   getAnnualReturnActionPermission,
   type AnnualReturnActionActor,
   type AnnualReturnActionCase,
@@ -94,5 +95,56 @@ describe("annual return action permissions", () => {
         "update_payment",
       ),
     ).toThrow(/Only assigned staff/);
+  });
+});
+
+// The board reads cases through listAnnualReturnCases, which applied no scoping at
+// all. Without this rule a Staff user gets a board full of rows whose detail
+// screens reject every action, because getAnnualReturnActionPermission allows only
+// the owner, the reviewer, the team manager, or an admin.
+describe("caseFiltersForActor", () => {
+  const admin = { id: OWNER_ID, role: "Admin" as const, teamId: null, active: true };
+  const manager = { id: OWNER_ID, role: "Manager" as const, teamId: TEAM_ALPHA_ID, active: true };
+  const staff = { id: OWNER_ID, role: "Staff" as const, teamId: TEAM_ALPHA_ID, active: true };
+
+  it("does not narrow an admin", () => {
+    expect(caseFiltersForActor(admin)).toEqual({});
+  });
+
+  it("narrows a manager to their own team", () => {
+    expect(caseFiltersForActor(manager)).toEqual({ teamId: TEAM_ALPHA_ID });
+  });
+
+  it("narrows staff to cases they own or review", () => {
+    // Owner OR reviewer. CaseFilters ANDs ownerId and reviewerId in SQL, so a
+    // staff reviewer would otherwise lose sight of their own review work.
+    expect(caseFiltersForActor(staff)).toEqual({
+      teamId: TEAM_ALPHA_ID,
+      visibleToUserId: OWNER_ID,
+    });
+  });
+
+  it("refuses an inactive actor before the admin shortcut", () => {
+    expect(() => caseFiltersForActor({ ...admin, active: false })).toThrow(
+      "Forbidden: inactive users cannot list annual return cases.",
+    );
+  });
+
+  it("refuses a non-admin with no team", () => {
+    expect(() => caseFiltersForActor({ ...staff, teamId: null })).toThrow(
+      "Forbidden: staff actor has no assigned team.",
+    );
+  });
+
+  it("refuses a staff actor with no database identity", () => {
+    expect(() => caseFiltersForActor({ ...staff, id: null })).toThrow(
+      "Forbidden: a staff database identity is required.",
+    );
+  });
+
+  it("refuses a client", () => {
+    expect(() => caseFiltersForActor({ ...staff, role: "Client" })).toThrow(
+      "Forbidden: staff access is required.",
+    );
   });
 });

@@ -43,12 +43,23 @@ describe("production route authorization contract", () => {
       "utf8",
     );
 
+    const commandCenter = readFileSync(
+      new URL(
+        "../features/annual-return/components/production-command-center.tsx",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
     expect(route).toContain("ProductionAnnualReturnCaseDetail");
     expect(route).toContain("dataMode");
-    expect(detail).not.toContain("annual-return-store");
-    expect(detail).not.toContain("client-portal-store");
-    expect(actions).not.toContain("annual-return-store");
-    expect(actions).not.toContain("client-portal-store");
+
+    // Enforced rather than left to convention: a production screen that reaches
+    // into a demo store renders fixtures to real users.
+    for (const source of [detail, actions, commandCenter]) {
+      expect(source).not.toContain("annual-return-store");
+      expect(source).not.toContain("client-portal-store");
+    }
     expect(serverFunctions).toContain("assertStaffAccess");
     expect(serverFunctions).toContain("getCurrentAnnualReturnActorId");
 

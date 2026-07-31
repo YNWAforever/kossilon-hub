@@ -101,3 +101,57 @@ export function assertAnnualReturnActionAllowed(
     throw new Error(permission.reason);
   }
 }
+
+/**
+ * The board actor. Structurally satisfied by AuthenticatedActor
+ * (src/features/auth/types.ts) with `userId` passed as `id`, so this module keeps
+ * its zero imports and stays usable from anywhere.
+ */
+export type AnnualReturnBoardActor = {
+  id: string | null;
+  role: AnnualReturnActorRole | "Client";
+  teamId: string | null;
+  active: boolean;
+};
+
+/**
+ * The narrowing a list read must apply so a board shows exactly the cases whose
+ * detail screens will accept actions. Mirrors queueFiltersForActor
+ * (src/features/work-items/server-fns.ts), including its throws.
+ */
+export type AnnualReturnCaseScope = {
+  teamId?: string;
+  visibleToUserId?: string;
+};
+
+export function caseFiltersForActor(actor: AnnualReturnBoardActor): AnnualReturnCaseScope {
+  // Checked before the Admin shortcut, matching getAnnualReturnActionPermission:
+  // an inactive admin cannot act on a case, so they are shown none.
+  if (!actor.active) {
+    throw new Error("Forbidden: inactive users cannot list annual return cases.");
+  }
+
+  if (actor.role === "Admin") {
+    return {};
+  }
+
+  // Role first: a Client is refused for being a Client, not incidentally for
+  // having no staff row.
+  if (actor.role !== "Manager" && actor.role !== "Staff") {
+    throw new Error("Forbidden: staff access is required.");
+  }
+
+  if (!actor.id) {
+    throw new Error("Forbidden: a staff database identity is required.");
+  }
+
+  if (!actor.teamId) {
+    throw new Error("Forbidden: staff actor has no assigned team.");
+  }
+
+  if (actor.role === "Manager") {
+    return { teamId: actor.teamId };
+  }
+
+  return { teamId: actor.teamId, visibleToUserId: actor.id };
+}

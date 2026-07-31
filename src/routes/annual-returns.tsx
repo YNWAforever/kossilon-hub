@@ -19,14 +19,44 @@ import {
 import { daysUntil } from "../lib/app-data";
 import { PageHeader } from "@/components/page-header";
 import { listWorkQueue } from "../features/work-items/server-fns";
+import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
+import { boardSearchFromUrl } from "../features/annual-return/board-filters";
 import type { PersistedWorkItem } from "../features/work-items/repository";
 
 export const Route = createFileRoute("/annual-returns")({
+  // Board filters live in the URL so they survive a reload and a return from a
+  // detail screen. The sanitiser is in board-filters.ts so it can be unit-tested;
+  // a route file cannot export a non-component without tripping react-refresh.
+  validateSearch: boardSearchFromUrl,
   component: AnnualReturnsRoute,
 });
 
 function AnnualReturnsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { dataMode } = Route.useRouteContext();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  // Hoisted above both the branch and every hook. /annual-returns/$id is a child
+  // route and renders only through this outlet, so a branch placed before it
+  // would silently stop the detail screen from rendering. Keeping it above the
+  // hooks also stops the board's queries and filter pipeline running while the
+  // detail screen is on screen, which is what happened before.
+  if (pathname !== "/annual-returns") {
+    return <Outlet />;
+  }
+
+  return dataMode === "demo" ? (
+    <DemoAnnualReturnCommandCenter />
+  ) : (
+    <ProductionAnnualReturnCommandCenter
+      search={search}
+      onSearchChange={(next) => void navigate({ search: next, replace: true })}
+    />
+  );
+}
+
+function DemoAnnualReturnCommandCenter() {
   const cases = useAnnualReturnCases();
   const workItemsQuery = useQuery({
     queryKey: ["work-queue", "annual-return-list"],
@@ -71,10 +101,6 @@ function AnnualReturnsRoute() {
       })
       .sort((a, b) => riskSortValue(getRiskLevel(a)) - riskSortValue(getRiskLevel(b)));
   }, [cases, filter, owner, query]);
-
-  if (pathname !== "/annual-returns") {
-    return <Outlet />;
-  }
 
   return (
     <main className="flex-1 space-y-6 p-6">

@@ -6,11 +6,13 @@ import {
   buildReminderDraft,
   calculateFilingDueDate,
   completionBlockers,
+  hasRequiredChecklistEvidence,
+  hongKongBusinessDate,
   isAllowedStatusTransition,
   riskForCase,
   shouldGenerateCase,
 } from "./workflow";
-import type { AnnualReturnCase } from "./types";
+import type { AnnualReturnCase, AnnualReturnChecklistItem } from "./types";
 
 const baseCase: AnnualReturnCase = {
   id: "case-1",
@@ -203,6 +205,22 @@ describe("annual return workflow", () => {
   });
 });
 
+describe("hongKongBusinessDate", () => {
+  it("returns the Hong Kong calendar date regardless of the caller's timezone", () => {
+    // 2026-07-30T17:30:00Z is 2026-07-31 01:30 in Hong Kong (UTC+8).
+    expect(hongKongBusinessDate(new Date("2026-07-30T17:30:00.000Z"))).toBe("2026-07-31");
+  });
+
+  it("does not roll over before Hong Kong midnight", () => {
+    // 2026-07-30T15:59:00Z is 2026-07-30 23:59 in Hong Kong.
+    expect(hongKongBusinessDate(new Date("2026-07-30T15:59:00.000Z"))).toBe("2026-07-30");
+  });
+
+  it("zero-pads single-digit months and days", () => {
+    expect(hongKongBusinessDate(new Date("2026-01-05T04:00:00.000Z"))).toBe("2026-01-05");
+  });
+});
+
 describe("package scripts", () => {
   it("does not point database commands at missing script files", () => {
     const packageJson = JSON.parse(
@@ -236,5 +254,35 @@ describe("package scripts", () => {
     expect(seedScript).toContain("returning company_id, id");
     expect(seedScript).toContain("on conflict (case_id)");
     expect(seedScript).toContain("returning case_id, id");
+  });
+});
+
+describe("hasRequiredChecklistEvidence", () => {
+  const verified: AnnualReturnChecklistItem = {
+    id: "44444444-4444-4444-8444-444444444444",
+    caseId: "11111111-1111-4111-8111-111111111111",
+    itemLabel: "Signed NAR1",
+    required: true,
+    status: "Verified",
+    dueDate: "2026-08-01",
+    receivedAt: "2026-07-10T00:00:00.000Z",
+    verifiedAt: "2026-07-11T00:00:00.000Z",
+    documentId: "55555555-5555-4555-8555-555555555555",
+  };
+
+  it("accepts an item that is verified with full evidence", () => {
+    expect(hasRequiredChecklistEvidence(verified)).toBe(true);
+  });
+
+  it("rejects a Verified item with no document", () => {
+    expect(hasRequiredChecklistEvidence({ ...verified, documentId: null })).toBe(false);
+  });
+
+  it("rejects a Verified item that was never marked received", () => {
+    expect(hasRequiredChecklistEvidence({ ...verified, receivedAt: null })).toBe(false);
+  });
+
+  it("rejects an item that is only Received", () => {
+    expect(hasRequiredChecklistEvidence({ ...verified, status: "Received" })).toBe(false);
   });
 });

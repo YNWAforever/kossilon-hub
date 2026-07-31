@@ -657,6 +657,30 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     ]);
   });
 
+  it("returns cases a user owns or reviews under one filter", async () => {
+    const repository = repositoryFor("2026-07-05");
+
+    // ownerId and reviewerId are separate AND-ed clauses, so owner-OR-reviewer
+    // cannot be asked for with them. Ken reviews all three; Mei owns one of them.
+    await expect(repository.listCases({ visibleToUserId: USER_KEN_ID })).resolves.toHaveLength(3);
+
+    const meiCases = await repository.listCases({ visibleToUserId: USER_MEI_ID });
+    const meiOwned = await repository.listCases({ ownerId: USER_MEI_ID });
+
+    expect(meiCases.length).toBeGreaterThanOrEqual(meiOwned.length);
+    for (const case_ of meiCases) {
+      expect(case_.ownerId === USER_MEI_ID || case_.reviewerId === USER_MEI_ID).toBe(true);
+    }
+  });
+
+  it("caps how many cases a single read returns", async () => {
+    const repository = repositoryFor("2026-07-05");
+
+    await expect(repository.listCases({})).resolves.toHaveLength(3);
+    await expect(repository.listCases({ limit: 2 })).resolves.toHaveLength(2);
+    await expect(repository.listCases({ limit: 1 })).resolves.toHaveLength(1);
+  });
+
   it("uses the repository date source for overdue-only reads", async () => {
     const julyFiveRepository = repositoryFor("2026-07-05");
     const julyTwentyEightRepository = repositoryFor("2026-07-28");

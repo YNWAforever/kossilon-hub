@@ -8,7 +8,9 @@ import {
   createAnnualReturnRepository,
   hongKongBusinessDate,
   type AnnualReturnRepository,
+  type CaseFilters,
 } from "./repository";
+import { caseFiltersForActor } from "./permissions";
 import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
 import { getCurrentAnnualReturnActor, getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
@@ -35,6 +37,7 @@ const listAnnualReturnCasesSchema = z
     missingDocuments: z.boolean().optional(),
     paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
     overdueOnly: z.boolean().optional(),
+    limit: z.number().int().min(1).max(500).optional(),
   })
   .default({});
 
@@ -110,6 +113,25 @@ function requireStaffUserId(actor: AuthenticatedActor): string {
   }
 
   return staff.userId;
+}
+
+/**
+ * The board's read. Scope is applied after the caller's filters so a
+ * client-supplied teamId can never widen what the actor is allowed to see.
+ */
+export async function listAnnualReturnCasesForActor(
+  actor: AuthenticatedActor,
+  filters: CaseFilters,
+  dependencies: { repository: Pick<AnnualReturnRepository, "listCases"> },
+) {
+  const scope = caseFiltersForActor({
+    id: actor.userId,
+    role: actor.role,
+    teamId: actor.teamId,
+    active: actor.active,
+  });
+
+  return dependencies.repository.listCases({ ...filters, ...scope });
 }
 
 export async function assignAnnualReturnCaseOwnerForActor(
@@ -293,9 +315,16 @@ async function withAnnualReturnActorRepository<T>(
 }
 export const listAnnualReturnCases = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
-  .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) => repository.listCases(data)),
-  );
+  .handler(async ({ data }) => {
+    const actor = await getCurrentAnnualReturnActor(getRequest());
+    const repository = createAnnualReturnRepository();
+
+    try {
+      return await listAnnualReturnCasesForActor(actor, data, { repository });
+    } finally {
+      await repository.close();
+    }
+  });
 
 export const getAnnualReturnCase = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))

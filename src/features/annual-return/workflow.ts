@@ -20,11 +20,39 @@ function formatDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
+
+function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
+  const part = parts.find((candidate) => candidate.type === type);
+
+  if (!part) {
+    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
+  }
+
+  return part.value;
+}
+
+/**
+ * The firm's operational "today". Lives here rather than in the repository so the
+ * board can derive deadline tiles against the same calendar day the server used to
+ * compute `riskLevel` — a browser-local date drifts for anyone outside HKT.
+ */
+export function hongKongBusinessDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: HONG_KONG_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
+}
+
 function hasText(value: string | null): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function hasRequiredChecklistEvidence(item: AnnualReturnChecklistItem): boolean {
+export function hasRequiredChecklistEvidence(item: AnnualReturnChecklistItem): boolean {
   return (
     item.status === "Verified" &&
     hasText(item.receivedAt) &&
