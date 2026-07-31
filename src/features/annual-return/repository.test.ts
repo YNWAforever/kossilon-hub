@@ -145,6 +145,16 @@ async function cleanupAnnualReturnTestFixtures() {
       where company_id = any(${companyIds}::uuid[])
         or phone_e164 in ('+85261234567', '+85255550123')
     `;
+    // Before companies: notification_outbox references companies with ON DELETE
+    // RESTRICT, so any test that queues a reminder leaves a row that blocks the
+    // company delete below — and one failed teardown fails every later test.
+    await tx`
+      delete from notification_outbox
+      where company_id = any(${companyIds}::uuid[])
+        or work_item_id in (
+          select id from work_items where case_id = any(${caseIds}::uuid[])
+        )
+    `;
     await tx`delete from reminder_logs where case_id = any(${caseIds}::uuid[])`;
     await tx`delete from annual_return_audit_events where case_id = any(${caseIds}::uuid[])`;
     await tx`
@@ -891,7 +901,10 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           select event_type, actor_id
           from timeline_events
           where case_id = ${fixture.caseId}
-          order by created_at asc
+          -- event_type breaks the tie: both rows are written in one transaction,
+          -- so now() gives them the same created_at and created_at alone leaves
+          -- the order up to the planner.
+          order by created_at asc, event_type asc
         `;
         expect(timelineEvents).toEqual([
           {

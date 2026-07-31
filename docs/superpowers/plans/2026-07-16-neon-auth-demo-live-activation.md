@@ -44,12 +44,14 @@
 ### Task 1: Guarded Operator Demo Reset
 
 **Files:**
+
 - Create: `scripts/db-reset-neon-auth-demo.ts`
 - Create: `scripts/db-reset-neon-auth-demo.test.ts`
 - Modify: `package.json`
 - Test: `scripts/db-reset-neon-auth-demo.test.ts`
 
 **Interfaces:**
+
 - Consumes: `readDemoSeedConfig(environment): DemoSeedConfig` and `seedAnnualReturn(sql, { adminAuthUserId }): Promise<void>`.
 - Produces: `readDemoResetOptions(args): { confirmFirmId: string }`, `runDemoReset(config, dependencies): Promise<void>`, and `runDemoResetCli(args, dependencies): Promise<number>`.
 - Produces package command: `npm run db:reset:neon-auth-demo -- --confirm-firm kossilon-demo`.
@@ -105,10 +107,7 @@ Expected: FAIL because `scripts/db-reset-neon-auth-demo.ts` does not exist.
 
 ```ts
 import { seedAnnualReturn } from "./db-seed-annual-return";
-import {
-  readDemoSeedConfig,
-  type DemoSeedConfig,
-} from "./db-seed-neon-auth-demo";
+import { readDemoSeedConfig, type DemoSeedConfig } from "./db-seed-neon-auth-demo";
 import { createSqlClient, type SqlClient } from "../src/server/db/client";
 
 export const DEMO_RESET_CLI_FAILURE_MESSAGE = "Neon Auth demo reset failed.";
@@ -178,10 +177,9 @@ it("truncates only public application tables, then reapplies the Admin seed", as
   expect(statement).toContain("public.whatsapp_messages");
   expect(statement).not.toContain("schema_migrations");
   expect(statement).not.toContain("neon_auth");
-  expect(seedAnnualReturn).toHaveBeenCalledWith(
-    expect.anything(),
-    { adminAuthUserId: config.authUserId },
-  );
+  expect(seedAnnualReturn).toHaveBeenCalledWith(expect.anything(), {
+    adminAuthUserId: config.authUserId,
+  });
   expect(unsafe.mock.invocationCallOrder[0]).toBeLessThan(
     seedAnnualReturn.mock.invocationCallOrder[0],
   );
@@ -224,9 +222,9 @@ const DEMO_RESET_TABLES = [
   "users",
 ] as const;
 
-const DEMO_RESET_SQL = `truncate table ${DEMO_RESET_TABLES.map(
-  (table) => `public.${table}`,
-).join(", ")} restart identity cascade`;
+const DEMO_RESET_SQL = `truncate table ${DEMO_RESET_TABLES.map((table) => `public.${table}`).join(
+  ", ",
+)} restart identity cascade`;
 
 export type DemoResetDependencies = {
   createSqlClient(url: string, options: { max: 1 }): SqlClient;
@@ -300,6 +298,7 @@ git commit -m "feat: add guarded Neon demo reset"
 ### Task 2: Demo-Only Simulated Provider Mode
 
 **Files:**
+
 - Modify: `src/server/provider-mode.ts`
 - Modify: `src/server/provider-mode.test.ts`
 - Create: `src/features/notifications/simulated-transport.ts`
@@ -312,6 +311,7 @@ git commit -m "feat: add guarded Neon demo reset"
 - Modify: `src/features/annual-return/follow-up-server-fns.test.ts`
 
 **Interfaces:**
+
 - Produces: `ProviderMode = "local" | "simulated" | "live"`.
 - Produces: `resolveProviderMode({ requested, isProductionBuild, firmId }): ProviderMode`.
 - Produces: `createSimulatedNotificationTransport(): NotificationTransport`.
@@ -597,6 +597,7 @@ git commit -m "feat: add demo-only simulated delivery"
 ### Task 3: Validate And Display Demo Delivery State
 
 **Files:**
+
 - Modify: `scripts/validate-neon-auth-demo.ts`
 - Modify: `scripts/validate-neon-auth-demo.test.ts`
 - Modify: `src/features/whatsapp/server-fns.ts`
@@ -606,6 +607,7 @@ git commit -m "feat: add demo-only simulated delivery"
 - Modify: `src/routes/settings.tsx`
 
 **Interfaces:**
+
 - Produces validator check `{ name: "VITE_PROVIDER_MODE", status: "pass" | "fail" | "missing" }` requiring `simulated`.
 - Produces `WhatsAppDeliveryMode = "live" | "simulated" | "blocked"` in integration status.
 - UI copy is exactly `Demo simulation` and `No external WhatsApp or email message is sent.`.
@@ -679,7 +681,8 @@ export function getWhatsAppIntegrationStatusForEnv(
   return {
     provider: providerMode === "simulated" ? ("simulated" as const) : ("woztell" as const),
     deliveryMode,
-    webhookConfigured: providerMode === "live" && !missingLiveEnvVars.includes("WOZTELL_WEBHOOK_SECRET"),
+    webhookConfigured:
+      providerMode === "live" && !missingLiveEnvVars.includes("WOZTELL_WEBHOOK_SECRET"),
     liveSendConfigured: deliveryMode === "live",
     missingLiveEnvVars,
   };
@@ -755,11 +758,13 @@ git commit -m "feat: surface Neon demo delivery mode"
 ### Task 4: Activation And Reset Runbook
 
 **Files:**
+
 - Modify: `docs/runbooks/neon-auth-demo.md`
 - Modify: `scripts/db-seed-neon-auth-demo.test.ts`
 - Modify: `scripts/db-reset-neon-auth-demo.test.ts`
 
 **Interfaces:**
+
 - Documents one approved operator environment file used by validation, migration, seed, reset, and deployment configuration.
 - Documents `VITE_PROVIDER_MODE=simulated` and the guarded reset command.
 - Keeps production identity values operator-local and out of Vercel demo bindings.
@@ -837,9 +842,11 @@ git commit -m "docs: add Neon demo activation runbook"
 ### Task 5: Local Release Gates
 
 **Files:**
+
 - Verify only; do not stage `.sdd-artifacts/`, generated output, or local environment files.
 
 **Interfaces:**
+
 - Produces a redacted local readiness report for the exact activation commit.
 
 - [ ] **Step 1: Run focused tests**
@@ -885,9 +892,11 @@ Expected: no whitespace errors; only intended commits appear; `.sdd-artifacts/` 
 ### Task 6: Approval-Gated Demo Provisioning And Deployment
 
 **Files:**
+
 - External provider state only. Do not write secrets or provider IDs into the repository.
 
 **Interfaces:**
+
 - Consumes the locally verified activation commit and approved operator environment file.
 - Produces a separate Neon database/Auth instance, Vercel project, seeded Admin mapping, and ready deployment.
 
@@ -963,9 +972,11 @@ Stop and obtain fresh approval. Deploy the verified activation commit to the sep
 ### Task 7: Live Acceptance And Reset Rehearsal
 
 **Files:**
+
 - External verification evidence only; store no secrets, cookies, Auth IDs, or personal password values.
 
 **Interfaces:**
+
 - Produces final redacted evidence that Auth, persistence, simulated delivery, reset, and production isolation work end to end.
 
 - [ ] **Step 1: Obtain explicit approval for external login and browser verification**
