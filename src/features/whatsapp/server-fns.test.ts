@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import {
   buildWhatsAppInboundWebhookResponse,
   getWhatsAppIntegrationStatusForEnv,
+  listWhatsAppConversationMessagesForActor,
+  listWhatsAppConversationMessagesInputSchema,
+  listWhatsAppConversationsForActor,
+  listWhatsAppConversationsInputSchema,
   processWhatsAppInboundWebhookWithRepository,
   processWhatsAppInboundWebhookInputSchema,
   queueWhatsAppTemplateMessageInputSchema,
@@ -195,5 +200,94 @@ describe("WhatsApp server function validation", () => {
       liveSendConfigured: true,
       missingLiveEnvVars: [],
     });
+  });
+});
+
+describe("WhatsApp inbox reads", () => {
+  const conversation = {
+    contactId: "11111111-1111-4111-8111-111111111111",
+    displayName: "Ada Wong",
+    phoneE164: "+85290001111",
+    companyId: null,
+    companyName: null,
+    caseId: null,
+    lastMessageBody: "Any update on the annual return?",
+    lastMessageDirection: "inbound" as const,
+    lastMessageAt: "2026-07-30T02:00:00.000Z",
+  };
+
+  function repositoryStub() {
+    return {
+      listConversations: vi.fn().mockResolvedValue([conversation]),
+      listConversationMessages: vi.fn().mockResolvedValue([]),
+    };
+  }
+
+  function actor(overrides: Partial<AuthenticatedActor> = {}): AuthenticatedActor {
+    return {
+      authUserId: "auth-user",
+      userId: "22222222-2222-4222-8222-222222222222",
+      role: "Staff",
+      teamId: "33333333-3333-4333-8333-333333333333",
+      active: true,
+      ...overrides,
+    };
+  }
+
+  it("returns conversations to an active staff actor", async () => {
+    const repository = repositoryStub();
+
+    await expect(
+      listWhatsAppConversationsForActor(actor(), { limit: 25 }, { repository }),
+    ).resolves.toEqual([conversation]);
+    expect(repository.listConversations).toHaveBeenCalledWith({ limit: 25 });
+  });
+
+  it("refuses a client actor", async () => {
+    // The inbox is an internal surface. whatsapp_contacts.company_id is nullable,
+    // so an unmatched inbound message belongs to no company and could not be
+    // scoped to a client even if we wanted to expose it.
+    const repository = repositoryStub();
+
+    await expect(
+      listWhatsAppConversationsForActor(
+        actor({ role: "Client", userId: null, teamId: null }),
+        {},
+        { repository },
+      ),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(repository.listConversations).not.toHaveBeenCalled();
+  });
+
+  it("refuses a deactivated staff actor", async () => {
+    const repository = repositoryStub();
+
+    await expect(
+      listWhatsAppConversationsForActor(actor({ active: false }), {}, { repository }),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(repository.listConversations).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client actor reading a thread", async () => {
+    const repository = repositoryStub();
+
+    await expect(
+      listWhatsAppConversationMessagesForActor(
+        actor({ role: "Client", userId: null, teamId: null }),
+        { contactId: conversation.contactId },
+        { repository },
+      ),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(repository.listConversationMessages).not.toHaveBeenCalled();
+  });
+
+  it("rejects a contact id that is not a uuid before it reaches the repository", () => {
+    expect(() =>
+      listWhatsAppConversationMessagesInputSchema.parse({ contactId: "not-a-uuid" }),
+    ).toThrow();
+  });
+
+  it("caps the conversation limit a caller can ask for", () => {
+    expect(() => listWhatsAppConversationsInputSchema.parse({ limit: 5000 })).toThrow();
   });
 });

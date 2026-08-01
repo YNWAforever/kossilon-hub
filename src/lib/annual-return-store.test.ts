@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   canSendFollowUp,
   getAnnualReturnCaseById,
+  getAnnualReturnCases,
   getBlockers,
   getCaseMetrics,
   getCaseTasks,
@@ -14,7 +15,6 @@ import {
   getReadinessScore,
   getRiskLevel,
   resetAnnualReturnCasesForTest,
-  subscribeAnnualReturnCasesForTest,
   type AnnualReturnCase,
 } from "./annual-return-store";
 
@@ -137,6 +137,21 @@ describe("annual return derived helpers", () => {
     expect(
       harbourCase && getCaseMetrics([harbourCase], new Date("2026-07-07T00:00:00")).readyToFile,
     ).toBe(1);
+  });
+
+  it("reads every case without a hook so a route loader can use it", () => {
+    resetAnnualReturnCasesForTest();
+
+    const cases = getAnnualReturnCases();
+
+    expect(cases.length).toBeGreaterThan(0);
+    expect(cases.map((caseItem) => caseItem.id)).toEqual(
+      cases.map((caseItem) => caseItem.id).filter(Boolean),
+    );
+
+    // Callers must not be able to reach into store state through the result.
+    cases.pop();
+    expect(getAnnualReturnCases().length).toBe(cases.length + 1);
   });
 });
 

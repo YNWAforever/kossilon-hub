@@ -69,9 +69,9 @@
   --radius: 0.625rem;
 
   /* Warm neutral palette */
-  --sand: oklch(0.68 0.04 75);        /* #A69572 */
-  --taupe: oklch(0.66 0.05 80);       /* #B39A6C */
-  --warm-gray: oklch(0.74 0.01 80);   /* #BBB5A5 */
+  --sand: oklch(0.68 0.04 75); /* #A69572 */
+  --taupe: oklch(0.66 0.05 80); /* #B39A6C */
+  --warm-gray: oklch(0.74 0.01 80); /* #BBB5A5 */
   --ink: oklch(0.22 0.01 70);
 
   --background: oklch(0.985 0.005 80);
@@ -157,7 +157,12 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     letter-spacing: 0;
   }

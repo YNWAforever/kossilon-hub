@@ -34,10 +34,12 @@
 ### Task 1: Store Idempotency And Review State
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.ts`
 - Modify: `src/lib/client-portal-store.test.ts`
 
 **Interfaces:**
+
 - Consumes: `markDocumentReceived(caseId: string, documentId: string): void`, `markDocumentMissing(caseId: string, documentId: string): void`, `appendClientPortalTimelineEvent(caseId: string, label: string, detail: string)`.
 - Produces: `export type ClientPortalDocumentReviewDecision = "accepted" | "rejected"`.
 - Produces: `reviewClientDocument(documentId: string, decision: ClientPortalDocumentReviewDecision, actor?: string): { ok: true; documentId: string } | { ok: false; reason: string }`.
@@ -92,9 +94,7 @@ it("keeps payment acknowledgement idempotent without duplicating activity or tim
   });
 
   expect(
-    getClientPortalActivity("ar-delta").filter(
-      (action) => action.type === "acknowledge-payment",
-    ),
+    getClientPortalActivity("ar-delta").filter((action) => action.type === "acknowledge-payment"),
   ).toHaveLength(1);
   expect(timelineLabels("ar-delta", "Payment instructions acknowledged")).toHaveLength(1);
 });
@@ -127,7 +127,12 @@ it("keeps packet approval idempotent after it succeeds", () => {
     "signed-nar1.pdf",
     "Joanna Poon",
   );
-  const scr = uploadClientDocument(requireCase("ar-delta"), "scr", "updated-scr.pdf", "Joanna Poon");
+  const scr = uploadClientDocument(
+    requireCase("ar-delta"),
+    "scr",
+    "updated-scr.pdf",
+    "Joanna Poon",
+  );
 
   if (!signed.ok || !scr.ok) throw new Error("Expected fixture uploads to succeed");
 
@@ -255,7 +260,12 @@ Update the exported types:
 
 ```ts
 export type ClientPortalDocumentStatus =
-  "required" | "uploaded" | "superseded" | "accepted" | "rejected" | "generated";
+  | "required"
+  | "uploaded"
+  | "superseded"
+  | "accepted"
+  | "rejected"
+  | "generated";
 
 export type ClientPortalActionType =
   | "upload-document"
@@ -267,8 +277,7 @@ export type ClientPortalActionType =
   | "reject-document";
 
 export type ClientPortalDocumentReviewDecision = "accepted" | "rejected";
-export type ClientPortalRequiredActionStatus =
-  "open" | "complete" | "blocked" | "pending-review";
+export type ClientPortalRequiredActionStatus = "open" | "complete" | "blocked" | "pending-review";
 ```
 
 Add review fields to `ClientPortalDocument` and archive rows:
@@ -500,7 +509,8 @@ function addActionOnce(
   summary: string,
 ): { action: ClientPortalAction; inserted: boolean } {
   const existing = snapshot.actions.find(
-    (action) => action.caseId === caseItem.id && action.type === type && action.status === "completed",
+    (action) =>
+      action.caseId === caseItem.id && action.type === type && action.status === "completed",
   );
   if (existing) return { action: existing, inserted: false };
 
@@ -603,9 +613,7 @@ export function reviewClientDocument(
   const actionType: ClientPortalActionType =
     decision === "accepted" ? "accept-document" : "reject-document";
   const reviewSummary =
-    decision === "accepted"
-      ? `Accepted by ${actor}`
-      : `Rejected by ${actor}; replacement required`;
+    decision === "accepted" ? `Accepted by ${actor}` : `Rejected by ${actor}; replacement required`;
   const summary =
     decision === "accepted"
       ? `${actor} accepted ${document.title}.`
@@ -667,11 +675,13 @@ Expected: commit succeeds with only the store and store test files staged.
 ### Task 2: Staff Review UI And Rendered Route Coverage
 
 **Files:**
+
 - Modify: `src/routes/documents.tsx`
 - Modify: `src/routes/portal.tsx`
 - Modify: `src/routes/-annual-returns-workflow.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reviewClientDocument(documentId, decision, actor)`.
 - Consumes: `ClientPortalArchiveRow.reviewable`, `documentId`, `reviewSummary`, `reviewedBy`, and `reviewedAt`.
 - Consumes: `ClientPortalRequiredAction.documentAction` and `ClientPortalRequiredAction.status`.
@@ -685,10 +695,7 @@ Update imports in `src/routes/-annual-returns-workflow.test.ts`:
 ```ts
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  getAnnualReturnCaseById,
-  resetAnnualReturnCasesForTest,
-} from "../lib/annual-return-store";
+import { getAnnualReturnCaseById, resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
 import {
   resetClientPortalStoreForTest,
   reviewClientDocument,
@@ -788,11 +795,13 @@ const [warning, setWarning] = useState<string | undefined>();
 Add the warning banner below the page header:
 
 ```tsx
-{warning ? (
-  <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
-    {warning}
-  </div>
-) : null}
+{
+  warning ? (
+    <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+      {warning}
+    </div>
+  ) : null;
+}
 ```
 
 Update the table header grid to include review:
@@ -814,13 +823,7 @@ Update the table header grid to include review:
 Update row rendering:
 
 ```tsx
-visibleRows.map((row) => (
-  <DocumentRow
-    key={row.id}
-    row={row}
-    onWarning={setWarning}
-  />
-))
+visibleRows.map((row) => <DocumentRow key={row.id} row={row} onWarning={setWarning} />);
 ```
 
 Replace `DocumentRow` with:
@@ -948,7 +951,9 @@ function primaryActionLabel(action: ClientPortalRequiredAction): string {
 Replace the primary button label expression with:
 
 ```tsx
-{primaryActionLabel(action)}
+{
+  primaryActionLabel(action);
+}
 ```
 
 - [ ] **Step 5: Run route tests to verify they pass**
@@ -987,6 +992,7 @@ Expected: commit succeeds with only route and route-test files staged.
 ### Task 3: Final Verification And Branch Readiness
 
 **Files:**
+
 - Review: `src/lib/client-portal-store.ts`
 - Review: `src/lib/client-portal-store.test.ts`
 - Review: `src/routes/documents.tsx`
@@ -994,6 +1000,7 @@ Expected: commit succeeds with only route and route-test files staged.
 - Review: `src/routes/-annual-returns-workflow.test.ts`
 
 **Interfaces:**
+
 - Consumes: all exports and route behavior added in Tasks 1 and 2.
 - Produces: verified branch ready for push or PR update.
 

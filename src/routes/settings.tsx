@@ -25,7 +25,8 @@ import {
   type RiskRule,
   type ReminderRule,
 } from "@/lib/templates";
-import { cases, formatDate } from "@/lib/mock-data";
+import { cases } from "@/lib/mock-data";
+import { formatDate } from "@/lib/format-date";
 import { KnowledgeBaseSection } from "@/components/knowledge-base-section";
 import { cn } from "@/lib/utils";
 import { settingsSectionsForMode } from "./-settings-sections";
@@ -125,7 +126,7 @@ function SettingsPage() {
                 {filtered.map((t) => {
                   const active = selected?.id === t.id;
                   const usage = cases.filter(
-                    (c) =>
+                    () =>
                       t.serviceType.startsWith("Annual Return") &&
                       // simplistic: assume all AR cases use the AR template
                       t.serviceType === "Annual Return — Private Ltd",

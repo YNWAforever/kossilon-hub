@@ -36,10 +36,12 @@
 ### Task 1: Structured Review Metadata
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.ts`
 - Modify: `src/lib/client-portal-store.test.ts`
 
 **Interfaces:**
+
 - Consumes: `appendClientPortalTimelineEvent(caseId: string, label: string, detail: string)`, `markDocumentReceived(caseId: string, documentId: string)`, `markDocumentMissing(caseId: string, documentId: string)`.
 - Produces: `clientPortalReviewReasons: readonly { code: ClientPortalReviewReasonCode; label: string }[]`.
 - Produces: `ClientPortalReviewReasonCode`.
@@ -458,10 +460,12 @@ Expected: commit succeeds with only the store and store test files staged.
 ### Task 2: Rejected-Document Follow-Up Drafts And Mock Send
 
 **Files:**
+
 - Modify: `src/lib/client-portal-store.ts`
 - Modify: `src/lib/client-portal-store.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ClientPortalDocument.reviewReasonCode`, `reviewReasonLabel`, `reviewNote`.
 - Consumes: `AnnualReturnCase.phone`, `contactName`, `companyName`, `status`, and `receipt`.
 - Produces: `ClientPortalDocumentReviewFollowUpDraft`.
@@ -761,7 +765,10 @@ function isCurrentRejectedDocument(
 ): boolean {
   if (document.status !== "rejected") return false;
   if (!document.requirementId) return false;
-  return getCurrentClientDocument(document.caseId, document.requirementId, currentSnapshot)?.id === document.id;
+  return (
+    getCurrentClientDocument(document.caseId, document.requirementId, currentSnapshot)?.id ===
+    document.id
+  );
 }
 
 function documentReviewFollowUpMessage(
@@ -790,7 +797,9 @@ export function getDocumentReviewFollowUpDrafts(
 ): ClientPortalDocumentReviewFollowUpDraft[] {
   const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
   const sentByDraftId = new Map(
-    currentSnapshot.documentReviewFollowUps.map((followUp) => [followUp.draftId, followUp] as const),
+    currentSnapshot.documentReviewFollowUps.map(
+      (followUp) => [followUp.draftId, followUp] as const,
+    ),
   );
 
   return currentSnapshot.documents
@@ -911,12 +920,14 @@ Expected: commit succeeds with only the store and store test files staged.
 ### Task 3: Staff, Portal, And WhatsApp Route Integration
 
 **Files:**
+
 - Modify: `src/routes/documents.tsx`
 - Modify: `src/routes/portal.tsx`
 - Modify: `src/routes/whatsapp.automation.tsx`
 - Modify: `src/routes/-annual-returns-workflow.test.ts`
 
 **Interfaces:**
+
 - Consumes: `clientPortalReviewReasons`.
 - Consumes: `reviewClientDocument(documentId, reviewRequest)`.
 - Consumes: `getDocumentReviewFollowUpDrafts(cases, snapshot)`.
@@ -1071,43 +1082,37 @@ import {
 In `DocumentRow`, derive draft state and accept structured review input:
 
 ```tsx
-  const followUp = getDocumentReviewFollowUpDrafts(cases, snapshot).find(
-    (draft) => draft.documentId === row.documentId,
-  );
+const followUp = getDocumentReviewFollowUpDrafts(cases, snapshot).find(
+  (draft) => draft.documentId === row.documentId,
+);
 
-  function handleReview(
-    decision: ClientPortalDocumentReviewDecision,
-    options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
-  ) {
-    if (!row.documentId) return;
-    const result =
-      decision === "accepted"
-        ? reviewClientDocument(row.documentId, {
-            decision: "accepted",
-            actor: "Operations",
-          })
-        : reviewClientDocument(row.documentId, {
-            decision: "rejected",
-            reasonCode: options.reasonCode,
-            note: options.note,
-            actor: "Operations",
-          });
-    onWarning(result.ok ? undefined : result.reason);
-  }
+function handleReview(
+  decision: ClientPortalDocumentReviewDecision,
+  options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
+) {
+  if (!row.documentId) return;
+  const result =
+    decision === "accepted"
+      ? reviewClientDocument(row.documentId, {
+          decision: "accepted",
+          actor: "Operations",
+        })
+      : reviewClientDocument(row.documentId, {
+          decision: "rejected",
+          reasonCode: options.reasonCode,
+          note: options.note,
+          actor: "Operations",
+        });
+  onWarning(result.ok ? undefined : result.reason);
+}
 ```
 
 Pass `cases` and `snapshot` into `DocumentRow` from the map call:
 
 ```tsx
 visibleRows.map((row) => (
-  <DocumentRow
-    key={row.id}
-    row={row}
-    cases={cases}
-    snapshot={snapshot}
-    onWarning={setWarning}
-  />
-))
+  <DocumentRow key={row.id} row={row} cases={cases} snapshot={snapshot} onWarning={setWarning} />
+));
 ```
 
 Update the `DocumentRow` props:
@@ -1174,7 +1179,9 @@ function ReviewCell({
               aria-label={`Rejection reason for ${row.title}`}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={reasonCode}
-              onChange={(event) => setReasonCode(event.target.value as ClientPortalReviewReasonCode)}
+              onChange={(event) =>
+                setReasonCode(event.target.value as ClientPortalReviewReasonCode)
+              }
             >
               {clientPortalReviewReasons.map((reason) => (
                 <option key={reason.code} value={reason.code}>
@@ -1252,7 +1259,7 @@ previewRows.map((row) => (
     <span>{row.source}</span>
     <span>{row.status}</span>
   </div>
-))
+));
 ```
 
 Update the accepted branch in `requiredDocumentDetail` in `src/lib/client-portal-store.ts` if it does not include `reviewSummary`:
@@ -1305,39 +1312,39 @@ type AutomationQueueRow =
 Update `WhatsAppAutomationRoute`:
 
 ```tsx
-  const cases = useAnnualReturnCases();
-  const portalSnapshot = useClientPortalSnapshot();
-  const [filter, setFilter] = useState<"open" | "sent" | "all">("open");
-  const [warning, setWarning] = useState<string | undefined>();
+const cases = useAnnualReturnCases();
+const portalSnapshot = useClientPortalSnapshot();
+const [filter, setFilter] = useState<"open" | "sent" | "all">("open");
+const [warning, setWarning] = useState<string | undefined>();
 
-  const rows = useMemo<AutomationQueueRow[]>(() => {
-    const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
-    const annualReturnRows = cases.flatMap((caseItem) =>
-      getFollowUpDrafts(caseItem).map((draft) => ({
-        id: draft.id,
-        source: "annual-return" as const,
-        caseItem,
-        draft,
-      })),
-    );
-    const documentReviewRows = getDocumentReviewFollowUpDrafts(cases, portalSnapshot).flatMap(
-      (draft) => {
-        const caseItem = casesById.get(draft.caseId);
-        return caseItem
-          ? [
-              {
-                id: draft.id,
-                source: "document-review" as const,
-                caseItem,
-                draft,
-              },
-            ]
-          : [];
-      },
-    );
+const rows = useMemo<AutomationQueueRow[]>(() => {
+  const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
+  const annualReturnRows = cases.flatMap((caseItem) =>
+    getFollowUpDrafts(caseItem).map((draft) => ({
+      id: draft.id,
+      source: "annual-return" as const,
+      caseItem,
+      draft,
+    })),
+  );
+  const documentReviewRows = getDocumentReviewFollowUpDrafts(cases, portalSnapshot).flatMap(
+    (draft) => {
+      const caseItem = casesById.get(draft.caseId);
+      return caseItem
+        ? [
+            {
+              id: draft.id,
+              source: "document-review" as const,
+              caseItem,
+              draft,
+            },
+          ]
+        : [];
+    },
+  );
 
-    return [...annualReturnRows, ...documentReviewRows];
-  }, [cases, portalSnapshot]);
+  return [...annualReturnRows, ...documentReviewRows];
+}, [cases, portalSnapshot]);
 ```
 
 Update the row render:
@@ -1355,7 +1362,7 @@ visibleRows.map((row) => (
       setWarning(result.ok ? undefined : result.reason);
     }}
   />
-))
+));
 ```
 
 Replace `AutomationRow` props and field usage:
@@ -1454,6 +1461,7 @@ Expected: commit succeeds with route files, route tests, and the small `required
 ### Task 4: Final Verification And Branch Readiness
 
 **Files:**
+
 - Review: `src/lib/client-portal-store.ts`
 - Review: `src/lib/client-portal-store.test.ts`
 - Review: `src/routes/documents.tsx`
@@ -1462,6 +1470,7 @@ Expected: commit succeeds with route files, route tests, and the small `required
 - Review: `src/routes/-annual-returns-workflow.test.ts`
 
 **Interfaces:**
+
 - Consumes: all exports and route behavior added in Tasks 1 through 3.
 - Produces: verified branch ready for review, push, or PR update.
 

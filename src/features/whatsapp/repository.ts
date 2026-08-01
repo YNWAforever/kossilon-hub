@@ -6,6 +6,14 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { enqueueNotification } from "@/features/notifications/outbox";
+// Both caps are bounded because a WhatsApp history has no natural end: an
+// unbounded thread query would grow as the provider keeps delivering.
+import {
+  CONVERSATION_MESSAGE_PAGE_SIZE,
+  CONVERSATION_PAGE_SIZE,
+  type WhatsAppConversation,
+  type WhatsAppConversationMessage,
+} from "./conversations";
 import type {
   NormalizedInboundWhatsAppMessage,
   WhatsAppMessageDirection,
@@ -103,6 +111,15 @@ export type RecordWebhookEventInput = {
   errorMessage: string | null;
 };
 
+export type ListConversationsInput = {
+  limit?: number;
+};
+
+export type ListConversationMessagesInput = {
+  contactId: string;
+  limit?: number;
+};
+
 type QueryClient = SqlClient | postgres.TransactionSql;
 
 export type CreateWhatsAppRepositoryOptions = CreateSqlClientOptions & {
@@ -117,6 +134,10 @@ export type WhatsAppRepository = {
     input: QueueOutboundTemplateMessageInput,
   ): Promise<WhatsAppMessageRecord>;
   recordWebhookEvent(input: RecordWebhookEventInput): Promise<WhatsAppWebhookEventRecord>;
+  listConversations(input?: ListConversationsInput): Promise<WhatsAppConversation[]>;
+  listConversationMessages(
+    input: ListConversationMessagesInput,
+  ): Promise<WhatsAppConversationMessage[]>;
   close(): Promise<void>;
 };
 
@@ -287,6 +308,56 @@ function mapContact(row: ContactRow): ContactRecord {
     displayName: row.display_name,
     phoneE164: row.phone_e164,
     whatsAppId: row.whatsapp_id,
+  };
+}
+
+type ConversationRow = {
+  contact_id: string;
+  display_name: string | null;
+  phone_e164: string | null;
+  company_id: string | null;
+  company_name: string | null;
+  case_id: string | null;
+  last_message_body: string;
+  last_message_direction: WhatsAppMessageDirection;
+  last_message_at: string | Date;
+};
+
+type ConversationMessageRow = {
+  id: string;
+  direction: WhatsAppMessageDirection;
+  status: WhatsAppMessageStatus;
+  body: string;
+  case_id: string | null;
+  created_at: string | Date;
+  received_at: string | Date | null;
+  sent_at: string | Date | null;
+};
+
+function mapConversation(row: ConversationRow): WhatsAppConversation {
+  return {
+    contactId: row.contact_id,
+    displayName: row.display_name,
+    phoneE164: row.phone_e164,
+    companyId: row.company_id,
+    companyName: row.company_name,
+    caseId: row.case_id,
+    lastMessageBody: row.last_message_body,
+    lastMessageDirection: row.last_message_direction,
+    lastMessageAt: timestampString(row.last_message_at)!,
+  };
+}
+
+function mapConversationMessage(row: ConversationMessageRow): WhatsAppConversationMessage {
+  return {
+    id: row.id,
+    direction: row.direction,
+    status: row.status,
+    body: row.body,
+    caseId: row.case_id,
+    createdAt: timestampString(row.created_at)!,
+    receivedAt: timestampString(row.received_at),
+    sentAt: timestampString(row.sent_at),
   };
 }
 
@@ -948,10 +1019,115 @@ export function createWhatsAppRepository(
     return mapWebhookEvent(rows[0]);
   }
 
+  // `coalesce(sent_at, received_at, created_at)` here has to stay in step with
+  // conversationMessageOccurredAt() in ./conversations — the same rule decides
+  // which rows a limit keeps and how the thread reads once it reaches the browser.
+  async function listConversations(
+    input: ListConversationsInput = {},
+  ): Promise<WhatsAppConversation[]> {
+    const limit = input.limit ?? CONVERSATION_PAGE_SIZE;
+    const rows = await sql<ConversationRow[]>`
+      -- One pass over whatsapp_messages. Two distinct-on CTEs read the same rows
+      -- twice, and the ordering expression is not cheap.
+      with ranked as (
+        select
+          m.contact_id,
+          m.body,
+          m.direction,
+          m.company_id,
+          coalesce(m.sent_at, m.received_at, m.created_at) as occurred_at,
+          row_number() over (
+            partition by m.contact_id
+            order by coalesce(m.sent_at, m.received_at, m.created_at) desc, m.id desc
+          ) as recency,
+          -- The case of the most recent message that HAS one, so a single
+          -- unmatched inbound reply cannot make the annual-return link vanish
+          -- from a thread that is plainly about it. A null case sorts last, so
+          -- rows carrying a case win the window regardless of recency.
+          first_value(m.case_id) over (
+            partition by m.contact_id
+            order by
+              (m.case_id is null),
+              coalesce(m.sent_at, m.received_at, m.created_at) desc,
+              m.id desc
+          ) as case_id,
+          -- Taken from that same row, so the company shown never belongs to a
+          -- different case than the one the link points at.
+          first_value(m.company_id) over (
+            partition by m.contact_id
+            order by
+              (m.case_id is null),
+              coalesce(m.sent_at, m.received_at, m.created_at) desc,
+              m.id desc
+          ) as case_company_id
+        from whatsapp_messages m
+        where m.contact_id is not null
+      ),
+      latest as (
+        select
+          contact_id,
+          body,
+          direction,
+          occurred_at,
+          case_id,
+          coalesce(
+            case when case_id is not null then case_company_id end,
+            company_id
+          ) as company_id
+        from ranked
+        where recency = 1
+      )
+      select
+        contact.id as contact_id,
+        contact.display_name,
+        contact.phone_e164,
+        coalesce(latest.company_id, contact.company_id) as company_id,
+        company.company_name,
+        latest.case_id,
+        latest.body as last_message_body,
+        latest.direction as last_message_direction,
+        latest.occurred_at::text as last_message_at
+      from latest
+      join whatsapp_contacts contact on contact.id = latest.contact_id
+      left join companies company on company.id = coalesce(latest.company_id, contact.company_id)
+      order by latest.occurred_at desc, contact.id asc
+      limit ${limit}
+    `;
+
+    return rows.map(mapConversation);
+  }
+
+  async function listConversationMessages(
+    input: ListConversationMessagesInput,
+  ): Promise<WhatsAppConversationMessage[]> {
+    const limit = input.limit ?? CONVERSATION_MESSAGE_PAGE_SIZE;
+    // Newest first so the limit keeps the most recent slice of a long thread;
+    // sortConversationMessagesOldestFirst() restores reading order for display.
+    const rows = await sql<ConversationMessageRow[]>`
+      select
+        id,
+        direction,
+        status,
+        body,
+        case_id,
+        created_at::text as created_at,
+        received_at::text as received_at,
+        sent_at::text as sent_at
+      from whatsapp_messages
+      where contact_id = ${input.contactId}::uuid
+      order by coalesce(sent_at, received_at, created_at) desc, id desc
+      limit ${limit}
+    `;
+
+    return rows.map(mapConversationMessage);
+  }
+
   return {
     recordInboundMessage,
     queueOutboundTemplateMessage,
     recordWebhookEvent,
+    listConversations,
+    listConversationMessages,
     async close() {
       if (ownsClient && "end" in sql) {
         await sql.end();

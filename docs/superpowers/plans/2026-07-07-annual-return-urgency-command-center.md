@@ -40,11 +40,13 @@
 ### Task 1: Annual Return Store And Derived Helpers
 
 **Files:**
+
 - Create: `src/lib/annual-return-store.ts`
 - Create: `src/lib/annual-return-store.test.ts`
 - Modify: `src/lib/app-data.ts`
 
 **Interfaces:**
+
 - Produces:
   - `type AnnualReturnCase`
   - `type AnnualReturnRiskLevel = "overdue" | "due-soon" | "blocked" | "healthy" | "ready-to-file" | "filed"`
@@ -320,13 +322,21 @@ export function getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[] {
     blockers.push({
       id: "review",
       type: "review",
-      label: caseItem.reviewStatus === "in-review" ? "Internal review in progress" : "Internal review not started",
+      label:
+        caseItem.reviewStatus === "in-review"
+          ? "Internal review in progress"
+          : "Internal review not started",
       action: "Complete internal review",
     });
   }
 
   if (!caseItem.owner.trim()) {
-    blockers.push({ id: "owner", type: "owner", label: "No owner assigned", action: "Assign owner" });
+    blockers.push({
+      id: "owner",
+      type: "owner",
+      label: "No owner assigned",
+      action: "Assign owner",
+    });
   }
 
   return blockers;
@@ -344,7 +354,10 @@ Implement readiness score as five equal 20-point groups:
 Implement risk and action rules:
 
 ```ts
-export function getRiskLevel(caseItem: AnnualReturnCase, today = new Date()): AnnualReturnRiskLevel {
+export function getRiskLevel(
+  caseItem: AnnualReturnCase,
+  today = new Date(),
+): AnnualReturnRiskLevel {
   if (caseItem.status === "filed") return "filed";
   if (getReadinessScore(caseItem) === 100) return "ready-to-file";
   if (daysUntilDate(caseItem.dueDate, today) < 0) return "overdue";
@@ -385,7 +398,11 @@ function subscribe(listener: () => void): () => void {
 }
 
 export function useAnnualReturnCases(): AnnualReturnCase[] {
-  return useSyncExternalStore(subscribe, () => cases, () => cases);
+  return useSyncExternalStore(
+    subscribe,
+    () => cases,
+    () => cases,
+  );
 }
 ```
 
@@ -413,9 +430,11 @@ If `git` is unavailable, record `git unavailable on PATH` in the task notes and 
 ### Task 2: Annual Returns Urgency Command Center
 
 **Files:**
+
 - Modify: `src/routes/annual-returns.tsx`
 
 **Interfaces:**
+
 - Consumes from Task 1:
   - `useAnnualReturnCases`
   - `getRiskLevel`
@@ -539,10 +558,16 @@ return (
             </button>
           ))}
         </div>
-        <select className="rounded-md border bg-background px-3 py-2 text-sm" value={owner} onChange={(event) => setOwner(event.target.value)}>
+        <select
+          className="rounded-md border bg-background px-3 py-2 text-sm"
+          value={owner}
+          onChange={(event) => setOwner(event.target.value)}
+        >
           <option value="all">All owners</option>
           {owners.map((ownerName) => (
-            <option key={ownerName} value={ownerName}>{ownerName}</option>
+            <option key={ownerName} value={ownerName}>
+              {ownerName}
+            </option>
           ))}
         </select>
       </div>
@@ -583,9 +608,11 @@ If `git` is unavailable, record `git unavailable on PATH` in the task notes and 
 ### Task 3: Annual Return Detail Workflow
 
 **Files:**
+
 - Modify: `src/routes/annual-returns.$id.tsx`
 
 **Interfaces:**
+
 - Consumes from Task 1:
   - `useAnnualReturnCase`
   - `getRiskLevel`
@@ -641,7 +668,9 @@ if (!caseItem) {
   return (
     <div className="space-y-4 p-6">
       <h1 className="text-2xl font-semibold">Case not found</h1>
-      <p className="text-sm text-muted-foreground">This annual return case does not exist in the mocked workspace.</p>
+      <p className="text-sm text-muted-foreground">
+        This annual return case does not exist in the mocked workspace.
+      </p>
       <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
         Back to command center
       </Link>
@@ -675,20 +704,29 @@ Show `filingWarning` inline in a status-colored warning block.
 Document rows:
 
 ```tsx
-{caseItem.documents.map((doc) => (
-  <div key={doc.id} className="flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
-    <div>
-      <p className="font-medium">{doc.label}</p>
-      <p className="text-sm text-muted-foreground">{doc.received ? "Received" : "Missing"}</p>
-    </div>
-    <button
-      className="rounded-md border px-3 py-2 text-sm"
-      onClick={() => (doc.received ? markDocumentMissing(caseItem.id, doc.id) : markDocumentReceived(caseItem.id, doc.id))}
+{
+  caseItem.documents.map((doc) => (
+    <div
+      key={doc.id}
+      className="flex items-center justify-between gap-3 border-b py-3 last:border-b-0"
     >
-      {doc.received ? "Mark missing" : "Mark received"}
-    </button>
-  </div>
-))}
+      <div>
+        <p className="font-medium">{doc.label}</p>
+        <p className="text-sm text-muted-foreground">{doc.received ? "Received" : "Missing"}</p>
+      </div>
+      <button
+        className="rounded-md border px-3 py-2 text-sm"
+        onClick={() =>
+          doc.received
+            ? markDocumentMissing(caseItem.id, doc.id)
+            : markDocumentReceived(caseItem.id, doc.id)
+        }
+      >
+        {doc.received ? "Mark missing" : "Mark received"}
+      </button>
+    </div>
+  ));
+}
 ```
 
 Payment, signature, and review controls must be `select` elements bound to `updatePaymentStatus`, `updateSignatureStatus`, and `updateReviewStatus`.
@@ -698,16 +736,22 @@ Payment, signature, and review controls must be `select` elements bound to `upda
 Checklist rows must toggle complete/reopen:
 
 ```tsx
-{caseItem.checklist.map((item) => (
-  <button
-    key={item.id}
-    className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm"
-    onClick={() => (item.complete ? reopenChecklistItem(caseItem.id, item.id) : completeChecklistItem(caseItem.id, item.id))}
-  >
-    <span>{item.label}</span>
-    <span>{item.complete ? "Complete" : "Open"}</span>
-  </button>
-))}
+{
+  caseItem.checklist.map((item) => (
+    <button
+      key={item.id}
+      className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm"
+      onClick={() =>
+        item.complete
+          ? reopenChecklistItem(caseItem.id, item.id)
+          : completeChecklistItem(caseItem.id, item.id)
+      }
+    >
+      <span>{item.label}</span>
+      <span>{item.complete ? "Complete" : "Open"}</span>
+    </button>
+  ));
+}
 ```
 
 Notes form:
@@ -751,12 +795,14 @@ If `git` is unavailable, record `git unavailable on PATH` in the task notes and 
 ### Task 4: Derived Tasks, Payments, And WhatsApp AI Context
 
 **Files:**
+
 - Modify: `src/routes/tasks.tsx`
 - Modify: `src/routes/payments.tsx`
 - Modify: `src/lib/ai-agent.ts`
 - Modify: `src/components/ai-assistant-panel.tsx`
 
 **Interfaces:**
+
 - Consumes from Task 1:
   - `useAnnualReturnCases`
   - `getCaseTasks`
@@ -793,7 +839,10 @@ function TasksRoute() {
       <div className="rounded-lg border bg-card">
         {tasks.length ? (
           tasks.map((task) => (
-            <div key={task.id} className="grid gap-2 border-b p-4 text-sm last:border-b-0 md:grid-cols-[1fr_180px_140px]">
+            <div
+              key={task.id}
+              className="grid gap-2 border-b p-4 text-sm last:border-b-0 md:grid-cols-[1fr_180px_140px]"
+            >
               <div>
                 <p className="font-medium">{task.title}</p>
                 <p className="text-muted-foreground">{task.companyName}</p>
@@ -822,15 +871,20 @@ const cases = useAnnualReturnCases();
 Render:
 
 ```tsx
-{cases.map((caseItem) => (
-  <div key={caseItem.id} className="grid gap-3 border-b p-4 text-sm last:border-b-0 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]">
-    <span>{caseItem.companyName}</span>
-    <span>{caseItem.owner}</span>
-    <span>{caseItem.dueDate}</span>
-    <span className="font-medium">{caseItem.paymentStatus}</span>
-    <span>{getReadinessScore(caseItem)}% ready</span>
-  </div>
-))}
+{
+  cases.map((caseItem) => (
+    <div
+      key={caseItem.id}
+      className="grid gap-3 border-b p-4 text-sm last:border-b-0 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]"
+    >
+      <span>{caseItem.companyName}</span>
+      <span>{caseItem.owner}</span>
+      <span>{caseItem.dueDate}</span>
+      <span className="font-medium">{caseItem.paymentStatus}</span>
+      <span>{getReadinessScore(caseItem)}% ready</span>
+    </div>
+  ));
+}
 ```
 
 - [ ] **Step 3: Extend AI agent types**
@@ -849,7 +903,7 @@ export function draftReply(
   context: RetrievalContext,
   clientCase?: ClientCase,
   annualReturnContext?: AnnualReturnAiContext,
-): DraftReply
+): DraftReply;
 ```
 
 Use annual return context first when building `caseLine`:
@@ -891,7 +945,9 @@ Inside the component:
 
 ```tsx
 const annualReturnCase = useAnnualReturnCase(clientCase ? clientCase.annualReturnCaseId : "");
-const annualReturnContext = annualReturnCase ? getAnnualReturnAiContext(annualReturnCase) : undefined;
+const annualReturnContext = annualReturnCase
+  ? getAnnualReturnAiContext(annualReturnCase)
+  : undefined;
 ```
 
 Update draft call:
@@ -935,6 +991,7 @@ If `git` is unavailable, record `git unavailable on PATH` in the task notes and 
 ### Task 5: Verification, Polish, And Guardrail Pass
 
 **Files:**
+
 - Review: `src/lib/annual-return-store.ts`
 - Review: `src/routes/annual-returns.tsx`
 - Review: `src/routes/annual-returns.$id.tsx`
@@ -944,6 +1001,7 @@ If `git` is unavailable, record `git unavailable on PATH` in the task notes and 
 - Review: `src/components/ai-assistant-panel.tsx`
 
 **Interfaces:**
+
 - Consumes all prior task outputs.
 - Produces a verified implementation with no missing spec coverage.
 

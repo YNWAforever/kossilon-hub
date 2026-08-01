@@ -77,6 +77,44 @@ describe("production route authorization contract", () => {
     }
   });
 
+  it("keeps the production WhatsApp inbox on staff-authorized server functions", () => {
+    const route = readFileSync(new URL("./whatsapp.tsx", import.meta.url), "utf8");
+    const inbox = readFileSync(
+      new URL("../features/whatsapp/components/production-inbox.tsx", import.meta.url),
+      "utf8",
+    );
+    const serverFunctions = readFileSync(
+      new URL("../features/whatsapp/server-fns.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(route).toContain("ProductionWhatsAppInbox");
+    expect(route).toContain("dataMode");
+
+    // app-data and ai-agent are the demo fixtures and the mock assistant. The
+    // AiAssistantPanel additionally reads two demo stores, so it cannot appear on
+    // a production screen at all.
+    expect(inbox).not.toContain("lib/app-data");
+    expect(inbox).not.toContain("lib/ai-agent");
+    expect(inbox).not.toContain("ai-assistant-panel");
+    expect(inbox).not.toContain("annual-return-store");
+    expect(inbox).not.toContain("client-portal-store");
+
+    for (const command of ["listWhatsAppConversations", "listWhatsAppConversationMessages"]) {
+      expect(inbox).toContain(command);
+      expect(serverFunctions).toContain("export const " + command + " = createServerFn");
+    }
+    expect(serverFunctions).toContain("requireStaffActor");
+    expect(serverFunctions).toContain("assertStaffAccess");
+
+    // The status response names the firm's unconfigured bindings and its provider
+    // mode. Without this the guard is enforced only by inspection: deleting the
+    // requireStaffActor call leaves every other test green.
+    expect(serverFunctions).toMatch(
+      /getWhatsAppIntegrationStatus = createServerFn[\s\S]{0,300}?requireStaffActor\(getRequest\(\)\)/,
+    );
+  });
+
   it("keeps evidence review and receipt acceptance behind actor-authorized server actions", () => {
     const evidenceActions = readFileSync(
       new URL("../features/annual-return/evidence-server-fns.ts", import.meta.url),

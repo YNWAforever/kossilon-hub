@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { assertStaffAccess } from "@/features/auth/authorization";
+import { requireActor, requireStaffActor } from "@/features/auth/neon-auth-server";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
+import type { WhatsAppConversation, WhatsAppConversationMessage } from "./conversations";
 import {
   createWhatsAppRepository,
   type InboundWhatsAppMessageRecord,
@@ -37,6 +42,19 @@ export const processWhatsAppInboundWebhookInputSchema = z.object({
   providerEventId: z.string().min(1).nullable().default(null),
   signatureValid: z.boolean(),
   payload: jsonObjectSchema,
+});
+
+// CLAUDE.md: "every one validates with a Zod schema". This server fn takes no
+// input, so the schema states exactly that rather than the rule being skipped.
+export const noInputSchema = z.undefined().or(z.object({}).strict());
+
+export const listWhatsAppConversationsInputSchema = z.object({
+  limit: z.number().int().min(1).max(500).optional(),
+});
+
+export const listWhatsAppConversationMessagesInputSchema = z.object({
+  contactId: z.string().uuid(),
+  limit: z.number().int().min(1).max(500).optional(),
 });
 
 export const queueWhatsAppTemplateMessageInputSchema = z.object({
@@ -181,10 +199,78 @@ export async function processWhatsAppInboundWebhookWithRepository(
   }
 }
 
-export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { currentProviderMode } = await import("@/server/provider-mode");
-  return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
-});
+export type WhatsAppInboxDependencies = {
+  repository: Pick<WhatsAppRepository, "listConversations" | "listConversationMessages">;
+};
+
+/**
+ * Staff-only, and scoped no further than that on purpose:
+ * `whatsapp_contacts.company_id` is nullable, so an inbound message the matcher
+ * could not attach to a company belongs to no company at all. There is no client
+ * scope to fall back on, which is exactly why a Client actor is refused outright
+ * rather than shown a filtered view.
+ */
+export async function listWhatsAppConversationsForActor(
+  actor: AuthenticatedActor,
+  input: { limit?: number },
+  dependencies: WhatsAppInboxDependencies,
+): Promise<WhatsAppConversation[]> {
+  assertStaffAccess(actor);
+  return dependencies.repository.listConversations(input);
+}
+
+export async function listWhatsAppConversationMessagesForActor(
+  actor: AuthenticatedActor,
+  input: { contactId: string; limit?: number },
+  dependencies: WhatsAppInboxDependencies,
+): Promise<WhatsAppConversationMessage[]> {
+  assertStaffAccess(actor);
+  return dependencies.repository.listConversationMessages(input);
+}
+
+// Staff is asserted before a connection is acquired, so an unauthorised caller
+// never reaches the pool. The *ForActor functions assert again on the actor they
+// are handed — they are the seam the unit tests drive, and have to stand on their
+// own rather than inherit a guarantee from this wrapper.
+async function withWhatsAppInboxRepository<T>(
+  handler: (repository: WhatsAppRepository, actor: AuthenticatedActor) => Promise<T>,
+): Promise<T> {
+  const actor = assertStaffAccess(await requireActor(getRequest()));
+  const repository = createWhatsAppRepository();
+
+  try {
+    return await handler(repository, actor);
+  } finally {
+    await repository.close();
+  }
+}
+
+export const listWhatsAppConversations = createServerFn({ method: "GET" })
+  .validator(listWhatsAppConversationsInputSchema)
+  .handler(({ data }) =>
+    withWhatsAppInboxRepository((repository, actor) =>
+      listWhatsAppConversationsForActor(actor, data, { repository }),
+    ),
+  );
+
+export const listWhatsAppConversationMessages = createServerFn({ method: "GET" })
+  .validator(listWhatsAppConversationMessagesInputSchema)
+  .handler(({ data }) =>
+    withWhatsAppInboxRepository((repository, actor) =>
+      listWhatsAppConversationMessagesForActor(actor, data, { repository }),
+    ),
+  );
+
+// Staff-only: the response names the firm's unconfigured bindings and its
+// provider mode. No values leak, but that is internal infrastructure state and a
+// client portal session has no business reading it.
+export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" })
+  .validator(noInputSchema)
+  .handler(async () => {
+    await requireStaffActor(getRequest());
+    const { currentProviderMode } = await import("@/server/provider-mode");
+    return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
+  });
 
 export const processWhatsAppInboundWebhook = createServerFn({ method: "POST" })
   .validator(processWhatsAppInboundWebhookInputSchema)

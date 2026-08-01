@@ -24,6 +24,7 @@
 ## Task 1: Extract a reusable, parameterized annual-return seed
 
 **Files:**
+
 - Modify `scripts/db-seed-annual-return.ts`
 - Add `scripts/db-seed-annual-return.test.ts`
 
@@ -33,8 +34,8 @@
   - non-Admin staff auth IDs and the synthetic client membership identity remain unchanged;
   - an empty or whitespace-only override is rejected;
   - no password-like field is accepted by the seed configuration type or included in generated seed rows.
-  Use an injected SQL client or a generated operation model so these tests do not open a database connection.
-  Run `npx vitest run scripts/db-seed-annual-return.test.ts`; confirm the new assertions fail before implementation.
+    Use an injected SQL client or a generated operation model so these tests do not open a database connection.
+    Run `npx vitest run scripts/db-seed-annual-return.test.ts`; confirm the new assertions fail before implementation.
 - [ ] **1.2 Refactor the existing script around an exported seed function.** Preserve all existing fixture IDs, fixture values, upsert conflict targets, adopted-ID checks, transaction boundaries, and final row-count behavior. Move the SQL work behind an exported function such as `seedAnnualReturn(sql, options)` where `options.adminAuthUserId` is optional and validated before any query runs. Keep the current CLI behavior as a thin entry point using the existing `DATABASE_URL` and default fixture identity.
 - [ ] **1.3 Make the Admin auth mapping explicit.** Build `staffProfiles` from a function that accepts the optional override and uses it only for the Admin fixture corresponding to `amy.chan@kossilon.hk`. Keep the seeded role as `Admin` and leave all other staff/client fixture identities unchanged. Ensure the function and its types are importable by the demo seed script without executing the CLI side effect.
 - [ ] **1.4 Run the focused tests and typecheck.** Run `npx vitest run scripts/db-seed-annual-return.test.ts scripts/validate-firm-runtime.test.ts`, then `npx tsc --noEmit`. Expected result: all focused tests pass and TypeScript reports no errors.
@@ -42,12 +43,13 @@
 ## Task 2: Add a demo-only database seed command with separation guards
 
 **Files:**
+
 - Add `scripts/db-seed-neon-auth-demo.ts`
 - Add `scripts/db-seed-neon-auth-demo.test.ts`
 - Modify `package.json`
 
 - [ ] **2.1 Write failing tests for demo environment parsing.** Cover a pure `readDemoSeedConfig(env)` contract requiring `DEMO_DATABASE_URL`, `DEMO_AUTH_USER_ID`, and `DEMO_FIRM_ID`. Test that it rejects missing values, whitespace values, an invalid database URL, and a demo URL equal to an explicitly supplied `PRODUCTION_DATABASE_URL` after normalization. Test that the returned object contains no password field and that error/output-safe summaries contain names/statuses rather than secret values.
-  Run `npx vitest run scripts/db-seed-neon-auth-demo.test.ts`; confirm the new tests fail before implementation.
+      Run `npx vitest run scripts/db-seed-neon-auth-demo.test.ts`; confirm the new tests fail before implementation.
 - [ ] **2.2 Implement the guarded CLI.** Add a script that reads only the required demo variables, validates the separation contract before connecting, creates a `postgres` client for `DEMO_DATABASE_URL`, calls the reusable seed with `DEMO_AUTH_USER_ID`, and closes the client in `finally`. Use one transaction through the existing seed function. Do not fall back to `DATABASE_URL`; a missing demo URL must fail closed.
 - [ ] **2.3 Add the package command.** Add `db:seed:neon-auth-demo` to `package.json` pointing at the new script. Keep `db:seed` unchanged for the existing fixture workflow. The demo command must print only a success count and the non-secret demo firm identifier, never a URL, auth ID, cookie secret, or password.
 - [ ] **2.4 Verify idempotency behavior at the operation boundary.** Extend the focused tests to assert that the demo command delegates to the existing deterministic upsert seed and does not issue destructive SQL or a second connection outside the transaction. Run `npx vitest run scripts/db-seed-annual-return.test.ts scripts/db-seed-neon-auth-demo.test.ts` and `npx tsc --noEmit`.
@@ -55,13 +57,14 @@
 ## Task 3: Add demo runtime validation and auth-to-Admin acceptance checks
 
 **Files:**
+
 - Add `scripts/validate-neon-auth-demo.ts`
 - Add `scripts/validate-neon-auth-demo.test.ts`
 - Add or extend `src/features/auth/neon-auth-server.test.ts` using the repository's existing test location/pattern
 - Modify `package.json`
 
 - [ ] **3.1 Write failing tests for demo validation.** Define a pure validator for the deployed demo environment that checks required names `FIRM_ID`, `NEON_AUTH_URL`, `NEON_AUTH_COOKIE_SECRET`, and `DATABASE_URL`; requires `NEON_AUTH_URL` to be HTTPS; rejects `VITE_ENABLE_DEMO_AUTH=true`; rejects `VITE_PROVIDER_MODE=local` for the production build; and rejects a missing or placeholder demo firm ID. Assert that validation results expose only pass/fail status and missing variable names, never values.
-  Run `npx vitest run scripts/validate-neon-auth-demo.test.ts`; confirm the new tests fail before implementation.
+      Run `npx vitest run scripts/validate-neon-auth-demo.test.ts`; confirm the new tests fail before implementation.
 - [ ] **3.2 Implement the validator CLI.** Add `npm run validate:neon-auth-demo` with a `--env-file` option matching `validate-firm-runtime.ts` conventions. It must read a local env file or process environment, perform no network calls, and print redacted readiness checks. It must not require or attempt to create Neon/Vercel resources.
 - [ ] **3.3 Add a server-side auth mapping regression test.** Use injected fake Neon session and SQL dependencies in `src/features/auth/neon-auth-server.test.ts` to prove that the real Neon Auth user ID inserted by the demo seed resolves to an active `Admin` actor and that an unknown auth user remains forbidden. Do not use a live Neon Auth account or database in the test.
 - [ ] **3.4 Add the package validation command and run focused checks.** Add `validate:neon-auth-demo` to `package.json`. Run `npx vitest run scripts/validate-neon-auth-demo.test.ts src/features/auth/neon-auth-server.test.ts`, then `npx tsc --noEmit`. Expected result: all checks pass with no live network calls.
@@ -69,6 +72,7 @@
 ## Task 4: Document the explicit Neon/Vercel provisioning and verification workflow
 
 **Files:**
+
 - Add `docs/runbooks/neon-auth-demo.md`
 - Modify `docs/runbooks/firm-deployment.md` only if a short cross-link is needed
 
@@ -81,6 +85,7 @@
 ## Task 5: Verify the implementation locally without provisioning resources
 
 **Files:**
+
 - No new files unless a test failure requires a narrowly scoped correction in the files above
 
 - [ ] **5.1 Run focused unit tests.** Run `npx vitest run scripts/db-seed-annual-return.test.ts scripts/db-seed-neon-auth-demo.test.ts scripts/validate-neon-auth-demo.test.ts src/features/auth/neon-auth-server.test.ts`.

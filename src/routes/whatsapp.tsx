@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
-import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { PageHeader } from "@/components/page-header";
+import { ProductionWhatsAppInbox } from "../features/whatsapp/components/production-inbox";
 import { enquiries, findClientForEnquiry } from "../lib/app-data";
 
 export const Route = createFileRoute("/whatsapp")({
+  // `enquiry` addresses a demo fixture. Production conversations are keyed by
+  // whatsapp_contacts.id and are selected in-page, so it is ignored there.
   validateSearch: (search: Record<string, unknown>) => ({
     enquiry: typeof search.enquiry === "string" ? search.enquiry : undefined,
   }),
@@ -14,6 +17,18 @@ export const Route = createFileRoute("/whatsapp")({
 
 function WhatsAppRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { dataMode } = Route.useRouteContext();
+
+  // Must stay above the data-mode branch: /whatsapp/automation renders through
+  // this Outlet, and a branch that returns a screen unconditionally would blank it.
+  if (pathname !== "/whatsapp") {
+    return <Outlet />;
+  }
+
+  return dataMode === "demo" ? <DemoWhatsAppInbox /> : <ProductionWhatsAppInbox />;
+}
+
+function DemoWhatsAppInbox() {
   const search = Route.useSearch();
   const initialId =
     search.enquiry && enquiries.some((enquiry) => enquiry.id === search.enquiry)
@@ -27,10 +42,6 @@ function WhatsAppRoute() {
     () => (selected ? findClientForEnquiry(selected) : undefined),
     [selected],
   );
-
-  if (pathname !== "/whatsapp") {
-    return <Outlet />;
-  }
 
   if (!selected) return null;
 
@@ -74,22 +85,11 @@ function WhatsAppRoute() {
 
       <section className="flex min-h-screen flex-col">
         <div className="border-b p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">{selected.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {selected.phone} - {selected.status}
-              </p>
-            </div>
-            {clientCase ? (
-              <Link
-                className="rounded-md border px-3 py-2 text-sm"
-                to="/clients/$id"
-                params={{ id: clientCase.id }}
-              >
-                Client
-              </Link>
-            ) : null}
+          <div>
+            <h2 className="text-xl font-semibold">{selected.name}</h2>
+            <p className="text-sm text-muted-foreground">
+              {selected.phone} - {selected.status}
+            </p>
           </div>
         </div>
 

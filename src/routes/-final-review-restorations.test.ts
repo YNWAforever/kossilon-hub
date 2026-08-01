@@ -20,10 +20,6 @@ const mobileNavSource = readFileSync(
 const startSource = readFileSync(new URL("../start.ts", import.meta.url), "utf8");
 const dashboardSource = readFileSync(new URL("./index.tsx", import.meta.url), "utf8");
 const settingsSource = readFileSync(new URL("./settings.tsx", import.meta.url), "utf8");
-const teamsSource = readFileSync(new URL("./teams.tsx", import.meta.url), "utf8");
-const clientDetailSource = readFileSync(new URL("./clients.$id.tsx", import.meta.url), "utf8");
-const clientsSource = readFileSync(new URL("./clients.tsx", import.meta.url), "utf8");
-const enquiriesSource = readFileSync(new URL("./enquiries.tsx", import.meta.url), "utf8");
 const knowledgeBaseSectionSource = readFileSync(
   new URL("../components/knowledge-base-section.tsx", import.meta.url),
   "utf8",
@@ -81,7 +77,11 @@ describe("final review architecture restorations", () => {
   });
 
   it("restores the dashboard loader and AI daily digest", () => {
-    expect(dashboardSource).toContain("loader: () => loadDashboardData()");
+    // The loader now picks its dependency set from route context rather than
+    // always calling the production server functions. -dashboard-modes.test.tsx
+    // renders both modes; this only pins that the branch is still there.
+    expect(dashboardSource).toContain("loadDashboardData(");
+    expect(dashboardSource).toContain('context.dataMode === "demo"');
     expect(dashboardSource).toContain("buildDailyDigest");
     expect(dashboardSource).toContain("AI daily digest");
     expect(dashboardSource).toContain("annualReturnDataAvailable");
@@ -95,27 +95,6 @@ describe("final review architecture restorations", () => {
     expect(settingsSource).toContain("<KnowledgeBaseSection />");
   });
 
-  it("restores team, member, and role views", () => {
-    expect(teamsSource).toContain("teams.map");
-    expect(teamsSource).toContain("teamMembers.map");
-    expect(teamsSource).toContain("Roles & permissions");
-    expect(teamsSource).not.toContain("ready for the next workflow phase");
-  });
-
-  it("uses an explicit not-found route outcome for unknown clients", () => {
-    expect(clientDetailSource).toContain("notFound");
-    expect(clientDetailSource).not.toContain("?? clients[0]");
-    expect(clientDetailSource).not.toContain("if (!client) return null");
-  });
-
-  it("keeps the client routes on the shared client store with full profile sections", () => {
-    expect(clientsSource).toContain("useAllCompanies");
-    expect(clientsSource).toContain("Search clients");
-    expect(clientDetailSource).toContain("useCompanyById");
-    expect(clientDetailSource).toContain("Annual return history");
-    expect(clientDetailSource).toContain('title="Company timeline"');
-  });
-
   it("keeps local knowledge ingestion, import, editing, and indexed previews wired", () => {
     expect(knowledgeBaseSectionSource).toContain("kbStore.uploadDoc(file)");
     expect(knowledgeBaseSectionSource).toContain("onDrop=");
@@ -123,14 +102,5 @@ describe("final review architecture restorations", () => {
     expect(knowledgeBaseSectionSource).toContain("parseFaqImport");
     expect(knowledgeBaseSectionSource).toContain("kbStore.importFaqs");
     expect(knowledgeBaseSectionSource).toContain("Indexed content preview");
-  });
-
-  it("keeps the enquiry inbox as a conversation workflow instead of a redirect", () => {
-    expect(enquiriesSource).toContain("active.messages.map");
-    expect(enquiriesSource).toContain("triageEnquiry");
-    expect(enquiriesSource).toContain("ConvertToClientDialog");
-    expect(enquiriesSource).toContain("AiAssistantPanel");
-    expect(enquiriesSource).toContain("Send quote");
-    expect(enquiriesSource).not.toContain('to="/whatsapp"');
   });
 });

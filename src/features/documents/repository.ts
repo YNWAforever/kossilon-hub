@@ -8,12 +8,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
-import {
-  DOCUMENT_CATEGORIES,
-  type DocumentCategory,
-  type DocumentScanResult,
-  type DocumentStatus,
-} from "./types";
+import { type DocumentCategory, type DocumentScanResult, type DocumentStatus } from "./types";
 
 export { DOCUMENT_CATEGORIES, type DocumentCategory } from "./types";
 

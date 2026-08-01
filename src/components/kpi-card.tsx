@@ -9,12 +9,16 @@ export function KpiCard({
   hint,
   icon: Icon,
   tone = "neutral",
+  unavailable = false,
 }: {
   label: string;
   value: string | number;
   hint?: string;
   icon: LucideIcon;
   tone?: StatusTone;
+  // When the figure could not be measured, render an em dash rather than the
+  // caller's fallback. A zero in this typography reads as a measurement.
+  unavailable?: boolean;
 }) {
   const t = toneClasses[tone];
   return (
@@ -26,8 +30,17 @@ export function KpiCard({
         </div>
       </div>
       <div className="mt-4">
-        <p className="font-display text-3xl font-semibold tabular-nums text-foreground">{value}</p>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        <p
+          data-testid="kpi-value"
+          aria-label={unavailable ? `${label}: unavailable` : undefined}
+          className={cn(
+            "font-display text-3xl font-semibold tabular-nums",
+            unavailable ? "text-muted-foreground" : "text-foreground",
+          )}
+        >
+          {unavailable ? "—" : value}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{unavailable ? "Unavailable" : hint}</p>
       </div>
     </div>
   );

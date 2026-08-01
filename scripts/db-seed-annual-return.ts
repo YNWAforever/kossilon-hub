@@ -156,6 +156,15 @@ const FIXTURE_UUID_PREFIXES = {
 
 type FixtureUuidPrefix = (typeof FIXTURE_UUID_PREFIXES)[keyof typeof FIXTURE_UUID_PREFIXES];
 
+// Callers pass the prefix as a literal, so the map above is read only for its
+// type — which meant a duplicated prefix would compile, and two tables would
+// then mint identical fixture ids for the same sequence number. Check it once
+// at load rather than debugging the collision downstream.
+const fixtureUuidPrefixValues = Object.values(FIXTURE_UUID_PREFIXES);
+if (new Set(fixtureUuidPrefixValues).size !== fixtureUuidPrefixValues.length) {
+  throw new Error("FIXTURE_UUID_PREFIXES must assign a distinct prefix to every table.");
+}
+
 // Reserved fixture UUID ranges: each seed-owned table uses one 8-digit prefix above.
 function fixtureId(group: FixtureUuidPrefix, sequence: number): string {
   return `${group}-0000-0000-0000-${String(sequence).padStart(12, "0")}`;
@@ -194,18 +203,44 @@ function normalizedJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/**
+ * A `date` column comes back from postgres.js as a Date, and String(date) is
+ * "Thu Jan 01 2026 ..." — so slicing ten characters yielded "Thu Jan 01" and the
+ * comparison below could never match its own fixture. Local getters, not
+ * toISOString(): postgres.js builds the Date at local midnight, so in Hong Kong
+ * the UTC rendering would report the previous day.
+ */
+function dateOnly(value: unknown): string {
+  if (value instanceof Date) {
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${value.getFullYear()}-${month}-${day}`;
+  }
+
+  return String(value).slice(0, 10);
+}
+
 function assertCalendarFixtureMatches(
   row: BusinessCalendarIdRow,
   fixture: (typeof businessCalendars)[number],
 ) {
-  if (
-    row.timezone !== fixture.timezone ||
-    row.version !== fixture.version ||
-    normalizedJson(row.weekly_schedule) !== normalizedJson(fixture.weeklySchedule) ||
-    String(row.effective_from).slice(0, 10) !== fixture.effectiveFrom ||
-    row.created_by !== fixture.createdBy
-  ) {
-    throw new Error(`Business calendar ${fixture.name} v${fixture.version} differs from fixture.`);
+  // Names the offending field. "differs from fixture" alone gave no way to tell a
+  // drifted calendar from a seeder that disagrees with its own round-trip.
+  const mismatches = [
+    ["timezone", row.timezone, fixture.timezone],
+    ["version", row.version, fixture.version],
+    ["weeklySchedule", normalizedJson(row.weekly_schedule), normalizedJson(fixture.weeklySchedule)],
+    ["effectiveFrom", dateOnly(row.effective_from), fixture.effectiveFrom],
+    ["createdBy", row.created_by, fixture.createdBy],
+  ].filter(([, actual, expected]) => actual !== expected);
+
+  if (mismatches.length > 0) {
+    throw new Error(
+      `Business calendar ${fixture.name} v${fixture.version} differs from fixture: ` +
+        mismatches
+          .map(([field, actual, expected]) => `${field} is ${actual}, expected ${expected}`)
+          .join("; "),
+    );
   }
 }
 
@@ -414,24 +449,24 @@ const businessCalendars = [
     version: 1,
     weeklySchedule: {
       monday: [
-        ["09:00", "12:30"],
-        ["13:30", "18:00"],
+        { start: "09:00", end: "12:30" },
+        { start: "13:30", end: "18:00" },
       ],
       tuesday: [
-        ["09:00", "12:30"],
-        ["13:30", "18:00"],
+        { start: "09:00", end: "12:30" },
+        { start: "13:30", end: "18:00" },
       ],
       wednesday: [
-        ["09:00", "12:30"],
-        ["13:30", "18:00"],
+        { start: "09:00", end: "12:30" },
+        { start: "13:30", end: "18:00" },
       ],
       thursday: [
-        ["09:00", "12:30"],
-        ["13:30", "18:00"],
+        { start: "09:00", end: "12:30" },
+        { start: "13:30", end: "18:00" },
       ],
       friday: [
-        ["09:00", "12:30"],
-        ["13:30", "18:00"],
+        { start: "09:00", end: "12:30" },
+        { start: "13:30", end: "18:00" },
       ],
       saturday: [],
       sunday: [],
