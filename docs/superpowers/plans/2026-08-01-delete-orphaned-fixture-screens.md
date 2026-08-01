@@ -267,6 +267,22 @@ This is the one point in the plan where the tree is intentionally red between ta
 - Delete: `src/components/timeline.tsx`
 - Modify (generated): `src/routeTree.gen.ts`
 
+**Amended during execution.** Three files the list above missed had to follow, because
+they reference the deleted screens directly:
+
+- `src/routes/whatsapp.tsx` — rendered `<Link to="/clients/$id">`. The affordance is
+  dropped, not repointed: `clientCase.id` is an `app-data` client id, so aiming it at
+  `/annual-returns/$id` would produce a link that resolves to nothing. `clientCase`
+  itself stays; `AiAssistantPanel` still uses it.
+- `src/routes/-final-review-restorations.test.ts` — four of its nine tests read the
+  deleted screens' source with `readFileSync` and assert on the text. Those four go,
+  with their four source constants. The remaining five cover surviving code.
+- `src/routes/-annual-returns-workflow.test.ts` — three tests render `/clients`,
+  `/clients/$id` and `/enquiries` through the real router. Those three go.
+
+Typecheck caught the first; the other two only surface under `vitest`, which is why
+Step 5 runs the full suite rather than trusting the compiler alone.
+
 - [ ] **Step 1: Confirm the exclusively-owned modules have no other importer**
 
 ```bash
@@ -463,7 +479,16 @@ npx vitest run --reporter=verbose 2>&1 | grep -E "^ (✓|×)" | sed 's/ [0-9]*ms
 diff /tmp/tests-before.txt /tmp/tests-after.txt
 ```
 
-Every `<` line is a test that disappeared. Confirm each is either from `enquiry-triage.test.ts` or is the renamed digest test from Task 2. Expect one `>` line: the renamed `prioritizes overdue annual returns`, plus the two new tests from Task 6.
+Every `<` line is a test that disappeared. Exactly twelve are expected:
+
+- four from `enquiry-triage.test.ts`, whose whole file is deleted in Task 3
+- four from `-final-review-restorations.test.ts` and three from
+  `-annual-returns-workflow.test.ts`, per the Task 4 amendment
+- one renamed: `prioritizes overdue annual returns, urgent enquiries, and due
+high-priority tasks` becomes `prioritizes overdue annual returns` in Task 2
+
+Expect three `>` lines: that renamed digest test, plus the two new tests from Task 6.
+Test files go 82 → 81; the total goes 522 → 513 (474 passing + 37 skipped + 2 new).
 
 Any other missing test is a regression — stop and investigate.
 
