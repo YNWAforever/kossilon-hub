@@ -81,15 +81,6 @@ describe("verifyFirmDeployment", () => {
     );
   });
 
-  it("fails the route gate when protected mutations are imported by a route", async () => {
-    const result = await verifyFirmDeployment(
-      verificationInput({
-        readRoute: async () =>
-          'import { sendFollowUpNow } from "@/lib/annual-return-store"; export default function Route() { return null; }',
-      }),
-    );
-  });
-
   it("reports binding names but never values", async () => {
     const result = await verifyFirmDeployment(verificationInput());
 

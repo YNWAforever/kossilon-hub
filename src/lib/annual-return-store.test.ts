@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   canSendFollowUp,
@@ -14,7 +14,6 @@ import {
   getReadinessScore,
   getRiskLevel,
   resetAnnualReturnCasesForTest,
-  subscribeAnnualReturnCasesForTest,
   type AnnualReturnCase,
 } from "./annual-return-store";
 

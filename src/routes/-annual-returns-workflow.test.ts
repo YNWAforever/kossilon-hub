@@ -57,51 +57,23 @@ vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
 });
 
 import { routeTree } from "../routeTree.gen";
-import { getAnnualReturnCaseById, resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
-import { getClientPortalSnapshot, resetClientPortalStoreForTest } from "../lib/client-portal-store";
+import { resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
+import { resetClientPortalStoreForTest } from "../lib/client-portal-store";
 
 const annualReturnsRouteSource = readFileSync(
   new URL("./annual-returns.tsx", import.meta.url),
-  "utf8",
-);
-const annualReturnDetailRouterSource = readFileSync(
-  new URL("./annual-returns.$id.tsx", import.meta.url),
   "utf8",
 );
 const annualReturnDetailRouteSource = readFileSync(
   new URL("../features/annual-return/components/demo-case-detail.tsx", import.meta.url),
   "utf8",
 );
-const productionAnnualReturnDetailSource = readFileSync(
-  new URL("../features/annual-return/components/production-case-detail.tsx", import.meta.url),
-  "utf8",
-);
-const productionAnnualReturnActionsSource = readFileSync(
-  new URL("../features/annual-return/components/production-case-actions.ts", import.meta.url),
-  "utf8",
-);
 const whatsappAutomationRouteSource = readFileSync(
   new URL("./whatsapp.automation.tsx", import.meta.url),
   "utf8",
 );
-const productionAutomationSource = readFileSync(
-  new URL(
-    "../features/annual-return/components/production-whatsapp-automation.tsx",
-    import.meta.url,
-  ),
-  "utf8",
-);
-const productionFollowUpServerSource = readFileSync(
-  new URL("../features/annual-return/follow-up-server-fns.ts", import.meta.url),
-  "utf8",
-);
 const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
-const paymentsRouteSource = readFileSync(new URL("./payments.tsx", import.meta.url), "utf8");
-const aiAssistantPanelSource = readFileSync(
-  new URL("../components/ai-assistant-panel.tsx", import.meta.url),
-  "utf8",
-);
 
 async function renderRoute(pathname: string) {
   const router = createRouter({

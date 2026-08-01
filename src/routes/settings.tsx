@@ -125,7 +125,7 @@ function SettingsPage() {
                 {filtered.map((t) => {
                   const active = selected?.id === t.id;
                   const usage = cases.filter(
-                    (c) =>
+                    () =>
                       t.serviceType.startsWith("Annual Return") &&
                       // simplistic: assume all AR cases use the AR template
                       t.serviceType === "Annual Return — Private Ltd",

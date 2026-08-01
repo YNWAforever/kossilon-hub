@@ -1,10 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-import {
-  type AnnualReturnCase,
-  getAnnualReturnCaseById,
-  getPacketStatus,
-} from "./annual-return-store";
+import { type AnnualReturnCase, getPacketStatus } from "./annual-return-store";
 
 export type ClientPortalDocumentCategory =
   | "identity"
@@ -124,22 +120,6 @@ export type ClientPortalPaymentProofReviewRequest = {
   note?: string;
   actor?: string;
 };
-
-type NormalizedClientPortalReviewRequest =
-  | {
-      ok: true;
-      decision: "accepted";
-      actor: string;
-    }
-  | {
-      ok: true;
-      decision: "rejected";
-      actor: string;
-      reasonCode: ClientPortalReviewReasonCode;
-      reasonLabel: string;
-      note?: string;
-    }
-  | { ok: false; reason: string };
 
 export type ClientPortalActionStatus = "completed" | "blocked";
 

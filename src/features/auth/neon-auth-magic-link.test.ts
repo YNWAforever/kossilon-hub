@@ -154,7 +154,7 @@ describe("Neon magic-link delivery webhook", () => {
       },
     };
     const { jwk, request } = signedWebhookRequest(payload);
-    const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+    const fetcher = vi.fn(async (input: string | URL | Request, _init?: RequestInit) => {
       const url = input instanceof Request ? input.url : input.toString();
       if (url.endsWith("/.well-known/jwks.json")) {
         return Response.json({ keys: [jwk] });
