@@ -33,7 +33,13 @@ export default tseslint.config(
         },
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/no-unused-vars": "off",
+      // A deletion pass has to be able to prove it left nothing dangling. With
+      // this off, neither the linter nor tsc reported an import, local or
+      // module-level constant orphaned by a removal, so the only check was grep.
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+      ],
     },
   },
   eslintPluginPrettier,
