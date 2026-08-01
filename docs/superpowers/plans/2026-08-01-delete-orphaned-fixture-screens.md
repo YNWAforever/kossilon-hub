@@ -26,7 +26,7 @@ Expected now: `82 passed`, `485 passed | 37 skipped`.
 
 `/tmp/tests-before.txt` is the list Task 7 diffs against. Capture it before deleting anything or that check cannot be run.
 
-The suite total is expected to **fall** by the end of this plan. That is correct — `enquiry-triage.test.ts` is deleted and `daily-digest.test.ts` loses assertions. Task 8 diffs the test-name list so an unrelated disappearance cannot hide inside the expected decrease.
+The suite total is expected to **fall** by the end of this plan. That is correct — `enquiry-triage.test.ts` is deleted and `daily-digest.test.ts` loses assertions. Task 7 diffs the test-name list so an unrelated disappearance cannot hide inside the expected decrease.
 
 ---
 
