@@ -488,7 +488,8 @@ Every `<` line is a test that disappeared. Exactly twelve are expected:
 high-priority tasks` becomes `prioritizes overdue annual returns` in Task 2
 
 Expect three `>` lines: that renamed digest test, plus the two new tests from Task 6.
-Test files go 82 → 81; the total goes 522 → 513 (474 passing + 37 skipped + 2 new).
+The file count stays at 82 — `enquiry-triage.test.ts` goes, Task 6's file arrives —
+and the total goes 522 → 513 (474 passing + 37 skipped + 2 new).
 
 Any other missing test is a regression — stop and investigate.
 

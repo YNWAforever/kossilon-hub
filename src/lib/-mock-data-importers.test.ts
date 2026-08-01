@@ -3,6 +3,26 @@ import { describe, expect, it } from "vitest";
 
 const srcDir = new URL("../", import.meta.url);
 
+const MOCK_DATA = "lib/mock-data.ts";
+// This file quotes specimen import statements below, so it matches itself.
+const SELF = "lib/-mock-data-importers.test.ts";
+
+// Every way a module can be pulled in: static import/export, dynamic import(),
+// require(), and vi.mock() — either quote style, extension optional. A form
+// this misses is a form the ratchet cannot police, which is why the forms are
+// asserted individually rather than trusted.
+const IMPORT_PATTERN =
+  /(?:from|import|require|vi\.mock)\s*\(?\s*["'][^"']*lib\/mock-data(?:\.tsx?)?["']/;
+
+// lib/mock-data is the demo fixture set. Sixteen files imported it before the
+// orphaned screens were deleted; these two are what remain, each for a reason.
+// Removing an entry is the definition of done for the dashboard phase — the
+// assertion is exact, so the list shrinks by deliberate edit and never drifts.
+const EXPECTED_IMPORTERS = [
+  "routes/index.tsx", // formatDate only
+  "routes/settings.tsx", // cases + formatDate, demo-gated by settingsSectionsForMode
+];
+
 function sourcesUnder(dir: URL): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.isDirectory()) return sourcesUnder(new URL(`${entry.name}/`, dir));
@@ -13,30 +33,42 @@ function sourcesUnder(dir: URL): string[] {
 
 const relativeToSrc = (path: string) => path.slice(path.lastIndexOf("/src/") + "/src/".length);
 
-// lib/mock-data is the demo fixture set. Every importer here is a known
-// exception with a reason; the list is allowed to shrink and never to grow.
-// Deleting an entry is the definition of done for the dashboard phase.
-const ALLOWED_IMPORTERS = new Set([
-  "lib/mock-data.ts", // the module itself
-  "lib/mock-data.test.ts", // its own tests, if any
-  "routes/index.tsx", // formatDate only
-  "routes/settings.tsx", // cases + formatDate, demo-gated by settingsSectionsForMode
-]);
-
 describe("lib/mock-data importers", () => {
   it("finds the sources it is meant to police", () => {
-    // A typo in the traversal would make the assertion below vacuously pass.
-    expect(sourcesUnder(srcDir).map(relativeToSrc)).toContain("lib/mock-data.ts");
+    // A typo in the traversal would make the assertion below report an empty
+    // set, which reads identically to a clean codebase.
+    expect(sourcesUnder(srcDir).map(relativeToSrc)).toContain(MOCK_DATA);
+  });
+
+  it("recognises every form an import can take", () => {
+    const forms = [
+      'import { cases } from "@/lib/mock-data";',
+      "import { cases } from '@/lib/mock-data';",
+      'import type { Enquiry } from "../lib/mock-data";',
+      'import { cases } from "@/lib/mock-data.ts";',
+      'import "@/lib/mock-data";',
+      'export { cases } from "@/lib/mock-data";',
+      'export * from "@/lib/mock-data";',
+      'const fixtures = await import("@/lib/mock-data");',
+      'require("@/lib/mock-data")',
+      'vi.mock("@/lib/mock-data", () => ({}));',
+    ];
+
+    for (const form of forms) {
+      expect(IMPORT_PATTERN.test(form), form).toBe(true);
+    }
+
+    // Neighbouring module names must not be swept up.
+    expect(IMPORT_PATTERN.test('import { cases } from "@/lib/mock-data-store";')).toBe(false);
   });
 
   it("is imported only by the known exceptions", () => {
     const importers = sourcesUnder(srcDir)
       .map(relativeToSrc)
-      .filter((path) => path !== "lib/mock-data.ts")
-      .filter((path) =>
-        /from "[^"]*lib\/mock-data"/.test(readFileSync(new URL(path, srcDir), "utf8")),
-      );
+      .filter((path) => path !== MOCK_DATA && path !== SELF)
+      .filter((path) => IMPORT_PATTERN.test(readFileSync(new URL(path, srcDir), "utf8")))
+      .sort();
 
-    expect(importers.filter((path) => !ALLOWED_IMPORTERS.has(path))).toEqual([]);
+    expect(importers).toEqual(EXPECTED_IMPORTERS);
   });
 });

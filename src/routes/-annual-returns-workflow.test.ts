@@ -174,11 +174,12 @@ describe("annual return workflow route regressions", () => {
     expect(html).not.toContain("Search company or contact");
   });
 
-  it("renders the root not-found state for an unknown client id", async () => {
+  it("renders the root not-found state for a route that no longer exists", async () => {
+    // /clients was deleted. This pins that the router 404s rather than
+    // crashing, which is otherwise only checked by hand in the browser.
     const html = await renderRoute("/clients/missing-client");
 
     expect(html).toContain("Page not found");
-    expect(html).not.toContain("Aurora Peak Trading Limited");
   });
 
   it("marks only WhatsApp Automation active on its nested route", async () => {

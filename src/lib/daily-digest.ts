@@ -149,7 +149,8 @@ export function buildDailyDigest({
   now = new Date(),
   maxItems = 5,
 }: BuildDailyDigestInput): DailyDigest {
-  const candidates = [...annualReturnCases.map((case_) => annualReturnItem(case_, now))]
+  const candidates = annualReturnCases
+    .map((case_) => annualReturnItem(case_, now))
     .filter((item): item is DailyDigestItem => item !== null)
     .sort(compareItems);
 

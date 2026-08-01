@@ -85,13 +85,11 @@ function DemoWhatsAppInbox() {
 
       <section className="flex min-h-screen flex-col">
         <div className="border-b p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">{selected.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {selected.phone} - {selected.status}
-              </p>
-            </div>
+          <div>
+            <h2 className="text-xl font-semibold">{selected.name}</h2>
+            <p className="text-sm text-muted-foreground">
+              {selected.phone} - {selected.status}
+            </p>
           </div>
         </div>
 

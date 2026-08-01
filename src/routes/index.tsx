@@ -271,7 +271,7 @@ function DigestActionLink({ item }: { item: DailyDigestItem }) {
     "inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent";
 
   return (
-    <Link to="/annual-returns/$id" params={item.route.params} className={className}>
+    <Link to={item.route.to} params={item.route.params} className={className}>
       {item.actionLabel} <ArrowRight className="h-3 w-3" />
     </Link>
   );
