@@ -1,4 +1,5 @@
-import type { AnnualReturnCase, RiskLevel } from "@/features/annual-return/types";
+import type { RiskLevel } from "@/features/annual-return/types";
+import type { DashboardCase } from "@/features/dashboard/types";
 import type { StatusTone } from "@/lib/status";
 
 export type DailyDigestSeverity = "critical" | "high" | "medium";
@@ -26,7 +27,7 @@ export type DailyDigest = {
 };
 
 export type BuildDailyDigestInput = {
-  annualReturnCases: AnnualReturnCase[];
+  annualReturnCases: DashboardCase[];
   now?: Date;
   maxItems?: number;
 };
@@ -66,12 +67,12 @@ function annualReturnRiskWeight(riskLevel: RiskLevel): number {
   }
 }
 
-function missingRequiredCount(case_: AnnualReturnCase): number {
+function missingRequiredCount(case_: DashboardCase): number {
   return case_.checklist.filter((item) => item.required && item.status !== "Verified").length;
 }
 
 function annualReturnSeverity(
-  case_: AnnualReturnCase,
+  case_: DashboardCase,
   daysLeft: number,
   missingRequired: number,
 ): DailyDigestSeverity | null {
@@ -94,7 +95,7 @@ function annualReturnSeverity(
   return null;
 }
 
-function annualReturnItem(case_: AnnualReturnCase, now: Date): DailyDigestItem | null {
+function annualReturnItem(case_: DashboardCase, now: Date): DailyDigestItem | null {
   const daysLeft = daysUntil(case_.filingDueDate, now);
   const missingRequired = missingRequiredCount(case_);
   const severity = annualReturnSeverity(case_, daysLeft, missingRequired);

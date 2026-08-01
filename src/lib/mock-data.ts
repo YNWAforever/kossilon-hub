@@ -584,11 +584,6 @@ export const daysUntil = (isoDate: string) => {
   return Math.round((d - t) / (1000 * 60 * 60 * 24));
 };
 
-export const formatDate = (isoDate: string) => {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString("en-HK", { day: "2-digit", month: "short", year: "numeric" });
-};
-
 export const formatDateTime = (isoDate: string) => {
   const d = new Date(isoDate);
   return d.toLocaleString("en-HK", {

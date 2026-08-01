@@ -25,7 +25,8 @@ import {
   type RiskRule,
   type ReminderRule,
 } from "@/lib/templates";
-import { cases, formatDate } from "@/lib/mock-data";
+import { cases } from "@/lib/mock-data";
+import { formatDate } from "@/lib/format-date";
 import { KnowledgeBaseSection } from "@/components/knowledge-base-section";
 import { cn } from "@/lib/utils";
 import { settingsSectionsForMode } from "./-settings-sections";
