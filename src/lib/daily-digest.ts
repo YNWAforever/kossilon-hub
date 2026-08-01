@@ -1,15 +1,10 @@
 import type { AnnualReturnCase, RiskLevel } from "@/features/annual-return/types";
-import { triageEnquiry } from "@/lib/enquiry-triage";
-import type { Enquiry, Task } from "@/lib/mock-data";
 import type { StatusTone } from "@/lib/status";
 
 export type DailyDigestSeverity = "critical" | "high" | "medium";
-export type DailyDigestKind = "annual-return" | "enquiry" | "task";
+export type DailyDigestKind = "annual-return";
 
-export type DailyDigestRoute =
-  | { to: "/annual-returns/$id"; params: { id: string } }
-  | { to: "/enquiries"; search: { enquiry: string } }
-  | { to: "/tasks" };
+export type DailyDigestRoute = { to: "/annual-returns/$id"; params: { id: string } };
 
 export type DailyDigestItem = {
   id: string;
@@ -32,8 +27,6 @@ export type DailyDigest = {
 
 export type BuildDailyDigestInput = {
   annualReturnCases: AnnualReturnCase[];
-  enquiries: Enquiry[];
-  tasks: Task[];
   now?: Date;
   maxItems?: number;
 };
@@ -131,62 +124,6 @@ function annualReturnItem(case_: AnnualReturnCase, now: Date): DailyDigestItem |
   };
 }
 
-function enquiryItem(enquiry: Enquiry): DailyDigestItem | null {
-  const triage = triageEnquiry(enquiry);
-
-  if (triage.band !== "urgent" && triage.band !== "priority") {
-    return null;
-  }
-
-  return {
-    id: `enquiry:${enquiry.id}`,
-    kind: "enquiry",
-    severity: "high",
-    title: `Review ${enquiry.contactName} WhatsApp reply`,
-    detail: `${triage.intent}; ${triage.recommendedAction}`,
-    actionLabel: "Open enquiry",
-    route: { to: "/enquiries", search: { enquiry: enquiry.id } },
-    score: severityWeight.high + triage.score,
-  };
-}
-
-function taskSeverity(task: Task, daysLeft: number): DailyDigestSeverity | null {
-  if (task.done) {
-    return null;
-  }
-
-  if (task.priority === "High" || daysLeft <= 1) {
-    return "high";
-  }
-
-  if (task.priority === "Normal" && daysLeft <= 3) {
-    return "medium";
-  }
-
-  return null;
-}
-
-function taskItem(task: Task, now: Date): DailyDigestItem | null {
-  const daysLeft = daysUntil(task.dueDate, now);
-  const severity = taskSeverity(task, daysLeft);
-
-  if (!severity) {
-    return null;
-  }
-
-  return {
-    id: `task:${task.id}`,
-    kind: "task",
-    severity,
-    title: task.title,
-    detail: `${task.companyName}; ${dueLabel(daysLeft)}; ${task.priority.toLowerCase()} priority.`,
-    actionLabel: "Open tasks",
-    route: { to: "/tasks" },
-    score:
-      severityWeight[severity] + (task.priority === "High" ? 85 : 25) + Math.max(0, 20 - daysLeft),
-  };
-}
-
 function compareItems(a: DailyDigestItem, b: DailyDigestItem): number {
   if (b.score !== a.score) {
     return b.score - a.score;
@@ -209,16 +146,10 @@ export function digestTone(severity: DailyDigestSeverity): StatusTone {
 
 export function buildDailyDigest({
   annualReturnCases,
-  enquiries,
-  tasks,
   now = new Date(),
   maxItems = 5,
 }: BuildDailyDigestInput): DailyDigest {
-  const candidates = [
-    ...annualReturnCases.map((case_) => annualReturnItem(case_, now)),
-    ...enquiries.map(enquiryItem),
-    ...tasks.map((task) => taskItem(task, now)),
-  ]
+  const candidates = [...annualReturnCases.map((case_) => annualReturnItem(case_, now))]
     .filter((item): item is DailyDigestItem => item !== null)
     .sort(compareItems);
 

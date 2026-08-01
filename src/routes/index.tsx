@@ -51,14 +51,8 @@ function DashboardPage() {
     myCases: realMetrics.assignedToMe,
   };
   const upcoming = upcomingAnnualReturns;
-  // Enquiries and tasks still come from lib/mock-data, so they are withheld from the
-  // digest: invented priority items on the landing page are worse than fewer real
-  // ones, and their action links pointed at screens no longer in the navigation.
-  // Restore these inputs once both read live data.
   const digest = buildDailyDigest({
     annualReturnCases: upcoming,
-    enquiries: [],
-    tasks: [],
     maxItems: 4,
   });
 
@@ -276,27 +270,11 @@ function DigestActionLink({ item }: { item: DailyDigestItem }) {
   const className =
     "inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent";
 
-  switch (item.route.to) {
-    case "/annual-returns/$id":
-      return (
-        <Link to="/annual-returns/$id" params={item.route.params} className={className}>
-          {item.actionLabel} <ArrowRight className="h-3 w-3" />
-        </Link>
-      );
-    case "/enquiries":
-      return (
-        <Link to="/enquiries" search={item.route.search} className={className}>
-          {item.actionLabel} <ArrowRight className="h-3 w-3" />
-        </Link>
-      );
-    case "/tasks":
-    default:
-      return (
-        <Link to="/tasks" className={className}>
-          {item.actionLabel} <ArrowRight className="h-3 w-3" />
-        </Link>
-      );
-  }
+  return (
+    <Link to="/annual-returns/$id" params={item.route.params} className={className}>
+      {item.actionLabel} <ArrowRight className="h-3 w-3" />
+    </Link>
+  );
 }
 
 function nextAnnualReturnAction(case_: AnnualReturnCase) {
