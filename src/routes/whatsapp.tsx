@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { PageHeader } from "@/components/page-header";
@@ -92,15 +92,6 @@ function DemoWhatsAppInbox() {
                 {selected.phone} - {selected.status}
               </p>
             </div>
-            {clientCase ? (
-              <Link
-                className="rounded-md border px-3 py-2 text-sm"
-                to="/clients/$id"
-                params={{ id: clientCase.id }}
-              >
-                Client
-              </Link>
-            ) : null}
           </div>
         </div>
 

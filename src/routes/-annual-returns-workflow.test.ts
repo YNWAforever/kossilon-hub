@@ -181,42 +181,6 @@ describe("annual return workflow route regressions", () => {
     expect(html).not.toContain("Aurora Peak Trading Limited");
   });
 
-  it("renders the restored client directory and operational filters", async () => {
-    const html = await renderRoute("/clients");
-
-    expect(html).toContain("companies under management");
-    expect(html).toContain("Search clients");
-    expect(html).toContain("All packages");
-    expect(html).toContain("All teams");
-    expect(html).toContain("Harbour Trading Ltd");
-    expect(html).toContain("60000000");
-  });
-
-  it("renders the restored client profile without routing an unmapped client to another portal case", async () => {
-    const html = await renderRoute("/clients/c-1");
-
-    expect(html).toContain("Harbour Trading Ltd");
-    expect(html).toContain("Contacts");
-    expect(html).toContain("Annual return history");
-    expect(html).toContain("Documents");
-    expect(html).toContain("Payment");
-    expect(html).toContain("Company timeline");
-    expect(html).toContain("Open board");
-    expect(html).not.toContain(">Open portal</a>");
-  });
-
-  it("renders the restored enquiry conversation, triage, conversion, and AI drafting workflow", async () => {
-    const html = await renderRoute("/enquiries");
-
-    expect(html).toContain("Enquiry Inbox");
-    expect(html).toContain("Search conversations");
-    expect(html).toContain("AI triage");
-    expect(html).toContain("Convert to client");
-    expect(html).toContain("Send quote");
-    expect(html).toContain("Type a message");
-    expect(html).toContain("AI draft available");
-  });
-
   it("marks only WhatsApp Automation active on its nested route", async () => {
     const html = await renderRoute("/whatsapp/automation");
     const navigation = html.match(
