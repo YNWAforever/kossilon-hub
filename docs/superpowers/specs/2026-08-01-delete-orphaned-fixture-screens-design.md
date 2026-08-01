@@ -54,7 +54,7 @@ that are about to be deleted.
 - **Clean cut plus digest untangle.** Would also sever `daily-digest.ts` from
   `enquiry-triage.ts` and relocate `formatDate`, leaving `lib/mock-data` demo-only.
   Rejected: deciding what the dashboard's digest is built from is dashboard design
-  work, and doing half of it here would pre-empt sub-project 3 without finishing it.
+  work, and doing half of it here would pre-empt sub-project 2 without finishing it.
 - **Full eradication.** The above plus rebuilding the dashboard on real data so
   `lib/mock-data` could be deleted outright. Rejected: merges two sub-projects back
   into one and recreates the scope problem the decomposition solved.
