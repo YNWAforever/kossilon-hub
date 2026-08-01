@@ -459,6 +459,13 @@ function getSnapshot(): AnnualReturnCase[] {
   return cases;
 }
 
+// Non-hook read for route loaders, which are not components. Returns a copy so
+// a caller cannot mutate store state through the result — demo mode is
+// read-only (docs/adr/0001-demo-mode-is-read-only.md).
+export function getAnnualReturnCases(): AnnualReturnCase[] {
+  return cloneAnnualReturnCases(cases);
+}
+
 export function useAnnualReturnCases(): AnnualReturnCase[] {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

@@ -16,10 +16,10 @@ import {
 // drawer (mobile) both render this, so the two can no longer drift apart in
 // either the set of destinations they expose or the labels they use.
 //
-// Deliberately absent: /clients, /enquiries, /teams and /tasks. Those screens
-// still render `lib/mock-data` or the demo store, and presenting invented figures
-// beside live ones is misleading. The routes remain in the codebase and reachable
-// by URL — re-add an entry here once a screen reads real data.
+// /clients, /clients/$id, /enquiries, /teams and /tasks were deleted, not
+// parked. Each was either superseded by a screen already reading Postgres
+// (/work-queue, /annual-returns) or had no table behind it. Adding an entry
+// here means the screen reads live data — there is no fixture-backed tier.
 
 export type NavItem = {
   to: string;

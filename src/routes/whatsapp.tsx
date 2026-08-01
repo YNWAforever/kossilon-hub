@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { PageHeader } from "@/components/page-header";
@@ -85,22 +85,11 @@ function DemoWhatsAppInbox() {
 
       <section className="flex min-h-screen flex-col">
         <div className="border-b p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">{selected.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {selected.phone} - {selected.status}
-              </p>
-            </div>
-            {clientCase ? (
-              <Link
-                className="rounded-md border px-3 py-2 text-sm"
-                to="/clients/$id"
-                params={{ id: clientCase.id }}
-              >
-                Client
-              </Link>
-            ) : null}
+          <div>
+            <h2 className="text-xl font-semibold">{selected.name}</h2>
+            <p className="text-sm text-muted-foreground">
+              {selected.phone} - {selected.status}
+            </p>
           </div>
         </div>
 

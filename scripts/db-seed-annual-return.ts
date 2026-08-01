@@ -156,6 +156,15 @@ const FIXTURE_UUID_PREFIXES = {
 
 type FixtureUuidPrefix = (typeof FIXTURE_UUID_PREFIXES)[keyof typeof FIXTURE_UUID_PREFIXES];
 
+// Callers pass the prefix as a literal, so the map above is read only for its
+// type — which meant a duplicated prefix would compile, and two tables would
+// then mint identical fixture ids for the same sequence number. Check it once
+// at load rather than debugging the collision downstream.
+const fixtureUuidPrefixValues = Object.values(FIXTURE_UUID_PREFIXES);
+if (new Set(fixtureUuidPrefixValues).size !== fixtureUuidPrefixValues.length) {
+  throw new Error("FIXTURE_UUID_PREFIXES must assign a distinct prefix to every table.");
+}
+
 // Reserved fixture UUID ranges: each seed-owned table uses one 8-digit prefix above.
 function fixtureId(group: FixtureUuidPrefix, sequence: number): string {
   return `${group}-0000-0000-0000-${String(sequence).padStart(12, "0")}`;

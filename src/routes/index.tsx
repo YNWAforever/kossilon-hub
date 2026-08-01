@@ -13,15 +13,18 @@ import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
-import type { AnnualReturnCase, AnnualReturnStatus } from "@/features/annual-return/types";
+import type { AnnualReturnStatus } from "@/features/annual-return/types";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import { loadDashboardData, type DashboardData } from "@/features/dashboard/dashboard-data";
+import { demoDashboardDependencies } from "@/features/dashboard/demo-dashboard-data";
+import type { DashboardCase } from "@/features/dashboard/types";
 import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
 import type { StatusTone } from "@/lib/status";
-import { formatDate } from "@/lib/mock-data";
+import { formatDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/")({
-  loader: () => loadDashboardData(),
+  loader: ({ context }) =>
+    loadDashboardData(context.dataMode === "demo" ? demoDashboardDependencies : undefined),
   head: () => ({
     meta: [
       { title: "Dashboard — Kossilon CoSec OS" },
@@ -41,6 +44,8 @@ function DashboardPage() {
     metrics: realMetrics,
     upcomingAnnualReturns,
     annualReturnDataAvailable,
+    annualReturnDataError,
+    annualReturnDataErrorKind,
   } = Route.useLoaderData() as DashboardData;
   const m = {
     dueIn7: realMetrics.dueIn7,
@@ -51,14 +56,8 @@ function DashboardPage() {
     myCases: realMetrics.assignedToMe,
   };
   const upcoming = upcomingAnnualReturns;
-  // Enquiries and tasks still come from lib/mock-data, so they are withheld from the
-  // digest: invented priority items on the landing page are worse than fewer real
-  // ones, and their action links pointed at screens no longer in the navigation.
-  // Restore these inputs once both read live data.
   const digest = buildDailyDigest({
     annualReturnCases: upcoming,
-    enquiries: [],
-    tasks: [],
     maxItems: 4,
   });
 
@@ -67,7 +66,11 @@ function DashboardPage() {
       <PageHeader
         eyebrow="Operations"
         title="Dashboard"
-        subtitle={`Good morning, ${session?.name.split(" ")[0] ?? "there"} — you have ${m.myCases} active cases.`}
+        subtitle={
+          annualReturnDataAvailable
+            ? `Good morning, ${session?.name.split(" ")[0] ?? "there"} — you have ${m.myCases} active cases.`
+            : `Good morning, ${session?.name.split(" ")[0] ?? "there"}.`
+        }
       />
 
       {!annualReturnDataAvailable && (
@@ -76,24 +79,32 @@ function DashboardPage() {
             <AlertTriangle className="mt-0.5 h-4 w-4 text-status-orange" />
             <div>
               <h2 className="text-sm font-semibold text-foreground">
-                Annual return data is temporarily unavailable
+                {annualReturnDataErrorKind === "forbidden"
+                  ? "You do not have access to annual return data"
+                  : "Annual return data is temporarily unavailable"}
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Showing fallback annual-return KPI totals until the live query recovers.
+                {annualReturnDataErrorKind === "forbidden"
+                  ? "Sign in again, or ask an administrator to grant staff access."
+                  : "Annual-return figures are hidden until the live query recovers."}
               </p>
+              {annualReturnDataError && (
+                <p className="mt-1 text-xs text-muted-foreground/80">{annualReturnDataError}</p>
+              )}
             </div>
           </div>
         </section>
       )}
 
       {/* KPI grid */}
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <section data-testid="kpi-grid" className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <KpiCard
           label="Due in 7 days"
           value={m.dueIn7}
           hint="Annual returns"
           icon={CalendarClock}
           tone="orange"
+          unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
           label="Due in 30 days"
@@ -101,6 +112,7 @@ function DashboardPage() {
           hint="Annual returns"
           icon={CalendarClock}
           tone="yellow"
+          unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
           label="Overdue cases"
@@ -108,6 +120,7 @@ function DashboardPage() {
           hint="Immediate action"
           icon={Flame}
           tone="red"
+          unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
           label="Missing documents"
@@ -115,6 +128,7 @@ function DashboardPage() {
           hint="Across all cases"
           icon={FileWarning}
           tone="yellow"
+          unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
           label="Payment pending"
@@ -122,6 +136,7 @@ function DashboardPage() {
           hint="Clients unpaid"
           icon={CreditCard}
           tone="orange"
+          unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
           label="Assigned to me"
@@ -129,6 +144,7 @@ function DashboardPage() {
           hint="Open cases"
           icon={UserCheck}
           tone="blue"
+          unavailable={!annualReturnDataAvailable}
         />
       </section>
 
@@ -255,8 +271,9 @@ function DashboardPage() {
                 Requires immediate attention
               </h2>
               <p className="mt-1 text-xs text-status-red/80">
-                {m.overdue} annual returns are overdue. Assign or escalate now to avoid Companies
-                Registry penalties.
+                {annualReturnDataAvailable
+                  ? `${m.overdue} annual returns are overdue. Assign or escalate now to avoid Companies Registry penalties.`
+                  : "Overdue counts are unavailable. Open the board to check directly."}
               </p>
               <Link
                 to="/annual-returns"
@@ -276,30 +293,14 @@ function DigestActionLink({ item }: { item: DailyDigestItem }) {
   const className =
     "inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent";
 
-  switch (item.route.to) {
-    case "/annual-returns/$id":
-      return (
-        <Link to="/annual-returns/$id" params={item.route.params} className={className}>
-          {item.actionLabel} <ArrowRight className="h-3 w-3" />
-        </Link>
-      );
-    case "/enquiries":
-      return (
-        <Link to="/enquiries" search={item.route.search} className={className}>
-          {item.actionLabel} <ArrowRight className="h-3 w-3" />
-        </Link>
-      );
-    case "/tasks":
-    default:
-      return (
-        <Link to="/tasks" className={className}>
-          {item.actionLabel} <ArrowRight className="h-3 w-3" />
-        </Link>
-      );
-  }
+  return (
+    <Link to={item.route.to} params={item.route.params} className={className}>
+      {item.actionLabel} <ArrowRight className="h-3 w-3" />
+    </Link>
+  );
 }
 
-function nextAnnualReturnAction(case_: AnnualReturnCase) {
+function nextAnnualReturnAction(case_: DashboardCase) {
   const missingRequired = case_.checklist.filter(
     (item) => item.required && item.status !== "Verified",
   ).length;

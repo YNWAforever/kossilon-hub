@@ -57,51 +57,23 @@ vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
 });
 
 import { routeTree } from "../routeTree.gen";
-import { getAnnualReturnCaseById, resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
-import { getClientPortalSnapshot, resetClientPortalStoreForTest } from "../lib/client-portal-store";
+import { resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
+import { resetClientPortalStoreForTest } from "../lib/client-portal-store";
 
 const annualReturnsRouteSource = readFileSync(
   new URL("./annual-returns.tsx", import.meta.url),
-  "utf8",
-);
-const annualReturnDetailRouterSource = readFileSync(
-  new URL("./annual-returns.$id.tsx", import.meta.url),
   "utf8",
 );
 const annualReturnDetailRouteSource = readFileSync(
   new URL("../features/annual-return/components/demo-case-detail.tsx", import.meta.url),
   "utf8",
 );
-const productionAnnualReturnDetailSource = readFileSync(
-  new URL("../features/annual-return/components/production-case-detail.tsx", import.meta.url),
-  "utf8",
-);
-const productionAnnualReturnActionsSource = readFileSync(
-  new URL("../features/annual-return/components/production-case-actions.ts", import.meta.url),
-  "utf8",
-);
 const whatsappAutomationRouteSource = readFileSync(
   new URL("./whatsapp.automation.tsx", import.meta.url),
   "utf8",
 );
-const productionAutomationSource = readFileSync(
-  new URL(
-    "../features/annual-return/components/production-whatsapp-automation.tsx",
-    import.meta.url,
-  ),
-  "utf8",
-);
-const productionFollowUpServerSource = readFileSync(
-  new URL("../features/annual-return/follow-up-server-fns.ts", import.meta.url),
-  "utf8",
-);
 const documentsRouteSource = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
 const portalRouteSource = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
-const paymentsRouteSource = readFileSync(new URL("./payments.tsx", import.meta.url), "utf8");
-const aiAssistantPanelSource = readFileSync(
-  new URL("../components/ai-assistant-panel.tsx", import.meta.url),
-  "utf8",
-);
 
 async function renderRoute(pathname: string) {
   const router = createRouter({
@@ -174,47 +146,12 @@ describe("annual return workflow route regressions", () => {
     expect(html).not.toContain("Search company or contact");
   });
 
-  it("renders the root not-found state for an unknown client id", async () => {
+  it("renders the root not-found state for a route that no longer exists", async () => {
+    // /clients was deleted. This pins that the router 404s rather than
+    // crashing, which is otherwise only checked by hand in the browser.
     const html = await renderRoute("/clients/missing-client");
 
     expect(html).toContain("Page not found");
-    expect(html).not.toContain("Aurora Peak Trading Limited");
-  });
-
-  it("renders the restored client directory and operational filters", async () => {
-    const html = await renderRoute("/clients");
-
-    expect(html).toContain("companies under management");
-    expect(html).toContain("Search clients");
-    expect(html).toContain("All packages");
-    expect(html).toContain("All teams");
-    expect(html).toContain("Harbour Trading Ltd");
-    expect(html).toContain("60000000");
-  });
-
-  it("renders the restored client profile without routing an unmapped client to another portal case", async () => {
-    const html = await renderRoute("/clients/c-1");
-
-    expect(html).toContain("Harbour Trading Ltd");
-    expect(html).toContain("Contacts");
-    expect(html).toContain("Annual return history");
-    expect(html).toContain("Documents");
-    expect(html).toContain("Payment");
-    expect(html).toContain("Company timeline");
-    expect(html).toContain("Open board");
-    expect(html).not.toContain(">Open portal</a>");
-  });
-
-  it("renders the restored enquiry conversation, triage, conversion, and AI drafting workflow", async () => {
-    const html = await renderRoute("/enquiries");
-
-    expect(html).toContain("Enquiry Inbox");
-    expect(html).toContain("Search conversations");
-    expect(html).toContain("AI triage");
-    expect(html).toContain("Convert to client");
-    expect(html).toContain("Send quote");
-    expect(html).toContain("Type a message");
-    expect(html).toContain("AI draft available");
   });
 
   it("marks only WhatsApp Automation active on its nested route", async () => {
