@@ -18,7 +18,7 @@ import { useAuth } from "@/features/auth/auth-context-neon";
 import { loadDashboardData, type DashboardData } from "@/features/dashboard/dashboard-data";
 import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
 import type { StatusTone } from "@/lib/status";
-import { formatDate } from "@/lib/mock-data";
+import { formatDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/")({
   loader: () => loadDashboardData(),
