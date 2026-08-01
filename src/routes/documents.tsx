@@ -3,6 +3,7 @@ import { useMutation, useMutationState, useQuery, useQueryClient } from "@tansta
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocuments } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
@@ -570,13 +571,6 @@ function Field({ label, value }: { label: string; value: string }) {
       <p className="truncate">{value}</p>
     </div>
   );
-}
-
-function labelValue(value: string): string {
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
 }
 
 function formatTimestamp(value: string): string {
