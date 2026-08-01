@@ -9,10 +9,11 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { errorDetails } from "../lib/error-details";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppMobileNav } from "@/components/app-mobile-nav";
 import { Toaster } from "@/components/ui/sonner";
@@ -52,15 +53,33 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [copied, setCopied] = useState(false);
+  const details = errorDetails(error, pathname);
+
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <div className="w-full max-w-xl text-center">
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
         <p className="mt-2 text-sm text-muted-foreground">Try refreshing the page.</p>
+
+        <p className="mt-4 break-words rounded-md bg-muted px-4 py-3 text-left text-sm text-foreground">
+          {error.message || "No error message was provided."}
+        </p>
+
+        <details className="mt-3 text-left">
+          <summary className="cursor-pointer text-xs text-muted-foreground">
+            Technical details
+          </summary>
+          <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-muted p-3 text-left text-xs leading-relaxed text-muted-foreground">
+            {details}
+          </pre>
+        </details>
+
         <div className="mt-6 flex justify-center gap-2">
           <button
             onClick={() => {
@@ -70,6 +89,15 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Try again
+          </button>
+          <button
+            onClick={() => {
+              void navigator.clipboard?.writeText(details).then(() => setCopied(true));
+            }}
+            className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+            type="button"
+          >
+            {copied ? "Copied" : "Copy details"}
           </button>
         </div>
       </div>
