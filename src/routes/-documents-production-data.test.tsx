@@ -51,6 +51,8 @@ vi.mock("../features/annual-return/server-fns", async (importOriginal) => {
 });
 
 import { routeTree } from "../routeTree.gen";
+import { resetAnnualReturnCasesForTest } from "../lib/annual-return-store";
+import { resetClientPortalStoreForTest } from "../lib/client-portal-store";
 
 const CASE_ID = "33333333-3333-4333-8333-333333333333";
 
@@ -70,13 +72,18 @@ const baseDocument = {
   uploadedAt: "2026-07-30T02:00:00.000Z",
 };
 
-async function render(options: { documents: unknown[]; caseData?: unknown; withCaseId: boolean }) {
+async function render(options: {
+  documents: unknown[];
+  caseData?: unknown;
+  withCaseId: boolean;
+  dataMode?: "demo" | "production";
+}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const path = options.withCaseId ? `/documents?caseId=${CASE_ID}` : "/documents";
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
-    context: { queryClient, dataMode: "production" },
+    context: { queryClient, dataMode: options.dataMode ?? "production" },
     defaultPreloadStaleTime: 0,
   });
   await router.load();
@@ -130,5 +137,39 @@ describe("/documents against data the types say is impossible", () => {
   it("listDocuments resolving null instead of an array", async () => {
     const html = await render({ documents: null as unknown as unknown[], withCaseId: false });
     expect(html).toContain("Production document vault");
+  });
+});
+
+describe("/documents in production must not link demo rows into production routes", () => {
+  it("emits no /annual-returns/$id link carrying a demo fixture id", async () => {
+    resetAnnualReturnCasesForTest();
+    resetClientPortalStoreForTest();
+
+    const html = await render({ documents: [], withCaseId: false });
+
+    // Demo case ids look like ar-harbour. The production detail route validates
+    // its id with z.string().uuid(), so following such a link renders
+    // "Annual return case unavailable" over a raw Zod error.
+    const demoLinks = [...html.matchAll(/href="\/annual-returns\/(ar-[a-z-]+)"/g)].map(
+      (match) => match[1],
+    );
+
+    expect(demoLinks).toEqual([]);
+  });
+
+  it("still renders the fixture archive in demo mode, where those links resolve", async () => {
+    // The gate must hide the archive in production, not delete it: demo mode is
+    // the walkthrough and /annual-returns/ar-harbour is a real screen there.
+    resetAnnualReturnCasesForTest();
+    resetClientPortalStoreForTest();
+
+    const html = await render({ documents: [], withCaseId: false, dataMode: "demo" });
+
+    const demoLinks = [...html.matchAll(/href="\/annual-returns\/(ar-[a-z-]+)"/g)].map(
+      (match) => match[1],
+    );
+
+    expect(demoLinks.length).toBeGreaterThan(0);
+    expect(html).toContain("Search company, contact, title, or filename");
   });
 });
