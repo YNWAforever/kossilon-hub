@@ -13,9 +13,10 @@ import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
-import type { AnnualReturnCase, AnnualReturnStatus } from "@/features/annual-return/types";
+import type { AnnualReturnStatus } from "@/features/annual-return/types";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import { loadDashboardData, type DashboardData } from "@/features/dashboard/dashboard-data";
+import type { DashboardCase } from "@/features/dashboard/types";
 import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
 import type { StatusTone } from "@/lib/status";
 import { formatDate } from "@/lib/format-date";
@@ -277,7 +278,7 @@ function DigestActionLink({ item }: { item: DailyDigestItem }) {
   );
 }
 
-function nextAnnualReturnAction(case_: AnnualReturnCase) {
+function nextAnnualReturnAction(case_: DashboardCase) {
   const missingRequired = case_.checklist.filter(
     (item) => item.required && item.status !== "Verified",
   ).length;
