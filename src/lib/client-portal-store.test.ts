@@ -1,39 +1,19 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  getAnnualReturnCaseById,
-  removeAnnualReturnCaseForTest,
-  resetAnnualReturnCasesForTest,
-  subscribeAnnualReturnCasesForTest,
-} from "./annual-return-store";
+import { getAnnualReturnCaseById, resetAnnualReturnCasesForTest } from "./annual-return-store";
 import {
   clientPortalReviewReasons,
-  getClientPortalActivity,
   getClientPortalProgress,
   getClientPortalRequiredActions,
   getClientPortalReviewReason,
-  getPaymentProofAiContext,
-  getCurrentClientDocument,
-  getCurrentPaymentProof,
-  getDocumentArchiveRows,
   getDocumentReviewFollowUpDrafts,
-  rowFromDocument,
-  getPaymentProofFollowUpDrafts,
-  getPaymentProofsForCase,
-  getClientPortalSnapshot,
   resetClientPortalStoreForTest,
-  subscribeClientPortalStoreForTest,
-  type ClientPortalReviewReasonCode,
 } from "./client-portal-store";
 
 function requireCase(caseId: string) {
   const caseItem = getAnnualReturnCaseById(caseId);
   if (!caseItem) throw new Error(`Missing fixture ${caseId}`);
   return caseItem;
-}
-
-function timelineLabels(caseId: string, label: string) {
-  return requireCase(caseId).timeline.filter((event) => event.label === label);
 }
 
 // The seed carries a rejected Signed NAR1 for ar-delta; the follow-up

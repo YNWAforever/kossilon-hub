@@ -1,43 +1,21 @@
 import { describe, expect, it } from "vitest";
-import type { AnnualReturnCase } from "@/features/annual-return/types";
+import type { DashboardCase } from "@/features/dashboard/types";
 import { buildDailyDigest, digestTone } from "@/lib/daily-digest";
 
 const NOW = new Date("2026-07-05T09:00:00+08:00");
 
-function annualReturnCase(partial: Partial<AnnualReturnCase>): AnnualReturnCase {
+function annualReturnCase(partial: Partial<DashboardCase>): DashboardCase {
   return {
     id: partial.id ?? "ar-test",
-    companyId: partial.companyId ?? "company-test",
-    companyTeamId: partial.companyTeamId ?? "team-a",
     companyName: partial.companyName ?? "Harbour Trading Ltd",
-    returnYear: partial.returnYear ?? 2026,
-    madeUpDate: partial.madeUpDate ?? "2026-06-01",
     filingDueDate: partial.filingDueDate ?? "2026-07-05",
     currentStatus: partial.currentStatus ?? "Documents pending",
     riskLevel: partial.riskLevel ?? "red",
-    ownerId: partial.ownerId ?? "u-amy",
     ownerName: partial.ownerName ?? "Amy Chan",
-    reviewerId: partial.reviewerId ?? null,
-    reviewerName: partial.reviewerName ?? null,
-    remindersSent: partial.remindersSent ?? 2,
+    checklist: partial.checklist ?? [{ required: true, status: "Missing" }],
+    payment: partial.payment ?? null,
     filingReference: partial.filingReference ?? null,
     confirmationDocumentId: partial.confirmationDocumentId ?? null,
-    lockedAt: partial.lockedAt ?? null,
-    completedAt: partial.completedAt ?? null,
-    checklist: partial.checklist ?? [
-      {
-        id: "item-1",
-        caseId: "ar-test",
-        itemLabel: "Signed NAR1 form",
-        required: true,
-        status: "Missing",
-        dueDate: "2026-07-05",
-        receivedAt: null,
-        verifiedAt: null,
-        documentId: null,
-      },
-    ],
-    payment: partial.payment ?? null,
   };
 }
 

@@ -77,7 +77,11 @@ describe("final review architecture restorations", () => {
   });
 
   it("restores the dashboard loader and AI daily digest", () => {
-    expect(dashboardSource).toContain("loader: () => loadDashboardData()");
+    // The loader now picks its dependency set from route context rather than
+    // always calling the production server functions. -dashboard-modes.test.tsx
+    // renders both modes; this only pins that the branch is still there.
+    expect(dashboardSource).toContain("loadDashboardData(");
+    expect(dashboardSource).toContain('context.dataMode === "demo"');
     expect(dashboardSource).toContain("buildDailyDigest");
     expect(dashboardSource).toContain("AI daily digest");
     expect(dashboardSource).toContain("annualReturnDataAvailable");

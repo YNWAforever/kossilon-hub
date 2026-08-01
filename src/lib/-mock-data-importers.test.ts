@@ -15,12 +15,12 @@ const IMPORT_PATTERN =
   /(?:from|import|require|vi\.mock)\s*\(?\s*["'][^"']*lib\/mock-data(?:\.tsx?)?["']/;
 
 // lib/mock-data is the demo fixture set. Sixteen files imported it before the
-// orphaned screens were deleted; these two are what remain, each for a reason.
-// Removing an entry is the definition of done for the dashboard phase — the
-// assertion is exact, so the list shrinks by deliberate edit and never drifts.
+// orphaned screens were deleted, and the dashboard dropped off it when
+// formatDate moved out. Settings is the last one, and its usage is demo-gated.
+// Emptying this list retires the fixture module — the assertion is exact, so
+// the list shrinks by deliberate edit and never drifts.
 const EXPECTED_IMPORTERS = [
-  "routes/index.tsx", // formatDate only
-  "routes/settings.tsx", // cases + formatDate, demo-gated by settingsSectionsForMode
+  "routes/settings.tsx", // cases only, demo-gated by settingsSectionsForMode
 ];
 
 function sourcesUnder(dir: URL): string[] {
