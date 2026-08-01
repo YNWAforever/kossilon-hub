@@ -34,6 +34,7 @@ export const Route = createFileRoute("/documents")({
 });
 
 function DocumentsRoute() {
+  const { dataMode } = Route.useRouteContext();
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const queryClient = useQueryClient();
@@ -129,86 +130,93 @@ function DocumentsRoute() {
         pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
       />
 
-      <section className="rounded-lg border bg-card">
-        <div className="grid gap-3 border-b p-4 xl:grid-cols-[1fr_180px_180px_180px_220px]">
-          <input
-            aria-label="Search documents"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search company, contact, title, or filename"
-            value={query}
-          />
-          <FilterSelect
-            label="Filter by source"
-            value={source}
-            onChange={setSource}
-            values={["client-portal", "staff-packet", "filing-submission", "filing-receipt"]}
-          />
-          <FilterSelect
-            label="Filter by category"
-            value={category}
-            onChange={setCategory}
-            values={[
-              "identity",
-              "registry",
-              "signature",
-              "payment",
-              "packet",
-              "submission",
-              "receipt",
-              "other",
-            ]}
-          />
-          <FilterSelect
-            label="Filter by status"
-            value={status}
-            onChange={setStatus}
-            values={["required", "uploaded", "superseded", "accepted", "rejected", "generated"]}
-          />
-          <select
-            aria-label="Filter by case"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-            value={caseFilter}
-            onChange={(event) => setCaseFilter(event.target.value)}
-          >
-            <option value="all">All cases</option>
-            {cases.map((caseItem) => (
-              <option key={caseItem.id} value={caseItem.id}>
-                {caseItem.companyName}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* The archive below is fixture-backed: getDocumentArchiveRows reads the
+          demo stores. Rendering it in production showed staff invented records
+          as if they were real, and its "Open" links carried demo case ids like
+          ar-harbour into /annual-returns/$id, whose validator requires a UUID.
+          Production has its own vault above, which reads Postgres. */}
+      {dataMode === "demo" ? (
+        <section className="rounded-lg border bg-card">
+          <div className="grid gap-3 border-b p-4 xl:grid-cols-[1fr_180px_180px_180px_220px]">
+            <input
+              aria-label="Search documents"
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search company, contact, title, or filename"
+              value={query}
+            />
+            <FilterSelect
+              label="Filter by source"
+              value={source}
+              onChange={setSource}
+              values={["client-portal", "staff-packet", "filing-submission", "filing-receipt"]}
+            />
+            <FilterSelect
+              label="Filter by category"
+              value={category}
+              onChange={setCategory}
+              values={[
+                "identity",
+                "registry",
+                "signature",
+                "payment",
+                "packet",
+                "submission",
+                "receipt",
+                "other",
+              ]}
+            />
+            <FilterSelect
+              label="Filter by status"
+              value={status}
+              onChange={setStatus}
+              values={["required", "uploaded", "superseded", "accepted", "rejected", "generated"]}
+            />
+            <select
+              aria-label="Filter by case"
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              value={caseFilter}
+              onChange={(event) => setCaseFilter(event.target.value)}
+            >
+              <option value="all">All cases</option>
+              {cases.map((caseItem) => (
+                <option key={caseItem.id} value={caseItem.id}>
+                  {caseItem.companyName}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
-          <span>Document</span>
-          <span>Company</span>
-          <span>Category</span>
-          <span>Source</span>
-          <span>Status</span>
-          <span>Uploaded by</span>
-          <span>Updated</span>
-          <span>Review</span>
-          <span className="text-right">Case</span>
-        </div>
+          <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+            <span>Document</span>
+            <span>Company</span>
+            <span>Category</span>
+            <span>Source</span>
+            <span>Status</span>
+            <span>Uploaded by</span>
+            <span>Updated</span>
+            <span>Review</span>
+            <span className="text-right">Case</span>
+          </div>
 
-        <div className="divide-y">
-          {visibleRows.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">No documents match these filters.</p>
-          ) : (
-            visibleRows.map((row) => (
-              <DocumentRow
-                key={row.id}
-                row={row}
-                cases={cases}
-                snapshot={snapshot}
-                onWarning={setWarning}
-                onReview={(input) => reviewMutation.mutate({ data: input })}
-              />
-            ))
-          )}
-        </div>
-      </section>
+          <div className="divide-y">
+            {visibleRows.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">No documents match these filters.</p>
+            ) : (
+              visibleRows.map((row) => (
+                <DocumentRow
+                  key={row.id}
+                  row={row}
+                  cases={cases}
+                  snapshot={snapshot}
+                  onWarning={setWarning}
+                  onReview={(input) => reviewMutation.mutate({ data: input })}
+                />
+              ))
+            )}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }
