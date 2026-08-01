@@ -199,9 +199,21 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           title={caseItem.companyName}
           subtitle={`Return year ${caseItem.returnYear} / Due ${caseItem.filingDueDate}`}
           actions={
-            <div className="text-right text-sm">
-              <p className="font-medium">{caseItem.currentStatus}</p>
-              <p className="text-muted-foreground">{caseItem.riskLevel} risk</p>
+            <div className="flex items-center gap-3">
+              {/* The demo case detail has always had this. Without it in
+                  production there was no link anywhere carrying a caseId, so
+                  /portal was unreachable except by hand-editing the URL. */}
+              <Link
+                className="rounded-md border px-3 py-2 text-sm"
+                to="/portal"
+                search={{ caseId: caseItem.id }}
+              >
+                Open portal
+              </Link>
+              <div className="text-right text-sm">
+                <p className="font-medium">{caseItem.currentStatus}</p>
+                <p className="text-muted-foreground">{caseItem.riskLevel} risk</p>
+              </div>
             </div>
           }
         />
