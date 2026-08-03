@@ -168,9 +168,7 @@ function withTransaction<T>(
   return handler(client as TransactionSqlClient);
 }
 
-export function createClientRepository(
-  options?: CreateClientRepositoryOptions,
-): ClientRepository;
+export function createClientRepository(options?: CreateClientRepositoryOptions): ClientRepository;
 export function createClientRepository(
   databaseUrl: string | undefined,
   options?: CreateClientRepositoryOptions,
@@ -262,10 +260,7 @@ export function createClientRepository(
     return rows.map(mapSummary);
   }
 
-  async function hydrateClient(
-    client: QueryClient,
-    id: string,
-  ): Promise<ClientDetail | null> {
+  async function hydrateClient(client: QueryClient, id: string): Promise<ClientDetail | null> {
     const detailRows = await client<DetailRow[]>`
       select
         c.id,
@@ -431,7 +426,13 @@ export function createClientRepository(
   async function insertContact(
     tx: TransactionSqlClient,
     companyId: string,
-    contact: { name: string; role: string; email: string | null; phone: string | null; isPrimary: boolean },
+    contact: {
+      name: string;
+      role: string;
+      email: string | null;
+      phone: string | null;
+      isPrimary: boolean;
+    },
   ): Promise<void> {
     if (contact.isPrimary) {
       await tx`
@@ -504,10 +505,7 @@ export function createClientRepository(
   }
 
   /** Field names whose values changed, for the timeline entry. */
-  function changedFields(
-    before: ClientDetail,
-    input: UpdateClientInput,
-  ): string[] {
+  function changedFields(before: ClientDetail, input: UpdateClientInput): string[] {
     const comparisons: [string, unknown, unknown][] = [
       ["companyName", before.companyName, input.companyName],
       ["registeredOffice", before.registeredOffice, input.registeredOffice],
@@ -518,9 +516,7 @@ export function createClientRepository(
       ["packageId", before.packageId, input.packageId],
     ];
 
-    return comparisons
-      .filter(([, previous, next]) => previous !== next)
-      .map(([field]) => field);
+    return comparisons.filter(([, previous, next]) => previous !== next).map(([field]) => field);
   }
 
   async function updateClient(input: UpdateClientInput): Promise<ClientDetail> {
@@ -653,11 +649,7 @@ export function createClientRepository(
     try {
       return await withTransaction(sql, async (tx) => {
         await assertActor(tx, input.actorId);
-        const contact = await assertContactBelongsToCompany(
-          tx,
-          input.companyId,
-          input.contactId,
-        );
+        const contact = await assertContactBelongsToCompany(tx, input.companyId, input.contactId);
 
         await tx`
           delete from company_contacts

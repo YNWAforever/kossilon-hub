@@ -65,7 +65,13 @@ async function seedCompany(options: {
   packageId?: string | null;
   status?: "active" | "inactive";
   cases?: { returnYear: number; filingDueDate: string; paymentStatus?: string }[];
-  contacts?: { name: string; role: string; email: string | null; phone: string | null; isPrimary: boolean }[];
+  contacts?: {
+    name: string;
+    role: string;
+    email: string | null;
+    phone: string | null;
+    isPrimary: boolean;
+  }[];
 }): Promise<string> {
   const sql = sqlForTests();
   const companyId = testUuid(TEST_COMPANY_UUID_PREFIX, options.sequence);
@@ -218,9 +224,7 @@ describe.skipIf(!databaseUrl)("client repository reads", () => {
 
     const clients = await repository.listClients();
 
-    expect(
-      clients.find((row) => row.companyName === "Aac Inactive Ltd")?.status,
-    ).toBe("inactive");
+    expect(clients.find((row) => row.companyName === "Aac Inactive Ltd")?.status).toBe("inactive");
   });
 
   it("hydrates a client with contacts ordered primary first", async () => {
@@ -229,7 +233,13 @@ describe.skipIf(!databaseUrl)("client repository reads", () => {
       companyName: "Aaa Hydrate Test Ltd",
       cases: [{ returnYear: 2026, filingDueDate: "2026-09-30", paymentStatus: "Overdue" }],
       contacts: [
-        { name: "Zoe Ng", role: "Accountant", email: "zoe@example.hk", phone: null, isPrimary: false },
+        {
+          name: "Zoe Ng",
+          role: "Accountant",
+          email: "zoe@example.hk",
+          phone: null,
+          isPrimary: false,
+        },
         { name: "Alan Ho", role: "Director", email: null, phone: "+85290000001", isPrimary: true },
       ],
     });
@@ -256,9 +266,7 @@ describe.skipIf(!databaseUrl)("client repository reads", () => {
   it("returns null for an unknown client id", async () => {
     const repository = repositoryForTests();
 
-    await expect(
-      repository.getClient("99999999-0000-0000-0000-000000000000"),
-    ).resolves.toBeNull();
+    await expect(repository.getClient("99999999-0000-0000-0000-000000000000")).resolves.toBeNull();
   });
 });
 
@@ -386,9 +394,7 @@ describe.skipIf(!databaseUrl)("client repository company writes", () => {
         companyName: "Test Unreachable Ltd",
         crNumber: "TEST-CR-0007",
         brNumber: "TEST-BR-0007",
-        contacts: [
-          { name: "Ghost", role: "Director", email: null, phone: null, isPrimary: true },
-        ],
+        contacts: [{ name: "Ghost", role: "Director", email: null, phone: null, isPrimary: true }],
       }),
     ).rejects.toMatchObject({ field: "contact" });
   });
@@ -402,9 +408,7 @@ describe.skipIf(!databaseUrl)("client repository company writes", () => {
         companyName: "Test Rollback Ltd",
         crNumber: "TEST-CR-0008",
         brNumber: "TEST-BR-0008",
-        contacts: [
-          { name: "Ghost", role: "Director", email: null, phone: null, isPrimary: true },
-        ],
+        contacts: [{ name: "Ghost", role: "Director", email: null, phone: null, isPrimary: true }],
       }),
     ).rejects.toThrow();
 
@@ -518,7 +522,13 @@ describe.skipIf(!databaseUrl)("client repository contact writes", () => {
       sequence: 1,
       companyName: "Aaa Primary Swap Ltd",
       contacts: [
-        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
+        {
+          name: "Alan Ho",
+          role: "Director",
+          email: "alan@example.hk",
+          phone: null,
+          isPrimary: true,
+        },
       ],
     });
     const repository = repositoryForTests();
@@ -543,8 +553,20 @@ describe.skipIf(!databaseUrl)("client repository contact writes", () => {
       sequence: 1,
       companyName: "Aaa Promote Ltd",
       contacts: [
-        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
-        { name: "Zoe Ng", role: "Accountant", email: "zoe@example.hk", phone: null, isPrimary: false },
+        {
+          name: "Alan Ho",
+          role: "Director",
+          email: "alan@example.hk",
+          phone: null,
+          isPrimary: true,
+        },
+        {
+          name: "Zoe Ng",
+          role: "Accountant",
+          email: "zoe@example.hk",
+          phone: null,
+          isPrimary: false,
+        },
       ],
     });
     const repository = repositoryForTests();
@@ -590,8 +612,20 @@ describe.skipIf(!databaseUrl)("client repository contact writes", () => {
       sequence: 1,
       companyName: "Aaa Remove Primary Ltd",
       contacts: [
-        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
-        { name: "Zoe Ng", role: "Accountant", email: "zoe@example.hk", phone: null, isPrimary: false },
+        {
+          name: "Alan Ho",
+          role: "Director",
+          email: "alan@example.hk",
+          phone: null,
+          isPrimary: true,
+        },
+        {
+          name: "Zoe Ng",
+          role: "Accountant",
+          email: "zoe@example.hk",
+          phone: null,
+          isPrimary: false,
+        },
       ],
     });
     const repository = repositoryForTests();
@@ -614,7 +648,13 @@ describe.skipIf(!databaseUrl)("client repository contact writes", () => {
       sequence: 1,
       companyName: "Aaa Owner Ltd",
       contacts: [
-        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
+        {
+          name: "Alan Ho",
+          role: "Director",
+          email: "alan@example.hk",
+          phone: null,
+          isPrimary: true,
+        },
       ],
     });
     const otherCompanyId = await seedCompany({ sequence: 2, companyName: "Aab Other Ltd" });
