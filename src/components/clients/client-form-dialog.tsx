@@ -82,6 +82,9 @@ const inputClass =
   "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
+/** ClientWriteError fields this dialog renders an inline message for. Anything else toasts. */
+const INLINE_ERROR_FIELDS = new Set(["crNumber", "brNumber", "contact"]);
+
 export function ClientFormDialog({ open, onOpenChange, options, client, onSaved }: Props) {
   const isEdit = Boolean(client);
   const [form, setForm] = useState<FormState>(() =>
@@ -182,7 +185,10 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
       const field = (error as { field?: string }).field;
       const message = error instanceof Error ? error.message : "Unable to save the client.";
 
-      if (field) {
+      // Only these fields have somewhere to render an inline error. Anything else falls back
+      // to a toast — without this the message would be swallowed entirely, because a truthy
+      // `field` with no matching slot renders nothing and skips the toast.
+      if (field && INLINE_ERROR_FIELDS.has(field)) {
         setFieldError({ field, message });
       } else {
         toast.error(message);
