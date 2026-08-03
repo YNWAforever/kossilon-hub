@@ -1,11 +1,9 @@
-const ACTOR_ID_ENV_KEY = "KOSSILON_ANNUAL_RETURN_ACTOR_ID";
+import { getCurrentActorId } from "@/features/session/actor";
 
+/**
+ * Retained so existing importers keep working. New code should call
+ * getCurrentActorId() from @/features/session/actor directly.
+ */
 export function getCurrentAnnualReturnActorId(): string {
-  const actorId = process.env[ACTOR_ID_ENV_KEY]?.trim();
-
-  if (!actorId) {
-    throw new Error(`${ACTOR_ID_ENV_KEY} actor is not configured.`);
-  }
-
-  return actorId;
+  return getCurrentActorId();
 }

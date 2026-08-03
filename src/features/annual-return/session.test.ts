@@ -9,12 +9,14 @@ afterEach(() => {
 
 describe("annual return session actor", () => {
   it("reads the configured server-side actor id", () => {
+    vi.stubEnv("KOSSILON_ACTOR_ID", "");
     vi.stubEnv("KOSSILON_ANNUAL_RETURN_ACTOR_ID", STAFF_ACTOR_ID);
 
     expect(getCurrentAnnualReturnActorId()).toBe(STAFF_ACTOR_ID);
   });
 
   it("fails closed when no actor is configured", () => {
+    vi.stubEnv("KOSSILON_ACTOR_ID", "");
     vi.stubEnv("KOSSILON_ANNUAL_RETURN_ACTOR_ID", "");
 
     expect(() => getCurrentAnnualReturnActorId()).toThrow(/actor is not configured/i);
