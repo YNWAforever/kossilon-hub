@@ -30,8 +30,6 @@ describe("getCurrentActorId", () => {
     vi.stubEnv("KOSSILON_ACTOR_ID", "");
     vi.stubEnv("KOSSILON_ANNUAL_RETURN_ACTOR_ID", "");
 
-    expect(() => getCurrentActorId()).toThrow(
-      "KOSSILON_ACTOR_ID actor is not configured.",
-    );
+    expect(() => getCurrentActorId()).toThrow("KOSSILON_ACTOR_ID actor is not configured.");
   });
 });
