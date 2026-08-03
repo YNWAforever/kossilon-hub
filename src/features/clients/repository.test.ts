@@ -53,6 +53,14 @@ async function cleanupClientFixtures() {
   await sql`delete from companies where id = any(${companyIds}::uuid[])`;
   // Companies created by createClient tests use generated ids, so match on the fixture prefix.
   await sql`delete from companies where cr_number like 'TEST-CR-%'`;
+
+  // The inactive-actor test deactivates a real user and restores it in a `finally`, which
+  // does not survive the process being killed mid-test. These run against a real database,
+  // so heal unconditionally rather than trusting the previous run to have exited cleanly.
+  await sql`
+    update users set active = true
+    where id = any(${[USER_AMY_ID, USER_KEN_ID]}::uuid[]) and not active
+  `;
 }
 
 /**
