@@ -1,3 +1,5 @@
+import type { PaymentStatus } from "@/features/annual-return/types";
+
 export type CompanyStatus = "active" | "inactive";
 
 export type ServicePackage = {
@@ -19,12 +21,9 @@ export type CompanyContact = {
   isPrimary: boolean;
 };
 
-/** Latest annual-return payment status, mirroring the payments.status check constraint. */
-export type ClientPaymentStatus =
-  | "Not invoiced"
-  | "Payment pending"
-  | "Payment received"
-  | "Overdue";
+/** Latest annual-return payment status. Re-exported from the annual-return module so the
+ *  payments.status check constraint has exactly one TypeScript definition. */
+export type ClientPaymentStatus = PaymentStatus;
 
 export type ClientSummary = {
   id: string;
