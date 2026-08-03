@@ -1,0 +1,263 @@
+import "dotenv/config";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createSqlClient, type SqlClient } from "@/server/db/client";
+import { createClientRepository } from "./repository";
+
+const databaseUrl = process.env.TEST_DATABASE_URL;
+
+const USER_AMY_ID = "20000000-0000-0000-0000-000000000001";
+const USER_KEN_ID = "20000000-0000-0000-0000-000000000002";
+const TEAM_ANNUAL_RETURN_ID = "10000000-0000-0000-0000-000000000001";
+const PACKAGE_BASIC_ID = "30000000-0000-0000-0000-000000000001";
+const PACKAGE_STANDARD_ID = "30000000-0000-0000-0000-000000000002";
+
+const TEST_COMPANY_UUID_PREFIX = "97000000";
+const TEST_CASE_UUID_PREFIX = "97100000";
+const TEST_PAYMENT_UUID_PREFIX = "97200000";
+const TEST_CONTACT_UUID_PREFIX = "97300000";
+const TEST_FIXTURE_SEQUENCES = [1, 2, 3] as const;
+
+type ClientRepositoryInstance = ReturnType<typeof createClientRepository>;
+
+const repositories: ClientRepositoryInstance[] = [];
+let testSql: SqlClient | undefined;
+
+function testUuid(prefix: string, sequence: number): string {
+  return `${prefix}-0000-0000-0000-${String(sequence).padStart(12, "0")}`;
+}
+
+function sqlForTests(): SqlClient {
+  if (!databaseUrl) {
+    throw new Error("TEST_DATABASE_URL is required for client register integration tests.");
+  }
+
+  testSql ??= createSqlClient(databaseUrl, { max: 1 });
+  return testSql;
+}
+
+function repositoryForTests(): ClientRepositoryInstance {
+  const repository = createClientRepository(databaseUrl!);
+  repositories.push(repository);
+  return repository;
+}
+
+async function cleanupClientFixtures() {
+  if (!databaseUrl) return;
+
+  const sql = sqlForTests();
+  const companyIds = TEST_FIXTURE_SEQUENCES.map((sequence) =>
+    testUuid(TEST_COMPANY_UUID_PREFIX, sequence),
+  );
+
+  // Companies cascade to contacts, cases, payments, and timeline events.
+  await sql`delete from companies where id = any(${companyIds}::uuid[])`;
+  // Companies created by createClient tests use generated ids, so match on the fixture prefix.
+  await sql`delete from companies where cr_number like 'TEST-CR-%'`;
+}
+
+/**
+ * Inserts a company with an optional latest annual-return case and payment.
+ * Returns the company id.
+ */
+async function seedCompany(options: {
+  sequence: number;
+  companyName: string;
+  packageId?: string | null;
+  status?: "active" | "inactive";
+  cases?: { returnYear: number; filingDueDate: string; paymentStatus?: string }[];
+  contacts?: { name: string; role: string; email: string | null; phone: string | null; isPrimary: boolean }[];
+}): Promise<string> {
+  const sql = sqlForTests();
+  const companyId = testUuid(TEST_COMPANY_UUID_PREFIX, options.sequence);
+
+  await sql`
+    insert into companies (
+      id, company_name, cr_number, br_number, incorporation_date,
+      annual_return_basis_date, registered_office, company_secretary,
+      status, assigned_owner_id, assigned_team_id, service_package_id
+    )
+    values (
+      ${companyId},
+      ${options.companyName},
+      ${`CR-${options.sequence}-${TEST_COMPANY_UUID_PREFIX}`},
+      ${`BR-${options.sequence}-${TEST_COMPANY_UUID_PREFIX}`},
+      '2020-01-15',
+      '2026-01-15',
+      'Unit 1, Test Tower, Hong Kong',
+      'Kossilon Secretaries Ltd',
+      ${options.status ?? "active"},
+      ${USER_AMY_ID},
+      ${TEAM_ANNUAL_RETURN_ID},
+      ${options.packageId === undefined ? PACKAGE_STANDARD_ID : options.packageId}
+    )
+  `;
+
+  for (const [index, case_] of (options.cases ?? []).entries()) {
+    const caseId = testUuid(TEST_CASE_UUID_PREFIX, options.sequence * 10 + index);
+    await sql`
+      insert into annual_return_cases (
+        id, company_id, return_year, made_up_date, filing_due_date,
+        current_status, risk_level, owner_id, reminders_sent
+      )
+      values (
+        ${caseId}, ${companyId}, ${case_.returnYear}, '2026-01-15',
+        ${case_.filingDueDate}, 'Upcoming', 'green', ${USER_AMY_ID}, 0
+      )
+    `;
+
+    if (case_.paymentStatus) {
+      await sql`
+        insert into payments (id, company_id, case_id, invoice_number, amount, status, due_date)
+        values (
+          ${testUuid(TEST_PAYMENT_UUID_PREFIX, options.sequence * 10 + index)},
+          ${companyId}, ${caseId},
+          ${`KOS-TEST-${options.sequence}-${index}`}, 3800,
+          ${case_.paymentStatus}, ${case_.filingDueDate}
+        )
+      `;
+    }
+  }
+
+  for (const [index, contact] of (options.contacts ?? []).entries()) {
+    await sql`
+      insert into company_contacts (id, company_id, name, role, email, phone, is_primary)
+      values (
+        ${testUuid(TEST_CONTACT_UUID_PREFIX, options.sequence * 10 + index)},
+        ${companyId}, ${contact.name}, ${contact.role},
+        ${contact.email}, ${contact.phone}, ${contact.isPrimary}
+      )
+    `;
+  }
+
+  return companyId;
+}
+
+afterAll(async () => {
+  await Promise.all(repositories.map((repository) => repository.close()));
+  await testSql?.end();
+});
+
+describe.skipIf(!databaseUrl)("client repository reads", () => {
+  beforeEach(async () => {
+    await cleanupClientFixtures();
+  });
+
+  afterEach(async () => {
+    await cleanupClientFixtures();
+  });
+
+  it("lists seeded service packages in sort order", async () => {
+    const repository = repositoryForTests();
+
+    const packages = await repository.listServicePackages();
+
+    expect(packages.map((servicePackage) => servicePackage.name)).toEqual([
+      "Basic",
+      "Standard",
+      "Premium",
+    ]);
+    expect(packages[0]).toMatchObject({
+      id: PACKAGE_BASIC_ID,
+      defaultFee: 2800,
+      currency: "HKD",
+      active: true,
+    });
+  });
+
+  it("returns owners, teams, and packages for assignment forms", async () => {
+    const repository = repositoryForTests();
+
+    const options = await repository.listAssignmentOptions();
+
+    expect(options.owners.some((owner) => owner.id === USER_AMY_ID)).toBe(true);
+    expect(options.teams.some((team) => team.id === TEAM_ANNUAL_RETURN_ID)).toBe(true);
+    expect(options.packages).toHaveLength(3);
+  });
+
+  it("derives AR due date and payment status from the most recent case", async () => {
+    await seedCompany({
+      sequence: 1,
+      companyName: "Aaa Lateral Test Ltd",
+      cases: [
+        { returnYear: 2025, filingDueDate: "2025-03-01", paymentStatus: "Payment received" },
+        { returnYear: 2026, filingDueDate: "2026-09-30", paymentStatus: "Payment pending" },
+      ],
+    });
+    const repository = repositoryForTests();
+
+    const clients = await repository.listClients();
+    const client = clients.find((row) => row.companyName === "Aaa Lateral Test Ltd");
+
+    expect(client).toMatchObject({
+      arDueDate: "2026-09-30",
+      paymentStatus: "Payment pending",
+      invoiceAmount: 3800,
+      packageName: "Standard",
+      ownerName: "Amy Chan",
+      ownerInitials: "AC",
+      status: "active",
+    });
+  });
+
+  it("includes companies that have no annual return cases", async () => {
+    await seedCompany({ sequence: 2, companyName: "Aab No Case Ltd" });
+    const repository = repositoryForTests();
+
+    const clients = await repository.listClients();
+    const client = clients.find((row) => row.companyName === "Aab No Case Ltd");
+
+    expect(client).toBeDefined();
+    expect(client?.arDueDate).toBeNull();
+    expect(client?.paymentStatus).toBeNull();
+    expect(client?.invoiceAmount).toBeNull();
+  });
+
+  it("includes inactive companies so the directory can filter on status", async () => {
+    await seedCompany({ sequence: 3, companyName: "Aac Inactive Ltd", status: "inactive" });
+    const repository = repositoryForTests();
+
+    const clients = await repository.listClients();
+
+    expect(
+      clients.find((row) => row.companyName === "Aac Inactive Ltd")?.status,
+    ).toBe("inactive");
+  });
+
+  it("hydrates a client with contacts ordered primary first", async () => {
+    const companyId = await seedCompany({
+      sequence: 1,
+      companyName: "Aaa Hydrate Test Ltd",
+      cases: [{ returnYear: 2026, filingDueDate: "2026-09-30", paymentStatus: "Overdue" }],
+      contacts: [
+        { name: "Zoe Ng", role: "Accountant", email: "zoe@example.hk", phone: null, isPrimary: false },
+        { name: "Alan Ho", role: "Director", email: null, phone: "+85290000001", isPrimary: true },
+      ],
+    });
+    const repository = repositoryForTests();
+
+    const detail = await repository.getClient(companyId);
+
+    expect(detail?.contacts.map((contact) => contact.name)).toEqual(["Alan Ho", "Zoe Ng"]);
+    expect(detail?.contacts[0]).toMatchObject({
+      isPrimary: true,
+      phone: "+85290000001",
+      email: null,
+    });
+    expect(detail?.annualReturnHistory).toHaveLength(1);
+    expect(detail?.annualReturnHistory[0]).toMatchObject({
+      returnYear: 2026,
+      filingDueDate: "2026-09-30",
+    });
+    expect(detail?.registeredOffice).toBe("Unit 1, Test Tower, Hong Kong");
+    expect(detail?.incorporationDate).toBe("2020-01-15");
+    expect(detail?.paymentStatus).toBe("Overdue");
+  });
+
+  it("returns null for an unknown client id", async () => {
+    const repository = repositoryForTests();
+
+    await expect(
+      repository.getClient("99999999-0000-0000-0000-000000000000"),
+    ).resolves.toBeNull();
+  });
+});
