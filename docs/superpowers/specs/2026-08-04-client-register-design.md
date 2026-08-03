@@ -123,6 +123,7 @@ under concurrent writes.
 ```ts
 export type ClientRepository = {
   listServicePackages(): Promise<ServicePackage[]>;
+  listAssignmentOptions(): Promise<ClientAssignmentOptions>;
   listClients(): Promise<ClientSummary[]>;
   getClient(id: string): Promise<ClientDetail | null>;
   createClient(input: CreateClientInput): Promise<ClientDetail>;
@@ -140,6 +141,9 @@ follow-up read to render its result.
 team name, company status, plus `arDueDate` and `paymentStatus`. The last two are derived at read time
 from the company's most recent `annual_return_cases` row and its `payments` join, via a lateral join.
 Nothing is denormalised onto `companies`, so these values cannot drift.
+
+`ClientAssignmentOptions` carries the active users, active teams, and service packages the create and
+edit forms need to populate their owner, team, and package pickers.
 
 `ClientDetail` adds `contacts[]`, `timeline` (the company's `timeline_events`), `annualReturnHistory`
 (all its cases), `documents`, the latest payment detail, and the registered-office, company-secretary,
@@ -253,8 +257,10 @@ the existing company, case, document, and payment prefixes.
   `KOSSILON_ANNUAL_RETURN_ACTOR_ID`, throws when neither is set.
 - The `23505` and `23514` error-to-field mapper, isolated from the database.
 
-The existing `src/features/annual-return/session.test.ts` must pass unchanged. That is the check that the
-re-export did not alter behaviour.
+The existing `src/features/annual-return/session.test.ts` keeps all its assertions, with one exception:
+the resolver now throws under the canonical `KOSSILON_ACTOR_ID` name, so that test's expected error string
+changes. Every other assertion must pass untouched — that is the check that the re-export did not alter
+behaviour.
 
 ### Manual verification
 
