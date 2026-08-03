@@ -74,7 +74,15 @@ function PortalRoute() {
       return (
         <main className="flex-1 space-y-3 p-6">
           <PageHeader eyebrow="Operations" title="Production portal" />
-          <p className="text-sm text-muted-foreground">Select a UUID-backed annual return case.</p>
+          {/* The sidebar links here with no caseId, so this is the screen staff
+              actually land on. It used to stop at a sentence, leaving the only
+              route onward as editing the URL by hand. */}
+          <p className="text-sm text-muted-foreground">
+            Open a case from the annual returns board to see its client portal.
+          </p>
+          <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
+            Browse annual returns
+          </Link>
         </main>
       );
     }
