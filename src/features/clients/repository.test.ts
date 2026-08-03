@@ -483,3 +483,174 @@ describe.skipIf(!databaseUrl)("client repository company writes", () => {
     ).rejects.toThrow("Client not found.");
   });
 });
+
+describe.skipIf(!databaseUrl)("client repository contact writes", () => {
+  beforeEach(async () => {
+    await cleanupClientFixtures();
+  });
+
+  afterEach(async () => {
+    await cleanupClientFixtures();
+  });
+
+  it("adds a contact and records a timeline entry", async () => {
+    const companyId = await seedCompany({ sequence: 1, companyName: "Aaa Contact Add Ltd" });
+    const repository = repositoryForTests();
+
+    const detail = await repository.addContact({
+      companyId,
+      name: "Alan Ho",
+      role: "Director",
+      email: "alan@example.hk",
+      phone: null,
+      isPrimary: true,
+      actorId: USER_AMY_ID,
+    });
+
+    expect(detail.contacts).toHaveLength(1);
+    expect(detail.contacts[0]).toMatchObject({ name: "Alan Ho", isPrimary: true });
+    expect(detail.timeline[0]).toMatchObject({ eventType: "contact_added" });
+    expect(detail.timeline[0].description).toContain("Alan Ho");
+  });
+
+  it("demotes the previous primary when a new contact is promoted", async () => {
+    const companyId = await seedCompany({
+      sequence: 1,
+      companyName: "Aaa Primary Swap Ltd",
+      contacts: [
+        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
+      ],
+    });
+    const repository = repositoryForTests();
+
+    const detail = await repository.addContact({
+      companyId,
+      name: "Bella Sit",
+      role: "Company Secretary",
+      email: null,
+      phone: "+85290000002",
+      isPrimary: true,
+      actorId: USER_AMY_ID,
+    });
+
+    const primaries = detail.contacts.filter((contact) => contact.isPrimary);
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0].name).toBe("Bella Sit");
+  });
+
+  it("promotes an existing contact and demotes the previous primary", async () => {
+    const companyId = await seedCompany({
+      sequence: 1,
+      companyName: "Aaa Promote Ltd",
+      contacts: [
+        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
+        { name: "Zoe Ng", role: "Accountant", email: "zoe@example.hk", phone: null, isPrimary: false },
+      ],
+    });
+    const repository = repositoryForTests();
+    const before = await repository.getClient(companyId);
+    const zoe = before!.contacts.find((contact) => contact.name === "Zoe Ng")!;
+
+    const detail = await repository.updateContact({
+      companyId,
+      contactId: zoe.id,
+      name: "Zoe Ng",
+      role: "Accountant",
+      email: "zoe@example.hk",
+      phone: null,
+      isPrimary: true,
+      actorId: USER_AMY_ID,
+    });
+
+    const primaries = detail.contacts.filter((contact) => contact.isPrimary);
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0].name).toBe("Zoe Ng");
+    expect(detail.timeline[0]).toMatchObject({ eventType: "contact_updated" });
+  });
+
+  it("rejects a contact with neither email nor phone", async () => {
+    const companyId = await seedCompany({ sequence: 1, companyName: "Aaa Unreachable Ltd" });
+    const repository = repositoryForTests();
+
+    await expect(
+      repository.addContact({
+        companyId,
+        name: "Ghost",
+        role: "Director",
+        email: null,
+        phone: null,
+        isPrimary: false,
+        actorId: USER_AMY_ID,
+      }),
+    ).rejects.toMatchObject({ field: "contact" });
+  });
+
+  it("removes the primary contact without error, leaving none", async () => {
+    const companyId = await seedCompany({
+      sequence: 1,
+      companyName: "Aaa Remove Primary Ltd",
+      contacts: [
+        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
+        { name: "Zoe Ng", role: "Accountant", email: "zoe@example.hk", phone: null, isPrimary: false },
+      ],
+    });
+    const repository = repositoryForTests();
+    const before = await repository.getClient(companyId);
+    const alan = before!.contacts.find((contact) => contact.name === "Alan Ho")!;
+
+    const detail = await repository.removeContact({
+      companyId,
+      contactId: alan.id,
+      actorId: USER_AMY_ID,
+    });
+
+    expect(detail.contacts).toHaveLength(1);
+    expect(detail.contacts.some((contact) => contact.isPrimary)).toBe(false);
+    expect(detail.timeline[0]).toMatchObject({ eventType: "contact_removed" });
+  });
+
+  it("rejects removing a contact that belongs to another company", async () => {
+    const companyId = await seedCompany({
+      sequence: 1,
+      companyName: "Aaa Owner Ltd",
+      contacts: [
+        { name: "Alan Ho", role: "Director", email: "alan@example.hk", phone: null, isPrimary: true },
+      ],
+    });
+    const otherCompanyId = await seedCompany({ sequence: 2, companyName: "Aab Other Ltd" });
+    const repository = repositoryForTests();
+    const before = await repository.getClient(companyId);
+    const alan = before!.contacts[0];
+
+    await expect(
+      repository.removeContact({
+        companyId: otherCompanyId,
+        contactId: alan.id,
+        actorId: USER_AMY_ID,
+      }),
+    ).rejects.toThrow("Contact not found for this company.");
+  });
+
+  it("rejects an inactive actor", async () => {
+    const companyId = await seedCompany({ sequence: 1, companyName: "Aaa Inactive Actor Ltd" });
+    const sql = sqlForTests();
+    await sql`update users set active = false where id = ${USER_KEN_ID}`;
+    const repository = repositoryForTests();
+
+    try {
+      await expect(
+        repository.addContact({
+          companyId,
+          name: "Alan Ho",
+          role: "Director",
+          email: "alan@example.hk",
+          phone: null,
+          isPrimary: false,
+          actorId: USER_KEN_ID,
+        }),
+      ).rejects.toThrow("Client actor not found or inactive.");
+    } finally {
+      await sql`update users set active = true where id = ${USER_KEN_ID}`;
+    }
+  });
+});

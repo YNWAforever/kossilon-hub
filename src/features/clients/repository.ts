@@ -560,6 +560,124 @@ export function createClientRepository(
     }
   }
 
+  async function assertContactBelongsToCompany(
+    tx: TransactionSqlClient,
+    companyId: string,
+    contactId: string,
+  ): Promise<ContactRow> {
+    const rows = await tx<ContactRow[]>`
+      select id, company_id, name, role, email, phone, is_primary
+      from company_contacts
+      where id = ${contactId} and company_id = ${companyId}
+      limit 1
+    `;
+
+    const [row] = rows;
+
+    if (!row) {
+      throw new Error("Contact not found for this company.");
+    }
+
+    return row;
+  }
+
+  async function addContact(input: AddContactInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        await hydrateOrThrow(tx, input.companyId);
+
+        await insertContact(tx, input.companyId, {
+          name: input.name,
+          role: input.role,
+          email: input.email,
+          phone: input.phone,
+          isPrimary: input.isPrimary,
+        });
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "contact_added",
+          actorId: input.actorId,
+          description: `Added contact ${input.name} (${input.role}).`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function updateContact(input: UpdateContactInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        await assertContactBelongsToCompany(tx, input.companyId, input.contactId);
+
+        if (input.isPrimary) {
+          await tx`
+            update company_contacts set is_primary = false, updated_at = now()
+            where company_id = ${input.companyId}
+              and is_primary
+              and id <> ${input.contactId}
+          `;
+        }
+
+        await tx`
+          update company_contacts
+          set name = ${input.name},
+              role = ${input.role},
+              email = ${input.email},
+              phone = ${input.phone},
+              is_primary = ${input.isPrimary},
+              updated_at = now()
+          where id = ${input.contactId} and company_id = ${input.companyId}
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "contact_updated",
+          actorId: input.actorId,
+          description: `Updated contact ${input.name} (${input.role}).`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function removeContact(input: RemoveContactInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        const contact = await assertContactBelongsToCompany(
+          tx,
+          input.companyId,
+          input.contactId,
+        );
+
+        await tx`
+          delete from company_contacts
+          where id = ${input.contactId} and company_id = ${input.companyId}
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "contact_removed",
+          actorId: input.actorId,
+          description: `Removed contact ${contact.name} (${contact.role}).`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) {
       await sql.end();
@@ -573,15 +691,9 @@ export function createClientRepository(
     getClient,
     createClient,
     updateClient,
-    addContact: async () => {
-      throw new Error("addContact is implemented in Task 7.");
-    },
-    updateContact: async () => {
-      throw new Error("updateContact is implemented in Task 7.");
-    },
-    removeContact: async () => {
-      throw new Error("removeContact is implemented in Task 7.");
-    },
+    addContact,
+    updateContact,
+    removeContact,
     close,
   };
 }
