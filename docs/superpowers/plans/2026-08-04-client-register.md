@@ -3592,8 +3592,24 @@ git commit -m "feat: serve the client profile from postgres"
 
 **Files:**
 - Modify: `src/components/convert-to-client-dialog.tsx`
+- Modify: `src/components/ai-assistant-panel.tsx`
 - Modify: `src/routes/enquiries.tsx`
 - Delete: `src/lib/clients-store.ts`
+
+> **Correction found during execution.** This plan originally listed only two consumers of
+> `clients-store.ts`. There is a third: `src/components/ai-assistant-panel.tsx` imports
+> `useAllCompanies` to match an enquiry's phone against company contacts.
+>
+> `useAllCompanies()` returns `[...state.added, ...seedCompanies]`, and `state.added` is only ever
+> written by `convertEnquiry()` — which this task removes. So after this task it is exactly the
+> `companies` array in `src/lib/mock-data.ts`. The panel is already a pure mock-data feature (it
+> imports `cases` from the same module), so it stays on mock data; rewiring it to Postgres belongs
+> with the future enquiries phase.
+>
+> The change is three lines: drop the `clients-store` import, add `companies` to the existing
+> `@/lib/mock-data` import, and delete `const companies = useAllCompanies();`. This removes a
+> `useSyncExternalStore` subscription, which is correct — after this task there is no store to
+> subscribe to.
 
 - [ ] **Step 1: Rewire the convert dialog**
 
