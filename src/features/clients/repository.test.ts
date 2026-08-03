@@ -261,3 +261,225 @@ describe.skipIf(!databaseUrl)("client repository reads", () => {
     ).resolves.toBeNull();
   });
 });
+
+const CREATE_INPUT_BASE = {
+  incorporationDate: "2021-06-01",
+  annualReturnBasisDate: "2026-06-01",
+  registeredOffice: "Room 8, Test Plaza, Hong Kong",
+  companySecretary: "Kossilon Secretaries Ltd",
+  ownerId: USER_AMY_ID,
+  teamId: TEAM_ANNUAL_RETURN_ID,
+  packageId: PACKAGE_BASIC_ID,
+  actorId: USER_KEN_ID,
+};
+
+describe.skipIf(!databaseUrl)("client repository company writes", () => {
+  beforeEach(async () => {
+    await cleanupClientFixtures();
+  });
+
+  afterEach(async () => {
+    await cleanupClientFixtures();
+  });
+
+  it("creates a company with its initial contact and a client_created timeline entry", async () => {
+    const repository = repositoryForTests();
+
+    const created = await repository.createClient({
+      ...CREATE_INPUT_BASE,
+      companyName: "Test Create Ltd",
+      crNumber: "TEST-CR-0001",
+      brNumber: "TEST-BR-0001",
+      contacts: [
+        {
+          name: "Alan Ho",
+          role: "Director",
+          email: "alan@example.hk",
+          phone: null,
+          isPrimary: true,
+        },
+      ],
+    });
+
+    expect(created).toMatchObject({
+      companyName: "Test Create Ltd",
+      crNumber: "TEST-CR-0001",
+      status: "active",
+      packageName: "Basic",
+      ownerName: "Amy Chan",
+    });
+    expect(created.contacts).toHaveLength(1);
+    expect(created.contacts[0]).toMatchObject({ name: "Alan Ho", isPrimary: true });
+    expect(created.timeline[0]).toMatchObject({
+      eventType: "client_created",
+      actorType: "user",
+      actorName: "Ken Wong",
+    });
+  });
+
+  it("creates a company with no contacts", async () => {
+    const repository = repositoryForTests();
+
+    const created = await repository.createClient({
+      ...CREATE_INPUT_BASE,
+      companyName: "Test No Contact Ltd",
+      crNumber: "TEST-CR-0002",
+      brNumber: "TEST-BR-0002",
+      contacts: [],
+    });
+
+    expect(created.contacts).toEqual([]);
+  });
+
+  it("rejects a duplicate CR number, identifying the field", async () => {
+    const repository = repositoryForTests();
+    await repository.createClient({
+      ...CREATE_INPUT_BASE,
+      companyName: "Test Dup One Ltd",
+      crNumber: "TEST-CR-0003",
+      brNumber: "TEST-BR-0003",
+      contacts: [],
+    });
+
+    await expect(
+      repository.createClient({
+        ...CREATE_INPUT_BASE,
+        companyName: "Test Dup Two Ltd",
+        crNumber: "TEST-CR-0003",
+        brNumber: "TEST-BR-0004",
+        contacts: [],
+      }),
+    ).rejects.toMatchObject({
+      name: "ClientWriteError",
+      field: "crNumber",
+      message: "A company with this CR number already exists.",
+    });
+  });
+
+  it("rejects a duplicate BR number, identifying the field", async () => {
+    const repository = repositoryForTests();
+    await repository.createClient({
+      ...CREATE_INPUT_BASE,
+      companyName: "Test Dup Br One Ltd",
+      crNumber: "TEST-CR-0005",
+      brNumber: "TEST-BR-0005",
+      contacts: [],
+    });
+
+    await expect(
+      repository.createClient({
+        ...CREATE_INPUT_BASE,
+        companyName: "Test Dup Br Two Ltd",
+        crNumber: "TEST-CR-0006",
+        brNumber: "TEST-BR-0005",
+        contacts: [],
+      }),
+    ).rejects.toMatchObject({ field: "brNumber" });
+  });
+
+  it("rejects an initial contact with neither email nor phone", async () => {
+    const repository = repositoryForTests();
+
+    await expect(
+      repository.createClient({
+        ...CREATE_INPUT_BASE,
+        companyName: "Test Unreachable Ltd",
+        crNumber: "TEST-CR-0007",
+        brNumber: "TEST-BR-0007",
+        contacts: [
+          { name: "Ghost", role: "Director", email: null, phone: null, isPrimary: true },
+        ],
+      }),
+    ).rejects.toMatchObject({ field: "contact" });
+  });
+
+  it("rolls the company back when its initial contact is rejected", async () => {
+    const repository = repositoryForTests();
+
+    await expect(
+      repository.createClient({
+        ...CREATE_INPUT_BASE,
+        companyName: "Test Rollback Ltd",
+        crNumber: "TEST-CR-0008",
+        brNumber: "TEST-BR-0008",
+        contacts: [
+          { name: "Ghost", role: "Director", email: null, phone: null, isPrimary: true },
+        ],
+      }),
+    ).rejects.toThrow();
+
+    const rows = await sqlForTests()`
+      select id from companies where cr_number = 'TEST-CR-0008'
+    `;
+    expect(rows).toHaveLength(0);
+  });
+
+  it("rejects an unknown actor before writing anything", async () => {
+    const repository = repositoryForTests();
+
+    await expect(
+      repository.createClient({
+        ...CREATE_INPUT_BASE,
+        actorId: "99999999-0000-0000-0000-000000000000",
+        companyName: "Test Bad Actor Ltd",
+        crNumber: "TEST-CR-0009",
+        brNumber: "TEST-BR-0009",
+        contacts: [],
+      }),
+    ).rejects.toThrow("Client actor not found or inactive.");
+
+    const rows = await sqlForTests()`
+      select id from companies where cr_number = 'TEST-CR-0009'
+    `;
+    expect(rows).toHaveLength(0);
+  });
+
+  it("records changed field names when updating a company", async () => {
+    const companyId = await seedCompany({ sequence: 1, companyName: "Aaa Update Test Ltd" });
+    const repository = repositoryForTests();
+
+    const updated = await repository.updateClient({
+      id: companyId,
+      companyName: "Aaa Update Test Ltd",
+      registeredOffice: "New Office, Central, Hong Kong",
+      companySecretary: "Kossilon Secretaries Ltd",
+      status: "inactive",
+      ownerId: USER_KEN_ID,
+      teamId: TEAM_ANNUAL_RETURN_ID,
+      packageId: PACKAGE_BASIC_ID,
+      actorId: USER_AMY_ID,
+    });
+
+    expect(updated).toMatchObject({
+      status: "inactive",
+      ownerName: "Ken Wong",
+      packageName: "Basic",
+      registeredOffice: "New Office, Central, Hong Kong",
+    });
+    expect(updated.timeline[0]).toMatchObject({
+      eventType: "client_updated",
+      actorType: "user",
+    });
+    expect(updated.timeline[0].description).toContain("registeredOffice");
+    expect(updated.timeline[0].description).toContain("status");
+    expect(updated.timeline[0].description).not.toContain("companyName");
+  });
+
+  it("rejects updating an unknown company", async () => {
+    const repository = repositoryForTests();
+
+    await expect(
+      repository.updateClient({
+        id: "99999999-0000-0000-0000-000000000000",
+        companyName: "Nowhere Ltd",
+        registeredOffice: "Nowhere",
+        companySecretary: "Nobody",
+        status: "active",
+        ownerId: USER_AMY_ID,
+        teamId: TEAM_ANNUAL_RETURN_ID,
+        packageId: null,
+        actorId: USER_AMY_ID,
+      }),
+    ).rejects.toThrow("Client not found.");
+  });
+});

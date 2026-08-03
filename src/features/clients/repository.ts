@@ -5,6 +5,7 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import { rethrowClientWriteError } from "./errors";
 import type {
   AddContactInput,
   ClientAnnualReturnEntry,
@@ -407,6 +408,158 @@ export function createClientRepository(
     return hydrateClient(sql, id);
   }
 
+  async function assertActor(tx: TransactionSqlClient, actorId: string): Promise<void> {
+    const rows = await tx<{ id: string }[]>`
+      select id from users where id = ${actorId} and active limit 1
+    `;
+
+    if (rows.length === 0) {
+      throw new Error("Client actor not found or inactive.");
+    }
+  }
+
+  async function writeTimelineEvent(
+    tx: TransactionSqlClient,
+    input: { companyId: string; eventType: string; actorId: string; description: string },
+  ): Promise<void> {
+    await tx`
+      insert into timeline_events (company_id, event_type, actor_type, actor_id, description)
+      values (${input.companyId}, ${input.eventType}, 'user', ${input.actorId}, ${input.description})
+    `;
+  }
+
+  async function insertContact(
+    tx: TransactionSqlClient,
+    companyId: string,
+    contact: { name: string; role: string; email: string | null; phone: string | null; isPrimary: boolean },
+  ): Promise<void> {
+    if (contact.isPrimary) {
+      await tx`
+        update company_contacts set is_primary = false, updated_at = now()
+        where company_id = ${companyId} and is_primary
+      `;
+    }
+
+    await tx`
+      insert into company_contacts (company_id, name, role, email, phone, is_primary)
+      values (
+        ${companyId}, ${contact.name}, ${contact.role},
+        ${contact.email}, ${contact.phone}, ${contact.isPrimary}
+      )
+    `;
+  }
+
+  /** Re-reads the company inside the transaction so callers get post-write state. */
+  async function hydrateOrThrow(
+    tx: TransactionSqlClient,
+    companyId: string,
+  ): Promise<ClientDetail> {
+    const detail = await hydrateClient(tx, companyId);
+
+    if (!detail) {
+      throw new Error("Client not found.");
+    }
+
+    return detail;
+  }
+
+  async function createClient(input: CreateClientInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+
+        const rows = await tx<{ id: string }[]>`
+          insert into companies (
+            company_name, cr_number, br_number, incorporation_date,
+            annual_return_basis_date, registered_office, company_secretary,
+            status, assigned_owner_id, assigned_team_id, service_package_id
+          )
+          values (
+            ${input.companyName}, ${input.crNumber}, ${input.brNumber},
+            ${input.incorporationDate}, ${input.annualReturnBasisDate},
+            ${input.registeredOffice}, ${input.companySecretary},
+            'active', ${input.ownerId}, ${input.teamId}, ${input.packageId}
+          )
+          returning id
+        `;
+
+        const companyId = rows[0].id;
+
+        for (const contact of input.contacts) {
+          await insertContact(tx, companyId, contact);
+        }
+
+        await writeTimelineEvent(tx, {
+          companyId,
+          eventType: "client_created",
+          actorId: input.actorId,
+          description: `Client ${input.companyName} added to the register.`,
+        });
+
+        return hydrateOrThrow(tx, companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  /** Field names whose values changed, for the timeline entry. */
+  function changedFields(
+    before: ClientDetail,
+    input: UpdateClientInput,
+  ): string[] {
+    const comparisons: [string, unknown, unknown][] = [
+      ["companyName", before.companyName, input.companyName],
+      ["registeredOffice", before.registeredOffice, input.registeredOffice],
+      ["companySecretary", before.companySecretary, input.companySecretary],
+      ["status", before.status, input.status],
+      ["ownerId", before.ownerId, input.ownerId],
+      ["teamId", before.teamId, input.teamId],
+      ["packageId", before.packageId, input.packageId],
+    ];
+
+    return comparisons
+      .filter(([, previous, next]) => previous !== next)
+      .map(([field]) => field);
+  }
+
+  async function updateClient(input: UpdateClientInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+
+        const before = await hydrateOrThrow(tx, input.id);
+        const changed = changedFields(before, input);
+
+        await tx`
+          update companies
+          set company_name = ${input.companyName},
+              registered_office = ${input.registeredOffice},
+              company_secretary = ${input.companySecretary},
+              status = ${input.status},
+              assigned_owner_id = ${input.ownerId},
+              assigned_team_id = ${input.teamId},
+              service_package_id = ${input.packageId},
+              updated_at = now()
+          where id = ${input.id}
+        `;
+
+        if (changed.length > 0) {
+          await writeTimelineEvent(tx, {
+            companyId: input.id,
+            eventType: "client_updated",
+            actorId: input.actorId,
+            description: `Updated ${changed.join(", ")}.`,
+          });
+        }
+
+        return hydrateOrThrow(tx, input.id);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) {
       await sql.end();
@@ -418,12 +571,8 @@ export function createClientRepository(
     listAssignmentOptions,
     listClients,
     getClient,
-    createClient: async () => {
-      throw new Error("createClient is implemented in Task 6.");
-    },
-    updateClient: async () => {
-      throw new Error("updateClient is implemented in Task 6.");
-    },
+    createClient,
+    updateClient,
     addContact: async () => {
       throw new Error("addContact is implemented in Task 7.");
     },
