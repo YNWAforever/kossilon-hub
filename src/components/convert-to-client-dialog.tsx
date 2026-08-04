@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -7,197 +9,294 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { teamMembers, type Company, type Enquiry } from "@/lib/mock-data";
-import { convertEnquiry, type ConvertFormData } from "@/lib/clients-store";
-import { SERVICE_TYPES } from "@/lib/templates";
+import { createClient, listClientAssignmentOptions } from "@/features/clients/server-fns";
+import type { ClientAssignmentOptions } from "@/features/clients/types";
+import type { Enquiry } from "@/lib/mock-data";
 import { UserPlus } from "lucide-react";
 
 type Props = {
   enquiry: Enquiry | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConverted: (company: Company) => void;
 };
 
-export function ConvertToClientDialog({ enquiry, open, onOpenChange, onConverted }: Props) {
-  const defaultServiceType =
-    enquiry?.intent === "New Incorporation"
-      ? "Incorporation — HK Ltd"
-      : enquiry?.intent === "Change of Director"
-        ? "Change of Director"
-        : enquiry?.intent === "Deregistration"
-          ? "Deregistration"
-          : "Annual Return — Private Ltd";
+const inputClass =
+  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
+const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
-  const [form, setForm] = useState<ConvertFormData>({
-    companyName: enquiry ? `${enquiry.contactName.split(" ")[0]} Company Ltd` : "",
-    brNumber: "",
-    crNumber: "",
-    package: "Standard",
-    ownerId: enquiry?.assignedTo ?? teamMembers[0].id,
-    address: "",
-    serviceType: defaultServiceType,
-    note: "",
-  });
+const EMPTY_OPTIONS: ClientAssignmentOptions = { owners: [], teams: [], packages: [] };
 
-  // Reset form when opening for a new enquiry
-  const [lastEnquiryId, setLastEnquiryId] = useState<string | null>(null);
-  if (enquiry && enquiry.id !== lastEnquiryId) {
-    setLastEnquiryId(enquiry.id);
-    setForm({
-      companyName: `${enquiry.contactName.split(" ")[0]} Company Ltd`,
-      brNumber: "",
-      crNumber: "",
-      package: "Standard",
-      ownerId: enquiry.assignedTo ?? teamMembers[0].id,
-      address: "",
-      serviceType: defaultServiceType,
-      note: "",
-    });
+export function ConvertToClientDialog({ enquiry, open, onOpenChange }: Props) {
+  const navigate = useNavigate();
+  const [options, setOptions] = useState<ClientAssignmentOptions>(EMPTY_OPTIONS);
+  const [companyName, setCompanyName] = useState("");
+  const [crNumber, setCrNumber] = useState("");
+  const [brNumber, setBrNumber] = useState("");
+  const [incorporationDate, setIncorporationDate] = useState("");
+  const [basisDate, setBasisDate] = useState("");
+  const [registeredOffice, setRegisteredOffice] = useState("");
+  const [ownerId, setOwnerId] = useState("");
+  const [teamId, setTeamId] = useState("");
+  const [packageId, setPackageId] = useState("");
+  const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+
+    listClientAssignmentOptions()
+      .then((loaded) => {
+        if (cancelled) return;
+        setOptions(loaded);
+        setOwnerId((current) => current || loaded.owners[0]?.id || "");
+        setTeamId((current) => current || loaded.teams[0]?.id || "");
+        setPackageId((current) => current || loaded.packages[0]?.id || "");
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Unable to load owners and packages.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !enquiry) return;
+
+    setCompanyName(`${enquiry.contactName.split(" ")[0]} Company Ltd`);
+    setCrNumber("");
+    setBrNumber("");
+    setIncorporationDate("");
+    setBasisDate("");
+    setRegisteredOffice("");
+    setFieldError(null);
+  }, [open, enquiry]);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (!enquiry) return;
+
+    setFieldError(null);
+    setSaving(true);
+
+    try {
+      const created = await createClient({
+        data: {
+          companyName,
+          crNumber,
+          brNumber,
+          incorporationDate,
+          annualReturnBasisDate: basisDate,
+          registeredOffice,
+          companySecretary: "Kossilon Secretaries Ltd",
+          ownerId,
+          teamId,
+          packageId: packageId || null,
+          contacts: [
+            {
+              name: enquiry.contactName,
+              role: "Primary contact",
+              email: null,
+              phone: enquiry.phone,
+              isPrimary: true,
+            },
+          ],
+        },
+      });
+
+      toast.success(`${companyName} added to the register.`);
+      onOpenChange(false);
+      await navigate({ to: "/clients/$id", params: { id: created.id } });
+    } catch (error) {
+      const field = (error as { field?: string }).field;
+      const message = error instanceof Error ? error.message : "Unable to convert the enquiry.";
+
+      if (field) {
+        setFieldError({ field, message });
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setSaving(false);
+    }
   }
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!enquiry || !form.companyName.trim()) return;
-    const company = convertEnquiry(enquiry, form);
-    onConverted(company);
-    onOpenChange(false);
-  };
-
-  const set = <K extends keyof ConvertFormData>(k: K, v: ConvertFormData[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display">
+          <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-4 w-4 text-primary" /> Convert enquiry to client
           </DialogTitle>
           <DialogDescription>
             {enquiry
-              ? `Create a new client company from the conversation with ${enquiry.contactName}. An initial timeline entry and owner will be recorded.`
+              ? `Creates a company record from the enquiry with ${enquiry.contactName} (${enquiry.phone}).`
               : "Select an enquiry to convert."}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={submit} className="space-y-3">
-          <Field label="Company name">
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className={labelClass} htmlFor="convert-name">
+              Company name
+            </label>
             <input
+              id="convert-name"
+              className={inputClass}
+              value={companyName}
+              onChange={(event) => setCompanyName(event.target.value)}
               required
-              value={form.companyName}
-              onChange={(e) => set("companyName", e.target.value)}
-              className={inputCls}
-              placeholder="Acme HK Ltd"
             />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="BR number (optional)">
-              <input
-                value={form.brNumber}
-                onChange={(e) => set("brNumber", e.target.value)}
-                className={inputCls}
-                placeholder="60000000"
-              />
-            </Field>
-            <Field label="CR number (optional)">
-              <input
-                value={form.crNumber}
-                onChange={(e) => set("crNumber", e.target.value)}
-                className={inputCls}
-                placeholder="1200000"
-              />
-            </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Service package">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClass} htmlFor="convert-cr">
+                CR number
+              </label>
+              <input
+                id="convert-cr"
+                className={inputClass}
+                value={crNumber}
+                onChange={(event) => setCrNumber(event.target.value)}
+                required
+              />
+              {fieldError?.field === "crNumber" && (
+                <p className="mt-1 text-xs text-destructive">{fieldError.message}</p>
+              )}
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="convert-br">
+                BR number
+              </label>
+              <input
+                id="convert-br"
+                className={inputClass}
+                value={brNumber}
+                onChange={(event) => setBrNumber(event.target.value)}
+                required
+              />
+              {fieldError?.field === "brNumber" && (
+                <p className="mt-1 text-xs text-destructive">{fieldError.message}</p>
+              )}
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="convert-incorporated">
+                Incorporation date
+              </label>
+              <input
+                id="convert-incorporated"
+                type="date"
+                className={inputClass}
+                value={incorporationDate}
+                onChange={(event) => setIncorporationDate(event.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="convert-basis">
+                Annual return basis date
+              </label>
+              <input
+                id="convert-basis"
+                type="date"
+                className={inputClass}
+                value={basisDate}
+                onChange={(event) => setBasisDate(event.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="convert-office">
+              Registered office
+            </label>
+            <input
+              id="convert-office"
+              className={inputClass}
+              value={registeredOffice}
+              onChange={(event) => setRegisteredOffice(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div>
+              <label className={labelClass} htmlFor="convert-owner">
+                Owner
+              </label>
               <select
-                value={form.package}
-                onChange={(e) => set("package", e.target.value as ConvertFormData["package"])}
-                className={inputCls}
+                id="convert-owner"
+                className={inputClass}
+                value={ownerId}
+                onChange={(event) => setOwnerId(event.target.value)}
               >
-                <option value="Basic">Basic — HKD 2,800</option>
-                <option value="Standard">Standard — HKD 3,800</option>
-                <option value="Premium">Premium — HKD 5,200</option>
-              </select>
-            </Field>
-            <Field label="Service type">
-              <select
-                value={form.serviceType}
-                onChange={(e) => set("serviceType", e.target.value)}
-                className={inputCls}
-              >
-                {SERVICE_TYPES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                {options.owners.map((owner) => (
+                  <option key={owner.id} value={owner.id}>
+                    {owner.name}
+                  </option>
                 ))}
               </select>
-            </Field>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="convert-team">
+                Team
+              </label>
+              <select
+                id="convert-team"
+                className={inputClass}
+                value={teamId}
+                onChange={(event) => setTeamId(event.target.value)}
+              >
+                {options.teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="convert-package">
+                Package
+              </label>
+              <select
+                id="convert-package"
+                className={inputClass}
+                value={packageId}
+                onChange={(event) => setPackageId(event.target.value)}
+              >
+                {options.packages.map((servicePackage) => (
+                  <option key={servicePackage.id} value={servicePackage.id}>
+                    {servicePackage.name} — HKD {servicePackage.defaultFee.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <Field label="Assigned owner">
-            <select
-              value={form.ownerId}
-              onChange={(e) => set("ownerId", e.target.value)}
-              className={inputCls}
-            >
-              {teamMembers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} · {m.role} · {m.team}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Registered address (optional)">
-            <input
-              value={form.address}
-              onChange={(e) => set("address", e.target.value)}
-              className={inputCls}
-              placeholder="Suite 1201, 12/F, Central, Hong Kong"
-            />
-          </Field>
-
-          <Field label="Onboarding note (optional)">
-            <textarea
-              value={form.note}
-              onChange={(e) => set("note", e.target.value)}
-              rows={2}
-              className={inputCls + " resize-none"}
-              placeholder="Anything the assigned owner should know…"
-            />
-          </Field>
-
-          <DialogFooter className="pt-2">
+          <DialogFooter>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+              className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              disabled={saving || !enquiry}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              Create client
+              {saving ? "Converting…" : "Convert to client"}
             </button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-const inputCls =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-medium text-foreground">{label}</span>
-      {children}
-    </label>
   );
 }

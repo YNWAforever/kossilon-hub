@@ -16,8 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { Enquiry } from "@/lib/mock-data";
-import { useAllCompanies } from "@/lib/clients-store";
-import { cases, daysUntil, formatDate } from "@/lib/mock-data";
+import { cases, companies, daysUntil, formatDate } from "@/lib/mock-data";
 import { templateForService } from "@/lib/templates";
 import {
   retrieveContext,
@@ -40,7 +39,6 @@ type Props = {
 export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
   // Force re-run when regenerating (deterministic outputs otherwise).
   const [nonce, setNonce] = useState(0);
-  const companies = useAllCompanies();
   // Ensure the panel re-renders when the KB changes.
   useFaqs();
 
@@ -53,7 +51,8 @@ export function AiAssistantPanel({ enquiry, onInsert, onSend }: Props) {
     const c = cases.find((k) => k.companyId === company.id);
     if (!c) return undefined;
     return { company, case: c, template: templateForService("Annual Return — Private Ltd") };
-  }, [companies, enquiry.phone]);
+    // `companies` is a module-level import now, not reactive state, so it is not a dependency.
+  }, [enquiry.phone]);
 
   const context = useMemo(() => {
     void nonce;
