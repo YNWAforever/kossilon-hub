@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kossilon-hub",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 8080,
+      "autoPort": false,
+      "url": "http://localhost:8080"
+    }
+  ]
+}
