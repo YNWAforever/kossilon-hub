@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatchRoute, useRouter } from "@tanstack/react-router";
 import { TopBar } from "@/components/top-bar";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
@@ -63,6 +63,8 @@ function paymentTone(status: ClientSummary["paymentStatus"]) {
 }
 
 function ClientsPage() {
+  const matchRoute = useMatchRoute();
+  const detailMatch = matchRoute({ to: "/clients/$id", fuzzy: false });
   const { clients, options, available, error } = Route.useLoaderData() as ClientsLoaderData;
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -105,6 +107,12 @@ function ClientsPage() {
       );
     });
   }, [clients, search, packageFilter, teamFilter, statusFilter]);
+
+  // `clients.$id` is a child of this route, so without this the directory would render in
+  // place of the profile. Matches the pattern in annual-returns.tsx.
+  if (detailMatch) {
+    return <Outlet />;
+  }
 
   return (
     <>
