@@ -760,7 +760,10 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           select event_type, actor_id
           from timeline_events
           where case_id = ${fixture.caseId}
-          order by created_at asc
+          -- Both rows are written in one transaction, so now() gives them an identical
+          -- created_at and the database guarantees no order between them. Sort by
+          -- event_type so the assertion is deterministic.
+          order by event_type asc
         `;
         expect(timelineEvents).toEqual([
           {

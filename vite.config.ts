@@ -4,6 +4,7 @@
 //     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+/// <reference types="vitest/config" />
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
@@ -11,5 +12,14 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+  },
+  vite: {
+    test: {
+      // The repository suites are integration tests against one shared Postgres database.
+      // Run test files one at a time: in parallel, one file's fixtures are visible to
+      // another file's unfiltered queries (e.g. the WhatsApp fixture company showing up
+      // in the annual-return suite's listCases()).
+      fileParallelism: false,
+    },
   },
 });
