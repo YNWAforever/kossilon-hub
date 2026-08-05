@@ -2,21 +2,27 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireStaffActor, type AuthDependencies } from "@/features/auth/neon-auth-server";
+import { assertClientActionAllowed, type ClientAction } from "./permissions";
 import { createClientRepository } from "./repository";
 
 /**
- * Resolves the staff user id every client write is attributed to. Mirrors
- * getCurrentAnnualReturnActorId — a Neon Auth session alone is not enough, the
- * actor must also have a staff row in the database to own a timeline event.
+ * Resolves the acting staff member and asserts they may perform `action`, then
+ * hands back the user id the repository attributes the write to. The repository
+ * still runs its own active-user check — it must not trust its caller, and that
+ * check also catches a user deactivated mid-session.
  */
-async function getCurrentClientActorId(dependencies: AuthDependencies = {}): Promise<string> {
+async function actorIdFor(
+  action: ClientAction,
+  dependencies: AuthDependencies = {},
+): Promise<string> {
   const actor = await requireStaffActor(getRequest(), dependencies);
+  assertClientActionAllowed(
+    { userId: actor.userId, role: actor.role, active: actor.active },
+    action,
+  );
 
-  if (!actor.userId) {
-    throw new Error("Forbidden: a staff database identity is required.");
-  }
-
-  return actor.userId;
+  // assertClientActionAllowed throws when userId is null, so this is narrowing only.
+  return actor.userId as string;
 }
 
 const contactSchema = z
@@ -69,48 +75,63 @@ const removeContactSchema = z.object({
 });
 
 export const listClients = createServerFn({ method: "GET" }).handler(async () => {
-  await requireStaffActor(getRequest());
+  await actorIdFor("view_register");
   return createClientRepository().listClients();
 });
 
 export const listClientAssignmentOptions = createServerFn({ method: "GET" }).handler(async () => {
-  await requireStaffActor(getRequest());
+  await actorIdFor("view_register");
   return createClientRepository().listAssignmentOptions();
 });
 
 export const getClient = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireStaffActor(getRequest());
+    await actorIdFor("view_register");
     return createClientRepository().getClient(data.id);
   });
 
 export const createClient = createServerFn({ method: "POST" })
   .validator(createClientSchema)
   .handler(async ({ data }) =>
-    createClientRepository().createClient({ ...data, actorId: await getCurrentClientActorId() }),
+    createClientRepository().createClient({ ...data, actorId: await actorIdFor("create_client") }),
   );
 
 export const updateClient = createServerFn({ method: "POST" })
   .validator(updateClientSchema)
-  .handler(async ({ data }) =>
-    createClientRepository().updateClient({ ...data, actorId: await getCurrentClientActorId() }),
-  );
+  .handler(async ({ data }) => {
+    // Reassignment and deactivation are managed actions; editing the rest is not.
+    const current = await createClientRepository().getClient(data.id);
+
+    if (!current) {
+      throw new Error("Client not found.");
+    }
+
+    const reassigns = data.ownerId !== current.ownerId || data.teamId !== current.teamId;
+    const deactivates = data.status !== current.status;
+    const action: ClientAction = reassigns
+      ? "reassign_client"
+      : deactivates
+        ? "deactivate_client"
+        : "edit_details";
+
+    return createClientRepository().updateClient({ ...data, actorId: await actorIdFor(action) });
+  });
 
 export const addClientContact = createServerFn({ method: "POST" })
   .validator(addContactSchema)
   .handler(async ({ data }) =>
-    createClientRepository().addContact({ ...data, actorId: await getCurrentClientActorId() }),
+    createClientRepository().addContact({ ...data, actorId: await actorIdFor("edit_details") }),
   );
 
 export const updateClientContact = createServerFn({ method: "POST" })
   .validator(updateContactSchema)
   .handler(async ({ data }) =>
-    createClientRepository().updateContact({ ...data, actorId: await getCurrentClientActorId() }),
+    createClientRepository().updateContact({ ...data, actorId: await actorIdFor("edit_details") }),
   );
 
 export const removeClientContact = createServerFn({ method: "POST" })
   .validator(removeContactSchema)
   .handler(async ({ data }) =>
-    createClientRepository().removeContact({ ...data, actorId: await getCurrentClientActorId() }),
+    createClientRepository().removeContact({ ...data, actorId: await actorIdFor("edit_details") }),
   );
