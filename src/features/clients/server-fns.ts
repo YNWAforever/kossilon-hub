@@ -100,13 +100,20 @@ export const createClient = createServerFn({ method: "POST" })
 export const updateClient = createServerFn({ method: "POST" })
   .validator(updateClientSchema)
   .handler(async ({ data }) => {
-    // Reassignment and deactivation are managed actions; editing the rest is not.
+    // Authenticate before touching the database: view_register is the floor every
+    // client action requires, so an inactive or non-staff caller is refused before
+    // we spend a query working out which finer permission applies.
+    const actor = await requireStaffActor(getRequest());
+    const clientActor = { userId: actor.userId, role: actor.role, active: actor.active };
+    assertClientActionAllowed(clientActor, "view_register");
+
     const current = await createClientRepository().getClient(data.id);
 
     if (!current) {
       throw new Error("Client not found.");
     }
 
+    // Reassignment and deactivation are managed actions; editing the rest is not.
     const reassigns = data.ownerId !== current.ownerId || data.teamId !== current.teamId;
     const deactivates = data.status !== current.status;
     const action: ClientAction = reassigns
@@ -115,7 +122,12 @@ export const updateClient = createServerFn({ method: "POST" })
         ? "deactivate_client"
         : "edit_details";
 
-    return createClientRepository().updateClient({ ...data, actorId: await actorIdFor(action) });
+    assertClientActionAllowed(clientActor, action);
+
+    return createClientRepository().updateClient({
+      ...data,
+      actorId: actor.userId as string,
+    });
   });
 
 export const addClientContact = createServerFn({ method: "POST" })
