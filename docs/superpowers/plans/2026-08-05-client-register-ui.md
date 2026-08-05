@@ -56,6 +56,13 @@ The two pure modules are separate files because a route file cannot export a non
 
 Read `src/features/annual-return/permissions.ts` first — this mirrors its shape, especially the ordering of the inactive check relative to the Admin shortcut.
 
+> **Correction found during execution.** Earlier drafts of Tasks 5 and 7 imported `useAuth`
+> from `@/features/auth/auth-context`. That module is a demo-only stub with no provider
+> mounted anywhere, so it throws "useAuth must be used within AuthProvider" at runtime.
+> `__root.tsx` mounts `AuthProvider` from `@/features/auth/auth-context-neon`, and
+> `work-queue.tsx` imports `useAuth` from there. Both route snippets now use
+> `auth-context-neon`.
+
 - [ ] **Step 1: Write the failing test**
 
 Create `src/features/clients/permissions.test.ts`:
@@ -755,7 +762,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
-import { useAuth } from "@/features/auth/auth-context";
+import { useAuth } from "@/features/auth/auth-context-neon";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { ProductionClientDirectory } from "@/features/clients/components/production-client-directory";
 import { clientSearchFromUrl } from "@/features/clients/board-filters";
@@ -1250,7 +1257,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { useAuth } from "@/features/auth/auth-context";
+import { useAuth } from "@/features/auth/auth-context-neon";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { ContactFormDialog } from "@/components/clients/contact-form-dialog";
 import { ProductionClientProfile } from "@/features/clients/components/production-client-profile";
