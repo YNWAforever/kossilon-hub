@@ -21,6 +21,7 @@ import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automation'
+import { Route as ClientsIdRouteImport } from './routes/clients.$id'
 import { Route as AnnualReturnsIdRouteImport } from './routes/annual-returns.$id'
 
 const WorkQueueRoute = WorkQueueRouteImport.update({
@@ -83,6 +84,11 @@ const WhatsappAutomationRoute = WhatsappAutomationRouteImport.update({
   path: '/automation',
   getParentRoute: () => WhatsappRoute,
 } as any)
+const ClientsIdRoute = ClientsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ClientsRoute,
+} as any)
 const AnnualReturnsIdRoute = AnnualReturnsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -93,7 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
-  '/clients': typeof ClientsRoute
+  '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -102,13 +108,14 @@ export interface FileRoutesByFullPath {
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
+  '/clients/$id': typeof ClientsIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
-  '/clients': typeof ClientsRoute
+  '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
+  '/clients/$id': typeof ClientsIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
 export interface FileRoutesById {
@@ -124,7 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
-  '/clients': typeof ClientsRoute
+  '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
+  '/clients/$id': typeof ClientsIdRoute
   '/whatsapp/automation': typeof WhatsappAutomationRoute
 }
 export interface FileRouteTypes {
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
+    | '/clients/$id'
     | '/whatsapp/automation'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
+    | '/clients/$id'
     | '/whatsapp/automation'
   id:
     | '__root__'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
+    | '/clients/$id'
     | '/whatsapp/automation'
   fileRoutesById: FileRoutesById
 }
@@ -187,7 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AnnualReturnsRoute: typeof AnnualReturnsRouteWithChildren
-  ClientsRoute: typeof ClientsRoute
+  ClientsRoute: typeof ClientsRouteWithChildren
   DocumentsRoute: typeof DocumentsRoute
   LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
@@ -283,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WhatsappAutomationRouteImport
       parentRoute: typeof WhatsappRoute
     }
+    '/clients/$id': {
+      id: '/clients/$id'
+      path: '/$id'
+      fullPath: '/clients/$id'
+      preLoaderRoute: typeof ClientsIdRouteImport
+      parentRoute: typeof ClientsRoute
+    }
     '/annual-returns/$id': {
       id: '/annual-returns/$id'
       path: '/$id'
@@ -305,6 +324,17 @@ const AnnualReturnsRouteWithChildren = AnnualReturnsRoute._addFileChildren(
   AnnualReturnsRouteChildren,
 )
 
+interface ClientsRouteChildren {
+  ClientsIdRoute: typeof ClientsIdRoute
+}
+
+const ClientsRouteChildren: ClientsRouteChildren = {
+  ClientsIdRoute: ClientsIdRoute,
+}
+
+const ClientsRouteWithChildren =
+  ClientsRoute._addFileChildren(ClientsRouteChildren)
+
 interface WhatsappRouteChildren {
   WhatsappAutomationRoute: typeof WhatsappAutomationRoute
 }
@@ -321,7 +351,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AnnualReturnsRoute: AnnualReturnsRouteWithChildren,
-  ClientsRoute: ClientsRoute,
+  ClientsRoute: ClientsRouteWithChildren,
   DocumentsRoute: DocumentsRoute,
   LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
