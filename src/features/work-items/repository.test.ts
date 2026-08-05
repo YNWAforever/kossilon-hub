@@ -311,6 +311,28 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
               .sort(),
           ).toEqual(["breach", "warning"]);
 
+          // An SLA breach is an internal alert: it goes to staff by email, never to
+          // the client by WhatsApp. These fixtures have no owner_id, so this also
+          // pins the fallback to the owning team's manager.
+          const [manager] = await tx<{ email: string }[]>`
+            select u.email from teams t
+            join users u on u.id = t.manager_id
+            where t.id = ${fixture.team_id}
+          `;
+          const notifications = await tx<{ channel: string; recipient: string | null }[]>`
+            select channel, recipient from notification_outbox
+            where work_item_id in (${warningId}, ${breachId})
+          `;
+          // Every escalation goes to a staff email. Nothing is addressed to a phone,
+          // which is what sending these over WhatsApp would have meant.
+          expect(notifications.length).toBeGreaterThan(0);
+          expect(notifications.every((row) => row.channel === "email")).toBe(true);
+          expect(notifications.every((row) => row.recipient?.includes("@"))).toBe(true);
+
+          // The item is unassigned when it first breaches and assigned later in this
+          // test, so both branches of the recipient fallback are exercised here.
+          expect(notifications.map((row) => row.recipient)).toContain(manager.email);
+
           throw new Error(rollbackMessage);
         }),
       ).rejects.toThrow(rollbackMessage);

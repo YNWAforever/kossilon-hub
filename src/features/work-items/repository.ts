@@ -579,19 +579,39 @@ export function createWorkItemRepository(
                   threshold,
                   occurredAt,
                 })})`;
-            await enqueueNotification(tx, {
-              companyId: item.companyId,
-              workItemId: item.id,
-              channel: "whatsapp",
-              notificationType: `work_item_sla_${threshold}`,
-              payload: {
-                caseId: item.caseId,
+            // An SLA breach means the firm is late on its own work, so this is an
+            // internal alert and must not reach the client. Staff have no phone
+            // column anywhere in the schema, only an email, which is why the channel
+            // is email rather than whatsapp. An unassigned item still breaches, so
+            // fall back to the owning team's manager.
+            const [escalationRecipient] = await tx<{ email: string | null }[]>`
+              select coalesce(owner.email, manager.email) as email
+              from work_items wi
+              left join users owner on owner.id = wi.owner_id and owner.active
+              left join teams t on t.id = wi.team_id
+              left join users manager on manager.id = t.manager_id and manager.active
+              where wi.id = ${item.id}
+            `;
+
+            // notification_outbox_redaction_check forbids a null recipient on a
+            // non-redacted row, so with nobody to tell we record the escalation
+            // event above and skip the notification rather than failing the write.
+            if (escalationRecipient?.email) {
+              await enqueueNotification(tx, {
+                companyId: item.companyId,
                 workItemId: item.id,
-                threshold,
-                occurredAt,
-                body: `Work item SLA ${threshold} reached for ${item.title}.`,
-              },
-            });
+                channel: "email",
+                notificationType: `work_item_sla_${threshold}`,
+                recipient: escalationRecipient.email,
+                payload: {
+                  caseId: item.caseId,
+                  workItemId: item.id,
+                  threshold,
+                  occurredAt,
+                  body: `Work item SLA ${threshold} reached for ${item.title}.`,
+                },
+              });
+            }
           }
         });
       }
