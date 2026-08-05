@@ -51,6 +51,11 @@ describe("page header convention", () => {
       // A pass-through to the demo and production case-detail components, which
       // render the header themselves.
       "routes/annual-returns.$id.tsx",
+      // Pass-throughs to the production client register components, which render
+      // the header themselves. The routes hold only the outlet guard, the role
+      // check, and the dialogs.
+      "routes/clients.tsx",
+      "routes/clients.$id.tsx",
     ]);
 
     const missing = routeSources
