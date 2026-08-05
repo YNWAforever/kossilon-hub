@@ -50,6 +50,52 @@ export async function sendWoztellMessage(
   return { providerMessageId };
 }
 
+/**
+ * WOZTELL signs each webhook delivery with an HMAC-SHA256 of the raw request
+ * body, keyed on `WOZTELL_WEBHOOK_SECRET`. The header is accepted either bare or
+ * with the `sha256=` prefix that most providers emit.
+ *
+ * The body must be the *raw* bytes as received. Re-serialising the parsed JSON
+ * changes key order and whitespace, which changes the digest, so callers have to
+ * read the text once and hand the same string to both this and the parser.
+ */
+export async function verifyWoztellSignature(input: {
+  secret: string;
+  rawBody: string;
+  signatureHeader: string | null;
+}): Promise<boolean> {
+  const provided = input.signatureHeader?.trim().replace(/^sha256=/i, "");
+
+  // A missing secret must never mean "everything is valid".
+  if (!input.secret || !provided) return false;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(input.secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(input.rawBody));
+  const expected = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+
+  return timingSafeEqual(expected, provided.toLowerCase());
+}
+
+/** Compares without leaking the position of the first difference through timing. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+
+  let mismatch = 0;
+  for (let index = 0; index < a.length; index += 1) {
+    mismatch |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  }
+
+  return mismatch === 0;
+}
+
 type JsonRecord = Record<string, unknown>;
 type Path = readonly string[];
 

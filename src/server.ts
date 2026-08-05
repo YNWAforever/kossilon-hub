@@ -3,6 +3,12 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+// Duplicated from ./features/whatsapp/webhook rather than imported: every other
+// branch here defers its imports so a cold start does not pull the database
+// client in, and importing the constant would pull the module. The pairing is
+// pinned by a test.
+const WHATSAPP_WEBHOOK_PATH = "/api/webhooks/whatsapp";
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -51,6 +57,29 @@ export default {
       const isAuthProxyRequest = pathname.startsWith("/api/auth/");
       const isMagicLinkWebhook = pathname === "/api/webhooks/neon-auth";
       const isMagicLinkConfirmation = pathname === "/auth/magic-link/confirm";
+
+      // WOZTELL authenticates with an HMAC over the raw body rather than a session,
+      // so inbound WhatsApp lands here instead of on a server function.
+      if (pathname === WHATSAPP_WEBHOOK_PATH) {
+        const [{ createWhatsAppWebhookHandler }, { getWhatsAppWebhookConfig }, { createWhatsAppRepository }] =
+          await Promise.all([
+            import("./features/whatsapp/webhook"),
+            import("./features/whatsapp/config"),
+            import("./features/whatsapp/repository"),
+          ]);
+        const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+        const { webhookSecret } = getWhatsAppWebhookConfig({
+          ...process.env,
+          ...(Object.fromEntries(
+            Object.entries(runtimeEnv).filter(([, value]) => typeof value === "string"),
+          ) as Record<string, string>),
+        });
+
+        return createWhatsAppWebhookHandler({
+          webhookSecret,
+          createRepository: () => createWhatsAppRepository(),
+        })(request);
+      }
 
       if (isAuthProxyRequest || isMagicLinkWebhook || isMagicLinkConfirmation) {
         const { createNeonAuthProxy } = await import("./features/auth/neon-auth-proxy");

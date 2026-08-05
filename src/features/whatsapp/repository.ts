@@ -130,6 +130,7 @@ export type WhatsAppRepository = {
   recordInboundMessage(
     input: NormalizedInboundWhatsAppMessage,
   ): Promise<InboundWhatsAppMessageRecord>;
+  getCaseAuthorizationContext(caseId: string): Promise<WhatsAppCaseAuthorizationContext | null>;
   queueOutboundTemplateMessage(
     input: QueueOutboundTemplateMessageInput,
   ): Promise<WhatsAppMessageRecord>;
@@ -190,6 +191,23 @@ type ActiveCaseRow = {
 type AnnualReturnCaseRow = {
   company_id: string;
   company_name: string;
+};
+
+/** Structurally satisfies AnnualReturnActionCase in ../annual-return/permissions. */
+export type WhatsAppCaseAuthorizationContext = {
+  id: string;
+  companyName: string;
+  companyTeamId: string;
+  ownerId: string;
+  reviewerId: string | null;
+};
+
+type CaseAuthorizationRow = {
+  id: string;
+  company_name: string;
+  assigned_team_id: string;
+  owner_id: string;
+  reviewer_id: string | null;
 };
 
 type TemplateRow = {
@@ -809,6 +827,34 @@ export function createWhatsAppRepository(
     });
   }
 
+  /**
+   * The fields `getAnnualReturnActionPermission` needs to decide whether this
+   * actor may message this case's client. Sending a WhatsApp message to a client
+   * is an action on the case, so it is scoped like every other case action rather
+   * than being open to any staff member who knows a case id.
+   */
+  async function getCaseAuthorizationContext(
+    caseId: string,
+  ): Promise<WhatsAppCaseAuthorizationContext | null> {
+    const rows = await sql<CaseAuthorizationRow[]>`
+      select arc.id, c.company_name, c.assigned_team_id, arc.owner_id, arc.reviewer_id
+      from annual_return_cases arc
+      join companies c on c.id = arc.company_id
+      where arc.id = ${caseId}
+      limit 1
+    `;
+    const [row] = rows;
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      companyName: row.company_name,
+      companyTeamId: row.assigned_team_id,
+      ownerId: row.owner_id,
+      reviewerId: row.reviewer_id,
+    };
+  }
+
   async function queueOutboundTemplateMessage(
     input: QueueOutboundTemplateMessageInput,
   ): Promise<WhatsAppMessageRecord> {
@@ -1124,6 +1170,7 @@ export function createWhatsAppRepository(
 
   return {
     recordInboundMessage,
+    getCaseAuthorizationContext,
     queueOutboundTemplateMessage,
     recordWebhookEvent,
     listConversations,
