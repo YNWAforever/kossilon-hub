@@ -48,6 +48,12 @@ export default async function config(env: ConfigEnv) {
       // default and made them fail intermittently under load.
       ...(resolved as { test?: Record<string, unknown> }).test,
       testTimeout: 30_000,
+      // The repository suites are integration tests against one shared Postgres
+      // database. Run test files one at a time: in parallel, one file's fixtures
+      // are visible to another file's unfiltered queries, so the annual-return
+      // suite counted the WhatsApp and work-item fixture companies as real rows
+      // and failed on assertions about exact case lists.
+      fileParallelism: false,
     },
   };
 }
