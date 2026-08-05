@@ -11,7 +11,15 @@ export type NotificationIdentity = {
   recipient?: string | null;
 };
 
-export type EnqueueNotificationInput = NotificationIdentity & {
+/**
+ * `recipient` is required here even though it is optional on NotificationIdentity,
+ * which also describes rows already written. notification_outbox_redaction_check
+ * rejects a null recipient on a non-redacted row, so an enqueue without one always
+ * fails at the database — this makes that a compile error instead. Redacted rows
+ * legitimately have no recipient, which is why the base type stays optional.
+ */
+export type EnqueueNotificationInput = Omit<NotificationIdentity, "recipient"> & {
+  recipient: string;
   idempotencyKey?: string;
   payload?: postgres.JSONValue;
   maxAttempts?: number;
