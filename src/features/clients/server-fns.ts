@@ -68,49 +68,79 @@ const removeContactSchema = z.object({
   contactId: z.string().uuid(),
 });
 
+/**
+ * Acquire, use, close. Every other feature has one of these; the client register
+ * landed without it and constructed a repository in eight handlers with no
+ * close() anywhere. In production that leaks nothing today — with no explicit
+ * url the repository resolves to the getSqlClient() singleton, so ownsClient is
+ * false and close() is a no-op — but it is one `createClientRepository(url)`
+ * away from leaking a pool per request.
+ */
+async function withClientRepository<T>(
+  handler: (repository: ReturnType<typeof createClientRepository>) => Promise<T>,
+): Promise<T> {
+  const repository = createClientRepository();
+
+  try {
+    return await handler(repository);
+  } finally {
+    await repository.close();
+  }
+}
+
 export const listClients = createServerFn({ method: "GET" }).handler(async () => {
   await requireStaffActor(getRequest());
-  return createClientRepository().listClients();
+  return withClientRepository((repository) => repository.listClients());
 });
 
 export const listClientAssignmentOptions = createServerFn({ method: "GET" }).handler(async () => {
   await requireStaffActor(getRequest());
-  return createClientRepository().listAssignmentOptions();
+  return withClientRepository((repository) => repository.listAssignmentOptions());
 });
 
 export const getClient = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
     await requireStaffActor(getRequest());
-    return createClientRepository().getClient(data.id);
+    return withClientRepository((repository) => repository.getClient(data.id));
   });
 
 export const createClient = createServerFn({ method: "POST" })
   .validator(createClientSchema)
   .handler(async ({ data }) =>
-    createClientRepository().createClient({ ...data, actorId: await getCurrentClientActorId() }),
+    withClientRepository(async (repository) =>
+      repository.createClient({ ...data, actorId: await getCurrentClientActorId() }),
+    ),
   );
 
 export const updateClient = createServerFn({ method: "POST" })
   .validator(updateClientSchema)
   .handler(async ({ data }) =>
-    createClientRepository().updateClient({ ...data, actorId: await getCurrentClientActorId() }),
+    withClientRepository(async (repository) =>
+      repository.updateClient({ ...data, actorId: await getCurrentClientActorId() }),
+    ),
   );
 
 export const addClientContact = createServerFn({ method: "POST" })
   .validator(addContactSchema)
   .handler(async ({ data }) =>
-    createClientRepository().addContact({ ...data, actorId: await getCurrentClientActorId() }),
+    withClientRepository(async (repository) =>
+      repository.addContact({ ...data, actorId: await getCurrentClientActorId() }),
+    ),
   );
 
 export const updateClientContact = createServerFn({ method: "POST" })
   .validator(updateContactSchema)
   .handler(async ({ data }) =>
-    createClientRepository().updateContact({ ...data, actorId: await getCurrentClientActorId() }),
+    withClientRepository(async (repository) =>
+      repository.updateContact({ ...data, actorId: await getCurrentClientActorId() }),
+    ),
   );
 
 export const removeClientContact = createServerFn({ method: "POST" })
   .validator(removeContactSchema)
   .handler(async ({ data }) =>
-    createClientRepository().removeContact({ ...data, actorId: await getCurrentClientActorId() }),
+    withClientRepository(async (repository) =>
+      repository.removeContact({ ...data, actorId: await getCurrentClientActorId() }),
+    ),
   );

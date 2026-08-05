@@ -30,11 +30,21 @@ export function isPublicRoute(pathname: string): boolean {
   return pathname === "/login";
 }
 
+/**
+ * Backslashes and control characters. Browsers normalise "\\" to "/" when parsing
+ * a URL and strip control characters before parsing, so "/\\evil.com" and
+ * "/\tevil.com" both reassemble into the protocol-relative "//evil.com" that the
+ * startsWith("//") check rejects.
+ */
+// eslint-disable-next-line no-control-regex
+const UNSAFE_REDIRECT_CHARACTERS = /[\\\u0000-\u001f\u007f]/;
+
 export function getSafeRedirectPath(path: string | null): string {
   if (
     !path ||
     !path.startsWith("/") ||
     path.startsWith("//") ||
+    UNSAFE_REDIRECT_CHARACTERS.test(path) ||
     path === "/login" ||
     path.startsWith("/login?") ||
     path.startsWith("/login#")

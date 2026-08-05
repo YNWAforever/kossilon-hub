@@ -105,6 +105,12 @@ export function isAllowedStatusTransition(
 ): boolean {
   const fromIndex = ANNUAL_RETURN_STATUSES.indexOf(from);
   const toIndex = ANNUAL_RETURN_STATUSES.indexOf(to);
+
+  // indexOf returns -1 for a status outside the enum, which made `toIndex ===
+  // fromIndex + 1` true for an unknown `from` and the very first status — moving
+  // a case with a drifted status backwards to the start of the workflow.
+  if (fromIndex < 0 || toIndex < 0) return false;
+
   return toIndex === fromIndex + 1;
 }
 

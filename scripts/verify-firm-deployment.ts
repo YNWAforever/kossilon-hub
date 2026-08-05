@@ -85,8 +85,31 @@ const LOCAL_GATE_CONTRACTS = {
         "cleanupExpiredUploads",
       ],
     },
+    // Presence of the function proved nothing: it existed, was tested, and was
+    // never called, because the Worker exported only `fetch` while the template
+    // declared a cron. The trigger needs a handler on the other end of it.
+    {
+      file: "src/server.ts",
+      snippets: ["async scheduled(", "runScheduledMaintenanceForWorker", "runFirmMaintenance("],
+    },
+    {
+      file: "src/server/maintenance.ts",
+      snippets: ["export async function runFirmMaintenance"],
+    },
   ],
 } as const;
+
+/**
+ * Routes allowed not to branch on dataMode, and why. Mirrors the list in
+ * src/lib/demo-store-boundary.test.ts — this gate runs offline before a deploy,
+ * that one runs in the suite.
+ */
+const ROUTES_WITHOUT_A_MODE_BRANCH = new Set([
+  "login.tsx",
+  "admin.tsx",
+  "work-queue.tsx",
+  "__root.tsx",
+]);
 
 export type FirmDeploymentVerificationInput = {
   dryRun: boolean;
@@ -95,6 +118,8 @@ export type FirmDeploymentVerificationInput = {
   routeFiles: readonly string[];
   readRoute(file: string): Promise<string>;
   readSchema(): Promise<string>;
+  /** Every migration concatenated, for the schema-drift diff. */
+  readMigrations(): Promise<string>;
   readOnlyCapabilities: {
     network: false;
     resourceWrite: false;
@@ -162,9 +187,32 @@ export async function verifyFirmDeployment(
     readOperations += 1;
     return input.readSchema();
   })();
-  const migrationReady = REQUIRED_TABLES.every((table) =>
-    schema.includes("create table if not exists " + table),
-  );
+  const migrations = await (async () => {
+    readOperations += 1;
+    return input.readMigrations();
+  })();
+
+  // Was: does schema.sql mention four hardcoded table names. That passed while
+  // schema.sql was missing five tables the migrations create and the app queries.
+  const schemaTables = tableNamesIn(schema);
+  const migrationTables = tableNamesIn(migrations);
+  const tablesMissingFromSchema = [...migrationTables]
+    .filter((table) => !schemaTables.has(table))
+    .sort();
+  const migrationReady =
+    tablesMissingFromSchema.length === 0 &&
+    REQUIRED_TABLES.every((table) => schemaTables.has(table));
+
+  // routeFiles and readRoute were supplied and never read, so the gate carried
+  // route-reading machinery while inspecting no routes — which is where the
+  // fixture-in-production bugs actually live.
+  const ungatedRoutes: string[] = [];
+  for (const file of input.routeFiles) {
+    if (ROUTES_WITHOUT_A_MODE_BRANCH.has(file)) continue;
+    readOperations += 1;
+    const body = await input.readRoute(file);
+    if (!body.includes("dataMode")) ungatedRoutes.push(file);
+  }
   const strictDataModeReady =
     structureReady && (await hasContract(LOCAL_GATE_CONTRACTS["strict-data-mode"]));
   const localProviderReady = await hasContract(LOCAL_GATE_CONTRACTS["local-provider-mode"]);
@@ -181,9 +229,25 @@ export async function verifyFirmDeployment(
   for (const table of REQUIRED_TABLES) {
     checks.push({
       name: "migration table " + table,
-      status: schema.includes("create table if not exists " + table) ? "pass" : "fail",
+      status: schemaTables.has(table) ? "pass" : "fail",
     });
   }
+
+  for (const table of tablesMissingFromSchema) {
+    checks.push({
+      name: `schema drift: ${table} is in migrations but not schema.sql`,
+      status: "fail",
+    });
+  }
+
+  for (const file of ungatedRoutes) {
+    checks.push({ name: `route ${file} does not branch on dataMode`, status: "fail" });
+  }
+
+  checks.push({
+    name: "route-data-mode",
+    status: ungatedRoutes.length === 0 ? "pass" : "fail",
+  });
 
   checks.push(
     {
@@ -223,10 +287,25 @@ export async function verifyFirmDeployment(
   };
 }
 
+export function tableNamesIn(sql: string): Set<string> {
+  const names = new Set<string>();
+  const pattern = /create\s+table\s+(?:if\s+not\s+exists\s+)?([a-z_][a-z0-9_]*)/gi;
+
+  for (const match of sql.matchAll(pattern)) {
+    names.add(match[1].toLowerCase());
+  }
+
+  return names;
+}
+
 async function main(): Promise<void> {
   const routeFiles = (await readdir(routeRoot))
     .filter((file) => file.endsWith(".tsx") && !file.endsWith(".test.tsx"))
+    // Route-directory tests are prefixed with "-" so the router ignores them.
+    .filter((file) => !file.startsWith("-"))
     .sort();
+  const migrationsRoot = new URL("db/migrations/", root);
+  const migrationFiles = (await readdir(migrationsRoot)).filter((file) => file.endsWith(".sql"));
   const result = await verifyFirmDeployment({
     dryRun: process.argv.includes("--dry-run"),
     fileExists: async (file) => {
@@ -241,6 +320,14 @@ async function main(): Promise<void> {
     routeFiles,
     readRoute: (file) => readFileFromDisk(new URL(file, routeRoot), "utf8"),
     readSchema: () => readFileFromDisk(new URL("src/server/db/schema.sql", root), "utf8"),
+    readMigrations: async () =>
+      (
+        await Promise.all(
+          migrationFiles
+            .sort()
+            .map((file) => readFileFromDisk(new URL(file, migrationsRoot), "utf8")),
+        )
+      ).join("\n"),
     readOnlyCapabilities: { network: false, resourceWrite: false },
   });
 

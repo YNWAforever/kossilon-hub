@@ -42,7 +42,8 @@ src/routes/          file-based routes; __root.tsx is the only layout. routeTree
 src/features/<name>/ vertical slice: types.ts, repository.ts (SQL), server-fns.ts, domain logic, components/
 src/lib/             demo stores + mock data + shared UI utils
 src/server/          db/client.ts, runtime-env.ts, provider-mode.ts, cron.ts, db/schema.sql
-src/server.ts        Worker fetch entry — auth proxy routing, then TanStack SSR handler
+src/server.ts        Worker entry — `scheduled` (the 5-min cron → runFirmMaintenance) and `fetch`
+                     (auth proxy + WhatsApp webhook routing, then the TanStack SSR handler)
 src/start.ts         CSRF + error request middleware; defaultSsr: false
 db/migrations/       numbered forward-only SQL
 scripts/             offline validators/gates + db migrate/seed (run with node --experimental-strip-types or bun)
@@ -53,7 +54,9 @@ docs/superpowers/    per-feature design specs and implementation plans
 ## Request Lifecycle (production mode)
 
 `src/server.ts` fetch → `/api/auth/*`, `/api/webhooks/neon-auth`, `/auth/magic-link/confirm`
-short-circuit to the Neon Auth proxy; everything else → TanStack Start SSR →
+short-circuit to the Neon Auth proxy; `/api/webhooks/whatsapp` short-circuits to the WOZTELL
+webhook handler (HMAC over the raw body — it has no session to derive an actor from, which is
+why it is a route and not a server fn); everything else → TanStack Start SSR →
 `__root.beforeLoad` calls `getAuthenticatedActor()` and redirects to `/login` on failure →
 route component calls a server fn → `createServerFn().validator(zodSchema).handler()` →
 `requireActor()`/`requireStaffActor()` resolves the `AuthenticatedActor` from `staff_profiles`
@@ -67,8 +70,11 @@ repository executes tagged-template SQL → repository `close()` in a `finally`.
   derive the actor from the request.
 - **Testability**: domain logic is pure and dependency-injected (`dependencies: { repository }`,
   `*ForActor()` functions). Server fns are thin wrappers around those. Follow this — it is why
-  468 of 500 tests run with no database. The other 32 are repository integration tests behind
-  `describe.skipIf(!databaseUrl)`; they only run when `DATABASE_URL` is set.
+  593 of 653 tests run with no database. The other 60 are repository integration tests behind
+  `describe.skipIf(!databaseUrl)`; they only run when **`TEST_DATABASE_URL`** is set (not
+  `DATABASE_URL`, which is what the migrate and seed scripts read), against a database that has
+  been migrated _and_ seeded — they assert against reference rows only `db:seed` creates.
+  CI does all of this; see `.github/workflows/ci.yml`.
 - **Route-dir tests** must be prefixed with `-` (e.g. `-settings.interaction.test.tsx`) or the
   router tries to treat them as routes.
 - **Page headers**: every screen renders `<PageHeader>` as the first child of its `<main>`, and
