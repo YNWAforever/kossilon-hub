@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -8,15 +9,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { createClient, updateClient } from "@/features/clients/server-fns";
+import {
+  createClient,
+  listClientAssignmentOptions,
+  updateClient,
+} from "@/features/clients/server-fns";
 import type { ClientAssignmentOptions, ClientDetail } from "@/features/clients/types";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  options: ClientAssignmentOptions;
   /** Omit to create a new client; supply to edit an existing one. */
   client?: ClientDetail;
+  /** Admin or Manager. Gates the owner, team, and status controls. */
+  canManage: boolean;
   onSaved: (clientId: string) => void;
 };
 
@@ -85,8 +91,19 @@ const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 /** ClientWriteError fields this dialog renders an inline message for. Anything else toasts. */
 const INLINE_ERROR_FIELDS = new Set(["crNumber", "brNumber", "contact"]);
 
-export function ClientFormDialog({ open, onOpenChange, options, client, onSaved }: Props) {
+// A stable reference: this feeds the useEffect below via `options`, and a fresh object
+// literal on every render — while the query is pending — would retrigger that effect
+// (and its setForm call) in an infinite loop until the query resolves.
+const EMPTY_OPTIONS: ClientAssignmentOptions = { owners: [], teams: [], packages: [] };
+
+export function ClientFormDialog({ open, onOpenChange, client, canManage, onSaved }: Props) {
   const isEdit = Boolean(client);
+  const optionsQuery = useQuery({
+    queryKey: ["clients", "assignment-options"],
+    queryFn: () => listClientAssignmentOptions(),
+    enabled: open,
+  });
+  const options = optionsQuery.data ?? EMPTY_OPTIONS;
   const [form, setForm] = useState<FormState>(() =>
     client ? formFor(client, options) : emptyForm(options),
   );
@@ -299,40 +316,44 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label className={labelClass} htmlFor="client-owner">
-                Owner
-              </label>
-              <select
-                id="client-owner"
-                className={inputClass}
-                value={form.ownerId}
-                onChange={(event) => set("ownerId", event.target.value)}
-              >
-                {ownerOptions.map((owner) => (
-                  <option key={owner.id} value={owner.id}>
-                    {owner.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass} htmlFor="client-team">
-                Team
-              </label>
-              <select
-                id="client-team"
-                className={inputClass}
-                value={form.teamId}
-                onChange={(event) => set("teamId", event.target.value)}
-              >
-                {teamOptions.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {canManage && (
+              <div>
+                <label className={labelClass} htmlFor="client-owner">
+                  Owner
+                </label>
+                <select
+                  id="client-owner"
+                  className={inputClass}
+                  value={form.ownerId}
+                  onChange={(event) => set("ownerId", event.target.value)}
+                >
+                  {ownerOptions.map((owner) => (
+                    <option key={owner.id} value={owner.id}>
+                      {owner.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {canManage && (
+              <div>
+                <label className={labelClass} htmlFor="client-team">
+                  Team
+                </label>
+                <select
+                  id="client-team"
+                  className={inputClass}
+                  value={form.teamId}
+                  onChange={(event) => set("teamId", event.target.value)}
+                >
+                  {teamOptions.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className={labelClass} htmlFor="client-package">
                 Package
@@ -352,7 +373,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             </div>
           </div>
 
-          {isEdit && (
+          {isEdit && canManage && (
             <div>
               <label className={labelClass} htmlFor="client-status">
                 Status
