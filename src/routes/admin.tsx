@@ -17,7 +17,7 @@ import {
 import { StatusPill } from "@/components/status-pill";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/features/auth/auth-context-neon";
-import { demoUsers, isAdmin, type AuthRole, type DemoUser } from "@/features/auth/session";
+import { isAdmin, type AuthRole, type DemoUser } from "@/features/auth/session";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
@@ -68,10 +68,63 @@ const auditRows = [
   },
 ];
 
+/**
+ * Every other screen branches on dataMode; this one never did. It rendered
+ * `demoUsers` and a hardcoded `auditRows` unconditionally, so a production deploy
+ * showed three invented staff members as the firm's roster alongside a fabricated
+ * audit trail — and any access decision made from it was made against fiction.
+ *
+ * There is no production user-management data layer to branch to, so production
+ * says so instead of inventing one. Fixtures now come from useAuth(), which
+ * returns [] outside demo mode, rather than from a direct module import.
+ */
 function AdminPage() {
-  const { session, loginDemoUser } = useAuth();
+  const { dataMode } = Route.useRouteContext();
+  return dataMode === "demo" ? <DemoAdminConsole /> : <ProductionAdminConsole />;
+}
+
+function ProductionAdminConsole() {
+  const { session } = useAuth();
+
+  return (
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Administration"
+        title="Admin"
+        subtitle="User and system administration"
+      />
+      <section className="rounded-xl border border-border bg-card p-6">
+        <div className="flex max-w-2xl items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
+            <ShieldCheck className="h-5 w-5 text-status-orange" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Not available in this deployment
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Staff accounts, roles and team membership are managed in Neon Auth and in the
+              firm&rsquo;s <code className="font-mono text-xs">staff_profiles</code> table, not from
+              this console. The prototype user list this screen used to show was fixture data and
+              never reflected the firm&rsquo;s real users.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Signed in as {session?.name ?? "an authenticated user"} ({session?.role ?? "User"}).
+            </p>
+            <Link className="mt-4 inline-flex rounded-md border px-3 py-2 text-sm" to="/">
+              Back to dashboard
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function DemoAdminConsole() {
+  const { session, loginDemoUser, demoUsers } = useAuth();
   const [tab, setTab] = useState<AdminTab>("users");
-  const [localUsers, setLocalUsers] = useState<DemoUser[]>(demoUsers);
+  const [localUsers, setLocalUsers] = useState<DemoUser[]>(() => [...demoUsers]);
   const canAdmin = isAdmin(session);
 
   const activeUsers = useMemo(() => localUsers.filter((user) => user.active).length, [localUsers]);
