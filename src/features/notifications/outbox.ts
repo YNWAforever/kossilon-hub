@@ -32,6 +32,27 @@ type NotificationRow = {
 const RETRY_BASE_SECONDS = 60;
 const RETRY_MAX_SECONDS = 60 * 60;
 
+/**
+ * How long a row may sit in 'processing' before another run may claim it.
+ *
+ * claimDue used to select only 'pending' and 'failed', and nothing else ever
+ * moved a row out of 'processing'. A Worker killed between the claim and
+ * markSent/markRetry — a CPU limit, an eviction, a deploy — stranded that
+ * notification permanently, with no error anywhere: the SLA escalation simply
+ * never arrived.
+ *
+ * Generous relative to a dispatch (seconds) so a slow run is not double-sent
+ * while it is still working; short enough that a stranded row recovers on the
+ * next few cron ticks rather than never. attempt_count was already incremented
+ * at claim time, so a row that strands repeatedly still exhausts max_attempts
+ * instead of looping forever.
+ */
+const PROCESSING_VISIBILITY_TIMEOUT_SECONDS = 15 * 60;
+
+export function processingReclaimCutoff(now: string): string {
+  return new Date(Date.parse(now) - PROCESSING_VISIBILITY_TIMEOUT_SECONDS * 1000).toISOString();
+}
+
 export function nextRetryAt(attempt: number, now: string): string {
   const normalizedAttempt = Math.max(1, Math.floor(attempt));
   const delaySeconds = Math.min(
@@ -169,8 +190,13 @@ export function createNotificationOutboxRepository(
       return withTransaction(sql, async (tx) => {
         const rows = await tx<NotificationRow[]>`
           select * from notification_outbox
-          where status in ('pending', 'failed') and next_attempt_at <= ${now}
-            and attempt_count < max_attempts
+          where attempt_count < max_attempts
+            and (
+              (status in ('pending', 'failed') and next_attempt_at <= ${now})
+              -- Stranded by a Worker that died mid-dispatch. Without this the row
+              -- is never claimable again and the notification is silently lost.
+              or (status = 'processing' and updated_at <= ${processingReclaimCutoff(now)})
+            )
           order by next_attempt_at asc, created_at asc
           limit ${limit}
           for update skip locked
