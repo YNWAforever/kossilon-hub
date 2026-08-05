@@ -5,6 +5,8 @@ import type { AnnualReturnRepository } from "./repository";
 import {
   addAnnualReturnCaseNoteForActor,
   assignAnnualReturnCaseOwnerForActor,
+  getAnnualReturnCaseForActor,
+  listAnnualReturnCaseNotesForActor,
   queueAnnualReturnWhatsAppReminderMessageForActor,
   updateAnnualReturnChecklistItemForActor,
   updateAnnualReturnFilingProofForActor,
@@ -186,5 +188,145 @@ describe("production annual return list scoping", () => {
     await expect(listAnnualReturnCasesForActor(clientActor, {}, { repository })).rejects.toThrow(
       "Forbidden: staff access is required.",
     );
+  });
+});
+
+/**
+ * The board read has always been scoped, but the detail reads behind it were not:
+ * getAnnualReturnCase, listAnnualReturnCaseNotes and buildAnnualReturnReminderDraft
+ * were staff-only and nothing more. A Staff actor who could not see another team's
+ * cases on the board could still read any of them in full by passing the case id.
+ */
+describe("production annual return detail scoping", () => {
+  const teamId = "10000000-0000-4000-8000-000000000001";
+  const otherTeamId = "10000000-0000-4000-8000-000000000002";
+
+  const staffActor: AuthenticatedActor = {
+    authUserId: "staff-auth",
+    userId: "20000000-0000-4000-8000-000000000009",
+    role: "Staff",
+    teamId,
+    active: true,
+  };
+
+  function caseRecord(overrides: Record<string, unknown> = {}) {
+    return {
+      id: caseId,
+      companyTeamId: teamId,
+      ownerId: staffActor.userId,
+      reviewerId: null,
+      companyName: "Harbour Holdings Limited",
+      ...overrides,
+    };
+  }
+
+  function repositoryFor(case_: unknown) {
+    const getCase = vi.fn(async () => case_);
+    const listNotes = vi.fn(async () => [{ id: "note-1" }]);
+    return {
+      getCase,
+      listNotes,
+      repository: { getCase, listNotes } as unknown as Pick<
+        AnnualReturnRepository,
+        "getCase" | "listNotes"
+      >,
+    };
+  }
+
+  it("returns a case the actor owns", async () => {
+    const { repository } = repositoryFor(caseRecord());
+
+    await expect(
+      getAnnualReturnCaseForActor(staffActor, { id: caseId }, { repository }),
+    ).resolves.toMatchObject({ id: caseId });
+  });
+
+  it("hides a case owned by someone else on another team", async () => {
+    const { repository } = repositoryFor(
+      caseRecord({ companyTeamId: otherTeamId, ownerId: "20000000-0000-4000-8000-00000000000a" }),
+    );
+
+    await expect(
+      getAnnualReturnCaseForActor(staffActor, { id: caseId }, { repository }),
+    ).resolves.toBeNull();
+  });
+
+  it("hides a same-team case the actor neither owns nor reviews", async () => {
+    const { repository } = repositoryFor(
+      caseRecord({ ownerId: "20000000-0000-4000-8000-00000000000a" }),
+    );
+
+    await expect(
+      getAnnualReturnCaseForActor(staffActor, { id: caseId }, { repository }),
+    ).resolves.toBeNull();
+  });
+
+  it("shows a same-team case the actor reviews", async () => {
+    const { repository } = repositoryFor(
+      caseRecord({
+        ownerId: "20000000-0000-4000-8000-00000000000a",
+        reviewerId: staffActor.userId,
+      }),
+    );
+
+    await expect(
+      getAnnualReturnCaseForActor(staffActor, { id: caseId }, { repository }),
+    ).resolves.toMatchObject({ id: caseId });
+  });
+
+  it("shows any case in the team to that team's manager", async () => {
+    const { repository } = repositoryFor(
+      caseRecord({ ownerId: "20000000-0000-4000-8000-00000000000a" }),
+    );
+
+    await expect(
+      getAnnualReturnCaseForActor(
+        { ...staffActor, role: "Manager" },
+        { id: caseId },
+        { repository },
+      ),
+    ).resolves.toMatchObject({ id: caseId });
+  });
+
+  it("does not narrow an admin", async () => {
+    const { repository } = repositoryFor(
+      caseRecord({ companyTeamId: otherTeamId, ownerId: "20000000-0000-4000-8000-00000000000a" }),
+    );
+
+    await expect(
+      getAnnualReturnCaseForActor(
+        { authUserId: "admin-auth", userId: "admin-1", role: "Admin", teamId: null, active: true },
+        { id: caseId },
+        { repository },
+      ),
+    ).resolves.toMatchObject({ id: caseId });
+  });
+
+  it("refuses a client actor", async () => {
+    const { repository } = repositoryFor(caseRecord());
+
+    await expect(
+      getAnnualReturnCaseForActor(clientActor, { id: caseId }, { repository }),
+    ).rejects.toThrow(/^Forbidden:/);
+  });
+
+  it("refuses notes on a case outside the actor's scope", async () => {
+    const { repository, listNotes } = repositoryFor(
+      caseRecord({ companyTeamId: otherTeamId, ownerId: "20000000-0000-4000-8000-00000000000a" }),
+    );
+
+    await expect(
+      listAnnualReturnCaseNotesForActor(staffActor, { caseId }, { repository }),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(listNotes).not.toHaveBeenCalled();
+  });
+
+  it("returns notes on a case the actor owns", async () => {
+    const { repository, listNotes } = repositoryFor(caseRecord());
+
+    await expect(
+      listAnnualReturnCaseNotesForActor(staffActor, { caseId }, { repository }),
+    ).resolves.toEqual([{ id: "note-1" }]);
+    expect(listNotes).toHaveBeenCalledWith(caseId);
   });
 });

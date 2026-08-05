@@ -10,7 +10,11 @@ import {
   type AnnualReturnRepository,
   type CaseFilters,
 } from "./repository";
-import { caseFiltersForActor } from "./permissions";
+import {
+  assertAnnualReturnCaseVisible,
+  caseFiltersForActor,
+  isAnnualReturnCaseVisibleToActor,
+} from "./permissions";
 import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
 import { getCurrentAnnualReturnActor, getCurrentAnnualReturnActorId } from "./session";
 import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
@@ -132,6 +136,44 @@ export async function listAnnualReturnCasesForActor(
   });
 
   return dependencies.repository.listCases({ ...filters, ...scope });
+}
+
+function boardActorFrom(actor: AuthenticatedActor) {
+  return { id: actor.userId, role: actor.role, teamId: actor.teamId, active: actor.active };
+}
+
+/**
+ * The detail read behind the board. Applies the same scope as
+ * listAnnualReturnCasesForActor, so a case that does not appear on an actor's
+ * board cannot be fetched by id either — which is what used to happen.
+ *
+ * An out-of-scope case reads as "not found" rather than "forbidden": the caller
+ * has no business learning that a case with that id exists.
+ */
+export async function getAnnualReturnCaseForActor(
+  actor: AuthenticatedActor,
+  input: { id: string },
+  dependencies: { repository: Pick<AnnualReturnRepository, "getCase"> },
+) {
+  const case_ = await dependencies.repository.getCase(input.id);
+  if (!case_) return null;
+
+  return isAnnualReturnCaseVisibleToActor(boardActorFrom(actor), case_) ? case_ : null;
+}
+
+export async function listAnnualReturnCaseNotesForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string },
+  dependencies: { repository: Pick<AnnualReturnRepository, "getCase" | "listNotes"> },
+) {
+  const case_ = await dependencies.repository.getCase(input.caseId);
+
+  if (!case_) {
+    throw new Error("Annual return case not found.");
+  }
+
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
+  return dependencies.repository.listNotes(input.caseId);
 }
 
 export async function assignAnnualReturnCaseOwnerForActor(
@@ -329,7 +371,9 @@ export const listAnnualReturnCases = createServerFn({ method: "GET" })
 export const getAnnualReturnCase = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository) => repository.getCase(data.id)),
+    withAnnualReturnActorRepository((repository, actor) =>
+      getAnnualReturnCaseForActor(actor, { id: data.id }, { repository }),
+    ),
   );
 
 export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" }).handler(async () =>
@@ -348,7 +392,9 @@ export const assignAnnualReturnCaseOwner = createServerFn({ method: "POST" })
 export const listAnnualReturnCaseNotes = createServerFn({ method: "GET" })
   .validator(annualReturnCaseIdSchema)
   .handler(({ data }) =>
-    withAnnualReturnRepository((repository) => repository.listNotes(data.caseId)),
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAnnualReturnCaseNotesForActor(actor, data, { repository }),
+    ),
   );
 
 export const addAnnualReturnCaseNote = createServerFn({ method: "POST" })
@@ -382,12 +428,12 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) =>
-    withAnnualReturnRepository((repository, actorId) =>
-      repository.recordReminder({
-        ...data,
-        actorId,
-      }),
-    ),
+    withAnnualReturnRepository(async (repository, actorId) => {
+      // A write, so it takes the same mutation guard as every other case write
+      // rather than the weaker "is some active staff member" it had before.
+      await repository.assertCanMutateCase(data.caseId, actorId, "record_reminder");
+      return repository.recordReminder({ ...data, actorId });
+    }),
   );
 
 export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
@@ -435,8 +481,8 @@ export const updateAnnualReturnFilingProof = createServerFn({ method: "POST" })
 export const buildAnnualReturnReminderDraft = createServerFn({ method: "GET" })
   .validator(annualReturnCaseIdSchema)
   .handler(async ({ data }) =>
-    withAnnualReturnRepository(async (repository) => {
-      const case_ = await repository.getCase(data.caseId);
+    withAnnualReturnActorRepository(async (repository, actor) => {
+      const case_ = await getAnnualReturnCaseForActor(actor, { id: data.caseId }, { repository });
 
       if (!case_) {
         throw new Error("Annual return case not found.");
