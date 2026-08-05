@@ -18,6 +18,11 @@ import {
   type AnnualReturnActionActor,
   type AnnualReturnActorRole,
 } from "./permissions";
+import {
+  CHECKLIST_EVIDENCE_FILE_TYPES,
+  FILING_CONFIRMATION_FILE_TYPES,
+  PAYMENT_PROOF_FILE_TYPES,
+} from "./evidence-file-types";
 import type {
   AnnualReturnCase,
   AnnualReturnCaseNote,
@@ -214,9 +219,11 @@ export const DEFAULT_CASE_LIMIT = 200;
 
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
-const CHECKLIST_EVIDENCE_FILE_TYPE = "annual-return-evidence";
-const PAYMENT_PROOF_FILE_TYPE = "payment-proof";
-const FILING_CONFIRMATION_FILE_TYPE = "filing-confirmation";
+// Accepted `documents.file_type` values per evidence kind. Previously three bare
+// literals that only the seed script wrote — see ./evidence-file-types.
+const CHECKLIST_EVIDENCE_FILE_TYPE = CHECKLIST_EVIDENCE_FILE_TYPES;
+const PAYMENT_PROOF_FILE_TYPE = PAYMENT_PROOF_FILE_TYPES;
+const FILING_CONFIRMATION_FILE_TYPE = FILING_CONFIRMATION_FILE_TYPES;
 
 function dateOnly(value: string | Date): string {
   if (value instanceof Date) {
@@ -753,7 +760,7 @@ export function createAnnualReturnRepository(
         and d.case_id = arci.case_id
         and d.company_id = ${companyId}
         and d.verification_status = 'verified'
-        and d.file_type = ${CHECKLIST_EVIDENCE_FILE_TYPE}
+        and d.file_type = any(${CHECKLIST_EVIDENCE_FILE_TYPE})
       where arci.case_id = ${caseId}
         and arci.required = true
         and (
@@ -792,7 +799,7 @@ export function createAnnualReturnRepository(
         and d.case_id = p.case_id
         and d.company_id = ${companyId}
         and d.verification_status = 'verified'
-        and d.file_type = ${PAYMENT_PROOF_FILE_TYPE}
+        and d.file_type = any(${PAYMENT_PROOF_FILE_TYPE})
       where p.case_id = ${caseId}
       for update of p
     `;
@@ -822,7 +829,7 @@ export function createAnnualReturnRepository(
           and case_id = ${caseId}
           and company_id = ${companyId}
           and verification_status = 'verified'
-          and file_type = ${FILING_CONFIRMATION_FILE_TYPE}
+          and file_type = any(${FILING_CONFIRMATION_FILE_TYPE})
         limit 1
       `;
 
@@ -1257,7 +1264,7 @@ export function createAnnualReturnRepository(
             and case_id = ${input.caseId}
             and company_id = ${lockedCase.company_id}
             and verification_status = 'verified'
-            and file_type = ${CHECKLIST_EVIDENCE_FILE_TYPE}
+            and file_type = any(${CHECKLIST_EVIDENCE_FILE_TYPE})
           limit 1
         `;
 
@@ -1378,7 +1385,7 @@ export function createAnnualReturnRepository(
             and case_id = ${input.caseId}
             and company_id = ${lockedCase.company_id}
             and verification_status = 'verified'
-            and file_type = ${PAYMENT_PROOF_FILE_TYPE}
+            and file_type = any(${PAYMENT_PROOF_FILE_TYPE})
           limit 1
         `;
 
@@ -1504,7 +1511,7 @@ export function createAnnualReturnRepository(
           and case_id = ${input.caseId}
           and company_id = ${lockedCase.company_id}
           and verification_status = 'verified'
-          and file_type = ${FILING_CONFIRMATION_FILE_TYPE}
+          and file_type = any(${FILING_CONFIRMATION_FILE_TYPE})
         limit 1
       `;
 

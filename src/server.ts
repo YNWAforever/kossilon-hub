@@ -50,7 +50,37 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+/**
+ * The other half of the five-minute cron trigger in `wrangler.template.jsonc`.
+ *
+ * Without this export the Worker only ever answered `fetch`, so the 5-minute
+ * trigger had nothing to invoke: SLA escalations were never evaluated, the
+ * notification outbox was only dispatched as a side effect of a staff member
+ * sending a follow-up, and expired upload intents were never reclaimed.
+ *
+ * `runFirmMaintenance` is actor-free by design — a scheduler has no request to
+ * derive an actor from — and is imported lazily so a `fetch` cold start does not
+ * pull the database client in.
+ */
+export async function runScheduledMaintenanceForWorker(scheduledTime: number): Promise<void> {
+  const { runFirmMaintenance } = await import("./server/maintenance");
+
+  try {
+    const result = await runFirmMaintenance({ now: new Date(scheduledTime).toISOString() });
+    console.log("scheduled maintenance", JSON.stringify(result));
+  } catch (error) {
+    // Nothing watches a scheduled invocation the way a user watches a request, so
+    // a failure has to announce itself or the next signal is a missed SLA.
+    console.error("scheduled maintenance failed", error);
+    throw error;
+  }
+}
+
 export default {
+  async scheduled(event: { scheduledTime?: number } | undefined) {
+    await runScheduledMaintenanceForWorker(event?.scheduledTime ?? Date.now());
+  },
+
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const pathname = new URL(request.url).pathname;
@@ -61,12 +91,15 @@ export default {
       // WOZTELL authenticates with an HMAC over the raw body rather than a session,
       // so inbound WhatsApp lands here instead of on a server function.
       if (pathname === WHATSAPP_WEBHOOK_PATH) {
-        const [{ createWhatsAppWebhookHandler }, { getWhatsAppWebhookConfig }, { createWhatsAppRepository }] =
-          await Promise.all([
-            import("./features/whatsapp/webhook"),
-            import("./features/whatsapp/config"),
-            import("./features/whatsapp/repository"),
-          ]);
+        const [
+          { createWhatsAppWebhookHandler },
+          { getWhatsAppWebhookConfig },
+          { createWhatsAppRepository },
+        ] = await Promise.all([
+          import("./features/whatsapp/webhook"),
+          import("./features/whatsapp/config"),
+          import("./features/whatsapp/repository"),
+        ]);
         const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
         const { webhookSecret } = getWhatsAppWebhookConfig({
           ...process.env,
