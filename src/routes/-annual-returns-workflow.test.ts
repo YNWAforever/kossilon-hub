@@ -147,9 +147,13 @@ describe("annual return workflow route regressions", () => {
   });
 
   it("renders the root not-found state for a route that no longer exists", async () => {
-    // /clients was deleted. This pins that the router 404s rather than
+    // /enquiries was deleted. This pins that the router 404s rather than
     // crashing, which is otherwise only checked by hand in the browser.
-    const html = await renderRoute("/clients/missing-client");
+    //
+    // This previously used /clients, which came back as a Postgres-backed screen.
+    // An unknown client id now renders the profile's own not-found state, which is
+    // a different path from the router 404 this test exists to cover.
+    const html = await renderRoute("/enquiries");
 
     expect(html).toContain("Page not found");
   });
