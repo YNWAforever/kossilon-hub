@@ -1,4 +1,5 @@
 import {
+  Building2,
   CalendarClock,
   CreditCard,
   ExternalLink,
@@ -16,10 +17,13 @@ import {
 // drawer (mobile) both render this, so the two can no longer drift apart in
 // either the set of destinations they expose or the labels they use.
 //
-// /clients, /clients/$id, /enquiries, /teams and /tasks were deleted, not
-// parked. Each was either superseded by a screen already reading Postgres
-// (/work-queue, /annual-returns) or had no table behind it. Adding an entry
-// here means the screen reads live data — there is no fixture-backed tier.
+// /enquiries, /teams and /tasks were deleted, not parked. Each was either
+// superseded by a screen already reading Postgres (/work-queue,
+// /annual-returns) or had no table behind it. Adding an entry here means the
+// screen reads live data — there is no fixture-backed tier.
+//
+// /clients and /clients/$id were deleted alongside them and returned once the
+// register read Postgres, which is the bar this comment sets.
 
 export type NavItem = {
   to: string;
@@ -40,6 +44,7 @@ export const navGroups: NavGroup[] = [
     heading: "Operations",
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { to: "/clients", label: "Clients", icon: Building2 },
       { to: "/work-queue", label: "Work Queue", icon: ListChecks },
       { to: "/annual-returns", label: "Annual Returns", icon: CalendarClock },
       { to: "/documents", label: "Documents", icon: FileText },
