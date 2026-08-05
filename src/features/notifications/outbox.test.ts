@@ -76,3 +76,61 @@ describe("stranded outbox rows become claimable again", () => {
     expect(migration).toContain("where status = 'processing'");
   });
 });
+
+/**
+ * retention_until was written on every insert and read back on every row while
+ * nothing ever acted on it, so notification_outbox grew without bound — carrying
+ * recipient addresses and message bodies indefinitely. The five-minute cron now
+ * prunes it.
+ */
+describe("outbox retention is enforced", () => {
+  const source = readFileSync(new URL("./outbox.ts", import.meta.url), "utf8");
+  const prune = source.slice(source.indexOf("async pruneExpired"), source.indexOf("async close()"));
+
+  it("deletes only rows past their retention date", () => {
+    expect(prune).toContain("retention_until <=");
+    expect(prune).toContain("delete from notification_outbox");
+  });
+
+  // The important half: a notification that has not been delivered yet must never
+  // be deleted, however old its retention date is.
+  it("never deletes a notification still awaiting delivery", () => {
+    expect(prune).toContain("status in ('sent', 'cancelled')");
+    expect(prune).toContain("status = 'failed' and attempt_count >= max_attempts");
+    expect(prune).not.toContain("status = 'pending'");
+    expect(prune).not.toContain("status = 'processing'");
+  });
+
+  it("bounds the work it does in one cron tick", () => {
+    expect(prune).toContain("limit ${limit}");
+    expect(prune).toContain("for update skip locked");
+  });
+
+  it("is driven by the scheduled maintenance pass", () => {
+    const cron = readFileSync(new URL("../../server/cron.ts", import.meta.url), "utf8");
+    const maintenance = readFileSync(
+      new URL("../../server/maintenance.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(cron).toContain("pruneNotifications");
+    expect(maintenance).toContain("outbox.pruneExpired(now)");
+  });
+});
+
+describe("manual dispatch does not take its clock from the caller", () => {
+  const source = readFileSync(new URL("./runtime-dispatch.ts", import.meta.url), "utf8");
+
+  // A caller-supplied `now` chooses which notifications look due: a future value
+  // claims ones that are not, a past value hides ones that are.
+  it("derives now on the server and keeps it out of the input schema", () => {
+    expect(source).toContain("manualDispatchInputSchema");
+    expect(source).toContain("now: new Date().toISOString()");
+
+    const schema = source.slice(
+      source.indexOf("const manualDispatchInputSchema"),
+      source.indexOf("export const dispatchDueNotifications"),
+    );
+    expect(schema).not.toContain("now:");
+  });
+});

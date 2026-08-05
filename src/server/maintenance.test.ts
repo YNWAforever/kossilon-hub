@@ -22,6 +22,10 @@ function dependencies(
       close: vi.fn(async () => {}),
     }),
     createDocumentStorage: () => ({ delete: vi.fn(async () => {}) }),
+    createOutboxRepository: () => ({
+      pruneExpired: vi.fn(async () => ({ pruned: 5 })),
+      close: vi.fn(async () => {}),
+    }),
     ...overrides,
   };
 }
@@ -38,6 +42,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
       escalations: { warnings: 1, breaches: 2 },
       dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0 },
       uploads: { expired: 2 },
+      notifications: { pruned: 5 },
     });
   });
 

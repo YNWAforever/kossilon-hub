@@ -160,6 +160,7 @@ export type NotificationOutboxRepository = {
     id: string,
     input: { errorCode: string; errorMessage: string; now: string },
   ): Promise<void>;
+  pruneExpired(now: string, limit?: number): Promise<{ pruned: number }>;
   close(): Promise<void>;
 };
 
@@ -238,6 +239,40 @@ export function createNotificationOutboxRepository(
           last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now()
         where id = ${id} and status = 'processing'
       `;
+    },
+    /**
+     * retention_until was written on every insert and read back on every row, and
+     * nothing ever acted on it — the column, its check constraint and its index
+     * existed while the table grew without bound, carrying recipient addresses and
+     * message bodies indefinitely.
+     *
+     * Only settled rows are pruned: anything still pending, failed within its
+     * attempt budget, or mid-dispatch is left alone regardless of its retention
+     * date, so this can never delete a notification that has yet to be delivered.
+     * Bounded per run because it shares a five-minute cron with the dispatch pass.
+     */
+    async pruneExpired(now, limit = 500) {
+      if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
+        throw new Error("Outbox prune limit must be between 1 and 5000.");
+      }
+
+      const rows = await sql<{ id: string }[]>`
+        delete from notification_outbox
+        where id in (
+          select id from notification_outbox
+          where retention_until <= ${now}
+            and (
+              status in ('sent', 'cancelled')
+              or (status = 'failed' and attempt_count >= max_attempts)
+            )
+          order by retention_until asc
+          limit ${limit}
+          for update skip locked
+        )
+        returning id
+      `;
+
+      return { pruned: rows.length };
     },
     async close() {
       if (ownsClient && "end" in sql) await sql.end();

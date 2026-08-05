@@ -778,3 +778,17 @@ create index if not exists whatsapp_messages_contact_case_occurred_idx
     id desc
   )
   where case_id is not null;
+-- from 0009_reclaim_stranded_outbox_rows.sql
+
+create index if not exists notification_outbox_stranded_idx
+  on notification_outbox (updated_at)
+  where status = 'processing';
+
+-- from 0010_index_timeline_and_upload_intent_lookups.sql
+
+create index if not exists timeline_events_company_created_idx
+  on timeline_events (company_id, created_at desc);
+
+create index if not exists document_upload_intents_document_idx
+  on document_upload_intents (document_id)
+  where document_id is not null;

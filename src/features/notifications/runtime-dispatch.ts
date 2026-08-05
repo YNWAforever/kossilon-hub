@@ -68,13 +68,26 @@ export const dispatchDueNotificationsOnServer = createServerOnlyFn(
   },
 );
 
+/**
+ * The manual dispatch escape hatch. The cron in src/server.ts is what normally
+ * drives the outbox; this exists for an operator who needs to flush it now.
+ *
+ * `now` is deliberately not part of the input. It used to be, which let a caller
+ * choose the clock the outbox is claimed and stamped against — a future `now`
+ * claims notifications that are not due yet, a past one hides ones that are.
+ * There is no reason for a caller to pick the current time.
+ */
+const manualDispatchInputSchema = z
+  .object({ limit: z.number().int().min(1).max(500).optional() })
+  .strict();
+
 export const dispatchDueNotifications = createServerFn({ method: "POST" })
-  .validator(dispatchInputSchema)
+  .validator(manualDispatchInputSchema)
   .handler(async ({ data }) => {
     const [{ getRequest }, { requireStaffActor }] = await Promise.all([
       import("@tanstack/react-start/server"),
       import("@/features/auth/neon-auth-server"),
     ]);
     await requireStaffActor(getRequest());
-    return dispatchDueNotificationsOnServer(data);
+    return dispatchDueNotificationsOnServer({ ...data, now: new Date().toISOString() });
   });
