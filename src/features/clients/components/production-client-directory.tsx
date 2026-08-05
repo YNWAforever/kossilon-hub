@@ -192,6 +192,11 @@ export function ProductionClientDirectory({
                         <Link
                           to="/clients/$id"
                           params={{ id: client.id }}
+                          // /clients/$id inherits the register's validateSearch, so the
+                          // filters must be carried through. Passing the whole search is
+                          // what makes returning from a profile land back on the same
+                          // filtered view rather than the default one.
+                          search={search}
                           className="font-medium hover:text-primary"
                         >
                           {client.companyName}
