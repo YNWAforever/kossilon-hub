@@ -60,9 +60,10 @@ existing pattern as the constraint rather than a suggestion.
 
 ### Route files stay thin
 
-`src/routes/clients.tsx` reads `dataMode` from route context and renders one of two
-things. The `<Outlet />` guard is hoisted **above** the heavy hooks, so the parent holds
-only `useRouterState` and the child route can render through it.
+`src/routes/clients.tsx` renders the production directory directly — there is no demo
+branch, so it does not read `dataMode` at all. The `<Outlet />` guard is hoisted **above**
+the heavy hooks, so the parent holds only `useRouterState` and the child route can render
+through it.
 
 `annual-returns.tsx:40-46` documents why:
 
