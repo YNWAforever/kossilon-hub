@@ -21,37 +21,49 @@ const MANAGED_ACTIONS = new Set<ClientAction>([
 ]);
 
 /**
+ * Single source of truth for the rule set. Returns the refusal reason, or null
+ * when the action is allowed. `canPerformClientAction` and
+ * `assertClientActionAllowed` both derive from this rather than re-encoding the
+ * rules independently, so a future role or managed action can't update one and
+ * silently drift from the other.
+ */
+function clientActionDenialReason(actor: ClientActor, action: ClientAction): string | null {
+  // Checked before the Admin shortcut, matching caseFiltersForActor: an inactive
+  // admin is refused for being inactive, not admitted for being an admin.
+  if (!actor.active) {
+    return "Forbidden: inactive users cannot access the client register.";
+  }
+
+  if (actor.role !== "Admin" && actor.role !== "Manager" && actor.role !== "Staff") {
+    return "Forbidden: staff access is required.";
+  }
+
+  if (!actor.userId) {
+    return "Forbidden: a staff database identity is required.";
+  }
+
+  if (MANAGED_ACTIONS.has(action) && actor.role === "Staff") {
+    return `Forbidden: ${action} requires a Manager or an Admin.`;
+  }
+
+  return null;
+}
+
+/**
  * The register is readable firm-wide by any active staff member — it is reference
  * data, and a system of record that hides most of the record cannot do its job.
  * Deliberately unlike caseFiltersForActor, which narrows reads by team and owner.
  * See docs/superpowers/specs/2026-08-05-client-register-ui-design.md.
  */
 export function canPerformClientAction(actor: ClientActor, action: ClientAction): boolean {
-  // Checked before the Admin shortcut, matching caseFiltersForActor: an inactive
-  // admin is refused for being inactive, not admitted for being an admin.
-  if (!actor.active) return false;
-  if (actor.role !== "Admin" && actor.role !== "Manager" && actor.role !== "Staff") return false;
-  if (!actor.userId) return false;
-  if (MANAGED_ACTIONS.has(action)) return actor.role === "Admin" || actor.role === "Manager";
-
-  return true;
+  return clientActionDenialReason(actor, action) === null;
 }
 
 export function assertClientActionAllowed(actor: ClientActor, action: ClientAction): ClientActor {
-  if (!actor.active) {
-    throw new Error("Forbidden: inactive users cannot access the client register.");
-  }
+  const reason = clientActionDenialReason(actor, action);
 
-  if (actor.role !== "Admin" && actor.role !== "Manager" && actor.role !== "Staff") {
-    throw new Error("Forbidden: staff access is required.");
-  }
-
-  if (!actor.userId) {
-    throw new Error("Forbidden: a staff database identity is required.");
-  }
-
-  if (MANAGED_ACTIONS.has(action) && actor.role === "Staff") {
-    throw new Error(`Forbidden: ${action} requires a Manager or an Admin.`);
+  if (reason) {
+    throw new Error(reason);
   }
 
   return actor;

@@ -45,6 +45,15 @@ describe("canPerformClientAction", () => {
   it("refuses a staff role with no database identity", () => {
     expect(canPerformClientAction(actor({ userId: null }), "view_register")).toBe(false);
   });
+
+  it("refuses an unrecognised role value", () => {
+    const rogue = actor({ role: "Auditor" as ClientActor["role"] });
+
+    expect(canPerformClientAction(rogue, "view_register")).toBe(false);
+    expect(() => assertClientActionAllowed(rogue, "view_register")).toThrow(
+      "Forbidden: staff access is required.",
+    );
+  });
 });
 
 describe("assertClientActionAllowed", () => {
