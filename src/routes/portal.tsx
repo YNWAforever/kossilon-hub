@@ -6,6 +6,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { StatusPill } from "@/components/status-pill";
+import type { StatusTone } from "@/lib/status";
+import { formatDate } from "@/lib/format-date";
+import {
+  getClientPortalCase,
+  listClientPortalCases,
+} from "../features/annual-return/client-portal-server-fns";
 import {
   createDocumentUploadIntent,
   downloadDocument,
@@ -43,7 +50,7 @@ export const Route = createFileRoute("/portal")({
 });
 
 function PortalRoute() {
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
@@ -70,6 +77,13 @@ function PortalRoute() {
   }, [caseId, dataMode, navigate, selectedCase]);
 
   if (dataMode !== "demo") {
+    // A Client sign-in gets its own companies' cases. Every other read in this
+    // feature resolves a staff actor, so before this a client landed on the
+    // "unavailable" branch below and had no route anywhere.
+    if (actor?.role === "Client") {
+      return <ClientPortalView caseId={productionCaseId} />;
+    }
+
     if (!productionCaseId) {
       return (
         <main className="flex-1 space-y-3 p-6">
@@ -418,6 +432,114 @@ function ArchivePreview({
         )}
       </div>
     </section>
+  );
+}
+
+// Mapped here rather than reusing lib/status's caseStatusTone, which is typed
+// against the demo CaseStatus vocabulary and differs from the production one.
+function clientPortalStatusTone(status: ProductionAnnualReturnCase["currentStatus"]): StatusTone {
+  switch (status) {
+    case "Documents pending":
+    case "Signature pending":
+      return "yellow";
+    case "Payment pending":
+      return "orange";
+    case "Filed":
+    case "Completed":
+      return "blue";
+    default:
+      return "green";
+  }
+}
+
+/**
+ * What a client signing in actually sees: their own companies' annual returns,
+ * and the document panel for whichever one they open. Read-only apart from the
+ * uploads the documents feature already authorises for Client actors.
+ */
+function ClientPortalView({ caseId }: { caseId?: string }) {
+  const casesQuery = useQuery({
+    queryKey: ["client-portal", "cases"],
+    queryFn: () => listClientPortalCases({ data: {} }),
+    retry: false,
+  });
+  const caseQuery = useQuery({
+    queryKey: ["client-portal", "case", caseId ?? "none"],
+    queryFn: () => getClientPortalCase({ data: { caseId: caseId! } }),
+    enabled: Boolean(caseId),
+    retry: false,
+  });
+
+  if (caseId) {
+    if (caseQuery.isPending) {
+      return <div className="p-6 text-sm text-muted-foreground">Loading your annual return...</div>;
+    }
+    if (caseQuery.data) {
+      return <ProductionPortalCaseView caseItem={caseQuery.data} />;
+    }
+    return (
+      <main className="flex-1 space-y-3 p-6">
+        <PageHeader eyebrow="Client portal" title="Annual return not found" />
+        <p className="text-sm text-muted-foreground">
+          This annual return is not one of your company&rsquo;s filings.
+        </p>
+        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/portal">
+          Back to your filings
+        </Link>
+      </main>
+    );
+  }
+
+  if (casesQuery.isPending) {
+    return <div className="p-6 text-sm text-muted-foreground">Loading your filings...</div>;
+  }
+
+  const cases = casesQuery.data ?? [];
+
+  return (
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Client portal"
+        title="Your annual returns"
+        subtitle="Filings we are preparing for your company"
+      />
+      {cases.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          There are no annual returns on file for your company yet. Your company secretary will be
+          in touch when one is due.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {cases.map((caseItem) => (
+            <li key={caseItem.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="font-display text-base font-semibold text-foreground">
+                  {caseItem.companyName} — {caseItem.returnYear}
+                </p>
+                <StatusPill tone={clientPortalStatusTone(caseItem.currentStatus)}>
+                  {caseItem.currentStatus}
+                </StatusPill>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Due {formatDate(caseItem.filingDueDate)}
+                {caseItem.outstandingRequiredItems > 0
+                  ? ` · ${caseItem.outstandingRequiredItems} document${
+                      caseItem.outstandingRequiredItems === 1 ? "" : "s"
+                    } still needed from you`
+                  : " · nothing outstanding from you"}
+              </p>
+              <Link
+                className="mt-3 inline-flex rounded-md border px-3 py-2 text-sm"
+                to="/portal"
+                search={{ caseId: caseItem.id }}
+              >
+                Open
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
   );
 }
 

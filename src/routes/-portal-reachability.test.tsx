@@ -76,7 +76,7 @@ async function render(pathname: string) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [pathname] }),
-    context: { queryClient, dataMode: "production" },
+    context: { queryClient, dataMode: "production", actor: null },
     defaultPreloadStaleTime: 0,
   });
   await router.load();

@@ -123,6 +123,8 @@ export type CaseFilters = {
    * which are separate AND-ed clauses.
    */
   visibleToUserId?: string;
+  /** The companies a client actor is a member of. Empty means no access at all. */
+  companyIds?: readonly string[];
   limit?: number;
 };
 
@@ -554,6 +556,7 @@ export function createAnnualReturnRepository(
     const status = filters.status ?? null;
     const paymentStatus = filters.paymentStatus ?? null;
     const visibleToUserId = filters.visibleToUserId ?? null;
+    const companyIds = filters.companyIds ? [...filters.companyIds] : null;
     const overdueOnly = filters.overdueOnly === true ? today : null;
     const missingDocuments = typeof filters.missingDocuments === "boolean" ? today : null;
     const wantsMissingDocuments = filters.missingDocuments === true;
@@ -605,6 +608,7 @@ export function createAnnualReturnRepository(
           or arc.owner_id = ${visibleToUserId}::uuid
           or arc.reviewer_id = ${visibleToUserId}::uuid
         )
+        and (${companyIds}::uuid[] is null or arc.company_id = any(${companyIds}::uuid[]))
         and (${overdueOnly}::date is null or arc.filing_due_date < ${overdueOnly}::date)
         and (
           ${missingDocuments}::date is null

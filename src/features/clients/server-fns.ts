@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireStaffActor, type AuthDependencies } from "@/features/auth/neon-auth-server";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { assertClientCompanyCreatable, assertClientCompanyWritable } from "./authorization";
 import { createClientRepository } from "./repository";
 
 /**
@@ -9,13 +11,35 @@ import { createClientRepository } from "./repository";
  * getCurrentAnnualReturnActorId — a Neon Auth session alone is not enough, the
  * actor must also have a staff row in the database to own a timeline event.
  */
-async function getCurrentClientActorId(dependencies: AuthDependencies = {}): Promise<string> {
+async function getCurrentClientActor(
+  dependencies: AuthDependencies = {},
+): Promise<AuthenticatedActor & { userId: string }> {
   const actor = await requireStaffActor(getRequest(), dependencies);
 
   if (!actor.userId) {
     throw new Error("Forbidden: a staff database identity is required.");
   }
 
+  return { ...actor, userId: actor.userId };
+}
+
+/**
+ * Resolves the acting staff member and checks they may write to this company.
+ * Reads stay firm-wide — the register doubles as a directory — but a Staff or
+ * Manager user can no longer rename, reassign or re-contact another team's client.
+ */
+async function requireWritableCompany(
+  repository: ReturnType<typeof createClientRepository>,
+  companyId: string,
+): Promise<string> {
+  const actor = await getCurrentClientActor();
+  const assignedTeamId = await repository.getCompanyTeamId(companyId);
+
+  if (!assignedTeamId) {
+    throw new Error("Client company not found.");
+  }
+
+  assertClientCompanyWritable(actor, { assignedTeamId });
   return actor.userId;
 }
 
@@ -108,16 +132,21 @@ export const getClient = createServerFn({ method: "GET" })
 export const createClient = createServerFn({ method: "POST" })
   .validator(createClientSchema)
   .handler(async ({ data }) =>
-    withClientRepository(async (repository) =>
-      repository.createClient({ ...data, actorId: await getCurrentClientActorId() }),
-    ),
+    withClientRepository(async (repository) => {
+      const actor = await getCurrentClientActor();
+      assertClientCompanyCreatable(actor, { teamId: data.teamId });
+      return repository.createClient({ ...data, actorId: actor.userId });
+    }),
   );
 
 export const updateClient = createServerFn({ method: "POST" })
   .validator(updateClientSchema)
   .handler(async ({ data }) =>
     withClientRepository(async (repository) =>
-      repository.updateClient({ ...data, actorId: await getCurrentClientActorId() }),
+      repository.updateClient({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.id),
+      }),
     ),
   );
 
@@ -125,7 +154,10 @@ export const addClientContact = createServerFn({ method: "POST" })
   .validator(addContactSchema)
   .handler(async ({ data }) =>
     withClientRepository(async (repository) =>
-      repository.addContact({ ...data, actorId: await getCurrentClientActorId() }),
+      repository.addContact({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
     ),
   );
 
@@ -133,7 +165,10 @@ export const updateClientContact = createServerFn({ method: "POST" })
   .validator(updateContactSchema)
   .handler(async ({ data }) =>
     withClientRepository(async (repository) =>
-      repository.updateContact({ ...data, actorId: await getCurrentClientActorId() }),
+      repository.updateContact({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
     ),
   );
 
@@ -141,6 +176,9 @@ export const removeClientContact = createServerFn({ method: "POST" })
   .validator(removeContactSchema)
   .handler(async ({ data }) =>
     withClientRepository(async (repository) =>
-      repository.removeContact({ ...data, actorId: await getCurrentClientActorId() }),
+      repository.removeContact({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
     ),
   );

@@ -36,6 +36,7 @@ export type ClientRepository = {
   listAssignmentOptions(): Promise<ClientAssignmentOptions>;
   listClients(): Promise<ClientSummary[]>;
   getClient(id: string): Promise<ClientDetail | null>;
+  getCompanyTeamId(companyId: string): Promise<string | null>;
   createClient(input: CreateClientInput): Promise<ClientDetail>;
   updateClient(input: UpdateClientInput): Promise<ClientDetail>;
   addContact(input: AddContactInput): Promise<ClientDetail>;
@@ -403,6 +404,17 @@ export function createClientRepository(
     return hydrateClient(sql, id);
   }
 
+  /**
+   * Just the owning team, for the write guard. getClient hydrates contacts and a
+   * timeline that an authorization check has no use for.
+   */
+  async function getCompanyTeamId(companyId: string): Promise<string | null> {
+    const rows = await sql<{ assigned_team_id: string }[]>`
+      select assigned_team_id from companies where id = ${companyId} limit 1
+    `;
+    return rows[0]?.assigned_team_id ?? null;
+  }
+
   async function assertActor(tx: TransactionSqlClient, actorId: string): Promise<void> {
     const rows = await tx<{ id: string }[]>`
       select id from users where id = ${actorId} and active limit 1
@@ -681,6 +693,7 @@ export function createClientRepository(
     listAssignmentOptions,
     listClients,
     getClient,
+    getCompanyTeamId,
     createClient,
     updateClient,
     addContact,

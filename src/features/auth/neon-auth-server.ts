@@ -154,6 +154,37 @@ export async function requireStaffActor(
   return assertStaffAccess(await requireActor(request, dependencies));
 }
 
+/**
+ * Every company this client actor may see. requireClientCompanyAccess answers
+ * "may I see company X" but there was no way to ask "which companies are mine",
+ * so a Client sign-in had no route to discover its own cases and the portal was
+ * unreachable for the actors it exists to serve.
+ */
+export async function listActiveClientCompanyIds(
+  request: Request,
+  dependencies: AuthDependencies = {},
+): Promise<string[]> {
+  const actor = await requireActor(request, dependencies);
+
+  if (actor.role !== "Client") {
+    throw new Error("Forbidden: client access is required.");
+  }
+
+  if (!actor.active) {
+    throw new Error("Forbidden: client account is inactive.");
+  }
+
+  const sql = dependencies.sql ?? getSqlClient();
+  const rows = await sql<ClientMembershipRow[]>`
+    select company_id, active
+    from client_company_memberships
+    where auth_user_id = ${actor.authUserId}
+      and active = true
+  `;
+
+  return rows.filter((row) => row.active).map((row) => row.company_id);
+}
+
 export async function requireClientCompanyAccess(
   request: Request,
   companyId: string,
