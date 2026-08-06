@@ -41,6 +41,7 @@ type MaintenanceDocumentRepository = {
 };
 
 type MaintenanceOutboxRepository = {
+  failStranded(now: string): Promise<{ failed: number }>;
   redactExpired(now: string): Promise<{ redacted: number }>;
   close(): Promise<void>;
 };
@@ -80,6 +81,7 @@ export async function runFirmMaintenanceWithDependencies(
           await Promise.all(expired.map((intent) => storage.delete(intent.objectKey)));
           return { expired: expired.length };
         },
+        failStrandedNotifications: (now) => outbox.failStranded(now),
         redactNotifications: (now) => outbox.redactExpired(now),
       },
       { dispatchLimit: data.dispatchLimit ?? DEFAULT_DISPATCH_LIMIT },

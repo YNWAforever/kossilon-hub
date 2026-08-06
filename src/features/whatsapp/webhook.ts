@@ -3,7 +3,7 @@ import {
   processWhatsAppInboundWebhookWithRepository,
   type ProcessWhatsAppInboundWebhookRepository,
 } from "./server-fns";
-import { verifyWoztellSignature } from "./woztell";
+import { normalizeWoztellInboundMessage, verifyWoztellSignature } from "./woztell";
 
 /**
  * Inbound WhatsApp ingestion.
@@ -68,8 +68,14 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
 
     // An unverified delivery is refused before it reaches the database. It is not
     // recorded either: an attacker who can write rows by failing the signature check
-    // still gets to fill the table.
+    // still gets to fill the table. It IS logged, because the other way to land here
+    // is a misconfigured secret after a rotation, and that would otherwise be a
+    // silent total loss of inbound messages.
     if (!signatureValid) {
+      console.warn("whatsapp webhook rejected: signature did not verify", {
+        hadSignatureHeader: readWoztellSignatureHeader(request.headers) !== null,
+        bodyBytes: rawBody.length,
+      });
       return json({ ok: false, error: "Webhook signature was not verified." }, 401);
     }
 
@@ -84,6 +90,18 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
       return json({ ok: false, error: "Webhook payload must be a JSON object." }, 400);
     }
 
+    // Classifies the failure before it happens. processWhatsAppInboundWebhookWithRepository
+    // catches everything and reports `ok: false` either way, so without this a
+    // deadlock or a transient write error would be acknowledged exactly like a
+    // malformed payload — and an acknowledged message is never redelivered.
+    // normalizeWoztellInboundMessage is pure, so running it twice costs nothing.
+    let payloadIsUnreadable = false;
+    try {
+      normalizeWoztellInboundMessage(payload);
+    } catch {
+      payloadIsUnreadable = true;
+    }
+
     const repository = config.createRepository();
     try {
       const result = await processWhatsAppInboundWebhookWithRepository(
@@ -95,9 +113,20 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
         },
       );
 
-      // A payload this firm cannot normalise is still a delivery WOZTELL made. It is
-      // recorded as failed and acknowledged, because retrying it would never succeed.
+      // A payload this firm cannot read is still a delivery WOZTELL made: record it
+      // as failed and acknowledge, because resending it would fail identically.
+      // A failure with a readable payload is the database's fault, so refuse to
+      // acknowledge and let WOZTELL redeliver.
+      if (!result.ok && !payloadIsUnreadable) {
+        console.error("whatsapp webhook could not be persisted", result.errorMessage);
+        return json(result, 503);
+      }
+
       return json(result, 200);
+    } catch (error) {
+      // Never acknowledge what was not stored.
+      console.error("whatsapp webhook failed", error);
+      return json({ ok: false, error: "Webhook could not be processed." }, 503);
     } finally {
       await repository.close();
     }

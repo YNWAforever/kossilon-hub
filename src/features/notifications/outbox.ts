@@ -160,6 +160,7 @@ export type NotificationOutboxRepository = {
     id: string,
     input: { errorCode: string; errorMessage: string; now: string },
   ): Promise<void>;
+  failStranded(now: string, limit?: number): Promise<{ failed: number }>;
   redactExpired(now: string, limit?: number): Promise<{ redacted: number }>;
   close(): Promise<void>;
 };
@@ -265,6 +266,46 @@ export function createNotificationOutboxRepository(
      * `redacted_at is null` in the subquery matches the partial index predicate,
      * so this uses the index rather than scanning.
      */
+    /**
+     * Finalises rows stranded in 'processing' on their LAST attempt.
+     *
+     * The reclaim branch in claimDue is gated on `attempt_count < max_attempts`,
+     * and claimDue increments the count when it claims. So a row claimed on its
+     * final attempt whose Worker then died sits at status='processing' with
+     * attempt_count = max_attempts: claimDue will not take it again, and
+     * redactExpired skips it because 'processing' is not settled. It is stuck
+     * forever and invisible — the same failure the reclaim was written to fix,
+     * one attempt later.
+     *
+     * Marking it 'failed' makes it terminal, gives it an error code an operator
+     * can search for, and lets retention redact it in due course. It is NOT
+     * re-sent: the attempt budget is spent.
+     */
+    async failStranded(now, limit = 500) {
+      if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
+        throw new Error("Outbox stranded limit must be between 1 and 5000.");
+      }
+
+      const rows = await sql<{ id: string }[]>`
+        update notification_outbox
+        set status = 'failed',
+            last_error_code = 'dispatch_stranded',
+            last_error_message = 'Dispatch did not complete before the visibility timeout and no attempts remain.',
+            updated_at = now()
+        where id in (
+          select id from notification_outbox
+          where status = 'processing'
+            and attempt_count >= max_attempts
+            and updated_at <= ${processingReclaimCutoff(now)}
+          order by updated_at asc
+          limit ${limit}
+          for update skip locked
+        )
+        returning id
+      `;
+
+      return { failed: rows.length };
+    },
     async redactExpired(now, limit = 500) {
       if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
         throw new Error("Outbox redaction limit must be between 1 and 5000.");

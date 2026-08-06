@@ -186,6 +186,76 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  /**
+   * The hole the reclaim left behind: claimDue increments attempt_count when it
+   * claims and its reclaim branch is gated on attempt_count < max_attempts, so a
+   * row stranded on its FINAL attempt can never be reclaimed — and redaction
+   * skips it because 'processing' is not settled. Stuck forever and invisible.
+   */
+  it(
+    "finalises a row stranded on its last attempt so it stops being invisible",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const id = await enqueue(sql, companyId, "stranded-final", {
+        status: "processing",
+        attemptCount: 5,
+      });
+      // Older than the 15-minute visibility timeout.
+      await sql`update notification_outbox set updated_at = now() - interval '1 hour' where id = ${id}`;
+
+      const repository = createNotificationOutboxRepository({ sql });
+
+      // Neither existing pass can touch it.
+      expect(await repository.claimDue(new Date().toISOString(), 10)).toHaveLength(0);
+      expect((await repository.redactExpired(new Date().toISOString())).redacted).toBe(0);
+
+      expect((await repository.failStranded(new Date().toISOString())).failed).toBe(1);
+
+      const rows = await sql<
+        { status: string; last_error_code: string | null }[]
+      >`select status, last_error_code from notification_outbox where id = ${id}`;
+      expect(rows[0].status).toBe("failed");
+      expect(rows[0].last_error_code).toBe("dispatch_stranded");
+
+      // Now terminal, so retention can redact it.
+      expect((await repository.redactExpired(new Date().toISOString())).redacted).toBe(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "leaves a processing row alone while it is still within the visibility timeout",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      await enqueue(sql, companyId, "in-flight", { status: "processing", attemptCount: 5 });
+
+      const repository = createNotificationOutboxRepository({ sql });
+      expect((await repository.failStranded(new Date().toISOString())).failed).toBe(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  // A stranded row that still has attempts left belongs to claimDue, not here.
+  it(
+    "leaves a stranded row that still has attempts remaining to the reclaim path",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const id = await enqueue(sql, companyId, "stranded-retryable", {
+        status: "processing",
+        attemptCount: 1,
+      });
+      await sql`update notification_outbox set updated_at = now() - interval '1 hour' where id = ${id}`;
+
+      const repository = createNotificationOutboxRepository({ sql });
+      expect((await repository.failStranded(new Date().toISOString())).failed).toBe(0);
+      expect(await repository.claimDue(new Date().toISOString(), 10)).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   // Without `redacted_at is null` the pass would rewrite the same rows every five
   // minutes forever, and could not use notification_outbox_retention_idx.
   it(

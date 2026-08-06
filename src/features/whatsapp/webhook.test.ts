@@ -186,19 +186,52 @@ describe("createWhatsAppWebhookHandler", () => {
     expect(repository.recordInboundMessage).not.toHaveBeenCalled();
   });
 
-  it("closes the repository when processing throws", async () => {
+  /**
+   * An acknowledged delivery is never redelivered. processWhatsAppInboundWebhookWithRepository
+   * reports ok:false for a malformed payload and for a database failure alike, so
+   * acknowledging both would silently drop real messages on a transient error.
+   */
+  it("refuses to acknowledge a delivery the database could not store", async () => {
+    const repository = repositoryDouble();
+    repository.recordInboundMessage.mockRejectedValueOnce(new Error("deadlock detected"));
+    const body = JSON.stringify(inboundPayload());
+
+    const response = await createWhatsAppWebhookHandler({
+      webhookSecret: SECRET,
+      createRepository: () => repository as never,
+    })(request(body, { "x-woztell-signature": await sign(body) }));
+
+    expect(response.status).toBe(503);
+    expect(repository.close).toHaveBeenCalledTimes(1);
+  });
+
+  // The opposite case: resending this would fail identically, so it is acked.
+  it("acknowledges a delivery whose payload it can never read", async () => {
+    const repository = repositoryDouble();
+    const body = JSON.stringify({ eventId: "evt-2", nothing: "useful" });
+
+    const response = await createWhatsAppWebhookHandler({
+      webhookSecret: SECRET,
+      createRepository: () => repository as never,
+    })(request(body, { "x-woztell-signature": await sign(body) }));
+
+    expect(response.status).toBe(200);
+    expect(repository.recordWebhookEvent).toHaveBeenCalledTimes(1);
+    expect(repository.recordInboundMessage).not.toHaveBeenCalled();
+  });
+
+  it("closes the repository and reports 503 when the whole write path throws", async () => {
     const repository = repositoryDouble();
     repository.recordInboundMessage.mockRejectedValueOnce(new Error("connection lost"));
     repository.recordWebhookEvent.mockRejectedValueOnce(new Error("connection lost"));
     const body = JSON.stringify(inboundPayload());
 
-    await expect(
-      createWhatsAppWebhookHandler({
-        webhookSecret: SECRET,
-        createRepository: () => repository as never,
-      })(request(body, { "x-woztell-signature": await sign(body) })),
-    ).rejects.toThrow("connection lost");
+    const response = await createWhatsAppWebhookHandler({
+      webhookSecret: SECRET,
+      createRepository: () => repository as never,
+    })(request(body, { "x-woztell-signature": await sign(body) }));
 
+    expect(response.status).toBe(503);
     expect(repository.close).toHaveBeenCalledTimes(1);
   });
 });

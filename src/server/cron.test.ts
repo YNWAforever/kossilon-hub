@@ -19,6 +19,10 @@ describe("scheduled maintenance", () => {
           calls.push("uploads");
           return { expired: 3 };
         }),
+        failStrandedNotifications: vi.fn(async () => {
+          calls.push("stranded");
+          return { failed: 2 };
+        }),
         redactNotifications: vi.fn(async () => {
           calls.push("redact");
           return { redacted: 4 };
@@ -30,10 +34,12 @@ describe("scheduled maintenance", () => {
       escalations: { warnings: 1, breaches: 2 },
       dispatch: { sent: 1 },
       uploads: { expired: 3 },
-      notifications: { redacted: 4 },
+      notifications: { strandedFailed: 2, redacted: 4 },
     });
     // Redaction runs last so a row settled in this same pass is not a candidate
     // until the next one.
-    expect(calls).toEqual(["escalations", "dispatch:7", "uploads", "redact"]);
+    // Stranded rows are finalised before dispatch so they cannot be picked up as
+    // if they were still live; redaction runs last.
+    expect(calls).toEqual(["escalations", "stranded", "dispatch:7", "uploads", "redact"]);
   });
 });
