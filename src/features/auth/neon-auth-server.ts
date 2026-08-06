@@ -4,6 +4,7 @@ import {
   assertStaffAccess,
   type ClientCompanyMembership,
 } from "./authorization";
+import { neonAuthCookies } from "./neon-auth-cookies";
 import type { AuthenticatedActor, AuthRole, VerifiedAuthUser } from "./types";
 
 type NeonSession = { user: VerifiedAuthUser };
@@ -47,7 +48,9 @@ export function getNeonAuthUrl(): string {
 
 function requestHeaders(request: Request): Headers {
   const headers = new Headers({ accept: "application/json" });
-  const cookie = request.headers.get("cookie");
+  // Allowlisted rather than forwarded wholesale: this request leaves the Worker
+  // for the Neon Auth origin, and the app's other cookies have no business there.
+  const cookie = neonAuthCookies(request.headers.get("cookie"));
   if (cookie) headers.set("cookie", cookie);
   return headers;
 }

@@ -138,6 +138,23 @@ export async function listAnnualReturnCasesForActor(
   return dependencies.repository.listCases({ ...filters, ...scope });
 }
 
+/**
+ * The tiles count exactly the cases the board would list. They used to be
+ * firm-wide for every role, so a Staff user saw headline numbers spanning teams
+ * whose cases they cannot open.
+ */
+export async function getAnnualReturnDashboardMetricsForActor(
+  actor: AuthenticatedActor,
+  dependencies: { repository: Pick<AnnualReturnRepository, "dashboardMetrics"> },
+) {
+  const scope = caseFiltersForActor(boardActorFrom(actor));
+  return dependencies.repository.dashboardMetrics(
+    hongKongBusinessDate(),
+    actor.userId ?? "",
+    scope,
+  );
+}
+
 function boardActorFrom(actor: AuthenticatedActor) {
   return { id: actor.userId, role: actor.role, teamId: actor.teamId, active: actor.active };
 }
@@ -377,8 +394,8 @@ export const getAnnualReturnCase = createServerFn({ method: "GET" })
   );
 
 export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" }).handler(async () =>
-  withAnnualReturnRepository((repository, actorId) =>
-    repository.dashboardMetrics(hongKongBusinessDate(), actorId),
+  withAnnualReturnActorRepository((repository, actor) =>
+    getAnnualReturnDashboardMetricsForActor(actor, { repository }),
   ),
 );
 

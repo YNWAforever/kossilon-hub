@@ -10,6 +10,7 @@ import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/rea
 import { createElement, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { annualReturnQueryKeys } from "@/features/annual-return/query-keys";
 
 vi.mock("../styles.css?url", () => ({ default: "/styles.css" }));
 vi.mock("@/features/auth/neon-auth-rpc", () => ({
@@ -93,7 +94,10 @@ async function render(options: {
   });
   if (options.withCaseId) {
     await queryClient.prefetchQuery({
-      queryKey: ["annual-return", "detail", CASE_ID],
+      // Was ["annual-return", ...] — singular. The factory produces
+      // ["annual-returns", ...], so this prefetch never matched and the
+      // case-backed branch these tests claim to cover was never rendered.
+      queryKey: annualReturnQueryKeys.detail(CASE_ID),
       queryFn: () => Promise.resolve(options.caseData),
     });
   }

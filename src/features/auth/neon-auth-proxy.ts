@@ -1,5 +1,6 @@
+import { neonAuthCookies } from "./neon-auth-cookies";
+
 const AUTH_PROXY_PREFIX = "/api/auth/";
-const NEON_AUTH_COOKIE_PREFIX = "__Secure-neon-auth";
 const SUPPORTED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 const REQUEST_HEADERS = ["user-agent", "authorization", "referer", "content-type"] as const;
 const RESPONSE_HEADERS = [
@@ -18,16 +19,6 @@ type NeonAuthProxyConfig = {
   baseUrl: string;
   fetcher?: typeof fetch;
 };
-
-function neonCookies(cookieHeader: string | null): string {
-  if (!cookieHeader) return "";
-
-  return cookieHeader
-    .split(";")
-    .map((cookie) => cookie.trim())
-    .filter((cookie) => cookie.startsWith(NEON_AUTH_COOKIE_PREFIX))
-    .join("; ");
-}
 
 function firstPartyCookie(cookieHeader: string): string {
   const attributes = cookieHeader
@@ -69,7 +60,7 @@ function upstreamHeaders(request: Request): Headers {
   // forces that check onto cookie-less first sign-in requests. (On runtimes whose fetch
   // adds Sec-Fetch-* headers, such as undici, the check is forced regardless — but the
   // Workers runtime does not, so this still matters for the Cloudflare target.)
-  const cookie = neonCookies(request.headers.get("cookie"));
+  const cookie = neonAuthCookies(request.headers.get("cookie"));
   if (cookie) headers.set("cookie", cookie);
   headers.set("x-neon-auth-middleware", "true");
   return headers;

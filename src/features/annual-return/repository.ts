@@ -190,7 +190,11 @@ export type CreateAnnualReturnRepositoryOptions = CreateSqlClientOptions & {
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
-  dashboardMetrics(today: string, currentUserId: string): Promise<AnnualReturnDashboardMetrics>;
+  dashboardMetrics(
+    today: string,
+    currentUserId: string,
+    scope?: CaseFilters,
+  ): Promise<AnnualReturnDashboardMetrics>;
   assertCanMutateCase(caseId: string, actorId: string, action: AnnualReturnAction): Promise<void>;
   updateStatus(
     caseId: string,
@@ -737,12 +741,18 @@ export function createAnnualReturnRepository(
     return case_ ?? null;
   }
 
+  /**
+   * `scope` is the same narrowing the board applies. Without it the tiles counted
+   * the whole firm for every staff role, so a user whose board showed their own
+   * cases saw headline numbers for books they cannot open.
+   */
   async function dashboardMetrics(
     today: string,
     currentUserId: string,
+    scope: CaseFilters = {},
   ): Promise<AnnualReturnDashboardMetrics> {
     // TODO: Move dashboard tiles to SQL aggregates and paginated reads as case volume grows.
-    const cases = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, today);
+    const cases = await listCasesForToday({ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }, today);
     const activeCases = cases.filter(isActiveForOperationalMetrics);
 
     return {

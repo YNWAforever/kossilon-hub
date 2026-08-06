@@ -460,7 +460,11 @@ function ProductionDocumentsSection({
       <div className="mt-4 divide-y">
         {documents.map((document) => {
           const isChecklistEvidence = checklistCategories.has(document.category);
-          const matchedChecklistItem = caseItem?.checklist.find(
+          // `caseItem?.` guards a missing case but not a case whose checklist is
+          // absent, which is what a row written before the checklist existed looks
+          // like. The optional chain has to reach the array itself or SSR throws
+          // and the whole route falls back to client rendering.
+          const matchedChecklistItem = caseItem?.checklist?.find(
             (item) => item.documentId === document.id,
           );
           const checklistItemId = checklistItemIds[document.id] ?? matchedChecklistItem?.id ?? "";
@@ -497,7 +501,7 @@ function ProductionDocumentsSection({
                       }
                     >
                       <option value="">Select checklist item</option>
-                      {caseItem.checklist.map((item) => (
+                      {(caseItem.checklist ?? []).map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.itemLabel}
                         </option>

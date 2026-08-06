@@ -1732,9 +1732,13 @@ describe("case filters narrow before the limit", () => {
     expect(selectCaseRows).toContain("RISK_FILTER_SCAN_LIMIT");
   });
 
-  it("counts dashboard tiles over more than one page of cases", () => {
+  it("counts dashboard tiles over more than one page of cases, within the actor's scope", () => {
     expect(DASHBOARD_METRICS_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    expect(source).toContain("listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }");
+    // The tiles were firm-wide for every role while the board was scoped, so a
+    // Staff user saw headline numbers for books they cannot open.
+    expect(source).toContain("scope: CaseFilters = {}");
+    expect(source).toContain("{ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }");
+    expect(source).toContain("limit: DASHBOARD_METRICS_SCAN_LIMIT");
   });
 
   // The SQL EXISTS clause and hasOutstandingRequiredEvidence must agree, or a
