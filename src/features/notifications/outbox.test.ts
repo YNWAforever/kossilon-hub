@@ -55,9 +55,11 @@ describe("stranded outbox rows become claimable again", () => {
   // attempt_count is incremented at claim time, so a row that strands on every
   // attempt still exhausts max_attempts rather than looping forever.
   it("keeps the attempt cap on the reclaim path", () => {
+    // Sliced to claimDue specifically: failStranded and redactExpired also use
+    // `for update skip locked`, so an index-based slice spans the wrong query.
     const claimQuery = source.slice(
-      source.indexOf("select * from notification_outbox"),
-      source.indexOf("for update skip locked"),
+      source.indexOf("async claimDue"),
+      source.indexOf("async markSent"),
     );
 
     expect(claimQuery).toContain("attempt_count < max_attempts");

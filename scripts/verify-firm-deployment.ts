@@ -88,9 +88,27 @@ const LOCAL_GATE_CONTRACTS = {
     // Presence of the function proved nothing: it existed, was tested, and was
     // never called, because the Worker exported only `fetch` while the template
     // declared a cron. The trigger needs a handler on the other end of it.
+    //
+    // And "a scheduled export on the server entry" was not that handler either:
+    // nitro generates the Worker entry, and its own `scheduled` does nothing but
+    // fire the `cloudflare:scheduled` hook. The only thing that connects the cron
+    // to the maintenance pass is a nitro plugin registering that hook, and the
+    // plugin only runs if vite.config.ts lists it.
     {
       file: "src/server.ts",
-      snippets: ["async scheduled(", "runScheduledMaintenanceForWorker", "runFirmMaintenance("],
+      snippets: ["runScheduledMaintenanceForWorker", "runFirmMaintenance(input)"],
+    },
+    {
+      file: "src/server/nitro-scheduled.ts",
+      snippets: [
+        "definePlugin",
+        'hooks.hook("cloudflare:scheduled"',
+        "runScheduledMaintenanceForWorker",
+      ],
+    },
+    {
+      file: "vite.config.ts",
+      snippets: ["./src/server/nitro-scheduled.ts"],
     },
     {
       file: "src/server/maintenance.ts",

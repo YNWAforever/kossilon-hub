@@ -13,6 +13,19 @@ const createConfig = defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // The Worker entry is nitro's, not ours: its `scheduled` only fires the
+  // `cloudflare:scheduled` hook, so a `scheduled` export on the server entry is
+  // never invoked. This plugin registers that hook — it is what connects
+  // wrangler's five-minute cron to runFirmMaintenance.
+  //
+  // Cast because @lovable.dev/vite-tanstack-config types its `nitro` surface
+  // narrowly on purpose ("only stable build-time knobs", Nitro v3 being pre-RC)
+  // while forwarding the whole object to `nitro()` from nitro/vite. `plugins` is
+  // a standard nitro option and is honoured — src/server/cron-wiring.test.ts and
+  // the verify:firm cron gate both check it stays registered.
+  nitro: {
+    plugins: ["./src/server/nitro-scheduled.ts"],
+  } as unknown as { preset?: string },
 });
 
 export async function flattenPlugins(plugins: PluginOption[]): Promise<Plugin[]> {

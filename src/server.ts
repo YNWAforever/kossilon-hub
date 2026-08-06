@@ -89,11 +89,11 @@ export async function runScheduledMaintenanceForWorker(
   }
 }
 
+// No `scheduled` export here. This module is the TanStack Start server entry, not
+// the Worker entry — nitro generates that, and its `scheduled` only fires the
+// `cloudflare:scheduled` hook. An export on this object would never be called.
+// ./server/nitro-scheduled.ts registers the hook instead.
 export default {
-  async scheduled(event: { scheduledTime?: number } | undefined) {
-    await runScheduledMaintenanceForWorker(event?.scheduledTime ?? Date.now());
-  },
-
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const pathname = new URL(request.url).pathname;

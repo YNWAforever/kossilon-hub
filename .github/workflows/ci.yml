@@ -77,3 +77,13 @@ jobs:
 
       - name: Pre-deploy gate
         run: npm run verify:firm -- --dry-run
+
+      # The scheduled handler only reaches the Worker through a nitro plugin, and
+      # nothing but a real build proves the hook actually lands in the output.
+      - name: Build
+        run: npm run build
+
+      - name: Cron trigger has a handler in the built Worker
+        run: |
+          grep -q 'hooks.hook("cloudflare:scheduled"' .output/server/index.mjs \
+            || { echo "cloudflare:scheduled hook missing from the built Worker"; exit 1; }

@@ -32,9 +32,9 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
       claimed = true;
       return rows;
     }),
-    markSent: vi.fn(async () => undefined),
-    markRetry: vi.fn(async () => undefined),
-    markFailed: vi.fn(async () => undefined),
+    markSent: vi.fn(async () => true),
+    markRetry: vi.fn(async () => true),
+    markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
 }
@@ -51,12 +51,13 @@ describe("runtime notification dispatch", () => {
         { now: "2026-07-14T09:00:00.000Z", limit: 10 },
         { currentProviderMode, createRepository: () => repo },
       ),
-    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0 });
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
     expect(repo.markSent).toHaveBeenCalledWith(
       row.id,
       `local:${row.id}`,
       "2026-07-14T09:00:00.000Z",
+      1,
     );
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(repo.close).toHaveBeenCalledTimes(1);
@@ -94,12 +95,13 @@ describe("runtime notification dispatch", () => {
           getLiveConfig,
         },
       ),
-    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0 });
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
     expect(repo.markSent).toHaveBeenCalledWith(
       row.id,
       "simulated:whatsapp:" + row.id,
       "2026-07-14T09:00:00.000Z",
+      1,
     );
     expect(createTransport).toHaveBeenCalledWith({ providerMode: "simulated", config: undefined });
     expect(getLiveConfig).not.toHaveBeenCalled();

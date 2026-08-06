@@ -26,11 +26,13 @@ const gateFiles = new Map<string, string>([
     "src/server/cron.ts",
     "export async function runScheduledMaintenance() {} dispatchDue cleanupExpiredUploads",
   ],
-  [
-    "src/server.ts",
-    "export default { async scheduled() { await runScheduledMaintenanceForWorker(0); } } runFirmMaintenance(",
-  ],
+  ["src/server.ts", "runScheduledMaintenanceForWorker runFirmMaintenance(input)"],
   ["src/server/maintenance.ts", "export async function runFirmMaintenance() {}"],
+  [
+    "src/server/nitro-scheduled.ts",
+    'definePlugin nitroApp.hooks.hook("cloudflare:scheduled", handler) runScheduledMaintenanceForWorker',
+  ],
+  ["vite.config.ts", 'nitro: { plugins: ["./src/server/nitro-scheduled.ts"] }'],
 ]);
 
 const schemaTablesForWiring = [
@@ -116,13 +118,15 @@ describe("verifyFirmDeployment catches wiring, not just spelling", () => {
   const passingInput = (overrides: Partial<Parameters<typeof verifyFirmDeployment>[0]> = {}) =>
     verificationInputForWiring(overrides);
 
-  it("fails when the cron trigger has no scheduled handler behind it", async () => {
+  // The regression this guards: a scheduled export on the server entry looks like
+  // a handler but nitro never calls it. Only the registered hook counts.
+  it("fails when nothing registers the cloudflare:scheduled hook", async () => {
     const result = await verifyFirmDeployment(
       passingInput({
+        // The plugin exists but nothing registers it with nitro, so the hook is
+        // never installed and the cron has nothing on the other end.
         readFile: async (file: string) =>
-          file === "src/server.ts"
-            ? "export default { async fetch() {} }"
-            : (gateFiles.get(file) ?? ""),
+          file === "vite.config.ts" ? "export default {}" : (gateFiles.get(file) ?? ""),
       }),
     );
 

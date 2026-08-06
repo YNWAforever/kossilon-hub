@@ -151,15 +151,30 @@ function withTransaction<T>(
 export type NotificationOutboxRepository = {
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
-  markSent(id: string, providerMessageId: string, sentAt: string): Promise<void>;
+  /**
+   * The terminal writes all take the attempt_count the claim returned and fence on
+   * it, and all report whether they actually landed.
+   *
+   * Without the fence they matched on `status = 'processing'` alone. The reclaim
+   * re-enters that same state, so when a slow-but-alive dispatch and its reclaimer
+   * both sent, whichever wrote first won and the other's write silently matched
+   * nothing — while the dispatcher counted both as sent. `false` means this claim
+   * was superseded: the row belongs to a later attempt and must not be counted.
+   */
+  markSent(
+    id: string,
+    providerMessageId: string,
+    sentAt: string,
+    attemptCount: number,
+  ): Promise<boolean>;
   markRetry(
     id: string,
-    input: { errorCode: string; errorMessage: string; now: string },
-  ): Promise<void>;
+    input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
+  ): Promise<boolean>;
   markFailed(
     id: string,
-    input: { errorCode: string; errorMessage: string; now: string },
-  ): Promise<void>;
+    input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
+  ): Promise<boolean>;
   failStranded(now: string, limit?: number): Promise<{ failed: number }>;
   redactExpired(now: string, limit?: number): Promise<{ redacted: number }>;
   close(): Promise<void>;
@@ -214,32 +229,40 @@ export function createNotificationOutboxRepository(
         return claimed.map(mapRow);
       });
     },
-    async markSent(id, providerMessageId, sentAt) {
-      await sql`
+    async markSent(id, providerMessageId, sentAt, attemptCount) {
+      const rows = await sql<{ id: string }[]>`
         update notification_outbox set status = 'sent', provider_message_id = ${providerMessageId},
           sent_at = ${sentAt}, updated_at = now()
-        where id = ${id} and status = 'processing'
+        where id = ${id} and status = 'processing' and attempt_count = ${attemptCount}
+        returning id
       `;
+      return rows.length === 1;
     },
     async markRetry(id, input) {
+      let applied = false;
       await withTransaction(sql, async (tx) => {
         const rows = await tx<{ attempt_count: number }[]>`
           select attempt_count from notification_outbox where id = ${id} for update
         `;
         if (!rows[0]) throw new Error("Notification outbox row not found.");
-        await tx`
+        const updated = await tx<{ id: string }[]>`
           update notification_outbox set status = 'failed', next_attempt_at = ${nextRetryAt(rows[0].attempt_count, input.now)},
             last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now()
-          where id = ${id} and status = 'processing'
+          where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
+          returning id
         `;
+        applied = updated.length === 1;
       });
+      return applied;
     },
     async markFailed(id, input) {
-      await sql`
+      const rows = await sql<{ id: string }[]>`
         update notification_outbox set status = 'failed', next_attempt_at = ${input.now},
           last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now()
-        where id = ${id} and status = 'processing'
+        where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
+        returning id
       `;
+      return rows.length === 1;
     },
     /**
      * retention_until was written on every insert and read back on every row, and

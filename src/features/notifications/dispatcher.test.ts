@@ -33,9 +33,9 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
   return {
     enqueue: vi.fn(),
     claimDue: vi.fn(async () => rows),
-    markSent: vi.fn(async () => undefined),
-    markRetry: vi.fn(async () => undefined),
-    markFailed: vi.fn(async () => undefined),
+    markSent: vi.fn(async () => true),
+    markRetry: vi.fn(async () => true),
+    markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
 }
@@ -79,6 +79,7 @@ describe("notification dispatcher", () => {
       "00000000-0000-0000-0000-000000000001",
       "local:00000000-0000-0000-0000-000000000001",
       "2026-07-12T00:00:00.000Z",
+      1,
     );
     expect(fetchImpl).not.toHaveBeenCalled();
     resetLocalNotificationTransportForTest();
@@ -98,6 +99,7 @@ describe("notification dispatcher", () => {
       "00000000-0000-0000-0000-000000000001",
       "provider-1",
       "2026-07-12T00:00:00.000Z",
+      1,
     );
   });
 

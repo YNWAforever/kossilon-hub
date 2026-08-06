@@ -278,6 +278,58 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  /**
+   * The reclaim re-enters status='processing', and the terminal writes used to
+   * match on that alone. So when a slow-but-alive dispatch and its reclaimer both
+   * sent, whichever wrote first won and the other's write silently matched
+   * nothing — while the dispatcher counted both as sent. The fence is the claimed
+   * attempt_count.
+   */
+  it(
+    "refuses a terminal write from a claim another run has superseded",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const id = await enqueue(sql, companyId, "fenced", { status: "processing", attemptCount: 1 });
+      const repository = createNotificationOutboxRepository({ sql });
+
+      // Run A holds attempt 1. Run B reclaims, taking the row to attempt 2.
+      await sql`update notification_outbox set attempt_count = 2 where id = ${id}`;
+
+      expect(await repository.markSent(id, "wamid.stale", new Date().toISOString(), 1)).toBe(false);
+      expect(await repository.markSent(id, "wamid.current", new Date().toISOString(), 2)).toBe(
+        true,
+      );
+
+      const rows = await sql<
+        { provider_message_id: string | null; status: string }[]
+      >`select provider_message_id, status from notification_outbox where id = ${id}`;
+      expect(rows[0].status).toBe("sent");
+      // The winning send is the one recorded, not whichever wrote last.
+      expect(rows[0].provider_message_id).toBe("wamid.current");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "fences the retry and failure writes the same way",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const id = await enqueue(sql, companyId, "fenced-retry", {
+        status: "processing",
+        attemptCount: 2,
+      });
+      const repository = createNotificationOutboxRepository({ sql });
+      const input = { errorCode: "x", errorMessage: "y", now: new Date().toISOString() };
+
+      expect(await repository.markRetry(id, { ...input, attemptCount: 1 })).toBe(false);
+      expect(await repository.markFailed(id, { ...input, attemptCount: 1 })).toBe(false);
+      expect(await repository.markRetry(id, { ...input, attemptCount: 2 })).toBe(true);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   // Without `redacted_at is null` the pass would rewrite the same rows every five
   // minutes forever, and could not use notification_outbox_retention_idx.
   it(

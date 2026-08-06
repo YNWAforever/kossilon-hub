@@ -16,6 +16,7 @@ function dependencies(
       sent: 3,
       retried: 1,
       permanentlyFailed: 0,
+      superseded: 0,
     })),
     createDocumentRepository: () => ({
       expireUploads: vi.fn(async () => [{ objectKey: "a" }, { objectKey: "b" }]),
@@ -41,7 +42,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
     expect(result).toEqual({
       now: "2026-07-26T00:00:00.000Z",
       escalations: { warnings: 1, breaches: 2 },
-      dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0 },
+      dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0, superseded: 0 },
       uploads: { expired: 2 },
       notifications: { strandedFailed: 2, redacted: 5 },
     });
@@ -53,6 +54,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
       sent: 0,
       retried: 0,
       permanentlyFailed: 0,
+      superseded: 0,
     }));
 
     await runFirmMaintenanceWithDependencies(

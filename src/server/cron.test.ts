@@ -13,7 +13,7 @@ describe("scheduled maintenance", () => {
         }),
         dispatchDue: vi.fn(async (_now, limit) => {
           calls.push(`dispatch:${limit}`);
-          return { claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0 };
+          return { claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 };
         }),
         cleanupExpiredUploads: vi.fn(async () => {
           calls.push("uploads");

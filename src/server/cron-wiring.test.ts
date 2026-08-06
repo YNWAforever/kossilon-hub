@@ -18,11 +18,32 @@ describe("scheduled maintenance wiring", () => {
     expect(wranglerTemplate.triggers?.crons ?? []).not.toHaveLength(0);
   });
 
-  it("exports a scheduled handler for that trigger to invoke", () => {
-    expect(serverEntry).toMatch(/async scheduled\(/);
+  /**
+   * src/server.ts is the TanStack Start server entry, NOT the Worker entry. Nitro
+   * generates the Worker, and its `scheduled` does nothing but fire the
+   * `cloudflare:scheduled` hook — so a `scheduled` export here is never invoked.
+   * An earlier version of this work added one and it was dead on arrival.
+   */
+  it("registers the cloudflare:scheduled hook from a nitro plugin", () => {
+    const plugin = readFileSync(new URL("./nitro-scheduled.ts", import.meta.url), "utf8");
+
+    expect(plugin).toContain("definePlugin");
+    expect(plugin).toContain('hooks.hook("cloudflare:scheduled"');
+    expect(plugin).toContain("runScheduledMaintenanceForWorker");
   });
 
-  it("routes the scheduled handler to the real maintenance entrypoint", () => {
+  // The plugin only runs if nitro is told about it.
+  it("registers that plugin with nitro", () => {
+    const viteConfig = readFileSync(new URL("../../vite.config.ts", import.meta.url), "utf8");
+
+    expect(viteConfig).toContain("./src/server/nitro-scheduled.ts");
+  });
+
+  it("does not rely on a scheduled export nitro would never call", () => {
+    expect(serverEntry).not.toMatch(/async scheduled\(/);
+  });
+
+  it("routes the hook to the real maintenance entrypoint", () => {
     expect(serverEntry).toContain("runScheduledMaintenanceForWorker");
     expect(serverEntry).toContain('import("./server/maintenance")');
     expect(serverEntry).toContain("runFirmMaintenance(");
