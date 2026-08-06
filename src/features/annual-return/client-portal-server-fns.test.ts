@@ -127,6 +127,55 @@ describe("getClientPortalCaseForActor", () => {
     });
   });
 
+  /**
+   * AnnualReturnCase is the internal staff record. An earlier version returned it
+   * whole because the staff detail view happened to take the same type, handing
+   * the client the firm's own assignment and risk grading of their file.
+   */
+  it("never exposes the firm's internal handling of the case", async () => {
+    const { deps } = dependencies([COMPANY_A]);
+
+    const detail = await getClientPortalCaseForActor({ caseId: CASE_A }, deps);
+
+    for (const leaked of [
+      "ownerId",
+      "ownerName",
+      "reviewerId",
+      "reviewerName",
+      "riskLevel",
+      "companyTeamId",
+      "lockedAt",
+    ]) {
+      expect(detail, `client detail leaks ${leaked}`).not.toHaveProperty(leaked);
+    }
+  });
+
+  it("still gives the client what their own filing needs", async () => {
+    const { deps } = dependencies([COMPANY_A]);
+
+    const detail = await getClientPortalCaseForActor({ caseId: CASE_A }, deps);
+
+    expect(detail).toMatchObject({
+      companyName: "Harbour Holdings Limited",
+      returnYear: 2026,
+      filingDueDate: "2026-05-12",
+      currentStatus: "Documents pending",
+    });
+    expect(detail?.checklist).toHaveLength(2);
+    expect(detail?.payment).toMatchObject({ status: "Payment pending" });
+  });
+
+  it("keeps the checklist free of internal document ids", async () => {
+    const { deps } = dependencies([COMPANY_A]);
+
+    const detail = await getClientPortalCaseForActor({ caseId: CASE_A }, deps);
+
+    for (const item of detail?.checklist ?? []) {
+      expect(item).not.toHaveProperty("documentId");
+      expect(item).not.toHaveProperty("verifiedAt");
+    }
+  });
+
   it("returns null for a case outside the client's companies", async () => {
     const { deps } = dependencies([COMPANY_A], []);
 

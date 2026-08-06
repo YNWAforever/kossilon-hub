@@ -31,6 +31,17 @@ export function isPublicRoute(pathname: string): boolean {
 }
 
 /**
+ * The routes a Client actor can actually use. /portal is theirs; /documents
+ * authorises Client actors explicitly through requireClientCompanyAccess. Every
+ * other screen resolves a staff actor and would refuse them on every query.
+ */
+const CLIENT_ROUTES = ["/portal", "/documents"] as const;
+
+export function isClientRoute(pathname: string): boolean {
+  return CLIENT_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+/**
  * Backslashes and control characters. Browsers normalise "\\" to "/" when parsing
  * a URL and strip control characters before parsing, so "/\\evil.com" and
  * "/\tevil.com" both reassemble into the protocol-relative "//evil.com" that the

@@ -29,6 +29,33 @@ export type ClientPortalCaseSummary = {
   paymentStatus: PaymentStatus | null;
 };
 
+/** What a client may see of their own filing. No staff assignment, no risk grade. */
+export type ClientPortalCaseDetail = {
+  id: string;
+  companyId: string;
+  companyName: string;
+  returnYear: number;
+  madeUpDate: string;
+  filingDueDate: string;
+  currentStatus: AnnualReturnStatus;
+  filingReference: string | null;
+  completedAt: string | null;
+  checklist: Array<{
+    id: string;
+    itemLabel: string;
+    required: boolean;
+    status: AnnualReturnCase["checklist"][number]["status"];
+    dueDate: string;
+  }>;
+  payment: {
+    invoiceNumber: string;
+    amount: number;
+    currency: "HKD";
+    status: PaymentStatus;
+    dueDate: string;
+  } | null;
+};
+
 export type ClientPortalDependencies = {
   repository: Pick<AnnualReturnRepository, "listCases">;
   listCompanyIds(): Promise<string[]>;
@@ -65,14 +92,55 @@ export async function listClientPortalCasesForActor(
 export async function getClientPortalCaseForActor(
   input: { caseId: string },
   dependencies: ClientPortalDependencies,
-): Promise<AnnualReturnCase | null> {
+): Promise<ClientPortalCaseDetail | null> {
   const companyIds = await dependencies.listCompanyIds();
   if (companyIds.length === 0) return null;
 
   // Filtered by membership rather than fetched by id and checked afterwards, so a
   // case outside the client's companies is not read at all.
   const cases = await dependencies.repository.listCases({ companyIds });
-  return cases.find((case_) => case_.id === input.caseId) ?? null;
+  const case_ = cases.find((candidate) => candidate.id === input.caseId);
+  return case_ ? toClientDetail(case_) : null;
+}
+
+/**
+ * Projected rather than returned whole.
+ *
+ * AnnualReturnCase is the internal staff record: it carries ownerId/ownerName,
+ * reviewerId/reviewerName and riskLevel — who inside the firm is handling the
+ * file and how badly the firm thinks it is going. An earlier version of this
+ * handed that object straight to the client because the staff detail view
+ * happened to take the same type. A client sees their filing, not the firm's
+ * internal assignment and grading of it.
+ */
+function toClientDetail(case_: AnnualReturnCase): ClientPortalCaseDetail {
+  return {
+    id: case_.id,
+    companyId: case_.companyId,
+    companyName: case_.companyName,
+    returnYear: case_.returnYear,
+    madeUpDate: case_.madeUpDate,
+    filingDueDate: case_.filingDueDate,
+    currentStatus: case_.currentStatus,
+    filingReference: case_.filingReference,
+    completedAt: case_.completedAt,
+    checklist: case_.checklist.map((item) => ({
+      id: item.id,
+      itemLabel: item.itemLabel,
+      required: item.required,
+      status: item.status,
+      dueDate: item.dueDate,
+    })),
+    payment: case_.payment
+      ? {
+          invoiceNumber: case_.payment.invoiceNumber,
+          amount: case_.payment.amount,
+          currency: case_.payment.currency,
+          status: case_.payment.status,
+          dueDate: case_.payment.dueDate,
+        }
+      : null,
+  };
 }
 
 async function withClientPortalDependencies<T>(

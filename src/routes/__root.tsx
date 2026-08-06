@@ -22,6 +22,7 @@ import { getAuthenticatedActor } from "@/features/auth/neon-auth-rpc";
 import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
+  isClientRoute,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
@@ -121,8 +122,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
     const { dataMode } = context;
     if (dataMode !== "demo") {
+      let actor: AuthenticatedActor;
       try {
-        return { actor: await getAuthenticatedActor() };
+        actor = await getAuthenticatedActor();
       } catch {
         const redirectPath = getSafeRedirectPath(location.href);
         rememberRedirectPath(redirectPath);
@@ -131,6 +133,15 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           replace: true,
         });
       }
+
+      // Every screen except these resolves a staff actor, so a Client signing in
+      // and landing on the dashboard hit Forbidden on every query it makes. They
+      // get the portal instead — which is the only thing built for them.
+      if (actor.role === "Client" && !isClientRoute(location.pathname)) {
+        throw redirect({ href: "/portal", replace: true });
+      }
+
+      return { actor };
     }
 
     return { actor: null };

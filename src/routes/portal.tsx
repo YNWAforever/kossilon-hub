@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format-date";
 import {
   getClientPortalCase,
   listClientPortalCases,
+  type ClientPortalCaseDetail,
 } from "../features/annual-return/client-portal-server-fns";
 import {
   createDocumentUploadIntent,
@@ -59,7 +60,9 @@ function PortalRoute() {
   const productionCaseQuery = useQuery({
     queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "portal"),
     queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
-    enabled: Boolean(productionCaseId),
+    // getAnnualReturnCase resolves a staff actor, so firing it for a Client is a
+    // guaranteed Forbidden. The client branch below has its own scoped read.
+    enabled: Boolean(productionCaseId) && actor?.role !== "Client",
     retry: false,
   });
   const [warning, setWarning] = useState<string | undefined>();
@@ -453,6 +456,69 @@ function clientPortalStatusTone(status: ProductionAnnualReturnCase["currentStatu
 }
 
 /**
+ * The client's own view of one filing. Deliberately NOT ProductionPortalCaseView:
+ * that is the staff screen and takes the internal AnnualReturnCase, which carries
+ * the owner, reviewer and risk grade. This renders the projection instead.
+ */
+function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }) {
+  const [, setWarning] = useState<string | undefined>();
+  const outstanding = caseItem.checklist.filter(
+    (item) => item.required && item.status !== "Verified",
+  );
+
+  return (
+    <main className="flex-1 space-y-6 p-6">
+      <PageHeader
+        eyebrow="Client portal"
+        title={caseItem.companyName}
+        subtitle={`Annual return ${caseItem.returnYear} · due ${formatDate(caseItem.filingDueDate)}`}
+      />
+
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-base font-semibold text-foreground">Progress</h2>
+          <StatusPill tone={clientPortalStatusTone(caseItem.currentStatus)}>
+            {caseItem.currentStatus}
+          </StatusPill>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {outstanding.length === 0
+            ? "Everything we need from you has been received."
+            : `We are still waiting on ${outstanding.length} document${outstanding.length === 1 ? "" : "s"} from you.`}
+        </p>
+        {outstanding.length > 0 ? (
+          <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground">
+            {outstanding.map((item) => (
+              <li key={item.id}>{item.itemLabel}</li>
+            ))}
+          </ul>
+        ) : null}
+        {caseItem.payment ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Invoice {caseItem.payment.invoiceNumber} — {caseItem.payment.currency}{" "}
+            {caseItem.payment.amount} · {caseItem.payment.status}
+          </p>
+        ) : null}
+        {caseItem.filingReference ? (
+          <p className="mt-1 text-sm text-muted-foreground">
+            Filing reference {caseItem.filingReference}
+          </p>
+        ) : null}
+      </section>
+
+      <ProductionDocumentPanel
+        companyId={caseItem.companyId}
+        caseId={caseItem.id}
+        onWarning={setWarning}
+      />
+      <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/portal">
+        Back to your filings
+      </Link>
+    </main>
+  );
+}
+
+/**
  * What a client signing in actually sees: their own companies' annual returns,
  * and the document panel for whichever one they open. Read-only apart from the
  * uploads the documents feature already authorises for Client actors.
@@ -475,7 +541,7 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
       return <div className="p-6 text-sm text-muted-foreground">Loading your annual return...</div>;
     }
     if (caseQuery.data) {
-      return <ProductionPortalCaseView caseItem={caseQuery.data} />;
+      return <ClientPortalCaseView caseItem={caseQuery.data} />;
     }
     return (
       <main className="flex-1 space-y-3 p-6">
