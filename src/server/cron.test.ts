@@ -19,9 +19,9 @@ describe("scheduled maintenance", () => {
           calls.push("uploads");
           return { expired: 3 };
         }),
-        pruneNotifications: vi.fn(async () => {
-          calls.push("prune");
-          return { pruned: 4 };
+        redactNotifications: vi.fn(async () => {
+          calls.push("redact");
+          return { redacted: 4 };
         }),
       },
       { dispatchLimit: 7 },
@@ -30,10 +30,10 @@ describe("scheduled maintenance", () => {
       escalations: { warnings: 1, breaches: 2 },
       dispatch: { sent: 1 },
       uploads: { expired: 3 },
-      notifications: { pruned: 4 },
+      notifications: { redacted: 4 },
     });
-    // Pruning runs last so a row settled in this same pass is not a deletion
-    // candidate until the next one.
-    expect(calls).toEqual(["escalations", "dispatch:7", "uploads", "prune"]);
+    // Redaction runs last so a row settled in this same pass is not a candidate
+    // until the next one.
+    expect(calls).toEqual(["escalations", "dispatch:7", "uploads", "redact"]);
   });
 });

@@ -80,30 +80,84 @@ describe("stranded outbox rows become claimable again", () => {
 /**
  * retention_until was written on every insert and read back on every row while
  * nothing ever acted on it, so notification_outbox grew without bound — carrying
- * recipient addresses and message bodies indefinitely. The five-minute cron now
- * prunes it.
+ * recipient addresses and message bodies indefinitely.
+ *
+ * The schema was built for REDACTION, not deletion: `redacted_at`, a check
+ * constraint spelling out the redacted shape, and a partial index on
+ * (retention_until) where redacted_at is null whose only purpose is finding rows
+ * due for it. An earlier draft of this work deleted the rows outright, which
+ * would have destroyed the firm's record that a statutory reminder was ever sent.
  */
-describe("outbox retention is enforced", () => {
+describe("outbox retention redacts rather than deletes", () => {
   const source = readFileSync(new URL("./outbox.ts", import.meta.url), "utf8");
-  const prune = source.slice(source.indexOf("async pruneExpired"), source.indexOf("async close()"));
+  const redact = source.slice(
+    source.indexOf("async redactExpired"),
+    source.indexOf("async close()"),
+  );
 
-  it("deletes only rows past their retention date", () => {
-    expect(prune).toContain("retention_until <=");
-    expect(prune).toContain("delete from notification_outbox");
+  it("keeps the row and strips the personal data", () => {
+    expect(redact).toContain("update notification_outbox");
+    expect(redact).not.toContain("delete from");
+    for (const column of [
+      "redacted_at = now()",
+      "recipient = null",
+      "payload = null",
+      "provider_message_id = null",
+      "last_error_code = null",
+      "last_error_message = null",
+    ]) {
+      expect(redact, `redaction does not clear ${column}`).toContain(column);
+    }
   });
 
-  // The important half: a notification that has not been delivered yet must never
-  // be deleted, however old its retention date is.
-  it("never deletes a notification still awaiting delivery", () => {
-    expect(prune).toContain("status in ('sent', 'cancelled')");
-    expect(prune).toContain("status = 'failed' and attempt_count >= max_attempts");
-    expect(prune).not.toContain("status = 'pending'");
-    expect(prune).not.toContain("status = 'processing'");
+  // notification_outbox_redaction_check requires exactly this set to be null
+  // alongside a non-null redacted_at; missing one makes every update fail.
+  it("clears precisely the columns the check constraint requires", () => {
+    const migration = readFileSync(
+      new URL(
+        "../../../db/migrations/0006_production_assignment_sla_foundation.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const constraint = migration.slice(
+      migration.indexOf("notification_outbox_redaction_check"),
+      migration.indexOf("create table document_upload_intents"),
+    );
+
+    for (const column of [
+      "recipient",
+      "payload",
+      "provider_message_id",
+      "last_error_code",
+      "last_error_message",
+    ]) {
+      expect(constraint, `constraint does not mention ${column}`).toContain(column);
+      expect(redact, `redaction does not clear ${column}`).toContain(`${column} = null`);
+    }
+  });
+
+  it("only touches rows past their retention date", () => {
+    expect(redact).toContain("retention_until <=");
+  });
+
+  it("never redacts a notification still awaiting delivery", () => {
+    expect(redact).toContain("status in ('sent', 'cancelled')");
+    expect(redact).toContain("status = 'failed' and attempt_count >= max_attempts");
+    expect(redact).not.toContain("status = 'pending'");
+    expect(redact).not.toContain("status = 'processing'");
+  });
+
+  // Matching the partial index predicate is what lets this use
+  // notification_outbox_retention_idx instead of scanning, and it also stops the
+  // pass from rewriting rows it already redacted.
+  it("skips rows it has already redacted, matching the partial index", () => {
+    expect(redact).toContain("redacted_at is null");
   });
 
   it("bounds the work it does in one cron tick", () => {
-    expect(prune).toContain("limit ${limit}");
-    expect(prune).toContain("for update skip locked");
+    expect(redact).toContain("limit ${limit}");
+    expect(redact).toContain("for update skip locked");
   });
 
   it("is driven by the scheduled maintenance pass", () => {
@@ -113,8 +167,8 @@ describe("outbox retention is enforced", () => {
       "utf8",
     );
 
-    expect(cron).toContain("pruneNotifications");
-    expect(maintenance).toContain("outbox.pruneExpired(now)");
+    expect(cron).toContain("redactNotifications");
+    expect(maintenance).toContain("outbox.redactExpired(now)");
   });
 });
 

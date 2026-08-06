@@ -160,7 +160,7 @@ export type NotificationOutboxRepository = {
     id: string,
     input: { errorCode: string; errorMessage: string; now: string },
   ): Promise<void>;
-  pruneExpired(now: string, limit?: number): Promise<{ pruned: number }>;
+  redactExpired(now: string, limit?: number): Promise<{ redacted: number }>;
   close(): Promise<void>;
 };
 
@@ -246,21 +246,43 @@ export function createNotificationOutboxRepository(
      * existed while the table grew without bound, carrying recipient addresses and
      * message bodies indefinitely.
      *
-     * Only settled rows are pruned: anything still pending, failed within its
-     * attempt budget, or mid-dispatch is left alone regardless of its retention
-     * date, so this can never delete a notification that has yet to be delivered.
+     * This REDACTS rather than deletes, which is what the schema was built for:
+     * `redacted_at` plus a check constraint spelling out the redacted shape
+     * (recipient, payload, provider_message_id and both error columns all null),
+     * and `notification_outbox_retention_idx on (retention_until) where
+     * redacted_at is null` — an index whose only purpose is finding rows due for
+     * redaction. The row survives with its id, company, work item, channel, type,
+     * status and timestamps, so the audit trail of "we sent this client their
+     * statutory reminder" outlives the phone number it was sent to. For a
+     * regulated firm that distinction matters; an earlier draft of this deleted
+     * the row outright and would have destroyed that record.
+     *
+     * Only settled rows are touched: anything pending, mid-dispatch, or failed
+     * within its attempt budget keeps its recipient, because redacting it would
+     * null the address it still needs to be delivered to.
+     *
      * Bounded per run because it shares a five-minute cron with the dispatch pass.
+     * `redacted_at is null` in the subquery matches the partial index predicate,
+     * so this uses the index rather than scanning.
      */
-    async pruneExpired(now, limit = 500) {
+    async redactExpired(now, limit = 500) {
       if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
-        throw new Error("Outbox prune limit must be between 1 and 5000.");
+        throw new Error("Outbox redaction limit must be between 1 and 5000.");
       }
 
       const rows = await sql<{ id: string }[]>`
-        delete from notification_outbox
+        update notification_outbox
+        set redacted_at = now(),
+            recipient = null,
+            payload = null,
+            provider_message_id = null,
+            last_error_code = null,
+            last_error_message = null,
+            updated_at = now()
         where id in (
           select id from notification_outbox
-          where retention_until <= ${now}
+          where redacted_at is null
+            and retention_until <= ${now}
             and (
               status in ('sent', 'cancelled')
               or (status = 'failed' and attempt_count >= max_attempts)
@@ -272,7 +294,7 @@ export function createNotificationOutboxRepository(
         returning id
       `;
 
-      return { pruned: rows.length };
+      return { redacted: rows.length };
     },
     async close() {
       if (ownsClient && "end" in sql) await sql.end();
