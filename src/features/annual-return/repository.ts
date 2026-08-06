@@ -18,6 +18,11 @@ import {
   type AnnualReturnActionActor,
   type AnnualReturnActorRole,
 } from "./permissions";
+import {
+  CHECKLIST_EVIDENCE_FILE_TYPES,
+  FILING_CONFIRMATION_FILE_TYPES,
+  PAYMENT_PROOF_FILE_TYPES,
+} from "./evidence-file-types";
 import type {
   AnnualReturnCase,
   AnnualReturnCaseNote,
@@ -118,6 +123,8 @@ export type CaseFilters = {
    * which are separate AND-ed clauses.
    */
   visibleToUserId?: string;
+  /** The companies a client actor is a member of. Empty means no access at all. */
+  companyIds?: readonly string[];
   limit?: number;
 };
 
@@ -183,7 +190,11 @@ export type CreateAnnualReturnRepositoryOptions = CreateSqlClientOptions & {
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
-  dashboardMetrics(today: string, currentUserId: string): Promise<AnnualReturnDashboardMetrics>;
+  dashboardMetrics(
+    today: string,
+    currentUserId: string,
+    scope?: CaseFilters,
+  ): Promise<AnnualReturnDashboardMetrics>;
   assertCanMutateCase(caseId: string, actorId: string, action: AnnualReturnAction): Promise<void>;
   updateStatus(
     caseId: string,
@@ -212,11 +223,33 @@ export { hongKongBusinessDate };
  */
 export const DEFAULT_CASE_LIMIT = 200;
 
+/**
+ * The window scanned when a `risk` filter is active.
+ *
+ * risk / missingDocuments / overdueOnly used to be applied in JS *after* the SQL
+ * LIMIT, so past 200 cases a filtered board silently omitted matches: "high risk"
+ * showed only the high-risk cases that happened to fall inside the 200 earliest
+ * due dates, and the dashboard tiles counted the same truncated set.
+ *
+ * overdueOnly and missingDocuments are now SQL predicates and filter before the
+ * limit. risk is derived from hydrated children, so it still filters afterwards
+ * and instead widens the window it filters over.
+ */
+export const RISK_FILTER_SCAN_LIMIT = 2000;
+
+/**
+ * Dashboard tiles count the whole active book rather than a page of it. Still
+ * bounded, because hydrateCases loads checklist and payment children per case.
+ */
+export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
+
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
-const CHECKLIST_EVIDENCE_FILE_TYPE = "annual-return-evidence";
-const PAYMENT_PROOF_FILE_TYPE = "payment-proof";
-const FILING_CONFIRMATION_FILE_TYPE = "filing-confirmation";
+// Accepted `documents.file_type` values per evidence kind. Previously three bare
+// literals that only the seed script wrote — see ./evidence-file-types.
+const CHECKLIST_EVIDENCE_FILE_TYPE = CHECKLIST_EVIDENCE_FILE_TYPES;
+const PAYMENT_PROOF_FILE_TYPE = PAYMENT_PROOF_FILE_TYPES;
+const FILING_CONFIRMATION_FILE_TYPE = FILING_CONFIRMATION_FILE_TYPES;
 
 function dateOnly(value: string | Date): string {
   if (value instanceof Date) {
@@ -343,28 +376,12 @@ function hydrateCase(
   };
 }
 
-function caseMatchesHydratedFilters(
-  case_: AnnualReturnCase,
-  filters: CaseFilters,
-  today: string,
-): boolean {
-  if (filters.risk && case_.riskLevel !== filters.risk) {
-    return false;
-  }
-
-  if (typeof filters.missingDocuments === "boolean") {
-    const hasOutstandingEvidence = case_.checklist.some(hasOutstandingRequiredEvidence);
-
-    if (hasOutstandingEvidence !== filters.missingDocuments) {
-      return false;
-    }
-  }
-
-  if (filters.overdueOnly && daysBetween(today, case_.filingDueDate) >= 0) {
-    return false;
-  }
-
-  return true;
+/**
+ * Only `risk` remains here. missingDocuments and overdueOnly are SQL predicates
+ * now, so they narrow before the LIMIT instead of after it.
+ */
+function caseMatchesHydratedFilters(case_: AnnualReturnCase, filters: CaseFilters): boolean {
+  return !filters.risk || case_.riskLevel === filters.risk;
 }
 
 function countOutstandingRequiredEvidence(case_: AnnualReturnCase): number {
@@ -536,14 +553,22 @@ export function createAnnualReturnRepository(
     return actor;
   }
 
-  async function selectCaseRows(filters: CaseFilters): Promise<CaseRow[]> {
+  async function selectCaseRows(filters: CaseFilters, today: string): Promise<CaseRow[]> {
     const ownerId = filters.ownerId ?? null;
     const teamId = filters.teamId ?? null;
     const reviewerId = filters.reviewerId ?? null;
     const status = filters.status ?? null;
     const paymentStatus = filters.paymentStatus ?? null;
     const visibleToUserId = filters.visibleToUserId ?? null;
-    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
+    const companyIds = filters.companyIds ? [...filters.companyIds] : null;
+    const overdueOnly = filters.overdueOnly === true ? today : null;
+    const missingDocuments = typeof filters.missingDocuments === "boolean" ? today : null;
+    const wantsMissingDocuments = filters.missingDocuments === true;
+    // `risk` stays a post-hydration filter — riskForCase derives it from the
+    // checklist, payment and filing state, and duplicating that in SQL is exactly
+    // the kind of drift that made the evidence guards unsatisfiable. It is applied
+    // to a wider window instead, so the LIMIT no longer truncates before filtering.
+    const limit = filters.limit ?? (filters.risk ? RISK_FILTER_SCAN_LIMIT : DEFAULT_CASE_LIMIT);
 
     return sql<CaseRow[]>`
       select
@@ -586,6 +611,25 @@ export function createAnnualReturnRepository(
           ${visibleToUserId}::uuid is null
           or arc.owner_id = ${visibleToUserId}::uuid
           or arc.reviewer_id = ${visibleToUserId}::uuid
+        )
+        and (${companyIds}::uuid[] is null or arc.company_id = any(${companyIds}::uuid[]))
+        and (${overdueOnly}::date is null or arc.filing_due_date < ${overdueOnly}::date)
+        and (
+          ${missingDocuments}::date is null
+          or ${wantsMissingDocuments} = exists (
+            -- Mirrors hasOutstandingRequiredEvidence exactly; the two are pinned
+            -- together by a test.
+            select 1
+            from annual_return_checklist_items i
+            where i.case_id = arc.id
+              and i.required = true
+              and (
+                i.status <> 'Verified'
+                or i.received_at is null
+                or i.verified_at is null
+                or i.document_id is null
+              )
+          )
         )
       order by arc.filing_due_date asc, c.company_name asc
       limit ${limit}
@@ -655,9 +699,9 @@ export function createAnnualReturnRepository(
     filters: CaseFilters,
     today: string,
   ): Promise<AnnualReturnCase[]> {
-    const rows = await selectCaseRows(filters);
+    const rows = await selectCaseRows(filters, today);
     const cases = await hydrateCases(rows, today);
-    return cases.filter((case_) => caseMatchesHydratedFilters(case_, filters, today));
+    return cases.filter((case_) => caseMatchesHydratedFilters(case_, filters));
   }
 
   async function listCases(filters: CaseFilters): Promise<AnnualReturnCase[]> {
@@ -697,12 +741,18 @@ export function createAnnualReturnRepository(
     return case_ ?? null;
   }
 
+  /**
+   * `scope` is the same narrowing the board applies. Without it the tiles counted
+   * the whole firm for every staff role, so a user whose board showed their own
+   * cases saw headline numbers for books they cannot open.
+   */
   async function dashboardMetrics(
     today: string,
     currentUserId: string,
+    scope: CaseFilters = {},
   ): Promise<AnnualReturnDashboardMetrics> {
     // TODO: Move dashboard tiles to SQL aggregates and paginated reads as case volume grows.
-    const cases = await listCasesForToday({}, today);
+    const cases = await listCasesForToday({ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }, today);
     const activeCases = cases.filter(isActiveForOperationalMetrics);
 
     return {
@@ -753,7 +803,7 @@ export function createAnnualReturnRepository(
         and d.case_id = arci.case_id
         and d.company_id = ${companyId}
         and d.verification_status = 'verified'
-        and d.file_type = ${CHECKLIST_EVIDENCE_FILE_TYPE}
+        and d.file_type = any(${CHECKLIST_EVIDENCE_FILE_TYPE})
       where arci.case_id = ${caseId}
         and arci.required = true
         and (
@@ -792,7 +842,7 @@ export function createAnnualReturnRepository(
         and d.case_id = p.case_id
         and d.company_id = ${companyId}
         and d.verification_status = 'verified'
-        and d.file_type = ${PAYMENT_PROOF_FILE_TYPE}
+        and d.file_type = any(${PAYMENT_PROOF_FILE_TYPE})
       where p.case_id = ${caseId}
       for update of p
     `;
@@ -822,7 +872,7 @@ export function createAnnualReturnRepository(
           and case_id = ${caseId}
           and company_id = ${companyId}
           and verification_status = 'verified'
-          and file_type = ${FILING_CONFIRMATION_FILE_TYPE}
+          and file_type = any(${FILING_CONFIRMATION_FILE_TYPE})
         limit 1
       `;
 
@@ -1257,7 +1307,7 @@ export function createAnnualReturnRepository(
             and case_id = ${input.caseId}
             and company_id = ${lockedCase.company_id}
             and verification_status = 'verified'
-            and file_type = ${CHECKLIST_EVIDENCE_FILE_TYPE}
+            and file_type = any(${CHECKLIST_EVIDENCE_FILE_TYPE})
           limit 1
         `;
 
@@ -1378,7 +1428,7 @@ export function createAnnualReturnRepository(
             and case_id = ${input.caseId}
             and company_id = ${lockedCase.company_id}
             and verification_status = 'verified'
-            and file_type = ${PAYMENT_PROOF_FILE_TYPE}
+            and file_type = any(${PAYMENT_PROOF_FILE_TYPE})
           limit 1
         `;
 
@@ -1504,7 +1554,7 @@ export function createAnnualReturnRepository(
           and case_id = ${input.caseId}
           and company_id = ${lockedCase.company_id}
           and verification_status = 'verified'
-          and file_type = ${FILING_CONFIRMATION_FILE_TYPE}
+          and file_type = any(${FILING_CONFIRMATION_FILE_TYPE})
         limit 1
       `;
 

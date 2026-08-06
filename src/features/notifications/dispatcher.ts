@@ -23,12 +23,23 @@ export function createNotificationDispatcher(
         sent: 0,
         retried: 0,
         permanentlyFailed: 0,
+        superseded: 0,
       };
       for (const notification of due) {
+        // Every terminal write is fenced on the attempt_count this claim saw. A
+        // false return means another run reclaimed the row and finished it first,
+        // so this outcome is not ours to count — previously both runs reported a
+        // send and only one of them was recorded.
         try {
           const result = await transport.dispatch(notification);
-          await repository.markSent(notification.id, result.providerMessageId, now);
-          summary.sent += 1;
+          const applied = await repository.markSent(
+            notification.id,
+            result.providerMessageId,
+            now,
+            notification.attemptCount,
+          );
+          if (applied) summary.sent += 1;
+          else summary.superseded += 1;
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Notification dispatch failed.";
@@ -36,12 +47,19 @@ export function createNotificationDispatcher(
             error instanceof Error && "code" in error && typeof error.code === "string"
               ? error.code
               : "dispatch_failed";
+          const input = {
+            errorCode,
+            errorMessage,
+            now,
+            attemptCount: notification.attemptCount,
+          };
           if (notification.attemptCount >= notification.maxAttempts) {
-            await repository.markFailed(notification.id, { errorCode, errorMessage, now });
-            summary.permanentlyFailed += 1;
-          } else {
-            await repository.markRetry(notification.id, { errorCode, errorMessage, now });
+            if (await repository.markFailed(notification.id, input)) summary.permanentlyFailed += 1;
+            else summary.superseded += 1;
+          } else if (await repository.markRetry(notification.id, input)) {
             summary.retried += 1;
+          } else {
+            summary.superseded += 1;
           }
         }
       }

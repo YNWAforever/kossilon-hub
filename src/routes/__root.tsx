@@ -22,11 +22,22 @@ import { getAuthenticatedActor } from "@/features/auth/neon-auth-rpc";
 import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
+  isClientRoute,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
+import type { AuthenticatedActor } from "@/features/auth/types";
 
-type RouterContext = { queryClient: QueryClient; dataMode: DataMode };
+/**
+ * `actor` is resolved in beforeLoad and handed to every route. The call was
+ * already being made to gate the route — its result was simply discarded, which
+ * is why no screen could tell a Client sign-in from a staff one.
+ */
+type RouterContext = {
+  queryClient: QueryClient;
+  dataMode: DataMode;
+  actor: AuthenticatedActor | null;
+};
 
 function NotFoundComponent() {
   return (
@@ -107,12 +118,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context, location }) => {
-    if (isPublicRoute(location.pathname)) return;
+    if (isPublicRoute(location.pathname)) return { actor: null };
 
     const { dataMode } = context;
     if (dataMode !== "demo") {
+      let actor: AuthenticatedActor;
       try {
-        await getAuthenticatedActor();
+        actor = await getAuthenticatedActor();
       } catch {
         const redirectPath = getSafeRedirectPath(location.href);
         rememberRedirectPath(redirectPath);
@@ -121,7 +133,18 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           replace: true,
         });
       }
+
+      // Every screen except these resolves a staff actor, so a Client signing in
+      // and landing on the dashboard hit Forbidden on every query it makes. They
+      // get the portal instead — which is the only thing built for them.
+      if (actor.role === "Client" && !isClientRoute(location.pathname)) {
+        throw redirect({ href: "/portal", replace: true });
+      }
+
+      return { actor };
     }
+
+    return { actor: null };
   },
   head: () => ({
     meta: [

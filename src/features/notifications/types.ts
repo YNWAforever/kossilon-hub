@@ -54,20 +54,31 @@ export type DispatchSummary = {
   sent: number;
   retried: number;
   permanentlyFailed: number;
+  /** Claims another run reclaimed and finished first, so this run did not record them. */
+  superseded: number;
 };
 
 export type NotificationOutboxRepository = {
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
-  markSent(id: string, providerMessageId: string, sentAt: string): Promise<void>;
+  /**
+   * Fenced on the attempt_count the claim returned; `false` means another run
+   * reclaimed the row and finished it first, so this outcome must not be counted.
+   */
+  markSent(
+    id: string,
+    providerMessageId: string,
+    sentAt: string,
+    attemptCount: number,
+  ): Promise<boolean>;
   markRetry(
     id: string,
-    input: { errorCode: string; errorMessage: string; now: string },
-  ): Promise<void>;
+    input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
+  ): Promise<boolean>;
   markFailed(
     id: string,
-    input: { errorCode: string; errorMessage: string; now: string },
-  ): Promise<void>;
+    input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
+  ): Promise<boolean>;
   close(): Promise<void>;
 };
 

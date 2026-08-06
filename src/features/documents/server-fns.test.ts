@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { R2BucketLike } from "@/server/runtime-env";
@@ -213,5 +214,35 @@ describe("document server orchestration", () => {
       intent.id,
       expect.objectContaining({ status: "rejected" }),
     );
+  });
+});
+
+/**
+ * The intent caps the declared size at 10MB, but the upload body was only
+ * `z.string().min(1)`. bytesFromBase64 decoded the whole string before
+ * finalizeDocumentUploadForActor compared byteLength against the intent, so any
+ * caller holding a valid intent could hand the Worker a several-hundred-megabyte
+ * payload and exhaust its 128MB memory limit before the size check ever ran.
+ */
+describe("upload body size is bounded at the validator", () => {
+  const source = readFileSync(new URL("./server-fns.ts", import.meta.url), "utf8");
+
+  it("caps the encoded body length", () => {
+    expect(source).toContain("MAX_UPLOAD_BASE64_LENGTH");
+    expect(source).toContain("z.string().min(1).max(MAX_UPLOAD_BASE64_LENGTH)");
+  });
+
+  it("derives the cap from the same limit the intent enforces", () => {
+    expect(source).toContain("const MAX_UPLOAD_BYTES = 10 * 1024 * 1024");
+    expect(source).toContain("Math.ceil(MAX_UPLOAD_BYTES / 3) * 4");
+    expect(source).toContain("sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES)");
+  });
+
+  it("rejects before decoding rather than after", () => {
+    const validatorAt = source.indexOf("z.string().min(1).max(MAX_UPLOAD_BASE64_LENGTH)");
+    const decodeAt = source.indexOf("bytesFromBase64(data.bodyBase64)");
+
+    expect(validatorAt).toBeGreaterThan(-1);
+    expect(decodeAt).toBeGreaterThan(validatorAt);
   });
 });

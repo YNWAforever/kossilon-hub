@@ -33,6 +33,31 @@ export type QueueAnnualReturnWhatsAppReminderResult = {
 const ANNUAL_RETURN_REMINDER_TEMPLATE_LABEL = "Annual return WhatsApp reminder";
 const ANNUAL_RETURN_REMINDER_TEMPLATE_NAME = "annual_return_manual_reminder";
 
+/**
+ * Dedupes a double-submit without blocking a deliberate second reminder.
+ *
+ * queueOutboundTemplateMessage has taken an idempotencyKey since the follow-up
+ * work — an advisory lock plus an outbox replay check — and this path simply never
+ * passed one. Two clicks on "send reminder" therefore sent the client two WhatsApp
+ * messages and incremented remindersSent twice.
+ *
+ * remindersSent is part of the key, so concurrent submits share it and collapse to
+ * one send, while a reminder sent later (after the counter has advanced) gets a
+ * fresh key and goes through as intended.
+ */
+export function annualReturnReminderIdempotencyKey(input: {
+  caseId: string;
+  recipientPhone: string;
+  remindersSent: number;
+}): string {
+  return [
+    "annual-return-reminder",
+    input.caseId,
+    input.recipientPhone.replace(/\s+/g, ""),
+    input.remindersSent,
+  ].join(":");
+}
+
 export function buildAnnualReturnWhatsAppReminderRequest({
   case_,
   actorId,
@@ -60,6 +85,11 @@ export function buildAnnualReturnWhatsAppReminderRequest({
       languageCode: "en",
       category: "annual_return",
       body: draftBody,
+      idempotencyKey: annualReturnReminderIdempotencyKey({
+        caseId: case_.id,
+        recipientPhone,
+        remindersSent: case_.remindersSent,
+      }),
     },
   };
 }

@@ -7,6 +7,7 @@ import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocuments } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
+import { CHECKLIST_EVIDENCE_FILE_TYPES } from "../features/annual-return/evidence-file-types";
 import { getAnnualReturnCase } from "../features/annual-return/server-fns";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import type { PrivateDocument } from "../features/documents/repository";
@@ -433,7 +434,10 @@ function ProductionDocumentsSection({
   pendingDocumentIds: string[];
 }) {
   const [checklistItemIds, setChecklistItemIds] = useState<Record<string, string>>({});
-  const checklistCategories = new Set(["identity", "registry", "signature", "other"]);
+  // Was a hardcoded set that had already drifted from the server guard: it omitted
+  // "packet" and the legacy "annual-return-evidence", so a document the server
+  // would happily accept as checklist evidence never offered the item selector.
+  const checklistCategories = new Set(CHECKLIST_EVIDENCE_FILE_TYPES);
 
   return (
     <section className="rounded-lg border bg-card p-4">
@@ -460,7 +464,11 @@ function ProductionDocumentsSection({
       <div className="mt-4 divide-y">
         {documents.map((document) => {
           const isChecklistEvidence = checklistCategories.has(document.category);
-          const matchedChecklistItem = caseItem?.checklist.find(
+          // `caseItem?.` guards a missing case but not a case whose checklist is
+          // absent, which is what a row written before the checklist existed looks
+          // like. The optional chain has to reach the array itself or SSR throws
+          // and the whole route falls back to client rendering.
+          const matchedChecklistItem = caseItem?.checklist?.find(
             (item) => item.documentId === document.id,
           );
           const checklistItemId = checklistItemIds[document.id] ?? matchedChecklistItem?.id ?? "";
@@ -497,7 +505,7 @@ function ProductionDocumentsSection({
                       }
                     >
                       <option value="">Select checklist item</option>
-                      {caseItem.checklist.map((item) => (
+                      {(caseItem.checklist ?? []).map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.itemLabel}
                         </option>

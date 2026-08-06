@@ -199,6 +199,20 @@ export async function downloadDocumentForActor(
   return { document, body: stored.body };
 }
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/**
+ * The declared size is capped on the intent, but the upload body was only
+ * `z.string().min(1)` — unbounded. bytesFromBase64 decoded the whole thing before
+ * finalizeDocumentUploadForActor compared byteLength to the intent, so a caller
+ * with any valid intent could hand the Worker a several-hundred-megabyte string
+ * and OOM it against the 128MB limit before the size check ever ran.
+ *
+ * Bounding the encoded length rejects that at the validator, ahead of any
+ * allocation. 4 characters per 3 bytes, plus padding.
+ */
+const MAX_UPLOAD_BASE64_LENGTH = Math.ceil(MAX_UPLOAD_BYTES / 3) * 4;
+
 const createIntentSchema = z
   .object({
     companyId: z.string().uuid(),
@@ -207,11 +221,7 @@ const createIntentSchema = z
     category: z.enum(DOCUMENT_CATEGORIES),
     fileName: z.string().trim().min(1).max(255),
     contentType: z.string().trim().min(1).max(120),
-    sizeBytes: z
-      .number()
-      .int()
-      .positive()
-      .max(10 * 1024 * 1024),
+    sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES),
     checksum: z.string().regex(/^[0-9a-f]{64}$/),
   })
   .strict();
@@ -227,7 +237,9 @@ export const createDocumentUploadIntent = createServerFn({ method: "POST" })
   );
 
 export const finalizeDocumentUpload = createServerFn({ method: "POST" })
-  .validator(intentIdSchema.extend({ bodyBase64: z.string().min(1) }).strict())
+  .validator(
+    intentIdSchema.extend({ bodyBase64: z.string().min(1).max(MAX_UPLOAD_BASE64_LENGTH) }).strict(),
+  )
   .handler(({ data }) =>
     withDefaultDocumentContext((actor, dependencies) =>
       finalizeDocumentUploadForActor(

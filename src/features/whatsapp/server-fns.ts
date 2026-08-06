@@ -4,6 +4,10 @@ import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import { requireActor, requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import {
+  assertAnnualReturnActionAllowed,
+  type AnnualReturnActorRole,
+} from "@/features/annual-return/permissions";
 import type { ProviderMode } from "@/server/provider-mode";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
 import type { WhatsAppConversation, WhatsAppConversationMessage } from "./conversations";
@@ -19,10 +23,13 @@ import { normalizeWoztellInboundMessage } from "./woztell";
 
 type Env = Record<string, string | undefined>;
 type ProcessWhatsAppInboundWebhookInput = z.infer<typeof processWhatsAppInboundWebhookInputSchema>;
-type ProcessWhatsAppInboundWebhookRepository = Pick<
+export type ProcessWhatsAppInboundWebhookRepository = Pick<
   WhatsAppRepository,
   "recordInboundMessage" | "recordWebhookEvent"
 >;
+type QueueWhatsAppTemplateMessageInput = z.infer<typeof queueWhatsAppTemplateMessageInputSchema> & {
+  actorId: string;
+};
 
 const templateCategories = [
   "annual_return",
@@ -57,8 +64,8 @@ export const listWhatsAppConversationMessagesInputSchema = z.object({
   limit: z.number().int().min(1).max(500).optional(),
 });
 
+// No `actorId`: identity is derived from the request, never accepted from it.
 export const queueWhatsAppTemplateMessageInputSchema = z.object({
-  actorId: z.string().uuid(),
   caseId: z.string().uuid(),
   toPhone: z.string().min(3),
   toWhatsAppId: z.string().min(1).nullable().optional(),
@@ -68,18 +75,6 @@ export const queueWhatsAppTemplateMessageInputSchema = z.object({
   category: z.enum(templateCategories),
   body: z.string().min(1),
 });
-
-async function withWhatsAppRepository<T>(
-  handler: (repository: WhatsAppRepository) => Promise<T>,
-): Promise<T> {
-  const repository = createWhatsAppRepository();
-
-  try {
-    return await handler(repository);
-  } finally {
-    await repository.close();
-  }
-}
 
 export type WhatsAppDeliveryMode = "live" | "simulated" | "blocked";
 
@@ -199,6 +194,51 @@ export async function processWhatsAppInboundWebhookWithRepository(
   }
 }
 
+export type QueueWhatsAppTemplateMessageDependencies = {
+  repository: Pick<
+    WhatsAppRepository,
+    "getCaseAuthorizationContext" | "queueOutboundTemplateMessage"
+  >;
+};
+
+/**
+ * Messaging a client about a case is an action on that case, so it is scoped with
+ * the same predicate as every other case action. The actor id is taken from the
+ * resolved actor and never from the input — the previous version accepted an
+ * `actorId` in the request body and had no authentication at all, so anyone could
+ * send a WhatsApp message from the firm's number attributed to any staff member.
+ */
+export async function queueWhatsAppTemplateMessageForActor(
+  actor: AuthenticatedActor,
+  input: Omit<QueueWhatsAppTemplateMessageInput, "actorId">,
+  dependencies: QueueWhatsAppTemplateMessageDependencies,
+) {
+  const staff = assertStaffAccess(actor);
+
+  if (!staff.userId) {
+    throw new Error("Forbidden: a staff database identity is required.");
+  }
+
+  const case_ = await dependencies.repository.getCaseAuthorizationContext(input.caseId);
+
+  if (!case_) {
+    throw new Error("Annual return case not found for WhatsApp template message.");
+  }
+
+  assertAnnualReturnActionAllowed(
+    {
+      id: staff.userId,
+      role: staff.role as AnnualReturnActorRole,
+      teamId: staff.teamId,
+      active: staff.active,
+    },
+    case_,
+    "record_reminder",
+  );
+
+  return dependencies.repository.queueOutboundTemplateMessage({ ...input, actorId: staff.userId });
+}
+
 export type WhatsAppInboxDependencies = {
   repository: Pick<WhatsAppRepository, "listConversations" | "listConversationMessages">;
 };
@@ -272,19 +312,17 @@ export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" })
     return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
   });
 
-export const processWhatsAppInboundWebhook = createServerFn({ method: "POST" })
-  .validator(processWhatsAppInboundWebhookInputSchema)
-  .handler(async ({ data }) =>
-    withWhatsAppRepository((repository) =>
-      processWhatsAppInboundWebhookWithRepository(repository, data),
-    ),
-  );
+// Inbound ingestion is NOT a server function. WOZTELL authenticates with an HMAC
+// over the raw body, which only an HTTP route can verify — see ./webhook.ts and
+// the `/api/webhooks/whatsapp` branch in src/server.ts. The previous server fn
+// took `signatureValid` as a boolean from the caller and had no actor check at
+// all, so anyone could post a forged inbound message.
 
 export const queueWhatsAppTemplateMessage = createServerFn({ method: "POST" })
   .validator(queueWhatsAppTemplateMessageInputSchema)
   .handler(async ({ data }) =>
-    withWhatsAppRepository(async (repository) => {
-      const message = await repository.queueOutboundTemplateMessage(data);
+    withWhatsAppInboxRepository(async (repository, actor) => {
+      const message = await queueWhatsAppTemplateMessageForActor(actor, data, { repository });
 
       return {
         messageId: message.id,

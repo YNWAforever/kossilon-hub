@@ -40,11 +40,18 @@ type MaintenanceDocumentRepository = {
   close(): Promise<void>;
 };
 
+type MaintenanceOutboxRepository = {
+  failStranded(now: string): Promise<{ failed: number }>;
+  redactExpired(now: string): Promise<{ redacted: number }>;
+  close(): Promise<void>;
+};
+
 export type FirmMaintenanceDependencies = {
   createWorkItemRepository(): MaintenanceWorkItemRepository;
   dispatchDue(input: { now: string; limit: number }): Promise<DispatchSummary>;
   createDocumentRepository(): MaintenanceDocumentRepository;
   createDocumentStorage(): { delete(objectKey: string): Promise<void> };
+  createOutboxRepository(): MaintenanceOutboxRepository;
 };
 
 const DEFAULT_DISPATCH_LIMIT = 50;
@@ -60,6 +67,7 @@ export async function runFirmMaintenanceWithDependencies(
   // leak whichever connection the failing pass had already opened.
   const workItems = dependencies.createWorkItemRepository();
   const documents = dependencies.createDocumentRepository();
+  const outbox = dependencies.createOutboxRepository();
 
   try {
     return await runScheduledMaintenance(
@@ -73,11 +81,13 @@ export async function runFirmMaintenanceWithDependencies(
           await Promise.all(expired.map((intent) => storage.delete(intent.objectKey)));
           return { expired: expired.length };
         },
+        failStrandedNotifications: (now) => outbox.failStranded(now),
+        redactNotifications: (now) => outbox.redactExpired(now),
       },
       { dispatchLimit: data.dispatchLimit ?? DEFAULT_DISPATCH_LIMIT },
     );
   } finally {
-    await Promise.all([workItems.close(), documents.close()]);
+    await Promise.all([workItems.close(), documents.close(), outbox.close()]);
   }
 }
 
@@ -95,6 +105,7 @@ export async function runFirmMaintenance(
     documentServerFnsModule,
     providerModeModule,
     runtimeEnvModule,
+    outboxModule,
   ] = await Promise.all([
     import("@/features/work-items/repository"),
     import("@/features/documents/repository"),
@@ -102,11 +113,13 @@ export async function runFirmMaintenance(
     import("@/features/documents/server-fns"),
     import("@/server/provider-mode"),
     import("@/server/runtime-env"),
+    import("@/features/notifications/outbox"),
   ]);
 
   return runFirmMaintenanceWithDependencies(input, {
     createWorkItemRepository: () => workItemsModule.createWorkItemRepository(),
     createDocumentRepository: () => documentsModule.createDocumentRepository(),
+    createOutboxRepository: () => outboxModule.createNotificationOutboxRepository(),
     dispatchDue: (dispatchInput) => dispatchModule.dispatchDueNotificationsOnServer(dispatchInput),
     createDocumentStorage: () => {
       // Live mode throws without a real bucket, so resolve the binding the same

@@ -610,3 +610,185 @@ create index if not exists company_contacts_company_id_idx
 create unique index if not exists company_contacts_primary_uidx
   on company_contacts (company_id)
   where is_primary;
+
+-- ---------------------------------------------------------------------------
+-- Reconciled with db/migrations/. schema.sql is a reference document (only
+-- db/migrations is ever applied), and it had drifted: these five tables were
+-- created by migrations 0003, 0005 and 0007 and queried by the app while being
+-- absent here. verify:firm now diffs the two rather than checking four names.
+-- ---------------------------------------------------------------------------
+
+-- from 0003_annual_return_audit_events.sql
+
+create table if not exists annual_return_audit_events (
+  id uuid primary key default gen_random_uuid(),
+  case_id uuid not null references annual_return_cases(id),
+  company_id uuid not null references companies(id),
+  actor_id uuid references users(id),
+  actor_role text not null check (actor_role in ('Admin', 'Manager', 'Staff')),
+  action text not null,
+  result text not null default 'succeeded' check (result in ('succeeded', 'denied', 'failed')),
+  summary text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists annual_return_audit_events_case_created_idx
+  on annual_return_audit_events (case_id, created_at desc);
+
+create index if not exists annual_return_audit_events_actor_created_idx
+  on annual_return_audit_events (actor_id, created_at desc);
+
+create index if not exists annual_return_audit_events_action_created_idx
+  on annual_return_audit_events (action, created_at desc);
+
+-- from 0005_whatsapp_integration_foundation.sql
+
+create table if not exists whatsapp_contacts (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null default 'woztell' check (provider in ('woztell')),
+  whatsapp_id text,
+  phone_e164 text,
+  display_name text,
+  company_id uuid references companies(id) on delete set null,
+  first_seen_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint whatsapp_contacts_identity_check check (
+    whatsapp_id is not null or phone_e164 is not null
+  )
+);
+
+create unique index if not exists whatsapp_contacts_provider_whatsapp_id_uidx
+  on whatsapp_contacts (provider, whatsapp_id)
+  where whatsapp_id is not null;
+
+create unique index if not exists whatsapp_contacts_provider_phone_uidx
+  on whatsapp_contacts (provider, phone_e164)
+  where phone_e164 is not null;
+
+create table if not exists whatsapp_templates (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null default 'woztell' check (provider in ('woztell')),
+  template_name text not null,
+  language_code text not null default 'en',
+  category text not null check (
+    category in ('annual_return', 'payment', 'document', 'signature', 'general')
+  ),
+  status text not null default 'draft' check (
+    status in ('draft', 'active', 'paused', 'archived')
+  ),
+  body text not null,
+  created_by uuid references users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists whatsapp_templates_provider_name_language_uidx
+  on whatsapp_templates (provider, template_name, language_code);
+
+create table if not exists whatsapp_messages (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null default 'woztell' check (provider in ('woztell')),
+  provider_message_id text,
+  direction text not null check (direction in ('inbound', 'outbound')),
+  status text not null check (
+    status in ('received', 'queued', 'sent', 'delivered', 'read', 'failed')
+  ),
+  contact_id uuid references whatsapp_contacts(id) on delete set null,
+  company_id uuid references companies(id) on delete set null,
+  case_id uuid references annual_return_cases(id) on delete set null,
+  template_id uuid references whatsapp_templates(id) on delete set null,
+  phone_e164 text,
+  whatsapp_id text,
+  body text not null,
+  payload jsonb not null default '{}'::jsonb,
+  sent_by uuid references users(id) on delete set null,
+  received_at timestamptz,
+  sent_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint whatsapp_messages_inbound_received_at_check check (
+    direction <> 'inbound' or received_at is not null
+  )
+);
+
+create unique index if not exists whatsapp_messages_provider_message_uidx
+  on whatsapp_messages (provider, provider_message_id)
+  where provider_message_id is not null;
+
+create index if not exists whatsapp_messages_contact_created_idx
+  on whatsapp_messages (contact_id, created_at desc);
+
+create index if not exists whatsapp_messages_company_created_idx
+  on whatsapp_messages (company_id, created_at desc);
+
+create index if not exists whatsapp_messages_case_created_idx
+  on whatsapp_messages (case_id, created_at desc);
+
+create table if not exists whatsapp_webhook_events (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null default 'woztell' check (provider in ('woztell')),
+  provider_event_id text,
+  signature_valid boolean not null default false,
+  payload jsonb not null,
+  normalized_message_id uuid references whatsapp_messages(id) on delete set null,
+  processing_status text not null check (
+    processing_status in ('received', 'processed', 'ignored', 'failed')
+  ),
+  error_message text,
+  received_at timestamptz not null default now(),
+  processed_at timestamptz
+);
+
+create unique index if not exists whatsapp_webhook_events_provider_event_uidx
+  on whatsapp_webhook_events (provider, provider_event_id)
+  where provider_event_id is not null;
+
+create index if not exists whatsapp_webhook_events_received_idx
+  on whatsapp_webhook_events (received_at desc);
+
+-- from 0007_whatsapp_inbox_ordering_indexes.sql
+
+-- The inbox orders every read by coalesce(sent_at, received_at, created_at): an
+-- outbound row carries sent_at once the provider accepts it but is queued with
+-- only created_at, and an inbound row never carries sent_at at all because the
+-- table's check constraint requires received_at instead.
+--
+-- whatsapp_messages_contact_created_idx (contact_id, created_at desc) cannot
+-- serve that expression, so listConversations fell back to a full scan and sort
+-- of the whole table to return one page. coalesce over timestamptz columns is
+-- immutable, so the ordering can be indexed directly.
+
+create index if not exists whatsapp_messages_contact_occurred_idx
+  on whatsapp_messages (
+    contact_id,
+    (coalesce(sent_at, received_at, created_at)) desc,
+    id desc
+  );
+
+-- Serves the latest_case CTE, which walks back to the most recent message that
+-- has a case rather than taking the case of the most recent message.
+create index if not exists whatsapp_messages_contact_case_occurred_idx
+  on whatsapp_messages (
+    contact_id,
+    (coalesce(sent_at, received_at, created_at)) desc,
+    id desc
+  )
+  where case_id is not null;
+-- from 0009_reclaim_stranded_outbox_rows.sql
+
+create index if not exists notification_outbox_stranded_idx
+  on notification_outbox (updated_at)
+  where status = 'processing';
+
+-- from 0010_index_timeline_and_upload_intent_lookups.sql
+
+create index if not exists timeline_events_company_created_idx
+  on timeline_events (company_id, created_at desc);
+
+create index if not exists document_upload_intents_document_idx
+  on document_upload_intents (document_id)
+  where document_id is not null;

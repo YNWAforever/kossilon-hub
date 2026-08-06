@@ -9,6 +9,7 @@ import {
   listWhatsAppConversationsInputSchema,
   processWhatsAppInboundWebhookWithRepository,
   processWhatsAppInboundWebhookInputSchema,
+  queueWhatsAppTemplateMessageForActor,
   queueWhatsAppTemplateMessageInputSchema,
 } from "./server-fns";
 
@@ -289,5 +290,133 @@ describe("WhatsApp inbox reads", () => {
 
   it("caps the conversation limit a caller can ask for", () => {
     expect(() => listWhatsAppConversationsInputSchema.parse({ limit: 5000 })).toThrow();
+  });
+});
+
+describe("queueWhatsAppTemplateMessageForActor", () => {
+  const CASE_ID = "44444444-4444-4444-8444-444444444444";
+  const OWNER_ID = "22222222-2222-4222-8222-222222222222";
+  const TEAM_ID = "33333333-3333-4333-8333-333333333333";
+
+  function actor(overrides: Partial<AuthenticatedActor> = {}): AuthenticatedActor {
+    return {
+      authUserId: "auth-user",
+      userId: OWNER_ID,
+      role: "Staff",
+      teamId: TEAM_ID,
+      active: true,
+      ...overrides,
+    };
+  }
+
+  function repositoryStub(caseOverrides: Record<string, unknown> = {}) {
+    return {
+      getCaseAuthorizationContext: vi.fn().mockResolvedValue({
+        id: CASE_ID,
+        companyName: "Harbour Holdings Limited",
+        companyTeamId: TEAM_ID,
+        ownerId: OWNER_ID,
+        reviewerId: null,
+        ...caseOverrides,
+      }),
+      queueOutboundTemplateMessage: vi.fn().mockResolvedValue({
+        id: "message-1",
+        provider: "woztell",
+        direction: "outbound",
+        status: "queued",
+        companyId: "company-1",
+        caseId: CASE_ID,
+      }),
+    };
+  }
+
+  const input = {
+    caseId: CASE_ID,
+    toPhone: "+85290000001",
+    templateName: "annual_return_reminder",
+    languageCode: "en",
+    category: "annual_return" as const,
+    body: "Your annual return is due.",
+  };
+
+  // The regression: actorId used to come from the request body, so a caller could
+  // attribute a client-facing message to any staff member.
+  it("attributes the message to the resolved actor, not to client input", async () => {
+    const repository = repositoryStub();
+
+    await queueWhatsAppTemplateMessageForActor(
+      actor(),
+      { ...input, actorId: "99999999-9999-4999-8999-999999999999" } as never,
+      { repository },
+    );
+
+    expect(repository.queueOutboundTemplateMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: OWNER_ID }),
+    );
+  });
+
+  it("refuses a client actor", async () => {
+    const repository = repositoryStub();
+
+    await expect(
+      queueWhatsAppTemplateMessageForActor(
+        actor({ role: "Client", userId: null, teamId: null }),
+        input,
+        { repository },
+      ),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(repository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  it("refuses an inactive staff actor", async () => {
+    const repository = repositoryStub();
+
+    await expect(
+      queueWhatsAppTemplateMessageForActor(actor({ active: false }), input, { repository }),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(repository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  // Staff-only is not enough on its own: a staff member from another team has no
+  // business messaging this case's client.
+  it("refuses a staff actor who neither owns, reviews nor manages the case", async () => {
+    const repository = repositoryStub({
+      companyTeamId: "55555555-5555-4555-8555-555555555555",
+      ownerId: "66666666-6666-4666-8666-666666666666",
+    });
+
+    await expect(
+      queueWhatsAppTemplateMessageForActor(actor(), input, { repository }),
+    ).rejects.toThrow(/Only assigned staff/);
+    expect(repository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  it("allows the team manager of the case", async () => {
+    const repository = repositoryStub({
+      ownerId: "66666666-6666-4666-8666-666666666666",
+    });
+
+    await expect(
+      queueWhatsAppTemplateMessageForActor(actor({ role: "Manager" }), input, { repository }),
+    ).resolves.toEqual(expect.objectContaining({ caseId: CASE_ID }));
+  });
+
+  it("refuses a case that does not exist", async () => {
+    const repository = repositoryStub();
+    repository.getCaseAuthorizationContext.mockResolvedValueOnce(null);
+
+    await expect(
+      queueWhatsAppTemplateMessageForActor(actor(), input, { repository }),
+    ).rejects.toThrow(/not found/);
+    expect(repository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  it("no longer accepts an actorId in its input schema", () => {
+    const parsed = queueWhatsAppTemplateMessageInputSchema.parse({
+      ...input,
+      actorId: "99999999-9999-4999-8999-999999999999",
+    });
+
+    expect(parsed).not.toHaveProperty("actorId");
   });
 });

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import type { AnnualReturnStatus } from "./types";
 import {
   ANNUAL_RETURN_STATUSES,
   buildReminderDraft,
@@ -284,5 +285,31 @@ describe("hasRequiredChecklistEvidence", () => {
 
   it("rejects an item that is only Received", () => {
     expect(hasRequiredChecklistEvidence({ ...verified, status: "Received" })).toBe(false);
+  });
+});
+
+describe("isAllowedStatusTransition with an unrecognised status", () => {
+  // indexOf returns -1 outside the enum, which made `toIndex === fromIndex + 1`
+  // true for an unknown `from` and the first status — so a case whose status had
+  // drifted from the enum could be walked back to the start of the workflow.
+  it("refuses a transition out of a status that is not in the workflow", () => {
+    expect(
+      isAllowedStatusTransition("Archived" as AnnualReturnStatus, ANNUAL_RETURN_STATUSES[0]),
+    ).toBe(false);
+  });
+
+  it("refuses a transition into a status that is not in the workflow", () => {
+    expect(
+      isAllowedStatusTransition(ANNUAL_RETURN_STATUSES[0], "Archived" as AnnualReturnStatus),
+    ).toBe(false);
+  });
+
+  it("still allows the ordinary one-step advance", () => {
+    expect(isAllowedStatusTransition(ANNUAL_RETURN_STATUSES[0], ANNUAL_RETURN_STATUSES[1])).toBe(
+      true,
+    );
+    expect(isAllowedStatusTransition(ANNUAL_RETURN_STATUSES[1], ANNUAL_RETURN_STATUSES[0])).toBe(
+      false,
+    );
   });
 });

@@ -124,6 +124,46 @@ export type AnnualReturnCaseScope = {
   visibleToUserId?: string;
 };
 
+/**
+ * The single-case counterpart to caseFiltersForActor, expressed against the same
+ * scope so a detail read can never return a case the list would have hidden.
+ *
+ * Detail reads used to apply no scope at all: `getAnnualReturnCase`,
+ * `listAnnualReturnCaseNotes` and `buildAnnualReturnReminderDraft` were staff-only
+ * and nothing more, so a Staff actor who could not see another team's cases on the
+ * board could still read any of them in full by passing the case id.
+ */
+export function isAnnualReturnCaseVisibleToActor(
+  actor: AnnualReturnBoardActor,
+  case_: Pick<AnnualReturnActionCase, "companyTeamId" | "ownerId" | "reviewerId">,
+): boolean {
+  const scope = caseFiltersForActor(actor);
+
+  const withinBoardScope =
+    (scope.teamId === undefined || case_.companyTeamId === scope.teamId) &&
+    (scope.visibleToUserId === undefined ||
+      case_.ownerId === scope.visibleToUserId ||
+      case_.reviewerId === scope.visibleToUserId);
+
+  if (withinBoardScope) return true;
+
+  // The board narrows by team AND by owner/reviewer, but getAnnualReturnActionPermission
+  // lets an owner or reviewer act on a case whatever team it belongs to. Deriving
+  // visibility from the board scope alone therefore produced a case an actor could
+  // mutate but could no longer open — assignOwner across teams is all it takes.
+  // Whoever may act on a case may read it.
+  return actor.id !== null && (case_.ownerId === actor.id || case_.reviewerId === actor.id);
+}
+
+export function assertAnnualReturnCaseVisible(
+  actor: AnnualReturnBoardActor,
+  case_: Pick<AnnualReturnActionCase, "companyTeamId" | "ownerId" | "reviewerId">,
+): void {
+  if (!isAnnualReturnCaseVisibleToActor(actor, case_)) {
+    throw new Error("Forbidden: this annual return case is outside your scope.");
+  }
+}
+
 export function caseFiltersForActor(actor: AnnualReturnBoardActor): AnnualReturnCaseScope {
   // Checked before the Admin shortcut, matching getAnnualReturnActionPermission:
   // an inactive admin cannot act on a case, so they are shown none.

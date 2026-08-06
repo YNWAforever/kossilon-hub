@@ -3,6 +3,12 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+// Duplicated from ./features/whatsapp/webhook rather than imported: every other
+// branch here defers its imports so a cold start does not pull the database
+// client in, and importing the constant would pull the module. The pairing is
+// pinned by a test.
+const WHATSAPP_WEBHOOK_PATH = "/api/webhooks/whatsapp";
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -44,6 +50,49 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+/**
+ * The other half of the five-minute cron trigger in `wrangler.template.jsonc`.
+ *
+ * Without this export the Worker only ever answered `fetch`, so the 5-minute
+ * trigger had nothing to invoke: SLA escalations were never evaluated, the
+ * notification outbox was only dispatched as a side effect of a staff member
+ * sending a follow-up, and expired upload intents were never reclaimed.
+ *
+ * `runFirmMaintenance` is actor-free by design — a scheduler has no request to
+ * derive an actor from — and is imported lazily so a `fetch` cold start does not
+ * pull the database client in.
+ */
+type MaintenanceRunner = (input: { now: string }) => Promise<unknown>;
+
+const defaultMaintenanceRunner: MaintenanceRunner = async (input) =>
+  (await import("./server/maintenance")).runFirmMaintenance(input);
+
+/**
+ * `run` is injectable so a test can assert the wiring without executing it. That
+ * matters more than it sounds: this function dispatches notifications, deletes R2
+ * objects and rewrites outbox rows, and it resolves its own bindings from the
+ * environment. A test that called it for real would do all of that against
+ * whatever DATABASE_URL happened to be in scope — a developer's .env, or CI's.
+ */
+export async function runScheduledMaintenanceForWorker(
+  scheduledTime: number,
+  run: MaintenanceRunner = defaultMaintenanceRunner,
+): Promise<void> {
+  try {
+    const result = await run({ now: new Date(scheduledTime).toISOString() });
+    console.log("scheduled maintenance", JSON.stringify(result));
+  } catch (error) {
+    // Nothing watches a scheduled invocation the way a user watches a request, so
+    // a failure has to announce itself or the next signal is a missed SLA.
+    console.error("scheduled maintenance failed", error);
+    throw error;
+  }
+}
+
+// No `scheduled` export here. This module is the TanStack Start server entry, not
+// the Worker entry — nitro generates that, and its `scheduled` only fires the
+// `cloudflare:scheduled` hook. An export on this object would never be called.
+// ./server/nitro-scheduled.ts registers the hook instead.
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -51,6 +100,32 @@ export default {
       const isAuthProxyRequest = pathname.startsWith("/api/auth/");
       const isMagicLinkWebhook = pathname === "/api/webhooks/neon-auth";
       const isMagicLinkConfirmation = pathname === "/auth/magic-link/confirm";
+
+      // WOZTELL authenticates with an HMAC over the raw body rather than a session,
+      // so inbound WhatsApp lands here instead of on a server function.
+      if (pathname === WHATSAPP_WEBHOOK_PATH) {
+        const [
+          { createWhatsAppWebhookHandler },
+          { getWhatsAppWebhookConfig },
+          { createWhatsAppRepository },
+        ] = await Promise.all([
+          import("./features/whatsapp/webhook"),
+          import("./features/whatsapp/config"),
+          import("./features/whatsapp/repository"),
+        ]);
+        const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+        const { webhookSecret } = getWhatsAppWebhookConfig({
+          ...process.env,
+          ...(Object.fromEntries(
+            Object.entries(runtimeEnv).filter(([, value]) => typeof value === "string"),
+          ) as Record<string, string>),
+        });
+
+        return createWhatsAppWebhookHandler({
+          webhookSecret,
+          createRepository: () => createWhatsAppRepository(),
+        })(request);
+      }
 
       if (isAuthProxyRequest || isMagicLinkWebhook || isMagicLinkConfirmation) {
         const { createNeonAuthProxy } = await import("./features/auth/neon-auth-proxy");

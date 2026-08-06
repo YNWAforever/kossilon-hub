@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  isClientRoute,
   AUTH_REDIRECT_STORAGE_KEY,
   consumeRedirectPath,
   isPublicRoute,
@@ -92,6 +93,31 @@ describe("auth route guard helpers", () => {
     expect(getSafeRedirectPath("https://example.com/phish")).toBe("/");
   });
 
+  // startsWith("//") alone was not enough. Browsers normalise backslashes to
+  // forward slashes when parsing a URL and strip control characters before
+  // parsing, so each of these reassembles into a protocol-relative authority.
+  it("rejects authority forms that only appear after URL normalisation", () => {
+    for (const path of [
+      "/\\evil.com",
+      "/\\/evil.com",
+      "/\\\\evil.com",
+      "/\tevil.com",
+      "/\nevil.com",
+      "/\revil.com",
+      "/\u0000//evil.com",
+      "/\u007f/evil.com",
+    ]) {
+      expect(getSafeRedirectPath(path), `${JSON.stringify(path)} should not be trusted`).toBe("/");
+    }
+  });
+
+  it("still allows ordinary in-app paths", () => {
+    expect(getSafeRedirectPath("/annual-returns/9f0c2e1a-0000-4000-8000-000000000001")).toBe(
+      "/annual-returns/9f0c2e1a-0000-4000-8000-000000000001",
+    );
+    expect(getSafeRedirectPath("/documents#section")).toBe("/documents#section");
+  });
+
   it("normalizes empty stored redirects when consuming", () => {
     storage.setItem(AUTH_REDIRECT_STORAGE_KEY, "");
 
@@ -109,5 +135,42 @@ describe("auth route guard helpers", () => {
 
     expect(() => rememberRedirectPath("/admin", throwingStorage)).not.toThrow();
     expect(consumeRedirectPath(throwingStorage)).toBe("/");
+  });
+});
+
+/**
+ * A Client sign-in used to land on the staff dashboard, which resolves a staff
+ * actor on every query it makes — so the first thing a client saw after signing
+ * in was a screen of Forbidden errors.
+ */
+describe("isClientRoute", () => {
+  it("allows the two surfaces built for client actors", () => {
+    expect(isClientRoute("/portal")).toBe(true);
+    expect(isClientRoute("/documents")).toBe(true);
+  });
+
+  it("allows nested paths under them", () => {
+    expect(isClientRoute("/portal/anything")).toBe(true);
+  });
+
+  it("refuses every staff surface", () => {
+    for (const pathname of [
+      "/",
+      "/admin",
+      "/annual-returns",
+      "/annual-returns/9f0c2e1a-0000-4000-8000-000000000001",
+      "/work-queue",
+      "/payments",
+      "/whatsapp",
+      "/settings",
+    ]) {
+      expect(isClientRoute(pathname), `${pathname} should not be a client route`).toBe(false);
+    }
+  });
+
+  // A prefix match must not let /portal-admin through on the strength of /portal.
+  it("does not match a path that merely starts with the same characters", () => {
+    expect(isClientRoute("/portalx")).toBe(false);
+    expect(isClientRoute("/documents-internal")).toBe(false);
   });
 });

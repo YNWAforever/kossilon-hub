@@ -5,6 +5,7 @@ import { buildReminderDraft } from "./workflow";
 import {
   buildAnnualReturnWhatsAppReminderRequest,
   queueAnnualReturnWhatsAppReminder,
+  annualReturnReminderIdempotencyKey,
 } from "./whatsapp-reminders";
 import type { AnnualReturnRepository } from "./repository";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
@@ -83,6 +84,8 @@ describe("annual return WhatsApp reminders", () => {
         toPhone: "+852 6123 4567",
         contactName: "Ada Director",
         templateName: "annual_return_manual_reminder",
+        idempotencyKey:
+          "annual-return-reminder:40000000-0000-0000-0000-000000000001:+85261234567:1",
         languageCode: "en",
         category: "annual_return",
         body: draftBody,
@@ -181,5 +184,43 @@ describe("annual return WhatsApp reminders", () => {
         recipientPhone: " ",
       }),
     ).toThrow();
+  });
+});
+
+/**
+ * queueOutboundTemplateMessage has taken an idempotencyKey since the follow-up
+ * work — an advisory lock plus an outbox replay check — and this path never
+ * passed one, so two clicks on "send reminder" sent the client two WhatsApp
+ * messages and incremented remindersSent twice.
+ */
+describe("annualReturnReminderIdempotencyKey", () => {
+  const base = { caseId: "case-1", recipientPhone: "+852 6123 4567", remindersSent: 0 };
+
+  it("is stable for the same reminder, so concurrent submits collapse into one", () => {
+    expect(annualReturnReminderIdempotencyKey(base)).toBe(
+      annualReturnReminderIdempotencyKey({ ...base }),
+    );
+  });
+
+  it("ignores phone formatting, which the UI does not normalise", () => {
+    expect(annualReturnReminderIdempotencyKey(base)).toBe(
+      annualReturnReminderIdempotencyKey({ ...base, recipientPhone: "+85261234567" }),
+    );
+  });
+
+  // The other half: a genuinely later reminder must still be allowed through.
+  it("changes once the reminder counter advances", () => {
+    expect(annualReturnReminderIdempotencyKey(base)).not.toBe(
+      annualReturnReminderIdempotencyKey({ ...base, remindersSent: 1 }),
+    );
+  });
+
+  it("separates cases and recipients", () => {
+    expect(annualReturnReminderIdempotencyKey(base)).not.toBe(
+      annualReturnReminderIdempotencyKey({ ...base, caseId: "case-2" }),
+    );
+    expect(annualReturnReminderIdempotencyKey(base)).not.toBe(
+      annualReturnReminderIdempotencyKey({ ...base, recipientPhone: "+85299999999" }),
+    );
   });
 });

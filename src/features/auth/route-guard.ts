@@ -30,11 +30,32 @@ export function isPublicRoute(pathname: string): boolean {
   return pathname === "/login";
 }
 
+/**
+ * The routes a Client actor can actually use. /portal is theirs; /documents
+ * authorises Client actors explicitly through requireClientCompanyAccess. Every
+ * other screen resolves a staff actor and would refuse them on every query.
+ */
+const CLIENT_ROUTES = ["/portal", "/documents"] as const;
+
+export function isClientRoute(pathname: string): boolean {
+  return CLIENT_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+/**
+ * Backslashes and control characters. Browsers normalise "\\" to "/" when parsing
+ * a URL and strip control characters before parsing, so "/\\evil.com" and
+ * "/\tevil.com" both reassemble into the protocol-relative "//evil.com" that the
+ * startsWith("//") check rejects.
+ */
+// eslint-disable-next-line no-control-regex
+const UNSAFE_REDIRECT_CHARACTERS = /[\\\u0000-\u001f\u007f]/;
+
 export function getSafeRedirectPath(path: string | null): string {
   if (
     !path ||
     !path.startsWith("/") ||
     path.startsWith("//") ||
+    UNSAFE_REDIRECT_CHARACTERS.test(path) ||
     path === "/login" ||
     path.startsWith("/login?") ||
     path.startsWith("/login#")

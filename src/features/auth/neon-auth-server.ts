@@ -4,6 +4,7 @@ import {
   assertStaffAccess,
   type ClientCompanyMembership,
 } from "./authorization";
+import { neonAuthCookies } from "./neon-auth-cookies";
 import type { AuthenticatedActor, AuthRole, VerifiedAuthUser } from "./types";
 
 type NeonSession = { user: VerifiedAuthUser };
@@ -47,7 +48,9 @@ export function getNeonAuthUrl(): string {
 
 function requestHeaders(request: Request): Headers {
   const headers = new Headers({ accept: "application/json" });
-  const cookie = request.headers.get("cookie");
+  // Allowlisted rather than forwarded wholesale: this request leaves the Worker
+  // for the Neon Auth origin, and the app's other cookies have no business there.
+  const cookie = neonAuthCookies(request.headers.get("cookie"));
   if (cookie) headers.set("cookie", cookie);
   return headers;
 }
@@ -152,6 +155,37 @@ export async function requireStaffActor(
   dependencies: AuthDependencies = {},
 ): Promise<AuthenticatedActor> {
   return assertStaffAccess(await requireActor(request, dependencies));
+}
+
+/**
+ * Every company this client actor may see. requireClientCompanyAccess answers
+ * "may I see company X" but there was no way to ask "which companies are mine",
+ * so a Client sign-in had no route to discover its own cases and the portal was
+ * unreachable for the actors it exists to serve.
+ */
+export async function listActiveClientCompanyIds(
+  request: Request,
+  dependencies: AuthDependencies = {},
+): Promise<string[]> {
+  const actor = await requireActor(request, dependencies);
+
+  if (actor.role !== "Client") {
+    throw new Error("Forbidden: client access is required.");
+  }
+
+  if (!actor.active) {
+    throw new Error("Forbidden: client account is inactive.");
+  }
+
+  const sql = dependencies.sql ?? getSqlClient();
+  const rows = await sql<ClientMembershipRow[]>`
+    select company_id, active
+    from client_company_memberships
+    where auth_user_id = ${actor.authUserId}
+      and active = true
+  `;
+
+  return rows.filter((row) => row.active).map((row) => row.company_id);
 }
 
 export async function requireClientCompanyAccess(

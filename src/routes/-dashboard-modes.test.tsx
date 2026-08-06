@@ -52,7 +52,7 @@ async function renderDashboard(dataMode: "demo" | "production") {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: ["/"] }),
-    context: { queryClient: new QueryClient(), dataMode },
+    context: { queryClient: new QueryClient(), dataMode, actor: null },
     defaultPreloadStaleTime: 0,
   });
 

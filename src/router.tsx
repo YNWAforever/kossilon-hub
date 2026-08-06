@@ -9,7 +9,9 @@ export const getRouter = () => {
 
   const router = createRouter({
     routeTree,
-    context: { queryClient, dataMode },
+    // `actor` is replaced by __root.beforeLoad on every navigation; this is the
+    // pre-resolution value.
+    context: { queryClient, dataMode, actor: null },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
   });
