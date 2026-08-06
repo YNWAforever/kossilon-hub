@@ -7,6 +7,7 @@ import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocuments } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
+import { CHECKLIST_EVIDENCE_FILE_TYPES } from "../features/annual-return/evidence-file-types";
 import { getAnnualReturnCase } from "../features/annual-return/server-fns";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import type { PrivateDocument } from "../features/documents/repository";
@@ -433,7 +434,10 @@ function ProductionDocumentsSection({
   pendingDocumentIds: string[];
 }) {
   const [checklistItemIds, setChecklistItemIds] = useState<Record<string, string>>({});
-  const checklistCategories = new Set(["identity", "registry", "signature", "other"]);
+  // Was a hardcoded set that had already drifted from the server guard: it omitted
+  // "packet" and the legacy "annual-return-evidence", so a document the server
+  // would happily accept as checklist evidence never offered the item selector.
+  const checklistCategories = new Set(CHECKLIST_EVIDENCE_FILE_TYPES);
 
   return (
     <section className="rounded-lg border bg-card p-4">

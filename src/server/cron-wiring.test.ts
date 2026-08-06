@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { parse } from "jsonc-parser";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const serverEntry = readFileSync(new URL("../server.ts", import.meta.url), "utf8");
 const wranglerTemplate = parse(
@@ -30,12 +30,34 @@ describe("scheduled maintenance wiring", () => {
 });
 
 describe("runScheduledMaintenanceForWorker", () => {
-  it("passes the scheduled time through as the maintenance clock", async () => {
+  // Injected, never executed for real. runFirmMaintenance dispatches
+  // notifications, deletes R2 objects and rewrites outbox rows against whatever
+  // DATABASE_URL is in scope; an earlier version of this test called it and
+  // relied on the connection failing to keep that harmless.
+  it("converts the scheduled time into the maintenance clock", async () => {
     const { runScheduledMaintenanceForWorker } = await import("../server.ts");
-    const scheduledTime = Date.parse("2026-08-05T02:35:00.000Z");
+    const run = vi.fn(async () => ({ ok: true }));
 
-    // No database binding here, so the maintenance run fails when it tries to
-    // connect. What matters is that the handler reaches it rather than no-opping.
-    await expect(runScheduledMaintenanceForWorker(scheduledTime)).rejects.toBeDefined();
+    await runScheduledMaintenanceForWorker(Date.parse("2026-08-05T02:35:00.000Z"), run);
+
+    expect(run).toHaveBeenCalledWith({ now: "2026-08-05T02:35:00.000Z" });
+  });
+
+  it("rethrows so a failed run is visible to the platform", async () => {
+    const { runScheduledMaintenanceForWorker } = await import("../server.ts");
+    const run = vi.fn(async () => {
+      throw new Error("escalation pass failed");
+    });
+
+    await expect(runScheduledMaintenanceForWorker(Date.now(), run)).rejects.toThrow(
+      "escalation pass failed",
+    );
+  });
+
+  it("defaults to the real maintenance entrypoint", async () => {
+    const source = readFileSync(new URL("../server.ts", import.meta.url), "utf8");
+
+    expect(source).toContain('import("./server/maintenance")');
+    expect(source).toContain("runFirmMaintenance(input)");
   });
 });

@@ -62,11 +62,24 @@ function isH3SwallowedErrorBody(body: string): boolean {
  * derive an actor from — and is imported lazily so a `fetch` cold start does not
  * pull the database client in.
  */
-export async function runScheduledMaintenanceForWorker(scheduledTime: number): Promise<void> {
-  const { runFirmMaintenance } = await import("./server/maintenance");
+type MaintenanceRunner = (input: { now: string }) => Promise<unknown>;
 
+const defaultMaintenanceRunner: MaintenanceRunner = async (input) =>
+  (await import("./server/maintenance")).runFirmMaintenance(input);
+
+/**
+ * `run` is injectable so a test can assert the wiring without executing it. That
+ * matters more than it sounds: this function dispatches notifications, deletes R2
+ * objects and rewrites outbox rows, and it resolves its own bindings from the
+ * environment. A test that called it for real would do all of that against
+ * whatever DATABASE_URL happened to be in scope — a developer's .env, or CI's.
+ */
+export async function runScheduledMaintenanceForWorker(
+  scheduledTime: number,
+  run: MaintenanceRunner = defaultMaintenanceRunner,
+): Promise<void> {
   try {
-    const result = await runFirmMaintenance({ now: new Date(scheduledTime).toISOString() });
+    const result = await run({ now: new Date(scheduledTime).toISOString() });
     console.log("scheduled maintenance", JSON.stringify(result));
   } catch (error) {
     // Nothing watches a scheduled invocation the way a user watches a request, so

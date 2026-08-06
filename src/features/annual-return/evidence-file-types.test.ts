@@ -49,6 +49,20 @@ describe("annual-return evidence file types", () => {
     expect(FILING_CONFIRMATION_FILE_TYPES).not.toContain("identity");
   });
 
+  /**
+   * "receipt" was in both sets, so one document satisfied the payment-proof guard
+   * and the filing-confirmation guard alike — a client's payment receipt could
+   * stand in for the Registry's acknowledgement of the NAR1, and a case could be
+   * completed with the filing never actually evidenced.
+   */
+  it("does not let one document satisfy both payment and filing guards", () => {
+    const shared = PAYMENT_PROOF_FILE_TYPES.filter((value) =>
+      FILING_CONFIRMATION_FILE_TYPES.includes(value),
+    );
+
+    expect(shared, `these satisfy both guards: ${shared.join(", ")}`).toEqual([]);
+  });
+
   it("recognises every accepted value as either a category or a legacy value", () => {
     for (const accepted of Object.values(EVIDENCE_SETS)) {
       for (const value of accepted) {

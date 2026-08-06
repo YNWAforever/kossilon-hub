@@ -34,6 +34,28 @@ async function seededCompanyId(sql: SqlClient): Promise<string> {
  * them. Both shapes satisfy a string assertion; only one satisfies the schema's
  * redaction constraint and leaves the firm's audit trail intact.
  */
+
+/**
+ * claimDue is database-wide and mutating: it claims whatever is due, sets it to
+ * 'processing' and increments attempt_count. Calling it directly from a test both
+ * depends on rows this test did not create and corrupts rows other tests do rely
+ * on. Running it inside a transaction that always rolls back keeps the assertion
+ * honest without touching anything.
+ */
+async function claimedIdsWithoutCommitting(sql: SqlClient, limit = 50): Promise<string[]> {
+  let ids: string[] = [];
+  try {
+    await sql.begin(async (tx) => {
+      const repository = createNotificationOutboxRepository({ sql: tx });
+      ids = (await repository.claimDue(new Date().toISOString(), limit)).map((row) => row.id);
+      throw new Error("rollback");
+    });
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== "rollback") throw error;
+  }
+  return ids;
+}
+
 describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", () => {
   afterEach(async () => {
     const sql = sqlForTests();
@@ -207,7 +229,7 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
       const repository = createNotificationOutboxRepository({ sql });
 
       // Neither existing pass can touch it.
-      expect(await repository.claimDue(new Date().toISOString(), 10)).toHaveLength(0);
+      expect(await claimedIdsWithoutCommitting(sql)).not.toContain(id);
       expect((await repository.redactExpired(new Date().toISOString())).redacted).toBe(0);
 
       expect((await repository.failStranded(new Date().toISOString())).failed).toBe(1);
@@ -251,7 +273,7 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
 
       const repository = createNotificationOutboxRepository({ sql });
       expect((await repository.failStranded(new Date().toISOString())).failed).toBe(0);
-      expect(await repository.claimDue(new Date().toISOString(), 10)).toHaveLength(1);
+      expect(await claimedIdsWithoutCommitting(sql)).toContain(id);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

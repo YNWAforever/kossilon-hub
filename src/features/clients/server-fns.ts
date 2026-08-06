@@ -31,6 +31,15 @@ async function getCurrentClientActor(
 async function requireWritableCompany(
   repository: ReturnType<typeof createClientRepository>,
   companyId: string,
+  /**
+   * The team the write would MOVE the company to, when it can move one.
+   *
+   * Checking only the current team leaves the scope trivially escapable: a Staff
+   * user cannot edit another team's client, but updateClient accepts a teamId, so
+   * they could take their own client and reassign it into any team they liked —
+   * out of their own scope and into someone else's, unreviewed.
+   */
+  targetTeamId?: string,
 ): Promise<string> {
   const actor = await getCurrentClientActor();
   const assignedTeamId = await repository.getCompanyTeamId(companyId);
@@ -40,6 +49,11 @@ async function requireWritableCompany(
   }
 
   assertClientCompanyWritable(actor, { assignedTeamId });
+
+  if (targetTeamId !== undefined && targetTeamId !== assignedTeamId) {
+    assertClientCompanyWritable(actor, { assignedTeamId: targetTeamId });
+  }
+
   return actor.userId;
 }
 
@@ -145,7 +159,7 @@ export const updateClient = createServerFn({ method: "POST" })
     withClientRepository(async (repository) =>
       repository.updateClient({
         ...data,
-        actorId: await requireWritableCompany(repository, data.id),
+        actorId: await requireWritableCompany(repository, data.id, data.teamId),
       }),
     ),
   );

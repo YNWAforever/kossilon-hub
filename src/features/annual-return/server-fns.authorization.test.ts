@@ -310,6 +310,45 @@ describe("production annual return detail scoping", () => {
     ).rejects.toThrow(/^Forbidden:/);
   });
 
+  /**
+   * The board narrows by team AND owner/reviewer, but getAnnualReturnActionPermission
+   * lets an owner or reviewer act on a case whatever team it sits in. Deriving
+   * visibility from the board scope alone left a case an actor could mutate but
+   * could not open — assignOwner across teams is all it takes to create one.
+   */
+  it("shows a case the actor owns even when it belongs to another team", async () => {
+    const { repository } = repositoryFor(caseRecord({ companyTeamId: otherTeamId }));
+
+    await expect(
+      getAnnualReturnCaseForActor(staffActor, { id: caseId }, { repository }),
+    ).resolves.toMatchObject({ id: caseId });
+  });
+
+  it("shows a case the actor reviews even when it belongs to another team", async () => {
+    const { repository } = repositoryFor(
+      caseRecord({
+        companyTeamId: otherTeamId,
+        ownerId: "20000000-0000-4000-8000-00000000000a",
+        reviewerId: staffActor.userId,
+      }),
+    );
+
+    await expect(
+      getAnnualReturnCaseForActor(staffActor, { id: caseId }, { repository }),
+    ).resolves.toMatchObject({ id: caseId });
+  });
+
+  // The widening is exactly "may act on it", nothing looser.
+  it("still hides another team's case the actor neither owns nor reviews", async () => {
+    const { repository } = repositoryFor(
+      caseRecord({ companyTeamId: otherTeamId, ownerId: "20000000-0000-4000-8000-00000000000a" }),
+    );
+
+    await expect(
+      getAnnualReturnCaseForActor(staffActor, { id: caseId }, { repository }),
+    ).resolves.toBeNull();
+  });
+
   it("refuses notes on a case outside the actor's scope", async () => {
     const { repository, listNotes } = repositoryFor(
       caseRecord({ companyTeamId: otherTeamId, ownerId: "20000000-0000-4000-8000-00000000000a" }),

@@ -28,6 +28,13 @@ const CHECKLIST_EVIDENCE_CATEGORIES = [
   "other",
 ] as const satisfies readonly DocumentCategory[];
 
+/**
+ * Disjoint on purpose. "receipt" was in both sets, which meant one uploaded
+ * document satisfied the payment-proof guard AND the filing-confirmation guard —
+ * so a client's payment receipt could be accepted as the Companies Registry's
+ * acknowledgement of the NAR1, and a case could be completed without the filing
+ * ever being evidenced. A receipt is money; a submission is the filing.
+ */
 const PAYMENT_PROOF_CATEGORIES = [
   "payment",
   "receipt",
@@ -35,7 +42,6 @@ const PAYMENT_PROOF_CATEGORIES = [
 
 const FILING_CONFIRMATION_CATEGORIES = [
   "submission",
-  "receipt",
 ] as const satisfies readonly DocumentCategory[];
 
 export const CHECKLIST_EVIDENCE_FILE_TYPES: readonly string[] = [

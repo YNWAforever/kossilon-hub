@@ -139,19 +139,20 @@ export function isAnnualReturnCaseVisibleToActor(
 ): boolean {
   const scope = caseFiltersForActor(actor);
 
-  if (scope.teamId !== undefined && case_.companyTeamId !== scope.teamId) {
-    return false;
-  }
+  const withinBoardScope =
+    (scope.teamId === undefined || case_.companyTeamId === scope.teamId) &&
+    (scope.visibleToUserId === undefined ||
+      case_.ownerId === scope.visibleToUserId ||
+      case_.reviewerId === scope.visibleToUserId);
 
-  if (
-    scope.visibleToUserId !== undefined &&
-    case_.ownerId !== scope.visibleToUserId &&
-    case_.reviewerId !== scope.visibleToUserId
-  ) {
-    return false;
-  }
+  if (withinBoardScope) return true;
 
-  return true;
+  // The board narrows by team AND by owner/reviewer, but getAnnualReturnActionPermission
+  // lets an owner or reviewer act on a case whatever team it belongs to. Deriving
+  // visibility from the board scope alone therefore produced a case an actor could
+  // mutate but could no longer open — assignOwner across teams is all it takes.
+  // Whoever may act on a case may read it.
+  return actor.id !== null && (case_.ownerId === actor.id || case_.reviewerId === actor.id);
 }
 
 export function assertAnnualReturnCaseVisible(
