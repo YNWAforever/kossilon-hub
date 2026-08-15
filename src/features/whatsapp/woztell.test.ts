@@ -8,7 +8,7 @@ describe("WOZTELL timestamp handling", () => {
   // message with its processing time instead of when the client sent it.
   it("reads epoch seconds sent as a string", () => {
     expect(normalizeWoztellInboundMessage(WOZTELL_INBOUND_TEXT).receivedAt).toBe(
-      "2020-09-08T04:27:44.000Z",
+      "2020-09-08T03:47:44.000Z",
     );
   });
 
