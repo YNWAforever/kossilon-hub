@@ -141,9 +141,21 @@ function firstString(source: JsonRecord, paths: readonly Path[]): string | null 
 function firstTimestamp(source: JsonRecord, paths: readonly Path[]): string {
   for (const path of paths) {
     const value = valueAtPath(source, path);
-    const parsed =
+
+    // WOZTELL sends epoch seconds as a string on inbound ("1599536864") and epoch
+    // milliseconds as a number on status events (1701914905000). `new Date` parses
+    // a bare numeric string as a date *string*, which is Invalid Date, so numeric
+    // strings are converted before parsing — otherwise every inbound message
+    // silently gets stamped "now".
+    const epoch =
       typeof value === "number"
-        ? new Date(value < 10_000_000_000 ? value * 1000 : value)
+        ? value
+        : typeof value === "string" && /^\d+$/.test(value.trim())
+          ? Number(value.trim())
+          : null;
+    const parsed =
+      epoch !== null
+        ? new Date(epoch < 10_000_000_000 ? epoch * 1000 : epoch)
         : typeof value === "string"
           ? new Date(value)
           : null;
