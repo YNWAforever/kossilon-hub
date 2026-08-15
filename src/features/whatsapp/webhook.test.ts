@@ -10,7 +10,7 @@ import { verifyWoztellSignature } from "./woztell";
 
 const SECRET = "woztell-webhook-secret-value";
 
-async function sign(body: string, secret = SECRET): Promise<string> {
+async function digestBytes(body: string, secret = SECRET): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -18,8 +18,20 @@ async function sign(body: string, secret = SECRET): Promise<string> {
     false,
     ["sign"],
   );
-  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
-  return btoa(String.fromCharCode(...new Uint8Array(digest)));
+
+  return new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body)));
+}
+
+/** The encoding WOZTELL actually sends. */
+async function sign(body: string, secret = SECRET): Promise<string> {
+  return btoa(String.fromCharCode(...(await digestBytes(body, secret))));
+}
+
+/** The encoding this codebase used to expect, kept only to prove it is now refused. */
+async function signHex(body: string, secret = SECRET): Promise<string> {
+  return Array.from(await digestBytes(body, secret), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 function inboundPayload() {
@@ -123,16 +135,9 @@ describe("verifyWoztellSignature", () => {
   // and every genuine delivery was rejected 401.
   it("accepts the Base64 digest WOZTELL actually sends", async () => {
     const body = JSON.stringify(inboundPayload());
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
-    );
-    const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(digest)));
+    const base64 = await sign(body);
 
+    // 44 chars, not 64. This is the wire format the whole bug turned on.
     expect(base64).toHaveLength(44);
     await expect(
       verifyWoztellSignature({ secret: SECRET, rawBody: body, signatureHeader: base64 }),
@@ -141,18 +146,9 @@ describe("verifyWoztellSignature", () => {
 
   it("rejects the hex digest the old implementation produced", async () => {
     const body = JSON.stringify(inboundPayload());
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
-    );
-    const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
-    const hex = Array.from(new Uint8Array(digest), (byte) =>
-      byte.toString(16).padStart(2, "0"),
-    ).join("");
+    const hex = await signHex(body);
 
+    expect(hex).toHaveLength(64);
     await expect(
       verifyWoztellSignature({ secret: SECRET, rawBody: body, signatureHeader: hex }),
     ).resolves.toBe(false);
