@@ -19,7 +19,7 @@ async function sign(body: string, secret = SECRET): Promise<string> {
     ["sign"],
   );
   const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return btoa(String.fromCharCode(...new Uint8Array(digest)));
 }
 
 function inboundPayload() {
@@ -115,6 +115,46 @@ describe("verifyWoztellSignature", () => {
   it("rejects when no signature header was sent", async () => {
     await expect(
       verifyWoztellSignature({ secret: SECRET, rawBody: "{}", signatureHeader: null }),
+    ).resolves.toBe(false);
+  });
+
+  // WOZTELL sends a 44-character Base64 digest. The previous implementation emitted
+  // 64 characters of hex, so the constant-time compare failed on the length guard
+  // and every genuine delivery was rejected 401.
+  it("accepts the Base64 digest WOZTELL actually sends", async () => {
+    const body = JSON.stringify(inboundPayload());
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(SECRET),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(digest)));
+
+    expect(base64).toHaveLength(44);
+    await expect(
+      verifyWoztellSignature({ secret: SECRET, rawBody: body, signatureHeader: base64 }),
+    ).resolves.toBe(true);
+  });
+
+  it("rejects the hex digest the old implementation produced", async () => {
+    const body = JSON.stringify(inboundPayload());
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(SECRET),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+    const hex = Array.from(new Uint8Array(digest), (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
+
+    await expect(
+      verifyWoztellSignature({ secret: SECRET, rawBody: body, signatureHeader: hex }),
     ).resolves.toBe(false);
   });
 });

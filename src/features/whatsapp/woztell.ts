@@ -77,11 +77,20 @@ export async function verifyWoztellSignature(input: {
     ["sign"],
   );
   const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(input.rawBody));
-  const expected = Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
 
-  return timingSafeEqual(expected, provided.toLowerCase());
+  // Base64, not hex: "Confirm that the Base64-encoded digest matches the signature
+  // in the X-Woztell-Signature request header." Base64 is case-significant, so the
+  // header is compared as sent — lowercasing it would reject every valid signature.
+  return timingSafeEqual(base64FromBytes(new Uint8Array(digest)), provided);
+}
+
+function base64FromBytes(bytes: Uint8Array): string {
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 1) {
+    binary += String.fromCharCode(bytes[index]);
+  }
+
+  return btoa(binary);
 }
 
 /** Compares without leaking the position of the first difference through timing. */
