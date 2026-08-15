@@ -52,9 +52,10 @@ export const WOZTELL_STATUS_READ = {
   app: "APP_ID",
 };
 
-/** Same envelope as READ, with type DELIVERED. */
+/** Same envelope as READ, with type DELIVERED. `data` is its own object, not shared with READ. */
 export const WOZTELL_STATUS_DELIVERED = {
   ...WOZTELL_STATUS_READ,
+  data: { ...WOZTELL_STATUS_READ.data },
   type: "DELIVERED",
   timestamp: 1701914900000,
 };
@@ -81,6 +82,7 @@ export const WOZTELL_API_OUTBOUND = {
   },
 };
 
+/** Member profile change event; carries `before`/`after` snapshots of the member document. */
 export const WOZTELL_MEMBER_UPDATE = {
   eventType: "MEMBER_UPDATE",
   functionName: "NORMAL_UPDATE_MEMBER",
@@ -95,6 +97,7 @@ export const WOZTELL_MEMBER_UPDATE = {
   },
 };
 
+/** Bulk tag/update event applied across multiple `members` at once, keyed by MongoDB-style update operators. */
 export const WOZTELL_BATCH_MEMBER_UPDATE = {
   eventType: "BATCH_MEMBER_UPDATE",
   functionName: "BATCH_ADD_TAGS",
@@ -104,6 +107,7 @@ export const WOZTELL_BATCH_MEMBER_UPDATE = {
   update: { $addToSet: { tags: { $each: ["testing_tag_1"] } } },
 };
 
+/** Flow node trigger. `compositeId: null` is as documented; the message is nested under `messageEvent` (same asymmetry as API_OUTBOUND). */
 export const WOZTELL_NODE_TRIGGER = {
   app: "appId",
   channel: "channelId",
