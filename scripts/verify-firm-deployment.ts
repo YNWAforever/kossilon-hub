@@ -17,6 +17,15 @@ const REQUIRED_TABLES = [
   "work_items",
   "escalation_events",
 ] as const;
+// Deliberately NOT the same list as runtime-env.ts's REQUIRED_BINDINGS. This one
+// only names bindings for the audit-only `blockedBindings` report below — it
+// never gates anything live. RESEND_API_KEY/RESEND_FROM belong here but must not
+// be added back to runtime-env.ts's REQUIRED_BINDINGS: that array drives
+// getFirmRuntimeEnv()'s all-or-nothing throw, which unrelated call sites
+// (notifications/runtime-dispatch.ts, server/maintenance.ts,
+// documents/server-fns.ts) depend on for fields that have nothing to do with
+// email — adding RESEND there once broke all three for any firm without Resend
+// configured, caught in code review before merge.
 const REQUIRED_BINDINGS = [
   "FIRM_ID",
   "NEON_AUTH_URL",
@@ -28,6 +37,8 @@ const REQUIRED_BINDINGS = [
   "WOZTELL_CHANNEL_ID",
   "WOZTELL_WEBHOOK_SECRET",
   "EMAIL_FROM",
+  "RESEND_API_KEY",
+  "RESEND_FROM",
 ] as const;
 const BLOCKED_PROVIDERS = [
   "Neon Auth",

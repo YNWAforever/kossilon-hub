@@ -9,6 +9,7 @@ const authClient = vi.hoisted(() => ({
   signIn: {
     email: vi.fn(),
     magicLink: vi.fn(),
+    social: vi.fn(),
   },
   signOut: vi.fn(),
 }));
@@ -94,5 +95,79 @@ describe("Neon Auth context magic-link login", () => {
 
     expect(await screen.findByText("Email address is not allowed.")).toBeTruthy();
     expect(screen.queryByText("Internal response details")).toBeNull();
+  });
+});
+
+function GoogleConsumer() {
+  const { loginWithGoogle } = useAuth();
+  const [message, setMessage] = useState("");
+
+  return (
+    <>
+      <button
+        onClick={() => {
+          void loginWithGoogle().then((result) => {
+            setMessage(result.ok ? "ok" : result.error);
+          });
+        }}
+      >
+        Continue with Google
+      </button>
+      <output>{message}</output>
+    </>
+  );
+}
+
+describe("Neon Auth context Google login", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isDemoAuthEnabled.mockReturnValue(false);
+    getNeonAuthClientConfiguration.mockResolvedValue({ url: "https://auth.example.test" });
+    authClient.getSession.mockResolvedValue({ data: null });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("requests a Google sign-in with the correct provider and callback", async () => {
+    authClient.signIn.social.mockResolvedValue({
+      data: { url: "https://accounts.google.test/x", redirect: true },
+      error: null,
+    });
+
+    render(
+      <AuthProvider>
+        <GoogleConsumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(createNeonAuthClient).toHaveBeenCalledOnce());
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
+
+    expect(await screen.findByText("ok")).toBeTruthy();
+    expect(authClient.signIn.social).toHaveBeenCalledWith({
+      provider: "google",
+      callbackURL: `${window.location.origin}/login`,
+      newUserCallbackURL: `${window.location.origin}/login`,
+    });
+  });
+
+  it("surfaces a provider error without throwing", async () => {
+    authClient.signIn.social.mockResolvedValue({
+      data: null,
+      error: { message: "Google sign-in is not configured." },
+    });
+
+    render(
+      <AuthProvider>
+        <GoogleConsumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(createNeonAuthClient).toHaveBeenCalledOnce());
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
+
+    expect(await screen.findByText("Google sign-in is not configured.")).toBeTruthy();
   });
 });

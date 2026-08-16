@@ -42,6 +42,17 @@ export function isClientRoute(pathname: string): boolean {
 }
 
 /**
+ * requireActor throws a `Forbidden:`-prefixed error for a session that
+ * authenticates but has no staff_profiles/client_company_memberships row, and
+ * `Unauthorized:` for no session at all. beforeLoad needs to tell them apart —
+ * bouncing both to the same "sign in again" redirect meant a provisioned-nowhere
+ * account got no explanation and would fail identically on every retry.
+ */
+export function isForbiddenAuthError(error: unknown): boolean {
+  return error instanceof Error && error.message.startsWith("Forbidden:");
+}
+
+/**
  * Backslashes and control characters. Browsers normalise "\\" to "/" when parsing
  * a URL and strip control characters before parsing, so "/\\evil.com" and
  * "/\tevil.com" both reassemble into the protocol-relative "//evil.com" that the

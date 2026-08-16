@@ -33,6 +33,7 @@ type AuthContextValue = {
   isCurrentUserAdmin: boolean;
   login: (email: string, password: string) => Promise<AuthActionResult>;
   loginWithMagicLink: (email: string) => Promise<AuthActionResult>;
+  loginWithGoogle: () => Promise<AuthActionResult>;
   loginDemo: (userId: string) => Promise<AuthActionResult>;
   loginDemoUser: (user: DemoUser) => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
@@ -72,25 +73,37 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const unavailable = useCallback(
+    async (): Promise<AuthActionResult> => ({
+      ok: false,
+      error: configurationError ?? "Authentication is loading.",
+    }),
+    [configurationError],
+  );
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      session: null,
+      isHydrated: configurationError !== null,
+      demoUsers: [],
+      isCurrentUserAdmin: false,
+      login: unavailable,
+      loginWithMagicLink: unavailable,
+      loginWithGoogle: unavailable,
+      loginDemo: unavailable,
+      loginDemoUser: unavailable,
+      signOut: async () => undefined,
+    }),
+    [configurationError, unavailable],
+  );
+
+  // The useCallback/useMemo above must run unconditionally on every render —
+  // React's Rules of Hooks forbid calling them after a conditional return, since
+  // that would change the number of hooks this component calls between the
+  // "still loading" render and the "url resolved" render below. The `value`
+  // object is simply discarded on renders that take the NeonAuthProvider branch.
   if (url) {
     return <NeonAuthProvider url={url}>{children}</NeonAuthProvider>;
   }
-
-  const unavailable = async (): Promise<AuthActionResult> => ({
-    ok: false,
-    error: configurationError ?? "Authentication is loading.",
-  });
-  const value: AuthContextValue = {
-    session: null,
-    isHydrated: configurationError !== null,
-    demoUsers: [],
-    isCurrentUserAdmin: false,
-    login: unavailable,
-    loginWithMagicLink: unavailable,
-    loginDemo: unavailable,
-    loginDemoUser: unavailable,
-    signOut: async () => undefined,
-  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -175,6 +188,23 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     },
     [client],
   );
+  const loginWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
+    const result = await client.signIn.social({
+      provider: "google",
+      callbackURL: `${window.location.origin}/login`,
+      newUserCallbackURL: `${window.location.origin}/login`,
+    });
+
+    if (result.error) {
+      return { ok: false, error: result.error.message ?? "Google sign-in failed." };
+    }
+
+    // better-auth's default redirectPlugin has already started navigating the
+    // browser to Google at this point (see client/config.mjs — active whenever
+    // the response carries {url, redirect: true}, which signIn.social's success
+    // response always does). There is nothing further to do here.
+    return { ok: true };
+  }, [client]);
   const demoUnavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
@@ -195,11 +225,12 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
       isCurrentUserAdmin: isAdmin(session),
       login,
       loginWithMagicLink,
+      loginWithGoogle,
       loginDemo: demoUnavailable,
       loginDemoUser: demoUnavailable,
       signOut,
     }),
-    [demoUnavailable, isHydrated, login, loginWithMagicLink, session, signOut],
+    [demoUnavailable, isHydrated, login, loginWithGoogle, loginWithMagicLink, session, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -248,6 +279,7 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
       isCurrentUserAdmin: isAdmin(session),
       login,
       loginWithMagicLink: magicLinkUnavailable,
+      loginWithGoogle: magicLinkUnavailable,
       loginDemo,
       loginDemoUser,
       signOut,

@@ -23,6 +23,7 @@ import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
   isClientRoute,
+  isForbiddenAuthError,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
@@ -125,7 +126,15 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       let actor: AuthenticatedActor;
       try {
         actor = await getAuthenticatedActor();
-      } catch {
+      } catch (error) {
+        // A Forbidden account is not "not signed in" — sending it through the
+        // same redirect=... path would bounce it back here after every future
+        // sign-in, identically and silently, since the sign-in step itself keeps
+        // succeeding. Only the authorisation check fails.
+        if (isForbiddenAuthError(error)) {
+          throw redirect({ href: "/login?denied=1", replace: true });
+        }
+
         const redirectPath = getSafeRedirectPath(location.href);
         rememberRedirectPath(redirectPath);
         throw redirect({
