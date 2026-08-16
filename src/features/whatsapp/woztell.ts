@@ -361,8 +361,16 @@ function inboundBody(payload: JsonRecord, messageType: string): string {
  * WOZTELL's documented inbound TEXT and MISC payloads carry no message id at all,
  * so idempotency has nothing to key on. The id is derived from the fields that
  * identify the event plus a hash of its data, which makes a redelivery of the
- * identical body produce the identical id while two different messages do not
- * collide.
+ * identical body produce the identical id.
+ *
+ * KNOWN LIMITATION, accepted deliberately: the seed's finest time resolution is
+ * WOZTELL's `timestamp`, which for inbound is whole seconds. Two *distinct*
+ * messages from the same member with byte-identical `data` inside the same second
+ * therefore derive the same id, and `recordInboundMessage`'s
+ * `on conflict do nothing` drops the second as if it were a redelivery — silently,
+ * with no timeline event. There is nothing in WOZTELL's inbound payload to
+ * separate them: it carries no message id and no sub-second component. Revisit if
+ * WOZTELL ever exposes either.
  *
  * Deliberately synchronous and non-cryptographic. This is a dedupe key, not a
  * signature, and keeping it sync keeps `normalizeWoztellInboundMessage` pure so

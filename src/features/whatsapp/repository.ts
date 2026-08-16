@@ -118,7 +118,13 @@ export type WhatsAppStatusUpdateResult = {
   status: WhatsAppMessageStatus | null;
 };
 
-/** read supersedes delivered supersedes sent. Receipts can arrive out of order. */
+/**
+ * read supersedes delivered supersedes sent. Receipts can arrive out of order.
+ *
+ * This ladder is duplicated as an inline SQL `case` inside recordMessageStatusEvent,
+ * which ranks the row's *current* status. Both must be changed together — adding a
+ * status here and not there would silently misrank it.
+ */
 const WHATSAPP_STATUS_RANK: Readonly<Record<string, number>> = {
   sent: 1,
   delivered: 2,
@@ -1138,6 +1144,15 @@ export function createWhatsAppRepository(
    * Links a queued outbound row to the id WOZTELL assigned when it was actually
    * sent. Without this the row's provider_message_id stays null forever and no
    * DELIVERED or READ receipt can ever match it.
+   *
+   * KNOWN RACE: this commits on the dispatch path while status webhooks arrive
+   * independently. A SENT receipt that lands before this commits finds
+   * provider_message_id still null, does not match, and — correctly, per the ack
+   * discipline — is acknowledged anyway, so that receipt is lost. It is largely
+   * self-healing because the `coalesce(sent_at, now())` below backfills the
+   * timestamp, but WOZTELL's own SENT time and the audit row are gone. DELIVERED
+   * and READ arrive later and are unaffected. Widen this only with evidence: the
+   * fix is a short retry on an unmatched SENT, not a lock.
    */
   async function attachProviderMessageId(input: {
     messageId: string;

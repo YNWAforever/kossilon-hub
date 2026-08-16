@@ -798,5 +798,5 @@ create index if not exists document_upload_intents_document_idx
 -- from 0011_whatsapp_delivery_receipts.sql
 
 create index if not exists whatsapp_messages_delivery_state_idx
-  on whatsapp_messages (direction, delivered_at, read_at)
+  on whatsapp_messages (delivered_at, read_at)
   where direction = 'outbound';

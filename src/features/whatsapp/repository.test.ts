@@ -840,6 +840,21 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         occurredAt: "2026-08-16T10:06:00.000Z",
       });
       expect(late.status).toBe("read");
+
+      // The returned status alone would still pass if the timestamp columns were
+      // wrong. Each column must hold the FIRST receipt of its kind — that is what
+      // the coalesce is for, and the late DELIVERED at 10:06 must not overwrite
+      // the 10:00 one.
+      const [row] = await sqlForTests()<
+        { delivered_at: string | null; read_at: string | null }[]
+      >`
+        select delivered_at::text as delivered_at, read_at::text as read_at
+        from whatsapp_messages
+        where provider = 'woztell' and provider_message_id = ${providerMessageId}
+      `;
+
+      expect(new Date(row.delivered_at!).toISOString()).toBe("2026-08-16T10:00:00.000Z");
+      expect(new Date(row.read_at!).toISOString()).toBe("2026-08-16T10:05:00.000Z");
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
@@ -888,6 +903,64 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
           providerMessageId: "phase2-test-attach-002",
         }),
       ).resolves.toBe(false);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  // The success path — the one that actually matters in production. A queued
+  // outbound row starts with provider_message_id NULL; until this links it, no
+  // DELIVERED or READ receipt can ever match the row.
+  it(
+    "links a queued outbound row to its provider id and marks it sent",
+    async () => {
+      const repository = repositoryFor();
+      const sql = sqlForTests();
+
+      // Body prefix matters: cleanupWhatsAppFixtures also matches on
+      // `body like 'Phase 2 test%'`, which is the only handle on this row while
+      // provider_message_id is still null.
+      const [queued] = await sql<{ id: string }[]>`
+        insert into whatsapp_messages (provider, direction, status, body)
+        values ('woztell', 'outbound', 'queued', 'Phase 2 test queued outbound')
+        returning id
+      `;
+
+      await expect(
+        repository.attachProviderMessageId({
+          messageId: queued.id,
+          providerMessageId: "phase2-test-attach-linked-001",
+        }),
+      ).resolves.toBe(true);
+
+      const [linked] = await sql<
+        { provider_message_id: string | null; status: string; sent_at: string | null }[]
+      >`
+        select provider_message_id, status, sent_at::text as sent_at
+        from whatsapp_messages
+        where id = ${queued.id}
+      `;
+
+      expect(linked.provider_message_id).toBe("phase2-test-attach-linked-001");
+      expect(linked.status).toBe("sent");
+      expect(linked.sent_at).not.toBeNull();
+
+      // Idempotent: a retried dispatch must not relabel an already-linked row.
+      await expect(
+        repository.attachProviderMessageId({
+          messageId: queued.id,
+          providerMessageId: "phase2-test-attach-linked-002",
+        }),
+      ).resolves.toBe(false);
+
+      // And a receipt can now find it — the whole point of the link.
+      const applied = await repository.recordMessageStatusEvent({
+        provider: "woztell",
+        providerMessageId: "phase2-test-attach-linked-001",
+        status: "delivered",
+        occurredAt: "2026-08-16T11:00:00.000Z",
+      });
+
+      expect(applied).toMatchObject({ matched: true, messageId: queued.id, status: "delivered" });
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

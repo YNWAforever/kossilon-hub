@@ -11,6 +11,9 @@ alter table whatsapp_messages
 -- outbound row fast. The existing unique index is partial on provider_message_id
 -- is not null, which already serves that lookup; this index covers the reporting
 -- read of "everything delivered but not yet read".
+-- `direction` is the partial predicate, so every row in the index already
+-- satisfies it — carrying it as a leading key column too would add no
+-- selectivity, only width.
 create index if not exists whatsapp_messages_delivery_state_idx
-  on whatsapp_messages (direction, delivered_at, read_at)
+  on whatsapp_messages (delivered_at, read_at)
   where direction = 'outbound';
