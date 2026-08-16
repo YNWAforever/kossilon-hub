@@ -24,6 +24,13 @@ export type RuntimeReadiness = {
   missing: string[];
 };
 
+// Every entry here is required by getFirmRuntimeEnv() for EVERY caller, since it
+// takes no arguments and throws all-or-nothing. Do not add RESEND_API_KEY/
+// RESEND_FROM: they are read directly by server.ts for the magic-link webhook
+// only, and adding them here once broke unrelated callers (WhatsApp dispatch,
+// document storage) that need this same function for fields that have nothing
+// to do with email. scripts/verify-firm-deployment.ts intentionally keeps its
+// own, longer list — that one only feeds an audit report and gates nothing.
 const REQUIRED_BINDINGS = [
   "FIRM_ID",
   "NEON_AUTH_URL",
