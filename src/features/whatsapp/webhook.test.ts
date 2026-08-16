@@ -7,6 +7,13 @@ import {
   WHATSAPP_WEBHOOK_PATH,
 } from "./webhook";
 import { verifyWoztellSignature } from "./woztell";
+import {
+  WOZTELL_DOCUMENTED_PAYLOADS,
+  WOZTELL_INBOUND_TEXT,
+  WOZTELL_MEMBER_UPDATE,
+  WOZTELL_STATUS_DELIVERED,
+  WOZTELL_STATUS_READ,
+} from "./woztell-fixtures";
 
 const SECRET = "woztell-webhook-secret-value";
 
@@ -36,14 +43,19 @@ async function signHex(body: string, secret = SECRET): Promise<string> {
 
 function inboundPayload() {
   return {
-    eventId: "evt-1",
-    message: { id: "wamid.1", text: { body: "Received, thanks." }, timestamp: 1785000000 },
-    contact: { wa_id: "85290000001", phone: "+852 9000 0001", profile: { name: "Ada Wong" } },
+    from: "85290000001",
+    to: "85268227287",
+    timestamp: "1785000000",
+    type: "TEXT",
+    data: { text: "Received, thanks." },
+    member: "member-1",
+    channel: "channel-1",
+    app: "app-1",
   };
 }
 
 function repositoryDouble() {
-  const recordInboundMessage = vi.fn(async () => ({
+  const recordInboundMessage = vi.fn(async (_input: unknown) => ({
     id: "msg-1",
     provider: "woztell" as const,
     providerMessageId: "wamid.1",
@@ -58,8 +70,13 @@ function repositoryDouble() {
     processingStatus: "processed" as const,
     errorMessage: null,
   }));
+  const recordMessageStatusEvent = vi.fn(async (_input: unknown) => ({
+    matched: true,
+    messageId: "msg-1",
+    status: "read" as const,
+  }));
   const close = vi.fn(async () => {});
-  return { recordInboundMessage, recordWebhookEvent, close };
+  return { recordInboundMessage, recordWebhookEvent, recordMessageStatusEvent, close };
 }
 
 function request(body: string, headers: Record<string, string>, method = "POST"): Request {
@@ -269,6 +286,72 @@ describe("createWhatsAppWebhookHandler", () => {
 
     expect(response.status).toBe(503);
     expect(repository.close).toHaveBeenCalledTimes(1);
+  });
+
+  // Every documented payload must be acknowledged. A 503 means WOZTELL redelivers
+  // forever; a throw means it is acked and lost.
+  it("acknowledges every payload WOZTELL documents", async () => {
+    for (const payload of WOZTELL_DOCUMENTED_PAYLOADS) {
+      const repository = repositoryDouble();
+      const body = JSON.stringify(payload);
+      const response = await createWhatsAppWebhookHandler({
+        webhookSecret: SECRET,
+        createRepository: () => repository as never,
+      })(request(body, { "x-woztell-signature": await sign(body) }));
+
+      expect(response.status).toBe(200);
+      expect(repository.recordWebhookEvent).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("stores a documented inbound text message", async () => {
+    const repository = repositoryDouble();
+    const body = JSON.stringify(WOZTELL_INBOUND_TEXT);
+    const response = await createWhatsAppWebhookHandler({
+      webhookSecret: SECRET,
+      createRepository: () => repository as never,
+    })(request(body, { "x-woztell-signature": await sign(body) }));
+
+    expect(response.status).toBe(200);
+    expect(repository.recordInboundMessage).toHaveBeenCalledTimes(1);
+    expect(repository.recordInboundMessage.mock.calls[0][0]).toMatchObject({
+      body: "Hello",
+      fromWhatsAppId: "85260903521",
+    });
+  });
+
+  // THE REGRESSION GUARD. normalizeWoztellInboundMessage happily turns a READ
+  // receipt into a message with body "[read]", so without the classifier in the
+  // request path every status webhook is stored as a fabricated customer message.
+  it("never stores a status receipt as a customer message", async () => {
+    for (const payload of [WOZTELL_STATUS_READ, WOZTELL_STATUS_DELIVERED]) {
+      const repository = repositoryDouble();
+      const body = JSON.stringify(payload);
+      const response = await createWhatsAppWebhookHandler({
+        webhookSecret: SECRET,
+        createRepository: () => repository as never,
+      })(request(body, { "x-woztell-signature": await sign(body) }));
+
+      expect(response.status).toBe(200);
+      expect(repository.recordInboundMessage).not.toHaveBeenCalled();
+      expect(repository.recordMessageStatusEvent).toHaveBeenCalledTimes(1);
+      expect(repository.recordMessageStatusEvent.mock.calls[0][0]).toMatchObject({
+        providerMessageId: payload.data.messageId,
+      });
+    }
+  });
+
+  it("does not ingest a MEMBER_UPDATE as a customer message", async () => {
+    const repository = repositoryDouble();
+    const body = JSON.stringify(WOZTELL_MEMBER_UPDATE);
+    await createWhatsAppWebhookHandler({
+      webhookSecret: SECRET,
+      createRepository: () => repository as never,
+    })(request(body, { "x-woztell-signature": await sign(body) }));
+
+    expect(repository.recordInboundMessage).not.toHaveBeenCalled();
+    expect(repository.recordMessageStatusEvent).not.toHaveBeenCalled();
+    expect(repository.recordWebhookEvent).toHaveBeenCalledTimes(1);
   });
 });
 

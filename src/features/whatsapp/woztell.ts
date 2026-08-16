@@ -318,6 +318,12 @@ function inboundBody(payload: JsonRecord, messageType: string): string {
  * Deliberately synchronous and non-cryptographic. This is a dedupe key, not a
  * signature, and keeping it sync keeps `normalizeWoztellInboundMessage` pure so
  * `webhook.ts` can run it twice to pre-classify a failure at no cost.
+ *
+ * The `data` hash uses JSON.stringify, which is key-order dependent. A redelivery
+ * that re-serialised the object with different key order would derive a different
+ * id and be stored twice. WOZTELL replays the stored raw body, so this has not
+ * been observed — but it is an assumption, not a guarantee, and the duplicate is
+ * the failure mode if it is ever wrong.
  */
 function derivedInboundMessageId(
   payload: JsonRecord,

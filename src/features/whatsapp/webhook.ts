@@ -3,7 +3,7 @@ import {
   processWhatsAppInboundWebhookWithRepository,
   type ProcessWhatsAppInboundWebhookRepository,
 } from "./server-fns";
-import { normalizeWoztellInboundMessage, verifyWoztellSignature } from "./woztell";
+import { classifyWoztellWebhookEvent, verifyWoztellSignature } from "./woztell";
 
 /**
  * Inbound WhatsApp ingestion.
@@ -94,10 +94,10 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
     // catches everything and reports `ok: false` either way, so without this a
     // deadlock or a transient write error would be acknowledged exactly like a
     // malformed payload — and an acknowledged message is never redelivered.
-    // normalizeWoztellInboundMessage is pure, so running it twice costs nothing.
+    // classifyWoztellWebhookEvent is pure, so running it twice costs nothing.
     let payloadIsUnreadable = false;
     try {
-      normalizeWoztellInboundMessage(payload);
+      classifyWoztellWebhookEvent(payload);
     } catch {
       payloadIsUnreadable = true;
     }
@@ -105,7 +105,7 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
     const repository = config.createRepository();
     try {
       const result = await processWhatsAppInboundWebhookWithRepository(
-        repository as ProcessWhatsAppInboundWebhookRepository,
+        repository as unknown as ProcessWhatsAppInboundWebhookRepository,
         {
           providerEventId: providerEventIdFrom(request.headers, payload),
           signatureValid: true,
