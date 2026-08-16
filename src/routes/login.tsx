@@ -1,5 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Building2, KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react";
+import {
+  AlertCircle,
+  Building2,
+  Chrome,
+  KeyRound,
+  Mail,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
@@ -49,6 +57,13 @@ export function LoginPage() {
 
   useEffect(() => {
     if (!isHydrated || !session) return;
+    // A Forbidden rejection (the only way to reach ?denied=1) implies a session
+    // that authenticates but isn't provisioned — so `session` here can be the
+    // same stale, still-truthy value carried over from immediately before the
+    // redirect (AuthProvider wraps both the protected shell and this route, so
+    // it never remounts on that client-side navigation). Without this guard,
+    // this effect would navigate away before the denied effect below ever runs.
+    if (new URLSearchParams(window.location.search).get("denied") === "1") return;
 
     const searchRedirect = new URLSearchParams(window.location.search).get("redirect");
     const safeSearchRedirect = getSafeRedirectPath(searchRedirect);
@@ -285,7 +300,7 @@ export function LoginPage() {
               disabled={!isHydrated || googleSubmitting}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <ShieldCheck className="h-4 w-4" />
+              <Chrome className="h-4 w-4" />
               Continue with Google
             </button>
           )}
