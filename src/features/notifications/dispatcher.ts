@@ -2,7 +2,9 @@ import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import { sendWoztellMessage, type WoztellTemplateComponent } from "@/features/whatsapp/woztell";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
+import type { ResendConfig } from "@/server/runtime-env";
 import { createLocalNotificationTransport } from "./local-transport";
+import { createResendNotificationTransport } from "./resend-transport";
 import { createSimulatedNotificationTransport } from "./simulated-transport";
 import {
   notificationPayload,
@@ -128,6 +130,7 @@ export function createWoztellNotificationTransport(
 export function createNotificationTransport(input: {
   providerMode: ProviderMode;
   config?: WhatsAppProviderConfig;
+  resendConfig?: ResendConfig | null;
   fetchImpl?: typeof fetch;
 }): NotificationTransport {
   if (input.providerMode === "local") return createLocalNotificationTransport();
@@ -135,5 +138,24 @@ export function createNotificationTransport(input: {
   if (!input.config) {
     throw new Error("Live notification transport requires a WhatsApp provider configuration.");
   }
-  return createWoztellNotificationTransport(input.config, input.fetchImpl);
+
+  const whatsappTransport = createWoztellNotificationTransport(input.config, input.fetchImpl);
+  const emailTransport = input.resendConfig
+    ? createResendNotificationTransport(input.resendConfig, input.fetchImpl)
+    : null;
+
+  return {
+    async dispatch(notification) {
+      if (notification.channel === "whatsapp") return whatsappTransport.dispatch(notification);
+      if (notification.channel === "email") {
+        if (!emailTransport) {
+          throw Object.assign(new Error("Email notifications are not configured for this firm."), {
+            code: "resend_not_configured",
+          });
+        }
+        return emailTransport.dispatch(notification);
+      }
+      throw new Error(`Unsupported notification channel: ${notification.channel}.`);
+    },
+  };
 }
