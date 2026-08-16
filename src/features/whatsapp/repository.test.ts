@@ -788,4 +788,100 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
+
+  it(
+    "applies a DELIVERED then READ receipt without ever downgrading the status",
+    async () => {
+      const repository = repositoryFor();
+      const providerMessageId = "phase2-test-receipt-001";
+
+      await repository.recordInboundMessage({
+        provider: "woztell",
+        providerMessageId,
+        channelId: "channel-1",
+        fromWhatsAppId: "phase2-test-wa-receipt-001",
+        fromPhone: "+85290000009",
+        contactName: null,
+        messageType: "text",
+        body: "seed row for receipt test",
+        receivedAt: new Date().toISOString(),
+        rawPayload: {},
+      });
+
+      const delivered = await repository.recordMessageStatusEvent({
+        provider: "woztell",
+        providerMessageId,
+        status: "delivered",
+        occurredAt: "2026-08-16T10:00:00.000Z",
+      });
+      expect(delivered.matched).toBe(true);
+      expect(delivered.status).toBe("delivered");
+
+      const read = await repository.recordMessageStatusEvent({
+        provider: "woztell",
+        providerMessageId,
+        status: "read",
+        occurredAt: "2026-08-16T10:05:00.000Z",
+      });
+      expect(read.status).toBe("read");
+
+      // A late-arriving DELIVERED must not drag a read message backwards.
+      const late = await repository.recordMessageStatusEvent({
+        provider: "woztell",
+        providerMessageId,
+        status: "delivered",
+        occurredAt: "2026-08-16T10:06:00.000Z",
+      });
+      expect(late.status).toBe("read");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  // A receipt for a message this firm never recorded is normal — it must be
+  // reported as unmatched, not thrown, or the webhook answers 503 and WOZTELL
+  // redelivers it forever.
+  it(
+    "reports an unmatched receipt instead of throwing",
+    async () => {
+      const repository = repositoryFor();
+
+      const result = await repository.recordMessageStatusEvent({
+        provider: "woztell",
+        providerMessageId: "phase2-test-receipt-does-not-exist",
+        status: "read",
+        occurredAt: "2026-08-16T10:00:00.000Z",
+      });
+
+      expect(result).toEqual({ matched: false, messageId: null, status: null });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "attaches a provider message id exactly once",
+    async () => {
+      const repository = repositoryFor();
+      const seeded = await repository.recordInboundMessage({
+        provider: "woztell",
+        providerMessageId: "phase2-test-attach-seed-001",
+        channelId: "channel-1",
+        fromWhatsAppId: "phase2-test-wa-attach-001",
+        fromPhone: "+85290000010",
+        contactName: null,
+        messageType: "text",
+        body: "seed row for attach test",
+        receivedAt: new Date().toISOString(),
+        rawPayload: {},
+      });
+
+      // Already has an id, so the guarded update must refuse it.
+      await expect(
+        repository.attachProviderMessageId({
+          messageId: seeded.id,
+          providerMessageId: "phase2-test-attach-002",
+        }),
+      ).resolves.toBe(false);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });

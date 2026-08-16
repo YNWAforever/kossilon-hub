@@ -23,19 +23,10 @@ import { classifyWoztellWebhookEvent } from "./woztell";
 
 type Env = Record<string, string | undefined>;
 type ProcessWhatsAppInboundWebhookInput = z.infer<typeof processWhatsAppInboundWebhookInputSchema>;
-// `recordMessageStatusEvent` is not yet on `WhatsAppRepository` — a later task adds
-// it. Declared inline here so this type doesn't have to wait on that landing.
 export type ProcessWhatsAppInboundWebhookRepository = Pick<
   WhatsAppRepository,
-  "recordInboundMessage" | "recordWebhookEvent"
-> & {
-  recordMessageStatusEvent(input: {
-    provider: "woztell";
-    providerMessageId: string;
-    status: "sent" | "delivered" | "read";
-    occurredAt: string;
-  }): Promise<{ matched: boolean; messageId: string | null; status: string | null }>;
-};
+  "recordInboundMessage" | "recordWebhookEvent" | "recordMessageStatusEvent"
+>;
 type QueueWhatsAppTemplateMessageInput = z.infer<typeof queueWhatsAppTemplateMessageInputSchema> & {
   actorId: string;
 };

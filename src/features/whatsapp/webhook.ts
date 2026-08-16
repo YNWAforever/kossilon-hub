@@ -105,7 +105,7 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
     const repository = config.createRepository();
     try {
       const result = await processWhatsAppInboundWebhookWithRepository(
-        repository as unknown as ProcessWhatsAppInboundWebhookRepository,
+        repository as ProcessWhatsAppInboundWebhookRepository,
         {
           providerEventId: providerEventIdFrom(request.headers, payload),
           signatureValid: true,

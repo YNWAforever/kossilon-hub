@@ -16,6 +16,7 @@ import {
 } from "./conversations";
 import type {
   NormalizedInboundWhatsAppMessage,
+  NormalizedWoztellStatusEvent,
   WhatsAppMessageDirection,
   WhatsAppMessageStatus,
   WhatsAppProvider,
@@ -111,6 +112,19 @@ export type RecordWebhookEventInput = {
   errorMessage: string | null;
 };
 
+export type WhatsAppStatusUpdateResult = {
+  matched: boolean;
+  messageId: string | null;
+  status: WhatsAppMessageStatus | null;
+};
+
+/** read supersedes delivered supersedes sent. Receipts can arrive out of order. */
+const WHATSAPP_STATUS_RANK: Readonly<Record<string, number>> = {
+  sent: 1,
+  delivered: 2,
+  read: 3,
+};
+
 export type ListConversationsInput = {
   limit?: number;
 };
@@ -135,6 +149,13 @@ export type WhatsAppRepository = {
     input: QueueOutboundTemplateMessageInput,
   ): Promise<WhatsAppMessageRecord>;
   recordWebhookEvent(input: RecordWebhookEventInput): Promise<WhatsAppWebhookEventRecord>;
+  recordMessageStatusEvent(
+    input: NormalizedWoztellStatusEvent,
+  ): Promise<WhatsAppStatusUpdateResult>;
+  attachProviderMessageId(input: {
+    messageId: string;
+    providerMessageId: string;
+  }): Promise<boolean>;
   listConversations(input?: ListConversationsInput): Promise<WhatsAppConversation[]>;
   listConversationMessages(
     input: ListConversationMessagesInput,
@@ -1065,6 +1086,77 @@ export function createWhatsAppRepository(
     return mapWebhookEvent(rows[0]);
   }
 
+  async function recordMessageStatusEvent(
+    input: NormalizedWoztellStatusEvent,
+  ): Promise<WhatsAppStatusUpdateResult> {
+    const rank = WHATSAPP_STATUS_RANK[input.status] ?? 0;
+    // The timestamp column is set with coalesce so the *first* receipt of a kind
+    // wins; the status column only moves forward. WOZTELL gives no ordering
+    // guarantee, and a redelivered DELIVERED after a READ must be a no-op.
+    const rows = await sql<{ id: string; status: WhatsAppMessageStatus }[]>`
+      update whatsapp_messages
+      set
+        status = case
+          when ${rank}::int > coalesce(
+            case status
+              when 'read' then 3
+              when 'delivered' then 2
+              when 'sent' then 1
+              else 0
+            end, 0)
+          then ${input.status}
+          else status
+        end,
+        sent_at = case
+          when ${input.status} = 'sent' then coalesce(sent_at, ${input.occurredAt}::timestamptz)
+          else sent_at
+        end,
+        delivered_at = case
+          when ${input.status} = 'delivered'
+            then coalesce(delivered_at, ${input.occurredAt}::timestamptz)
+          else delivered_at
+        end,
+        read_at = case
+          when ${input.status} = 'read' then coalesce(read_at, ${input.occurredAt}::timestamptz)
+          else read_at
+        end,
+        updated_at = now()
+      where provider = 'woztell'
+        and provider_message_id = ${input.providerMessageId}
+      returning id, status
+    `;
+    const [updated] = rows;
+
+    if (!updated) {
+      return { matched: false, messageId: null, status: null };
+    }
+
+    return { matched: true, messageId: updated.id, status: updated.status };
+  }
+
+  /**
+   * Links a queued outbound row to the id WOZTELL assigned when it was actually
+   * sent. Without this the row's provider_message_id stays null forever and no
+   * DELIVERED or READ receipt can ever match it.
+   */
+  async function attachProviderMessageId(input: {
+    messageId: string;
+    providerMessageId: string;
+  }): Promise<boolean> {
+    const rows = await sql<{ id: string }[]>`
+      update whatsapp_messages
+      set provider_message_id = ${input.providerMessageId},
+          status = case when status = 'queued' then 'sent' else status end,
+          sent_at = coalesce(sent_at, now()),
+          updated_at = now()
+      where id = ${input.messageId}
+        and provider_message_id is null
+      returning id
+    `;
+
+    return rows.length > 0;
+  }
+
   // `coalesce(sent_at, received_at, created_at)` here has to stay in step with
   // conversationMessageOccurredAt() in ./conversations — the same rule decides
   // which rows a limit keeps and how the thread reads once it reaches the browser.
@@ -1173,6 +1265,8 @@ export function createWhatsAppRepository(
     getCaseAuthorizationContext,
     queueOutboundTemplateMessage,
     recordWebhookEvent,
+    recordMessageStatusEvent,
+    attachProviderMessageId,
     listConversations,
     listConversationMessages,
     async close() {
