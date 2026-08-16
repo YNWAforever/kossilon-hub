@@ -7,6 +7,7 @@ import {
   rememberRedirectPath,
   isDemoAuthEnabled,
   getSafeRedirectPath,
+  isForbiddenAuthError,
 } from "./route-guard";
 
 class MemoryStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem"> {
@@ -172,5 +173,22 @@ describe("isClientRoute", () => {
   it("does not match a path that merely starts with the same characters", () => {
     expect(isClientRoute("/portalx")).toBe(false);
     expect(isClientRoute("/documents-internal")).toBe(false);
+  });
+});
+
+describe("isForbiddenAuthError", () => {
+  it("recognizes a Forbidden-prefixed error", () => {
+    expect(isForbiddenAuthError(new Error("Forbidden: user is not provisioned."))).toBe(true);
+  });
+
+  it("does not treat Unauthorized as Forbidden", () => {
+    expect(isForbiddenAuthError(new Error("Unauthorized: a session is required."))).toBe(false);
+  });
+
+  it("fails closed on anything that is not an Error with the prefix", () => {
+    expect(isForbiddenAuthError("Forbidden: not an Error instance")).toBe(false);
+    expect(isForbiddenAuthError(null)).toBe(false);
+    expect(isForbiddenAuthError(undefined)).toBe(false);
+    expect(isForbiddenAuthError(new Error("some other failure"))).toBe(false);
   });
 });
