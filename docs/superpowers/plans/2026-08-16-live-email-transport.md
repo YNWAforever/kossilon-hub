@@ -768,22 +768,22 @@ git commit -m "feat(notifications): wire the Resend config through runtime dispa
 
 **Files:** none modified.
 
-- [ ] **Step 1: Typecheck**
+- [x] **Step 1: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 2: Lint**
+- [x] **Step 2: Lint**
 
 Run: `npm run lint`
 Expected: clean. Confirm the exit code directly (e.g. run it unpiped, or check `$?` immediately after) — do not trust a piped `tail`/`head` summary, since that reports the pipe's own exit code, not lint's.
 
-- [ ] **Step 3: Full suite**
+- [x] **Step 3: Full suite**
 
 Run: `npm run test`
 Expected: PASS, with a total no lower than this branch's baseline before Task 1.
 
-- [ ] **Step 4: Confirm the prior incident cannot recur**
+- [x] **Step 4: Confirm the prior incident cannot recur**
 
 Run: `grep -n "RESEND_API_KEY\|RESEND_FROM" src/server/runtime-env.ts`
 Expected: both names appear only inside `getResendConfig` (and its doc comment) — neither appears inside `REQUIRED_BINDINGS` or `FirmRuntimeEnv`. If either does, something went wrong; do not proceed to commit anything further until this is fixed.
