@@ -75,7 +75,17 @@ export function LoginPage() {
     if (new URLSearchParams(window.location.search).get("denied") !== "1") return;
 
     setDenied(true);
-    void signOut();
+    // Clear the marker once sign-out actually completes so the redirect
+    // effect's guard above stops blocking if the user then successfully signs
+    // in again as a different, properly-provisioned account. Until this
+    // resolves, `denied=1` staying in the URL is exactly what keeps that guard
+    // correctly blocking a still-stale session. Follows the same
+    // history.replaceState shape as clearSessionVerifier() in neon-auth-client.ts.
+    void signOut().then(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("denied");
+      history.replaceState(history.state, "", url.href);
+    });
   }, [signOut]);
 
   function changeMode(nextMode: LoginMode) {
