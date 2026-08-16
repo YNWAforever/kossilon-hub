@@ -984,9 +984,30 @@ Magic link delivery uses Resend, configured as:
 - `RESEND_FROM` — a plain sender address, templated in
   `wrangler.template.jsonc`'s `vars` alongside `EMAIL_FROM`.
 
-Both are validated at Worker startup by `getRuntimeReadiness()` — running
-`npm run verify:firm -- --dry-run` before a deploy will report either as
-missing by name if unset.
+**Neither is checked as strictly as the other bindings this app depends on —
+know the actual guarantee before relying on it:**
+
+- Running `npm run verify:firm -- --dry-run` before a deploy prints both names
+  in its report, as a reminder of what a live deployment needs. This is
+  informational only; the dry run does not read real values and does not fail
+  the check if either is unset.
+- `RESEND_API_KEY` genuinely fails loudly, but only lazily — `src/server.ts`
+  throws the first time a Neon Auth magic-link webhook actually arrives with no
+  key configured, not at deploy time.
+- `RESEND_FROM` does **not** fail at all if unset. `src/server.ts` silently
+  falls back to a hardcoded sender address. If you want a different sender,
+  you must set this explicitly; nothing will tell you if you forget.
+
+An earlier draft of this work routed both through `getFirmRuntimeEnv()`, the
+same all-or-nothing readiness check every other binding above goes through.
+Code review caught that this would have broken WhatsApp dispatch and document
+storage for any firm not yet holding Resend credentials — those features read
+`getFirmRuntimeEnv()` too, for entirely unrelated fields, and would have failed
+alongside it. The fix was to keep Resend's presence out of that shared gate
+entirely, which is why the checks above are weaker than the rest of this
+runbook's bindings. Do not silently "fix" this weaker guarantee by
+re-coupling Resend to `getFirmRuntimeEnv()` — see the comments in
+`src/server/runtime-env.ts` and `scripts/verify-firm-deployment.ts` for why.
 
 ## Open risks to record here
 
