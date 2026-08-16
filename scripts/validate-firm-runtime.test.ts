@@ -45,6 +45,7 @@ describe("firm runtime deployment validation", () => {
       WOZTELL_API_BASE_URL: "${WOZTELL_API_BASE_URL}",
       WOZTELL_CHANNEL_ID: "${WOZTELL_CHANNEL_ID}",
       EMAIL_FROM: "${EMAIL_FROM}",
+      RESEND_FROM: "${RESEND_FROM}",
     });
     expect(template.r2_buckets).toContainEqual(
       expect.objectContaining({ binding: "DOCUMENTS_BUCKET" }),
@@ -73,6 +74,8 @@ describe("firm runtime deployment validation", () => {
       "- WOZTELL_CHANNEL_ID",
       "- WOZTELL_WEBHOOK_SECRET",
       "- EMAIL_FROM",
+      "- RESEND_API_KEY",
+      "- RESEND_FROM",
     ]);
   });
 
@@ -108,6 +111,7 @@ EMAIL_FROM=operations@example.test
     const cookieSecret = "cookie-secret-value-at-least-32-characters";
     const accessToken = "whatsapp-access-token";
     const webhookSecret = "whatsapp-webhook-secret";
+    const resendApiKey = "re_test_resend_api_key";
     const envFile = createEnvFile(`
 FIRM_ID=firm-a
 NEON_AUTH_URL=https://firm-a.example.neon.tech/auth
@@ -117,6 +121,8 @@ WOZTELL_ACCESS_TOKEN=${accessToken}
 WOZTELL_CHANNEL_ID=test-channel
 WOZTELL_WEBHOOK_SECRET=${webhookSecret}
 EMAIL_FROM=operations@example.test
+RESEND_API_KEY=${resendApiKey}
+RESEND_FROM=auth@example.test
 `);
     const wranglerFile = createTemporaryFile(
       "wrangler.jsonc",
@@ -128,6 +134,7 @@ EMAIL_FROM=operations@example.test
           WOZTELL_API_BASE_URL: "https://api.example.test",
           WOZTELL_CHANNEL_ID: "test-channel",
           EMAIL_FROM: "operations@example.test",
+          RESEND_FROM: "auth@example.test",
         },
         r2_buckets: [
           {
@@ -152,5 +159,53 @@ EMAIL_FROM=operations@example.test
     expect(`${result.stdout}${result.stderr}`).not.toContain(cookieSecret);
     expect(`${result.stdout}${result.stderr}`).not.toContain(accessToken);
     expect(`${result.stdout}${result.stderr}`).not.toContain(webhookSecret);
+    expect(`${result.stdout}${result.stderr}`).not.toContain(resendApiKey);
+  });
+
+  // The regression this fix closes: getFirmRuntimeEnv() (src/server/runtime-env.ts)
+  // deliberately does NOT check RESEND_API_KEY/RESEND_FROM — coupling them to that
+  // all-or-nothing gate once broke unrelated live call sites (WhatsApp dispatch,
+  // document storage). This validator is a separate, offline tool an operator runs
+  // before deploying, and it must still catch a firm that hasn't configured Resend,
+  // or magic-link email silently never sends in production with no warning.
+  it("reports a firm missing Resend configuration as not ready", () => {
+    const envFile = createEnvFile(`
+FIRM_ID=firm-a
+NEON_AUTH_URL=https://firm-a.example.neon.tech/auth
+NEON_AUTH_COOKIE_SECRET=cookie-secret-value-at-least-32-characters
+WOZTELL_API_BASE_URL=https://api.example.test
+WOZTELL_ACCESS_TOKEN=whatsapp-access-token
+WOZTELL_CHANNEL_ID=test-channel
+WOZTELL_WEBHOOK_SECRET=whatsapp-webhook-secret
+EMAIL_FROM=operations@example.test
+`);
+    const wranglerFile = createTemporaryFile(
+      "wrangler.jsonc",
+      JSON.stringify({
+        name: "firm-a-worker",
+        vars: {
+          FIRM_ID: "firm-a",
+          NEON_AUTH_URL: "https://firm-a.example.neon.tech/auth",
+          WOZTELL_API_BASE_URL: "https://api.example.test",
+          WOZTELL_CHANNEL_ID: "test-channel",
+          EMAIL_FROM: "operations@example.test",
+        },
+        r2_buckets: [{ binding: "DOCUMENTS_BUCKET", bucket_name: "firm-a-documents" }],
+        hyperdrive: [{ binding: "HYPERDRIVE", id: "00000000-0000-4000-8000-000000000001" }],
+        triggers: { crons: ["*/5 * * * *"] },
+      }),
+    );
+
+    const result = runValidator(["--env-file", envFile, "--wrangler-file", wranglerFile]);
+
+    // Exact-list, not toContain: this fixture supplies everything else the
+    // validator checks, so an unrelated field slipping onto the missing list
+    // (a masked regression elsewhere) would fail this test too, not just the
+    // RESEND-specific assertion it exists for.
+    expect(result.status).toBe(1);
+    expect(result.stderr.trim().split(/\r?\n/).slice(1)).toEqual([
+      "- RESEND_API_KEY",
+      "- RESEND_FROM",
+    ]);
   });
 });
