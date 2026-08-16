@@ -388,7 +388,26 @@ describe("webhook header helpers", () => {
   it("uses the provider message id when the payload carries one", () => {
     expect(
       providerEventIdFrom(new Headers(), WOZTELL_STATUS_READ, JSON.stringify(WOZTELL_STATUS_READ)),
-    ).toBe(WOZTELL_STATUS_READ.data.messageId);
+    ).toBe(`READ:${WOZTELL_STATUS_READ.data.messageId}`);
+  });
+
+  // SENT, DELIVERED and READ for one message all carry the SAME data.messageId.
+  // Keying on it alone collapsed all three onto one row, so the upsert overwrote
+  // the receipt trail and only the last one to arrive survived.
+  it("keeps each status of the same message as a distinct event", () => {
+    const read = providerEventIdFrom(
+      new Headers(),
+      WOZTELL_STATUS_READ,
+      JSON.stringify(WOZTELL_STATUS_READ),
+    );
+    const delivered = providerEventIdFrom(
+      new Headers(),
+      WOZTELL_STATUS_DELIVERED,
+      JSON.stringify(WOZTELL_STATUS_DELIVERED),
+    );
+
+    expect(WOZTELL_STATUS_DELIVERED.data.messageId).toBe(WOZTELL_STATUS_READ.data.messageId);
+    expect(read).not.toBe(delivered);
   });
 
   // Never null: a null would disable the partial-index conflict clause entirely,

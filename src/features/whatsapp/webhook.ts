@@ -46,6 +46,11 @@ export function readWoztellSignatureHeader(headers: Headers): string | null {
  * to send one; otherwise the message id is used where the event type provides one,
  * and a digest of the raw body where it does not. Never returns null, so the
  * conflict clause is always active.
+ *
+ * The message id is qualified with `type`, because it identifies a *message* and
+ * not an *event*: SENT, DELIVERED and READ for one message all carry the same
+ * `data.messageId`. Keying on it alone made all three collapse onto one row, so
+ * the upsert overwrote the receipt trail and left only whichever arrived last.
  */
 export function providerEventIdFrom(headers: Headers, payload: unknown, rawBody: string): string {
   const header = headers.get("x-woztell-event-id")?.trim();
@@ -58,9 +63,12 @@ export function providerEventIdFrom(headers: Headers, payload: unknown, rawBody:
       data !== null && typeof data === "object" && !Array.isArray(data)
         ? (data as Record<string, unknown>).messageId
         : undefined;
+    const type = typeof record.type === "string" ? record.type.trim().toUpperCase() : null;
 
     for (const candidate of [nested, record.messageId, record.eventId]) {
-      if (typeof candidate === "string" && candidate.trim().length > 0) return candidate.trim();
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return type ? `${type}:${candidate.trim()}` : candidate.trim();
+      }
     }
   }
 
