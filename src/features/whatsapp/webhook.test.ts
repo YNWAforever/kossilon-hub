@@ -362,11 +362,38 @@ describe("webhook header helpers", () => {
     expect(readWoztellSignatureHeader(new Headers())).toBeNull();
   });
 
-  it("prefers the event id header over the payload body", () => {
+  it("prefers the event id header over anything in the body", () => {
     expect(
-      providerEventIdFrom(new Headers({ "x-woztell-event-id": "hdr" }), { eventId: "body" }),
+      providerEventIdFrom(new Headers({ "x-woztell-event-id": "hdr" }), { eventId: "body" }, "{}"),
     ).toBe("hdr");
-    expect(providerEventIdFrom(new Headers(), { eventId: "body" })).toBe("body");
-    expect(providerEventIdFrom(new Headers(), {})).toBeNull();
+  });
+
+  // WOZTELL sends no event id of any kind on the documented payloads, so the id
+  // falls back to a digest of the raw body. Same body => same key => the upsert
+  // collapses a redelivery instead of inserting a second row.
+  it("derives a stable key from the raw body when WOZTELL sends no id", () => {
+    const raw = JSON.stringify(WOZTELL_INBOUND_TEXT);
+    const first = providerEventIdFrom(new Headers(), WOZTELL_INBOUND_TEXT, raw);
+
+    expect(first).toBe(providerEventIdFrom(new Headers(), WOZTELL_INBOUND_TEXT, raw));
+    expect(first).toMatch(/^woztell-body:[0-9a-f]{16}$/);
+  });
+
+  it("gives a different body a different key", () => {
+    expect(providerEventIdFrom(new Headers(), {}, '{"a":1}')).not.toBe(
+      providerEventIdFrom(new Headers(), {}, '{"a":2}'),
+    );
+  });
+
+  it("uses the provider message id when the payload carries one", () => {
+    expect(
+      providerEventIdFrom(new Headers(), WOZTELL_STATUS_READ, JSON.stringify(WOZTELL_STATUS_READ)),
+    ).toBe(WOZTELL_STATUS_READ.data.messageId);
+  });
+
+  // Never null: a null would disable the partial-index conflict clause entirely,
+  // which is the bug this replaces.
+  it("always returns a key, even for an empty payload", () => {
+    expect(providerEventIdFrom(new Headers(), {}, "{}")).toMatch(/^woztell-body:[0-9a-f]{16}$/);
   });
 });

@@ -3,7 +3,7 @@ import {
   processWhatsAppInboundWebhookWithRepository,
   type ProcessWhatsAppInboundWebhookRepository,
 } from "./server-fns";
-import { classifyWoztellWebhookEvent, verifyWoztellSignature } from "./woztell";
+import { classifyWoztellWebhookEvent, fnv1a64, verifyWoztellSignature } from "./woztell";
 
 /**
  * Inbound WhatsApp ingestion.
@@ -36,16 +36,35 @@ export function readWoztellSignatureHeader(headers: Headers): string | null {
   return null;
 }
 
-export function providerEventIdFrom(headers: Headers, payload: unknown): string | null {
+/**
+ * The dedupe key for `whatsapp_webhook_events`.
+ *
+ * WOZTELL documents no event id: neither `x-woztell-event-id` nor `payload.eventId`
+ * appears anywhere in its documentation, so the previous version always returned
+ * null, `provider_event_id` was always null, and the partial-index conflict clause
+ * never fired. The header is still honoured first in case a channel is configured
+ * to send one; otherwise the message id is used where the event type provides one,
+ * and a digest of the raw body where it does not. Never returns null, so the
+ * conflict clause is always active.
+ */
+export function providerEventIdFrom(headers: Headers, payload: unknown, rawBody: string): string {
   const header = headers.get("x-woztell-event-id")?.trim();
   if (header) return header;
 
   if (payload !== null && typeof payload === "object" && !Array.isArray(payload)) {
-    const candidate = (payload as Record<string, unknown>).eventId;
-    if (typeof candidate === "string" && candidate.trim().length > 0) return candidate.trim();
+    const record = payload as Record<string, unknown>;
+    const data = record.data;
+    const nested =
+      data !== null && typeof data === "object" && !Array.isArray(data)
+        ? (data as Record<string, unknown>).messageId
+        : undefined;
+
+    for (const candidate of [nested, record.messageId, record.eventId]) {
+      if (typeof candidate === "string" && candidate.trim().length > 0) return candidate.trim();
+    }
   }
 
-  return null;
+  return `woztell-body:${fnv1a64(rawBody)}`;
 }
 
 export type WhatsAppWebhookHandlerConfig = {
@@ -107,7 +126,7 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
       const result = await processWhatsAppInboundWebhookWithRepository(
         repository as ProcessWhatsAppInboundWebhookRepository,
         {
-          providerEventId: providerEventIdFrom(request.headers, payload),
+          providerEventId: providerEventIdFrom(request.headers, payload, rawBody),
           signatureValid: true,
           payload: payload as Record<string, unknown>,
         },
