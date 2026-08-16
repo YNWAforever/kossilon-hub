@@ -3,7 +3,7 @@ import {
   processWhatsAppInboundWebhookWithRepository,
   type ProcessWhatsAppInboundWebhookRepository,
 } from "./server-fns";
-import { normalizeWoztellInboundMessage, verifyWoztellSignature } from "./woztell";
+import { classifyWoztellWebhookEvent, fnv1a64, verifyWoztellSignature } from "./woztell";
 
 /**
  * Inbound WhatsApp ingestion.
@@ -36,16 +36,43 @@ export function readWoztellSignatureHeader(headers: Headers): string | null {
   return null;
 }
 
-export function providerEventIdFrom(headers: Headers, payload: unknown): string | null {
+/**
+ * The dedupe key for `whatsapp_webhook_events`.
+ *
+ * WOZTELL documents no event id: neither `x-woztell-event-id` nor `payload.eventId`
+ * appears anywhere in its documentation, so the previous version always returned
+ * null, `provider_event_id` was always null, and the partial-index conflict clause
+ * never fired. The header is still honoured first in case a channel is configured
+ * to send one; otherwise the message id is used where the event type provides one,
+ * and a digest of the raw body where it does not. Never returns null, so the
+ * conflict clause is always active.
+ *
+ * The message id is qualified with `type`, because it identifies a *message* and
+ * not an *event*: SENT, DELIVERED and READ for one message all carry the same
+ * `data.messageId`. Keying on it alone made all three collapse onto one row, so
+ * the upsert overwrote the receipt trail and left only whichever arrived last.
+ */
+export function providerEventIdFrom(headers: Headers, payload: unknown, rawBody: string): string {
   const header = headers.get("x-woztell-event-id")?.trim();
   if (header) return header;
 
   if (payload !== null && typeof payload === "object" && !Array.isArray(payload)) {
-    const candidate = (payload as Record<string, unknown>).eventId;
-    if (typeof candidate === "string" && candidate.trim().length > 0) return candidate.trim();
+    const record = payload as Record<string, unknown>;
+    const data = record.data;
+    const nested =
+      data !== null && typeof data === "object" && !Array.isArray(data)
+        ? (data as Record<string, unknown>).messageId
+        : undefined;
+    const type = typeof record.type === "string" ? record.type.trim().toUpperCase() : null;
+
+    for (const candidate of [nested, record.messageId, record.eventId]) {
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return type ? `${type}:${candidate.trim()}` : candidate.trim();
+      }
+    }
   }
 
-  return null;
+  return `woztell-body:${fnv1a64(rawBody)}`;
 }
 
 export type WhatsAppWebhookHandlerConfig = {
@@ -94,10 +121,10 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
     // catches everything and reports `ok: false` either way, so without this a
     // deadlock or a transient write error would be acknowledged exactly like a
     // malformed payload — and an acknowledged message is never redelivered.
-    // normalizeWoztellInboundMessage is pure, so running it twice costs nothing.
+    // classifyWoztellWebhookEvent is pure, so running it twice costs nothing.
     let payloadIsUnreadable = false;
     try {
-      normalizeWoztellInboundMessage(payload);
+      classifyWoztellWebhookEvent(payload);
     } catch {
       payloadIsUnreadable = true;
     }
@@ -107,7 +134,7 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookHandlerConfi
       const result = await processWhatsAppInboundWebhookWithRepository(
         repository as ProcessWhatsAppInboundWebhookRepository,
         {
-          providerEventId: providerEventIdFrom(request.headers, payload),
+          providerEventId: providerEventIdFrom(request.headers, payload, rawBody),
           signatureValid: true,
           payload: payload as Record<string, unknown>,
         },

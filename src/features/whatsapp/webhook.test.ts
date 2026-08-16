@@ -7,10 +7,17 @@ import {
   WHATSAPP_WEBHOOK_PATH,
 } from "./webhook";
 import { verifyWoztellSignature } from "./woztell";
+import {
+  WOZTELL_DOCUMENTED_PAYLOADS,
+  WOZTELL_INBOUND_TEXT,
+  WOZTELL_MEMBER_UPDATE,
+  WOZTELL_STATUS_DELIVERED,
+  WOZTELL_STATUS_READ,
+} from "./woztell-fixtures";
 
 const SECRET = "woztell-webhook-secret-value";
 
-async function sign(body: string, secret = SECRET): Promise<string> {
+async function digestBytes(body: string, secret = SECRET): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -18,20 +25,37 @@ async function sign(body: string, secret = SECRET): Promise<string> {
     false,
     ["sign"],
   );
-  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+  return new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body)));
+}
+
+/** The encoding WOZTELL actually sends. */
+async function sign(body: string, secret = SECRET): Promise<string> {
+  return btoa(String.fromCharCode(...(await digestBytes(body, secret))));
+}
+
+/** The encoding this codebase used to expect, kept only to prove it is now refused. */
+async function signHex(body: string, secret = SECRET): Promise<string> {
+  return Array.from(await digestBytes(body, secret), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 function inboundPayload() {
   return {
-    eventId: "evt-1",
-    message: { id: "wamid.1", text: { body: "Received, thanks." }, timestamp: 1785000000 },
-    contact: { wa_id: "85290000001", phone: "+852 9000 0001", profile: { name: "Ada Wong" } },
+    from: "85290000001",
+    to: "85268227287",
+    timestamp: "1785000000",
+    type: "TEXT",
+    data: { text: "Received, thanks." },
+    member: "member-1",
+    channel: "channel-1",
+    app: "app-1",
   };
 }
 
 function repositoryDouble() {
-  const recordInboundMessage = vi.fn(async () => ({
+  const recordInboundMessage = vi.fn(async (_input: unknown) => ({
     id: "msg-1",
     provider: "woztell" as const,
     providerMessageId: "wamid.1",
@@ -46,8 +70,13 @@ function repositoryDouble() {
     processingStatus: "processed" as const,
     errorMessage: null,
   }));
+  const recordMessageStatusEvent = vi.fn(async (_input: unknown) => ({
+    matched: true,
+    messageId: "msg-1",
+    status: "read" as const,
+  }));
   const close = vi.fn(async () => {});
-  return { recordInboundMessage, recordWebhookEvent, close };
+  return { recordInboundMessage, recordWebhookEvent, recordMessageStatusEvent, close };
 }
 
 function request(body: string, headers: Record<string, string>, method = "POST"): Request {
@@ -115,6 +144,30 @@ describe("verifyWoztellSignature", () => {
   it("rejects when no signature header was sent", async () => {
     await expect(
       verifyWoztellSignature({ secret: SECRET, rawBody: "{}", signatureHeader: null }),
+    ).resolves.toBe(false);
+  });
+
+  // WOZTELL sends a 44-character Base64 digest. The previous implementation emitted
+  // 64 characters of hex, so the constant-time compare failed on the length guard
+  // and every genuine delivery was rejected 401.
+  it("accepts the Base64 digest WOZTELL actually sends", async () => {
+    const body = JSON.stringify(inboundPayload());
+    const base64 = await sign(body);
+
+    // 44 chars, not 64. This is the wire format the whole bug turned on.
+    expect(base64).toHaveLength(44);
+    await expect(
+      verifyWoztellSignature({ secret: SECRET, rawBody: body, signatureHeader: base64 }),
+    ).resolves.toBe(true);
+  });
+
+  it("rejects the hex digest the old implementation produced", async () => {
+    const body = JSON.stringify(inboundPayload());
+    const hex = await signHex(body);
+
+    expect(hex).toHaveLength(64);
+    await expect(
+      verifyWoztellSignature({ secret: SECRET, rawBody: body, signatureHeader: hex }),
     ).resolves.toBe(false);
   });
 });
@@ -234,6 +287,72 @@ describe("createWhatsAppWebhookHandler", () => {
     expect(response.status).toBe(503);
     expect(repository.close).toHaveBeenCalledTimes(1);
   });
+
+  // Every documented payload must be acknowledged. A 503 means WOZTELL redelivers
+  // forever; a throw means it is acked and lost.
+  it("acknowledges every payload WOZTELL documents", async () => {
+    for (const payload of WOZTELL_DOCUMENTED_PAYLOADS) {
+      const repository = repositoryDouble();
+      const body = JSON.stringify(payload);
+      const response = await createWhatsAppWebhookHandler({
+        webhookSecret: SECRET,
+        createRepository: () => repository as never,
+      })(request(body, { "x-woztell-signature": await sign(body) }));
+
+      expect(response.status).toBe(200);
+      expect(repository.recordWebhookEvent).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("stores a documented inbound text message", async () => {
+    const repository = repositoryDouble();
+    const body = JSON.stringify(WOZTELL_INBOUND_TEXT);
+    const response = await createWhatsAppWebhookHandler({
+      webhookSecret: SECRET,
+      createRepository: () => repository as never,
+    })(request(body, { "x-woztell-signature": await sign(body) }));
+
+    expect(response.status).toBe(200);
+    expect(repository.recordInboundMessage).toHaveBeenCalledTimes(1);
+    expect(repository.recordInboundMessage.mock.calls[0][0]).toMatchObject({
+      body: "Hello",
+      fromWhatsAppId: "85260903521",
+    });
+  });
+
+  // THE REGRESSION GUARD. normalizeWoztellInboundMessage happily turns a READ
+  // receipt into a message with body "[read]", so without the classifier in the
+  // request path every status webhook is stored as a fabricated customer message.
+  it("never stores a status receipt as a customer message", async () => {
+    for (const payload of [WOZTELL_STATUS_READ, WOZTELL_STATUS_DELIVERED]) {
+      const repository = repositoryDouble();
+      const body = JSON.stringify(payload);
+      const response = await createWhatsAppWebhookHandler({
+        webhookSecret: SECRET,
+        createRepository: () => repository as never,
+      })(request(body, { "x-woztell-signature": await sign(body) }));
+
+      expect(response.status).toBe(200);
+      expect(repository.recordInboundMessage).not.toHaveBeenCalled();
+      expect(repository.recordMessageStatusEvent).toHaveBeenCalledTimes(1);
+      expect(repository.recordMessageStatusEvent.mock.calls[0][0]).toMatchObject({
+        providerMessageId: payload.data.messageId,
+      });
+    }
+  });
+
+  it("does not ingest a MEMBER_UPDATE as a customer message", async () => {
+    const repository = repositoryDouble();
+    const body = JSON.stringify(WOZTELL_MEMBER_UPDATE);
+    await createWhatsAppWebhookHandler({
+      webhookSecret: SECRET,
+      createRepository: () => repository as never,
+    })(request(body, { "x-woztell-signature": await sign(body) }));
+
+    expect(repository.recordInboundMessage).not.toHaveBeenCalled();
+    expect(repository.recordMessageStatusEvent).not.toHaveBeenCalled();
+    expect(repository.recordWebhookEvent).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("webhook header helpers", () => {
@@ -243,11 +362,57 @@ describe("webhook header helpers", () => {
     expect(readWoztellSignatureHeader(new Headers())).toBeNull();
   });
 
-  it("prefers the event id header over the payload body", () => {
+  it("prefers the event id header over anything in the body", () => {
     expect(
-      providerEventIdFrom(new Headers({ "x-woztell-event-id": "hdr" }), { eventId: "body" }),
+      providerEventIdFrom(new Headers({ "x-woztell-event-id": "hdr" }), { eventId: "body" }, "{}"),
     ).toBe("hdr");
-    expect(providerEventIdFrom(new Headers(), { eventId: "body" })).toBe("body");
-    expect(providerEventIdFrom(new Headers(), {})).toBeNull();
+  });
+
+  // WOZTELL sends no event id of any kind on the documented payloads, so the id
+  // falls back to a digest of the raw body. Same body => same key => the upsert
+  // collapses a redelivery instead of inserting a second row.
+  it("derives a stable key from the raw body when WOZTELL sends no id", () => {
+    const raw = JSON.stringify(WOZTELL_INBOUND_TEXT);
+    const first = providerEventIdFrom(new Headers(), WOZTELL_INBOUND_TEXT, raw);
+
+    expect(first).toBe(providerEventIdFrom(new Headers(), WOZTELL_INBOUND_TEXT, raw));
+    expect(first).toMatch(/^woztell-body:[0-9a-f]{16}$/);
+  });
+
+  it("gives a different body a different key", () => {
+    expect(providerEventIdFrom(new Headers(), {}, '{"a":1}')).not.toBe(
+      providerEventIdFrom(new Headers(), {}, '{"a":2}'),
+    );
+  });
+
+  it("uses the provider message id when the payload carries one", () => {
+    expect(
+      providerEventIdFrom(new Headers(), WOZTELL_STATUS_READ, JSON.stringify(WOZTELL_STATUS_READ)),
+    ).toBe(`READ:${WOZTELL_STATUS_READ.data.messageId}`);
+  });
+
+  // SENT, DELIVERED and READ for one message all carry the SAME data.messageId.
+  // Keying on it alone collapsed all three onto one row, so the upsert overwrote
+  // the receipt trail and only the last one to arrive survived.
+  it("keeps each status of the same message as a distinct event", () => {
+    const read = providerEventIdFrom(
+      new Headers(),
+      WOZTELL_STATUS_READ,
+      JSON.stringify(WOZTELL_STATUS_READ),
+    );
+    const delivered = providerEventIdFrom(
+      new Headers(),
+      WOZTELL_STATUS_DELIVERED,
+      JSON.stringify(WOZTELL_STATUS_DELIVERED),
+    );
+
+    expect(WOZTELL_STATUS_DELIVERED.data.messageId).toBe(WOZTELL_STATUS_READ.data.messageId);
+    expect(read).not.toBe(delivered);
+  });
+
+  // Never null: a null would disable the partial-index conflict clause entirely,
+  // which is the bug this replaces.
+  it("always returns a key, even for an empty payload", () => {
+    expect(providerEventIdFrom(new Headers(), {}, "{}")).toMatch(/^woztell-body:[0-9a-f]{16}$/);
   });
 });

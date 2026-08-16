@@ -19,13 +19,13 @@ import {
   type WhatsAppWebhookEventRecord,
   type WhatsAppWebhookProcessingStatus,
 } from "./repository";
-import { normalizeWoztellInboundMessage } from "./woztell";
+import { classifyWoztellWebhookEvent } from "./woztell";
 
 type Env = Record<string, string | undefined>;
 type ProcessWhatsAppInboundWebhookInput = z.infer<typeof processWhatsAppInboundWebhookInputSchema>;
 export type ProcessWhatsAppInboundWebhookRepository = Pick<
   WhatsAppRepository,
-  "recordInboundMessage" | "recordWebhookEvent"
+  "recordInboundMessage" | "recordWebhookEvent" | "recordMessageStatusEvent"
 >;
 type QueueWhatsAppTemplateMessageInput = z.infer<typeof queueWhatsAppTemplateMessageInputSchema> & {
   actorId: string;
@@ -164,9 +164,43 @@ export async function processWhatsAppInboundWebhookWithRepository(
   }
 
   try {
-    const normalized = normalizeWoztellInboundMessage(data.payload);
-    const message = await repository.recordInboundMessage(normalized);
-    const event = await repository.recordWebhookEvent({
+    const event = classifyWoztellWebhookEvent(data.payload);
+
+    if (event.kind === "ignored") {
+      // Recorded and acknowledged on purpose. Redelivering it would produce the
+      // same classification, and 503 here would make WOZTELL retry forever.
+      const row = await repository.recordWebhookEvent({
+        providerEventId: data.providerEventId,
+        signatureValid: true,
+        payload: data.payload,
+        normalizedMessageId: null,
+        processingStatus: "ignored",
+        errorMessage: event.reason,
+      });
+
+      return { ...buildFailedWhatsAppInboundWebhookResponse(row), ok: true };
+    }
+
+    if (event.kind === "status") {
+      const applied = await repository.recordMessageStatusEvent(event.status);
+      const row = await repository.recordWebhookEvent({
+        providerEventId: data.providerEventId,
+        signatureValid: true,
+        payload: data.payload,
+        normalizedMessageId: applied.messageId,
+        processingStatus: applied.matched ? "processed" : "ignored",
+        errorMessage: applied.matched ? null : "No outbound message matched this status update.",
+      });
+
+      return {
+        ...buildFailedWhatsAppInboundWebhookResponse(row),
+        ok: true,
+        messageId: applied.messageId,
+      };
+    }
+
+    const message = await repository.recordInboundMessage(event.message);
+    const row = await repository.recordWebhookEvent({
       providerEventId: data.providerEventId,
       signatureValid: data.signatureValid,
       payload: data.payload,
@@ -178,7 +212,7 @@ export async function processWhatsAppInboundWebhookWithRepository(
     return buildWhatsAppInboundWebhookResponse({
       signatureValid: data.signatureValid,
       message,
-      event,
+      event: row,
     });
   } catch (error) {
     const event = await repository.recordWebhookEvent({
