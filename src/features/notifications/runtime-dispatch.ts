@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
+import type { ResendConfig } from "@/server/runtime-env";
 import { createNotificationDispatcher, createNotificationTransport } from "./dispatcher";
 import type { NotificationOutboxRepository, NotificationTransport } from "./types";
 
@@ -19,8 +20,10 @@ export type RuntimeDispatchDependencies = {
   createTransport?(input: {
     providerMode: ProviderMode;
     config?: WhatsAppProviderConfig;
+    resendConfig?: ResendConfig | null;
   }): NotificationTransport;
   getLiveConfig?(): WhatsAppProviderConfig;
+  getResendConfig?(): ResendConfig | null;
   createWhatsAppRepository?(): WhatsAppRepository;
 };
 
@@ -34,9 +37,11 @@ export async function dispatchDueNotificationsWithDependencies(
   try {
     const providerMode = dependencies.currentProviderMode();
     const config = providerMode === "live" ? dependencies.getLiveConfig?.() : undefined;
+    const resendConfig = providerMode === "live" ? dependencies.getResendConfig?.() : undefined;
     const transport = (dependencies.createTransport ?? createNotificationTransport)({
       providerMode,
       config,
+      resendConfig,
     });
     return await createNotificationDispatcher(repository, transport, {
       whatsAppRepository,
@@ -69,6 +74,7 @@ export const dispatchDueNotificationsOnServer = createServerOnlyFn(
           webhookSecret: env.woztellWebhookSecret,
         };
       },
+      getResendConfig: () => runtimeEnvModule.getResendConfig(),
     });
   },
 );

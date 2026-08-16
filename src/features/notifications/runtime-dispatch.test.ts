@@ -103,7 +103,11 @@ describe("runtime notification dispatch", () => {
       "2026-07-14T09:00:00.000Z",
       1,
     );
-    expect(createTransport).toHaveBeenCalledWith({ providerMode: "simulated", config: undefined });
+    expect(createTransport).toHaveBeenCalledWith({
+      providerMode: "simulated",
+      config: undefined,
+      resendConfig: undefined,
+    });
     expect(getLiveConfig).not.toHaveBeenCalled();
     expect(fetchImpl).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
@@ -142,5 +146,49 @@ describe("runtime notification dispatch", () => {
       expect.objectContaining({ errorMessage: "temporary outage" }),
     );
     expect(repo.close).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes the resend config through only in live mode", async () => {
+    const repo = repository([row]);
+    const createTransport = vi.fn(() => ({
+      dispatch: vi.fn(async () => ({ providerMessageId: "test-id" })),
+    }));
+    const getResendConfig = vi.fn(() => ({ apiKey: "re_test_key", from: "auth@example.test" }));
+
+    await dispatchDueNotificationsWithDependencies(
+      { now: "2026-07-14T09:00:00.000Z" },
+      {
+        currentProviderMode: () => "live",
+        createRepository: () => repo,
+        createTransport,
+        getLiveConfig: () => ({
+          provider: "woztell",
+          apiBaseUrl: "https://example.test",
+          accessToken: "test-token",
+          channelId: "channel-1",
+          webhookSecret: "test-secret-value",
+        }),
+        getResendConfig,
+      },
+    );
+
+    expect(getResendConfig).toHaveBeenCalledTimes(1);
+    expect(createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resendConfig: { apiKey: "re_test_key", from: "auth@example.test" },
+      }),
+    );
+  });
+
+  it("does not request the resend config outside live mode", async () => {
+    const repo = repository([row]);
+    const getResendConfig = vi.fn(() => ({ apiKey: "re_test_key", from: "auth@example.test" }));
+
+    await dispatchDueNotificationsWithDependencies(
+      { now: "2026-07-14T09:00:00.000Z" },
+      { currentProviderMode: () => "local", createRepository: () => repo, getResendConfig },
+    );
+
+    expect(getResendConfig).not.toHaveBeenCalled();
   });
 });
