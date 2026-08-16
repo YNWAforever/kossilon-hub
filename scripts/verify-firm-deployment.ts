@@ -28,6 +28,8 @@ const REQUIRED_BINDINGS = [
   "WOZTELL_CHANNEL_ID",
   "WOZTELL_WEBHOOK_SECRET",
   "EMAIL_FROM",
+  "RESEND_API_KEY",
+  "RESEND_FROM",
 ] as const;
 const BLOCKED_PROVIDERS = [
   "Neon Auth",

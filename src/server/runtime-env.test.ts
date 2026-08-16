@@ -25,6 +25,8 @@ describe("firm runtime", () => {
     WOZTELL_CHANNEL_ID: "test-channel",
     WOZTELL_WEBHOOK_SECRET: "test-webhook-secret",
     EMAIL_FROM: "operations@example.test",
+    RESEND_API_KEY: "test-resend-key",
+    RESEND_FROM: "auth@example.test",
   };
 
   it("requires one fixed firm id and every production binding", () => {
@@ -41,6 +43,8 @@ describe("firm runtime", () => {
         "WOZTELL_CHANNEL_ID",
         "WOZTELL_WEBHOOK_SECRET",
         "EMAIL_FROM",
+        "RESEND_API_KEY",
+        "RESEND_FROM",
       ],
     });
   });
@@ -51,6 +55,8 @@ describe("firm runtime", () => {
       firmId: "firm-a",
       documentsBucket: fakeR2Bucket,
       emailFrom: "operations@example.test",
+      resendApiKey: "test-resend-key",
+      resendFrom: "auth@example.test",
     });
   });
 
@@ -75,6 +81,7 @@ describe("firm runtime", () => {
         NEON_AUTH_COOKIE_SECRET: "short",
         DOCUMENTS_BUCKET: {},
         EMAIL_FROM: "not-an-email",
+        RESEND_FROM: "not-an-email",
       }).missing,
     ).toEqual([
       "FIRM_ID",
@@ -82,6 +89,7 @@ describe("firm runtime", () => {
       "NEON_AUTH_COOKIE_SECRET",
       "DOCUMENTS_BUCKET",
       "EMAIL_FROM",
+      "RESEND_FROM",
     ]);
   });
 

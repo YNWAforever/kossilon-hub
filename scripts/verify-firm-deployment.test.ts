@@ -102,6 +102,8 @@ describe("verifyFirmDeployment", () => {
     const result = await verifyFirmDeployment(verificationInput());
 
     expect(result.blockedBindings).toContain("WOZTELL_ACCESS_TOKEN");
+    expect(result.blockedBindings).toContain("RESEND_API_KEY");
+    expect(result.blockedBindings).toContain("RESEND_FROM");
     expect(JSON.stringify(result)).not.toContain("secret-value");
     expect(result.safety.networkCalls).toBe(0);
   });

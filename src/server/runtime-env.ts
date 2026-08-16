@@ -17,6 +17,8 @@ export type FirmRuntimeEnv = {
   woztellChannelId: string;
   woztellWebhookSecret: string;
   emailFrom: string;
+  resendApiKey: string;
+  resendFrom: string;
 };
 
 export type RuntimeReadiness = {
@@ -35,6 +37,8 @@ const REQUIRED_BINDINGS = [
   "WOZTELL_CHANNEL_ID",
   "WOZTELL_WEBHOOK_SECRET",
   "EMAIL_FROM",
+  "RESEND_API_KEY",
+  "RESEND_FROM",
 ] as const;
 
 function hasText(value: unknown): value is string {
@@ -129,6 +133,8 @@ function hasBinding(env: Record<string, unknown>, name: string): boolean {
       return hasText(env[name]) && env[name].trim().length >= 16;
     case "EMAIL_FROM":
       return isEmail(env[name]);
+    case "RESEND_FROM":
+      return isEmail(env[name]);
     default:
       return hasText(env[name]);
   }
@@ -168,5 +174,7 @@ export function getFirmRuntimeEnv(
     woztellChannelId: (env.WOZTELL_CHANNEL_ID as string).trim(),
     woztellWebhookSecret: env.WOZTELL_WEBHOOK_SECRET as string,
     emailFrom: (env.EMAIL_FROM as string).trim(),
+    resendApiKey: env.RESEND_API_KEY as string,
+    resendFrom: (env.RESEND_FROM as string).trim(),
   };
 }
