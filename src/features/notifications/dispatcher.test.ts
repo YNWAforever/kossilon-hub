@@ -126,4 +126,63 @@ describe("notification dispatcher", () => {
     });
     expect(failedRepo.markFailed).toHaveBeenCalled();
   });
+
+  // The outbox payload already carries whatsappMessageId — whatsapp/repository.ts
+  // reads it back for idempotent replay (resolveWhatsAppReplayMessageId). Without
+  // writing the provider id onto that row, provider_message_id stays null forever
+  // and every DELIVERED/READ receipt is unmatchable.
+  it("writes the provider message id onto the linked whatsapp_messages row", async () => {
+    const repo = repository([
+      notification({ payload: { body: "Reminder body", whatsappMessageId: "wa-msg-1" } }),
+    ]);
+    const attachProviderMessageId = vi.fn(async () => true);
+
+    await createNotificationDispatcher(
+      repo,
+      { dispatch: vi.fn(async () => ({ providerMessageId: "wamid.sent-1" })) },
+      { whatsAppRepository: { attachProviderMessageId } },
+    ).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(attachProviderMessageId).toHaveBeenCalledWith({
+      messageId: "wa-msg-1",
+      providerMessageId: "wamid.sent-1",
+    });
+  });
+
+  it("leaves a notification with no linked WhatsApp row alone", async () => {
+    const repo = repository([notification({ channel: "email", payload: { body: "hi" } })]);
+    const attachProviderMessageId = vi.fn(async () => true);
+
+    await createNotificationDispatcher(
+      repo,
+      { dispatch: vi.fn(async () => ({ providerMessageId: "provider-1" })) },
+      { whatsAppRepository: { attachProviderMessageId } },
+    ).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(attachProviderMessageId).not.toHaveBeenCalled();
+  });
+
+  // A send that succeeded must stay succeeded. If linking throws and the error
+  // escapes, the row is marked for retry and the client gets the message twice.
+  it("still counts the send when linking the provider id fails", async () => {
+    const repo = repository([
+      notification({ payload: { body: "Reminder body", whatsappMessageId: "wa-msg-1" } }),
+    ]);
+
+    await expect(
+      createNotificationDispatcher(
+        repo,
+        { dispatch: vi.fn(async () => ({ providerMessageId: "wamid.sent-1" })) },
+        {
+          whatsAppRepository: {
+            attachProviderMessageId: vi.fn(async () => {
+              throw new Error("connection lost");
+            }),
+          },
+        },
+      ).dispatchDue("2026-07-12T00:00:00.000Z"),
+    ).resolves.toMatchObject({ claimed: 1, sent: 1 });
+
+    expect(repo.markRetry).not.toHaveBeenCalled();
+  });
 });

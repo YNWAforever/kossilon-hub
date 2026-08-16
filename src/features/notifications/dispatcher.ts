@@ -1,3 +1,4 @@
+import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import { sendWoztellMessage } from "@/features/whatsapp/woztell";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
@@ -11,9 +12,14 @@ import type {
   NotificationTransport,
 } from "./types";
 
+export type NotificationDispatcherOptions = {
+  whatsAppRepository?: Pick<WhatsAppRepository, "attachProviderMessageId">;
+};
+
 export function createNotificationDispatcher(
   repository: NotificationOutboxRepository,
   transport: NotificationTransport,
+  options: NotificationDispatcherOptions = {},
 ): NotificationDispatcher {
   return {
     async dispatchDue(now, limit = 50): Promise<DispatchSummary> {
@@ -40,6 +46,27 @@ export function createNotificationDispatcher(
           );
           if (applied) summary.sent += 1;
           else summary.superseded += 1;
+
+          // Optional on purpose: the local and simulated transports have no
+          // WhatsApp repository and must keep working untouched.
+          const whatsAppMessageId = notificationPayload(notification).whatsappMessageId;
+          if (
+            notification.channel === "whatsapp" &&
+            typeof whatsAppMessageId === "string" &&
+            options.whatsAppRepository
+          ) {
+            try {
+              await options.whatsAppRepository.attachProviderMessageId({
+                messageId: whatsAppMessageId,
+                providerMessageId: result.providerMessageId,
+              });
+            } catch (linkError) {
+              // The message was sent. Letting this reach the outer catch would
+              // mark the row for retry and send the client a second copy — a
+              // missing receipt link is strictly the lesser failure.
+              console.error("whatsapp provider id could not be linked", linkError);
+            }
+          }
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Notification dispatch failed.";

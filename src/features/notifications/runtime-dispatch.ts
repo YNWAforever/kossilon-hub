@@ -1,5 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import { createNotificationDispatcher, createNotificationTransport } from "./dispatcher";
@@ -20,6 +21,7 @@ export type RuntimeDispatchDependencies = {
     config?: WhatsAppProviderConfig;
   }): NotificationTransport;
   getLiveConfig?(): WhatsAppProviderConfig;
+  createWhatsAppRepository?(): WhatsAppRepository;
 };
 
 export async function dispatchDueNotificationsWithDependencies(
@@ -28,6 +30,7 @@ export async function dispatchDueNotificationsWithDependencies(
 ) {
   const data = dispatchInputSchema.parse(input);
   const repository = dependencies.createRepository();
+  const whatsAppRepository = dependencies.createWhatsAppRepository?.();
   try {
     const providerMode = dependencies.currentProviderMode();
     const config = providerMode === "live" ? dependencies.getLiveConfig?.() : undefined;
@@ -35,25 +38,27 @@ export async function dispatchDueNotificationsWithDependencies(
       providerMode,
       config,
     });
-    return await createNotificationDispatcher(repository, transport).dispatchDue(
-      data.now,
-      data.limit,
-    );
+    return await createNotificationDispatcher(repository, transport, {
+      whatsAppRepository,
+    }).dispatchDue(data.now, data.limit);
   } finally {
     await repository.close();
+    await whatsAppRepository?.close();
   }
 }
 
 export const dispatchDueNotificationsOnServer = createServerOnlyFn(
   async (input: { now: string; limit?: number }) => {
-    const [providerModeModule, outboxModule, runtimeEnvModule] = await Promise.all([
+    const [providerModeModule, outboxModule, runtimeEnvModule, whatsAppModule] = await Promise.all([
       import("@/server/provider-mode"),
       import("./outbox"),
       import("@/server/runtime-env"),
+      import("@/features/whatsapp/repository"),
     ]);
     return dispatchDueNotificationsWithDependencies(input, {
       currentProviderMode: providerModeModule.currentProviderMode,
       createRepository: () => outboxModule.createNotificationOutboxRepository(),
+      createWhatsAppRepository: () => whatsAppModule.createWhatsAppRepository(),
       getLiveConfig: () => {
         const env = runtimeEnvModule.getFirmRuntimeEnv();
         return {
