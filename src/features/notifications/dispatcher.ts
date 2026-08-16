@@ -4,12 +4,12 @@ import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import { createLocalNotificationTransport } from "./local-transport";
 import { createSimulatedNotificationTransport } from "./simulated-transport";
-import type {
-  DispatchSummary,
-  NotificationDispatcher,
-  NotificationOutboxRecord,
-  NotificationOutboxRepository,
-  NotificationTransport,
+import {
+  notificationPayload,
+  type DispatchSummary,
+  type NotificationDispatcher,
+  type NotificationOutboxRepository,
+  type NotificationTransport,
 } from "./types";
 
 export type NotificationDispatcherOptions = {
@@ -136,17 +136,4 @@ export function createNotificationTransport(input: {
     throw new Error("Live notification transport requires a WhatsApp provider configuration.");
   }
   return createWoztellNotificationTransport(input.config, input.fetchImpl);
-}
-
-export function notificationPayload(
-  notification: NotificationOutboxRecord,
-): Record<string, unknown> {
-  if (
-    !notification.payload ||
-    typeof notification.payload !== "object" ||
-    Array.isArray(notification.payload)
-  ) {
-    return {};
-  }
-  return notification.payload as Record<string, unknown>;
 }

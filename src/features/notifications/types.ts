@@ -85,3 +85,16 @@ export type NotificationOutboxRepository = {
 export type NotificationDispatcher = {
   dispatchDue(now: string, limit?: number): Promise<DispatchSummary>;
 };
+
+export function notificationPayload(
+  notification: NotificationOutboxRecord,
+): Record<string, unknown> {
+  if (
+    !notification.payload ||
+    typeof notification.payload !== "object" ||
+    Array.isArray(notification.payload)
+  ) {
+    return {};
+  }
+  return notification.payload as Record<string, unknown>;
+}
