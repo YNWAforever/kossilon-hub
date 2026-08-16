@@ -4,7 +4,11 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
 import { useAuth } from "@/features/auth/auth-context-neon";
-import { consumeRedirectPath, getSafeRedirectPath } from "@/features/auth/route-guard";
+import {
+  consumeRedirectPath,
+  getSafeRedirectPath,
+  isDemoAuthEnabled,
+} from "@/features/auth/route-guard";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -21,23 +25,27 @@ export const Route = createFileRoute("/login")({
 
 type LoginMode = "password" | "magic-link";
 
-function isDemoMagicLinkEnabled(): boolean {
-  return (
-    import.meta.env.VITE_ENABLE_NEON_AUTH_DEMO === "true" &&
-    import.meta.env.VITE_PROVIDER_MODE === "simulated"
-  );
-}
-
 export function LoginPage() {
   const navigate = useNavigate();
-  const magicLinkEnabled = isDemoMagicLinkEnabled();
-  const { session, isHydrated, login, loginWithMagicLink, loginDemo, demoUsers } = useAuth();
+  const magicLinkEnabled = !isDemoAuthEnabled();
+  const {
+    session,
+    isHydrated,
+    login,
+    loginWithMagicLink,
+    loginWithGoogle,
+    loginDemo,
+    demoUsers,
+    signOut,
+  } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<LoginMode>("password");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [denied, setDenied] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isHydrated || !session) return;
@@ -47,6 +55,13 @@ export function LoginPage() {
     const redirectPath = safeSearchRedirect === "/" ? consumeRedirectPath() : safeSearchRedirect;
     void navigate({ href: redirectPath, replace: true });
   }, [isHydrated, navigate, session]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("denied") !== "1") return;
+
+    setDenied(true);
+    void signOut();
+  }, [signOut]);
 
   function changeMode(nextMode: LoginMode) {
     if (nextMode === "magic-link" && !magicLinkEnabled) return;
@@ -86,6 +101,18 @@ export function LoginPage() {
   async function submitDemoLogin(userId: string) {
     const result = await loginDemo(userId);
     setError(result.ok ? null : result.error);
+  }
+
+  async function submitGoogleLogin() {
+    setGoogleSubmitting(true);
+    setError(null);
+    const result = await loginWithGoogle();
+    if (!result.ok) {
+      setError(result.error);
+      setGoogleSubmitting(false);
+    }
+    // On success the browser is already navigating to Google; no further state
+    // update is meaningful before the page unloads.
   }
 
   return (
@@ -144,6 +171,16 @@ export function LoginPage() {
               Sign in with your firm's Neon Auth account.
             </p>
           </div>
+
+          {denied && (
+            <div
+              className="mt-6 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red"
+              role="alert"
+            >
+              This account does not have access to Kossilon Hub. Ask an administrator to grant
+              access, or sign in with a different account below.
+            </div>
+          )}
 
           {magicLinkEnabled && (
             <div
@@ -240,6 +277,18 @@ export function LoginPage() {
               )}
             </button>
           </form>
+
+          {magicLinkEnabled && (
+            <button
+              type="button"
+              onClick={() => void submitGoogleLogin()}
+              disabled={!isHydrated || googleSubmitting}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Continue with Google
+            </button>
+          )}
 
           {magicLinkEnabled && (
             <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">

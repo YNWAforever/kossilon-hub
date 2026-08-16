@@ -8,6 +8,8 @@ const navigate = vi.fn();
 const login = vi.fn();
 const loginWithMagicLink = vi.fn();
 const loginDemo = vi.fn();
+const loginWithGoogle = vi.fn();
+const signOut = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
@@ -26,6 +28,8 @@ vi.mock("@/features/auth/auth-context-neon", () => ({
     login,
     loginWithMagicLink,
     loginDemo,
+    loginWithGoogle,
+    signOut,
   }),
 }));
 
@@ -44,23 +48,30 @@ afterEach(() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubEnv("VITE_ENABLE_NEON_AUTH_DEMO", "true");
-  vi.stubEnv("VITE_PROVIDER_MODE", "simulated");
+  vi.stubEnv("VITE_ENABLE_DEMO_AUTH", "false");
   login.mockResolvedValue({ ok: true });
   loginWithMagicLink.mockResolvedValue({
     ok: true,
     message: "Check your email for a magic link.",
   });
   loginDemo.mockResolvedValue({ ok: true });
+  loginWithGoogle.mockResolvedValue({ ok: true });
 });
 
 describe("LoginPage", () => {
-  it("hides magic-link mode outside the demo provider", () => {
-    vi.stubEnv("VITE_ENABLE_NEON_AUTH_DEMO", "false");
-    vi.stubEnv("VITE_PROVIDER_MODE", "live");
+  it("shows magic link and Google by default (a real Neon Auth backend)", () => {
+    render(<LoginPage />);
+
+    expect(screen.getByRole("button", { name: "Magic link" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeTruthy();
+  });
+
+  it("hides magic link and Google under the fixture demo-auth provider", () => {
+    vi.stubEnv("VITE_ENABLE_DEMO_AUTH", "true");
     render(<LoginPage />);
 
     expect(screen.queryByRole("button", { name: "Magic link" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Continue with Google" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Request an invitation" })).toBeNull();
   });
 
@@ -122,5 +133,35 @@ describe("LoginPage", () => {
     expect(screen.getByRole("link", { name: "Request an invitation" }).getAttribute("href")).toBe(
       "mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request",
     );
+  });
+});
+
+describe("LoginPage denied state", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_ENABLE_DEMO_AUTH", "false");
+  });
+
+  it("signs out and explains the account has no access", async () => {
+    const originalLocation = window.location;
+    // Window.location's setter only accepts a string (see lib.dom.d.ts), so a
+    // direct assignment of a Location-shaped object doesn't type-check even
+    // after deleting the property. Object.defineProperty sidesteps that.
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...originalLocation, search: "?denied=1" },
+    });
+
+    render(<LoginPage />);
+
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("alert").textContent).toContain("does not have access");
+
+    Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
+  });
+
+  it("does not show the denied message without the query param", () => {
+    render(<LoginPage />);
+    expect(screen.queryByText(/does not have access/i)).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
   });
 });
