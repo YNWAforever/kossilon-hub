@@ -1,5 +1,5 @@
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
-import { sendWoztellMessage } from "@/features/whatsapp/woztell";
+import { sendWoztellMessage, type WoztellTemplateComponent } from "@/features/whatsapp/woztell";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import { createLocalNotificationTransport } from "./local-transport";
@@ -115,6 +115,9 @@ export function createWoztellNotificationTransport(
           body,
           templateName: typeof payload.templateName === "string" ? payload.templateName : undefined,
           languageCode: typeof payload.languageCode === "string" ? payload.languageCode : undefined,
+          templateComponents: Array.isArray(payload.templateComponents)
+            ? (payload.templateComponents as WoztellTemplateComponent[])
+            : undefined,
         },
         fetchImpl,
       );

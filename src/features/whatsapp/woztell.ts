@@ -6,20 +6,28 @@ import type {
   WoztellWebhookEvent,
 } from "./types";
 
+export type WoztellTemplateComponent = Record<string, unknown>;
+
 export type WoztellOutboundMessage = {
   toPhone: string;
   toWhatsAppId?: string | null;
   body: string;
   templateName?: string;
   languageCode?: string;
+  templateComponents?: readonly WoztellTemplateComponent[];
 };
+
+/** err_code 100: the number is invalid or has no WhatsApp account. Retrying cannot fix it. */
+const WOZTELL_UNREACHABLE_RECIPIENT_ERR_CODE = 100;
 
 export async function sendWoztellMessage(
   config: WhatsAppProviderConfig,
   input: WoztellOutboundMessage,
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ providerMessageId: string }> {
-  const response = await fetchImpl(`${config.apiBaseUrl.replace(/\/+$/, "")}/messages`, {
+  // BotAPI is POST {base}/sendResponses. The previous version appended /messages,
+  // which no value of WOZTELL_API_BASE_URL could correct.
+  const response = await fetchImpl(`${config.apiBaseUrl.replace(/\/+$/, "")}/sendResponses`, {
     method: "POST",
     headers: {
       authorization: `Bearer ${config.accessToken}`,
@@ -27,33 +35,74 @@ export async function sendWoztellMessage(
     },
     body: JSON.stringify({
       channelId: config.channelId,
-      to: input.toPhone,
-      whatsappId: input.toWhatsAppId ?? undefined,
-      type: "text",
-      text: input.body,
-      templateName: input.templateName,
-      languageCode: input.languageCode,
+      recipientId: input.toPhone.replace(/\D/g, ""),
+      response: [woztellResponseElement(input)],
     }),
   });
   const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!response.ok) {
-    const error = new Error(
-      typeof payload.error === "string"
-        ? payload.error
-        : `WOZTELL request failed with ${response.status}.`,
-    );
-    Object.assign(error, { code: `woztell_${response.status}` });
-    throw error;
+
+  // BotAPI reports application errors as `{ok: 0}` and does so on a 2xx as well as
+  // on a 5xx, so the HTTP status alone cannot be trusted. Branching only on
+  // `!response.ok` read a rejected send as a success until the missing-id throw
+  // fired with a misleading message and no err_code.
+  if (payload.ok !== 1) {
+    const errCode = typeof payload.err_code === "number" ? payload.err_code : null;
+    const message =
+      typeof payload.err === "string"
+        ? payload.err
+        : `WOZTELL rejected the send with HTTP ${response.status}.`;
+
+    throw Object.assign(new Error(message), {
+      code: errCode === null ? `woztell_${response.status}` : `woztell_err_${errCode}`,
+      errCode,
+      unreachableRecipient: errCode === WOZTELL_UNREACHABLE_RECIPIENT_ERR_CODE,
+    });
   }
-  const data =
-    typeof payload.data === "object" && payload.data !== null
-      ? (payload.data as Record<string, unknown>)
-      : undefined;
-  const providerMessageId = [payload.messageId, payload.id, data?.messageId].find(
-    (value): value is string => typeof value === "string" && value.length > 0,
-  );
+
+  const providerMessageId = providerMessageIdFromSendResult(payload);
   if (!providerMessageId) throw new Error("WOZTELL response is missing a provider message ID.");
   return { providerMessageId };
+}
+
+function woztellResponseElement(input: WoztellOutboundMessage): Record<string, unknown> {
+  // Outside the 24-hour session window WhatsApp requires an approved template, so
+  // a named template always goes as TEMPLATE. Window tracking itself is roadmap
+  // P2-3 and deliberately not handled here.
+  if (input.templateName) {
+    return {
+      type: "TEMPLATE",
+      elementName: input.templateName,
+      languageCode: input.languageCode ?? "en",
+      components: input.templateComponents ?? [],
+    };
+  }
+
+  return { type: "TEXT", text: input.body };
+}
+
+/** Documented success is `{ok: 1, member, sendResult}` — the id is inside sendResult. */
+function providerMessageIdFromSendResult(payload: Record<string, unknown>): string | null {
+  const sendResult = isRecord(payload.sendResult) ? payload.sendResult : null;
+  const results = sendResult && Array.isArray(sendResult.result) ? sendResult.result : [];
+
+  for (const entry of results) {
+    if (!isRecord(entry)) continue;
+
+    const messageEvent = isRecord(entry.messageEvent) ? entry.messageEvent : null;
+    if (typeof messageEvent?.messageId === "string" && messageEvent.messageId.length > 0) {
+      return messageEvent.messageId;
+    }
+
+    const result = isRecord(entry.result) ? entry.result : null;
+    const messages = result && Array.isArray(result.messages) ? result.messages : [];
+    for (const message of messages) {
+      if (isRecord(message) && typeof message.id === "string" && message.id.length > 0) {
+        return message.id;
+      }
+    }
+  }
+
+  return null;
 }
 
 /**

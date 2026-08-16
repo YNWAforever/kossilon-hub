@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { classifyWoztellWebhookEvent, normalizeWoztellInboundMessage } from "./woztell";
+import {
+  classifyWoztellWebhookEvent,
+  normalizeWoztellInboundMessage,
+  sendWoztellMessage,
+} from "./woztell";
 import {
   WOZTELL_API_OUTBOUND,
   WOZTELL_BATCH_MEMBER_UPDATE,
@@ -132,5 +136,120 @@ describe("classifyWoztellWebhookEvent", () => {
     expect(() =>
       classifyWoztellWebhookEvent({ eventType: "INBOUND", type: "READ", from: "852", data: {} }),
     ).toThrow("WOZTELL status event is missing a message id.");
+  });
+});
+
+const config = {
+  provider: "woztell" as const,
+  apiBaseUrl: "https://bot.api.woztell.com",
+  accessToken: "token-123",
+  channelId: "channel-1",
+  webhookSecret: "secret-1234567890",
+};
+
+function sendResultResponse(id: string, status = 200) {
+  return new Response(
+    JSON.stringify({
+      ok: 1,
+      member: "member-1",
+      sendResult: { ok: 1, member: "member-1", result: [{ result: { messages: [{ id }] } }] },
+    }),
+    { status },
+  );
+}
+
+describe("sendWoztellMessage", () => {
+  it("posts the documented sendResponses envelope", async () => {
+    let seenUrl = "";
+    let seenBody: Record<string, unknown> = {};
+    const fetchImpl = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seenUrl = String(input);
+      seenBody = JSON.parse(String(init?.body));
+      return sendResultResponse("gBGGhSZphigfAglySd38a9T4jAE");
+    };
+
+    await expect(
+      sendWoztellMessage(config, { toPhone: "+852 9000 0000", body: "Reminder body" }, fetchImpl),
+    ).resolves.toEqual({ providerMessageId: "gBGGhSZphigfAglySd38a9T4jAE" });
+
+    expect(seenUrl).toBe("https://bot.api.woztell.com/sendResponses");
+    expect(seenBody).toEqual({
+      channelId: "channel-1",
+      recipientId: "85290000000",
+      response: [{ type: "TEXT", text: "Reminder body" }],
+    });
+  });
+
+  it("sends a template as the TEMPLATE response variant", async () => {
+    let seenBody: Record<string, unknown> = {};
+    const fetchImpl = async (_input: RequestInfo | URL, init?: RequestInit) => {
+      seenBody = JSON.parse(String(init?.body));
+      return sendResultResponse("wamid.template-1");
+    };
+
+    await sendWoztellMessage(
+      config,
+      {
+        toPhone: "+85290000000",
+        body: "ignored on the wire for a template",
+        templateName: "annual_return_manual_reminder",
+        languageCode: "zh_HK",
+      },
+      fetchImpl,
+    );
+
+    expect(seenBody.response).toEqual([
+      {
+        type: "TEMPLATE",
+        elementName: "annual_return_manual_reminder",
+        languageCode: "zh_HK",
+        components: [],
+      },
+    ]);
+  });
+
+  // The single most likely production error: a number that is not on WhatsApp.
+  // It used to surface as "response is missing a provider message ID".
+  it("raises err_code 100 as an unreachable recipient rather than a missing id", async () => {
+    const fetchImpl = async () =>
+      new Response(
+        JSON.stringify({ ok: 0, err_code: 100, err: "Phone Number provided is invalid." }),
+        { status: 200 },
+      );
+
+    await expect(
+      sendWoztellMessage(config, { toPhone: "+85290000000", body: "hi" }, fetchImpl),
+    ).rejects.toMatchObject({
+      code: "woztell_err_100",
+      errCode: 100,
+      unreachableRecipient: true,
+    });
+  });
+
+  it("treats ok:0 on a 2xx as a failure", async () => {
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ ok: 0, err: "User is not authorized." }), { status: 200 });
+
+    await expect(
+      sendWoztellMessage(config, { toPhone: "+85290000000", body: "hi" }, fetchImpl),
+    ).rejects.toThrow("User is not authorized.");
+  });
+
+  it("reads the id from messageEvent when the result carries one", async () => {
+    const fetchImpl = async () =>
+      new Response(
+        JSON.stringify({
+          ok: 1,
+          sendResult: {
+            ok: 1,
+            result: [{ messageEvent: { messageId: "wamid.from-event" } }],
+          },
+        }),
+        { status: 200 },
+      );
+
+    await expect(
+      sendWoztellMessage(config, { toPhone: "+85290000000", body: "hi" }, fetchImpl),
+    ).resolves.toEqual({ providerMessageId: "wamid.from-event" });
   });
 });
