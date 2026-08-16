@@ -21,7 +21,19 @@ const REQUIRED_RENDERED_VARS = [
   "WOZTELL_API_BASE_URL",
   "WOZTELL_CHANNEL_ID",
   "EMAIL_FROM",
+  "RESEND_FROM",
 ] as const;
+
+// RESEND_API_KEY is deliberately NOT part of runtime-env.ts's REQUIRED_BINDINGS —
+// that array drives getFirmRuntimeEnv()'s all-or-nothing throw, and coupling
+// Resend to it once broke unrelated live call sites (WhatsApp dispatch, document
+// storage) that need that same function for fields that have nothing to do with
+// email. This offline validator still needs to flag a firm that hasn't
+// configured it, so it checks env presence directly here instead of routing
+// through runtime-env.ts. Do NOT fold this into the getRuntimeReadiness(...)
+// delegation below — that would silently require RESEND_API_KEY again inside
+// getFirmRuntimeEnv() and reintroduce the exact bug this array avoids.
+const REQUIRED_SECRET_VARS = ["RESEND_API_KEY"] as const;
 
 const DEPLOYMENT_REQUIREMENT_ORDER = [
   "WORKER_NAME",
@@ -35,6 +47,8 @@ const DEPLOYMENT_REQUIREMENT_ORDER = [
   "WOZTELL_CHANNEL_ID",
   "WOZTELL_WEBHOOK_SECRET",
   "EMAIL_FROM",
+  "RESEND_API_KEY",
+  "RESEND_FROM",
 ] as const;
 
 function getEnvFileArgument(args: string[]): string | undefined {
@@ -123,6 +137,13 @@ function deploymentMissing(env: Record<string, unknown>, template: WranglerTempl
       typeof envValue !== "string" ||
       templateValue !== envValue.trim()
     ) {
+      missing.add(name);
+    }
+  }
+
+  for (const name of REQUIRED_SECRET_VARS) {
+    const envValue = env[name];
+    if (typeof envValue !== "string" || envValue.trim().length === 0) {
       missing.add(name);
     }
   }
