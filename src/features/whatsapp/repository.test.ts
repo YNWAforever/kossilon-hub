@@ -845,9 +845,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       // wrong. Each column must hold the FIRST receipt of its kind — that is what
       // the coalesce is for, and the late DELIVERED at 10:06 must not overwrite
       // the 10:00 one.
-      const [row] = await sqlForTests()<
-        { delivered_at: string | null; read_at: string | null }[]
-      >`
+      const [row] = await sqlForTests()<{ delivered_at: string | null; read_at: string | null }[]>`
         select delivered_at::text as delivered_at, read_at::text as read_at
         from whatsapp_messages
         where provider = 'woztell' and provider_message_id = ${providerMessageId}
