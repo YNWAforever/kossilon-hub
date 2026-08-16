@@ -708,6 +708,8 @@ create table if not exists whatsapp_messages (
   sent_by uuid references users(id) on delete set null,
   received_at timestamptz,
   sent_at timestamptz,
+  delivered_at timestamptz,
+  read_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint whatsapp_messages_inbound_received_at_check check (
@@ -792,3 +794,9 @@ create index if not exists timeline_events_company_created_idx
 create index if not exists document_upload_intents_document_idx
   on document_upload_intents (document_id)
   where document_id is not null;
+
+-- from 0011_whatsapp_delivery_receipts.sql
+
+create index if not exists whatsapp_messages_delivery_state_idx
+  on whatsapp_messages (direction, delivered_at, read_at)
+  where direction = 'outbound';
