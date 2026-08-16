@@ -262,20 +262,22 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
     "records inbound messages once while upserting the WhatsApp contact",
     async () => {
       const repository = repositoryFor();
+      // WOZTELL's real inbound shape is {from, to, timestamp, type, data, member,
+      // channel, app} — a single `from` identity, not Meta's separate wa_id/phone
+      // pair. `from` drives both fromWhatsAppId and fromPhone (normalizePhone(from)),
+      // so it has to be phone-like for the phone_e164 assertion below to be
+      // meaningful — "+85261234567" is also in cleanupWhatsAppFixtures' fixed
+      // phone_e164 list, so no cleanup-filter change is needed.
       const normalized = normalizeWoztellInboundMessage({
-        event: "message",
-        channel: { id: "kossilon-whatsapp-channel" },
-        contact: {
-          wa_id: "phase2-test-wa-001",
-          phone: "+852 6123 4567",
-          profile: { name: "Phase 2 Client" },
-        },
-        message: {
-          id: "phase2-test-inbound-001",
-          type: "text",
-          text: { body: "Phase 2 test inbound annual return question" },
-          timestamp: "2026-07-05T12:10:00.000Z",
-        },
+        from: "+85261234567",
+        to: "85268227287",
+        timestamp: "2026-07-05T12:10:00.000Z",
+        type: "TEXT",
+        data: { text: "Phase 2 test inbound annual return question" },
+        member: "memberId",
+        channel: "kossilon-whatsapp-channel",
+        app: "appId",
+        messageId: "phase2-test-inbound-001",
       });
 
       const first = await repository.recordInboundMessage(normalized);
@@ -297,9 +299,12 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         from whatsapp_contacts
         where id = ${first.contactId}
       `;
+      // WOZTELL sends one identity (`from`), so whatsapp_id and phone_e164 are
+      // both derived from it and are equal here — unlike Meta's independent
+      // wa_id/phone fields.
       expect(contacts).toEqual([
         {
-          whatsapp_id: "phase2-test-wa-001",
+          whatsapp_id: "+85261234567",
           phone_e164: "+85261234567",
         },
       ]);
@@ -433,20 +438,26 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         category: "annual_return",
         body: "Phase 2 test annual return reminder body.",
       });
+      // The outbound leg above set toWhatsAppId "phase2-test-wa-outbound" and
+      // toPhone "+852 6999 0001" directly (not through the normalizer). For the
+      // inbound reply to match that same contact, its `from` only needs to equal
+      // one of those two values — `from` now feeds both fromWhatsAppId and
+      // fromPhone (normalizePhone(from)), so it can no longer carry a synthetic
+      // wa-id and a real phone independently. Using the phone value lets the
+      // repository match by phone_e164 and keeps phoneE164 below meaningful;
+      // recordInboundMessage stores fromWhatsAppId verbatim on the message row,
+      // so whatsAppId below reflects that same phone-like `from`, not the
+      // contact's original synthetic wa-id.
       const normalized = normalizeWoztellInboundMessage({
-        event: "message",
-        channel: { id: "kossilon-whatsapp-channel" },
-        contact: {
-          wa_id: "phase2-test-wa-outbound",
-          phone: "+852 6999 0001",
-          profile: { name: "Phase 2 Director" },
-        },
-        message: {
-          id: "phase2-test-inbound-reply-001",
-          type: "text",
-          text: { body: "Phase 2 test reply: documents are ready." },
-          timestamp: "2026-07-05T12:20:00.000Z",
-        },
+        from: "+85269990001",
+        to: "85268227287",
+        timestamp: "2026-07-05T12:20:00.000Z",
+        type: "TEXT",
+        data: { text: "Phase 2 test reply: documents are ready." },
+        member: "memberId",
+        channel: "kossilon-whatsapp-channel",
+        app: "appId",
+        messageId: "phase2-test-inbound-reply-001",
       });
 
       const inbound = await repository.recordInboundMessage(normalized);
@@ -460,7 +471,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         companyId: TEST_COMPANY_ID,
         caseId: TEST_CASE_ID,
         phoneE164: "+85269990001",
-        whatsAppId: "phase2-test-wa-outbound",
+        whatsAppId: "+85269990001",
         body: "Phase 2 test reply: documents are ready.",
         timelineEventCreated: true,
       });
@@ -525,6 +536,12 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
     "merges split contact identities before inbound matching",
     async () => {
       const sql = sqlForTests();
+      // Seeded as a phone-like value, not a synthetic "phase2-test-..." id: WOZTELL's
+      // single `from` field now drives both fromWhatsAppId and fromPhone in one shot,
+      // so the inbound message below can only carry ONE raw identity string. For the
+      // split-identity merge query to find *both* pre-existing rows (one keyed by
+      // whatsapp_id, one by phone_e164), that one string has to equal both — hence
+      // reusing the phone number here instead of a distinct synthetic wa-id.
       const [whatsAppContact] = await sql<{ id: string }[]>`
         insert into whatsapp_contacts (
           provider,
@@ -534,7 +551,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         )
         values (
           'woztell',
-          'phase2-test-wa-split',
+          '+85269990001',
           'Split WhatsApp Contact',
           ${sql.json({})}
         )
@@ -558,29 +575,29 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       `;
       const repository = repositoryFor();
       const normalized = normalizeWoztellInboundMessage({
-        event: "message",
-        channel: { id: "kossilon-whatsapp-channel" },
-        contact: {
-          wa_id: "phase2-test-wa-split",
-          phone: "+852 6999 0001",
-          profile: { name: "Phase 2 Director" },
-        },
-        message: {
-          id: "phase2-test-inbound-split-001",
-          type: "text",
-          text: { body: "Phase 2 test split identity reply." },
-          timestamp: "2026-07-05T12:25:00.000Z",
-        },
+        from: "+85269990001",
+        to: "85268227287",
+        timestamp: "2026-07-05T12:25:00.000Z",
+        type: "TEXT",
+        data: { text: "Phase 2 test split identity reply." },
+        member: "memberId",
+        channel: "kossilon-whatsapp-channel",
+        app: "appId",
+        messageId: "phase2-test-inbound-split-001",
       });
 
       const inbound = await repository.recordInboundMessage(normalized);
 
+      // recordInboundMessage stores fromWhatsAppId/fromPhone verbatim on the
+      // message row, and both now come from the same `from` string, so they are
+      // equal here (see the seed comment above for why the WA-only contact was
+      // itself seeded with that same phone-like value).
       expect(inbound).toMatchObject({
         contactId: whatsAppContact.id,
         companyId: TEST_COMPANY_ID,
         caseId: TEST_CASE_ID,
         phoneE164: "+85269990001",
-        whatsAppId: "phase2-test-wa-split",
+        whatsAppId: "+85269990001",
         timelineEventCreated: true,
       });
 
@@ -594,7 +611,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       >`
         select id, company_id, phone_e164, whatsapp_id
         from whatsapp_contacts
-        where whatsapp_id = 'phase2-test-wa-split'
+        where whatsapp_id = '+85269990001'
           or phone_e164 = '+85269990001'
         order by id asc
       `;
@@ -603,7 +620,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
           id: whatsAppContact.id,
           company_id: TEST_COMPANY_ID,
           phone_e164: "+85269990001",
-          whatsapp_id: "phase2-test-wa-split",
+          whatsapp_id: "+85269990001",
         },
       ]);
     },
@@ -641,28 +658,26 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  // WOZTELL's inbound payload has one `from` identity (no separate wa_id/phone,
+  // no profile name — normalizeWoztellInboundMessage always sets contactName to
+  // null). The conversations below are told apart by phone number, not by a
+  // display name that WOZTELL never sends.
   function inboundFixture(input: {
-    waId: string;
-    phone: string;
-    name: string;
+    from: string;
     messageId: string;
     body: string;
     timestamp: string;
   }) {
     return normalizeWoztellInboundMessage({
-      event: "message",
-      channel: { id: "kossilon-whatsapp-channel" },
-      contact: {
-        wa_id: input.waId,
-        phone: input.phone,
-        profile: { name: input.name },
-      },
-      message: {
-        id: input.messageId,
-        type: "text",
-        text: { body: input.body },
-        timestamp: input.timestamp,
-      },
+      from: input.from,
+      to: "85268227287",
+      timestamp: input.timestamp,
+      type: "TEXT",
+      data: { text: input.body },
+      member: "memberId",
+      channel: "kossilon-whatsapp-channel",
+      app: "appId",
+      messageId: input.messageId,
     });
   }
 
@@ -673,9 +688,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
 
       await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-test-inbox-a",
-          phone: "+852 6100 0001",
-          name: "Contact A",
+          from: "+85261000001",
           messageId: "phase2-test-inbox-a-1",
           body: "First question from A",
           timestamp: "2026-07-05T09:00:00.000Z",
@@ -683,9 +696,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       );
       await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-test-inbox-b",
-          phone: "+852 6100 0002",
-          name: "Contact B",
+          from: "+85261000002",
           messageId: "phase2-test-inbox-b-1",
           body: "Only question from B",
           timestamp: "2026-07-05T10:00:00.000Z",
@@ -693,9 +704,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       );
       await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-test-inbox-a",
-          phone: "+852 6100 0001",
-          name: "Contact A",
+          from: "+85261000001",
           messageId: "phase2-test-inbox-a-2",
           body: "Latest question from A",
           timestamp: "2026-07-05T11:00:00.000Z",
@@ -706,9 +715,11 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
 
       // A ahead of B because A's newest is 11:00, and A's preview is that newest
       // message rather than its first — the `distinct on` has to pick the latest.
-      expect(conversations.map((entry) => [entry.displayName, entry.lastMessageBody])).toEqual([
-        ["Contact A", "Latest question from A"],
-        ["Contact B", "Only question from B"],
+      // Distinguished by phone number, not display name: WOZTELL's channel webhook
+      // sends no profile name, so contact.display_name is null for both.
+      expect(conversations.map((entry) => [entry.phoneE164, entry.lastMessageBody])).toEqual([
+        ["+85261000001", "Latest question from A"],
+        ["+85261000002", "Only question from B"],
       ]);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
@@ -720,9 +731,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       const repository = repositoryFor();
       const oldest = await repository.recordInboundMessage(
         inboundFixture({
-          waId: "phase2-test-thread",
-          phone: "+852 6100 0004",
-          name: "Thread Contact",
+          from: "+85261000004",
           messageId: "phase2-test-thread-1",
           body: "one",
           timestamp: "2026-07-05T09:00:00.000Z",
@@ -734,9 +743,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       ].entries()) {
         await repository.recordInboundMessage(
           inboundFixture({
-            waId: "phase2-test-thread",
-            phone: "+852 6100 0004",
-            name: "Thread Contact",
+            from: "+85261000004",
             messageId: `phase2-test-thread-${index + 2}`,
             body: index === 0 ? "two" : "three",
             timestamp,
