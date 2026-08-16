@@ -33,3 +33,21 @@ export type NormalizedInboundWhatsAppMessage = {
   receivedAt: string;
   rawPayload: unknown;
 };
+
+export type WoztellStatusType = "sent" | "delivered" | "read";
+
+export type NormalizedWoztellStatusEvent = {
+  provider: "woztell";
+  providerMessageId: string;
+  status: WoztellStatusType;
+  occurredAt: string;
+};
+
+/**
+ * What a delivery turned out to be. Classifying before any write is what lets the
+ * webhook distinguish "cannot read this, ack it" from "database failed, do not ack".
+ */
+export type WoztellWebhookEvent =
+  | { kind: "message"; message: NormalizedInboundWhatsAppMessage }
+  | { kind: "status"; status: NormalizedWoztellStatusEvent }
+  | { kind: "ignored"; eventType: string; reason: string };

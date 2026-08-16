@@ -1,4 +1,10 @@
-import type { NormalizedInboundWhatsAppMessage, WhatsAppProviderConfig } from "./types";
+import type {
+  NormalizedInboundWhatsAppMessage,
+  NormalizedWoztellStatusEvent,
+  WhatsAppProviderConfig,
+  WoztellStatusType,
+  WoztellWebhookEvent,
+} from "./types";
 
 export type WoztellOutboundMessage = {
   toPhone: string;
@@ -180,80 +186,164 @@ function normalizePhone(value: string | null): string | null {
   return digits.length > 0 ? `${prefix}${digits}` : null;
 }
 
-export function normalizeWoztellInboundMessage(payload: unknown): NormalizedInboundWhatsAppMessage {
+const WOZTELL_STATUS_TYPES: Readonly<Record<string, WoztellStatusType>> = {
+  SENT: "sent",
+  DELIVERED: "delivered",
+  READ: "read",
+};
+
+/**
+ * Fans a delivery into the three things it can be.
+ *
+ * `eventType` is absent on inbound TEXT and MISC — WOZTELL only sets it on status
+ * updates and on the non-message events — so absent means INBOUND. Reading it the
+ * other way round classifies every real customer message as ignorable.
+ *
+ * API_OUTBOUND and NODE_TRIGGER nest their message under `messageEvent` and
+ * describe messages this firm sent, not received; they are recorded and acked but
+ * not ingested. An unrecognised eventType takes the same path deliberately: an
+ * unknown event must never throw, because a throw is acked and lost.
+ */
+export function classifyWoztellWebhookEvent(payload: unknown): WoztellWebhookEvent {
   if (!isRecord(payload)) {
     throw new Error("WOZTELL payload must be a JSON object.");
   }
 
-  const providerMessageId = firstString(payload, [
-    ["message", "id"],
-    ["messageId"],
-    ["providerMessageId"],
-    ["id"],
-    ["data", "message", "id"],
-  ]);
+  const eventType = firstString(payload, [["eventType"]]) ?? "INBOUND";
+
+  if (eventType !== "INBOUND") {
+    return {
+      kind: "ignored",
+      eventType,
+      reason: `WOZTELL ${eventType} events are recorded but not ingested as inbound messages.`,
+    };
+  }
+
+  const type = firstString(payload, [["type"]]);
+  const status = type ? WOZTELL_STATUS_TYPES[type.toUpperCase()] : undefined;
+
+  if (status) {
+    return { kind: "status", status: normalizeWoztellStatusEvent(payload, status) };
+  }
+
+  return { kind: "message", message: normalizeWoztellInboundMessage(payload) };
+}
+
+/** Internal: `JsonRecord` is module-private, so this is not part of the public API. */
+function normalizeWoztellStatusEvent(
+  payload: JsonRecord,
+  status: WoztellStatusType,
+): NormalizedWoztellStatusEvent {
+  const providerMessageId = firstString(payload, [["data", "messageId"], ["messageId"]]);
 
   if (!providerMessageId) {
-    throw new Error("WOZTELL payload is missing provider message id.");
-  }
-
-  const fromWhatsAppId = firstString(payload, [
-    ["contact", "wa_id"],
-    ["contact", "whatsappId"],
-    ["sender", "wa_id"],
-    ["sender", "id"],
-    ["from"],
-    ["source", "userId"],
-    ["data", "from"],
-  ]);
-  const fromPhone = normalizePhone(
-    firstString(payload, [["contact", "phone"], ["sender", "phone"], ["fromPhone"], ["phone"]]) ??
-      fromWhatsAppId,
-  );
-
-  if (!fromWhatsAppId && !fromPhone) {
-    throw new Error("WOZTELL payload is missing sender identity.");
-  }
-
-  const body = firstString(payload, [
-    ["message", "text", "body"],
-    ["message", "text"],
-    ["message", "body"],
-    ["text", "body"],
-    ["text"],
-    ["body"],
-    ["data", "message", "text", "body"],
-  ]);
-
-  if (!body) {
-    throw new Error("WOZTELL payload is missing message body.");
+    throw new Error("WOZTELL status event is missing a message id.");
   }
 
   return {
     provider: "woztell",
     providerMessageId,
-    channelId: firstString(payload, [
-      ["channel", "id"],
-      ["channelId"],
-      ["recipient", "id"],
-      ["botId"],
-    ]),
-    fromWhatsAppId: fromWhatsAppId ?? fromPhone!,
-    fromPhone,
-    contactName: firstString(payload, [
-      ["contact", "profile", "name"],
-      ["contact", "name"],
-      ["profile", "name"],
-      ["sender", "name"],
-    ]),
-    messageType: firstString(payload, [["message", "type"], ["type"]]) ?? "text",
-    body,
-    receivedAt: firstTimestamp(payload, [
-      ["message", "timestamp"],
-      ["timestamp"],
-      ["createdAt"],
-      ["date"],
-    ]),
+    status,
+    occurredAt: firstTimestamp(payload, [["timestamp"]]),
+  };
+}
+
+export function normalizeWoztellInboundMessage(payload: unknown): NormalizedInboundWhatsAppMessage {
+  if (!isRecord(payload)) {
+    throw new Error("WOZTELL payload must be a JSON object.");
+  }
+
+  // WOZTELL's documented shape: {from, to, timestamp, type, data, member, channel, app}.
+  // `channel` is a string, not an object. The previous version walked Meta Cloud API
+  // paths (contact.wa_id, message.text.body, channel.id) that WOZTELL never sends.
+  const fromWhatsAppId = firstString(payload, [["from"]]);
+
+  if (!fromWhatsAppId) {
+    throw new Error("WOZTELL payload is missing sender identity.");
+  }
+
+  const messageType = (firstString(payload, [["type"]]) ?? "TEXT").toLowerCase();
+  const receivedAt = firstTimestamp(payload, [["timestamp"]]);
+  const channelId = firstString(payload, [["channel"]]);
+
+  return {
+    provider: "woztell",
+    providerMessageId:
+      firstString(payload, [["messageId"], ["data", "messageId"]]) ??
+      derivedInboundMessageId(payload, { channelId, fromWhatsAppId, receivedAt }),
+    channelId,
+    fromWhatsAppId,
+    fromPhone: normalizePhone(fromWhatsAppId),
+    // WOZTELL's channel webhook carries no profile name. The inbox shows the phone
+    // number until a name arrives from the Open API (roadmap P3-3); inventing one
+    // from memberExtraData would be a guess about a customer-configured field.
+    contactName: null,
+    messageType,
+    body: inboundBody(payload, messageType),
+    receivedAt,
     rawPayload: payload,
   };
+}
+
+/**
+ * A media message has no text but is still a real client message. The previous
+ * code threw for any payload without a body, which the webhook classified as
+ * "unreadable" and acknowledged 200 — the message was gone. A descriptive
+ * placeholder satisfies `body text not null` and the full payload stays in
+ * `rawPayload`.
+ */
+function inboundBody(payload: JsonRecord, messageType: string): string {
+  const text = firstString(payload, [["data", "text"]]);
+  if (text) return text;
+
+  const attachments = valueAtPath(payload, ["data", "attachments"]);
+  if (Array.isArray(attachments)) {
+    const kinds = attachments
+      .map((attachment) => (isRecord(attachment) ? firstString(attachment, [["type"]]) : null))
+      .filter((kind): kind is string => typeof kind === "string");
+
+    if (kinds.length > 0) return `[${kinds.join(", ").toLowerCase()}]`;
+  }
+
+  return `[${messageType}]`;
+}
+
+/**
+ * WOZTELL's documented inbound TEXT and MISC payloads carry no message id at all,
+ * so idempotency has nothing to key on. The id is derived from the fields that
+ * identify the event plus a hash of its data, which makes a redelivery of the
+ * identical body produce the identical id while two different messages do not
+ * collide.
+ *
+ * Deliberately synchronous and non-cryptographic. This is a dedupe key, not a
+ * signature, and keeping it sync keeps `normalizeWoztellInboundMessage` pure so
+ * `webhook.ts` can run it twice to pre-classify a failure at no cost.
+ */
+function derivedInboundMessageId(
+  payload: JsonRecord,
+  parts: { channelId: string | null; fromWhatsAppId: string; receivedAt: string },
+): string {
+  const seed = [
+    parts.channelId ?? "unknown-channel",
+    firstString(payload, [["member"]]) ?? "unknown-member",
+    parts.fromWhatsAppId,
+    parts.receivedAt,
+    JSON.stringify(payload.data ?? null),
+  ].join("\u0000");
+
+  return `woztell-derived:${fnv1a64(seed)}`;
+}
+
+/** FNV-1a across two 32-bit lanes, because JS bitwise operators are 32-bit. */
+export function fnv1a64(value: string): string {
+  let high = 0x811c9dc5;
+  let low = 0x811c9dc5;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    high = Math.imul(high ^ code, 0x01000193) >>> 0;
+    low = Math.imul(low ^ ((code + index) & 0xff), 0x01000193) >>> 0;
+  }
+
+  return `${high.toString(16).padStart(8, "0")}${low.toString(16).padStart(8, "0")}`;
 }
