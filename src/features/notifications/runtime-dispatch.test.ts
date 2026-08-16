@@ -191,4 +191,47 @@ describe("runtime notification dispatch", () => {
 
     expect(getResendConfig).not.toHaveBeenCalled();
   });
+
+  it("dispatches a live email notification through the real transport chain end-to-end", async () => {
+    // No createTransport override here — this exercises the real composite router
+    // from dispatcher.ts and the real createResendNotificationTransport, wired
+    // through the default global `fetch`, not a directly-injected fetchImpl. Every
+    // other live-mode test above mocks createTransport, so this is the only test
+    // that actually walks the seam runtime-dispatch.ts -> dispatcher.ts -> resend-transport.ts.
+    const fetchImpl = vi.fn(
+      async () => new Response(JSON.stringify({ id: "resend-msg-live-1" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchImpl);
+    const emailRow: NotificationOutboxRecord = {
+      ...row,
+      channel: "email",
+      recipient: "client@example.test",
+    };
+    const repo = repository([emailRow]);
+
+    await expect(
+      dispatchDueNotificationsWithDependencies(
+        { now: "2026-07-14T09:00:00.000Z" },
+        {
+          currentProviderMode: () => "live",
+          createRepository: () => repo,
+          getLiveConfig: () => ({
+            provider: "woztell",
+            apiBaseUrl: "https://example.test",
+            accessToken: "test-token",
+            channelId: "channel-1",
+            webhookSecret: "test-secret-value",
+          }),
+          getResendConfig: () => ({ apiKey: "re_test_key", from: "auth@example.test" }),
+        },
+      ),
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://api.resend.com/emails",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(repo.close).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
+  });
 });
