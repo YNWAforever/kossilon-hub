@@ -35,6 +35,11 @@ type MaintenanceWorkItemRepository = {
   close(): Promise<void>;
 };
 
+type MaintenanceAnnualReturnRepository = {
+  evaluateReminders(now?: string): Promise<{ sent: number; skipped: number }>;
+  close(): Promise<void>;
+};
+
 type MaintenanceDocumentRepository = {
   expireUploads(now: string): Promise<readonly { objectKey: string }[]>;
   close(): Promise<void>;
@@ -48,6 +53,7 @@ type MaintenanceOutboxRepository = {
 
 export type FirmMaintenanceDependencies = {
   createWorkItemRepository(): MaintenanceWorkItemRepository;
+  createAnnualReturnRepository(): MaintenanceAnnualReturnRepository;
   dispatchDue(input: { now: string; limit: number }): Promise<DispatchSummary>;
   createDocumentRepository(): MaintenanceDocumentRepository;
   createDocumentStorage(): { delete(objectKey: string): Promise<void> };
@@ -62,10 +68,11 @@ export async function runFirmMaintenanceWithDependencies(
 ): Promise<ScheduledMaintenanceResult> {
   const data = inputSchema.parse(input);
 
-  // Both repositories open a Postgres connection eagerly, so they are created
-  // up front and closed in one `finally`. Closing them inside each pass would
-  // leak whichever connection the failing pass had already opened.
+  // All four repositories open a Postgres connection eagerly, so they are
+  // created up front and closed in one `finally`. Closing them inside each
+  // pass would leak whichever connection the failing pass had already opened.
   const workItems = dependencies.createWorkItemRepository();
+  const annualReturns = dependencies.createAnnualReturnRepository();
   const documents = dependencies.createDocumentRepository();
   const outbox = dependencies.createOutboxRepository();
 
@@ -74,6 +81,7 @@ export async function runFirmMaintenanceWithDependencies(
       data.now,
       {
         evaluateEscalations: (now) => workItems.evaluateEscalations(now),
+        evaluateAnnualReturnReminders: (now) => annualReturns.evaluateReminders(now),
         dispatchDue: (now, limit) => dependencies.dispatchDue({ now, limit }),
         cleanupExpiredUploads: async (now) => {
           const expired = await documents.expireUploads(now);
@@ -87,7 +95,12 @@ export async function runFirmMaintenanceWithDependencies(
       { dispatchLimit: data.dispatchLimit ?? DEFAULT_DISPATCH_LIMIT },
     );
   } finally {
-    await Promise.all([workItems.close(), documents.close(), outbox.close()]);
+    await Promise.all([
+      workItems.close(),
+      annualReturns.close(),
+      documents.close(),
+      outbox.close(),
+    ]);
   }
 }
 
@@ -100,6 +113,7 @@ export async function runFirmMaintenance(
 ): Promise<ScheduledMaintenanceResult> {
   const [
     workItemsModule,
+    annualReturnModule,
     documentsModule,
     dispatchModule,
     documentServerFnsModule,
@@ -108,6 +122,7 @@ export async function runFirmMaintenance(
     outboxModule,
   ] = await Promise.all([
     import("@/features/work-items/repository"),
+    import("@/features/annual-return/repository"),
     import("@/features/documents/repository"),
     import("@/features/notifications/runtime-dispatch"),
     import("@/features/documents/server-fns"),
@@ -118,6 +133,7 @@ export async function runFirmMaintenance(
 
   return runFirmMaintenanceWithDependencies(input, {
     createWorkItemRepository: () => workItemsModule.createWorkItemRepository(),
+    createAnnualReturnRepository: () => annualReturnModule.createAnnualReturnRepository(),
     createDocumentRepository: () => documentsModule.createDocumentRepository(),
     createOutboxRepository: () => outboxModule.createNotificationOutboxRepository(),
     dispatchDue: (dispatchInput) => dispatchModule.dispatchDueNotificationsOnServer(dispatchInput),
