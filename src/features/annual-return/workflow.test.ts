@@ -195,14 +195,32 @@ describe("annual return workflow", () => {
     ).toBe("green");
   });
 
-  it("builds a staff-copyable WhatsApp reminder draft", () => {
-    expect(buildReminderDraft(baseCase)).toContain("Harbour Trading Ltd");
-    expect(buildReminderDraft(baseCase)).toContain("2026-08-12");
-    expect(buildReminderDraft(baseCase)).toContain("Signed NAR1 form");
+  it("builds a staff-copyable Traditional Chinese reminder draft", () => {
+    const draft = buildReminderDraft(baseCase, "Ada Chan", "2026-07-13");
+    expect(draft).toContain("Ada Chan");
+    expect(draft).toContain("Harbour Trading Ltd");
+    expect(draft).toContain("2026-08-12");
+    expect(draft).toContain("Signed NAR1 form");
+    expect(draft).toContain("距離現時尚餘 30 天");
   });
 
   it("does not ask for outstanding items when required documents are complete", () => {
-    expect(buildReminderDraft(readyCase)).not.toContain("outstanding items");
+    const draft = buildReminderDraft(readyCase, "Ada Chan", "2026-07-13");
+    expect(draft).not.toContain("我們已為貴公司準備申報文件");
+    expect(draft).toContain("貴公司提供的文件已經齊備");
+  });
+
+  it("falls back to the generic company honorific when no contact name is resolved", () => {
+    const draft = buildReminderDraft(baseCase, "貴公司", "2026-07-13");
+    expect(draft).toContain("貴公司 您好，我是高仕輪企業服務。");
+    expect(draft).not.toContain("undefined");
+    expect(draft).not.toContain("null");
+  });
+
+  it("renders an overdue case as days-overdue rather than a negative day count", () => {
+    const draft = buildReminderDraft(baseCase, "Ada Chan", "2026-08-20");
+    expect(draft).toContain("已逾期 8 天");
+    expect(draft).not.toContain("-8");
   });
 });
 

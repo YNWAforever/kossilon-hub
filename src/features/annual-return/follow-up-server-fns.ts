@@ -10,6 +10,7 @@ import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/wh
 import { getAnnualReturnActionPermission } from "./permissions";
 import { createAnnualReturnRepository, type AnnualReturnRepository } from "./repository";
 import { getCurrentAnnualReturnActor } from "./session";
+import { hongKongBusinessDate } from "./workflow";
 import {
   deriveProductionFollowUpDrafts,
   PRODUCTION_FOLLOW_UP_SOURCES,
@@ -71,7 +72,7 @@ export async function listProductionFollowUpDraftsForActor(
   const state = await dependencies.followUpRepository.listPersistedState(
     authorizedCases.map((caseItem) => caseItem.id),
   );
-  return deriveProductionFollowUpDrafts(authorizedCases, state);
+  return deriveProductionFollowUpDrafts(authorizedCases, state, hongKongBusinessDate());
 }
 
 function queueDetails(source: ProductionFollowUpSource) {
@@ -113,7 +114,7 @@ async function sendFollowUpForActor(
   const currentCase = await dependencies.annualReturnRepository.getCase(identity.caseId);
   if (!currentCase) throw new Error("Annual return case not found.");
   const state = await dependencies.followUpRepository.listPersistedState([identity.caseId]);
-  const draft = deriveProductionFollowUpDrafts([currentCase], state).find(
+  const draft = deriveProductionFollowUpDrafts([currentCase], state, hongKongBusinessDate()).find(
     (candidate) => candidate.source === identity.source && candidate.entityId === identity.entityId,
   );
   if (!draft) {

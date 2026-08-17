@@ -813,6 +813,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           actorId: USER_AMY_ID,
           recipientName: "Ada Director",
           recipientPhone: "+852 6123 4567",
+          today: "2026-07-05",
         });
 
         expect(result.case).toMatchObject({

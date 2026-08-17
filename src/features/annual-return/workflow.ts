@@ -158,26 +158,34 @@ export function completionBlockers(case_: AnnualReturnCase): CompletionBlocker[]
   return blockers;
 }
 
-export function buildReminderDraft(case_: AnnualReturnCase): string {
+export function buildReminderDraft(
+  case_: AnnualReturnCase,
+  contactName: string,
+  today: string,
+): string {
   const missingItems = case_.checklist.filter(
     (item) => item.required && item.status !== "Verified",
   );
-  const missingItemList = missingItems.map((item) => `- ${item.itemLabel}`).join("\n");
+  const daysRemaining = daysBetween(today, case_.filingDueDate);
+  const daysRemainingText =
+    daysRemaining >= 0 ? `距離現時尚餘 ${daysRemaining} 天` : `已逾期 ${-daysRemaining} 天`;
 
   const missingSection =
-    missingItemList.length > 0
-      ? `We are still waiting for:\n${missingItemList}`
-      : "All required documents are recorded. We will continue preparing the filing.";
-  const closing =
     missingItems.length > 0
-      ? "Please send the outstanding items as soon as possible so we can avoid late filing risk."
-      : "We will continue preparing the filing and follow up if anything else is needed.";
+      ? [
+          "我們已為貴公司準備申報文件，現需要您提供以下資料以便如期遞交：",
+          ...missingItems.map((item) => `- ${item.itemLabel}`),
+          "",
+          "如所有文件已齊備，我們會即時安排遞交，並在完成後把回條發送給您。",
+        ].join("\n")
+      : "貴公司提供的文件已經齊備，我們將繼續為貴公司準備及跟進申報事宜。";
 
   return [
-    `Hello, this is Kossilon following up on the annual return for ${case_.companyName}.`,
-    `The filing deadline is ${case_.filingDueDate}.`,
+    `${contactName} 您好，我是高仕輪企業服務。`,
+    `提提您，${case_.companyName} 的周年申報表（NAR1）申報限期為 ${case_.filingDueDate}，${daysRemainingText}。`,
     missingSection,
-    closing,
-    "Thank you.",
+    "請留意：若周年申報表在申報日起計 42 天後才遞交，會按逾期時間產生罰款，最低 HK$870，最高 HK$3,480。",
+    "如有任何疑問，歡迎隨時聯絡我們。",
+    "高仕輪企業服務",
   ].join("\n\n");
 }

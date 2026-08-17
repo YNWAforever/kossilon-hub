@@ -116,6 +116,7 @@ function evidenceBody(
 export function deriveProductionFollowUpDrafts(
   cases: readonly AnnualReturnCase[],
   state: PersistedFollowUpState,
+  today: string,
 ): ProductionFollowUpDraft[] {
   const recipients = latestRecipientByCase(state.recipients);
   const mutableCases = cases.filter(
@@ -146,7 +147,7 @@ export function deriveProductionFollowUpDrafts(
       recipientName: recipient?.recipientName ?? null,
       phone: recipient?.recipientPhone ?? null,
       reasonLabel: "Annual return follow-up",
-      messagePreview: buildReminderDraft(caseItem),
+      messagePreview: buildReminderDraft(caseItem, recipient?.recipientName ?? "貴公司", today),
       status: deliveryStatus(identity, state, Boolean(recipient)),
     });
   }
