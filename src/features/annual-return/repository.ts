@@ -5,13 +5,16 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
+import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
 import {
+  buildReminderDraft,
   daysBetween,
   hongKongBusinessDate,
   isAllowedStatusTransition,
   riskForCase,
 } from "./workflow";
+import { dueMilestone, type ReminderMilestone } from "./reminder-cadence";
 import {
   assertAnnualReturnActionAllowed,
   type AnnualReturnAction,
@@ -196,6 +199,7 @@ export type AnnualReturnRepository = {
     scope?: CaseFilters,
   ): Promise<AnnualReturnDashboardMetrics>;
   assertCanMutateCase(caseId: string, actorId: string, action: AnnualReturnAction): Promise<void>;
+  evaluateReminders(now?: string): Promise<{ sent: number; skipped: number }>;
   updateStatus(
     caseId: string,
     nextStatus: AnnualReturnStatus,
@@ -1657,6 +1661,136 @@ export function createAnnualReturnRepository(
       await assertActorCanMutateLockedCase(tx, actorId, lockedCase, action);
     });
   }
+
+  async function evaluateReminders(
+    now: string = readToday(),
+  ): Promise<{ sent: number; skipped: number }> {
+    const candidates = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, now);
+    const openCases = candidates.filter(
+      (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
+    );
+
+    let sent = 0;
+    let skipped = 0;
+
+    for (const case_ of openCases) {
+      const outcome = await withTransaction(sql, async (tx) => {
+        const lockedCase = await tryLockWritableCase(tx, case_.id);
+        if (!lockedCase) return null;
+        // openCases is a snapshot taken before this loop started. tryLockWritableCase's
+        // WHERE clause re-checks locked_at/completed_at/<> 'Completed', but 'Filed' is a
+        // distinct, earlier status than 'Completed' in this workflow, so a case a staff
+        // member marks Filed while an earlier case in this same sweep is still processing
+        // would otherwise pass the fresh re-fetch and receive a live client-facing
+        // reminder about a case that no longer needs one.
+        if (lockedCase.current_status === "Filed") return null;
+
+        const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
+          select milestone from annual_return_reminder_events where case_id = ${case_.id}
+        `;
+        const milestone = dueMilestone(
+          case_.filingDueDate,
+          now,
+          firedRows.map((row) => row.milestone),
+        );
+        if (!milestone) return null;
+
+        const insertedEvent = await tx<{ id: string }[]>`
+          insert into annual_return_reminder_events (case_id, milestone, occurred_at)
+          values (${case_.id}, ${milestone}, ${now})
+          on conflict (case_id, milestone) do nothing
+          returning id
+        `;
+        if (!insertedEvent[0]) return null;
+
+        const contactRows = await tx<
+          { name: string; email: string | null; phone: string | null }[]
+        >`
+          select name, email, phone from company_contacts
+          where company_id = ${lockedCase.company_id} and is_primary = true
+          limit 1
+        `;
+        const contact = contactRows[0];
+
+        if (!contact) {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, 'Automated reminder skipped: no primary contact on file.',
+              ${tx.json({ milestone, reason: "no_primary_contact" })}
+            )
+          `;
+          return "skipped" as const;
+        }
+
+        const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
+        const recipient = contact.phone ?? contact.email;
+
+        // company_contacts only guarantees email IS NOT NULL OR phone IS NOT NULL, not
+        // that either is a non-empty string, so this is reachable on a data anomaly (e.g.
+        // phone: ''). withTransaction's `for` loop has no try/catch around it, so throwing
+        // here would propagate out of the whole evaluateReminders() call and silently
+        // abandon every case still queued behind this one for the rest of the sweep.
+        // Skip this case the same way an entirely missing contact is skipped above.
+        if (!recipient) {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, 'Automated reminder skipped: primary contact has neither phone nor email.',
+              ${tx.json({ milestone, reason: "unreachable_primary_contact" })}
+            )
+          `;
+          return "skipped" as const;
+        }
+
+        await enqueueNotification(tx, {
+          companyId: lockedCase.company_id,
+          channel,
+          notificationType: `annual_return_reminder_${milestone}`,
+          recipient,
+          payload: {
+            caseId: case_.id,
+            milestone,
+            subject: `「${case_.companyName}」周年申報表提醒 — 請於 ${case_.filingDueDate} 前提供文件`,
+            body: buildReminderDraft(case_, contact.name, now),
+          },
+        });
+
+        await tx`
+          update annual_return_cases
+          set reminders_sent = reminders_sent + 1,
+              current_status = case
+                when current_status = 'Upcoming' then 'Client reminder sent'
+                else current_status
+              end,
+              updated_at = now()
+          where id = ${case_.id}
+        `;
+
+        await tx`
+          insert into timeline_events (
+            company_id, case_id, event_type, actor_type, actor_id, description, metadata
+          ) values (
+            ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_sent',
+            'system', null, 'Automated reminder sent.',
+            ${tx.json({ milestone, channel })}
+          )
+        `;
+
+        return "sent" as const;
+      });
+
+      if (outcome === "sent") sent += 1;
+      else if (outcome === "skipped") skipped += 1;
+    }
+
+    return { sent, skipped };
+  }
+
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) {
       await sql.end();
@@ -1668,6 +1802,7 @@ export function createAnnualReturnRepository(
     getCase,
     dashboardMetrics,
     assertCanMutateCase,
+    evaluateReminders,
     assignOwner,
     listNotes,
     addNote,

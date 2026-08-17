@@ -2,6 +2,7 @@ import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWhatsAppRepository } from "@/features/whatsapp/repository";
+import * as notificationOutbox from "@/features/notifications/outbox";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import {
   createAnnualReturnRepository,
@@ -29,7 +30,8 @@ const TEST_DOCUMENT_UUID_PREFIX = "92000000";
 const TEST_CHECKLIST_UUID_PREFIX = "93000000";
 const TEST_PAYMENT_UUID_PREFIX = "94000000";
 const TEST_FIXTURE_SEQUENCES = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+  28, 29, 30, 31, 32,
 ] as const;
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 
@@ -164,6 +166,11 @@ async function cleanupAnnualReturnTestFixtures() {
     `;
     await tx`delete from reminder_logs where case_id = any(${caseIds}::uuid[])`;
     await tx`delete from annual_return_audit_events where case_id = any(${caseIds}::uuid[])`;
+    // annual_return_reminder_events.case_id deliberately has no ON DELETE CASCADE
+    // (durability intent, matching annual_return_audit_events above), so it must
+    // be cleared before the annual_return_cases delete below or that delete fails
+    // with a foreign-key violation for any test that wrote a reminder event.
+    await tx`delete from annual_return_reminder_events where case_id = any(${caseIds}::uuid[])`;
     await tx`
       delete from assignment_events where work_item_id in (
         select id from work_items where case_id = any(${caseIds}::uuid[])
@@ -1690,6 +1697,291 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
       expect(current).not.toBeNull();
       expect(() => assertAnnualReturnStatusActionAllowed(current!, "Completed")).not.toThrow();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+});
+
+describe.skipIf(!databaseUrl)("evaluateReminders", () => {
+  beforeEach(async () => {
+    await cleanupAnnualReturnTestFixtures();
+  });
+
+  afterEach(async () => {
+    await cleanupAnnualReturnTestFixtures();
+    vi.restoreAllMocks();
+  });
+
+  it(
+    "sends a milestone reminder to the primary contact and enqueues a WhatsApp notification",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 24 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13"); // 30 days before the fixture's 2026-08-12 due date
+
+      const result = await repository.evaluateReminders();
+
+      // evaluateReminders sweeps the whole active book by design (see
+      // DASHBOARD_METRICS_SCAN_LIMIT above `listCasesForToday` in the
+      // repository), so the seeded reference companies (e.g. Kowloon Textiles,
+      // Harbour Trading — both due within 30 days of "2026-07-13" and without a
+      // company_contacts row) are also evaluated and contribute their own
+      // "skipped" outcomes here. Assert this fixture's own contribution rather
+      // than a whole-book total that isn't this test's to own.
+      expect(result.sent).toBeGreaterThanOrEqual(1);
+
+      const eventRows = await sql<{ milestone: string }[]>`
+        select milestone from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(eventRows).toEqual([{ milestone: "1_month" }]);
+
+      const outboxRows = await sql<
+        { channel: string; notification_type: string; recipient: string }[]
+      >`
+        select channel, notification_type, recipient from notification_outbox
+        where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toEqual([
+        {
+          channel: "whatsapp",
+          notification_type: "annual_return_reminder_1_month",
+          recipient: "+85291234567",
+        },
+      ]);
+
+      const updatedCase = await repository.getCase(fixture.caseId);
+      expect(updatedCase?.remindersSent).toBe(1);
+      expect(updatedCase?.currentStatus).toBe("Client reminder sent");
+
+      const timelineRows = await sql<{ event_type: string; actor_type: string }[]>`
+        select event_type, actor_type from timeline_events where case_id = ${fixture.caseId}
+      `;
+      expect(timelineRows).toEqual([
+        { event_type: "annual_return_reminder_sent", actor_type: "system" },
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "does not send a duplicate reminder for a milestone that already fired",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 25 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+      const secondResult = await repository.evaluateReminders();
+
+      expect(secondResult).toEqual({ sent: 0, skipped: 0 });
+      const outboxRows = await sql`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "chooses email when the primary contact has no phone",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 26 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', null, true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+
+      const outboxRows = await sql<{ channel: string; recipient: string }[]>`
+        select channel, recipient from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toEqual([{ channel: "email", recipient: "ada@example.test" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "skips and logs a timeline event when no primary contact exists",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 27 });
+      const sql = sqlForTests();
+      const repository = repositoryFor("2026-07-13");
+
+      const result = await repository.evaluateReminders();
+
+      // Same whole-book caveat as the first test in this block: the seeded
+      // reference companies also contribute "skipped" outcomes of their own, so
+      // only the lower bound (this fixture's own contribution) is guaranteed.
+      expect(result.sent).toBe(0);
+      expect(result.skipped).toBeGreaterThanOrEqual(1);
+      const outboxRows = await sql`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(0);
+      const timelineRows = await sql<{ event_type: string }[]>`
+        select event_type from timeline_events where case_id = ${fixture.caseId}
+      `;
+      expect(timelineRows).toEqual([{ event_type: "annual_return_reminder_skipped" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "never evaluates a Filed or Completed case",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 28,
+        currentStatus: "Filed",
+      });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      const result = await repository.evaluateReminders();
+
+      // The whole-book scan may also evaluate unrelated cases (e.g. seeded
+      // reference companies due within the same window), so the aggregate
+      // result alone can't prove THIS Filed case was excluded — assert its own
+      // non-effect directly instead.
+      expect(result.sent).toBe(0);
+      const eventRows = await sql`
+        select id from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(eventRows).toHaveLength(0);
+      const outboxRows = await sql`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "skips rather than throws when the primary contact has neither a usable phone nor email",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 32 });
+      const sql = sqlForTests();
+      // company_contacts' check constraint only guarantees email IS NOT NULL OR
+      // phone IS NOT NULL — not that either is a non-empty string. An empty-string
+      // phone with no email satisfies the constraint but leaves nobody reachable.
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', null, '', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      const result = await repository.evaluateReminders();
+
+      expect(result.sent).toBe(0);
+      expect(result.skipped).toBeGreaterThanOrEqual(1);
+      const outboxRows = await sql`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(0);
+      const timelineRows = await sql<{ event_type: string }[]>`
+        select event_type from timeline_events where case_id = ${fixture.caseId}
+      `;
+      expect(timelineRows).toEqual([{ event_type: "annual_return_reminder_skipped" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "does not send a reminder for a case that transitions to Filed mid-sweep",
+    async () => {
+      const gate = await createMutableAnnualReturnFixture({ sequence: 29 });
+      const target = await createMutableAnnualReturnFixture({ sequence: 30 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${gate.companyId}, 'Gate Contact', 'Director', 'gate@example.test', '+85291111111', true)
+      `;
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${target.companyId}, 'Target Contact', 'Director', 'target@example.test', '+85292222222', true)
+      `;
+
+      // Both fixtures share the same 2026-08-12 due date, and "Task 5 Test
+      // Company 29 Ltd" sorts before "...30 Ltd", so evaluateReminders reaches
+      // `gate` before `target`. Hooking gate's own enqueueNotification call
+      // gives a deterministic control-flow checkpoint — it only runs once
+      // gate's per-case lock, milestone check, and contact lookup have all
+      // already succeeded, which is necessarily strictly after the upfront
+      // candidate snapshot (which already captured `target` as "Upcoming") and
+      // strictly before `target`'s own turn in the sequential loop. Flipping
+      // `target` to Filed from a second connection right there reproduces
+      // exactly what a concurrent staff action would do, with no timing or
+      // manual-locking guesswork required.
+      const originalEnqueue = notificationOutbox.enqueueNotification;
+      const enqueueSpy = vi
+        .spyOn(notificationOutbox, "enqueueNotification")
+        .mockImplementationOnce(async (client, input) => {
+          await sql`update annual_return_cases set current_status = 'Filed' where id = ${target.caseId}`;
+          return originalEnqueue(client, input);
+        });
+
+      const repository = repositoryFor("2026-07-13");
+      await repository.evaluateReminders();
+
+      expect(enqueueSpy).toHaveBeenCalledOnce();
+
+      const eventRows = await sql`
+        select id from annual_return_reminder_events where case_id = ${target.caseId}
+      `;
+      expect(eventRows).toHaveLength(0);
+      const outboxRows = await sql`
+        select id from notification_outbox where company_id = ${target.companyId}
+      `;
+      expect(outboxRows).toHaveLength(0);
+      const updatedTarget = await repository.getCase(target.caseId);
+      expect(updatedTarget?.remindersSent).toBe(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rolls back the reminder event when enqueueNotification fails",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 31 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const enqueueSpy = vi
+        .spyOn(notificationOutbox, "enqueueNotification")
+        .mockRejectedValueOnce(new Error("simulated outbox failure"));
+      const repository = repositoryFor("2026-07-13");
+
+      // No try/catch wraps withTransaction inside evaluateReminders' loop (that
+      // gap mirrors evaluateEscalations and is unchanged here), so a genuine
+      // infrastructure failure still surfaces as a rejection — what this test
+      // pins down is that the per-case transaction itself rolls back atomically
+      // rather than leaving a "reminder already sent" record with nothing
+      // actually sent.
+      await expect(repository.evaluateReminders()).rejects.toThrow(/simulated outbox failure/);
+      expect(enqueueSpy).toHaveBeenCalledOnce();
+
+      const eventRows = await sql`
+        select id from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(eventRows).toHaveLength(0);
+      const updatedCase = await repository.getCase(fixture.caseId);
+      expect(updatedCase?.remindersSent).toBe(0);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
