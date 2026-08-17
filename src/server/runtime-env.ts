@@ -177,3 +177,21 @@ export function getFirmRuntimeEnv(
     emailFrom: (env.EMAIL_FROM as string).trim(),
   };
 }
+
+export type ResendConfig = { apiKey: string; from: string };
+
+/**
+ * A deliberate sibling to getFirmRuntimeEnv, not part of it. RESEND_API_KEY/
+ * RESEND_FROM must never join REQUIRED_BINDINGS — see the comment above that
+ * array. Returns null (never throws) so a caller can build a WhatsApp transport
+ * regardless of whether Resend is configured; only the email channel should
+ * fail when this is null.
+ */
+export function getResendConfig(
+  env: Record<string, unknown> = defaultRuntimeSource(),
+): ResendConfig | null {
+  const apiKey = env.RESEND_API_KEY;
+  const from = env.RESEND_FROM;
+  if (!hasText(apiKey) || !hasText(from)) return null;
+  return { apiKey: apiKey.trim(), from: from.trim() };
+}

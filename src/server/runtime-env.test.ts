@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import type { R2BucketLike } from "./runtime-env";
-import { getFirmRuntimeEnv, getRuntimeReadiness } from "./runtime-env";
+import { getFirmRuntimeEnv, getResendConfig, getRuntimeReadiness } from "./runtime-env";
 
 describe("firm runtime", () => {
   const fakeR2Bucket = {
@@ -145,5 +145,36 @@ describe("firm runtime", () => {
 
   it("does not expose a request-controlled tenant field", () => {
     expect(Object.keys(getFirmRuntimeEnv(validEnv))).not.toContain("tenantId");
+  });
+});
+
+describe("getResendConfig", () => {
+  it("returns null when either RESEND_API_KEY or RESEND_FROM is missing", () => {
+    expect(getResendConfig({})).toBeNull();
+    expect(getResendConfig({ RESEND_API_KEY: "re_test_key" })).toBeNull();
+    expect(getResendConfig({ RESEND_FROM: "auth@example.test" })).toBeNull();
+  });
+
+  it("returns null when either value is blank", () => {
+    expect(getResendConfig({ RESEND_API_KEY: "   ", RESEND_FROM: "auth@example.test" })).toBeNull();
+    expect(getResendConfig({ RESEND_API_KEY: "re_test_key", RESEND_FROM: "   " })).toBeNull();
+  });
+
+  it("returns a trimmed config when both are present", () => {
+    expect(
+      getResendConfig({
+        RESEND_API_KEY: "  re_test_key  ",
+        RESEND_FROM: "  Kossilon Hub <auth@example.test>  ",
+      }),
+    ).toEqual({ apiKey: "re_test_key", from: "Kossilon Hub <auth@example.test>" });
+  });
+
+  it("is independent of every other runtime binding", () => {
+    // A firm with no WOZTELL/Neon Auth config at all can still have a valid
+    // Resend config — this must never route through getRuntimeReadiness/
+    // getFirmRuntimeEnv's REQUIRED_BINDINGS check.
+    expect(
+      getResendConfig({ RESEND_API_KEY: "re_test_key", RESEND_FROM: "auth@example.test" }),
+    ).toEqual({ apiKey: "re_test_key", from: "auth@example.test" });
   });
 });

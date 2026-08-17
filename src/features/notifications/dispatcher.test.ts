@@ -186,3 +186,105 @@ describe("notification dispatcher", () => {
     expect(repo.markRetry).not.toHaveBeenCalled();
   });
 });
+
+describe("createNotificationTransport (live mode composite routing)", () => {
+  const whatsappConfig = {
+    provider: "woztell" as const,
+    apiBaseUrl: "https://api.example.test",
+    accessToken: "test-token",
+    channelId: "channel-1",
+    webhookSecret: "test-secret-value",
+  };
+  const resendConfig = { apiKey: "re_test_key", from: "Kossilon Hub <auth@example.test>" };
+
+  it("routes a whatsapp notification to the WOZTELL transport, unchanged", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: 1,
+            sendResult: { ok: 1, result: [{ result: { messages: [{ id: "wamid.1" }] } }] },
+          }),
+          { status: 200 },
+        ),
+    );
+
+    await expect(
+      createNotificationTransport({
+        providerMode: "live",
+        config: whatsappConfig,
+        resendConfig,
+        fetchImpl,
+      }).dispatch(
+        notification({ channel: "whatsapp", recipient: "+85290000000", payload: { body: "hi" } }),
+      ),
+    ).resolves.toEqual({ providerMessageId: "wamid.1" });
+  });
+
+  it("routes an email notification to the Resend transport when configured", async () => {
+    const fetchImpl = vi.fn(
+      async () => new Response(JSON.stringify({ id: "resend-msg-1" }), { status: 200 }),
+    );
+
+    await expect(
+      createNotificationTransport({
+        providerMode: "live",
+        config: whatsappConfig,
+        resendConfig,
+        fetchImpl,
+      }).dispatch(
+        notification({
+          channel: "email",
+          recipient: "client@example.test",
+          payload: { body: "hi" },
+        }),
+      ),
+    ).resolves.toEqual({ providerMessageId: "resend-msg-1" });
+  });
+
+  it("fails only the email channel, with a diagnostic code, when Resend is not configured", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: 1,
+            sendResult: { ok: 1, result: [{ result: { messages: [{ id: "wamid.2" }] } }] },
+          }),
+          { status: 200 },
+        ),
+    );
+    const transport = createNotificationTransport({
+      providerMode: "live",
+      config: whatsappConfig,
+      resendConfig: null,
+      fetchImpl,
+    });
+
+    await expect(
+      transport.dispatch(
+        notification({
+          channel: "email",
+          recipient: "client@example.test",
+          payload: { body: "hi" },
+        }),
+      ),
+    ).rejects.toMatchObject({ code: "resend_not_configured" });
+
+    // Same transport instance — WhatsApp must be completely unaffected.
+    await expect(
+      transport.dispatch(
+        notification({ channel: "whatsapp", recipient: "+85290000000", payload: { body: "hi" } }),
+      ),
+    ).resolves.toEqual({ providerMessageId: "wamid.2" });
+  });
+
+  it("still rejects an in_app notification, unchanged from today", async () => {
+    await expect(
+      createNotificationTransport({
+        providerMode: "live",
+        config: whatsappConfig,
+        resendConfig,
+      }).dispatch(notification({ channel: "in_app" })),
+    ).rejects.toThrow("Unsupported notification channel: in_app.");
+  });
+});
