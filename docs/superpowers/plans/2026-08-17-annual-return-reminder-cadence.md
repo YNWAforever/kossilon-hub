@@ -200,14 +200,16 @@ export function dueMilestone(
   const daysRemaining = daysBetween(today, filingDueDate);
 
   for (const milestone of MILESTONES_BY_URGENCY) {
-    if (daysRemaining <= MILESTONE_OFFSET_DAYS[milestone] && !firedMilestones.includes(milestone)) {
-      return milestone;
+    if (daysRemaining <= MILESTONE_OFFSET_DAYS[milestone]) {
+      return firedMilestones.includes(milestone) ? null : milestone;
     }
   }
 
   return null;
 }
 ```
+
+**Correctness note (found in code review, fixed before this plan was executed):** the first draft of this function continued past an already-fired milestone to check the next, less-urgent one — meaning a case that became eligible late would fire `1_week`, then on the very next cron tick fire `2_week` too, then `1_month`, cascading through all three within about 15 minutes. The fix above finds the single most-urgent NUMERICALLY-due milestone first, regardless of fired status, and returns `null` immediately if that one already fired — it never falls through to consider a less-urgent milestone once the most-urgent applicable one is resolved either way.
 
 ### Step 3: Run the tests
 

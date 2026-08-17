@@ -67,15 +67,15 @@ export function dueMilestone(
   );
 
   for (const milestone of MILESTONES_BY_URGENCY) {
-    if (daysRemaining <= MILESTONE_OFFSET_DAYS[milestone] && !firedMilestones.includes(milestone)) {
-      return milestone;
+    if (daysRemaining <= MILESTONE_OFFSET_DAYS[milestone]) {
+      return firedMilestones.includes(milestone) ? null : milestone;
     }
   }
   return null;
 }
 ```
 
-Walking from most urgent (`1_week`) to least (`1_month`) and returning the first due-and-unfired match gives "fire only the most urgent applicable one" for free — a case created 10 days before its deadline has `daysRemaining` already under both the 30-day and 14-day thresholds, but the loop hits `1_week`'s 7-day threshold first and finds it not yet due (10 > 7), so it falls through to `2_week` (10 ≤ 14, unfired) and returns that — `1_month` is never considered, never fires, and needs no separate "moot" bookkeeping. Once `2_week` fires and is recorded, the next relevant tick (once `daysRemaining` drops to 7) fires `1_week` the same way. No case ever gets more than one reminder per tick, and a milestone whose window has already passed by the time a case became eligible simply never gets a row.
+Walking from most urgent (`1_week`) to least (`1_month`) and returning based on the *first numerically-due* milestone — firing it if unfired, or returning `null` immediately if it already fired — gives "fire only the most urgent applicable one" for free. A case created 10 days before its deadline has `daysRemaining` already under both the 30-day and 14-day thresholds, but the loop hits `1_week`'s 7-day threshold first, finds it not yet due (10 > 7), and moves on to `2_week` (10 ≤ 14, unfired) and returns that — `1_month` is never considered. Critically, the function must stop at the first numerically-due milestone regardless of whether that one has already fired — an earlier draft kept walking to the next, less-urgent milestone whenever the current one turned out to be already-fired, which meant a case eligible late would fire `1_week` on one tick, then `2_week` on the very next tick, then `1_month` on the one after that, cascading through all three within minutes. Returning `null` as soon as the most-urgent-due milestone is found already-fired — never falling through to a less-urgent one — is what actually makes "a milestone whose window has already passed by the time a case became eligible simply never gets a row" true.
 
 ## Recipient resolution & channel selection
 
