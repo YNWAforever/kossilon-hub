@@ -85,16 +85,15 @@ Create `db/migrations/0012_annual_return_reminder_events.sql`:
 -- and breaches.
 create table if not exists annual_return_reminder_events (
   id uuid primary key default gen_random_uuid(),
-  case_id uuid not null references annual_return_cases(id) on delete cascade,
+  case_id uuid not null references annual_return_cases(id),
   milestone text not null check (milestone in ('1_month', '2_week', '1_week')),
   occurred_at timestamptz not null,
   created_at timestamptz not null default now(),
   unique (case_id, milestone)
 );
-
-create index if not exists annual_return_reminder_events_case_idx
-  on annual_return_reminder_events (case_id);
 ```
+
+**Correction (found in code review, fixed before Task 4 began):** the block above originally also had `on delete cascade` on `case_id`, plus a separate `create index ... (case_id)`. Both were removed: cascade contradicted this table's own stated durability rationale (see the comment above) and its closest sibling, `annual_return_audit_events`, deliberately has no `on delete` clause; and the standalone index was redundant with the index the `unique (case_id, milestone)` constraint already creates (whose leading column is `case_id`, already serving single-column lookups on it).
 
 ### Step 2: Add the same table to `schema.sql`
 

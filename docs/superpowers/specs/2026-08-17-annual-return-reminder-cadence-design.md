@@ -29,16 +29,15 @@ New table, migration `0012_annual_return_reminder_events.sql`, mirroring the exi
 ```sql
 create table if not exists annual_return_reminder_events (
   id uuid primary key default gen_random_uuid(),
-  case_id uuid not null references annual_return_cases(id) on delete cascade,
+  case_id uuid not null references annual_return_cases(id),
   milestone text not null check (milestone in ('1_month', '2_week', '1_week')),
   occurred_at timestamptz not null,
   created_at timestamptz not null default now(),
   unique (case_id, milestone)
 );
-
-create index if not exists annual_return_reminder_events_case_idx
-  on annual_return_reminder_events (case_id);
 ```
+
+No `on delete cascade` on `case_id`: this table exists to be a durable record (see below), and cascade would make that durability conditional on the parent case never being deleted — its closest sibling, `annual_return_audit_events`, deliberately has no `on delete` clause either. No separate index on `case_id` either: the `unique (case_id, milestone)` constraint's own backing index already has `case_id` as its leading column, which fully serves a single-column lookup on it.
 
 **Why a dedicated table, not a derived check against `notification_outbox`:** outbox rows are redacted after `retentionUntil` (the existing `redactNotifications` maintenance pass). If "has this milestone already fired" were derived by querying the outbox for a matching `notificationType`, that answer would silently become wrong once the row aged out, and a milestone could re-fire. A dedicated table with `unique (case_id, milestone)` and an `on conflict do nothing` insert is a permanent record of "did this business event happen," independent of delivery-queue housekeeping — exactly why `escalation_events` exists as its own table rather than being derived from the outbox.
 
