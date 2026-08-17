@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import type { NotificationOutboxRecord, NotificationOutboxRepository } from "./types";
 import { createSimulatedNotificationTransport } from "./simulated-transport";
-import { dispatchDueNotificationsWithDependencies } from "./runtime-dispatch";
+import {
+  dispatchDueNotificationsForActor,
+  dispatchDueNotificationsWithDependencies,
+} from "./runtime-dispatch";
 
 const row: NotificationOutboxRecord = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -233,5 +237,59 @@ describe("runtime notification dispatch", () => {
     );
     expect(repo.close).toHaveBeenCalledTimes(1);
     vi.unstubAllGlobals();
+  });
+});
+
+const adminActor: AuthenticatedActor = {
+  authUserId: "admin-auth",
+  userId: "20000000-0000-0000-0000-000000000001",
+  role: "Admin",
+  teamId: null,
+  active: true,
+};
+const staffActor: AuthenticatedActor = {
+  authUserId: "staff-auth",
+  userId: "20000000-0000-0000-0000-000000000002",
+  role: "Staff",
+  teamId: "10000000-0000-0000-0000-000000000001",
+  active: true,
+};
+
+describe("dispatchDueNotificationsForActor", () => {
+  it("rejects a non-admin actor", async () => {
+    const dispatch = vi.fn();
+
+    await expect(dispatchDueNotificationsForActor(staffActor, {}, { dispatch })).rejects.toThrow(
+      "Forbidden: Admin access is required.",
+    );
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("rejects an inactive admin actor", async () => {
+    const dispatch = vi.fn();
+
+    await expect(
+      dispatchDueNotificationsForActor({ ...adminActor, active: false }, {}, { dispatch }),
+    ).rejects.toThrow("Forbidden: Admin access is required.");
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("dispatches and logs for an admin actor", async () => {
+    const summary = { claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 };
+    const dispatch = vi.fn(async () => summary);
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const result = await dispatchDueNotificationsForActor(adminActor, { limit: 10 }, { dispatch });
+
+    expect(result).toEqual(summary);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 10, now: expect.any(String) }),
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      "Manual outbox dispatch",
+      expect.objectContaining({ actorId: adminActor.userId, summary }),
+    );
+
+    logSpy.mockRestore();
   });
 });
