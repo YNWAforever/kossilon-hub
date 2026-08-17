@@ -198,7 +198,11 @@ export type DocumentRepository = {
     source: "staff" | "client";
   }): Promise<PrivateDocument>;
   getDocument(id: string): Promise<PrivateDocument | null>;
-  listDocuments(filters?: { companyId?: string; caseId?: string }): Promise<PrivateDocument[]>;
+  listDocuments(filters?: {
+    companyId?: string;
+    caseId?: string;
+    teamId?: string;
+  }): Promise<PrivateDocument[]>;
   recordScanResult(intentId: string, result: DocumentScanResult): Promise<DocumentUploadIntent>;
   reviewDocument(input: {
     documentId: string;
@@ -236,13 +240,18 @@ export function createDocumentRepository(
     return rows[0] ? mapIntent(rows[0]) : null;
   }
 
-  async function documentRows(filters: { id?: string; companyId?: string; caseId?: string } = {}) {
+  async function documentRows(
+    filters: { id?: string; companyId?: string; caseId?: string; teamId?: string } = {},
+  ) {
     return sql<DocumentRow[]>`
       select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status
-      from documents d join document_upload_intents i on i.document_id = d.id
+      from documents d
+      join document_upload_intents i on i.document_id = d.id
+      join companies c on c.id = d.company_id
       where (${filters.id ?? null}::uuid is null or d.id = ${filters.id ?? null})
         and (${filters.companyId ?? null}::uuid is null or d.company_id = ${filters.companyId ?? null})
         and (${filters.caseId ?? null}::uuid is null or d.case_id = ${filters.caseId ?? null})
+        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null})
       order by d.uploaded_at desc, d.id`;
   }
 

@@ -7,8 +7,10 @@ import type { DocumentScanner, DocumentStorage } from "./types";
 import {
   createDocumentStorageForProviderMode,
   createDocumentUploadIntentForActor,
+  documentFiltersForActor,
   downloadDocumentForActor,
   finalizeDocumentUploadForActor,
+  listDocumentsForActor,
   scanQuarantinedDocumentForActor,
 } from "./server-fns";
 
@@ -20,6 +22,26 @@ const actor: AuthenticatedActor = {
   active: true,
 };
 const companyId = "10000000-0000-0000-0000-000000000001";
+const staffActor: AuthenticatedActor = {
+  authUserId: "staff-auth",
+  userId: "20000000-0000-0000-0000-000000000002",
+  role: "Staff",
+  teamId: "10000000-0000-0000-0000-000000000001",
+  active: true,
+};
+const managerActor: AuthenticatedActor = {
+  ...staffActor,
+  authUserId: "manager-auth",
+  userId: "20000000-0000-0000-0000-000000000003",
+  role: "Manager",
+};
+const adminActor: AuthenticatedActor = {
+  authUserId: "admin-auth",
+  userId: "20000000-0000-0000-0000-000000000004",
+  role: "Admin",
+  teamId: null,
+  active: true,
+};
 const intent: DocumentUploadIntent = {
   id: "30000000-0000-0000-0000-000000000001",
   companyId,
@@ -214,6 +236,81 @@ describe("document server orchestration", () => {
       intent.id,
       expect.objectContaining({ status: "rejected" }),
     );
+  });
+});
+
+describe("documentFiltersForActor", () => {
+  it("does not restrict an admin", () => {
+    expect(documentFiltersForActor(adminActor)).toEqual({});
+  });
+
+  it("scopes a manager to their team", () => {
+    expect(documentFiltersForActor(managerActor)).toEqual({ teamId: managerActor.teamId });
+  });
+
+  it("scopes staff to their team", () => {
+    expect(documentFiltersForActor(staffActor)).toEqual({ teamId: staffActor.teamId });
+  });
+
+  it("refuses an inactive actor", () => {
+    expect(() => documentFiltersForActor({ ...staffActor, active: false })).toThrow(
+      "Forbidden: inactive users cannot list documents.",
+    );
+  });
+
+  it("refuses a client", () => {
+    expect(() => documentFiltersForActor(actor)).toThrow("Forbidden: staff access is required.");
+  });
+
+  it("refuses a staff actor with no assigned team", () => {
+    expect(() => documentFiltersForActor({ ...staffActor, teamId: null })).toThrow(
+      "Forbidden: staff actor has no assigned team.",
+    );
+  });
+});
+
+describe("listDocumentsForActor", () => {
+  it("narrows a staff actor's list to their own team", async () => {
+    const deps = dependencies();
+
+    await listDocumentsForActor(staffActor, {}, deps);
+
+    expect(deps.repository.listDocuments).toHaveBeenCalledWith({ teamId: staffActor.teamId });
+  });
+
+  it("does not let a client-supplied filter widen a staff actor's scope", async () => {
+    const deps = dependencies();
+
+    await listDocumentsForActor(
+      staffActor,
+      { companyId: "10000000-0000-0000-0000-000000000099" },
+      deps,
+    );
+
+    expect(deps.repository.listDocuments).toHaveBeenCalledWith({
+      companyId: "10000000-0000-0000-0000-000000000099",
+      teamId: staffActor.teamId,
+    });
+  });
+
+  it("does not narrow an admin", async () => {
+    const deps = dependencies();
+
+    await listDocumentsForActor(adminActor, {}, deps);
+
+    expect(deps.repository.listDocuments).toHaveBeenCalledWith({});
+  });
+
+  it("still requires a company ID and authorization for a client", async () => {
+    const deps = dependencies();
+
+    await expect(listDocumentsForActor(actor, {}, deps)).rejects.toThrow(
+      "Client document lists require a company ID.",
+    );
+
+    await listDocumentsForActor(actor, { companyId }, deps);
+    expect(deps.authorizeCompany).toHaveBeenCalledWith(actor, companyId);
+    expect(deps.repository.listDocuments).toHaveBeenCalledWith({ companyId });
   });
 });
 
