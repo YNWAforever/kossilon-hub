@@ -1380,26 +1380,26 @@ git commit -m "feat(annual-return): wire the reminder cadence into the maintenan
 
 **Files:** none modified.
 
-- [ ] **Step 1: Typecheck**
+- [x] **Step 1: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 2: Lint**
+- [x] **Step 2: Lint**
 
 Run: `npm run lint`
 Expected: clean. Confirm the exit code directly (run it unpiped, or check `$?` immediately after) — a piped `tail`/`head` summary reports the pipe's own exit code, not lint's.
 
-- [ ] **Step 3: Full suite**
+- [x] **Step 3: Full suite**
 
 Run: `npm run test`
 Expected: PASS, with a total no lower than this branch's baseline before Task 1. If `TEST_DATABASE_URL` is not set in this environment, Task 4's new `evaluateReminders` tests (and every other repository integration test) will report as skipped, not failed — that is the expected, pre-existing behavior for this test suite, not a regression.
 
-- [ ] **Step 4: Confirm the migration is syntactically sound**
+- [x] **Step 4: Confirm the migration is syntactically sound**
 
 If a local test database is available (`TEST_DATABASE_URL` set), run `npm run db:migrate` (per `CLAUDE.md`, via Bun) against it and confirm migration `0012` applies cleanly. If not available in this environment, at minimum confirm the SQL in `db/migrations/0012_annual_return_reminder_events.sql` matches `src/server/db/schema.sql`'s copy exactly.
 
-- [ ] **Step 5: Confirm every `buildReminderDraft` call site was actually found**
+- [x] **Step 5: Confirm every `buildReminderDraft` call site was actually found**
 
 Run: `grep -rn "buildReminderDraft(" src/ --include=*.ts | grep -v ".test.ts"`
 Expected: every production call site listed passes three arguments (`case_`, a contact name, and `today`) — none should still show the old single-argument form. Also run the same grep including test files, and confirm every one compiles (already proven by Step 1's clean `tsc`, but worth eyeballing that none were silently skipped).
