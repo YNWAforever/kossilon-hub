@@ -485,10 +485,10 @@ export function createAnnualReturnRepository(
     `;
   }
 
-  async function lockWritableCase(
+  async function tryLockWritableCase(
     tx: TransactionSqlClient,
     caseId: string,
-  ): Promise<LockedCaseRow> {
+  ): Promise<LockedCaseRow | null> {
     const rows = await tx<LockedCaseRow[]>`
       select
         arc.id,
@@ -509,8 +509,16 @@ export function createAnnualReturnRepository(
       for update
     `;
 
-    assertSingleMutatedRow(rows, COMPLETED_CASE_LOCKED_MESSAGE);
-    return rows[0];
+    return rows[0] ?? null;
+  }
+
+  async function lockWritableCase(
+    tx: TransactionSqlClient,
+    caseId: string,
+  ): Promise<LockedCaseRow> {
+    const lockedCase = await tryLockWritableCase(tx, caseId);
+    if (!lockedCase) throw new Error(COMPLETED_CASE_LOCKED_MESSAGE);
+    return lockedCase;
   }
 
   async function assertActorCanMutateLockedCase(
