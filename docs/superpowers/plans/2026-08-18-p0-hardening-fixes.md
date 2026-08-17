@@ -554,11 +554,11 @@ afterEach(() => {
   mockIsAdmin.value = true;
 });
 
-async function renderSettings() {
+async function renderSettings(dataMode: "demo" | "production" = "production") {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: ["/settings"] }),
-    context: { queryClient: new QueryClient(), dataMode: "production" as const, actor: null },
+    context: { queryClient: new QueryClient(), dataMode, actor: null },
     defaultPreloadStaleTime: 0,
   });
 
@@ -574,6 +574,7 @@ describe("/settings, gated by role", () => {
     const html = await renderSettings();
 
     expect(html).not.toContain("Admin access required");
+    expect(html).toContain("WOZTELL");
   });
 
   it("shows a denied state to a non-admin", async () => {
@@ -583,11 +584,21 @@ describe("/settings, gated by role", () => {
 
     expect(html).toContain("Admin access required");
   });
+
+  it("stays fully open in demo mode regardless of role", async () => {
+    mockIsAdmin.value = false;
+
+    const html = await renderSettings("demo");
+
+    expect(html).not.toContain("Admin access required");
+  });
 });
 ```
 
 Run: `npm run test -- src/routes/-settings-admin-guard.test.tsx`
 Expected: FAIL — `SettingsPage` has no admin gate yet, so the "denied to a non-admin" case fails.
+
+Note: `renderSettings`'s `dataMode` parameter defaults to `"production"` so the two pre-existing production-mode cases need no change; only the new demo-mode case passes `"demo"` explicitly. The admin-path assertion also gains a positive check (`"WOZTELL"`, the always-rendered WhatsApp integration panel heading) so it can't pass against blank/broken admin content.
 
 ### Step 5: Gate `SettingsPage`
 
@@ -604,7 +615,7 @@ Inside `SettingsPage`, add `const { isCurrentUserAdmin } = useAuth();` alongside
 Immediately after all the existing hook calls (after the `filtered` computation, before the `return (...)` that renders the page), add:
 
 ```typescript
-  if (!isCurrentUserAdmin) {
+  if (dataMode === "production" && !isCurrentUserAdmin) {
     return (
       <main className="flex-1 space-y-6 p-6">
         <PageHeader eyebrow="Administration" title="Settings" subtitle="Restricted area" />
@@ -617,6 +628,8 @@ Immediately after all the existing hook calls (after the `filtered` computation,
     );
   }
 ```
+
+The gate is scoped to `dataMode === "production"` — not a bare `!isCurrentUserAdmin` — because `settingsSectionsForMode("demo")` (`-settings-sections.ts:18-26`) already documents and tests ("shows every section in demo") that demo mode shows every section to every persona regardless of role. An unconditional gate would silently break that for Manager/Staff demo personas.
 
 ### Step 6: Run both tests
 
