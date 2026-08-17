@@ -608,6 +608,7 @@ export function createWorkItemRepository(
                   workItemId: item.id,
                   threshold,
                   occurredAt,
+                  subject: `SLA ${threshold} reached for ${item.title}`,
                   body: `Work item SLA ${threshold} reached for ${item.title}.`,
                 },
               });
