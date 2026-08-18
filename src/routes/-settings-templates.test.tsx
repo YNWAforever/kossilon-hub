@@ -4,7 +4,7 @@ import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/rea
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../styles.css?url", () => ({ default: "" }));
+vi.mock("../styles.css?url", () => ({ default: "/styles.css" }));
 
 vi.mock("@/features/auth/neon-auth-rpc", () => ({
   getAuthenticatedActor: () => Promise.resolve({ authUserId: "test-user" }),
