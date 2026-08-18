@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth } from "@/features/auth/auth-context-neon";
@@ -35,6 +35,7 @@ import {
   updateChecklistTemplate,
 } from "@/features/checklist-templates/server-fns";
 import type { DataMode } from "@/features/runtime/data-mode";
+import { guardMutation } from "@/lib/guard-mutation";
 import { cases } from "@/lib/mock-data";
 import { formatDate } from "@/lib/format-date";
 import { KnowledgeBaseSection } from "@/components/knowledge-base-section";
@@ -63,6 +64,14 @@ type UpdateTemplateMutation = {
   mutate: (input: { id: string; patch: ChecklistTemplatePatch }) => void;
 };
 
+// Stable fallback so `templates` keeps the same array identity across renders while the
+// production query has no data yet (an inline `[]` would allocate a new array every render).
+const EMPTY_TEMPLATES: ChecklistTemplate[] = [];
+
+function describeMutationError(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 function SettingsPage() {
   const { dataMode } = Route.useRouteContext();
   const { isCurrentUserAdmin } = useAuth();
@@ -79,40 +88,101 @@ function SettingsPage() {
     queryFn: () => listChecklistTemplates(),
     enabled: dataMode === "production",
   });
-  const templates = dataMode === "demo" ? demoTemplates : (productionTemplatesQuery.data ?? []);
+  const templates =
+    dataMode === "demo" ? demoTemplates : (productionTemplatesQuery.data ?? EMPTY_TEMPLATES);
 
+  // Returns the promise so mutation `onSuccess` handlers can `await` it — that keeps
+  // TanStack Query's `isPending` true for the mutation's *entire* round trip (server write +
+  // refetch + cache update), not just the initial network request. See `isSaving` below: as
+  // long as any of the four mutations is pending, every add/remove/duplicate/delete control and
+  // every editable field is *rendered* disabled, so in ordinary use a second click never even
+  // reaches a handler.
   function invalidateTemplates() {
-    void queryClient.invalidateQueries({ queryKey: ["checklist-templates"] });
+    return queryClient.invalidateQueries({ queryKey: ["checklist-templates"] });
+  }
+
+  // Belt-and-suspenders against the same race, for the (narrow, but real) window before a render
+  // driven by `isSaving` has actually committed — see `guardMutation` (`@/lib/guard-mutation`) for
+  // why this can't just rely on `isPending`/`isSaving`. Cleared in `onSettled` (below), which
+  // TanStack Query runs after `onSuccess`'s `await invalidateTemplates()` has already completed —
+  // so the next call this ref allows is always against a freshly-refetched `t`.
+  const mutationInFlightRef = useRef(false);
+
+  function clearMutationInFlight() {
+    mutationInFlightRef.current = false;
   }
 
   const createMutation = useMutation({
     mutationFn: (serviceType: ServiceType) => createChecklistTemplate({ data: { serviceType } }),
-    onSuccess: (created) => {
-      invalidateTemplates();
+    onSuccess: async (created) => {
+      setWarning(undefined);
+      await invalidateTemplates();
       setSelectedId(created.id);
       setTab("documents");
     },
+    onError: (error) => setWarning(describeMutationError(error, "Unable to create the template.")),
+    onSettled: clearMutationInFlight,
   });
   const updateMutation = useMutation({
     mutationFn: (input: { id: string; patch: ChecklistTemplatePatch }) =>
       updateChecklistTemplate({ data: input }),
-    onSuccess: invalidateTemplates,
+    onSuccess: async () => {
+      setWarning(undefined);
+      await invalidateTemplates();
+    },
+    onError: (error) => setWarning(describeMutationError(error, "Unable to save the change.")),
+    onSettled: clearMutationInFlight,
   });
   const duplicateMutation = useMutation({
     mutationFn: (id: string) => duplicateChecklistTemplate({ data: { id } }),
-    onSuccess: (duplicated) => {
-      invalidateTemplates();
+    onSuccess: async (duplicated) => {
+      setWarning(undefined);
+      await invalidateTemplates();
       setSelectedId(duplicated.id);
     },
+    onError: (error) =>
+      setWarning(describeMutationError(error, "Unable to duplicate the template.")),
+    onSettled: clearMutationInFlight,
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteChecklistTemplate({ data: { id } }),
-    onSuccess: invalidateTemplates,
+    onSuccess: async () => {
+      setWarning(undefined);
+      await invalidateTemplates();
+    },
+    onError: (error) => setWarning(describeMutationError(error, "Unable to delete the template.")),
+    onSettled: clearMutationInFlight,
   });
+
+  // The `updateMutation` prop threaded down to `TemplateEditor` and its tabs is the *guarded*
+  // `mutate`, so every add/remove/edit call site below (23 of them) gets the synchronous
+  // protection for free, with no per-call-site change needed.
+  const guardedUpdateMutation: UpdateTemplateMutation = {
+    mutate: guardMutation(
+      mutationInFlightRef,
+      (input: { id: string; patch: ChecklistTemplatePatch }) => updateMutation.mutate(input),
+    ),
+  };
+  const guardedCreateTemplate = guardMutation(mutationInFlightRef, (serviceType: ServiceType) =>
+    createMutation.mutate(serviceType),
+  );
+  const guardedDuplicateTemplate = guardMutation(mutationInFlightRef, (id: string) =>
+    duplicateMutation.mutate(id),
+  );
+
+  // True for the entire round trip of any in-flight template mutation (see the comment on
+  // `invalidateTemplates` above). Threaded down alongside `dataMode` so every mutating control
+  // and editable field disables itself while a write is outstanding.
+  const isSaving =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    duplicateMutation.isPending ||
+    deleteMutation.isPending;
 
   const [selectedId, setSelectedId] = useState<string>(templates[0]?.id ?? "");
   const [tab, setTab] = useState<Tab>("documents");
   const [query, setQuery] = useState("");
+  const [warning, setWarning] = useState<string | undefined>();
 
   const selected = templates.find((t) => t.id === selectedId) ?? templates[0];
   const filtered = useMemo(
@@ -149,6 +219,11 @@ function SettingsPage() {
             : "Integrations"
         }
       />
+      {warning ? (
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+          {warning}
+        </div>
+      ) : null}
       {sections.checklistTemplates ? (
         <section className="rounded-xl border border-border bg-card">
           <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
@@ -166,8 +241,9 @@ function SettingsPage() {
             </div>
             {dataMode === "production" && (
               <button
-                onClick={() => createMutation.mutate("Annual Return — Private Ltd")}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                onClick={() => guardedCreateTemplate("Annual Return — Private Ltd")}
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Plus className="h-3.5 w-3.5" /> New template
               </button>
@@ -236,9 +312,12 @@ function SettingsPage() {
                   tab={tab}
                   setTab={setTab}
                   dataMode={dataMode}
-                  updateMutation={updateMutation}
-                  onDuplicate={() => duplicateMutation.mutate(selected.id)}
+                  isSaving={isSaving}
+                  updateMutation={guardedUpdateMutation}
+                  onDuplicate={() => guardedDuplicateTemplate(selected.id)}
                   onDelete={() => {
+                    if (mutationInFlightRef.current) return;
+                    mutationInFlightRef.current = true;
                     deleteMutation.mutate(selected.id);
                     const next = templates.find((t) => t.id !== selected.id);
                     if (next) setSelectedId(next.id);
@@ -344,6 +423,7 @@ function TemplateEditor({
   tab,
   setTab,
   dataMode,
+  isSaving,
   updateMutation,
   onDuplicate,
   onDelete,
@@ -352,6 +432,7 @@ function TemplateEditor({
   tab: Tab;
   setTab: (t: Tab) => void;
   dataMode: DataMode;
+  isSaving: boolean;
   updateMutation: UpdateTemplateMutation;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -370,7 +451,7 @@ function TemplateEditor({
             onBlur={() => {
               if (name !== t.name) updateMutation.mutate({ id: t.id, patch: { name } });
             }}
-            disabled={dataMode === "demo"}
+            disabled={dataMode === "demo" || isSaving}
             className="w-full border-b border-transparent bg-transparent font-display text-xl font-semibold text-foreground outline-none focus:border-border disabled:cursor-not-allowed disabled:opacity-70"
           />
           <textarea
@@ -382,7 +463,7 @@ function TemplateEditor({
             }}
             placeholder="Describe when this template applies…"
             rows={2}
-            disabled={dataMode === "demo"}
+            disabled={dataMode === "demo" || isSaving}
             className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
           />
           <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -396,7 +477,7 @@ function TemplateEditor({
                     patch: { serviceType: e.target.value as ServiceType },
                   })
                 }
-                disabled={dataMode === "demo"}
+                disabled={dataMode === "demo" || isSaving}
                 className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {SERVICE_TYPES.map((s) => (
@@ -413,7 +494,7 @@ function TemplateEditor({
                 onChange={(e) =>
                   updateMutation.mutate({ id: t.id, patch: { active: e.target.checked } })
                 }
-                disabled={dataMode === "demo"}
+                disabled={dataMode === "demo" || isSaving}
               />
               <span className="text-muted-foreground">Active</span>
             </label>
@@ -424,13 +505,15 @@ function TemplateEditor({
           <div className="flex gap-2">
             <button
               onClick={onDuplicate}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Copy className="h-3.5 w-3.5" /> Duplicate
             </button>
             <button
               onClick={onDelete}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
@@ -474,23 +557,37 @@ function TemplateEditor({
       </div>
 
       {tab === "documents" && (
-        <DocumentsTab t={t} dataMode={dataMode} updateMutation={updateMutation} />
+        <DocumentsTab
+          t={t}
+          dataMode={dataMode}
+          isSaving={isSaving}
+          updateMutation={updateMutation}
+        />
       )}
       {tab === "reminders" && (
-        <RemindersTab t={t} dataMode={dataMode} updateMutation={updateMutation} />
+        <RemindersTab
+          t={t}
+          dataMode={dataMode}
+          isSaving={isSaving}
+          updateMutation={updateMutation}
+        />
       )}
-      {tab === "risks" && <RisksTab t={t} dataMode={dataMode} updateMutation={updateMutation} />}
+      {tab === "risks" && (
+        <RisksTab t={t} dataMode={dataMode} isSaving={isSaving} updateMutation={updateMutation} />
+      )}
     </div>
   );
 }
 
-function DocumentsTab({
+export function DocumentsTab({
   t,
   dataMode,
+  isSaving,
   updateMutation,
 }: {
   t: ChecklistTemplate;
   dataMode: DataMode;
+  isSaving: boolean;
   updateMutation: UpdateTemplateMutation;
 }) {
   function updateDocument(docId: string, patch: Partial<DocumentItem>) {
@@ -534,6 +631,7 @@ function DocumentsTab({
             key={d.id}
             doc={d}
             dataMode={dataMode}
+            isSaving={isSaving}
             onUpdate={(patch) => updateDocument(d.id, patch)}
             onRemove={() => removeDocument(d.id)}
           />
@@ -543,7 +641,8 @@ function DocumentsTab({
         <div className="border-t border-border p-2">
           <button
             onClick={addDocument}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground"
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Plus className="h-3.5 w-3.5" /> Add document
           </button>
@@ -556,11 +655,13 @@ function DocumentsTab({
 function DocumentRow({
   doc,
   dataMode,
+  isSaving,
   onUpdate,
   onRemove,
 }: {
   doc: DocumentItem;
   dataMode: DataMode;
+  isSaving: boolean;
   onUpdate: (patch: Partial<DocumentItem>) => void;
   onRemove: () => void;
 }) {
@@ -575,7 +676,7 @@ function DocumentRow({
         onBlur={() => {
           if (label !== doc.label) onUpdate({ label });
         }}
-        disabled={dataMode === "demo"}
+        disabled={dataMode === "demo" || isSaving}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-1 text-xs">
@@ -588,7 +689,7 @@ function DocumentRow({
           onBlur={() => {
             if (daysBeforeDue !== doc.daysBeforeDue) onUpdate({ daysBeforeDue });
           }}
-          disabled={dataMode === "demo"}
+          disabled={dataMode === "demo" || isSaving}
           className="w-14 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
         <span className="text-muted-foreground">days</span>
@@ -598,7 +699,7 @@ function DocumentRow({
           type="checkbox"
           checked={doc.required}
           onChange={(e) => onUpdate({ required: e.target.checked })}
-          disabled={dataMode === "demo"}
+          disabled={dataMode === "demo" || isSaving}
         />
         <span className="text-muted-foreground">Required</span>
       </label>
@@ -606,7 +707,8 @@ function DocumentRow({
         {dataMode === "production" && (
           <button
             onClick={onRemove}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            disabled={isSaving}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
             aria-label="Remove document"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -620,10 +722,12 @@ function DocumentRow({
 function RemindersTab({
   t,
   dataMode,
+  isSaving,
   updateMutation,
 }: {
   t: ChecklistTemplate;
   dataMode: DataMode;
+  isSaving: boolean;
   updateMutation: UpdateTemplateMutation;
 }) {
   const channels: ReminderRule["channel"][] = ["WhatsApp", "Email", "SMS"];
@@ -670,6 +774,7 @@ function RemindersTab({
             reminder={r}
             channels={channels}
             dataMode={dataMode}
+            isSaving={isSaving}
             onUpdate={(patch) => updateReminder(r.id, patch)}
             onRemove={() => removeReminder(r.id)}
           />
@@ -679,7 +784,8 @@ function RemindersTab({
         <div className="border-t border-border p-2">
           <button
             onClick={addReminder}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground"
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Plus className="h-3.5 w-3.5" /> Add reminder
           </button>
@@ -693,12 +799,14 @@ function ReminderRow({
   reminder,
   channels,
   dataMode,
+  isSaving,
   onUpdate,
   onRemove,
 }: {
   reminder: ReminderRule;
   channels: ReminderRule["channel"][];
   dataMode: DataMode;
+  isSaving: boolean;
   onUpdate: (patch: Partial<ReminderRule>) => void;
   onRemove: () => void;
 }) {
@@ -713,7 +821,7 @@ function ReminderRow({
         onBlur={() => {
           if (label !== reminder.label) onUpdate({ label });
         }}
-        disabled={dataMode === "demo"}
+        disabled={dataMode === "demo" || isSaving}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-1 text-xs">
@@ -726,7 +834,7 @@ function ReminderRow({
           onBlur={() => {
             if (daysBeforeDue !== reminder.daysBeforeDue) onUpdate({ daysBeforeDue });
           }}
-          disabled={dataMode === "demo"}
+          disabled={dataMode === "demo" || isSaving}
           className="w-16 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
         <span className="text-muted-foreground">days</span>
@@ -734,7 +842,7 @@ function ReminderRow({
       <select
         value={reminder.channel}
         onChange={(e) => onUpdate({ channel: e.target.value as ReminderRule["channel"] })}
-        disabled={dataMode === "demo"}
+        disabled={dataMode === "demo" || isSaving}
         className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       >
         {channels.map((c) => (
@@ -747,7 +855,8 @@ function ReminderRow({
         {dataMode === "production" && (
           <button
             onClick={onRemove}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            disabled={isSaving}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
             aria-label="Remove reminder"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -761,10 +870,12 @@ function ReminderRow({
 function RisksTab({
   t,
   dataMode,
+  isSaving,
   updateMutation,
 }: {
   t: ChecklistTemplate;
   dataMode: DataMode;
+  isSaving: boolean;
   updateMutation: UpdateTemplateMutation;
 }) {
   const severities: RiskRule["severity"][] = ["Low", "Medium", "High"];
@@ -816,6 +927,7 @@ function RisksTab({
             severities={severities}
             tone={tone}
             dataMode={dataMode}
+            isSaving={isSaving}
             onUpdate={(patch) => updateRisk(r.id, patch)}
             onRemove={() => removeRisk(r.id)}
           />
@@ -825,7 +937,8 @@ function RisksTab({
         <div className="border-t border-border p-2">
           <button
             onClick={addRisk}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground"
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Plus className="h-3.5 w-3.5" /> Add risk rule
           </button>
@@ -840,6 +953,7 @@ function RiskRow({
   severities,
   tone,
   dataMode,
+  isSaving,
   onUpdate,
   onRemove,
 }: {
@@ -847,6 +961,7 @@ function RiskRow({
   severities: RiskRule["severity"][];
   tone: (s: RiskRule["severity"]) => "red" | "orange" | "yellow";
   dataMode: DataMode;
+  isSaving: boolean;
   onUpdate: (patch: Partial<RiskRule>) => void;
   onRemove: () => void;
 }) {
@@ -861,7 +976,7 @@ function RiskRow({
         onBlur={() => {
           if (label !== risk.label) onUpdate({ label });
         }}
-        disabled={dataMode === "demo"}
+        disabled={dataMode === "demo" || isSaving}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <input
@@ -870,7 +985,7 @@ function RiskRow({
         onBlur={() => {
           if (trigger !== risk.trigger) onUpdate({ trigger });
         }}
-        disabled={dataMode === "demo"}
+        disabled={dataMode === "demo" || isSaving}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-2">
@@ -878,7 +993,7 @@ function RiskRow({
         <select
           value={risk.severity}
           onChange={(e) => onUpdate({ severity: e.target.value as RiskRule["severity"] })}
-          disabled={dataMode === "demo"}
+          disabled={dataMode === "demo" || isSaving}
           className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         >
           {severities.map((s) => (
@@ -893,7 +1008,7 @@ function RiskRow({
           type="checkbox"
           checked={risk.enabled}
           onChange={(e) => onUpdate({ enabled: e.target.checked })}
-          disabled={dataMode === "demo"}
+          disabled={dataMode === "demo" || isSaving}
         />
         <span className="text-muted-foreground">On</span>
       </label>
@@ -901,7 +1016,8 @@ function RiskRow({
         {dataMode === "production" && (
           <button
             onClick={onRemove}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            disabled={isSaving}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
             aria-label="Remove risk rule"
           >
             <Trash2 className="h-3.5 w-3.5" />
