@@ -1476,6 +1476,8 @@ git commit -m "feat(settings): show checklist templates in production"
 
 **Files:**
 - Modify: `src/routes/settings.tsx`
+- Modify: `src/routes/-settings.interaction.test.tsx`
+- Create: `src/lib/guard-mutation.ts`
 
 This is the task that actually fixes the `tsc` errors left by Tasks 5-6.
 
@@ -1719,10 +1721,83 @@ add/remove/duplicate/delete controls, which are omitted per Step 4) gets `disabl
 is editable. Confirm this against the design's acceptance criterion 3: "no create/edit/duplicate/
 delete control is present or functional" in demo.
 
+### Step 6a: Guard against concurrent mutations and surface errors
+
+Two real gaps surfaced during code-quality review of this task's first pass, both worth building
+in from the start rather than treating as an afterthought:
+
+**Concurrent-write race.** Every mutation above builds its patch from the *current* `t` prop
+(`[...t.documents, newDoc]`, `t.documents.filter(...)`, etc.), and `t` only refreshes once
+`onSuccess → invalidateTemplates() → refetch` completes. Nothing stops a second click — on the same
+control or a different one for the same template — from firing before that refresh lands, and
+`repository.ts`'s `updateTemplate` does a full-column replace, not a merge, so whichever request
+commits last silently overwrites the other's change. A naive fix (disable controls while
+`updateMutation.isPending`) is not sufficient on its own: TanStack Query's `notifyManager` defers
+the re-render that flips `isPending` via `setTimeout(fn, 0)`, not synchronously and not even via a
+microtask, so two `mutate()` calls issued in the same tick can both fire before that timer runs.
+
+Create `src/lib/guard-mutation.ts`:
+```typescript
+// Guards a `mutate` call with a plain ref flag, checked and set *synchronously* — independent of
+// any render or scheduler. TanStack Query's own `isPending` is not enough on its own: it defers
+// the re-render that flips `isPending` to `true` via `setTimeout(fn, 0)` (see
+// `notifyManager`/`MutationObserver` in `@tanstack/query-core`), not synchronously and not even
+// via a microtask. In ordinary human use that gap closes long before a second click could land,
+// but two `mutate()` calls issued back to back in the same tick (a double-click fast enough, or
+// anything scripted) can both fire before that timer runs, both closing over the same stale
+// snapshot of whatever data they patch. Wrapping every `mutate` call site with this guard makes a
+// second call a deterministic no-op regardless of that timing, rather than relying on a rendered
+// `disabled` attribute alone.
+export function guardMutation<Args>(
+  inFlightRef: { current: boolean },
+  mutate: (args: Args) => void,
+): (args: Args) => void {
+  return (args) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    mutate(args);
+  };
+}
+```
+In `SettingsPage`, wrap every user-triggered mutation entry point (create, update, duplicate,
+delete) with `guardMutation` over a `useRef<boolean>(false)`, clearing the ref in that mutation's
+`onSettled` — not `onSuccess` alone, since `onSettled` only runs after `onSuccess`'s own async work
+(including an `await`ed `invalidateTemplates()`) has completed, so the guard doesn't clear until the
+data a subsequent call would read is actually fresh. `invalidateTemplates` must therefore return the
+promise from `queryClient.invalidateQueries(...)` (not `void` it) so `onSuccess` can `await` it.
+
+Add a regression test to `src/routes/-settings.interaction.test.tsx` that wires a real `useMutation`
+to a controllable, unresolved promise (mirroring `SettingsPage`'s wiring), fires two `mutate`/click
+calls with nothing awaited in between, and asserts the underlying mock was called exactly once.
+Confirm this test actually catches the regression by temporarily bypassing the guard and observing
+the test fail (e.g. "called 2 times"), then restore the fix.
+
+**No error handling.** None of the four mutations had `onError`, so a failed request (network
+issue, an `assertAdminAccess` rejection, a Zod validation error) was indistinguishable from a
+no-op — this is exactly what made an earlier `addRisk` validation bug silent. Add `onError` to all
+four mutations, surfaced as a visible inline warning message (matching either
+`documents.tsx`'s `reviewMutation` convention — `onError: (error) => setWarning(...)` feeding an
+inline banner — or `production-case-detail.tsx`'s `<MutationMessage error={...} />` pattern;
+`documents.tsx`'s approach fits better here since all four mutations live in one component rather
+than being per-row).
+
+While in the area, hoist a module-level `const EMPTY_TEMPLATES: ChecklistTemplate[] = [];` and use
+it as `productionTemplatesQuery.data ?? EMPTY_TEMPLATES` (Step 3) instead of an inline `?? []` — the
+inline form allocates a fresh array reference every render while loading, which trips
+`react-hooks/exhaustive-deps` on the `filtered` `useMemo` for no functional reason.
+
+If `guardMutation` needs to be exported for the interaction test to import it, and that export
+triggers a `react-refresh/only-export-components` lint warning on the route file, that's the signal
+it belongs in `src/lib/` (shared, non-route utility) rather than inline in `settings.tsx` — matching
+this codebase's existing `src/lib/*` convention.
+
 ### Step 7: Typecheck and fix fallout
 
 Run: `npx tsc --noEmit`
 Expected: clean — this is the task that resolves every error Tasks 5-6 introduced.
+Run: `npm run lint`
+Expected: clean, zero errors and zero warnings (including `react-hooks/exhaustive-deps` and
+`react-refresh/only-export-components` — Step 6a's changes exist partly to close these out).
 
 ### Step 8: Manual smoke check
 
@@ -1735,7 +1810,7 @@ and survives a reload.
 ### Step 9: Commit
 
 ```bash
-git add src/routes/settings.tsx
+git add src/routes/settings.tsx src/routes/-settings.interaction.test.tsx src/lib/guard-mutation.ts
 git commit -m "feat(settings): wire checklist templates to the real backend, make demo read-only"
 ```
 
