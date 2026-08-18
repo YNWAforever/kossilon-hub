@@ -144,11 +144,7 @@ export const createChecklistTemplate = createServerFn({ method: "POST" })
   .validator(z.object({ serviceType: serviceTypeSchema }).strict())
   .handler(({ data }) =>
     withDefaultChecklistTemplateContext((actor, dependencies) =>
-      createChecklistTemplateForActor(
-        actor,
-        { serviceType: data.serviceType as (typeof SERVICE_TYPES)[number] },
-        dependencies,
-      ),
+      createChecklistTemplateForActor(actor, { serviceType: data.serviceType }, dependencies),
     ),
   );
 
@@ -156,11 +152,7 @@ export const updateChecklistTemplate = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.string().uuid(), patch: patchSchema }).strict())
   .handler(({ data }) =>
     withDefaultChecklistTemplateContext((actor, dependencies) =>
-      updateChecklistTemplateForActor(
-        actor,
-        { id: data.id, patch: data.patch as ChecklistTemplatePatch },
-        dependencies,
-      ),
+      updateChecklistTemplateForActor(actor, { id: data.id, patch: data.patch }, dependencies),
     ),
   );
 

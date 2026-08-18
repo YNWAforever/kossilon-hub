@@ -160,6 +160,27 @@ describe("duplicateChecklistTemplateForActor", () => {
     ).rejects.toThrow("Forbidden: Admin access is required.");
     expect(repository.duplicateTemplate).not.toHaveBeenCalled();
   });
+
+  it("duplicates via the repository for an admin actor", async () => {
+    const { repository } = repositoryFor();
+
+    const result = await duplicateChecklistTemplateForActor(
+      adminActor,
+      { id: "tpl-1" },
+      { repository },
+    );
+
+    expect(repository.duplicateTemplate).toHaveBeenCalledWith("tpl-1");
+    expect(result).toEqual(sampleTemplate);
+  });
+
+  it("throws when the template does not exist", async () => {
+    const { repository } = repositoryFor({ duplicateTemplate: vi.fn(async () => null) });
+
+    await expect(
+      duplicateChecklistTemplateForActor(adminActor, { id: "missing" }, { repository }),
+    ).rejects.toThrow("Checklist template not found.");
+  });
 });
 
 describe("deleteChecklistTemplateForActor", () => {
