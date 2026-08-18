@@ -1660,6 +1660,33 @@ blur, matching today's numeric-input pattern; channel select → immediate; add/
 and `RisksTab` (label/trigger text → blur; severity select/enabled checkbox → immediate; add/remove
 → immediate).
 
+Their "add" buttons need explicit new-item defaults, matching the values the deleted in-memory
+store's own `addReminder`/`addRisk` methods used (`git show 4d5c5ab~1:src/lib/templates.ts` is the
+last commit before Task 5 trimmed them, if you need to confirm):
+```typescript
+// RemindersTab's addReminder
+const newReminder: ReminderRule = {
+  id: crypto.randomUUID(),
+  label: "New reminder",
+  daysBeforeDue: 7,
+  channel: "WhatsApp",
+};
+// RisksTab's addRisk
+const newRisk: RiskRule = {
+  id: crypto.randomUUID(),
+  label: "New risk rule",
+  severity: "Medium",
+  trigger: "Describe the trigger…",
+  enabled: true,
+};
+```
+The `trigger` default matters beyond cosmetics: `server-fns.ts`'s `riskRuleSchema` requires
+`trigger: z.string().min(1)` (Task 4), so an empty-string default would fail server-side Zod
+validation on every "Add risk rule" click — silently, since no mutation in this file has an
+`onError` handler — making the button non-functional in production. This was caught by code review
+during Task 7's first pass (an implementer inferred `trigger: ""` since this exact default wasn't
+spelled out here) and is now made explicit to prevent a repeat.
+
 For `onDuplicate`/`onDelete` on `TemplateEditor` itself, replace:
 ```tsx
 onDuplicate={() => {
