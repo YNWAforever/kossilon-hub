@@ -122,6 +122,8 @@ create table if not exists checklist_templates (
   updated_at timestamptz not null default now()
 );
 
+create index if not exists checklist_templates_service_type_idx on checklist_templates (service_type) where active;
+
 insert into checklist_templates (name, service_type, description, active, documents, reminders, risk_rules)
 values
   (
@@ -233,18 +235,24 @@ on conflict (name) do nothing;
 
 ### Step 2: Mirror the table into schema.sql
 
-Add the identical `create table if not exists checklist_templates (...)` block (without the
-`insert`) to `src/server/db/schema.sql`, near the other standalone/config tables (e.g. next to
-`sla_policies`/`business_calendars`). Add an index: `create index if not exists
-checklist_templates_service_type_idx on checklist_templates (service_type) where active;` — this is
-the lookup shape a future `templateForService`-equivalent will use, matching this schema's existing
-convention of indexing the columns things actually filter on.
+Add the identical `create table if not exists checklist_templates (...)` block **and** the
+`checklist_templates_service_type_idx` index (without the `insert`) to `src/server/db/schema.sql`,
+near the other standalone/config tables (e.g. next to `sla_policies`/`business_calendars`). Both
+must come from the migration itself, not be introduced here for the first time — `schema.sql` is a
+reference document only (it says so at its own top, and only `db/migrations` is ever applied; see
+`schema.sql`'s "Reconciled with db/migrations/" banner for the prior incident this exact mistake
+would repeat, in mirror image: a table/index that exists in `schema.sql` but that no migration ever
+creates is a real database drift, not a documentation nicety). The index is the lookup shape a
+future `templateForService`-equivalent will use, matching this schema's existing convention of
+indexing the columns things actually filter on.
 
 ### Step 3: Apply the migration locally and verify
 
 Run: `npm run db:migrate` (requires a local `DATABASE_URL` — do not run against any non-local
 database without explicit approval, per this repo's `CLAUDE.md`).
-Expected: migration applies cleanly, `checklist_templates` has 5 rows.
+Expected: migration applies cleanly, `checklist_templates` has 5 rows, and
+`checklist_templates_service_type_idx` exists (confirm with `\d checklist_templates` or a query
+against `pg_indexes` — the index must come from the migration itself, not only from `schema.sql`).
 
 ### Step 4: Commit
 
