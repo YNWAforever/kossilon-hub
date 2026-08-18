@@ -363,7 +363,9 @@ let testSql: SqlClient | undefined;
 
 async function cleanup() {
   if (!testSql) return;
-  await testSql`delete from checklist_templates where name like 'Test template%'`;
+  // 'Untitled template' is createTemplate's hardcoded default name (name is unique), so a test
+  // that creates a template without renaming it must still be cleaned up between runs.
+  await testSql`delete from checklist_templates where name like 'Test template%' or name = 'Untitled template'`;
 }
 
 afterAll(async () => {
@@ -380,7 +382,7 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
   it("creates a template with empty lists and reads it back", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
 
-    const created = await repository.createTemplate("Test template create" as never);
+    const created = await repository.createTemplate("Annual Return — Private Ltd");
     const all = await repository.listTemplates();
     const found = all.find((t) => t.id === created.id);
 
@@ -420,7 +422,7 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
 
   it("leaves unpatched fields untouched", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
-    const created = await repository.createTemplate("Test template patch" as never);
+    const created = await repository.createTemplate("Annual Return — Private Ltd");
 
     const updated = await repository.updateTemplate(created.id, { active: false });
 
@@ -432,7 +434,7 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
 
   it("duplicates a template with fresh item ids", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
-    const created = await repository.createTemplate("Test template dup-source" as never);
+    const created = await repository.createTemplate("Annual Return — Private Ltd");
     await repository.updateTemplate(created.id, {
       name: "Test template dup-source",
       documents: [{ id: "orig-1", label: "Doc", required: true, daysBeforeDue: 1 }],
@@ -449,7 +451,7 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
 
   it("deletes a template", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
-    const created = await repository.createTemplate("Test template delete" as never);
+    const created = await repository.createTemplate("Annual Return — Private Ltd");
 
     await repository.deleteTemplate(created.id);
     const all = await repository.listTemplates();
@@ -458,8 +460,32 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
 
     await repository.close();
   });
+
+  it("returns updatedAt as a string, not a Date object", async () => {
+    const repository = createChecklistTemplateRepository({ sql: testSql! });
+    const created = await repository.createTemplate("Annual Return — Private Ltd");
+
+    expect(typeof created.updatedAt).toBe("string");
+    expect(() => new Date(created.updatedAt).toISOString()).not.toThrow();
+
+    await repository.close();
+  });
 });
 ```
+
+The five `createTemplate` calls above that don't care about the created row's `name`/`serviceType`
+all use the valid literal `"Annual Return — Private Ltd"` rather than an arbitrary string — the
+`service_type` column is check-constrained to the 5 real `ServiceType` values (Task 1's migration),
+so an invalid string fails at the database, not just the type system; a `some string as never` cast
+would compile but throw at runtime against a real database. `cleanup()` also deletes rows named
+`'Untitled template'` (`createTemplate`'s hardcoded default), not just `'Test template%'` ones, since
+tests 1/3/4/6 below never rename the row they create and `name` is `unique` — without this a second
+run would fail on a leftover row from the first, not the assertion under test. The 6th test
+(`"returns updatedAt as a string, not a Date object"`) exists because `postgres.js` returns real
+`Date` objects for `timestamptz` columns by default; `mapTemplate`'s `iso()` conversion (Step 2
+below) is what makes this pass — omitting it would return a `Date`, silently violating
+`ChecklistTemplate.updatedAt: string`'s contract with no type error anywhere, since nothing in this
+file's own types would catch a repository lying about its return type at runtime.
 
 Run: `TEST_DATABASE_URL=<local test db> npm run test -- src/features/checklist-templates/repository.test.ts`
 Expected: FAIL — `./repository` does not exist yet.
@@ -496,8 +522,12 @@ type TemplateRow = {
   documents: DocumentItem[];
   reminders: ReminderRule[];
   risk_rules: RiskRule[];
-  updated_at: string;
+  updated_at: string | Date;
 };
+
+function iso(value: string | Date): string {
+  return new Date(value).toISOString();
+}
 
 function mapTemplate(row: TemplateRow): ChecklistTemplate {
   return {
@@ -509,7 +539,7 @@ function mapTemplate(row: TemplateRow): ChecklistTemplate {
     documents: row.documents,
     reminders: row.reminders,
     riskRules: row.risk_rules,
-    updatedAt: row.updated_at,
+    updatedAt: iso(row.updated_at),
   };
 }
 
@@ -614,7 +644,7 @@ export function createChecklistTemplateRepository(
 ### Step 3: Run the tests
 
 Run: `TEST_DATABASE_URL=<local test db> npm run test -- src/features/checklist-templates/repository.test.ts`
-Expected: PASS, all 5 cases.
+Expected: PASS, all 6 cases.
 
 ### Step 4: Verify
 
@@ -1750,7 +1780,7 @@ Expected: PASS, with a total no lower than this branch's baseline before Task 1.
 - [ ] **Step 4: Repository integration suite**
 
 Run: `TEST_DATABASE_URL=<local test db> npm run test -- src/features/checklist-templates/repository.test.ts`
-Expected: PASS, all 5 cases (this suite is skipped in the plain `npm run test` run from Step 3 unless
+Expected: PASS, all 6 cases (this suite is skipped in the plain `npm run test` run from Step 3 unless
 `TEST_DATABASE_URL` is set — confirm it actually ran here, not silently skipped).
 
 - [ ] **Step 5: Confirm no other `templatesStore` reference survives**
