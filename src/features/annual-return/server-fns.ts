@@ -317,6 +317,7 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
     actorId,
     recipientName: data.recipientName,
     recipientPhone: data.recipientPhone,
+    today: hongKongBusinessDate(),
   });
 
   return {
@@ -505,6 +506,6 @@ export const buildAnnualReturnReminderDraft = createServerFn({ method: "GET" })
         throw new Error("Annual return case not found.");
       }
 
-      return { draftBody: buildReminderDraft(case_) };
+      return { draftBody: buildReminderDraft(case_, "貴公司", hongKongBusinessDate()) };
     }),
   );

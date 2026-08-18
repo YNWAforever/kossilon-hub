@@ -90,7 +90,7 @@ function state(overrides: Partial<PersistedFollowUpState> = {}): PersistedFollow
 
 describe("production follow-up draft derivation", () => {
   it("derives each authoritative linked document and payment draft from persisted state", () => {
-    const drafts = deriveProductionFollowUpDrafts([caseItem], state());
+    const drafts = deriveProductionFollowUpDrafts([caseItem], state(), "2026-07-14");
 
     expect(drafts.map(({ source, id }) => ({ source, id }))).toEqual([
       { source: "annual-return", id: caseId },
@@ -107,7 +107,11 @@ describe("production follow-up draft derivation", () => {
   });
 
   it("marks rows blocked without a persisted reminder recipient", () => {
-    const drafts = deriveProductionFollowUpDrafts([caseItem], state({ recipients: [] }));
+    const drafts = deriveProductionFollowUpDrafts(
+      [caseItem],
+      state({ recipients: [] }),
+      "2026-07-14",
+    );
 
     expect(drafts).toHaveLength(4);
     expect(drafts.every((draft) => draft.status === "blocked")).toBe(true);
@@ -120,6 +124,7 @@ describe("production follow-up draft derivation", () => {
     const drafts = deriveProductionFollowUpDrafts(
       [{ ...caseItem, currentStatus: "Filed" }],
       state(),
+      "2026-07-14",
     );
 
     expect(drafts).toEqual([]);
@@ -145,6 +150,7 @@ describe("production follow-up draft derivation", () => {
           { idempotencyKey: stableFollowUpIdempotencyKey(paymentIdentity), status: "failed" },
         ],
       }),
+      "2026-07-14",
     );
 
     expect(drafts.map(({ source, status }) => ({ source, status }))).toEqual([

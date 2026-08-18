@@ -12,6 +12,7 @@ export type BuildAnnualReturnWhatsAppReminderRequestInput = {
   actorId: string;
   recipientName: string;
   recipientPhone: string;
+  today: string;
 };
 
 export type AnnualReturnWhatsAppReminderRequest = {
@@ -63,8 +64,9 @@ export function buildAnnualReturnWhatsAppReminderRequest({
   actorId,
   recipientName,
   recipientPhone,
+  today,
 }: BuildAnnualReturnWhatsAppReminderRequestInput): AnnualReturnWhatsAppReminderRequest {
-  const draftBody = buildReminderDraft(case_);
+  const draftBody = buildReminderDraft(case_, recipientName, today);
 
   return {
     annualReturnReminder: {

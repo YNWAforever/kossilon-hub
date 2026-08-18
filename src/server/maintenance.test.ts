@@ -11,6 +11,10 @@ function dependencies(
       evaluateEscalations: vi.fn(async () => ({ warnings: 1, breaches: 2 })),
       close: vi.fn(async () => {}),
     }),
+    createAnnualReturnRepository: () => ({
+      evaluateReminders: vi.fn(async () => ({ sent: 1, skipped: 0 })),
+      close: vi.fn(async () => {}),
+    }),
     dispatchDue: vi.fn(async () => ({
       claimed: 4,
       sent: 3,
@@ -42,6 +46,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
     expect(result).toEqual({
       now: "2026-07-26T00:00:00.000Z",
       escalations: { warnings: 1, breaches: 2 },
+      annualReturnReminders: { sent: 1, skipped: 0 },
       dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0, superseded: 0 },
       uploads: { expired: 2 },
       notifications: { strandedFailed: 2, redacted: 5 },
@@ -76,8 +81,9 @@ describe("runFirmMaintenanceWithDependencies", () => {
     expect(remove.mock.calls.map(([key]) => key)).toEqual(["a", "b"]);
   });
 
-  it("closes both repositories even when a pass throws", async () => {
+  it("closes every repository even when a pass throws", async () => {
     const closeWorkItems = vi.fn(async () => {});
+    const closeAnnualReturns = vi.fn(async () => {});
     const closeDocuments = vi.fn(async () => {});
 
     // Escalation evaluation runs first, so its failure is the case that would
@@ -92,6 +98,10 @@ describe("runFirmMaintenanceWithDependencies", () => {
             }),
             close: closeWorkItems,
           }),
+          createAnnualReturnRepository: () => ({
+            evaluateReminders: vi.fn(async () => ({ sent: 0, skipped: 0 })),
+            close: closeAnnualReturns,
+          }),
           createDocumentRepository: () => ({
             expireUploads: vi.fn(async () => []),
             close: closeDocuments,
@@ -101,6 +111,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
     ).rejects.toThrow("sla sweep failed");
 
     expect(closeWorkItems).toHaveBeenCalledTimes(1);
+    expect(closeAnnualReturns).toHaveBeenCalledTimes(1);
     expect(closeDocuments).toHaveBeenCalledTimes(1);
   });
 

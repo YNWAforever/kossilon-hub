@@ -59,7 +59,7 @@ const harbourCase: AnnualReturnCase = {
 
 describe("annual return WhatsApp reminders", () => {
   it("builds matching annual-return reminder and WhatsApp queue requests", () => {
-    const draftBody = buildReminderDraft(harbourCase);
+    const draftBody = buildReminderDraft(harbourCase, "Ada Director", "2026-07-13");
 
     expect(
       buildAnnualReturnWhatsAppReminderRequest({
@@ -67,6 +67,7 @@ describe("annual return WhatsApp reminders", () => {
         actorId,
         recipientName: "Ada Director",
         recipientPhone: "+852 6123 4567",
+        today: "2026-07-13",
       }),
     ).toEqual({
       annualReturnReminder: {
@@ -108,7 +109,7 @@ describe("annual return WhatsApp reminders", () => {
       templateId: "template-1",
       phoneE164: "+85261234567",
       whatsAppId: null,
-      body: buildReminderDraft(harbourCase),
+      body: buildReminderDraft(harbourCase, "Ada Director", "2026-07-13"),
       payload: {},
       sentBy: actorId,
       receivedAt: null,
@@ -136,6 +137,7 @@ describe("annual return WhatsApp reminders", () => {
         actorId,
         recipientName: "Ada Director",
         recipientPhone: "+852 6123 4567",
+        today: "2026-07-13",
       }),
     ).resolves.toEqual({ case: updatedCase, message });
     expect(calls).toEqual(["queue-whatsapp", "record-reminder"]);
@@ -159,6 +161,7 @@ describe("annual return WhatsApp reminders", () => {
         actorId,
         recipientName: "Ada Director",
         recipientPhone: "+852 6123 4567",
+        today: "2026-07-13",
       }),
     ).rejects.toThrow("WhatsApp queue unavailable.");
     expect(annualReturnRepository.recordReminder).not.toHaveBeenCalled();
