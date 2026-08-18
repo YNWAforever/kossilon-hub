@@ -1996,8 +1996,10 @@ Expected: PASS, with a total no lower than this branch's baseline before Task 1.
 - [ ] **Step 4: Repository integration suite**
 
 Run: `TEST_DATABASE_URL=<local test db> npm run test -- src/features/checklist-templates/repository.test.ts`
-Expected: PASS, all 6 cases (this suite is skipped in the plain `npm run test` run from Step 3 unless
-`TEST_DATABASE_URL` is set — confirm it actually ran here, not silently skipped).
+Expected: PASS, all 9 cases (6 from the original plan plus 3 added later: the `updatedAt`-is-a-string
+guard from Step 1's `iso()` fix, and the two unique-name collision tests from Task 3's error-
+translation addition). This suite is skipped in the plain `npm run test` run from Step 3 unless
+`TEST_DATABASE_URL` is set — confirm it actually ran here, not silently skipped.
 
 - [ ] **Step 5: Confirm no other `templatesStore` reference survives**
 
