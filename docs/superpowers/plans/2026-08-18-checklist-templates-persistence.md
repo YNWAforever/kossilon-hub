@@ -342,6 +342,7 @@ git commit -m "feat(checklist-templates): add shared types module"
 **Files:**
 - Create: `src/features/checklist-templates/repository.ts`
 - Create: `src/features/checklist-templates/repository.test.ts`
+- Create: `src/features/checklist-templates/errors.ts`
 
 ### Step 1: Write the failing tests
 
@@ -641,20 +642,126 @@ export function createChecklistTemplateRepository(
 }
 ```
 
-### Step 3: Run the tests
+### Step 3: Translate unique-name constraint violations into a friendly error
+
+`createTemplate` always inserts the hardcoded name `'Untitled template'`, and `duplicateTemplate`
+always inserts `"${source.name} (copy)"` — both write to `name`, which is `unique` (Task 1's
+migration). An Admin clicking "New template" twice, or "Duplicate" the same template twice, without
+renaming in between, hits that constraint. Without translation, the raw Postgres error
+(`PostgresError code=23505 ... duplicate key value violates unique constraint
+"checklist_templates_name_key"`) would propagate unhandled all the way to the client. This codebase
+already has an established, on-point precedent for exactly this: `src/features/clients/errors.ts`'s
+`ClientWriteError`/`rethrowClientWriteError`, used at the repository layer in
+`src/features/clients/repository.ts` (every mutating method wraps its write in
+`try { ... } catch (error) { rethrowClientWriteError(error); }`).
+
+Read `src/features/clients/errors.ts` in full (67 lines) — it's short and exactly the shape to
+mirror. Create `src/features/checklist-templates/errors.ts`:
+
+```typescript
+export type ChecklistTemplateWriteField = "name";
+
+/** A database constraint violation translated into a message for a specific form field. */
+export class ChecklistTemplateWriteError extends Error {
+  readonly field: ChecklistTemplateWriteField;
+
+  constructor(field: ChecklistTemplateWriteField, message: string) {
+    super(message);
+    this.name = "ChecklistTemplateWriteError";
+    this.field = field;
+  }
+}
+
+const CONSTRAINT_FIELDS: Record<string, { field: ChecklistTemplateWriteField; message: string }> = {
+  checklist_templates_name_key: {
+    field: "name",
+    message: "A checklist template with this name already exists.",
+  },
+};
+
+const HANDLED_CODES = new Set(["23505"]);
+
+export function toChecklistTemplateWriteError(error: unknown): ChecklistTemplateWriteError | null {
+  if (!(error instanceof Error)) {
+    return null;
+  }
+
+  const { code, constraint_name: constraintName } = error as Error & {
+    code?: string;
+    constraint_name?: string;
+  };
+
+  if (!code || !constraintName || !HANDLED_CODES.has(code)) {
+    return null;
+  }
+
+  const mapping = CONSTRAINT_FIELDS[constraintName];
+
+  if (!mapping) {
+    return null;
+  }
+
+  return new ChecklistTemplateWriteError(mapping.field, mapping.message);
+}
+
+/** Rethrows a recognised constraint violation as a ChecklistTemplateWriteError, otherwise rethrows as-is. */
+export function rethrowChecklistTemplateWriteError(error: unknown): never {
+  const mapped = toChecklistTemplateWriteError(error);
+
+  if (mapped) {
+    throw mapped;
+  }
+
+  throw error;
+}
+```
+
+In `repository.ts`, import `rethrowChecklistTemplateWriteError` from `./errors`, and wrap the SQL
+statement inside `createTemplate`, `updateTemplate`, and `duplicateTemplate` (its `insert` half only,
+not the `select`) in `try { ... } catch (error) { rethrowChecklistTemplateWriteError(error); }` —
+`updateTemplate` carries the identical risk (an Admin renaming a template to an existing name) even
+though it wasn't the case that surfaced this gap first.
+
+Add two tests to `repository.test.ts`, in the same `describe` block:
+
+```typescript
+  it("translates a duplicate name into a friendly ChecklistTemplateWriteError", async () => {
+    const repository = createChecklistTemplateRepository({ sql: testSql! });
+    await repository.createTemplate("Annual Return — Private Ltd");
+
+    await expect(repository.createTemplate("Annual Return — Private Ltd")).rejects.toMatchObject({
+      name: "ChecklistTemplateWriteError",
+      field: "name",
+      message: "A checklist template with this name already exists.",
+    });
+  });
+
+  it("translates a duplicate-of-a-duplicate name the same way", async () => {
+    const repository = createChecklistTemplateRepository({ sql: testSql! });
+    const created = await repository.createTemplate("Annual Return — Private Ltd");
+    await repository.duplicateTemplate(created.id);
+
+    await expect(repository.duplicateTemplate(created.id)).rejects.toMatchObject({
+      name: "ChecklistTemplateWriteError",
+      field: "name",
+    });
+  });
+```
+
+### Step 4: Run the tests
 
 Run: `TEST_DATABASE_URL=<local test db> npm run test -- src/features/checklist-templates/repository.test.ts`
-Expected: PASS, all 6 cases.
+Expected: PASS, all 8 cases.
 
-### Step 4: Verify
+### Step 5: Verify
 
 Run: `npx tsc --noEmit` — expect clean.
 Run: `npm run lint` — expect clean, exit code checked directly.
 
-### Step 5: Commit
+### Step 6: Commit
 
 ```bash
-git add src/features/checklist-templates/repository.ts src/features/checklist-templates/repository.test.ts
+git add src/features/checklist-templates/repository.ts src/features/checklist-templates/repository.test.ts src/features/checklist-templates/errors.ts
 git commit -m "feat(checklist-templates): add repository"
 ```
 
