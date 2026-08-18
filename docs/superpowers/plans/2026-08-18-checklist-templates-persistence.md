@@ -1352,11 +1352,13 @@ Expected: **type errors in `src/routes/settings.tsx` only** (every reference to 
 If `tsc` reports errors in any file other than `settings.tsx`, stop and investigate before
 continuing — that would mean something unexpected imports the deleted API.
 
-Separately, `npm run test -- src/routes/-final-review-restorations.test.ts` will now **fail at test
-runtime** (not a type error — that file only does `readFileSync` + string `toContain` checks against
-`settings.tsx`'s source, so it has no import of `templatesStore` to break `tsc`). Confirm it fails
-for the expected reason (the `"templatesStore.update"`/`"templatesStore.addDocument"` assertions no
-longer match) and leave it failing — Task 8 fixes it.
+Separately, run `npm run test -- src/routes/-final-review-restorations.test.ts` — expect it to
+**still pass** at this point in the plan, not fail. That test does `readFileSync` + string
+`toContain` checks against `settings.tsx`'s own source text, not against `templates.ts` — since this
+task doesn't touch `settings.tsx` at all, the literal substrings `"templatesStore.update"`/
+`"templatesStore.addDocument"` are still physically present there, so the assertions still match.
+It only starts failing once Task 7 rewires `settings.tsx` to stop calling `templatesStore.*` — that
+task is what makes it fail, and Task 8 is what fixes it. Don't be surprised if it's green here.
 
 ### Step 4: Commit
 
