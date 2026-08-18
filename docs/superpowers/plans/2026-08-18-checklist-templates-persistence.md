@@ -271,20 +271,15 @@ git commit -m "feat(checklist-templates): add checklist_templates table"
 ### Step 1: Write the types
 
 ```typescript
-export type ServiceType =
-  | "Annual Return — Private Ltd"
-  | "Annual Return — Public Ltd"
-  | "Incorporation — HK Ltd"
-  | "Change of Director"
-  | "Deregistration";
-
-export const SERVICE_TYPES: ServiceType[] = [
+export const SERVICE_TYPES = [
   "Annual Return — Private Ltd",
   "Annual Return — Public Ltd",
   "Incorporation — HK Ltd",
   "Change of Director",
   "Deregistration",
-];
+] as const;
+
+export type ServiceType = (typeof SERVICE_TYPES)[number];
 
 export type DocumentItem = {
   id: string;
