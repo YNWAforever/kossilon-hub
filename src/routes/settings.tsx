@@ -790,7 +790,7 @@ function RisksTab({
       id: crypto.randomUUID(),
       label: "New risk rule",
       severity: "Medium",
-      trigger: "",
+      trigger: "Describe the trigger…",
       enabled: true,
     };
     updateMutation.mutate({ id: t.id, patch: { riskRules: [...t.riskRules, newRisk] } });
