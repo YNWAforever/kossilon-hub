@@ -1,5 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
@@ -79,6 +80,32 @@ export const dispatchDueNotificationsOnServer = createServerOnlyFn(
   },
 );
 
+export function assertAdminAccess(actor: AuthenticatedActor): void {
+  if (!actor.active || actor.role !== "Admin")
+    throw new Error("Forbidden: Admin access is required.");
+}
+
+export async function dispatchDueNotificationsForActor(
+  actor: AuthenticatedActor,
+  input: { limit?: number },
+  dependencies: {
+    dispatch(input: {
+      now: string;
+      limit?: number;
+    }): ReturnType<typeof dispatchDueNotificationsOnServer>;
+  } = { dispatch: dispatchDueNotificationsOnServer },
+) {
+  assertAdminAccess(actor);
+  const now = new Date().toISOString();
+  const summary = await dependencies.dispatch({ ...input, now });
+  console.log("Manual outbox dispatch", {
+    actorId: actor.userId ?? actor.authUserId,
+    now,
+    summary,
+  });
+  return summary;
+}
+
 /**
  * The manual dispatch escape hatch. The cron in src/server.ts is what normally
  * drives the outbox; this exists for an operator who needs to flush it now.
@@ -99,6 +126,6 @@ export const dispatchDueNotifications = createServerFn({ method: "POST" })
       import("@tanstack/react-start/server"),
       import("@/features/auth/neon-auth-server"),
     ]);
-    await requireStaffActor(getRequest());
-    return dispatchDueNotificationsOnServer({ ...data, now: new Date().toISOString() });
+    const actor = await requireStaffActor(getRequest());
+    return dispatchDueNotificationsForActor(actor, data);
   });

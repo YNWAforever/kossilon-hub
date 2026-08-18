@@ -6,6 +6,7 @@ import {
   addAnnualReturnCaseNoteForActor,
   assignAnnualReturnCaseOwnerForActor,
   getAnnualReturnCaseForActor,
+  getAnnualReturnDashboardMetricsForActor,
   listAnnualReturnCaseNotesForActor,
   queueAnnualReturnWhatsAppReminderMessageForActor,
   updateAnnualReturnChecklistItemForActor,
@@ -188,6 +189,62 @@ describe("production annual return list scoping", () => {
     await expect(listAnnualReturnCasesForActor(clientActor, {}, { repository })).rejects.toThrow(
       "Forbidden: staff access is required.",
     );
+  });
+
+  describe("getAnnualReturnDashboardMetricsForActor", () => {
+    function repositoryFor(
+      dashboardMetrics = vi.fn(async () => ({
+        dueIn7: 0,
+        dueIn30: 0,
+        overdue: 0,
+        highRisk: 0,
+        missingDocuments: 0,
+        paymentPending: 0,
+        assignedToMe: 0,
+      })),
+    ) {
+      return {
+        dashboardMetrics,
+        repository: { dashboardMetrics } as unknown as Pick<
+          AnnualReturnRepository,
+          "dashboardMetrics"
+        >,
+      };
+    }
+
+    it("scopes a staff actor's tiles to their own team", async () => {
+      const { dashboardMetrics, repository } = repositoryFor();
+
+      await getAnnualReturnDashboardMetricsForActor(staffActor, { repository });
+
+      expect(dashboardMetrics).toHaveBeenCalledWith(expect.any(String), staffActor.userId, {
+        teamId: staffActor.teamId,
+        visibleToUserId: staffActor.userId,
+      });
+    });
+
+    it("does not scope an admin's tiles", async () => {
+      const { dashboardMetrics, repository } = repositoryFor();
+      const admin: AuthenticatedActor = {
+        authUserId: "admin-auth",
+        userId: "20000000-0000-0000-0000-000000000005",
+        role: "Admin",
+        teamId: null,
+        active: true,
+      };
+
+      await getAnnualReturnDashboardMetricsForActor(admin, { repository });
+
+      expect(dashboardMetrics).toHaveBeenCalledWith(expect.any(String), admin.userId, {});
+    });
+
+    it("refuses a client", async () => {
+      const { repository } = repositoryFor();
+
+      await expect(
+        getAnnualReturnDashboardMetricsForActor(clientActor, { repository }),
+      ).rejects.toThrow("Forbidden: staff access is required.");
+    });
   });
 });
 

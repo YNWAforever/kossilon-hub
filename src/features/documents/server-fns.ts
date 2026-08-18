@@ -199,6 +199,39 @@ export async function downloadDocumentForActor(
   return { document, body: stored.body };
 }
 
+export type DocumentScope = { teamId?: string };
+
+export function documentFiltersForActor(actor: AuthenticatedActor): DocumentScope {
+  if (!actor.active) {
+    throw new Error("Forbidden: inactive users cannot list documents.");
+  }
+  if (actor.role === "Client") {
+    throw new Error("Forbidden: staff access is required.");
+  }
+  if (actor.role === "Admin") {
+    return {};
+  }
+  if (!actor.teamId) {
+    throw new Error("Forbidden: staff actor has no assigned team.");
+  }
+  return { teamId: actor.teamId };
+}
+
+export async function listDocumentsForActor(
+  actor: AuthenticatedActor,
+  filters: { companyId?: string; caseId?: string },
+  dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeCompany">,
+) {
+  if (actor.role === "Client") {
+    if (!filters.companyId) throw new Error("Client document lists require a company ID.");
+    await dependencies.authorizeCompany(actor, filters.companyId);
+    return dependencies.repository.listDocuments(filters);
+  }
+
+  const scope = documentFiltersForActor(actor);
+  return dependencies.repository.listDocuments({ ...filters, ...scope });
+}
+
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 /**
@@ -285,15 +318,9 @@ export const listDocuments = createServerFn({ method: "GET" })
       .strict(),
   )
   .handler(({ data }) =>
-    withDefaultDocumentContext(async (actor, dependencies) => {
-      if (actor.role === "Client") {
-        if (!data.companyId) throw new Error("Client document lists require a company ID.");
-        await dependencies.authorizeCompany(actor, data.companyId);
-      } else {
-        assertStaffAccess(actor);
-      }
-      return dependencies.repository.listDocuments(data);
-    }),
+    withDefaultDocumentContext((actor, dependencies) =>
+      listDocumentsForActor(actor, data, dependencies),
+    ),
   );
 
 export const reviewDocument = createServerFn({ method: "POST" })

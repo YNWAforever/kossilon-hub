@@ -84,7 +84,37 @@ function AdminPage() {
 }
 
 function ProductionAdminConsole() {
-  const { session } = useAuth();
+  const { session, isCurrentUserAdmin } = useAuth();
+
+  if (!isCurrentUserAdmin) {
+    return (
+      <main className="flex-1 space-y-6 p-6">
+        <PageHeader eyebrow="Administration" title="Admin" subtitle="Restricted area" />
+        <section className="rounded-xl border border-border bg-card p-6">
+          <div className="flex max-w-2xl items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
+              <LockKeyhole className="h-5 w-5 text-status-orange" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Admin access required
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {session?.name ?? "This user"} is signed in as {session?.role ?? "User"}.
+                Administration is limited to Admin users.
+              </p>
+              <Link
+                to="/"
+                className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+              >
+                Back to dashboard
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 space-y-6 p-6">

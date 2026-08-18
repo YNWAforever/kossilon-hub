@@ -181,7 +181,7 @@ describe("manual dispatch does not take its clock from the caller", () => {
   // claims ones that are not, a past value hides ones that are.
   it("derives now on the server and keeps it out of the input schema", () => {
     expect(source).toContain("manualDispatchInputSchema");
-    expect(source).toContain("now: new Date().toISOString()");
+    expect(source).toContain("const now = new Date().toISOString()");
 
     const schema = source.slice(
       source.indexOf("const manualDispatchInputSchema"),

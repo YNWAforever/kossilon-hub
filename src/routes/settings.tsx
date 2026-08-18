@@ -4,6 +4,7 @@ import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
+import { useAuth } from "@/features/auth/auth-context-neon";
 import {
   ClipboardList,
   Package,
@@ -49,6 +50,7 @@ type Tab = "documents" | "reminders" | "risks";
 
 function SettingsPage() {
   const { dataMode } = Route.useRouteContext();
+  const { isCurrentUserAdmin } = useAuth();
   const sections = settingsSectionsForMode(dataMode);
   const templates = useTemplates();
   const integrationQuery = useQuery({
@@ -69,6 +71,19 @@ function SettingsPage() {
       ),
     [templates, query],
   );
+
+  if (dataMode === "production" && !isCurrentUserAdmin) {
+    return (
+      <main className="flex-1 space-y-6 p-6">
+        <PageHeader eyebrow="Administration" title="Settings" subtitle="Restricted area" />
+        <section className="rounded-xl border border-border bg-card p-6">
+          <p className="text-sm leading-6 text-muted-foreground">
+            Admin access required. Settings are limited to Admin users.
+          </p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 space-y-6 p-6">
