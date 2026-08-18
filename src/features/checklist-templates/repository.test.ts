@@ -117,4 +117,57 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
 
     await repository.close();
   });
+
+  it("translates a duplicate name into a friendly ChecklistTemplateWriteError on create", async () => {
+    const repository = createChecklistTemplateRepository({ sql: testSql! });
+    await repository.createTemplate("Annual Return — Private Ltd");
+
+    // A second createTemplate() call with no rename in between hits the same
+    // hardcoded 'Untitled template' name — an entirely ordinary "click New template
+    // twice" Admin workflow, not an edge case.
+    await expect(repository.createTemplate("Annual Return — Private Ltd")).rejects.toMatchObject({
+      name: "ChecklistTemplateWriteError",
+      field: "name",
+      message: "A checklist template with this name already exists.",
+    });
+
+    await repository.close();
+  });
+
+  it("translates a duplicate name into a friendly ChecklistTemplateWriteError on duplicate", async () => {
+    const repository = createChecklistTemplateRepository({ sql: testSql! });
+    const created = await repository.createTemplate("Annual Return — Private Ltd");
+    await repository.updateTemplate(created.id, { name: "Test template dup-collision" });
+
+    // Duplicating the same source twice produces the identical "<name> (copy)" name
+    // both times — an entirely ordinary "click Duplicate twice" Admin workflow.
+    await repository.duplicateTemplate(created.id);
+
+    await expect(repository.duplicateTemplate(created.id)).rejects.toMatchObject({
+      name: "ChecklistTemplateWriteError",
+      field: "name",
+      message: "A checklist template with this name already exists.",
+    });
+
+    await repository.close();
+  });
+
+  it("translates a rename collision on updateTemplate into a friendly ChecklistTemplateWriteError", async () => {
+    const repository = createChecklistTemplateRepository({ sql: testSql! });
+    const first = await repository.createTemplate("Annual Return — Private Ltd");
+    await repository.updateTemplate(first.id, { name: "Test template rename-collision" });
+    const second = await repository.createTemplate("Annual Return — Private Ltd");
+
+    // Renaming a second template to a name already taken by another row is an
+    // entirely ordinary Admin workflow, not an edge case.
+    await expect(
+      repository.updateTemplate(second.id, { name: "Test template rename-collision" }),
+    ).rejects.toMatchObject({
+      name: "ChecklistTemplateWriteError",
+      field: "name",
+      message: "A checklist template with this name already exists.",
+    });
+
+    await repository.close();
+  });
 });

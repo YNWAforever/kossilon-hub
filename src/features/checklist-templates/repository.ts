@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
+import { rethrowChecklistTemplateWriteError } from "./errors";
 import type {
   ChecklistTemplate,
   ChecklistTemplatePatch,
@@ -83,30 +84,38 @@ export function createChecklistTemplateRepository(
     },
 
     async createTemplate(serviceType) {
-      const rows = await sql<TemplateRow[]>`
-        insert into checklist_templates (name, service_type, description, active, documents, reminders, risk_rules)
-        values ('Untitled template', ${serviceType}, '', true, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
-        returning *
-      `;
-      return mapTemplate(rows[0]!);
+      try {
+        const rows = await sql<TemplateRow[]>`
+          insert into checklist_templates (name, service_type, description, active, documents, reminders, risk_rules)
+          values ('Untitled template', ${serviceType}, '', true, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb)
+          returning *
+        `;
+        return mapTemplate(rows[0]!);
+      } catch (error) {
+        rethrowChecklistTemplateWriteError(error);
+      }
     },
 
     async updateTemplate(id, patch) {
-      const rows = await sql<TemplateRow[]>`
-        update checklist_templates
-        set
-          name = coalesce(${patch.name ?? null}, name),
-          service_type = coalesce(${patch.serviceType ?? null}, service_type),
-          description = coalesce(${patch.description ?? null}, description),
-          active = coalesce(${patch.active ?? null}, active),
-          documents = coalesce(${patch.documents ? sql.json(patch.documents) : null}, documents),
-          reminders = coalesce(${patch.reminders ? sql.json(patch.reminders) : null}, reminders),
-          risk_rules = coalesce(${patch.riskRules ? sql.json(patch.riskRules) : null}, risk_rules),
-          updated_at = now()
-        where id = ${id}
-        returning *
-      `;
-      return rows[0] ? mapTemplate(rows[0]) : null;
+      try {
+        const rows = await sql<TemplateRow[]>`
+          update checklist_templates
+          set
+            name = coalesce(${patch.name ?? null}, name),
+            service_type = coalesce(${patch.serviceType ?? null}, service_type),
+            description = coalesce(${patch.description ?? null}, description),
+            active = coalesce(${patch.active ?? null}, active),
+            documents = coalesce(${patch.documents ? sql.json(patch.documents) : null}, documents),
+            reminders = coalesce(${patch.reminders ? sql.json(patch.reminders) : null}, reminders),
+            risk_rules = coalesce(${patch.riskRules ? sql.json(patch.riskRules) : null}, risk_rules),
+            updated_at = now()
+          where id = ${id}
+          returning *
+        `;
+        return rows[0] ? mapTemplate(rows[0]) : null;
+      } catch (error) {
+        rethrowChecklistTemplateWriteError(error);
+      }
     },
 
     async duplicateTemplate(id) {
@@ -117,20 +126,24 @@ export function createChecklistTemplateRepository(
       const freshen = <T extends { id: string }>(items: T[]) =>
         items.map((item) => ({ ...item, id: crypto.randomUUID() }));
 
-      const rows = await sql<TemplateRow[]>`
-        insert into checklist_templates (name, service_type, description, active, documents, reminders, risk_rules)
-        values (
-          ${`${template.name} (copy)`},
-          ${template.service_type},
-          ${template.description},
-          ${template.active},
-          ${sql.json(freshen(template.documents))},
-          ${sql.json(freshen(template.reminders))},
-          ${sql.json(freshen(template.risk_rules))}
-        )
-        returning *
-      `;
-      return mapTemplate(rows[0]!);
+      try {
+        const rows = await sql<TemplateRow[]>`
+          insert into checklist_templates (name, service_type, description, active, documents, reminders, risk_rules)
+          values (
+            ${`${template.name} (copy)`},
+            ${template.service_type},
+            ${template.description},
+            ${template.active},
+            ${sql.json(freshen(template.documents))},
+            ${sql.json(freshen(template.reminders))},
+            ${sql.json(freshen(template.risk_rules))}
+          )
+          returning *
+        `;
+        return mapTemplate(rows[0]!);
+      } catch (error) {
+        rethrowChecklistTemplateWriteError(error);
+      }
     },
 
     async deleteTemplate(id) {
