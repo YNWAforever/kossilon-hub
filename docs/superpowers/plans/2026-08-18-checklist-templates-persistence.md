@@ -1051,7 +1051,9 @@ const loadDefaultChecklistTemplateContext = createServerOnlyFn(async () => {
   const actor = await requireStaffActor(getRequest());
   return {
     actor,
-    dependencies: { repository: createChecklistTemplateRepository() } satisfies ChecklistTemplateDependencies,
+    dependencies: {
+      repository: createChecklistTemplateRepository(),
+    } satisfies ChecklistTemplateDependencies,
   };
 });
 
@@ -1095,7 +1097,10 @@ const riskRuleSchema = z
   })
   .strict();
 
-const serviceTypeSchema = z.enum(SERVICE_TYPES as [string, ...string[]]);
+const serviceTypeSchema = z.enum(SERVICE_TYPES);
+// No `as [string, ...string[]]` cast needed: SERVICE_TYPES is a readonly tuple (Task 2's
+// `as const`), and Zod 3.24's `z.enum()` accepts a readonly tuple directly. The cast this plan
+// originally showed fails `tsc` (TS2352, readonly-to-mutable) against that type.
 
 const patchSchema = z
   .object({
