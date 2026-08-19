@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
 
@@ -108,8 +108,17 @@ async function main(): Promise<void> {
   });
 
   function killChild(): void {
-    if (process.platform === "win32" || !child.pid) {
+    if (!child.pid) {
       child.kill();
+      return;
+    }
+    if (process.platform === "win32") {
+      // npm run dev spawns through cmd.exe (shell: true), which forks a node
+      // process running vite, which itself may fork further workers —
+      // child.kill() only signals cmd.exe and leaves those grandchildren
+      // running, which keeps their piped stdout/stderr open and the event
+      // loop alive forever. taskkill's /t kills the whole process tree.
+      spawnSync("taskkill", ["/pid", String(child.pid), "/t", "/f"]);
       return;
     }
     try {
