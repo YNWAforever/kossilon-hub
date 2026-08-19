@@ -1,10 +1,18 @@
-import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireStaffActor, type AuthDependencies } from "@/features/auth/neon-auth-server";
+import type { AuthDependencies } from "@/features/auth/neon-auth-server";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { assertClientCompanyCreatable, assertClientCompanyWritable } from "./authorization";
-import { createClientRepository } from "./repository";
+import type { ClientRepository } from "./repository";
+
+const loadDefaultClientContext = createServerOnlyFn(async () => {
+  const [{ getRequest }, { requireStaffActor }, { createClientRepository }] = await Promise.all([
+    import("@tanstack/react-start/server"),
+    import("@/features/auth/neon-auth-server"),
+    import("./repository"),
+  ]);
+  return { getRequest, requireStaffActor, createClientRepository };
+});
 
 /**
  * Resolves the staff user id every client write is attributed to. Mirrors
@@ -14,6 +22,7 @@ import { createClientRepository } from "./repository";
 async function getCurrentClientActor(
   dependencies: AuthDependencies = {},
 ): Promise<AuthenticatedActor & { userId: string }> {
+  const { getRequest, requireStaffActor } = await loadDefaultClientContext();
   const actor = await requireStaffActor(getRequest(), dependencies);
 
   if (!actor.userId) {
@@ -29,7 +38,7 @@ async function getCurrentClientActor(
  * Manager user can no longer rename, reassign or re-contact another team's client.
  */
 async function requireWritableCompany(
-  repository: ReturnType<typeof createClientRepository>,
+  repository: ClientRepository,
   companyId: string,
   /**
    * The team the write would MOVE the company to, when it can move one.
@@ -115,8 +124,9 @@ const removeContactSchema = z.object({
  * away from leaking a pool per request.
  */
 async function withClientRepository<T>(
-  handler: (repository: ReturnType<typeof createClientRepository>) => Promise<T>,
+  handler: (repository: ClientRepository) => Promise<T>,
 ): Promise<T> {
+  const { createClientRepository } = await loadDefaultClientContext();
   const repository = createClientRepository();
 
   try {
@@ -127,11 +137,13 @@ async function withClientRepository<T>(
 }
 
 export const listClients = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequest, requireStaffActor } = await loadDefaultClientContext();
   await requireStaffActor(getRequest());
   return withClientRepository((repository) => repository.listClients());
 });
 
 export const listClientAssignmentOptions = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequest, requireStaffActor } = await loadDefaultClientContext();
   await requireStaffActor(getRequest());
   return withClientRepository((repository) => repository.listAssignmentOptions());
 });
@@ -139,6 +151,7 @@ export const listClientAssignmentOptions = createServerFn({ method: "GET" }).han
 export const getClient = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
+    const { getRequest, requireStaffActor } = await loadDefaultClientContext();
     await requireStaffActor(getRequest());
     return withClientRepository((repository) => repository.getClient(data.id));
   });

@@ -1,8 +1,6 @@
-import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
-import { requireActor, requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import {
   assertAnnualReturnActionAllowed,
@@ -11,13 +9,12 @@ import {
 import type { ProviderMode } from "@/server/provider-mode";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
 import type { WhatsAppConversation, WhatsAppConversationMessage } from "./conversations";
-import {
-  createWhatsAppRepository,
-  type InboundWhatsAppMessageRecord,
-  type WhatsAppRepository,
-  type WhatsAppTemplateCategory,
-  type WhatsAppWebhookEventRecord,
-  type WhatsAppWebhookProcessingStatus,
+import type {
+  InboundWhatsAppMessageRecord,
+  WhatsAppRepository,
+  WhatsAppTemplateCategory,
+  WhatsAppWebhookEventRecord,
+  WhatsAppWebhookProcessingStatus,
 } from "./repository";
 import { classifyWoztellWebhookEvent } from "./woztell";
 
@@ -306,11 +303,20 @@ export async function listWhatsAppConversationMessagesForActor(
 // never reaches the pool. The *ForActor functions assert again on the actor they
 // are handed — they are the seam the unit tests drive, and have to stand on their
 // own rather than inherit a guarantee from this wrapper.
+const loadDefaultWhatsAppInboxContext = createServerOnlyFn(async () => {
+  const [{ getRequest }, { requireActor }, { createWhatsAppRepository }] = await Promise.all([
+    import("@tanstack/react-start/server"),
+    import("@/features/auth/neon-auth-server"),
+    import("./repository"),
+  ]);
+  const actor = assertStaffAccess(await requireActor(getRequest()));
+  return { actor, repository: createWhatsAppRepository() };
+});
+
 async function withWhatsAppInboxRepository<T>(
   handler: (repository: WhatsAppRepository, actor: AuthenticatedActor) => Promise<T>,
 ): Promise<T> {
-  const actor = assertStaffAccess(await requireActor(getRequest()));
-  const repository = createWhatsAppRepository();
+  const { actor, repository } = await loadDefaultWhatsAppInboxContext();
 
   try {
     return await handler(repository, actor);
@@ -341,8 +347,12 @@ export const listWhatsAppConversationMessages = createServerFn({ method: "GET" }
 export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" })
   .validator(noInputSchema)
   .handler(async () => {
+    const [{ getRequest }, { requireStaffActor }, { currentProviderMode }] = await Promise.all([
+      import("@tanstack/react-start/server"),
+      import("@/features/auth/neon-auth-server"),
+      import("@/server/provider-mode"),
+    ]);
     await requireStaffActor(getRequest());
-    const { currentProviderMode } = await import("@/server/provider-mode");
     return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
   });
 

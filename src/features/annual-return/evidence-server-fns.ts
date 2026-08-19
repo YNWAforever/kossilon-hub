@@ -1,13 +1,8 @@
-import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import { getCurrentAnnualReturnActor } from "./session";
-import {
-  createAnnualReturnEvidenceService,
-  type AnnualReturnEvidenceService,
-} from "./evidence-service";
+import type { AnnualReturnEvidenceService } from "./evidence-service";
 
 const reviewEvidenceSchema = z
   .object({
@@ -67,20 +62,32 @@ export async function acceptAnnualReturnFilingReceiptForActor(
   });
 }
 
+const loadDefaultAnnualReturnEvidenceContext = createServerOnlyFn(async () => {
+  const [{ getRequest }, { getCurrentAnnualReturnActor }, { createAnnualReturnEvidenceService }] =
+    await Promise.all([
+      import("@tanstack/react-start/server"),
+      import("./session"),
+      import("./evidence-service"),
+    ]);
+  const actor = await getCurrentAnnualReturnActor(getRequest());
+  return {
+    actor,
+    dependencies: {
+      service: createAnnualReturnEvidenceService(),
+    } satisfies AnnualReturnEvidenceCommandDependencies,
+  };
+});
+
 export const reviewAnnualReturnEvidenceAction = createServerFn({ method: "POST" })
   .validator(reviewEvidenceSchema)
   .handler(async ({ data }) => {
-    const actor = await getCurrentAnnualReturnActor(getRequest());
-    return reviewAnnualReturnEvidenceForActor(actor, data, {
-      service: createAnnualReturnEvidenceService(),
-    });
+    const { actor, dependencies } = await loadDefaultAnnualReturnEvidenceContext();
+    return reviewAnnualReturnEvidenceForActor(actor, data, dependencies);
   });
 
 export const acceptAnnualReturnFilingReceiptAction = createServerFn({ method: "POST" })
   .validator(acceptFilingReceiptSchema)
   .handler(async ({ data }) => {
-    const actor = await getCurrentAnnualReturnActor(getRequest());
-    return acceptAnnualReturnFilingReceiptForActor(actor, data, {
-      service: createAnnualReturnEvidenceService(),
-    });
+    const { actor, dependencies } = await loadDefaultAnnualReturnEvidenceContext();
+    return acceptAnnualReturnFilingReceiptForActor(actor, data, dependencies);
   });

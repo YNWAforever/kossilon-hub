@@ -1,15 +1,12 @@
-import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DispatchSummary } from "@/features/notifications/types";
 import type { ProviderMode } from "@/server/provider-mode";
-import { getSqlClient } from "@/server/db/client";
-import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
+import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import { getAnnualReturnActionPermission } from "./permissions";
-import { createAnnualReturnRepository, type AnnualReturnRepository } from "./repository";
-import { getCurrentAnnualReturnActor } from "./session";
+import type { AnnualReturnRepository } from "./repository";
 import { hongKongBusinessDate } from "./workflow";
 import {
   deriveProductionFollowUpDrafts,
@@ -19,10 +16,7 @@ import {
   type ProductionFollowUpIdentity,
   type ProductionFollowUpSource,
 } from "./follow-ups";
-import {
-  createProductionFollowUpRepository,
-  type ProductionFollowUpRepository,
-} from "./follow-up-repository";
+import type { ProductionFollowUpRepository } from "./follow-up-repository";
 
 const followUpIdentityFields = {
   caseId: z.string().uuid(),
@@ -227,7 +221,40 @@ export function sendProductionFollowUpForActor(
   return sendPaymentProofFollowUpForActor(actor, data, dependencies);
 }
 
+const loadProductionFollowUpDependencies = createServerOnlyFn(async () => {
+  const [
+    { getRequest },
+    { getCurrentAnnualReturnActor },
+    { getSqlClient },
+    { createAnnualReturnRepository },
+    { createProductionFollowUpRepository },
+    { createWhatsAppRepository },
+  ] = await Promise.all([
+    import("@tanstack/react-start/server"),
+    import("./session"),
+    import("@/server/db/client"),
+    import("./repository"),
+    import("./follow-up-repository"),
+    import("@/features/whatsapp/repository"),
+  ]);
+  return {
+    getRequest,
+    getCurrentAnnualReturnActor,
+    getSqlClient,
+    createAnnualReturnRepository,
+    createProductionFollowUpRepository,
+    createWhatsAppRepository,
+  };
+});
+
 export const listProductionFollowUpDrafts = createServerFn({ method: "GET" }).handler(async () => {
+  const {
+    getRequest,
+    getCurrentAnnualReturnActor,
+    createAnnualReturnRepository,
+    createProductionFollowUpRepository,
+    createWhatsAppRepository,
+  } = await loadProductionFollowUpDependencies();
   const actor = await getCurrentAnnualReturnActor(getRequest());
   const annualReturnRepository = createAnnualReturnRepository();
   const followUpRepository = createProductionFollowUpRepository();
@@ -250,6 +277,14 @@ export const listProductionFollowUpDrafts = createServerFn({ method: "GET" }).ha
 export const sendProductionFollowUp = createServerFn({ method: "POST" })
   .validator(productionFollowUpSchema)
   .handler(async ({ data }) => {
+    const {
+      getRequest,
+      getCurrentAnnualReturnActor,
+      getSqlClient,
+      createAnnualReturnRepository,
+      createProductionFollowUpRepository,
+      createWhatsAppRepository,
+    } = await loadProductionFollowUpDependencies();
     const actor = await getCurrentAnnualReturnActor(getRequest());
     const sql = getSqlClient();
     const result = await sql.begin(async (tx) => {

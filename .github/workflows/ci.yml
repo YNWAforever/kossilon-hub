@@ -83,6 +83,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      # npm run build passing doesn't prove npm run dev works — dev mode skips
+      # Rollup's tree-shaking, so a static import of server-only code that build
+      # happily eliminates can still break every page in dev. This boots the real
+      # dev server and requests every route to catch that class of regression.
+      - name: Dev server import boundaries
+        run: npm run verify:dev-server-imports
+
       - name: Cron trigger has a handler in the built Worker
         run: |
           grep -q 'hooks.hook("cloudflare:scheduled"' .output/server/index.mjs \
