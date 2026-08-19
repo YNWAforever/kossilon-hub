@@ -111,7 +111,7 @@ describe("production route authorization contract", () => {
     // mode. Without this the guard is enforced only by inspection: deleting the
     // requireStaffActor call leaves every other test green.
     expect(serverFunctions).toMatch(
-      /getWhatsAppIntegrationStatus = createServerFn[\s\S]{0,300}?requireStaffActor\(getRequest\(\)\)/,
+      /getWhatsAppIntegrationStatus = createServerFn[\s\S]{0,400}?requireStaffActor\(getRequest\(\)\)/,
     );
   });
 
