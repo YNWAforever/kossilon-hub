@@ -1,8 +1,7 @@
-import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { createAnnualReturnRepository, type AnnualReturnRepository } from "./repository";
+import type { AnnualReturnRepository } from "./repository";
 import type { AnnualReturnCase, AnnualReturnStatus, PaymentStatus } from "./types";
 
 /**
@@ -143,22 +142,29 @@ function toClientDetail(case_: AnnualReturnCase): ClientPortalCaseDetail {
   };
 }
 
+const loadClientPortalDependencies = createServerOnlyFn(async () => {
+  const [{ getRequest }, { listActiveClientCompanyIds }, { createAnnualReturnRepository }] =
+    await Promise.all([
+      import("@tanstack/react-start/server"),
+      import("@/features/auth/neon-auth-server"),
+      import("./repository"),
+    ]);
+  const request = getRequest();
+  return {
+    repository: createAnnualReturnRepository(),
+    listCompanyIds: () => listActiveClientCompanyIds(request),
+  };
+});
+
 async function withClientPortalDependencies<T>(
   handler: (dependencies: ClientPortalDependencies) => Promise<T>,
 ): Promise<T> {
-  const [{ listActiveClientCompanyIds }] = await Promise.all([
-    import("@/features/auth/neon-auth-server"),
-  ]);
-  const request = getRequest();
-  const repository = createAnnualReturnRepository();
+  const dependencies = await loadClientPortalDependencies();
 
   try {
-    return await handler({
-      repository,
-      listCompanyIds: () => listActiveClientCompanyIds(request),
-    });
+    return await handler(dependencies);
   } finally {
-    await repository.close();
+    await dependencies.repository.close();
   }
 }
 
