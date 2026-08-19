@@ -275,6 +275,26 @@ create table if not exists sla_policies (
   unique (policy_key, version)
 );
 
+create table if not exists checklist_templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  service_type text not null check (service_type in (
+    'Annual Return — Private Ltd', 'Annual Return — Public Ltd',
+    'Incorporation — HK Ltd', 'Change of Director', 'Deregistration'
+  )),
+  description text not null default '',
+  active boolean not null default true,
+  documents jsonb not null default '[]'::jsonb,
+  reminders jsonb not null default '[]'::jsonb,
+  risk_rules jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists checklist_templates_service_type_idx
+  on checklist_templates (service_type)
+  where active;
+
 create table if not exists work_items (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references companies(id) on delete restrict,

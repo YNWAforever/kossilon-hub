@@ -88,8 +88,8 @@ describe("final review architecture restorations", () => {
   });
 
   it("restores editable settings while retaining the knowledge base", () => {
-    expect(settingsSource).toContain("templatesStore.update");
-    expect(settingsSource).toContain("templatesStore.addDocument");
+    expect(settingsSource).toContain("updateChecklistTemplate");
+    expect(settingsSource).toContain("createChecklistTemplate");
     expect(settingsSource).toContain("Service packages");
     expect(settingsSource).toContain("WOZTELL WhatsApp API");
     expect(settingsSource).toContain("<KnowledgeBaseSection />");

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth } from "@/features/auth/auth-context-neon";
@@ -17,15 +17,25 @@ import {
   Shield,
   Search,
 } from "lucide-react";
+import { useTemplates as useDemoTemplates } from "@/lib/templates";
 import {
-  useTemplates,
-  templatesStore,
   SERVICE_TYPES,
   type ChecklistTemplate,
+  type ChecklistTemplatePatch,
+  type DocumentItem,
   type ServiceType,
   type RiskRule,
   type ReminderRule,
-} from "@/lib/templates";
+} from "@/features/checklist-templates/types";
+import {
+  createChecklistTemplate,
+  deleteChecklistTemplate,
+  duplicateChecklistTemplate,
+  listChecklistTemplates,
+  updateChecklistTemplate,
+} from "@/features/checklist-templates/server-fns";
+import type { DataMode } from "@/features/runtime/data-mode";
+import { guardMutation } from "@/lib/guard-mutation";
 import { cases } from "@/lib/mock-data";
 import { formatDate } from "@/lib/format-date";
 import { KnowledgeBaseSection } from "@/components/knowledge-base-section";
@@ -48,18 +58,131 @@ export const Route = createFileRoute("/settings")({
 
 type Tab = "documents" | "reminders" | "risks";
 
+// The shape of `useMutation`'s result that the template-editing subcomponents need. Kept narrow
+// (rather than the full `UseMutationResult`) so it's easy to pass down through props.
+type UpdateTemplateMutation = {
+  mutate: (input: { id: string; patch: ChecklistTemplatePatch }) => void;
+};
+
+// Stable fallback so `templates` keeps the same array identity across renders while the
+// production query has no data yet (an inline `[]` would allocate a new array every render).
+const EMPTY_TEMPLATES: ChecklistTemplate[] = [];
+
+function describeMutationError(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 function SettingsPage() {
   const { dataMode } = Route.useRouteContext();
   const { isCurrentUserAdmin } = useAuth();
   const sections = settingsSectionsForMode(dataMode);
-  const templates = useTemplates();
   const integrationQuery = useQuery({
     queryKey: ["whatsapp-integration-status"],
     queryFn: () => getWhatsAppIntegrationStatus(),
   });
+
+  const queryClient = useQueryClient();
+  const demoTemplates = useDemoTemplates();
+  const productionTemplatesQuery = useQuery({
+    queryKey: ["checklist-templates"],
+    queryFn: () => listChecklistTemplates(),
+    enabled: dataMode === "production",
+  });
+  const templates =
+    dataMode === "demo" ? demoTemplates : (productionTemplatesQuery.data ?? EMPTY_TEMPLATES);
+
+  // Returns the promise so mutation `onSuccess` handlers can `await` it — that keeps
+  // TanStack Query's `isPending` true for the mutation's *entire* round trip (server write +
+  // refetch + cache update), not just the initial network request. See `isSaving` below: as
+  // long as any of the four mutations is pending, every add/remove/duplicate/delete control and
+  // every editable field is *rendered* disabled, so in ordinary use a second click never even
+  // reaches a handler.
+  function invalidateTemplates() {
+    return queryClient.invalidateQueries({ queryKey: ["checklist-templates"] });
+  }
+
+  // Belt-and-suspenders against the same race, for the (narrow, but real) window before a render
+  // driven by `isSaving` has actually committed — see `guardMutation` (`@/lib/guard-mutation`) for
+  // why this can't just rely on `isPending`/`isSaving`. Cleared in `onSettled` (below), which
+  // TanStack Query runs after `onSuccess`'s `await invalidateTemplates()` has already completed —
+  // so the next call this ref allows is always against a freshly-refetched `t`.
+  const mutationInFlightRef = useRef(false);
+
+  function clearMutationInFlight() {
+    mutationInFlightRef.current = false;
+  }
+
+  const createMutation = useMutation({
+    mutationFn: (serviceType: ServiceType) => createChecklistTemplate({ data: { serviceType } }),
+    onSuccess: async (created) => {
+      setWarning(undefined);
+      await invalidateTemplates();
+      setSelectedId(created.id);
+      setTab("documents");
+    },
+    onError: (error) => setWarning(describeMutationError(error, "Unable to create the template.")),
+    onSettled: clearMutationInFlight,
+  });
+  const updateMutation = useMutation({
+    mutationFn: (input: { id: string; patch: ChecklistTemplatePatch }) =>
+      updateChecklistTemplate({ data: input }),
+    onSuccess: async () => {
+      setWarning(undefined);
+      await invalidateTemplates();
+    },
+    onError: (error) => setWarning(describeMutationError(error, "Unable to save the change.")),
+    onSettled: clearMutationInFlight,
+  });
+  const duplicateMutation = useMutation({
+    mutationFn: (id: string) => duplicateChecklistTemplate({ data: { id } }),
+    onSuccess: async (duplicated) => {
+      setWarning(undefined);
+      await invalidateTemplates();
+      setSelectedId(duplicated.id);
+    },
+    onError: (error) =>
+      setWarning(describeMutationError(error, "Unable to duplicate the template.")),
+    onSettled: clearMutationInFlight,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteChecklistTemplate({ data: { id } }),
+    onSuccess: async () => {
+      setWarning(undefined);
+      await invalidateTemplates();
+    },
+    onError: (error) => setWarning(describeMutationError(error, "Unable to delete the template.")),
+    onSettled: clearMutationInFlight,
+  });
+
+  // The `updateMutation` prop threaded down to `TemplateEditor` and its tabs is the *guarded*
+  // `mutate`, so every add/remove/edit call site below (23 of them) gets the synchronous
+  // protection for free, with no per-call-site change needed.
+  const guardedUpdateMutation: UpdateTemplateMutation = {
+    mutate: guardMutation(
+      mutationInFlightRef,
+      (input: { id: string; patch: ChecklistTemplatePatch }) => updateMutation.mutate(input),
+    ),
+  };
+  const guardedCreateTemplate = guardMutation(mutationInFlightRef, (serviceType: ServiceType) =>
+    createMutation.mutate(serviceType),
+  );
+  const guardedDuplicateTemplate = guardMutation(mutationInFlightRef, (id: string) =>
+    duplicateMutation.mutate(id),
+  );
+
+  // True for the entire round trip of any in-flight template mutation (see the comment on
+  // `invalidateTemplates` above). Threaded down alongside `dataMode` so every mutating control
+  // and editable field disables itself while a write is outstanding.
+  const isSaving =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    duplicateMutation.isPending ||
+    deleteMutation.isPending;
+
   const [selectedId, setSelectedId] = useState<string>(templates[0]?.id ?? "");
   const [tab, setTab] = useState<Tab>("documents");
   const [query, setQuery] = useState("");
+  const [warning, setWarning] = useState<string | undefined>();
 
   const selected = templates.find((t) => t.id === selectedId) ?? templates[0];
   const filtered = useMemo(
@@ -96,6 +219,11 @@ function SettingsPage() {
             : "Integrations"
         }
       />
+      {warning ? (
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+          {warning}
+        </div>
+      ) : null}
       {sections.checklistTemplates ? (
         <section className="rounded-xl border border-border bg-card">
           <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
@@ -111,16 +239,15 @@ function SettingsPage() {
                 active template for its service type.
               </p>
             </div>
-            <button
-              onClick={() => {
-                const id = templatesStore.create();
-                setSelectedId(id);
-                setTab("documents");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus className="h-3.5 w-3.5" /> New template
-            </button>
+            {dataMode === "production" && (
+              <button
+                onClick={() => guardedCreateTemplate("Annual Return — Private Ltd")}
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <Plus className="h-3.5 w-3.5" /> New template
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
@@ -184,12 +311,14 @@ function SettingsPage() {
                   t={selected}
                   tab={tab}
                   setTab={setTab}
-                  onDuplicate={() => {
-                    const id = templatesStore.duplicate(selected.id);
-                    if (id) setSelectedId(id);
-                  }}
+                  dataMode={dataMode}
+                  isSaving={isSaving}
+                  updateMutation={guardedUpdateMutation}
+                  onDuplicate={() => guardedDuplicateTemplate(selected.id)}
                   onDelete={() => {
-                    templatesStore.remove(selected.id);
+                    if (mutationInFlightRef.current) return;
+                    mutationInFlightRef.current = true;
+                    deleteMutation.mutate(selected.id);
                     const next = templates.find((t) => t.id !== selected.id);
                     if (next) setSelectedId(next.id);
                   }}
@@ -293,31 +422,49 @@ function TemplateEditor({
   t,
   tab,
   setTab,
+  dataMode,
+  isSaving,
+  updateMutation,
   onDuplicate,
   onDelete,
 }: {
   t: ChecklistTemplate;
   tab: Tab;
   setTab: (t: Tab) => void;
+  dataMode: DataMode;
+  isSaving: boolean;
+  updateMutation: UpdateTemplateMutation;
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  const [name, setName] = useState(t.name);
+  const [description, setDescription] = useState(t.description);
+
   return (
     <div className="space-y-5">
       {/* Meta */}
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex-1 space-y-3">
           <input
-            value={t.name}
-            onChange={(e) => templatesStore.update(t.id, { name: e.target.value })}
-            className="w-full border-b border-transparent bg-transparent font-display text-xl font-semibold text-foreground outline-none focus:border-border"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => {
+              if (name !== t.name) updateMutation.mutate({ id: t.id, patch: { name } });
+            }}
+            disabled={dataMode === "demo" || isSaving}
+            className="w-full border-b border-transparent bg-transparent font-display text-xl font-semibold text-foreground outline-none focus:border-border disabled:cursor-not-allowed disabled:opacity-70"
           />
           <textarea
-            value={t.description}
-            onChange={(e) => templatesStore.update(t.id, { description: e.target.value })}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={() => {
+              if (description !== t.description)
+                updateMutation.mutate({ id: t.id, patch: { description } });
+            }}
             placeholder="Describe when this template applies…"
             rows={2}
-            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+            disabled={dataMode === "demo" || isSaving}
+            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
           />
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <label className="flex items-center gap-2">
@@ -325,11 +472,13 @@ function TemplateEditor({
               <select
                 value={t.serviceType}
                 onChange={(e) =>
-                  templatesStore.update(t.id, {
-                    serviceType: e.target.value as ServiceType,
+                  updateMutation.mutate({
+                    id: t.id,
+                    patch: { serviceType: e.target.value as ServiceType },
                   })
                 }
-                className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
+                disabled={dataMode === "demo" || isSaving}
+                className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {SERVICE_TYPES.map((s) => (
                   <option key={s} value={s}>
@@ -342,27 +491,34 @@ function TemplateEditor({
               <input
                 type="checkbox"
                 checked={t.active}
-                onChange={(e) => templatesStore.update(t.id, { active: e.target.checked })}
+                onChange={(e) =>
+                  updateMutation.mutate({ id: t.id, patch: { active: e.target.checked } })
+                }
+                disabled={dataMode === "demo" || isSaving}
               />
               <span className="text-muted-foreground">Active</span>
             </label>
             <span className="text-muted-foreground">Updated {formatDate(t.updatedAt)}</span>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={onDuplicate}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
-          >
-            <Copy className="h-3.5 w-3.5" /> Duplicate
-          </button>
-          <button
-            onClick={onDelete}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Delete
-          </button>
-        </div>
+        {dataMode === "production" && (
+          <div className="flex gap-2">
+            <button
+              onClick={onDuplicate}
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <Copy className="h-3.5 w-3.5" /> Duplicate
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Summary chips */}
@@ -400,14 +556,64 @@ function TemplateEditor({
         ))}
       </div>
 
-      {tab === "documents" && <DocumentsTab t={t} />}
-      {tab === "reminders" && <RemindersTab t={t} />}
-      {tab === "risks" && <RisksTab t={t} />}
+      {tab === "documents" && (
+        <DocumentsTab
+          t={t}
+          dataMode={dataMode}
+          isSaving={isSaving}
+          updateMutation={updateMutation}
+        />
+      )}
+      {tab === "reminders" && (
+        <RemindersTab
+          t={t}
+          dataMode={dataMode}
+          isSaving={isSaving}
+          updateMutation={updateMutation}
+        />
+      )}
+      {tab === "risks" && (
+        <RisksTab t={t} dataMode={dataMode} isSaving={isSaving} updateMutation={updateMutation} />
+      )}
     </div>
   );
 }
 
-function DocumentsTab({ t }: { t: ChecklistTemplate }) {
+export function DocumentsTab({
+  t,
+  dataMode,
+  isSaving,
+  updateMutation,
+}: {
+  t: ChecklistTemplate;
+  dataMode: DataMode;
+  isSaving: boolean;
+  updateMutation: UpdateTemplateMutation;
+}) {
+  function updateDocument(docId: string, patch: Partial<DocumentItem>) {
+    updateMutation.mutate({
+      id: t.id,
+      patch: {
+        documents: t.documents.map((d) => (d.id === docId ? { ...d, ...patch } : d)),
+      },
+    });
+  }
+  function removeDocument(docId: string) {
+    updateMutation.mutate({
+      id: t.id,
+      patch: { documents: t.documents.filter((d) => d.id !== docId) },
+    });
+  }
+  function addDocument() {
+    const newDocument: DocumentItem = {
+      id: crypto.randomUUID(),
+      label: "New document",
+      required: true,
+      daysBeforeDue: 14,
+    };
+    updateMutation.mutate({ id: t.id, patch: { documents: [...t.documents, newDocument] } });
+  }
+
   return (
     <div className="rounded-lg border border-border">
       <div className="grid grid-cols-[1fr_120px_110px_80px] items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -421,68 +627,135 @@ function DocumentsTab({ t }: { t: ChecklistTemplate }) {
       )}
       <ul className="divide-y divide-border">
         {t.documents.map((d) => (
-          <li
+          <DocumentRow
             key={d.id}
-            className="grid grid-cols-[1fr_120px_110px_80px] items-center gap-2 px-3 py-2 text-sm"
-          >
-            <input
-              value={d.label}
-              onChange={(e) => templatesStore.updateDocument(t.id, d.id, { label: e.target.value })}
-              className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
-            />
-            <div className="flex items-center gap-1 text-xs">
-              <span className="text-muted-foreground">-</span>
-              <input
-                type="number"
-                min={0}
-                value={d.daysBeforeDue}
-                onChange={(e) =>
-                  templatesStore.updateDocument(t.id, d.id, {
-                    daysBeforeDue: Math.max(0, Number(e.target.value) || 0),
-                  })
-                }
-                className="w-14 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring"
-              />
-              <span className="text-muted-foreground">days</span>
-            </div>
-            <label className="inline-flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                checked={d.required}
-                onChange={(e) =>
-                  templatesStore.updateDocument(t.id, d.id, {
-                    required: e.target.checked,
-                  })
-                }
-              />
-              <span className="text-muted-foreground">Required</span>
-            </label>
-            <div className="text-right">
-              <button
-                onClick={() => templatesStore.removeDocument(t.id, d.id)}
-                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="Remove document"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </li>
+            doc={d}
+            dataMode={dataMode}
+            isSaving={isSaving}
+            onUpdate={(patch) => updateDocument(d.id, patch)}
+            onRemove={() => removeDocument(d.id)}
+          />
         ))}
       </ul>
-      <div className="border-t border-border p-2">
-        <button
-          onClick={() => templatesStore.addDocument(t.id)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add document
-        </button>
-      </div>
+      {dataMode === "production" && (
+        <div className="border-t border-border p-2">
+          <button
+            onClick={addDocument}
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add document
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-function RemindersTab({ t }: { t: ChecklistTemplate }) {
+function DocumentRow({
+  doc,
+  dataMode,
+  isSaving,
+  onUpdate,
+  onRemove,
+}: {
+  doc: DocumentItem;
+  dataMode: DataMode;
+  isSaving: boolean;
+  onUpdate: (patch: Partial<DocumentItem>) => void;
+  onRemove: () => void;
+}) {
+  const [label, setLabel] = useState(doc.label);
+  const [daysBeforeDue, setDaysBeforeDue] = useState(doc.daysBeforeDue);
+
+  return (
+    <li className="grid grid-cols-[1fr_120px_110px_80px] items-center gap-2 px-3 py-2 text-sm">
+      <input
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        onBlur={() => {
+          if (label !== doc.label) onUpdate({ label });
+        }}
+        disabled={dataMode === "demo" || isSaving}
+        className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+      />
+      <div className="flex items-center gap-1 text-xs">
+        <span className="text-muted-foreground">-</span>
+        <input
+          type="number"
+          min={0}
+          value={daysBeforeDue}
+          onChange={(e) => setDaysBeforeDue(Math.max(0, Number(e.target.value) || 0))}
+          onBlur={() => {
+            if (daysBeforeDue !== doc.daysBeforeDue) onUpdate({ daysBeforeDue });
+          }}
+          disabled={dataMode === "demo" || isSaving}
+          className="w-14 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        />
+        <span className="text-muted-foreground">days</span>
+      </div>
+      <label className="inline-flex items-center gap-2 text-xs">
+        <input
+          type="checkbox"
+          checked={doc.required}
+          onChange={(e) => onUpdate({ required: e.target.checked })}
+          disabled={dataMode === "demo" || isSaving}
+        />
+        <span className="text-muted-foreground">Required</span>
+      </label>
+      <div className="text-right">
+        {dataMode === "production" && (
+          <button
+            onClick={onRemove}
+            disabled={isSaving}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
+            aria-label="Remove document"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function RemindersTab({
+  t,
+  dataMode,
+  isSaving,
+  updateMutation,
+}: {
+  t: ChecklistTemplate;
+  dataMode: DataMode;
+  isSaving: boolean;
+  updateMutation: UpdateTemplateMutation;
+}) {
   const channels: ReminderRule["channel"][] = ["WhatsApp", "Email", "SMS"];
+
+  function updateReminder(reminderId: string, patch: Partial<ReminderRule>) {
+    updateMutation.mutate({
+      id: t.id,
+      patch: {
+        reminders: t.reminders.map((r) => (r.id === reminderId ? { ...r, ...patch } : r)),
+      },
+    });
+  }
+  function removeReminder(reminderId: string) {
+    updateMutation.mutate({
+      id: t.id,
+      patch: { reminders: t.reminders.filter((r) => r.id !== reminderId) },
+    });
+  }
+  function addReminder() {
+    const newReminder: ReminderRule = {
+      id: crypto.randomUUID(),
+      label: "New reminder",
+      daysBeforeDue: 7,
+      channel: "WhatsApp",
+    };
+    updateMutation.mutate({ id: t.id, patch: { reminders: [...t.reminders, newReminder] } });
+  }
+
   return (
     <div className="rounded-lg border border-border">
       <div className="grid grid-cols-[1fr_140px_130px_80px] items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -496,73 +769,144 @@ function RemindersTab({ t }: { t: ChecklistTemplate }) {
       )}
       <ul className="divide-y divide-border">
         {t.reminders.map((r) => (
-          <li
+          <ReminderRow
             key={r.id}
-            className="grid grid-cols-[1fr_140px_130px_80px] items-center gap-2 px-3 py-2 text-sm"
-          >
-            <input
-              value={r.label}
-              onChange={(e) => templatesStore.updateReminder(t.id, r.id, { label: e.target.value })}
-              className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
-            />
-            <div className="flex items-center gap-1 text-xs">
-              <span className="text-muted-foreground">-</span>
-              <input
-                type="number"
-                min={0}
-                value={r.daysBeforeDue}
-                onChange={(e) =>
-                  templatesStore.updateReminder(t.id, r.id, {
-                    daysBeforeDue: Math.max(0, Number(e.target.value) || 0),
-                  })
-                }
-                className="w-16 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring"
-              />
-              <span className="text-muted-foreground">days</span>
-            </div>
-            <select
-              value={r.channel}
-              onChange={(e) =>
-                templatesStore.updateReminder(t.id, r.id, {
-                  channel: e.target.value as ReminderRule["channel"],
-                })
-              }
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
-            >
-              {channels.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <div className="text-right">
-              <button
-                onClick={() => templatesStore.removeReminder(t.id, r.id)}
-                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="Remove reminder"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </li>
+            reminder={r}
+            channels={channels}
+            dataMode={dataMode}
+            isSaving={isSaving}
+            onUpdate={(patch) => updateReminder(r.id, patch)}
+            onRemove={() => removeReminder(r.id)}
+          />
         ))}
       </ul>
-      <div className="border-t border-border p-2">
-        <button
-          onClick={() => templatesStore.addReminder(t.id)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add reminder
-        </button>
-      </div>
+      {dataMode === "production" && (
+        <div className="border-t border-border p-2">
+          <button
+            onClick={addReminder}
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add reminder
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-function RisksTab({ t }: { t: ChecklistTemplate }) {
+function ReminderRow({
+  reminder,
+  channels,
+  dataMode,
+  isSaving,
+  onUpdate,
+  onRemove,
+}: {
+  reminder: ReminderRule;
+  channels: ReminderRule["channel"][];
+  dataMode: DataMode;
+  isSaving: boolean;
+  onUpdate: (patch: Partial<ReminderRule>) => void;
+  onRemove: () => void;
+}) {
+  const [label, setLabel] = useState(reminder.label);
+  const [daysBeforeDue, setDaysBeforeDue] = useState(reminder.daysBeforeDue);
+
+  return (
+    <li className="grid grid-cols-[1fr_140px_130px_80px] items-center gap-2 px-3 py-2 text-sm">
+      <input
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        onBlur={() => {
+          if (label !== reminder.label) onUpdate({ label });
+        }}
+        disabled={dataMode === "demo" || isSaving}
+        className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+      />
+      <div className="flex items-center gap-1 text-xs">
+        <span className="text-muted-foreground">-</span>
+        <input
+          type="number"
+          min={0}
+          value={daysBeforeDue}
+          onChange={(e) => setDaysBeforeDue(Math.max(0, Number(e.target.value) || 0))}
+          onBlur={() => {
+            if (daysBeforeDue !== reminder.daysBeforeDue) onUpdate({ daysBeforeDue });
+          }}
+          disabled={dataMode === "demo" || isSaving}
+          className="w-16 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        />
+        <span className="text-muted-foreground">days</span>
+      </div>
+      <select
+        value={reminder.channel}
+        onChange={(e) => onUpdate({ channel: e.target.value as ReminderRule["channel"] })}
+        disabled={dataMode === "demo" || isSaving}
+        className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {channels.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+      <div className="text-right">
+        {dataMode === "production" && (
+          <button
+            onClick={onRemove}
+            disabled={isSaving}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
+            aria-label="Remove reminder"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function RisksTab({
+  t,
+  dataMode,
+  isSaving,
+  updateMutation,
+}: {
+  t: ChecklistTemplate;
+  dataMode: DataMode;
+  isSaving: boolean;
+  updateMutation: UpdateTemplateMutation;
+}) {
   const severities: RiskRule["severity"][] = ["Low", "Medium", "High"];
   const tone = (s: RiskRule["severity"]) =>
     s === "High" ? "red" : s === "Medium" ? "orange" : "yellow";
+
+  function updateRisk(riskId: string, patch: Partial<RiskRule>) {
+    updateMutation.mutate({
+      id: t.id,
+      patch: {
+        riskRules: t.riskRules.map((r) => (r.id === riskId ? { ...r, ...patch } : r)),
+      },
+    });
+  }
+  function removeRisk(riskId: string) {
+    updateMutation.mutate({
+      id: t.id,
+      patch: { riskRules: t.riskRules.filter((r) => r.id !== riskId) },
+    });
+  }
+  function addRisk() {
+    const newRisk: RiskRule = {
+      id: crypto.randomUUID(),
+      label: "New risk rule",
+      severity: "Medium",
+      trigger: "Describe the trigger…",
+      enabled: true,
+    };
+    updateMutation.mutate({ id: t.id, patch: { riskRules: [...t.riskRules, newRisk] } });
+  }
+
   return (
     <div className="rounded-lg border border-border">
       <div className="grid grid-cols-[1fr_1.4fr_110px_90px_80px] items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -577,69 +921,110 @@ function RisksTab({ t }: { t: ChecklistTemplate }) {
       )}
       <ul className="divide-y divide-border">
         {t.riskRules.map((r) => (
-          <li
+          <RiskRow
             key={r.id}
-            className="grid grid-cols-[1fr_1.4fr_110px_90px_80px] items-center gap-2 px-3 py-2 text-sm"
-          >
-            <input
-              value={r.label}
-              onChange={(e) => templatesStore.updateRisk(t.id, r.id, { label: e.target.value })}
-              className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
-            />
-            <input
-              value={r.trigger}
-              onChange={(e) => templatesStore.updateRisk(t.id, r.id, { trigger: e.target.value })}
-              className="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring"
-            />
-            <div className="flex items-center gap-2">
-              <StatusPill tone={tone(r.severity)}>{r.severity}</StatusPill>
-              <select
-                value={r.severity}
-                onChange={(e) =>
-                  templatesStore.updateRisk(t.id, r.id, {
-                    severity: e.target.value as RiskRule["severity"],
-                  })
-                }
-                className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:ring-2 focus:ring-ring"
-              >
-                {severities.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <label className="inline-flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                checked={r.enabled}
-                onChange={(e) =>
-                  templatesStore.updateRisk(t.id, r.id, { enabled: e.target.checked })
-                }
-              />
-              <span className="text-muted-foreground">On</span>
-            </label>
-            <div className="text-right">
-              <button
-                onClick={() => templatesStore.removeRisk(t.id, r.id)}
-                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="Remove risk rule"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </li>
+            risk={r}
+            severities={severities}
+            tone={tone}
+            dataMode={dataMode}
+            isSaving={isSaving}
+            onUpdate={(patch) => updateRisk(r.id, patch)}
+            onRemove={() => removeRisk(r.id)}
+          />
         ))}
       </ul>
-      <div className="border-t border-border p-2">
-        <button
-          onClick={() => templatesStore.addRisk(t.id)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add risk rule
-        </button>
-      </div>
+      {dataMode === "production" && (
+        <div className="border-t border-border p-2">
+          <button
+            onClick={addRisk}
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add risk rule
+          </button>
+        </div>
+      )}
     </div>
+  );
+}
+
+function RiskRow({
+  risk,
+  severities,
+  tone,
+  dataMode,
+  isSaving,
+  onUpdate,
+  onRemove,
+}: {
+  risk: RiskRule;
+  severities: RiskRule["severity"][];
+  tone: (s: RiskRule["severity"]) => "red" | "orange" | "yellow";
+  dataMode: DataMode;
+  isSaving: boolean;
+  onUpdate: (patch: Partial<RiskRule>) => void;
+  onRemove: () => void;
+}) {
+  const [label, setLabel] = useState(risk.label);
+  const [trigger, setTrigger] = useState(risk.trigger);
+
+  return (
+    <li className="grid grid-cols-[1fr_1.4fr_110px_90px_80px] items-center gap-2 px-3 py-2 text-sm">
+      <input
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        onBlur={() => {
+          if (label !== risk.label) onUpdate({ label });
+        }}
+        disabled={dataMode === "demo" || isSaving}
+        className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+      />
+      <input
+        value={trigger}
+        onChange={(e) => setTrigger(e.target.value)}
+        onBlur={() => {
+          if (trigger !== risk.trigger) onUpdate({ trigger });
+        }}
+        disabled={dataMode === "demo" || isSaving}
+        className="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+      />
+      <div className="flex items-center gap-2">
+        <StatusPill tone={tone(risk.severity)}>{risk.severity}</StatusPill>
+        <select
+          value={risk.severity}
+          onChange={(e) => onUpdate({ severity: e.target.value as RiskRule["severity"] })}
+          disabled={dataMode === "demo" || isSaving}
+          className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {severities.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      </div>
+      <label className="inline-flex items-center gap-2 text-xs">
+        <input
+          type="checkbox"
+          checked={risk.enabled}
+          onChange={(e) => onUpdate({ enabled: e.target.checked })}
+          disabled={dataMode === "demo" || isSaving}
+        />
+        <span className="text-muted-foreground">On</span>
+      </label>
+      <div className="text-right">
+        {dataMode === "production" && (
+          <button
+            onClick={onRemove}
+            disabled={isSaving}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
+            aria-label="Remove risk rule"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    </li>
   );
 }
 

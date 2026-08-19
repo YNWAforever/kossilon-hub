@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { settingsSectionsForMode } from "./-settings-sections";
 
-// Checklist templates and the knowledge base live only in browser stores: there
-// is no table for either, no repository, and no production code reads them. The
-// screen used to render both editors unconditionally, so in production an Admin
-// edited state that was discarded on reload and would not have changed anything
-// even if it had persisted.
+// Checklist templates are now backed by a real table, repository, and Admin-gated
+// server functions, so they show in both modes. The knowledge base still lives only
+// in a browser store: there is no table, no repository, and no production code reads
+// it. Rendering its editor in production meant an Admin edited state that was
+// discarded on reload and would not have changed anything even if it had persisted.
 describe("settingsSectionsForMode", () => {
-  it("hides the browser-store sections in production", () => {
+  it("hides the remaining browser-store sections in production", () => {
     expect(settingsSectionsForMode("production")).toEqual({
-      checklistTemplates: false,
+      checklistTemplates: true,
       knowledgeBase: false,
       servicePackages: false,
       whatsappIntegration: true,
