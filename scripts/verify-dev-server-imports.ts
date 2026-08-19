@@ -59,9 +59,7 @@ function waitForReady(getOutput: () => string, timeoutMs: number): Promise<void>
       }
       if (Date.now() - start > timeoutMs) {
         clearInterval(interval);
-        reject(
-          new Error(`Dev server did not report ready within ${timeoutMs}ms.\n${getOutput()}`),
-        );
+        reject(new Error(`Dev server did not report ready within ${timeoutMs}ms.\n${getOutput()}`));
       }
     }, 200);
   });
@@ -146,7 +144,9 @@ async function main(): Promise<void> {
     }
 
     for (const result of results) {
-      console.log(`${result.ok ? "PASS" : "FAIL"} request ${result.path}${result.error ? `: ${result.error}` : ""}`);
+      console.log(
+        `${result.ok ? "PASS" : "FAIL"} request ${result.path}${result.error ? `: ${result.error}` : ""}`,
+      );
     }
 
     const violation = findImportProtectionViolation(output);
