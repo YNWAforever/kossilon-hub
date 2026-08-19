@@ -1,23 +1,20 @@
-import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import { getSqlClient } from "@/server/db/client";
-import {
-  createAnnualReturnRepository,
-  hongKongBusinessDate,
-  type AnnualReturnRepository,
-  type CaseFilters,
-} from "./repository";
+import type { AnnualReturnRepository, CaseFilters } from "./repository";
 import {
   assertAnnualReturnCaseVisible,
   caseFiltersForActor,
   isAnnualReturnCaseVisibleToActor,
 } from "./permissions";
-import { createWhatsAppRepository, type WhatsAppRepository } from "@/features/whatsapp/repository";
-import { getCurrentAnnualReturnActor, getCurrentAnnualReturnActorId } from "./session";
-import { buildReminderDraft, completionBlockers, isAllowedStatusTransition } from "./workflow";
+import type { WhatsAppRepository } from "@/features/whatsapp/repository";
+import {
+  buildReminderDraft,
+  completionBlockers,
+  hongKongBusinessDate,
+  isAllowedStatusTransition,
+} from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 
@@ -348,9 +345,35 @@ export function assertAnnualReturnStatusActionAllowed(
   }
 }
 
+const loadAnnualReturnServerDependencies = createServerOnlyFn(async () => {
+  const [
+    { getRequest },
+    { getCurrentAnnualReturnActor, getCurrentAnnualReturnActorId },
+    { getSqlClient },
+    { createAnnualReturnRepository },
+    { createWhatsAppRepository },
+  ] = await Promise.all([
+    import("@tanstack/react-start/server"),
+    import("./session"),
+    import("@/server/db/client"),
+    import("./repository"),
+    import("@/features/whatsapp/repository"),
+  ]);
+  return {
+    getRequest,
+    getCurrentAnnualReturnActor,
+    getCurrentAnnualReturnActorId,
+    getSqlClient,
+    createAnnualReturnRepository,
+    createWhatsAppRepository,
+  };
+});
+
 async function withAnnualReturnRepository<T>(
   handler: (repository: AnnualReturnRepository, actorId: string) => Promise<T>,
 ): Promise<T> {
+  const { getRequest, getCurrentAnnualReturnActorId, createAnnualReturnRepository } =
+    await loadAnnualReturnServerDependencies();
   const actorId = await getCurrentAnnualReturnActorId(getRequest());
   const repository = createAnnualReturnRepository();
 
@@ -364,6 +387,8 @@ async function withAnnualReturnRepository<T>(
 async function withAnnualReturnActorRepository<T>(
   handler: (repository: AnnualReturnRepository, actor: AuthenticatedActor) => Promise<T>,
 ): Promise<T> {
+  const { getRequest, getCurrentAnnualReturnActor, createAnnualReturnRepository } =
+    await loadAnnualReturnServerDependencies();
   const actor = await getCurrentAnnualReturnActor(getRequest());
   const repository = createAnnualReturnRepository();
 
@@ -375,16 +400,11 @@ async function withAnnualReturnActorRepository<T>(
 }
 export const listAnnualReturnCases = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
-  .handler(async ({ data }) => {
-    const actor = await getCurrentAnnualReturnActor(getRequest());
-    const repository = createAnnualReturnRepository();
-
-    try {
-      return await listAnnualReturnCasesForActor(actor, data, { repository });
-    } finally {
-      await repository.close();
-    }
-  });
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAnnualReturnCasesForActor(actor, data, { repository }),
+    ),
+  );
 
 export const getAnnualReturnCase = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
@@ -457,6 +477,13 @@ export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
 export const queueAnnualReturnWhatsAppReminderMessage = createServerFn({ method: "POST" })
   .validator(queueAnnualReturnWhatsAppReminderSchema)
   .handler(async ({ data }) => {
+    const {
+      getRequest,
+      getCurrentAnnualReturnActor,
+      getSqlClient,
+      createAnnualReturnRepository,
+      createWhatsAppRepository,
+    } = await loadAnnualReturnServerDependencies();
     const actor = await getCurrentAnnualReturnActor(getRequest());
     const sql = getSqlClient();
 
