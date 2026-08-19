@@ -118,7 +118,15 @@ async function main(): Promise<void> {
       // child.kill() only signals cmd.exe and leaves those grandchildren
       // running, which keeps their piped stdout/stderr open and the event
       // loop alive forever. taskkill's /t kills the whole process tree.
-      spawnSync("taskkill", ["/pid", String(child.pid), "/t", "/f"]);
+      const result = spawnSync("taskkill", ["/pid", String(child.pid), "/t", "/f"]);
+      if (result.error || result.status !== 0) {
+        console.warn(
+          `taskkill failed to tear down the dev-server process tree (pid ${child.pid}); ` +
+            "it may still be running. Falling back to killing the immediate child only.",
+          result.error ?? `exit code ${result.status}`,
+        );
+        child.kill();
+      }
       return;
     }
     try {
