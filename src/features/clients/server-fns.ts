@@ -5,11 +5,6 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import { assertClientCompanyCreatable, assertClientCompanyWritable } from "./authorization";
 import type { ClientRepository } from "./repository";
 
-/**
- * Resolves the staff user id every client write is attributed to. Mirrors
- * getCurrentAnnualReturnActorId — a Neon Auth session alone is not enough, the
- * actor must also have a staff row in the database to own a timeline event.
- */
 const loadDefaultClientContext = createServerOnlyFn(async () => {
   const [{ getRequest }, { requireStaffActor }, { createClientRepository }] = await Promise.all([
     import("@tanstack/react-start/server"),
@@ -19,6 +14,11 @@ const loadDefaultClientContext = createServerOnlyFn(async () => {
   return { getRequest, requireStaffActor, createClientRepository };
 });
 
+/**
+ * Resolves the staff user id every client write is attributed to. Mirrors
+ * getCurrentAnnualReturnActorId — a Neon Auth session alone is not enough, the
+ * actor must also have a staff row in the database to own a timeline event.
+ */
 async function getCurrentClientActor(
   dependencies: AuthDependencies = {},
 ): Promise<AuthenticatedActor & { userId: string }> {
