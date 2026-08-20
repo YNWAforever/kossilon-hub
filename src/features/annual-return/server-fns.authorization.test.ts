@@ -5,9 +5,11 @@ import type { AnnualReturnRepository } from "./repository";
 import {
   addAnnualReturnCaseNoteForActor,
   assignAnnualReturnCaseOwnerForActor,
+  createAnnualReturnCaseForActor,
   getAnnualReturnCaseForActor,
   getAnnualReturnDashboardMetricsForActor,
   listAnnualReturnCaseNotesForActor,
+  listCompaniesEligibleForCaseForActor,
   queueAnnualReturnWhatsAppReminderMessageForActor,
   updateAnnualReturnChecklistItemForActor,
   updateAnnualReturnFilingProofForActor,
@@ -424,5 +426,84 @@ describe("production annual return detail scoping", () => {
       listAnnualReturnCaseNotesForActor(staffActor, { caseId }, { repository }),
     ).resolves.toEqual([{ id: "note-1" }]);
     expect(listNotes).toHaveBeenCalledWith(caseId);
+  });
+});
+
+describe("createAnnualReturnCaseForActor / listCompaniesEligibleForCaseForActor", () => {
+  const staffActor: AuthenticatedActor = {
+    authUserId: "staff-auth",
+    userId: "20000000-0000-0000-0000-000000000005",
+    role: "Staff",
+    teamId: "10000000-0000-0000-0000-000000000001",
+    active: true,
+  };
+
+  it("rejects a Client actor from creating a case", async () => {
+    const createCase = vi.fn();
+    const dependencies = { repository: { createCase } as unknown as AnnualReturnRepository };
+
+    await expect(
+      createAnnualReturnCaseForActor(
+        clientActor,
+        {
+          companyId: "90000000-0000-0000-0000-000000000001",
+          templateId: "95000000-0000-0000-0000-000000000001",
+          ownerId: "20000000-0000-0000-0000-000000000001",
+          invoiceNumber: "INV-1",
+          feeAmount: 2800,
+        },
+        dependencies,
+      ),
+    ).rejects.toThrow(/staff access is required/i);
+    expect(createCase).not.toHaveBeenCalled();
+  });
+
+  it("passes validated data and the resolved actorId through to the repository", async () => {
+    const createCase = vi.fn(async (input: unknown) => input);
+    const dependencies = { repository: { createCase } as unknown as AnnualReturnRepository };
+
+    await createAnnualReturnCaseForActor(
+      staffActor,
+      {
+        companyId: "90000000-0000-0000-0000-000000000001",
+        templateId: "95000000-0000-0000-0000-000000000001",
+        ownerId: "20000000-0000-0000-0000-000000000001",
+        invoiceNumber: "INV-1",
+        feeAmount: 2800,
+      },
+      dependencies,
+    );
+
+    expect(createCase).toHaveBeenCalledWith({
+      companyId: "90000000-0000-0000-0000-000000000001",
+      templateId: "95000000-0000-0000-0000-000000000001",
+      ownerId: "20000000-0000-0000-0000-000000000001",
+      invoiceNumber: "INV-1",
+      feeAmount: 2800,
+      actorId: staffActor.userId,
+    });
+  });
+
+  it("rejects a Client actor from listing eligible companies", async () => {
+    const listCompaniesEligibleForCase = vi.fn();
+    const dependencies = {
+      repository: { listCompaniesEligibleForCase } as unknown as AnnualReturnRepository,
+    };
+
+    await expect(
+      listCompaniesEligibleForCaseForActor(clientActor, {}, dependencies),
+    ).rejects.toThrow(/staff access is required/i);
+    expect(listCompaniesEligibleForCase).not.toHaveBeenCalled();
+  });
+
+  it("lets a staff actor list eligible companies", async () => {
+    const listCompaniesEligibleForCase = vi.fn(async () => []);
+    const dependencies = {
+      repository: { listCompaniesEligibleForCase } as unknown as AnnualReturnRepository,
+    };
+
+    await listCompaniesEligibleForCaseForActor(staffActor, {}, dependencies);
+
+    expect(listCompaniesEligibleForCase).toHaveBeenCalledOnce();
   });
 });

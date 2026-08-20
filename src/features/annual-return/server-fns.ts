@@ -2,7 +2,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import type { AnnualReturnRepository, CaseFilters } from "./repository";
+import type { AnnualReturnRepository, CaseFilters, EligibleCompanyForCase } from "./repository";
 import {
   assertAnnualReturnCaseVisible,
   caseFiltersForActor,
@@ -102,6 +102,16 @@ const updatePaymentSchema = z
     }
   });
 
+const createAnnualReturnCaseSchema = z
+  .object({
+    companyId: z.string().uuid(),
+    templateId: z.string().uuid(),
+    ownerId: z.string().uuid(),
+    invoiceNumber: z.string().trim().min(1),
+    feeAmount: z.number().int().positive(),
+  })
+  .strict();
+
 export type AnnualReturnCaseCommandDependencies = {
   repository: AnnualReturnRepository;
 };
@@ -154,6 +164,33 @@ export async function getAnnualReturnDashboardMetricsForActor(
 
 function boardActorFrom(actor: AuthenticatedActor) {
   return { id: actor.userId, role: actor.role, teamId: actor.teamId, active: actor.active };
+}
+
+export async function listCompaniesEligibleForCaseForActor(
+  actor: AuthenticatedActor,
+  _input: Record<string, never>,
+  dependencies: { repository: Pick<AnnualReturnRepository, "listCompaniesEligibleForCase"> },
+): Promise<EligibleCompanyForCase[]> {
+  requireStaffUserId(actor);
+  return dependencies.repository.listCompaniesEligibleForCase();
+}
+
+export async function createAnnualReturnCaseForActor(
+  actor: AuthenticatedActor,
+  input: {
+    companyId: string;
+    templateId: string;
+    ownerId: string;
+    invoiceNumber: string;
+    feeAmount: number;
+  },
+  dependencies: AnnualReturnCaseCommandDependencies,
+) {
+  const data = createAnnualReturnCaseSchema.parse(input);
+  return dependencies.repository.createCase({
+    ...data,
+    actorId: requireStaffUserId(actor),
+  });
 }
 
 /**
@@ -419,6 +456,20 @@ export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" })
     getAnnualReturnDashboardMetricsForActor(actor, { repository }),
   ),
 );
+
+export const listCompaniesEligibleForCase = createServerFn({ method: "GET" }).handler(() =>
+  withAnnualReturnActorRepository((repository, actor) =>
+    listCompaniesEligibleForCaseForActor(actor, {}, { repository }),
+  ),
+);
+
+export const createAnnualReturnCase = createServerFn({ method: "POST" })
+  .validator(createAnnualReturnCaseSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      createAnnualReturnCaseForActor(actor, data, { repository }),
+    ),
+  );
 
 export const assignAnnualReturnCaseOwner = createServerFn({ method: "POST" })
   .validator(assignOwnerSchema)
