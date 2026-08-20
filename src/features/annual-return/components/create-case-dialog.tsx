@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -19,6 +19,14 @@ type Props = {
   companies: EligibleCompanyForCase[];
   templates: ActiveChecklistTemplateSummary[];
   owners: ClientAssignmentOptions["owners"];
+  /**
+   * True while the parent's companies/templates/owners queries are still
+   * resolving. Without this the dialog cannot tell "confirmed zero results"
+   * apart from "hasn't loaded yet" — and since those queries only start once
+   * the dialog opens, every open would otherwise show a false "no companies
+   * are eligible" message for a moment before the real data arrives.
+   */
+  isLoading: boolean;
   onCreated: (caseId: string) => void;
 };
 
@@ -30,15 +38,31 @@ type FormState = {
   feeAmount: string;
 };
 
+/**
+ * A company's assigned owner is only used as the default if they're actually
+ * in the (active-only) owners list — otherwise a deactivated owner would be
+ * silently submitted with no matching <option> shown on screen.
+ */
+function defaultOwnerId(
+  company: EligibleCompanyForCase | undefined,
+  owners: ClientAssignmentOptions["owners"],
+): string {
+  if (company && owners.some((owner) => owner.id === company.assignedOwnerId)) {
+    return company.assignedOwnerId;
+  }
+  return owners[0]?.id ?? "";
+}
+
 function emptyForm(
   companies: EligibleCompanyForCase[],
   templates: ActiveChecklistTemplateSummary[],
+  owners: ClientAssignmentOptions["owners"],
 ): FormState {
   const firstCompany = companies[0];
   return {
     companyId: firstCompany?.id ?? "",
     templateId: templates[0]?.id ?? "",
-    ownerId: firstCompany?.assignedOwnerId ?? "",
+    ownerId: defaultOwnerId(firstCompany, owners),
     invoiceNumber: "",
     feeAmount: "",
   };
@@ -54,20 +78,27 @@ export function CreateCaseDialog({
   companies,
   templates,
   owners,
+  isLoading,
   onCreated,
 }: Props) {
-  const [form, setForm] = useState<FormState>(() => emptyForm(companies, templates));
+  const [form, setForm] = useState<FormState>(() => emptyForm(companies, templates, owners));
   const [saving, setSaving] = useState(false);
+  const initializedRef = useRef(false);
 
-  // Only re-derive when the dialog transitions open, not on every companies/templates
-  // refetch while it's already open — that would blow away whatever the user is
-  // mid-filling-in.
+  // Re-derives the form exactly once per open: not on the first render (data
+  // is still loading, per isLoading), but the moment loading finishes. Further
+  // background refetches while the dialog stays open do NOT re-run this, so a
+  // user's in-progress edit is never clobbered — initializedRef only resets
+  // when the dialog closes.
   useEffect(() => {
-    if (open) {
-      setForm(emptyForm(companies, templates));
+    if (!open) {
+      initializedRef.current = false;
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+    if (isLoading || initializedRef.current) return;
+    setForm(emptyForm(companies, templates, owners));
+    initializedRef.current = true;
+  }, [open, isLoading, companies, templates, owners]);
 
   const selectedCompany = useMemo(
     () => companies.find((company) => company.id === form.companyId),
@@ -82,7 +113,7 @@ export function CreateCaseDialog({
     setForm((current) => ({
       ...current,
       companyId,
-      ownerId: company?.assignedOwnerId ?? current.ownerId,
+      ownerId: defaultOwnerId(company, owners),
     }));
   }
 
@@ -121,7 +152,9 @@ export function CreateCaseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {companies.length === 0 ? (
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : companies.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No companies are eligible for a new case right now — every active company already has
             one for its current return year.
