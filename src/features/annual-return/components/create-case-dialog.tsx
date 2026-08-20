@@ -27,6 +27,11 @@ type Props = {
    * are eligible" message for a moment before the real data arrives.
    */
   isLoading: boolean;
+  /** True if any of the three source queries failed. Without this, a real
+   * fetch failure renders as the misleading "no companies/templates" empty
+   * state instead of a genuine error — companies/templates default to `[]`
+   * on error the same way they do while genuinely empty. */
+  hasError: boolean;
   onCreated: (caseId: string) => void;
 };
 
@@ -79,6 +84,7 @@ export function CreateCaseDialog({
   templates,
   owners,
   isLoading,
+  hasError,
   onCreated,
 }: Props) {
   const [form, setForm] = useState<FormState>(() => emptyForm(companies, templates, owners));
@@ -154,6 +160,10 @@ export function CreateCaseDialog({
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : hasError ? (
+          <p role="alert" className="text-sm text-destructive">
+            Unable to load company, template, or owner data. Try again shortly.
+          </p>
         ) : companies.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No companies are eligible for a new case right now — every active company already has

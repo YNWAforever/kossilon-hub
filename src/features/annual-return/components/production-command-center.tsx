@@ -62,18 +62,21 @@ export function ProductionAnnualReturnCommandCenter({
     queryKey: ["annual-returns", "eligible-companies"],
     queryFn: () => listCompaniesEligibleForCase(),
     enabled: isCreateOpen,
+    retry: false,
   });
 
   const activeTemplatesQuery = useQuery({
     queryKey: ["checklist-templates", "active-annual-return"],
     queryFn: () => listActiveAnnualReturnTemplates(),
     enabled: isCreateOpen,
+    retry: false,
   });
 
   const assignmentOptionsQuery = useQuery({
     queryKey: ["clients", "assignment-options"],
     queryFn: () => listClientAssignmentOptions(),
     enabled: isCreateOpen,
+    retry: false,
   });
 
   const workItemsQuery = useQuery({
@@ -157,6 +160,11 @@ export function ProductionAnnualReturnCommandCenter({
           eligibleCompaniesQuery.isPending ||
           activeTemplatesQuery.isPending ||
           assignmentOptionsQuery.isPending
+        }
+        hasError={
+          eligibleCompaniesQuery.isError ||
+          activeTemplatesQuery.isError ||
+          assignmentOptionsQuery.isError
         }
         onCreated={() => {
           void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
