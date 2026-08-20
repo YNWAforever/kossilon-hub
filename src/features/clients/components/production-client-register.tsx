@@ -90,6 +90,12 @@ export function ProductionClientRegister() {
         </p>
       ) : null}
 
+      {optionsQuery.isError ? (
+        <p role="status" className="text-sm text-status-yellow">
+          Owner, team and package options are unavailable. New client is disabled until this loads.
+        </p>
+      ) : null}
+
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto]">
           <input

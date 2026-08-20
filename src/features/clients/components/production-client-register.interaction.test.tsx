@@ -140,4 +140,16 @@ describe("production client register", () => {
     resolveOptions(makeOptions());
     await waitFor(() => expect(button().disabled).toBe(false));
   });
+
+  it("shows a status message and keeps New client disabled when options fail to load", async () => {
+    serverFns.listClients.mockResolvedValue([]);
+    serverFns.listClientAssignmentOptions.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    renderRegister();
+
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toContain("Owner, team and package options are unavailable.");
+
+    const button = screen.getByRole("button", { name: "New client" }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
 });
