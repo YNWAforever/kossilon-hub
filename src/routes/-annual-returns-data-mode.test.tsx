@@ -142,4 +142,16 @@ describe("annual returns route across data modes", () => {
     expect(html).toContain("Search company or contact");
     expect(html).toContain("Delta Bloom Ventures Limited");
   });
+
+  it("shows the New case action in production mode", async () => {
+    const html = await renderRoute("/annual-returns", "production");
+
+    expect(html).toContain("New case");
+  });
+
+  it("shows no New case action in demo mode", async () => {
+    const html = await renderRoute("/annual-returns", "demo");
+
+    expect(html).not.toContain("New case");
+  });
 });

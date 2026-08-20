@@ -1,14 +1,16 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
+import { listClientAssignmentOptions } from "@/features/clients/server-fns";
 import { listWorkQueue } from "@/features/work-items/server-fns";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
 import { boardFiltersFromSearch, type AnnualReturnBoardSearch } from "../board-filters";
 import { boardMetrics } from "../board-metrics";
 import { annualReturnQueryKeys } from "../query-keys";
-import { listAnnualReturnCases } from "../server-fns";
+import { listAnnualReturnCases, listCompaniesEligibleForCase } from "../server-fns";
 import {
   ANNUAL_RETURN_STATUSES,
   type AnnualReturnCase,
@@ -16,6 +18,7 @@ import {
   type RiskLevel,
 } from "../types";
 import { daysBetween, hongKongBusinessDate } from "../workflow";
+import { CreateCaseDialog } from "./create-case-dialog";
 
 const BOARD_PAGE_SIZE = 200;
 
@@ -41,6 +44,8 @@ export function ProductionAnnualReturnCommandCenter({
   onSearchChange?: (next: AnnualReturnBoardSearch) => void;
 }) {
   const today = hongKongBusinessDate();
+  const queryClient = useQueryClient();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
 
@@ -48,6 +53,27 @@ export function ProductionAnnualReturnCommandCenter({
     queryKey: annualReturnQueryKeys.list(filters),
     queryFn: () => listAnnualReturnCases({ data: filters }),
     retry: false,
+  });
+
+  // Only fetched once the dialog is actually open — these are cheap reads, but
+  // there is no reason to fire them on every board load when most visits never
+  // open the dialog at all.
+  const eligibleCompaniesQuery = useQuery({
+    queryKey: ["annual-returns", "eligible-companies"],
+    queryFn: () => listCompaniesEligibleForCase(),
+    enabled: isCreateOpen,
+  });
+
+  const activeTemplatesQuery = useQuery({
+    queryKey: ["checklist-templates", "active-annual-return"],
+    queryFn: () => listActiveAnnualReturnTemplates(),
+    enabled: isCreateOpen,
+  });
+
+  const assignmentOptionsQuery = useQuery({
+    queryKey: ["clients", "assignment-options"],
+    queryFn: () => listClientAssignmentOptions(),
+    enabled: isCreateOpen,
   });
 
   const workItemsQuery = useQuery({
@@ -95,21 +121,46 @@ export function ProductionAnnualReturnCommandCenter({
         eyebrow="Operations"
         title="Annual returns"
         actions={
-          <Link
-            to="/work-queue"
-            search={{
-              view: "team",
-              owner: "all",
-              workType: "all",
-              sla: "all",
-              priority: "all",
-              status: "all",
-            }}
-            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Open work queue
-          </Link>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(true)}
+              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              New case
+            </button>
+            <Link
+              to="/work-queue"
+              search={{
+                view: "team",
+                owner: "all",
+                workType: "all",
+                sla: "all",
+                priority: "all",
+                status: "all",
+              }}
+              className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Open work queue
+            </Link>
+          </div>
         }
+      />
+
+      <CreateCaseDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        companies={eligibleCompaniesQuery.data ?? []}
+        templates={activeTemplatesQuery.data ?? []}
+        owners={assignmentOptionsQuery.data?.owners ?? []}
+        isLoading={
+          eligibleCompaniesQuery.isPending ||
+          activeTemplatesQuery.isPending ||
+          assignmentOptionsQuery.isPending
+        }
+        onCreated={() => {
+          void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
+        }}
       />
 
       {/* A fixed string, never query.error.message: the client rehydrates and
