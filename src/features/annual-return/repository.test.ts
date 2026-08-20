@@ -533,7 +533,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       const workItems = await sql<{ owner_id: string | null; status: string }[]>`
         select owner_id, status
         from work_items
-        where case_id = ${fixture.caseId}
+        where annual_return_case_id = ${fixture.caseId}
           and status in ('open', 'in_progress', 'blocked')
       `;
       expect(workItems.length).toBeGreaterThan(0);
@@ -1033,7 +1033,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         }[]
       >`
         select source_event_type from work_items
-        where case_id = ${fixture.caseId}
+        where annual_return_case_id = ${fixture.caseId}
         order by source_event_type
       `;
       expect(workItems.map((item) => item.source_event_type)).toEqual([
