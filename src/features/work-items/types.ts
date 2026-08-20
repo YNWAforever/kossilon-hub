@@ -38,6 +38,8 @@ export type SlaSnapshot = {
   dueAt: string;
 };
 
+export type WorkItemCaseType = "annual_return";
+
 export type WorkItemStatus = "open" | "in_progress" | "blocked" | "completed" | "cancelled";
 
 export type SlaThreshold = "none" | "warning" | "breach";
@@ -75,7 +77,7 @@ export type StaffCandidate = {
   capacityPoints: number;
   skills: readonly StaffSkill[];
   activeWork: readonly ActiveWorkload[];
-  caseIds: readonly string[];
+  caseIds: readonly (string | null)[];
 };
 
 export type AssignmentInput = {
@@ -83,7 +85,7 @@ export type AssignmentInput = {
   requiredRole: AssignmentRole;
   requiredSkillKey: string;
   teamId: string;
-  caseId: string;
+  caseId: string | null;
   ownerId: string | null;
   reviewerId: string | null;
   separationOfDuties: boolean;
