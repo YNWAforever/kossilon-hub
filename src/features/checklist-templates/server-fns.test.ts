@@ -220,7 +220,9 @@ describe("listActiveAnnualReturnTemplatesForActor", () => {
 
     await expect(
       listActiveAnnualReturnTemplatesForActor(staffActor, {}, { repository }),
-    ).resolves.toEqual([{ id: sampleTemplate.id, name: sampleTemplate.name, serviceType: sampleTemplate.serviceType }]);
+    ).resolves.toEqual([
+      { id: sampleTemplate.id, name: sampleTemplate.name, serviceType: sampleTemplate.serviceType },
+    ]);
   });
 
   it("rejects a Client actor", async () => {
