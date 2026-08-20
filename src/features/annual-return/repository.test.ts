@@ -2054,3 +2054,162 @@ describe("case filters narrow before the limit", () => {
     }
   });
 });
+
+describe.skipIf(!databaseUrl)("createCase", () => {
+  const TEST_TEMPLATE_ID = "95000000-0000-0000-0000-000000000001";
+  const TEST_COMPANY_ID = "96000000-0000-0000-0000-000000000001";
+
+  afterEach(async () => {
+    const sql = sqlForTests();
+    // Deleted in dependency order rather than relying on cascade behavior for
+    // every table — explicit and correct regardless of each FK's own ON DELETE rule.
+    await sql`delete from work_items where company_id = ${TEST_COMPANY_ID}`;
+    await sql`delete from timeline_events where company_id = ${TEST_COMPANY_ID}`;
+    await sql`delete from annual_return_audit_events where company_id = ${TEST_COMPANY_ID}`;
+    await sql`delete from payments where company_id = ${TEST_COMPANY_ID}`;
+    await sql`delete from annual_return_checklist_items where case_id in (
+      select id from annual_return_cases where company_id = ${TEST_COMPANY_ID}
+    )`;
+    await sql`delete from annual_return_cases where company_id = ${TEST_COMPANY_ID}`;
+    await sql`delete from companies where id = ${TEST_COMPANY_ID}`;
+    await sql`delete from checklist_templates where id = ${TEST_TEMPLATE_ID}`;
+  });
+
+  async function seedCompanyAndTemplate(basisDate: string) {
+    const sql = sqlForTests();
+    await sql`
+      insert into companies (
+        id, company_name, cr_number, br_number, incorporation_date,
+        annual_return_basis_date, registered_office, company_secretary,
+        status, assigned_owner_id, assigned_team_id
+      ) values (
+        ${TEST_COMPANY_ID}, 'Test Harbour Ltd', 'CR-CREATE-TEST', 'BR-CREATE-TEST',
+        '2020-01-01', ${basisDate}, 'Test office', 'Test Secretary Ltd',
+        'active', ${USER_AMY_ID}, ${TEAM_ANNUAL_RETURN_ID}
+      )
+      on conflict (id) do nothing
+    `;
+    await sql`
+      insert into checklist_templates (id, name, service_type, description, active, documents, reminders, risk_rules)
+      values (
+        ${TEST_TEMPLATE_ID}, 'Test template', 'Annual Return — Private Ltd', '', true,
+        ${sql.json([
+          { id: "doc-1", label: "Signed NAR1", required: true, daysBeforeDue: 14 },
+          { id: "doc-2", label: "Register extract", required: false, daysBeforeDue: 7 },
+        ])},
+        '[]'::jsonb, '[]'::jsonb
+      )
+      on conflict (id) do nothing
+    `;
+  }
+
+  it(
+    "creates a case with checklist items derived from the template, a payment row, and a work item",
+    async () => {
+      await seedCompanyAndTemplate("2026-07-01");
+      const repository = repositoryFor();
+
+      const created = await repository.createCase({
+        companyId: TEST_COMPANY_ID,
+        templateId: TEST_TEMPLATE_ID,
+        ownerId: USER_AMY_ID,
+        invoiceNumber: "INV-TEST-0001",
+        feeAmount: 2800,
+        actorId: USER_AMY_ID,
+      });
+
+      expect(created.companyId).toBe(TEST_COMPANY_ID);
+      expect(created.returnYear).toBe(2026);
+      expect(created.filingDueDate).toBe("2026-08-12");
+      expect(created.currentStatus).toBe("Upcoming");
+      expect(created.ownerId).toBe(USER_AMY_ID);
+      expect(created.checklist).toHaveLength(2);
+      expect(created.checklist.find((item) => item.itemLabel === "Signed NAR1")?.dueDate).toBe(
+        "2026-07-29",
+      );
+      expect(created.checklist.find((item) => item.itemLabel === "Register extract")?.dueDate).toBe(
+        "2026-08-05",
+      );
+      expect(created.payment).not.toBeNull();
+      expect(created.payment?.invoiceNumber).toBe("INV-TEST-0001");
+      expect(created.payment?.amount).toBe(2800);
+      expect(created.payment?.status).toBe("Payment pending");
+
+      const sql = sqlForTests();
+      const workItemRows = await sql`
+        select work_type, owner_id, team_id from work_items where case_id = ${created.id}
+      `;
+      expect(workItemRows).toHaveLength(1);
+      expect(workItemRows[0]?.work_type).toBe("annual_return_case");
+      expect(workItemRows[0]?.owner_id).toBe(USER_AMY_ID);
+      expect(workItemRows[0]?.team_id).toBe(TEAM_ANNUAL_RETURN_ID);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects a second case for a company that already has one for its return year",
+    async () => {
+      await seedCompanyAndTemplate("2026-07-01");
+      const repository = repositoryFor();
+      await repository.createCase({
+        companyId: TEST_COMPANY_ID,
+        templateId: TEST_TEMPLATE_ID,
+        ownerId: USER_AMY_ID,
+        invoiceNumber: "INV-TEST-0002",
+        feeAmount: 2800,
+        actorId: USER_AMY_ID,
+      });
+
+      await expect(
+        repository.createCase({
+          companyId: TEST_COMPANY_ID,
+          templateId: TEST_TEMPLATE_ID,
+          ownerId: USER_AMY_ID,
+          invoiceNumber: "INV-TEST-0003",
+          feeAmount: 2800,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow("This company already has a case for 2026.");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it("rejects an inactive checklist template", async () => {
+    await seedCompanyAndTemplate("2026-07-01");
+    const sql = sqlForTests();
+    await sql`update checklist_templates set active = false where id = ${TEST_TEMPLATE_ID}`;
+    const repository = repositoryFor();
+
+    await expect(
+      repository.createCase({
+        companyId: TEST_COMPANY_ID,
+        templateId: TEST_TEMPLATE_ID,
+        ownerId: USER_AMY_ID,
+        invoiceNumber: "INV-TEST-0004",
+        feeAmount: 2800,
+        actorId: USER_AMY_ID,
+      }),
+    ).rejects.toThrow("Checklist template not found or inactive.");
+  }, INTEGRATION_TEST_TIMEOUT_MS);
+
+  it("lists the new company as eligible before creating a case, and not after", async () => {
+    await seedCompanyAndTemplate("2026-09-15");
+    const repository = repositoryFor();
+
+    const beforeCreate = await repository.listCompaniesEligibleForCase();
+    expect(beforeCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(true);
+
+    await repository.createCase({
+      companyId: TEST_COMPANY_ID,
+      templateId: TEST_TEMPLATE_ID,
+      ownerId: USER_AMY_ID,
+      invoiceNumber: "INV-TEST-0005",
+      feeAmount: 2800,
+      actorId: USER_AMY_ID,
+    });
+
+    const afterCreate = await repository.listCompaniesEligibleForCase();
+    expect(afterCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(false);
+  }, INTEGRATION_TEST_TIMEOUT_MS);
+});

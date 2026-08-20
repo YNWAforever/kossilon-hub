@@ -9,14 +9,17 @@ import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
 import {
   buildReminderDraft,
+  calculateFilingDueDate,
   daysBetween,
   hongKongBusinessDate,
   isAllowedStatusTransition,
+  offsetDateOnly,
   riskForCase,
 } from "./workflow";
 import { dueMilestone, type ReminderMilestone } from "./reminder-cadence";
 import {
   assertAnnualReturnActionAllowed,
+  assertAnnualReturnCaseCreatable,
   type AnnualReturnAction,
   type AnnualReturnActionActor,
   type AnnualReturnActorRole,
@@ -36,6 +39,7 @@ import type {
   PaymentStatus,
   RiskLevel,
 } from "./types";
+import type { DocumentItem } from "@/features/checklist-templates/types";
 
 type CaseRow = {
   id: string;
@@ -107,6 +111,29 @@ type LockedCaseRow = {
   reviewer_id: string | null;
   filing_reference: string | null;
   confirmation_document_id: string | null;
+};
+
+type EligibleCompanyRow = {
+  id: string;
+  company_name: string;
+  cr_number: string;
+  annual_return_basis_date: string | Date;
+  assigned_owner_id: string;
+  assigned_team_id: string;
+  team_name: string;
+};
+
+type CompanyForCaseRow = {
+  id: string;
+  status: "active" | "inactive";
+  annual_return_basis_date: string | Date;
+  assigned_team_id: string;
+};
+
+type TemplateForCaseRow = {
+  id: string;
+  active: boolean;
+  documents: DocumentItem[];
 };
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -190,9 +217,30 @@ export type CreateAnnualReturnRepositoryOptions = CreateSqlClientOptions & {
   today?: string | (() => string);
 };
 
+export type EligibleCompanyForCase = {
+  id: string;
+  companyName: string;
+  crNumber: string;
+  annualReturnBasisDate: string;
+  assignedOwnerId: string;
+  assignedTeamId: string;
+  assignedTeamName: string;
+};
+
+export type CreateAnnualReturnCaseInput = {
+  companyId: string;
+  templateId: string;
+  ownerId: string;
+  invoiceNumber: string;
+  feeAmount: number;
+  actorId: string;
+};
+
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
+  listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>;
+  createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>;
   dashboardMetrics(
     today: string,
     currentUserId: string,
@@ -457,7 +505,7 @@ export function createAnnualReturnRepository(
   async function writeAuditEvent(
     tx: TransactionSqlClient,
     input: {
-      case_: AnnualReturnCase;
+      case_: Pick<AnnualReturnCase, "id" | "companyId">;
       companyId?: string;
       actor: AnnualReturnActionActor;
       action: AnnualReturnAction;
@@ -751,6 +799,162 @@ export function createAnnualReturnRepository(
 
     const [case_] = await hydrateCases(rows, readToday());
     return case_ ?? null;
+  }
+
+  async function listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]> {
+    const rows = await sql<EligibleCompanyRow[]>`
+      select
+        c.id,
+        c.company_name,
+        c.cr_number,
+        c.annual_return_basis_date::text as annual_return_basis_date,
+        c.assigned_owner_id,
+        c.assigned_team_id,
+        t.name as team_name
+      from companies c
+      join teams t on t.id = c.assigned_team_id
+      where c.status = 'active'
+        and not exists (
+          select 1
+          from annual_return_cases arc
+          where arc.company_id = c.id
+            and arc.return_year = extract(year from c.annual_return_basis_date)::int
+        )
+      order by c.company_name asc
+    `;
+
+    return rows.map((row) => ({
+      id: row.id,
+      companyName: row.company_name,
+      crNumber: row.cr_number,
+      annualReturnBasisDate: dateOnly(row.annual_return_basis_date),
+      assignedOwnerId: row.assigned_owner_id,
+      assignedTeamId: row.assigned_team_id,
+      assignedTeamName: row.team_name,
+    }));
+  }
+
+  async function createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase> {
+    const caseId = await withTransaction(sql, async (tx) => {
+      const actorRows = await tx<ActorRow[]>`
+        select id, role, team_id, active
+        from users
+        where id = ${input.actorId}
+        limit 1
+      `;
+      const [actorRow] = actorRows;
+      if (!actorRow) throw new Error("Annual return actor not found.");
+
+      const actor: AnnualReturnActionActor = {
+        id: actorRow.id,
+        role: actorRow.role,
+        teamId: actorRow.team_id,
+        active: actorRow.active,
+      };
+
+      const companyRows = await tx<CompanyForCaseRow[]>`
+        select
+          id, status, annual_return_basis_date::text as annual_return_basis_date, assigned_team_id
+        from companies
+        where id = ${input.companyId}
+        for update
+      `;
+      const company = companyRows[0];
+      if (!company || company.status !== "active") {
+        throw new Error("Company not found or inactive.");
+      }
+
+      assertAnnualReturnCaseCreatable(actor, { teamId: company.assigned_team_id });
+
+      const basisDate = dateOnly(company.annual_return_basis_date);
+      const returnYear = Number(basisDate.slice(0, 4));
+
+      const existingRows = await tx<{ id: string }[]>`
+        select id from annual_return_cases
+        where company_id = ${input.companyId} and return_year = ${returnYear}
+        limit 1
+      `;
+      if (existingRows.length > 0) {
+        throw new Error(`This company already has a case for ${returnYear}.`);
+      }
+
+      const templateRows = await tx<TemplateForCaseRow[]>`
+        select id, active, documents
+        from checklist_templates
+        where id = ${input.templateId}
+        limit 1
+      `;
+      const template = templateRows[0];
+      if (!template || !template.active) {
+        throw new Error("Checklist template not found or inactive.");
+      }
+
+      const filingDueDate = calculateFilingDueDate(basisDate);
+
+      const caseRows = await tx<{ id: string }[]>`
+        insert into annual_return_cases (
+          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id
+        )
+        values (
+          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId}
+        )
+        returning id
+      `;
+      const newCaseId = caseRows[0]?.id;
+      if (!newCaseId) throw new Error("Annual return case was not created.");
+
+      for (const document of template.documents) {
+        const dueDate = offsetDateOnly(filingDueDate, -document.daysBeforeDue);
+        await tx`
+          insert into annual_return_checklist_items (case_id, item_label, required, status, due_date)
+          values (${newCaseId}, ${document.label}, ${document.required}, 'Missing', ${dueDate})
+        `;
+      }
+
+      await tx`
+        insert into payments (company_id, case_id, invoice_number, amount, due_date)
+        values (
+          ${input.companyId}, ${newCaseId}, ${input.invoiceNumber}, ${input.feeAmount}, ${filingDueDate}
+        )
+      `;
+
+      await ensureWorkItemForEvent(tx, {
+        companyId: input.companyId,
+        caseId: newCaseId,
+        sourceEventKey: `annual-return:${newCaseId}:created`,
+        sourceEventType: "annual_return_case_created",
+        workType: "annual_return_case",
+        requiredSkillKey: "annual-return",
+        title: "Set up new annual return case",
+        ownerId: input.ownerId,
+        reviewerId: null,
+        teamId: company.assigned_team_id,
+      });
+
+      await tx`
+        insert into timeline_events (
+          company_id, case_id, event_type, actor_type, actor_id, description, metadata
+        )
+        values (
+          ${input.companyId}, ${newCaseId}, 'annual_return_case_created', 'user', ${input.actorId},
+          'Annual return case created.',
+          ${tx.json({ templateId: input.templateId, returnYear })}
+        )
+      `;
+
+      await writeAuditEvent(tx, {
+        case_: { id: newCaseId, companyId: input.companyId },
+        companyId: input.companyId,
+        actor,
+        action: "create_case",
+        summary: "Annual return case created.",
+        metadata: { templateId: input.templateId, returnYear },
+      });
+
+      return newCaseId;
+    });
+
+    return hydratedCaseAfterMutation(caseId, "case creation");
   }
 
   /**
@@ -1800,6 +2004,8 @@ export function createAnnualReturnRepository(
   return {
     listCases,
     getCase,
+    listCompaniesEligibleForCase,
+    createCase,
     dashboardMetrics,
     assertCanMutateCase,
     evaluateReminders,
