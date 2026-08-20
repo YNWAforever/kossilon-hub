@@ -1,8 +1,9 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { ChecklistTemplateRepository } from "./repository";
-import { SERVICE_TYPES, type ChecklistTemplatePatch } from "./types";
+import { SERVICE_TYPES, type ChecklistTemplatePatch, type ServiceType } from "./types";
 
 export function assertAdminAccess(actor: AuthenticatedActor): void {
   if (!actor.active || actor.role !== "Admin") {
@@ -62,6 +63,41 @@ export async function deleteChecklistTemplateForActor(
   assertAdminAccess(actor);
   await dependencies.repository.deleteTemplate(input.id);
   return { deleted: true };
+}
+
+const ANNUAL_RETURN_SERVICE_TYPES: readonly ServiceType[] = [
+  "Annual Return — Private Ltd",
+  "Annual Return — Public Ltd",
+];
+
+export type ActiveChecklistTemplateSummary = {
+  id: string;
+  name: string;
+  serviceType: ServiceType;
+};
+
+/**
+ * Staff-readable, not Admin-only like every other function in this file: a
+ * Manager/Staff actor creating an annual return case needs to pick a template
+ * by name, but has no business editing template configuration — hence the
+ * trimmed projection rather than reusing listChecklistTemplatesForActor.
+ */
+export async function listActiveAnnualReturnTemplatesForActor(
+  actor: AuthenticatedActor,
+  _input: Record<string, never>,
+  dependencies: ChecklistTemplateDependencies,
+): Promise<ActiveChecklistTemplateSummary[]> {
+  assertStaffAccess(actor);
+  const templates = await dependencies.repository.listTemplates();
+  return templates
+    .filter(
+      (template) => template.active && ANNUAL_RETURN_SERVICE_TYPES.includes(template.serviceType),
+    )
+    .map((template) => ({
+      id: template.id,
+      name: template.name,
+      serviceType: template.serviceType,
+    }));
 }
 
 const loadDefaultChecklistTemplateContext = createServerOnlyFn(async () => {
@@ -137,6 +173,12 @@ const patchSchema = z
 export const listChecklistTemplates = createServerFn({ method: "GET" }).handler(() =>
   withDefaultChecklistTemplateContext((actor, dependencies) =>
     listChecklistTemplatesForActor(actor, {}, dependencies),
+  ),
+);
+
+export const listActiveAnnualReturnTemplates = createServerFn({ method: "GET" }).handler(() =>
+  withDefaultChecklistTemplateContext((actor, dependencies) =>
+    listActiveAnnualReturnTemplatesForActor(actor, {}, dependencies),
   ),
 );
 
