@@ -2175,41 +2175,49 @@ describe.skipIf(!databaseUrl)("createCase", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
-  it("rejects an inactive checklist template", async () => {
-    await seedCompanyAndTemplate("2026-07-01");
-    const sql = sqlForTests();
-    await sql`update checklist_templates set active = false where id = ${TEST_TEMPLATE_ID}`;
-    const repository = repositoryFor();
+  it(
+    "rejects an inactive checklist template",
+    async () => {
+      await seedCompanyAndTemplate("2026-07-01");
+      const sql = sqlForTests();
+      await sql`update checklist_templates set active = false where id = ${TEST_TEMPLATE_ID}`;
+      const repository = repositoryFor();
 
-    await expect(
-      repository.createCase({
+      await expect(
+        repository.createCase({
+          companyId: TEST_COMPANY_ID,
+          templateId: TEST_TEMPLATE_ID,
+          ownerId: USER_AMY_ID,
+          invoiceNumber: "INV-TEST-0004",
+          feeAmount: 2800,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow("Checklist template not found or inactive.");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "lists the new company as eligible before creating a case, and not after",
+    async () => {
+      await seedCompanyAndTemplate("2026-09-15");
+      const repository = repositoryFor();
+
+      const beforeCreate = await repository.listCompaniesEligibleForCase();
+      expect(beforeCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(true);
+
+      await repository.createCase({
         companyId: TEST_COMPANY_ID,
         templateId: TEST_TEMPLATE_ID,
         ownerId: USER_AMY_ID,
-        invoiceNumber: "INV-TEST-0004",
+        invoiceNumber: "INV-TEST-0005",
         feeAmount: 2800,
         actorId: USER_AMY_ID,
-      }),
-    ).rejects.toThrow("Checklist template not found or inactive.");
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      });
 
-  it("lists the new company as eligible before creating a case, and not after", async () => {
-    await seedCompanyAndTemplate("2026-09-15");
-    const repository = repositoryFor();
-
-    const beforeCreate = await repository.listCompaniesEligibleForCase();
-    expect(beforeCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(true);
-
-    await repository.createCase({
-      companyId: TEST_COMPANY_ID,
-      templateId: TEST_TEMPLATE_ID,
-      ownerId: USER_AMY_ID,
-      invoiceNumber: "INV-TEST-0005",
-      feeAmount: 2800,
-      actorId: USER_AMY_ID,
-    });
-
-    const afterCreate = await repository.listCompaniesEligibleForCase();
-    expect(afterCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(false);
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      const afterCreate = await repository.listCompaniesEligibleForCase();
+      expect(afterCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(false);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });
