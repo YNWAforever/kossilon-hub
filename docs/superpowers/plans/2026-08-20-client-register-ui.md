@@ -18,13 +18,18 @@ library) — all matching the existing `annual-return` feature's screens, which 
 copies the shape of.
 
 **Reference files** (read, not modified, by every task below):
+
 - `src/features/clients/types.ts` — `ClientSummary`, `ClientDetail`, `ClientAssignmentOptions`,
   `CompanyContact`, `CompanyStatus`, `ClientPaymentStatus`.
-- `src/features/clients/server-fns.ts` — `listClients`, `getClient`, `listAssignmentOptions`,
+- `src/features/clients/server-fns.ts` — `listClients`, `getClient`, `listClientAssignmentOptions`,
   `removeClientContact` (all already implemented; called, never edited, by this plan).
+- `src/features/clients/types.ts` — `ClientPaymentStatus` is a re-export of
+  `PaymentStatus` from `annual-return/types.ts`: `"Not invoiced" | "Payment pending" |
+"Payment received" | "Overdue"`. Tasks 2 and 4 both correct an earlier draft of this plan
+  that assumed lowercase `"paid"/"pending"/"overdue"` values — use the real four-value union.
 - `src/components/clients/client-form-dialog.tsx` — `ClientFormDialog`, props
   `{ open, onOpenChange, options: ClientAssignmentOptions, client?: ClientDetail, onSaved:
-  (clientId: string) => void }`.
+(clientId: string) => void }`.
 - `src/components/clients/contact-form-dialog.tsx` — `ContactFormDialog`, props
   `{ open, onOpenChange, companyId: string, contact?: CompanyContact, onSaved: () => void }`.
 - `src/lib/status.ts` — `StatusTone` and `toneClasses`, consumed via `<StatusPill>`.
@@ -35,6 +40,7 @@ copies the shape of.
 ### Task 1: Demo-mode notice component
 
 **Files:**
+
 - Create: `src/features/clients/components/demo-client-notice.tsx`
 - Test: `src/features/clients/components/demo-client-notice.test.tsx`
 
@@ -125,6 +131,7 @@ git commit -m "feat: add demo-mode notice for the client register"
 ### Task 2: Production client register (list) component
 
 **Files:**
+
 - Create: `src/features/clients/components/production-client-register.tsx`
 - Test: `src/features/clients/components/production-client-register.interaction.test.tsx`
 
@@ -142,12 +149,12 @@ import { ProductionClientRegister } from "./production-client-register";
 
 const serverFns = vi.hoisted(() => ({
   listClients: vi.fn(),
-  listAssignmentOptions: vi.fn(),
+  listClientAssignmentOptions: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => ({
   listClients: serverFns.listClients,
-  listAssignmentOptions: serverFns.listAssignmentOptions,
+  listClientAssignmentOptions: serverFns.listClientAssignmentOptions,
 }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/clients">{children}</a>,
@@ -168,7 +175,7 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
     teamId: "33333333-3333-4333-8333-333333333333",
     teamName: "Team Alpha",
     arDueDate: "2026-09-11",
-    paymentStatus: "pending",
+    paymentStatus: "Payment pending",
     invoiceAmount: 3000,
     ...overrides,
   };
@@ -176,15 +183,32 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
 
 function makeOptions(): ClientAssignmentOptions {
   return {
-    owners: [{ id: "22222222-2222-4222-8222-222222222222", name: "Ada Chan", teamId: "33333333-3333-4333-8333-333333333333" }],
+    owners: [
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        name: "Ada Chan",
+        teamId: "33333333-3333-4333-8333-333333333333",
+      },
+    ],
     teams: [{ id: "33333333-3333-4333-8333-333333333333", name: "Team Alpha" }],
-    packages: [{ id: "44444444-4444-4444-8444-444444444444", name: "Standard", defaultFee: 3000, currency: "HKD", active: true, sortOrder: 0 }],
+    packages: [
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        name: "Standard",
+        defaultFee: 3000,
+        currency: "HKD",
+        active: true,
+        sortOrder: 0,
+      },
+    ],
   };
 }
 
 function renderRegister() {
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <ProductionClientRegister />
     </QueryClientProvider>,
   );
@@ -193,8 +217,8 @@ function renderRegister() {
 describe("production client register", () => {
   beforeEach(() => {
     serverFns.listClients.mockReset();
-    serverFns.listAssignmentOptions.mockReset();
-    serverFns.listAssignmentOptions.mockResolvedValue(makeOptions());
+    serverFns.listClientAssignmentOptions.mockReset();
+    serverFns.listClientAssignmentOptions.mockResolvedValue(makeOptions());
   });
 
   afterEach(() => {
@@ -243,7 +267,7 @@ describe("production client register", () => {
   it("disables New client until assignment options resolve", async () => {
     serverFns.listClients.mockResolvedValue([]);
     let resolveOptions: (value: ClientAssignmentOptions) => void = () => {};
-    serverFns.listAssignmentOptions.mockReturnValue(
+    serverFns.listClientAssignmentOptions.mockReturnValue(
       new Promise((resolve) => {
         resolveOptions = resolve;
       }),
@@ -275,7 +299,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
-import { listAssignmentOptions, listClients } from "../server-fns";
+import { listClientAssignmentOptions, listClients } from "../server-fns";
 import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types";
 
 const REGISTER_GRID_COLUMNS =
@@ -291,9 +315,10 @@ const companyStatusTone: Record<CompanyStatus, StatusTone> = {
 };
 
 const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
-  paid: "green",
-  pending: "yellow",
-  overdue: "red",
+  "Not invoiced": "neutral",
+  "Payment pending": "yellow",
+  "Payment received": "green",
+  Overdue: "red",
 };
 
 export function ProductionClientRegister() {
@@ -311,7 +336,7 @@ export function ProductionClientRegister() {
 
   const optionsQuery = useQuery({
     queryKey: ["clients", "assignment-options"],
-    queryFn: () => listAssignmentOptions(),
+    queryFn: () => listClientAssignmentOptions(),
     retry: false,
   });
 
@@ -513,6 +538,7 @@ git commit -m "feat: add the production client register list screen"
 ### Task 3: `/clients` route + route-level data-mode test
 
 **Files:**
+
 - Create: `src/routes/clients.tsx`
 - Modify: `src/components/page-header.convention.test.ts:47-54` (the `passThroughRoutes` set)
 - Test: `src/routes/-clients-data-mode.test.tsx`
@@ -588,14 +614,14 @@ vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
 const serverFns = vi.hoisted(() => ({
   listClients: vi.fn(async () => []),
   getClient: vi.fn(async () => null),
-  listAssignmentOptions: vi.fn(async () => ({ owners: [], teams: [], packages: [] })),
+  listClientAssignmentOptions: vi.fn(async () => ({ owners: [], teams: [], packages: [] })),
 }));
 
 vi.mock("../features/clients/server-fns", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../features/clients/server-fns")>()),
   listClients: serverFns.listClients,
   getClient: serverFns.getClient,
-  listAssignmentOptions: serverFns.listAssignmentOptions,
+  listClientAssignmentOptions: serverFns.listClientAssignmentOptions,
 }));
 
 import { routeTree } from "../routeTree.gen";
@@ -662,15 +688,15 @@ In `src/components/page-header.convention.test.ts`, add `"routes/clients.tsx"` t
 `passThroughRoutes` set (in the `"is rendered by every route that draws a page"` test):
 
 ```ts
-    const passThroughRoutes = new Set([
-      "routes/__root.tsx",
-      "routes/login.tsx",
-      // A pass-through to the demo and production case-detail components, which
-      // render the header themselves.
-      "routes/annual-returns.$id.tsx",
-      // A pass-through to DemoClientNotice / ProductionClientRegister, same reason.
-      "routes/clients.tsx",
-    ]);
+const passThroughRoutes = new Set([
+  "routes/__root.tsx",
+  "routes/login.tsx",
+  // A pass-through to the demo and production case-detail components, which
+  // render the header themselves.
+  "routes/annual-returns.$id.tsx",
+  // A pass-through to DemoClientNotice / ProductionClientRegister, same reason.
+  "routes/clients.tsx",
+]);
 ```
 
 - [ ] **Step 5: Regenerate the route tree and run the tests**
@@ -702,6 +728,7 @@ git commit -m "feat: add the /clients route"
 ### Task 4: Production client detail component
 
 **Files:**
+
 - Create: `src/features/clients/components/production-client-detail.tsx`
 - Test: `src/features/clients/components/production-client-detail.interaction.test.tsx`
 
@@ -719,13 +746,13 @@ import { ProductionClientDetail } from "./production-client-detail";
 
 const serverFns = vi.hoisted(() => ({
   getClient: vi.fn(),
-  listAssignmentOptions: vi.fn(),
+  listClientAssignmentOptions: vi.fn(),
   removeClientContact: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => ({
   getClient: serverFns.getClient,
-  listAssignmentOptions: serverFns.listAssignmentOptions,
+  listClientAssignmentOptions: serverFns.listClientAssignmentOptions,
   removeClientContact: serverFns.removeClientContact,
 }));
 vi.mock("@tanstack/react-router", () => ({
@@ -749,7 +776,7 @@ function makeClient(overrides: Partial<ClientDetail> = {}): ClientDetail {
     teamId: "33333333-3333-4333-8333-333333333333",
     teamName: "Team Alpha",
     arDueDate: "2026-09-11",
-    paymentStatus: "pending",
+    paymentStatus: "Payment pending",
     invoiceAmount: 3000,
     incorporationDate: "2020-01-15",
     annualReturnBasisDate: "2020-01-15",
@@ -765,7 +792,13 @@ function makeClient(overrides: Partial<ClientDetail> = {}): ClientDetail {
 
 function makeOptions(): ClientAssignmentOptions {
   return {
-    owners: [{ id: "22222222-2222-4222-8222-222222222222", name: "Ada Chan", teamId: "33333333-3333-4333-8333-333333333333" }],
+    owners: [
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        name: "Ada Chan",
+        teamId: "33333333-3333-4333-8333-333333333333",
+      },
+    ],
     teams: [{ id: "33333333-3333-4333-8333-333333333333", name: "Team Alpha" }],
     packages: [],
   };
@@ -773,7 +806,9 @@ function makeOptions(): ClientAssignmentOptions {
 
 function renderDetail() {
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <ProductionClientDetail clientId={clientId} />
     </QueryClientProvider>,
   );
@@ -782,9 +817,9 @@ function renderDetail() {
 describe("production client detail", () => {
   beforeEach(() => {
     serverFns.getClient.mockReset();
-    serverFns.listAssignmentOptions.mockReset();
+    serverFns.listClientAssignmentOptions.mockReset();
     serverFns.removeClientContact.mockReset();
-    serverFns.listAssignmentOptions.mockResolvedValue(makeOptions());
+    serverFns.listClientAssignmentOptions.mockResolvedValue(makeOptions());
   });
 
   afterEach(() => {
@@ -820,7 +855,15 @@ describe("production client detail", () => {
     serverFns.getClient.mockResolvedValue(
       makeClient({
         contacts: [
-          { id: "66666666-6666-4666-8666-666666666666", companyId: clientId, name: "Ivy Wong", role: "Director", email: "ivy@example.com", phone: null, isPrimary: true },
+          {
+            id: "66666666-6666-4666-8666-666666666666",
+            companyId: clientId,
+            name: "Ivy Wong",
+            role: "Director",
+            email: "ivy@example.com",
+            phone: null,
+            isPrimary: true,
+          },
         ],
       }),
     );
@@ -841,7 +884,13 @@ describe("production client detail", () => {
     serverFns.getClient.mockResolvedValue(
       makeClient({
         annualReturnHistory: [
-          { id: "77777777-7777-4777-8777-777777777777", returnYear: 2026, madeUpDate: "2026-01-15", filingDueDate: "2026-02-26", currentStatus: "Upcoming" },
+          {
+            id: "77777777-7777-4777-8777-777777777777",
+            returnYear: 2026,
+            madeUpDate: "2026-01-15",
+            filingDueDate: "2026-02-26",
+            currentStatus: "Upcoming",
+          },
         ],
       }),
     );
@@ -871,12 +920,8 @@ import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { ContactFormDialog } from "@/components/clients/contact-form-dialog";
-import { getClient, listAssignmentOptions, removeClientContact } from "../server-fns";
-import type {
-  ClientPaymentStatus,
-  CompanyContact,
-  CompanyStatus,
-} from "../types";
+import { getClient, listClientAssignmentOptions, removeClientContact } from "../server-fns";
+import type { ClientPaymentStatus, CompanyContact, CompanyStatus } from "../types";
 
 const companyStatusTone: Record<CompanyStatus, StatusTone> = {
   active: "green",
@@ -884,9 +929,10 @@ const companyStatusTone: Record<CompanyStatus, StatusTone> = {
 };
 
 const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
-  paid: "green",
-  pending: "yellow",
-  overdue: "red",
+  "Not invoiced": "neutral",
+  "Payment pending": "yellow",
+  "Payment received": "green",
+  Overdue: "red",
 };
 
 const verificationTone: Record<"pending" | "verified" | "rejected", StatusTone> = {
@@ -910,7 +956,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
   const optionsQuery = useQuery({
     queryKey: ["clients", "assignment-options"],
-    queryFn: () => listAssignmentOptions(),
+    queryFn: () => listClientAssignmentOptions(),
     retry: false,
   });
 
@@ -1060,7 +1106,10 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         <h2 className="mb-3 text-sm font-semibold">Annual return history</h2>
         <div className="divide-y">
           {client.annualReturnHistory.map((entry) => (
-            <div key={entry.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+            <div
+              key={entry.id}
+              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+            >
               <span>Return year {entry.returnYear}</span>
               <span className="text-muted-foreground">Made up {entry.madeUpDate}</span>
               <span className="text-muted-foreground">Due {entry.filingDueDate}</span>
@@ -1084,7 +1133,10 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         <h2 className="mb-3 text-sm font-semibold">Documents</h2>
         <div className="divide-y">
           {client.documents.map((document) => (
-            <div key={document.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+            <div
+              key={document.id}
+              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+            >
               <span className="truncate">{document.fileName}</span>
               <span className="text-muted-foreground">{document.fileType}</span>
               <StatusPill tone={verificationTone[document.verificationStatus]}>
@@ -1169,6 +1221,7 @@ git commit -m "feat: add the production client detail screen"
 ### Task 5: `/clients/$id` route + route-level data-mode test
 
 **Files:**
+
 - Create: `src/routes/clients.$id.tsx`
 - Modify: `src/routes/-clients-data-mode.test.tsx` (append two more tests to the same
   `describe` block written in Task 3 — same mocks and `renderRoute` helper already in the
@@ -1183,25 +1236,19 @@ git commit -m "feat: add the production client detail screen"
 Append inside the existing `describe("clients route across data modes", ...)` block:
 
 ```tsx
-  it("renders the production detail screen at /clients/$id in production mode", async () => {
-    const html = await renderRoute(
-      "/clients/11111111-1111-4111-8111-111111111111",
-      "production",
-    );
+it("renders the production detail screen at /clients/$id in production mode", async () => {
+  const html = await renderRoute("/clients/11111111-1111-4111-8111-111111111111", "production");
 
-    expect(html).toContain("Loading client");
-    expect(html).not.toContain("no demo fixtures");
-  });
+  expect(html).toContain("Loading client");
+  expect(html).not.toContain("no demo fixtures");
+});
 
-  it("renders the demo notice at /clients/$id in demo mode", async () => {
-    const html = await renderRoute(
-      "/clients/11111111-1111-4111-8111-111111111111",
-      "demo",
-    );
+it("renders the demo notice at /clients/$id in demo mode", async () => {
+  const html = await renderRoute("/clients/11111111-1111-4111-8111-111111111111", "demo");
 
-    expect(html).toContain("no demo fixtures");
-    expect(html).not.toContain("Loading client");
-  });
+  expect(html).toContain("no demo fixtures");
+  expect(html).not.toContain("Loading client");
+});
 ```
 
 - [ ] **Step 2: Run the test and confirm the two new cases fail**
@@ -1237,16 +1284,16 @@ In `src/components/page-header.convention.test.ts`, add `"routes/clients.$id.tsx
 the `"routes/clients.tsx"` entry added in Task 3:
 
 ```ts
-    const passThroughRoutes = new Set([
-      "routes/__root.tsx",
-      "routes/login.tsx",
-      // A pass-through to the demo and production case-detail components, which
-      // render the header themselves.
-      "routes/annual-returns.$id.tsx",
-      // A pass-through to DemoClientNotice / ProductionClientRegister(/Detail), same reason.
-      "routes/clients.tsx",
-      "routes/clients.$id.tsx",
-    ]);
+const passThroughRoutes = new Set([
+  "routes/__root.tsx",
+  "routes/login.tsx",
+  // A pass-through to the demo and production case-detail components, which
+  // render the header themselves.
+  "routes/annual-returns.$id.tsx",
+  // A pass-through to DemoClientNotice / ProductionClientRegister(/Detail), same reason.
+  "routes/clients.tsx",
+  "routes/clients.$id.tsx",
+]);
 ```
 
 - [ ] **Step 5: Regenerate the route tree and run the tests**
@@ -1275,6 +1322,7 @@ git commit -m "feat: add the /clients/\$id route"
 ### Task 6: Restore the navigation entry
 
 **Files:**
+
 - Modify: `src/components/navigation.ts:1-23` (imports + the comment block above `navGroups`)
   and `:38-49` (the "Operations" group's `items` array)
 
@@ -1374,6 +1422,7 @@ Expected: PASS, no errors.
 - [ ] **Step 4: Manual smoke test (production mode)**
 
 Start the dev server (`npm run dev`), sign in as a production (non-demo) user, and confirm:
+
 - `/clients` shows the "Clients" entry in the sidebar, lists at least the seeded demo/test
   companies, search and filters narrow the table, and "New client" opens a working create
   dialog.
