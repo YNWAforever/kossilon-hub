@@ -67,10 +67,15 @@ export function daysBetween(startDate: string, endDate: string): number {
   return Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY);
 }
 
+/** Positive `days` moves forward, negative moves backward. */
+export function offsetDateOnly(date: string, days: number): string {
+  const value = parseDateOnly(date);
+  value.setUTCDate(value.getUTCDate() + days);
+  return formatDateOnly(value);
+}
+
 export function calculateFilingDueDate(annualReturnBasisDate: string): string {
-  const due = parseDateOnly(annualReturnBasisDate);
-  due.setUTCDate(due.getUTCDate() + 42);
-  return formatDateOnly(due);
+  return offsetDateOnly(annualReturnBasisDate, 42);
 }
 
 export function shouldGenerateCase(filingDueDate: string, today: string): boolean {

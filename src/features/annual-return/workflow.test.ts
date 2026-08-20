@@ -10,6 +10,7 @@ import {
   hasRequiredChecklistEvidence,
   hongKongBusinessDate,
   isAllowedStatusTransition,
+  offsetDateOnly,
   riskForCase,
   shouldGenerateCase,
 } from "./workflow";
@@ -85,6 +86,11 @@ const readyCase: AnnualReturnCase = {
 describe("annual return workflow", () => {
   it("calculates the filing due date as 42 days after the basis date", () => {
     expect(calculateFilingDueDate("2026-07-01")).toBe("2026-08-12");
+  });
+
+  it("offsets a date-only string forward and backward", () => {
+    expect(offsetDateOnly("2026-08-12", -14)).toBe("2026-07-29");
+    expect(offsetDateOnly("2026-07-01", 42)).toBe("2026-08-12");
   });
 
   it("generates cases when the filing due date is 90 days away or overdue", () => {
