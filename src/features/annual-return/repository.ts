@@ -889,6 +889,17 @@ export function createAnnualReturnRepository(
         throw new Error("Checklist template not found or inactive.");
       }
 
+      const ownerRows = await tx<{ id: string }[]>`
+        select id
+        from users
+        where id = ${input.ownerId}
+          and active = true
+        limit 1
+      `;
+      if (ownerRows.length !== 1) {
+        throw new Error("Annual return owner not found or inactive.");
+      }
+
       const filingDueDate = calculateFilingDueDate(basisDate);
 
       const caseRows = await tx<{ id: string }[]>`
