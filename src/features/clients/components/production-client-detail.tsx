@@ -2,6 +2,7 @@ import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
@@ -35,6 +36,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
   const [contactDialog, setContactDialog] = useState<{ open: boolean; contact?: CompanyContact }>({
     open: false,
   });
+  const [removingContactId, setRemovingContactId] = useState<string | null>(null);
 
   const clientQuery = useQuery({
     queryKey: ["clients", clientId],
@@ -54,8 +56,16 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
   }
 
   async function handleRemoveContact(contactId: string) {
-    await removeClientContact({ data: { companyId: clientId, contactId } });
-    invalidate();
+    setRemovingContactId(contactId);
+
+    try {
+      await removeClientContact({ data: { companyId: clientId, contactId } });
+      invalidate();
+    } catch {
+      toast.error("Unable to remove the contact. Try again.");
+    } finally {
+      setRemovingContactId(null);
+    }
   }
 
   if (clientQuery.isPending) {
@@ -183,7 +193,8 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                 <button
                   type="button"
                   onClick={() => void handleRemoveContact(contact.id)}
-                  className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+                  disabled={removingContactId === contact.id}
+                  className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
                   Remove
                 </button>

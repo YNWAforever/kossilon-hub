@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { toast } from "sonner";
+
 import type { ClientAssignmentOptions, ClientDetail } from "../types";
 import { ProductionClientDetail } from "./production-client-detail";
 
@@ -20,6 +22,9 @@ vi.mock("../server-fns", () => ({
 }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/clients">{children}</a>,
+}));
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 const clientId = "11111111-1111-4111-8111-111111111111";
@@ -83,6 +88,8 @@ describe("production client detail", () => {
     serverFns.listClientAssignmentOptions.mockReset();
     serverFns.removeClientContact.mockReset();
     serverFns.listClientAssignmentOptions.mockResolvedValue(makeOptions());
+    vi.mocked(toast.success).mockReset();
+    vi.mocked(toast.error).mockReset();
   });
 
   afterEach(() => {
@@ -141,6 +148,39 @@ describe("production client detail", () => {
         data: { companyId: clientId, contactId: "66666666-6666-4666-8666-666666666666" },
       }),
     );
+  });
+
+  it("shows a fixed error toast and never the raw server error when contact removal fails", async () => {
+    serverFns.getClient.mockResolvedValue(
+      makeClient({
+        contacts: [
+          {
+            id: "66666666-6666-4666-8666-666666666666",
+            companyId: clientId,
+            name: "Ivy Wong",
+            role: "Director",
+            email: "ivy@example.com",
+            phone: null,
+            isPrimary: true,
+          },
+        ],
+      }),
+    );
+    serverFns.removeClientContact.mockRejectedValue(
+      new Error("connect ECONNREFUSED 10.0.0.4:5432"),
+    );
+    renderDetail();
+
+    await screen.findByText("Ivy Wong");
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+
+    const [message] = vi.mocked(toast.error).mock.calls[0];
+    expect(message).not.toContain("ECONNREFUSED");
+    expect(message).toBe("Unable to remove the contact. Try again.");
+    // The contact remains, since the removal failed.
+    expect(screen.getByText("Ivy Wong")).toBeTruthy();
   });
 
   it("links each annual-return history row to its case", async () => {
