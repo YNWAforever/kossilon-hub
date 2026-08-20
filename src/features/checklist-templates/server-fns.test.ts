@@ -6,6 +6,7 @@ import {
   createChecklistTemplateForActor,
   deleteChecklistTemplateForActor,
   duplicateChecklistTemplateForActor,
+  listActiveAnnualReturnTemplatesForActor,
   listChecklistTemplatesForActor,
   updateChecklistTemplateForActor,
 } from "./server-fns";
@@ -199,5 +200,57 @@ describe("deleteChecklistTemplateForActor", () => {
     await deleteChecklistTemplateForActor(adminActor, { id: "tpl-1" }, { repository });
 
     expect(repository.deleteTemplate).toHaveBeenCalledWith("tpl-1");
+  });
+});
+
+describe("listActiveAnnualReturnTemplatesForActor", () => {
+  const incorporationTemplate: ChecklistTemplate = {
+    ...sampleTemplate,
+    id: "tpl-incorporation",
+    serviceType: "Incorporation — HK Ltd",
+  };
+  const inactiveTemplate: ChecklistTemplate = {
+    ...sampleTemplate,
+    id: "tpl-inactive",
+    active: false,
+  };
+
+  it("allows a non-Admin staff actor", async () => {
+    const { repository } = repositoryFor();
+
+    await expect(
+      listActiveAnnualReturnTemplatesForActor(staffActor, {}, { repository }),
+    ).resolves.toEqual([
+      { id: sampleTemplate.id, name: sampleTemplate.name, serviceType: sampleTemplate.serviceType },
+    ]);
+  });
+
+  it("rejects a Client actor", async () => {
+    const { repository } = repositoryFor();
+    const clientActor: AuthenticatedActor = { ...staffActor, role: "Client" };
+
+    await expect(
+      listActiveAnnualReturnTemplatesForActor(clientActor, {}, { repository }),
+    ).rejects.toThrow(/staff access is required/i);
+  });
+
+  it("excludes inactive templates and non-Annual-Return service types", async () => {
+    const { repository } = repositoryFor({
+      listTemplates: vi.fn(async () => [sampleTemplate, incorporationTemplate, inactiveTemplate]),
+    });
+
+    const result = await listActiveAnnualReturnTemplatesForActor(staffActor, {}, { repository });
+
+    expect(result).toEqual([
+      { id: sampleTemplate.id, name: sampleTemplate.name, serviceType: sampleTemplate.serviceType },
+    ]);
+  });
+
+  it("projects to id/name/serviceType only", async () => {
+    const { repository } = repositoryFor();
+
+    const [result] = await listActiveAnnualReturnTemplatesForActor(staffActor, {}, { repository });
+
+    expect(Object.keys(result!)).toEqual(["id", "name", "serviceType"]);
   });
 });
