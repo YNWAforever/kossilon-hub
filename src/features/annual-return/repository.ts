@@ -1154,7 +1154,7 @@ export function createAnnualReturnRepository(
         with candidates as (
           select id, owner_id, version
           from work_items
-          where case_id = ${input.caseId}
+          where annual_return_case_id = ${input.caseId}
             and status in ('open', 'in_progress', 'blocked')
             and owner_id is distinct from ${input.ownerId}
           for update
