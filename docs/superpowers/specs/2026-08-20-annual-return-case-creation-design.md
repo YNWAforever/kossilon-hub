@@ -11,7 +11,7 @@ decision has since shipped as P1-12 (`src/features/checklist-templates/`, a real
 table and repository), so this blocker is cleared.
 
 **Goal:** a staff-facing "New case" flow — pick a company, pick an active checklist template, confirm
-owner/team, submit — that creates a real `annual_return_cases` row, instantiates its checklist items
+the owner, submit — that creates a real `annual_return_cases` row, instantiates its checklist items
 from the template, and opens the same work item every other case lifecycle event already uses.
 
 **Confirmed via direct exploration of the current codebase, not assumption:**
@@ -43,8 +43,8 @@ from the template, and opens the same work item every other case lifecycle event
 **In scope:**
 - A "New case" button on `/annual-returns`, production mode only (matching the read-only-demo
   convention used everywhere else in this app — demo mode's command centre gets no create affordance).
-- A dialog: company picker → active-template picker → owner/team fields (pre-filled, editable) →
-  submit.
+- A dialog: company picker → active-template picker → owner field (pre-filled, editable; team shown
+  read-only) → invoice number/fee → submit.
 - One transaction: insert the case, instantiate checklist items from the template, open the work
   item.
 
@@ -80,16 +80,17 @@ to every item (`scripts/db-seed-annual-return.ts:1311-1350`).
 
 ## Company picker
 
-A new repository read method, `listCompaniesEligibleForCase(): Promise<EligibleCompany[]>`
-(`EligibleCompany = { id, companyName, crNumber, annualReturnBasisDate, assignedOwnerId, assignedTeamId }`),
-selecting from `companies` where `status = 'active'` and **no** existing `annual_return_cases` row
-matches `(company_id, EXTRACT(YEAR FROM annual_return_basis_date))`. This keeps the picker from ever
-offering a company that would immediately fail the unique constraint.
+A new repository read method, `listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>`
+(`EligibleCompanyForCase = { id, companyName, crNumber, annualReturnBasisDate, assignedOwnerId, assignedTeamId, assignedTeamName }`,
+joining `teams` for the display name), selecting from `companies` where `status = 'active'` and
+**no** existing `annual_return_cases` row matches
+`(company_id, EXTRACT(YEAR FROM annual_return_basis_date))`. This keeps the picker from ever offering
+a company that would immediately fail the unique constraint.
 
 The dialog's picker is a searchable combobox, filtering this list client-side by name/CR number — the
 active-company count is small enough that a full client-side list is fine; no server-side search
-debouncing needed. Selecting a company shows its basis date (read-only, for context) and pre-fills
-owner/team (see below).
+debouncing needed. Selecting a company shows its basis date and team name (both read-only, for
+context — see the team correction below for why team isn't editable) and pre-fills the owner picker.
 
 ## Create-case dialog: fields & validation
 
@@ -100,14 +101,27 @@ owner/team (see below).
   template explicitly at creation time — this was confirmed as the preferred approach over always
   defaulting to Private Ltd (silently wrong for the rare public-company client) or adding a new
   `companies` column (larger, unnecessary scope for this task).
-- `ownerId` / `teamId` (pre-filled from the company's `assigned_owner_id`/`assigned_team_id`,
-  editable, required). The owner/team picker data itself is **not** duplicated — the dialog calls
-  the existing `listClientAssignmentOptions` server fn (`clients/server-fns.ts`) directly and uses
-  only its `owners`/`teams` fields (ignoring `packages`, which is client-specific and irrelevant
-  here). Owners and teams are global staff data, not client-specific, so there's no reason to write
-  a second, nearly-identical query in the annual-return module. Defaulting from the company record
-  is right most of the time (the case usually belongs to whoever already owns the client
-  relationship) while still allowing override for the cases that need a different assignee.
+- `ownerId` (pre-filled from the company's `assigned_owner_id`, editable, required). The owner
+  picker data itself is **not** duplicated — the dialog calls the existing
+  `listClientAssignmentOptions` server fn (`clients/server-fns.ts`) directly and uses only its
+  `owners` field (ignoring `teams`/`packages`, see the correction below for why `teams` isn't
+  needed). Owners are global staff data, not client-specific, so there's no reason to write a
+  second, nearly-identical query in the annual-return module. Defaulting from the company record is
+  right most of the time (the case usually belongs to whoever already owns the client relationship)
+  while still allowing override for the cases that need a different assignee — and, matching the
+  existing `assignOwner` repository method exactly, the new owner can be **any** active user, not
+  restricted to the company's team (confirmed: `assignOwner`'s own query only checks
+  `id = ownerId and active = true`, no team restriction).
+- **Team is shown read-only, not a form field — a correction made during planning.** The original
+  brainstorm assumed a case's team could be overridden like its owner. It can't:
+  `annual_return_cases` has **no `team_id` column at all** (confirmed against `schema.sql:70-102`).
+  Every place this codebase shows a case's team (`AnnualReturnCase.companyTeamId`,
+  `selectCaseRows`'s `c.assigned_team_id as company_team_id`) derives it live from a join to
+  `companies.assigned_team_id` — it is not stored per-case and cannot be. The dialog therefore shows
+  the eligible company's team name as plain read-only context (from the company picker's own read,
+  no separate query needed), and authorization checks against that fixed company team (see
+  Authorization below) — there is no `teamId` input, and `listClientAssignmentOptions`'s `teams`
+  field goes unused here.
 - `reviewerId` stays unset at creation — nullable in `AnnualReturnCase` already, assigned later in
   the case's lifecycle by an existing flow, not part of this form.
 - `invoiceNumber` (required text) / `feeAmount` (required positive integer, HKD). **Discovered during
@@ -129,7 +143,6 @@ const createAnnualReturnCaseSchema = z
     companyId: z.string().uuid(),
     templateId: z.string().uuid(),
     ownerId: z.string().uuid(),
-    teamId: z.string().uuid(),
     invoiceNumber: z.string().trim().min(1),
     feeAmount: z.number().int().positive(),
   })
@@ -148,18 +161,19 @@ authorization step specifically (see Authorization below for why).
    violation surface as a raw SQL error.
 2. Look up the actor fresh from `users` by `actorId` (same shape as the existing
    `assertActorCanMutateLockedCase`'s actor lookup — role/team/active, never trusting a client-passed
-   role) and check it against the form's `teamId` via the new `assertAnnualReturnCaseCreatable` (see
-   Authorization below). There is no existing case row to lock yet, so this doesn't reuse
-   `lockWritableCase`/`assertActorCanMutateLockedCase` directly — it's a new, analogous check.
+   role) and check it against **the company's own `assigned_team_id`** (not a form value — see the
+   team correction above) via the new `assertAnnualReturnCaseCreatable`. There is no existing case
+   row to lock yet, so this doesn't reuse `lockWritableCase`/`assertActorCanMutateLockedCase`
+   directly — it's a new, analogous check.
 3. Load the template by `templateId`; reject with `"Checklist template not found or inactive."` if
    it doesn't exist or `active: false`.
 4. Compute `filingDueDate` via `calculateFilingDueDate(company.annualReturnBasisDate)` (unchanged
    existing function).
 5. Insert the `annual_return_cases` row: `current_status: "Upcoming"`, `made_up_date` = the
-   company's basis date, `filing_due_date` as computed above, `owner_id`/`team_id` from the
-   (possibly-overridden) form values, `reviewer_id: null`. `risk_level` and `reminders_sent` are left
-   to their schema defaults (`'green'`, `0` — confirmed in `schema.sql:91,94`, no need to specify
-   them).
+   company's basis date, `filing_due_date` as computed above, `owner_id` from the (possibly-
+   overridden) form value, `reviewer_id: null`. There is no `team_id` to set — see above. `risk_level`
+   and `reminders_sent` are left to their schema defaults (`'green'`, `0` — confirmed in
+   `schema.sql:91,94`, no need to specify them).
 6. Insert one `annual_return_checklist_items` row per template `documents[]` entry: `item_label` =
    `DocumentItem.label`, `required` = `DocumentItem.required`, `status: "Missing"`, `due_date` =
    `filingDueDate - documentItem.daysBeforeDue`, `received_at: null`, `verified_at: null`,
@@ -205,9 +219,10 @@ existing exported function's behavior.
 A new `assertAnnualReturnCaseCreatable(actor: AnnualReturnActionActor, input: { teamId: string })` in
 `annual-return/permissions.ts`, next to `assertAnnualReturnActionAllowed` — same policy as
 `clients/authorization.ts`'s `assertClientCompanyCreatable` (Admin unrestricted; Manager/Staff may
-only create into their own team, checked against the *target* team, which may differ from the
-company's default team if overridden in the form; Client role and inactive actors forbidden), but
-placed and invoked to match **this module's own established convention**: every existing mutation in
+only create for a company whose `assigned_team_id` matches their own team; Client role and inactive
+actors forbidden), checked against **the company's fixed team**, not a form value (see the team
+correction above — there is nothing else to check it against). Placed and invoked to match **this
+module's own established convention**: every existing mutation in
 `annual-return/repository.ts` re-fetches the actor's role/team from `users` inside the transaction and
 checks that, rather than trusting the `AuthenticatedActor` passed down from the server-fn layer (the
 opposite of how `clients` does it). `createCase` follows that same repository-internal pattern rather
@@ -236,7 +251,8 @@ otherwise untouched.
   projects to `{ id, name, serviceType }` only (no documents/reminders/riskRules leaked).
 - A route-level test for `/annual-returns` (extending the existing route-test harness): demo mode
   renders no "New case" button; production renders it, opens the dialog for an Admin actor, and the
-  picker/template/owner-team/invoice-fee fields render correctly for an eligible company.
+  picker/template/owner/invoice-fee fields render correctly for an eligible company (with team shown
+  read-only).
 
 Full suite + `tsc --noEmit` + `lint` at the end, same discipline as every prior feature this session.
 
@@ -252,11 +268,11 @@ Full suite + `tsc --noEmit` + `lint` at the end, same discipline as every prior 
 
 ## Acceptance
 
-1. An Admin or Manager/Staff actor (into their own team) can open "New case" from `/annual-returns`
-   in production mode, pick an eligible company and an active template, confirm or override
-   owner/team, enter an invoice number and fee, and submit — creating a real, persisted case with
-   checklist items matching the template, a payments row, and a linked work item, all in one
-   transaction.
+1. An Admin or Manager/Staff actor (for a company whose team matches their own) can open "New case"
+   from `/annual-returns` in production mode, pick an eligible company and an active template,
+   confirm or override the owner, enter an invoice number and fee, and submit — creating a real,
+   persisted case with checklist items matching the template, a payments row, and a linked work
+   item, all in one transaction.
 2. A Client actor's or inactive actor's attempt is rejected with a `Forbidden:` error, independent of
    the button being hidden client-side.
 3. Attempting to create a second case for a company that already has one for its derived return year
