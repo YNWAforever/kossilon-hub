@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assertAnnualReturnActionAllowed,
+  assertAnnualReturnCaseCreatable,
   caseFiltersForActor,
   getAnnualReturnActionPermission,
   type AnnualReturnActionActor,
@@ -95,6 +96,35 @@ describe("annual return action permissions", () => {
         "update_payment",
       ),
     ).toThrow(/Only assigned staff/);
+  });
+});
+
+describe("assertAnnualReturnCaseCreatable", () => {
+  it("rejects inactive actors", () => {
+    expect(() =>
+      assertAnnualReturnCaseCreatable(actor({ active: false }), { teamId: TEAM_ALPHA_ID }),
+    ).toThrow("Forbidden: inactive users cannot create annual return cases.");
+  });
+
+  it("allows admins to create for any team", () => {
+    const admin = actor({ role: "Admin", teamId: TEAM_BRAVO_ID });
+
+    expect(() => assertAnnualReturnCaseCreatable(admin, { teamId: TEAM_ALPHA_ID })).not.toThrow();
+  });
+
+  it("allows managers and staff to create for their own team", () => {
+    expect(() =>
+      assertAnnualReturnCaseCreatable(actor({ role: "Manager" }), { teamId: TEAM_ALPHA_ID }),
+    ).not.toThrow();
+    expect(() =>
+      assertAnnualReturnCaseCreatable(actor({ role: "Staff" }), { teamId: TEAM_ALPHA_ID }),
+    ).not.toThrow();
+  });
+
+  it("rejects managers and staff creating for another team", () => {
+    expect(() =>
+      assertAnnualReturnCaseCreatable(actor({ role: "Manager" }), { teamId: TEAM_BRAVO_ID }),
+    ).toThrow("Forbidden: this company belongs to another team.");
   });
 });
 

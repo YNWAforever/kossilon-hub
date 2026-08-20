@@ -6,7 +6,8 @@ export type AnnualReturnAction =
   | "update_payment"
   | "update_filing_proof"
   | "change_status"
-  | "complete";
+  | "complete"
+  | "create_case";
 
 export type AnnualReturnActorRole = "Admin" | "Manager" | "Staff";
 
@@ -99,6 +100,29 @@ export function assertAnnualReturnActionAllowed(
 
   if (!permission.allowed) {
     throw new Error(permission.reason);
+  }
+}
+
+/**
+ * Creation has no existing case row to compare against, so the check is on the
+ * company's own team — a case has no team_id of its own; every read derives it
+ * live from companies.assigned_team_id (see annual-return/repository.ts's
+ * selectCaseRows/getCase), so the company's team is the only team there is.
+ */
+export function assertAnnualReturnCaseCreatable(
+  actor: AnnualReturnActionActor,
+  input: { teamId: string },
+): void {
+  if (!actor.active) {
+    throw new Error("Forbidden: inactive users cannot create annual return cases.");
+  }
+
+  if (actor.role === "Admin") {
+    return;
+  }
+
+  if (actor.teamId !== input.teamId) {
+    throw new Error("Forbidden: this company belongs to another team.");
   }
 }
 
