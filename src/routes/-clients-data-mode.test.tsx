@@ -98,4 +98,18 @@ describe("clients route across data modes", () => {
     expect(html).toContain("no demo fixtures");
     expect(html).not.toContain("Search company, CR or BR number");
   });
+
+  it("renders the production detail screen at /clients/$id in production mode", async () => {
+    const html = await renderRoute("/clients/11111111-1111-4111-8111-111111111111", "production");
+
+    expect(html).toContain("Loading client");
+    expect(html).not.toContain("no demo fixtures");
+  });
+
+  it("renders the demo notice at /clients/$id in demo mode", async () => {
+    const html = await renderRoute("/clients/11111111-1111-4111-8111-111111111111", "demo");
+
+    expect(html).toContain("no demo fixtures");
+    expect(html).not.toContain("Loading client");
+  });
 });
