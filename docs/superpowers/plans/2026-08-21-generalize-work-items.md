@@ -830,6 +830,13 @@ git commit -m "feat: route work-queue case links through the case_type discrimin
 **Files:**
 - Modify: `src/routes/annual-returns.tsx`
 - Modify: `src/features/annual-return/components/production-command-center.tsx`
+- Modify: `src/features/annual-return/components/demo-case-detail.tsx`
+
+**Note:** this third file was not in the original design's enumerated consumer list — it
+surfaced as an extra typecheck error during Task 2's implementation (`demo-case-detail.tsx`
+does its own `.find((item) => item.caseId === id)` against `PersistedWorkItem`, structurally
+identical to the two `workItemsByCase` maps below, just via `Array.find` instead of a `Map`).
+Confirmed genuine and in-scope before this task was dispatched.
 
 - [ ] **Step 1: Update the demo command center's map**
 
@@ -865,22 +872,36 @@ Apply the identical change in
 `src/features/annual-return/components/production-command-center.tsx`'s `workItemsByCase`
 construction (same shape as above).
 
-- [ ] **Step 3: Run the annual-return component tests**
+- [ ] **Step 3: Update the demo case detail screen's lookup**
+
+In `src/features/annual-return/components/demo-case-detail.tsx`, around line 75:
+
+```ts
+  const workItem = (workItemsQuery.data ?? []).find((item) => item.caseId === id);
+```
+
+becomes:
+
+```ts
+  const workItem = (workItemsQuery.data ?? []).find((item) => item.annualReturnCaseId === id);
+```
+
+- [ ] **Step 4: Run the annual-return component tests**
 
 Run: `npm run test -- src/features/annual-return/components src/routes/-annual-returns-data-mode.test.tsx src/routes/-annual-returns-workflow.test.ts`
 Expected: PASS — the correlation behaves identically since every work item today has a
 non-null `annualReturnCaseId`.
 
-- [ ] **Step 4: Run full typecheck**
+- [ ] **Step 5: Run full typecheck**
 
 Run: `npm run typecheck`
 Expected: fully clean now — every consumer has been updated.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/routes/annual-returns.tsx src/features/annual-return/components/production-command-center.tsx
-git commit -m "feat: key the annual-return command centers' work-item lookup on annualReturnCaseId"
+git add src/routes/annual-returns.tsx src/features/annual-return/components/production-command-center.tsx src/features/annual-return/components/demo-case-detail.tsx
+git commit -m "feat: key the annual-return case-detail work-item lookups on annualReturnCaseId"
 ```
 
 ---
