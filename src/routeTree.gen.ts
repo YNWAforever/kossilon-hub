@@ -16,6 +16,7 @@ import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -57,6 +58,11 @@ const DocumentsRoute = DocumentsRouteImport.update({
   path: '/documents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientsRoute = ClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnnualReturnsRoute = AnnualReturnsRouteImport.update({
   id: '/annual-returns',
   path: '/annual-returns',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/annual-returns'
+    | '/clients'
     | '/documents'
     | '/login'
     | '/payments'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/annual-returns'
+    | '/clients'
     | '/documents'
     | '/login'
     | '/payments'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/annual-returns'
+    | '/clients'
     | '/documents'
     | '/login'
     | '/payments'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AnnualReturnsRoute: typeof AnnualReturnsRouteWithChildren
+  ClientsRoute: typeof ClientsRoute
   DocumentsRoute: typeof DocumentsRoute
   LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/documents'
       fullPath: '/documents'
       preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients': {
+      id: '/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof ClientsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/annual-returns': {
@@ -301,6 +321,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AnnualReturnsRoute: AnnualReturnsRouteWithChildren,
+  ClientsRoute: ClientsRoute,
   DocumentsRoute: DocumentsRoute,
   LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
