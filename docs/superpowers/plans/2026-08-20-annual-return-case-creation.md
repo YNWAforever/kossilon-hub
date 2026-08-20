@@ -38,7 +38,7 @@ change is additive — no existing exported function's signature or behavior cha
 
 ---
 
-### Task 1: `annual-return/workflow.ts` — a small, reusable date-offset helper
+### Task 1: `annual-return/workflow.ts` — a small, reusable date-offset helper — ✅ DONE (commit `086b2cc`)
 
 **Files:**
 - Modify: `src/features/annual-return/workflow.ts`
@@ -153,7 +153,7 @@ git commit -m "feat: add offsetDateOnly, reuse it in calculateFilingDueDate"
 
 ---
 
-### Task 2: `annual-return/permissions.ts` — authorization for creating a case
+### Task 2: `annual-return/permissions.ts` — authorization for creating a case — ✅ DONE (commit `567fc29`; code-quality review flagged `"create_case"` as apparently-unused in isolation, verified against Task 4 below where it's actually consumed via `writeAuditEvent` — no fix needed)
 
 **Files:**
 - Modify: `src/features/annual-return/permissions.ts`
@@ -357,7 +357,7 @@ git commit -m "feat: add assertAnnualReturnCaseCreatable"
 
 ---
 
-### Task 3: `checklist-templates/server-fns.ts` — a staff-readable template list for the picker
+### Task 3: `checklist-templates/server-fns.ts` — a staff-readable template list for the picker — ✅ DONE (commits `39e4035`, `1dadd8b`)
 
 **Files:**
 - Modify: `src/features/checklist-templates/server-fns.ts`
@@ -596,7 +596,7 @@ git commit -m "feat: add staff-readable active-templates list for case creation"
 
 ---
 
-### Task 4: `annual-return/repository.ts` — `listCompaniesEligibleForCase` and `createCase`
+### Task 4: `annual-return/repository.ts` — `listCompaniesEligibleForCase` and `createCase` — ✅ DONE (commits `3aa2574`, `19e81c8`)
 
 **Files:**
 - Modify: `src/features/annual-return/repository.ts`
@@ -1264,7 +1264,7 @@ git commit -m "feat: add createCase and listCompaniesEligibleForCase to AnnualRe
 
 ---
 
-### Task 5: `annual-return/server-fns.ts` — the `*ForActor` functions and server fns
+### Task 5: `annual-return/server-fns.ts` — the `*ForActor` functions and server fns — ✅ DONE (commit `4f76a82`)
 
 **Files:**
 - Modify: `src/features/annual-return/server-fns.ts`
@@ -1573,7 +1573,7 @@ git commit -m "feat: add createAnnualReturnCase and listCompaniesEligibleForCase
 
 ---
 
-### Task 6: `create-case-dialog.tsx` — the new UI component
+### Task 6: `create-case-dialog.tsx` — the new UI component — ✅ DONE (commits `73e8fa9`, `530b503`; required `isLoading` prop added — see Task 7's usage below, already updated)
 
 **Files:**
 - Create: `src/features/annual-return/components/create-case-dialog.tsx`
@@ -1853,7 +1853,7 @@ git commit -m "feat: add the New case dialog component"
 
 ---
 
-### Task 7: Wire the dialog into the production command center
+### Task 7: Wire the dialog into the production command center — ✅ DONE (commits `3a33601`, `d1db295` error-state fix, `fbd555a` team-scoping fix)
 
 **Files:**
 - Modify: `src/features/annual-return/components/production-command-center.tsx`
@@ -2031,11 +2031,24 @@ With:
         companies={eligibleCompaniesQuery.data ?? []}
         templates={activeTemplatesQuery.data ?? []}
         owners={assignmentOptionsQuery.data?.owners ?? []}
+        isLoading={
+          eligibleCompaniesQuery.isPending ||
+          activeTemplatesQuery.isPending ||
+          assignmentOptionsQuery.isPending
+        }
         onCreated={() => {
           void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
         }}
       />
 ```
+
+**Note added after Task 6's code-quality review:** `CreateCaseDialog` gained a required `isLoading`
+prop (Task 6 was revised to fix a bug where it couldn't tell "confirmed zero results" apart from
+"hasn't loaded yet" — since these three queries only start once the dialog opens, every open would
+otherwise show a false "no companies are eligible" message for a moment before real data arrives).
+`isPending` (not `isLoading`, which TanStack Query v5 deprecated in favor of `isPending` for this
+exact meaning) is true only while a query has no data yet — since all three are `enabled: isCreateOpen`,
+this is `true` for the entire window between the dialog opening and its first successful fetch.
 
 - [ ] **Step 4: Extend the route-level test**
 
