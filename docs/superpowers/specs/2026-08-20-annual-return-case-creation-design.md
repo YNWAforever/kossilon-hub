@@ -110,6 +110,16 @@ owner/team (see below).
   relationship) while still allowing override for the cases that need a different assignee.
 - `reviewerId` stays unset at creation — nullable in `AnnualReturnCase` already, assigned later in
   the case's lifecycle by an existing flow, not part of this form.
+- `invoiceNumber` (required text) / `feeAmount` (required positive integer, HKD). **Discovered during
+  planning, not in the original brainstorm:** `payments.case_id` is `not null` with `unique(case_id)`
+  (`schema.sql:134-148`), and `amount` has a `> 0` check — every case needs exactly one payment row
+  from the moment it's created, or the very first payment-status update (`updatePayment`) fails with
+  `"Annual return payment not found."`. There is no invoicing system anywhere in this codebase to
+  auto-derive either value (confirmed: `scripts/db-seed-annual-return.ts` just hand-picks both per
+  fixture; the roadmap itself calls out "no invoice entity" as an open gap, P1-11). Rather than
+  fabricate a placeholder invoice number or amount, staff enters both explicitly at creation time —
+  the same information they'd already need to raise a real invoice. Payment `status` starts at the
+  schema default, `"Payment pending"`.
 
 Validator:
 
@@ -120,37 +130,56 @@ const createAnnualReturnCaseSchema = z
     templateId: z.string().uuid(),
     ownerId: z.string().uuid(),
     teamId: z.string().uuid(),
+    invoiceNumber: z.string().trim().min(1),
+    feeAmount: z.number().int().positive(),
   })
   .strict();
 ```
 
 ## Repository / server-fn orchestration
 
-One transaction, mirroring `clients/repository.ts`'s `createClient` shape:
+One transaction, mirroring the existing write methods already in `annual-return/repository.ts`
+(`assignOwner`, `addNote`, `updateStatus`, …) — **not** `clients/repository.ts`'s shape for the
+authorization step specifically (see Authorization below for why).
 
 1. Re-check eligibility (company `active`, no existing case for the derived `return_year`) —
    defensive, since the picker's list could be stale by submit time. Surface a friendly
    `"This company already has a case for {year}."` rather than letting the unique-constraint
    violation surface as a raw SQL error.
-2. Load the template by `templateId`; reject with `"Checklist template not found or inactive."` if
+2. Look up the actor fresh from `users` by `actorId` (same shape as the existing
+   `assertActorCanMutateLockedCase`'s actor lookup — role/team/active, never trusting a client-passed
+   role) and check it against the form's `teamId` via the new `assertAnnualReturnCaseCreatable` (see
+   Authorization below). There is no existing case row to lock yet, so this doesn't reuse
+   `lockWritableCase`/`assertActorCanMutateLockedCase` directly — it's a new, analogous check.
+3. Load the template by `templateId`; reject with `"Checklist template not found or inactive."` if
    it doesn't exist or `active: false`.
-3. Compute `filingDueDate` via `calculateFilingDueDate(company.annualReturnBasisDate)` (unchanged
+4. Compute `filingDueDate` via `calculateFilingDueDate(company.annualReturnBasisDate)` (unchanged
    existing function).
-4. Insert the `annual_return_cases` row: `current_status: "Upcoming"`, `risk_level: "green"`
-   (placeholder), `made_up_date` = the company's basis date, `filing_due_date` as computed above,
-   `owner_id`/`team_id` from the (possibly-overridden) form values, `reviewer_id: null`,
-   `reminders_sent: 0`, `filing_reference: null`, `confirmation_document_id: null`.
-5. Insert one `annual_return_checklist_items` row per template `documents[]` entry: `item_label` =
+5. Insert the `annual_return_cases` row: `current_status: "Upcoming"`, `made_up_date` = the
+   company's basis date, `filing_due_date` as computed above, `owner_id`/`team_id` from the
+   (possibly-overridden) form values, `reviewer_id: null`. `risk_level` and `reminders_sent` are left
+   to their schema defaults (`'green'`, `0` — confirmed in `schema.sql:91,94`, no need to specify
+   them).
+6. Insert one `annual_return_checklist_items` row per template `documents[]` entry: `item_label` =
    `DocumentItem.label`, `required` = `DocumentItem.required`, `status: "Missing"`, `due_date` =
    `filingDueDate - documentItem.daysBeforeDue`, `received_at: null`, `verified_at: null`,
    `document_id: null`.
-6. Call `ensureWorkItemForEvent` in the same transaction, following the exact shape of the existing
+7. Insert the required `payments` row (`unique(case_id)`, `not null`, confirmed in
+   `schema.sql:134-148`): `invoice_number`/`amount` from the form, `currency: "HKD"` (schema default),
+   `status: "Payment pending"` (schema default), `due_date` = the case's `filing_due_date`.
+8. Call `ensureWorkItemForEvent` in the same transaction, following the exact shape of the existing
    `ensureAnnualReturnWorkItem` wrapper (`workType: "annual_return_case"`,
    `requiredSkillKey: "annual-return"`), with a new `sourceEventType: "annual_return_case_created"`
    and `sourceEventKey: `annual-return:${caseId}:created`` (idempotent, matching every other call
    site's key convention).
-7. Re-hydrate and return the full `AnnualReturnCase` from inside the same transaction, matching
-   `createClient`'s pattern (`clients/repository.ts:479-517`).
+9. Re-hydrate the new case (same `getCase`-style read every other mutation method already uses), then
+   — matching every other write method in this file — insert a `timeline_events` row
+   (`event_type: "annual_return_case_created"`) and a `writeAuditEvent` call. This needs
+   `"create_case"` added to the `AnnualReturnAction` union in `permissions.ts` (currently
+   `"assign_owner" | "add_note" | "record_reminder" | "update_checklist" | "update_payment" |
+   "update_filing_proof" | "change_status" | "complete"` — `annual_return_audit_events.action` is a
+   plain `text` column with no CHECK constraint, so this needs no migration).
+10. Return the hydrated case.
 
 The new `AnnualReturnRepository` method: `createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>`.
 
@@ -158,13 +187,32 @@ The new `*ForActor` function, `createAnnualReturnCaseForActor(actor, input, depe
 the same shape as every other function in this module — pure, dependency-injected, unit-testable
 without a database.
 
+**A second gap discovered during planning, in a different, already-shipped file:** the dialog's
+template dropdown needs to read active checklist templates, but the *only* existing read path,
+`listChecklistTemplates` (`checklist-templates/server-fns.ts`), calls `assertAdminAccess` — so a
+Manager/Staff actor creating a case (per the authorization policy below) couldn't see the template
+list at all. This needs one new, narrowly-scoped addition to that file: a
+`listActiveAnnualReturnTemplatesForActor` function requiring only `assertStaffAccess` (not Admin),
+returning a minimal `{ id, name, serviceType }` projection (not the full template with its
+documents/reminders/riskRules — staff creating a case pick a template by name, they don't need to see
+or edit its configuration) for templates where `active` and `serviceType` is one of the two Annual
+Return types. It reuses the existing `ChecklistTemplateRepository.listTemplates()` and filters/
+projects in the pure function — no new repository method, no schema change, no change to any
+existing exported function's behavior.
+
 ## Authorization
 
-A new `assertAnnualReturnCaseCreatable(actor, { teamId })` in `annual-return/permissions.ts`,
-mirroring `clients/authorization.ts`'s `assertClientCompanyCreatable` exactly: Admin unrestricted;
-Manager/Staff may only create into their own team (checked against the *target* team — which may
-differ from the company's default team if overridden in the form); Client role and inactive actors
-forbidden.
+A new `assertAnnualReturnCaseCreatable(actor: AnnualReturnActionActor, input: { teamId: string })` in
+`annual-return/permissions.ts`, next to `assertAnnualReturnActionAllowed` — same policy as
+`clients/authorization.ts`'s `assertClientCompanyCreatable` (Admin unrestricted; Manager/Staff may
+only create into their own team, checked against the *target* team, which may differ from the
+company's default team if overridden in the form; Client role and inactive actors forbidden), but
+placed and invoked to match **this module's own established convention**: every existing mutation in
+`annual-return/repository.ts` re-fetches the actor's role/team from `users` inside the transaction and
+checks that, rather than trusting the `AuthenticatedActor` passed down from the server-fn layer (the
+opposite of how `clients` does it). `createCase` follows that same repository-internal pattern rather
+than importing `clients`' server-fn-layer style, so both modules stay internally consistent with
+themselves even though they differ from each other.
 
 The "New case" button itself only renders in production mode — matching the read-only-demo
 convention used everywhere else (checklist templates settings, etc.); demo mode's command centre is
@@ -179,12 +227,16 @@ otherwise untouched.
 - `createCase` repository method: a `describe.skipIf(!databaseUrl)` integration suite (real Postgres,
   matching the existing convention for the ~60 tests that need one) — proves the actual transaction:
   the unique-constraint path surfaces the friendly error, checklist rows persist with correct due
-  dates, the work item row is created and linked to the case, and an active SLA policy for
-  `annual_return_case` already covers it (confirmed: no new SLA policy needed, existing cases already
-  use this work type).
+  dates, the payments row is created (satisfying the `not null`/`unique(case_id)` constraint), the
+  work item row is created and linked to the case, and an active SLA policy for `annual_return_case`
+  already covers it (confirmed: no new SLA policy needed, existing cases already use this work type).
+- `listActiveAnnualReturnTemplatesForActor` (new, in `checklist-templates/server-fns.ts`): unit tests
+  against a mocked repository — a Staff (non-Admin) actor can call it successfully (the whole point of
+  adding it), returns only `active` templates, returns only the two Annual Return service types,
+  projects to `{ id, name, serviceType }` only (no documents/reminders/riskRules leaked).
 - A route-level test for `/annual-returns` (extending the existing route-test harness): demo mode
   renders no "New case" button; production renders it, opens the dialog for an Admin actor, and the
-  picker/template/owner-team fields render correctly for an eligible company.
+  picker/template/owner-team/invoice-fee fields render correctly for an eligible company.
 
 Full suite + `tsc --noEmit` + `lint` at the end, same discipline as every prior feature this session.
 
@@ -202,8 +254,9 @@ Full suite + `tsc --noEmit` + `lint` at the end, same discipline as every prior 
 
 1. An Admin or Manager/Staff actor (into their own team) can open "New case" from `/annual-returns`
    in production mode, pick an eligible company and an active template, confirm or override
-   owner/team, and submit — creating a real, persisted case with checklist items matching the
-   template and a linked work item, all in one transaction.
+   owner/team, enter an invoice number and fee, and submit — creating a real, persisted case with
+   checklist items matching the template, a payments row, and a linked work item, all in one
+   transaction.
 2. A Client actor's or inactive actor's attempt is rejected with a `Forbidden:` error, independent of
    the button being hidden client-side.
 3. Attempting to create a second case for a company that already has one for its derived return year
