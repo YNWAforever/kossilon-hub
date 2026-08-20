@@ -172,7 +172,17 @@ export async function listCompaniesEligibleForCaseForActor(
   dependencies: { repository: Pick<AnnualReturnRepository, "listCompaniesEligibleForCase"> },
 ): Promise<EligibleCompanyForCase[]> {
   requireStaffUserId(actor);
-  return dependencies.repository.listCompaniesEligibleForCase();
+  const companies = await dependencies.repository.listCompaniesEligibleForCase();
+
+  // Admin unrestricted; Manager/Staff only ever see companies they could
+  // actually submit for — matches assertAnnualReturnCaseCreatable's policy
+  // exactly, so the picker never offers a company that would just bounce
+  // back with a Forbidden error after the whole form is filled out.
+  if (actor.role === "Admin") {
+    return companies;
+  }
+
+  return companies.filter((company) => company.assignedTeamId === actor.teamId);
 }
 
 export async function createAnnualReturnCaseForActor(

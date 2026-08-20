@@ -506,4 +506,65 @@ describe("createAnnualReturnCaseForActor / listCompaniesEligibleForCaseForActor"
 
     expect(listCompaniesEligibleForCase).toHaveBeenCalledOnce();
   });
+
+  it("scopes eligible companies to the actor's own team for non-Admin actors", async () => {
+    const ownTeamCompany = {
+      id: "90000000-0000-0000-0000-000000000001",
+      companyName: "Own Team Ltd",
+      crNumber: "CR-OWN",
+      annualReturnBasisDate: "2026-07-01",
+      assignedOwnerId: "20000000-0000-0000-0000-000000000001",
+      assignedTeamId: staffActor.teamId!,
+      assignedTeamName: "Own Team",
+    };
+    const otherTeamCompany = {
+      ...ownTeamCompany,
+      id: "90000000-0000-0000-0000-000000000002",
+      companyName: "Other Team Ltd",
+      assignedTeamId: "10000000-0000-0000-0000-000000000099",
+      assignedTeamName: "Other Team",
+    };
+    const listCompaniesEligibleForCase = vi.fn(async () => [ownTeamCompany, otherTeamCompany]);
+    const dependencies = {
+      repository: { listCompaniesEligibleForCase } as unknown as AnnualReturnRepository,
+    };
+
+    const result = await listCompaniesEligibleForCaseForActor(staffActor, {}, dependencies);
+
+    expect(result).toEqual([ownTeamCompany]);
+  });
+
+  it("does not scope eligible companies for an Admin actor", async () => {
+    const adminActor: AuthenticatedActor = {
+      authUserId: "admin-auth",
+      userId: "20000000-0000-0000-0000-000000000006",
+      role: "Admin",
+      teamId: null,
+      active: true,
+    };
+    const ownTeamCompany = {
+      id: "90000000-0000-0000-0000-000000000001",
+      companyName: "Own Team Ltd",
+      crNumber: "CR-OWN",
+      annualReturnBasisDate: "2026-07-01",
+      assignedOwnerId: "20000000-0000-0000-0000-000000000001",
+      assignedTeamId: "10000000-0000-0000-0000-000000000001",
+      assignedTeamName: "Own Team",
+    };
+    const otherTeamCompany = {
+      ...ownTeamCompany,
+      id: "90000000-0000-0000-0000-000000000002",
+      companyName: "Other Team Ltd",
+      assignedTeamId: "10000000-0000-0000-0000-000000000099",
+      assignedTeamName: "Other Team",
+    };
+    const listCompaniesEligibleForCase = vi.fn(async () => [ownTeamCompany, otherTeamCompany]);
+    const dependencies = {
+      repository: { listCompaniesEligibleForCase } as unknown as AnnualReturnRepository,
+    };
+
+    const result = await listCompaniesEligibleForCaseForActor(adminActor, {}, dependencies);
+
+    expect(result).toEqual([ownTeamCompany, otherTeamCompany]);
+  });
 });
