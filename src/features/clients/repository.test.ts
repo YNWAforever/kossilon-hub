@@ -859,4 +859,72 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
       await sql.end();
     }
   });
+
+  it("never leaves two simultaneously-active secretaries after repeated appointments", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Secretary Race Test Co Ltd",
+            crNumber: `CR-RACE-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-RACE-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "First Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "secretary",
+            name: "Second Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+
+          const final = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "secretary",
+            name: "Third Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-02-01",
+            actorId: owner.id,
+          });
+
+          const activeSecretaries = final.officers.filter(
+            (o) => o.officerType === "secretary" && o.cessationDate === null,
+          );
+
+          expect(activeSecretaries).toHaveLength(1);
+          expect(activeSecretaries[0].name).toBe("Third Secretary Ltd");
+          expect(final.companySecretary).toBe("Third Secretary Ltd");
+
+          throw new Error("rollback secretary race fixture");
+        }),
+      ).rejects.toThrow("rollback secretary race fixture");
+    } finally {
+      await sql.end();
+    }
+  });
 });

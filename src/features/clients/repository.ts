@@ -733,6 +733,8 @@ export function createClientRepository(
         await hydrateOrThrow(tx, input.companyId);
 
         if (input.officerType === "secretary") {
+          await tx`select id from companies where id = ${input.companyId} for update`;
+
           await tx`
             update officers
             set cessation_date = ${input.appointmentDate}, updated_at = now()
