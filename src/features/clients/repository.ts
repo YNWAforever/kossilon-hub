@@ -859,7 +859,10 @@ export function createClientRepository(
         await assertActor(tx, input.actorId);
         await hydrateOrThrow(tx, input.companyId);
 
-        if (input.officerType === "secretary" || input.officerType === "designated_representative") {
+        if (
+          input.officerType === "secretary" ||
+          input.officerType === "designated_representative"
+        ) {
           await tx`select id from companies where id = ${input.companyId} for update`;
 
           await tx`
