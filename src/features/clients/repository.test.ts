@@ -51,6 +51,16 @@ async function cleanupClientFixtures() {
   const companyIds = TEST_FIXTURE_SEQUENCES.map((sequence) =>
     testUuid(TEST_COMPANY_UUID_PREFIX, sequence),
   );
+  const generatedCompanies = await sql<{ id: string }[]>`
+    select id from companies where cr_number like 'TEST-CR-%'
+  `;
+  const allCompanyIds = [...companyIds, ...generatedCompanies.map((row) => row.id)];
+
+  // officers/shareholdings reference companies with `on delete restrict`, so createClient's
+  // auto-seeded secretary officer (and any shareholdings a test recorded) must be cleared
+  // before the company row itself can be deleted.
+  await sql`delete from officers where company_id = any(${allCompanyIds}::uuid[])`;
+  await sql`delete from shareholdings where company_id = any(${allCompanyIds}::uuid[])`;
 
   // Companies cascade to contacts, cases, payments, and timeline events.
   await sql`delete from companies where id = any(${companyIds}::uuid[])`;
