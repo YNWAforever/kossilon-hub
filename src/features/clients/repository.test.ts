@@ -942,4 +942,70 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
       await setupSql.end();
     }
   });
+
+  it("records and ceases a shareholding independently of officers", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Shareholder Test Co Ltd",
+            crNumber: `CR-SH-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-SH-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          expect(client.shareholdings).toEqual([]);
+
+          const recorded = await repository.recordShareholding({
+            companyId: client.id,
+            shareholderName: "Jane Shareholder",
+            shareholderAddress: "3 Test Street, Hong Kong",
+            shareClass: "Ordinary",
+            numberOfShares: 100,
+            allotmentDate: "2020-01-15",
+            actorId: owner.id,
+          });
+
+          const shareholding = recorded.shareholdings.find((s) => s.shareholderName === "Jane Shareholder");
+          expect(shareholding).toBeDefined();
+          expect(shareholding?.numberOfShares).toBe(100);
+          expect(shareholding?.cessationDate).toBeNull();
+
+          const ceased = await repository.ceaseShareholding({
+            companyId: client.id,
+            shareholdingId: shareholding!.id,
+            cessationDate: "2026-06-01",
+            actorId: owner.id,
+          });
+
+          expect(
+            ceased.shareholdings.find((s) => s.id === shareholding!.id)?.cessationDate,
+          ).toBe("2026-06-01");
+
+          throw new Error("rollback shareholdings integration fixture");
+        }),
+      ).rejects.toThrow("rollback shareholdings integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
 });

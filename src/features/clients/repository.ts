@@ -10,6 +10,7 @@ import type {
   AddContactInput,
   AppointOfficerInput,
   CeaseOfficerInput,
+  CeaseShareholdingInput,
   ClientAnnualReturnEntry,
   ClientAssignmentOptions,
   ClientDetail,
@@ -23,8 +24,10 @@ import type {
   IdentificationType,
   Officer,
   OfficerType,
+  RecordShareholdingInput,
   RemoveContactInput,
   ServicePackage,
+  Shareholding,
   UpdateClientInput,
   UpdateContactInput,
 } from "./types";
@@ -49,6 +52,8 @@ export type ClientRepository = {
   removeContact(input: RemoveContactInput): Promise<ClientDetail>;
   appointOfficer(input: AppointOfficerInput): Promise<ClientDetail>;
   ceaseOfficer(input: CeaseOfficerInput): Promise<ClientDetail>;
+  recordShareholding(input: RecordShareholdingInput): Promise<ClientDetail>;
+  ceaseShareholding(input: CeaseShareholdingInput): Promise<ClientDetail>;
   close(): Promise<void>;
 };
 
@@ -95,6 +100,17 @@ type OfficerRow = {
   identification_number: string | null;
   address: string | null;
   appointment_date: string | Date;
+  cessation_date: string | Date | null;
+};
+
+type ShareholdingRow = {
+  id: string;
+  company_id: string;
+  shareholder_name: string;
+  shareholder_address: string | null;
+  share_class: string;
+  number_of_shares: number;
+  allotment_date: string | Date;
   cessation_date: string | Date | null;
 };
 
@@ -167,6 +183,19 @@ function mapOfficer(row: OfficerRow): Officer {
     identificationNumber: row.identification_number,
     address: row.address,
     appointmentDate: dateOnly(row.appointment_date),
+    cessationDate: row.cessation_date ? dateOnly(row.cessation_date) : null,
+  };
+}
+
+function mapShareholding(row: ShareholdingRow): Shareholding {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    shareholderName: row.shareholder_name,
+    shareholderAddress: row.shareholder_address,
+    shareClass: row.share_class,
+    numberOfShares: row.number_of_shares,
+    allotmentDate: dateOnly(row.allotment_date),
     cessationDate: row.cessation_date ? dateOnly(row.cessation_date) : null,
   };
 }
@@ -340,7 +369,7 @@ export function createClientRepository(
       return null;
     }
 
-    const [contacts, officers, timeline, history, documents] = await Promise.all([
+    const [contacts, officers, shareholdings, timeline, history, documents] = await Promise.all([
       client<ContactRow[]>`
         select id, company_id, name, role, email, phone, is_primary
         from company_contacts
@@ -353,6 +382,13 @@ export function createClientRepository(
         from officers
         where company_id = ${id}
         order by (cessation_date is not null), appointment_date desc
+      `,
+      client<ShareholdingRow[]>`
+        select id, company_id, shareholder_name, shareholder_address, share_class,
+               number_of_shares, allotment_date, cessation_date
+        from shareholdings
+        where company_id = ${id}
+        order by (cessation_date is not null), allotment_date desc
       `,
       client<
         {
@@ -410,6 +446,7 @@ export function createClientRepository(
       companySecretary: detailRow.company_secretary,
       contacts: contacts.map(mapContact),
       officers: officers.map(mapOfficer),
+      shareholdings: shareholdings.map(mapShareholding),
       timeline: timeline.map(
         (row): ClientTimelineEntry => ({
           id: row.id,
@@ -820,6 +857,87 @@ export function createClientRepository(
     }
   }
 
+  async function recordShareholding(input: RecordShareholdingInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        await hydrateOrThrow(tx, input.companyId);
+
+        await tx`
+          insert into shareholdings (
+            company_id, shareholder_name, shareholder_address, share_class,
+            number_of_shares, allotment_date
+          ) values (
+            ${input.companyId}, ${input.shareholderName}, ${input.shareholderAddress},
+            ${input.shareClass}, ${input.numberOfShares}, ${input.allotmentDate}
+          )
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "shareholding_recorded",
+          actorId: input.actorId,
+          description: `Recorded shareholding for ${input.shareholderName} (${input.numberOfShares} ${input.shareClass} shares).`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function assertShareholdingBelongsToCompany(
+    tx: TransactionSqlClient,
+    companyId: string,
+    shareholdingId: string,
+  ): Promise<ShareholdingRow> {
+    const rows = await tx<ShareholdingRow[]>`
+      select id, company_id, shareholder_name, shareholder_address, share_class,
+             number_of_shares, allotment_date, cessation_date
+      from shareholdings
+      where id = ${shareholdingId} and company_id = ${companyId}
+      limit 1
+    `;
+
+    const [row] = rows;
+
+    if (!row) {
+      throw new Error("Shareholding not found for this company.");
+    }
+
+    return row;
+  }
+
+  async function ceaseShareholding(input: CeaseShareholdingInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        const shareholding = await assertShareholdingBelongsToCompany(
+          tx,
+          input.companyId,
+          input.shareholdingId,
+        );
+
+        await tx`
+          update shareholdings set cessation_date = ${input.cessationDate}, updated_at = now()
+          where id = ${input.shareholdingId} and company_id = ${input.companyId}
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "shareholding_ceased",
+          actorId: input.actorId,
+          description: `Ceased shareholding for ${shareholding.shareholder_name}.`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) {
       await sql.end();
@@ -839,6 +957,8 @@ export function createClientRepository(
     removeContact,
     appointOfficer,
     ceaseOfficer,
+    recordShareholding,
+    ceaseShareholding,
     close,
   };
 }
