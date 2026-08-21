@@ -121,4 +121,64 @@ describe("ControllerFormDialog", () => {
     );
     expect(onSaved).toHaveBeenCalled();
   });
+
+  it("shows an error and does not close when the server call fails", async () => {
+    serverFns.recordClientController.mockRejectedValue(new Error("Client not found."));
+
+    render(
+      <ControllerFormDialog
+        open
+        onOpenChange={() => {}}
+        companyId="company-1"
+        onSaved={() => {}}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Controller name"), {
+      target: { value: "Jane Controller" },
+    });
+    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
+    fireEvent.change(screen.getByLabelText("Registered date"), {
+      target: { value: "2026-01-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+
+    expect(await screen.findByText("Client not found.")).toBeTruthy();
+  });
+
+  it("excludes a control basis that was checked and then unchecked", async () => {
+    serverFns.recordClientController.mockResolvedValue({ id: "client-1" });
+    const onSaved = vi.fn();
+
+    render(
+      <ControllerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Controller name"), {
+      target: { value: "Jane Controller" },
+    });
+    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
+    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
+    fireEvent.click(screen.getByLabelText("Exercises significant influence or control"));
+    fireEvent.change(screen.getByLabelText("Registered date"), {
+      target: { value: "2026-01-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+
+    await waitFor(() =>
+      expect(serverFns.recordClientController).toHaveBeenCalledWith({
+        data: {
+          companyId: "company-1",
+          controllerName: "Jane Controller",
+          identificationType: null,
+          identificationNumber: null,
+          address: null,
+          controlBases: ["significant_influence"],
+          registeredDate: "2026-01-01",
+          registerUpdateDueDate: null,
+        },
+      }),
+    );
+    expect(onSaved).toHaveBeenCalled();
+  });
 });
