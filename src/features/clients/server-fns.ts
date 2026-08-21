@@ -114,15 +114,23 @@ const removeContactSchema = z.object({
   contactId: z.string().uuid(),
 });
 
-const appointOfficerSchema = z.object({
-  companyId: z.string().uuid(),
-  officerType: z.enum(["director", "secretary"]),
-  name: z.string().min(1),
-  identificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
-  identificationNumber: z.string().nullable(),
-  address: z.string().nullable(),
-  appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
+const appointOfficerSchema = z
+  .object({
+    companyId: z.string().uuid(),
+    officerType: z.enum(["director", "secretary"]),
+    name: z.string().min(1),
+    identificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
+    identificationNumber: z.string().nullable(),
+    address: z.string().nullable(),
+    appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .refine(
+    (officer) => (officer.identificationType === null) === (officer.identificationNumber === null),
+    {
+      message: "Provide both an identification type and number, or neither.",
+      path: ["identificationNumber"],
+    },
+  );
 
 const ceaseOfficerSchema = z.object({
   companyId: z.string().uuid(),
