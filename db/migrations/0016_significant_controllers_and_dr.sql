@@ -25,6 +25,9 @@ create table if not exists significant_controllers (
   constraint significant_controllers_cessation_after_registered check (
     cessation_date is null or cessation_date >= registered_date
   ),
+  constraint significant_controllers_due_date_not_before_registered check (
+    register_update_due_date is null or register_update_due_date >= registered_date
+  ),
   constraint significant_controllers_control_bases_valid check (
     control_bases <@ array['shares_over_25pct', 'votes_over_25pct',
                             'board_appointment_right', 'significant_influence']::text[]

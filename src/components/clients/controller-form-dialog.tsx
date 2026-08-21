@@ -104,6 +104,13 @@ export function ControllerFormDialog({
       return;
     }
 
+    const registeredDateForComparison = controller?.registeredDate ?? registeredDate;
+
+    if (registerUpdateDueDate && registerUpdateDueDate < registeredDateForComparison) {
+      setError("Register update due date cannot be before the registered date.");
+      return;
+    }
+
     setError(null);
     setSaving(true);
 

@@ -181,6 +181,15 @@ const recordControllerSchema = z
       message: "Provide both an identification type and number, or neither.",
       path: ["identificationNumber"],
     },
+  )
+  .refine(
+    (controller) =>
+      controller.registerUpdateDueDate === null ||
+      controller.registerUpdateDueDate >= controller.registeredDate,
+    {
+      message: "Register update due date cannot be before the registered date.",
+      path: ["registerUpdateDueDate"],
+    },
   );
 
 const updateControllerParticularsSchema = z.object({

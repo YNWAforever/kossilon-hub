@@ -77,6 +77,34 @@ describe("ControllerFormDialog", () => {
     expect(serverFns.recordClientController).not.toHaveBeenCalled();
   });
 
+  it("rejects a register update due date earlier than the registered date, without calling the server", async () => {
+    render(
+      <ControllerFormDialog
+        open
+        onOpenChange={() => {}}
+        companyId="company-1"
+        onSaved={() => {}}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Controller name"), {
+      target: { value: "Jane Controller" },
+    });
+    fireEvent.click(screen.getByLabelText("Holds more than 25% of shares"));
+    fireEvent.change(screen.getByLabelText("Registered date"), {
+      target: { value: "2026-01-01" },
+    });
+    fireEvent.change(screen.getByLabelText("Register update due date"), {
+      target: { value: "2025-12-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Record controller" }));
+
+    expect(
+      await screen.findByText("Register update due date cannot be before the registered date."),
+    ).toBeTruthy();
+    expect(serverFns.recordClientController).not.toHaveBeenCalled();
+  });
+
   it("edits an existing controller's particulars", async () => {
     serverFns.updateClientControllerParticulars.mockResolvedValue({ id: "client-1" });
     const onSaved = vi.fn();
