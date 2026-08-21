@@ -97,7 +97,6 @@ const updateClientSchema = z.object({
   id: z.string().uuid(),
   companyName: z.string().min(1),
   registeredOffice: z.string().min(1),
-  companySecretary: z.string().min(1),
   status: z.enum(["active", "inactive"]),
   ownerId: z.string().uuid(),
   teamId: z.string().uuid(),
@@ -113,6 +112,37 @@ const updateContactSchema = z
 const removeContactSchema = z.object({
   companyId: z.string().uuid(),
   contactId: z.string().uuid(),
+});
+
+const appointOfficerSchema = z.object({
+  companyId: z.string().uuid(),
+  officerType: z.enum(["director", "secretary"]),
+  name: z.string().min(1),
+  identificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
+  identificationNumber: z.string().nullable(),
+  address: z.string().nullable(),
+  appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const ceaseOfficerSchema = z.object({
+  companyId: z.string().uuid(),
+  officerId: z.string().uuid(),
+  cessationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const recordShareholdingSchema = z.object({
+  companyId: z.string().uuid(),
+  shareholderName: z.string().min(1),
+  shareholderAddress: z.string().nullable(),
+  shareClass: z.string().min(1),
+  numberOfShares: z.number().int().positive(),
+  allotmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const ceaseShareholdingSchema = z.object({
+  companyId: z.string().uuid(),
+  shareholdingId: z.string().uuid(),
+  cessationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 /**
@@ -204,6 +234,50 @@ export const removeClientContact = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     withClientRepository(async (repository) =>
       repository.removeContact({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const appointClientOfficer = createServerFn({ method: "POST" })
+  .validator(appointOfficerSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.appointOfficer({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const ceaseClientOfficer = createServerFn({ method: "POST" })
+  .validator(ceaseOfficerSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.ceaseOfficer({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const recordClientShareholding = createServerFn({ method: "POST" })
+  .validator(recordShareholdingSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.recordShareholding({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const ceaseClientShareholding = createServerFn({ method: "POST" })
+  .validator(ceaseShareholdingSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.ceaseShareholding({
         ...data,
         actorId: await requireWritableCompany(repository, data.companyId),
       }),
