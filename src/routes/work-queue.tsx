@@ -27,6 +27,21 @@ type SlaFilter = "all" | PersistedWorkItem["escalationState"];
 type PriorityFilter = "all" | "high" | "normal";
 type StatusFilter = "all" | PersistedWorkItem["status"];
 
+type CaseDetailLink = { to: "/annual-returns/$id"; params: { id: string } };
+
+export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | null {
+  switch (item.caseType) {
+    case "annual_return":
+      return item.annualReturnCaseId
+        ? { to: "/annual-returns/$id", params: { id: item.annualReturnCaseId } }
+        : null;
+    default: {
+      const exhaustive: never = item.caseType;
+      throw new Error(`Unhandled work item case type: ${exhaustive}`);
+    }
+  }
+}
+
 export const Route = createFileRoute("/work-queue")({
   validateSearch: (search: Record<string, unknown>) => ({
     view:
@@ -86,7 +101,7 @@ function WorkQueueRoute() {
     return items.filter((item) => {
       const matchesQuery =
         !needle ||
-        `${item.title} ${item.workType} ${item.caseId} ${item.companyId}`
+        `${item.title} ${item.workType} ${item.annualReturnCaseId ?? ""} ${item.companyId}`
           .toLowerCase()
           .includes(needle);
       const matchesOwner =
@@ -270,15 +285,22 @@ function WorkQueueRoute() {
                       <p className="text-xs text-muted-foreground">
                         Company {item.companyId.slice(0, 8)}
                       </p>
-                      <Link
-                        to="/annual-returns/$id"
-                        params={{ id: item.caseId }}
-                        className="font-medium hover:underline"
-                      >
-                        {item.title}
-                      </Link>
+                      {caseDetailLinkFor(item) ? (
+                        <Link
+                          to={caseDetailLinkFor(item)!.to}
+                          params={caseDetailLinkFor(item)!.params}
+                          className="font-medium hover:underline"
+                        >
+                          {item.title}
+                        </Link>
+                      ) : (
+                        <p className="font-medium">{item.title}</p>
+                      )}
                       <p className="truncate text-xs text-muted-foreground">
-                        {item.workType} · Case {item.caseId.slice(0, 8)}
+                        {item.workType}
+                        {item.annualReturnCaseId
+                          ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}`
+                          : ""}
                       </p>
                     </div>
                     <span role="cell">
@@ -314,15 +336,22 @@ function WorkQueueRoute() {
                     <p className="text-xs text-muted-foreground">
                       Company {item.companyId.slice(0, 8)}
                     </p>
-                    <Link
-                      to="/annual-returns/$id"
-                      params={{ id: item.caseId }}
-                      className="font-medium hover:underline"
-                    >
-                      {item.title}
-                    </Link>
+                    {caseDetailLinkFor(item) ? (
+                      <Link
+                        to={caseDetailLinkFor(item)!.to}
+                        params={caseDetailLinkFor(item)!.params}
+                        className="font-medium hover:underline"
+                      >
+                        {item.title}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">{item.title}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
-                      {item.workType} · Case {item.caseId.slice(0, 8)}
+                      {item.workType}
+                      {item.annualReturnCaseId
+                        ? ` · Case ${item.annualReturnCaseId.slice(0, 8)}`
+                        : ""}
                     </p>
                   </div>
                   <QueueField label="Owner">

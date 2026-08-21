@@ -72,7 +72,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
     queryKey: ["work-queue", "annual-return-detail", id],
     queryFn: () => listWorkQueue({ data: { view: "team" } }),
   });
-  const workItem = (workItemsQuery.data ?? []).find((item) => item.caseId === id);
+  const workItem = (workItemsQuery.data ?? []).find((item) => item.annualReturnCaseId === id);
   const portalSnapshot = useClientPortalSnapshot();
 
   if (!caseItem) {

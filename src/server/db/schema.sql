@@ -298,7 +298,8 @@ create index if not exists checklist_templates_service_type_idx
 create table if not exists work_items (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references companies(id) on delete restrict,
-  case_id uuid not null references annual_return_cases(id) on delete restrict,
+  case_type text not null check (case_type in ('annual_return')),
+  annual_return_case_id uuid references annual_return_cases(id) on delete restrict,
   source_event_key text not null unique,
   source_event_type text not null,
   work_type text not null,
@@ -327,6 +328,9 @@ create table if not exists work_items (
   constraint work_items_completion_state_check check (
     (status = 'completed' and completed_at is not null)
     or (status <> 'completed' and completed_at is null)
+  ),
+  constraint work_items_case_reference_check check (
+    case_type <> 'annual_return' or annual_return_case_id is not null
   )
 );
 

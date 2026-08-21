@@ -12,7 +12,8 @@ function item(id: string, input: Partial<PersistedWorkItem> = {}): PersistedWork
   return {
     id,
     companyId: "company-1",
-    caseId: "case-1",
+    caseType: "annual_return",
+    annualReturnCaseId: "case-1",
     sourceEventKey: `event:${id}`,
     sourceEventType: "status_changed",
     workType: "annual_return_status",
@@ -204,19 +205,20 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
 
           await tx`
             insert into work_items (
-              id, company_id, case_id, source_event_key, source_event_type, work_type,
-              required_skill_key, title, priority, team_id, sla_policy_version_id,
-              sla_started_at, sla_warning_at, sla_due_at, sla_breached_at
+              id, company_id, case_type, annual_return_case_id, source_event_key,
+              source_event_type, work_type, required_skill_key, title, priority, team_id,
+              sla_policy_version_id, sla_started_at, sla_warning_at, sla_due_at, sla_breached_at
             ) values
-              (${warningId}, ${fixture.company_id}, ${fixture.case_id}, ${`test:${token}:warning`},
-                'test_event', 'annual_return_case', ${fixture.skill_key}, 'Warning fixture', 80,
-                ${fixture.team_id}, ${fixture.policy_id}, '2026-07-01T00:00:00.000Z',
-                '2026-07-01T01:00:00.000Z', '2026-07-01T03:00:00.000Z', null),
-              (${breachId}, ${fixture.company_id}, ${fixture.case_id}, ${`test:${token}:breach`},
-                'test_event', 'annual_return_case', ${fixture.skill_key}, 'Breach fixture', 20,
-                ${fixture.team_id}, ${fixture.policy_id}, '2026-07-01T00:00:00.000Z',
-                '2026-07-01T01:00:00.000Z', '2026-07-01T05:00:00.000Z',
-                '2026-07-01T01:30:00.000Z')
+              (${warningId}, ${fixture.company_id}, 'annual_return', ${fixture.case_id},
+                ${`test:${token}:warning`}, 'test_event', 'annual_return_case',
+                ${fixture.skill_key}, 'Warning fixture', 80, ${fixture.team_id},
+                ${fixture.policy_id}, '2026-07-01T00:00:00.000Z', '2026-07-01T01:00:00.000Z',
+                '2026-07-01T03:00:00.000Z', null),
+              (${breachId}, ${fixture.company_id}, 'annual_return', ${fixture.case_id},
+                ${`test:${token}:breach`}, 'test_event', 'annual_return_case',
+                ${fixture.skill_key}, 'Breach fixture', 20, ${fixture.team_id},
+                ${fixture.policy_id}, '2026-07-01T00:00:00.000Z', '2026-07-01T01:00:00.000Z',
+                '2026-07-01T05:00:00.000Z', '2026-07-01T01:30:00.000Z')
           `;
 
           const repository = createWorkItemRepository({ sql: tx });

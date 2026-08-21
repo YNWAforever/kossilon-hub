@@ -161,7 +161,7 @@ async function cleanupAnnualReturnTestFixtures() {
       delete from notification_outbox
       where company_id = any(${companyIds}::uuid[])
         or work_item_id in (
-          select id from work_items where case_id = any(${caseIds}::uuid[])
+          select id from work_items where annual_return_case_id = any(${caseIds}::uuid[])
         )
     `;
     await tx`delete from reminder_logs where case_id = any(${caseIds}::uuid[])`;
@@ -173,13 +173,13 @@ async function cleanupAnnualReturnTestFixtures() {
     await tx`delete from annual_return_reminder_events where case_id = any(${caseIds}::uuid[])`;
     await tx`
       delete from assignment_events where work_item_id in (
-        select id from work_items where case_id = any(${caseIds}::uuid[])
+        select id from work_items where annual_return_case_id = any(${caseIds}::uuid[])
       )`;
     await tx`
       delete from escalation_events where work_item_id in (
-        select id from work_items where case_id = any(${caseIds}::uuid[])
+        select id from work_items where annual_return_case_id = any(${caseIds}::uuid[])
       )`;
-    await tx`delete from work_items where case_id = any(${caseIds}::uuid[])`;
+    await tx`delete from work_items where annual_return_case_id = any(${caseIds}::uuid[])`;
     await tx`delete from timeline_events where case_id = any(${caseIds}::uuid[])`;
     await tx`
       delete from payments
@@ -533,7 +533,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       const workItems = await sql<{ owner_id: string | null; status: string }[]>`
         select owner_id, status
         from work_items
-        where case_id = ${fixture.caseId}
+        where annual_return_case_id = ${fixture.caseId}
           and status in ('open', 'in_progress', 'blocked')
       `;
       expect(workItems.length).toBeGreaterThan(0);
@@ -543,7 +543,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         select assigned_to_id, assigned_by_id
         from assignment_events
         where work_item_id in (
-          select id from work_items where case_id = ${fixture.caseId}
+          select id from work_items where annual_return_case_id = ${fixture.caseId}
         )
       `;
       expect(assignmentEvents).toContainEqual({
@@ -1033,7 +1033,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         }[]
       >`
         select source_event_type from work_items
-        where case_id = ${fixture.caseId}
+        where annual_return_case_id = ${fixture.caseId}
         order by source_event_type
       `;
       expect(workItems.map((item) => item.source_event_type)).toEqual([
@@ -2137,7 +2137,7 @@ describe.skipIf(!databaseUrl)("createCase", () => {
 
       const sql = sqlForTests();
       const workItemRows = await sql`
-        select work_type, owner_id, team_id from work_items where case_id = ${created.id}
+        select work_type, owner_id, team_id from work_items where annual_return_case_id = ${created.id}
       `;
       expect(workItemRows).toHaveLength(1);
       expect(workItemRows[0]?.work_type).toBe("annual_return_case");

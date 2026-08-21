@@ -489,7 +489,8 @@ export function createAnnualReturnRepository(
   ) {
     return ensureWorkItemForEvent(tx, {
       companyId: lockedCase.company_id,
-      caseId: lockedCase.id,
+      caseType: "annual_return",
+      annualReturnCaseId: lockedCase.id,
       sourceEventKey: event.sourceEventKey,
       sourceEventType: event.sourceEventType,
       workType: "annual_return_case",
@@ -931,7 +932,8 @@ export function createAnnualReturnRepository(
 
       await ensureWorkItemForEvent(tx, {
         companyId: input.companyId,
-        caseId: newCaseId,
+        caseType: "annual_return",
+        annualReturnCaseId: newCaseId,
         sourceEventKey: `annual-return:${newCaseId}:created`,
         sourceEventType: "annual_return_case_created",
         workType: "annual_return_case",
@@ -1152,7 +1154,7 @@ export function createAnnualReturnRepository(
         with candidates as (
           select id, owner_id, version
           from work_items
-          where case_id = ${input.caseId}
+          where annual_return_case_id = ${input.caseId}
             and status in ('open', 'in_progress', 'blocked')
             and owner_id is distinct from ${input.ownerId}
           for update

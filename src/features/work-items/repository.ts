@@ -14,6 +14,7 @@ import type {
   BusinessCalendar,
   SlaThreshold,
   StaffCandidate,
+  WorkItemCaseType,
   WorkItemStatus,
 } from "./types";
 
@@ -24,7 +25,8 @@ export type EscalationState = "none" | "warning" | "breach" | "acknowledged";
 export type PersistedWorkItem = {
   id: string;
   companyId: string;
-  caseId: string;
+  caseType: WorkItemCaseType;
+  annualReturnCaseId: string | null;
   sourceEventKey: string;
   sourceEventType: string;
   workType: string;
@@ -48,7 +50,8 @@ export type PersistedWorkItem = {
 type WorkItemRow = {
   id: string;
   company_id: string;
-  case_id: string;
+  case_type: WorkItemCaseType;
+  annual_return_case_id: string | null;
   source_event_key: string;
   source_event_type: string;
   work_type: string;
@@ -100,7 +103,8 @@ export type AcknowledgeEscalationInput = {
 };
 export type EnsureWorkItemEvent = {
   companyId: string;
-  caseId: string;
+  caseType: WorkItemCaseType;
+  annualReturnCaseId: string;
   sourceEventKey: string;
   sourceEventType: string;
   workType: string;
@@ -127,7 +131,8 @@ function mapWorkItem(row: WorkItemRow): PersistedWorkItem {
   return {
     id: row.id,
     companyId: row.company_id,
-    caseId: row.case_id,
+    caseType: row.case_type,
+    annualReturnCaseId: row.annual_return_case_id,
     sourceEventKey: row.source_event_key,
     sourceEventType: row.source_event_type,
     workType: row.work_type,
@@ -240,7 +245,7 @@ async function recommendationsFor(
   const work = await client<
     {
       user_id: string;
-      case_id: string;
+      annual_return_case_id: string | null;
       priority: number;
       sla_warning_at: string | Date;
       sla_due_at: string | Date;
@@ -248,7 +253,7 @@ async function recommendationsFor(
     }[]
   >`
     select ${options.assignmentTarget === "reviewer" ? client`reviewer_id` : client`owner_id`} user_id,
-      case_id, priority, sla_warning_at, sla_due_at, sla_breached_at
+      annual_return_case_id, priority, sla_warning_at, sla_due_at, sla_breached_at
     from work_items where ${options.assignmentTarget === "reviewer" ? client`reviewer_id` : client`owner_id`} is not null
       and status in ('open','in_progress','blocked')
   `;
@@ -266,7 +271,7 @@ async function recommendationsFor(
       .map((entry) => ({
         threshold: thresholdFor(
           {
-            id: entry.case_id,
+            id: entry.annual_return_case_id ?? "",
             status: "open",
             priority: entry.priority,
             ownerId: row.user_id,
@@ -279,14 +284,16 @@ async function recommendationsFor(
         ),
         effortPoints: Math.max(1, Math.ceil(entry.priority / 10)),
       })),
-    caseIds: work.filter((entry) => entry.user_id === row.user_id).map((entry) => entry.case_id),
+    caseIds: work
+      .filter((entry) => entry.user_id === row.user_id)
+      .map((entry) => entry.annual_return_case_id),
   }));
   return rankAssignmentCandidates({
     assignmentTarget: options.assignmentTarget ?? "owner",
     requiredRole: options.requiredRole ?? "Staff",
     requiredSkillKey: item.requiredSkillKey,
     teamId: item.teamId,
-    caseId: item.caseId,
+    caseId: item.annualReturnCaseId,
     ownerId: item.ownerId,
     reviewerId: item.reviewerId,
     separationOfDuties: options.separationOfDuties ?? true,
@@ -352,14 +359,15 @@ export async function ensureWorkItemForEvent(
   );
   const inserted = await tx<WorkItemRow[]>`
     insert into work_items (
-      company_id, case_id, source_event_key, source_event_type, work_type,
-      required_skill_key, title, priority, owner_id, reviewer_id, team_id,
+      company_id, case_type, annual_return_case_id, source_event_key, source_event_type,
+      work_type, required_skill_key, title, priority, owner_id, reviewer_id, team_id,
       sla_policy_version_id, sla_started_at, sla_warning_at, sla_due_at
     ) values (
-      ${event.companyId}, ${event.caseId}, ${event.sourceEventKey}, ${event.sourceEventType},
-      ${event.workType}, ${event.requiredSkillKey ?? null}, ${event.title}, ${event.priority ?? 50},
-      ${event.ownerId ?? null}, ${event.reviewerId ?? null}, ${event.teamId ?? null},
-      ${snapshot.policyVersionId}, ${snapshot.startedAt}, ${snapshot.warningAt}, ${snapshot.dueAt}
+      ${event.companyId}, ${event.caseType}, ${event.annualReturnCaseId}, ${event.sourceEventKey},
+      ${event.sourceEventType}, ${event.workType}, ${event.requiredSkillKey ?? null},
+      ${event.title}, ${event.priority ?? 50}, ${event.ownerId ?? null}, ${event.reviewerId ?? null},
+      ${event.teamId ?? null}, ${snapshot.policyVersionId}, ${snapshot.startedAt},
+      ${snapshot.warningAt}, ${snapshot.dueAt}
     ) on conflict (source_event_key) do nothing returning *
   `;
   if (inserted[0]) return mapWorkItem(inserted[0]);
@@ -488,7 +496,7 @@ export function createWorkItemRepository(
         await tx`
           insert into timeline_events (
             company_id, case_id, event_type, actor_type, actor_id, description, metadata
-          ) values (${item.companyId}, ${item.caseId}, 'work_item_assigned', 'user',
+          ) values (${item.companyId}, ${item.annualReturnCaseId}, 'work_item_assigned', 'user',
             ${input.assignedById}, ${`Work item ${assignmentTarget} assigned.`},
             ${tx.json({
               workItemId: item.id,
@@ -525,7 +533,7 @@ export function createWorkItemRepository(
         await tx`
           insert into timeline_events (
             company_id, case_id, event_type, actor_type, actor_id, description, metadata
-          ) values (${item.companyId}, ${item.caseId}, 'work_item_escalation_acknowledged',
+          ) values (${item.companyId}, ${item.annualReturnCaseId}, 'work_item_escalation_acknowledged',
             'user', ${input.actorId}, 'Work item escalation acknowledged.',
             ${tx.json({ workItemId: item.id, threshold: item.escalationState, note: input.note.trim() })})`;
         return mapWorkItem(rows[0]);
@@ -571,7 +579,7 @@ export function createWorkItemRepository(
             await tx`
               insert into timeline_events (
                 company_id, case_id, event_type, actor_type, actor_id, description, metadata
-              ) values (${item.companyId}, ${item.caseId}, ${`work_item_sla_${threshold}`},
+              ) values (${item.companyId}, ${item.annualReturnCaseId}, ${`work_item_sla_${threshold}`},
                 'system', null, ${`Work item SLA ${threshold} reached.`},
                 ${tx.json({
                   workItemId: item.id,
@@ -604,7 +612,7 @@ export function createWorkItemRepository(
                 notificationType: `work_item_sla_${threshold}`,
                 recipient: escalationRecipient.email,
                 payload: {
-                  caseId: item.caseId,
+                  caseId: item.annualReturnCaseId,
                   workItemId: item.id,
                   threshold,
                   occurredAt,

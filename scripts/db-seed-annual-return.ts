@@ -1207,7 +1207,8 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
         workItemFixtures.map((item) => ({
           id: item.id,
           company_id: item.company.id,
-          case_id: actualCaseIdFor(caseIdsByFixtureId, item.company.caseId),
+          case_type: "annual_return",
+          annual_return_case_id: actualCaseIdFor(caseIdsByFixtureId, item.company.caseId),
           source_event_key: item.sourceEventKey,
           source_event_type: "annual_return_case_seeded",
           work_type: "annual_return_case",
@@ -1233,7 +1234,8 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
         })),
         "id",
         "company_id",
-        "case_id",
+        "case_type",
+        "annual_return_case_id",
         "source_event_key",
         "source_event_type",
         "work_type",
@@ -1255,7 +1257,8 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
       )}
       on conflict (source_event_key) do update set
         company_id = excluded.company_id,
-        case_id = excluded.case_id,
+        case_type = excluded.case_type,
+        annual_return_case_id = excluded.annual_return_case_id,
         source_event_type = excluded.source_event_type,
         work_type = excluded.work_type,
         title = excluded.title,

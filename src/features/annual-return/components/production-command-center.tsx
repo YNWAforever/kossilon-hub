@@ -90,7 +90,9 @@ export function ProductionAnnualReturnCommandCenter({
   const workItemsByCase = useMemo(() => {
     const map = new Map<string, PersistedWorkItem>();
     for (const item of workItemsQuery.data ?? []) {
-      if (!map.has(item.caseId)) map.set(item.caseId, item);
+      if (item.annualReturnCaseId && !map.has(item.annualReturnCaseId)) {
+        map.set(item.annualReturnCaseId, item);
+      }
     }
     return map;
   }, [workItemsQuery.data]);

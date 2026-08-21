@@ -48,7 +48,8 @@ function recommendationFor(
     candidate.capacityPoints > 0
       ? Math.round((rawWorkload / candidate.capacityPoints) * 100)
       : 1_000;
-  const continuityBonus = candidate.caseIds.includes(input.caseId) ? 30 : 0;
+  const continuityBonus =
+    input.caseId !== null && candidate.caseIds.includes(input.caseId) ? 30 : 0;
   const score = skill.proficiency * 100 - weightedWorkload - capacityUtilization + continuityBonus;
 
   return {
