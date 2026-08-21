@@ -140,7 +140,6 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             id: client.id,
             companyName: form.companyName,
             registeredOffice: form.registeredOffice,
-            companySecretary: form.companySecretary,
             status: form.status,
             ownerId: form.ownerId,
             teamId: form.teamId,

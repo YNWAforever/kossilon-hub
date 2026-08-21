@@ -13,12 +13,16 @@ const serverFns = vi.hoisted(() => ({
   getClient: vi.fn(),
   listClientAssignmentOptions: vi.fn(),
   removeClientContact: vi.fn(),
+  ceaseClientOfficer: vi.fn(),
+  ceaseClientShareholding: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => ({
   getClient: serverFns.getClient,
   listClientAssignmentOptions: serverFns.listClientAssignmentOptions,
   removeClientContact: serverFns.removeClientContact,
+  ceaseClientOfficer: serverFns.ceaseClientOfficer,
+  ceaseClientShareholding: serverFns.ceaseClientShareholding,
 }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/clients">{children}</a>,
@@ -54,6 +58,8 @@ function makeClient(overrides: Partial<ClientDetail> = {}): ClientDetail {
     timeline: [],
     annualReturnHistory: [],
     documents: [],
+    officers: [],
+    shareholdings: [],
     ...overrides,
   };
 }
@@ -87,6 +93,8 @@ describe("production client detail", () => {
     serverFns.getClient.mockReset();
     serverFns.listClientAssignmentOptions.mockReset();
     serverFns.removeClientContact.mockReset();
+    serverFns.ceaseClientOfficer.mockReset();
+    serverFns.ceaseClientShareholding.mockReset();
     serverFns.listClientAssignmentOptions.mockResolvedValue(makeOptions());
     vi.mocked(toast.success).mockReset();
     vi.mocked(toast.error).mockReset();
@@ -212,5 +220,52 @@ describe("production client detail", () => {
     const status = await screen.findByRole("status");
     expect(status.textContent).toMatch(/options are unavailable/i);
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+  });
+
+  it("renders officers and shareholdings, and ceases an officer on click", async () => {
+    serverFns.getClient.mockResolvedValue(
+      makeClient({
+        officers: [
+          {
+            id: "officer-1",
+            companyId: clientId,
+            officerType: "secretary",
+            name: "Wong Corporate Secretaries Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2020-01-15",
+            cessationDate: null,
+          },
+        ],
+        shareholdings: [
+          {
+            id: "shareholding-1",
+            companyId: clientId,
+            shareholderName: "Jane Shareholder",
+            shareholderAddress: null,
+            shareClass: "Ordinary",
+            numberOfShares: 100,
+            allotmentDate: "2020-01-15",
+            cessationDate: null,
+          },
+        ],
+      }),
+    );
+    serverFns.ceaseClientOfficer.mockResolvedValue({});
+    renderDetail();
+
+    await screen.findByText("Wong Corporate Secretaries Ltd");
+    expect(screen.getByText("Jane Shareholder")).toBeTruthy();
+
+    // Both the officer and shareholding rows render a "Cease" button (neither is ceased);
+    // the officer section is listed first in the JSX, so index [0] is the officer's button.
+    fireEvent.click(screen.getAllByRole("button", { name: "Cease" })[0]);
+
+    await waitFor(() =>
+      expect(serverFns.ceaseClientOfficer).toHaveBeenCalledWith({
+        data: expect.objectContaining({ companyId: clientId, officerId: "officer-1" }),
+      }),
+    );
   });
 });

@@ -635,6 +635,45 @@ create unique index if not exists company_contacts_primary_uidx
   on company_contacts (company_id)
   where is_primary;
 
+-- from 0015_officers_and_shareholdings.sql
+
+create table if not exists officers (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete restrict,
+  officer_type text not null check (officer_type in ('director', 'secretary')),
+  name text not null,
+  identification_type text check (identification_type in ('hkid', 'passport', 'br_number')),
+  identification_number text,
+  address text,
+  appointment_date date not null,
+  cessation_date date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint officers_cessation_after_appointment check (
+    cessation_date is null or cessation_date >= appointment_date
+  )
+);
+
+create index if not exists officers_company_idx on officers (company_id);
+
+create table if not exists shareholdings (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete restrict,
+  shareholder_name text not null,
+  shareholder_address text,
+  share_class text not null default 'Ordinary',
+  number_of_shares integer not null check (number_of_shares > 0),
+  allotment_date date not null,
+  cessation_date date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint shareholdings_cessation_after_allotment check (
+    cessation_date is null or cessation_date >= allotment_date
+  )
+);
+
+create index if not exists shareholdings_company_idx on shareholdings (company_id);
+
 -- ---------------------------------------------------------------------------
 -- Reconciled with db/migrations/. schema.sql is a reference document (only
 -- db/migrations is ever applied), and it had drifted: these five tables were

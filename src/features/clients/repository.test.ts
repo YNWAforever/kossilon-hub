@@ -478,7 +478,6 @@ describe.skipIf(!databaseUrl)(
         id: companyId,
         companyName: "Aaa Update Test Ltd",
         registeredOffice: "New Office, Central, Hong Kong",
-        companySecretary: "Kossilon Secretaries Ltd",
         status: "inactive",
         ownerId: USER_KEN_ID,
         teamId: TEAM_ANNUAL_RETURN_ID,
@@ -509,7 +508,6 @@ describe.skipIf(!databaseUrl)(
           id: "99999999-0000-0000-0000-000000000000",
           companyName: "Nowhere Ltd",
           registeredOffice: "Nowhere",
-          companySecretary: "Nobody",
           status: "active",
           ownerId: USER_AMY_ID,
           teamId: TEAM_ANNUAL_RETURN_ID,
@@ -731,3 +729,287 @@ describe.skipIf(!databaseUrl)(
     });
   },
 );
+
+describe.skipIf(!databaseUrl)("officers integration", () => {
+  it("appointing a new secretary cessates the old one and syncs companies.company_secretary", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Officer Test Co Ltd",
+            crNumber: `CR-OFF-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-OFF-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "Original Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          // Company creation seeds an initial secretary officer.
+          expect(client.officers).toHaveLength(1);
+          expect(client.officers[0].officerType).toBe("secretary");
+          expect(client.officers[0].name).toBe("Original Secretary Ltd");
+          expect(client.officers[0].cessationDate).toBeNull();
+          expect(client.companySecretary).toBe("Original Secretary Ltd");
+
+          const updated = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "secretary",
+            name: "New Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+
+          const originalSecretary = updated.officers.find(
+            (o) => o.name === "Original Secretary Ltd",
+          );
+          const newSecretary = updated.officers.find((o) => o.name === "New Secretary Ltd");
+
+          expect(originalSecretary?.cessationDate).toBe("2026-01-01");
+          expect(newSecretary?.cessationDate).toBeNull();
+          expect(updated.companySecretary).toBe("New Secretary Ltd");
+
+          throw new Error("rollback officers integration fixture");
+        }),
+      ).rejects.toThrow("rollback officers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
+  it("appointing a director does not affect companies.company_secretary", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Director Test Co Ltd",
+            crNumber: `CR-DIR-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-DIR-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          const updated = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "director",
+            name: "Jane Director",
+            identificationType: "hkid",
+            identificationNumber: "A1234567",
+            address: "2 Test Street, Hong Kong",
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+
+          expect(updated.companySecretary).toBe("A Secretary Ltd");
+          expect(updated.officers.find((o) => o.name === "Jane Director")?.officerType).toBe(
+            "director",
+          );
+
+          const ceased = await repository.ceaseOfficer({
+            companyId: client.id,
+            officerId: updated.officers.find((o) => o.name === "Jane Director")!.id,
+            cessationDate: "2026-06-01",
+            actorId: owner.id,
+          });
+
+          expect(ceased.officers.find((o) => o.name === "Jane Director")?.cessationDate).toBe(
+            "2026-06-01",
+          );
+          expect(ceased.companySecretary).toBe("A Secretary Ltd");
+
+          throw new Error("rollback officers integration fixture");
+        }),
+      ).rejects.toThrow("rollback officers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
+  it("serializes concurrent secretary appointments so exactly one ends up active", async () => {
+    const setupSql = createSqlClient(databaseUrl!, { max: 1 });
+    let companyId: string | undefined;
+
+    try {
+      const repository = createClientRepository({ sql: setupSql });
+      const [owner] = await setupSql<{ id: string }[]>`
+        select id from users where active limit 1
+      `;
+      const [team] = await setupSql<{ id: string }[]>`
+        select id from teams where active limit 1
+      `;
+
+      const client = await repository.createClient({
+        companyName: "Secretary Race Test Co Ltd",
+        crNumber: `CR-RACE-${crypto.randomUUID().slice(0, 8)}`,
+        brNumber: `BR-RACE-${crypto.randomUUID().slice(0, 8)}`,
+        incorporationDate: "2020-01-15",
+        annualReturnBasisDate: "2020-01-15",
+        registeredOffice: "1 Test Street, Hong Kong",
+        companySecretary: "First Secretary Ltd",
+        ownerId: owner.id,
+        teamId: team.id,
+        packageId: null,
+        contacts: [],
+        actorId: owner.id,
+      });
+      companyId = client.id;
+
+      // Two independent connections/transactions racing to appoint a secretary
+      // for the SAME company concurrently — this is what actually exercises the
+      // `for update` lock added in appointOfficer. A single shared transaction
+      // calling appointOfficer twice sequentially never races at all, since
+      // there is nothing to serialize against.
+      const sqlA = createSqlClient(databaseUrl!, { max: 1 });
+      const sqlB = createSqlClient(databaseUrl!, { max: 1 });
+
+      try {
+        await Promise.all([
+          createClientRepository({ sql: sqlA }).appointOfficer({
+            companyId: client.id,
+            officerType: "secretary",
+            name: "Second Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          }),
+          createClientRepository({ sql: sqlB }).appointOfficer({
+            companyId: client.id,
+            officerType: "secretary",
+            name: "Third Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          }),
+        ]);
+      } finally {
+        await sqlA.end();
+        await sqlB.end();
+      }
+
+      const final = await repository.getClient(client.id);
+      const activeSecretaries = (final?.officers ?? []).filter(
+        (o) => o.officerType === "secretary" && o.cessationDate === null,
+      );
+
+      // Whichever of the two appointments effectively "won" the race is not
+      // asserted — only that the lock prevented the invalid two-active-
+      // secretaries outcome the bug produced.
+      expect(activeSecretaries).toHaveLength(1);
+    } finally {
+      if (companyId) {
+        await setupSql`delete from officers where company_id = ${companyId}`;
+        await setupSql`delete from companies where id = ${companyId}`;
+      }
+      await setupSql.end();
+    }
+  });
+
+  it("records and ceases a shareholding independently of officers", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Shareholder Test Co Ltd",
+            crNumber: `CR-SH-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-SH-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          expect(client.shareholdings).toEqual([]);
+
+          const recorded = await repository.recordShareholding({
+            companyId: client.id,
+            shareholderName: "Jane Shareholder",
+            shareholderAddress: "3 Test Street, Hong Kong",
+            shareClass: "Ordinary",
+            numberOfShares: 100,
+            allotmentDate: "2020-01-15",
+            actorId: owner.id,
+          });
+
+          const shareholding = recorded.shareholdings.find(
+            (s) => s.shareholderName === "Jane Shareholder",
+          );
+          expect(shareholding).toBeDefined();
+          expect(shareholding?.numberOfShares).toBe(100);
+          expect(shareholding?.cessationDate).toBeNull();
+
+          const ceased = await repository.ceaseShareholding({
+            companyId: client.id,
+            shareholdingId: shareholding!.id,
+            cessationDate: "2026-06-01",
+            actorId: owner.id,
+          });
+
+          expect(ceased.shareholdings.find((s) => s.id === shareholding!.id)?.cessationDate).toBe(
+            "2026-06-01",
+          );
+
+          throw new Error("rollback shareholdings integration fixture");
+        }),
+      ).rejects.toThrow("rollback shareholdings integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+});

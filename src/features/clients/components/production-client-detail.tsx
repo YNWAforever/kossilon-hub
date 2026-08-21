@@ -9,7 +9,15 @@ import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { ContactFormDialog } from "@/components/clients/contact-form-dialog";
-import { getClient, listClientAssignmentOptions, removeClientContact } from "../server-fns";
+import { OfficerFormDialog } from "@/components/clients/officer-form-dialog";
+import { ShareholdingFormDialog } from "@/components/clients/shareholding-form-dialog";
+import {
+  ceaseClientOfficer,
+  ceaseClientShareholding,
+  getClient,
+  listClientAssignmentOptions,
+  removeClientContact,
+} from "../server-fns";
 import type { ClientPaymentStatus, CompanyContact, CompanyStatus } from "../types";
 
 const companyStatusTone: Record<CompanyStatus, StatusTone> = {
@@ -30,6 +38,34 @@ const verificationTone: Record<"pending" | "verified" | "rejected", StatusTone> 
   rejected: "red",
 };
 
+const officerTypeLabel: Record<"director" | "secretary", string> = {
+  director: "Director",
+  secretary: "Secretary",
+};
+
+const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
+
+function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
+  const part = parts.find((candidate) => candidate.type === type);
+
+  if (!part) {
+    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
+  }
+
+  return part.value;
+}
+
+function today(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: HONG_KONG_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
+}
+
 export function ProductionClientDetail({ clientId }: { clientId: string }) {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -37,6 +73,10 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
     open: false,
   });
   const [removingContactId, setRemovingContactId] = useState<string | null>(null);
+  const [isOfficerDialogOpen, setIsOfficerDialogOpen] = useState(false);
+  const [isShareholdingDialogOpen, setIsShareholdingDialogOpen] = useState(false);
+  const [ceasingOfficerId, setCeasingOfficerId] = useState<string | null>(null);
+  const [ceasingShareholdingId, setCeasingShareholdingId] = useState<string | null>(null);
 
   const clientQuery = useQuery({
     queryKey: ["clients", clientId],
@@ -65,6 +105,44 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       toast.error("Unable to remove the contact. Try again.");
     } finally {
       setRemovingContactId(null);
+    }
+  }
+
+  async function handleCeaseOfficer(officerId: string) {
+    setCeasingOfficerId(officerId);
+
+    try {
+      await ceaseClientOfficer({
+        data: {
+          companyId: clientId,
+          officerId,
+          cessationDate: today(),
+        },
+      });
+      invalidate();
+    } catch {
+      toast.error("Unable to cease the officer. Try again.");
+    } finally {
+      setCeasingOfficerId(null);
+    }
+  }
+
+  async function handleCeaseShareholding(shareholdingId: string) {
+    setCeasingShareholdingId(shareholdingId);
+
+    try {
+      await ceaseClientShareholding({
+        data: {
+          companyId: clientId,
+          shareholdingId,
+          cessationDate: today(),
+        },
+      });
+      invalidate();
+    } catch {
+      toast.error("Unable to cease the shareholding. Try again.");
+    } finally {
+      setCeasingShareholdingId(null);
     }
   }
 
@@ -153,6 +231,101 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
             )
           }
         />
+      </section>
+
+      <section className="rounded-lg border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Officers</h2>
+          <button
+            type="button"
+            onClick={() => setIsOfficerDialogOpen(true)}
+            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
+          >
+            Appoint officer
+          </button>
+        </div>
+        <div className="divide-y">
+          {client.officers.map((officer) => (
+            <div key={officer.id} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {officer.name}
+                  <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+                    {officerTypeLabel[officer.officerType]}
+                  </span>
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  Appointed {officer.appointmentDate}
+                  {officer.cessationDate ? ` · Ceased ${officer.cessationDate}` : ""}
+                  {officer.identificationNumber ? ` · ${officer.identificationNumber}` : ""}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <StatusPill tone={officer.cessationDate ? "neutral" : "green"}>
+                  {officer.cessationDate ? "Ceased" : "Active"}
+                </StatusPill>
+                {!officer.cessationDate ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleCeaseOfficer(officer.id)}
+                    disabled={ceasingOfficerId === officer.id}
+                    className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                  >
+                    Cease
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ))}
+          {client.officers.length === 0 ? (
+            <p className="py-3 text-sm text-muted-foreground">No officers on file.</p>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="rounded-lg border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Shareholders</h2>
+          <button
+            type="button"
+            onClick={() => setIsShareholdingDialogOpen(true)}
+            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
+          >
+            Record shareholding
+          </button>
+        </div>
+        <div className="divide-y">
+          {client.shareholdings.map((shareholding) => (
+            <div key={shareholding.id} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{shareholding.shareholderName}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {shareholding.numberOfShares} {shareholding.shareClass} shares · Allotted{" "}
+                  {shareholding.allotmentDate}
+                  {shareholding.cessationDate ? ` · Ceased ${shareholding.cessationDate}` : ""}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <StatusPill tone={shareholding.cessationDate ? "neutral" : "green"}>
+                  {shareholding.cessationDate ? "Ceased" : "Active"}
+                </StatusPill>
+                {!shareholding.cessationDate ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleCeaseShareholding(shareholding.id)}
+                    disabled={ceasingShareholdingId === shareholding.id}
+                    className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                  >
+                    Cease
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ))}
+          {client.shareholdings.length === 0 ? (
+            <p className="py-3 text-sm text-muted-foreground">No shareholdings on file.</p>
+          ) : null}
+        </div>
       </section>
 
       <section className="rounded-lg border bg-card p-4">
@@ -292,6 +465,20 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
           invalidate();
           setContactDialog({ open: false });
         }}
+      />
+
+      <OfficerFormDialog
+        open={isOfficerDialogOpen}
+        onOpenChange={setIsOfficerDialogOpen}
+        companyId={clientId}
+        onSaved={invalidate}
+      />
+
+      <ShareholdingFormDialog
+        open={isShareholdingDialogOpen}
+        onOpenChange={setIsShareholdingDialogOpen}
+        companyId={clientId}
+        onSaved={invalidate}
       />
     </main>
   );
