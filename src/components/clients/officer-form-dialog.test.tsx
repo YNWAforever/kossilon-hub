@@ -50,6 +50,39 @@ describe("OfficerFormDialog", () => {
     expect(onSaved).toHaveBeenCalled();
   });
 
+  it("appoints a Designated Representative when that type is selected", async () => {
+    serverFns.appointClientOfficer.mockResolvedValue({ id: "client-1" });
+    const onSaved = vi.fn();
+
+    render(
+      <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Type"), {
+      target: { value: "designated_representative" },
+    });
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Jane DR" } });
+    fireEvent.change(screen.getByLabelText("Appointment date"), {
+      target: { value: "2026-01-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Appoint officer" }));
+
+    await waitFor(() =>
+      expect(serverFns.appointClientOfficer).toHaveBeenCalledWith({
+        data: {
+          companyId: "company-1",
+          officerType: "designated_representative",
+          name: "Jane DR",
+          identificationType: null,
+          identificationNumber: null,
+          address: null,
+          appointmentDate: "2026-01-01",
+        },
+      }),
+    );
+    expect(onSaved).toHaveBeenCalled();
+  });
+
   it("shows an error and does not close when the server call fails", async () => {
     serverFns.appointClientOfficer.mockRejectedValue(
       new Error("Officer not found for this company."),
