@@ -779,7 +779,9 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
             actorId: owner.id,
           });
 
-          const originalSecretary = updated.officers.find((o) => o.name === "Original Secretary Ltd");
+          const originalSecretary = updated.officers.find(
+            (o) => o.name === "Original Secretary Ltd",
+          );
           const newSecretary = updated.officers.find((o) => o.name === "New Secretary Ltd");
 
           expect(originalSecretary?.cessationDate).toBe("2026-01-01");
@@ -985,7 +987,9 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
             actorId: owner.id,
           });
 
-          const shareholding = recorded.shareholdings.find((s) => s.shareholderName === "Jane Shareholder");
+          const shareholding = recorded.shareholdings.find(
+            (s) => s.shareholderName === "Jane Shareholder",
+          );
           expect(shareholding).toBeDefined();
           expect(shareholding?.numberOfShares).toBe(100);
           expect(shareholding?.cessationDate).toBeNull();
@@ -997,9 +1001,9 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
             actorId: owner.id,
           });
 
-          expect(
-            ceased.shareholdings.find((s) => s.id === shareholding!.id)?.cessationDate,
-          ).toBe("2026-06-01");
+          expect(ceased.shareholdings.find((s) => s.id === shareholding!.id)?.cessationDate).toBe(
+            "2026-06-01",
+          );
 
           throw new Error("rollback shareholdings integration fixture");
         }),
