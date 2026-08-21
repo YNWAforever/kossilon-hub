@@ -61,6 +61,8 @@ async function cleanupClientFixtures() {
   // before the company row itself can be deleted.
   await sql`delete from officers where company_id = any(${allCompanyIds}::uuid[])`;
   await sql`delete from shareholdings where company_id = any(${allCompanyIds}::uuid[])`;
+  await sql`delete from significant_controllers where company_id = any(${allCompanyIds}::uuid[])`;
+  await sql`delete from scr_inspection_requests where company_id = any(${allCompanyIds}::uuid[])`;
 
   // Companies cascade to contacts, cases, payments, and timeline events.
   await sql`delete from companies where id = any(${companyIds}::uuid[])`;
@@ -1018,6 +1020,363 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
           throw new Error("rollback shareholdings integration fixture");
         }),
       ).rejects.toThrow("rollback shareholdings integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+});
+
+describe.skipIf(!databaseUrl)("significant controllers integration", () => {
+  it("records, edits, and ceases a significant controller", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Controller Test Co Ltd",
+            crNumber: `CR-SCR-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-SCR-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          expect(client.significantControllers).toEqual([]);
+
+          const recorded = await repository.recordController({
+            companyId: client.id,
+            controllerName: "Jane Controller",
+            identificationType: "hkid",
+            identificationNumber: "A1234567",
+            address: "4 Test Street, Hong Kong",
+            controlBases: ["shares_over_25pct", "votes_over_25pct"],
+            registeredDate: "2020-01-15",
+            registerUpdateDueDate: null,
+            actorId: owner.id,
+          });
+
+          const controller = recorded.significantControllers.find(
+            (c) => c.controllerName === "Jane Controller",
+          );
+          expect(controller).toBeDefined();
+          expect(controller?.controlBases).toEqual(["shares_over_25pct", "votes_over_25pct"]);
+          expect(controller?.cessationDate).toBeNull();
+
+          const edited = await repository.updateControllerParticulars({
+            companyId: client.id,
+            controllerId: controller!.id,
+            address: "5 New Street, Hong Kong",
+            controlBases: ["significant_influence"],
+            registerUpdateDueDate: "2026-02-01",
+            actorId: owner.id,
+          });
+
+          const editedController = edited.significantControllers.find(
+            (c) => c.id === controller!.id,
+          );
+          expect(editedController?.address).toBe("5 New Street, Hong Kong");
+          expect(editedController?.controlBases).toEqual(["significant_influence"]);
+          expect(editedController?.registerUpdateDueDate).toBe("2026-02-01");
+
+          const ceased = await repository.ceaseController({
+            companyId: client.id,
+            controllerId: controller!.id,
+            cessationDate: "2026-06-01",
+            actorId: owner.id,
+          });
+
+          expect(
+            ceased.significantControllers.find((c) => c.id === controller!.id)?.cessationDate,
+          ).toBe("2026-06-01");
+
+          throw new Error("rollback significant controllers integration fixture");
+        }),
+      ).rejects.toThrow("rollback significant controllers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
+  it("rejects an empty control_bases array", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Empty Basis Test Co Ltd",
+            crNumber: `CR-SCR2-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-SCR2-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          await repository.recordController({
+            companyId: client.id,
+            controllerName: "Bad Controller",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            controlBases: [],
+            registeredDate: "2020-01-15",
+            registerUpdateDueDate: null,
+            actorId: owner.id,
+          });
+        }),
+      ).rejects.toThrow();
+    } finally {
+      await sql.end();
+    }
+  });
+});
+
+describe.skipIf(!databaseUrl)("designated representative integration", () => {
+  it("appointing a new DR cessates the old one without touching companies.company_secretary", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "DR Test Co Ltd",
+            crNumber: `CR-DR-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-DR-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          const firstDr = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "designated_representative",
+            name: "First DR",
+            identificationType: "hkid",
+            identificationNumber: "B1234567",
+            address: null,
+            appointmentDate: "2020-02-01",
+            actorId: owner.id,
+          });
+
+          expect(firstDr.companySecretary).toBe("A Secretary Ltd");
+          expect(firstDr.officers.find((o) => o.name === "First DR")?.officerType).toBe(
+            "designated_representative",
+          );
+
+          const secondDr = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "designated_representative",
+            name: "Second DR",
+            identificationType: "hkid",
+            identificationNumber: "B7654321",
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+
+          const first = secondDr.officers.find((o) => o.name === "First DR");
+          const second = secondDr.officers.find((o) => o.name === "Second DR");
+
+          expect(first?.cessationDate).toBe("2026-01-01");
+          expect(second?.cessationDate).toBeNull();
+          expect(secondDr.companySecretary).toBe("A Secretary Ltd");
+
+          throw new Error("rollback DR integration fixture");
+        }),
+      ).rejects.toThrow("rollback DR integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
+  it("serializes concurrent DR appointments so exactly one ends up active", async () => {
+    const setupSql = createSqlClient(databaseUrl!, { max: 1 });
+    let companyId: string | undefined;
+
+    try {
+      const repository = createClientRepository({ sql: setupSql });
+      const [owner] = await setupSql<{ id: string }[]>`
+        select id from users where active limit 1
+      `;
+      const [team] = await setupSql<{ id: string }[]>`
+        select id from teams where active limit 1
+      `;
+
+      const client = await repository.createClient({
+        companyName: "DR Race Test Co Ltd",
+        crNumber: `CR-DRRACE-${crypto.randomUUID().slice(0, 8)}`,
+        brNumber: `BR-DRRACE-${crypto.randomUUID().slice(0, 8)}`,
+        incorporationDate: "2020-01-15",
+        annualReturnBasisDate: "2020-01-15",
+        registeredOffice: "1 Test Street, Hong Kong",
+        companySecretary: "A Secretary Ltd",
+        ownerId: owner.id,
+        teamId: team.id,
+        packageId: null,
+        contacts: [],
+        actorId: owner.id,
+      });
+      companyId = client.id;
+
+      // Two independent connections racing to appoint a DR for the SAME company
+      // concurrently — mirrors the secretary race test above, which is what
+      // actually exercises the generalized `for update` lock in appointOfficer.
+      const sqlA = createSqlClient(databaseUrl!, { max: 1 });
+      const sqlB = createSqlClient(databaseUrl!, { max: 1 });
+
+      try {
+        await Promise.all([
+          createClientRepository({ sql: sqlA }).appointOfficer({
+            companyId: client.id,
+            officerType: "designated_representative",
+            name: "DR Candidate A",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          }),
+          createClientRepository({ sql: sqlB }).appointOfficer({
+            companyId: client.id,
+            officerType: "designated_representative",
+            name: "DR Candidate B",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          }),
+        ]);
+      } finally {
+        await sqlA.end();
+        await sqlB.end();
+      }
+
+      const final = await repository.getClient(client.id);
+      const activeDrs = (final?.officers ?? []).filter(
+        (o) => o.officerType === "designated_representative" && o.cessationDate === null,
+      );
+
+      expect(activeDrs).toHaveLength(1);
+    } finally {
+      if (companyId) {
+        await setupSql`delete from officers where company_id = ${companyId}`;
+        await setupSql`delete from companies where id = ${companyId}`;
+      }
+      await setupSql.end();
+    }
+  });
+});
+
+describe.skipIf(!databaseUrl)("inspection requests integration", () => {
+  it("records and resolves an inspection request", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Inspection Test Co Ltd",
+            crNumber: `CR-INSP-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-INSP-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          expect(client.inspectionRequests).toEqual([]);
+
+          const recorded = await repository.recordInspectionRequest({
+            companyId: client.id,
+            requesterName: "Officer Lee",
+            requesterAuthority: "Companies Registry",
+            requestDate: "2026-01-15",
+            actorId: owner.id,
+          });
+
+          const request = recorded.inspectionRequests.find(
+            (r) => r.requesterName === "Officer Lee",
+          );
+          expect(request).toBeDefined();
+          expect(request?.resolvedAt).toBeNull();
+
+          const resolved = await repository.resolveInspectionRequest({
+            companyId: client.id,
+            inspectionRequestId: request!.id,
+            resolutionNote: "Register shown to Officer Lee on site, 2026-01-16.",
+            actorId: owner.id,
+          });
+
+          const resolvedRequest = resolved.inspectionRequests.find((r) => r.id === request!.id);
+          expect(resolvedRequest?.resolutionNote).toBe(
+            "Register shown to Officer Lee on site, 2026-01-16.",
+          );
+          expect(resolvedRequest?.resolvedAt).not.toBeNull();
+
+          throw new Error("rollback inspection requests integration fixture");
+        }),
+      ).rejects.toThrow("rollback inspection requests integration fixture");
     } finally {
       await sql.end();
     }
