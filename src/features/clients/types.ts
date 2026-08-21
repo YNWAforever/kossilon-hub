@@ -21,6 +21,32 @@ export type CompanyContact = {
   isPrimary: boolean;
 };
 
+export type OfficerType = "director" | "secretary";
+export type IdentificationType = "hkid" | "passport" | "br_number";
+
+export type Officer = {
+  id: string;
+  companyId: string;
+  officerType: OfficerType;
+  name: string;
+  identificationType: IdentificationType | null;
+  identificationNumber: string | null;
+  address: string | null;
+  appointmentDate: string;
+  cessationDate: string | null;
+};
+
+export type Shareholding = {
+  id: string;
+  companyId: string;
+  shareholderName: string;
+  shareholderAddress: string | null;
+  shareClass: string;
+  numberOfShares: number;
+  allotmentDate: string;
+  cessationDate: string | null;
+};
+
 /** Latest annual-return payment status. Re-exported from the annual-return module so the
  *  payments.status check constraint has exactly one TypeScript definition. */
 export type ClientPaymentStatus = PaymentStatus;
@@ -75,6 +101,8 @@ export type ClientDetail = ClientSummary & {
   registeredOffice: string;
   companySecretary: string;
   contacts: CompanyContact[];
+  officers: Officer[];
+  shareholdings: Shareholding[];
   timeline: ClientTimelineEntry[];
   annualReturnHistory: ClientAnnualReturnEntry[];
   documents: ClientDocument[];
@@ -114,7 +142,6 @@ export type UpdateClientInput = {
   id: string;
   companyName: string;
   registeredOffice: string;
-  companySecretary: string;
   status: CompanyStatus;
   ownerId: string;
   teamId: string;
@@ -136,5 +163,40 @@ export type UpdateContactInput = ClientContactInput & {
 export type RemoveContactInput = {
   companyId: string;
   contactId: string;
+  actorId: string;
+};
+
+export type AppointOfficerInput = {
+  companyId: string;
+  officerType: OfficerType;
+  name: string;
+  identificationType: IdentificationType | null;
+  identificationNumber: string | null;
+  address: string | null;
+  appointmentDate: string;
+  actorId: string;
+};
+
+export type CeaseOfficerInput = {
+  companyId: string;
+  officerId: string;
+  cessationDate: string;
+  actorId: string;
+};
+
+export type RecordShareholdingInput = {
+  companyId: string;
+  shareholderName: string;
+  shareholderAddress: string | null;
+  shareClass: string;
+  numberOfShares: number;
+  allotmentDate: string;
+  actorId: string;
+};
+
+export type CeaseShareholdingInput = {
+  companyId: string;
+  shareholdingId: string;
+  cessationDate: string;
   actorId: string;
 };
