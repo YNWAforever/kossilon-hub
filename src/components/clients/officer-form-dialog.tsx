@@ -21,7 +21,28 @@ const inputClass =
   "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
+
+function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
+  const part = parts.find((candidate) => candidate.type === type);
+
+  if (!part) {
+    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
+  }
+
+  return part.value;
+}
+
+function today(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: HONG_KONG_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
+}
 
 export function OfficerFormDialog({ open, onOpenChange, companyId, onSaved }: Props) {
   const [officerType, setOfficerType] = useState<OfficerType>("director");
