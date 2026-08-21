@@ -43,6 +43,29 @@ const officerTypeLabel: Record<"director" | "secretary", string> = {
   secretary: "Secretary",
 };
 
+const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
+
+function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
+  const part = parts.find((candidate) => candidate.type === type);
+
+  if (!part) {
+    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
+  }
+
+  return part.value;
+}
+
+function today(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: HONG_KONG_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
+}
+
 export function ProductionClientDetail({ clientId }: { clientId: string }) {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -93,7 +116,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         data: {
           companyId: clientId,
           officerId,
-          cessationDate: new Date().toISOString().slice(0, 10),
+          cessationDate: today(),
         },
       });
       invalidate();
@@ -112,7 +135,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         data: {
           companyId: clientId,
           shareholdingId,
-          cessationDate: new Date().toISOString().slice(0, 10),
+          cessationDate: today(),
         },
       });
       invalidate();
