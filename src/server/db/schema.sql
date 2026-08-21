@@ -640,7 +640,7 @@ create unique index if not exists company_contacts_primary_uidx
 create table if not exists officers (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references companies(id) on delete restrict,
-  officer_type text not null check (officer_type in ('director', 'secretary')),
+  officer_type text not null check (officer_type in ('director', 'secretary', 'designated_representative')),
   name text not null,
   identification_type text check (identification_type in ('hkid', 'passport', 'br_number')),
   identification_number text,
@@ -673,6 +673,45 @@ create table if not exists shareholdings (
 );
 
 create index if not exists shareholdings_company_idx on shareholdings (company_id);
+
+create table if not exists significant_controllers (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete restrict,
+  controller_name text not null,
+  identification_type text check (identification_type in ('hkid', 'passport', 'br_number')),
+  identification_number text,
+  address text,
+  control_bases text[] not null,
+  registered_date date not null,
+  cessation_date date,
+  register_update_due_date date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint significant_controllers_cessation_after_registered check (
+    cessation_date is null or cessation_date >= registered_date
+  ),
+  constraint significant_controllers_control_bases_valid check (
+    control_bases <@ array['shares_over_25pct', 'votes_over_25pct',
+                            'board_appointment_right', 'significant_influence']::text[]
+    and cardinality(control_bases) > 0
+  )
+);
+
+create index if not exists significant_controllers_company_idx on significant_controllers (company_id);
+
+create table if not exists scr_inspection_requests (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete restrict,
+  requester_name text not null,
+  requester_authority text not null,
+  request_date date not null,
+  resolution_note text,
+  resolved_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists scr_inspection_requests_company_idx on scr_inspection_requests (company_id);
 
 -- ---------------------------------------------------------------------------
 -- Reconciled with db/migrations/. schema.sql is a reference document (only
