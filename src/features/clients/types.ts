@@ -21,7 +21,13 @@ export type CompanyContact = {
   isPrimary: boolean;
 };
 
-export type OfficerType = "director" | "secretary";
+export type OfficerType = "director" | "secretary" | "designated_representative";
+
+export type ControlBasis =
+  | "shares_over_25pct"
+  | "votes_over_25pct"
+  | "board_appointment_right"
+  | "significant_influence";
 export type IdentificationType = "hkid" | "passport" | "br_number";
 
 export type Officer = {
@@ -45,6 +51,29 @@ export type Shareholding = {
   numberOfShares: number;
   allotmentDate: string;
   cessationDate: string | null;
+};
+
+export type SignificantController = {
+  id: string;
+  companyId: string;
+  controllerName: string;
+  identificationType: IdentificationType | null;
+  identificationNumber: string | null;
+  address: string | null;
+  controlBases: ControlBasis[];
+  registeredDate: string;
+  cessationDate: string | null;
+  registerUpdateDueDate: string | null;
+};
+
+export type InspectionRequest = {
+  id: string;
+  companyId: string;
+  requesterName: string;
+  requesterAuthority: string;
+  requestDate: string;
+  resolutionNote: string | null;
+  resolvedAt: string | null;
 };
 
 /** Latest annual-return payment status. Re-exported from the annual-return module so the
@@ -103,6 +132,8 @@ export type ClientDetail = ClientSummary & {
   contacts: CompanyContact[];
   officers: Officer[];
   shareholdings: Shareholding[];
+  significantControllers: SignificantController[];
+  inspectionRequests: InspectionRequest[];
   timeline: ClientTimelineEntry[];
   annualReturnHistory: ClientAnnualReturnEntry[];
   documents: ClientDocument[];
@@ -198,5 +229,48 @@ export type CeaseShareholdingInput = {
   companyId: string;
   shareholdingId: string;
   cessationDate: string;
+  actorId: string;
+};
+
+export type RecordControllerInput = {
+  companyId: string;
+  controllerName: string;
+  identificationType: IdentificationType | null;
+  identificationNumber: string | null;
+  address: string | null;
+  controlBases: ControlBasis[];
+  registeredDate: string;
+  registerUpdateDueDate: string | null;
+  actorId: string;
+};
+
+export type UpdateControllerParticularsInput = {
+  companyId: string;
+  controllerId: string;
+  address: string | null;
+  controlBases: ControlBasis[];
+  registerUpdateDueDate: string | null;
+  actorId: string;
+};
+
+export type CeaseControllerInput = {
+  companyId: string;
+  controllerId: string;
+  cessationDate: string;
+  actorId: string;
+};
+
+export type RecordInspectionRequestInput = {
+  companyId: string;
+  requesterName: string;
+  requesterAuthority: string;
+  requestDate: string;
+  actorId: string;
+};
+
+export type ResolveInspectionRequestInput = {
+  companyId: string;
+  inspectionRequestId: string;
+  resolutionNote: string;
   actorId: string;
 };
