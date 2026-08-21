@@ -80,4 +80,29 @@ describe("ShareholdingFormDialog", () => {
 
     expect(await screen.findByText("Client not found.")).toBeTruthy();
   });
+
+  it("rejects a malformed share count without calling the server", async () => {
+    render(
+      <ShareholdingFormDialog
+        open
+        onOpenChange={() => {}}
+        companyId="company-1"
+        onSaved={() => {}}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Shareholder name"), {
+      target: { value: "Jane Shareholder" },
+    });
+    fireEvent.change(screen.getByLabelText("Number of shares"), { target: { value: "5e2" } });
+    fireEvent.change(screen.getByLabelText("Allotment date"), {
+      target: { value: "2026-01-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Record shareholding" }));
+
+    expect(
+      await screen.findByText("Enter a whole number of shares greater than zero."),
+    ).toBeTruthy();
+    expect(serverFns.recordClientShareholding).not.toHaveBeenCalled();
+  });
 });

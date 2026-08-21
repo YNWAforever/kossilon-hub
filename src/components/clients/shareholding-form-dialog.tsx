@@ -66,9 +66,10 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
-    const parsedShares = Number.parseInt(numberOfShares, 10);
+    const trimmedShares = numberOfShares.trim();
+    const parsedShares = Number.parseInt(trimmedShares, 10);
 
-    if (!Number.isInteger(parsedShares) || parsedShares <= 0) {
+    if (!/^\d+$/.test(trimmedShares) || parsedShares <= 0) {
       setError("Enter a whole number of shares greater than zero.");
       return;
     }
