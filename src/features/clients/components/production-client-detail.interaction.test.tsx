@@ -15,6 +15,7 @@ const serverFns = vi.hoisted(() => ({
   removeClientContact: vi.fn(),
   ceaseClientOfficer: vi.fn(),
   ceaseClientShareholding: vi.fn(),
+  ceaseClientController: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => ({
@@ -23,6 +24,7 @@ vi.mock("../server-fns", () => ({
   removeClientContact: serverFns.removeClientContact,
   ceaseClientOfficer: serverFns.ceaseClientOfficer,
   ceaseClientShareholding: serverFns.ceaseClientShareholding,
+  ceaseClientController: serverFns.ceaseClientController,
 }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/clients">{children}</a>,
@@ -60,6 +62,8 @@ function makeClient(overrides: Partial<ClientDetail> = {}): ClientDetail {
     documents: [],
     officers: [],
     shareholdings: [],
+    significantControllers: [],
+    inspectionRequests: [],
     ...overrides,
   };
 }
@@ -95,6 +99,7 @@ describe("production client detail", () => {
     serverFns.removeClientContact.mockReset();
     serverFns.ceaseClientOfficer.mockReset();
     serverFns.ceaseClientShareholding.mockReset();
+    serverFns.ceaseClientController.mockReset();
     serverFns.listClientAssignmentOptions.mockResolvedValue(makeOptions());
     vi.mocked(toast.success).mockReset();
     vi.mocked(toast.error).mockReset();
