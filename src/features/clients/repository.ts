@@ -8,6 +8,8 @@ import {
 import { rethrowClientWriteError } from "./errors";
 import type {
   AddContactInput,
+  AppointOfficerInput,
+  CeaseOfficerInput,
   ClientAnnualReturnEntry,
   ClientAssignmentOptions,
   ClientDetail,
@@ -18,6 +20,9 @@ import type {
   CompanyContact,
   CompanyStatus,
   CreateClientInput,
+  IdentificationType,
+  Officer,
+  OfficerType,
   RemoveContactInput,
   ServicePackage,
   UpdateClientInput,
@@ -42,6 +47,8 @@ export type ClientRepository = {
   addContact(input: AddContactInput): Promise<ClientDetail>;
   updateContact(input: UpdateContactInput): Promise<ClientDetail>;
   removeContact(input: RemoveContactInput): Promise<ClientDetail>;
+  appointOfficer(input: AppointOfficerInput): Promise<ClientDetail>;
+  ceaseOfficer(input: CeaseOfficerInput): Promise<ClientDetail>;
   close(): Promise<void>;
 };
 
@@ -77,6 +84,18 @@ type ContactRow = {
   email: string | null;
   phone: string | null;
   is_primary: boolean;
+};
+
+type OfficerRow = {
+  id: string;
+  company_id: string;
+  officer_type: OfficerType;
+  name: string;
+  identification_type: IdentificationType | null;
+  identification_number: string | null;
+  address: string | null;
+  appointment_date: string | Date;
+  cessation_date: string | Date | null;
 };
 
 type PackageRow = {
@@ -135,6 +154,20 @@ function mapContact(row: ContactRow): CompanyContact {
     email: row.email,
     phone: row.phone,
     isPrimary: row.is_primary,
+  };
+}
+
+function mapOfficer(row: OfficerRow): Officer {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    officerType: row.officer_type,
+    name: row.name,
+    identificationType: row.identification_type,
+    identificationNumber: row.identification_number,
+    address: row.address,
+    appointmentDate: dateOnly(row.appointment_date),
+    cessationDate: row.cessation_date ? dateOnly(row.cessation_date) : null,
   };
 }
 
@@ -307,12 +340,19 @@ export function createClientRepository(
       return null;
     }
 
-    const [contacts, timeline, history, documents] = await Promise.all([
+    const [contacts, officers, timeline, history, documents] = await Promise.all([
       client<ContactRow[]>`
         select id, company_id, name, role, email, phone, is_primary
         from company_contacts
         where company_id = ${id}
         order by is_primary desc, name asc
+      `,
+      client<OfficerRow[]>`
+        select id, company_id, officer_type, name, identification_type,
+               identification_number, address, appointment_date, cessation_date
+        from officers
+        where company_id = ${id}
+        order by (cessation_date is not null), appointment_date desc
       `,
       client<
         {
@@ -369,6 +409,7 @@ export function createClientRepository(
       registeredOffice: detailRow.registered_office,
       companySecretary: detailRow.company_secretary,
       contacts: contacts.map(mapContact),
+      officers: officers.map(mapOfficer),
       timeline: timeline.map(
         (row): ClientTimelineEntry => ({
           id: row.id,
@@ -502,6 +543,11 @@ export function createClientRepository(
           await insertContact(tx, companyId, contact);
         }
 
+        await tx`
+          insert into officers (company_id, officer_type, name, appointment_date)
+          values (${companyId}, 'secretary', ${input.companySecretary}, ${input.incorporationDate})
+        `;
+
         await writeTimelineEvent(tx, {
           companyId,
           eventType: "client_created",
@@ -521,7 +567,6 @@ export function createClientRepository(
     const comparisons: [string, unknown, unknown][] = [
       ["companyName", before.companyName, input.companyName],
       ["registeredOffice", before.registeredOffice, input.registeredOffice],
-      ["companySecretary", before.companySecretary, input.companySecretary],
       ["status", before.status, input.status],
       ["ownerId", before.ownerId, input.ownerId],
       ["teamId", before.teamId, input.teamId],
@@ -543,7 +588,6 @@ export function createClientRepository(
           update companies
           set company_name = ${input.companyName},
               registered_office = ${input.registeredOffice},
-              company_secretary = ${input.companySecretary},
               status = ${input.status},
               assigned_owner_id = ${input.ownerId},
               assigned_team_id = ${input.teamId},
@@ -682,6 +726,98 @@ export function createClientRepository(
     }
   }
 
+  async function appointOfficer(input: AppointOfficerInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        await hydrateOrThrow(tx, input.companyId);
+
+        if (input.officerType === "secretary") {
+          await tx`
+            update officers
+            set cessation_date = ${input.appointmentDate}, updated_at = now()
+            where company_id = ${input.companyId}
+              and officer_type = 'secretary'
+              and cessation_date is null
+          `;
+
+          await tx`
+            update companies set company_secretary = ${input.name}, updated_at = now()
+            where id = ${input.companyId}
+          `;
+        }
+
+        await tx`
+          insert into officers (
+            company_id, officer_type, name, identification_type,
+            identification_number, address, appointment_date
+          ) values (
+            ${input.companyId}, ${input.officerType}, ${input.name}, ${input.identificationType},
+            ${input.identificationNumber}, ${input.address}, ${input.appointmentDate}
+          )
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "officer_appointed",
+          actorId: input.actorId,
+          description: `Appointed ${input.name} as ${input.officerType}.`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function assertOfficerBelongsToCompany(
+    tx: TransactionSqlClient,
+    companyId: string,
+    officerId: string,
+  ): Promise<OfficerRow> {
+    const rows = await tx<OfficerRow[]>`
+      select id, company_id, officer_type, name, identification_type,
+             identification_number, address, appointment_date, cessation_date
+      from officers
+      where id = ${officerId} and company_id = ${companyId}
+      limit 1
+    `;
+
+    const [row] = rows;
+
+    if (!row) {
+      throw new Error("Officer not found for this company.");
+    }
+
+    return row;
+  }
+
+  async function ceaseOfficer(input: CeaseOfficerInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        const officer = await assertOfficerBelongsToCompany(tx, input.companyId, input.officerId);
+
+        await tx`
+          update officers set cessation_date = ${input.cessationDate}, updated_at = now()
+          where id = ${input.officerId} and company_id = ${input.companyId}
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "officer_ceased",
+          actorId: input.actorId,
+          description: `Ceased ${officer.name} as ${officer.officer_type}.`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) {
       await sql.end();
@@ -699,6 +835,8 @@ export function createClientRepository(
     addContact,
     updateContact,
     removeContact,
+    appointOfficer,
+    ceaseOfficer,
     close,
   };
 }

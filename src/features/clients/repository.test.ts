@@ -731,3 +731,134 @@ describe.skipIf(!databaseUrl)(
     });
   },
 );
+
+describe.skipIf(!databaseUrl)("officers integration", () => {
+  it("appointing a new secretary cessates the old one and syncs companies.company_secretary", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Officer Test Co Ltd",
+            crNumber: `CR-OFF-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-OFF-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "Original Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          // Company creation seeds an initial secretary officer.
+          expect(client.officers).toHaveLength(1);
+          expect(client.officers[0].officerType).toBe("secretary");
+          expect(client.officers[0].name).toBe("Original Secretary Ltd");
+          expect(client.officers[0].cessationDate).toBeNull();
+          expect(client.companySecretary).toBe("Original Secretary Ltd");
+
+          const updated = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "secretary",
+            name: "New Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+
+          const originalSecretary = updated.officers.find((o) => o.name === "Original Secretary Ltd");
+          const newSecretary = updated.officers.find((o) => o.name === "New Secretary Ltd");
+
+          expect(originalSecretary?.cessationDate).toBe("2026-01-01");
+          expect(newSecretary?.cessationDate).toBeNull();
+          expect(updated.companySecretary).toBe("New Secretary Ltd");
+
+          throw new Error("rollback officers integration fixture");
+        }),
+      ).rejects.toThrow("rollback officers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
+  it("appointing a director does not affect companies.company_secretary", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Director Test Co Ltd",
+            crNumber: `CR-DIR-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-DIR-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            packageId: null,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          const updated = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "director",
+            name: "Jane Director",
+            identificationType: "hkid",
+            identificationNumber: "A1234567",
+            address: "2 Test Street, Hong Kong",
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+
+          expect(updated.companySecretary).toBe("A Secretary Ltd");
+          expect(updated.officers.find((o) => o.name === "Jane Director")?.officerType).toBe(
+            "director",
+          );
+
+          const ceased = await repository.ceaseOfficer({
+            companyId: client.id,
+            officerId: updated.officers.find((o) => o.name === "Jane Director")!.id,
+            cessationDate: "2026-06-01",
+            actorId: owner.id,
+          });
+
+          expect(ceased.officers.find((o) => o.name === "Jane Director")?.cessationDate).toBe(
+            "2026-06-01",
+          );
+          expect(ceased.companySecretary).toBe("A Secretary Ltd");
+
+          throw new Error("rollback officers integration fixture");
+        }),
+      ).rejects.toThrow("rollback officers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+});
