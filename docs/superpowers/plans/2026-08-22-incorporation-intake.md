@@ -962,6 +962,121 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
       await setupSql.end();
     }
   });
+
+  it("serializes concurrent completions so exactly one company is created", async () => {
+    const setupSql = sqlForTests();
+    let caseId: string | undefined;
+    let companyIds: string[] = [];
+
+    try {
+      const repository = createIncorporationRepository({ sql: setupSql });
+      const [owner] = await setupSql<{ id: string }[]>`select id from users where active limit 1`;
+      const [team] = await setupSql<{ id: string }[]>`select id from teams where active limit 1`;
+
+      const created = await repository.createCase({
+        proposedCompanyNameEn: "Race Test Limited",
+        proposedCompanyNameZh: null,
+        proposedRegisteredOffice: "1 Test Street, Hong Kong",
+        proposedCompanySecretary: "Kossilon Secretaries Ltd",
+        registeredCapital: 10000,
+        businessNature: "Trading",
+        ownerId: owner.id,
+        teamId: team.id,
+        targetCompletionDate: "2026-09-01",
+        actorId: owner.id,
+      });
+      caseId = created.id;
+
+      await repository.updateCaseStatus({
+        caseId: created.id,
+        status: "Documents pending",
+        actorId: owner.id,
+      });
+      await repository.updateCaseStatus({
+        caseId: created.id,
+        status: "Ready to file",
+        actorId: owner.id,
+      });
+      await repository.updateCaseStatus({
+        caseId: created.id,
+        status: "Filed with Registrar",
+        actorId: owner.id,
+      });
+
+      // Two independent connections racing to complete the SAME case
+      // concurrently — this is what actually exercises the `for update` lock
+      // added in completeCase. A single shared transaction calling
+      // completeCase twice sequentially would never race at all, since there
+      // is nothing to serialize against — the exact tautological-test mistake
+      // made once already in this codebase's history (P1-5's first attempt at
+      // the secretary-appointment race test) and corrected since.
+      const sqlA = createSqlClient(databaseUrl!, { max: 1 });
+      const sqlB = createSqlClient(databaseUrl!, { max: 1 });
+
+      let results: PromiseSettledResult<unknown>[];
+      try {
+        results = await Promise.allSettled([
+          createIncorporationRepository({ sql: sqlA }).completeCase({
+            caseId: created.id,
+            crNumber: `CR-RACEA-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-RACEA-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2026-08-01",
+            actorId: owner.id,
+          }),
+          createIncorporationRepository({ sql: sqlB }).completeCase({
+            caseId: created.id,
+            crNumber: `CR-RACEB-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-RACEB-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2026-08-01",
+            actorId: owner.id,
+          }),
+        ]);
+      } finally {
+        await sqlA.end();
+        await sqlB.end();
+      }
+
+      const fulfilled = results.filter(
+        (result): result is PromiseFulfilledResult<unknown> => result.status === "fulfilled",
+      );
+      const rejected = results.filter(
+        (result): result is PromiseRejectedResult => result.status === "rejected",
+      );
+
+      // Exactly one call wins and creates the company; the other loses the
+      // race (blocked by the `for update` lock, then sees the
+      // already-committed 'Completed' status and throws) rather than both
+      // succeeding and creating two orphan companies.
+      expect(fulfilled).toHaveLength(1);
+      expect(rejected).toHaveLength(1);
+      expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(Error);
+      expect(((rejected[0] as PromiseRejectedResult).reason as Error).message).toContain(
+        "Cannot complete a case from status Completed",
+      );
+
+      const finalCase = await repository.getCase(created.id);
+      expect(finalCase?.companyId).not.toBeNull();
+
+      const companyRows = await setupSql<{ id: string }[]>`
+        select id from companies
+        where cr_number like 'CR-RACEA-%' or cr_number like 'CR-RACEB-%'
+      `;
+      companyIds = companyRows.map((row) => row.id);
+
+      // The whole point of the fix: only ONE companies row exists for this
+      // race, not two.
+      expect(companyIds).toHaveLength(1);
+    } finally {
+      if (caseId) {
+        await setupSql`delete from incorporation_cases where id = ${caseId}`;
+      }
+      for (const companyId of companyIds) {
+        await setupSql`delete from officers where company_id = ${companyId}`;
+        await setupSql`delete from companies where id = ${companyId}`;
+      }
+      await setupSql.end();
+    }
+  });
 });
 ```
 
@@ -2350,3 +2465,15 @@ done.
   Tasks 4, 7, 8, 10, 11 — checked for drift across all tasks. `registeredCapital`
   is consistently `number` (TS) / `integer` (SQL) end to end, matching the
   Task 1 fix from `numeric` to `integer`.
+- **Post-writing addendum (found during Task 4's code-quality review, applied
+  before Task 5 was dispatched)**: `completeCase` originally had no row lock
+  guarding its check-then-act status transition — two concurrent completions of
+  the same case could both pass the status guard and both create a `companies`
+  row, exactly the class of bug this codebase already fixed twice
+  (`appointOfficer`'s secretary/DR race, `annual-return/repository.ts`'s
+  `createCase`). Fixed by adding `select id from incorporation_cases where id =
+  ${input.caseId} for update` as the first statement inside `completeCase`'s
+  transaction, and Task 5's test file now includes a genuine two-connection
+  race test for it (added after Task 4 committed, before Task 1's constraint
+  fix and Task 2's naming fix were also folded in) — both fixes are reflected
+  in the Task 4/5 code blocks above, not just this note.
