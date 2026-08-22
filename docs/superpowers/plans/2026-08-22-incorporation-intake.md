@@ -1907,7 +1907,7 @@ existing list-screen structure (query + table + create dialog + navigate-on-crea
 
 ```tsx
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -1929,6 +1929,7 @@ const statusTone: Record<IncorporationStatus, StatusTone> = {
 
 export function ProductionIncorporationList() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const casesQuery = useQuery({
@@ -1993,11 +1994,9 @@ export function ProductionIncorporationList() {
       <section className="rounded-lg border bg-card p-4">
         <div className="divide-y">
           {cases.map((incorporationCase) => (
-            <Link
+            <div
               key={incorporationCase.id}
-              to="/incorporation/$id"
-              params={{ id: incorporationCase.id }}
-              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm hover:bg-muted/50"
+              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
             >
               <span className="min-w-0 truncate font-medium">
                 {incorporationCase.proposedCompanyNameEn}
@@ -2009,7 +2008,14 @@ export function ProductionIncorporationList() {
                 <DeadlinePill dueDate={incorporationCase.targetCompletionDate} />
               ) : null}
               <span className="text-muted-foreground">{incorporationCase.ownerName}</span>
-            </Link>
+              <Link
+                to="/incorporation/$id"
+                params={{ id: incorporationCase.id }}
+                className="rounded-md border px-2 py-1 text-xs"
+              >
+                Open
+              </Link>
+            </div>
           ))}
           {cases.length === 0 ? (
             <p className="py-3 text-sm text-muted-foreground">No incorporation cases yet.</p>
@@ -2026,6 +2032,7 @@ export function ProductionIncorporationList() {
           isLoading={false}
           hasError={false}
           onCreated={(caseId) => {
+            void queryClient.invalidateQueries({ queryKey: ["incorporation-cases"] });
             void navigate({ to: "/incorporation/$id", params: { id: caseId } });
           }}
         />
