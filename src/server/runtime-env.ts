@@ -31,6 +31,12 @@ export type RuntimeReadiness = {
 // document storage) that need this same function for fields that have nothing
 // to do with email. scripts/verify-firm-deployment.ts intentionally keeps its
 // own, longer list — that one only feeds an audit report and gates nothing.
+//
+// DOCUMENTS_BUCKET stays listed here for getRuntimeReadiness()'s "is this firm
+// fully provisioned" audit, but document storage itself no longer resolves its
+// bucket through this all-or-nothing function — see getDocumentsBucketBinding
+// below, added after this exact coupling broke real production document reads
+// with FIRM_ID/WOZTELL_*/EMAIL_FROM unset but R2 fully configured.
 const REQUIRED_BINDINGS = [
   "FIRM_ID",
   "NEON_AUTH_URL",
@@ -194,4 +200,23 @@ export function getResendConfig(
   const from = env.RESEND_FROM;
   if (!hasText(apiKey) || !hasText(from)) return null;
   return { apiKey: apiKey.trim(), from: from.trim() };
+}
+
+/**
+ * Another deliberate sibling to getFirmRuntimeEnv, not part of it — same
+ * reasoning as getResendConfig above. Document storage only ever needs its own
+ * R2 binding/credentials, not the other nine REQUIRED_BINDINGS entries; routing
+ * it through getFirmRuntimeEnv() meant one unrelated missing binding (WOZTELL_*,
+ * EMAIL_FROM, FIRM_ID — none of which document storage reads) took down every
+ * document read even when R2 itself was fully configured. This is exactly the
+ * failure this comment block already named "document storage" as a past victim
+ * of, recurring: it broke kossilon-hub.vercel.app's real production /documents
+ * page while DATABASE_URL and all four R2_* credentials were correctly set.
+ * Unlike getResendConfig, this still throws — a genuinely unconfigured bucket
+ * is a real error for document storage itself, just not a shared one.
+ */
+export function getDocumentsBucketBinding(
+  env: Record<string, unknown> = defaultRuntimeSource(),
+): R2BucketLike {
+  return resolveDocumentsBucket(env);
 }

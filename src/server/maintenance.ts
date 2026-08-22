@@ -143,7 +143,7 @@ export async function runFirmMaintenance(
       const providerMode = providerModeModule.currentProviderMode();
       return documentServerFnsModule.createDocumentStorageForProviderMode(
         providerMode,
-        providerMode === "live" ? runtimeEnvModule.getFirmRuntimeEnv().documentsBucket : undefined,
+        providerMode === "live" ? runtimeEnvModule.getDocumentsBucketBinding() : undefined,
       );
     },
   });

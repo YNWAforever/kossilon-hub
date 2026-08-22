@@ -5,7 +5,12 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import type { R2BucketLike } from "./runtime-env";
-import { getFirmRuntimeEnv, getResendConfig, getRuntimeReadiness } from "./runtime-env";
+import {
+  getDocumentsBucketBinding,
+  getFirmRuntimeEnv,
+  getResendConfig,
+  getRuntimeReadiness,
+} from "./runtime-env";
 
 describe("firm runtime", () => {
   const fakeR2Bucket = {
@@ -176,5 +181,54 @@ describe("getResendConfig", () => {
     expect(
       getResendConfig({ RESEND_API_KEY: "re_test_key", RESEND_FROM: "auth@example.test" }),
     ).toEqual({ apiKey: "re_test_key", from: "auth@example.test" });
+  });
+});
+
+describe("getDocumentsBucketBinding", () => {
+  const fakeR2Bucket = {
+    delete: async () => undefined,
+    get: async () => null,
+    head: async () => null,
+    put: async () => null,
+  } as unknown as R2BucketLike;
+  const r2Credentials = {
+    R2_ACCOUNT_ID: "acct123",
+    R2_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE",
+    R2_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    R2_BUCKET_NAME: "firm-documents",
+  };
+
+  it("resolves a Workers R2 binding with no other firm binding configured", () => {
+    expect(getDocumentsBucketBinding({ DOCUMENTS_BUCKET: fakeR2Bucket })).toBe(fakeR2Bucket);
+  });
+
+  it("resolves R2 S3 credentials with no other firm binding configured", () => {
+    const bucket = getDocumentsBucketBinding(r2Credentials);
+    for (const method of ["get", "put", "head", "delete"] as const) {
+      expect(typeof bucket[method]).toBe("function");
+    }
+  });
+
+  it("is independent of every other runtime binding", () => {
+    // This is the exact incident this test guards against: a real production
+    // deployment (kossilon-hub.vercel.app) had DATABASE_URL and all four R2_*
+    // credentials configured, but no FIRM_ID/WOZTELL_*/EMAIL_FROM — and every
+    // document read failed anyway, because the old code path resolved the R2
+    // bucket via getFirmRuntimeEnv().documentsBucket, which throws all-or-
+    // nothing across every REQUIRED_BINDINGS entry regardless of whether the
+    // caller needs them. Confirm the readiness gate is still "not ready" here
+    // (proving this env genuinely lacks WOZTELL/EMAIL_FROM/FIRM_ID), while the
+    // bucket itself still resolves.
+    expect(getRuntimeReadiness(r2Credentials).ready).toBe(false);
+    const bucket = getDocumentsBucketBinding(r2Credentials);
+    for (const method of ["get", "put", "head", "delete"] as const) {
+      expect(typeof bucket[method]).toBe("function");
+    }
+  });
+
+  it("still throws when its own R2 configuration is genuinely incomplete", () => {
+    expect(() =>
+      getDocumentsBucketBinding({ R2_ACCOUNT_ID: "acct123", R2_BUCKET_NAME: "firm-documents" }),
+    ).toThrow(/DOCUMENTS_BUCKET requires a Workers R2 binding or R2 S3 credentials/);
   });
 });

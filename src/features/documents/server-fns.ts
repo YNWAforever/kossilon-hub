@@ -33,7 +33,7 @@ const loadDefaultDocumentContext = createServerOnlyFn(async () => {
     { requireActor, requireClientCompanyAccess },
     { createDocumentRepository },
     { createDeterministicDocumentScanner },
-    { getFirmRuntimeEnv },
+    { getDocumentsBucketBinding },
     { currentProviderMode },
   ] = await Promise.all([
     import("@tanstack/react-start/server"),
@@ -49,7 +49,7 @@ const loadDefaultDocumentContext = createServerOnlyFn(async () => {
   const providerMode = currentProviderMode();
   const storage = createDocumentStorageForProviderMode(
     providerMode,
-    providerMode === "live" ? getFirmRuntimeEnv().documentsBucket : undefined,
+    providerMode === "live" ? getDocumentsBucketBinding() : undefined,
   );
   return {
     actor,
