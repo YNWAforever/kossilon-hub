@@ -9,6 +9,7 @@ import { rethrowClientWriteError } from "./errors";
 import type {
   AddContactInput,
   AppointOfficerInput,
+  CeaseControllerInput,
   CeaseOfficerInput,
   CeaseShareholdingInput,
   ClientAnnualReturnEntry,
@@ -20,16 +21,23 @@ import type {
   ClientTimelineEntry,
   CompanyContact,
   CompanyStatus,
+  ControlBasis,
   CreateClientInput,
   IdentificationType,
+  InspectionRequest,
   Officer,
   OfficerType,
+  RecordControllerInput,
+  RecordInspectionRequestInput,
   RecordShareholdingInput,
   RemoveContactInput,
+  ResolveInspectionRequestInput,
   ServicePackage,
   Shareholding,
+  SignificantController,
   UpdateClientInput,
   UpdateContactInput,
+  UpdateControllerParticularsInput,
 } from "./types";
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -54,6 +62,11 @@ export type ClientRepository = {
   ceaseOfficer(input: CeaseOfficerInput): Promise<ClientDetail>;
   recordShareholding(input: RecordShareholdingInput): Promise<ClientDetail>;
   ceaseShareholding(input: CeaseShareholdingInput): Promise<ClientDetail>;
+  recordController(input: RecordControllerInput): Promise<ClientDetail>;
+  updateControllerParticulars(input: UpdateControllerParticularsInput): Promise<ClientDetail>;
+  ceaseController(input: CeaseControllerInput): Promise<ClientDetail>;
+  recordInspectionRequest(input: RecordInspectionRequestInput): Promise<ClientDetail>;
+  resolveInspectionRequest(input: ResolveInspectionRequestInput): Promise<ClientDetail>;
   close(): Promise<void>;
 };
 
@@ -112,6 +125,29 @@ type ShareholdingRow = {
   number_of_shares: number;
   allotment_date: string | Date;
   cessation_date: string | Date | null;
+};
+
+type SignificantControllerRow = {
+  id: string;
+  company_id: string;
+  controller_name: string;
+  identification_type: IdentificationType | null;
+  identification_number: string | null;
+  address: string | null;
+  control_bases: ControlBasis[];
+  registered_date: string | Date;
+  cessation_date: string | Date | null;
+  register_update_due_date: string | Date | null;
+};
+
+type InspectionRequestRow = {
+  id: string;
+  company_id: string;
+  requester_name: string;
+  requester_authority: string;
+  request_date: string | Date;
+  resolution_note: string | null;
+  resolved_at: string | Date | null;
 };
 
 type PackageRow = {
@@ -197,6 +233,35 @@ function mapShareholding(row: ShareholdingRow): Shareholding {
     numberOfShares: row.number_of_shares,
     allotmentDate: dateOnly(row.allotment_date),
     cessationDate: row.cessation_date ? dateOnly(row.cessation_date) : null,
+  };
+}
+
+function mapController(row: SignificantControllerRow): SignificantController {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    controllerName: row.controller_name,
+    identificationType: row.identification_type,
+    identificationNumber: row.identification_number,
+    address: row.address,
+    controlBases: row.control_bases,
+    registeredDate: dateOnly(row.registered_date),
+    cessationDate: row.cessation_date ? dateOnly(row.cessation_date) : null,
+    registerUpdateDueDate: row.register_update_due_date
+      ? dateOnly(row.register_update_due_date)
+      : null,
+  };
+}
+
+function mapInspectionRequest(row: InspectionRequestRow): InspectionRequest {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    requesterName: row.requester_name,
+    requesterAuthority: row.requester_authority,
+    requestDate: dateOnly(row.request_date),
+    resolutionNote: row.resolution_note,
+    resolvedAt: row.resolved_at ? timestampString(row.resolved_at) : null,
   };
 }
 
@@ -369,7 +434,16 @@ export function createClientRepository(
       return null;
     }
 
-    const [contacts, officers, shareholdings, timeline, history, documents] = await Promise.all([
+    const [
+      contacts,
+      officers,
+      shareholdings,
+      significantControllers,
+      inspectionRequests,
+      timeline,
+      history,
+      documents,
+    ] = await Promise.all([
       client<ContactRow[]>`
         select id, company_id, name, role, email, phone, is_primary
         from company_contacts
@@ -389,6 +463,20 @@ export function createClientRepository(
         from shareholdings
         where company_id = ${id}
         order by (cessation_date is not null), allotment_date desc
+      `,
+      client<SignificantControllerRow[]>`
+        select id, company_id, controller_name, identification_type, identification_number,
+               address, control_bases, registered_date, cessation_date, register_update_due_date
+        from significant_controllers
+        where company_id = ${id}
+        order by (cessation_date is not null), registered_date desc
+      `,
+      client<InspectionRequestRow[]>`
+        select id, company_id, requester_name, requester_authority, request_date,
+               resolution_note, resolved_at
+        from scr_inspection_requests
+        where company_id = ${id}
+        order by request_date desc
       `,
       client<
         {
@@ -447,6 +535,8 @@ export function createClientRepository(
       contacts: contacts.map(mapContact),
       officers: officers.map(mapOfficer),
       shareholdings: shareholdings.map(mapShareholding),
+      significantControllers: significantControllers.map(mapController),
+      inspectionRequests: inspectionRequests.map(mapInspectionRequest),
       timeline: timeline.map(
         (row): ClientTimelineEntry => ({
           id: row.id,
@@ -769,21 +859,26 @@ export function createClientRepository(
         await assertActor(tx, input.actorId);
         await hydrateOrThrow(tx, input.companyId);
 
-        if (input.officerType === "secretary") {
+        if (
+          input.officerType === "secretary" ||
+          input.officerType === "designated_representative"
+        ) {
           await tx`select id from companies where id = ${input.companyId} for update`;
 
           await tx`
             update officers
             set cessation_date = ${input.appointmentDate}, updated_at = now()
             where company_id = ${input.companyId}
-              and officer_type = 'secretary'
+              and officer_type = ${input.officerType}
               and cessation_date is null
           `;
 
-          await tx`
-            update companies set company_secretary = ${input.name}, updated_at = now()
-            where id = ${input.companyId}
-          `;
+          if (input.officerType === "secretary") {
+            await tx`
+              update companies set company_secretary = ${input.name}, updated_at = now()
+              where id = ${input.companyId}
+            `;
+          }
         }
 
         await tx`
@@ -938,6 +1033,209 @@ export function createClientRepository(
     }
   }
 
+  async function recordController(input: RecordControllerInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        await hydrateOrThrow(tx, input.companyId);
+
+        await tx`
+          insert into significant_controllers (
+            company_id, controller_name, identification_type, identification_number,
+            address, control_bases, registered_date, register_update_due_date
+          ) values (
+            ${input.companyId}, ${input.controllerName}, ${input.identificationType},
+            ${input.identificationNumber}, ${input.address}, ${input.controlBases},
+            ${input.registeredDate}, ${input.registerUpdateDueDate}
+          )
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "controller_recorded",
+          actorId: input.actorId,
+          description: `Recorded significant controller ${input.controllerName}.`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function assertControllerBelongsToCompany(
+    tx: TransactionSqlClient,
+    companyId: string,
+    controllerId: string,
+  ): Promise<SignificantControllerRow> {
+    const rows = await tx<SignificantControllerRow[]>`
+      select id, company_id, controller_name, identification_type, identification_number,
+             address, control_bases, registered_date, cessation_date, register_update_due_date
+      from significant_controllers
+      where id = ${controllerId} and company_id = ${companyId}
+      limit 1
+    `;
+
+    const [row] = rows;
+
+    if (!row) {
+      throw new Error("Significant controller not found for this company.");
+    }
+
+    return row;
+  }
+
+  async function updateControllerParticulars(
+    input: UpdateControllerParticularsInput,
+  ): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        const controller = await assertControllerBelongsToCompany(
+          tx,
+          input.companyId,
+          input.controllerId,
+        );
+
+        await tx`
+          update significant_controllers
+          set address = ${input.address},
+              control_bases = ${input.controlBases},
+              register_update_due_date = ${input.registerUpdateDueDate},
+              updated_at = now()
+          where id = ${input.controllerId} and company_id = ${input.companyId}
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "controller_updated",
+          actorId: input.actorId,
+          description: `Updated particulars for significant controller ${controller.controller_name}.`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function ceaseController(input: CeaseControllerInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        const controller = await assertControllerBelongsToCompany(
+          tx,
+          input.companyId,
+          input.controllerId,
+        );
+
+        await tx`
+          update significant_controllers
+          set cessation_date = ${input.cessationDate}, updated_at = now()
+          where id = ${input.controllerId} and company_id = ${input.companyId}
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "controller_ceased",
+          actorId: input.actorId,
+          description: `Ceased significant controller ${controller.controller_name}.`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function recordInspectionRequest(
+    input: RecordInspectionRequestInput,
+  ): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        await hydrateOrThrow(tx, input.companyId);
+
+        await tx`
+          insert into scr_inspection_requests (
+            company_id, requester_name, requester_authority, request_date
+          ) values (
+            ${input.companyId}, ${input.requesterName}, ${input.requesterAuthority},
+            ${input.requestDate}
+          )
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "inspection_request_recorded",
+          actorId: input.actorId,
+          description: `Recorded inspection request from ${input.requesterName} (${input.requesterAuthority}).`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
+  async function assertInspectionRequestBelongsToCompany(
+    tx: TransactionSqlClient,
+    companyId: string,
+    inspectionRequestId: string,
+  ): Promise<InspectionRequestRow> {
+    const rows = await tx<InspectionRequestRow[]>`
+      select id, company_id, requester_name, requester_authority, request_date,
+             resolution_note, resolved_at
+      from scr_inspection_requests
+      where id = ${inspectionRequestId} and company_id = ${companyId}
+      limit 1
+    `;
+
+    const [row] = rows;
+
+    if (!row) {
+      throw new Error("Inspection request not found for this company.");
+    }
+
+    return row;
+  }
+
+  async function resolveInspectionRequest(
+    input: ResolveInspectionRequestInput,
+  ): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        const request = await assertInspectionRequestBelongsToCompany(
+          tx,
+          input.companyId,
+          input.inspectionRequestId,
+        );
+
+        await tx`
+          update scr_inspection_requests
+          set resolution_note = ${input.resolutionNote}, resolved_at = now(), updated_at = now()
+          where id = ${input.inspectionRequestId} and company_id = ${input.companyId}
+        `;
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "inspection_request_resolved",
+          actorId: input.actorId,
+          description: `Resolved inspection request from ${request.requester_name}.`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) {
       await sql.end();
@@ -959,6 +1257,11 @@ export function createClientRepository(
     ceaseOfficer,
     recordShareholding,
     ceaseShareholding,
+    recordController,
+    updateControllerParticulars,
+    ceaseController,
+    recordInspectionRequest,
+    resolveInspectionRequest,
     close,
   };
 }

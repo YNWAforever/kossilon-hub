@@ -117,7 +117,7 @@ const removeContactSchema = z.object({
 const appointOfficerSchema = z
   .object({
     companyId: z.string().uuid(),
-    officerType: z.enum(["director", "secretary"]),
+    officerType: z.enum(["director", "secretary", "designated_representative"]),
     name: z.string().min(1),
     identificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
     identificationNumber: z.string().nullable(),
@@ -151,6 +151,75 @@ const ceaseShareholdingSchema = z.object({
   companyId: z.string().uuid(),
   shareholdingId: z.string().uuid(),
   cessationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const controlBasisSchema = z.enum([
+  "shares_over_25pct",
+  "votes_over_25pct",
+  "board_appointment_right",
+  "significant_influence",
+]);
+
+const recordControllerSchema = z
+  .object({
+    companyId: z.string().uuid(),
+    controllerName: z.string().min(1),
+    identificationType: z.enum(["hkid", "passport", "br_number"]).nullable(),
+    identificationNumber: z.string().nullable(),
+    address: z.string().nullable(),
+    controlBases: z.array(controlBasisSchema).min(1),
+    registeredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    registerUpdateDueDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable(),
+  })
+  .refine(
+    (controller) =>
+      (controller.identificationType === null) === (controller.identificationNumber === null),
+    {
+      message: "Provide both an identification type and number, or neither.",
+      path: ["identificationNumber"],
+    },
+  )
+  .refine(
+    (controller) =>
+      controller.registerUpdateDueDate === null ||
+      controller.registerUpdateDueDate >= controller.registeredDate,
+    {
+      message: "Register update due date cannot be before the registered date.",
+      path: ["registerUpdateDueDate"],
+    },
+  );
+
+const updateControllerParticularsSchema = z.object({
+  companyId: z.string().uuid(),
+  controllerId: z.string().uuid(),
+  address: z.string().nullable(),
+  controlBases: z.array(controlBasisSchema).min(1),
+  registerUpdateDueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+});
+
+const ceaseControllerSchema = z.object({
+  companyId: z.string().uuid(),
+  controllerId: z.string().uuid(),
+  cessationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const recordInspectionRequestSchema = z.object({
+  companyId: z.string().uuid(),
+  requesterName: z.string().min(1),
+  requesterAuthority: z.string().min(1),
+  requestDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const resolveInspectionRequestSchema = z.object({
+  companyId: z.string().uuid(),
+  inspectionRequestId: z.string().uuid(),
+  resolutionNote: z.string().min(1),
 });
 
 /**
@@ -286,6 +355,61 @@ export const ceaseClientShareholding = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     withClientRepository(async (repository) =>
       repository.ceaseShareholding({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const recordClientController = createServerFn({ method: "POST" })
+  .validator(recordControllerSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.recordController({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const updateClientControllerParticulars = createServerFn({ method: "POST" })
+  .validator(updateControllerParticularsSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.updateControllerParticulars({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const ceaseClientController = createServerFn({ method: "POST" })
+  .validator(ceaseControllerSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.ceaseController({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const recordClientInspectionRequest = createServerFn({ method: "POST" })
+  .validator(recordInspectionRequestSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.recordInspectionRequest({
+        ...data,
+        actorId: await requireWritableCompany(repository, data.companyId),
+      }),
+    ),
+  );
+
+export const resolveClientInspectionRequest = createServerFn({ method: "POST" })
+  .validator(resolveInspectionRequestSchema)
+  .handler(async ({ data }) =>
+    withClientRepository(async (repository) =>
+      repository.resolveInspectionRequest({
         ...data,
         actorId: await requireWritableCompany(repository, data.companyId),
       }),

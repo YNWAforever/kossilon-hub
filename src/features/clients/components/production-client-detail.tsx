@@ -11,14 +11,24 @@ import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { ContactFormDialog } from "@/components/clients/contact-form-dialog";
 import { OfficerFormDialog } from "@/components/clients/officer-form-dialog";
 import { ShareholdingFormDialog } from "@/components/clients/shareholding-form-dialog";
+import { ControllerFormDialog } from "@/components/clients/controller-form-dialog";
+import { InspectionRequestFormDialog } from "@/components/clients/inspection-request-form-dialog";
+import { ResolveInspectionRequestDialog } from "@/components/clients/resolve-inspection-request-dialog";
+import { DeadlinePill } from "@/components/deadline-pill";
 import {
+  ceaseClientController,
   ceaseClientOfficer,
   ceaseClientShareholding,
   getClient,
   listClientAssignmentOptions,
   removeClientContact,
 } from "../server-fns";
-import type { ClientPaymentStatus, CompanyContact, CompanyStatus } from "../types";
+import type {
+  ClientPaymentStatus,
+  CompanyContact,
+  CompanyStatus,
+  SignificantController,
+} from "../types";
 
 const companyStatusTone: Record<CompanyStatus, StatusTone> = {
   active: "green",
@@ -38,9 +48,10 @@ const verificationTone: Record<"pending" | "verified" | "rejected", StatusTone> 
   rejected: "red",
 };
 
-const officerTypeLabel: Record<"director" | "secretary", string> = {
+const officerTypeLabel: Record<"director" | "secretary" | "designated_representative", string> = {
   director: "Director",
   secretary: "Secretary",
+  designated_representative: "Designated Representative",
 };
 
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
@@ -77,6 +88,15 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
   const [isShareholdingDialogOpen, setIsShareholdingDialogOpen] = useState(false);
   const [ceasingOfficerId, setCeasingOfficerId] = useState<string | null>(null);
   const [ceasingShareholdingId, setCeasingShareholdingId] = useState<string | null>(null);
+  const [controllerDialog, setControllerDialog] = useState<{
+    open: boolean;
+    controller?: SignificantController;
+  }>({ open: false });
+  const [ceasingControllerId, setCeasingControllerId] = useState<string | null>(null);
+  const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
+  const [resolvingInspectionRequestId, setResolvingInspectionRequestId] = useState<string | null>(
+    null,
+  );
 
   const clientQuery = useQuery({
     queryKey: ["clients", clientId],
@@ -143,6 +163,25 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       toast.error("Unable to cease the shareholding. Try again.");
     } finally {
       setCeasingShareholdingId(null);
+    }
+  }
+
+  async function handleCeaseController(controllerId: string) {
+    setCeasingControllerId(controllerId);
+
+    try {
+      await ceaseClientController({
+        data: {
+          companyId: clientId,
+          controllerId,
+          cessationDate: today(),
+        },
+      });
+      invalidate();
+    } catch {
+      toast.error("Unable to cease the controller. Try again.");
+    } finally {
+      setCeasingControllerId(null);
     }
   }
 
@@ -330,6 +369,117 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Significant controllers</h2>
+          <button
+            type="button"
+            onClick={() => setControllerDialog({ open: true })}
+            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
+          >
+            Record controller
+          </button>
+        </div>
+        <div className="divide-y">
+          {client.significantControllers.map((controller) => (
+            <div key={controller.id} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{controller.controllerName}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  Registered {controller.registeredDate}
+                  {controller.cessationDate ? ` · Ceased ${controller.cessationDate}` : ""}
+                </p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {controller.controlBases.map((basis) => (
+                    <span
+                      key={basis}
+                      className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground"
+                    >
+                      {basis.replaceAll("_", " ")}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {controller.registerUpdateDueDate ? (
+                  <DeadlinePill dueDate={controller.registerUpdateDueDate} />
+                ) : null}
+                <StatusPill tone={controller.cessationDate ? "neutral" : "green"}>
+                  {controller.cessationDate ? "Ceased" : "Active"}
+                </StatusPill>
+                {!controller.cessationDate ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setControllerDialog({ open: true, controller })}
+                      className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
+                    >
+                      Edit particulars
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleCeaseController(controller.id)}
+                      disabled={ceasingControllerId === controller.id}
+                      className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                    >
+                      Cease
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ))}
+          {client.significantControllers.length === 0 ? (
+            <p className="py-3 text-sm text-muted-foreground">
+              No significant controllers on file.
+            </p>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="rounded-lg border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Inspection requests</h2>
+          <button
+            type="button"
+            onClick={() => setIsInspectionDialogOpen(true)}
+            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
+          >
+            Record request
+          </button>
+        </div>
+        <div className="divide-y">
+          {client.inspectionRequests.map((request) => (
+            <div key={request.id} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{request.requesterName}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {request.requesterAuthority} · Requested {request.requestDate}
+                  {request.resolutionNote ? ` · ${request.resolutionNote}` : ""}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <StatusPill tone={request.resolvedAt ? "green" : "yellow"}>
+                  {request.resolvedAt ? "Resolved" : "Pending"}
+                </StatusPill>
+                {!request.resolvedAt ? (
+                  <button
+                    type="button"
+                    onClick={() => setResolvingInspectionRequestId(request.id)}
+                    className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
+                  >
+                    Resolve
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ))}
+          {client.inspectionRequests.length === 0 ? (
+            <p className="py-3 text-sm text-muted-foreground">No inspection requests on file.</p>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="rounded-lg border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">Contacts</h2>
           <button
             type="button"
@@ -480,6 +630,39 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         companyId={clientId}
         onSaved={invalidate}
       />
+
+      <ControllerFormDialog
+        open={controllerDialog.open}
+        onOpenChange={(open) => setControllerDialog((current) => ({ ...current, open }))}
+        companyId={clientId}
+        controller={controllerDialog.controller}
+        onSaved={() => {
+          invalidate();
+          setControllerDialog({ open: false });
+        }}
+      />
+
+      <InspectionRequestFormDialog
+        open={isInspectionDialogOpen}
+        onOpenChange={setIsInspectionDialogOpen}
+        companyId={clientId}
+        onSaved={invalidate}
+      />
+
+      {resolvingInspectionRequestId ? (
+        <ResolveInspectionRequestDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setResolvingInspectionRequestId(null);
+          }}
+          companyId={clientId}
+          inspectionRequestId={resolvingInspectionRequestId}
+          onSaved={() => {
+            invalidate();
+            setResolvingInspectionRequestId(null);
+          }}
+        />
+      ) : null}
     </main>
   );
 }

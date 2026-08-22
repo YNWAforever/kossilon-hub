@@ -99,7 +99,8 @@ export function OfficerFormDialog({ open, onOpenChange, companyId, onSaved }: Pr
         <DialogHeader>
           <DialogTitle>Appoint officer</DialogTitle>
           <DialogDescription>
-            Appointing a new secretary automatically supersedes the current one.
+            Appointing a new secretary or Designated Representative automatically supersedes the
+            current one of that type.
           </DialogDescription>
         </DialogHeader>
 
@@ -116,6 +117,7 @@ export function OfficerFormDialog({ open, onOpenChange, companyId, onSaved }: Pr
             >
               <option value="director">Director</option>
               <option value="secretary">Secretary</option>
+              <option value="designated_representative">Designated Representative</option>
             </select>
           </div>
 

@@ -15,6 +15,7 @@ const serverFns = vi.hoisted(() => ({
   removeClientContact: vi.fn(),
   ceaseClientOfficer: vi.fn(),
   ceaseClientShareholding: vi.fn(),
+  ceaseClientController: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => ({
@@ -23,6 +24,7 @@ vi.mock("../server-fns", () => ({
   removeClientContact: serverFns.removeClientContact,
   ceaseClientOfficer: serverFns.ceaseClientOfficer,
   ceaseClientShareholding: serverFns.ceaseClientShareholding,
+  ceaseClientController: serverFns.ceaseClientController,
 }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/clients">{children}</a>,
@@ -60,6 +62,8 @@ function makeClient(overrides: Partial<ClientDetail> = {}): ClientDetail {
     documents: [],
     officers: [],
     shareholdings: [],
+    significantControllers: [],
+    inspectionRequests: [],
     ...overrides,
   };
 }
@@ -95,6 +99,7 @@ describe("production client detail", () => {
     serverFns.removeClientContact.mockReset();
     serverFns.ceaseClientOfficer.mockReset();
     serverFns.ceaseClientShareholding.mockReset();
+    serverFns.ceaseClientController.mockReset();
     serverFns.listClientAssignmentOptions.mockResolvedValue(makeOptions());
     vi.mocked(toast.success).mockReset();
     vi.mocked(toast.error).mockReset();
@@ -265,6 +270,51 @@ describe("production client detail", () => {
     await waitFor(() =>
       expect(serverFns.ceaseClientOfficer).toHaveBeenCalledWith({
         data: expect.objectContaining({ companyId: clientId, officerId: "officer-1" }),
+      }),
+    );
+  });
+
+  it("renders significant controllers and inspection requests, and ceases a controller on click", async () => {
+    serverFns.getClient.mockResolvedValue(
+      makeClient({
+        significantControllers: [
+          {
+            id: "controller-1",
+            companyId: clientId,
+            controllerName: "Jane Controller",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            controlBases: ["shares_over_25pct"],
+            registeredDate: "2020-01-15",
+            cessationDate: null,
+            registerUpdateDueDate: null,
+          },
+        ],
+        inspectionRequests: [
+          {
+            id: "request-1",
+            companyId: clientId,
+            requesterName: "Officer Lee",
+            requesterAuthority: "Companies Registry",
+            requestDate: "2026-01-15",
+            resolutionNote: null,
+            resolvedAt: null,
+          },
+        ],
+      }),
+    );
+    serverFns.ceaseClientController.mockResolvedValue({});
+    renderDetail();
+
+    await screen.findByText("Jane Controller");
+    expect(screen.getByText("Officer Lee")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cease" }));
+
+    await waitFor(() =>
+      expect(serverFns.ceaseClientController).toHaveBeenCalledWith({
+        data: expect.objectContaining({ companyId: clientId, controllerId: "controller-1" }),
       }),
     );
   });
