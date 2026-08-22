@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tableNamesIn, verifyFirmDeployment } from "./verify-firm-deployment";
+import { droppedTableNamesIn, tableNamesIn, verifyFirmDeployment } from "./verify-firm-deployment";
 
 const gateFiles = new Map<string, string>([
   [
@@ -152,6 +152,25 @@ describe("verifyFirmDeployment catches wiring, not just spelling", () => {
     expect(result.checks).toContainEqual({ name: "migration-schema", status: "fail" });
   });
 
+  // A table a later migration drops is correctly absent from schema.sql, which
+  // reflects the fully-migrated end state — this must not be flagged as drift.
+  it("does not flag a table as drift when a later migration drops it", async () => {
+    const result = await verifyFirmDeployment(
+      passingInput({
+        readMigrations: async () =>
+          [...schemaTablesForWiring]
+            .map((table) => "create table " + table)
+            .concat(["create table service_packages (id uuid);", "drop table service_packages;"])
+            .join("\n"),
+      }),
+    );
+
+    expect(result.checks).not.toContainEqual(
+      expect.objectContaining({ name: expect.stringContaining("service_packages") }),
+    );
+    expect(result.checks).toContainEqual({ name: "migration-schema", status: "pass" });
+  });
+
   it("fails when a route renders without branching on dataMode", async () => {
     const result = await verifyFirmDeployment(
       passingInput({
@@ -202,5 +221,16 @@ describe("tableNamesIn", () => {
 
   it("ignores prose that merely mentions a table", () => {
     expect([...tableNamesIn("-- the work_items table is created elsewhere")]).toEqual([]);
+  });
+});
+
+describe("droppedTableNamesIn", () => {
+  it("reads both the plain and if-exists drop forms", () => {
+    expect([...droppedTableNamesIn("drop table foo;")]).toEqual(["foo"]);
+    expect([...droppedTableNamesIn("drop table if exists Bar;")]).toEqual(["bar"]);
+  });
+
+  it("ignores prose that merely mentions dropping a table", () => {
+    expect([...droppedTableNamesIn("-- the work_items table is dropped elsewhere")]).toEqual([]);
   });
 });

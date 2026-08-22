@@ -223,9 +223,18 @@ export async function verifyFirmDeployment(
 
   // Was: does schema.sql mention four hardcoded table names. That passed while
   // schema.sql was missing five tables the migrations create and the app queries.
+  //
+  // A table a later migration drops is expected to be absent from schema.sql
+  // (which reflects the fully-migrated end state) — without excluding dropped
+  // tables here, retiring any table (first done by migration 0018, retiring
+  // service_packages) would permanently fail this gate, since a name that ever
+  // appeared behind `create table` stayed required forever.
   const schemaTables = tableNamesIn(schema);
-  const migrationTables = tableNamesIn(migrations);
-  const tablesMissingFromSchema = [...migrationTables]
+  const droppedTables = droppedTableNamesIn(migrations);
+  const migrationTables = [...tableNamesIn(migrations)].filter(
+    (table) => !droppedTables.has(table),
+  );
+  const tablesMissingFromSchema = migrationTables
     .filter((table) => !schemaTables.has(table))
     .sort();
   const migrationReady =
@@ -319,6 +328,17 @@ export async function verifyFirmDeployment(
 export function tableNamesIn(sql: string): Set<string> {
   const names = new Set<string>();
   const pattern = /create\s+table\s+(?:if\s+not\s+exists\s+)?([a-z_][a-z0-9_]*)/gi;
+
+  for (const match of sql.matchAll(pattern)) {
+    names.add(match[1].toLowerCase());
+  }
+
+  return names;
+}
+
+export function droppedTableNamesIn(sql: string): Set<string> {
+  const names = new Set<string>();
+  const pattern = /drop\s+table\s+(?:if\s+exists\s+)?([a-z_][a-z0-9_]*)/gi;
 
   for (const match of sql.matchAll(pattern)) {
     names.add(match[1].toLowerCase());
