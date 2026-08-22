@@ -11,16 +11,19 @@ export class ServiceSubscriptionWriteError extends Error {
   }
 }
 
-const CONSTRAINT_FIELDS: Record<string, { field: ServiceSubscriptionWriteField; message: string }> = {
-  service_subscriptions_one_per_type: {
-    field: "serviceType",
-    message: "This company already has an active subscription for that service.",
-  },
-};
+const CONSTRAINT_FIELDS: Record<string, { field: ServiceSubscriptionWriteField; message: string }> =
+  {
+    service_subscriptions_one_per_type: {
+      field: "serviceType",
+      message: "This company already has an active subscription for that service.",
+    },
+  };
 
 const HANDLED_CODES = new Set(["23505", "23514"]);
 
-export function toServiceSubscriptionWriteError(error: unknown): ServiceSubscriptionWriteError | null {
+export function toServiceSubscriptionWriteError(
+  error: unknown,
+): ServiceSubscriptionWriteError | null {
   if (!(error instanceof Error)) {
     return null;
   }
