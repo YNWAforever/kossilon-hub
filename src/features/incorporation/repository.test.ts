@@ -316,6 +316,20 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
         await sqlB.end();
       }
 
+      // Populate the cleanup list BEFORE any assertion below can throw. The
+      // query only depends on the fixed CR-number prefixes used in the race,
+      // not on which promise fulfilled/rejected, so it's safe to run
+      // unconditionally here. If this ran after the expect()s instead, a
+      // regression in the `for update` lock (both calls succeeding) would
+      // throw on `expect(fulfilled).toHaveLength(1)` and skip straight to
+      // `finally` with `companyIds` still empty, leaking both orphan
+      // companies (and their officers) into the test database forever.
+      const companyRows = await setupSql<{ id: string }[]>`
+        select id from companies
+        where cr_number like 'CR-RACEA-%' or cr_number like 'CR-RACEB-%'
+      `;
+      companyIds = companyRows.map((row) => row.id);
+
       const fulfilled = results.filter(
         (result): result is PromiseFulfilledResult<unknown> => result.status === "fulfilled",
       );
@@ -329,19 +343,13 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
       // succeeding and creating two orphan companies.
       expect(fulfilled).toHaveLength(1);
       expect(rejected).toHaveLength(1);
-      expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(Error);
-      expect(((rejected[0] as PromiseRejectedResult).reason as Error).message).toContain(
+      expect(rejected[0].reason).toBeInstanceOf(Error);
+      expect((rejected[0].reason as Error).message).toContain(
         "Cannot complete a case from status Completed",
       );
 
       const finalCase = await repository.getCase(created.id);
       expect(finalCase?.companyId).not.toBeNull();
-
-      const companyRows = await setupSql<{ id: string }[]>`
-        select id from companies
-        where cr_number like 'CR-RACEA-%' or cr_number like 'CR-RACEB-%'
-      `;
-      companyIds = companyRows.map((row) => row.id);
 
       // The whole point of the fix: only ONE companies row exists for this
       // race, not two.
