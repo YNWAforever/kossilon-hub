@@ -325,6 +325,7 @@ Rejected) is the established, deliberate behavior here, not an oversight.
 
 ```ts
 import type postgres from "postgres";
+import { rethrowClientWriteError } from "@/features/clients/errors";
 import {
   createSqlClient,
   getSqlClient,
@@ -627,48 +628,52 @@ export function createIncorporationRepository(
   }
 
   async function completeCase(input: CompleteIncorporationCaseInput): Promise<IncorporationCase> {
-    return withTransaction(sql, async (tx) => {
-      await assertActor(tx, input.actorId);
-      await tx`select id from incorporation_cases where id = ${input.caseId} for update`;
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        await tx`select id from incorporation_cases where id = ${input.caseId} for update`;
 
-      const current = await hydrateOrThrow(tx, input.caseId);
-      if (current.status !== "Filed with Registrar") {
-        throw new Error(
-          `Cannot complete a case from status ${current.status}; it must be Filed with Registrar.`,
-        );
-      }
+        const current = await hydrateOrThrow(tx, input.caseId);
+        if (current.status !== "Filed with Registrar") {
+          throw new Error(
+            `Cannot complete a case from status ${current.status}; it must be Filed with Registrar.`,
+          );
+        }
 
-      const annualReturnBasisDate = oneYearLater(input.incorporationDate);
+        const annualReturnBasisDate = oneYearLater(input.incorporationDate);
 
-      const companyRows = await tx<{ id: string }[]>`
-        insert into companies (
-          company_name, cr_number, br_number, incorporation_date,
-          annual_return_basis_date, registered_office, company_secretary,
-          status, assigned_owner_id, assigned_team_id
-        )
-        values (
-          ${current.proposedCompanyNameEn}, ${input.crNumber}, ${input.brNumber},
-          ${input.incorporationDate}, ${annualReturnBasisDate},
-          ${current.proposedRegisteredOffice}, ${current.proposedCompanySecretary},
-          'active', ${current.ownerId}, ${current.teamId}
-        )
-        returning id
-      `;
-      const companyId = companyRows[0].id;
+        const companyRows = await tx<{ id: string }[]>`
+          insert into companies (
+            company_name, cr_number, br_number, incorporation_date,
+            annual_return_basis_date, registered_office, company_secretary,
+            status, assigned_owner_id, assigned_team_id
+          )
+          values (
+            ${current.proposedCompanyNameEn}, ${input.crNumber}, ${input.brNumber},
+            ${input.incorporationDate}, ${annualReturnBasisDate},
+            ${current.proposedRegisteredOffice}, ${current.proposedCompanySecretary},
+            'active', ${current.ownerId}, ${current.teamId}
+          )
+          returning id
+        `;
+        const companyId = companyRows[0].id;
 
-      await tx`
-        insert into officers (company_id, officer_type, name, appointment_date)
-        values (${companyId}, 'secretary', ${current.proposedCompanySecretary}, ${input.incorporationDate})
-      `;
+        await tx`
+          insert into officers (company_id, officer_type, name, appointment_date)
+          values (${companyId}, 'secretary', ${current.proposedCompanySecretary}, ${input.incorporationDate})
+        `;
 
-      await tx`
-        update incorporation_cases
-        set status = 'Completed', company_id = ${companyId}, completed_at = now(), updated_at = now()
-        where id = ${input.caseId}
-      `;
+        await tx`
+          update incorporation_cases
+          set status = 'Completed', company_id = ${companyId}, completed_at = now(), updated_at = now()
+          where id = ${input.caseId}
+        `;
 
-      return hydrateOrThrow(tx, input.caseId);
-    });
+        return hydrateOrThrow(tx, input.caseId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
   }
 
   async function close(): Promise<void> {
@@ -2130,6 +2135,7 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
     brNumber: "",
     incorporationDate: "",
   });
+  const [completionError, setCompletionError] = useState<string | null>(null);
 
   const caseQuery = useQuery({
     queryKey: ["incorporation-cases", caseId],
@@ -2173,8 +2179,11 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
         void navigate({ to: "/clients/$id", params: { id: result.companyId } });
       }
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Unable to complete the case."),
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unable to complete the case.";
+      setCompletionError(message);
+      toast.error(message);
+    },
   });
 
   if (caseQuery.isPending) {
@@ -2283,6 +2292,13 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
           <form
             onSubmit={(event) => {
               event.preventDefault();
+
+              if (!completionForm.crNumber.trim() || !completionForm.brNumber.trim()) {
+                setCompletionError("CR number and BR number are required.");
+                return;
+              }
+
+              setCompletionError(null);
               complete.mutate();
             }}
             className="grid grid-cols-1 gap-4 md:grid-cols-3"
@@ -2336,6 +2352,9 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
                 required
               />
             </div>
+            {completionError && (
+              <p className="text-xs text-destructive md:col-span-3">{completionError}</p>
+            )}
             <div className="md:col-span-3">
               <button
                 type="submit"

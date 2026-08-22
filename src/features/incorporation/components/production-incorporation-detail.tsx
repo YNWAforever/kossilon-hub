@@ -37,6 +37,7 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
     brNumber: "",
     incorporationDate: "",
   });
+  const [completionError, setCompletionError] = useState<string | null>(null);
 
   const caseQuery = useQuery({
     queryKey: ["incorporation-cases", caseId],
@@ -80,8 +81,11 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
         void navigate({ to: "/clients/$id", params: { id: result.companyId } });
       }
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Unable to complete the case."),
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unable to complete the case.";
+      setCompletionError(message);
+      toast.error(message);
+    },
   });
 
   if (caseQuery.isPending) {
@@ -190,6 +194,13 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
           <form
             onSubmit={(event) => {
               event.preventDefault();
+
+              if (!completionForm.crNumber.trim() || !completionForm.brNumber.trim()) {
+                setCompletionError("CR number and BR number are required.");
+                return;
+              }
+
+              setCompletionError(null);
               complete.mutate();
             }}
             className="grid grid-cols-1 gap-4 md:grid-cols-3"
@@ -249,6 +260,9 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
                 required
               />
             </div>
+            {completionError && (
+              <p className="text-xs text-destructive md:col-span-3">{completionError}</p>
+            )}
             <div className="md:col-span-3">
               <button
                 type="submit"
