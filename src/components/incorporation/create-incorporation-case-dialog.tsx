@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -66,12 +66,23 @@ export function CreateIncorporationCaseDialog({
   const [form, setForm] = useState<FormState>(() => emptyForm(owners, teams));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const initializedRef = useRef(false);
 
+  // Re-derives the form exactly once per open: not on the first render (data
+  // is still loading, per isLoading), but the moment loading finishes. Further
+  // background refetches while the dialog stays open do NOT re-run this, so a
+  // user's in-progress edit is never clobbered — initializedRef only resets
+  // when the dialog closes.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      initializedRef.current = false;
+      return;
+    }
+    if (isLoading || initializedRef.current) return;
     setForm(emptyForm(owners, teams));
     setError(null);
-  }, [open, owners, teams]);
+    initializedRef.current = true;
+  }, [open, isLoading, owners, teams]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -129,6 +140,16 @@ export function CreateIncorporationCaseDialog({
         ) : hasError ? (
           <p role="alert" className="text-sm text-destructive">
             Unable to load owner or team data. Try again shortly.
+          </p>
+        ) : owners.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No active staff members are available to assign as owner. Ask an Admin to activate one
+            before starting an incorporation case.
+          </p>
+        ) : teams.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No teams are configured. Ask an Admin to configure one before starting an incorporation
+            case.
           </p>
         ) : (
           <form onSubmit={submit} className="space-y-4">
