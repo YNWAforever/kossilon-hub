@@ -56,6 +56,8 @@ describe("page header convention", () => {
       "routes/clients.$id.tsx",
       // A pass-through to ProductionIncorporationList / DemoIncorporationNotice, same reason.
       "routes/incorporation.tsx",
+      // A pass-through to ProductionIncorporationDetail / DemoIncorporationNotice, same reason.
+      "routes/incorporation.$id.tsx",
     ]);
 
     const missing = routeSources
