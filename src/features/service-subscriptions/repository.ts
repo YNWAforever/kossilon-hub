@@ -6,7 +6,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { oneYearLater } from "@/lib/date-math";
-import { rethrowServiceSubscriptionWriteError } from "./errors";
+import { ServiceSubscriptionWriteError, rethrowServiceSubscriptionWriteError } from "./errors";
 import type {
   AddSubscriptionInput,
   CancelSubscriptionInput,
@@ -154,7 +154,15 @@ export function createServiceSubscriptionRepository(
           select id, status from service_subscriptions
           where company_id = ${input.companyId} and service_type = ${input.serviceType}
           limit 1
+          for update
         `;
+
+        if (existing[0]?.status === "Active") {
+          throw new ServiceSubscriptionWriteError(
+            "serviceType",
+            "This company already has an active subscription for that service.",
+          );
+        }
 
         if (existing[0]) {
           // Reactivating a cancelled row for this (company, service_type) —
