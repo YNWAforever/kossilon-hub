@@ -735,7 +735,7 @@ create table if not exists incorporation_cases (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint incorporation_cases_completed_has_company check (
-    status <> 'Completed' or company_id is not null
+    (status = 'Completed') = (company_id is not null)
   )
 );
 
