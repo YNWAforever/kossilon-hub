@@ -111,6 +111,8 @@ git commit -m "feat: add incorporation_cases and incorporation_checklist_items t
 - [ ] **Step 1: Write the types**
 
 ```ts
+import type { ChecklistStatus } from "@/features/annual-return/types";
+
 export const INCORPORATION_STATUSES = [
   "Intake",
   "Documents pending",
@@ -121,7 +123,9 @@ export const INCORPORATION_STATUSES = [
 
 export type IncorporationStatus = (typeof INCORPORATION_STATUSES)[number];
 
-export type ChecklistItemStatus = "Missing" | "Received" | "Verified" | "Rejected";
+/** Re-exported so the checklist-item status check constraint (shared literal set
+ *  with annual_return_checklist_items) has exactly one TypeScript definition. */
+export type ChecklistItemStatus = ChecklistStatus;
 
 export type IncorporationChecklistItem = {
   id: string;
@@ -169,7 +173,7 @@ export type CreateIncorporationCaseInput = {
   actorId: string;
 };
 
-export type UpdateChecklistItemInput = {
+export type UpdateIncorporationChecklistItemInput = {
   caseId: string;
   itemId: string;
   status: ChecklistItemStatus;
@@ -177,7 +181,7 @@ export type UpdateChecklistItemInput = {
   actorId: string;
 };
 
-export type UpdateCaseStatusInput = {
+export type UpdateIncorporationCaseStatusInput = {
   caseId: string;
   status: IncorporationStatus;
   actorId: string;
@@ -336,8 +340,8 @@ import type {
   IncorporationCaseSummary,
   IncorporationChecklistItem,
   IncorporationStatus,
-  UpdateCaseStatusInput,
-  UpdateChecklistItemInput,
+  UpdateIncorporationCaseStatusInput,
+  UpdateIncorporationChecklistItemInput,
 } from "./types";
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -352,8 +356,8 @@ export type IncorporationRepository = {
   getCase(id: string): Promise<IncorporationCase | null>;
   getCaseTeamId(caseId: string): Promise<string | null>;
   createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase>;
-  updateChecklistItem(input: UpdateChecklistItemInput): Promise<IncorporationCase>;
-  updateCaseStatus(input: UpdateCaseStatusInput): Promise<IncorporationCase>;
+  updateChecklistItem(input: UpdateIncorporationChecklistItemInput): Promise<IncorporationCase>;
+  updateCaseStatus(input: UpdateIncorporationCaseStatusInput): Promise<IncorporationCase>;
   completeCase(input: CompleteIncorporationCaseInput): Promise<IncorporationCase>;
   close(): Promise<void>;
 };
@@ -583,7 +587,7 @@ export function createIncorporationRepository(
     if (rows.length === 0) throw new Error("Checklist item not found for this case.");
   }
 
-  async function updateChecklistItem(input: UpdateChecklistItemInput): Promise<IncorporationCase> {
+  async function updateChecklistItem(input: UpdateIncorporationChecklistItemInput): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
       await assertItemBelongsToCase(tx, input.caseId, input.itemId);
@@ -604,7 +608,7 @@ export function createIncorporationRepository(
     });
   }
 
-  async function updateCaseStatus(input: UpdateCaseStatusInput): Promise<IncorporationCase> {
+  async function updateCaseStatus(input: UpdateIncorporationCaseStatusInput): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
 

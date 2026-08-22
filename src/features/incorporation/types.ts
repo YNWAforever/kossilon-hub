@@ -1,3 +1,5 @@
+import type { ChecklistStatus } from "@/features/annual-return/types";
+
 export const INCORPORATION_STATUSES = [
   "Intake",
   "Documents pending",
@@ -8,7 +10,9 @@ export const INCORPORATION_STATUSES = [
 
 export type IncorporationStatus = (typeof INCORPORATION_STATUSES)[number];
 
-export type ChecklistItemStatus = "Missing" | "Received" | "Verified" | "Rejected";
+/** Re-exported so the checklist-item status check constraint (shared literal set
+ *  with annual_return_checklist_items) has exactly one TypeScript definition. */
+export type ChecklistItemStatus = ChecklistStatus;
 
 export type IncorporationChecklistItem = {
   id: string;
@@ -56,7 +60,7 @@ export type CreateIncorporationCaseInput = {
   actorId: string;
 };
 
-export type UpdateChecklistItemInput = {
+export type UpdateIncorporationChecklistItemInput = {
   caseId: string;
   itemId: string;
   status: ChecklistItemStatus;
@@ -64,7 +68,7 @@ export type UpdateChecklistItemInput = {
   actorId: string;
 };
 
-export type UpdateCaseStatusInput = {
+export type UpdateIncorporationCaseStatusInput = {
   caseId: string;
   status: IncorporationStatus;
   actorId: string;
