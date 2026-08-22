@@ -185,6 +185,13 @@ export function createServiceSubscriptionRepository(
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
 
+      // Locks the row before reading its status, so a concurrent cancel (or a
+      // second concurrent renew) blocks here rather than racing: both would
+      // otherwise read "Active" before either write lands, and the losing
+      // write would apply unconditionally with no status re-check. Same
+      // pattern as incorporation's completeCase and clients' appointOfficer.
+      await tx`select id from service_subscriptions where id = ${input.subscriptionId} for update`;
+
       const current = await hydrateById(tx, input.subscriptionId);
       if (current.status !== "Active") {
         throw new Error("Cannot renew a subscription that is not Active.");
@@ -205,6 +212,9 @@ export function createServiceSubscriptionRepository(
   async function cancelSubscription(input: CancelSubscriptionInput): Promise<ServiceSubscription> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
+
+      // Same lock-before-read rationale as renewSubscription above.
+      await tx`select id from service_subscriptions where id = ${input.subscriptionId} for update`;
 
       const current = await hydrateById(tx, input.subscriptionId);
       if (current.status !== "Active") {
