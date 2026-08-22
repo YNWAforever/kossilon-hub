@@ -15,6 +15,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as IncorporationRouteImport } from './routes/incorporation'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
@@ -52,6 +53,11 @@ const PaymentsRoute = PaymentsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IncorporationRoute = IncorporationRouteImport.update({
+  id: '/incorporation',
+  path: '/incorporation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/incorporation': typeof IncorporationRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/incorporation': typeof IncorporationRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
   '/clients': typeof ClientsRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/incorporation': typeof IncorporationRoute
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/annual-returns'
     | '/clients'
     | '/documents'
+    | '/incorporation'
     | '/login'
     | '/payments'
     | '/portal'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/annual-returns'
     | '/clients'
     | '/documents'
+    | '/incorporation'
     | '/login'
     | '/payments'
     | '/portal'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/annual-returns'
     | '/clients'
     | '/documents'
+    | '/incorporation'
     | '/login'
     | '/payments'
     | '/portal'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   AnnualReturnsRoute: typeof AnnualReturnsRouteWithChildren
   ClientsRoute: typeof ClientsRouteWithChildren
   DocumentsRoute: typeof DocumentsRoute
+  IncorporationRoute: typeof IncorporationRoute
   LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
   PortalRoute: typeof PortalRoute
@@ -251,6 +264,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/incorporation': {
+      id: '/incorporation'
+      path: '/incorporation'
+      fullPath: '/incorporation'
+      preLoaderRoute: typeof IncorporationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -353,6 +373,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnnualReturnsRoute: AnnualReturnsRouteWithChildren,
   ClientsRoute: ClientsRouteWithChildren,
   DocumentsRoute: DocumentsRoute,
+  IncorporationRoute: IncorporationRoute,
   LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
   PortalRoute: PortalRoute,
