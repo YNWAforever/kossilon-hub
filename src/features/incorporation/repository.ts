@@ -195,7 +195,10 @@ export function createIncorporationRepository(
     return rows[0]?.team_id ?? null;
   }
 
-  async function hydrateOrThrow(tx: TransactionSqlClient, caseId: string): Promise<IncorporationCase> {
+  async function hydrateOrThrow(
+    tx: TransactionSqlClient,
+    caseId: string,
+  ): Promise<IncorporationCase> {
     const result = await hydrateCase(tx, caseId);
     if (!result) throw new Error("Incorporation case not found.");
     return result;
@@ -215,7 +218,7 @@ export function createIncorporationRepository(
       const ownerRows = await tx<{ id: string }[]>`
         select id from users where id = ${input.ownerId} and active limit 1
       `;
-      if (ownerRows.length !== 1) throw new Error("Owner not found or inactive.");
+      if (ownerRows.length !== 1) throw new Error("Incorporation owner not found or inactive.");
 
       const templateRows = await tx<{ documents: { label: string; required: boolean }[] }[]>`
         select documents from checklist_templates
@@ -261,7 +264,9 @@ export function createIncorporationRepository(
     if (rows.length === 0) throw new Error("Checklist item not found for this case.");
   }
 
-  async function updateChecklistItem(input: UpdateIncorporationChecklistItemInput): Promise<IncorporationCase> {
+  async function updateChecklistItem(
+    input: UpdateIncorporationChecklistItemInput,
+  ): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
       await assertItemBelongsToCase(tx, input.caseId, input.itemId);
@@ -282,7 +287,9 @@ export function createIncorporationRepository(
     });
   }
 
-  async function updateCaseStatus(input: UpdateIncorporationCaseStatusInput): Promise<IncorporationCase> {
+  async function updateCaseStatus(
+    input: UpdateIncorporationCaseStatusInput,
+  ): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
 
@@ -303,6 +310,7 @@ export function createIncorporationRepository(
   async function completeCase(input: CompleteIncorporationCaseInput): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
+      await tx`select id from incorporation_cases where id = ${input.caseId} for update`;
 
       const current = await hydrateOrThrow(tx, input.caseId);
       if (current.status !== "Filed with Registrar") {

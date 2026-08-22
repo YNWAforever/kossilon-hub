@@ -541,7 +541,7 @@ export function createIncorporationRepository(
       const ownerRows = await tx<{ id: string }[]>`
         select id from users where id = ${input.ownerId} and active limit 1
       `;
-      if (ownerRows.length !== 1) throw new Error("Owner not found or inactive.");
+      if (ownerRows.length !== 1) throw new Error("Incorporation owner not found or inactive.");
 
       const templateRows = await tx<{ documents: { label: string; required: boolean }[] }[]>`
         select documents from checklist_templates
@@ -629,6 +629,7 @@ export function createIncorporationRepository(
   async function completeCase(input: CompleteIncorporationCaseInput): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
+      await tx`select id from incorporation_cases where id = ${input.caseId} for update`;
 
       const current = await hydrateOrThrow(tx, input.caseId);
       if (current.status !== "Filed with Registrar") {
