@@ -22,7 +22,7 @@ company-creation insert directly rather than importing across feature slices.
 - Create: `db/migrations/0017_incorporation_intake.sql`
 - Modify: `src/server/db/schema.sql`
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- 0017: incorporation intake case type (P1-7).
@@ -82,19 +82,19 @@ string-vs-number parsing complexity Postgres's `numeric` type forces on JS
 consumers. HK company registered capital is a round HKD figure (commonly
 10,000), so this loses nothing.
 
-- [ ] **Step 2: Update `schema.sql`**
+- [x] **Step 2: Update `schema.sql`**
 
 Read the file first. Insert the two `create table`/`create index` blocks above
 (byte-identical to the migration) immediately after the `scr_inspection_requests`
 table's index (the last table added by migration 0016), before whatever comment
 or table follows it.
 
-- [ ] **Step 3: Verify the migration/schema consistency gate**
+- [x] **Step 3: Verify the migration/schema consistency gate**
 
 Run: `npm run verify:firm -- --dry-run`
 Expected: passes, including `migration-schema`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add db/migrations/0017_incorporation_intake.sql src/server/db/schema.sql
@@ -108,7 +108,7 @@ git commit -m "feat: add incorporation_cases and incorporation_checklist_items t
 **Files:**
 - Create: `src/features/incorporation/types.ts`
 
-- [ ] **Step 1: Write the types**
+- [x] **Step 1: Write the types**
 
 ```ts
 import type { ChecklistStatus } from "@/features/annual-return/types";
@@ -196,12 +196,12 @@ export type CompleteIncorporationCaseInput = {
 };
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean — nothing else references this new module yet.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/features/incorporation/types.ts
@@ -216,7 +216,7 @@ git commit -m "feat: add incorporation intake types"
 - Create: `src/features/incorporation/workflow.ts`
 - Test: `src/features/incorporation/workflow.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -257,12 +257,12 @@ describe("oneYearLater", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/features/incorporation/workflow.test.ts`
 Expected: FAIL — `./workflow` does not exist yet.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 import type { IncorporationStatus } from "./types";
@@ -292,12 +292,12 @@ export function oneYearLater(date: string): string {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/features/incorporation/workflow.test.ts`
 Expected: PASS, all 6 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/features/incorporation/workflow.ts src/features/incorporation/workflow.test.ts
@@ -321,7 +321,7 @@ pattern this task's `updateChecklistItem` mirrors exactly — resetting a
 timestamp to `null` when the item moves away from Received/Verified (e.g. into
 Rejected) is the established, deliberate behavior here, not an oversight.
 
-- [ ] **Step 1: Write the repository**
+- [x] **Step 1: Write the repository**
 
 ```ts
 import type postgres from "postgres";
@@ -693,12 +693,12 @@ export function createIncorporationRepository(
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/features/incorporation/repository.ts
@@ -720,7 +720,7 @@ they created, from the very first test that exercises `completeCase` — this is
 the third time this exact class of bug could recur in this codebase (PR #46/#47
 for officers/shareholdings; caught pre-merge for P1-6's significant_controllers).
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 ```ts
 import "dotenv/config";
@@ -1093,7 +1093,7 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
 });
 ```
 
-- [ ] **Step 2: Format, lint, and run**
+- [x] **Step 2: Format, lint, and run**
 
 ```bash
 npx eslint --fix src/features/incorporation/repository.test.ts
@@ -1101,7 +1101,7 @@ npx vitest run src/features/incorporation/repository.test.ts
 ```
 Expected: skipped locally (no `TEST_DATABASE_URL`), no syntax errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/features/incorporation/repository.test.ts
@@ -1119,7 +1119,7 @@ Read `src/features/clients/authorization.ts` in full first — this mirrors its
 Admin/Manager/Staff shape exactly, just scoped to `incorporation_cases.team_id`
 instead of `companies.assigned_team_id`.
 
-- [ ] **Step 1: Write the authorization module**
+- [x] **Step 1: Write the authorization module**
 
 ```ts
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -1161,12 +1161,12 @@ export function assertIncorporationCaseCreatable(
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/features/incorporation/authorization.ts
@@ -1184,7 +1184,7 @@ Read `src/features/clients/server-fns.ts` in full first for the
 `loadDefaultClientContext`/`getCurrentClientActor`/`withClientRepository` pattern
 this mirrors closely.
 
-- [ ] **Step 1: Write the server functions**
+- [x] **Step 1: Write the server functions**
 
 ```ts
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
@@ -1332,12 +1332,12 @@ export const completeIncorporationCase = createServerFn({ method: "POST" })
   );
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/features/incorporation/server-fns.ts
@@ -1356,7 +1356,7 @@ Read `src/components/clients/client-form-dialog.tsx` (owner/team select pattern)
 and `src/features/annual-return/components/create-case-dialog.tsx` (loading/error
 state pattern for options that come from a separate query) first.
 
-- [ ] **Step 1: Write the dialog**
+- [x] **Step 1: Write the dialog**
 
 ```tsx
 import { useEffect, useRef, useState } from "react";
@@ -1672,7 +1672,7 @@ export function CreateIncorporationCaseDialog({
 }
 ```
 
-- [ ] **Step 2: Write the test file**
+- [x] **Step 2: Write the test file**
 
 ```tsx
 // @vitest-environment jsdom
@@ -1821,16 +1821,16 @@ describe("CreateIncorporationCaseDialog", () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests**
+- [x] **Step 3: Run the tests**
 
 Run: `npx vitest run src/components/incorporation/create-incorporation-case-dialog.test.tsx`
 Expected: all 3 pass.
 
-- [ ] **Step 4: Lint**
+- [x] **Step 4: Lint**
 
 Run: `npx eslint --fix src/components/incorporation/create-incorporation-case-dialog.tsx src/components/incorporation/create-incorporation-case-dialog.test.tsx`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/incorporation/create-incorporation-case-dialog.tsx src/components/incorporation/create-incorporation-case-dialog.test.tsx
@@ -1847,7 +1847,7 @@ git commit -m "feat: add CreateIncorporationCaseDialog"
 Read `src/features/clients/components/demo-client-notice.tsx` first — this is a
 near-identical copy for a second variant.
 
-- [ ] **Step 1: Write the component**
+- [x] **Step 1: Write the component**
 
 ```tsx
 import { PageHeader } from "@/components/page-header";
@@ -1883,12 +1883,12 @@ export function DemoIncorporationNotice({ variant }: Props) {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/features/incorporation/components/demo-incorporation-notice.tsx
@@ -1908,7 +1908,7 @@ the two shared components reused here, and
 `src/features/clients/components/production-client-register.tsx` for the closest
 existing list-screen structure (query + table + create dialog + navigate-on-create).
 
-- [ ] **Step 1: Write the list component**
+- [x] **Step 1: Write the list component**
 
 ```tsx
 import { useState } from "react";
@@ -2047,7 +2047,7 @@ export function ProductionIncorporationList() {
 }
 ```
 
-- [ ] **Step 2: Write the route**
+- [x] **Step 2: Write the route**
 
 ```tsx
 import { createFileRoute } from "@tanstack/react-router";
@@ -2068,7 +2068,7 @@ function IncorporationRoute() {
 }
 ```
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: TanStack Router's file-based routing regenerates `routeTree.gen.ts`
@@ -2078,7 +2078,7 @@ server having run at least once since this file was added, `/incorporation/$id`
 expected at this point in the plan — Task 11 adds that route file, and a
 subsequent full typecheck (Task 12) will be clean once both exist.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/features/incorporation/components/production-incorporation-list.tsx src/routes/incorporation.tsx
@@ -2093,7 +2093,7 @@ git commit -m "feat: add /incorporation list route"
 - Create: `src/features/incorporation/components/production-incorporation-detail.tsx`
 - Create: `src/routes/incorporation.$id.tsx`
 
-- [ ] **Step 1: Write the detail component**
+- [x] **Step 1: Write the detail component**
 
 ```tsx
 import { useState } from "react";
@@ -2372,7 +2372,7 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
 }
 ```
 
-- [ ] **Step 2: Write the route**
+- [x] **Step 2: Write the route**
 
 ```tsx
 import { createFileRoute } from "@tanstack/react-router";
@@ -2394,14 +2394,14 @@ function IncorporationDetailRoute() {
 }
 ```
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: clean now that both `/incorporation` and `/incorporation/$id` exist and
 `routeTree.gen.ts` has regenerated (run `npm run dev` briefly and stop it, or
 `npm run build`, if the generated route tree hasn't picked up the new files yet).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/features/incorporation/components/production-incorporation-detail.tsx src/routes/incorporation.\$id.tsx
@@ -2415,7 +2415,7 @@ git commit -m "feat: add /incorporation/\$id detail route"
 **Files:**
 - Modify: `src/components/navigation.ts`
 
-- [ ] **Step 1: Add the nav item**
+- [x] **Step 1: Add the nav item**
 
 Add `Rocket` to the `lucide-react` import list (alongside `Building2` etc.), and
 add a new entry to the `"Operations"` group's `items` array, immediately after
@@ -2425,12 +2425,12 @@ add a new entry to the `"Operations"` group's `items` array, immediately after
 { to: "/incorporation", label: "Incorporation", icon: Rocket },
 ```
 
-- [ ] **Step 2: Typecheck and lint**
+- [x] **Step 2: Typecheck and lint**
 
 Run: `npx tsc --noEmit && npm run lint`
 Expected: both clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/navigation.ts
@@ -2443,35 +2443,35 @@ git commit -m "feat: add Incorporation to the primary navigation"
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Full typecheck**
+- [x] **Step 1: Full typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: no errors anywhere in the repo.
 
-- [ ] **Step 2: Full lint**
+- [x] **Step 2: Full lint**
 
 Run: `npm run lint`
 Expected: no new errors (the pre-existing `work-queue.tsx` fast-refresh warning
 may remain).
 
-- [ ] **Step 3: Full test suite**
+- [x] **Step 3: Full test suite**
 
 Run: `npm test`
 Expected: all non-DB tests pass; DB-integration tests skip locally.
 
-- [ ] **Step 4: Offline pre-deploy gate**
+- [x] **Step 4: Offline pre-deploy gate**
 
 Run: `npm run verify:firm -- --dry-run`
 Expected: passes, including `migration-schema` for migration 0017.
 
-- [ ] **Step 5: Confirm the app's own page-header convention holds**
+- [x] **Step 5: Confirm the app's own page-header convention holds**
 
 `src/components/page-header.convention.test.ts` scans all routes and enforces
 every screen renders `<PageHeader>` as the first child of `<main>`. Both new
 routes' components already do this (see Tasks 10-11); run the full suite (Step 3)
 and confirm this test file specifically passes with no changes needed to it.
 
-- [ ] **Step 6: Manual smoke test in demo mode**
+- [x] **Step 6: Manual smoke test in demo mode**
 
 Start the dev server and confirm `/incorporation` and `/incorporation/$id` (any
 id) both render their explanatory "no demo data" notices with no crash, and that
@@ -2481,7 +2481,7 @@ exercised in this sandbox due to the pre-existing `NEON_AUTH_URL is required`
 limitation documented in earlier roadmap work — disclose this rather than
 claiming a full production-mode smoke test.
 
-- [ ] **Step 7: Dispatch a final holistic code review of the whole branch diff**
+- [x] **Step 7: Dispatch a final holistic code review of the whole branch diff**
 
 Compare the full diff against
 `docs/superpowers/specs/2026-08-22-incorporation-intake-design.md` for spec
