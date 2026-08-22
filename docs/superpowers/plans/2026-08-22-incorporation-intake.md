@@ -2496,7 +2496,7 @@ tables' test cleanup ordering is correct, mirroring the lesson from
 [[feedback_schema_migration_raw_sql_sweep]] and this session's repeated
 `on delete restrict`-cleanup incidents.
 
-- [ ] **Step 8: Confirm CI is green in an actual CI run before merging**
+- [x] **Step 8: Confirm CI is green in an actual CI run before merging**
 
 After pushing and opening the PR, wait for the `verify` CI job (DB-integration
 suite against a real database) to report `SUCCESS` before treating this item as
