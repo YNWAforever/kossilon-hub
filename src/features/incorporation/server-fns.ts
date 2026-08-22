@@ -1,11 +1,9 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import {
-  assertIncorporationCaseCreatable,
-  assertIncorporationCaseWritable,
-} from "./authorization";
+import { assertIncorporationCaseCreatable, assertIncorporationCaseWritable } from "./authorization";
 import type { IncorporationRepository } from "./repository";
+import { INCORPORATION_STATUSES } from "./types";
 
 const loadDefaultIncorporationContext = createServerOnlyFn(async () => {
   const [{ getRequest }, { requireStaffActor }, { createIncorporationRepository }] =
@@ -77,7 +75,7 @@ const updateChecklistItemSchema = z.object({
 
 const updateCaseStatusSchema = z.object({
   caseId: z.string().uuid(),
-  status: z.enum(["Intake", "Documents pending", "Ready to file", "Filed with Registrar", "Completed"]),
+  status: z.enum(INCORPORATION_STATUSES),
 });
 
 const completeCaseSchema = z.object({
