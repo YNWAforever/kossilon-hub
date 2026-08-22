@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { INCORPORATION_STATUSES, type IncorporationStatus } from "./types";
 import { isAllowedIntakeStatusTransition, oneYearLater } from "./workflow";
 
 describe("isAllowedIntakeStatusTransition", () => {
@@ -19,6 +20,15 @@ describe("isAllowedIntakeStatusTransition", () => {
 
   it("rejects a no-op transition", () => {
     expect(isAllowedIntakeStatusTransition("Intake", "Intake")).toBe(false);
+  });
+
+  // indexOf returns -1 outside the enum, which made `toIndex === fromIndex + 1`
+  // true for an unknown `from` and the first status — so a case whose status had
+  // drifted from the enum could be walked back to the start of the workflow.
+  it("refuses a transition out of a status that is not in the workflow", () => {
+    expect(
+      isAllowedIntakeStatusTransition("Archived" as IncorporationStatus, INCORPORATION_STATUSES[0]),
+    ).toBe(false);
   });
 });
 
