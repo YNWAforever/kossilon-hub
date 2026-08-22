@@ -1,3 +1,4 @@
+import { daysBetween } from "@/lib/date-math";
 import {
   ANNUAL_RETURN_STATUSES,
   type AnnualReturnCase,
@@ -8,8 +9,7 @@ import {
 } from "./types";
 
 export { ANNUAL_RETURN_STATUSES };
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+export { daysBetween };
 
 function parseDateOnly(date: string): Date {
   const [year, month, day] = date.slice(0, 10).split("-").map(Number);
@@ -59,12 +59,6 @@ export function hasRequiredChecklistEvidence(item: AnnualReturnChecklistItem): b
     hasText(item.verifiedAt) &&
     hasText(item.documentId)
   );
-}
-
-export function daysBetween(startDate: string, endDate: string): number {
-  const start = parseDateOnly(startDate);
-  const end = parseDateOnly(endDate);
-  return Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY);
 }
 
 /** Positive `days` moves forward, negative moves backward. */
