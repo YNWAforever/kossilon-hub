@@ -716,6 +716,47 @@ create table if not exists scr_inspection_requests (
 
 create index if not exists scr_inspection_requests_company_idx on scr_inspection_requests (company_id);
 
+create table if not exists incorporation_cases (
+  id uuid primary key default gen_random_uuid(),
+  proposed_company_name_en text not null,
+  proposed_company_name_zh text,
+  proposed_registered_office text not null,
+  proposed_company_secretary text not null,
+  registered_capital integer not null check (registered_capital > 0),
+  business_nature text not null,
+  status text not null default 'Intake' check (status in (
+    'Intake', 'Documents pending', 'Ready to file', 'Filed with Registrar', 'Completed'
+  )),
+  owner_id uuid not null references users(id),
+  team_id uuid not null references teams(id),
+  target_completion_date date not null,
+  company_id uuid references companies(id) on delete restrict,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint incorporation_cases_completed_has_company check (
+    (status = 'Completed') = (company_id is not null)
+  )
+);
+
+create index if not exists incorporation_cases_status_idx on incorporation_cases (status);
+create index if not exists incorporation_cases_company_idx on incorporation_cases (company_id);
+
+create table if not exists incorporation_checklist_items (
+  id uuid primary key default gen_random_uuid(),
+  case_id uuid not null references incorporation_cases(id) on delete cascade,
+  item_label text not null,
+  required boolean not null default true,
+  status text not null default 'Missing' check (status in ('Missing', 'Received', 'Verified', 'Rejected')),
+  note text,
+  received_at timestamptz,
+  verified_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists incorporation_checklist_items_case_idx on incorporation_checklist_items (case_id);
+
 -- ---------------------------------------------------------------------------
 -- Reconciled with db/migrations/. schema.sql is a reference document (only
 -- db/migrations is ever applied), and it had drifted: these five tables were
