@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -104,7 +104,7 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
               <div className="flex shrink-0 gap-2">
                 <button
                   type="button"
-                  disabled={renewMutation.isPending}
+                  disabled={renewMutation.isPending && renewMutation.variables === subscription.id}
                   onClick={() => renewMutation.mutate(subscription.id)}
                   className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-60"
                 >
@@ -112,7 +112,9 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
                 </button>
                 <button
                   type="button"
-                  disabled={cancelMutation.isPending}
+                  disabled={
+                    cancelMutation.isPending && cancelMutation.variables === subscription.id
+                  }
                   onClick={() => cancelMutation.mutate(subscription.id)}
                   className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
@@ -156,6 +158,17 @@ function AddSubscriptionDialog({
   const [renewalDate, setRenewalDate] = useState(defaultRenewalDate());
   const [saving, setSaving] = useState(false);
 
+  // Resets on every open, not just after a successful submit — otherwise
+  // dismissing without submitting (Cancel, Escape, overlay click) leaves a
+  // stale fee/renewal-date pre-filled the next time the dialog opens, which
+  // may now be for a different service type entirely.
+  useEffect(() => {
+    if (!open) return;
+    setServiceType("");
+    setFee("");
+    setRenewalDate(defaultRenewalDate());
+  }, [open]);
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!serviceType) return;
@@ -173,9 +186,6 @@ function AddSubscriptionDialog({
       toast.success("Subscription added.");
       onAdded();
       onOpenChange(false);
-      setServiceType("");
-      setFee("");
-      setRenewalDate(defaultRenewalDate());
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to add subscription.");
     } finally {

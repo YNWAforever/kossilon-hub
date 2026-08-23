@@ -37,6 +37,16 @@ const secretarySubscription: ServiceSubscription = {
   cancelledAt: null,
 };
 
+const registeredOfficeSubscription: ServiceSubscription = {
+  id: "33333333-3333-4333-8333-333333333333",
+  companyId,
+  serviceType: "registered_office",
+  fee: 2800,
+  status: "Active",
+  renewalDate: "2027-02-01",
+  cancelledAt: null,
+};
+
 function renderSection() {
   return render(
     <QueryClientProvider
@@ -124,5 +134,53 @@ describe("ServiceSubscriptionsSection", () => {
         data: { subscriptionId: secretarySubscription.id, companyId },
       }),
     );
+  });
+
+  it("clears the add-subscription form on reopen after dismissing without submitting", async () => {
+    serverFns.listServiceSubscriptions.mockResolvedValue([secretarySubscription]);
+
+    renderSection();
+    await screen.findByText("Company Secretary");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add subscription" }));
+    fireEvent.change(screen.getByLabelText("Fee (HKD)"), { target: { value: "9999" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Add subscription" }));
+
+    expect((screen.getByLabelText("Fee (HKD)") as HTMLInputElement).value).toBe("");
+  });
+
+  it("only disables the row being acted on, not every subscription's buttons", async () => {
+    serverFns.listServiceSubscriptions.mockResolvedValue([
+      secretarySubscription,
+      registeredOfficeSubscription,
+    ]);
+    let resolveRenew: (() => void) | undefined;
+    serverFns.renewServiceSubscription.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRenew = () => resolve({ ...secretarySubscription, renewalDate: "2028-01-01" });
+      }),
+    );
+
+    renderSection();
+    await screen.findByText("Company Secretary");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Mark renewed" })[0]);
+
+    await waitFor(() =>
+      expect(serverFns.renewServiceSubscription).toHaveBeenCalledWith({
+        data: { subscriptionId: secretarySubscription.id, companyId },
+      }),
+    );
+    await waitFor(() => {
+      const [first, second] = screen.getAllByRole("button", {
+        name: "Mark renewed",
+      }) as HTMLButtonElement[];
+      expect(first.disabled).toBe(true);
+      expect(second.disabled).toBe(false);
+    });
+
+    resolveRenew?.();
   });
 });
