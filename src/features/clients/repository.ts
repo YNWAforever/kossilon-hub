@@ -32,7 +32,6 @@ import type {
   RecordShareholdingInput,
   RemoveContactInput,
   ResolveInspectionRequestInput,
-  ServicePackage,
   Shareholding,
   SignificantController,
   UpdateClientInput,
@@ -48,7 +47,6 @@ export type CreateClientRepositoryOptions = CreateSqlClientOptions & {
 };
 
 export type ClientRepository = {
-  listServicePackages(): Promise<ServicePackage[]>;
   listAssignmentOptions(): Promise<ClientAssignmentOptions>;
   listClients(): Promise<ClientSummary[]>;
   getClient(id: string): Promise<ClientDetail | null>;
@@ -76,8 +74,6 @@ type SummaryRow = {
   cr_number: string;
   br_number: string;
   status: CompanyStatus;
-  service_package_id: string | null;
-  package_name: string | null;
   owner_id: string;
   owner_name: string;
   team_id: string;
@@ -150,15 +146,6 @@ type InspectionRequestRow = {
   resolved_at: string | Date | null;
 };
 
-type PackageRow = {
-  id: string;
-  name: string;
-  default_fee: number;
-  currency: "HKD";
-  active: boolean;
-  sort_order: number;
-};
-
 function dateOnly(value: string | Date): string {
   if (value instanceof Date) {
     return value.toISOString().slice(0, 10);
@@ -184,17 +171,6 @@ export function initialsFor(name: string): string {
   }
 
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
-
-function mapPackage(row: PackageRow): ServicePackage {
-  return {
-    id: row.id,
-    name: row.name,
-    defaultFee: row.default_fee,
-    currency: row.currency,
-    active: row.active,
-    sortOrder: row.sort_order,
-  };
 }
 
 function mapContact(row: ContactRow): CompanyContact {
@@ -272,8 +248,6 @@ function mapSummary(row: SummaryRow): ClientSummary {
     crNumber: row.cr_number,
     brNumber: row.br_number,
     status: row.status,
-    packageId: row.service_package_id,
-    packageName: row.package_name,
     ownerId: row.owner_id,
     ownerName: row.owner_name,
     ownerInitials: initialsFor(row.owner_name),
@@ -312,18 +286,8 @@ export function createClientRepository(
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
 
-  async function listServicePackages(): Promise<ServicePackage[]> {
-    const rows = await sql<PackageRow[]>`
-      select id, name, default_fee, currency, active, sort_order
-      from service_packages
-      order by sort_order asc, name asc
-    `;
-
-    return rows.map(mapPackage);
-  }
-
   async function listAssignmentOptions(): Promise<ClientAssignmentOptions> {
-    const [owners, teams, packages] = await Promise.all([
+    const [owners, teams] = await Promise.all([
       sql<{ id: string; name: string; team_id: string | null }[]>`
         select id, name, team_id
         from users
@@ -336,7 +300,6 @@ export function createClientRepository(
         where active
         order by name asc
       `,
-      listServicePackages(),
     ]);
 
     return {
@@ -346,7 +309,6 @@ export function createClientRepository(
         teamId: owner.team_id,
       })),
       teams: teams.map((team) => ({ id: team.id, name: team.name })),
-      packages,
     };
   }
 
@@ -358,8 +320,6 @@ export function createClientRepository(
         c.cr_number,
         c.br_number,
         c.status,
-        c.service_package_id,
-        sp.name as package_name,
         u.id as owner_id,
         u.name as owner_name,
         t.id as team_id,
@@ -370,7 +330,6 @@ export function createClientRepository(
       from companies c
       join users u on u.id = c.assigned_owner_id
       join teams t on t.id = c.assigned_team_id
-      left join service_packages sp on sp.id = c.service_package_id
       left join lateral (
         select
           arc.filing_due_date,
@@ -400,8 +359,6 @@ export function createClientRepository(
         c.annual_return_basis_date,
         c.registered_office,
         c.company_secretary,
-        c.service_package_id,
-        sp.name as package_name,
         u.id as owner_id,
         u.name as owner_name,
         t.id as team_id,
@@ -412,7 +369,6 @@ export function createClientRepository(
       from companies c
       join users u on u.id = c.assigned_owner_id
       join teams t on t.id = c.assigned_team_id
-      left join service_packages sp on sp.id = c.service_package_id
       left join lateral (
         select
           arc.filing_due_date,
@@ -653,13 +609,13 @@ export function createClientRepository(
           insert into companies (
             company_name, cr_number, br_number, incorporation_date,
             annual_return_basis_date, registered_office, company_secretary,
-            status, assigned_owner_id, assigned_team_id, service_package_id
+            status, assigned_owner_id, assigned_team_id
           )
           values (
             ${input.companyName}, ${input.crNumber}, ${input.brNumber},
             ${input.incorporationDate}, ${input.annualReturnBasisDate},
             ${input.registeredOffice}, ${input.companySecretary},
-            'active', ${input.ownerId}, ${input.teamId}, ${input.packageId}
+            'active', ${input.ownerId}, ${input.teamId}
           )
           returning id
         `;
@@ -697,7 +653,6 @@ export function createClientRepository(
       ["status", before.status, input.status],
       ["ownerId", before.ownerId, input.ownerId],
       ["teamId", before.teamId, input.teamId],
-      ["packageId", before.packageId, input.packageId],
     ];
 
     return comparisons.filter(([, previous, next]) => previous !== next).map(([field]) => field);
@@ -718,7 +673,6 @@ export function createClientRepository(
               status = ${input.status},
               assigned_owner_id = ${input.ownerId},
               assigned_team_id = ${input.teamId},
-              service_package_id = ${input.packageId},
               updated_at = now()
           where id = ${input.id}
         `;
@@ -1243,7 +1197,6 @@ export function createClientRepository(
   }
 
   return {
-    listServicePackages,
     listAssignmentOptions,
     listClients,
     getClient,

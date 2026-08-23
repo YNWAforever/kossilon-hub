@@ -2,15 +2,6 @@ import type { PaymentStatus } from "@/features/annual-return/types";
 
 export type CompanyStatus = "active" | "inactive";
 
-export type ServicePackage = {
-  id: string;
-  name: string;
-  defaultFee: number;
-  currency: "HKD";
-  active: boolean;
-  sortOrder: number;
-};
-
 export type CompanyContact = {
   id: string;
   companyId: string;
@@ -86,8 +77,6 @@ export type ClientSummary = {
   crNumber: string;
   brNumber: string;
   status: CompanyStatus;
-  packageId: string | null;
-  packageName: string | null;
   ownerId: string;
   ownerName: string;
   ownerInitials: string;
@@ -139,11 +128,10 @@ export type ClientDetail = ClientSummary & {
   documents: ClientDocument[];
 };
 
-/** Owner, team, and package choices for the create and edit forms. */
+/** Owner and team choices for the create and edit forms. */
 export type ClientAssignmentOptions = {
   owners: { id: string; name: string; teamId: string | null }[];
   teams: { id: string; name: string }[];
-  packages: ServicePackage[];
 };
 
 export type ClientContactInput = {
@@ -164,7 +152,6 @@ export type CreateClientInput = {
   companySecretary: string;
   ownerId: string;
   teamId: string;
-  packageId: string | null;
   contacts: ClientContactInput[];
   actorId: string;
 };
@@ -176,7 +163,6 @@ export type UpdateClientInput = {
   status: CompanyStatus;
   ownerId: string;
   teamId: string;
-  packageId: string | null;
   actorId: string;
 };
 
