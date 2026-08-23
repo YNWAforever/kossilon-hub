@@ -43,13 +43,28 @@ describe("caseDetailLinkFor", () => {
     expect(caseDetailLinkFor(makeItem({ annualReturnCaseId: null }))).toBeNull();
   });
 
-  it("returns null for a corporate_change_request work item (no case detail route yet)", () => {
+  it("links a corporate_change_request work item to its request detail route", () => {
     expect(
       caseDetailLinkFor(
         makeItem({
           caseType: "corporate_change_request",
           annualReturnCaseId: null,
           corporateChangeRequestId: "request-1",
+        }),
+      ),
+    ).toEqual({
+      to: "/corporate-changes/$id",
+      params: { id: "request-1" },
+    });
+  });
+
+  it("returns null for a corporate_change_request work item with no case id yet", () => {
+    expect(
+      caseDetailLinkFor(
+        makeItem({
+          caseType: "corporate_change_request",
+          annualReturnCaseId: null,
+          corporateChangeRequestId: null,
         }),
       ),
     ).toBeNull();

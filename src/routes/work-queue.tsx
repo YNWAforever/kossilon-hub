@@ -27,7 +27,9 @@ type SlaFilter = "all" | PersistedWorkItem["escalationState"];
 type PriorityFilter = "all" | "high" | "normal";
 type StatusFilter = "all" | PersistedWorkItem["status"];
 
-type CaseDetailLink = { to: "/annual-returns/$id"; params: { id: string } };
+type CaseDetailLink =
+  | { to: "/annual-returns/$id"; params: { id: string } }
+  | { to: "/corporate-changes/$id"; params: { id: string } };
 
 export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | null {
   switch (item.caseType) {
@@ -36,9 +38,9 @@ export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | nul
         ? { to: "/annual-returns/$id", params: { id: item.annualReturnCaseId } }
         : null;
     case "corporate_change_request":
-      // No case detail route exists yet for corporate change requests; link once
-      // one lands.
-      return null;
+      return item.corporateChangeRequestId
+        ? { to: "/corporate-changes/$id", params: { id: item.corporateChangeRequestId } }
+        : null;
     default: {
       const exhaustive: never = item.caseType;
       throw new Error(`Unhandled work item case type: ${exhaustive}`);

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-dialog";
@@ -89,10 +90,15 @@ export function ProductionCorporateChangeList() {
             <tbody>
               {requests.map((request) => (
                 <tr key={request.id} className="border-b last:border-0">
-                  {/* The `/corporate-changes/$id` detail route ships in a later task in this
-                      plan; until it exists, a typed <Link> to it fails typecheck, so this is
-                      plain text rather than a dead or untyped link. */}
-                  <td className="p-3 font-medium">{request.companyName}</td>
+                  <td className="p-3 font-medium">
+                    <Link
+                      to="/corporate-changes/$id"
+                      params={{ id: request.id }}
+                      className="underline"
+                    >
+                      {request.companyName}
+                    </Link>
+                  </td>
                   <td className="p-3">{request.changeType.replace("_", " ")}</td>
                   <td className="p-3">{request.status}</td>
                   <td className="p-3">HKD {request.quotedFee.toLocaleString()}</td>
