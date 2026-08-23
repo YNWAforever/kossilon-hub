@@ -7,7 +7,7 @@ import {
 } from "@/server/db/client";
 import { rethrowClientWriteError } from "@/features/clients/errors";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
-import { checklistLabelsFor } from "./workflow";
+import { checklistLabelsFor, isAllowedCorporateChangeStatusTransition } from "./workflow";
 import type {
   CancelRequestInput,
   CompleteRequestInput,
@@ -331,14 +331,77 @@ export function createCorporateChangeRequestRepository(
     }
   }
 
+  async function updateChecklistItemStatus(
+    input: UpdateChecklistItemStatusInput,
+  ): Promise<CorporateChangeRequestDetail> {
+    return withTransaction(sql, async (tx) => {
+      await tx`
+        update corporate_change_checklist_items
+        set status = ${input.status},
+            note = ${input.note},
+            received_at = case when ${input.status} = 'Received' then now() else received_at end,
+            verified_at = case when ${input.status} = 'Verified' then now() else verified_at end,
+            updated_at = now()
+        where id = ${input.itemId} and request_id = ${input.requestId}
+      `;
+      return hydrateOrThrow(tx, input.requestId);
+    });
+  }
+
+  async function transitionStatus(
+    input: TransitionStatusInput,
+  ): Promise<CorporateChangeRequestDetail> {
+    return withTransaction(sql, async (tx) => {
+      const rows = await tx<{ status: CorporateChangeRequest["status"] }[]>`
+        select status from corporate_change_requests where id = ${input.requestId} for update
+      `;
+      const current = rows[0];
+      if (!current) throw new Error("Corporate change request not found.");
+      if (!isAllowedCorporateChangeStatusTransition(current.status, input.toStatus)) {
+        throw new Error(`Cannot transition from ${current.status} to ${input.toStatus}.`);
+      }
+
+      await tx`
+        update corporate_change_requests set status = ${input.toStatus}, updated_at = now()
+        where id = ${input.requestId}
+      `;
+
+      return hydrateOrThrow(tx, input.requestId);
+    });
+  }
+
+  async function cancelRequest(input: CancelRequestInput): Promise<CorporateChangeRequestDetail> {
+    return withTransaction(sql, async (tx) => {
+      const rows = await tx<{ status: CorporateChangeRequest["status"] }[]>`
+        select status from corporate_change_requests where id = ${input.requestId} for update
+      `;
+      const current = rows[0];
+      if (!current) throw new Error("Corporate change request not found.");
+      if (!isAllowedCorporateChangeStatusTransition(current.status, "Cancelled")) {
+        throw new Error(`Cannot transition from ${current.status} to Cancelled.`);
+      }
+
+      await tx`
+        update corporate_change_requests set status = 'Cancelled', updated_at = now()
+        where id = ${input.requestId}
+      `;
+      await tx`
+        update work_items set status = 'cancelled', updated_at = now()
+        where corporate_change_request_id = ${input.requestId}
+      `;
+
+      return hydrateOrThrow(tx, input.requestId);
+    });
+  }
+
   return {
     listRequests,
     getRequest,
     getCompanyTeamId,
     createRequest,
-    updateChecklistItemStatus: notImplemented("updateChecklistItemStatus"),
-    transitionStatus: notImplemented("transitionStatus"),
-    cancelRequest: notImplemented("cancelRequest"),
+    updateChecklistItemStatus,
+    transitionStatus,
+    cancelRequest,
     completeRequest: notImplemented("completeRequest"),
     async close() {
       if (ownsClient && "end" in sql) await sql.end();

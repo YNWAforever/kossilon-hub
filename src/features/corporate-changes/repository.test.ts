@@ -155,4 +155,81 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
+
+  it(
+    "marks a checklist item Verified and rejects an invalid status transition",
+    async () => {
+      const companyId = await seedTestCompany();
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "address_change",
+        companyId,
+        quotedFee: 2800,
+        newRegisteredOffice: "88 New Road, Central, Hong Kong",
+        actorId: USER_AMY_ID,
+      });
+      const item = created.checklistItems[0];
+
+      const updated = await repository.updateChecklistItemStatus({
+        requestId: created.id,
+        itemId: item.id,
+        status: "Verified",
+        note: null,
+        actorId: USER_AMY_ID,
+      });
+      expect(updated.checklistItems.find((i) => i.id === item.id)!.status).toBe("Verified");
+
+      await expect(
+        repository.transitionStatus({
+          requestId: created.id,
+          toStatus: "Filed with Registrar",
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/Cannot transition/);
+
+      const progressed = await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      expect(progressed.status).toBe("Documents pending");
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "cancels a request and marks its linked work item cancelled",
+    async () => {
+      const companyId = await seedTestCompany();
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "address_change",
+        companyId,
+        quotedFee: 2800,
+        newRegisteredOffice: "88 New Road, Central, Hong Kong",
+        actorId: USER_AMY_ID,
+      });
+
+      const cancelled = await repository.cancelRequest({
+        requestId: created.id,
+        actorId: USER_AMY_ID,
+      });
+      expect(cancelled.status).toBe("Cancelled");
+
+      const sql = sqlForTests();
+      const workItems = await sql`
+        select status from work_items where corporate_change_request_id = ${created.id}
+      `;
+      expect(workItems[0].status).toBe("cancelled");
+
+      await expect(
+        repository.cancelRequest({ requestId: created.id, actorId: USER_AMY_ID }),
+      ).rejects.toThrow(/Cannot transition/);
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });
