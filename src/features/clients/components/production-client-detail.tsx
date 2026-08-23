@@ -15,6 +15,7 @@ import { ControllerFormDialog } from "@/components/clients/controller-form-dialo
 import { InspectionRequestFormDialog } from "@/components/clients/inspection-request-form-dialog";
 import { ResolveInspectionRequestDialog } from "@/components/clients/resolve-inspection-request-dialog";
 import { DeadlinePill } from "@/components/deadline-pill";
+import { ServiceSubscriptionsSection } from "./service-subscriptions-section";
 import {
   ceaseClientController,
   ceaseClientOfficer,
@@ -365,6 +366,8 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
           ) : null}
         </div>
       </section>
+
+      <ServiceSubscriptionsSection companyId={client.id} />
 
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
