@@ -24,9 +24,9 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
   }
 
   const updateItem = useMutation({
-    mutationFn: (input: { itemId: string; status: ChecklistItemStatus }) =>
+    mutationFn: (input: { itemId: string; status: ChecklistItemStatus; note: string | null }) =>
       updateCorporateChangeChecklistItemStatus({
-        data: { requestId, itemId: input.itemId, status: input.status, note: null },
+        data: { requestId, itemId: input.itemId, status: input.status, note: input.note },
       }),
     onSuccess: invalidate,
     onError: () => toast.error("Unable to update the checklist item. Try again."),
@@ -148,6 +148,7 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
                   updateItem.mutate({
                     itemId: item.id,
                     status: event.target.value as ChecklistItemStatus,
+                    note: item.note,
                   })
                 }
                 disabled={updateItem.isPending}

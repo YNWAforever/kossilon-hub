@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CorporateChangeRequestDetail } from "../types";
 import { ProductionCorporateChangeDetail } from "./production-corporate-change-detail";
@@ -14,6 +15,9 @@ const serverFns = vi.hoisted(() => ({
 }));
 
 vi.mock("../server-fns", () => serverFns);
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 const requestId = "request-1";
 
@@ -91,6 +95,9 @@ describe("ProductionCorporateChangeDetail", () => {
     serverFns.completeCorporateChangeRequest.mockResolvedValue({ status: "Completed" });
     serverFns.cancelCorporateChangeRequest.mockResolvedValue({ status: "Cancelled" });
     serverFns.updateCorporateChangeChecklistItemStatus.mockResolvedValue({});
+
+    vi.mocked(toast.success).mockReset();
+    vi.mocked(toast.error).mockReset();
   });
 
   afterEach(() => {
@@ -98,7 +105,7 @@ describe("ProductionCorporateChangeDetail", () => {
   });
 
   it("enables Complete once status is Filed with Registrar and all required items are Verified", async () => {
-    renderDetail();
+    const { invalidateSpy } = renderDetail();
 
     const completeButton = (await screen.findByRole("button", {
       name: /^complete$/i,
@@ -112,6 +119,73 @@ describe("ProductionCorporateChangeDetail", () => {
         data: { requestId },
       });
     });
+
+    // A successful completion invalidates the request query so the refreshed status/checklist
+    // are refetched, rather than leaving the screen showing stale pre-completion data.
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: ["corporate-change-request", requestId] }),
+      );
+    });
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("shows a toast error and leaves Complete usable again when completion fails", async () => {
+    serverFns.completeCorporateChangeRequest.mockRejectedValue(new Error("db unavailable"));
+
+    renderDetail();
+
+    const completeButton = (await screen.findByRole("button", {
+      name: /^complete$/i,
+    })) as HTMLButtonElement;
+
+    fireEvent.click(completeButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Unable to complete this request. Try again.");
+    });
+
+    // The mutation failing must not leave the button stuck disabled — the user should be able
+    // to retry immediately.
+    expect(completeButton.disabled).toBe(false);
+    fireEvent.click(completeButton);
+    await waitFor(() => {
+      expect(serverFns.completeCorporateChangeRequest).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("shows a toast error when cancelling fails, without invalidating the query", async () => {
+    serverFns.cancelCorporateChangeRequest.mockRejectedValue(new Error("network error"));
+
+    const { invalidateSpy } = renderDetail();
+
+    const cancelButton = (await screen.findByRole("button", {
+      name: /cancel request/i,
+    })) as HTMLButtonElement;
+
+    fireEvent.click(cancelButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Unable to cancel this request. Try again.");
+    });
+    expect(cancelButton.disabled).toBe(false);
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it("shows a toast error when a checklist status update fails, and re-enables the select", async () => {
+    serverFns.updateCorporateChangeChecklistItemStatus.mockRejectedValue(new Error("boom"));
+
+    renderDetail();
+
+    const statusSelect = (await screen.findByLabelText(/nr1 form/i)) as HTMLSelectElement;
+    fireEvent.change(statusSelect, { target: { value: "Rejected" } });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Unable to update the checklist item. Try again.");
+    });
+
+    // The select must not get stuck disabled after a failed update.
+    expect(statusSelect.disabled).toBe(false);
   });
 
   it("disables Complete when a required checklist item is not yet Verified", async () => {
@@ -187,6 +261,29 @@ describe("ProductionCorporateChangeDetail", () => {
     await waitFor(() => {
       expect(serverFns.updateCorporateChangeChecklistItemStatus).toHaveBeenCalledWith({
         data: { requestId, itemId: "item-1", status: "Rejected", note: null },
+      });
+    });
+  });
+
+  it("preserves an existing checklist item note when only its status changes", async () => {
+    serverFns.getCorporateChangeRequest.mockResolvedValue({
+      ...baseRequest,
+      checklistItems: [{ ...baseRequest.checklistItems[0], note: "Called client for original" }],
+    });
+
+    renderDetail();
+
+    const statusSelect = await screen.findByLabelText(/nr1 form/i);
+    fireEvent.change(statusSelect, { target: { value: "Rejected" } });
+
+    await waitFor(() => {
+      expect(serverFns.updateCorporateChangeChecklistItemStatus).toHaveBeenCalledWith({
+        data: {
+          requestId,
+          itemId: "item-1",
+          status: "Rejected",
+          note: "Called client for original",
+        },
       });
     });
   });
