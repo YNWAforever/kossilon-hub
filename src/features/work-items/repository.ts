@@ -325,7 +325,9 @@ export async function ensureWorkItemForEvent(
   const referenceId =
     event.caseType === "annual_return" ? event.annualReturnCaseId : event.corporateChangeRequestId;
   if (!referenceId) {
-    throw new Error(`ensureWorkItemForEvent: missing case reference for caseType "${event.caseType}".`);
+    throw new Error(
+      `ensureWorkItemForEvent: missing case reference for caseType "${event.caseType}".`,
+    );
   }
   const startedAt = event.startedAt ?? new Date().toISOString();
   const policies = await tx<PolicyCalendarRow[]>`
