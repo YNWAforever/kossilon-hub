@@ -5,6 +5,7 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import { createClientRepository } from "@/features/clients/repository";
 import { rethrowClientWriteError } from "@/features/clients/errors";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { checklistLabelsFor, isAllowedCorporateChangeStatusTransition } from "./workflow";
@@ -421,8 +422,39 @@ export function createCorporateChangeRequestRepository(
           update companies set registered_office = ${current.newRegisteredOffice}, updated_at = now()
           where id = ${current.companyId}
         `;
+      } else if (current.changeType === "officer_change") {
+        const clientsRepository = createClientRepository(undefined, { sql: tx });
+        if (current.officerAction === "appoint") {
+          await clientsRepository.appointOfficer({
+            companyId: current.companyId,
+            officerType: current.newOfficerType!,
+            name: current.newOfficerName!,
+            identificationType: current.newOfficerIdentificationType,
+            identificationNumber: current.newOfficerIdentificationNumber,
+            address: current.newOfficerAddress,
+            appointmentDate: current.effectiveDate!,
+            actorId: input.actorId,
+          });
+        } else if (current.officerAction === "resign") {
+          await clientsRepository.ceaseOfficer({
+            companyId: current.companyId,
+            officerId: current.officerId!,
+            cessationDate: current.effectiveDate!,
+            actorId: input.actorId,
+          });
+        } else {
+          await clientsRepository.updateOfficerDetails({
+            companyId: current.companyId,
+            officerId: current.officerId!,
+            name: current.newOfficerName!,
+            identificationType: current.newOfficerIdentificationType,
+            identificationNumber: current.newOfficerIdentificationNumber,
+            address: current.newOfficerAddress,
+            actorId: input.actorId,
+          });
+        }
       }
-      // officer_change and share_transfer branches: Tasks 14-15.
+      // share_transfer branch: Task 15.
 
       await tx`
         update corporate_change_requests

@@ -312,6 +312,55 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
   );
 
   it(
+    "completing an officer_change appoint request creates the new officer via the clients repository",
+    async () => {
+      const companyId = await seedTestCompany();
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "officer_change",
+        companyId,
+        quotedFee: 1200,
+        officerAction: "appoint",
+        officerId: null,
+        newOfficerType: "director",
+        newOfficerName: "New Director",
+        newOfficerIdentificationType: "hkid",
+        newOfficerIdentificationNumber: "B7654321",
+        newOfficerAddress: "5 Director Lane, Hong Kong",
+        effectiveDate: "2026-09-01",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Ready to file",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Filed with Registrar",
+        actorId: USER_AMY_ID,
+      });
+
+      await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
+
+      const clients = createClientRepository(databaseUrl!);
+      const detail = await clients.getClient(companyId);
+      expect(
+        detail!.officers.some((o) => o.name === "New Director" && o.cessationDate === null),
+      ).toBe(true);
+      await clients.close();
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "rejects completing a request that has not reached Filed with Registrar",
     async () => {
       const companyId = await seedTestCompany();
