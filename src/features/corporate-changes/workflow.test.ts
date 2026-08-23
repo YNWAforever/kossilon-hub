@@ -4,9 +4,15 @@ import { checklistLabelsFor, isAllowedCorporateChangeStatusTransition } from "./
 describe("isAllowedCorporateChangeStatusTransition", () => {
   it("allows moving forward one step in the lifecycle", () => {
     expect(isAllowedCorporateChangeStatusTransition("Requested", "Documents pending")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Documents pending", "Ready to file")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Ready to file", "Filed with Registrar")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Completed")).toBe(true);
+    expect(isAllowedCorporateChangeStatusTransition("Documents pending", "Ready to file")).toBe(
+      true,
+    );
+    expect(isAllowedCorporateChangeStatusTransition("Ready to file", "Filed with Registrar")).toBe(
+      true,
+    );
+    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Completed")).toBe(
+      true,
+    );
   });
 
   it("rejects skipping a step", () => {
@@ -20,7 +26,9 @@ describe("isAllowedCorporateChangeStatusTransition", () => {
   it("allows cancelling from any non-terminal status", () => {
     expect(isAllowedCorporateChangeStatusTransition("Requested", "Cancelled")).toBe(true);
     expect(isAllowedCorporateChangeStatusTransition("Documents pending", "Cancelled")).toBe(true);
-    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Cancelled")).toBe(true);
+    expect(isAllowedCorporateChangeStatusTransition("Filed with Registrar", "Cancelled")).toBe(
+      true,
+    );
   });
 
   it("rejects cancelling a terminal request", () => {

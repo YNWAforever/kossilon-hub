@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import { assertCorporateChangeRequestCreatable, assertCorporateChangeRequestWritable } from "./authorization";
+import {
+  assertCorporateChangeRequestCreatable,
+  assertCorporateChangeRequestWritable,
+} from "./authorization";
 
 const TEAM_A = "10000000-0000-0000-0000-000000000001";
 const TEAM_B = "10000000-0000-0000-0000-000000000002";
@@ -24,9 +27,9 @@ describe("assertCorporateChangeRequestWritable", () => {
   });
 
   it("rejects Staff on a different team", () => {
-    expect(() =>
-      assertCorporateChangeRequestWritable(actor(), { assignedTeamId: TEAM_B }),
-    ).toThrow(/Forbidden/);
+    expect(() => assertCorporateChangeRequestWritable(actor(), { assignedTeamId: TEAM_B })).toThrow(
+      /Forbidden/,
+    );
   });
 
   it("rejects an inactive actor", () => {
@@ -64,14 +67,12 @@ describe("assertCorporateChangeRequestWritable", () => {
 
 describe("assertCorporateChangeRequestCreatable", () => {
   it("allows Staff creating into their own team", () => {
-    expect(() =>
-      assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_A }),
-    ).not.toThrow();
+    expect(() => assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_A })).not.toThrow();
   });
 
   it("rejects Staff creating into another team", () => {
-    expect(() =>
-      assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_B }),
-    ).toThrow(/Forbidden/);
+    expect(() => assertCorporateChangeRequestCreatable(actor(), { teamId: TEAM_B })).toThrow(
+      /Forbidden/,
+    );
   });
 });
