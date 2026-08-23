@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { deadlineTone, formatDaysLeft, toneClasses } from "@/lib/status";
+import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 
-const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MONTH_LABELS = [
   "Jan",
@@ -17,27 +17,6 @@ const MONTH_LABELS = [
   "Nov",
   "Dec",
 ] as const;
-
-function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-  const part = parts.find((candidate) => candidate.type === type);
-
-  if (!part) {
-    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
-  }
-
-  return part.value;
-}
-
-function hongKongBusinessDate(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: HONG_KONG_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-
-  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
-}
 
 function dateOnly(value: string): string {
   return value.slice(0, 10);

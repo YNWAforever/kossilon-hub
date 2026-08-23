@@ -6,10 +6,15 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { oneYearLater } from "@/lib/date-math";
+import { dueMilestone, type ReminderMilestone } from "@/lib/reminder-cadence";
+import { enqueueNotification } from "@/features/notifications/outbox";
+import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 import { ServiceSubscriptionWriteError, rethrowServiceSubscriptionWriteError } from "./errors";
+import { buildServiceSubscriptionReminderDraft } from "./reminder-draft";
 import type {
   AddSubscriptionInput,
   CancelSubscriptionInput,
+  EvaluateRemindersResult,
   RenewSubscriptionInput,
   ServiceSubscription,
   ServiceType,
@@ -28,6 +33,7 @@ export type ServiceSubscriptionRepository = {
   addSubscription(input: AddSubscriptionInput): Promise<ServiceSubscription>;
   renewSubscription(input: RenewSubscriptionInput): Promise<ServiceSubscription>;
   cancelSubscription(input: CancelSubscriptionInput): Promise<ServiceSubscription>;
+  evaluateReminders(now?: string): Promise<EvaluateRemindersResult>;
   close(): Promise<void>;
 };
 
@@ -259,6 +265,135 @@ export function createServiceSubscriptionRepository(
     });
   }
 
+  async function evaluateReminders(
+    now: string = hongKongBusinessDate(),
+  ): Promise<EvaluateRemindersResult> {
+    const candidates = await sql<
+      { id: string; company_id: string; company_name: string; renewal_date: string }[]
+    >`
+      select ss.id, ss.company_id, c.company_name, ss.renewal_date::text
+      from service_subscriptions ss
+      join companies c on c.id = ss.company_id
+      where ss.status = 'Active'
+        and ss.renewal_date <= (${now}::date + interval '30 days')
+    `;
+
+    let sent = 0;
+    let skipped = 0;
+
+    for (const candidate of candidates) {
+      const outcome = await withTransaction(sql, async (tx) => {
+        const lockedRows = await tx<{ id: string; status: "Active" | "Cancelled" }[]>`
+          select id, status from service_subscriptions where id = ${candidate.id} for update
+        `;
+        const locked = lockedRows[0];
+        // Re-check under lock: a subscription cancelled by staff while this
+        // sweep was still processing an earlier row must not receive a
+        // reminder for a service that's no longer active — the same race
+        // annual-return's evaluateReminders guards against for a case
+        // marked Filed mid-sweep.
+        if (!locked || locked.status !== "Active") return null;
+
+        const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
+          select milestone from service_subscription_reminder_events where subscription_id = ${candidate.id}
+        `;
+        const milestone = dueMilestone(
+          candidate.renewal_date,
+          now,
+          firedRows.map((row) => row.milestone),
+        );
+        if (!milestone) return null;
+
+        const insertedEvent = await tx<{ id: string }[]>`
+          insert into service_subscription_reminder_events (subscription_id, milestone, occurred_at)
+          values (${candidate.id}, ${milestone}, ${now})
+          on conflict (subscription_id, milestone) do nothing
+          returning id
+        `;
+        if (!insertedEvent[0]) return null;
+
+        const contactRows = await tx<
+          { name: string; email: string | null; phone: string | null }[]
+        >`
+          select name, email, phone from company_contacts
+          where company_id = ${candidate.company_id} and is_primary = true
+          limit 1
+        `;
+        const contact = contactRows[0];
+
+        if (!contact) {
+          await tx`
+            insert into timeline_events (
+              company_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${candidate.company_id}, 'service_subscription_reminder_skipped',
+              'system', null, 'Automated reminder skipped: no primary contact on file.',
+              ${tx.json({ subscriptionId: candidate.id, milestone, reason: "no_primary_contact" })}
+            )
+          `;
+          return "skipped" as const;
+        }
+
+        const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
+        const recipient = contact.phone ?? contact.email;
+
+        if (!recipient) {
+          await tx`
+            insert into timeline_events (
+              company_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${candidate.company_id}, 'service_subscription_reminder_skipped',
+              'system', null, 'Automated reminder skipped: primary contact has neither phone nor email.',
+              ${tx.json({ subscriptionId: candidate.id, milestone, reason: "unreachable_primary_contact" })}
+            )
+          `;
+          return "skipped" as const;
+        }
+
+        const fullRows = await tx<SubscriptionRow[]>`
+          select id, company_id, service_type, fee, status, renewal_date, cancelled_at
+          from service_subscriptions where id = ${candidate.id}
+        `;
+        const subscription = mapSubscription(fullRows[0]);
+
+        await enqueueNotification(tx, {
+          companyId: candidate.company_id,
+          channel,
+          notificationType: `service_subscription_reminder_${milestone}`,
+          recipient,
+          payload: {
+            subscriptionId: candidate.id,
+            milestone,
+            subject: `「${candidate.company_name}」服務續期提醒`,
+            body: buildServiceSubscriptionReminderDraft(
+              subscription,
+              candidate.company_name,
+              contact.name,
+              now,
+            ),
+          },
+        });
+
+        await tx`
+          insert into timeline_events (
+            company_id, event_type, actor_type, actor_id, description, metadata
+          ) values (
+            ${candidate.company_id}, 'service_subscription_reminder_sent',
+            'system', null, 'Automated reminder sent.',
+            ${tx.json({ subscriptionId: candidate.id, milestone, channel })}
+          )
+        `;
+
+        return "sent" as const;
+      });
+
+      if (outcome === "sent") sent += 1;
+      else if (outcome === "skipped") skipped += 1;
+    }
+
+    return { sent, skipped };
+  }
+
   async function close(): Promise<void> {
     if (ownsClient && "end" in sql) await sql.end();
   }
@@ -269,6 +404,7 @@ export function createServiceSubscriptionRepository(
     addSubscription,
     renewSubscription,
     cancelSubscription,
+    evaluateReminders,
     close,
   };
 }

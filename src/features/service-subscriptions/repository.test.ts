@@ -294,4 +294,53 @@ describe.skipIf(!databaseUrl)("service subscriptions integration", () => {
       await setupSql.end();
     }
   });
+
+  it("fires a reminder once per milestone and never again after cancellation", async () => {
+    const setupSql = sqlForTests();
+    let subscriptionId: string | undefined;
+
+    try {
+      const repository = createServiceSubscriptionRepository({ sql: setupSql });
+      const [company] = await setupSql<{ id: string }[]>`select id from companies limit 1`;
+      const [owner] = await setupSql<{ id: string }[]>`select id from users where active limit 1`;
+
+      const created = await repository.addSubscription({
+        companyId: company.id,
+        serviceType: "secretary",
+        fee: 2800,
+        renewalDate: "2026-09-12",
+        actorId: owner.id,
+      });
+      subscriptionId = created.id;
+
+      await repository.evaluateReminders("2026-08-13");
+
+      const fired = await setupSql<{ milestone: string }[]>`
+        select milestone from service_subscription_reminder_events where subscription_id = ${created.id}
+      `;
+      await repository.evaluateReminders("2026-08-13");
+      const firedAfterSecond = await setupSql<{ milestone: string }[]>`
+        select milestone from service_subscription_reminder_events where subscription_id = ${created.id}
+      `;
+      expect(firedAfterSecond).toHaveLength(fired.length);
+
+      await repository.cancelSubscription({
+        subscriptionId: created.id,
+        companyId: company.id,
+        actorId: owner.id,
+      });
+
+      await repository.evaluateReminders("2026-08-29");
+      const firedAfterCancel = await setupSql<{ milestone: string }[]>`
+        select milestone from service_subscription_reminder_events where subscription_id = ${created.id}
+      `;
+      expect(firedAfterCancel).toHaveLength(fired.length);
+    } finally {
+      if (subscriptionId) {
+        await setupSql`delete from service_subscription_reminder_events where subscription_id = ${subscriptionId}`;
+        await setupSql`delete from service_subscriptions where id = ${subscriptionId}`;
+      }
+      await setupSql.end();
+    }
+  });
 });
