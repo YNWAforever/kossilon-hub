@@ -981,6 +981,70 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
     }
   });
 
+  it("cascades a secretary's updated name to companies.company_secretary", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Update Secretary Test Co Ltd",
+            crNumber: `CR-UPDSEC-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-UPDSEC-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "Original Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          const detail = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "secretary",
+            name: "New Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+          const secretary = detail.officers.find((o) => o.name === "New Secretary Ltd")!;
+
+          const updated = await repository.updateOfficerDetails({
+            companyId: client.id,
+            officerId: secretary.id,
+            name: "Renamed Secretary Ltd",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            actorId: owner.id,
+          });
+
+          expect(updated.officers.find((o) => o.id === secretary.id)?.name).toBe(
+            "Renamed Secretary Ltd",
+          );
+          expect(updated.companySecretary).toBe("Renamed Secretary Ltd");
+
+          throw new Error("rollback officers integration fixture");
+        }),
+      ).rejects.toThrow("rollback officers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
   it("serializes concurrent secretary appointments so exactly one ends up active", async () => {
     const setupSql = createSqlClient(databaseUrl!, { max: 1 });
     let companyId: string | undefined;
