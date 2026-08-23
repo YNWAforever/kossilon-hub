@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -102,7 +102,25 @@ export function CreateCorporateChangeRequestDialog({
     value: ReturnType<typeof emptyForm>[K],
   ) => setForm((current) => ({ ...current, [key]: value }));
 
+  const previousCompanyId = useRef(form.companyId);
+
   useEffect(() => {
+    // Register-scoped selections (transferor/transferee shareholding, officer) belong to a
+    // specific company's register. If the company changes, any such selection made against the
+    // previous company's register is no longer valid and must be cleared — otherwise the form
+    // can submit companyId: B paired with a shareholding/officer id that actually belongs to A,
+    // and nothing downstream (repository insert, DB schema) checks that ownership.
+    if (previousCompanyId.current !== form.companyId) {
+      previousCompanyId.current = form.companyId;
+      setForm((current) => ({
+        ...current,
+        transferorShareholdingId: "",
+        transfereeMode: "new",
+        transfereeShareholdingId: "",
+        officerId: "",
+      }));
+    }
+
     if (!form.companyId || !NEEDS_REGISTER.has(form.changeType)) {
       setOfficers([]);
       setShareholdings([]);
@@ -125,6 +143,9 @@ export function CreateCorporateChangeRequestDialog({
       cancelled = true;
     };
   }, [form.companyId, form.changeType]);
+
+  const officerDetailsApply =
+    form.officerAction === "appoint" || form.officerAction === "detail_change";
 
   function buildData(): CreateChangePayload {
     const base = { companyId: form.companyId, quotedFee: Number(form.quotedFee) };
@@ -161,8 +182,6 @@ export function CreateCorporateChangeRequestDialog({
       };
     }
 
-    const officerDetailsApply =
-      form.officerAction === "appoint" || form.officerAction === "detail_change";
     return {
       ...base,
       changeType: form.changeType,
@@ -202,6 +221,9 @@ export function CreateCorporateChangeRequestDialog({
     if (form.officerAction === "appoint") {
       return Boolean(form.newOfficerType) && Boolean(form.newOfficerName);
     }
+    if (form.officerAction === "detail_change") {
+      return Boolean(form.officerId) && Boolean(form.newOfficerName);
+    }
     return Boolean(form.officerId);
   }
 
@@ -223,8 +245,6 @@ export function CreateCorporateChangeRequestDialog({
 
   const activeOfficers = officers.filter((officer) => officer.cessationDate === null);
   const activeShareholdings = shareholdings.filter((holding) => holding.cessationDate === null);
-  const officerDetailsApply =
-    form.officerAction === "appoint" || form.officerAction === "detail_change";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -198,4 +198,104 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
     });
     expect(onCreated).toHaveBeenCalledWith("new-request-id");
   });
+
+  it("clears the previously selected transferor shareholding when the company is switched", async () => {
+    const onCreated = vi.fn();
+    const twoCompanies = [
+      { id: "company-1", companyName: "Test Co Ltd" },
+      { id: "company-2", companyName: "Second Co Ltd" },
+    ];
+
+    render(
+      <CreateCorporateChangeRequestDialog
+        open
+        onOpenChange={() => {}}
+        companies={twoCompanies}
+        isLoading={false}
+        hasError={false}
+        onCreated={onCreated}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText(/change type/i), {
+      target: { value: "share_transfer" },
+    });
+
+    await waitFor(() => {
+      expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
+    });
+    await screen.findByRole("option", { name: /existing holder/i, hidden: true });
+
+    fireEvent.change(screen.getByLabelText(/quoted fee/i), { target: { value: "2500" } });
+    fireEvent.change(screen.getByLabelText(/transferor shareholding/i), {
+      target: { value: "holding-1" },
+    });
+    fireEvent.change(screen.getByLabelText(/new shareholder name/i), {
+      target: { value: "New Holder" },
+    });
+    fireEvent.change(screen.getByLabelText(/shares transferred/i), { target: { value: "400" } });
+    fireEvent.change(screen.getByLabelText(/consideration/i), { target: { value: "400000" } });
+    fireEvent.change(screen.getByLabelText(/stamp duty/i), { target: { value: "800" } });
+
+    expect(
+      (screen.getByRole("button", { name: /create request/i }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+
+    // Switching companies must clear the shareholding selected against the previous company's
+    // register — otherwise the form could submit companyId: company-2 paired with a
+    // shareholding id that actually belongs to company-1.
+    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-2" } });
+
+    await waitFor(() => {
+      expect((screen.getByLabelText(/transferor shareholding/i) as HTMLSelectElement).value).toBe(
+        "",
+      );
+    });
+    expect(
+      (screen.getByRole("button", { name: /create request/i }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(serverFns.createCorporateChangeRequest).not.toHaveBeenCalled();
+  });
+
+  it("keeps Create request disabled for an officer_change detail_change with no updated name entered", async () => {
+    const onCreated = vi.fn();
+
+    render(
+      <CreateCorporateChangeRequestDialog
+        open
+        onOpenChange={() => {}}
+        companies={companies}
+        isLoading={false}
+        hasError={false}
+        onCreated={onCreated}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText(/change type/i), {
+      target: { value: "officer_change" },
+    });
+
+    await waitFor(() => {
+      expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
+    });
+
+    fireEvent.change(screen.getByLabelText(/quoted fee/i), { target: { value: "1200" } });
+    fireEvent.change(screen.getByLabelText(/officer action/i), {
+      target: { value: "detail_change" },
+    });
+    await screen.findByRole("option", { name: /existing director/i, hidden: true });
+    fireEvent.change(screen.getByLabelText(/^officer$/i), { target: { value: "officer-1" } });
+    fireEvent.change(screen.getByLabelText(/effective date/i), {
+      target: { value: "2026-09-01" },
+    });
+
+    // An officer is selected and the effective date is filled, but the "Updated name" field
+    // (required by the JSX for both appoint and detail_change) is still empty.
+    expect(
+      (screen.getByRole("button", { name: /create request/i }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(serverFns.createCorporateChangeRequest).not.toHaveBeenCalled();
+  });
 });
