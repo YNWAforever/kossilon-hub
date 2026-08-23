@@ -612,6 +612,84 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
   );
 
   it(
+    "completing a share_transfer to an existing shareholder credits that holding without creating a new one",
+    async () => {
+      const companyId = await seedTestCompany();
+      const clients = createClientRepository(databaseUrl!);
+      await clients.recordShareholding({
+        companyId,
+        shareholderName: "Existing Seller",
+        shareholderAddress: null,
+        shareClass: "Ordinary",
+        numberOfShares: 1000,
+        allotmentDate: "2020-01-01",
+        actorId: USER_AMY_ID,
+      });
+      const seededTransferee = await clients.recordShareholding({
+        companyId,
+        shareholderName: "Existing Buyer",
+        shareholderAddress: null,
+        shareClass: "Ordinary",
+        numberOfShares: 200,
+        allotmentDate: "2020-01-01",
+        actorId: USER_AMY_ID,
+      });
+      const transferor = seededTransferee.shareholdings.find(
+        (s) => s.shareholderName === "Existing Seller",
+      )!;
+      const transferee = seededTransferee.shareholdings.find(
+        (s) => s.shareholderName === "Existing Buyer",
+      )!;
+      const shareholdingCountBefore = seededTransferee.shareholdings.length;
+      await clients.close();
+
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "share_transfer",
+        companyId,
+        quotedFee: 2500,
+        transferorShareholdingId: transferor.id,
+        sharesTransferred: 300,
+        consideration: 300000,
+        stampDutyAmount: 600,
+        transfereeShareholdingId: transferee.id,
+        transfereeNewShareholderName: null,
+        transfereeNewShareholderAddress: null,
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Ready to file",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Filed with Registrar",
+        actorId: USER_AMY_ID,
+      });
+
+      await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
+
+      const clientsAfter = createClientRepository(databaseUrl!);
+      const detail = await clientsAfter.getClient(companyId);
+      const transferorAfter = detail!.shareholdings.find((s) => s.id === transferor.id)!;
+      const transfereeAfter = detail!.shareholdings.find((s) => s.id === transferee.id)!;
+      expect(transferorAfter.numberOfShares).toBe(700);
+      expect(transfereeAfter.numberOfShares).toBe(500);
+      expect(detail!.shareholdings.length).toBe(shareholdingCountBefore);
+      await clientsAfter.close();
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "rejects completing a request that has not reached Filed with Registrar",
     async () => {
       const companyId = await seedTestCompany();

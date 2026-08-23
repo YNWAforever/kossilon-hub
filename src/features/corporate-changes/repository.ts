@@ -480,15 +480,19 @@ export function createCorporateChangeRequestRepository(
       } else if (current.changeType === "share_transfer") {
         const clientsRepository = createClientRepository(undefined, { sql: tx });
 
-        await tx`select id from shareholdings where id = ${current.transferorShareholdingId} for update`;
-        if (current.transfereeShareholdingId) {
-          await tx`select id from shareholdings where id = ${current.transfereeShareholdingId} for update`;
+        // Lock both rows in a consistent (lexicographic) order regardless of which is the
+        // transferor and which is the transferee: two concurrently-completing share_transfer
+        // requests that move shares in opposite directions between the same two holdings would
+        // otherwise lock transferor-then-transferee in opposite orders and deadlock.
+        const lockIds = current.transfereeShareholdingId
+          ? [current.transferorShareholdingId, current.transfereeShareholdingId].sort()
+          : [current.transferorShareholdingId];
+        for (const id of lockIds) {
+          await tx`select id from shareholdings where id = ${id} for update`;
         }
 
-        const transferorRows = await tx<
-          { number_of_shares: number; allotment_date: string | Date }[]
-        >`
-          select number_of_shares, allotment_date from shareholdings where id = ${current.transferorShareholdingId}
+        const transferorRows = await tx<{ number_of_shares: number }[]>`
+          select number_of_shares from shareholdings where id = ${current.transferorShareholdingId}
         `;
         const transferor = transferorRows[0];
         if (!transferor) throw new Error("Transferor shareholding not found.");
@@ -517,6 +521,11 @@ export function createCorporateChangeRequestRepository(
         }
 
         if (current.transfereeShareholdingId) {
+          const transfereeRows = await tx<{ id: string }[]>`
+            select id from shareholdings where id = ${current.transfereeShareholdingId}
+          `;
+          if (!transfereeRows[0]) throw new Error("Transferee shareholding not found.");
+
           await tx`
             update shareholdings
             set number_of_shares = number_of_shares + ${current.sharesTransferred}, updated_at = now()
