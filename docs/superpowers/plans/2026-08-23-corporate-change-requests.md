@@ -2629,9 +2629,9 @@ git commit -m "feat: add corporate changes demo notice, nav entry, and header al
 
 ---
 
-### Task 18: `ProductionCorporateChangeList` + `CreateCorporateChangeRequestDialog`
+### Task 18: `ProductionCorporateChangeList` + `CreateCorporateChangeRequestDialog` (name_change/address_change only)
 
-**Known scope trim in this task, flagged up front**: this dialog only supports creating `name_change`/`address_change` requests directly. `share_transfer`/`officer_change` need a shareholding/officer picker scoped to the selected company's existing register (so staff pick a real `transferorShareholdingId`/`officerId`, not free text) — that picker does not exist as a reusable component anywhere in this codebase yet, and building it is out of scope for this task. The two buttons for those types are disabled with an explanatory message. This is a real, deliberate gap — not a bug — and should be raised as a fast-follow task before this plan is treated as fully closing P1-9's UI surface.
+This task ships the dialog with `name_change`/`address_change` working end-to-end; `share_transfer`/`officer_change` need a shareholding/officer picker scoped to the selected company's existing register, which doesn't exist as a reusable component anywhere in this codebase yet. Rather than leave those two silently broken, Task 18a immediately following this one adds that picker and completes the dialog for all four types before any UI ships. The two buttons are disabled with an explanatory message only within this task's own commit — Task 18a removes that limitation before the branch is done.
 
 **Files:**
 - Create: `src/features/corporate-changes/components/production-corporate-change-list.tsx`
@@ -3011,6 +3011,695 @@ git commit -m "feat: add corporate change request list screen and creation dialo
 
 ---
 
+### Task 18a: Complete the dialog — shareholding/officer picker for `share_transfer`/`officer_change`
+
+Closes the gap flagged in Task 18: once a company is selected, fetch that company's `officers`/`shareholdings` via the existing `getClient` server fn (`src/features/clients/server-fns.ts:256`, already used by `ProductionClientDetail` — no new server fn needed) and use them to populate real pickers instead of free text.
+
+**Files:**
+- Modify: `src/components/corporate-changes/create-corporate-change-request-dialog.tsx`
+- Modify: `src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx`
+
+- [ ] **Step 1: Write the failing tests** (append to the existing test file)
+
+```tsx
+vi.mock("@/features/clients/server-fns", () => ({
+  getClient: vi.fn().mockResolvedValue({
+    id: "company-1",
+    officers: [
+      { id: "officer-1", name: "Existing Director", officerType: "director", cessationDate: null },
+    ],
+    shareholdings: [
+      { id: "holding-1", shareholderName: "Existing Holder", numberOfShares: 1000, cessationDate: null },
+    ],
+  }),
+}));
+
+import { getClient } from "@/features/clients/server-fns";
+
+describe("CreateCorporateChangeRequestDialog — share_transfer and officer_change", () => {
+  it("submits a share_transfer to an existing shareholding, picked from the company's real register", async () => {
+    const onCreated = vi.fn();
+    render(
+      <CreateCorporateChangeRequestDialog
+        open
+        onOpenChange={() => {}}
+        companies={[{ id: "company-1", companyName: "Test Co Ltd" }]}
+        isLoading={false}
+        hasError={false}
+        onCreated={onCreated}
+      />,
+    );
+
+    await userEvent.selectOptions(screen.getByLabelText(/company/i), "company-1");
+    await userEvent.selectOptions(screen.getByLabelText(/change type/i), "share_transfer");
+    await waitFor(() => expect(getClient).toHaveBeenCalledWith({ data: { id: "company-1" } }));
+
+    await userEvent.type(screen.getByLabelText(/quoted fee/i), "2500");
+    await userEvent.selectOptions(screen.getByLabelText(/transferor shareholding/i), "holding-1");
+    await userEvent.click(screen.getByLabelText(/new shareholder/i));
+    await userEvent.type(screen.getByLabelText(/new shareholder name/i), "New Holder");
+    await userEvent.type(screen.getByLabelText(/shares transferred/i), "400");
+    await userEvent.type(screen.getByLabelText(/consideration/i), "400000");
+    await userEvent.type(screen.getByLabelText(/stamp duty/i), "800");
+    await userEvent.click(screen.getByRole("button", { name: /create request/i }));
+
+    await waitFor(() => {
+      expect(createCorporateChangeRequest).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          changeType: "share_transfer",
+          transferorShareholdingId: "holding-1",
+          transfereeShareholdingId: null,
+          transfereeNewShareholderName: "New Holder",
+          sharesTransferred: 400,
+          consideration: 400000,
+          stampDutyAmount: 800,
+        }),
+      });
+    });
+    expect(onCreated).toHaveBeenCalledWith("new-request-id");
+  });
+
+  it("submits an officer_change resign request against a real officer from the register", async () => {
+    const onCreated = vi.fn();
+    render(
+      <CreateCorporateChangeRequestDialog
+        open
+        onOpenChange={() => {}}
+        companies={[{ id: "company-1", companyName: "Test Co Ltd" }]}
+        isLoading={false}
+        hasError={false}
+        onCreated={onCreated}
+      />,
+    );
+
+    await userEvent.selectOptions(screen.getByLabelText(/company/i), "company-1");
+    await userEvent.selectOptions(screen.getByLabelText(/change type/i), "officer_change");
+    await waitFor(() => expect(getClient).toHaveBeenCalledWith({ data: { id: "company-1" } }));
+
+    await userEvent.type(screen.getByLabelText(/quoted fee/i), "1200");
+    await userEvent.selectOptions(screen.getByLabelText(/officer action/i), "resign");
+    await userEvent.selectOptions(screen.getByLabelText(/^officer$/i), "officer-1");
+    await userEvent.type(screen.getByLabelText(/effective date/i), "2026-09-01");
+    await userEvent.click(screen.getByRole("button", { name: /create request/i }));
+
+    await waitFor(() => {
+      expect(createCorporateChangeRequest).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          changeType: "officer_change",
+          officerAction: "resign",
+          officerId: "officer-1",
+          effectiveDate: "2026-09-01",
+        }),
+      });
+    });
+    expect(onCreated).toHaveBeenCalledWith("new-request-id");
+  });
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `npx vitest run src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx -t "share_transfer and officer_change"`
+Expected: FAIL — the picker fields (`transferor shareholding`, `officer action`, etc.) don't exist yet; `getClient` is never called.
+
+- [ ] **Step 3: Rewrite `CreateCorporateChangeRequestDialog`** to add company-scoped officer/shareholding fetching and the two remaining sub-forms, replacing the whole file from Task 18 with this version:
+
+```tsx
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createCorporateChangeRequest } from "@/features/corporate-changes/server-fns";
+import { getClient } from "@/features/clients/server-fns";
+import type {
+  CorporateChangeType,
+  IdentificationType,
+  NewOfficerType,
+  OfficerAction,
+} from "@/features/corporate-changes/types";
+
+type CompanyOption = { id: string; companyName: string };
+type OfficerOption = { id: string; name: string; cessationDate: string | null };
+type ShareholdingOption = { id: string; shareholderName: string; cessationDate: string | null };
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  companies: CompanyOption[];
+  isLoading: boolean;
+  hasError: boolean;
+  onCreated: (requestId: string) => void;
+};
+
+const CHANGE_TYPE_LABELS: Record<CorporateChangeType, string> = {
+  name_change: "Name change",
+  share_transfer: "Share transfer",
+  officer_change: "Officer appointment/resignation/detail change",
+  address_change: "Registered address change",
+};
+
+const NEEDS_REGISTER = new Set<CorporateChangeType>(["share_transfer", "officer_change"]);
+
+export function CreateCorporateChangeRequestDialog({
+  open,
+  onOpenChange,
+  companies,
+  isLoading,
+  hasError,
+  onCreated,
+}: Props) {
+  const [companyId, setCompanyId] = useState("");
+  const [changeType, setChangeType] = useState<CorporateChangeType>("address_change");
+  const [quotedFee, setQuotedFee] = useState("");
+
+  // name_change
+  const [newNameEn, setNewNameEn] = useState("");
+  const [newNameZh, setNewNameZh] = useState("");
+
+  // address_change
+  const [newRegisteredOffice, setNewRegisteredOffice] = useState("");
+
+  // share_transfer
+  const [transferorShareholdingId, setTransferorShareholdingId] = useState("");
+  const [transfereeMode, setTransfereeMode] = useState<"existing" | "new">("new");
+  const [transfereeShareholdingId, setTransfereeShareholdingId] = useState("");
+  const [transfereeNewShareholderName, setTransfereeNewShareholderName] = useState("");
+  const [transfereeNewShareholderAddress, setTransfereeNewShareholderAddress] = useState("");
+  const [sharesTransferred, setSharesTransferred] = useState("");
+  const [consideration, setConsideration] = useState("");
+  const [stampDutyAmount, setStampDutyAmount] = useState("");
+
+  // officer_change
+  const [officerAction, setOfficerAction] = useState<OfficerAction>("appoint");
+  const [officerId, setOfficerId] = useState("");
+  const [newOfficerType, setNewOfficerType] = useState<NewOfficerType>("director");
+  const [newOfficerName, setNewOfficerName] = useState("");
+  const [newOfficerIdentificationType, setNewOfficerIdentificationType] = useState<IdentificationType | "">("");
+  const [newOfficerIdentificationNumber, setNewOfficerIdentificationNumber] = useState("");
+  const [newOfficerAddress, setNewOfficerAddress] = useState("");
+  const [effectiveDate, setEffectiveDate] = useState("");
+
+  const [officers, setOfficers] = useState<OfficerOption[]>([]);
+  const [shareholdings, setShareholdings] = useState<ShareholdingOption[]>([]);
+  const [registerLoading, setRegisterLoading] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!companyId || !NEEDS_REGISTER.has(changeType)) {
+      setOfficers([]);
+      setShareholdings([]);
+      return;
+    }
+
+    let cancelled = false;
+    setRegisterLoading(true);
+    getClient({ data: { id: companyId } })
+      .then((client) => {
+        if (cancelled) return;
+        setOfficers(client.officers);
+        setShareholdings(client.shareholdings);
+      })
+      .finally(() => {
+        if (!cancelled) setRegisterLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId, changeType]);
+
+  function reset() {
+    setCompanyId("");
+    setChangeType("address_change");
+    setQuotedFee("");
+    setNewNameEn("");
+    setNewNameZh("");
+    setNewRegisteredOffice("");
+    setTransferorShareholdingId("");
+    setTransfereeMode("new");
+    setTransfereeShareholdingId("");
+    setTransfereeNewShareholderName("");
+    setTransfereeNewShareholderAddress("");
+    setSharesTransferred("");
+    setConsideration("");
+    setStampDutyAmount("");
+    setOfficerAction("appoint");
+    setOfficerId("");
+    setNewOfficerType("director");
+    setNewOfficerName("");
+    setNewOfficerIdentificationType("");
+    setNewOfficerIdentificationNumber("");
+    setNewOfficerAddress("");
+    setEffectiveDate("");
+    setSubmitError(null);
+  }
+
+  function buildData() {
+    const base = { companyId, quotedFee: Number(quotedFee) };
+
+    if (changeType === "address_change") {
+      return { ...base, changeType, newRegisteredOffice };
+    }
+    if (changeType === "name_change") {
+      return { ...base, changeType, newNameEn, newNameZh: newNameZh || null };
+    }
+    if (changeType === "share_transfer") {
+      return {
+        ...base,
+        changeType,
+        transferorShareholdingId,
+        sharesTransferred: Number(sharesTransferred),
+        consideration: Number(consideration),
+        stampDutyAmount: Number(stampDutyAmount),
+        transfereeShareholdingId: transfereeMode === "existing" ? transfereeShareholdingId : null,
+        transfereeNewShareholderName: transfereeMode === "new" ? transfereeNewShareholderName : null,
+        transfereeNewShareholderAddress: transfereeMode === "new" ? transfereeNewShareholderAddress : null,
+      };
+    }
+    return {
+      ...base,
+      changeType,
+      officerAction,
+      officerId: officerAction === "appoint" ? null : officerId,
+      newOfficerType: officerAction === "appoint" ? newOfficerType : null,
+      newOfficerName: officerAction === "appoint" || officerAction === "detail_change" ? newOfficerName : null,
+      newOfficerIdentificationType:
+        officerAction === "appoint" || officerAction === "detail_change"
+          ? newOfficerIdentificationType || null
+          : null,
+      newOfficerIdentificationNumber:
+        officerAction === "appoint" || officerAction === "detail_change" ? newOfficerIdentificationNumber || null : null,
+      newOfficerAddress:
+        officerAction === "appoint" || officerAction === "detail_change" ? newOfficerAddress || null : null,
+      effectiveDate,
+    };
+  }
+
+  function isValid(): boolean {
+    if (!companyId || !quotedFee) return false;
+    if (changeType === "address_change") return Boolean(newRegisteredOffice);
+    if (changeType === "name_change") return Boolean(newNameEn);
+    if (changeType === "share_transfer") {
+      const hasTransferee =
+        transfereeMode === "existing" ? Boolean(transfereeShareholdingId) : Boolean(transfereeNewShareholderName);
+      return Boolean(transferorShareholdingId) && Boolean(sharesTransferred) && Boolean(consideration) && Boolean(stampDutyAmount) && hasTransferee;
+    }
+    if (!effectiveDate) return false;
+    if (officerAction === "appoint") return Boolean(newOfficerType) && Boolean(newOfficerName);
+    return Boolean(officerId);
+  }
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const created = await createCorporateChangeRequest({ data: buildData() as never });
+      reset();
+      onOpenChange(false);
+      onCreated(created.id);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Failed to create request.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const activeOfficers = officers.filter((officer) => !officer.cessationDate);
+  const activeShareholdings = shareholdings.filter((holding) => !holding.cessationDate);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New corporate change request</DialogTitle>
+          <DialogDescription>
+            Record an ad hoc name change, share transfer, officer change, or address change.
+          </DialogDescription>
+        </DialogHeader>
+
+        {hasError ? (
+          <p className="text-sm text-destructive">Failed to load companies. Try closing and reopening this dialog.</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="company">Company</Label>
+              <select
+                id="company"
+                aria-label="Company"
+                className="w-full rounded-md border p-2"
+                value={companyId}
+                onChange={(event) => setCompanyId(event.target.value)}
+                disabled={isLoading}
+              >
+                <option value="">Select a company</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.companyName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="change-type">Change type</Label>
+              <select
+                id="change-type"
+                aria-label="Change type"
+                className="w-full rounded-md border p-2"
+                value={changeType}
+                onChange={(event) => setChangeType(event.target.value as CorporateChangeType)}
+              >
+                {Object.entries(CHANGE_TYPE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quoted-fee">Quoted fee (HKD)</Label>
+              <Input
+                id="quoted-fee"
+                aria-label="Quoted fee"
+                type="number"
+                value={quotedFee}
+                onChange={(event) => setQuotedFee(event.target.value)}
+              />
+            </div>
+
+            {changeType === "address_change" && (
+              <div className="space-y-2">
+                <Label htmlFor="new-registered-office">New registered office</Label>
+                <Input
+                  id="new-registered-office"
+                  aria-label="New registered office"
+                  value={newRegisteredOffice}
+                  onChange={(event) => setNewRegisteredOffice(event.target.value)}
+                />
+              </div>
+            )}
+
+            {changeType === "name_change" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="new-name-en">New English name</Label>
+                  <Input
+                    id="new-name-en"
+                    aria-label="New English name"
+                    value={newNameEn}
+                    onChange={(event) => setNewNameEn(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-name-zh">New Chinese name (optional)</Label>
+                  <Input
+                    id="new-name-zh"
+                    aria-label="New Chinese name"
+                    value={newNameZh}
+                    onChange={(event) => setNewNameZh(event.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {changeType === "share_transfer" && (
+              <>
+                {registerLoading && <p className="text-sm text-muted-foreground">Loading the company's register…</p>}
+                <div className="space-y-2">
+                  <Label htmlFor="transferor-shareholding">Transferor shareholding</Label>
+                  <select
+                    id="transferor-shareholding"
+                    aria-label="Transferor shareholding"
+                    className="w-full rounded-md border p-2"
+                    value={transferorShareholdingId}
+                    onChange={(event) => setTransferorShareholdingId(event.target.value)}
+                  >
+                    <option value="">Select a shareholding</option>
+                    {activeShareholdings.map((holding) => (
+                      <option key={holding.id} value={holding.id}>
+                        {holding.shareholderName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-medium">Transferee</legend>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      aria-label="Existing shareholder"
+                      checked={transfereeMode === "existing"}
+                      onChange={() => setTransfereeMode("existing")}
+                    />
+                    Existing shareholder
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      aria-label="New shareholder"
+                      checked={transfereeMode === "new"}
+                      onChange={() => setTransfereeMode("new")}
+                    />
+                    New shareholder
+                  </label>
+                </fieldset>
+
+                {transfereeMode === "existing" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="transferee-shareholding">Transferee shareholding</Label>
+                    <select
+                      id="transferee-shareholding"
+                      aria-label="Transferee shareholding"
+                      className="w-full rounded-md border p-2"
+                      value={transfereeShareholdingId}
+                      onChange={(event) => setTransfereeShareholdingId(event.target.value)}
+                    >
+                      <option value="">Select a shareholding</option>
+                      {activeShareholdings
+                        .filter((holding) => holding.id !== transferorShareholdingId)
+                        .map((holding) => (
+                          <option key={holding.id} value={holding.id}>
+                            {holding.shareholderName}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="transferee-new-name">New shareholder name</Label>
+                      <Input
+                        id="transferee-new-name"
+                        aria-label="New shareholder name"
+                        value={transfereeNewShareholderName}
+                        onChange={(event) => setTransfereeNewShareholderName(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="transferee-new-address">New shareholder address</Label>
+                      <Input
+                        id="transferee-new-address"
+                        aria-label="New shareholder address"
+                        value={transfereeNewShareholderAddress}
+                        onChange={(event) => setTransfereeNewShareholderAddress(event.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="shares-transferred">Shares transferred</Label>
+                  <Input
+                    id="shares-transferred"
+                    aria-label="Shares transferred"
+                    type="number"
+                    value={sharesTransferred}
+                    onChange={(event) => setSharesTransferred(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="consideration">Consideration (HKD)</Label>
+                  <Input
+                    id="consideration"
+                    aria-label="Consideration"
+                    type="number"
+                    value={consideration}
+                    onChange={(event) => setConsideration(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="stamp-duty">Stamp duty (HKD)</Label>
+                  <Input
+                    id="stamp-duty"
+                    aria-label="Stamp duty"
+                    type="number"
+                    value={stampDutyAmount}
+                    onChange={(event) => setStampDutyAmount(event.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {changeType === "officer_change" && (
+              <>
+                {registerLoading && <p className="text-sm text-muted-foreground">Loading the company's register…</p>}
+                <div className="space-y-2">
+                  <Label htmlFor="officer-action">Officer action</Label>
+                  <select
+                    id="officer-action"
+                    aria-label="Officer action"
+                    className="w-full rounded-md border p-2"
+                    value={officerAction}
+                    onChange={(event) => setOfficerAction(event.target.value as OfficerAction)}
+                  >
+                    <option value="appoint">Appoint</option>
+                    <option value="resign">Resign</option>
+                    <option value="detail_change">Detail change</option>
+                  </select>
+                </div>
+
+                {officerAction !== "appoint" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="officer">Officer</Label>
+                    <select
+                      id="officer"
+                      aria-label="Officer"
+                      className="w-full rounded-md border p-2"
+                      value={officerId}
+                      onChange={(event) => setOfficerId(event.target.value)}
+                    >
+                      <option value="">Select an officer</option>
+                      {activeOfficers.map((officer) => (
+                        <option key={officer.id} value={officer.id}>
+                          {officer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {officerAction === "appoint" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="new-officer-type">New officer type</Label>
+                    <select
+                      id="new-officer-type"
+                      aria-label="New officer type"
+                      className="w-full rounded-md border p-2"
+                      value={newOfficerType}
+                      onChange={(event) => setNewOfficerType(event.target.value as NewOfficerType)}
+                    >
+                      <option value="director">Director</option>
+                      <option value="secretary">Secretary</option>
+                    </select>
+                  </div>
+                )}
+
+                {(officerAction === "appoint" || officerAction === "detail_change") && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-officer-name">
+                        {officerAction === "appoint" ? "New officer name" : "Updated name"}
+                      </Label>
+                      <Input
+                        id="new-officer-name"
+                        aria-label={officerAction === "appoint" ? "New officer name" : "Updated name"}
+                        value={newOfficerName}
+                        onChange={(event) => setNewOfficerName(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-officer-identification-type">Identification type</Label>
+                      <select
+                        id="new-officer-identification-type"
+                        aria-label="Identification type"
+                        className="w-full rounded-md border p-2"
+                        value={newOfficerIdentificationType}
+                        onChange={(event) => setNewOfficerIdentificationType(event.target.value as IdentificationType | "")}
+                      >
+                        <option value="">None</option>
+                        <option value="hkid">HKID</option>
+                        <option value="passport">Passport</option>
+                        <option value="br_number">BR number</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-officer-identification-number">Identification number</Label>
+                      <Input
+                        id="new-officer-identification-number"
+                        aria-label="Identification number"
+                        value={newOfficerIdentificationNumber}
+                        onChange={(event) => setNewOfficerIdentificationNumber(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-officer-address">Address</Label>
+                      <Input
+                        id="new-officer-address"
+                        aria-label="Address"
+                        value={newOfficerAddress}
+                        onChange={(event) => setNewOfficerAddress(event.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="effective-date">Effective date</Label>
+                  <Input
+                    id="effective-date"
+                    aria-label="Effective date"
+                    type="date"
+                    value={effectiveDate}
+                    onChange={(event) => setEffectiveDate(event.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={submitting || !isValid()}>
+            Create request
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+- [ ] **Step 4: Run all dialog tests to verify they pass**
+
+Run: `npx vitest run src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx`
+Expected: PASS — all tests from Task 18 and Task 18a.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/corporate-changes/create-corporate-change-request-dialog.tsx src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx
+git commit -m "feat: add shareholding/officer pickers, completing the creation dialog for all four change types"
+```
+
+---
+
 ### Task 19: `ProductionCorporateChangeDetail` (checklist, status stepper, complete/cancel)
 
 **Files:**
@@ -3358,4 +4047,4 @@ Then: `gh pr checks <n> --watch` (or `gh pr view <n> --json statusCheckRollup` a
 
 - **Spec coverage**: every section of the design spec has a corresponding task — data model (Tasks 1, 3), work-item/SLA integration (Tasks 2, 8, 9), completion behavior for all four types (Tasks 13-15), UI (Tasks 17-20), authorization (Task 6), checklist content (Task 5), and the fixture-cleanup item named in the spec's verification plan (Task 21).
 - **Real gap surfaced during planning, not in the spec**: `EnsureWorkItemEvent.annualReturnCaseId` was typed as a required `string` even though the DB column is nullable — Task 8 widens it correctly rather than leaving a latent type lie.
-- **Known scope trim, flagged in Task 18 itself**: the general-purpose creation dialog only supports `name_change`/`address_change` directly; `share_transfer`/`officer_change` need a shareholding/officer picker scoped to the company's existing register, which isn't built in this plan as a standalone task. The two buttons are disabled with an explanatory message rather than silently broken. **This is a real follow-up gap to raise with the user before execution begins** — either accept it as a documented fast-follow, or add a Task 18a for the picker before starting.
+- **UI gap surfaced during planning, resolved before execution**: Task 18's general-purpose creation dialog initially only supported `name_change`/`address_change` directly, since `share_transfer`/`officer_change` need a shareholding/officer picker scoped to the company's existing register and no such component existed anywhere in this codebase. Flagged to the user, who chose to close it immediately — Task 18a adds the picker (reusing the existing `getClient` server fn) and completes the dialog for all four types before the branch is considered done, rather than shipping a UI with two dead-end buttons.
