@@ -242,7 +242,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
       {optionsQuery.isError ? (
         <p role="status" className="text-sm text-status-yellow">
-          Owner, team and package options are unavailable. Edit is disabled until this loads.
+          Owner and team options are unavailable. Edit is disabled until this loads.
         </p>
       ) : null}
 
@@ -253,7 +253,6 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         />
         <Detail label="Owner" value={client.ownerName} />
         <Detail label="Team" value={client.teamName} />
-        <Detail label="Package" value={client.packageName ?? "No package"} />
         <Detail label="Incorporation date" value={client.incorporationDate} />
         <Detail label="AR basis date" value={client.annualReturnBasisDate} />
         <Detail label="Registered office" value={client.registeredOffice} />

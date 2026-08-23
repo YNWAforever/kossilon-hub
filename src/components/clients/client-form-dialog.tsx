@@ -31,7 +31,6 @@ type FormState = {
   status: "active" | "inactive";
   ownerId: string;
   teamId: string;
-  packageId: string;
   contactName: string;
   contactRole: string;
   contactEmail: string;
@@ -50,7 +49,6 @@ function emptyForm(options: ClientAssignmentOptions): FormState {
     status: "active",
     ownerId: options.owners[0]?.id ?? "",
     teamId: options.teams[0]?.id ?? "",
-    packageId: options.packages[0]?.id ?? "",
     contactName: "",
     contactRole: "Primary contact",
     contactEmail: "",
@@ -58,7 +56,7 @@ function emptyForm(options: ClientAssignmentOptions): FormState {
   };
 }
 
-function formFor(client: ClientDetail, options: ClientAssignmentOptions): FormState {
+function formFor(client: ClientDetail): FormState {
   return {
     companyName: client.companyName,
     crNumber: client.crNumber,
@@ -70,7 +68,6 @@ function formFor(client: ClientDetail, options: ClientAssignmentOptions): FormSt
     status: client.status,
     ownerId: client.ownerId,
     teamId: client.teamId,
-    packageId: client.packageId ?? options.packages[0]?.id ?? "",
     contactName: "",
     contactRole: "Primary contact",
     contactEmail: "",
@@ -88,14 +85,14 @@ const INLINE_ERROR_FIELDS = new Set(["crNumber", "brNumber", "contact"]);
 export function ClientFormDialog({ open, onOpenChange, options, client, onSaved }: Props) {
   const isEdit = Boolean(client);
   const [form, setForm] = useState<FormState>(() =>
-    client ? formFor(client, options) : emptyForm(options),
+    client ? formFor(client) : emptyForm(options),
   );
   const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setForm(client ? formFor(client, options) : emptyForm(options));
+      setForm(client ? formFor(client) : emptyForm(options));
       setFieldError(null);
     }
   }, [open, client, options]);
@@ -143,7 +140,6 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             status: form.status,
             ownerId: form.ownerId,
             teamId: form.teamId,
-            packageId: form.packageId || null,
           },
         });
         toast.success("Client updated.");
@@ -161,7 +157,6 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             companySecretary: form.companySecretary,
             ownerId: form.ownerId,
             teamId: form.teamId,
-            packageId: form.packageId || null,
             contacts: hasContact
               ? [
                   {
@@ -297,7 +292,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="client-owner">
                 Owner
@@ -328,23 +323,6 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 {teamOptions.map((team) => (
                   <option key={team.id} value={team.id}>
                     {team.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass} htmlFor="client-package">
-                Package
-              </label>
-              <select
-                id="client-package"
-                className={inputClass}
-                value={form.packageId}
-                onChange={(event) => set("packageId", event.target.value)}
-              >
-                {options.packages.map((servicePackage) => (
-                  <option key={servicePackage.id} value={servicePackage.id}>
-                    {servicePackage.name} — HKD {servicePackage.defaultFee.toLocaleString()}
                   </option>
                 ))}
               </select>

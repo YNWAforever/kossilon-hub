@@ -10,7 +10,7 @@ import { listClientAssignmentOptions, listClients } from "../server-fns";
 import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types";
 
 const REGISTER_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_140px_100px_120px_110px_72px]";
+  "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
 const REGISTER_GRID_MIN_WIDTH = "lg:min-w-[1180px]";
 
 const STATUS_FILTERS = ["all", "active", "inactive"] as const;
@@ -92,7 +92,7 @@ export function ProductionClientRegister() {
 
       {optionsQuery.isError ? (
         <p role="status" className="text-sm text-status-yellow">
-          Owner, team and package options are unavailable. New client is disabled until this loads.
+          Owner and team options are unavailable. New client is disabled until this loads.
         </p>
       ) : null}
 
@@ -142,7 +142,6 @@ export function ProductionClientRegister() {
               <span>Company</span>
               <span>Owner</span>
               <span>Team</span>
-              <span>Package</span>
               <span>Status</span>
               <span>AR due</span>
               <span>Payment</span>
@@ -191,7 +190,6 @@ function ClientRow({ client }: { client: ClientSummary }) {
       </div>
       <Field label="Owner" value={client.ownerName} />
       <Field label="Team" value={client.teamName} />
-      <Field label="Package" value={client.packageName ?? "No package"} />
       <Field
         label="Status"
         value={<StatusPill tone={companyStatusTone[client.status]}>{client.status}</StatusPill>}
