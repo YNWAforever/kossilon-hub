@@ -15,6 +15,10 @@ function dependencies(
       evaluateReminders: vi.fn(async () => ({ sent: 1, skipped: 0 })),
       close: vi.fn(async () => {}),
     }),
+    createServiceSubscriptionRepository: () => ({
+      evaluateReminders: vi.fn(async () => ({ sent: 1, skipped: 0 })),
+      close: vi.fn(async () => {}),
+    }),
     dispatchDue: vi.fn(async () => ({
       claimed: 4,
       sent: 3,
@@ -47,6 +51,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
       now: "2026-07-26T00:00:00.000Z",
       escalations: { warnings: 1, breaches: 2 },
       annualReturnReminders: { sent: 1, skipped: 0 },
+      serviceSubscriptionReminders: { sent: 1, skipped: 0 },
       dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0, superseded: 0 },
       uploads: { expired: 2 },
       notifications: { strandedFailed: 2, redacted: 5 },

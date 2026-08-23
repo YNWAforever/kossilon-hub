@@ -89,7 +89,6 @@ const createClientSchema = z.object({
   companySecretary: z.string().min(1),
   ownerId: z.string().uuid(),
   teamId: z.string().uuid(),
-  packageId: z.string().uuid().nullable(),
   contacts: z.array(contactSchema).default([]),
 });
 
@@ -100,7 +99,6 @@ const updateClientSchema = z.object({
   status: z.enum(["active", "inactive"]),
   ownerId: z.string().uuid(),
   teamId: z.string().uuid(),
-  packageId: z.string().uuid().nullable(),
 });
 
 const addContactSchema = z.object({ companyId: z.string().uuid() }).and(contactSchema);

@@ -40,6 +40,11 @@ type MaintenanceAnnualReturnRepository = {
   close(): Promise<void>;
 };
 
+type MaintenanceServiceSubscriptionRepository = {
+  evaluateReminders(now?: string): Promise<{ sent: number; skipped: number }>;
+  close(): Promise<void>;
+};
+
 type MaintenanceDocumentRepository = {
   expireUploads(now: string): Promise<readonly { objectKey: string }[]>;
   close(): Promise<void>;
@@ -54,6 +59,7 @@ type MaintenanceOutboxRepository = {
 export type FirmMaintenanceDependencies = {
   createWorkItemRepository(): MaintenanceWorkItemRepository;
   createAnnualReturnRepository(): MaintenanceAnnualReturnRepository;
+  createServiceSubscriptionRepository(): MaintenanceServiceSubscriptionRepository;
   dispatchDue(input: { now: string; limit: number }): Promise<DispatchSummary>;
   createDocumentRepository(): MaintenanceDocumentRepository;
   createDocumentStorage(): { delete(objectKey: string): Promise<void> };
@@ -68,11 +74,12 @@ export async function runFirmMaintenanceWithDependencies(
 ): Promise<ScheduledMaintenanceResult> {
   const data = inputSchema.parse(input);
 
-  // All four repositories open a Postgres connection eagerly, so they are
+  // All five repositories open a Postgres connection eagerly, so they are
   // created up front and closed in one `finally`. Closing them inside each
   // pass would leak whichever connection the failing pass had already opened.
   const workItems = dependencies.createWorkItemRepository();
   const annualReturns = dependencies.createAnnualReturnRepository();
+  const serviceSubscriptions = dependencies.createServiceSubscriptionRepository();
   const documents = dependencies.createDocumentRepository();
   const outbox = dependencies.createOutboxRepository();
 
@@ -82,6 +89,7 @@ export async function runFirmMaintenanceWithDependencies(
       {
         evaluateEscalations: (now) => workItems.evaluateEscalations(now),
         evaluateAnnualReturnReminders: (now) => annualReturns.evaluateReminders(now),
+        evaluateServiceSubscriptionReminders: (now) => serviceSubscriptions.evaluateReminders(now),
         dispatchDue: (now, limit) => dependencies.dispatchDue({ now, limit }),
         cleanupExpiredUploads: async (now) => {
           const expired = await documents.expireUploads(now);
@@ -98,6 +106,7 @@ export async function runFirmMaintenanceWithDependencies(
     await Promise.all([
       workItems.close(),
       annualReturns.close(),
+      serviceSubscriptions.close(),
       documents.close(),
       outbox.close(),
     ]);
@@ -114,6 +123,7 @@ export async function runFirmMaintenance(
   const [
     workItemsModule,
     annualReturnModule,
+    serviceSubscriptionsModule,
     documentsModule,
     dispatchModule,
     documentServerFnsModule,
@@ -123,6 +133,7 @@ export async function runFirmMaintenance(
   ] = await Promise.all([
     import("@/features/work-items/repository"),
     import("@/features/annual-return/repository"),
+    import("@/features/service-subscriptions/repository"),
     import("@/features/documents/repository"),
     import("@/features/notifications/runtime-dispatch"),
     import("@/features/documents/server-fns"),
@@ -134,6 +145,8 @@ export async function runFirmMaintenance(
   return runFirmMaintenanceWithDependencies(input, {
     createWorkItemRepository: () => workItemsModule.createWorkItemRepository(),
     createAnnualReturnRepository: () => annualReturnModule.createAnnualReturnRepository(),
+    createServiceSubscriptionRepository: () =>
+      serviceSubscriptionsModule.createServiceSubscriptionRepository(),
     createDocumentRepository: () => documentsModule.createDocumentRepository(),
     createOutboxRepository: () => outboxModule.createNotificationOutboxRepository(),
     dispatchDue: (dispatchInput) => dispatchModule.dispatchDueNotificationsOnServer(dispatchInput),

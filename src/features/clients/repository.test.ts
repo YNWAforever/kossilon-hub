@@ -8,8 +8,6 @@ const databaseUrl = process.env.TEST_DATABASE_URL;
 const USER_AMY_ID = "20000000-0000-0000-0000-000000000001";
 const USER_KEN_ID = "20000000-0000-0000-0000-000000000002";
 const TEAM_ANNUAL_RETURN_ID = "10000000-0000-0000-0000-000000000001";
-const PACKAGE_BASIC_ID = "30000000-0000-0000-0000-000000000001";
-const PACKAGE_STANDARD_ID = "30000000-0000-0000-0000-000000000002";
 
 const TEST_COMPANY_UUID_PREFIX = "97000000";
 const TEST_CASE_UUID_PREFIX = "97100000";
@@ -85,7 +83,6 @@ async function cleanupClientFixtures() {
 async function seedCompany(options: {
   sequence: number;
   companyName: string;
-  packageId?: string | null;
   status?: "active" | "inactive";
   cases?: { returnYear: number; filingDueDate: string; paymentStatus?: string }[];
   contacts?: {
@@ -103,7 +100,7 @@ async function seedCompany(options: {
     insert into companies (
       id, company_name, cr_number, br_number, incorporation_date,
       annual_return_basis_date, registered_office, company_secretary,
-      status, assigned_owner_id, assigned_team_id, service_package_id
+      status, assigned_owner_id, assigned_team_id
     )
     values (
       ${companyId},
@@ -116,8 +113,7 @@ async function seedCompany(options: {
       'Kossilon Secretaries Ltd',
       ${options.status ?? "active"},
       ${USER_AMY_ID},
-      ${TEAM_ANNUAL_RETURN_ID},
-      ${options.packageId === undefined ? PACKAGE_STANDARD_ID : options.packageId}
+      ${TEAM_ANNUAL_RETURN_ID}
     )
   `;
 
@@ -178,32 +174,13 @@ describe.skipIf(!databaseUrl)(
       await cleanupClientFixtures();
     }, INTEGRATION_TEST_TIMEOUT_MS);
 
-    it("lists seeded service packages in sort order", async () => {
-      const repository = repositoryForTests();
-
-      const packages = await repository.listServicePackages();
-
-      expect(packages.map((servicePackage) => servicePackage.name)).toEqual([
-        "Basic",
-        "Standard",
-        "Premium",
-      ]);
-      expect(packages[0]).toMatchObject({
-        id: PACKAGE_BASIC_ID,
-        defaultFee: 2800,
-        currency: "HKD",
-        active: true,
-      });
-    });
-
-    it("returns owners, teams, and packages for assignment forms", async () => {
+    it("returns owners and teams for assignment forms", async () => {
       const repository = repositoryForTests();
 
       const options = await repository.listAssignmentOptions();
 
       expect(options.owners.some((owner) => owner.id === USER_AMY_ID)).toBe(true);
       expect(options.teams.some((team) => team.id === TEAM_ANNUAL_RETURN_ID)).toBe(true);
-      expect(options.packages).toHaveLength(3);
     });
 
     it("derives AR due date and payment status from the most recent case", async () => {
@@ -224,7 +201,6 @@ describe.skipIf(!databaseUrl)(
         arDueDate: "2026-09-30",
         paymentStatus: "Payment pending",
         invoiceAmount: 3800,
-        packageName: "Standard",
         ownerName: "Amy Chan",
         ownerInitials: "AC",
         status: "active",
@@ -314,7 +290,6 @@ const CREATE_INPUT_BASE = {
   companySecretary: "Kossilon Secretaries Ltd",
   ownerId: USER_AMY_ID,
   teamId: TEAM_ANNUAL_RETURN_ID,
-  packageId: PACKAGE_BASIC_ID,
   actorId: USER_KEN_ID,
 };
 
@@ -353,7 +328,6 @@ describe.skipIf(!databaseUrl)(
         companyName: "Test Create Ltd",
         crNumber: "TEST-CR-0001",
         status: "active",
-        packageName: "Basic",
         ownerName: "Amy Chan",
       });
       expect(created.contacts).toHaveLength(1);
@@ -493,14 +467,12 @@ describe.skipIf(!databaseUrl)(
         status: "inactive",
         ownerId: USER_KEN_ID,
         teamId: TEAM_ANNUAL_RETURN_ID,
-        packageId: PACKAGE_BASIC_ID,
         actorId: USER_AMY_ID,
       });
 
       expect(updated).toMatchObject({
         status: "inactive",
         ownerName: "Ken Wong",
-        packageName: "Basic",
         registeredOffice: "New Office, Central, Hong Kong",
       });
       expect(updated.timeline[0]).toMatchObject({
@@ -523,7 +495,6 @@ describe.skipIf(!databaseUrl)(
           status: "active",
           ownerId: USER_AMY_ID,
           teamId: TEAM_ANNUAL_RETURN_ID,
-          packageId: null,
           actorId: USER_AMY_ID,
         }),
       ).rejects.toThrow("Client not found.");
@@ -768,7 +739,6 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
             companySecretary: "Original Secretary Ltd",
             ownerId: owner.id,
             teamId: team.id,
-            packageId: null,
             contacts: [],
             actorId: owner.id,
           });
@@ -833,7 +803,6 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
             companySecretary: "A Secretary Ltd",
             ownerId: owner.id,
             teamId: team.id,
-            packageId: null,
             contacts: [],
             actorId: owner.id,
           });
@@ -897,7 +866,6 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
         companySecretary: "First Secretary Ltd",
         ownerId: owner.id,
         teamId: team.id,
-        packageId: null,
         contacts: [],
         actorId: owner.id,
       });
@@ -982,7 +950,6 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
             companySecretary: "A Secretary Ltd",
             ownerId: owner.id,
             teamId: team.id,
-            packageId: null,
             contacts: [],
             actorId: owner.id,
           });
@@ -1052,7 +1019,6 @@ describe.skipIf(!databaseUrl)("significant controllers integration", () => {
             companySecretary: "A Secretary Ltd",
             ownerId: owner.id,
             teamId: team.id,
-            packageId: null,
             contacts: [],
             actorId: owner.id,
           });
@@ -1138,7 +1104,6 @@ describe.skipIf(!databaseUrl)("significant controllers integration", () => {
             companySecretary: "A Secretary Ltd",
             ownerId: owner.id,
             teamId: team.id,
-            packageId: null,
             contacts: [],
             actorId: owner.id,
           });
@@ -1188,7 +1153,6 @@ describe.skipIf(!databaseUrl)("designated representative integration", () => {
             companySecretary: "A Secretary Ltd",
             ownerId: owner.id,
             teamId: team.id,
-            packageId: null,
             contacts: [],
             actorId: owner.id,
           });
@@ -1258,7 +1222,6 @@ describe.skipIf(!databaseUrl)("designated representative integration", () => {
         companySecretary: "A Secretary Ltd",
         ownerId: owner.id,
         teamId: team.id,
-        packageId: null,
         contacts: [],
         actorId: owner.id,
       });
@@ -1340,7 +1303,6 @@ describe.skipIf(!databaseUrl)("inspection requests integration", () => {
             companySecretary: "A Secretary Ltd",
             ownerId: owner.id,
             teamId: team.id,
-            packageId: null,
             contacts: [],
             actorId: owner.id,
           });

@@ -15,6 +15,10 @@ describe("scheduled maintenance", () => {
           calls.push("annual-return-reminders");
           return { sent: 1, skipped: 0 };
         }),
+        evaluateServiceSubscriptionReminders: vi.fn(async () => {
+          calls.push("service-subscription-reminders");
+          return { sent: 1, skipped: 0 };
+        }),
         dispatchDue: vi.fn(async (_now, limit) => {
           calls.push(`dispatch:${limit}`);
           return { claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 };
@@ -37,6 +41,7 @@ describe("scheduled maintenance", () => {
     expect(result).toMatchObject({
       escalations: { warnings: 1, breaches: 2 },
       annualReturnReminders: { sent: 1, skipped: 0 },
+      serviceSubscriptionReminders: { sent: 1, skipped: 0 },
       dispatch: { sent: 1 },
       uploads: { expired: 3 },
       notifications: { strandedFailed: 2, redacted: 4 },
@@ -44,6 +49,7 @@ describe("scheduled maintenance", () => {
     expect(calls).toEqual([
       "escalations",
       "annual-return-reminders",
+      "service-subscription-reminders",
       "stranded",
       "dispatch:7",
       "uploads",

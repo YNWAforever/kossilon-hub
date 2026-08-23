@@ -1,3 +1,5 @@
+import { daysBetween } from "@/lib/date-math";
+import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 import {
   ANNUAL_RETURN_STATUSES,
   type AnnualReturnCase,
@@ -8,8 +10,12 @@ import {
 } from "./types";
 
 export { ANNUAL_RETURN_STATUSES };
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+export { daysBetween };
+// Lives in src/lib/hong-kong-time.ts, not here — the service-subscriptions
+// reminder sweep needs the identical "firm's operational today" computation,
+// and this re-export keeps every existing import of hongKongBusinessDate
+// from "./workflow" working unchanged.
+export { hongKongBusinessDate };
 
 function parseDateOnly(date: string): Date {
   const [year, month, day] = date.slice(0, 10).split("-").map(Number);
@@ -18,34 +24,6 @@ function parseDateOnly(date: string): Date {
 
 function formatDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
-}
-
-const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
-
-function datePart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-  const part = parts.find((candidate) => candidate.type === type);
-
-  if (!part) {
-    throw new Error(`Unable to derive ${type} from Hong Kong business date.`);
-  }
-
-  return part.value;
-}
-
-/**
- * The firm's operational "today". Lives here rather than in the repository so the
- * board can derive deadline tiles against the same calendar day the server used to
- * compute `riskLevel` — a browser-local date drifts for anyone outside HKT.
- */
-export function hongKongBusinessDate(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: HONG_KONG_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-
-  return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
 }
 
 function hasText(value: string | null): boolean {
@@ -59,12 +37,6 @@ export function hasRequiredChecklistEvidence(item: AnnualReturnChecklistItem): b
     hasText(item.verifiedAt) &&
     hasText(item.documentId)
   );
-}
-
-export function daysBetween(startDate: string, endDate: string): number {
-  const start = parseDateOnly(startDate);
-  const end = parseDateOnly(endDate);
-  return Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY);
 }
 
 /** Positive `days` moves forward, negative moves backward. */

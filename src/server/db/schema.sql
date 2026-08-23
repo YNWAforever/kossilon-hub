@@ -594,27 +594,6 @@ create trigger business_calendar_holidays_immutable
 before insert or update or delete on business_calendar_holidays
 for each row execute function enforce_business_calendar_holiday_immutability();
 
-create table if not exists service_packages (
-  id uuid primary key default gen_random_uuid(),
-  name text not null unique,
-  default_fee integer not null constraint service_packages_fee_positive_check check (default_fee > 0),
-  currency text not null default 'HKD' constraint service_packages_currency_hkd_check check (currency = 'HKD'),
-  active boolean not null default true,
-  sort_order integer not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-insert into service_packages (id, name, default_fee, sort_order)
-values
-  ('30000000-0000-0000-0000-000000000001', 'Basic', 2800, 1),
-  ('30000000-0000-0000-0000-000000000002', 'Standard', 3800, 2),
-  ('30000000-0000-0000-0000-000000000003', 'Premium', 5200, 3)
-on conflict (name) do nothing;
-
-alter table companies
-  add column if not exists service_package_id uuid references service_packages(id);
-
 create table if not exists company_contacts (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references companies(id) on delete cascade,
@@ -756,6 +735,37 @@ create table if not exists incorporation_checklist_items (
 );
 
 create index if not exists incorporation_checklist_items_case_idx on incorporation_checklist_items (case_id);
+
+create table if not exists service_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  service_type text not null check (service_type in (
+    'secretary', 'registered_office', 'director_correspondence_address', 'designated_representative'
+  )),
+  fee integer not null check (fee > 0),
+  status text not null default 'Active' check (status in ('Active', 'Cancelled')),
+  renewal_date date not null,
+  cancelled_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint service_subscriptions_one_per_type unique (company_id, service_type)
+);
+
+create index if not exists service_subscriptions_company_idx on service_subscriptions (company_id);
+create index if not exists service_subscriptions_renewal_date_idx on service_subscriptions (renewal_date)
+  where status = 'Active';
+
+-- Mirrors annual_return_reminder_events exactly (see its own migration's
+-- comment for why this needs to be a permanent record independent of
+-- notification_outbox, which redacts rows after retention_until).
+create table if not exists service_subscription_reminder_events (
+  id uuid primary key default gen_random_uuid(),
+  subscription_id uuid not null references service_subscriptions(id) on delete cascade,
+  milestone text not null check (milestone in ('1_month', '2_week', '1_week')),
+  occurred_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  unique (subscription_id, milestone)
+);
 
 -- ---------------------------------------------------------------------------
 -- Reconciled with db/migrations/. schema.sql is a reference document (only

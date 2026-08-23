@@ -42,8 +42,6 @@ function makeClient(overrides: Partial<ClientDetail> = {}): ClientDetail {
     crNumber: "CR1234567",
     brNumber: "BR7654321",
     status: "active",
-    packageId: null,
-    packageName: "Standard",
     ownerId: "22222222-2222-4222-8222-222222222222",
     ownerName: "Ada Chan",
     ownerInitials: "AC",
@@ -78,7 +76,6 @@ function makeOptions(): ClientAssignmentOptions {
       },
     ],
     teams: [{ id: "33333333-3333-4333-8333-333333333333", name: "Team Alpha" }],
-    packages: [],
   };
 }
 

@@ -27,8 +27,6 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
     crNumber: "CR1234567",
     brNumber: "BR7654321",
     status: "active",
-    packageId: null,
-    packageName: "Standard",
     ownerId: "22222222-2222-4222-8222-222222222222",
     ownerName: "Ada Chan",
     ownerInitials: "AC",
@@ -51,16 +49,6 @@ function makeOptions(): ClientAssignmentOptions {
       },
     ],
     teams: [{ id: "33333333-3333-4333-8333-333333333333", name: "Team Alpha" }],
-    packages: [
-      {
-        id: "44444444-4444-4444-8444-444444444444",
-        name: "Standard",
-        defaultFee: 3000,
-        currency: "HKD",
-        active: true,
-        sortOrder: 0,
-      },
-    ],
   };
 }
 
@@ -147,7 +135,7 @@ describe("production client register", () => {
     renderRegister();
 
     const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("Owner, team and package options are unavailable.");
+    expect(status.textContent).toContain("Owner and team options are unavailable.");
 
     const button = screen.getByRole("button", { name: "New client" }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
