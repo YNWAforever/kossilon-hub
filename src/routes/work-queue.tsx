@@ -35,6 +35,10 @@ export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | nul
       return item.annualReturnCaseId
         ? { to: "/annual-returns/$id", params: { id: item.annualReturnCaseId } }
         : null;
+    case "corporate_change_request":
+      // No case detail route exists yet for corporate change requests; link once
+      // one lands.
+      return null;
     default: {
       const exhaustive: never = item.caseType;
       throw new Error(`Unhandled work item case type: ${exhaustive}`);

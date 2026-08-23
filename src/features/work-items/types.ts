@@ -38,7 +38,7 @@ export type SlaSnapshot = {
   dueAt: string;
 };
 
-export type WorkItemCaseType = "annual_return";
+export type WorkItemCaseType = "annual_return" | "corporate_change_request";
 
 export type WorkItemStatus = "open" | "in_progress" | "blocked" | "completed" | "cancelled";
 

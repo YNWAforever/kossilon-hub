@@ -8,6 +8,7 @@ function makeItem(overrides: Partial<PersistedWorkItem> = {}): PersistedWorkItem
     companyId: "company-1",
     caseType: "annual_return",
     annualReturnCaseId: "case-1",
+    corporateChangeRequestId: null,
     sourceEventKey: "event:wi-1",
     sourceEventType: "annual_return_case_created",
     workType: "annual_return_case",
