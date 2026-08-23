@@ -322,6 +322,11 @@ export async function ensureWorkItemForEvent(
     WorkItemRow[]
   >`select * from work_items where source_event_key = ${event.sourceEventKey}`;
   if (existing[0]) return mapWorkItem(existing[0]);
+  const referenceId =
+    event.caseType === "annual_return" ? event.annualReturnCaseId : event.corporateChangeRequestId;
+  if (!referenceId) {
+    throw new Error(`ensureWorkItemForEvent: missing case reference for caseType "${event.caseType}".`);
+  }
   const startedAt = event.startedAt ?? new Date().toISOString();
   const policies = await tx<PolicyCalendarRow[]>`
     select p.id policy_id, p.warning_minutes, p.due_minutes, c.id calendar_id,

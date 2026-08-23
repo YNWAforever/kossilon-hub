@@ -42,4 +42,16 @@ describe("caseDetailLinkFor", () => {
   it("returns null when the work item has no case id yet", () => {
     expect(caseDetailLinkFor(makeItem({ annualReturnCaseId: null }))).toBeNull();
   });
+
+  it("returns null for a corporate_change_request work item (no case detail route yet)", () => {
+    expect(
+      caseDetailLinkFor(
+        makeItem({
+          caseType: "corporate_change_request",
+          annualReturnCaseId: null,
+          corporateChangeRequestId: "request-1",
+        }),
+      ),
+    ).toBeNull();
+  });
 });
