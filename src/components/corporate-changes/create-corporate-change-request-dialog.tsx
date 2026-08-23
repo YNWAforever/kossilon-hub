@@ -81,7 +81,7 @@ export function CreateCorporateChangeRequestDialog({
         throw new Error(`${form.changeType} is not available from this dialog yet.`);
       }
 
-      const created = await createCorporateChangeRequest({ data: data as never });
+      const created = await createCorporateChangeRequest({ data });
       setForm(emptyForm());
       onOpenChange(false);
       onCreated(created.id);
