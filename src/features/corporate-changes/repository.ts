@@ -398,6 +398,46 @@ export function createCorporateChangeRequestRepository(
     });
   }
 
+  async function completeRequest(
+    input: CompleteRequestInput,
+  ): Promise<CorporateChangeRequestDetail> {
+    return withTransaction(sql, async (tx) => {
+      await tx`select id from corporate_change_requests where id = ${input.requestId} for update`;
+      const current = await hydrateOrThrow(tx, input.requestId);
+
+      if (current.status !== "Filed with Registrar") {
+        throw new Error(
+          `Cannot complete a request from status ${current.status}; it must be Filed with Registrar.`,
+        );
+      }
+
+      if (current.changeType === "name_change") {
+        await tx`
+          update companies set company_name = ${current.newNameEn}, updated_at = now()
+          where id = ${current.companyId}
+        `;
+      } else if (current.changeType === "address_change") {
+        await tx`
+          update companies set registered_office = ${current.newRegisteredOffice}, updated_at = now()
+          where id = ${current.companyId}
+        `;
+      }
+      // officer_change and share_transfer branches: Tasks 14-15.
+
+      await tx`
+        update corporate_change_requests
+        set status = 'Completed', completed_at = now(), updated_at = now()
+        where id = ${input.requestId}
+      `;
+      await tx`
+        update work_items set status = 'completed', completed_at = now(), updated_at = now()
+        where corporate_change_request_id = ${input.requestId}
+      `;
+
+      return hydrateOrThrow(tx, input.requestId);
+    });
+  }
+
   return {
     listRequests,
     getRequest,
@@ -406,15 +446,9 @@ export function createCorporateChangeRequestRepository(
     updateChecklistItemStatus,
     transitionStatus,
     cancelRequest,
-    completeRequest: notImplemented("completeRequest"),
+    completeRequest,
     async close() {
       if (ownsClient && "end" in sql) await sql.end();
     },
   };
-
-  function notImplemented(name: string): () => never {
-    return () => {
-      throw new Error(`${name} is implemented in a later task.`);
-    };
-  }
 }

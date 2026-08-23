@@ -260,4 +260,76 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
+
+  it(
+    "completing a name_change request updates the company's name and marks the work item completed",
+    async () => {
+      const companyId = await seedTestCompany();
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "name_change",
+        companyId,
+        quotedFee: 3000,
+        newNameEn: "Renamed Test Co Ltd",
+        newNameZh: "新測試有限公司",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Ready to file",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Filed with Registrar",
+        actorId: USER_AMY_ID,
+      });
+
+      const completed = await repository.completeRequest({
+        requestId: created.id,
+        actorId: USER_AMY_ID,
+      });
+      expect(completed.status).toBe("Completed");
+      expect(completed.completedAt).not.toBeNull();
+
+      const sql = sqlForTests();
+      const company = await sql`select company_name from companies where id = ${companyId}`;
+      expect(company[0].company_name).toBe("Renamed Test Co Ltd");
+
+      const workItems = await sql`
+        select status from work_items where corporate_change_request_id = ${created.id}
+      `;
+      expect(workItems[0].status).toBe("completed");
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "rejects completing a request that has not reached Filed with Registrar",
+    async () => {
+      const companyId = await seedTestCompany();
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "address_change",
+        companyId,
+        quotedFee: 2800,
+        newRegisteredOffice: "88 New Road, Central, Hong Kong",
+        actorId: USER_AMY_ID,
+      });
+
+      await expect(
+        repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID }),
+      ).rejects.toThrow(/must be Filed with Registrar/);
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });
