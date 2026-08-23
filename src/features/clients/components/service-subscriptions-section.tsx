@@ -10,7 +10,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DeadlinePill } from "@/components/deadline-pill";
-import { SERVICE_TYPE_LABELS } from "@/features/service-subscriptions/constants";
+import {
+  SERVICE_TYPE_DEFAULT_FEES,
+  SERVICE_TYPE_LABELS,
+} from "@/features/service-subscriptions/constants";
 import { SERVICE_TYPES, type ServiceType } from "@/features/service-subscriptions/types";
 import {
   addServiceSubscription,
@@ -220,7 +223,11 @@ function AddSubscriptionDialog({
                 id="subscription-type"
                 className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm"
                 value={serviceType}
-                onChange={(event) => setServiceType(event.target.value as ServiceType)}
+                onChange={(event) => {
+                  const nextType = event.target.value as ServiceType;
+                  setServiceType(nextType);
+                  setFee(String(SERVICE_TYPE_DEFAULT_FEES[nextType]));
+                }}
                 required
               >
                 <option value="" disabled>

@@ -151,6 +151,20 @@ describe("ServiceSubscriptionsSection", () => {
     expect((screen.getByLabelText("Fee (HKD)") as HTMLInputElement).value).toBe("");
   });
 
+  it("defaults the fee to the selected service type's standard rate", async () => {
+    serverFns.listServiceSubscriptions.mockResolvedValue([secretarySubscription]);
+
+    renderSection();
+    await screen.findByText("Company Secretary");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add subscription" }));
+    fireEvent.change(screen.getByLabelText("Service"), {
+      target: { value: "registered_office" },
+    });
+
+    expect((screen.getByLabelText("Fee (HKD)") as HTMLInputElement).value).toBe("2800");
+  });
+
   it("only disables the row being acted on, not every subscription's buttons", async () => {
     serverFns.listServiceSubscriptions.mockResolvedValue([
       secretarySubscription,
