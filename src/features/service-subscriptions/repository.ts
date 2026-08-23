@@ -130,14 +130,24 @@ export function createServiceSubscriptionRepository(
     return mapSubscription(row);
   }
 
-  async function hydrateById(
+  // renewSubscription/cancelSubscription take both subscriptionId and
+  // companyId from client-supplied server-fn input, and requireWritableCompany
+  // (server-fns.ts) authorizes the actor against companyId alone. Without this
+  // check, a subscriptionId belonging to a DIFFERENT company than the caller's
+  // authorized companyId would still be mutated — a cross-tenant bypass, since
+  // authorization and the actual mutation target would be scoped to two
+  // different rows. Failing with the same "not found" message a genuinely
+  // missing row gets (not a more specific "wrong company" message) avoids
+  // confirming another team's subscription exists.
+  async function hydrateByIdForCompany(
     client: QueryClient,
     subscriptionId: string,
+    companyId: string,
   ): Promise<ServiceSubscription> {
     const rows = await client<SubscriptionRow[]>`
       select id, company_id, service_type, fee, status, renewal_date, cancelled_at
       from service_subscriptions
-      where id = ${subscriptionId}
+      where id = ${subscriptionId} and company_id = ${companyId}
       limit 1
     `;
     const [row] = rows;
@@ -198,9 +208,14 @@ export function createServiceSubscriptionRepository(
       // otherwise read "Active" before either write lands, and the losing
       // write would apply unconditionally with no status re-check. Same
       // pattern as incorporation's completeCase and clients' appointOfficer.
-      await tx`select id from service_subscriptions where id = ${input.subscriptionId} for update`;
+      // Scoped by company_id too — see hydrateByIdForCompany's comment above.
+      await tx`
+        select id from service_subscriptions
+        where id = ${input.subscriptionId} and company_id = ${input.companyId}
+        for update
+      `;
 
-      const current = await hydrateById(tx, input.subscriptionId);
+      const current = await hydrateByIdForCompany(tx, input.subscriptionId, input.companyId);
       if (current.status !== "Active") {
         throw new Error("Cannot renew a subscription that is not Active.");
       }
@@ -210,10 +225,10 @@ export function createServiceSubscriptionRepository(
       await tx`
         update service_subscriptions
         set renewal_date = ${nextRenewalDate}, updated_at = now()
-        where id = ${input.subscriptionId}
+        where id = ${input.subscriptionId} and company_id = ${input.companyId}
       `;
 
-      return hydrateById(tx, input.subscriptionId);
+      return hydrateByIdForCompany(tx, input.subscriptionId, input.companyId);
     });
   }
 
@@ -221,10 +236,15 @@ export function createServiceSubscriptionRepository(
     return withTransaction(sql, async (tx) => {
       await assertActor(tx, input.actorId);
 
-      // Same lock-before-read rationale as renewSubscription above.
-      await tx`select id from service_subscriptions where id = ${input.subscriptionId} for update`;
+      // Same lock-before-read rationale as renewSubscription above, scoped by
+      // company_id too — see hydrateByIdForCompany's comment above.
+      await tx`
+        select id from service_subscriptions
+        where id = ${input.subscriptionId} and company_id = ${input.companyId}
+        for update
+      `;
 
-      const current = await hydrateById(tx, input.subscriptionId);
+      const current = await hydrateByIdForCompany(tx, input.subscriptionId, input.companyId);
       if (current.status !== "Active") {
         throw new Error("Cannot cancel a subscription that is not Active.");
       }
@@ -232,10 +252,10 @@ export function createServiceSubscriptionRepository(
       await tx`
         update service_subscriptions
         set status = 'Cancelled', cancelled_at = now(), updated_at = now()
-        where id = ${input.subscriptionId}
+        where id = ${input.subscriptionId} and company_id = ${input.companyId}
       `;
 
-      return hydrateById(tx, input.subscriptionId);
+      return hydrateByIdForCompany(tx, input.subscriptionId, input.companyId);
     });
   }
 
