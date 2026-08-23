@@ -24,18 +24,17 @@ import type {
 // of importing it. Follow that established convention here.
 type QueryClient = SqlClient | postgres.TransactionSql;
 
-type TransactionSqlClient = QueryClient & { begin?: never };
+type TransactionSqlClient = postgres.TransactionSql;
 
 function withTransaction<T>(
   client: QueryClient,
   handler: (tx: TransactionSqlClient) => Promise<T>,
 ): Promise<T> {
   if ("begin" in client) {
-    return (
-      client as { begin: (fn: (tx: TransactionSqlClient) => Promise<T>) => Promise<T> }
-    ).begin(handler);
+    return client.begin(handler) as Promise<T>;
   }
-  return handler(client as TransactionSqlClient);
+
+  return handler(client);
 }
 
 type RequestRow = {
@@ -81,6 +80,11 @@ type ChecklistRow = {
   received_at: string | Date | null;
   verified_at: string | Date | null;
 };
+
+type RequestSummaryRow = Pick<
+  RequestRow,
+  "id" | "company_id" | "change_type" | "status" | "owner_id" | "quoted_fee" | "created_at"
+> & { company_name: string };
 
 function iso(value: string | Date): string {
   return typeof value === "string" ? value : value.toISOString();
@@ -198,7 +202,7 @@ export function createCorporateChangeRequestRepository(
   async function listRequests(
     filter: ListCorporateChangeRequestsFilter,
   ): Promise<CorporateChangeRequestSummary[]> {
-    const rows = await sql<(RequestRow & { company_name: string })[]>`
+    const rows = await sql<RequestSummaryRow[]>`
       select r.id, r.company_id, r.change_type, r.status, r.owner_id, r.quoted_fee, r.created_at,
              c.company_name
       from corporate_change_requests r
