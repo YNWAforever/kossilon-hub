@@ -201,6 +201,16 @@ export type CeaseOfficerInput = {
   actorId: string;
 };
 
+export type UpdateOfficerDetailsInput = {
+  companyId: string;
+  officerId: string;
+  name: string;
+  identificationType: IdentificationType | null;
+  identificationNumber: string | null;
+  address: string | null;
+  actorId: string;
+};
+
 export type RecordShareholdingInput = {
   companyId: string;
   shareholderName: string;

@@ -843,6 +843,144 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
     }
   });
 
+  it("updates an existing officer's details without ceasing their appointment", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const client = await repository.createClient({
+            companyName: "Update Officer Test Co Ltd",
+            crNumber: `CR-UPD-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-UPD-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          const detail = await repository.appointOfficer({
+            companyId: client.id,
+            officerType: "director",
+            name: "Original Name",
+            identificationType: "hkid",
+            identificationNumber: "A1234567",
+            address: "1 Old Street, Hong Kong",
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+          const officer = detail.officers.find((o) => o.name === "Original Name")!;
+
+          const updated = await repository.updateOfficerDetails({
+            companyId: client.id,
+            officerId: officer.id,
+            name: "Original Name",
+            identificationType: "hkid",
+            identificationNumber: "A1234567",
+            address: "2 New Street, Hong Kong",
+            actorId: owner.id,
+          });
+
+          const updatedOfficer = updated.officers.find((o) => o.id === officer.id)!;
+          expect(updatedOfficer.address).toBe("2 New Street, Hong Kong");
+          expect(updatedOfficer.cessationDate).toBeNull();
+
+          throw new Error("rollback officers integration fixture");
+        }),
+      ).rejects.toThrow("rollback officers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
+  it("throws when updateOfficerDetails targets an officer from another company", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const repository = createClientRepository({ sql: tx });
+
+          const [owner] = await tx<{ id: string }[]>`
+            select id from users where active limit 1
+          `;
+          const [team] = await tx<{ id: string }[]>`
+            select id from teams where active limit 1
+          `;
+
+          const companyA = await repository.createClient({
+            companyName: "Cross Company A Ltd",
+            crNumber: `CR-XA-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-XA-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "A Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          const companyB = await repository.createClient({
+            companyName: "Cross Company B Ltd",
+            crNumber: `CR-XB-${crypto.randomUUID().slice(0, 8)}`,
+            brNumber: `BR-XB-${crypto.randomUUID().slice(0, 8)}`,
+            incorporationDate: "2020-01-15",
+            annualReturnBasisDate: "2020-01-15",
+            registeredOffice: "1 Test Street, Hong Kong",
+            companySecretary: "B Secretary Ltd",
+            ownerId: owner.id,
+            teamId: team.id,
+            contacts: [],
+            actorId: owner.id,
+          });
+
+          const detail = await repository.appointOfficer({
+            companyId: companyA.id,
+            officerType: "director",
+            name: "Cross Company Officer",
+            identificationType: null,
+            identificationNumber: null,
+            address: null,
+            appointmentDate: "2026-01-01",
+            actorId: owner.id,
+          });
+          const officer = detail.officers.find((o) => o.name === "Cross Company Officer")!;
+
+          await expect(
+            repository.updateOfficerDetails({
+              companyId: companyB.id,
+              officerId: officer.id,
+              name: "Cross Company Officer",
+              identificationType: null,
+              identificationNumber: null,
+              address: "Somewhere",
+              actorId: owner.id,
+            }),
+          ).rejects.toThrow("Officer not found for this company.");
+
+          throw new Error("rollback officers integration fixture");
+        }),
+      ).rejects.toThrow("rollback officers integration fixture");
+    } finally {
+      await sql.end();
+    }
+  });
+
   it("serializes concurrent secretary appointments so exactly one ends up active", async () => {
     const setupSql = createSqlClient(databaseUrl!, { max: 1 });
     let companyId: string | undefined;
