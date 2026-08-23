@@ -487,6 +487,131 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
   );
 
   it(
+    "completing a share_transfer to a new shareholder decrements the transferor and creates the transferee",
+    async () => {
+      const companyId = await seedTestCompany();
+      const clients = createClientRepository(databaseUrl!);
+      const seeded = await clients.recordShareholding({
+        companyId,
+        shareholderName: "Original Holder",
+        shareholderAddress: null,
+        shareClass: "Ordinary",
+        numberOfShares: 1000,
+        allotmentDate: "2020-01-01",
+        actorId: USER_AMY_ID,
+      });
+      const transferor = seeded.shareholdings.find((s) => s.shareholderName === "Original Holder")!;
+      await clients.close();
+
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "share_transfer",
+        companyId,
+        quotedFee: 2500,
+        transferorShareholdingId: transferor.id,
+        sharesTransferred: 400,
+        consideration: 400000,
+        stampDutyAmount: 800,
+        transfereeShareholdingId: null,
+        transfereeNewShareholderName: "New Holder",
+        transfereeNewShareholderAddress: "9 Test Ave, Hong Kong",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Ready to file",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Filed with Registrar",
+        actorId: USER_AMY_ID,
+      });
+
+      await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
+
+      const clientsAfter = createClientRepository(databaseUrl!);
+      const detail = await clientsAfter.getClient(companyId);
+      const originalAfter = detail!.shareholdings.find((s) => s.id === transferor.id)!;
+      const newHolder = detail!.shareholdings.find((s) => s.shareholderName === "New Holder")!;
+      expect(originalAfter.numberOfShares).toBe(600);
+      expect(originalAfter.cessationDate).toBeNull();
+      expect(newHolder.numberOfShares).toBe(400);
+      await clientsAfter.close();
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "completing a full share_transfer (all shares) sets the transferor's cessation date",
+    async () => {
+      const companyId = await seedTestCompany();
+      const clients = createClientRepository(databaseUrl!);
+      const seeded = await clients.recordShareholding({
+        companyId,
+        shareholderName: "Full Seller",
+        shareholderAddress: null,
+        shareClass: "Ordinary",
+        numberOfShares: 500,
+        allotmentDate: "2020-01-01",
+        actorId: USER_AMY_ID,
+      });
+      const transferor = seeded.shareholdings.find((s) => s.shareholderName === "Full Seller")!;
+      await clients.close();
+
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "share_transfer",
+        companyId,
+        quotedFee: 2500,
+        transferorShareholdingId: transferor.id,
+        sharesTransferred: 500,
+        consideration: 500000,
+        stampDutyAmount: 1000,
+        transfereeShareholdingId: null,
+        transfereeNewShareholderName: "Full Buyer",
+        transfereeNewShareholderAddress: "10 Test Ave, Hong Kong",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Ready to file",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Filed with Registrar",
+        actorId: USER_AMY_ID,
+      });
+      await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
+
+      const clientsAfter = createClientRepository(databaseUrl!);
+      const detail = await clientsAfter.getClient(companyId);
+      const soldOut = detail!.shareholdings.find((s) => s.id === transferor.id)!;
+      // The row keeps its historical share count (matching ceaseShareholding's pattern) rather
+      // than being zeroed out — shareholdings.number_of_shares has a `> 0` check constraint.
+      expect(soldOut.numberOfShares).toBe(500);
+      expect(soldOut.cessationDate).not.toBeNull();
+      await clientsAfter.close();
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "rejects completing a request that has not reached Filed with Registrar",
     async () => {
       const companyId = await seedTestCompany();

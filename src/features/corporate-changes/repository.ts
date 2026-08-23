@@ -477,8 +477,63 @@ export function createCorporateChangeRequestRepository(
         } else {
           throw new Error(`Unhandled officer action: ${String(current.officerAction)}`);
         }
+      } else if (current.changeType === "share_transfer") {
+        const clientsRepository = createClientRepository(undefined, { sql: tx });
+
+        await tx`select id from shareholdings where id = ${current.transferorShareholdingId} for update`;
+        if (current.transfereeShareholdingId) {
+          await tx`select id from shareholdings where id = ${current.transfereeShareholdingId} for update`;
+        }
+
+        const transferorRows = await tx<
+          { number_of_shares: number; allotment_date: string | Date }[]
+        >`
+          select number_of_shares, allotment_date from shareholdings where id = ${current.transferorShareholdingId}
+        `;
+        const transferor = transferorRows[0];
+        if (!transferor) throw new Error("Transferor shareholding not found.");
+
+        const remaining = transferor.number_of_shares - current.sharesTransferred!;
+        if (remaining < 0)
+          throw new Error("Cannot transfer more shares than the transferor holds.");
+
+        if (remaining === 0) {
+          // shareholdings.number_of_shares has a `> 0` check constraint (0015), and
+          // ceaseShareholding (clients/repository.ts) already establishes the pattern for a
+          // fully-divested holding: keep the historical share count and only record when it
+          // ceased. Mirror that here instead of zeroing the column, which would violate the
+          // constraint and erase the record of how many shares this holder used to have.
+          await tx`
+            update shareholdings
+            set cessation_date = ${current.effectiveDate ?? current.updatedAt.slice(0, 10)},
+                updated_at = now()
+            where id = ${current.transferorShareholdingId}
+          `;
+        } else {
+          await tx`
+            update shareholdings set number_of_shares = ${remaining}, updated_at = now()
+            where id = ${current.transferorShareholdingId}
+          `;
+        }
+
+        if (current.transfereeShareholdingId) {
+          await tx`
+            update shareholdings
+            set number_of_shares = number_of_shares + ${current.sharesTransferred}, updated_at = now()
+            where id = ${current.transfereeShareholdingId}
+          `;
+        } else {
+          await clientsRepository.recordShareholding({
+            companyId: current.companyId,
+            shareholderName: current.transfereeNewShareholderName!,
+            shareholderAddress: current.transfereeNewShareholderAddress,
+            shareClass: "Ordinary",
+            numberOfShares: current.sharesTransferred!,
+            allotmentDate: current.effectiveDate ?? current.updatedAt.slice(0, 10),
+            actorId: input.actorId,
+          });
+        }
       }
-      // share_transfer branch: Task 15.
 
       await tx`
         update corporate_change_requests
