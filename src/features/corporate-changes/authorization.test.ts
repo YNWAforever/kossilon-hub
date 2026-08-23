@@ -48,6 +48,18 @@ describe("assertCorporateChangeRequestWritable", () => {
       }),
     ).not.toThrow();
   });
+
+  it("rejects a Manager reaching into another team", () => {
+    expect(() =>
+      assertCorporateChangeRequestWritable(actor({ role: "Manager" }), { assignedTeamId: TEAM_B }),
+    ).toThrow(/Forbidden/);
+  });
+
+  it("rejects a staff actor with no team rather than defaulting open", () => {
+    expect(() =>
+      assertCorporateChangeRequestWritable(actor({ teamId: null }), { assignedTeamId: TEAM_A }),
+    ).toThrow(/Forbidden:.*no assigned team/);
+  });
 });
 
 describe("assertCorporateChangeRequestCreatable", () => {
