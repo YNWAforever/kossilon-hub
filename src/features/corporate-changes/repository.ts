@@ -18,6 +18,7 @@ import type {
   CorporateChangeRequestSummary,
   CorporateChangeType,
   CreateCorporateChangeRequestInput,
+  IdentificationType,
   ListCorporateChangeRequestsFilter,
   TransitionStatusInput,
   UpdateChecklistItemStatusInput,
@@ -442,16 +443,39 @@ export function createCorporateChangeRequestRepository(
             cessationDate: current.effectiveDate!,
             actorId: input.actorId,
           });
-        } else {
+        } else if (current.officerAction === "detail_change") {
+          // The request stores only the fields the requester chose to change; a null field
+          // means "leave as-is", not "overwrite with null". Read the officer's current values
+          // so unspecified fields survive the update instead of being nulled out.
+          const existingOfficerRows = await tx<
+            {
+              name: string;
+              identification_type: IdentificationType | null;
+              identification_number: string | null;
+              address: string | null;
+            }[]
+          >`
+            select name, identification_type, identification_number, address
+            from officers where id = ${current.officerId}
+          `;
+          const existingOfficer = existingOfficerRows[0];
+          if (!existingOfficer) {
+            throw new Error("Officer not found for detail_change completion.");
+          }
+
           await clientsRepository.updateOfficerDetails({
             companyId: current.companyId,
             officerId: current.officerId!,
-            name: current.newOfficerName!,
-            identificationType: current.newOfficerIdentificationType,
-            identificationNumber: current.newOfficerIdentificationNumber,
-            address: current.newOfficerAddress,
+            name: current.newOfficerName ?? existingOfficer.name,
+            identificationType:
+              current.newOfficerIdentificationType ?? existingOfficer.identification_type,
+            identificationNumber:
+              current.newOfficerIdentificationNumber ?? existingOfficer.identification_number,
+            address: current.newOfficerAddress ?? existingOfficer.address,
             actorId: input.actorId,
           });
+        } else {
+          throw new Error(`Unhandled officer action: ${String(current.officerAction)}`);
         }
       }
       // share_transfer branch: Task 15.

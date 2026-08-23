@@ -361,6 +361,132 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
   );
 
   it(
+    "completing an officer_change resign request marks the existing officer ceased",
+    async () => {
+      const companyId = await seedTestCompany();
+      const clients = createClientRepository(databaseUrl!);
+      const detail = await clients.appointOfficer({
+        companyId,
+        officerType: "director",
+        name: "Departing Director",
+        identificationType: "hkid",
+        identificationNumber: "C1234567",
+        address: "1 Old Street, Hong Kong",
+        appointmentDate: "2020-01-01",
+        actorId: USER_AMY_ID,
+      });
+      const officer = detail.officers.find((o) => o.name === "Departing Director")!;
+      await clients.close();
+
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "officer_change",
+        companyId,
+        quotedFee: 1000,
+        officerAction: "resign",
+        officerId: officer.id,
+        newOfficerType: null,
+        newOfficerName: null,
+        newOfficerIdentificationType: null,
+        newOfficerIdentificationNumber: null,
+        newOfficerAddress: null,
+        effectiveDate: "2026-09-01",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Ready to file",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Filed with Registrar",
+        actorId: USER_AMY_ID,
+      });
+
+      await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
+
+      const clientsAfter = createClientRepository(databaseUrl!);
+      const detailAfter = await clientsAfter.getClient(companyId);
+      const resigned = detailAfter!.officers.find((o) => o.id === officer.id)!;
+      expect(resigned.cessationDate).not.toBeNull();
+      await clientsAfter.close();
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "completing an officer_change detail_change request that only sets a new address leaves the officer's name unchanged",
+    async () => {
+      const companyId = await seedTestCompany();
+      const clients = createClientRepository(databaseUrl!);
+      const detail = await clients.appointOfficer({
+        companyId,
+        officerType: "director",
+        name: "Unchanged Name Director",
+        identificationType: "hkid",
+        identificationNumber: "D1234567",
+        address: "1 Old Address, Hong Kong",
+        appointmentDate: "2020-01-01",
+        actorId: USER_AMY_ID,
+      });
+      const officer = detail.officers.find((o) => o.name === "Unchanged Name Director")!;
+      await clients.close();
+
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "officer_change",
+        companyId,
+        quotedFee: 1000,
+        officerAction: "detail_change",
+        officerId: officer.id,
+        newOfficerType: null,
+        newOfficerName: null,
+        newOfficerIdentificationType: null,
+        newOfficerIdentificationNumber: null,
+        newOfficerAddress: "9 New Address, Hong Kong",
+        effectiveDate: "2026-09-01",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Documents pending",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Ready to file",
+        actorId: USER_AMY_ID,
+      });
+      await repository.transitionStatus({
+        requestId: created.id,
+        toStatus: "Filed with Registrar",
+        actorId: USER_AMY_ID,
+      });
+
+      await repository.completeRequest({ requestId: created.id, actorId: USER_AMY_ID });
+
+      const clientsAfter = createClientRepository(databaseUrl!);
+      const detailAfter = await clientsAfter.getClient(companyId);
+      const updated = detailAfter!.officers.find((o) => o.id === officer.id)!;
+      expect(updated.name).toBe("Unchanged Name Director");
+      expect(updated.identificationNumber).toBe("D1234567");
+      expect(updated.address).toBe("9 New Address, Hong Kong");
+      await clientsAfter.close();
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "rejects completing a request that has not reached Filed with Registrar",
     async () => {
       const companyId = await seedTestCompany();
