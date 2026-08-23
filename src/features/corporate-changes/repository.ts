@@ -246,10 +246,7 @@ export function createCorporateChangeRequestRepository(
     cancelRequest: notImplemented("cancelRequest"),
     completeRequest: notImplemented("completeRequest"),
     async close() {
-      // `ownsClient` is only true when `sql` was created internally via `createSqlClient`
-      // above (never when a `TransactionSql` was injected via `options.sql`), so this
-      // cast is safe; `end()` is not part of the `postgres.TransactionSql` interface.
-      if (ownsClient) await (sql as SqlClient).end();
+      if (ownsClient && "end" in sql) await sql.end();
     },
   };
 
