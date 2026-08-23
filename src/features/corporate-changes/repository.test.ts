@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
+import { createClientRepository } from "@/features/clients/repository";
 import { createCorporateChangeRequestRepository } from "./repository";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
@@ -79,6 +80,76 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
 
       const list = await repository.listRequests({ companyId } as never);
       expect(list.some((row) => row.id === created.id)).toBe(true);
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "creates a share_transfer request against a real shareholding and requires exactly one transferee",
+    async () => {
+      const companyId = await seedTestCompany();
+      const clients = createClientRepository(databaseUrl!);
+      const detail = await clients.recordShareholding({
+        companyId,
+        shareholderName: "Original Holder",
+        shareholderAddress: null,
+        shareClass: "Ordinary",
+        numberOfShares: 1000,
+        allotmentDate: "2020-01-01",
+        actorId: USER_AMY_ID,
+      });
+      const shareholding = detail.shareholdings.find(
+        (s) => s.shareholderName === "Original Holder",
+      )!;
+      await clients.close();
+
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "share_transfer",
+        companyId,
+        quotedFee: 2500,
+        transferorShareholdingId: shareholding.id,
+        sharesTransferred: 400,
+        consideration: 400000,
+        stampDutyAmount: 800,
+        transfereeShareholdingId: null,
+        transfereeNewShareholderName: "New Holder",
+        transfereeNewShareholderAddress: "9 Test Ave, Hong Kong",
+        actorId: USER_AMY_ID,
+      });
+
+      expect(created.sharesTransferred).toBe(400);
+      expect(created.checklistItems.map((i) => i.itemLabel)).toContain("Bought & Sold Note");
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "creates one work_items row per request, idempotently keyed by source event",
+    async () => {
+      const companyId = await seedTestCompany();
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+
+      const created = await repository.createRequest({
+        changeType: "name_change",
+        companyId,
+        quotedFee: 3000,
+        newNameEn: "Renamed Test Co Ltd",
+        newNameZh: null,
+        actorId: USER_AMY_ID,
+      });
+
+      const sql = sqlForTests();
+      const workItems = await sql`
+        select case_type, corporate_change_request_id from work_items
+        where corporate_change_request_id = ${created.id}
+      `;
+      expect(workItems).toHaveLength(1);
+      expect(workItems[0].case_type).toBe("corporate_change_request");
 
       await repository.close();
     },

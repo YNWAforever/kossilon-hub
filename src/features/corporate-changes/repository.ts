@@ -5,6 +5,9 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import { rethrowClientWriteError } from "@/features/clients/errors";
+import { ensureWorkItemForEvent } from "@/features/work-items/repository";
+import { checklistLabelsFor } from "./workflow";
 import type {
   CancelRequestInput,
   CompleteRequestInput,
@@ -237,14 +240,102 @@ export function createCorporateChangeRequestRepository(
     return rows[0].assigned_team_id;
   }
 
-  // createRequest/updateChecklistItemStatus/transitionStatus/cancelRequest/completeRequest
-  // are implemented in Tasks 11-15.
+  async function createRequest(
+    input: CreateCorporateChangeRequestInput,
+  ): Promise<CorporateChangeRequestDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        const companyRows = await tx<{ id: string; assigned_team_id: string }[]>`
+          select id, assigned_team_id from companies where id = ${input.companyId} for update
+        `;
+        const company = companyRows[0];
+        if (!company) throw new Error("Company not found.");
+
+        let insertedId: string;
+
+        if (input.changeType === "name_change") {
+          const rows = await tx<{ id: string }[]>`
+            insert into corporate_change_requests (
+              company_id, change_type, owner_id, quoted_fee, new_name_en, new_name_zh
+            ) values (
+              ${input.companyId}, 'name_change', ${input.actorId}, ${input.quotedFee},
+              ${input.newNameEn}, ${input.newNameZh}
+            ) returning id
+          `;
+          insertedId = rows[0].id;
+        } else if (input.changeType === "share_transfer") {
+          const rows = await tx<{ id: string }[]>`
+            insert into corporate_change_requests (
+              company_id, change_type, owner_id, quoted_fee,
+              transferor_shareholding_id, transferee_shareholding_id,
+              transferee_new_shareholder_name, transferee_new_shareholder_address,
+              shares_transferred, consideration, stamp_duty_amount
+            ) values (
+              ${input.companyId}, 'share_transfer', ${input.actorId}, ${input.quotedFee},
+              ${input.transferorShareholdingId}, ${input.transfereeShareholdingId},
+              ${input.transfereeNewShareholderName}, ${input.transfereeNewShareholderAddress},
+              ${input.sharesTransferred}, ${input.consideration}, ${input.stampDutyAmount}
+            ) returning id
+          `;
+          insertedId = rows[0].id;
+        } else if (input.changeType === "officer_change") {
+          const rows = await tx<{ id: string }[]>`
+            insert into corporate_change_requests (
+              company_id, change_type, owner_id, quoted_fee,
+              officer_id, officer_action, new_officer_type, new_officer_name,
+              new_officer_identification_type, new_officer_identification_number,
+              new_officer_address, effective_date
+            ) values (
+              ${input.companyId}, 'officer_change', ${input.actorId}, ${input.quotedFee},
+              ${input.officerId}, ${input.officerAction}, ${input.newOfficerType}, ${input.newOfficerName},
+              ${input.newOfficerIdentificationType}, ${input.newOfficerIdentificationNumber},
+              ${input.newOfficerAddress}, ${input.effectiveDate}
+            ) returning id
+          `;
+          insertedId = rows[0].id;
+        } else {
+          const rows = await tx<{ id: string }[]>`
+            insert into corporate_change_requests (
+              company_id, change_type, owner_id, quoted_fee, new_registered_office
+            ) values (
+              ${input.companyId}, 'address_change', ${input.actorId}, ${input.quotedFee},
+              ${input.newRegisteredOffice}
+            ) returning id
+          `;
+          insertedId = rows[0].id;
+        }
+
+        for (const label of checklistLabelsFor(input.changeType)) {
+          await tx`
+            insert into corporate_change_checklist_items (request_id, item_label)
+            values (${insertedId}, ${label})
+          `;
+        }
+
+        await ensureWorkItemForEvent(tx, {
+          companyId: input.companyId,
+          caseType: "corporate_change_request",
+          corporateChangeRequestId: insertedId,
+          sourceEventKey: `corporate-change:${insertedId}:created`,
+          sourceEventType: "corporate_change_request_created",
+          workType: "corporate_change_request",
+          title: `Process ${input.changeType.replace("_", " ")} request`,
+          ownerId: input.actorId,
+          teamId: company.assigned_team_id,
+        });
+
+        return hydrateOrThrow(tx, insertedId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
 
   return {
     listRequests,
     getRequest,
     getCompanyTeamId,
-    createRequest: notImplemented("createRequest"),
+    createRequest,
     updateChecklistItemStatus: notImplemented("updateChecklistItemStatus"),
     transitionStatus: notImplemented("transitionStatus"),
     cancelRequest: notImplemented("cancelRequest"),
