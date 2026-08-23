@@ -335,7 +335,7 @@ export function createCorporateChangeRequestRepository(
     input: UpdateChecklistItemStatusInput,
   ): Promise<CorporateChangeRequestDetail> {
     return withTransaction(sql, async (tx) => {
-      await tx`
+      const rows = await tx<{ id: string }[]>`
         update corporate_change_checklist_items
         set status = ${input.status},
             note = ${input.note},
@@ -343,7 +343,11 @@ export function createCorporateChangeRequestRepository(
             verified_at = case when ${input.status} = 'Verified' then now() else verified_at end,
             updated_at = now()
         where id = ${input.itemId} and request_id = ${input.requestId}
+        returning id
       `;
+      if (rows.length === 0) {
+        throw new Error("Checklist item not found for this corporate change request.");
+      }
       return hydrateOrThrow(tx, input.requestId);
     });
   }

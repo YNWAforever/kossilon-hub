@@ -200,6 +200,34 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
   );
 
   it(
+    "rejects updateChecklistItemStatus when the item does not belong to the request",
+    async () => {
+      const companyId = await seedTestCompany();
+      const repository = createCorporateChangeRequestRepository(databaseUrl!);
+      const created = await repository.createRequest({
+        changeType: "address_change",
+        companyId,
+        quotedFee: 2800,
+        newRegisteredOffice: "88 New Road, Central, Hong Kong",
+        actorId: USER_AMY_ID,
+      });
+
+      await expect(
+        repository.updateChecklistItemStatus({
+          requestId: created.id,
+          itemId: "00000000-0000-0000-0000-000000000000",
+          status: "Verified",
+          note: null,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/Checklist item not found/);
+
+      await repository.close();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "cancels a request and marks its linked work item cancelled",
     async () => {
       const companyId = await seedTestCompany();
