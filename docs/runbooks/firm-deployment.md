@@ -18,6 +18,13 @@ npm.cmd run db:migrate
 
 Approval is required to use any staging or production `DATABASE_URL`, run migrations outside an isolated local database, or rotate a secret.
 
+- After migration 0020 is applied, confirm an active `sla_policies` row exists with
+  `work_type = 'corporate_change_request'` (seeded automatically by `npm run db:seed`
+  in demo/staging; in production, insert it manually the same way `annual_return_case`'s
+  policy was originally set up, referencing an existing active `business_calendars` row).
+  Without it, creating a corporate change request fails with "No active SLA policy
+  exists for work type corporate_change_request."
+
 ## Runtime health
 
 Verify the following bindings through the deployment provider's redacted environment view: `FIRM_ID`, Neon Auth URL and cookie secret, `DATABASE_URL`, `DOCUMENTS_BUCKET`, WOZTELL bindings, and `EMAIL_FROM`.
