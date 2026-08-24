@@ -61,6 +61,10 @@ async function cleanupClientFixtures() {
   await sql`delete from shareholdings where company_id = any(${allCompanyIds}::uuid[])`;
   await sql`delete from significant_controllers where company_id = any(${allCompanyIds}::uuid[])`;
   await sql`delete from scr_inspection_requests where company_id = any(${allCompanyIds}::uuid[])`;
+  await sql`delete from work_items where corporate_change_request_id in (
+    select id from corporate_change_requests where company_id = any(${allCompanyIds}::uuid[])
+  )`;
+  await sql`delete from corporate_change_requests where company_id = any(${allCompanyIds}::uuid[])`;
 
   // Companies cascade to contacts, cases, payments, and timeline events.
   await sql`delete from companies where id = any(${companyIds}::uuid[])`;
