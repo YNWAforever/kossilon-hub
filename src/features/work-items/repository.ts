@@ -27,6 +27,7 @@ export type PersistedWorkItem = {
   companyId: string;
   caseType: WorkItemCaseType;
   annualReturnCaseId: string | null;
+  corporateChangeRequestId: string | null;
   sourceEventKey: string;
   sourceEventType: string;
   workType: string;
@@ -52,6 +53,7 @@ type WorkItemRow = {
   company_id: string;
   case_type: WorkItemCaseType;
   annual_return_case_id: string | null;
+  corporate_change_request_id: string | null;
   source_event_key: string;
   source_event_type: string;
   work_type: string;
@@ -104,7 +106,8 @@ export type AcknowledgeEscalationInput = {
 export type EnsureWorkItemEvent = {
   companyId: string;
   caseType: WorkItemCaseType;
-  annualReturnCaseId: string;
+  annualReturnCaseId?: string | null;
+  corporateChangeRequestId?: string | null;
   sourceEventKey: string;
   sourceEventType: string;
   workType: string;
@@ -133,6 +136,7 @@ function mapWorkItem(row: WorkItemRow): PersistedWorkItem {
     companyId: row.company_id,
     caseType: row.case_type,
     annualReturnCaseId: row.annual_return_case_id,
+    corporateChangeRequestId: row.corporate_change_request_id,
     sourceEventKey: row.source_event_key,
     sourceEventType: row.source_event_type,
     workType: row.work_type,
@@ -318,6 +322,13 @@ export async function ensureWorkItemForEvent(
     WorkItemRow[]
   >`select * from work_items where source_event_key = ${event.sourceEventKey}`;
   if (existing[0]) return mapWorkItem(existing[0]);
+  const referenceId =
+    event.caseType === "annual_return" ? event.annualReturnCaseId : event.corporateChangeRequestId;
+  if (!referenceId) {
+    throw new Error(
+      `ensureWorkItemForEvent: missing case reference for caseType "${event.caseType}".`,
+    );
+  }
   const startedAt = event.startedAt ?? new Date().toISOString();
   const policies = await tx<PolicyCalendarRow[]>`
     select p.id policy_id, p.warning_minutes, p.due_minutes, c.id calendar_id,
@@ -359,11 +370,13 @@ export async function ensureWorkItemForEvent(
   );
   const inserted = await tx<WorkItemRow[]>`
     insert into work_items (
-      company_id, case_type, annual_return_case_id, source_event_key, source_event_type,
+      company_id, case_type, annual_return_case_id, corporate_change_request_id,
+      source_event_key, source_event_type,
       work_type, required_skill_key, title, priority, owner_id, reviewer_id, team_id,
       sla_policy_version_id, sla_started_at, sla_warning_at, sla_due_at
     ) values (
-      ${event.companyId}, ${event.caseType}, ${event.annualReturnCaseId}, ${event.sourceEventKey},
+      ${event.companyId}, ${event.caseType}, ${event.annualReturnCaseId ?? null},
+      ${event.corporateChangeRequestId ?? null}, ${event.sourceEventKey},
       ${event.sourceEventType}, ${event.workType}, ${event.requiredSkillKey ?? null},
       ${event.title}, ${event.priority ?? 50}, ${event.ownerId ?? null}, ${event.reviewerId ?? null},
       ${event.teamId ?? null}, ${snapshot.policyVersionId}, ${snapshot.startedAt},

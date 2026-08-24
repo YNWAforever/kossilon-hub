@@ -27,13 +27,19 @@ type SlaFilter = "all" | PersistedWorkItem["escalationState"];
 type PriorityFilter = "all" | "high" | "normal";
 type StatusFilter = "all" | PersistedWorkItem["status"];
 
-type CaseDetailLink = { to: "/annual-returns/$id"; params: { id: string } };
+type CaseDetailLink =
+  | { to: "/annual-returns/$id"; params: { id: string } }
+  | { to: "/corporate-changes/$id"; params: { id: string } };
 
 export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | null {
   switch (item.caseType) {
     case "annual_return":
       return item.annualReturnCaseId
         ? { to: "/annual-returns/$id", params: { id: item.annualReturnCaseId } }
+        : null;
+    case "corporate_change_request":
+      return item.corporateChangeRequestId
+        ? { to: "/corporate-changes/$id", params: { id: item.corporateChangeRequestId } }
         : null;
     default: {
       const exhaustive: never = item.caseType;

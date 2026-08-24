@@ -8,6 +8,7 @@ function makeItem(overrides: Partial<PersistedWorkItem> = {}): PersistedWorkItem
     companyId: "company-1",
     caseType: "annual_return",
     annualReturnCaseId: "case-1",
+    corporateChangeRequestId: null,
     sourceEventKey: "event:wi-1",
     sourceEventType: "annual_return_case_created",
     workType: "annual_return_case",
@@ -40,5 +41,32 @@ describe("caseDetailLinkFor", () => {
 
   it("returns null when the work item has no case id yet", () => {
     expect(caseDetailLinkFor(makeItem({ annualReturnCaseId: null }))).toBeNull();
+  });
+
+  it("links a corporate_change_request work item to its request detail route", () => {
+    expect(
+      caseDetailLinkFor(
+        makeItem({
+          caseType: "corporate_change_request",
+          annualReturnCaseId: null,
+          corporateChangeRequestId: "request-1",
+        }),
+      ),
+    ).toEqual({
+      to: "/corporate-changes/$id",
+      params: { id: "request-1" },
+    });
+  });
+
+  it("returns null for a corporate_change_request work item with no case id yet", () => {
+    expect(
+      caseDetailLinkFor(
+        makeItem({
+          caseType: "corporate_change_request",
+          annualReturnCaseId: null,
+          corporateChangeRequestId: null,
+        }),
+      ),
+    ).toBeNull();
   });
 });

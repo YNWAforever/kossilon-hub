@@ -500,6 +500,20 @@ const slaPolicies = [
     effectiveFrom: "2026-01-01T00:00:00.000Z",
     createdBy: users[0].id,
   },
+  {
+    id: fixtureId("95000000", 2),
+    policyKey: "corporate-change-request",
+    version: 1,
+    name: "Corporate change request SLA",
+    workType: "corporate_change_request",
+    businessCalendarId: businessCalendars[0].id,
+    warningMinutes: 2880,
+    dueMinutes: 5760,
+    escalationTargets: ["manager"],
+    priorityModifier: 0,
+    effectiveFrom: "2026-01-01T00:00:00.000Z",
+    createdBy: users[0].id,
+  },
 ];
 
 const workItemFixtures = companies.map((company, index) => ({

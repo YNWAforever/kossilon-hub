@@ -3,6 +3,7 @@ import { createSqlClient } from "@/server/db/client";
 import {
   assignmentDecisionFor,
   createWorkItemRepository,
+  ensureWorkItemForEvent,
   escalationTransitionsFor,
   sortWorkItemQueue,
   type PersistedWorkItem,
@@ -14,6 +15,7 @@ function item(id: string, input: Partial<PersistedWorkItem> = {}): PersistedWork
     companyId: "company-1",
     caseType: "annual_return",
     annualReturnCaseId: "case-1",
+    corporateChangeRequestId: null,
     sourceEventKey: `event:${id}`,
     sourceEventType: "status_changed",
     workType: "annual_return_status",
@@ -334,6 +336,90 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
           // The item is unassigned when it first breaches and assigned later in this
           // test, so both branches of the recipient fallback are exercised here.
           expect(notifications.map((row) => row.recipient)).toContain(manager.email);
+
+          throw new Error(rollbackMessage);
+        }),
+      ).rejects.toThrow(rollbackMessage);
+    } finally {
+      await sql.end();
+    }
+  }, 20_000);
+});
+
+describe.skipIf(!databaseUrl)("ensureWorkItemForEvent", () => {
+  it("creates a work item for a corporate_change_request case using its own FK column", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+    const rollbackMessage = "rollback corporate change request work item fixture";
+
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          // Reuse the calendar backing the seeded annual_return_case SLA policy so
+          // this test doesn't need to seed its own business_calendars fixture.
+          const [calendar] = await tx<{ business_calendar_id: string }[]>`
+            select business_calendar_id from sla_policies
+            where work_type = 'annual_return_case' and active = true
+            order by version desc limit 1
+          `;
+          expect(calendar).toBeDefined();
+
+          const [team] = await tx<{ id: string }[]>`select id from teams limit 1`;
+          expect(team).toBeDefined();
+          const [user] = await tx<{ id: string }[]>`
+            select id from users where active = true limit 1
+          `;
+          expect(user).toBeDefined();
+          const ownerId = user.id;
+
+          const companyId = crypto.randomUUID();
+          await tx`
+            insert into companies (
+              id, company_name, cr_number, br_number, incorporation_date,
+              annual_return_basis_date, registered_office, company_secretary,
+              status, assigned_owner_id, assigned_team_id
+            ) values (
+              ${companyId}, 'Task 8 Test Company Ltd', ${`T8CR${companyId.slice(0, 8)}`},
+              ${`T8BR${companyId.slice(0, 8)}`}, '2021-07-01', '2026-07-01',
+              'Unit 8, Test Tower, Hong Kong', 'Kossilon Corporate Services Limited',
+              'active', ${ownerId}, ${team.id}
+            )
+          `;
+
+          const requestId = crypto.randomUUID();
+          await tx`
+            insert into corporate_change_requests (
+              id, company_id, change_type, owner_id, quoted_fee, new_registered_office
+            ) values (
+              ${requestId}, ${companyId}, 'address_change', ${ownerId}, 1500,
+              'Unit 9, New Tower, Hong Kong'
+            )
+          `;
+
+          await tx`
+            insert into sla_policies (
+              policy_key, version, name, work_type, business_calendar_id,
+              warning_minutes, due_minutes, effective_from, active, created_by
+            ) values (
+              'corporate_change_request', 1, 'Corporate change request SLA', 'corporate_change_request',
+              ${calendar.business_calendar_id}, 2880, 5760, now(), true, ${ownerId}
+            )
+          `;
+
+          const workItem = await ensureWorkItemForEvent(tx, {
+            companyId,
+            caseType: "corporate_change_request",
+            corporateChangeRequestId: requestId,
+            sourceEventKey: `corporate-change:${requestId}:created`,
+            sourceEventType: "corporate_change_request_created",
+            workType: "corporate_change_request",
+            title: "Process corporate change request",
+            ownerId,
+            teamId: team.id,
+          });
+
+          expect(workItem.caseType).toBe("corporate_change_request");
+          expect(workItem.corporateChangeRequestId).toBe(requestId);
+          expect(workItem.annualReturnCaseId).toBeNull();
 
           throw new Error(rollbackMessage);
         }),

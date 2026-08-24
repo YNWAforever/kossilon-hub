@@ -37,6 +37,7 @@ import type {
   UpdateClientInput,
   UpdateContactInput,
   UpdateControllerParticularsInput,
+  UpdateOfficerDetailsInput,
 } from "./types";
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -57,6 +58,7 @@ export type ClientRepository = {
   updateContact(input: UpdateContactInput): Promise<ClientDetail>;
   removeContact(input: RemoveContactInput): Promise<ClientDetail>;
   appointOfficer(input: AppointOfficerInput): Promise<ClientDetail>;
+  updateOfficerDetails(input: UpdateOfficerDetailsInput): Promise<ClientDetail>;
   ceaseOfficer(input: CeaseOfficerInput): Promise<ClientDetail>;
   recordShareholding(input: RecordShareholdingInput): Promise<ClientDetail>;
   ceaseShareholding(input: CeaseShareholdingInput): Promise<ClientDetail>;
@@ -859,6 +861,43 @@ export function createClientRepository(
     }
   }
 
+  async function updateOfficerDetails(input: UpdateOfficerDetailsInput): Promise<ClientDetail> {
+    try {
+      return await withTransaction(sql, async (tx) => {
+        await assertActor(tx, input.actorId);
+        const officer = await assertOfficerBelongsToCompany(tx, input.companyId, input.officerId);
+
+        await tx`
+          update officers
+          set name = ${input.name},
+              identification_type = ${input.identificationType},
+              identification_number = ${input.identificationNumber},
+              address = ${input.address},
+              updated_at = now()
+          where id = ${input.officerId} and company_id = ${input.companyId}
+        `;
+
+        if (officer.officer_type === "secretary") {
+          await tx`
+            update companies set company_secretary = ${input.name}, updated_at = now()
+            where id = ${input.companyId}
+          `;
+        }
+
+        await writeTimelineEvent(tx, {
+          companyId: input.companyId,
+          eventType: "officer_details_updated",
+          actorId: input.actorId,
+          description: `Updated details for ${input.name} (${officer.officer_type}).`,
+        });
+
+        return hydrateOrThrow(tx, input.companyId);
+      });
+    } catch (error) {
+      rethrowClientWriteError(error);
+    }
+  }
+
   async function assertOfficerBelongsToCompany(
     tx: TransactionSqlClient,
     companyId: string,
@@ -1207,6 +1246,7 @@ export function createClientRepository(
     updateContact,
     removeContact,
     appointOfficer,
+    updateOfficerDetails,
     ceaseOfficer,
     recordShareholding,
     ceaseShareholding,
