@@ -95,6 +95,12 @@ describe("mergeCaseHistory", () => {
     expect(entry.createdAt).toBe("2026-08-01T09:00:00.000Z");
   });
 
+  it("coerces the numeric string postgres returns for recommendation_score into a number", () => {
+    const [entry] = mergeCaseHistory([], [{ ...baseAssignmentRow, recommendation_score: "0.0000" }]);
+
+    expect(entry).toMatchObject({ recommendationScore: 0 });
+  });
+
   it("breaks ties on identical timestamps deterministically by id", () => {
     const at = "2026-08-02T09:00:00.000Z";
     const auditRow = {
