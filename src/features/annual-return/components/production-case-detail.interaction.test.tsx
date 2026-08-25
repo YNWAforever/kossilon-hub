@@ -319,7 +319,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
         assignedToId: nextOwnerId,
         assignedToName: "Ken Wong",
         assignedById: ownerId,
-        assignedByName: "Ada Chan",
+        assignedByName: "Mei Lam",
         decision: "manual",
         overrideReason: null,
         recommendationRank: null,
@@ -336,7 +336,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     const [firstEntry, secondEntry] = within(history).getAllByRole("listitem");
     expect(firstEntry.textContent).toContain("Assignment: manual");
     expect(secondEntry.textContent).toContain("Note added");
-    expect(firstEntry.textContent).toContain("by Ada Chan");
+    expect(firstEntry.textContent).toContain("by Mei Lam");
     expect(secondEntry.textContent).toContain("by System");
   });
 
