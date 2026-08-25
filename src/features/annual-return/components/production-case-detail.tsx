@@ -487,17 +487,22 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Audit history</h2>
-            <ul className="mt-3 space-y-3">
-              {historyQuery.isPending ? (
-                <li className="text-sm text-muted-foreground">Loading history</li>
-              ) : historyQuery.isError ? (
-                <li role="alert" className="text-sm text-destructive">
-                  {historyQuery.error.message}
-                </li>
-              ) : historyQuery.data.length === 0 ? (
-                <li className="text-sm text-muted-foreground">No history yet.</li>
-              ) : (
-                [...historyQuery.data]
+            {historyQuery.isPending ? (
+              <p className="mt-3 text-sm text-muted-foreground">Loading history</p>
+            ) : historyQuery.isError ? (
+              <p role="alert" className="mt-3 text-sm text-destructive">
+                {historyQuery.error.message}
+              </p>
+            ) : historyQuery.data.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">No history yet.</p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {/* mergeCaseHistory already returns newest-first (with an id tiebreak for
+                    rows written in one transaction), so this is a no-op on real data —
+                    Array#sort is stable, so equal timestamps keep the server's order. It
+                    stays because ordering is compliance-visible and the interaction test
+                    mocks the server fn directly, bypassing that sort. */}
+                {[...historyQuery.data]
                   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                   .map((entry) => {
                     const { label, description } = describeCaseHistoryEntry(entry);
@@ -515,9 +520,9 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                         <p className="mt-1 text-xs text-muted-foreground">by {actorName}</p>
                       </li>
                     );
-                  })
-              )}
-            </ul>
+                  })}
+              </ul>
+            )}
           </section>
 
           <section>

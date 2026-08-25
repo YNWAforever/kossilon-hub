@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { annualReturnQueryKeys } from "../query-keys";
 import type { AnnualReturnCase } from "../types";
@@ -302,7 +302,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
         id: "a1000000-0000-0000-0000-000000000001",
         createdAt: "2026-08-01T09:00:00.000Z",
         actorId: ownerId,
-        actorName: "Ada Chan",
+        actorName: null,
         actorRole: "Staff",
         action: "add_note",
         result: "succeeded",
@@ -331,11 +331,13 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    const historySection = await screen.findByText("Audit history");
-    const [firstEntry, secondEntry] = screen.getAllByRole("listitem");
-    expect(historySection).toBeTruthy();
+    const history = (await screen.findByText("Audit history")).closest("section")!;
+    await within(history).findByText("Assignment: manual");
+    const [firstEntry, secondEntry] = within(history).getAllByRole("listitem");
     expect(firstEntry.textContent).toContain("Assignment: manual");
     expect(secondEntry.textContent).toContain("Note added");
+    expect(firstEntry.textContent).toContain("by Ada Chan");
+    expect(secondEntry.textContent).toContain("by System");
   });
 
   it("shows an empty state when no history exists", async () => {
