@@ -110,7 +110,10 @@ describe("describeCaseHistoryEntry", () => {
   };
 
   it.each(Object.entries(auditActionLabels))("labels audit action %s as %s", (action, label) => {
-    const [entry] = mergeCaseHistory([{ ...baseAuditRow, action: action as AuditEventRow["action"] }], []);
+    const [entry] = mergeCaseHistory(
+      [{ ...baseAuditRow, action: action as AuditEventRow["action"] }],
+      [],
+    );
 
     expect(describeCaseHistoryEntry(entry).label).toBe(label);
   });
@@ -141,7 +144,10 @@ describe("describeCaseHistoryEntry", () => {
   });
 
   it("labels an accepted-recommendation assignment", () => {
-    const [entry] = mergeCaseHistory([], [{ ...baseAssignmentRow, decision: "accepted_recommendation" }]);
+    const [entry] = mergeCaseHistory(
+      [],
+      [{ ...baseAssignmentRow, decision: "accepted_recommendation" }],
+    );
 
     expect(describeCaseHistoryEntry(entry).label).toBe("Assignment: accepted recommendation");
   });
