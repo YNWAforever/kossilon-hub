@@ -566,6 +566,94 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   );
 
   it(
+    "reads merged audit and assignment history for a case",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });
+      const repository = repositoryFor("2026-07-05");
+
+      // assignOwner only writes an assignment_events row for work items that
+      // are already open/in_progress/blocked (see its candidates CTE), and a
+      // freshly created fixture has none. Give it one the same way the
+      // "updates the case and active work items" test above does, otherwise
+      // assignOwner's insert...select matches zero rows and
+      // listAssignmentEventsForCase comes back empty.
+      await repository.updateStatus(fixture.caseId, "Client reminder sent", USER_AMY_ID);
+
+      await repository.addNote({
+        caseId: fixture.caseId,
+        body: "Checked with the client.",
+        actorId: USER_AMY_ID,
+      });
+      await repository.assignOwner({
+        caseId: fixture.caseId,
+        ownerId: USER_MEI_ID,
+        actorId: USER_KEN_ID,
+      });
+
+      const auditEvents = await repository.listAuditEventsForCase(fixture.caseId);
+      const assignmentEvents = await repository.listAssignmentEventsForCase(fixture.caseId);
+
+      expect(auditEvents.length).toBeGreaterThanOrEqual(1);
+      expect(auditEvents.some((row) => row.action === "add_note")).toBe(true);
+      expect(auditEvents.some((row) => row.action === "assign_owner")).toBe(true);
+      expect(auditEvents.every((row) => typeof row.actor_name === "string")).toBe(true);
+
+      expect(assignmentEvents.length).toBeGreaterThanOrEqual(1);
+      expect(assignmentEvents[0]).toMatchObject({
+        assigned_to_id: USER_MEI_ID,
+        assigned_by_id: USER_KEN_ID,
+        assigned_to_name: expect.any(String),
+        assigned_by_name: expect.any(String),
+        decision: "manual",
+      });
+
+      // assignOwner's insert never sets recommendation_score (it always
+      // writes decision: "manual"), so the field observed via this path is
+      // null. Confirmed empirically here rather than assumed.
+      expect(assignmentEvents[0].recommendation_score).toBeNull();
+
+      // Separately confirm the *non-null* case, since case-history.ts
+      // declares recommendation_score as `string | null` on the theory that
+      // postgres.js has no default parser for numeric(10,4) (OID 1700) and
+      // returns it as a string rather than a number. Insert a row that
+      // satisfies assignment_events' non-manual recommendation-evidence
+      // check constraint directly, then read it back through the repository
+      // query under test.
+      const sql = sqlForTests();
+      const [workItem] = await sql<{ id: string; version: number }[]>`
+        select id, version
+        from work_items
+        where annual_return_case_id = ${fixture.caseId}
+        limit 1
+      `;
+      if (!workItem) {
+        throw new Error("Expected updateStatus to have created a work item for this case.");
+      }
+
+      await sql`
+        insert into assignment_events (
+          work_item_id, assigned_to_id, assigned_by_id,
+          recommendation_rank, recommendation_score, recommendation_factors,
+          decision, expected_version
+        )
+        values (
+          ${workItem.id}, ${USER_MEI_ID}, ${USER_KEN_ID},
+          1, 0.8750, ${sql.json({ skillMatch: true })},
+          'accepted_recommendation', ${workItem.version}
+        )
+      `;
+
+      const [latestAssignmentEvent] = await repository.listAssignmentEventsForCase(fixture.caseId);
+      expect(latestAssignmentEvent.decision).toBe("accepted_recommendation");
+      // Observed: postgres.js returns numeric(10,4) as a string, e.g. "0.8750",
+      // not a number -- confirming the `string | null` type in case-history.ts.
+      expect(typeof latestAssignmentEvent.recommendation_score).toBe("string");
+      expect(latestAssignmentEvent.recommendation_score).toBe("0.8750");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "persists and lists case notes in chronological order",
     async () => {
       const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });
