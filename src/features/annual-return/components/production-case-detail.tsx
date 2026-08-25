@@ -14,7 +14,12 @@ import {
 } from "lucide-react";
 import { annualReturnQueryKeys } from "../query-keys";
 import { createProductionCaseActions } from "./production-case-actions";
-import { getAnnualReturnCase, listAnnualReturnCaseNotes } from "../server-fns";
+import {
+  getAnnualReturnCase,
+  listAnnualReturnCaseHistory,
+  listAnnualReturnCaseNotes,
+} from "../server-fns";
+import { describeCaseHistoryEntry } from "../case-history";
 import {
   ANNUAL_RETURN_STATUSES,
   type AnnualReturnCase,
@@ -83,6 +88,10 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
   const notesQuery = useQuery({
     queryKey: annualReturnQueryKeys.notes(caseId),
     queryFn: () => listAnnualReturnCaseNotes({ data: { caseId } }),
+  });
+  const historyQuery = useQuery({
+    queryKey: annualReturnQueryKeys.history(caseId),
+    queryFn: () => listAnnualReturnCaseHistory({ data: { caseId } }),
   });
 
   const [ownerId, setOwnerId] = useState("");
@@ -474,6 +483,41 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 ))
               )}
             </div>
+          </section>
+
+          <section className="border-b pb-4">
+            <h2 className="text-base font-semibold">Audit history</h2>
+            <ul className="mt-3 space-y-3">
+              {historyQuery.isPending ? (
+                <li className="text-sm text-muted-foreground">Loading history</li>
+              ) : historyQuery.isError ? (
+                <li role="alert" className="text-sm text-destructive">
+                  {historyQuery.error.message}
+                </li>
+              ) : historyQuery.data.length === 0 ? (
+                <li className="text-sm text-muted-foreground">No history yet.</li>
+              ) : (
+                [...historyQuery.data]
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((entry) => {
+                    const { label, description } = describeCaseHistoryEntry(entry);
+                    const actorName =
+                      entry.kind === "audit" ? (entry.actorName ?? "System") : entry.assignedByName;
+                    return (
+                      <li key={entry.id} className="border-l-2 pl-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-medium">{label}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(entry.createdAt).toLocaleString("en-HK")}
+                          </p>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">by {actorName}</p>
+                      </li>
+                    );
+                  })
+              )}
+            </ul>
           </section>
 
           <section>

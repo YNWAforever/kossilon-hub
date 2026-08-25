@@ -11,6 +11,7 @@ import { ProductionAnnualReturnCaseDetail } from "./production-case-detail";
 const serverFns = vi.hoisted(() => ({
   getAnnualReturnCase: vi.fn(),
   listAnnualReturnCaseNotes: vi.fn(),
+  listAnnualReturnCaseHistory: vi.fn(),
   assignAnnualReturnCaseOwner: vi.fn(),
   updateAnnualReturnStatus: vi.fn(),
   updateAnnualReturnChecklistItem: vi.fn(),
@@ -104,6 +105,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
   serverFns.listAnnualReturnCaseNotes.mockResolvedValue([]);
+  serverFns.listAnnualReturnCaseHistory.mockResolvedValue([]);
   serverFns.assignAnnualReturnCaseOwner.mockResolvedValue(caseItem);
   serverFns.updateAnnualReturnStatus.mockResolvedValue(caseItem);
   serverFns.updateAnnualReturnChecklistItem.mockResolvedValue(caseItem);
@@ -291,5 +293,55 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     expect((screen.getByRole("button", { name: "Add note" }) as HTMLButtonElement).disabled).toBe(
       false,
     );
+  });
+
+  it("renders merged audit history entries newest first", async () => {
+    serverFns.listAnnualReturnCaseHistory.mockResolvedValue([
+      {
+        kind: "audit",
+        id: "a1000000-0000-0000-0000-000000000001",
+        createdAt: "2026-08-01T09:00:00.000Z",
+        actorId: ownerId,
+        actorName: "Ada Chan",
+        actorRole: "Staff",
+        action: "add_note",
+        result: "succeeded",
+        summary: "Checked with the client.",
+        metadata: {},
+      },
+      {
+        kind: "assignment",
+        id: "b1000000-0000-0000-0000-000000000001",
+        createdAt: "2026-08-02T09:00:00.000Z",
+        workItemId: "c1000000-0000-0000-0000-000000000001",
+        previousAssigneeId: ownerId,
+        previousAssigneeName: "Ada Chan",
+        assignedToId: nextOwnerId,
+        assignedToName: "Ken Wong",
+        assignedById: ownerId,
+        assignedByName: "Ada Chan",
+        decision: "manual",
+        overrideReason: null,
+        recommendationRank: null,
+        recommendationScore: null,
+        recommendationFactors: {},
+      },
+    ]);
+
+    renderDetail();
+    await screen.findByRole("heading", { name: "Acme Company Limited" });
+
+    const historySection = await screen.findByText("Audit history");
+    const [firstEntry, secondEntry] = screen.getAllByRole("listitem");
+    expect(historySection).toBeTruthy();
+    expect(firstEntry.textContent).toContain("Assignment: manual");
+    expect(secondEntry.textContent).toContain("Note added");
+  });
+
+  it("shows an empty state when no history exists", async () => {
+    renderDetail();
+    await screen.findByRole("heading", { name: "Acme Company Limited" });
+
+    expect(await screen.findByText("No history yet.")).toBeTruthy();
   });
 });
