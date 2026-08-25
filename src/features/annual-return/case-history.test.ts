@@ -96,7 +96,10 @@ describe("mergeCaseHistory", () => {
   });
 
   it("coerces the numeric string postgres returns for recommendation_score into a number", () => {
-    const [entry] = mergeCaseHistory([], [{ ...baseAssignmentRow, recommendation_score: "0.0000" }]);
+    const [entry] = mergeCaseHistory(
+      [],
+      [{ ...baseAssignmentRow, recommendation_score: "0.0000" }],
+    );
 
     expect(entry).toMatchObject({ recommendationScore: 0 });
   });
