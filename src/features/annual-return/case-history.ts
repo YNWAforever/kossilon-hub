@@ -1,5 +1,17 @@
 import type { AnnualReturnAction, AnnualReturnActorRole } from "./permissions";
 
+// jsonb columns (audit_events.metadata, assignment_events.recommendation_factors)
+// always deserialize to plain JSON values. Typing them this way (rather than
+// Record<string, unknown>) lets TanStack Start's createServerFn prove the
+// history entries are serializable — it can't prove that of a bare `unknown`.
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
 export type AuditEventRow = {
   id: string;
   actor_id: string | null;
@@ -8,7 +20,7 @@ export type AuditEventRow = {
   action: AnnualReturnAction;
   result: "succeeded" | "denied" | "failed";
   summary: string;
-  metadata: Record<string, unknown>;
+  metadata: Record<string, JsonValue>;
   created_at: string | Date;
 };
 
@@ -27,7 +39,7 @@ export type AssignmentEventRow = {
   // numeric(10,4) in Postgres — postgres.js has no default parser for OID 1700
   // (numeric), so this arrives as a string (e.g. "0.8750"), not a number.
   recommendation_score: string | null;
-  recommendation_factors: Record<string, unknown>;
+  recommendation_factors: Record<string, JsonValue>;
   created_at: string | Date;
 };
 
@@ -42,7 +54,7 @@ export type CaseHistoryEntry =
       action: AnnualReturnAction;
       result: "succeeded" | "denied" | "failed";
       summary: string;
-      metadata: Record<string, unknown>;
+      metadata: Record<string, JsonValue>;
     }
   | {
       kind: "assignment";
@@ -59,7 +71,7 @@ export type CaseHistoryEntry =
       overrideReason: string | null;
       recommendationRank: number | null;
       recommendationScore: number | null;
-      recommendationFactors: Record<string, unknown>;
+      recommendationFactors: Record<string, JsonValue>;
     };
 
 function toIsoString(value: string | Date): string {

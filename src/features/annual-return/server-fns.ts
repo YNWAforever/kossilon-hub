@@ -523,6 +523,14 @@ export const listAnnualReturnCaseNotes = createServerFn({ method: "GET" })
     ),
   );
 
+export const listAnnualReturnCaseHistory = createServerFn({ method: "GET" })
+  .validator(annualReturnCaseIdSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAnnualReturnCaseHistoryForActor(actor, data, { repository }),
+    ),
+  );
+
 export const addAnnualReturnCaseNote = createServerFn({ method: "POST" })
   .validator(addNoteSchema)
   .handler(({ data }) =>
