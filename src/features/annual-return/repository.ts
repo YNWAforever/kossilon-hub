@@ -29,6 +29,7 @@ import {
   FILING_CONFIRMATION_FILE_TYPES,
   PAYMENT_PROOF_FILE_TYPES,
 } from "./evidence-file-types";
+import type { AuditEventRow, AssignmentEventRow } from "./case-history";
 import type {
   AnnualReturnCase,
   AnnualReturnCaseNote,
@@ -255,6 +256,8 @@ export type AnnualReturnRepository = {
   ): Promise<AnnualReturnCase>;
   assignOwner(input: AssignAnnualReturnOwnerInput): Promise<AnnualReturnCase>;
   listNotes(caseId: string): Promise<AnnualReturnCaseNote[]>;
+  listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]>;
+  listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]>;
   addNote(input: AddAnnualReturnCaseNoteInput): Promise<AnnualReturnCaseNote>;
   recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase>;
   updateChecklistItem(input: UpdateAnnualReturnChecklistItemInput): Promise<AnnualReturnCase>;
@@ -1246,6 +1249,39 @@ export function createAnnualReturnRepository(
     }));
   }
 
+  async function listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]> {
+    return sql<AuditEventRow[]>`
+      select
+        e.id, e.actor_id, u.name as actor_name, e.actor_role,
+        e.action, e.result, e.summary, e.metadata, e.created_at
+      from annual_return_audit_events e
+      left join users u on u.id = e.actor_id
+      where e.case_id = ${caseId}
+      order by e.created_at desc
+      limit 200
+    `;
+  }
+
+  async function listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]> {
+    return sql<AssignmentEventRow[]>`
+      select
+        a.id, a.work_item_id,
+        a.previous_assignee_id, pu.name as previous_assignee_name,
+        a.assigned_to_id, tu.name as assigned_to_name,
+        a.assigned_by_id, bu.name as assigned_by_name,
+        a.decision, a.override_reason, a.recommendation_rank, a.recommendation_score,
+        a.recommendation_factors, a.created_at
+      from assignment_events a
+      join work_items w on w.id = a.work_item_id
+      left join users pu on pu.id = a.previous_assignee_id
+      join users tu on tu.id = a.assigned_to_id
+      join users bu on bu.id = a.assigned_by_id
+      where w.annual_return_case_id = ${caseId}
+      order by a.created_at desc
+      limit 200
+    `;
+  }
+
   async function addNote(input: AddAnnualReturnCaseNoteInput): Promise<AnnualReturnCaseNote> {
     const current = await getCase(input.caseId);
     if (!current) throw new Error("Annual return case not found.");
@@ -2024,6 +2060,8 @@ export function createAnnualReturnRepository(
     evaluateReminders,
     assignOwner,
     listNotes,
+    listAuditEventsForCase,
+    listAssignmentEventsForCase,
     addNote,
     updateStatus,
     recordReminder,

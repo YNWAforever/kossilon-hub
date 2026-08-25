@@ -487,6 +487,8 @@ describe("annual return repository configuration", () => {
     expect(repository.assignOwner).toBeTypeOf("function");
     expect(repository.listNotes).toBeTypeOf("function");
     expect(repository.addNote).toBeTypeOf("function");
+    expect(repository.listAuditEventsForCase).toBeTypeOf("function");
+    expect(repository.listAssignmentEventsForCase).toBeTypeOf("function");
   });
   it("honors options when the database URL argument is explicitly undefined", async () => {
     vi.stubEnv("DATABASE_URL", "");
