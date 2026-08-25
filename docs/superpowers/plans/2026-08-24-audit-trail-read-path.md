@@ -562,7 +562,16 @@ const visibleCase = {
 };
 
 it("rejects a history read for a case outside the actor's scope", async () => {
-  const getCase = vi.fn(async () => ({ ...visibleCase, companyTeamId: managerActor.teamId! }));
+  // Overriding companyTeamId alone is not enough: isAnnualReturnCaseVisibleToActor
+  // falls back to granting visibility to a case's own owner/reviewer regardless of
+  // team, and this mock case's ownerId is staffActor.userId — so ownerId must also
+  // be overridden or the case stays in scope and this test fails with a TypeError
+  // instead of testing the Forbidden throw.
+  const getCase = vi.fn(async () => ({
+    ...visibleCase,
+    companyTeamId: managerActor.teamId!,
+    ownerId: managerActor.userId!,
+  }));
   const listAuditEventsForCase = vi.fn();
   const listAssignmentEventsForCase = vi.fn();
   const dependencies = {
