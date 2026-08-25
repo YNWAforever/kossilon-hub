@@ -24,7 +24,9 @@ export type AssignmentEventRow = {
   decision: "accepted_recommendation" | "override" | "manual";
   override_reason: string | null;
   recommendation_rank: number | null;
-  recommendation_score: number | null;
+  // numeric(10,4) in Postgres — postgres.js has no default parser for OID 1700
+  // (numeric), so this arrives as a string (e.g. "0.8750"), not a number.
+  recommendation_score: string | null;
   recommendation_factors: Record<string, unknown>;
   created_at: string | Date;
 };
@@ -95,7 +97,8 @@ export function mergeCaseHistory(
     decision: row.decision,
     overrideReason: row.override_reason,
     recommendationRank: row.recommendation_rank,
-    recommendationScore: row.recommendation_score,
+    recommendationScore:
+      row.recommendation_score === null ? null : Number(row.recommendation_score),
     recommendationFactors: row.recommendation_factors,
   }));
 

@@ -298,6 +298,19 @@ export const RISK_FILTER_SCAN_LIMIT = 2000;
  */
 export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
 
+/**
+ * Row cap for each of the two case-history sources (audit events and
+ * assignment events), applied independently in listAuditEventsForCase and
+ * listAssignmentEventsForCase. Because the cap is per-source, a case whose
+ * audit and assignment event counts both exceed this limit can produce a
+ * merged history whose tail looks quieter than it really was: the recent
+ * activity truncation is invisible in the merged list. This is a known,
+ * accepted limitation — see the design spec's "Explicitly out of scope"
+ * section on pagination — not a bug, but it must stay visible here rather
+ * than only in that doc.
+ */
+export const CASE_HISTORY_ROW_LIMIT = 200;
+
 const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
 // Accepted `documents.file_type` values per evidence kind. Previously three bare
@@ -1257,8 +1270,11 @@ export function createAnnualReturnRepository(
       from annual_return_audit_events e
       left join users u on u.id = e.actor_id
       where e.case_id = ${caseId}
-      order by e.created_at desc
-      limit 200
+      order by e.created_at desc, e.id desc
+      -- See CASE_HISTORY_ROW_LIMIT: capped independently of the assignment
+      -- events query, so a case with more audit events than this limit but
+      -- few assignment events can look like recent activity went quiet.
+      limit ${CASE_HISTORY_ROW_LIMIT}
     `;
   }
 
@@ -1277,8 +1293,11 @@ export function createAnnualReturnRepository(
       join users tu on tu.id = a.assigned_to_id
       join users bu on bu.id = a.assigned_by_id
       where w.annual_return_case_id = ${caseId}
-      order by a.created_at desc
-      limit 200
+      order by a.created_at desc, a.id desc
+      -- See CASE_HISTORY_ROW_LIMIT: capped independently of the audit events
+      -- query, so a case with more assignment events than this limit but few
+      -- audit events can look like recent activity went quiet.
+      limit ${CASE_HISTORY_ROW_LIMIT}
     `;
   }
 
