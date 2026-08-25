@@ -100,7 +100,13 @@ export function mergeCaseHistory(
   }));
 
   return [...auditEntries, ...assignmentEntries].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() ||
+      // Ties are the normal case, not the exception: assignOwner writes the
+      // assignment_events row and its assign_owner audit row in one transaction,
+      // so now() gives them the same created_at. Without this the two sources'
+      // relative order is left to the planner (see repository.test.ts:919-921).
+      (a.id < b.id ? 1 : a.id > b.id ? -1 : 0),
   );
 }
 
@@ -127,7 +133,7 @@ export function describeCaseHistoryEntry(entry: CaseHistoryEntry): {
   description: string;
 } {
   if (entry.kind === "audit") {
-    return { label: AUDIT_ACTION_LABELS[entry.action], description: entry.summary };
+    return { label: AUDIT_ACTION_LABELS[entry.action] ?? entry.action, description: entry.summary };
   }
 
   const from = entry.previousAssigneeName ?? "Unassigned";

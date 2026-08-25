@@ -94,6 +94,24 @@ describe("mergeCaseHistory", () => {
 
     expect(entry.createdAt).toBe("2026-08-01T09:00:00.000Z");
   });
+
+  it("breaks ties on identical timestamps deterministically by id", () => {
+    const at = "2026-08-02T09:00:00.000Z";
+    const auditRow = {
+      ...baseAuditRow,
+      id: "a1000000-0000-0000-0000-000000000001",
+      created_at: at,
+    };
+    const assignmentRow = {
+      ...baseAssignmentRow,
+      id: "b1000000-0000-0000-0000-000000000001",
+      created_at: at,
+    };
+
+    const merged = mergeCaseHistory([auditRow], [assignmentRow]);
+
+    expect(merged.map((entry) => entry.id)).toEqual([assignmentRow.id, auditRow.id]);
+  });
 });
 
 describe("describeCaseHistoryEntry", () => {
@@ -109,14 +127,14 @@ describe("describeCaseHistoryEntry", () => {
     complete: "Case completed",
   };
 
-  it.each(Object.entries(auditActionLabels))("labels audit action %s as %s", (action, label) => {
-    const [entry] = mergeCaseHistory(
-      [{ ...baseAuditRow, action: action as AuditEventRow["action"] }],
-      [],
-    );
+  it.each(Object.entries(auditActionLabels) as [AuditEventRow["action"], string][])(
+    "labels audit action %s as %s",
+    (action, label) => {
+      const [entry] = mergeCaseHistory([{ ...baseAuditRow, action }], []);
 
-    expect(describeCaseHistoryEntry(entry).label).toBe(label);
-  });
+      expect(describeCaseHistoryEntry(entry).label).toBe(label);
+    },
+  );
 
   it("labels an audit entry's description as its stored summary", () => {
     const [entry] = mergeCaseHistory([baseAuditRow], []);
