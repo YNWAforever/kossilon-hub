@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { AnnualReturnRepository } from "./repository";
-import { addAnnualReturnCaseNoteForActor, assignAnnualReturnCaseOwnerForActor } from "./server-fns";
+import type { CaseHistoryEntry } from "./case-history";
+import {
+  addAnnualReturnCaseNoteForActor,
+  assignAnnualReturnCaseOwnerForActor,
+  listAnnualReturnCaseHistoryForActor,
+} from "./server-fns";
 
 const caseId = "91000000-0000-0000-0000-000000000001";
 const ownerId = "20000000-0000-0000-0000-000000000002";
@@ -60,5 +65,95 @@ describe("annual return case command authorization", () => {
       body: "Ready for review.",
       actorId: staffId,
     });
+  });
+
+  const managerActor: AuthenticatedActor = {
+    authUserId: "manager-auth",
+    userId: "20000000-0000-0000-0000-000000000009",
+    role: "Manager",
+    teamId: "10000000-0000-0000-0000-000000000099",
+    active: true,
+  };
+
+  const visibleCase = {
+    id: caseId,
+    companyName: "Acme Company Limited",
+    companyTeamId: staffActor.teamId!,
+    ownerId: staffActor.userId!,
+    reviewerId: null,
+  };
+
+  it("rejects a history read for a case outside the actor's scope", async () => {
+    const getCase = vi.fn(async () => ({
+      ...visibleCase,
+      companyTeamId: managerActor.teamId!,
+      ownerId: managerActor.userId!,
+    }));
+    const listAuditEventsForCase = vi.fn();
+    const listAssignmentEventsForCase = vi.fn();
+    const dependencies = {
+      repository: {
+        getCase,
+        listAuditEventsForCase,
+        listAssignmentEventsForCase,
+      } as unknown as AnnualReturnRepository,
+    };
+
+    await expect(
+      listAnnualReturnCaseHistoryForActor(staffActor, { caseId }, dependencies),
+    ).rejects.toThrow(/outside your scope/i);
+    expect(listAuditEventsForCase).not.toHaveBeenCalled();
+    expect(listAssignmentEventsForCase).not.toHaveBeenCalled();
+  });
+
+  it("throws when the case does not exist", async () => {
+    const getCase = vi.fn(async () => null);
+    const dependencies = {
+      repository: {
+        getCase,
+        listAuditEventsForCase: vi.fn(),
+        listAssignmentEventsForCase: vi.fn(),
+      } as unknown as AnnualReturnRepository,
+    };
+
+    await expect(
+      listAnnualReturnCaseHistoryForActor(staffActor, { caseId }, dependencies),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it("returns the merged history for a visible case", async () => {
+    const getCase = vi.fn(async () => visibleCase);
+    const listAuditEventsForCase = vi.fn(async () => [
+      {
+        id: "a1000000-0000-0000-0000-000000000001",
+        actor_id: staffActor.userId,
+        actor_name: "Amy Chan",
+        actor_role: "Staff" as const,
+        action: "add_note" as const,
+        result: "succeeded" as const,
+        summary: "Note added.",
+        metadata: {},
+        created_at: "2026-08-01T09:00:00.000Z",
+      },
+    ]);
+    const listAssignmentEventsForCase = vi.fn(async () => []);
+    const dependencies = {
+      repository: {
+        getCase,
+        listAuditEventsForCase,
+        listAssignmentEventsForCase,
+      } as unknown as AnnualReturnRepository,
+    };
+
+    const history: CaseHistoryEntry[] = await listAnnualReturnCaseHistoryForActor(
+      staffActor,
+      { caseId },
+      dependencies,
+    );
+
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({ kind: "audit", action: "add_note" });
+    expect(listAuditEventsForCase).toHaveBeenCalledWith(caseId);
+    expect(listAssignmentEventsForCase).toHaveBeenCalledWith(caseId);
   });
 });
