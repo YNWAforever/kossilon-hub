@@ -666,6 +666,28 @@ to:
         response: [woztellResponseElement(input.mode)],
 ```
 
+- [ ] **Step 3b: Keep the build green by adapting the single production caller**
+
+`sendWoztellMessage` has exactly one production call site — `src/features/notifications/dispatcher.ts:112-124`. Changing the signature without touching it leaves the repo non-typechecking until Task 8, so this task must adapt it **behaviour-preservingly**: build the mode from the same payload fields, reproducing today's exact rule (a `templateName` present → TEMPLATE, otherwise TEXT). Task 8 replaces this block with the window-aware resolution.
+
+```ts
+      const templateName = typeof payload.templateName === "string" ? payload.templateName : undefined;
+      const mode: WoztellSendMode = templateName
+        ? {
+            kind: "template",
+            elementName: templateName,
+            languageCode: typeof payload.languageCode === "string" ? payload.languageCode : "en",
+            components: Array.isArray(payload.templateComponents)
+              ? (payload.templateComponents as WoztellTemplateComponent[])
+              : [],
+          }
+        : { kind: "text", body };
+
+      return sendWoztellMessage(config, { toPhone: notification.recipient, mode }, fetchImpl);
+```
+
+`toWhatsAppId` disappears here — it was read from the payload and passed, but `sendWoztellMessage` never used it.
+
 - [ ] **Step 4: Update all five test call sites**
 
 `src/features/whatsapp/woztell.test.ts` calls `sendWoztellMessage` at `:172`, `:190`, `:221`, `:234`, `:252`. Each passes a `WoztellOutboundMessage`; convert each to the new shape. The two byte-exact wire assertions are at `:176-180` (TEXT) and `:201-208` (TEMPLATE) — they assert the *output*, which is unchanged, so only the inputs move. For example the TEXT case becomes:
