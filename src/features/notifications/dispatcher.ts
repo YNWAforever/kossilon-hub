@@ -1,5 +1,9 @@
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
-import { sendWoztellMessage, type WoztellTemplateComponent } from "@/features/whatsapp/woztell";
+import {
+  sendWoztellMessage,
+  type WoztellSendMode,
+  type WoztellTemplateComponent,
+} from "@/features/whatsapp/woztell";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { ResendConfig } from "@/server/runtime-env";
@@ -109,20 +113,20 @@ export function createWoztellNotificationTransport(
       const payload = notificationPayload(notification);
       const body = typeof payload.body === "string" ? payload.body : undefined;
       if (!body) throw new Error("WhatsApp notification is missing a message body.");
-      return sendWoztellMessage(
-        config,
-        {
-          toPhone: notification.recipient,
-          toWhatsAppId: typeof payload.toWhatsAppId === "string" ? payload.toWhatsAppId : null,
-          body,
-          templateName: typeof payload.templateName === "string" ? payload.templateName : undefined,
-          languageCode: typeof payload.languageCode === "string" ? payload.languageCode : undefined,
-          templateComponents: Array.isArray(payload.templateComponents)
-            ? (payload.templateComponents as WoztellTemplateComponent[])
-            : undefined,
-        },
-        fetchImpl,
-      );
+      const templateName =
+        typeof payload.templateName === "string" ? payload.templateName : undefined;
+      const mode: WoztellSendMode = templateName
+        ? {
+            kind: "template",
+            elementName: templateName,
+            languageCode: typeof payload.languageCode === "string" ? payload.languageCode : "en",
+            components: Array.isArray(payload.templateComponents)
+              ? (payload.templateComponents as WoztellTemplateComponent[])
+              : [],
+          }
+        : { kind: "text", body };
+
+      return sendWoztellMessage(config, { toPhone: notification.recipient, mode }, fetchImpl);
     },
   };
 }

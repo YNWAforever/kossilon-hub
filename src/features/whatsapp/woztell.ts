@@ -8,13 +8,18 @@ import type {
 
 export type WoztellTemplateComponent = Record<string, unknown>;
 
+export type WoztellSendMode =
+  | { kind: "text"; body: string }
+  | {
+      kind: "template";
+      elementName: string;
+      languageCode: string;
+      components: readonly WoztellTemplateComponent[];
+    };
+
 export type WoztellOutboundMessage = {
   toPhone: string;
-  toWhatsAppId?: string | null;
-  body: string;
-  templateName?: string;
-  languageCode?: string;
-  templateComponents?: readonly WoztellTemplateComponent[];
+  mode: WoztellSendMode;
 };
 
 /** err_code 100: the number is invalid or has no WhatsApp account. Retrying cannot fix it. */
@@ -36,7 +41,7 @@ export async function sendWoztellMessage(
     body: JSON.stringify({
       channelId: config.channelId,
       recipientId: input.toPhone.replace(/\D/g, ""),
-      response: [woztellResponseElement(input)],
+      response: [woztellResponseElement(input.mode)],
     }),
   });
   const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
@@ -64,20 +69,23 @@ export async function sendWoztellMessage(
   return { providerMessageId };
 }
 
-function woztellResponseElement(input: WoztellOutboundMessage): Record<string, unknown> {
-  // Outside the 24-hour session window WhatsApp requires an approved template, so
-  // a named template always goes as TEMPLATE. Window tracking itself is roadmap
-  // P2-3 and deliberately not handled here.
-  if (input.templateName) {
+/**
+ * The TEXT-vs-TEMPLATE choice is WhatsApp's 24-hour session window rule, resolved
+ * in dispatchDue (which owns the clock and the contact lookup) and handed here
+ * already decided. This function used to infer it from whether a templateName was
+ * passed, which had nothing to do with the actual rule.
+ */
+function woztellResponseElement(mode: WoztellSendMode): Record<string, unknown> {
+  if (mode.kind === "template") {
     return {
       type: "TEMPLATE",
-      elementName: input.templateName,
-      languageCode: input.languageCode ?? "en",
-      components: input.templateComponents ?? [],
+      elementName: mode.elementName,
+      languageCode: mode.languageCode,
+      components: mode.components,
     };
   }
 
-  return { type: "TEXT", text: input.body };
+  return { type: "TEXT", text: mode.body };
 }
 
 /** Documented success is `{ok: 1, member, sendResult}` — the id is inside sendResult. */
