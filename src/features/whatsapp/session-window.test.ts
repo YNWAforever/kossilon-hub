@@ -33,6 +33,10 @@ describe("isWithinSessionWindow", () => {
     expect(isWithinSessionWindow(new Date(nowMs - 60_000), new Date(nowMs))).toBe(true);
   });
 
+  it("treats a future inbound timestamp as inside (cron tick lags real time)", () => {
+    expect(isWithinSessionWindow(new Date(nowMs + 30_000).toISOString(), now)).toBe(true);
+  });
+
   it("fails closed on an unparseable timestamp", () => {
     expect(isWithinSessionWindow("not a date", now)).toBe(false);
     expect(isWithinSessionWindow(isoAgo(60_000), "not a date")).toBe(false);
