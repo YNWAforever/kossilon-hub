@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { NotificationOutboxRecord, NotificationOutboxRepository } from "./types";
 import { createSimulatedNotificationTransport } from "./simulated-transport";
 import {
@@ -41,6 +42,28 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
     markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
+}
+
+const liveWhatsAppConfig = {
+  provider: "woztell" as const,
+  apiBaseUrl: "https://example.test",
+  accessToken: "test-token",
+  channelId: "channel-1",
+  webhookSecret: "test-secret-value",
+};
+
+/**
+ * Only the two methods dispatchDue reaches through `createWhatsAppRepository` are
+ * real; the rest of WhatsAppRepository is database surface this path never touches,
+ * and stubbing all of it would obscure which two actually matter.
+ */
+function whatsAppRepositoryStub(overrides: {
+  lastInboundAtForPhoneDigits: WhatsAppRepository["lastInboundAtForPhoneDigits"];
+}): WhatsAppRepository {
+  return {
+    ...overrides,
+    close: vi.fn(async () => undefined),
+  } as unknown as WhatsAppRepository;
 }
 
 describe("runtime notification dispatch", () => {
@@ -107,11 +130,13 @@ describe("runtime notification dispatch", () => {
       "2026-07-14T09:00:00.000Z",
       1,
     );
-    expect(createTransport).toHaveBeenCalledWith({
-      providerMode: "simulated",
-      config: undefined,
-      resendConfig: undefined,
-    });
+    expect(createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerMode: "simulated",
+        config: undefined,
+        resendConfig: undefined,
+      }),
+    );
     expect(getLiveConfig).not.toHaveBeenCalled();
     expect(fetchImpl).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
@@ -236,6 +261,113 @@ describe("runtime notification dispatch", () => {
       expect.objectContaining({ method: "POST" }),
     );
     expect(repo.close).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
+  });
+
+  // The WhatsApp twin of the email test above, and for the same reason: every other
+  // live-mode test here mocks createTransport, so nothing else walks
+  // runtime-dispatch.ts -> dispatcher.ts -> woztell.ts with the real transport.
+  //
+  // This is the test that would have caught the break these two were added for.
+  // Wiring `whatsAppRepository` without also wiring `lastInboundResolver` left
+  // dispatchDue passing `context: undefined` for every whatsapp row, so the WOZTELL
+  // transport threw whatsapp_send_mode_missing before it ever called fetch: live
+  // WhatsApp dispatch sent zero messages while every unit test stayed green. The
+  // `fetch` assertions below are the teeth — a mis-wired dispatcher never gets there.
+  it("sends TEXT on the wire for a live whatsapp row inside the session window", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: 1,
+            sendResult: { ok: 1, result: [{ result: { messages: [{ id: "wamid.live-text" }] } }] },
+          }),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchImpl);
+    const repo = repository([row]);
+    // 2 hours before `now` — comfortably inside the 24-hour window.
+    const lastInboundAtForPhoneDigits = vi.fn(async () => "2026-07-14T07:00:00.000Z");
+
+    await expect(
+      dispatchDueNotificationsWithDependencies(
+        { now: "2026-07-14T09:00:00.000Z" },
+        {
+          currentProviderMode: () => "live",
+          createRepository: () => repo,
+          createWhatsAppRepository: () => whatsAppRepositoryStub({ lastInboundAtForPhoneDigits }),
+          getLiveConfig: () => liveWhatsAppConfig,
+        },
+      ),
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+
+    expect(lastInboundAtForPhoneDigits).toHaveBeenCalledWith("85291234567");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://example.test/sendResponses");
+    expect(JSON.parse(String(init.body))).toEqual({
+      channelId: "channel-1",
+      recipientId: "85291234567",
+      response: [{ type: "TEXT", text: "Persisted body" }],
+    });
+    expect(repo.markSent).toHaveBeenCalledWith(
+      row.id,
+      "wamid.live-text",
+      "2026-07-14T09:00:00.000Z",
+      1,
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it("sends the fallback TEMPLATE on the wire for a live whatsapp row outside the window", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: 1,
+            sendResult: { ok: 1, result: [{ result: { messages: [{ id: "wamid.live-tpl" }] } }] },
+          }),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchImpl);
+    // Exactly what runAnnualReturnReminderSweep enqueues: a body, no template hints.
+    const sweepRow: NotificationOutboxRecord = {
+      ...row,
+      notificationType: "annual_return_reminder_t14",
+    };
+    const repo = repository([sweepRow]);
+    // Never heard from, so the composed body is undeliverable and a template is required.
+    const lastInboundAtForPhoneDigits = vi.fn(async () => null);
+
+    await expect(
+      dispatchDueNotificationsWithDependencies(
+        { now: "2026-07-14T09:00:00.000Z" },
+        {
+          currentProviderMode: () => "live",
+          createRepository: () => repo,
+          createWhatsAppRepository: () => whatsAppRepositoryStub({ lastInboundAtForPhoneDigits }),
+          getLiveConfig: () => liveWhatsAppConfig,
+        },
+      ),
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://example.test/sendResponses");
+    expect(JSON.parse(String(init.body))).toEqual({
+      channelId: "channel-1",
+      recipientId: "85291234567",
+      response: [
+        {
+          type: "TEMPLATE",
+          elementName: "annual_return_reengagement",
+          languageCode: "zh_HK",
+          components: [],
+        },
+      ],
+    });
     vi.unstubAllGlobals();
   });
 });
