@@ -485,6 +485,13 @@ Add this function inside `createWhatsAppRepository`, immediately before the retu
    * use the index.
    */
   async function lastInboundAtForPhoneDigits(phoneDigits: string): Promise<string | null> {
+    // An empty string would match EVERY contact whose phone_e164 and whatsapp_id
+    // are both digitless — coalesce(...) yields '' for those — and max() would then
+    // return an unrelated contact's timestamp, silently opening the window for the
+    // wrong person. toPhoneDigits returns null rather than "" precisely so callers
+    // can avoid this, but the type signature cannot enforce it.
+    if (phoneDigits === "") return null;
+
     const rows = await sql<{ last_inbound_at: string | Date | null }[]>`
       select max(wm.received_at) as last_inbound_at
       from whatsapp_messages wm
@@ -553,6 +560,15 @@ Add inside the existing `describe.skipIf(!databaseUrl)` block in `src/features/w
     async () => {
       const repository = repositoryFor();
       expect(await repository.lastInboundAtForPhoneDigits("85299999999")).toBeNull();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "returns null for an empty digit string rather than matching digitless contacts",
+    async () => {
+      const repository = repositoryFor();
+      expect(await repository.lastInboundAtForPhoneDigits("")).toBeNull();
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
