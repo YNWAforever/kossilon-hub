@@ -39,29 +39,53 @@ For the planned isolated Neon Auth demo workflow, see [the Neon Auth demo runboo
 
 ## REQUIRES EXPLICIT APPROVAL: WhatsApp template approvals
 
-Outside WhatsApp's 24-hour session window, free-form text is rejected and an
-approved template is required. Both of the following must be approved in the
-WOZTELL/Meta dashboard, in `zh_HK`, before automated reminders can reach a client
-who has gone quiet:
+Approval is required before creating or changing WhatsApp templates in the WOZTELL/Meta
+dashboard. Outside WhatsApp's 24-hour session window, free-form text is rejected and an
+approved template is required. Both of the following must be approved in the dashboard,
+in `zh_HK` language, before automated reminders can reach a client who has gone quiet:
 
-- [ ] `annual_return_reengagement`
-- [ ] `service_subscription_reengagement`
+- [ ] **`annual_return_reengagement`**
+  - Where: WhatsApp Manager → Message Templates in the WOZTELL/Meta dashboard
+  - Language: `zh_HK` (see note below on language variants)
+  - Category: UTILITY (flag this for confirmation with WOZTELL support; UTILITY is the typical category for service reminders, but the firm's account settings may require a different choice)
+  - Status: Must show "Approved", not "Pending" or "Rejected"; Meta review takes time and may request revision
+  - Body (zero variables/placeholders): see suggested draft below
 
-**Note:** These are the first `zh_HK` templates in this deployment. Every other
-template path in the codebase defaults to `"en"`. Setting up a new language locale
-requires careful verification in the dashboard — template name mismatches will cause
-silent failures in production with no way to detect the error from within the
-application.
+- [ ] **`service_subscription_reengagement`**
+  - Where: WhatsApp Manager → Message Templates in the WOZTELL/Meta dashboard
+  - Language: `zh_HK` (see note below on language variants)
+  - Category: UTILITY (flag this for confirmation with WOZTELL support; UTILITY is the typical category for service reminders, but the firm's account settings may require a different choice)
+  - Status: Must show "Approved", not "Pending" or "Rejected"; Meta review takes time and may request revision
+  - Body (zero variables/placeholders): see suggested draft below
 
-Both are no-variable templates — they prompt the client to reply, which reopens the
-window; they cannot name the client or the case. Their names are code constants in
-`src/features/whatsapp/fallback-templates.ts`; changing one here requires changing
-it there.
+**Suggested body copy** (REVIEW BEFORE SUBMITTING — this is client-facing copy and the
+firm should approve the wording):
 
-If a template is missing or unapproved, WOZTELL rejects the send and the failure is
-logged by the dispatcher as `notification dispatch failed` with the notification
-type and error code. Nothing in CI or `verify:firm` can detect this — it is a
-dashboard-side fact.
+```
+你好，我們就貴公司的法定申報事宜有更新需要與您跟進。請回覆本訊息，我們的同事會盡快為您處理。
+```
+
+This must contain no variables or placeholders. The template cannot name the client or
+the case — that is why a reply is requested rather than details being sent.
+
+**Language variant warning:** Meta treats each language as a separate template. If you
+author this template under `zh_TW`, `zh_CN`, or bare `zh` instead of `zh_HK`, the
+dashboard will show "Approved" but the application will never match it (the code requests
+`zh_HK` specifically). Both templates will fail silently in production with no error visible
+in the app itself. Verify the language code in the dashboard exactly matches `zh_HK`.
+
+**Both template names and the language code are code constants** in
+`src/features/whatsapp/fallback-templates.ts`; changing either requires changing it there.
+
+**Error logging:** If a template is missing or unapproved, WOZTELL rejects the send and
+the dispatcher logs it as `console.error("notification dispatch failed", {...})` to the
+Cloudflare Worker logs (viewable via `wrangler tail`). The application UI has no way to
+detect this — sweep failures are invisible there because the screen reading
+`notification_outbox` filters on `idempotency_key like 'follow-up:%'`, and the
+`redactExpired` cleanup nulls error columns after 90 days. Permanently unapproved templates
+surface only as an aggregate count in Worker logs. Verify the `live blocked gates` section
+below — `whatsapp` being blocked indicates the integration still needs an approved
+environment, which includes these templates.
 
 ## REQUIRES EXPLICIT APPROVAL: Webhook and auth probes
 
