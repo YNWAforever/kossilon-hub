@@ -1,5 +1,7 @@
 export type FallbackTemplate = { templateName: string; languageCode: string };
 
+type FallbackRule = { prefix: string; template: FallbackTemplate };
+
 /**
  * Approved, no-variable re-engagement templates — one per sweep family. Sent when a
  * reminder is due but the contact is outside the 24-hour window, where WhatsApp
@@ -19,18 +21,22 @@ export type FallbackTemplate = { templateName: string; languageCode: string };
  * dashboard, in zh_HK. Nothing in this repo can verify that — verify:firm is
  * offline by construction. See docs/runbooks/firm-deployment.md.
  */
-const FALLBACK_TEMPLATES: ReadonlyArray<{ prefix: string } & FallbackTemplate> = [
+const FALLBACK_TEMPLATES = [
   {
     prefix: "annual_return_reminder_",
-    templateName: "annual_return_reengagement",
-    languageCode: "zh_HK",
+    template: {
+      templateName: "annual_return_reengagement",
+      languageCode: "zh_HK",
+    },
   },
   {
     prefix: "service_subscription_reminder_",
-    templateName: "service_subscription_reengagement",
-    languageCode: "zh_HK",
+    template: {
+      templateName: "service_subscription_reengagement",
+      languageCode: "zh_HK",
+    },
   },
-];
+] as const satisfies readonly FallbackRule[];
 
 /**
  * Note these notification types do NOT identify a channel — both sweeps write the
@@ -39,6 +45,5 @@ const FALLBACK_TEMPLATES: ReadonlyArray<{ prefix: string } & FallbackTemplate> =
  */
 export function fallbackTemplateFor(notificationType: string): FallbackTemplate | null {
   const match = FALLBACK_TEMPLATES.find((entry) => notificationType.startsWith(entry.prefix));
-  if (!match) return null;
-  return { templateName: match.templateName, languageCode: match.languageCode };
+  return match?.template ?? null;
 }
