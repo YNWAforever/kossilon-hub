@@ -70,10 +70,11 @@ export async function sendWoztellMessage(
 }
 
 /**
- * The TEXT-vs-TEMPLATE choice is WhatsApp's 24-hour session window rule, resolved
- * in dispatchDue (which owns the clock and the contact lookup) and handed here
- * already decided. This function used to infer it from whether a templateName was
- * passed, which had nothing to do with the actual rule.
+ * The TEXT-vs-TEMPLATE choice is WhatsApp's 24-hour session window rule. It is
+ * resolved by the caller and handed here already decided, so this function does not
+ * infer it from whether a template name was supplied — that inference had nothing to
+ * do with the actual rule. P2-3 Task 8 moves the resolution into dispatchDue, which
+ * owns the clock and the contact lookup.
  */
 function woztellResponseElement(mode: WoztellSendMode): Record<string, unknown> {
   if (mode.kind === "template") {

@@ -113,6 +113,10 @@ export function createWoztellNotificationTransport(
       const payload = notificationPayload(notification);
       const body = typeof payload.body === "string" ? payload.body : undefined;
       if (!body) throw new Error("WhatsApp notification is missing a message body.");
+      // TEMPORARY (P2-3 Task 6; deleted by Task 8). Reproduces the pre-existing
+      // templateName-presence rule verbatim so the signature change compiles. This is
+      // NOT the session-window rule and has no test — Task 8 replaces this whole block
+      // with window-aware resolution in dispatchDue. Do not build on it.
       const templateName =
         typeof payload.templateName === "string" ? payload.templateName : undefined;
       const mode: WoztellSendMode = templateName
