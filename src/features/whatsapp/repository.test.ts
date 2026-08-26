@@ -134,6 +134,17 @@ async function cleanupWhatsAppFixtures() {
       delete from annual_return_cases
       where id = ${TEST_CASE_ID}
     `;
+    // companies has seven further restrict-only children that are deliberately
+    // NOT swept here: client_company_memberships, corporate_change_requests,
+    // incorporation_cases, officers, scr_inspection_requests, shareholdings and
+    // significant_controllers. Every insert into them is an explicit
+    // create against one named company, so no other test file's sweep can
+    // attach one to this fixture; deleting them would be dead work on every
+    // teardown. If any of them ever gains a whole-book sweep the way
+    // evaluateReminders() did, add it here — and note the order is not free:
+    // corporate_change_requests references officers and shareholdings with
+    // restrict, and work_items references corporate_change_requests, so those
+    // have to be removed innermost-first or the delete just moves the error.
     await tx`
       delete from companies
       where id = ${TEST_COMPANY_ID}
