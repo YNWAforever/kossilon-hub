@@ -31,4 +31,9 @@ describe("toPhoneDigits", () => {
     expect(toPhoneDigits("   ")).toBeNull();
     expect(toPhoneDigits("+")).toBeNull();
   });
+
+  it("strips non-ASCII digits, matching Postgres [^0-9]", () => {
+    expect(toPhoneDigits("５８５２")).toBeNull();
+    expect(toPhoneDigits("+852 6090 352５")).toBe("8526090352");
+  });
 });
