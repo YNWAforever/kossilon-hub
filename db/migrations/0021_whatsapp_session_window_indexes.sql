@@ -14,6 +14,12 @@
 -- The expression MUST stay character-identical to the one in
 -- lastInboundAtForPhoneDigits (src/features/whatsapp/repository.ts) or the planner
 -- will not use this index.
+--
+-- Deliberately NOT `concurrently`: scripts/db-migrate.ts runs each migration inside
+-- a transaction (sql.begin), and CREATE INDEX CONCURRENTLY cannot run in one. It
+-- would also interact badly with `if not exists` -- a failed concurrent build leaves
+-- an INVALID index that `if not exists` then matches by name forever, silently
+-- skipping the repair. Both tables are small enough that the brief SHARE lock is fine.
 
 create index if not exists whatsapp_contacts_phone_digits_idx
   on whatsapp_contacts ((regexp_replace(coalesce(phone_e164, whatsapp_id), '[^0-9]', '', 'g')));
