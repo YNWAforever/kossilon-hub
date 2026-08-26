@@ -37,6 +37,32 @@ Approval is required before provisioning or changing Neon Auth, R2, Hyperdrive, 
 
 For the planned isolated Neon Auth demo workflow, see [the Neon Auth demo runbook](neon-auth-demo.md).
 
+## REQUIRES EXPLICIT APPROVAL: WhatsApp template approvals
+
+Outside WhatsApp's 24-hour session window, free-form text is rejected and an
+approved template is required. Both of the following must be approved in the
+WOZTELL/Meta dashboard, in `zh_HK`, before automated reminders can reach a client
+who has gone quiet:
+
+- [ ] `annual_return_reengagement`
+- [ ] `service_subscription_reengagement`
+
+**Note:** These are the first `zh_HK` templates in this deployment. Every other
+template path in the codebase defaults to `"en"`. Setting up a new language locale
+requires careful verification in the dashboard — template name mismatches will cause
+silent failures in production with no way to detect the error from within the
+application.
+
+Both are no-variable templates — they prompt the client to reply, which reopens the
+window; they cannot name the client or the case. Their names are code constants in
+`src/features/whatsapp/fallback-templates.ts`; changing one here requires changing
+it there.
+
+If a template is missing or unapproved, WOZTELL rejects the send and the failure is
+logged by the dispatcher as `notification dispatch failed` with the notification
+type and error code. Nothing in CI or `verify:firm` can detect this — it is a
+dashboard-side fact.
+
 ## REQUIRES EXPLICIT APPROVAL: Webhook and auth probes
 
 1. Verify Neon Auth invite and magic-link login for a staff user and a client user.
