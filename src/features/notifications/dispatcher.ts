@@ -1,4 +1,7 @@
+import { fallbackTemplateFor } from "@/features/whatsapp/fallback-templates";
+import { toPhoneDigits } from "@/features/whatsapp/phone";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
+import { isWithinSessionWindow } from "@/features/whatsapp/session-window";
 import {
   sendWoztellMessage,
   type WoztellSendMode,
@@ -13,14 +16,80 @@ import { createSimulatedNotificationTransport } from "./simulated-transport";
 import {
   notificationPayload,
   type DispatchSummary,
+  type LastInboundResolver,
+  type NotificationDispatchContext,
   type NotificationDispatcher,
+  type NotificationOutboxRecord,
   type NotificationOutboxRepository,
   type NotificationTransport,
 } from "./types";
 
 export type NotificationDispatcherOptions = {
   whatsAppRepository?: Pick<WhatsAppRepository, "attachProviderMessageId">;
+  /**
+   * Supplied only in live provider mode (see runtime-dispatch.ts). Its absence
+   * means "do not resolve", which keeps local and simulated dispatch byte-identical
+   * to their previous behaviour.
+   */
+  lastInboundResolver?: LastInboundResolver;
 };
+
+/**
+ * Chooses TEXT or TEMPLATE on WhatsApp's actual rule. Runs here rather than in the
+ * transport because this is the layer that owns the clock: dispatchDue's `now` is
+ * the cron's intended tick, and a transport calling new Date() would introduce a
+ * second clock inside one dispatch run.
+ */
+async function resolveWhatsAppSendMode(
+  notification: NotificationOutboxRecord,
+  now: string,
+  lastInboundResolver: LastInboundResolver,
+): Promise<WoztellSendMode> {
+  const payload = notificationPayload(notification);
+  const body = typeof payload.body === "string" ? payload.body : undefined;
+  if (!body) throw new Error("WhatsApp notification is missing a message body.");
+
+  const phoneDigits = toPhoneDigits(notification.recipient);
+  const lastInboundAt = phoneDigits ? await lastInboundResolver(phoneDigits) : null;
+
+  // Inside the window the composed body is sent even when the caller supplied a
+  // template name — the TEMPLATE branch drops the body on the wire, which is how an
+  // actively-engaged client used to lose their case-specific reminder.
+  if (isWithinSessionWindow(lastInboundAt, now)) {
+    return { kind: "text", body };
+  }
+
+  const components = Array.isArray(payload.templateComponents)
+    ? (payload.templateComponents as WoztellTemplateComponent[])
+    : [];
+
+  const templateName = typeof payload.templateName === "string" ? payload.templateName : undefined;
+  if (templateName) {
+    return {
+      kind: "template",
+      elementName: templateName,
+      languageCode: typeof payload.languageCode === "string" ? payload.languageCode : "en",
+      components,
+    };
+  }
+
+  const fallback = fallbackTemplateFor(notification.notificationType);
+  if (!fallback) {
+    throw Object.assign(
+      new Error(
+        `WhatsApp notification ${notification.notificationType} is outside the 24-hour session window and has no template to fall back to.`,
+      ),
+      { code: "whatsapp_no_fallback_template" },
+    );
+  }
+
+  return {
+    kind: "template",
+    elementName: fallback.templateName,
+    languageCode: fallback.languageCode,
+    components: [],
+  };
+}
 
 export function createNotificationDispatcher(
   repository: NotificationOutboxRepository,
@@ -43,7 +112,17 @@ export function createNotificationDispatcher(
         // so this outcome is not ours to count — previously both runs reported a
         // send and only one of them was recorded.
         try {
-          const result = await transport.dispatch(notification);
+          const context: NotificationDispatchContext | undefined =
+            notification.channel === "whatsapp" && options.lastInboundResolver
+              ? {
+                  whatsAppSendMode: await resolveWhatsAppSendMode(
+                    notification,
+                    now,
+                    options.lastInboundResolver,
+                  ),
+                }
+              : undefined;
+          const result = await transport.dispatch(notification, context);
           const applied = await repository.markSent(
             notification.id,
             result.providerMessageId,
@@ -80,6 +159,17 @@ export function createNotificationDispatcher(
             error instanceof Error && "code" in error && typeof error.code === "string"
               ? error.code
               : "dispatch_failed";
+          // The only screen that reads notification_outbox filters on
+          // idempotency_key like 'follow-up:%', so sweep failures are otherwise
+          // invisible — and redactExpired nulls last_error_code/message at
+          // retention, putting the evidence on a 90-day fuse. A permanently
+          // unapproved fallback template would surface only as an aggregate count.
+          console.error("notification dispatch failed", {
+            id: notification.id,
+            notificationType: notification.notificationType,
+            channel: notification.channel,
+            errorCode,
+          });
           const input = {
             errorCode,
             errorMessage,
@@ -106,29 +196,21 @@ export function createWoztellNotificationTransport(
   fetchImpl: typeof fetch = fetch,
 ): NotificationTransport {
   return {
-    async dispatch(notification) {
+    async dispatch(notification, context) {
       if (notification.channel !== "whatsapp")
         throw new Error(`Unsupported notification channel: ${notification.channel}.`);
       if (!notification.recipient) throw new Error("WhatsApp notification is missing a recipient.");
-      const payload = notificationPayload(notification);
-      const body = typeof payload.body === "string" ? payload.body : undefined;
-      if (!body) throw new Error("WhatsApp notification is missing a message body.");
-      // TEMPORARY (P2-3 Task 6; deleted by Task 8). Reproduces the pre-existing
-      // templateName-presence rule verbatim so the signature change compiles. This is
-      // NOT the session-window rule and has no test — Task 8 replaces this whole block
-      // with window-aware resolution in dispatchDue. Do not build on it.
-      const templateName =
-        typeof payload.templateName === "string" ? payload.templateName : undefined;
-      const mode: WoztellSendMode = templateName
-        ? {
-            kind: "template",
-            elementName: templateName,
-            languageCode: typeof payload.languageCode === "string" ? payload.languageCode : "en",
-            components: Array.isArray(payload.templateComponents)
-              ? (payload.templateComponents as WoztellTemplateComponent[])
-              : [],
-          }
-        : { kind: "text", body };
+
+      // Resolved by dispatchDue, which owns the clock. Its absence means the
+      // dispatcher was mis-wired — fail loudly rather than silently reverting to
+      // un-windowed sends.
+      const mode = context?.whatsAppSendMode;
+      if (!mode) {
+        throw Object.assign(
+          new Error("WhatsApp dispatch is missing a resolved session-window send mode."),
+          { code: "whatsapp_send_mode_missing" },
+        );
+      }
 
       return sendWoztellMessage(config, { toPhone: notification.recipient, mode }, fetchImpl);
     },
@@ -153,8 +235,9 @@ export function createNotificationTransport(input: {
     : null;
 
   return {
-    async dispatch(notification) {
-      if (notification.channel === "whatsapp") return whatsappTransport.dispatch(notification);
+    async dispatch(notification, context) {
+      if (notification.channel === "whatsapp")
+        return whatsappTransport.dispatch(notification, context);
       if (notification.channel === "email") {
         if (!emailTransport) {
           throw Object.assign(new Error("Email notifications are not configured for this firm."), {

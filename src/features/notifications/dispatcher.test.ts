@@ -197,7 +197,7 @@ describe("createNotificationTransport (live mode composite routing)", () => {
   };
   const resendConfig = { apiKey: "re_test_key", from: "Kossilon Hub <auth@example.test>" };
 
-  it("routes a whatsapp notification to the WOZTELL transport, unchanged", async () => {
+  it("routes a whatsapp notification to the WOZTELL transport with its resolved send mode", async () => {
     const fetchImpl = vi.fn(
       async () =>
         new Response(
@@ -217,6 +217,7 @@ describe("createNotificationTransport (live mode composite routing)", () => {
         fetchImpl,
       }).dispatch(
         notification({ channel: "whatsapp", recipient: "+85290000000", payload: { body: "hi" } }),
+        { whatsAppSendMode: { kind: "text", body: "hi" } },
       ),
     ).resolves.toEqual({ providerMessageId: "wamid.1" });
   });
@@ -274,8 +275,86 @@ describe("createNotificationTransport (live mode composite routing)", () => {
     await expect(
       transport.dispatch(
         notification({ channel: "whatsapp", recipient: "+85290000000", payload: { body: "hi" } }),
+        { whatsAppSendMode: { kind: "text", body: "hi" } },
       ),
     ).resolves.toEqual({ providerMessageId: "wamid.2" });
+  });
+
+  // These two are the only coverage createWoztellNotificationTransport has. They run
+  // the REAL transport (not a vi.fn stub) through the composite router, so they also
+  // guard the context forwarding in createNotificationTransport. Both are written to
+  // fail if the transport ever goes back to inferring TEXT-vs-TEMPLATE from
+  // payload.templateName: the payloads deliberately contradict the resolved mode.
+  it("puts the resolved send mode on the wire, ignoring the payload's template hints", async () => {
+    const sent: Record<string, unknown>[] = [];
+    const fetchImpl: typeof fetch = async (_input, init) => {
+      const body = JSON.parse(String(init?.body)) as { response: Record<string, unknown>[] };
+      sent.push(body.response[0]);
+      return new Response(
+        JSON.stringify({
+          ok: 1,
+          sendResult: { ok: 1, result: [{ result: { messages: [{ id: "wamid.3" }] } }] },
+        }),
+        { status: 200 },
+      );
+    };
+    const transport = createNotificationTransport({
+      providerMode: "live",
+      config: whatsappConfig,
+      resendConfig,
+      fetchImpl,
+    });
+
+    // Outside the window: the fallback TEMPLATE is sent even though the payload
+    // carries only a composed body and names no template.
+    await expect(
+      transport.dispatch(notification({ payload: { body: "跟進提醒" } }), {
+        whatsAppSendMode: {
+          kind: "template",
+          elementName: "annual_return_reengagement",
+          languageCode: "zh_HK",
+          components: [],
+        },
+      }),
+    ).resolves.toEqual({ providerMessageId: "wamid.3" });
+
+    // Inside the window: the composed body is sent even though the payload names a
+    // template — the bug that used to discard an engaged client's reminder text.
+    await expect(
+      transport.dispatch(
+        notification({
+          payload: { body: "跟進提醒", templateName: "annual_return_reengagement" },
+        }),
+        { whatsAppSendMode: { kind: "text", body: "跟進提醒" } },
+      ),
+    ).resolves.toEqual({ providerMessageId: "wamid.3" });
+
+    expect(sent[0]).toEqual({
+      type: "TEMPLATE",
+      elementName: "annual_return_reengagement",
+      languageCode: "zh_HK",
+      components: [],
+    });
+    expect(sent[1]).toEqual({ type: "TEXT", text: "跟進提醒" });
+  });
+
+  it("refuses to send a whatsapp notification that arrives without a resolved send mode", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 }));
+
+    await expect(
+      createNotificationTransport({
+        providerMode: "live",
+        config: whatsappConfig,
+        resendConfig,
+        fetchImpl,
+      }).dispatch(
+        // templateName is present on purpose: the deleted inference would have
+        // happily sent this, so a revert of the missing-mode guard fails here.
+        notification({ payload: { body: "hi", templateName: "annual_return_reengagement" } }),
+      ),
+    ).rejects.toMatchObject({ code: "whatsapp_send_mode_missing" });
+
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("still rejects an in_app notification, unchanged from today", async () => {
