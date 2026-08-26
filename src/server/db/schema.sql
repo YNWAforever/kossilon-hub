@@ -1056,3 +1056,14 @@ create index if not exists document_upload_intents_document_idx
 create index if not exists whatsapp_messages_delivery_state_idx
   on whatsapp_messages (delivered_at, read_at)
   where direction = 'outbound';
+
+-- from 0021_whatsapp_session_window_indexes.sql
+-- Digits-only comparison indexes for 24-hour session window resolution. The
+-- contacts expression must stay character-identical to the query in
+-- lastInboundAtForPhoneDigits or the planner will not use it.
+create index if not exists whatsapp_contacts_phone_digits_idx
+  on whatsapp_contacts ((regexp_replace(coalesce(phone_e164, whatsapp_id), '[^0-9]', '', 'g')));
+
+create index if not exists whatsapp_messages_inbound_received_idx
+  on whatsapp_messages (contact_id, received_at desc)
+  where direction = 'inbound';
