@@ -71,6 +71,7 @@ async function cleanupWhatsAppFixtures() {
       where whatsapp_id like 'phase2-test-%'
         or phone_e164 in (
           '85260903521',
+          '+85260903521',
           '85261234567',
           '+85269990001',
           '+85261000001',
@@ -362,6 +363,59 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
 
       expect(resolved).not.toBeNull();
       expect(new Date(resolved!).toISOString()).toBe(receivedAt);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "spans the duplicate contact rows the format split creates, taking the latest",
+    async () => {
+      const repository = repositoryFor();
+      // One human, two contact rows. upsertContact looks contacts up by exact
+      // string equality and whatsapp_contacts_provider_phone_uidx keys on the raw
+      // string, so the bare-digit row WOZTELL creates on inbound and the
+      // plus-prefixed row a staff send creates never collide — production already
+      // holds pairs like this.
+      const earlierAt = "2026-08-25T02:00:00.000Z";
+      const laterAt = "2026-08-26T02:00:00.000Z";
+
+      const earlier = await repository.recordInboundMessage({
+        provider: "woztell",
+        providerMessageId: "test-window-dup-bare",
+        channelId: null,
+        fromWhatsAppId: "85260903521",
+        fromPhone: "85260903521",
+        contactName: "Window Dup Bare",
+        messageType: "text",
+        body: "Earlier",
+        receivedAt: earlierAt,
+        rawPayload: {},
+      });
+      const later = await repository.recordInboundMessage({
+        provider: "woztell",
+        providerMessageId: "test-window-dup-plus",
+        channelId: null,
+        fromWhatsAppId: "+85260903521",
+        fromPhone: "+85260903521",
+        contactName: "Window Dup Plus",
+        messageType: "text",
+        body: "Later",
+        receivedAt: laterAt,
+        rawPayload: {},
+      });
+
+      // Pin the precondition: if these two ever merge into a single contact row,
+      // the assertion below would still pass while proving nothing about spanning.
+      expect(later.contactId).not.toBe(earlier.contactId);
+
+      const resolved = await repository.lastInboundAtForPhoneDigits("85260903521");
+
+      // max() runs across BOTH rows. A contact-first query that resolves one
+      // contact id and then reads its messages would return whichever row it
+      // happened to pick — the earlier one here, closing the window early and
+      // downgrading a free-form reply to a paid template.
+      expect(resolved).not.toBeNull();
+      expect(new Date(resolved!).toISOString()).toBe(laterAt);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

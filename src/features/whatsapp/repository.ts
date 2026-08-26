@@ -1291,6 +1291,13 @@ export function createWhatsAppRepository(
    * The regexp_replace expression must stay character-identical to
    * whatsapp_contacts_phone_digits_idx (migration 0021) or the planner will not
    * use the index.
+   *
+   * Returns ISO-8601 ("2026-08-26T02:00:00.000Z"), NOT the Postgres text rendering
+   * the `received_at::text` reads elsewhere in this file return. The `::text` cast
+   * is deliberately omitted: it renders timestamptz as "2026-08-26 02:00:00+00",
+   * which JavaScriptCore rejects outright and V8 only parses via a lenient
+   * fallback. Left uncast, postgres.js returns a Date and timestampString
+   * normalizes it.
    */
   async function lastInboundAtForPhoneDigits(phoneDigits: string): Promise<string | null> {
     // An empty string would match EVERY contact whose phone_e164 and whatsapp_id
@@ -1308,9 +1315,7 @@ export function createWhatsAppRepository(
         and wm.direction = 'inbound'
     `;
 
-    const value = rows[0]?.last_inbound_at ?? null;
-    if (value === null) return null;
-    return typeof value === "string" ? value : value.toISOString();
+    return timestampString(rows[0]?.last_inbound_at ?? null);
   }
 
   return {
@@ -1320,9 +1325,9 @@ export function createWhatsAppRepository(
     recordWebhookEvent,
     recordMessageStatusEvent,
     attachProviderMessageId,
-    lastInboundAtForPhoneDigits,
     listConversations,
     listConversationMessages,
+    lastInboundAtForPhoneDigits,
     async close() {
       if (ownsClient && "end" in sql) {
         await sql.end();
