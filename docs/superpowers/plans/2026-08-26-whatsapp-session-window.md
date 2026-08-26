@@ -429,12 +429,16 @@ Expected: all 21 migrations apply, including `0021_whatsapp_session_window_index
 
 - [ ] **Step 4: Confirm both indexes exist**
 
-```bash
-docker exec kossilon-test-pg psql -U postgres -d kossilon_test -c "\di whatsapp_contacts_phone_digits_idx whatsapp_messages_inbound_received_idx"
-```
-Expected: both indexes listed.
+`psql`'s `\di` takes only ONE pattern — a two-argument form silently ignores the second and would report success even if that index was never created. Query `pg_indexes` instead, which also shows the materialized definition so you can confirm the expression index was accepted:
 
-Leave the container running — Task 5 uses it.
+```bash
+docker exec kossilon-test-pg psql -U postgres -d kossilon_test -c "select indexname, indexdef from pg_indexes where indexname in ('whatsapp_contacts_phone_digits_idx','whatsapp_messages_inbound_received_idx');"
+```
+Expected: **two** rows. The contacts index should be a btree over `regexp_replace(COALESCE(phone_e164, whatsapp_id), '[^0-9]'::text, ''::text, 'g'::text)`; the messages index `(contact_id, received_at DESC) WHERE (direction = 'inbound'::text)`.
+
+Note on idempotency: re-running `bun scripts/db-migrate.ts` proves nothing, because the script keeps a `schema_migrations` ledger and simply skips applied files. To exercise the SQL itself, delete the `0021` ledger row and re-run, or apply the statements directly with `psql -v ON_ERROR_STOP=1`.
+
+Tear the container down (`docker rm -f kossilon-test-pg`) — Task 5 runs as a separate process and creates its own.
 
 - [ ] **Step 5: Commit**
 
