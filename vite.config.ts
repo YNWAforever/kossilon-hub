@@ -31,6 +31,27 @@ const createConfig = defineConfig({
   } as unknown as { preset?: string },
 });
 
+/**
+ * Checkouts of other branches live under `.worktrees/` — AGENTS.md forbids
+ * rebasing pushed commits, so a worktree is the normal way to hold a second
+ * branch here. Their test files must never be collected:
+ *
+ *  - they resolve `@/` back into THIS repo, so their mocks land on the main
+ *    checkout's modules and corrupt the registry, killing the whole run;
+ *  - a worktree copy of a database test matches neither the `unit` project's
+ *    exclude list nor the `db` project's include list (both hold repo-root-
+ *    relative paths), so Vitest assigns it to `unit` — full parallelism, group 0
+ *    — where it races the serialized `db` project on the same TEST_DATABASE_URL.
+ *
+ * This has to be declared on EACH project. A project-level `exclude` REPLACES
+ * the root and CLI one rather than merging with it, which is why the
+ * `vitest run --exclude .worktrees/**` this replaces silently did nothing once
+ * the config grew projects. `.gitignore`, the eslint script and
+ * db-integration-files.convention.test.ts's SKIP_DIRS all already know to skip
+ * this directory; the test runner was the one place that did not.
+ */
+export const WORKTREE_EXCLUDE = "**/.worktrees/**";
+
 export async function flattenPlugins(plugins: PluginOption[]): Promise<Plugin[]> {
   const groups = await Promise.all(
     plugins.map(async (candidate) => {
@@ -94,7 +115,7 @@ export default async function config(env: ConfigEnv) {
           extends: true,
           test: {
             name: "unit",
-            exclude: [...defaultExclude, ...DB_INTEGRATION_TEST_FILES],
+            exclude: [...defaultExclude, WORKTREE_EXCLUDE, ...DB_INTEGRATION_TEST_FILES],
           },
         },
         {
@@ -102,6 +123,11 @@ export default async function config(env: ConfigEnv) {
           test: {
             name: "db",
             include: [...DB_INTEGRATION_TEST_FILES],
+            // Redundant against `include` above, which lists repo-root-relative
+            // paths a worktree copy cannot match — but stated anyway so the
+            // property is owned by this project rather than being a side effect
+            // of how `include` happens to be spelled.
+            exclude: [...defaultExclude, WORKTREE_EXCLUDE],
             fileParallelism: !testDatabaseUrl,
             // fileParallelism alone only serializes these while the root config
             // keeps `isolate: true` and groupOrder 0. Pinning this project to a

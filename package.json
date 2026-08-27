@@ -11,7 +11,7 @@
     "lint": "eslint . --ignore-pattern .worktrees/**",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run --exclude .worktrees/**",
+    "test": "vitest run",
     "test:watch": "vitest --exclude .worktrees/**",
     "validate:runtime": "node --experimental-strip-types scripts/validate-firm-runtime.ts",
     "validate:neon-auth-demo": "node --experimental-strip-types scripts/validate-neon-auth-demo.ts",
