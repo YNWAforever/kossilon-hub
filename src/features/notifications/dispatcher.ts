@@ -123,12 +123,16 @@ export function createNotificationDispatcher(
                 }
               : undefined;
           const result = await transport.dispatch(notification, context);
-          const applied = await repository.markSent(
-            notification.id,
-            result.delivery === "provider" ? result.providerMessageId : null,
-            now,
-            notification.attemptCount,
-          );
+          const applied = await repository.markSent(notification.id, {
+            providerMessageId: result.delivery === "provider" ? result.providerMessageId : null,
+            // Recorded positively rather than left to be inferred from a null
+            // provider_message_id, which is also what a redacted row and a
+            // never-dispatched row look like. The transport is the only layer that
+            // knows, and the fact is already in hand right here.
+            delivery: result.delivery,
+            sentAt: now,
+            attemptCount: notification.attemptCount,
+          });
           if (applied) summary.sent += 1;
           else summary.superseded += 1;
 

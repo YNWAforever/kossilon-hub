@@ -102,7 +102,12 @@ describe("runtime notification dispatch", () => {
       ),
     ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(repo.close).toHaveBeenCalledTimes(1);
 
@@ -141,7 +146,12 @@ describe("runtime notification dispatch", () => {
       ),
     ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
     // Asserted as an exact object, not objectContaining: the session-window work
     // added a lastInboundResolver that belongs on createNotificationDispatcher, and
     // an exact match is what catches it being threaded here by mistake.
@@ -186,7 +196,12 @@ describe("runtime notification dispatch", () => {
     ).resolves.toMatchObject({ claimed: 1, sent: 1 });
 
     expect(attachProviderMessageId).not.toHaveBeenCalled();
-    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
     expect(close).toHaveBeenCalledTimes(1);
   });
 
@@ -354,12 +369,12 @@ describe("runtime notification dispatch", () => {
         response: [{ type: "TEXT", text: "Persisted body" }],
       },
     });
-    expect(repo.markSent).toHaveBeenCalledWith(
-      row.id,
-      "wamid.live-text",
-      "2026-07-14T09:00:00.000Z",
-      1,
-    );
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: "wamid.live-text",
+      delivery: "provider",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
     vi.unstubAllGlobals();
   });
 

@@ -93,7 +93,7 @@ describe("notification dispatcher", () => {
    * client was actually contacted. No provider acknowledged this send, so the
    * column must stay null.
    */
-  it("records no provider message id for a local dispatch", async () => {
+  it("records a local dispatch as simulated, with no provider message id", async () => {
     const fetchImpl = vi.fn();
     vi.stubGlobal("fetch", fetchImpl);
     const repo = repository([notification()]);
@@ -104,18 +104,24 @@ describe("notification dispatcher", () => {
       ),
     ).resolves.toMatchObject({ claimed: 1, sent: 1 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(
-      "00000000-0000-0000-0000-000000000001",
-      null,
-      "2026-07-12T00:00:00.000Z",
-      1,
-    );
+    expect(repo.markSent).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-12T00:00:00.000Z",
+      attemptCount: 1,
+    });
     expect(fetchImpl).not.toHaveBeenCalled();
     resetLocalNotificationTransportForTest();
     vi.unstubAllGlobals();
   });
 
-  it("records no provider message id for a simulated dispatch", async () => {
+  /**
+   * The null provider_message_id above is not by itself evidence of anything —
+   * a redacted row and a never-dispatched row look identical. `delivery` is the
+   * only positive record that no provider was ever asked, which is what an
+   * auditor reading "did we actually contact this client" needs.
+   */
+  it("records a simulated dispatch as simulated, with no provider message id", async () => {
     const repo = repository([notification()]);
 
     await expect(
@@ -124,12 +130,12 @@ describe("notification dispatcher", () => {
       ),
     ).resolves.toMatchObject({ claimed: 1, sent: 1 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(
-      "00000000-0000-0000-0000-000000000001",
-      null,
-      "2026-07-12T00:00:00.000Z",
-      1,
-    );
+    expect(repo.markSent).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-12T00:00:00.000Z",
+      attemptCount: 1,
+    });
   });
 
   /**
@@ -151,15 +157,15 @@ describe("notification dispatcher", () => {
     }).dispatchDue("2026-07-12T00:00:00.000Z");
 
     expect(attachProviderMessageId).not.toHaveBeenCalled();
-    expect(repo.markSent).toHaveBeenCalledWith(
-      "00000000-0000-0000-0000-000000000001",
-      null,
-      "2026-07-12T00:00:00.000Z",
-      1,
-    );
+    expect(repo.markSent).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-12T00:00:00.000Z",
+      attemptCount: 1,
+    });
   });
 
-  it("persists provider IDs after a successful dispatch", async () => {
+  it("persists provider IDs and records the delivery as provider-acknowledged", async () => {
     const repo = repository([notification()]);
     const dispatcher = createNotificationDispatcher(repo, {
       dispatch: vi.fn(async () => ({
@@ -171,12 +177,12 @@ describe("notification dispatcher", () => {
       claimed: 1,
       sent: 1,
     });
-    expect(repo.markSent).toHaveBeenCalledWith(
-      "00000000-0000-0000-0000-000000000001",
-      "provider-1",
-      "2026-07-12T00:00:00.000Z",
-      1,
-    );
+    expect(repo.markSent).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", {
+      providerMessageId: "provider-1",
+      delivery: "provider",
+      sentAt: "2026-07-12T00:00:00.000Z",
+      attemptCount: 1,
+    });
   });
 
   it("retries transient failures and permanently fails the final attempt", async () => {
