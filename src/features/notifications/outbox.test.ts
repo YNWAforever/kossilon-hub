@@ -245,11 +245,18 @@ describe("outbox records how a dispatch was delivered", () => {
    * cannot catch a column that exists in one file and not the other — this can.
    */
   it("carries the same column in the canonical schema", () => {
-    expect(schema).toContain("-- from 0022_notification_outbox_delivery.sql");
-    expect(schema).toContain(
-      "alter table notification_outbox add column if not exists delivery text",
+    // Scoped to the table's own create block rather than the whole file: schema.sql
+    // is the reference a reader consults, so a `delivery` column declared anywhere
+    // else in it would satisfy a file-wide search while still leaving the reader of
+    // notification_outbox unable to see it.
+    const createBlock = schema.slice(
+      schema.indexOf("create table if not exists notification_outbox ("),
     );
-    expect(schema).toContain("delivery is null or delivery in ('provider', 'simulated')");
+    const columns = createBlock.slice(0, createBlock.indexOf("\n);"));
+
+    expect(columns).toContain("delivery text check");
+    expect(columns).toContain("delivery is null or delivery in ('provider', 'simulated')");
+    expect(columns).not.toMatch(/delivery text[^,]*not null/);
   });
 });
 

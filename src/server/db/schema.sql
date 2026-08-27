@@ -394,6 +394,12 @@ create table if not exists notification_outbox (
   max_attempts integer not null default 5 check (max_attempts > 0),
   next_attempt_at timestamptz not null default now(),
   provider_message_id text,
+  -- Added by 0022. Records positively whether a provider acknowledged the send or
+  -- it was simulated; without it, provider_message_id is null for three unrelated
+  -- reasons (never dispatched, redacted, simulated) and the last is readable only
+  -- by elimination. Nullable because rows written before 0022 genuinely are
+  -- unknown -- a default would hand an auditor a value that looks like evidence.
+  delivery text check (delivery is null or delivery in ('provider', 'simulated')),
   last_error_code text,
   last_error_message text,
   sent_at timestamptz,
@@ -1056,16 +1062,3 @@ create index if not exists document_upload_intents_document_idx
 create index if not exists whatsapp_messages_delivery_state_idx
   on whatsapp_messages (delivered_at, read_at)
   where direction = 'outbound';
-
--- from 0022_notification_outbox_delivery.sql
-
--- Records positively whether a provider acknowledged the send or it was
--- simulated. Without it, provider_message_id is null for three unrelated reasons
--- and a simulated dispatch is readable only by elimination. Nullable because rows
--- written before 0022 genuinely are unknown; the migration backfills only the
--- pre-fix rows whose fabricated 'simulated:%' / 'local:%' ids identify them.
-alter table notification_outbox add column if not exists delivery text;
-
-alter table notification_outbox drop constraint if exists notification_outbox_delivery_check;
-alter table notification_outbox add constraint notification_outbox_delivery_check
-  check (delivery is null or delivery in ('provider', 'simulated'));
