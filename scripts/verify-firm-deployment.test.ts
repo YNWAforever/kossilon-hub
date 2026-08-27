@@ -16,7 +16,7 @@ const gateFiles = new Map<string, string>([
   ],
   [
     "src/features/notifications/local-transport.ts",
-    "export function createLocalNotificationTransport() { return { providerMessageId: `local:${notification.id}` }; }",
+    'export function createLocalNotificationTransport() { dispatchedPayloads.push(structuredClone(notification)); return { delivery: "simulated" }; }',
   ],
   [
     "src/features/auth/neon-auth-server.ts",
