@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, type Mock } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { NotificationOutboxRecord, NotificationOutboxRepository } from "./types";
@@ -42,6 +42,50 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
     markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
+}
+
+const liveWhatsAppConfig = {
+  provider: "woztell" as const,
+  apiBaseUrl: "https://example.test",
+  accessToken: "test-token",
+  channelId: "channel-1",
+  webhookSecret: "test-secret-value",
+};
+
+/**
+ * Only the two methods dispatchDue reaches through `createWhatsAppRepository` are
+ * real; the rest of WhatsAppRepository is database surface this path never touches,
+ * and stubbing all of it would obscure which two actually matter.
+ */
+function whatsAppRepositoryStub(methods: {
+  lastInboundAtForPhoneDigits: WhatsAppRepository["lastInboundAtForPhoneDigits"];
+}): WhatsAppRepository {
+  return {
+    ...methods,
+    close: vi.fn(async () => undefined),
+  } as unknown as WhatsAppRepository;
+}
+
+/** WOZTELL's documented success envelope — the provider id lives inside sendResult. */
+function woztellOkResponse(providerMessageId: string): Response {
+  return new Response(
+    JSON.stringify({
+      ok: 1,
+      sendResult: { ok: 1, result: [{ result: { messages: [{ id: providerMessageId }] } }] },
+    }),
+    { status: 200 },
+  );
+}
+
+/**
+ * The one cast over recorded fetch arguments. `vi.fn(async () => …)` is typed from
+ * its implementation, which declares no parameters, so `mock.calls[0]` is `[]` and
+ * the request the transport actually made is invisible to the type checker. Keeping
+ * the cast here means the assertions in the tests read plain values.
+ */
+function woztellRequest(fetchImpl: Mock): { url: string; body: unknown } {
+  const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+  return { url, body: JSON.parse(String(init.body)) };
 }
 
 describe("runtime notification dispatch", () => {
@@ -108,6 +152,9 @@ describe("runtime notification dispatch", () => {
       sentAt: "2026-07-14T09:00:00.000Z",
       attemptCount: 1,
     });
+    // Asserted as an exact object, not objectContaining: the session-window work
+    // added a lastInboundResolver that belongs on createNotificationDispatcher, and
+    // an exact match is what catches it being threaded here by mistake.
     expect(createTransport).toHaveBeenCalledWith({
       providerMode: "simulated",
       config: undefined,
@@ -281,6 +328,122 @@ describe("runtime notification dispatch", () => {
     );
     expect(repo.close).toHaveBeenCalledTimes(1);
     vi.unstubAllGlobals();
+  });
+
+  // The WhatsApp twin of the email test above, and for the same reason: every other
+  // live-mode test here mocks createTransport, so nothing else walks
+  // runtime-dispatch.ts -> dispatcher.ts -> woztell.ts with the real transport.
+  //
+  // This is the test that would have caught the break these two were added for.
+  // Wiring `whatsAppRepository` without also wiring `lastInboundResolver` left
+  // dispatchDue passing `context: undefined` for every whatsapp row, so the WOZTELL
+  // transport threw whatsapp_send_mode_missing before it ever called fetch: live
+  // WhatsApp dispatch sent zero messages while every unit test stayed green. The
+  // `fetch` assertions below are the teeth — a mis-wired dispatcher never gets there.
+  it("sends TEXT on the wire for a live whatsapp row inside the session window", async () => {
+    const fetchImpl = vi.fn(async () => woztellOkResponse("wamid.live-text"));
+    vi.stubGlobal("fetch", fetchImpl);
+    const repo = repository([row]);
+    // 2 hours before `now` — comfortably inside the 24-hour window.
+    const lastInboundAtForPhoneDigits = vi.fn(async () => "2026-07-14T07:00:00.000Z");
+
+    await expect(
+      dispatchDueNotificationsWithDependencies(
+        { now: "2026-07-14T09:00:00.000Z" },
+        {
+          currentProviderMode: () => "live",
+          createRepository: () => repo,
+          createWhatsAppRepository: () => whatsAppRepositoryStub({ lastInboundAtForPhoneDigits }),
+          getLiveConfig: () => liveWhatsAppConfig,
+        },
+      ),
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+
+    expect(lastInboundAtForPhoneDigits).toHaveBeenCalledWith("85291234567");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(woztellRequest(fetchImpl)).toEqual({
+      url: "https://example.test/sendResponses",
+      body: {
+        channelId: "channel-1",
+        recipientId: "85291234567",
+        response: [{ type: "TEXT", text: "Persisted body" }],
+      },
+    });
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: "wamid.live-text",
+      delivery: "provider",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it("sends the fallback TEMPLATE on the wire for a live whatsapp row outside the window", async () => {
+    const fetchImpl = vi.fn(async () => woztellOkResponse("wamid.live-tpl"));
+    vi.stubGlobal("fetch", fetchImpl);
+    // Exactly what runAnnualReturnReminderSweep enqueues: a body, no template hints.
+    const sweepRow: NotificationOutboxRecord = {
+      ...row,
+      notificationType: "annual_return_reminder_t14",
+    };
+    const repo = repository([sweepRow]);
+    // Never heard from, so the composed body is undeliverable and a template is required.
+    const lastInboundAtForPhoneDigits = vi.fn(async () => null);
+
+    await expect(
+      dispatchDueNotificationsWithDependencies(
+        { now: "2026-07-14T09:00:00.000Z" },
+        {
+          currentProviderMode: () => "live",
+          createRepository: () => repo,
+          createWhatsAppRepository: () => whatsAppRepositoryStub({ lastInboundAtForPhoneDigits }),
+          getLiveConfig: () => liveWhatsAppConfig,
+        },
+      ),
+    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(woztellRequest(fetchImpl)).toEqual({
+      url: "https://example.test/sendResponses",
+      body: {
+        channelId: "channel-1",
+        recipientId: "85291234567",
+        response: [
+          {
+            type: "TEMPLATE",
+            elementName: "annual_return_reengagement",
+            languageCode: "zh_HK",
+            components: [],
+          },
+        ],
+      },
+    });
+    vi.unstubAllGlobals();
+  });
+
+  // Pins the `providerMode === "live"` half of the resolver gate, which nothing else
+  // holds in place — the full suite stays green if it is dropped. Without it,
+  // simulated and local dispatch would issue a real lastInboundAtForPhoneDigits query
+  // against Postgres for every whatsapp row, and a transient DB error would burn a
+  // retry attempt on sends that previously always succeeded.
+  //
+  // The timestamp is deliberately INSIDE the window: with the gate dropped the row
+  // still sends, so this fails on the query happening rather than on some downstream
+  // send difference, keeping the failure pointed at the actual defect.
+  it("does not resolve the session window outside live mode", async () => {
+    const repo = repository([row]);
+    const lastInboundAtForPhoneDigits = vi.fn(async () => "2026-07-14T07:00:00.000Z");
+
+    await dispatchDueNotificationsWithDependencies(
+      { now: "2026-07-14T09:00:00.000Z" },
+      {
+        currentProviderMode: () => "simulated",
+        createRepository: () => repo,
+        createWhatsAppRepository: () => whatsAppRepositoryStub({ lastInboundAtForPhoneDigits }),
+      },
+    );
+
+    expect(lastInboundAtForPhoneDigits).not.toHaveBeenCalled();
   });
 });
 

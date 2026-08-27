@@ -1,4 +1,6 @@
 import type postgres from "postgres";
+import type { WhatsAppRepository } from "@/features/whatsapp/repository";
+import type { WoztellSendMode } from "@/features/whatsapp/woztell";
 
 export type NotificationChannel = "email" | "whatsapp" | "in_app";
 export type NotificationStatus = "pending" | "processing" | "sent" | "failed" | "cancelled";
@@ -72,8 +74,22 @@ export type NotificationDispatchResult =
  */
 export type NotificationDelivery = NotificationDispatchResult["delivery"];
 
+/** Resolves a contact's last inbound message time from a digits-only phone number. */
+export type LastInboundResolver = WhatsAppRepository["lastInboundAtForPhoneDigits"];
+
+/**
+ * Per-dispatch context resolved by dispatchDue. Optional so local, simulated, and
+ * resend transports keep their single-parameter implementations unchanged.
+ */
+export type NotificationDispatchContext = {
+  whatsAppSendMode?: WoztellSendMode;
+};
+
 export type NotificationTransport = {
-  dispatch(notification: NotificationOutboxRecord): Promise<NotificationDispatchResult>;
+  dispatch(
+    notification: NotificationOutboxRecord,
+    context?: NotificationDispatchContext,
+  ): Promise<NotificationDispatchResult>;
 };
 
 export type DispatchSummary = {

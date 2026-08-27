@@ -46,6 +46,13 @@ export async function dispatchDueNotificationsWithDependencies(
     });
     return await createNotificationDispatcher(repository, transport, {
       whatsAppRepository,
+      // Gated exactly as config/resendConfig are above. Scoped to the resolver
+      // alone: local and simulated modes do no window lookup, while the line above
+      // still hands them the repository for attachProviderMessageId.
+      lastInboundResolver:
+        providerMode === "live" && whatsAppRepository
+          ? (phoneDigits) => whatsAppRepository.lastInboundAtForPhoneDigits(phoneDigits)
+          : undefined,
     }).dispatchDue(data.now, data.limit);
   } finally {
     await repository.close();

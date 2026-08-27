@@ -169,7 +169,11 @@ describe("sendWoztellMessage", () => {
     };
 
     await expect(
-      sendWoztellMessage(config, { toPhone: "+852 9000 0000", body: "Reminder body" }, fetchImpl),
+      sendWoztellMessage(
+        config,
+        { toPhone: "+852 9000 0000", mode: { kind: "text", body: "Reminder body" } },
+        fetchImpl,
+      ),
     ).resolves.toEqual({ providerMessageId: "gBGGhSZphigfAglySd38a9T4jAE" });
 
     expect(seenUrl).toBe("https://bot.api.woztell.com/sendResponses");
@@ -191,9 +195,12 @@ describe("sendWoztellMessage", () => {
       config,
       {
         toPhone: "+85290000000",
-        body: "ignored on the wire for a template",
-        templateName: "annual_return_manual_reminder",
-        languageCode: "zh_HK",
+        mode: {
+          kind: "template",
+          elementName: "annual_return_manual_reminder",
+          languageCode: "zh_HK",
+          components: [],
+        },
       },
       fetchImpl,
     );
@@ -218,7 +225,11 @@ describe("sendWoztellMessage", () => {
       );
 
     await expect(
-      sendWoztellMessage(config, { toPhone: "+85290000000", body: "hi" }, fetchImpl),
+      sendWoztellMessage(
+        config,
+        { toPhone: "+85290000000", mode: { kind: "text", body: "hi" } },
+        fetchImpl,
+      ),
     ).rejects.toMatchObject({
       code: "woztell_err_100",
       errCode: 100,
@@ -231,7 +242,11 @@ describe("sendWoztellMessage", () => {
       new Response(JSON.stringify({ ok: 0, err: "User is not authorized." }), { status: 200 });
 
     await expect(
-      sendWoztellMessage(config, { toPhone: "+85290000000", body: "hi" }, fetchImpl),
+      sendWoztellMessage(
+        config,
+        { toPhone: "+85290000000", mode: { kind: "text", body: "hi" } },
+        fetchImpl,
+      ),
     ).rejects.toThrow("User is not authorized.");
   });
 
@@ -249,7 +264,11 @@ describe("sendWoztellMessage", () => {
       );
 
     await expect(
-      sendWoztellMessage(config, { toPhone: "+85290000000", body: "hi" }, fetchImpl),
+      sendWoztellMessage(
+        config,
+        { toPhone: "+85290000000", mode: { kind: "text", body: "hi" } },
+        fetchImpl,
+      ),
     ).resolves.toEqual({ providerMessageId: "wamid.from-event" });
   });
 });
