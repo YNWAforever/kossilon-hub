@@ -43,7 +43,7 @@ describe("createResendNotificationTransport", () => {
 
     await expect(
       createResendNotificationTransport(config, fetchImpl).dispatch(notification()),
-    ).resolves.toEqual({ providerMessageId: "resend-msg-1" });
+    ).resolves.toEqual({ delivery: "provider", providerMessageId: "resend-msg-1" });
 
     expect(seenUrl).toBe("https://api.resend.com/emails");
     expect(seenInit?.method).toBe("POST");

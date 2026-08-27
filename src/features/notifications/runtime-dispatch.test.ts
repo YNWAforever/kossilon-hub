@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { NotificationOutboxRecord, NotificationOutboxRepository } from "./types";
 import { createSimulatedNotificationTransport } from "./simulated-transport";
 import {
@@ -44,7 +45,7 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
 }
 
 describe("runtime notification dispatch", () => {
-  it("selects local mode, persists deterministic delivery once, closes, and never fetches", async () => {
+  it("selects local mode, records the send once with no provider id, closes, and never fetches", async () => {
     const fetchImpl = vi.fn();
     vi.stubGlobal("fetch", fetchImpl);
     const repo = repository([row]);
@@ -57,12 +58,7 @@ describe("runtime notification dispatch", () => {
       ),
     ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(
-      row.id,
-      `local:${row.id}`,
-      "2026-07-14T09:00:00.000Z",
-      1,
-    );
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(repo.close).toHaveBeenCalledTimes(1);
 
@@ -101,12 +97,7 @@ describe("runtime notification dispatch", () => {
       ),
     ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(
-      row.id,
-      "simulated:whatsapp:" + row.id,
-      "2026-07-14T09:00:00.000Z",
-      1,
-    );
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
     expect(createTransport).toHaveBeenCalledWith({
       providerMode: "simulated",
       config: undefined,
@@ -115,6 +106,41 @@ describe("runtime notification dispatch", () => {
     expect(getLiveConfig).not.toHaveBeenCalled();
     expect(fetchImpl).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
+  });
+
+  /**
+   * REGRESSION GUARD, at the seam the bug actually lived on. This function hands
+   * a WhatsApp repository to EVERY provider mode — there is no live-mode gate
+   * here and there should not be one. What used to make that dangerous was the
+   * simulated transport minting `"simulated:whatsapp:<outbox-id>"`, which the
+   * dispatcher then wrote into notification_outbox.provider_message_id AND
+   * whatsapp_messages.provider_message_id, flipping that row to 'sent' while its
+   * `provider` column still claimed WOZTELL delivered it — and, because
+   * attachProviderMessageId matches on `provider_message_id is null`, blocking
+   * the genuine receipt from ever linking.
+   */
+  it("hands the whatsapp repository to simulated mode but writes no provider id anywhere", async () => {
+    const repo = repository([
+      { ...row, payload: { body: "Persisted body", whatsappMessageId: "wa-msg-1" } },
+    ]);
+    const attachProviderMessageId = vi.fn(async () => true);
+    const close = vi.fn(async () => undefined);
+
+    await expect(
+      dispatchDueNotificationsWithDependencies(
+        { now: "2026-07-14T09:00:00.000Z" },
+        {
+          currentProviderMode: () => "simulated",
+          createRepository: () => repo,
+          createWhatsAppRepository: () =>
+            ({ attachProviderMessageId, close }) as unknown as WhatsAppRepository,
+        },
+      ),
+    ).resolves.toMatchObject({ claimed: 1, sent: 1 });
+
+    expect(attachProviderMessageId).not.toHaveBeenCalled();
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
+    expect(close).toHaveBeenCalledTimes(1);
   });
 
   it("persists retry state through the selected transport and always closes", async () => {
@@ -155,7 +181,10 @@ describe("runtime notification dispatch", () => {
   it("passes the resend config through only in live mode", async () => {
     const repo = repository([row]);
     const createTransport = vi.fn(() => ({
-      dispatch: vi.fn(async () => ({ providerMessageId: "test-id" })),
+      dispatch: vi.fn(async () => ({
+        delivery: "provider" as const,
+        providerMessageId: "test-id",
+      })),
     }));
     const getResendConfig = vi.fn(() => ({ apiKey: "re_test_key", from: "auth@example.test" }));
 
