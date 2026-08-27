@@ -61,6 +61,17 @@ export type NotificationDispatchResult =
   | { delivery: "provider"; providerMessageId: string }
   | { delivery: "simulated" };
 
+/**
+ * The value notification_outbox.delivery stores, DERIVED from the discriminant
+ * above rather than restated beside it — a second literal union would be free to
+ * drift from the one the transports actually produce.
+ *
+ * The third party to this agreement is the CHECK constraint in
+ * db/migrations/0022_notification_outbox_delivery.sql, which TypeScript cannot
+ * see; outbox.test.ts pins the two against each other.
+ */
+export type NotificationDelivery = NotificationDispatchResult["delivery"];
+
 export type NotificationTransport = {
   dispatch(notification: NotificationOutboxRecord): Promise<NotificationDispatchResult>;
 };
@@ -83,9 +94,12 @@ export type NotificationOutboxRepository = {
    */
   markSent(
     id: string,
-    providerMessageId: string | null,
-    sentAt: string,
-    attemptCount: number,
+    input: {
+      providerMessageId: string | null;
+      delivery: NotificationDelivery;
+      sentAt: string;
+      attemptCount: number;
+    },
   ): Promise<boolean>;
   markRetry(
     id: string,

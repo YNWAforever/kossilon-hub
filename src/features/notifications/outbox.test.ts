@@ -174,6 +174,85 @@ describe("outbox retention redacts rather than deletes", () => {
   });
 });
 
+/**
+ * `provider_message_id is null` on a sent row meant three unrelated things —
+ * never dispatched, redacted after retention, or a simulated/local dispatch — and
+ * only the first two had something positive to read (`status`, `redacted_at`).
+ * The third was inferable only by elimination, and only because both live
+ * transports happen to throw rather than return an empty id. `simulated` is a
+ * deployed mode against a real database and VITE_PROVIDER_MODE can flip on the
+ * same database over time, after which the historical rows are unreadable.
+ */
+describe("outbox records how a dispatch was delivered", () => {
+  const source = readFileSync(new URL("./outbox.ts", import.meta.url), "utf8");
+  const types = readFileSync(new URL("./types.ts", import.meta.url), "utf8");
+  const migration = readFileSync(
+    new URL("../../../db/migrations/0022_notification_outbox_delivery.sql", import.meta.url),
+    "utf8",
+  );
+  const schema = readFileSync(new URL("../../server/db/schema.sql", import.meta.url), "utf8");
+
+  it("writes the delivery alongside the provider id on the terminal send", () => {
+    const markSent = source.slice(
+      source.indexOf("async markSent"),
+      source.indexOf("async markRetry"),
+    );
+
+    expect(markSent).toContain("delivery = ${input.delivery}");
+    expect(markSent).toContain("provider_message_id = ${input.providerMessageId}");
+  });
+
+  // Nullable on purpose: rows written before 0022 genuinely are unknown, and a
+  // default would hand an auditor a value that looks like evidence and is not.
+  it("adds a nullable column whose check tolerates the unknown rows", () => {
+    expect(migration).toContain("alter table notification_outbox add column delivery text");
+    expect(migration).not.toMatch(/delivery text[^;]*not null/);
+    expect(migration).toContain("delivery is null or delivery in");
+  });
+
+  /**
+   * TypeScript cannot see the CHECK constraint, and Postgres cannot see the
+   * union, so nothing but this compares them. A third spelling anywhere means
+   * every simulated send is rejected by the database at dispatch time.
+   */
+  it("uses the same vocabulary as the dispatch result the transports produce", () => {
+    const result = types.slice(
+      types.indexOf("export type NotificationDispatchResult"),
+      types.indexOf("export type NotificationDelivery"),
+    );
+    const fromTypes = [...result.matchAll(/delivery: "([a-z_]+)"/g)].map((match) => match[1]);
+    const constraint = /delivery in \(([^)]*)\)/.exec(migration)?.[1] ?? "";
+    const fromMigration = [...constraint.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]);
+
+    expect(fromTypes).toEqual(["provider", "simulated"]);
+    expect(fromMigration.slice().sort()).toEqual(fromTypes.slice().sort());
+  });
+
+  /**
+   * Pre-fix rows are self-describing — the simulated and local transports used to
+   * mint 'simulated:<channel>:<id>' and 'local:<id>' into this very column — so
+   * they can be classified with certainty rather than guessed at.
+   */
+  it("backfills only the rows that identify themselves", () => {
+    expect(migration).toContain("provider_message_id like 'simulated:%'");
+    expect(migration).toContain("provider_message_id like 'local:%'");
+    expect(migration).toContain("where provider_message_id is not null");
+  });
+
+  /**
+   * A migration-only change drifts permanently and a schema.sql-only change never
+   * reaches production. verify:firm compares `create table` names only, so it
+   * cannot catch a column that exists in one file and not the other — this can.
+   */
+  it("carries the same column in the canonical schema", () => {
+    expect(schema).toContain("-- from 0022_notification_outbox_delivery.sql");
+    expect(schema).toContain(
+      "alter table notification_outbox add column if not exists delivery text",
+    );
+    expect(schema).toContain("delivery is null or delivery in ('provider', 'simulated')");
+  });
+});
+
 describe("manual dispatch does not take its clock from the caller", () => {
   const source = readFileSync(new URL("./runtime-dispatch.ts", import.meta.url), "utf8");
 

@@ -58,7 +58,12 @@ describe("runtime notification dispatch", () => {
       ),
     ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(repo.close).toHaveBeenCalledTimes(1);
 
@@ -97,7 +102,12 @@ describe("runtime notification dispatch", () => {
       ),
     ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
 
-    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
     expect(createTransport).toHaveBeenCalledWith({
       providerMode: "simulated",
       config: undefined,
@@ -139,7 +149,12 @@ describe("runtime notification dispatch", () => {
     ).resolves.toMatchObject({ claimed: 1, sent: 1 });
 
     expect(attachProviderMessageId).not.toHaveBeenCalled();
-    expect(repo.markSent).toHaveBeenCalledWith(row.id, null, "2026-07-14T09:00:00.000Z", 1);
+    expect(repo.markSent).toHaveBeenCalledWith(row.id, {
+      providerMessageId: null,
+      delivery: "simulated",
+      sentAt: "2026-07-14T09:00:00.000Z",
+      attemptCount: 1,
+    });
     expect(close).toHaveBeenCalledTimes(1);
   });
 

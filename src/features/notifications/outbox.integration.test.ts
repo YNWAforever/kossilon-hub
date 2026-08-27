@@ -296,10 +296,23 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
       // Run A holds attempt 1. Run B reclaims, taking the row to attempt 2.
       await sql`update notification_outbox set attempt_count = 2 where id = ${id}`;
 
-      expect(await repository.markSent(id, "wamid.stale", new Date().toISOString(), 1)).toBe(false);
-      expect(await repository.markSent(id, "wamid.current", new Date().toISOString(), 2)).toBe(
-        true,
-      );
+      const sentAt = new Date().toISOString();
+      expect(
+        await repository.markSent(id, {
+          providerMessageId: "wamid.stale",
+          delivery: "provider",
+          sentAt,
+          attemptCount: 1,
+        }),
+      ).toBe(false);
+      expect(
+        await repository.markSent(id, {
+          providerMessageId: "wamid.current",
+          delivery: "provider",
+          sentAt,
+          attemptCount: 2,
+        }),
+      ).toBe(true);
 
       const rows = await sql<
         { provider_message_id: string | null; status: string }[]
@@ -307,6 +320,78 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
       expect(rows[0].status).toBe("sent");
       // The winning send is the one recorded, not whichever wrote last.
       expect(rows[0].provider_message_id).toBe("wamid.current");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * The column exists because provider_message_id IS NULL means three unrelated
+   * things — never dispatched, redacted, or simulated — and only the third had no
+   * positive record. Every other test of this change asserts on a mock's argument
+   * or on source text, all of which pass just as happily if the SQL never writes
+   * the column; this is the only one that proves the value reaches Postgres.
+   */
+  it(
+    "persists how the dispatch was delivered, and keeps it through redaction",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const repository = createNotificationOutboxRepository({ sql });
+      const sentAt = new Date().toISOString();
+
+      const providerId = await enqueue(sql, companyId, "delivery-provider", {
+        status: "processing",
+        attemptCount: 1,
+      });
+      const simulatedId = await enqueue(sql, companyId, "delivery-simulated", {
+        status: "processing",
+        attemptCount: 1,
+      });
+
+      expect(
+        await repository.markSent(providerId, {
+          providerMessageId: "wamid.real-1",
+          delivery: "provider",
+          sentAt,
+          attemptCount: 1,
+        }),
+      ).toBe(true);
+      expect(
+        await repository.markSent(simulatedId, {
+          providerMessageId: null,
+          delivery: "simulated",
+          sentAt,
+          attemptCount: 1,
+        }),
+      ).toBe(true);
+
+      const rows = await sql<
+        { id: string; delivery: string | null; provider_message_id: string | null }[]
+      >`
+        select id, delivery, provider_message_id from notification_outbox
+        where id in (${providerId}, ${simulatedId})
+      `;
+      const byId = new Map(rows.map((row) => [row.id, row]));
+      expect(byId.get(providerId)?.delivery).toBe("provider");
+      expect(byId.get(providerId)?.provider_message_id).toBe("wamid.real-1");
+      // The whole point: null id, yet unambiguously not a real send.
+      expect(byId.get(simulatedId)?.delivery).toBe("simulated");
+      expect(byId.get(simulatedId)?.provider_message_id).toBeNull();
+
+      // Redaction strips provider_message_id, which is exactly when the null
+      // becomes unreadable. delivery is not personal data and must survive, or
+      // the record of whether a client was really contacted dies with it.
+      expect((await repository.redactExpired(new Date().toISOString())).redacted).toBe(2);
+
+      const redacted = await sql<{ id: string; delivery: string | null }[]>`
+        select id, delivery from notification_outbox where id in (${providerId}, ${simulatedId})
+      `;
+      expect(new Map(redacted.map((row) => [row.id, row.delivery]))).toEqual(
+        new Map([
+          [providerId, "provider"],
+          [simulatedId, "simulated"],
+        ]),
+      );
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

@@ -5,7 +5,12 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
-import type { DispatchSummary, EnqueueNotificationInput, NotificationOutboxRecord } from "./types";
+import type {
+  DispatchSummary,
+  EnqueueNotificationInput,
+  NotificationDelivery,
+  NotificationOutboxRecord,
+} from "./types";
 
 type QueryClient = SqlClient | postgres.TransactionSql;
 type NotificationSqlOptions = CreateSqlClientOptions & { sql?: QueryClient };
@@ -163,9 +168,12 @@ export type NotificationOutboxRepository = {
    */
   markSent(
     id: string,
-    providerMessageId: string | null,
-    sentAt: string,
-    attemptCount: number,
+    input: {
+      providerMessageId: string | null;
+      delivery: NotificationDelivery;
+      sentAt: string;
+      attemptCount: number;
+    },
   ): Promise<boolean>;
   markRetry(
     id: string,
@@ -229,11 +237,11 @@ export function createNotificationOutboxRepository(
         return claimed.map(mapRow);
       });
     },
-    async markSent(id, providerMessageId, sentAt, attemptCount) {
+    async markSent(id, input) {
       const rows = await sql<{ id: string }[]>`
-        update notification_outbox set status = 'sent', provider_message_id = ${providerMessageId},
-          sent_at = ${sentAt}, updated_at = now()
-        where id = ${id} and status = 'processing' and attempt_count = ${attemptCount}
+        update notification_outbox set status = 'sent', provider_message_id = ${input.providerMessageId},
+          delivery = ${input.delivery}, sent_at = ${input.sentAt}, updated_at = now()
+        where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
         returning id
       `;
       return rows.length === 1;
