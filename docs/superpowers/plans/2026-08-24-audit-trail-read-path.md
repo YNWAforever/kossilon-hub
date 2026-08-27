@@ -504,13 +504,15 @@ Add this test inside the existing `describe.skipIf(!databaseUrl)("annual return 
 
 - [ ] **Step 3: Run the test to verify it fails**
 
-Run: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test npx vitest run src/features/annual-return/repository.test.ts -t "reads merged audit and assignment history"`
+Run: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_SSL=false npx vitest run src/features/annual-return/repository.test.ts -t "reads merged audit and assignment history"`
 Expected: FAIL — `repository.listAuditEventsForCase is not a function` if Task 2 wasn't yet run in this environment, or the test should already PASS if Task 2's implementation is already in place (Task 2 is a prerequisite for this task; if both are implemented in sequence this test passes immediately — in that case skip to Step 4's full-suite run to prove there's no regression instead of expecting a contrived failure).
 
 - [ ] **Step 4: Run the full annual-return suite against the real database twice**
 
-Run: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test npx vitest run src/features/annual-return/repository.test.ts`
+Run: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_SSL=false npx vitest run src/features/annual-return/repository.test.ts`
 Expected: PASS, run it a second time to confirm no fixture-cleanup leakage between runs.
+
+Note: `DATABASE_SSL=false` is required here — `createSqlClient` defaults `ssl` to `"require"` when unset, and the local `postgres:17-alpine` container serves no TLS, so omitting this flag causes the command to hang indefinitely rather than fail fast (confirmed during this plan's own execution).
 
 - [ ] **Step 5: Tear down the container**
 
@@ -560,7 +562,16 @@ const visibleCase = {
 };
 
 it("rejects a history read for a case outside the actor's scope", async () => {
-  const getCase = vi.fn(async () => ({ ...visibleCase, companyTeamId: managerActor.teamId! }));
+  // Overriding companyTeamId alone is not enough: isAnnualReturnCaseVisibleToActor
+  // falls back to granting visibility to a case's own owner/reviewer regardless of
+  // team, and this mock case's ownerId is staffActor.userId — so ownerId must also
+  // be overridden or the case stays in scope and this test fails with a TypeError
+  // instead of testing the Forbidden throw.
+  const getCase = vi.fn(async () => ({
+    ...visibleCase,
+    companyTeamId: managerActor.teamId!,
+    ownerId: managerActor.userId!,
+  }));
   const listAuditEventsForCase = vi.fn();
   const listAssignmentEventsForCase = vi.fn();
   const dependencies = {
@@ -912,7 +923,7 @@ Expected: PASS.
 
 Start a fresh local Postgres, migrate, seed (same commands as Task 3, Step 1), then:
 
-Run: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test npm run test`
+Run: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_SSL=false npm run test`
 Expected: All tests pass, including the new audit/assignment history integration test from Task 3, with zero `TEST_DATABASE_URL`-gated skips.
 
 Tear the container down afterward: `docker rm -f kossilon-test-pg`

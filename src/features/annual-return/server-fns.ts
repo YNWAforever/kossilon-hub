@@ -8,6 +8,7 @@ import {
   caseFiltersForActor,
   isAnnualReturnCaseVisibleToActor,
 } from "./permissions";
+import { mergeCaseHistory, type CaseHistoryEntry } from "./case-history";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import {
   buildReminderDraft,
@@ -235,6 +236,32 @@ export async function listAnnualReturnCaseNotesForActor(
 
   assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
   return dependencies.repository.listNotes(input.caseId);
+}
+
+export async function listAnnualReturnCaseHistoryForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string },
+  dependencies: {
+    repository: Pick<
+      AnnualReturnRepository,
+      "getCase" | "listAuditEventsForCase" | "listAssignmentEventsForCase"
+    >;
+  },
+): Promise<CaseHistoryEntry[]> {
+  const case_ = await dependencies.repository.getCase(input.caseId);
+
+  if (!case_) {
+    throw new Error("Annual return case not found.");
+  }
+
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
+
+  const [auditEvents, assignmentEvents] = await Promise.all([
+    dependencies.repository.listAuditEventsForCase(input.caseId),
+    dependencies.repository.listAssignmentEventsForCase(input.caseId),
+  ]);
+
+  return mergeCaseHistory(auditEvents, assignmentEvents);
 }
 
 export async function assignAnnualReturnCaseOwnerForActor(
@@ -493,6 +520,14 @@ export const listAnnualReturnCaseNotes = createServerFn({ method: "GET" })
   .handler(({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>
       listAnnualReturnCaseNotesForActor(actor, data, { repository }),
+    ),
+  );
+
+export const listAnnualReturnCaseHistory = createServerFn({ method: "GET" })
+  .validator(annualReturnCaseIdSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAnnualReturnCaseHistoryForActor(actor, data, { repository }),
     ),
   );
 

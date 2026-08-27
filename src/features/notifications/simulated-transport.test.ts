@@ -25,16 +25,22 @@ function notification(channel: NotificationOutboxRecord["channel"]): Notificatio
 }
 
 describe("simulated notification transport", () => {
-  it("returns deterministic demo provider IDs without calling fetch", async () => {
+  /**
+   * REGRESSION GUARD. This used to return
+   * `providerMessageId: "simulated:<channel>:<outbox-id>"`, and the dispatcher
+   * persisted that fabricated string as if a provider had acknowledged the send.
+   * No provider did, so there is nothing to return — the value must not exist.
+   */
+  it("acknowledges the dispatch with no provider id and without calling fetch", async () => {
     const fetchImpl = vi.fn();
     vi.stubGlobal("fetch", fetchImpl);
     const transport = createSimulatedNotificationTransport();
 
     await expect(transport.dispatch(notification("whatsapp"))).resolves.toEqual({
-      providerMessageId: "simulated:whatsapp:11111111-1111-4111-8111-111111111111",
+      delivery: "simulated",
     });
     await expect(transport.dispatch(notification("email"))).resolves.toEqual({
-      providerMessageId: "simulated:email:11111111-1111-4111-8111-111111111111",
+      delivery: "simulated",
     });
 
     expect(fetchImpl).not.toHaveBeenCalled();

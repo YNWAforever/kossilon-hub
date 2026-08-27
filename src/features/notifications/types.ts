@@ -43,9 +43,25 @@ export type NotificationOutboxRecord = NotificationIdentity & {
   retentionUntil: string;
 };
 
-export type NotificationDispatchResult = {
-  providerMessageId: string;
-};
+/**
+ * The transport is the only layer that knows whether a provider acknowledged the
+ * send, so that fact travels WITH the value rather than being re-derived by a
+ * downstream consumer or by a second read of the provider mode.
+ *
+ * The "simulated" arm carries no id on purpose. It used to be
+ * `providerMessageId: "simulated:whatsapp:<outbox-id>"`, which markSent and then
+ * attachProviderMessageId wrote into two different provider_message_id columns —
+ * flipping whatsapp_messages to 'sent' on a row whose `provider` column claims
+ * WOZTELL delivered it. That row is indistinguishable from a real delivery when
+ * auditing whether a client was actually contacted. The id was derived from the
+ * outbox row's own primary key, so it never carried information anyway.
+ *
+ * INVARIANT: provider_message_id is non-null if and only if a provider
+ * acknowledged that send.
+ */
+export type NotificationDispatchResult =
+  | { delivery: "provider"; providerMessageId: string }
+  | { delivery: "simulated" };
 
 /** Resolves a contact's last inbound message time from a digits-only phone number. */
 export type LastInboundResolver = WhatsAppRepository["lastInboundAtForPhoneDigits"];
@@ -83,7 +99,7 @@ export type NotificationOutboxRepository = {
    */
   markSent(
     id: string,
-    providerMessageId: string,
+    providerMessageId: string | null,
     sentAt: string,
     attemptCount: number,
   ): Promise<boolean>;

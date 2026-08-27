@@ -34,6 +34,10 @@ const TEST_FIXTURE_SEQUENCES = [
   28, 29, 30, 31, 32,
 ] as const;
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
+// Kept as a single literal so the raw-SQL insert and its expected-value
+// assertion in "returns numeric recommendation_score as a string" can never
+// drift apart.
+const RECOMMENDATION_SCORE_TEXT = "0.8750";
 
 type ClosableRepository = ReturnType<typeof createAnnualReturnRepository>;
 
@@ -487,6 +491,8 @@ describe("annual return repository configuration", () => {
     expect(repository.assignOwner).toBeTypeOf("function");
     expect(repository.listNotes).toBeTypeOf("function");
     expect(repository.addNote).toBeTypeOf("function");
+    expect(repository.listAuditEventsForCase).toBeTypeOf("function");
+    expect(repository.listAssignmentEventsForCase).toBeTypeOf("function");
   });
   it("honors options when the database URL argument is explicitly undefined", async () => {
     vi.stubEnv("DATABASE_URL", "");
@@ -559,6 +565,127 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       expect(timelineEvents).toContainEqual({
         event_type: "annual_return_owner_assigned",
       });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reads audit and assignment history for a case",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });
+      const repository = repositoryFor("2026-07-05");
+
+      // assignOwner only writes an assignment_events row for work items that
+      // are already open/in_progress/blocked (see its candidates CTE), and a
+      // freshly created fixture has none. Give it one the same way the
+      // "updates the case and active work items" test above does, otherwise
+      // assignOwner's insert...select matches zero rows and
+      // listAssignmentEventsForCase comes back empty.
+      await repository.updateStatus(fixture.caseId, "Client reminder sent", USER_AMY_ID);
+
+      await repository.addNote({
+        caseId: fixture.caseId,
+        body: "Checked with the client.",
+        actorId: USER_AMY_ID,
+      });
+      await repository.assignOwner({
+        caseId: fixture.caseId,
+        ownerId: USER_MEI_ID,
+        actorId: USER_KEN_ID,
+      });
+
+      const auditEvents = await repository.listAuditEventsForCase(fixture.caseId);
+      const assignmentEvents = await repository.listAssignmentEventsForCase(fixture.caseId);
+
+      // updateStatus, addNote, and assignOwner above each run in their own
+      // transaction, in that chronological order, so their created_at values
+      // are strictly increasing. listAuditEventsForCase orders "created_at
+      // desc, id desc", so newest-first here must be assign_owner, add_note,
+      // then change_status (from updateStatus) -- this exact array would
+      // catch the query's `order by` being dropped or reversed.
+      expect(auditEvents.map((row) => row.action)).toEqual([
+        "assign_owner",
+        "add_note",
+        "change_status",
+      ]);
+      expect(auditEvents.find((row) => row.action === "add_note")).toMatchObject({
+        actor_name: "Amy Chan",
+      });
+      expect(auditEvents.find((row) => row.action === "assign_owner")).toMatchObject({
+        actor_name: "Ken Wong",
+      });
+
+      expect(assignmentEvents.length).toBeGreaterThanOrEqual(1);
+      expect(assignmentEvents[0]).toMatchObject({
+        assigned_to_id: USER_MEI_ID,
+        assigned_by_id: USER_KEN_ID,
+        assigned_to_name: "Mei Lam",
+        assigned_by_name: "Ken Wong",
+        decision: "manual",
+      });
+
+      // assignOwner's insert never sets recommendation_score (it always
+      // writes decision: "manual"), so the field observed via this path is
+      // null. Confirmed empirically here rather than assumed.
+      expect(assignmentEvents[0].recommendation_score).toBeNull();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "returns numeric recommendation_score as a string",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });
+      const repository = repositoryFor("2026-07-05");
+
+      // listAssignmentEventsForCase joins assignment_events to work_items, so
+      // a work item must exist for this case before the directly-inserted row
+      // below can be read back through it. updateStatus is the simplest path
+      // that creates one (see the sibling test above).
+      await repository.updateStatus(fixture.caseId, "Client reminder sent", USER_AMY_ID);
+
+      // Separately confirm the *non-null* case, since case-history.ts
+      // declares recommendation_score as `string | null` on the theory that
+      // postgres.js has no default parser for numeric(10,4) (OID 1700) and
+      // returns it as a string rather than a number. Insert a row that
+      // satisfies assignment_events' non-manual recommendation-evidence
+      // check constraint directly, then read it back through the repository
+      // query under test.
+      const sql = sqlForTests();
+      const [workItem] = await sql<{ id: string; version: number }[]>`
+        select id, version
+        from work_items
+        where annual_return_case_id = ${fixture.caseId}
+        order by created_at asc
+        limit 1
+      `;
+      if (!workItem) {
+        throw new Error("Expected updateStatus to have created a work item for this case.");
+      }
+
+      await sql`
+        insert into assignment_events (
+          work_item_id, assigned_to_id, assigned_by_id,
+          recommendation_rank, recommendation_score, recommendation_factors,
+          decision, expected_version
+        )
+        values (
+          ${workItem.id}, ${USER_MEI_ID}, ${USER_KEN_ID},
+          1, ${RECOMMENDATION_SCORE_TEXT},
+          ${sql.json({ selected: { rank: 1, score: 0.875 }, recommendations: [] })},
+          'accepted_recommendation', ${workItem.version}
+        )
+      `;
+
+      const assignmentEvents = await repository.listAssignmentEventsForCase(fixture.caseId);
+      expect(assignmentEvents).toHaveLength(1);
+
+      const [latestAssignmentEvent] = assignmentEvents;
+      expect(latestAssignmentEvent.decision).toBe("accepted_recommendation");
+      // Observed: postgres.js returns numeric(10,4) as a string, e.g. "0.8750",
+      // not a number -- confirming the `string | null` type in case-history.ts.
+      expect(typeof latestAssignmentEvent.recommendation_score).toBe("string");
+      expect(latestAssignmentEvent.recommendation_score).toBe(RECOMMENDATION_SCORE_TEXT);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
