@@ -42,17 +42,20 @@ export function createNotificationDispatcher(
           const result = await transport.dispatch(notification);
           const applied = await repository.markSent(
             notification.id,
-            result.providerMessageId,
+            result.delivery === "provider" ? result.providerMessageId : null,
             now,
             notification.attemptCount,
           );
           if (applied) summary.sent += 1;
           else summary.superseded += 1;
 
-          // Optional on purpose: the local and simulated transports have no
-          // WhatsApp repository and must keep working untouched.
+          // Receipt linkback — live sends only. A simulated dispatch has no
+          // provider id to link, and writing one flips whatsapp_messages to
+          // 'sent' with a fabricated provider_message_id on a row that asserts
+          // provider = 'woztell'. The row stays 'queued', which is what happened.
           const whatsAppMessageId = notificationPayload(notification).whatsappMessageId;
           if (
+            result.delivery === "provider" &&
             notification.channel === "whatsapp" &&
             typeof whatsAppMessageId === "string" &&
             options.whatsAppRepository
@@ -109,7 +112,7 @@ export function createWoztellNotificationTransport(
       const payload = notificationPayload(notification);
       const body = typeof payload.body === "string" ? payload.body : undefined;
       if (!body) throw new Error("WhatsApp notification is missing a message body.");
-      return sendWoztellMessage(
+      const { providerMessageId } = await sendWoztellMessage(
         config,
         {
           toPhone: notification.recipient,
@@ -123,6 +126,7 @@ export function createWoztellNotificationTransport(
         },
         fetchImpl,
       );
+      return { delivery: "provider", providerMessageId };
     },
   };
 }

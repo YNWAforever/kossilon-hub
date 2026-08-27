@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { createNotificationDispatcher, createNotificationTransport } from "./dispatcher";
 import {
   createLocalNotificationTransport,
+  getLocalNotificationPayloadsForTest,
   resetLocalNotificationTransportForTest,
 } from "./local-transport";
+import { createSimulatedNotificationTransport } from "./simulated-transport";
 import type { NotificationOutboxRecord, NotificationOutboxRepository } from "./types";
 
 function notification(overrides: Partial<NotificationOutboxRecord> = {}): NotificationOutboxRecord {
@@ -41,30 +43,53 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
 }
 
 describe("notification dispatcher", () => {
+  /**
+   * Pinned by the SIDE EFFECT, not the return value. Local and simulated both
+   * resolve to a byte-identical `{ delivery: "simulated" }` — deliberately, since
+   * nothing downstream needs to tell them apart — so a return-value assertion
+   * here passes just as happily when `providerMode: "local"` is wired to the
+   * simulated transport. Recording the payload into `dispatchedPayloads` is the
+   * local transport's entire reason to exist, and it is the only thing that
+   * distinguishes the two, so that is what pins the mode -> transport mapping.
+   */
   it("selects the local transport only when explicitly requested", async () => {
+    resetLocalNotificationTransportForTest();
     const item = notification();
+
     await expect(
       createNotificationTransport({ providerMode: "local" }).dispatch(item),
-    ).resolves.toEqual({
-      providerMessageId: `local:${item.id}`,
-    });
+    ).resolves.toEqual({ delivery: "simulated" });
+    expect(getLocalNotificationPayloadsForTest()).toEqual([item]);
+
+    resetLocalNotificationTransportForTest();
   });
   it("selects the simulated transport without requiring live configuration", async () => {
+    resetLocalNotificationTransportForTest();
     const item = notification({ channel: "email" });
     const fetchImpl = vi.fn();
     vi.stubGlobal("fetch", fetchImpl);
 
     await expect(
       createNotificationTransport({ providerMode: "simulated" }).dispatch(item),
-    ).resolves.toEqual({
-      providerMessageId: "simulated:email:" + item.id,
-    });
+    ).resolves.toEqual({ delivery: "simulated" });
 
+    // The mirror of the local assertion above: with both arms returning the same
+    // value, an empty payload log is the only evidence this did NOT route to the
+    // local transport.
+    expect(getLocalNotificationPayloadsForTest()).toEqual([]);
     expect(fetchImpl).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 
-  it("persists deterministic local provider IDs without network dispatch", async () => {
+  /**
+   * REGRESSION GUARD. The local transport used to return
+   * `providerMessageId: "local:<outbox-id>"`, which markSent wrote into
+   * notification_outbox.provider_message_id — a fabricated id on a statutory
+   * delivery record, indistinguishable from a real one when auditing whether a
+   * client was actually contacted. No provider acknowledged this send, so the
+   * column must stay null.
+   */
+  it("records no provider message id for a local dispatch", async () => {
     const fetchImpl = vi.fn();
     vi.stubGlobal("fetch", fetchImpl);
     const repo = repository([notification()]);
@@ -77,7 +102,7 @@ describe("notification dispatcher", () => {
 
     expect(repo.markSent).toHaveBeenCalledWith(
       "00000000-0000-0000-0000-000000000001",
-      "local:00000000-0000-0000-0000-000000000001",
+      null,
       "2026-07-12T00:00:00.000Z",
       1,
     );
@@ -86,10 +111,57 @@ describe("notification dispatcher", () => {
     vi.unstubAllGlobals();
   });
 
+  it("records no provider message id for a simulated dispatch", async () => {
+    const repo = repository([notification()]);
+
+    await expect(
+      createNotificationDispatcher(repo, createSimulatedNotificationTransport()).dispatchDue(
+        "2026-07-12T00:00:00.000Z",
+      ),
+    ).resolves.toMatchObject({ claimed: 1, sent: 1 });
+
+    expect(repo.markSent).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      null,
+      "2026-07-12T00:00:00.000Z",
+      1,
+    );
+  });
+
+  /**
+   * REGRESSION GUARD. runtime-dispatch.ts hands a WhatsApp repository to EVERY
+   * provider mode, so this linkback ran in simulated and local mode too: it set
+   * whatsapp_messages.provider_message_id to the fabricated id and flipped the
+   * row from 'queued' to 'sent' while `provider` still read 'woztell'. It also
+   * permanently blocked the real linkback — attachProviderMessageId matches on
+   * `provider_message_id is null`, so a genuine WOZTELL receipt could never land.
+   */
+  it("never links a simulated dispatch onto the whatsapp_messages row", async () => {
+    const repo = repository([
+      notification({ payload: { body: "Reminder body", whatsappMessageId: "wa-msg-1" } }),
+    ]);
+    const attachProviderMessageId = vi.fn(async () => true);
+
+    await createNotificationDispatcher(repo, createSimulatedNotificationTransport(), {
+      whatsAppRepository: { attachProviderMessageId },
+    }).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(attachProviderMessageId).not.toHaveBeenCalled();
+    expect(repo.markSent).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      null,
+      "2026-07-12T00:00:00.000Z",
+      1,
+    );
+  });
+
   it("persists provider IDs after a successful dispatch", async () => {
     const repo = repository([notification()]);
     const dispatcher = createNotificationDispatcher(repo, {
-      dispatch: vi.fn(async () => ({ providerMessageId: "provider-1" })),
+      dispatch: vi.fn(async () => ({
+        delivery: "provider" as const,
+        providerMessageId: "provider-1",
+      })),
     });
     await expect(dispatcher.dispatchDue("2026-07-12T00:00:00.000Z", 10)).resolves.toMatchObject({
       claimed: 1,
@@ -139,7 +211,12 @@ describe("notification dispatcher", () => {
 
     await createNotificationDispatcher(
       repo,
-      { dispatch: vi.fn(async () => ({ providerMessageId: "wamid.sent-1" })) },
+      {
+        dispatch: vi.fn(async () => ({
+          delivery: "provider" as const,
+          providerMessageId: "wamid.sent-1",
+        })),
+      },
       { whatsAppRepository: { attachProviderMessageId } },
     ).dispatchDue("2026-07-12T00:00:00.000Z");
 
@@ -155,7 +232,12 @@ describe("notification dispatcher", () => {
 
     await createNotificationDispatcher(
       repo,
-      { dispatch: vi.fn(async () => ({ providerMessageId: "provider-1" })) },
+      {
+        dispatch: vi.fn(async () => ({
+          delivery: "provider" as const,
+          providerMessageId: "provider-1",
+        })),
+      },
       { whatsAppRepository: { attachProviderMessageId } },
     ).dispatchDue("2026-07-12T00:00:00.000Z");
 
@@ -172,7 +254,12 @@ describe("notification dispatcher", () => {
     await expect(
       createNotificationDispatcher(
         repo,
-        { dispatch: vi.fn(async () => ({ providerMessageId: "wamid.sent-1" })) },
+        {
+          dispatch: vi.fn(async () => ({
+            delivery: "provider" as const,
+            providerMessageId: "wamid.sent-1",
+          })),
+        },
         {
           whatsAppRepository: {
             attachProviderMessageId: vi.fn(async () => {
@@ -218,7 +305,7 @@ describe("createNotificationTransport (live mode composite routing)", () => {
       }).dispatch(
         notification({ channel: "whatsapp", recipient: "+85290000000", payload: { body: "hi" } }),
       ),
-    ).resolves.toEqual({ providerMessageId: "wamid.1" });
+    ).resolves.toEqual({ delivery: "provider", providerMessageId: "wamid.1" });
   });
 
   it("routes an email notification to the Resend transport when configured", async () => {
@@ -239,7 +326,7 @@ describe("createNotificationTransport (live mode composite routing)", () => {
           payload: { body: "hi" },
         }),
       ),
-    ).resolves.toEqual({ providerMessageId: "resend-msg-1" });
+    ).resolves.toEqual({ delivery: "provider", providerMessageId: "resend-msg-1" });
   });
 
   it("fails only the email channel, with a diagnostic code, when Resend is not configured", async () => {
@@ -275,7 +362,7 @@ describe("createNotificationTransport (live mode composite routing)", () => {
       transport.dispatch(
         notification({ channel: "whatsapp", recipient: "+85290000000", payload: { body: "hi" } }),
       ),
-    ).resolves.toEqual({ providerMessageId: "wamid.2" });
+    ).resolves.toEqual({ delivery: "provider", providerMessageId: "wamid.2" });
   });
 
   it("still rejects an in_app notification, unchanged from today", async () => {

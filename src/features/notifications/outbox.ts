@@ -163,7 +163,7 @@ export type NotificationOutboxRepository = {
    */
   markSent(
     id: string,
-    providerMessageId: string,
+    providerMessageId: string | null,
     sentAt: string,
     attemptCount: number,
   ): Promise<boolean>;

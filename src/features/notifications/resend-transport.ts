@@ -48,7 +48,7 @@ export function createResendNotificationTransport(
       if (typeof providerMessageId !== "string" || providerMessageId.length === 0) {
         throw new Error("Resend response is missing a provider message ID.");
       }
-      return { providerMessageId };
+      return { delivery: "provider", providerMessageId };
     },
   };
 }

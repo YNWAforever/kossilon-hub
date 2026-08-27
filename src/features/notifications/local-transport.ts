@@ -6,7 +6,7 @@ export function createLocalNotificationTransport(): NotificationTransport {
   return {
     async dispatch(notification) {
       dispatchedPayloads.push(structuredClone(notification));
-      return { providerMessageId: `local:${notification.id}` };
+      return { delivery: "simulated" };
     },
   };
 }

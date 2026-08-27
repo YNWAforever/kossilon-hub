@@ -39,8 +39,10 @@ describe("local notification transport", () => {
     vi.stubGlobal("fetch", fetchImpl);
     const item = notification();
 
+    // REGRESSION GUARD: this used to return `providerMessageId: "local:<id>"`,
+    // which the dispatcher persisted as a real provider acknowledgement.
     await expect(createLocalNotificationTransport().dispatch(item)).resolves.toEqual({
-      providerMessageId: `local:${item.id}`,
+      delivery: "simulated",
     });
     expect(getLocalNotificationPayloadsForTest()).toEqual([item]);
     expect(fetchImpl).not.toHaveBeenCalled();
