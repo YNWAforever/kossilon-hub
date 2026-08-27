@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createNotificationDispatcher, createNotificationTransport } from "./dispatcher";
 import {
   createLocalNotificationTransport,
+  getLocalNotificationPayloadsForTest,
   resetLocalNotificationTransportForTest,
 } from "./local-transport";
 import { createSimulatedNotificationTransport } from "./simulated-transport";
@@ -42,13 +43,28 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
 }
 
 describe("notification dispatcher", () => {
+  /**
+   * Pinned by the SIDE EFFECT, not the return value. Local and simulated both
+   * resolve to a byte-identical `{ delivery: "simulated" }` — deliberately, since
+   * nothing downstream needs to tell them apart — so a return-value assertion
+   * here passes just as happily when `providerMode: "local"` is wired to the
+   * simulated transport. Recording the payload into `dispatchedPayloads` is the
+   * local transport's entire reason to exist, and it is the only thing that
+   * distinguishes the two, so that is what pins the mode -> transport mapping.
+   */
   it("selects the local transport only when explicitly requested", async () => {
+    resetLocalNotificationTransportForTest();
     const item = notification();
+
     await expect(
       createNotificationTransport({ providerMode: "local" }).dispatch(item),
     ).resolves.toEqual({ delivery: "simulated" });
+    expect(getLocalNotificationPayloadsForTest()).toEqual([item]);
+
+    resetLocalNotificationTransportForTest();
   });
   it("selects the simulated transport without requiring live configuration", async () => {
+    resetLocalNotificationTransportForTest();
     const item = notification({ channel: "email" });
     const fetchImpl = vi.fn();
     vi.stubGlobal("fetch", fetchImpl);
@@ -57,6 +73,10 @@ describe("notification dispatcher", () => {
       createNotificationTransport({ providerMode: "simulated" }).dispatch(item),
     ).resolves.toEqual({ delivery: "simulated" });
 
+    // The mirror of the local assertion above: with both arms returning the same
+    // value, an empty payload log is the only evidence this did NOT route to the
+    // local transport.
+    expect(getLocalNotificationPayloadsForTest()).toEqual([]);
     expect(fetchImpl).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
