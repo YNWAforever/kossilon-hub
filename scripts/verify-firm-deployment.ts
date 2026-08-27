@@ -72,7 +72,14 @@ const LOCAL_GATE_CONTRACTS = {
       file: "src/features/notifications/local-transport.ts",
       snippets: [
         "export function createLocalNotificationTransport",
-        "providerMessageId: `local:${notification.id}`",
+        // What makes the local transport local: it records the payload in memory
+        // instead of calling a provider. This previously asserted the literal
+        // "providerMessageId: `local:${notification.id}`", but that fabricated id
+        // was itself a bug — it reached markSent and attachProviderMessageId and
+        // was persisted as a genuine provider id, flipping whatsapp_messages to
+        // 'sent'. Assert the behaviour that should exist, not a string that
+        // should not.
+        "dispatchedPayloads.push(structuredClone(notification))",
       ],
     },
   ],
