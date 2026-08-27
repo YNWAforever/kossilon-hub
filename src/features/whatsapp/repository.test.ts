@@ -83,10 +83,68 @@ async function cleanupWhatsAppFixtures() {
         or metadata ->> 'source' = 'phase2-whatsapp-test'
         or metadata ->> 'providerMessageId' like 'phase2-test-%'
     `;
+    // Every FK child of annual_return_cases that does NOT cascade. This file
+    // never writes them, but whole-book sweeps in other suites do —
+    // evaluateReminders() walks every open case in the database and inserts an
+    // annual_return_reminder_events row for each eligible one, this fixture
+    // included. Those FKs are deliberately restrict/no-action so real audit and
+    // reminder history cannot be erased by a case delete, which means one stray
+    // sweep row makes the delete below throw, rolls this whole transaction back,
+    // and leaves the fixture company alive to break every later run.
+    await tx`
+      delete from annual_return_reminder_events
+      where case_id = ${TEST_CASE_ID}
+    `;
+    await tx`
+      delete from annual_return_audit_events
+      where case_id = ${TEST_CASE_ID}
+        or company_id = ${TEST_COMPANY_ID}
+    `;
+    // work_items is itself the parent of three restrict-only children, so
+    // clearing them has to come first or the delete below just trades one
+    // foreign key violation for another. (notification_outbox, the third, is
+    // already deleted by company_id at the top of this transaction.)
+    await tx`
+      delete from assignment_events
+      where work_item_id in (
+        select id from work_items
+        where annual_return_case_id = ${TEST_CASE_ID}
+          or company_id = ${TEST_COMPANY_ID}
+      )
+    `;
+    await tx`
+      delete from escalation_events
+      where work_item_id in (
+        select id from work_items
+        where annual_return_case_id = ${TEST_CASE_ID}
+          or company_id = ${TEST_COMPANY_ID}
+      )
+    `;
+    await tx`
+      delete from work_items
+      where annual_return_case_id = ${TEST_CASE_ID}
+        or company_id = ${TEST_COMPANY_ID}
+    `;
+    await tx`
+      delete from document_upload_intents
+      where case_id = ${TEST_CASE_ID}
+        or company_id = ${TEST_COMPANY_ID}
+    `;
     await tx`
       delete from annual_return_cases
       where id = ${TEST_CASE_ID}
     `;
+    // companies has seven further restrict-only children that are deliberately
+    // NOT swept here: client_company_memberships, corporate_change_requests,
+    // incorporation_cases, officers, scr_inspection_requests, shareholdings and
+    // significant_controllers. Every insert into them is an explicit
+    // create against one named company, so no other test file's sweep can
+    // attach one to this fixture; deleting them would be dead work on every
+    // teardown. If any of them ever gains a whole-book sweep the way
+    // evaluateReminders() did, add it here — and note the order is not free:
+    // corporate_change_requests references officers and shareholdings with
+    // restrict, and work_items references corporate_change_requests, so those
+    // have to be removed innermost-first or the delete just moves the error.
     await tx`
       delete from companies
       where id = ${TEST_COMPANY_ID}

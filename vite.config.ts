@@ -5,7 +5,10 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import type { ConfigEnv, Plugin, PluginOption } from "vite";
+import { loadEnv, type ConfigEnv, type Plugin, type PluginOption } from "vite";
+import { defaultExclude } from "vitest/config";
+
+import { DB_INTEGRATION_TEST_FILES } from "./src/test/db-integration-files";
 
 const createConfig = defineConfig({
   tanstackStart: {
@@ -41,6 +44,16 @@ export async function flattenPlugins(plugins: PluginOption[]): Promise<Plugin[]>
 
 export default async function config(env: ConfigEnv) {
   const resolved = await createConfig(env);
+
+  // Seven of the nine DB test files start with `import "dotenv/config"`, so they
+  // connect to whatever TEST_DATABASE_URL `.env` holds even when the shell does
+  // not export it — and `.env` is gitignored, so that is a normal local setup,
+  // not an edge case. Reading only process.env here left the `db` project fully
+  // parallel on exactly that path, which is the original race verbatim. loadEnv
+  // resolves `.env*` the same way the tests do and returns a plain object, so
+  // this stays a read: process.env is untouched for the production build.
+  const testDatabaseUrl =
+    process.env.TEST_DATABASE_URL || loadEnv(env.mode, process.cwd(), "").TEST_DATABASE_URL;
   const plugins = await flattenPlugins(resolved.plugins ?? []);
   const sourceInjectionIndex = plugins.findIndex(
     (plugin) => plugin.name === "@tanstack/devtools:inject-source",
@@ -61,6 +74,43 @@ export default async function config(env: ConfigEnv) {
       // default and made them fail intermittently under load.
       ...(resolved as { test?: Record<string, unknown> }).test,
       testTimeout: 30_000,
+      // Vitest runs test FILES in parallel. The repository suites all share one
+      // real Postgres with no per-file schema or transaction isolation, so two
+      // of them in flight at once can see — and write FK children onto — each
+      // other's fixtures. `fileParallelism: false` pulls this project's files
+      // into Vitest's sequential group, which runs last, one file at a time,
+      // while everything else keeps full parallelism.
+      // Only needed when there is a shared database to collide on. The guard
+      // reads `.env` as well as the shell (see testDatabaseUrl above), because
+      // that is where a local TEST_DATABASE_URL usually lives; with no database
+      // anywhere these files skip every test and can run in parallel.
+      // Measured cost with a database: ~48s -> ~82s here (+39% on other
+      // hardware). Most of it is structural rather than any one slow file:
+      // Vitest runs the sequential group last, so the db phase cannot overlap
+      // the unit phase at all. corporate-changes/repository.test.ts (~40s solo)
+      // is the largest single contributor to the serialized phase.
+      projects: [
+        {
+          extends: true,
+          test: {
+            name: "unit",
+            exclude: [...defaultExclude, ...DB_INTEGRATION_TEST_FILES],
+          },
+        },
+        {
+          extends: true,
+          test: {
+            name: "db",
+            include: [...DB_INTEGRATION_TEST_FILES],
+            fileParallelism: !testDatabaseUrl,
+            // fileParallelism alone only serializes these while the root config
+            // keeps `isolate: true` and groupOrder 0. Pinning this project to a
+            // later group makes "runs after everything else, on its own" a
+            // property of the project rather than of settings it does not own.
+            sequence: { groupOrder: 1 },
+          },
+        },
+      ],
     },
   };
 }
