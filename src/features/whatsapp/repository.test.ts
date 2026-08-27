@@ -58,6 +58,7 @@ async function cleanupWhatsAppFixtures() {
     await tx`
       delete from whatsapp_messages
       where provider_message_id like 'phase2-test-%'
+        or provider_message_id like 'test-window-%'
         or body like 'Phase 2 test%'
         or case_id = ${TEST_CASE_ID}
     `;
@@ -69,7 +70,9 @@ async function cleanupWhatsAppFixtures() {
       delete from whatsapp_contacts
       where whatsapp_id like 'phase2-test-%'
         or phone_e164 in (
-          '+85261234567',
+          '85260903521',
+          '+85260903521',
+          '85261234567',
           '+85269990001',
           '+85261000001',
           '+85261000002',
@@ -322,12 +325,15 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       const repository = repositoryFor();
       // WOZTELL's real inbound shape is {from, to, timestamp, type, data, member,
       // channel, app} — a single `from` identity, not Meta's separate wa_id/phone
-      // pair. `from` drives both fromWhatsAppId and fromPhone (normalizePhone(from)),
-      // so it has to be phone-like for the phone_e164 assertion below to be
-      // meaningful — "+85261234567" is also in cleanupWhatsAppFixtures' fixed
-      // phone_e164 list, so no cleanup-filter change is needed.
+      // pair. `from` drives both fromWhatsAppId and fromPhone (normalizePhone(from)).
+      // `from` is BARE DIGITS with no plus (see woztell-fixtures.ts, copied from
+      // WOZTELL's docs); normalizePhone only preserves a leading "+", never adds
+      // one, so phone_e164 lands unprefixed too. A "+85261234567" here would be a
+      // value WOZTELL never sends, and would hide the format mismatch that
+      // lastInboundAtForPhoneDigits exists to bridge. "85261234567" is in
+      // cleanupWhatsAppFixtures' fixed phone_e164 list.
       const normalized = normalizeWoztellInboundMessage({
-        from: "+85261234567",
+        from: "85261234567",
         to: "85268227287",
         timestamp: "2026-07-05T12:10:00.000Z",
         type: "TEXT",
@@ -362,8 +368,8 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       // wa_id/phone fields.
       expect(contacts).toEqual([
         {
-          whatsapp_id: "+85261234567",
-          phone_e164: "+85261234567",
+          whatsapp_id: "85261234567",
+          phone_e164: "85261234567",
         },
       ]);
 
@@ -381,6 +387,111 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
           and metadata ->> 'providerMessageId' = 'phase2-test-inbound-001'
       `;
       expect(timelineEvents[0].count).toBe(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "resolves the last inbound timestamp across real-world phone formats",
+    async () => {
+      const repository = repositoryFor();
+      // WOZTELL's documented inbound `from` is bare digits with no plus.
+      const inboundFrom = "85260903521";
+      const receivedAt = "2026-08-26T02:00:00.000Z";
+
+      await repository.recordInboundMessage({
+        provider: "woztell",
+        providerMessageId: `test-window-${inboundFrom}`,
+        channelId: null,
+        fromWhatsAppId: inboundFrom,
+        fromPhone: inboundFrom,
+        contactName: "Window Test",
+        messageType: "text",
+        body: "Hello",
+        receivedAt,
+        rawPayload: {},
+      });
+
+      // The sweeps enqueue company_contacts.phone verbatim, and the firm's house
+      // format is spaced. Exact string equality against phone_e164 would miss.
+      const sweepRecipient = "+852 6090 3521";
+      const resolved = await repository.lastInboundAtForPhoneDigits(
+        sweepRecipient.replace(/\D/g, ""),
+      );
+
+      expect(resolved).not.toBeNull();
+      expect(new Date(resolved!).toISOString()).toBe(receivedAt);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "spans the duplicate contact rows the format split creates, taking the latest",
+    async () => {
+      const repository = repositoryFor();
+      // One human, two contact rows. upsertContact looks contacts up by exact
+      // string equality and whatsapp_contacts_provider_phone_uidx keys on the raw
+      // string, so the bare-digit row WOZTELL creates on inbound and the
+      // plus-prefixed row a staff send creates never collide — production already
+      // holds pairs like this.
+      const earlierAt = "2026-08-25T02:00:00.000Z";
+      const laterAt = "2026-08-26T02:00:00.000Z";
+
+      const earlier = await repository.recordInboundMessage({
+        provider: "woztell",
+        providerMessageId: "test-window-dup-bare",
+        channelId: null,
+        fromWhatsAppId: "85260903521",
+        fromPhone: "85260903521",
+        contactName: "Window Dup Bare",
+        messageType: "text",
+        body: "Earlier",
+        receivedAt: earlierAt,
+        rawPayload: {},
+      });
+      const later = await repository.recordInboundMessage({
+        provider: "woztell",
+        providerMessageId: "test-window-dup-plus",
+        channelId: null,
+        fromWhatsAppId: "+85260903521",
+        fromPhone: "+85260903521",
+        contactName: "Window Dup Plus",
+        messageType: "text",
+        body: "Later",
+        receivedAt: laterAt,
+        rawPayload: {},
+      });
+
+      // Pin the precondition: if these two ever merge into a single contact row,
+      // the assertion below would still pass while proving nothing about spanning.
+      expect(later.contactId).not.toBe(earlier.contactId);
+
+      const resolved = await repository.lastInboundAtForPhoneDigits("85260903521");
+
+      // max() runs across BOTH rows. A contact-first query that resolves one
+      // contact id and then reads its messages would return whichever row it
+      // happened to pick — the earlier one here, closing the window early and
+      // downgrading a free-form reply to a paid template.
+      expect(resolved).not.toBeNull();
+      expect(new Date(resolved!).toISOString()).toBe(laterAt);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "returns null for a number that has never messaged us",
+    async () => {
+      const repository = repositoryFor();
+      expect(await repository.lastInboundAtForPhoneDigits("85299999999")).toBeNull();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "returns null for an empty digit string rather than matching digitless contacts",
+    async () => {
+      const repository = repositoryFor();
+      expect(await repository.lastInboundAtForPhoneDigits("")).toBeNull();
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

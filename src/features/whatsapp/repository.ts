@@ -166,6 +166,7 @@ export type WhatsAppRepository = {
   listConversationMessages(
     input: ListConversationMessagesInput,
   ): Promise<WhatsAppConversationMessage[]>;
+  lastInboundAtForPhoneDigits(phoneDigits: string): Promise<string | null>;
   close(): Promise<void>;
 };
 
@@ -1275,6 +1276,48 @@ export function createWhatsAppRepository(
     return rows.map(mapConversationMessage);
   }
 
+  /**
+   * The 24-hour session window clock. whatsapp_contacts.last_seen_at cannot serve
+   * here: its single write is reached from both recordInboundMessage AND
+   * queueOutboundTemplateMessage, and the outbound one fires at queue time.
+   *
+   * Matched digits-only because the two sides are stored in three incompatible
+   * formats (see phone.ts). This also spans the duplicate contact rows the format
+   * split has already created — a staff-created "+85291234567" and an
+   * inbound-created "85291234567" are distinct rows under
+   * whatsapp_contacts_provider_phone_uidx, and max() across both is the answer we
+   * want.
+   *
+   * The regexp_replace expression must stay character-identical to
+   * whatsapp_contacts_phone_digits_idx (migration 0021) or the planner will not
+   * use the index.
+   *
+   * Returns ISO-8601 ("2026-08-26T02:00:00.000Z"), NOT the Postgres text rendering
+   * the `received_at::text` reads elsewhere in this file return. The `::text` cast
+   * is deliberately omitted: it renders timestamptz as "2026-08-26 02:00:00+00",
+   * which JavaScriptCore rejects outright and V8 only parses via a lenient
+   * fallback. Left uncast, postgres.js returns a Date and timestampString
+   * normalizes it.
+   */
+  async function lastInboundAtForPhoneDigits(phoneDigits: string): Promise<string | null> {
+    // An empty string would match EVERY contact whose phone_e164 and whatsapp_id
+    // are both digitless — coalesce(...) yields '' for those — and max() would then
+    // return an unrelated contact's timestamp, silently opening the window for the
+    // wrong person. toPhoneDigits returns null rather than "" precisely so callers
+    // can avoid this, but the type signature cannot enforce it.
+    if (phoneDigits === "") return null;
+
+    const rows = await sql<{ last_inbound_at: string | Date | null }[]>`
+      select max(wm.received_at) as last_inbound_at
+      from whatsapp_messages wm
+      join whatsapp_contacts wc on wc.id = wm.contact_id
+      where regexp_replace(coalesce(wc.phone_e164, wc.whatsapp_id), '[^0-9]', '', 'g') = ${phoneDigits}
+        and wm.direction = 'inbound'
+    `;
+
+    return timestampString(rows[0]?.last_inbound_at ?? null);
+  }
+
   return {
     recordInboundMessage,
     getCaseAuthorizationContext,
@@ -1284,6 +1327,7 @@ export function createWhatsAppRepository(
     attachProviderMessageId,
     listConversations,
     listConversationMessages,
+    lastInboundAtForPhoneDigits,
     async close() {
       if (ownsClient && "end" in sql) {
         await sql.end();
