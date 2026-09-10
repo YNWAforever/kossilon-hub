@@ -19,6 +19,16 @@ export type WhatsAppConversationMessage = {
   createdAt: string;
   receivedAt: string | null;
   sentAt: string | null;
+  /**
+   * Which branch the dispatcher took, when it was recorded.
+   *
+   * `body` is the draft. Outside WhatsApp's 24-hour window a zero-variable
+   * template goes out instead, so for a "template" row the body is NOT what the
+   * client received. Null means the row predates the column, not that it was
+   * text -- an unrecorded send is unknown, not confirmed.
+   */
+  sentAs: "text" | "template" | null;
+  sentTemplateName: string | null;
 };
 
 export type WhatsAppConversation = {

@@ -1024,6 +1024,12 @@ create table if not exists whatsapp_messages (
   phone_e164 text,
   whatsapp_id text,
   body text not null,
+  -- from 0029: which branch the dispatcher actually took. `body` is the draft;
+  -- outside the 24-hour window a zero-variable template goes out instead, so for
+  -- a 'template' row the body is NOT what the client received. Null means the
+  -- row predates this column, not that it was text.
+  sent_as text check (sent_as is null or sent_as in ('text', 'template')),
+  sent_template_name text,
   payload jsonb not null default '{}'::jsonb,
   sent_by uuid references users(id) on delete set null,
   received_at timestamptz,
@@ -1572,3 +1578,8 @@ create index if not exists document_findings_requirement_idx
 create index if not exists document_findings_open_issue_idx
   on document_findings (document_version_id, severity)
   where resolved_by is null and outcome = 'issue';
+
+-- from 0029_whatsapp_send_mode.sql
+create index if not exists whatsapp_messages_sent_as_idx
+  on whatsapp_messages (contact_id, sent_as)
+  where sent_as = 'template';

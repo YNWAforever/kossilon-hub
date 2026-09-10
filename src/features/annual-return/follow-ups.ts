@@ -61,7 +61,14 @@ export type ProductionFollowUpDraft = {
   phone: string | null;
   reasonLabel: string;
   messagePreview: string;
-  status: "draft" | "sent" | "blocked";
+  /**
+   * `queued` is separate from `sent` on purpose. A row the dispatcher has not
+   * finished is not a message the client has: it may be seconds old, or stranded
+   * mid-dispatch awaiting the fifteen-minute reclaim, and in local or simulated
+   * mode nothing will ever contact the client at all. Collapsing the two told a
+   * staff member the chase had gone out when nothing had left the building.
+   */
+  status: "draft" | "queued" | "sent" | "blocked";
 };
 
 export function stableFollowUpIdempotencyKey(identity: ProductionFollowUpIdentity): string {
@@ -99,7 +106,8 @@ function deliveryStatus(
 ): ProductionFollowUpDraft["status"] {
   const stableKey = stableFollowUpIdempotencyKey(identity);
   const delivery = state.deliveries.find((candidate) => candidate.idempotencyKey === stableKey);
-  if (delivery && ["pending", "processing", "sent"].includes(delivery.status)) return "sent";
+  if (delivery?.status === "sent") return "sent";
+  if (delivery && ["pending", "processing"].includes(delivery.status)) return "queued";
   if (delivery) return "blocked";
   return hasRecipient ? "draft" : "blocked";
 }

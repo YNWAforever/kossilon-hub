@@ -129,7 +129,14 @@ describe("production follow-up draft derivation", () => {
 
     expect(drafts).toEqual([]);
   });
-  it("maps queued or sent stable outbox keys to sent without trusting failed delivery", () => {
+  /**
+   * Inverted, not loosened. This asserted that a `pending` outbox row reads as
+   * "sent" -- which is the defect: a row queued seconds ago, or one stranded
+   * mid-dispatch awaiting the fifteen-minute reclaim, told a staff member the
+   * chase had gone out. In local or simulated mode nothing will ever contact the
+   * client and the screen still said sent.
+   */
+  it("distinguishes a queued outbox row from one the provider acknowledged", () => {
     const annualIdentity = { source: "annual-return" as const, caseId, entityId: caseId };
     const documentIdentity = {
       source: "document-review" as const,
@@ -154,7 +161,7 @@ describe("production follow-up draft derivation", () => {
     );
 
     expect(drafts.map(({ source, status }) => ({ source, status }))).toEqual([
-      { source: "annual-return", status: "sent" },
+      { source: "annual-return", status: "queued" },
       { source: "document-review", status: "draft" },
       { source: "document-review", status: "sent" },
       { source: "payment-proof-review", status: "blocked" },

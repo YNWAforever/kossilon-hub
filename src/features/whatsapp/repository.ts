@@ -161,6 +161,13 @@ export type WhatsAppRepository = {
   attachProviderMessageId(input: {
     messageId: string;
     providerMessageId: string;
+    /**
+     * Which branch the dispatcher took. This is the only moment it is known, and
+     * it decides whether `body` describes what the client received: outside the
+     * 24-hour window a zero-variable template goes out instead of the draft.
+     */
+    sentAs?: "text" | "template";
+    sentTemplateName?: string | null;
   }): Promise<boolean>;
   listConversations(input?: ListConversationsInput): Promise<WhatsAppConversation[]>;
   listConversationMessages(
@@ -374,6 +381,8 @@ type ConversationMessageRow = {
   direction: WhatsAppMessageDirection;
   status: WhatsAppMessageStatus;
   body: string;
+  sent_as: "text" | "template" | null;
+  sent_template_name: string | null;
   case_id: string | null;
   created_at: string | Date;
   received_at: string | Date | null;
@@ -400,6 +409,8 @@ function mapConversationMessage(row: ConversationMessageRow): WhatsAppConversati
     direction: row.direction,
     status: row.status,
     body: row.body,
+    sentAs: row.sent_as,
+    sentTemplateName: row.sent_template_name,
     caseId: row.case_id,
     createdAt: timestampString(row.created_at)!,
     receivedAt: timestampString(row.received_at),
@@ -1175,12 +1186,19 @@ export function createWhatsAppRepository(
   async function attachProviderMessageId(input: {
     messageId: string;
     providerMessageId: string;
+    sentAs?: "text" | "template";
+    sentTemplateName?: string | null;
   }): Promise<boolean> {
     const rows = await sql<{ id: string }[]>`
       update whatsapp_messages
       set provider_message_id = ${input.providerMessageId},
           status = case when status = 'queued' then 'sent' else status end,
           sent_at = coalesce(sent_at, now()),
+          -- Left alone when the caller does not know, rather than defaulted to
+          -- 'text'. Null means "not recorded", and asserting text would claim the
+          -- client received the body when nobody checked.
+          sent_as = coalesce(${input.sentAs ?? null}, sent_as),
+          sent_template_name = coalesce(${input.sentTemplateName ?? null}, sent_template_name),
           updated_at = now()
       where id = ${input.messageId}
         and provider_message_id is null
@@ -1280,6 +1298,8 @@ export function createWhatsAppRepository(
         direction,
         status,
         body,
+        sent_as,
+        sent_template_name,
         case_id,
         created_at::text as created_at,
         received_at::text as received_at,

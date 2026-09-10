@@ -157,9 +157,26 @@ export function createNotificationDispatcher(
               options.whatsAppRepository
             ) {
               try {
+                // What actually went on the wire. `body` on that row is the
+                // draft, and outside the 24-hour window the template branch
+                // sends zero variables -- so for a template send the body is not
+                // what the client received, and the inbox has to be able to say
+                // so rather than presenting the draft as delivered.
+                //
+                // Spread rather than passed as undefined: local and simulated
+                // dispatch have no send-mode context, and this call stays exactly
+                // what it was for them.
+                const sendMode = context?.whatsAppSendMode;
                 await options.whatsAppRepository.attachProviderMessageId({
                   messageId: whatsAppMessageId,
                   providerMessageId: result.providerMessageId,
+                  ...(sendMode
+                    ? {
+                        sentAs: sendMode.kind,
+                        sentTemplateName:
+                          sendMode.kind === "template" ? sendMode.elementName : null,
+                      }
+                    : {}),
                 });
               } catch (linkError) {
                 // The message was sent. Letting this reach the outer catch would

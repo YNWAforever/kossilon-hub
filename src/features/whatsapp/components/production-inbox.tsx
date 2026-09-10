@@ -253,6 +253,18 @@ export function ProductionWhatsAppInbox() {
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{message.body}</p>
+                  {/* The draft is not always what went out. Outside WhatsApp's
+                      24-hour window free-form text is forbidden, so a
+                      zero-variable template is sent instead -- no company name,
+                      no due date. Showing the draft alone let a staff member
+                      believe the client had been told something they had not. */}
+                  {message.sentAs === "template" ? (
+                    <p className="mt-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow">
+                      客戶收到的是範本訊息
+                      {message.sentTemplateName ? `（${message.sentTemplateName}）` : ""}
+                      ，不是上面這段文字。範本不含公司名稱或限期。
+                    </p>
+                  ) : null}
                   <p className="mt-2 text-xs text-muted-foreground">
                     {formatHongKongTimestamp(conversationMessageOccurredAt(message))} -{" "}
                     {message.status}
