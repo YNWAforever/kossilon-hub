@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Zap,
   type LucideIcon,
+  Upload,
 } from "lucide-react";
 
 // Single source of truth for primary navigation. The sidebar (desktop) and the
@@ -50,6 +51,7 @@ export const navGroups: NavGroup[] = [
       { to: "/incorporation", label: "Incorporation", icon: Rocket },
       { to: "/corporate-changes", label: "Corporate changes", icon: Repeat2 },
       { to: "/documents", label: "Documents", icon: FileText },
+      { to: "/imports", label: "月表匯入", icon: Upload },
       { to: "/portal", label: "Portal", icon: ExternalLink },
       { to: "/payments", label: "Payments", icon: CreditCard },
     ],

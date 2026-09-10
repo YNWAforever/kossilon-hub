@@ -16,6 +16,7 @@ import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncorporationRouteImport } from './routes/incorporation'
+import { Route as ImportsRouteImport } from './routes/imports'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as CorporateChangesRouteImport } from './routes/corporate-changes'
 import { Route as ClientsRouteImport } from './routes/clients'
@@ -61,6 +62,11 @@ const LoginRoute = LoginRouteImport.update({
 const IncorporationRoute = IncorporationRouteImport.update({
   id: '/incorporation',
   path: '/incorporation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportsRoute = ImportsRouteImport.update({
+  id: '/imports',
+  path: '/imports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/documents'
+    | '/imports'
     | '/incorporation'
     | '/login'
     | '/payments'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/documents'
+    | '/imports'
     | '/incorporation'
     | '/login'
     | '/payments'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/documents'
+    | '/imports'
     | '/incorporation'
     | '/login'
     | '/payments'
@@ -250,6 +262,7 @@ export interface RootRouteChildren {
   ClientsRoute: typeof ClientsRouteWithChildren
   CorporateChangesRoute: typeof CorporateChangesRouteWithChildren
   DocumentsRoute: typeof DocumentsRoute
+  ImportsRoute: typeof ImportsRoute
   IncorporationRoute: typeof IncorporationRouteWithChildren
   LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
@@ -308,6 +321,13 @@ declare module '@tanstack/react-router' {
       path: '/incorporation'
       fullPath: '/incorporation'
       preLoaderRoute: typeof IncorporationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/imports': {
+      id: '/imports'
+      path: '/imports'
+      fullPath: '/imports'
+      preLoaderRoute: typeof ImportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -455,6 +475,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsRoute: ClientsRouteWithChildren,
   CorporateChangesRoute: CorporateChangesRouteWithChildren,
   DocumentsRoute: DocumentsRoute,
+  ImportsRoute: ImportsRoute,
   IncorporationRoute: IncorporationRouteWithChildren,
   LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
