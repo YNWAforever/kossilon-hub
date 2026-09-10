@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
@@ -10,7 +10,12 @@ import type { PersistedWorkItem } from "@/features/work-items/repository";
 import { boardFiltersFromSearch, type AnnualReturnBoardSearch } from "../board-filters";
 import { boardMetrics } from "../board-metrics";
 import { annualReturnQueryKeys } from "../query-keys";
-import { listAnnualReturnCases, listCompaniesEligibleForCase } from "../server-fns";
+import {
+  getAnnualReturnBoardTotals,
+  listAnnualReturnCasePage,
+  listAssignableStaff,
+  listCompaniesEligibleForCase,
+} from "../server-fns";
 import {
   ANNUAL_RETURN_STATUSES,
   type AnnualReturnCase,
@@ -48,11 +53,35 @@ export function ProductionAnnualReturnCommandCenter({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
+  // Pages already loaded beyond the first. Reset whenever the filters change,
+  // because a cursor is only meaningful within the query that produced it.
+  const [extraPages, setExtraPages] = useState<AnnualReturnCase[][]>([]);
+  const [cursor, setCursor] = useState<string | undefined>();
+  const filtersKey = JSON.stringify(filters);
+  useEffect(() => {
+    setExtraPages([]);
+    setCursor(undefined);
+  }, [filtersKey]);
 
   const casesQuery = useQuery({
     queryKey: annualReturnQueryKeys.list(filters),
-    queryFn: () => listAnnualReturnCases({ data: filters }),
+    queryFn: () => listAnnualReturnCasePage({ data: filters }),
     retry: false,
+  });
+
+  // Counted in SQL across the actor's whole scope, not over the page on screen.
+  const totalsQuery = useQuery({
+    queryKey: [...annualReturnQueryKeys.list(filters), "totals"],
+    queryFn: () => getAnnualReturnBoardTotals({ data: filters }),
+    retry: false,
+  });
+
+  const nextPageMutation = useMutation({
+    mutationFn: (from: string) => listAnnualReturnCasePage({ data: { ...filters, cursor: from } }),
+    onSuccess: (page) => {
+      setExtraPages((current) => [...current, page.cases]);
+      setCursor(page.nextCursor ?? undefined);
+    },
   });
 
   // Only fetched once the dialog is actually open — these are cheap reads, but
@@ -85,7 +114,11 @@ export function ProductionAnnualReturnCommandCenter({
     retry: false,
   });
 
-  const cases = useMemo(() => casesQuery.data ?? [], [casesQuery.data]);
+  const cases = useMemo(
+    () => [...(casesQuery.data?.cases ?? []), ...extraPages.flat()],
+    [casesQuery.data, extraPages],
+  );
+  const nextCursor = cursor ?? casesQuery.data?.nextCursor ?? undefined;
 
   const workItemsByCase = useMemo(() => {
     const map = new Map<string, PersistedWorkItem>();
@@ -97,24 +130,30 @@ export function ProductionAnnualReturnCommandCenter({
     return map;
   }, [workItemsQuery.data]);
 
-  // Company-name only: the production case carries no contact name or phone.
-  const query = (search.q ?? "").trim().toLowerCase();
-  const visibleCases = useMemo(
-    () =>
-      query ? cases.filter((c) => c.companyName.toLowerCase().includes(query)) : cases.slice(),
-    [cases, query],
+  // No client-side re-filter: `q` is a SQL predicate over company name and CR
+  // number now, so the server has already applied it. Filtering again here is
+  // what used to make a case at row 201 unfindable.
+  const visibleCases = cases;
+
+  // From the staff directory rather than from the loaded rows. Building it from
+  // the page meant the one control that could have narrowed the query enough to
+  // surface a late case was itself limited to the cases already on screen.
+  const ownersQuery = useQuery({
+    queryKey: ["annual-return", "assignable-staff"],
+    queryFn: () => listAssignableStaff(),
+    retry: false,
+    staleTime: 60_000,
+  });
+  const owners = useMemo(
+    () => (ownersQuery.data ?? []).map((member) => ({ id: member.id, name: member.name })),
+    [ownersQuery.data],
   );
 
-  const owners = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const case_ of cases) map.set(case_.ownerId, case_.ownerName);
-    return Array.from(map, ([id, name]) => ({ id, name })).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
-  }, [cases]);
-
-  const metrics = boardMetrics(cases, today);
-  const capped = cases.length === BOARD_PAGE_SIZE;
+  const totals = totalsQuery.data;
+  // highRisk stays derived from the loaded rows and is labelled as such:
+  // riskForCase computes it from checklist, payment and filing state, and
+  // reproducing that in SQL is exactly the drift the repository warns about.
+  const pageMetrics = boardMetrics(cases, today);
 
   function update(patch: Partial<AnnualReturnBoardSearch>) {
     onSearchChange?.({ ...search, ...patch });
@@ -188,20 +227,23 @@ export function ProductionAnnualReturnCommandCenter({
         </p>
       ) : null}
 
-      {capped ? (
+      {/* Was `cases.length === BOARD_PAGE_SIZE`, an exact-equality guess that
+          could be absent while truncation had happened. The server says whether
+          another page exists. */}
+      {nextCursor ? (
         <p role="status" className="text-sm text-muted-foreground">
-          Showing the first {BOARD_PAGE_SIZE} cases — narrow the filters.
+          顯示 {visibleCases.length} 筆，還有更多。
         </p>
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <Metric label="Due in 7 days" value={metrics.dueIn7} />
-        <Metric label="Due in 30 days" value={metrics.dueIn30} />
-        <Metric label="Overdue" value={metrics.overdue} />
-        <Metric label="High risk" value={metrics.highRisk} />
-        <Metric label="Missing documents" value={metrics.missingDocuments} />
-        <Metric label="Payment pending" value={metrics.paymentPending} />
-        <Metric label="Cases shown" value={visibleCases.length} />
+        <Metric label="Due in 7 days" value={totals?.dueIn7 ?? 0} />
+        <Metric label="Due in 30 days" value={totals?.dueIn30 ?? 0} />
+        <Metric label="Overdue" value={totals?.overdue ?? 0} />
+        <Metric label="High risk (loaded)" value={pageMetrics.highRisk} />
+        <Metric label="Missing documents" value={totals?.missingDocuments ?? 0} />
+        <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
+        <Metric label="Cases in scope" value={totals?.total ?? 0} />
       </div>
 
       <section className="rounded-lg border bg-card">
@@ -291,6 +333,18 @@ export function ProductionAnnualReturnCommandCenter({
 
         {/* Gated on isError as well as isPending. payments.tsx omits the isError
             half and so renders "unavailable" and "nothing to review" together. */}
+        {nextCursor ? (
+          <div className="border-t p-4">
+            <button
+              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              disabled={nextPageMutation.isPending}
+              onClick={() => nextPageMutation.mutate(nextCursor)}
+              type="button"
+            >
+              {nextPageMutation.isPending ? "載入中…" : "載入更多"}
+            </button>
+          </div>
+        ) : null}
         {!casesQuery.isPending && !casesQuery.isError && visibleCases.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">
             No annual return cases match these filters.

@@ -31,10 +31,23 @@ describe("boardFiltersFromSearch", () => {
     ]);
   });
 
-  it("does not send the company search to the server", () => {
-    // The production case has no contact name or phone, so `q` filters the rows
-    // already returned rather than narrowing the query.
-    expect(boardFiltersFromSearch({ q: "acme" }, 200)).toEqual({ limit: 200 });
+  // This used to assert the opposite, on the reasoning that a production case
+  // carries no contact name or phone. But the consequence was that `q` filtered
+  // only the rows already returned, so a case at row 201 could not be found by
+  // typing its name at all. It is now a SQL predicate over company name and CR
+  // number.
+  it("sends the company search to the server as a real predicate", () => {
+    expect(boardFiltersFromSearch({ q: "acme" }, 200)).toEqual({ limit: 200, q: "acme" });
+  });
+
+  it("omits an absent search rather than sending an empty string", () => {
+    expect(boardFiltersFromSearch({}, 200)).toEqual({ limit: 200 });
+    expect(boardFiltersFromSearch({ q: "" }, 200)).toEqual({ limit: 200 });
+  });
+
+  it("forwards a page cursor only when one was supplied", () => {
+    expect(boardFiltersFromSearch({}, 200, "abc")).toEqual({ limit: 200, cursor: "abc" });
+    expect(boardFiltersFromSearch({}, 200, undefined)).toEqual({ limit: 200 });
   });
 
   it("drops overdueOnly when it is false", () => {

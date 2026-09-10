@@ -44,6 +44,10 @@ const listAnnualReturnCasesSchema = z
     missingDocuments: z.boolean().optional(),
     paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
     overdueOnly: z.boolean().optional(),
+    // Bounded so a caller cannot ask for the whole table in one request, and
+    // trimmed so a whitespace-only search is the same as no search.
+    q: z.string().trim().min(1).max(120).optional(),
+    cursor: z.string().max(512).optional(),
     limit: z.number().int().min(1).max(500).optional(),
   })
   .default({});
@@ -149,6 +153,49 @@ export async function listAnnualReturnCasesForActor(
   });
 
   return dependencies.repository.listCases({ ...filters, ...scope });
+}
+
+/**
+ * A page of the board, scoped identically to listAnnualReturnCasesForActor.
+ *
+ * The scope is applied after the caller's filters, so a client-supplied
+ * companyId or ownerId can narrow within an actor's reach but never widen past
+ * it -- the same ordering the list read already uses.
+ */
+export async function listAnnualReturnCasePageForActor(
+  actor: AuthenticatedActor,
+  filters: CaseFilters,
+  dependencies: { repository: Pick<AnnualReturnRepository, "listCasePage"> },
+) {
+  const scope = caseFiltersForActor({
+    id: actor.userId,
+    role: actor.role,
+    teamId: actor.teamId,
+    active: actor.active,
+  });
+
+  return dependencies.repository.listCasePage({ ...filters, ...scope });
+}
+
+/**
+ * Board tiles counted in SQL across the actor's whole scope.
+ *
+ * They were computed in the browser over the same truncated page the board
+ * rendered, so "12 overdue" meant "12 overdue among the 200 cases we loaded".
+ */
+export async function getAnnualReturnBoardTotalsForActor(
+  actor: AuthenticatedActor,
+  filters: CaseFilters,
+  dependencies: { repository: Pick<AnnualReturnRepository, "boardTotals"> },
+) {
+  const scope = caseFiltersForActor({
+    id: actor.userId,
+    role: actor.role,
+    teamId: actor.teamId,
+    active: actor.active,
+  });
+
+  return dependencies.repository.boardTotals({ ...filters, ...scope });
 }
 
 /**
@@ -516,6 +563,22 @@ export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" })
     getAnnualReturnDashboardMetricsForActor(actor, { repository }),
   ),
 );
+
+export const listAnnualReturnCasePage = createServerFn({ method: "GET" })
+  .validator(listAnnualReturnCasesSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAnnualReturnCasePageForActor(actor, data, { repository }),
+    ),
+  );
+
+export const getAnnualReturnBoardTotals = createServerFn({ method: "GET" })
+  .validator(listAnnualReturnCasesSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      getAnnualReturnBoardTotalsForActor(actor, data, { repository }),
+    ),
+  );
 
 export const listCompaniesEligibleForCase = createServerFn({ method: "GET" }).handler(() =>
   withAnnualReturnActorRepository((repository, actor) =>

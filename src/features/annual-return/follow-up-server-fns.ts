@@ -59,7 +59,10 @@ export async function listProductionFollowUpDraftsForActor(
   dependencies: ProductionFollowUpDependencies,
 ): Promise<ProductionFollowUpDraft[]> {
   const staff = staffIdentity(actor);
-  const cases = await dependencies.annualReturnRepository.listCases({});
+  // listCases({}) is the 200 earliest-due cases, so every client past that row
+  // was silently never chased at all. That is a correctness bug, not a display
+  // one, and it is why this drains pages instead.
+  const cases = await dependencies.annualReturnRepository.listAllCases({});
   const authorizedCases = cases.filter(
     (caseItem) => getAnnualReturnActionPermission(staff, caseItem, "record_reminder").allowed,
   );

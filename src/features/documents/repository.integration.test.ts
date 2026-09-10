@@ -98,7 +98,6 @@ async function anyUserId(sql: SqlClient): Promise<string> {
   return rows[0].id;
 }
 
-
 async function checklistItemFor(sql: SqlClient, caseId: string): Promise<string | null> {
   const rows = await sql<{ id: string }[]>`
     select id from annual_return_checklist_items
@@ -467,7 +466,9 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
         source: "client",
       });
 
-      const rows = await sql<{ status: string; document_id: string | null; received_at: string | null }[]>`
+      const rows = await sql<
+        { status: string; document_id: string | null; received_at: string | null }[]
+      >`
         select status, document_id, received_at::text as received_at
         from annual_return_checklist_items where id = ${itemId}`;
       // The whole point: the requirement can no longer read "Missing" while the

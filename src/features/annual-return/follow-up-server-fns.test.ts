@@ -73,6 +73,9 @@ const message: WhatsAppMessageRecord = {
 function dependencies(overrides: Record<string, unknown> = {}) {
   const annualReturnRepository = {
     listCases: vi.fn(async () => [caseItem]),
+    // The drafts read drains pages now: listCases({}) is only the 200
+    // earliest-due cases, so clients past that row were never chased.
+    listAllCases: vi.fn(async () => [caseItem]),
     getCase: vi.fn(async () => caseItem),
     assertCanMutateCase: vi.fn(async () => undefined),
     recordReminder: vi.fn(async () => ({ ...caseItem, remindersSent: 2 })),

@@ -156,8 +156,91 @@ export type CaseFilters = {
   visibleToUserId?: string;
   /** The companies a client actor is a member of. Empty means no access at all. */
   companyIds?: readonly string[];
+  /**
+   * Free text over company name and CR number, as a SQL predicate.
+   *
+   * It used to be a client-side filter over whatever the 200-row page happened
+   * to contain -- board-filters.ts said so in its own comment -- so a case at
+   * row 201 could not be found by typing its name, and the owner dropdown that
+   * might have narrowed the query was itself built from the same truncated page.
+   */
+  q?: string;
+  /** Keyset position from a previous page. Opaque to the caller. */
+  cursor?: string;
   limit?: number;
 };
+
+/**
+ * A page of cases plus where to resume.
+ *
+ * `nextCursor` comes from the SQL rows, before the post-hydration `risk` filter
+ * runs, so "is there more" stays correct even when a page returns fewer rows
+ * than were asked for.
+ */
+export type AnnualReturnCasePage = {
+  cases: AnnualReturnCase[];
+  nextCursor: string | null;
+};
+
+export type BoardTotals = {
+  total: number;
+  overdue: number;
+  dueIn7: number;
+  dueIn30: number;
+  missingDocuments: number;
+  paymentPending: number;
+};
+
+/**
+ * The keyset is the full sort key, because none of its parts is unique on its
+ * own: two cases share a due date constantly, and two companies can share a
+ * name. Without the id a page boundary would silently skip or repeat rows.
+ *
+ * Base64url of the three parts, so the cursor stays opaque to the caller and
+ * carries no separator a company name could contain.
+ */
+export function encodeCaseCursor(row: {
+  filing_due_date: string | Date;
+  company_name: string;
+  id: string;
+}): string {
+  // selectCaseRows casts the column to text, but the row type still admits a Date
+  // because other reads of the same table do not. Normalising here keeps the
+  // cursor a date-only string whichever shape arrives.
+  const dueDate =
+    typeof row.filing_due_date === "string"
+      ? row.filing_due_date.slice(0, 10)
+      : row.filing_due_date.toISOString().slice(0, 10);
+  const payload = JSON.stringify([dueDate, row.company_name, row.id]);
+  return btoa(String.fromCharCode(...new TextEncoder().encode(payload)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+export function decodeCaseCursor(
+  cursor: string | undefined,
+): { dueDate: string; companyName: string; id: string } | null {
+  if (!cursor) return null;
+  try {
+    const normalized = cursor.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(normalized);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    if (!Array.isArray(parsed) || parsed.length !== 3) return null;
+    const [dueDate, companyName, id] = parsed;
+    if (typeof dueDate !== "string" || typeof companyName !== "string" || typeof id !== "string") {
+      return null;
+    }
+    // A cursor arrives from the client, so its shape is checked rather than
+    // trusted -- it goes straight into a SQL comparison.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return null;
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+    return { dueDate, companyName, id };
+  } catch {
+    return null;
+  }
+}
 
 export type AnnualReturnDashboardMetrics = {
   dueIn7: number;
@@ -255,6 +338,12 @@ export type CreateAnnualReturnCaseInput = {
 
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
+  listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage>;
+  listAllCases(
+    filters: CaseFilters,
+    options?: { pageSize?: number; maxPages?: number },
+  ): Promise<AnnualReturnCase[]>;
+  boardTotals(filters: CaseFilters): Promise<BoardTotals>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
   listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>;
   listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
@@ -663,6 +752,12 @@ export function createAnnualReturnRepository(
     // the kind of drift that made the evidence guards unsatisfiable. It is applied
     // to a wider window instead, so the LIMIT no longer truncates before filtering.
     const limit = filters.limit ?? (filters.risk ? RISK_FILTER_SCAN_LIMIT : DEFAULT_CASE_LIMIT);
+    // Escaped so a name containing % or _ matches literally rather than turning
+    // into a wildcard the user did not type.
+    const query = filters.q?.trim()
+      ? `%${filters.q.trim().replace(/[\\%_]/g, (character) => `\\${character}`)}%`
+      : null;
+    const cursor = decodeCaseCursor(filters.cursor);
 
     return sql<CaseRow[]>`
       select
@@ -725,7 +820,20 @@ export function createAnnualReturnRepository(
               )
           )
         )
-      order by arc.filing_due_date asc, c.company_name asc
+        and (
+          ${query}::text is null
+          or c.company_name ilike ${query} escape '\\'
+          or c.cr_number ilike ${query} escape '\\'
+        )
+        and (
+          ${cursor === null}
+          or (arc.filing_due_date, c.company_name, arc.id)
+             > (${cursor?.dueDate ?? null}::date, ${cursor?.companyName ?? ""}, ${cursor?.id ?? null}::uuid)
+        )
+      -- arc.id is part of the sort key, not decoration: without it the keyset
+      -- has no unique tiebreaker and a page boundary silently skips or repeats
+      -- rows whenever two cases share a due date and company name.
+      order by arc.filing_due_date asc, c.company_name asc, arc.id asc
       limit ${limit}
     `;
   }
@@ -800,6 +908,137 @@ export function createAnnualReturnRepository(
 
   async function listCases(filters: CaseFilters): Promise<AnnualReturnCase[]> {
     return listCasesForToday(filters, readToday());
+  }
+
+  /**
+   * One page, plus where to resume.
+   *
+   * `nextCursor` is taken from the last SQL row, before the post-hydration `risk`
+   * filter runs. Deriving it from the returned cases instead would stall
+   * pagination the moment a whole page was filtered out, and deriving "has more"
+   * from `cases.length === limit` would be wrong for the same reason -- which is
+   * how the board's "Showing the first 200" warning could be absent while
+   * truncation had happened.
+   */
+  async function listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage> {
+    const today = readToday();
+    const rows = await selectCaseRows(filters, today);
+    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
+    const hydrated = await hydrateCases(rows, today);
+    const cases = hydrated.filter((case_) => caseMatchesHydratedFilters(case_, filters));
+    const last = rows.at(-1);
+    return {
+      cases,
+      nextCursor: rows.length === limit && last ? encodeCaseCursor(last) : null,
+    };
+  }
+
+  /**
+   * Every case matching the filters, drained page by page.
+   *
+   * For callers that must not silently stop at a page boundary. The production
+   * WhatsApp follow-up drafts were built from `listCases({})`, which is the 200
+   * earliest-due cases, so every client past that row was never chased at all --
+   * a correctness bug rather than a display one.
+   */
+  async function listAllCases(
+    filters: CaseFilters,
+    options: { pageSize?: number; maxPages?: number } = {},
+  ): Promise<AnnualReturnCase[]> {
+    const pageSize = options.pageSize ?? DEFAULT_CASE_LIMIT;
+    // A ceiling so a bug here cannot become an unbounded scan; at the default
+    // page size this is 20,000 cases, far beyond any real firm's book.
+    const maxPages = options.maxPages ?? 100;
+    const all: AnnualReturnCase[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < maxPages; page += 1) {
+      const result = await listCasePage({ ...filters, limit: pageSize, cursor });
+      all.push(...result.cases);
+      if (!result.nextCursor) return all;
+      cursor = result.nextCursor;
+    }
+    return all;
+  }
+
+  /**
+   * Board tiles, counted in SQL over the whole authorized scope.
+   *
+   * They were computed in the browser over the same truncated page the board
+   * rendered, so "12 overdue" meant "12 overdue among the 200 earliest-due cases
+   * we happened to load".
+   *
+   * `highRisk` is deliberately absent. riskForCase derives it from checklist,
+   * payment and filing state, and reproducing that in SQL is exactly the drift
+   * the selectCaseRows comment already warns about -- so the caller shows it as
+   * covering the loaded page rather than the scope.
+   */
+  async function boardTotals(filters: CaseFilters): Promise<BoardTotals> {
+    const today = readToday();
+    // Deliberately ignores `q` and `cursor`: these are the totals for the
+    // actor's scope, not for whatever they have typed into the search box, and
+    // the caller labels them that way.
+    const counted = await sql<
+      {
+        total: string;
+        overdue: string;
+        due_in_7: string;
+        due_in_30: string;
+        missing_documents: string;
+        payment_pending: string;
+      }[]
+    >`
+      select
+        count(*) total,
+        count(*) filter (where arc.filing_due_date < ${today}::date) overdue,
+        count(*) filter (
+          where arc.filing_due_date >= ${today}::date
+            and arc.filing_due_date <= ${today}::date + 7
+        ) due_in_7,
+        count(*) filter (
+          where arc.filing_due_date >= ${today}::date
+            and arc.filing_due_date <= ${today}::date + 30
+        ) due_in_30,
+        count(*) filter (
+          where exists (
+            select 1 from annual_return_checklist_items i
+            where i.case_id = arc.id and i.required = true
+              and (
+                i.status <> 'Verified' or i.received_at is null
+                or i.verified_at is null or i.document_id is null
+              )
+          )
+        ) missing_documents,
+        count(*) filter (
+          where exists (
+            select 1 from payments p
+            where p.case_id = arc.id and p.status = 'Payment pending'
+          )
+        ) payment_pending
+      from annual_return_cases arc
+      join companies c on c.id = arc.company_id
+      where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
+        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
+        and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
+        and (${filters.status ?? null}::text is null or arc.current_status = ${filters.status ?? null})
+        and (
+          ${filters.visibleToUserId ?? null}::uuid is null
+          or arc.owner_id = ${filters.visibleToUserId ?? null}::uuid
+          or arc.reviewer_id = ${filters.visibleToUserId ?? null}::uuid
+        )
+        and (
+          ${filters.companyIds ? [...filters.companyIds] : null}::uuid[] is null
+          or arc.company_id = any(${filters.companyIds ? [...filters.companyIds] : null}::uuid[])
+        )
+    `;
+    const row = counted[0];
+    return {
+      total: Number(row?.total ?? 0),
+      overdue: Number(row?.overdue ?? 0),
+      dueIn7: Number(row?.due_in_7 ?? 0),
+      dueIn30: Number(row?.due_in_30 ?? 0),
+      missingDocuments: Number(row?.missing_documents ?? 0),
+      paymentPending: Number(row?.payment_pending ?? 0),
+    };
   }
 
   async function getCase(id: string): Promise<AnnualReturnCase | null> {
@@ -2120,6 +2359,9 @@ export function createAnnualReturnRepository(
 
   return {
     listCases,
+    listCasePage,
+    listAllCases,
+    boardTotals,
     getCase,
     listCompaniesEligibleForCase,
     listAssignableStaff,

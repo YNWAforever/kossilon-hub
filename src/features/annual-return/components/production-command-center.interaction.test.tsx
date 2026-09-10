@@ -2,18 +2,29 @@
 
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AnnualReturnCase } from "../types";
 import { ProductionAnnualReturnCommandCenter } from "./production-command-center";
 
 const serverFns = vi.hoisted(() => ({
-  listAnnualReturnCases: vi.fn(),
+  // The board reads a page and a totals aggregate now: `q` is a SQL predicate
+  // and the tiles are counted across the actor's scope rather than over the rows
+  // that happened to load.
+  listAnnualReturnCasePage: vi.fn(),
+  getAnnualReturnBoardTotals: vi.fn(),
+  listAssignableStaff: vi.fn(),
+  listCompaniesEligibleForCase: vi.fn(),
   listWorkQueue: vi.fn(),
 }));
 
-vi.mock("../server-fns", () => ({ listAnnualReturnCases: serverFns.listAnnualReturnCases }));
+vi.mock("../server-fns", () => ({
+  listAnnualReturnCasePage: serverFns.listAnnualReturnCasePage,
+  getAnnualReturnBoardTotals: serverFns.getAnnualReturnBoardTotals,
+  listAssignableStaff: serverFns.listAssignableStaff,
+  listCompaniesEligibleForCase: serverFns.listCompaniesEligibleForCase,
+}));
 vi.mock("@/features/work-items/server-fns", () => ({ listWorkQueue: serverFns.listWorkQueue }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
@@ -59,9 +70,19 @@ function renderBoard() {
 
 describe("production annual return command center", () => {
   beforeEach(() => {
-    serverFns.listAnnualReturnCases.mockReset();
+    serverFns.listAnnualReturnCasePage.mockReset();
     serverFns.listWorkQueue.mockReset();
     serverFns.listWorkQueue.mockResolvedValue([]);
+    serverFns.getAnnualReturnBoardTotals.mockResolvedValue({
+      total: 1,
+      overdue: 0,
+      dueIn7: 0,
+      dueIn30: 1,
+      missingDocuments: 0,
+      paymentPending: 0,
+    });
+    serverFns.listAssignableStaff.mockResolvedValue([]);
+    serverFns.listCompaniesEligibleForCase.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -69,14 +90,14 @@ describe("production annual return command center", () => {
   });
 
   it("renders a row per case", async () => {
-    serverFns.listAnnualReturnCases.mockResolvedValue([makeCase()]);
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [makeCase()], nextCursor: null });
     renderBoard();
 
     expect(await screen.findByText("Acme Company Limited")).toBeTruthy();
   });
 
   it("shows a fixed message on failure and never the raw server error", async () => {
-    serverFns.listAnnualReturnCases.mockRejectedValue(
+    serverFns.listAnnualReturnCasePage.mockRejectedValue(
       new Error("connect ECONNREFUSED 10.0.0.4:5432"),
     );
     renderBoard();
@@ -92,7 +113,7 @@ describe("production annual return command center", () => {
     // payments.tsx:83 and :160 do exactly this: on error `data` is undefined so the
     // list is empty and isLoading is false, so the screen says both "unavailable"
     // and "nothing to review".
-    serverFns.listAnnualReturnCases.mockRejectedValue(new Error("boom"));
+    serverFns.listAnnualReturnCasePage.mockRejectedValue(new Error("boom"));
     renderBoard();
 
     await screen.findByRole("alert");
@@ -101,14 +122,14 @@ describe("production annual return command center", () => {
   });
 
   it("shows the empty state when the query succeeds with no cases", async () => {
-    serverFns.listAnnualReturnCases.mockResolvedValue([]);
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
     renderBoard();
 
     expect(await screen.findByText("No annual return cases match these filters.")).toBeTruthy();
   });
 
   it("surfaces a work queue failure as a banner instead of silent per-row text", async () => {
-    serverFns.listAnnualReturnCases.mockResolvedValue([makeCase()]);
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [makeCase()], nextCursor: null });
     serverFns.listWorkQueue.mockRejectedValue(
       new Error("Forbidden: staff actor has no assigned team."),
     );
@@ -124,25 +145,58 @@ describe("production annual return command center", () => {
     );
   });
 
-  it("warns when the result is capped", async () => {
-    serverFns.listAnnualReturnCases.mockResolvedValue(
-      Array.from({ length: 200 }, (_, index) =>
-        makeCase({ id: `case-${index}`, companyName: `Company ${index}` }),
-      ),
-    );
+  // The warning used to be gated on `cases.length === 200`, an exact-equality
+  // guess. The `risk` filter is applied after hydration, so a truncated query
+  // could return fewer than 200 rows and the warning would not appear at all.
+  // The server now says whether another page exists.
+  it("says there is more when the server returns a cursor", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({
+      cases: [makeCase()],
+      nextCursor: "next-page",
+    });
     renderBoard();
 
-    expect(
-      await screen.findByText("Showing the first 200 cases — narrow the filters."),
-    ).toBeTruthy();
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "載入更多" })).toBeTruthy();
+  });
+
+  it("says nothing about more pages when the server returns no cursor", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({
+      cases: Array.from({ length: 200 }, (_, index) =>
+        makeCase({ id: `case-${index}`, companyName: `Company ${index}` }),
+      ),
+      nextCursor: null,
+    });
+    renderBoard();
+
+    await screen.findByText("Company 0");
+    expect(screen.queryByRole("button", { name: "載入更多" })).toBeNull();
+  });
+
+  it("loads the next page and appends it rather than replacing the first", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ id: "case-a", companyName: "Alpha Limited" })],
+      nextCursor: "cursor-1",
+    });
+    renderBoard();
+    await screen.findByText("Alpha Limited");
+
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ id: "case-b", companyName: "Beta Limited" })],
+      nextCursor: null,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "載入更多" }));
+
+    expect(await screen.findByText("Beta Limited")).toBeTruthy();
+    expect(screen.getByText("Alpha Limited")).toBeTruthy();
   });
 
   it("requests the capped page size", async () => {
-    serverFns.listAnnualReturnCases.mockResolvedValue([]);
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
     renderBoard();
 
     await waitFor(() =>
-      expect(serverFns.listAnnualReturnCases).toHaveBeenCalledWith({ data: { limit: 200 } }),
+      expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({ data: { limit: 200 } }),
     );
   });
 });
