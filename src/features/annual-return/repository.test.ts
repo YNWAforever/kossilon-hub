@@ -1839,6 +1839,102 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     vi.restoreAllMocks();
   });
 
+  /**
+   * The Phase B rule, on the path that actually sends.
+   *
+   * outstanding.ts was written so a document the client has already sent is
+   * never chased for again -- Received sits unreviewed and `Received !==
+   * "Verified"`, which is what made the old checks wrong. But it was only wired
+   * into the paths that COMPOSE drafts: the portal, the work views, the
+   * follow-up screen. This sweep is the one that sends, on the five-minute cron,
+   * and it consulted nothing but the case status.
+   */
+  it(
+    "does not chase a client whose required documents have all arrived",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 41,
+        checklistStatus: "Received",
+        checklistDocument: true,
+      });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+
+      const outboxRows = await sql<{ id: string }[]>`
+        select o.id from notification_outbox o
+        where o.company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(0);
+
+      // Visible, not silent. A skipped chase that left no trace would be
+      // indistinguishable from a sweep that never looked at the case.
+      const skipped = await sql<{ description: string }[]>`
+        select description from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_skipped'
+      `;
+      expect(skipped).toHaveLength(1);
+      expect(skipped[0].description).toContain("nothing is outstanding");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "still chases when a required document is genuinely missing",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 42,
+        checklistStatus: "Missing",
+      });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+
+      const outboxRows = await sql<{ id: string }[]>`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * `unknown` must not suppress. A case whose requirements nobody has recorded
+   * is not evidence that nothing is owed, and staying silent before a statutory
+   * deadline is the worse error.
+   */
+  it(
+    "chases a case with no checklist rows rather than staying silent",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 43 });
+      const sql = sqlForTests();
+      await sql`delete from annual_return_checklist_items where case_id = ${fixture.caseId}`;
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+
+      const outboxRows = await sql<{ id: string }[]>`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   it(
     "sends a milestone reminder to the primary contact and enqueues a WhatsApp notification",
     async () => {

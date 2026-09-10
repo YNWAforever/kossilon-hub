@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type { RequirementInstanceDraft } from "./requirement-template";
+import { shouldChaseClient } from "./outstanding";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
@@ -2369,6 +2370,42 @@ export function createAnnualReturnRepository(
           returning id
         `;
         if (!insertedEvent[0]) return null;
+
+        // Does this client actually owe us anything?
+        //
+        // Phase B added outstanding.ts precisely so a document the client has
+        // already sent is never chased for again -- Received sits unreviewed and
+        // `Received !== "Verified"`, which is what made the old checks wrong.
+        // But it was only wired into the paths that COMPOSE drafts: the portal,
+        // the work views, the follow-up screen. This sweep is the one that
+        // actually sends, on the five-minute cron, and it consulted nothing but
+        // the case status. A client whose every required document was Received
+        // still got a live reminder asking for them.
+        //
+        // Re-read under the lock rather than trusting the pre-loop snapshot: the
+        // staleness window is small, but it runs in exactly the wrong direction
+        // -- a document that arrived since the snapshot would be chased for.
+        const checklistForChase = await tx<{ required: boolean; status: ChecklistStatus }[]>`
+          select required, status from annual_return_checklist_items
+          where case_id = ${case_.id}
+        `;
+
+        // `unknown` (no checklist rows at all) deliberately does NOT suppress.
+        // A case whose requirements nobody has recorded is not evidence that
+        // nothing is owed, and staying silent before a statutory deadline is the
+        // worse error.
+        if (!shouldChaseClient({ checklist: checklistForChase })) {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, 'Automated reminder skipped: nothing is outstanding from the client.',
+              ${tx.json({ milestone, reason: "nothing_outstanding" })}
+            )
+          `;
+          return "skipped" as const;
+        }
 
         const contactRows = await tx<
           { name: string; email: string | null; phone: string | null }[]
