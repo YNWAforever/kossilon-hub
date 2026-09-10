@@ -100,7 +100,14 @@ describe("runtime notification dispatch", () => {
         { now: "2026-07-14T09:00:00.000Z", limit: 10 },
         { currentProviderMode, createRepository: () => repo },
       ),
-    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+    ).resolves.toEqual({
+      claimed: 1,
+      sent: 1,
+      retried: 0,
+      permanentlyFailed: 0,
+      superseded: 0,
+      sentButUnrecorded: 0,
+    });
 
     expect(repo.markSent).toHaveBeenCalledWith(row.id, {
       providerMessageId: null,
@@ -144,7 +151,14 @@ describe("runtime notification dispatch", () => {
           getLiveConfig,
         },
       ),
-    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+    ).resolves.toEqual({
+      claimed: 1,
+      sent: 1,
+      retried: 0,
+      permanentlyFailed: 0,
+      superseded: 0,
+      sentButUnrecorded: 0,
+    });
 
     expect(repo.markSent).toHaveBeenCalledWith(row.id, {
       providerMessageId: null,
@@ -320,7 +334,14 @@ describe("runtime notification dispatch", () => {
           getResendConfig: () => ({ apiKey: "re_test_key", from: "auth@example.test" }),
         },
       ),
-    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+    ).resolves.toEqual({
+      claimed: 1,
+      sent: 1,
+      retried: 0,
+      permanentlyFailed: 0,
+      superseded: 0,
+      sentButUnrecorded: 0,
+    });
 
     expect(fetchImpl).toHaveBeenCalledWith(
       "https://api.resend.com/emails",
@@ -357,7 +378,14 @@ describe("runtime notification dispatch", () => {
           getLiveConfig: () => liveWhatsAppConfig,
         },
       ),
-    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+    ).resolves.toEqual({
+      claimed: 1,
+      sent: 1,
+      retried: 0,
+      permanentlyFailed: 0,
+      superseded: 0,
+      sentButUnrecorded: 0,
+    });
 
     expect(lastInboundAtForPhoneDigits).toHaveBeenCalledWith("85291234567");
     expect(fetchImpl).toHaveBeenCalledTimes(1);
@@ -400,7 +428,14 @@ describe("runtime notification dispatch", () => {
           getLiveConfig: () => liveWhatsAppConfig,
         },
       ),
-    ).resolves.toEqual({ claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 });
+    ).resolves.toEqual({
+      claimed: 1,
+      sent: 1,
+      retried: 0,
+      permanentlyFailed: 0,
+      superseded: 0,
+      sentButUnrecorded: 0,
+    });
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(woztellRequest(fetchImpl)).toEqual({
