@@ -3,6 +3,8 @@
 
 import mammoth from "mammoth";
 
+import { tokenize } from "./text-tokens";
+
 export type ParsedDoc = {
   text: string;
   summary: string;
@@ -110,14 +112,9 @@ function chunkText(text: string): string[] {
   return chunks.filter((c) => c.length > 0);
 }
 
-// Simple keyword scoring — shared with the retrieval engine.
-export function tokenize(s: string): string[] {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .split(/\s+/)
-    .filter((t) => t.length > 2);
-}
+// Simple keyword scoring. This used to be a second ASCII-only copy of the
+// tokenizer in ai-agent.ts; both stripped Chinese. See text-tokens.ts.
+export { tokenize };
 
 export function scoreChunk(chunk: string, queryTokens: string[]): number {
   const hay = new Set(tokenize(chunk));

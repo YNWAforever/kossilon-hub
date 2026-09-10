@@ -93,7 +93,18 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
                 Kossilon AI mocked
               </span>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">Confidence {draft.confidence}%</p>
+            {draft.grounding.ungrounded ? (
+              <p className="mt-1 text-sm text-status-yellow">
+                No knowledge-base match. This is template text; read it before sending.
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Matched {draft.grounding.matchedFaqs} FAQ
+                {draft.grounding.matchedFaqs === 1 ? "" : "s"} and{" "}
+                {draft.grounding.matchedDocuments} reference document
+                {draft.grounding.matchedDocuments === 1 ? "" : "s"}.
+              </p>
+            )}
           </div>
           <button
             className="rounded-md border px-3 py-2 text-sm"
@@ -239,7 +250,10 @@ function tweakDraft(draft: DraftReply, generation: number): DraftReply {
   const variant = variants[(generation - 2) % variants.length];
   return {
     ...draft,
-    confidence: Math.max(68, draft.confidence - ((generation - 1) % 4)),
+    // Grounding is carried through unchanged on purpose: Regenerate only
+    // rewords the closing line, it does not run retrieval again. The old code
+    // decremented a confidence score here, which made a cosmetic edit look
+    // like a fresh evaluation.
     markdown: draft.markdown.replace(
       "\n\nRegards,\nKossilon team",
       `${variant}\n\nRegards,\nKossilon team`,

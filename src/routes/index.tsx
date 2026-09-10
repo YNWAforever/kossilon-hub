@@ -6,7 +6,7 @@ import {
   CreditCard,
   UserCheck,
   Flame,
-  Sparkles,
+  ListChecks,
   ArrowRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -152,13 +152,17 @@ function DashboardPage() {
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <ListChecks className="h-4 w-4 text-primary" />
             </div>
             <div>
               <h2 className="font-display text-base font-semibold text-foreground">
-                AI daily digest
+                Priority queue
               </h2>
               <p className="text-xs text-muted-foreground">{digest.headline}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Ranked by filing deadline, risk level and missing required documents. No model reads
+                these cases.
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
