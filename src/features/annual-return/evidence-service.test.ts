@@ -255,6 +255,50 @@ describe("annual return evidence service", () => {
     ).rejects.toThrow("Document has already been reviewed.");
   });
 
+  /**
+   * The gate that documents/server-fns.ts had and this path did not.
+   *
+   * `baseDocument` carries scanVerdictSource: "provider", which is why every
+   * other test in this file passed while the check was missing entirely. Under
+   * BLOCKED_INTEGRATION: malware-scanner-provider no real document has that --
+   * every one is "deterministic" or null -- so in production every approval made
+   * through /documents and /payments was being recorded against a file nothing
+   * had genuinely scanned.
+   */
+  it("refuses to record an approval against a document nothing genuinely scanned", async () => {
+    for (const scanVerdictSource of ["deterministic", null] as const) {
+      const unverified = createHarness({ ...baseDocument, scanVerdictSource });
+
+      await expect(
+        unverified.service.reviewEvidence({
+          caseId,
+          documentId,
+          decision: "verified",
+          actorId,
+        }),
+      ).rejects.toThrow("Document safety is unverified");
+
+      // Refused before anything was written, so a rejected approval leaves no
+      // trace of having been attempted.
+      expect(unverified.documents.reviewDocument).not.toHaveBeenCalled();
+    }
+  });
+
+  // Rejecting is an approval decision too: it is recorded against the file and
+  // later read as a reviewed outcome, so it needs the same evidence.
+  it("refuses a rejection against an unverified document as well", async () => {
+    const unverified = createHarness({ ...baseDocument, scanVerdictSource: null });
+
+    await expect(
+      unverified.service.reviewEvidence({
+        caseId,
+        documentId,
+        decision: "rejected",
+        actorId,
+      }),
+    ).rejects.toThrow("Document safety is unverified");
+  });
+
   it("requires a checklist item for checklist evidence", async () => {
     const harness = createHarness({
       ...baseDocument,

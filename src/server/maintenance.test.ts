@@ -9,6 +9,7 @@ function dependencies(
   overrides: Partial<FirmMaintenanceDependencies> = {},
 ): FirmMaintenanceDependencies {
   return {
+    failStrandedDocumentJobs: vi.fn(async () => ({ scans: 0, analyses: 0 })),
     createWorkItemRepository: () => ({
       evaluateEscalations: vi.fn(async () => ({ warnings: 1, breaches: 2 })),
       close: vi.fn(async () => {}),
@@ -81,6 +82,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
         providerSkipped: 0,
         worker: "not-configured",
       },
+      strandedDocumentJobs: { scans: 0, analyses: 0 },
       stalledQuarantine: { stalled: 0 },
       annualReturnReminders: { sent: 1, skipped: 0 },
       serviceSubscriptionReminders: { sent: 1, skipped: 0 },
@@ -164,6 +166,44 @@ describe("runFirmMaintenanceWithDependencies", () => {
   // Absent and null are different facts -- no scan pass wired at all, versus a
   // caller that looked and found no scanner configured -- but both are honest
   // "not-configured" rather than an error, and neither may fail the run.
+  /**
+   * The reason this is its own pass rather than part of the drains.
+   *
+   * claimDue is gated on `attempt_count < max_attempts` and the reclaim branch
+   * lives inside that gate, so a job claimed on its final attempt whose worker
+   * then died is unclaimable forever. Under
+   * BLOCKED_INTEGRATION: malware-scanner-provider the scan drain does not run at
+   * all -- which is exactly when such a row would otherwise sit there unnoticed.
+   */
+  it("finalises stranded document jobs even when no scanner is configured", async () => {
+    const failStrandedDocumentJobs = vi.fn(async () => ({ scans: 2, analyses: 1 }));
+
+    const result = await runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z" },
+      dependencies({ failStrandedDocumentJobs, createScanWorker: () => null }),
+    );
+
+    expect(failStrandedDocumentJobs).toHaveBeenCalledWith({ now: "2026-07-26T00:00:00.000Z" });
+    expect(result.strandedDocumentJobs).toEqual({ scans: 2, analyses: 1 });
+    expect(result.documentScans).toMatchObject({ scanner: "not-configured" });
+    expect(result.failures).toEqual([]);
+  });
+
+  // Null, not zero: a pass that threw produced no information, and reporting 0
+  // stranded jobs would claim a sweep that never happened.
+  it("reports a stranded sweep that threw as null rather than zero", async () => {
+    await expect(
+      runFirmMaintenanceWithDependencies(
+        { now: "2026-07-26T00:00:00.000Z" },
+        dependencies({
+          failStrandedDocumentJobs: vi.fn(async () => {
+            throw new Error("queue unavailable");
+          }),
+        }),
+      ),
+    ).rejects.toBeInstanceOf(MaintenancePassesFailedError);
+  });
+
   it("treats a scan worker factory that returns null as a disabled capability", async () => {
     const result = await runFirmMaintenanceWithDependencies(
       { now: "2026-07-26T00:00:00.000Z", dispatchLimit: 7 },

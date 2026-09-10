@@ -233,6 +233,23 @@ export type DocumentAnalysisJobRepository = {
   /** Superseded because a newer version of the document exists. Kept as history. */
   cancelForSupersededVersion(documentVersionId: string): Promise<{ cancelled: number }>;
   listForVersion(documentVersionId: string): Promise<DocumentAnalysisJob[]>;
+  /**
+   * Finalises jobs stranded in 'processing' on their LAST attempt.
+   *
+   * claimDue is gated on `attempt_count < max_attempts` and increments the count
+   * when it claims, and the reclaim branch lives inside that gate. So a job
+   * claimed on its final attempt whose Worker then died sits at
+   * status='processing' with attempt_count = max_attempts: claimDue will never
+   * take it again. It is stuck forever and invisible -- the same failure the
+   * reclaim was written to fix, one attempt later.
+   *
+   * This is the counterpart notification_outbox already had. The two queues
+   * copied the claim-and-reclaim pattern without it.
+   *
+   * Marking it 'failed' makes it terminal and gives it an error code an operator
+   * can search for. It is NOT retried: the attempt budget is spent.
+   */
+  failStranded(now: string, limit?: number): Promise<{ failed: number }>;
   close(): Promise<void>;
 };
 
@@ -375,6 +392,34 @@ export function createDocumentAnalysisJobRepository(
         order by created_at desc
       `;
       return rows.map(mapRow);
+    },
+
+    async failStranded(now, limit = 500) {
+      if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
+        throw new Error("Document analysis stranded limit must be between 1 and 5000.");
+      }
+
+      const rows = await sql<{ id: string }[]>`
+        update document_analysis_jobs
+        set status = 'failed',
+            attempt_count = max_attempts,
+            completed_at = ${now},
+            last_error_code = 'analysis_stranded',
+            last_error_message = 'The analysis did not complete before the visibility timeout and no attempts remain.',
+            updated_at = now()
+        where id in (
+          select id from document_analysis_jobs
+          where status = 'processing'
+            and attempt_count >= max_attempts
+            and updated_at <= ${analysisProcessingReclaimCutoff(now)}
+          order by updated_at asc
+          limit ${limit}
+          for update skip locked
+        )
+        returning id
+      `;
+
+      return { failed: rows.length };
     },
 
     async close() {

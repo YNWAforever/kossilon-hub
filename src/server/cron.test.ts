@@ -16,6 +16,7 @@ import {
  */
 function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies {
   return {
+    failStrandedDocumentJobs: vi.fn(async () => ({ scans: 0, analyses: 0 })),
     evaluateEscalations: vi.fn(async () => {
       calls.push("escalations");
       return { warnings: 1, breaches: 2 };

@@ -119,6 +119,13 @@ export type FirmMaintenanceDependencies = {
    * and the model is the optional third tier.
    */
   createAnalysisWorker?(): (AnalysisWorkerDependencies & { close(): Promise<void> }) | null;
+  /**
+   * Finalises jobs stranded in 'processing' on their final attempt, in both
+   * document queues. Required rather than optional: unlike the drains it has to
+   * run even with no scanner configured, which is when a stranded row is least
+   * likely to be noticed.
+   */
+  failStrandedDocumentJobs(input: { now: string }): Promise<{ scans: number; analyses: number }>;
   createOutboxRepository(): MaintenanceOutboxRepository;
   /**
    * Where the tick's record goes.
@@ -285,6 +292,7 @@ async function runScheduledMaintenancePasses(
       evaluateAnnualReturnReminders: (now) => annualReturns.evaluateReminders(now),
       evaluateServiceSubscriptionReminders: (now) => serviceSubscriptions.evaluateReminders(now),
       dispatchDue: (now, limit) => dependencies.dispatchDue({ now, limit }),
+      failStrandedDocumentJobs: (now) => dependencies.failStrandedDocumentJobs({ now }),
       drainDocumentScanJobs: async (now) => {
         const worker = dependencies.createScanWorker?.();
         if (!worker) {
@@ -392,6 +400,19 @@ export async function runFirmMaintenance(
       serviceSubscriptionsModule.createServiceSubscriptionRepository(),
     createDocumentRepository: () => documentsModule.createDocumentRepository(),
     createOutboxRepository: () => outboxModule.createNotificationOutboxRepository(),
+    failStrandedDocumentJobs: async ({ now }) => {
+      const scans = scanJobsModule.createDocumentScanJobRepository();
+      const analyses = analysisJobsModule.createDocumentAnalysisJobRepository();
+      try {
+        const [scanResult, analysisResult] = await Promise.all([
+          scans.failStranded(now),
+          analyses.failStranded(now),
+        ]);
+        return { scans: scanResult.failed, analyses: analysisResult.failed };
+      } finally {
+        await Promise.all([scans.close(), analyses.close()]);
+      }
+    },
     // Always supplied here, never conditionally. The dependency is optional on
     // the type so existing tests need no stub database; if production were
     // allowed to inherit that default, the tick would go on leaving no trace,

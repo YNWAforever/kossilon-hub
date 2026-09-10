@@ -487,6 +487,76 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  /**
+   * The failure the reclaim branch does not cover.
+   *
+   * claimDue is gated on `attempt_count < max_attempts` and increments the count
+   * when it claims, and the reclaim sits inside that gate. So a job claimed on
+   * its FINAL attempt whose Worker then died stays at status='processing' with
+   * attempt_count = max_attempts, and claimDue will never take it again: the
+   * document silently never gets a safety verdict, and so can never be approved.
+   * notification_outbox already had this counterpart; the two document queues
+   * copied the claim-and-reclaim pattern without it.
+   *
+   * Asserted against a real Postgres because the local suite cannot see SQL at
+   * all -- which is how the pattern came to be copied incompletely.
+   */
+  it(
+    "finalises a scan job stranded on its final attempt, and leaves a live one alone",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const jobs = createDocumentScanJobRepository({ sql });
+      const data = await fixture(sql);
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      const now = new Date().toISOString();
+      const claimed = await jobs.claimDue(now, 100);
+      const mine = claimed.find((job) => job.intentId === intent.id);
+      expect(mine).toBeDefined();
+
+      // A worker that died on the last attempt, long enough ago to be past the
+      // visibility timeout.
+      await sql`
+        update document_scan_jobs
+        set attempt_count = max_attempts, updated_at = now() - interval '2 hours'
+        where id = ${mine!.id}`;
+
+      // A second row, claimed just now with attempts left: it is still working,
+      // and the sweep must not touch it.
+      const [live] = await sql<{ id: string }[]>`
+        select id from document_scan_jobs
+        where status = 'processing' and attempt_count < max_attempts
+          and id <> ${mine!.id}
+        limit 1`;
+
+      const swept = await jobs.failStranded(now);
+      expect(swept.failed).toBeGreaterThanOrEqual(1);
+
+      const [after] = await sql<{ status: string; last_error_code: string | null }[]>`
+        select status, last_error_code from document_scan_jobs where id = ${mine!.id}`;
+      expect(after.status).toBe("failed");
+      expect(after.last_error_code).toBe("scan_stranded");
+
+      // Terminal, not retried: the attempt budget is spent.
+      const reclaimed = await jobs.claimDue(new Date().toISOString(), 100);
+      expect(reclaimed.some((job) => job.id === mine!.id)).toBe(false);
+
+      if (live) {
+        const [untouched] = await sql<{ status: string }[]>`
+          select status from document_scan_jobs where id = ${live.id}`;
+        expect(untouched.status).toBe("processing");
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   it(
     "marks the checklist item received in the same transaction as the document",
     async () => {

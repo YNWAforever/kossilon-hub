@@ -953,6 +953,15 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
         registered_office = excluded.registered_office,
         company_secretary = excluded.company_secretary,
         status = excluded.status,
+        -- Set on conflict too, and that is not cosmetic. 0030 adds the column
+        -- with a 'client' default, so on a database seeded before it every one
+        -- of these fixture companies is backfilled to 'client'. Re-seeding takes
+        -- the conflict path, and while this line was missing it never repaired
+        -- them -- leaving cancelFixtureOriginNotifications matching zero rows
+        -- and the fixture-replay guard permanently inert on exactly the
+        -- databases it exists to protect. CI cannot catch this: it builds a
+        -- fresh Postgres each run, so only the INSERT path above ever executes.
+        data_origin = excluded.data_origin,
         assigned_owner_id = excluded.assigned_owner_id,
         assigned_team_id = excluded.assigned_team_id,
         updated_at = now()

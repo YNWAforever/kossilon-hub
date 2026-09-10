@@ -23,6 +23,16 @@ export type ScheduledMaintenanceDependencies = {
     now: string,
   ): Promise<AnalysisDrainSummary & { worker: WorkerAvailability }>;
   /**
+   * Jobs stranded in 'processing' on their final attempt, in both document
+   * queues.
+   *
+   * Its own pass rather than part of the drains, because it has to run even when
+   * there is no scanner -- which is the permanent state under
+   * BLOCKED_INTEGRATION: malware-scanner-provider, and exactly when a row
+   * stranded by an earlier configuration would otherwise sit there forever.
+   */
+  failStrandedDocumentJobs(now: string): Promise<{ scans: number; analyses: number }>;
+  /**
    * Received files whose retention window lapsed without a verdict. Reports
    * only -- it must never delete evidence, which is the failure this whole pass
    * exists to prevent.
@@ -78,6 +88,8 @@ export type ScheduledMaintenanceResult = {
    * failed scan pass beside a successful escalation pass, and that combination
    * is exactly what a missing scanner produces.
    */
+  /** Stranded document jobs finalised this tick, per queue. */
+  strandedDocumentJobs: { scans: number; analyses: number } | null;
   stalledQuarantine: { stalled: number } | null;
   uploads: { expired: number } | null;
   notifications: { strandedFailed: number | null; redacted: number | null };
@@ -145,6 +157,12 @@ export async function runScheduledMaintenance(
   const dispatch = await runPass("dispatchDue", failures, () =>
     dependencies.dispatchDue(now, options.dispatchLimit ?? 50),
   );
+  // Before the drains, for the same reason failStrandedNotifications runs before
+  // dispatch: a job stranded on its final attempt is unclaimable, so it is
+  // finalised here rather than sitting invisible forever.
+  const strandedDocumentJobs = await runPass("failStrandedDocumentJobs", failures, () =>
+    dependencies.failStrandedDocumentJobs(now),
+  );
   // Scanning runs before the expiry sweep so a file that becomes available in
   // this tick is already out of quarantine when the sweep looks.
   const documentScans = await runPass("drainDocumentScanJobs", failures, () =>
@@ -176,6 +194,7 @@ export async function runScheduledMaintenance(
     dispatch,
     documentScans,
     documentAnalysis,
+    strandedDocumentJobs,
     stalledQuarantine,
     uploads,
     notifications: {
