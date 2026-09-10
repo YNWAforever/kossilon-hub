@@ -39,7 +39,8 @@ create table if not exists document_versions (
 
   -- Nullable: known only from the intent. Deliberately not defaulted from
   -- documents.file_type, which despite its name holds the requirement category
-  -- ('identity', 'address-proof', ...) and not a MIME type.
+  -- ('identity', 'registry', 'payment', ...) and not a MIME type. There is no
+  -- 'address-proof' category; DOCUMENT_CATEGORIES is the vocabulary.
   content_type text,
   file_name text not null,
   storage_url text not null,

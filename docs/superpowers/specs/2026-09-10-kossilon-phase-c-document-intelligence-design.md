@@ -50,9 +50,9 @@ derived from how many FAQs were retrieved.
 
 ### Both tokenizers delete Chinese
 
-`ai-agent.ts:73-79` and `doc-parser.ts:114-120` both normalise with an ASCII-only class
-(`[^a-z0-9]+` / `[^a-z0-9 ]+`), and they are the entire retrieval layer. Executed
-directly:
+`ai-agent.ts` and `doc-parser.ts` both normalised with an ASCII-only class
+(`[^a-z0-9]+` / `[^a-z0-9 ]+`), and they were the entire retrieval layer. Executed
+directly, before the fix:
 
 ```
 tokenize("請問週年申報表的費用是多少？") -> []
@@ -93,19 +93,61 @@ proven twice in this codebase; a third invention would be the mistake.
 It runs **only after a real malware verdict**. Phase A already refuses to release a file
 the fixture scanner passed, and analysis inherits that: unknown safety is not analysed.
 
-Three tiers, in order, and the first two need no provider:
+Three tiers, in order.
 
-1. **Classification and readability** — file type, page count, encrypted, corrupt,
-   empty-text-layer. Deterministic.
-2. **Deterministic rule checks** — the requirement, date and consistency checks that can
-   be stated as rules: an address proof older than the configured window measured in
-   calendar months from a stated reference date; a document whose extracted year does not
-   match the case's return year; a required page absent.
+### What tier 1 and tier 2 can actually compute — corrected against the code
+
+The first draft of this section assumed the first two tiers needed no provider. That is
+true, and irrelevant: **they need extracted text, and no server-side text extraction
+exists or can be lifted from what is here.**
+
+- `src/lib/doc-parser.ts` is the only extraction code in the repository and is
+  browser-only by construction. `pdfjs-dist` evaluates `new DOMMatrix()` at module scope,
+  which workerd does not provide; `mammoth` requires `fs`. `nodejs_compat` appears zero
+  times in the wrangler config, so adding either is a deploy-surface change, not a code
+  change.
+- Its output never leaves the browser — module state plus `localStorage`, quota failures
+  swallowed — and the knowledge-base UI that drives it is demo-mode only. There is
+  nothing wired up to move.
+- `EXTENSIONS_BY_CATEGORY` restricts every upload to **PDF or an image**. So the one
+  genuinely reusable server-side reader — the dependency-free ZIP/OOXML parser in
+  `src/features/nar-import/xlsx/`, which would give DOCX text via `DecompressionStream` —
+  matches nothing in the real corpus.
+
+`BLOCKED_INTEGRATION: document-text-extraction`. Everything that needs a document's own
+words is blocked behind it, and that includes both of the date rules this spec previously
+promised: an address proof's age and a document's own year can only come from its content.
+`case_requirement_instances.reference_date` exists for the first of them and is NULL on
+every row; the schema explicitly forbids defaulting it to today, "which would silently
+re-age every document each time it was read."
+
+So the tiers, as built:
+
+1. **Classification and readability** — what can be decided from the stored bytes and the
+   version row without parsing a document format: content type against the declared one,
+   size, PDF header and EOF markers, and whether the file announces itself as encrypted.
+   Enough to tell a reviewer "this will not open" before they waste a slot on it. Page
+   count is **not** here: it needs a real PDF parser.
+2. **Deterministic cross-checks** — the checks that compare records to each other rather
+   than reading content. The load-bearing one falls out of C-1: a version whose declared
+   checksum or size disagrees with the verified one, and a version still carrying no
+   verified identity at all. An evidence link citing a page range on a document whose page
+   count is unknown is reported `uncertain`, never `pass`.
 3. **Provider-assisted classification and extraction** — `BLOCKED_INTEGRATION: ai-provider`.
    The adapter is implemented against a strict response schema with an explicit
    `uncertain` outcome, contract-tested against a stub, and **disabled**: a sibling
    accessor like `getDocumentScannerConfig` rather than an entry in `REQUIRED_BINDINGS`,
    whose all-or-nothing throw has already taken down document reads twice.
+
+A tier that cannot run says so. `extraction_method = 'none'` is a real outcome distinct
+from "no row at all", and a rule that could not be evaluated reports `uncertain` — an
+image-only PDF must never produce a "year is missing" finding, which would manufacture a
+false failure on every scan.
+
+A rule keyed on `requirement_key` also matches nothing on existing rows: migration 0026
+backfilled it from free-text checklist labels under `template_version = 'legacy'`, so real
+values read "Proof of address for each director", not `address-proof`. Dispatch must be
+template-version aware.
 
 **Every finding cites its source or says it has none.** A missing-file finding carries no
 document and no page, because there is nothing to cite; fabricating a page reference for
