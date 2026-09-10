@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { makeFinding, type FindingTier } from "@/features/documents/findings";
 import type { DocumentVersionState } from "@/features/documents/versions";
 import {
   buildPackageManifest,
@@ -57,6 +58,32 @@ function candidate(overrides: Partial<ManifestCandidateEntry> = {}): ManifestCan
     decision: approval,
     findings: [],
     ...overrides,
+  };
+}
+
+/**
+ * A finding as the manifest sees it. `tier` matters now: the manifest asks
+ * blocksRelease rather than testing severity, so a provider-tier finding cannot
+ * block however severe it claims to be.
+ */
+function findingState(overrides: {
+  id: string;
+  severity: "critical" | "warning" | "info";
+  resolvedByUserId?: string | null;
+  tier?: FindingTier;
+}) {
+  return {
+    id: overrides.id,
+    resolvedByUserId: overrides.resolvedByUserId ?? null,
+    finding: makeFinding({
+      ruleKey: "content-identity-matches-claim",
+      ruleVersion: "1",
+      tier: overrides.tier ?? "cross-check",
+      outcome: "issue",
+      severity: overrides.severity,
+      detail: "The stored bytes do not hash to the checksum declared at upload.",
+      citation: { kind: "none" },
+    }),
   };
 }
 
@@ -147,7 +174,7 @@ describe("buildPackageManifest", () => {
   // The one place a worker's output has force, and only in the safe direction.
   it("holds the package back for a critical finding nobody has dealt with", () => {
     const result = build([
-      candidate({ findings: [{ id: "f1", severity: "critical", resolvedByUserId: null }] }),
+      candidate({ findings: [findingState({ id: "f1", severity: "critical" })] }),
     ]);
     expect(result).toMatchObject({
       kind: "blocked",
@@ -157,7 +184,9 @@ describe("buildPackageManifest", () => {
 
   it("releases once a person has resolved the critical finding", () => {
     const result = build([
-      candidate({ findings: [{ id: "f1", severity: "critical", resolvedByUserId: REVIEWER }] }),
+      candidate({
+        findings: [findingState({ id: "f1", severity: "critical", resolvedByUserId: REVIEWER })],
+      }),
     ]);
     expect(result.kind).toBe("releasable");
   });
@@ -166,9 +195,25 @@ describe("buildPackageManifest", () => {
     const result = build([
       candidate({
         findings: [
-          { id: "f1", severity: "warning", resolvedByUserId: null },
-          { id: "f2", severity: "info", resolvedByUserId: null },
+          findingState({ id: "f1", severity: "warning" }),
+          findingState({ id: "f2", severity: "info" }),
         ],
+      }),
+    ]);
+    expect(result.kind).toBe("releasable");
+  });
+
+  /**
+   * The manifest used to carry its own two-field copy of a finding with no
+   * `tier`, and tested `severity === "critical"` itself. A provider finding
+   * recorded as critical would have blocked a filing -- the one thing a provider
+   * tier must never be able to do, since it reads text an uploader controls and
+   * stalling a client's filing is a denial of service against that client.
+   */
+  it("does not let a provider finding block a filing, however severe it claims to be", () => {
+    const result = build([
+      candidate({
+        findings: [findingState({ id: "f1", severity: "critical", tier: "provider" })],
       }),
     ]);
     expect(result.kind).toBe("releasable");

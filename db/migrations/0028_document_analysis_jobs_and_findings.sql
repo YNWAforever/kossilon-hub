@@ -122,3 +122,22 @@ create index if not exists document_findings_requirement_idx
 create index if not exists document_findings_open_issue_idx
   on document_findings (document_version_id, severity)
   where resolved_by is null and outcome = 'issue';
+
+-- Backfill: every version that already exists gets a job too.
+--
+-- 0027 created a version for every pre-existing document, and the only
+-- production enqueue is in finalizeUploadIntent -- so without this, every
+-- document uploaded before this migration would never be analysed. Not visibly
+-- today, because the worker refuses anything without a real scanner verdict and
+-- there is no scanner; but the day one is configured, new uploads would start
+-- producing findings while the entire existing corpus stayed silently empty.
+-- That is the same shape as the legacy re-scan backlog Phase A already carries,
+-- and it is cheaper to avoid than to discover.
+--
+-- The idempotency key matches analysisJobIdempotencyKey's 'initial' form exactly,
+-- so a job the application later enqueues for the same version collides and is
+-- deduplicated rather than duplicated.
+insert into document_analysis_jobs (document_version_id, idempotency_key)
+select v.id, 'analysis:' || v.id
+from document_versions v
+on conflict (idempotency_key) do nothing;

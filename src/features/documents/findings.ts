@@ -130,9 +130,13 @@ export function makeFinding(input: {
  * Whether this finding, left unresolved, holds a package back.
  *
  * Deliberately narrow. Only a deterministic check that actually found something
- * wrong can stop a filing; everything else is information for the reviewer. The
- * package manifest asks this question rather than inspecting severity directly,
- * so the rule lives in one place.
+ * wrong can stop a filing; everything else is information for the reviewer.
+ *
+ * `buildPackageManifest` calls this rather than testing severity itself, so the
+ * rule lives in one place. It did not always: the manifest predates the analysis
+ * pipeline and carried its own two-field copy of a finding with no `tier`, which
+ * meant a provider finding recorded as critical would have blocked a filing --
+ * the one thing a provider tier must never be able to do.
  */
 export function blocksRelease(finding: Finding): boolean {
   return finding.outcome === "issue" && finding.severity === "critical";

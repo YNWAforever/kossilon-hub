@@ -1,3 +1,4 @@
+import { blocksRelease, type Finding } from "@/features/documents/findings";
 import {
   canCiteInManifest,
   isCurrent,
@@ -34,10 +35,20 @@ export type HumanDecision = {
   reason: string | null;
 };
 
-/** A finding from the analysis pipeline. Advisory, never dispositive. */
+/**
+ * A finding from the analysis pipeline, as the manifest sees it.
+ *
+ * Carries the whole `Finding` rather than a copy of two of its fields. The
+ * copy was a real gap: this type was written before the analysis pipeline
+ * existed, so it had no `tier`, and the blocker check below tested
+ * `severity === "critical"` itself instead of asking `blocksRelease`. Two
+ * statements of one rule, and `findings.ts` claimed the opposite -- that the
+ * manifest "asks this question rather than inspecting severity directly, so the
+ * rule lives in one place". It did not, until now.
+ */
 export type FindingState = {
   id: string;
-  severity: "critical" | "warning" | "info";
+  finding: Finding;
   /** Whether a person has dealt with it. A worker cannot set this. */
   resolvedByUserId: string | null;
 };
@@ -99,12 +110,17 @@ function blockersFor(candidate: ManifestCandidateEntry): ManifestBlocker[] {
   const blockers: ManifestBlocker[] = [];
   const requirement = describeRequirement(candidate.requirement);
 
-  // A critical finding blocks whatever the reviewer concluded. It is the one
-  // place a worker's output has force, and only ever in the safe direction:
-  // holding a package back, never releasing one.
-  for (const finding of candidate.findings) {
-    if (finding.severity === "critical" && !finding.resolvedByUserId) {
-      blockers.push({ kind: "unresolved-critical-finding", requirement, findingId: finding.id });
+  // A blocking finding stops the package whatever the reviewer concluded. It is
+  // the one place a worker's output has force, and only ever in the safe
+  // direction: holding a package back, never releasing one.
+  //
+  // `blocksRelease` rather than a severity test here, so a provider-tier finding
+  // can never block. That matters: a provider reads text an uploader controls,
+  // and a document that could stall a filing by asserting a critical problem
+  // would be a denial of service against the client it belongs to.
+  for (const entry of candidate.findings) {
+    if (!entry.resolvedByUserId && blocksRelease(entry.finding)) {
+      blockers.push({ kind: "unresolved-critical-finding", requirement, findingId: entry.id });
     }
   }
 
