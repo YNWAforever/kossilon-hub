@@ -142,14 +142,16 @@ export async function drainDocumentAnalysisJobs(
     // so it must not touch anything a real scanner has not passed -- and
     // `unknown` is not a pass, however long ago the fixture scanner said clean.
     if (safety !== "verified") {
-      // A retry, not a failure. Nothing is wrong; the scan simply has not
-      // happened, and under BLOCKED_INTEGRATION: malware-scanner-provider it may
-      // not for a long time. The backoff means an unscannable document costs one
-      // claim an hour rather than one every tick.
-      const applied = await dependencies.jobs.markRetry(job.id, {
+      // Deferred, not retried, and the difference is load-bearing. Nothing is
+      // wrong here -- the scan simply has not happened, and under
+      // BLOCKED_INTEGRATION: malware-scanner-provider it may never. markRetry
+      // would spend an attempt, and since attempt_count is incremented at claim
+      // time, five deferrals would exhaust max_attempts and make the row
+      // permanently unclaimable: every document silently never analysed, about
+      // fifteen minutes after upload, including after a scanner is configured.
+      const applied = await dependencies.jobs.markDeferred(job.id, {
         ...fence,
-        errorCode: "awaiting-scan-verdict",
-        errorMessage: `Document safety is '${safety}'; analysis waits for a real scanner verdict.`,
+        reasonCode: "awaiting-scan-verdict",
       });
       if (applied) summary.awaitingScan += 1;
       else summary.superseded += 1;

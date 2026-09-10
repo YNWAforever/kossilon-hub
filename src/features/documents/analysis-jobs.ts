@@ -80,6 +80,21 @@ export function analysisProcessingReclaimCutoff(now: string): string {
   return new Date(Date.parse(now) - PROCESSING_VISIBILITY_TIMEOUT_SECONDS * 1000).toISOString();
 }
 
+/**
+ * How long a job waits when it was claimed but could do no work.
+ *
+ * Fixed, not exponential. The wait is for an external event -- a malware verdict
+ * -- and backing off would mean a document uploaded just before a scanner is
+ * switched on sits unanalysed for hours afterwards for no reason. An hour is
+ * cheap: one claim per unscanned document per hour, and every claim is a single
+ * indexed row read that stops at the safety gate before touching storage.
+ */
+const DEFERRAL_SECONDS = 60 * 60;
+
+export function deferredUntil(now: string): string {
+  return new Date(Date.parse(now) + DEFERRAL_SECONDS * 1000).toISOString();
+}
+
 export function nextAnalysisAttemptAt(attempt: number, now: string): string {
   const normalizedAttempt = Math.max(1, Math.floor(attempt));
   const delaySeconds = Math.min(
@@ -195,6 +210,26 @@ export type DocumentAnalysisJobRepository = {
     id: string,
     input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
   ): Promise<boolean>;
+  /**
+   * Put the job back without spending an attempt.
+   *
+   * For a claim that did no work because a precondition outside the job's
+   * control is not met yet -- today, a document whose malware verdict has not
+   * arrived. Using markRetry for that is a bug with a long fuse: attempt_count
+   * is incremented at claim time, so five deferrals exhaust max_attempts and
+   * `attempt_count < max_attempts` refuses the row forever. With the scanner
+   * BLOCKED_INTEGRATION that would strand every document about fifteen minutes
+   * after upload, permanently, including after a scanner is finally configured.
+   *
+   * So the attempt is given back, and the delay is fixed rather than
+   * exponential: the wait is for an external event, and doubling the interval
+   * would mean a document that arrives just after a scanner is switched on waits
+   * hours for no reason.
+   */
+  markDeferred(
+    id: string,
+    input: { reasonCode: string; now: string; attemptCount: number },
+  ): Promise<boolean>;
   /** Superseded because a newer version of the document exists. Kept as history. */
   cancelForSupersededVersion(documentVersionId: string): Promise<{ cancelled: number }>;
   listForVersion(documentVersionId: string): Promise<DocumentAnalysisJob[]>;
@@ -295,6 +330,25 @@ export function createDocumentAnalysisJobRepository(
         update document_analysis_jobs
         set status = 'failed', attempt_count = max_attempts, completed_at = ${input.now},
           last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage},
+          updated_at = now()
+        where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
+        returning id
+      `;
+      return rows.length === 1;
+    },
+
+    async markDeferred(id, input) {
+      // greatest(attempt_count - 1, 0) rather than a plain decrement: the fence
+      // already proves this claim owns the row, but the floor means a future
+      // change to when attempt_count moves cannot drive it negative and make the
+      // claim predicate behave strangely.
+      const rows = await sql<{ id: string }[]>`
+        update document_analysis_jobs
+        set status = 'pending',
+          attempt_count = greatest(attempt_count - 1, 0),
+          next_attempt_at = ${deferredUntil(input.now)},
+          last_error_code = ${input.reasonCode},
+          last_error_message = null,
           updated_at = now()
         where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
         returning id

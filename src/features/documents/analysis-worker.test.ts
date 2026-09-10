@@ -77,6 +77,7 @@ function harness(options: HarnessOptions = {}) {
     markSucceeded: vi.fn(async () => fenceHolds),
     markRetry: vi.fn(async () => fenceHolds),
     markFailed: vi.fn(async () => fenceHolds),
+    markDeferred: vi.fn(async () => fenceHolds),
   };
 
   const storageGet = vi.fn(async () => {
@@ -151,17 +152,40 @@ describe("drainDocumentAnalysisJobs", () => {
     expect(test.storageGet).not.toHaveBeenCalled();
   });
 
-  // A retry, not a failure: nothing is wrong, the scan has simply not happened,
-  // and the backoff means an unscannable document costs one claim an hour rather
-  // than one every tick.
-  it("backs off rather than burning the attempt budget while waiting for a scan", async () => {
+  /**
+   * The bug this deferral exists for, pinned.
+   *
+   * markRetry spends an attempt, and attempt_count is incremented at claim time,
+   * so five waits would exhaust max_attempts and make claimDue's
+   * `attempt_count < max_attempts` predicate refuse the row forever. With the
+   * malware scanner BLOCKED_INTEGRATION that is every document, roughly fifteen
+   * minutes after upload -- permanently, and still dead after a scanner is
+   * finally configured. Waiting for someone else must not consume the budget for
+   * work this job has not yet had a chance to do.
+   */
+  it("defers rather than spending an attempt while waiting for a scan", async () => {
     const test = harness({ subject: subject({ scanVerdictSource: "deterministic" }) });
     await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
-    expect(test.jobs.markRetry).toHaveBeenCalledWith(
+
+    expect(test.jobs.markDeferred).toHaveBeenCalledWith(
       "job-1",
-      expect.objectContaining({ errorCode: "awaiting-scan-verdict" }),
+      expect.objectContaining({ reasonCode: "awaiting-scan-verdict" }),
     );
+    expect(test.jobs.markRetry).not.toHaveBeenCalled();
     expect(test.jobs.markFailed).not.toHaveBeenCalled();
+  });
+
+  it("keeps deferring indefinitely rather than giving up on an unscanned document", async () => {
+    // A job already on its last nominal attempt still defers, because a deferral
+    // gives the attempt back instead of taking one.
+    const test = harness({
+      claimed: [job({ attemptCount: 5, maxAttempts: 5 })],
+      subject: subject({ scanVerdictSource: null }),
+    });
+    const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    expect(summary).toMatchObject({ awaitingScan: 1, failed: 0 });
+    expect(test.jobs.markDeferred).toHaveBeenCalled();
   });
 
   it("fails terminally when the version is gone, because no retry brings it back", async () => {
