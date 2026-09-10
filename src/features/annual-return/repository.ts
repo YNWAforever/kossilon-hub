@@ -4,6 +4,7 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import type { RequirementInstanceDraft } from "./requirement-template";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
@@ -346,6 +347,23 @@ export type CreateAnnualReturnCaseInput = {
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]>;
+  /**
+   * Materialises the approved template's instances for a case.
+   *
+   * Insert-only, deliberately. An instance can carry a human decision -- a
+   * waiver, a not-applicable with a reason, an authorising user -- and a sync
+   * that deleted rows the template no longer produces would erase that decision
+   * the first time a director was removed from the party list. Pruning stale
+   * instances is a separate action a person takes, not a side effect of
+   * recomputing the template.
+   *
+   * Idempotent: the two partial unique indexes from migration 0026 make a repeat
+   * run a no-op rather than a duplicate.
+   */
+  syncRequirementInstances(
+    caseId: string,
+    drafts: readonly RequirementInstanceDraft[],
+  ): Promise<{ created: number }>;
   listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage>;
   listAllCases(
     filters: CaseFilters,
@@ -2446,9 +2464,39 @@ export function createAnnualReturnRepository(
     }
   }
 
+  async function syncRequirementInstances(
+    caseId: string,
+    drafts: readonly RequirementInstanceDraft[],
+  ): Promise<{ created: number }> {
+    if (drafts.length === 0) return { created: 0 };
+
+    let created = 0;
+    await withTransaction(sql, async (tx) => {
+      for (const draft of drafts) {
+        // `do nothing` against both partial unique indexes: (checklist_item_id,
+        // party_id) where party_id is not null, and (checklist_item_id) where it
+        // is null. A second run adds nothing and changes nothing.
+        const rows = await tx<{ id: string }[]>`
+          insert into case_requirement_instances (
+            case_id, checklist_item_id, party_id, requirement_key, template_version, reference_date
+          ) values (
+            ${caseId}, ${draft.checklistItemId}, ${draft.partyId}, ${draft.requirementKey},
+            ${draft.templateVersion}, ${draft.referenceDate}
+          )
+          on conflict do nothing
+          returning id
+        `;
+        if (rows.length === 1) created += 1;
+      }
+    });
+
+    return { created };
+  }
+
   return {
     listCases,
     listCaseRequirements,
+    syncRequirementInstances,
     listCasePage,
     listAllCases,
     boardTotals,
