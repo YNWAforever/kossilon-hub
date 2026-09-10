@@ -26,6 +26,7 @@ function dependencies(
       retried: 1,
       permanentlyFailed: 0,
       superseded: 0,
+      sentButUnrecorded: 0,
     })),
     createDocumentRepository: () => ({
       expireUploads: vi.fn(async () => [{ objectKey: "a" }, { objectKey: "b" }]),
@@ -170,6 +171,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
       retried: 0,
       permanentlyFailed: 0,
       superseded: 0,
+      sentButUnrecorded: 0,
     }));
 
     await runFirmMaintenanceWithDependencies(

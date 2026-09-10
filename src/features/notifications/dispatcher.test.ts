@@ -651,3 +651,33 @@ describe("createNotificationTransport (live mode composite routing)", () => {
     ).rejects.toThrow("Unsupported notification channel: in_app.");
   });
 });
+
+/**
+ * The provider has the message; the database write that records it failed.
+ *
+ * markSent used to sit inside the same try as transport.dispatch, so this landed
+ * in the catch that labels anything without a `code` as 'dispatch_failed' and
+ * calls markRetry -- delivering a second copy to the client. The receipt-linkback
+ * twelve lines below already had its own catch and said exactly why; markSent,
+ * where the same hazard is worse, did not.
+ */
+describe("a send the database could not record", () => {
+  it("does not retry, because the client already has the message", async () => {
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+    const repo = repository([notification()]);
+    vi.mocked(repo.markSent).mockRejectedValue(new Error("connection terminated unexpectedly"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const summary = await createNotificationDispatcher(
+      repo,
+      createLocalNotificationTransport(),
+    ).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markRetry).not.toHaveBeenCalled();
+    expect(repo.markFailed).not.toHaveBeenCalled();
+    // Counted apart from `sent`, because nothing recorded it, and apart from
+    // `retried`, because retrying is the thing that must not happen.
+    expect(summary).toMatchObject({ sent: 0, retried: 0, sentButUnrecorded: 1 });
+  });
+});

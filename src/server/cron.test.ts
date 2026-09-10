@@ -30,7 +30,14 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
     }),
     dispatchDue: vi.fn(async (_now: string, limit: number) => {
       calls.push(`dispatch:${limit}`);
-      return { claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 };
+      return {
+        claimed: 1,
+        sent: 1,
+        retried: 0,
+        permanentlyFailed: 0,
+        superseded: 0,
+        sentButUnrecorded: 0,
+      };
     }),
     drainDocumentScanJobs: vi.fn(async () => {
       calls.push("scans");
@@ -41,6 +48,7 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
         retried: 0,
         failed: 0,
         superseded: 0,
+        sentButUnrecorded: 0,
         scanner: "ran" as const,
       };
     }),
@@ -53,6 +61,7 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
         retried: 0,
         failed: 0,
         superseded: 0,
+        sentButUnrecorded: 0,
         providerSkipped: 1,
         worker: "ran" as const,
       };

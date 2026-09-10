@@ -482,7 +482,14 @@ describe("dispatchDueNotificationsForActor", () => {
   });
 
   it("dispatches and logs for an admin actor", async () => {
-    const summary = { claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 };
+    const summary = {
+      claimed: 1,
+      sent: 1,
+      retried: 0,
+      permanentlyFailed: 0,
+      superseded: 0,
+      sentButUnrecorded: 0,
+    };
     const dispatch = vi.fn(async () => summary);
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 

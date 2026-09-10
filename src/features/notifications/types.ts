@@ -113,6 +113,16 @@ export type DispatchSummary = {
   permanentlyFailed: number;
   /** Claims another run reclaimed and finished first, so this run did not record them. */
   superseded: number;
+  /**
+   * The provider accepted the message and the database write that records it
+   * failed.
+   *
+   * Counted apart from `sent` because the send happened and apart from `retried`
+   * because retrying would deliver a second copy. It is the one outcome a run
+   * cannot resolve on its own, so it is named rather than folded into a
+   * neighbour that reads as normal.
+   */
+  sentButUnrecorded: number;
 };
 
 export type NotificationOutboxRepository = {
