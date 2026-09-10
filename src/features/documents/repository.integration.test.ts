@@ -90,18 +90,23 @@ async function cleanup(sql: SqlClient): Promise<void> {
       where id = ${itemId}`;
   }
   touchedChecklistItems.clear();
+  // Order matters, and it used to be wrong: document_upload_intents.document_id
+  // is `on delete restrict`, so deleting the documents while their intents still
+  // pointed at them raised a foreign-key violation and every test in this file
+  // failed in cleanup. The ids have to be captured before the intents go, since
+  // the intents are what names them.
+  const owned = await sql<{ document_id: string }[]>`
+    select document_id from document_upload_intents
+    where object_key like ${KEY_PREFIX + "%"} and document_id is not null`;
   await sql`
     delete from document_scan_jobs
     where intent_id in (
       select id from document_upload_intents where object_key like ${KEY_PREFIX + "%"}
     )`;
-  await sql`
-    delete from documents
-    where id in (
-      select document_id from document_upload_intents
-      where object_key like ${KEY_PREFIX + "%"} and document_id is not null
-    )`;
   await sql`delete from document_upload_intents where object_key like ${KEY_PREFIX + "%"}`;
+  if (owned.length > 0) {
+    await sql`delete from documents where id = any(${owned.map((row) => row.document_id)}::uuid[])`;
+  }
 }
 
 async function anyUserId(sql: SqlClient): Promise<string> {

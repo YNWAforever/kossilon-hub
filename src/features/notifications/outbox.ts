@@ -266,7 +266,12 @@ export function createNotificationOutboxRepository(
     async cancelFixtureOriginNotifications(now) {
       const rows = await sql<{ id: string }[]>`
         update notification_outbox
-        set status = 'cancelled', completed_at = now(), updated_at = now(),
+        -- updated_at records when, because notification_outbox has no
+        -- completed_at column -- this query named one and threw on every call,
+        -- so the fixture-origin guard did not run at all. sent_at would be the
+        -- wrong column to reach for instead: nothing was sent, and that is the
+        -- entire point of cancelling.
+        set status = 'cancelled', updated_at = now(),
           last_error_code = 'fixture-origin'
         where status in ('pending', 'failed', 'processing')
           and next_attempt_at <= ${now}

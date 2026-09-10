@@ -40,7 +40,13 @@ create table if not exists maintenance_runs (
   -- guessed at in advance. A pass added later is recorded without a migration,
   -- and `null` inside it keeps meaning "this pass produced no information",
   -- which is the distinction from `0` that the result type exists to preserve.
-  passes jsonb not null,
+  --
+  -- Nullable, and the constraint below says when. This was `not null`, which
+  -- made a `failed` run -- one that died before it had any passes -- impossible
+  -- to insert: the write threw, the recorder swallowed it, and the row was lost.
+  -- That is precisely the run this table was reordered to capture. CI found it
+  -- the first time the insert ran against a real Postgres.
+  passes jsonb,
 
   failed_passes text[] not null default '{}',
   -- Message only, never a thrown value: a maintenance failure can carry a
@@ -64,6 +70,14 @@ create table if not exists maintenance_runs (
   constraint maintenance_runs_outcome_agrees check (
     (outcome = 'succeeded' and cardinality(failed_passes) = 0)
     or (outcome = 'partial' and cardinality(failed_passes) > 0)
+    or outcome = 'failed'
+  ),
+
+  -- A run that reached its passes must record them. Only `failed` may have none,
+  -- because only `failed` never got that far. This keeps the guarantee where it
+  -- means something instead of dropping it for every row.
+  constraint maintenance_runs_passes_present check (
+    (outcome in ('succeeded', 'partial') and passes is not null)
     or outcome = 'failed'
   )
 );

@@ -180,6 +180,23 @@ export function createMaintenanceRunRepository(
 
   return {
     async recordRun(draft) {
+      /**
+       * The empty array is written as a literal rather than as a parameter.
+       *
+       * `sql.array` takes its element type from the FIRST element, so an empty
+       * array gets no type at all, is sent as plain text, and the insert is
+       * rejected against a `text[]` column -- which is every clean run, the most
+       * common row this table will ever hold. A cast cannot rescue it either,
+       * because the value is serialised as text before the cast sees it.
+       *
+       * CI found this. It could not have been found by reading, and it could not
+       * have been found by the local suite, which skips every database test.
+       */
+      const failedPasses =
+        draft.failedPasses.length > 0
+          ? sql`${sql.array([...draft.failedPasses])}::text[]`
+          : sql`'{}'::text[]`;
+
       const rows = await sql<{ id: string }[]>`
         insert into maintenance_runs (
           scheduled_for, started_at, finished_at, duration_ms,
@@ -187,7 +204,7 @@ export function createMaintenanceRunRepository(
         ) values (
           ${draft.scheduledFor}, ${draft.startedAt}, ${draft.finishedAt}, ${draft.durationMs},
           ${draft.outcome}, ${sql.json(draft.passes as never)},
-          ${sql.array([...draft.failedPasses])}, ${draft.failureSummary},
+          ${failedPasses}, ${draft.failureSummary},
           ${draft.triggerSource}
         )
         returning id

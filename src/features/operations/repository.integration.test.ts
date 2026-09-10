@@ -143,6 +143,28 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
   );
 
   /**
+   * The column was `not null` at first, which made the row below impossible to
+   * insert -- so the one run this table was reordered to capture was the one it
+   * could not record. It is nullable now, and this constraint keeps the
+   * guarantee where it still means something: a run that reached its passes has
+   * to have recorded them.
+   */
+  it(
+    "refuses a completed run that recorded no passes",
+    async () => {
+      const repository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        await expect(
+          repository.recordRun(draft({ outcome: "succeeded", passes: null })),
+        ).rejects.toThrow(/maintenance_runs_passes_present/);
+      } finally {
+        await repository.close();
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
    * A run that died before assembling its passes has none to name, so `failed`
    * is deliberately the one outcome the constraint leaves alone.
    */

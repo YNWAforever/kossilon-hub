@@ -1752,7 +1752,11 @@ create table if not exists maintenance_runs (
   -- The whole ScheduledMaintenanceResult. `null` inside it keeps meaning "this
   -- pass produced no information", which is the distinction from `0` that the
   -- result type exists to preserve.
-  passes jsonb not null,
+  --
+  -- Nullable, with the constraint below saying when. `not null` made a `failed`
+  -- run -- one that died before it had any passes -- impossible to insert, which
+  -- is exactly the run this table exists to capture.
+  passes jsonb,
 
   failed_passes text[] not null default '{}',
   -- Message only, never a thrown value: it can carry a provider payload or a
@@ -1774,6 +1778,12 @@ create table if not exists maintenance_runs (
   constraint maintenance_runs_outcome_agrees check (
     (outcome = 'succeeded' and cardinality(failed_passes) = 0)
     or (outcome = 'partial' and cardinality(failed_passes) > 0)
+    or outcome = 'failed'
+  ),
+
+  -- A run that reached its passes must record them. Only `failed` may have none.
+  constraint maintenance_runs_passes_present check (
+    (outcome in ('succeeded', 'partial') and passes is not null)
     or outcome = 'failed'
   )
 );

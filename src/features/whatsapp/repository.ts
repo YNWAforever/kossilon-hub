@@ -575,7 +575,12 @@ export function createWhatsAppRepository(
             -- attributed to a client it may not belong to.
             company_id = case
               when whatsapp_contacts.company_id is null
-                then coalesce(${input.companyId ?? null}, ${mergePlan.duplicateCompanyId})
+                -- Both cast, not just the ones below. Two untyped null parameters
+                -- make this coalesce infer as text, and a CASE cannot mix text
+                -- with the uuid branches that follow -- so every inbound message
+                -- failed to record. Caught by CI, which is the first time any of
+                -- this SQL had run.
+                then coalesce(${input.companyId ?? null}::uuid, ${mergePlan.duplicateCompanyId}::uuid)
               when ${input.companyId ?? null}::uuid is null then whatsapp_contacts.company_id
               when whatsapp_contacts.company_id = ${input.companyId ?? null}::uuid
                 then whatsapp_contacts.company_id
