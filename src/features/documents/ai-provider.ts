@@ -46,26 +46,57 @@ export const AI_RULE_VERSION = "1";
  * turn a finding list into a denial-of-service against the reviewer's screen and
  * the findings table.
  */
+const observationSchema = z
+  .object({
+    // Constrained so a provider cannot invent a key that collides with a
+    // deterministic rule and inherit its meaning in the UI.
+    ruleKey: z
+      .string()
+      .min(1)
+      .max(80)
+      .regex(/^[a-z0-9-]+$/, "A rule key is lowercase, digits and hyphens."),
+    outcome: z.enum(["pass", "issue", "uncertain"]),
+    severity: z.enum(["warning", "info"]),
+    detail: z.string().min(1).max(MAX_DETAIL_CHARACTERS),
+    pageFrom: z.number().int().min(1).nullable().optional(),
+    pageTo: z.number().int().min(1).nullable().optional(),
+  })
+  // Mirrors makeFinding's rules exactly, because the two disagreeing is itself a
+  // defect. They did: `{pageTo: 3}` with no pageFrom, a backwards range, and a
+  // whitespace-only detail all parsed here and then threw inside makeFinding --
+  // out of analyze() entirely, past the promise below to return
+  // `malformed-response`, and on into the caller. The first of those needs no
+  // hostile intent at all; a benign model citing "page 3" was enough.
+  .superRefine((observation, ctx) => {
+    if (!observation.detail.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["detail"],
+        message: "A finding must say something a human can read.",
+      });
+    }
+
+    const pageFrom = observation.pageFrom ?? null;
+    const pageTo = observation.pageTo ?? null;
+    if (pageTo !== null && pageFrom === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["pageFrom"],
+        message: "A cited page range needs a start.",
+      });
+    }
+    if (pageFrom !== null && pageTo !== null && pageTo < pageFrom) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["pageTo"],
+        message: "A cited page range ends at or after it starts.",
+      });
+    }
+  });
+
 const responseSchema = z.object({
   reference: z.string().min(1).max(200),
-  observations: z
-    .array(
-      z.object({
-        // Constrained so a provider cannot invent a key that collides with a
-        // deterministic rule and inherit its meaning in the UI.
-        ruleKey: z
-          .string()
-          .min(1)
-          .max(80)
-          .regex(/^[a-z0-9-]+$/, "A rule key is lowercase, digits and hyphens."),
-        outcome: z.enum(["pass", "issue", "uncertain"]),
-        severity: z.enum(["warning", "info"]),
-        detail: z.string().min(1).max(MAX_DETAIL_CHARACTERS),
-        pageFrom: z.number().int().min(1).nullable().optional(),
-        pageTo: z.number().int().min(1).nullable().optional(),
-      }),
-    )
-    .max(MAX_OBSERVATIONS),
+  observations: z.array(observationSchema).max(MAX_OBSERVATIONS),
 });
 
 export type AiAnalysisInput = {
@@ -153,10 +184,9 @@ export function createLiveDocumentAiAnalyzer(options: {
         };
       }
 
-      return {
-        status: "analysed",
-        providerReference: parsed.reference,
-        findings: parsed.observations.map((observation) =>
+      let findings: Finding[];
+      try {
+        findings = parsed.observations.map((observation) =>
           makeFinding({
             // Namespaced so a provider observation can never be mistaken for a
             // deterministic check in a list, a filter or a log.
@@ -173,8 +203,18 @@ export function createLiveDocumentAiAnalyzer(options: {
               pageTo: observation.pageTo ?? null,
             },
           }),
-        ),
-      };
+        );
+      } catch {
+        // Belt and braces. superRefine above should have caught anything
+        // makeFinding would refuse, but the two are separate statements of the
+        // same rules and a future edit could let them drift. If they ever do,
+        // this adapter still keeps the promise it makes: a provider that does
+        // not honour the contract gets `malformed-response`, and never a throw
+        // into a caller that has no reason to expect one.
+        return { status: "failed", retryable: false, errorCode: "malformed-response" };
+      }
+
+      return { status: "analysed", providerReference: parsed.reference, findings };
     },
   };
 }

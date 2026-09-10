@@ -202,6 +202,44 @@ describe("a model that has been talked into overstepping", () => {
     expect(result).toMatchObject({ status: "failed", errorCode: "malformed-response" });
   });
 
+  /**
+   * The response schema and makeFinding must not disagree.
+   *
+   * These three shapes parsed cleanly and then threw inside makeFinding, out of
+   * analyze() entirely -- contradicting this adapter's own promise to return
+   * `malformed-response` for a provider that does not honour the contract, and
+   * taking the whole analysis drain down with it. Note the first needs no
+   * hostile intent at all: a benign model emitting a `pageTo` with no `pageFrom`
+   * was enough.
+   */
+  it("rejects an observation the finding contract would refuse, instead of throwing", async () => {
+    const cases = [
+      {
+        ruleKey: "page-note",
+        outcome: "issue",
+        severity: "warning",
+        detail: "see page 3",
+        pageTo: 3,
+      },
+      {
+        ruleKey: "page-note",
+        outcome: "issue",
+        severity: "warning",
+        detail: "x",
+        pageFrom: 9,
+        pageTo: 2,
+      },
+      { ruleKey: "blank", outcome: "issue", severity: "warning", detail: " " },
+    ];
+
+    for (const observation of cases) {
+      await expect(analyseWith([observation])).resolves.toMatchObject({
+        status: "failed",
+        errorCode: "malformed-response",
+      });
+    }
+  });
+
   // A hostile document that induces thousands of observations would otherwise be
   // a denial-of-service against the reviewer's screen and the findings table.
   it("refuses an unbounded flood of observations", async () => {

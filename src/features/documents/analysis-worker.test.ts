@@ -309,6 +309,41 @@ describe("the provider tier", () => {
     expect(test.written[0].some((finding) => finding.tier === "cross-check")).toBe(true);
   });
 
+  /**
+   * An advisory tier must not be able to abort the drain.
+   *
+   * A returned failure was already handled; a THROWN one was not, and it is
+   * worse: the rejection unwinds drainDocumentAnalysisJobs mid-loop, so every
+   * job claimed after this one in the same batch never gets a terminal write.
+   * They sit in 'processing' with an attempt already burnt and no recorded
+   * reason, recoverable only by the reclaim -- which re-runs the same poisoned
+   * document and burns another, until max_attempts strands them permanently.
+   */
+  it("survives an analyzer that throws, and still finishes the rest of the batch", async () => {
+    const test = harness({
+      claimed: [job({ id: "job-1" }), job({ id: "job-2" })],
+      analyzer: {
+        analyze: vi.fn(async () => {
+          throw new Error("A cited page range needs a start.");
+        }),
+      },
+    });
+
+    const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    // Both jobs completed. Neither was left claimed-but-unwritten.
+    expect(summary).toMatchObject({ claimed: 2, analysed: 2 });
+    expect(test.jobs.markSucceeded).toHaveBeenCalledTimes(2);
+    expect(test.written).toHaveLength(2);
+
+    // And the deterministic findings survived, with the failure recorded beside
+    // them rather than replacing them.
+    expect(test.written[0].some((finding) => finding.tier === "cross-check")).toBe(true);
+    expect(
+      test.written[0].find((finding) => finding.ruleKey === "provider:analysis"),
+    ).toMatchObject({ outcome: "uncertain" });
+  });
+
   // Silence would be indistinguishable from a tier that never ran at all.
   it("records that the model ran and could not tell", async () => {
     const test = harness({

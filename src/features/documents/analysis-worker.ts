@@ -1,4 +1,4 @@
-import { AI_RULE_VERSION, type DocumentAiAnalyzer } from "./ai-provider";
+import { AI_RULE_VERSION, type AiAnalysisResult, type DocumentAiAnalyzer } from "./ai-provider";
 import {
   BYTES_SAMPLE_WINDOW,
   crossCheckFindings,
@@ -205,12 +205,28 @@ export async function drainDocumentAnalysisJobs(
     if (!dependencies.analyzer) {
       summary.providerSkipped += 1;
     } else {
-      const analysis = await dependencies.analyzer.analyze({
-        documentVersionId: subject.version.id,
-        contentType: subject.declaredContentType ?? "application/octet-stream",
-        fileName: subject.fileName,
-        body: stored.body,
-      });
+      // Wrapped, because an advisory tier must not be able to abort the drain.
+      // A returned failure was always handled; a thrown one was not, and it is
+      // strictly worse: the rejection unwinds this loop, so every job claimed
+      // after this one never gets a terminal write and sits in 'processing' with
+      // an attempt already burnt and no recorded reason. Only the reclaim
+      // recovers them, which re-runs the same poisoned document and burns
+      // another attempt each time.
+      //
+      // A throw is treated exactly as a returned failure: the adapter's own
+      // contract says it should not happen, and this is what makes that true for
+      // the caller whatever a future adapter does.
+      let analysis: AiAnalysisResult;
+      try {
+        analysis = await dependencies.analyzer.analyze({
+          documentVersionId: subject.version.id,
+          contentType: subject.declaredContentType ?? "application/octet-stream",
+          fileName: subject.fileName,
+          body: stored.body,
+        });
+      } catch {
+        analysis = { status: "failed", retryable: false, errorCode: "analyzer-threw" };
+      }
 
       if (analysis.status === "analysed") {
         findings.push(...analysis.findings);
