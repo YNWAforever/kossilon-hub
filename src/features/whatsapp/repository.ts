@@ -546,11 +546,28 @@ export function createWhatsAppRepository(
               whatsapp_contacts.display_name,
               ${mergePlan.duplicateDisplayName}
             ),
-            company_id = coalesce(
-              ${input.companyId ?? null},
-              whatsapp_contacts.company_id,
-              ${mergePlan.duplicateCompanyId}
-            ),
+            -- A shared number belongs to nobody in particular.
+            --
+            -- The caller's value used to come first in a coalesce, so every staff
+            -- send repointed the contact at whichever company messaged last. A
+            -- nominee director serving several shell companies from one number
+            -- was silently reassigned on each send, and an unsolicited inbound
+            -- reply -- the one case where resolveInboundMatch falls back to this
+            -- column rather than to the last outbound message -- was then filed
+            -- against the wrong client's timeline.
+            --
+            -- Agreement keeps it, silence keeps it, and a genuine conflict clears
+            -- it. Null is the honest answer for a number two companies use: the
+            -- match falls through, the message is still recorded, and nothing is
+            -- attributed to a client it may not belong to.
+            company_id = case
+              when whatsapp_contacts.company_id is null
+                then coalesce(${input.companyId ?? null}, ${mergePlan.duplicateCompanyId})
+              when ${input.companyId ?? null}::uuid is null then whatsapp_contacts.company_id
+              when whatsapp_contacts.company_id = ${input.companyId ?? null}::uuid
+                then whatsapp_contacts.company_id
+              else null
+            end,
             last_seen_at = now(),
             updated_at = now()
         where id = ${existing.id}
