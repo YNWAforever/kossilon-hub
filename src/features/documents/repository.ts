@@ -9,6 +9,7 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import type { DocumentAccessSubject } from "./authorization";
+import { enqueueDocumentAnalysisJob } from "./analysis-jobs";
 import { enqueueDocumentScanJob } from "./scan-jobs";
 import {
   type DocumentCategory,
@@ -455,13 +456,26 @@ export function createDocumentRepository(
         // nothing enabled has compared them to the stored object -- only the
         // provider scanner reads and hashes it, and that is BLOCKED_INTEGRATION.
         // verified_checksum_sha256 stays null until it does.
-        await tx`
+        const versions = await tx<{ id: string }[]>`
           insert into document_versions (
             document_id, version_number, declared_checksum_sha256, declared_byte_size,
             content_type, file_name, storage_url, intent_id, uploaded_by
           ) values (${documents[0].id}, 1, ${intent.checksum}, ${intent.expectedSizeBytes},
             ${intent.contentType}, ${intent.fileName}, ${intent.objectKey}, ${intent.id},
-            ${input.uploadedBy})`;
+            ${input.uploadedBy}) returning id`;
+
+        // Analysis work, enqueued in the same transaction and for the same
+        // reason as the scan job below: a version must never exist without the
+        // work that examines it. A Worker killed between the commit and a
+        // post-commit enqueue would leave a document nothing will ever look at,
+        // and no error anywhere to say so.
+        //
+        // Enqueued even though no scanner has passed the file yet. The worker
+        // itself holds the gate -- it refuses to read bytes whose safety is not
+        // `verified` and backs off -- so queuing now costs a cheap deferred
+        // claim, and means nothing has to remember to enqueue later when the
+        // verdict finally lands.
+        await enqueueDocumentAnalysisJob(tx, { documentVersionId: versions[0].id });
 
         // quarantine_retention_until is set here, from the moment of actual
         // receipt, and from now on it -- not expires_at -- governs these bytes.

@@ -5,6 +5,10 @@ import {
   type ScanWorkerDependencies,
 } from "@/features/documents/scan-worker";
 import type { DispatchSummary } from "@/features/notifications/types";
+import {
+  drainDocumentAnalysisJobs,
+  type AnalysisWorkerDependencies,
+} from "@/features/documents/analysis-worker";
 import { runScheduledMaintenance, type ScheduledMaintenanceResult } from "./cron";
 
 /**
@@ -84,6 +88,12 @@ export type FirmMaintenanceDependencies = {
    * aborted every later pass in the tick.
    */
   createScanWorker?(): (ScanWorkerDependencies & { close(): Promise<void> }) | null;
+  /**
+   * The analysis pass. Optional only so a test can leave it out; unlike the scan
+   * worker it needs no provider, because the deterministic tiers run everywhere
+   * and the model is the optional third tier.
+   */
+  createAnalysisWorker?(): (AnalysisWorkerDependencies & { close(): Promise<void> }) | null;
   createOutboxRepository(): MaintenanceOutboxRepository;
 };
 
@@ -131,6 +141,33 @@ export async function runFirmMaintenanceWithDependencies(
           }
           try {
             return { ...(await drainDocumentScanJobs({ now }, worker)), scanner: "ran" as const };
+          } finally {
+            await worker.close();
+          }
+        },
+        drainDocumentAnalysisJobs: async (now) => {
+          // Unlike the scan pass, this one needs no provider: the deterministic
+          // tiers are real work that runs everywhere, and the model is the
+          // optional third tier. So an absent worker here means a caller that
+          // wired no analysis pass at all, not a disabled capability.
+          const worker = dependencies.createAnalysisWorker?.();
+          if (!worker) {
+            return {
+              claimed: 0,
+              analysed: 0,
+              awaitingScan: 0,
+              retried: 0,
+              failed: 0,
+              superseded: 0,
+              providerSkipped: 0,
+              worker: "not-configured" as const,
+            };
+          }
+          try {
+            return {
+              ...(await drainDocumentAnalysisJobs({ now }, worker)),
+              worker: "ran" as const,
+            };
           } finally {
             await worker.close();
           }
@@ -190,6 +227,9 @@ export async function runFirmMaintenance(
     import("@/features/notifications/outbox"),
   ]);
   const scanJobsModule = await import("@/features/documents/scan-jobs");
+  const analysisJobsModule = await import("@/features/documents/analysis-jobs");
+  const analysisRepositoryModule = await import("@/features/documents/analysis-repository");
+  const aiProviderModule = await import("@/features/documents/ai-provider");
 
   return runFirmMaintenanceWithDependencies(input, {
     createWorkItemRepository: () => workItemsModule.createWorkItemRepository(),
@@ -239,6 +279,35 @@ export async function runFirmMaintenance(
         scanner,
         close: async () => {
           await Promise.all([jobs.close(), documents.close()]);
+        },
+      };
+    },
+    createAnalysisWorker: () => {
+      const providerMode = providerModeModule.currentProviderMode();
+
+      // No `return null` for a missing model here, unlike the scan worker. The
+      // deterministic tiers are the pass; the model is its optional third tier,
+      // and createDocumentAiAnalyzerForProviderMode already returns null when
+      // there is no provider (BLOCKED_INTEGRATION: ai-provider, which is always
+      // today). The pass runs, does the real work, and reports providerSkipped.
+      const storage = documentServerFnsModule.createDocumentStorageForProviderMode(
+        providerMode,
+        providerMode === "live" ? runtimeEnvModule.getDocumentsBucketBinding() : undefined,
+      );
+      const analyzer = aiProviderModule.createDocumentAiAnalyzerForProviderMode(providerMode, {
+        config: providerMode === "live" ? runtimeEnvModule.getDocumentAiConfig() : null,
+      });
+      const jobs = analysisJobsModule.createDocumentAnalysisJobRepository();
+      const analysis = analysisRepositoryModule.createDocumentAnalysisRepository();
+
+      return {
+        jobs,
+        versions: analysis,
+        findings: analysis,
+        storage,
+        analyzer,
+        close: async () => {
+          await Promise.all([jobs.close(), analysis.close()]);
         },
       };
     },

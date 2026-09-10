@@ -1,3 +1,4 @@
+import type { AnalysisDrainSummary } from "@/features/documents/analysis-worker";
 import type { ScanDrainSummary } from "@/features/documents/scan-worker";
 import type { DispatchSummary } from "@/features/notifications/types";
 
@@ -13,6 +14,14 @@ export type ScheduledMaintenanceDependencies = {
    * scanned anything.
    */
   drainDocumentScanJobs(now: string): Promise<ScanDrainSummary & { scanner: ScannerAvailability }>;
+  /**
+   * Readability and cross-checks over document versions a real scanner has
+   * passed. Advisory: its findings inform a reviewer and never approve or
+   * release anything.
+   */
+  drainDocumentAnalysisJobs(
+    now: string,
+  ): Promise<AnalysisDrainSummary & { worker: WorkerAvailability }>;
   /**
    * Received files whose retention window lapsed without a verdict. Reports
    * only -- it must never delete evidence, which is the failure this whole pass
@@ -34,6 +43,14 @@ export type ScheduledMaintenanceDependencies = {
  */
 export type ScannerAvailability = "ran" | "not-configured";
 
+/**
+ * Whether a pass had a worker to run at all.
+ *
+ * Same reasoning as ScannerAvailability: zeros cannot distinguish "nothing was
+ * due" from "nothing ran", and only one of those is fine.
+ */
+export type WorkerAvailability = "ran" | "not-configured";
+
 export type MaintenancePassFailure = {
   /** The dependency that threw, so a log line names the pass. */
   pass: string;
@@ -54,6 +71,7 @@ export type ScheduledMaintenanceResult = {
   serviceSubscriptionReminders: { sent: number; skipped: number } | null;
   dispatch: DispatchSummary | null;
   documentScans: (ScanDrainSummary & { scanner: ScannerAvailability }) | null;
+  documentAnalysis: (AnalysisDrainSummary & { worker: WorkerAvailability }) | null;
   /**
    * Split out of `documentScans`, which used to merge it in. They are two
    * separate passes with separate fates: the merged shape could not express a
@@ -132,6 +150,12 @@ export async function runScheduledMaintenance(
   const documentScans = await runPass("drainDocumentScanJobs", failures, () =>
     dependencies.drainDocumentScanJobs(now),
   );
+  // After scanning, because analysis refuses to read bytes whose safety is not
+  // `verified`: a file that becomes available in this tick can be analysed in the
+  // same tick rather than waiting for the next one.
+  const documentAnalysis = await runPass("drainDocumentAnalysisJobs", failures, () =>
+    dependencies.drainDocumentAnalysisJobs(now),
+  );
   const stalledQuarantine = await runPass("escalateStalledQuarantine", failures, () =>
     dependencies.escalateStalledQuarantine(now),
   );
@@ -151,6 +175,7 @@ export async function runScheduledMaintenance(
     serviceSubscriptionReminders,
     dispatch,
     documentScans,
+    documentAnalysis,
     stalledQuarantine,
     uploads,
     notifications: {

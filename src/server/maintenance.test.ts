@@ -66,6 +66,18 @@ describe("runFirmMaintenanceWithDependencies", () => {
         superseded: 0,
         scanner: "not-configured",
       },
+      // No createAnalysisWorker here, so the pass reports that it did not run
+      // rather than zeros that would read as "analysed, nothing found".
+      documentAnalysis: {
+        claimed: 0,
+        analysed: 0,
+        awaitingScan: 0,
+        retried: 0,
+        failed: 0,
+        superseded: 0,
+        providerSkipped: 0,
+        worker: "not-configured",
+      },
       stalledQuarantine: { stalled: 0 },
       annualReturnReminders: { sent: 1, skipped: 0 },
       serviceSubscriptionReminders: { sent: 1, skipped: 0 },

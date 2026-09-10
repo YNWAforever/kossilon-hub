@@ -44,6 +44,19 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
         scanner: "ran" as const,
       };
     }),
+    drainDocumentAnalysisJobs: vi.fn(async () => {
+      calls.push("analysis");
+      return {
+        claimed: 1,
+        analysed: 1,
+        awaitingScan: 0,
+        retried: 0,
+        failed: 0,
+        superseded: 0,
+        providerSkipped: 1,
+        worker: "ran" as const,
+      };
+    }),
     escalateStalledQuarantine: vi.fn(async () => {
       calls.push("stalled-quarantine");
       return { stalled: 0 };
@@ -110,6 +123,7 @@ describe("scheduled maintenance", () => {
       "stranded",
       "dispatch:7",
       "scans",
+      "analysis",
       "stalled-quarantine",
       "uploads",
       "redact",
