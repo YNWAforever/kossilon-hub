@@ -66,8 +66,16 @@ async function sha256Hex(body: Uint8Array): Promise<string> {
  */
 function assertImportAuthority(actor: AuthenticatedActor): AuthenticatedActor {
   const staff = assertStaffAccess(actor);
-  if (staff.role !== "Admin" && staff.role !== "Manager") {
-    throw new Error("Forbidden: Manager or Admin access is required to import a workbook.");
+  // Admin only, which is what the reasoning above always argued for and what the
+  // code did not do. A Manager passed this check and then read the whole batch:
+  // getNarImportBatchReview applies no team scope, and every staged row carries
+  // `raw` -- the spreadsheet cells verbatim -- for every company in the workbook,
+  // including companies belonging to other teams. Scoping the read by team was
+  // the alternative and it is incoherent here: a batch spans teams by nature, so
+  // a team-filtered review would hide rows from the very person who has to
+  // approve the import.
+  if (staff.role !== "Admin") {
+    throw new Error("Forbidden: Admin access is required to import a workbook.");
   }
   return staff;
 }

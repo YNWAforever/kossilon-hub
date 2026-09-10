@@ -229,6 +229,28 @@ export function createAnnualReturnEvidenceService(
                 documentId: input.documentId,
                 actorId: input.actorId,
               });
+
+              /**
+               * The requirement instances on this item are satisfied here, in the
+               * same transaction that accepted the document.
+               *
+               * Nothing wrote requirement_evidence_links outside migration 0026's
+               * one-shot backfill, so every instance created at runtime after it
+               * was permanently `outstanding` -- a document could be uploaded,
+               * scanned and approved and the requirement still reported the
+               * client as owing it.
+               *
+               * On the verified decision only. A rejection is not evidence, and
+               * a link is the record of why a document was accepted.
+               */
+              if (input.decision === "verified") {
+                await annualReturns.linkRequirementEvidence({
+                  caseId: input.caseId,
+                  checklistItemId: checklistItem.id,
+                  documentId: input.documentId,
+                  linkedBy: input.actorId,
+                });
+              }
             }
           }
 

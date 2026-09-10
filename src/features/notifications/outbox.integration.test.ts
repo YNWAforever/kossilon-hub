@@ -458,41 +458,47 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
       });
       await sql`update notification_outbox set next_attempt_at = now() - interval '1 minute' where id = ${id}`;
 
-      // Mark it fixture data for the duration of this assertion, then restore
-      // whatever the seed actually set.
-      await sql`update companies set data_origin = 'fixture' where id = ${companyId}`;
-      const suppressed = await repository.cancelFixtureOriginNotifications(
-        new Date().toISOString(),
-      );
-      expect(suppressed.cancelled).toBeGreaterThanOrEqual(1);
+      // The restore is in a `finally`, and restores to the seed's own value
+      // rather than the one read back. Outside a finally, any failed assertion
+      // below left this seeded company flipped for every later test in the
+      // shared database -- and restoring the read-back value would perpetuate a
+      // corruption rather than repair it. The sibling test below already had
+      // this shape; it was not applied here.
+      try {
+        await sql`update companies set data_origin = 'fixture' where id = ${companyId}`;
+        const suppressed = await repository.cancelFixtureOriginNotifications(
+          new Date().toISOString(),
+        );
+        expect(suppressed.cancelled).toBeGreaterThanOrEqual(1);
 
-      const cancelled = await sql<{ status: string; last_error_code: string | null }[]>`
-        select status, last_error_code from notification_outbox where id = ${id}
-      `;
-      expect(cancelled[0]).toMatchObject({
-        status: "cancelled",
-        last_error_code: "fixture-origin",
-      });
+        const cancelled = await sql<{ status: string; last_error_code: string | null }[]>`
+          select status, last_error_code from notification_outbox where id = ${id}
+        `;
+        expect(cancelled[0]).toMatchObject({
+          status: "cancelled",
+          last_error_code: "fixture-origin",
+        });
 
-      // And a client's row in the same state is untouched.
-      await sql`update companies set data_origin = 'client' where id = ${companyId}`;
-      const clientId = await enqueue(sql, companyId, "client-untouched", {
-        status: "pending",
-        attemptCount: 0,
-        retentionUntil: "2099-01-01T00:00:00.000Z",
-      });
-      await sql`update notification_outbox set next_attempt_at = now() - interval '1 minute' where id = ${clientId}`;
+        // And a client's row in the same state is untouched.
+        await sql`update companies set data_origin = 'client' where id = ${companyId}`;
+        const clientId = await enqueue(sql, companyId, "client-untouched", {
+          status: "pending",
+          attemptCount: 0,
+          retentionUntil: "2099-01-01T00:00:00.000Z",
+        });
+        await sql`update notification_outbox set next_attempt_at = now() - interval '1 minute' where id = ${clientId}`;
 
-      await repository.cancelFixtureOriginNotifications(new Date().toISOString());
-      const untouched = await sql<{ status: string }[]>`
-        select status from notification_outbox where id = ${clientId}
-      `;
-      expect(untouched[0].status).toBe("pending");
-
-      await sql`
-        update companies set data_origin = ${wasFixture ? "fixture" : "client"}
-        where id = ${companyId}
-      `;
+        await repository.cancelFixtureOriginNotifications(new Date().toISOString());
+        const untouched = await sql<{ status: string }[]>`
+          select status from notification_outbox where id = ${clientId}
+        `;
+        expect(untouched[0].status).toBe("pending");
+      } finally {
+        await sql`
+          update companies set data_origin = ${wasFixture ? "fixture" : "client"}
+          where id = ${companyId}
+        `;
+      }
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

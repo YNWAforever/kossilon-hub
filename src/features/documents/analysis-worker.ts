@@ -204,6 +204,20 @@ export async function drainDocumentAnalysisJobs(
 
     if (!dependencies.analyzer) {
       summary.providerSkipped += 1;
+      // Recorded on the version, not only in the drain summary. Both
+      // deterministic tiers emit an `uncertain` when they cannot check; silence
+      // here made "no model is configured" indistinguishable from "a model read
+      // this and was happy" -- and worse, made a provider that ran and FAILED
+      // read as less clean than one that never ran at all, because only the
+      // failure left a note. Under BLOCKED_INTEGRATION: ai-provider this is
+      // every document, which is exactly why it has to be visible rather than
+      // assumed.
+      findings.push(
+        providerNote(
+          subject.version.id,
+          "No model is configured, so the third analysis tier did not run. This is not a clean result from it.",
+        ),
+      );
     } else {
       // Wrapped, because an advisory tier must not be able to abort the drain.
       // A returned failure was always handled; a thrown one was not, and it is

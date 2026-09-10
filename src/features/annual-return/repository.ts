@@ -441,6 +441,24 @@ export type AnnualReturnRepository = {
   addNote(input: AddAnnualReturnCaseNoteInput): Promise<AnnualReturnCaseNote>;
   recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase>;
   updateChecklistItem(input: UpdateAnnualReturnChecklistItemInput): Promise<AnnualReturnCase>;
+  /**
+   * Record that a document satisfies the requirement instances on a checklist
+   * item.
+   *
+   * `requirement_evidence_links` had exactly one writer in the whole repository
+   * -- the one-shot backfill inside migration 0026 -- so every instance created
+   * at runtime afterwards was unsatisfiable: `listCaseRequirements` reads
+   * evidence only through this table, and `requirementStatusOf` returns
+   * "satisfied" only when an evidence entry exists. A document could be
+   * uploaded, scanned and approved and its requirement still reported
+   * `outstanding`, permanently. Two design specs asserted the opposite.
+   */
+  linkRequirementEvidence(input: {
+    caseId: string;
+    checklistItemId: string;
+    documentId: string;
+    linkedBy: string;
+  }): Promise<{ linked: number }>;
   updatePayment(input: UpdateAnnualReturnPaymentInput): Promise<AnnualReturnCase>;
   updateFilingProof(input: UpdateAnnualReturnFilingProofInput): Promise<AnnualReturnCase>;
   close(): Promise<void>;
@@ -1998,6 +2016,43 @@ export function createAnnualReturnRepository(
     return hydratedCaseAfterMutation(input.caseId, "reminder logging");
   }
 
+  /**
+   * Written as one statement whose joins ARE the authorization.
+   *
+   * The instance, the checklist item and the document must all agree on the same
+   * case. A caller that checked "may this actor see case X" and then inserted by
+   * id alone could pair a visible case with a document from a case the actor
+   * cannot see; keeping the check and the write in one statement leaves nothing
+   * to slip between them -- the same shape `confirmCaseParty` uses.
+   *
+   * `on conflict do nothing` against requirement_evidence_links_uidx, so a
+   * second review of the same item is a no-op rather than a duplicate.
+   */
+  async function linkRequirementEvidence(input: {
+    caseId: string;
+    checklistItemId: string;
+    documentId: string;
+    linkedBy: string;
+  }): Promise<{ linked: number }> {
+    const rows = await sql<{ id: string }[]>`
+      insert into requirement_evidence_links (
+        requirement_instance_id, document_id, linked_by, note
+      )
+      select r.id, d.id, ${input.linkedBy},
+             'Linked when the checklist item was verified.'
+      from case_requirement_instances r
+      join annual_return_checklist_items i on i.id = r.checklist_item_id
+      join documents d on d.id = ${input.documentId}
+      where r.checklist_item_id = ${input.checklistItemId}
+        and r.case_id = ${input.caseId}
+        and i.case_id = ${input.caseId}
+        and d.case_id = ${input.caseId}
+      on conflict do nothing
+      returning id
+    `;
+    return { linked: rows.length };
+  }
+
   async function updateChecklistItem(
     input: UpdateAnnualReturnChecklistItemInput,
   ): Promise<AnnualReturnCase> {
@@ -2759,6 +2814,7 @@ export function createAnnualReturnRepository(
     updateStatus,
     recordReminder,
     updateChecklistItem,
+    linkRequirementEvidence,
     updatePayment,
     updateFilingProof,
     close,

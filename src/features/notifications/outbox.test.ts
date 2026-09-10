@@ -292,20 +292,39 @@ describe("notificationIdempotencyKey", () => {
    * production two years later. Both recurring sweeps now pass an explicit,
    * period-scoped key instead.
    */
-  it("collides across periods when only company, type and recipient are used", () => {
-    const thisYear = notificationIdempotencyKey({
-      companyId: "company-1",
-      channel: "whatsapp",
-      notificationType: "annual_return_reminder_1_month",
-      recipient: "+85291234567",
-    });
-    const nextYear = notificationIdempotencyKey({
-      companyId: "company-1",
-      channel: "whatsapp",
-      notificationType: "annual_return_reminder_1_month",
-      recipient: "+85291234567",
-    });
-    expect(thisYear).toBe(nextYear);
+  it("carries no period at all, so a recurring sweep must supply its own key", () => {
+    // This used to call the function twice with byte-identical arguments and
+    // assert the two matched, which is key(X) === key(X) -- true of any
+    // function, and blind to the defect it was named for. The signature has no
+    // period argument to vary, so the only honest way to pin "this key cannot
+    // separate years" is to pin the whole string it produces.
+    expect(
+      notificationIdempotencyKey({
+        companyId: "company-1",
+        channel: "whatsapp",
+        notificationType: "annual_return_reminder_1_month",
+        recipient: "+85291234567",
+      }),
+    ).toBe("notification:company-1:none:whatsapp:annual_return_reminder_1_month:+85291234567");
+
+    // Every segment is stable across years. A caller that wants year 2 to be a
+    // different row has to put the period in one of them itself -- which is
+    // what both recurring sweeps now do, via notificationType.
+    expect(
+      notificationIdempotencyKey({
+        companyId: "company-1",
+        channel: "whatsapp",
+        notificationType: "annual_return_reminder_1_month:2027",
+        recipient: "+85291234567",
+      }),
+    ).not.toBe(
+      notificationIdempotencyKey({
+        companyId: "company-1",
+        channel: "whatsapp",
+        notificationType: "annual_return_reminder_1_month:2026",
+        recipient: "+85291234567",
+      }),
+    );
   });
 
   it("separates different milestones, recipients and channels", () => {
