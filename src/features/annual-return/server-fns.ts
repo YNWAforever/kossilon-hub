@@ -23,6 +23,7 @@ import {
 } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
+import { deriveWorkViews } from "./work-views";
 
 const RISK_LEVELS = ["green", "yellow", "orange", "red"] as const;
 const CHECKLIST_STATUSES = ["Missing", "Received", "Verified", "Rejected"] as const;
@@ -591,6 +592,34 @@ export const listAnnualReturnCaseRequirements = createServerFn({ method: "GET" }
       listAnnualReturnCaseRequirementsForActor(actor, data, { repository }),
     ),
   );
+
+/**
+ * The five daily work views, derived on the server.
+ *
+ * Server-side because the views need the viewer's own staff id to separate "work
+ * on my cases" from "work anywhere", and because they read every case in scope --
+ * listAllCases drains pages, so a firm past the old 200-row window does not
+ * silently lose the back half of its day.
+ */
+export async function getAnnualReturnWorkViewsForActor(
+  actor: AuthenticatedActor,
+  dependencies: { repository: Pick<AnnualReturnRepository, "listAllCases"> },
+) {
+  const scope = caseFiltersForActor({
+    id: actor.userId,
+    role: actor.role,
+    teamId: actor.teamId,
+    active: actor.active,
+  });
+  const cases = await dependencies.repository.listAllCases(scope);
+  return deriveWorkViews(cases, hongKongBusinessDate(), { userId: actor.userId });
+}
+
+export const getAnnualReturnWorkViews = createServerFn({ method: "GET" }).handler(() =>
+  withAnnualReturnActorRepository((repository, actor) =>
+    getAnnualReturnWorkViewsForActor(actor, { repository }),
+  ),
+);
 
 export const listAnnualReturnCasePage = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)

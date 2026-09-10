@@ -40,24 +40,43 @@ export type NavGroup = {
   items: NavItem[];
 };
 
+// Grouped by what a staff member is doing rather than by which subsystem owns
+// the screen. It was thirteen destinations across Operations / Messaging /
+// Administration, with nothing shaped like "what do I do today" -- the board
+// answers which cases exist, which is a different question.
+//
+// Every previous destination is still here. Manager and admin surfaces keep
+// their own group rather than being folded into daily work, and no route was
+// removed: a screen someone has bookmarked still resolves.
 export const navGroups: NavGroup[] = [
   {
-    heading: "Operations",
+    heading: "今日工作",
     items: [
+      { to: "/today", label: "今日工作", icon: CalendarClock, exact: true },
       { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { to: "/work-queue", label: "Work Queue", icon: ListChecks },
+    ],
+  },
+  {
+    heading: "客戶與案件",
+    items: [
       { to: "/annual-returns", label: "Annual Returns", icon: CalendarClock },
       { to: "/clients", label: "Clients", icon: Building2 },
       { to: "/incorporation", label: "Incorporation", icon: Rocket },
       { to: "/corporate-changes", label: "Corporate changes", icon: Repeat2 },
-      { to: "/documents", label: "Documents", icon: FileText },
       { to: "/imports", label: "月表匯入", icon: Upload },
-      { to: "/portal", label: "Portal", icon: ExternalLink },
       { to: "/payments", label: "Payments", icon: CreditCard },
     ],
   },
   {
-    heading: "Messaging",
+    heading: "文件審閱",
+    items: [
+      { to: "/documents", label: "Documents", icon: FileText },
+      { to: "/portal", label: "Portal", icon: ExternalLink },
+    ],
+  },
+  {
+    heading: "訊息",
     items: [
       { to: "/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle, exact: true },
       { to: "/whatsapp/automation", label: "WhatsApp Automation", icon: Zap, nested: true },

@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-b` · Current commit: `2826724` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-b` · Current commit: `pending` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -8,7 +8,7 @@ its code is written.
 | Phase | Code | Real integration | Releasable | Blocked on |
 |---|---|---|---|---|
 | **A** Safe staff document workflow | ✅ complete | ❌ none | ❌ no | scanner provider, a database, a browser walkthrough |
-| **B** Monthly NAR intake and daily operations | 🟡 **in progress** — see below | ❌ none | ❌ no | a database for the staging tables |
+| **B** Monthly NAR intake and daily operations | ✅ complete | ❌ none | ❌ no | a database for the new tables |
 | **C** Document intelligence and Kossilon review | ⬜ not started | — | — | AI provider |
 | **D** Messaging, attachments and chasing | ⬜ not started | — | — | real accounts and conversations |
 | **E** External handoff and folder returns | ⬜ not started | — | — | the internal server, its protocol and rights |
@@ -25,29 +25,26 @@ its code is written.
 | **B-1e** Import review screen | Complete — `/imports`, in the primary navigation |
 | **B-2** A received document is not a missing document | Complete — migration `0024`; 18 unit + 4 integration tests |
 | **B-3** Server-side search and real pagination | Complete — including the follow-up-drafts correctness fix |
-| **B-4** The daily workspace | **Partial.** The two named defects are fixed (zero-overdue red banner, uuid prefixes in the work queue). The 今日工作 / 五個工作視圖 navigation restructure is **not** done. |
-| **B-5** Person-level requirement foundation | **Not started.** |
+| **B-4** The daily workspace | Complete — `/today` with the five work views, navigation regrouped into 今日工作 / 客戶與案件 / 文件審閱 / 訊息, plus the zero-overdue banner and work-queue name fixes |
+| **B-5** Person-level requirement foundation | Complete — migration `0026`; 15 tests including the plan's own two examples |
 
 **Design is complete for all of Phase B**:
 `docs/superpowers/specs/2026-09-10-kossilon-phase-b-nar-intake-design.md`.
 
 ## Exact next step
 
-**B-5**, the person-level requirement foundation: confirmed case parties and
-versioned requirement instances, extending `annual_return_checklist_items` rather
-than competing with it, plus evidence links so one requirement may have several
-documents and one document may support several requirements. The legacy backfill
-maps only unambiguous evidence and flags the rest; a generic identity requirement
-is never split into guessed directors.
+**Phase C — document intelligence and accountable Kossilon review.** Its
+dependency (B) is code-complete. Phase A's `documentSafetyOf` and Phase B's
+`case_requirement_instances` / `requirement_evidence_links` are the model C's
+findings attach to: a finding cites an exact document version and a page range,
+which the evidence link already carries.
 
-Then the rest of **B-4**: the 今日工作 / 客戶與案件 / 文件審閱 / 訊息 navigation and
-the five work views. Phase A's `documentSafetyOf` and Phase B's
-`outstandingForClient` / `awaitingInternalReview` already supply the state each
-view needs, so this is composition rather than new derivation.
+Before writing code, the reconciliation already established what C is walking
+into: `src/lib/ai-agent.ts` is a demo FAQ helper, not a completeness capability,
+and must not be dressed as one.
 
-Applying `0023`, `0024` and `0025` to a database needs explicit authorization
-under `CLAUDE.md`, and the CI run is what executes the 15 repository integration
-tests.
+Applying `0023` through `0026` to a database needs explicit authorization under
+`CLAUDE.md`. The CI run is what executes the 15 repository integration tests.
 
 ## Open blockers
 

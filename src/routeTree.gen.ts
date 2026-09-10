@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkQueueRouteImport } from './routes/work-queue'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as TodayRouteImport } from './routes/today'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
@@ -37,6 +38,11 @@ const WorkQueueRoute = WorkQueueRouteImport.update({
 const WhatsappRoute = WhatsappRouteImport.update({
   id: '/whatsapp',
   path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
+  '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
+  '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
+  '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/portal'
     | '/settings'
+    | '/today'
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/portal'
     | '/settings'
+    | '/today'
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/portal'
     | '/settings'
+    | '/today'
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
@@ -268,6 +280,7 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   PortalRoute: typeof PortalRoute
   SettingsRoute: typeof SettingsRoute
+  TodayRoute: typeof TodayRoute
   WhatsappRoute: typeof WhatsappRouteWithChildren
   WorkQueueRoute: typeof WorkQueueRoute
 }
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/whatsapp'
       fullPath: '/whatsapp'
       preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -481,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   PortalRoute: PortalRoute,
   SettingsRoute: SettingsRoute,
+  TodayRoute: TodayRoute,
   WhatsappRoute: WhatsappRouteWithChildren,
   WorkQueueRoute: WorkQueueRoute,
 }
