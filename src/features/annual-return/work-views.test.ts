@@ -142,7 +142,12 @@ describe("deriveWorkViews", () => {
     });
     const returns = view(results, "returnsAndExceptions");
     expect(returns.definition.released).toBe(false);
-    expect(returns.definition.unavailableReason).toContain("第 E 階段");
+    // Names the specific integration that is missing, not a phase number -- and
+    // says outright that the blank is not "no exceptions". No package has been
+    // transmitted, so no return can have arrived, so the absence here is the
+    // absence of the whole process.
+    expect(returns.definition.unavailableReason).toContain("external-handoff-destination");
+    expect(returns.definition.unavailableReason).toContain("空白不代表沒有異常");
     expect(returns.rows).toHaveLength(0);
   });
 

@@ -60,13 +60,21 @@ export const WORK_VIEWS: readonly WorkViewDefinition[] = [
   {
     key: "returnsAndExceptions",
     label: "回件與異常",
-    // Phase E owns the folder connector and the returned-output contract. Saying
-    // so is the honest thing: an empty list here would read as "no exceptions",
-    // which is a claim nothing in this build can make.
+    // Phase E built the model behind this -- package_handoffs, handoff_returns,
+    // the reconciliation rule and the destination adapter -- but the destination
+    // itself is the firm's internal server, and its protocol, address and rights
+    // are not known to this repository.
+    //
+    // So the view stays unreleased, and the reason names the specific thing that
+    // is missing rather than a phase number. An empty list here would read as
+    // "no exceptions", which is a claim nothing in this build can make: no
+    // package has been transmitted, so no return can have arrived, so the
+    // absence of exceptions is the absence of the whole process.
     description: "外部交件後的回件核對。",
     released: false,
     unavailableReason:
-      "回件核對屬於第 E 階段，尚未推出。現時請沿用人手記錄，這裡不會顯示任何回件狀態。",
+      "回件核對需要外部交件連接器（BLOCKED_INTEGRATION: external-handoff-destination）。" +
+      "尚未有任何套件成功交出，因此不會有回件。現時請沿用人手記錄；這裡的空白不代表沒有異常。",
   },
 ];
 
