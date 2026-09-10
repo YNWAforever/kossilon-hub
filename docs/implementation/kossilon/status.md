@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-c` · Current commit: `7e2ab0c` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-d` · Current commit: `e3d91d3` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -38,7 +38,7 @@ its code is written.
 | **C-0** Three claims the product could not support | Complete — dashboard heading, synthetic confidence, both Chinese-stripping tokenizers |
 | **C-1** Document versions and supersession | Complete — migration `0027`; 19 unit + 5 integration tests; not applied to any database |
 | **C-2** Analysis pipeline and provider adapter | ✅ complete — migration `0028`; queue, worker, two deterministic tiers, disabled provider adapter; wired end to end; 56 tests |
-| **C-3** Approved annual-return requirement template | ✅ complete — NAR1/AGM/CDD company-level, identity and address proof per confirmed party; calendar-month freshness rule; 29 tests. `syncRequirementInstances` has no caller yet |
+| **C-3** Approved annual-return requirement template | ✅ complete — NAR1/AGM/CDD company-level, identity and address proof per confirmed party; calendar-month freshness rule; parties seeded from the officer register and confirmed by a person, which creates their requirements in the same transaction |
 | **C-4a** No synthetic certainty percentage | Complete — `DraftGrounding` replaced `confidence: number`; 8 tests |
 | **C-4b** Findings in the review workspace | ✅ complete — findings on the case detail screen, with "not checked" said in words rather than shown as a blank; 27 tests |
 | **C-5** Package approval contract | Complete — 19 tests; AI holds no package-approve permission, structurally |
@@ -147,24 +147,36 @@ A model cannot ask.
 
 ## Exact next step
 
-**Phase C is code-complete.** All six packages are done; none is
-integration-verified, because no migration has been applied and no provider
-exists.
+**Phase C is complete.** All seven packages are done and the per-party model is
+reachable end to end: officers seed candidates, a person confirms one, and that
+party's requirements are created in the same transaction.
 
-Two loose ends inside C, both deliberate and both small:
+One thing deliberately left, and it is a product decision rather than an
+oversight: nothing prunes a requirement instance whose party has since left the
+case. Insert-only was chosen so a sync can never erase a human decision — a
+waiver, a not-applicable with a reason, an authorising user — and pruning needs
+to be an action a person takes rather than a side effect of recomputing a
+template.
 
-- `syncRequirementInstances` has no caller. The natural trigger is case creation
-  or party confirmation, and choosing which is a product decision rather than a
-  mechanical one.
-- `document_findings` is written and read, but nothing prunes a requirement
-  instance whose party has left the case. Insert-only was chosen so a sync can
-  never erase a human decision; pruning needs to be an action a person takes.
+Note also that `matchRequirementKey` is conservative by design. On a case whose
+checklist rows do not name a requirement (the seeded fixtures carry only "Signed
+NAR1 form"), the identity and address-proof requirements are simply not
+instantiated, because there is no row to attach them to. That is visible in the
+review workspace rather than silent, but it means a firm adopting the template
+will want its checklist labels to name what they are.
 
-**Phase D — messaging, attachments and chasing** is next under the whole-plan
-instruction. Its dependency (C) is code-complete, and Phase B already built the
-chase-suppression rule (`outstanding.ts`) and the daily work views D will drive.
+**Phase D — messaging, attachments and chasing** is where the work continues.
+Eight pre-existing defects in the messaging code have already been found and
+fixed (see the Phase D section below); none of Phase D's own features is built:
 
-Applying `0023` through `0028` to a database needs explicit authorization under
+- **Inbound media intake.** An attachment becomes the literal string `[image]`
+  today; `waMediaId` survives only in a JSONB blob no read query selects, nothing
+  downloads media, and the WhatsApp feature imports nothing from documents. A new
+  capability, not an extension.
+- **The fixture-replay send guard.** The plan requires "do not send customer
+  reminders during fixture replay" and nothing in code enforces it.
+
+Applying `0023` through `0029` to a database needs explicit authorization under
 `CLAUDE.md`. No Postgres is reachable here, so the repository integration tests
 execute only in CI.
 
