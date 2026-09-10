@@ -288,8 +288,11 @@ function WorkQueueRoute() {
                     className="grid min-h-20 grid-cols-[1.4fr_110px_110px_110px_140px_90px_100px_110px] items-center gap-3 px-3 py-4 hover:bg-muted/30"
                   >
                     <div role="cell" className="min-w-0">
-                      <p className="text-xs text-muted-foreground">
-                        Company {item.companyId.slice(0, 8)}
+                      {/* Was `Company {item.companyId.slice(0, 8)}` -- a raw uuid
+                          prefix where the company name belongs, on the screen
+                          staff are supposed to work from. */}
+                      <p className="truncate text-xs text-muted-foreground">
+                        {item.companyName ?? "Company no longer on file"}
                       </p>
                       {caseDetailLinkFor(item) ? (
                         <Link
@@ -309,8 +312,10 @@ function WorkQueueRoute() {
                           : ""}
                       </p>
                     </div>
-                    <span role="cell">
-                      {item.ownerId ? item.ownerId.slice(0, 8) : "Unassigned"}
+                    <span role="cell" className="truncate">
+                      {/* "Unknown owner" and "Unassigned" are different facts: one
+                          is a person we cannot resolve, the other is nobody. */}
+                      {item.ownerName ?? (item.ownerId ? "Unknown owner" : "Unassigned")}
                     </span>
                     <span role="cell">
                       <SlaPill state={item.escalationState} />
