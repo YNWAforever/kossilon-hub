@@ -90,22 +90,49 @@ async function cleanup(sql: SqlClient): Promise<void> {
       where id = ${itemId}`;
   }
   touchedChecklistItems.clear();
-  // Order matters, and it used to be wrong: document_upload_intents.document_id
-  // is `on delete restrict`, so deleting the documents while their intents still
-  // pointed at them raised a foreign-key violation and every test in this file
-  // failed in cleanup. The ids have to be captured before the intents go, since
-  // the intents are what names them.
+  // Teardown has to run innermost-first, and getting it wrong failed all twenty
+  // tests in this file rather than one. The graph, as it actually is:
+  //   document_versions   -> document_upload_intents  (restrict)
+  //   document_versions   -> documents                (cascade)
+  //   document_versions   -> document_versions        (restrict, supersession)
+  //   document_scan_jobs  -> document_upload_intents  (restrict)
+  //   document_upload_intents -> documents            (restrict)
+  // So the versions and jobs go first, then the intents, then the documents --
+  // and the document ids have to be read before the intents are gone, because
+  // the intents are what name them.
   const owned = await sql<{ document_id: string }[]>`
     select document_id from document_upload_intents
     where object_key like ${KEY_PREFIX + "%"} and document_id is not null`;
+
+  // Supersession points version 1 at version 2 with restrict, so a single
+  // delete covering both rows would refuse itself.
+  await sql`
+    update document_versions set superseded_by_version_id = null
+    where intent_id in (
+      select id from document_upload_intents where object_key like ${KEY_PREFIX + "%"}
+    )`;
+  await sql`
+    delete from document_versions
+    where intent_id in (
+      select id from document_upload_intents where object_key like ${KEY_PREFIX + "%"}
+    )`;
   await sql`
     delete from document_scan_jobs
     where intent_id in (
       select id from document_upload_intents where object_key like ${KEY_PREFIX + "%"}
     )`;
   await sql`delete from document_upload_intents where object_key like ${KEY_PREFIX + "%"}`;
+
   if (owned.length > 0) {
-    await sql`delete from documents where id = any(${owned.map((row) => row.document_id)}::uuid[])`;
+    // string_to_array rather than an array parameter: postgres.js takes an
+    // array's element type from its FIRST element, so it sends the value as
+    // plain text and the cast then fails on a malformed array literal. A uuid
+    // never contains a comma, so joining is safe here.
+    const ids = owned.map((row) => row.document_id).join(",");
+    await sql`
+      delete from requirement_evidence_links
+      where document_id = any(string_to_array(${ids}, ',')::uuid[])`;
+    await sql`delete from documents where id = any(string_to_array(${ids}, ',')::uuid[])`;
   }
 }
 

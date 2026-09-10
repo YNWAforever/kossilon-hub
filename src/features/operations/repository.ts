@@ -91,6 +91,13 @@ export type MaintenanceRunRepository = {
 
 const DEFAULT_RUN_LIMIT = 20;
 
+/**
+ * Separator for the failed-pass list, written as an escape so nothing between
+ * here and Postgres can mangle a raw control byte. A unit separator appears in
+ * no pass name, so joining cannot depend on a convention holding.
+ */
+const PASS_SEPARATOR = "\u0001";
+
 function iso(value: string | Date): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
@@ -181,20 +188,25 @@ export function createMaintenanceRunRepository(
   return {
     async recordRun(draft) {
       /**
-       * The empty array is written as a literal rather than as a parameter.
+       * Built in SQL from a delimited string, not passed as an array parameter.
        *
-       * `sql.array` takes its element type from the FIRST element, so an empty
-       * array gets no type at all, is sent as plain text, and the insert is
-       * rejected against a `text[]` column -- which is every clean run, the most
-       * common row this table will ever hold. A cast cannot rescue it either,
-       * because the value is serialised as text before the cast sees it.
+       * `sql.array` resolves its element type through a map the driver fills in
+       * lazily from the server, and until it does the value goes out as plain
+       * `text` -- so the insert is refused against a `text[]` column whether the
+       * array is empty or not. Casting cannot rescue it, because by then the
+       * value has already been serialised as `dispatchDue,redactNotifications`
+       * rather than as an array literal. `string_to_array` has no inference in
+       * it at all.
        *
-       * CI found this. It could not have been found by reading, and it could not
-       * have been found by the local suite, which skips every database test.
+       * The separator is a unit separator rather than a comma so this does not
+       * quietly depend on pass names never containing one.
+       *
+       * CI found this, twice. It was not findable by reading, and not findable
+       * by the local suite, which skips every database test.
        */
       const failedPasses =
         draft.failedPasses.length > 0
-          ? sql`${sql.array([...draft.failedPasses])}::text[]`
+          ? sql`string_to_array(${[...draft.failedPasses].join(PASS_SEPARATOR)}, ${PASS_SEPARATOR})`
           : sql`'{}'::text[]`;
 
       const rows = await sql<{ id: string }[]>`

@@ -48,7 +48,10 @@ async function cleanupWhatsAppFixtures() {
   await sql.begin(async (tx) => {
     await tx`
       delete from notification_outbox
-      where company_id = ${TEST_COMPANY_ID}
+      -- Both companies. The shared-number test introduced SHARED_COMPANY_ID and
+      -- this sweep still named only the first, so the companies delete below hit
+      -- notification_outbox_company_id_fkey and took the whole test with it.
+      where company_id in (${TEST_COMPANY_ID}, ${SHARED_COMPANY_ID})
         or idempotency_key like 'follow-up:phase2-test:%'
     `;
     await tx`
