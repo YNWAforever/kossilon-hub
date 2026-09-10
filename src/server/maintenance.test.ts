@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { runFirmMaintenanceWithDependencies } from "./maintenance";
 import type { FirmMaintenanceDependencies } from "./maintenance";
+import { MaintenancePassesFailedError } from "./cron";
 
 function dependencies(
   overrides: Partial<FirmMaintenanceDependencies> = {},
@@ -53,7 +54,9 @@ describe("runFirmMaintenanceWithDependencies", () => {
       escalations: { warnings: 1, breaches: 2 },
       // No createScanWorker is supplied here, so the pass reports zeros. Asserted
       // explicitly rather than loosened away: zeros must mean "nothing was
-      // scanned", never "everything is clear".
+      // scanned", never "everything is clear". `scanner` is what makes that
+      // readable -- without it these zeros are identical to a tick where a real
+      // scanner ran and found nothing due.
       documentScans: {
         claimed: 0,
         clean: 0,
@@ -61,14 +64,91 @@ describe("runFirmMaintenanceWithDependencies", () => {
         retried: 0,
         failed: 0,
         superseded: 0,
-        stalled: 0,
+        scanner: "not-configured",
       },
+      stalledQuarantine: { stalled: 0 },
       annualReturnReminders: { sent: 1, skipped: 0 },
       serviceSubscriptionReminders: { sent: 1, skipped: 0 },
       dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0, superseded: 0 },
       uploads: { expired: 2 },
       notifications: { strandedFailed: 2, redacted: 5 },
+      failures: [],
     });
+  });
+
+  /**
+   * The defect, at the layer where it actually occurred.
+   *
+   * `createScanWorker?.()` guards an ABSENT factory, not a throwing one, and the
+   * production wiring in runFirmMaintenance always supplies the factory. In live
+   * mode that factory resolved an R2 binding and a scanner config and threw when
+   * either was missing -- the permanent state under
+   * BLOCKED_INTEGRATION: malware-scanner-provider. The throw escaped the closure
+   * and aborted the tick, so escalateStalledQuarantine, cleanupExpiredUploads and
+   * redactNotifications never ran.
+   *
+   * The old test omitted createScanWorker entirely, which is why the behaviour
+   * was certified green: it exercised the absent branch and never the throwing
+   * one.
+   */
+  it("survives a scan worker factory that throws, and still runs the later passes", async () => {
+    const expireUploads = vi.fn(async () => [{ objectKey: "a" }]);
+    const listStalledQuarantine = vi.fn(async () => []);
+    const redactExpired = vi.fn(async () => ({ redacted: 5 }));
+
+    const error = await runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z", dispatchLimit: 7 },
+      dependencies({
+        createScanWorker: () => {
+          throw new Error(
+            "Live document scanning requires DOCUMENT_SCANNER_URL and DOCUMENT_SCANNER_API_KEY.",
+          );
+        },
+        createDocumentRepository: () => ({
+          expireUploads,
+          listStalledQuarantine,
+          close: vi.fn(async () => {}),
+        }),
+        createOutboxRepository: () => ({
+          failStranded: vi.fn(async () => ({ failed: 2 })),
+          redactExpired,
+          close: vi.fn(async () => {}),
+        }),
+      }),
+    ).catch((thrown: unknown) => thrown);
+
+    // The run still fails, so nothing can mistake a broken tick for a clean one.
+    expect(error).toBeInstanceOf(MaintenancePassesFailedError);
+    const result = (error as MaintenancePassesFailedError).result;
+
+    // Null, not zeros: the pass produced no information at all.
+    expect(result.documentScans).toBeNull();
+    expect(result.failures).toEqual([
+      {
+        pass: "drainDocumentScanJobs",
+        message:
+          "Live document scanning requires DOCUMENT_SCANNER_URL and DOCUMENT_SCANNER_API_KEY.",
+      },
+    ]);
+
+    // The three passes the throw used to take with it. The old comment on that
+    // factory named the first of these as the thing keeping the backlog visible.
+    expect(listStalledQuarantine).toHaveBeenCalled();
+    expect(expireUploads).toHaveBeenCalled();
+    expect(redactExpired).toHaveBeenCalled();
+  });
+
+  // Absent and null are different facts -- no scan pass wired at all, versus a
+  // caller that looked and found no scanner configured -- but both are honest
+  // "not-configured" rather than an error, and neither may fail the run.
+  it("treats a scan worker factory that returns null as a disabled capability", async () => {
+    const result = await runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z", dispatchLimit: 7 },
+      dependencies({ createScanWorker: () => null }),
+    );
+
+    expect(result.documentScans).toMatchObject({ claimed: 0, scanner: "not-configured" });
+    expect(result.failures).toEqual([]);
   });
 
   it("passes the dispatch limit through", async () => {

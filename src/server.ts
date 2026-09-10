@@ -2,6 +2,10 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+// Statically imported where the rest of this file defers, and safe to be: cron.ts
+// has only `import type` dependencies, so this pulls no database client into a
+// cold start. It is a pure function over an already-returned result.
+import { maintenanceResultOf } from "./server/cron";
 
 // Duplicated from ./features/whatsapp/webhook rather than imported: every other
 // branch here defers its imports so a cold start does not pull the database
@@ -82,6 +86,12 @@ export async function runScheduledMaintenanceForWorker(
     const result = await run({ now: new Date(scheduledTime).toISOString() });
     console.log("scheduled maintenance", JSON.stringify(result));
   } catch (error) {
+    // A run where one pass failed still learned everything the other passes
+    // found, and that ride-along result is logged in the same shape as a clean
+    // run. Isolating the passes would otherwise trade an aborted tick for a
+    // blank one.
+    const partial = maintenanceResultOf(error);
+    if (partial) console.log("scheduled maintenance", JSON.stringify(partial));
     // Nothing watches a scheduled invocation the way a user watches a request, so
     // a failure has to announce itself or the next signal is a missed SLA.
     console.error("scheduled maintenance failed", error);

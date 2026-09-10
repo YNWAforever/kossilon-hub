@@ -70,12 +70,20 @@ export type FirmMaintenanceDependencies = {
   createDocumentStorage(): { delete(objectKey: string): Promise<void> };
   /**
    * The scan pass, assembled by the caller so this module stays free of provider
-   * resolution. It is optional because live mode has no scanner configured yet
-   * (BLOCKED_INTEGRATION: malware-scanner-provider) and a maintenance run must
-   * not fail wholesale for that -- the queue simply keeps its backlog, visibly,
-   * which is the accurate state.
+   * resolution.
+   *
+   * Optional, and separately allowed to return null. The two are different
+   * facts: absent means no caller wired a scan pass at all (a test), while null
+   * means the caller looked and there is no scanner configured
+   * (BLOCKED_INTEGRATION: malware-scanner-provider). Both report
+   * scanner: "not-configured" and neither fails the run -- the queue keeps its
+   * backlog, visibly, which is the accurate state.
+   *
+   * Returning null rather than throwing is load-bearing. `createScanWorker?.()`
+   * guards an absent factory, not a throwing one, so a factory that threw here
+   * aborted every later pass in the tick.
    */
-  createScanWorker?(): ScanWorkerDependencies & { close(): Promise<void> };
+  createScanWorker?(): (ScanWorkerDependencies & { close(): Promise<void> }) | null;
   createOutboxRepository(): MaintenanceOutboxRepository;
 };
 
@@ -107,14 +115,22 @@ export async function runFirmMaintenanceWithDependencies(
         drainDocumentScanJobs: async (now) => {
           const worker = dependencies.createScanWorker?.();
           if (!worker) {
-            // No scanner configured. Reporting zeros is honest: nothing was
-            // claimed and nothing was verdicted. It must never be read as "all
-            // clear" -- escalateStalledQuarantine below is what surfaces the
-            // backlog that results.
-            return { claimed: 0, clean: 0, rejected: 0, retried: 0, failed: 0, superseded: 0 };
+            // No scanner. Zeros alone would be ambiguous -- identical to a tick
+            // where nothing was due -- so the pass says which it was. It must
+            // never be read as "all clear": nothing was claimed and nothing was
+            // verdicted, and every received file is still waiting.
+            return {
+              claimed: 0,
+              clean: 0,
+              rejected: 0,
+              retried: 0,
+              failed: 0,
+              superseded: 0,
+              scanner: "not-configured" as const,
+            };
           }
           try {
-            return await drainDocumentScanJobs({ now }, worker);
+            return { ...(await drainDocumentScanJobs({ now }, worker)), scanner: "ran" as const };
           } finally {
             await worker.close();
           }
@@ -184,16 +200,34 @@ export async function runFirmMaintenance(
     createOutboxRepository: () => outboxModule.createNotificationOutboxRepository(),
     createScanWorker: () => {
       const providerMode = providerModeModule.currentProviderMode();
+
+      // Asked before anything is built, and answered with null rather than a
+      // throw.
+      //
+      // This used to fall through to createDocumentScannerForProviderMode, which
+      // throws in live with no config. That is correct for that function -- there
+      // is no fallback scanner, because a fallback is exactly how a fake "clean"
+      // reached production in the first place -- but it was wrong here. The
+      // caller guards `createScanWorker?.()`, which handles an ABSENT factory,
+      // not a throwing one, and the production wiring always supplies the
+      // factory. So under BLOCKED_INTEGRATION: malware-scanner-provider the
+      // throw aborted the whole tick at the scan pass, taking
+      // escalateStalledQuarantine, cleanupExpiredUploads and redactNotifications
+      // with it -- including the very pass the old comment here named as the
+      // thing that would keep the backlog visible.
+      //
+      // A deliberately disabled capability is not an error. It is reported as
+      // scanner: "not-configured", and no scanner is still built.
+      const scannerConfig =
+        providerMode === "live" ? runtimeEnvModule.getDocumentScannerConfig() : null;
+      if (providerMode === "live" && !scannerConfig) return null;
+
       const storage = documentServerFnsModule.createDocumentStorageForProviderMode(
         providerMode,
         providerMode === "live" ? runtimeEnvModule.getDocumentsBucketBinding() : undefined,
       );
-      // Throws in live when DOCUMENT_SCANNER_* is unset, which is deliberate:
-      // there is no fallback scanner, because a fallback is exactly how a fake
-      // "clean" reached production in the first place. The caller treats the
-      // absence as "no scan pass this tick" and the backlog stays visible.
       const scanner = documentServerFnsModule.createDocumentScannerForProviderMode(providerMode, {
-        config: providerMode === "live" ? runtimeEnvModule.getDocumentScannerConfig() : null,
+        config: scannerConfig,
         storage,
       });
       const jobs = scanJobsModule.createDocumentScanJobRepository();
