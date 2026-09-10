@@ -76,14 +76,16 @@ describe("final review architecture restorations", () => {
     expect(startSource).toContain("defaultSsr: false");
   });
 
-  it("restores the dashboard loader and AI daily digest", () => {
+  it("restores the dashboard loader and priority queue", () => {
     // The loader now picks its dependency set from route context rather than
     // always calling the production server functions. -dashboard-modes.test.tsx
     // renders both modes; this only pins that the branch is still there.
     expect(dashboardSource).toContain("loadDashboardData(");
     expect(dashboardSource).toContain('context.dataMode === "demo"');
     expect(dashboardSource).toContain("buildDailyDigest");
-    expect(dashboardSource).toContain("AI daily digest");
+    expect(dashboardSource).toContain("Priority queue");
+    // Phase C: no AI claim over a deterministic ranker.
+    expect(dashboardSource).not.toContain("AI daily digest");
     expect(dashboardSource).toContain("annualReturnDataAvailable");
   });
 

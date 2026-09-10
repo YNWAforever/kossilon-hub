@@ -125,9 +125,15 @@ describe("annual return workflow route regressions", () => {
     expect(desktopNavigation?.indexOf('href="/portal"')).toBeLessThan(
       desktopNavigation?.indexOf('href="/whatsapp/automation"') ?? -1,
     );
-    // Destinations are grouped rather than presented as one flat list.
-    expect(desktopNavigation).toContain(">Operations<");
-    expect(desktopNavigation).toContain(">Messaging<");
+    // Destinations are grouped rather than presented as one flat list. The
+    // headings changed from Operations / Messaging / Administration to groups
+    // named after what a staff member is doing: the old set had thirteen
+    // destinations and nothing shaped like "what do I do today". Every previous
+    // destination is still reachable, which the loop above checks.
+    expect(desktopNavigation).toContain(">今日工作<");
+    expect(desktopNavigation).toContain(">客戶與案件<");
+    expect(desktopNavigation).toContain(">文件審閱<");
+    expect(desktopNavigation).toContain(">訊息<");
     expect(desktopNavigation).toContain(">Administration<");
   });
 

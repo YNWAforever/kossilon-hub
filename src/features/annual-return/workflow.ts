@@ -1,5 +1,6 @@
 import { daysBetween } from "@/lib/date-math";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
+import { outstandingForClient } from "./outstanding";
 import {
   ANNUAL_RETURN_STATUSES,
   type AnnualReturnCase,
@@ -140,9 +141,10 @@ export function buildReminderDraft(
   contactName: string,
   today: string,
 ): string {
-  const missingItems = case_.checklist.filter(
-    (item) => item.required && item.status !== "Verified",
-  );
+  // Not `status !== "Verified"`. That set includes every document the client has
+  // already sent and staff have not yet reviewed, so the reminder asked for them
+  // again.
+  const missingItems = outstandingForClient(case_.checklist);
   const daysRemaining = daysBetween(today, case_.filingDueDate);
   const daysRemainingText =
     daysRemaining >= 0 ? `距離現時尚餘 ${daysRemaining} 天` : `已逾期 ${-daysRemaining} 天`;

@@ -161,6 +161,13 @@ export type WhatsAppRepository = {
   attachProviderMessageId(input: {
     messageId: string;
     providerMessageId: string;
+    /**
+     * Which branch the dispatcher took. This is the only moment it is known, and
+     * it decides whether `body` describes what the client received: outside the
+     * 24-hour window a zero-variable template goes out instead of the draft.
+     */
+    sentAs?: "text" | "template";
+    sentTemplateName?: string | null;
   }): Promise<boolean>;
   listConversations(input?: ListConversationsInput): Promise<WhatsAppConversation[]>;
   listConversationMessages(
@@ -374,6 +381,9 @@ type ConversationMessageRow = {
   direction: WhatsAppMessageDirection;
   status: WhatsAppMessageStatus;
   body: string;
+  attachments: { providerMediaId: string; mediaType: string; hasDocument: boolean }[] | null;
+  sent_as: "text" | "template" | null;
+  sent_template_name: string | null;
   case_id: string | null;
   created_at: string | Date;
   received_at: string | Date | null;
@@ -400,6 +410,9 @@ function mapConversationMessage(row: ConversationMessageRow): WhatsAppConversati
     direction: row.direction,
     status: row.status,
     body: row.body,
+    attachments: row.attachments ?? [],
+    sentAs: row.sent_as,
+    sentTemplateName: row.sent_template_name,
     caseId: row.case_id,
     createdAt: timestampString(row.created_at)!,
     receivedAt: timestampString(row.received_at),
@@ -546,11 +559,33 @@ export function createWhatsAppRepository(
               whatsapp_contacts.display_name,
               ${mergePlan.duplicateDisplayName}
             ),
-            company_id = coalesce(
-              ${input.companyId ?? null},
-              whatsapp_contacts.company_id,
-              ${mergePlan.duplicateCompanyId}
-            ),
+            -- A shared number belongs to nobody in particular.
+            --
+            -- The caller's value used to come first in a coalesce, so every staff
+            -- send repointed the contact at whichever company messaged last. A
+            -- nominee director serving several shell companies from one number
+            -- was silently reassigned on each send, and an unsolicited inbound
+            -- reply -- the one case where resolveInboundMatch falls back to this
+            -- column rather than to the last outbound message -- was then filed
+            -- against the wrong client's timeline.
+            --
+            -- Agreement keeps it, silence keeps it, and a genuine conflict clears
+            -- it. Null is the honest answer for a number two companies use: the
+            -- match falls through, the message is still recorded, and nothing is
+            -- attributed to a client it may not belong to.
+            company_id = case
+              when whatsapp_contacts.company_id is null
+                -- Both cast, not just the ones below. Two untyped null parameters
+                -- make this coalesce infer as text, and a CASE cannot mix text
+                -- with the uuid branches that follow -- so every inbound message
+                -- failed to record. Caught by CI, which is the first time any of
+                -- this SQL had run.
+                then coalesce(${input.companyId ?? null}::uuid, ${mergePlan.duplicateCompanyId}::uuid)
+              when ${input.companyId ?? null}::uuid is null then whatsapp_contacts.company_id
+              when whatsapp_contacts.company_id = ${input.companyId ?? null}::uuid
+                then whatsapp_contacts.company_id
+              else null
+            end,
             last_seen_at = now(),
             updated_at = now()
         where id = ${existing.id}
@@ -781,6 +816,29 @@ export function createWhatsAppRepository(
           created_at::text as created_at
       `;
       const [inserted] = rows;
+
+      // In the same transaction as the message, so a client's file reference can
+      // never exist without the message that carried it, nor the message without
+      // the reference. The unique constraint makes a redelivered webhook a no-op
+      // rather than showing the client sending the same file twice.
+      //
+      // Recording the reference is all this can do: fetching the bytes needs a
+      // WOZTELL media-download endpoint and none appears in the webhook
+      // documentation the fixtures are copied from.
+      // BLOCKED_INTEGRATION: whatsapp-media-download.
+      if (inserted && input.attachments.length > 0) {
+        for (const attachment of input.attachments) {
+          await tx`
+            insert into whatsapp_message_media (
+              message_id, provider_media_id, media_type, position
+            ) values (
+              ${inserted.id}, ${attachment.providerMediaId}, ${attachment.mediaType},
+              ${attachment.position}
+            )
+            on conflict do nothing
+          `;
+        }
+      }
 
       if (!inserted) {
         const conflictRows = await tx<MessageRow[]>`
@@ -1158,12 +1216,19 @@ export function createWhatsAppRepository(
   async function attachProviderMessageId(input: {
     messageId: string;
     providerMessageId: string;
+    sentAs?: "text" | "template";
+    sentTemplateName?: string | null;
   }): Promise<boolean> {
     const rows = await sql<{ id: string }[]>`
       update whatsapp_messages
       set provider_message_id = ${input.providerMessageId},
           status = case when status = 'queued' then 'sent' else status end,
           sent_at = coalesce(sent_at, now()),
+          -- Left alone when the caller does not know, rather than defaulted to
+          -- 'text'. Null means "not recorded", and asserting text would claim the
+          -- client received the body when nobody checked.
+          sent_as = coalesce(${input.sentAs ?? null}, sent_as),
+          sent_template_name = coalesce(${input.sentTemplateName ?? null}, sent_template_name),
           updated_at = now()
       where id = ${input.messageId}
         and provider_message_id is null
@@ -1263,6 +1328,25 @@ export function createWhatsAppRepository(
         direction,
         status,
         body,
+        -- Aggregated rather than joined, so one message with three attachments
+        -- stays one row instead of three copies of the message.
+        (
+          select coalesce(
+            json_agg(
+              json_build_object(
+                'providerMediaId', m.provider_media_id,
+                'mediaType', m.media_type,
+                'hasDocument', m.document_id is not null
+              )
+              order by m.position asc
+            ),
+            '[]'::json
+          )
+          from whatsapp_message_media m
+          where m.message_id = whatsapp_messages.id
+        ) as attachments,
+        sent_as,
+        sent_template_name,
         case_id,
         created_at::text as created_at,
         received_at::text as received_at,

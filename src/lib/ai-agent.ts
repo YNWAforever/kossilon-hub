@@ -2,6 +2,7 @@ import { checklistTemplates, daysUntil, type ClientCase } from "./app-data";
 import { type AnnualReturnAiContext } from "./annual-return-store";
 import { type ClientPortalPaymentProofAiContext } from "./client-portal-store";
 import { type FaqEntry, type ReferenceDoc } from "./knowledge-base";
+import { tokenize } from "./text-tokens";
 
 export type AiEnquiry = {
   name?: string;
@@ -26,9 +27,33 @@ export type RetrievalContext = {
   caseFields: string[];
 };
 
+export type DraftGrounding = {
+  /** FAQ entries whose text actually matched the message. */
+  matchedFaqs: number;
+  /** Reference documents whose text actually matched. */
+  matchedDocuments: number;
+  /** Whether live case fields were available to quote. */
+  caseLinked: boolean;
+  /**
+   * Nothing in the knowledge base matched. The reply is the intent template
+   * plus whatever case fields exist -- not a retrieved answer.
+   */
+  ungrounded: boolean;
+};
+
 export type DraftReply = {
   markdown: string;
-  confidence: number;
+  /**
+   * What this draft was built from.
+   *
+   * This replaced `confidence: number`, which was
+   * `min(96, 70 + faqs.length * 4 + documents.length * 3 + ...)`. Because both
+   * arrays are capped at 4 and 3, that was a pure arity function bounded to
+   * 70-96: with zero matched FAQs, zero matched documents and no linked case it
+   * still read "Confidence 70%". A reviewer cannot act on that number. They can
+   * act on "nothing matched, this is template text".
+   */
+  grounding: DraftGrounding;
   sources: Array<{
     id: string;
     label: string;
@@ -69,14 +94,6 @@ const annualReturnPaymentStatusLabels: Record<AnnualReturnAiContext["paymentStat
   paid: "Paid",
   overdue: "Overdue",
 };
-
-function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .split(" ")
-    .filter((word) => word.length > 2);
-}
 
 function scoreText(query: string[], target: string, boosts: string[]): number {
   const targetWords = new Set(tokenize(target));
@@ -251,15 +268,14 @@ export function draftReply(
     })),
   ];
 
-  const confidence = Math.min(
-    96,
-    70 +
-      context.faqs.length * 4 +
-      context.documents.length * 3 +
-      (annualReturnContext || clientCase ? 8 : 0),
-  );
+  const grounding: DraftGrounding = {
+    matchedFaqs: context.faqs.length,
+    matchedDocuments: context.documents.length,
+    caseLinked: Boolean(annualReturnContext || clientCase),
+    ungrounded: context.faqs.length === 0 && context.documents.length === 0,
+  };
 
-  return { markdown, confidence, sources };
+  return { markdown, grounding, sources };
 }
 
 export function suggestedFaqs(enquiry: AiEnquiry, faqs: FaqEntry[]): FaqEntry[] {

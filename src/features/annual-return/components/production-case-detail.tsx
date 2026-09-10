@@ -1,3 +1,5 @@
+import { CaseFindings } from "./case-findings";
+import { CaseParties } from "./case-parties";
 import { useEffect, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -13,6 +15,7 @@ import {
   UserRoundCheck,
 } from "lucide-react";
 import { annualReturnQueryKeys } from "../query-keys";
+import { DocumentPicker, StaffPicker } from "./scoped-pickers";
 import { createProductionCaseActions } from "./production-case-actions";
 import {
   getAnnualReturnCase,
@@ -234,27 +237,23 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             <h2 className="text-base font-semibold">Case controls</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
-                <label className="text-sm font-medium" htmlFor="owner-id">
-                  Owner ID
-                </label>
-                <div className="mt-1 flex gap-2">
-                  <input
-                    id="owner-id"
-                    className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2 text-sm"
-                    value={ownerId}
-                    onChange={(event) => setOwnerId(event.target.value)}
-                  />
-                  <button
-                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-                    disabled={locked || ownerMutation.isPending || !isUuid(ownerId)}
-                    onClick={() => ownerMutation.mutate(ownerId)}
-                    type="button"
-                  >
-                    <PendingIcon pending={ownerMutation.isPending} />
-                    <UserRoundCheck aria-hidden className="h-4 w-4" />
-                    Assign
-                  </button>
-                </div>
+                <StaffPicker
+                  id="owner-id"
+                  label="負責同事"
+                  value={ownerId}
+                  onChange={setOwnerId}
+                  disabled={locked || ownerMutation.isPending}
+                />
+                <button
+                  className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                  disabled={locked || ownerMutation.isPending || !isUuid(ownerId)}
+                  onClick={() => ownerMutation.mutate(ownerId)}
+                  type="button"
+                >
+                  <PendingIcon pending={ownerMutation.isPending} />
+                  <UserRoundCheck aria-hidden className="h-4 w-4" />
+                  Assign
+                </button>
                 <MutationMessage error={ownerMutation.error} />
               </div>
 
@@ -338,6 +337,10 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             <MutationMessage error={checklistMutation.error} />
           </section>
 
+          <CaseParties caseId={caseId} locked={locked} />
+
+          <CaseFindings caseId={caseId} locked={locked} />
+
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Payment</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto]">
@@ -351,12 +354,14 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   <option key={status}>{status}</option>
                 ))}
               </select>
-              <input
-                aria-label="Payment proof document ID"
-                className="min-w-0 rounded-md border bg-background px-3 py-2 text-sm"
-                placeholder="Payment proof document UUID"
+              <DocumentPicker
+                id="payment-proof-document"
+                label="付款證明文件"
+                caseId={caseItem.id}
+                categories={["payment", "receipt", "other"]}
                 value={paymentProofDocumentId}
-                onChange={(event) => setPaymentProofDocumentId(event.target.value)}
+                onChange={setPaymentProofDocumentId}
+                disabled={locked || paymentMutation.isPending}
               />
               <button
                 className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
@@ -411,12 +416,14 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 value={filingReference}
                 onChange={(event) => setFilingReference(event.target.value)}
               />
-              <input
-                aria-label="Verified receipt document ID"
-                className="min-w-0 rounded-md border bg-background px-3 py-2 text-sm"
-                placeholder="Verified receipt document UUID"
+              <DocumentPicker
+                id="confirmation-document"
+                label="已核實回執文件"
+                caseId={caseItem.id}
+                categories={["receipt", "submission", "registry"]}
                 value={confirmationDocumentId}
-                onChange={(event) => setConfirmationDocumentId(event.target.value)}
+                onChange={setConfirmationDocumentId}
+                disabled={locked || receiptMutation.isPending}
               />
               <button
                 className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"

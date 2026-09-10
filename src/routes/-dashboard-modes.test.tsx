@@ -86,7 +86,10 @@ describe("dashboard at both data modes", () => {
   it("renders the digest and the upcoming table from demo data", async () => {
     const html = await renderDashboard("demo");
 
-    expect(html).toContain("AI daily digest");
+    // Renamed in Phase C. The heading was not inside a dataMode branch, so a
+    // production user read "AI" over buildDailyDigest -- a hardcoded weight table.
+    expect(html).toContain("Priority queue");
+    expect(html).not.toContain("AI daily digest");
     expect(html).toContain("Upcoming annual returns");
     expect(html).not.toContain("No priority work detected from annual returns.");
   });

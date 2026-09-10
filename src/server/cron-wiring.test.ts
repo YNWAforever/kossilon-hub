@@ -61,7 +61,14 @@ describe("runScheduledMaintenanceForWorker", () => {
 
     await runScheduledMaintenanceForWorker(Date.parse("2026-08-05T02:35:00.000Z"), run);
 
-    expect(run).toHaveBeenCalledWith({ now: "2026-08-05T02:35:00.000Z" });
+    expect(run).toHaveBeenCalledWith({
+      now: "2026-08-05T02:35:00.000Z",
+      // Only the cron hook may claim this. `maintenanceHealthOf` counts
+      // scheduled runs alone when deciding whether the schedule is alive, so a
+      // manual invocation cannot silence a dead cron -- and a row written from
+      // here is the first real evidence the deployed runtime fires at all.
+      triggerSource: "scheduled",
+    });
   });
 
   it("rethrows so a failed run is visible to the platform", async () => {
@@ -80,5 +87,26 @@ describe("runScheduledMaintenanceForWorker", () => {
 
     expect(source).toContain('import("./server/maintenance")');
     expect(source).toContain("runFirmMaintenance(input)");
+  });
+
+  /**
+   * `createMaintenanceRunRecorder` is optional on FirmMaintenanceDependencies so
+   * the existing tests of runFirmMaintenanceWithDependencies need no stub
+   * database. That optionality must never reach production: a deployment that
+   * inherited the default would go on leaving no trace of the tick, which is the
+   * exact fault Phase F exists to fix, and nothing else in a build would notice.
+   *
+   * Asserted by source text rather than by calling it, for the same reason the
+   * test above injects a runner: runFirmMaintenance opens five Postgres
+   * connections against whatever DATABASE_URL is in scope.
+   */
+  it("gives the production wiring somewhere to record the run", () => {
+    const source = readFileSync(new URL("./maintenance.ts", import.meta.url), "utf8");
+    const productionWiring = source.slice(
+      source.indexOf("export async function runFirmMaintenance("),
+    );
+
+    expect(productionWiring).toContain("createMaintenanceRunRecorder:");
+    expect(productionWiring).toContain("createMaintenanceRunRepository()");
   });
 });

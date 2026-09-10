@@ -6,7 +6,7 @@ import {
   CreditCard,
   UserCheck,
   Flame,
-  Sparkles,
+  ListChecks,
   ArrowRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -152,13 +152,17 @@ function DashboardPage() {
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <ListChecks className="h-4 w-4 text-primary" />
             </div>
             <div>
               <h2 className="font-display text-base font-semibold text-foreground">
-                AI daily digest
+                Priority queue
               </h2>
               <p className="text-xs text-muted-foreground">{digest.headline}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Ranked by filing deadline, risk level and missing required documents. No model reads
+                these cases.
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -261,30 +265,68 @@ function DashboardPage() {
         </div>
       </section>
 
-      {/* Overdue banner */}
-      <section>
-        <div className="rounded-xl border border-status-red/30 bg-status-red-soft p-5">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-status-red" />
-            <div>
-              <h2 className="font-display text-base font-semibold text-status-red">
-                Requires immediate attention
-              </h2>
-              <p className="mt-1 text-xs text-status-red/80">
-                {annualReturnDataAvailable
-                  ? `${m.overdue} annual returns are overdue. Assign or escalate now to avoid Companies Registry penalties.`
-                  : "Overdue counts are unavailable. Open the board to check directly."}
-              </p>
-              <Link
-                to="/annual-returns"
-                className="mt-3 inline-flex items-center rounded-md bg-status-red px-3 py-1.5 text-xs font-medium text-white hover:bg-status-red/90"
-              >
-                Review overdue cases
-              </Link>
+      {/* Overdue banner.
+
+          It used to render unconditionally, so with nothing overdue it said, in
+          full red alarm styling, "0 annual returns are overdue". A banner that
+          shouts on a quiet day teaches people to ignore it on a loud one, which
+          costs exactly the Companies Registry penalties it exists to prevent.
+
+          Three states, because "none overdue" and "we could not count" are not
+          the same thing and only one of them is good news. */}
+      {!annualReturnDataAvailable ? (
+        <section>
+          <div className="rounded-xl border border-status-yellow/30 bg-status-yellow-soft p-5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-status-yellow" />
+              <div>
+                <h2 className="font-display text-base font-semibold text-status-yellow">
+                  Overdue count unavailable
+                </h2>
+                <p className="mt-1 text-xs text-status-yellow/80">
+                  This is not the same as nothing being overdue. Open the board to check directly.
+                </p>
+                <Link
+                  to="/annual-returns"
+                  className="mt-3 inline-flex items-center rounded-md border border-status-yellow px-3 py-1.5 text-xs font-medium text-status-yellow"
+                >
+                  Open the board
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : m.overdue > 0 ? (
+        <section>
+          <div className="rounded-xl border border-status-red/30 bg-status-red-soft p-5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-status-red" />
+              <div>
+                <h2 className="font-display text-base font-semibold text-status-red">
+                  Requires immediate attention
+                </h2>
+                <p className="mt-1 text-xs text-status-red/80">
+                  {`${m.overdue} annual return${m.overdue === 1 ? " is" : "s are"} overdue. Assign or escalate now to avoid Companies Registry penalties.`}
+                </p>
+                <Link
+                  to="/annual-returns"
+                  className="mt-3 inline-flex items-center rounded-md bg-status-red px-3 py-1.5 text-xs font-medium text-white hover:bg-status-red/90"
+                >
+                  Review overdue cases
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section>
+          <div className="rounded-xl border bg-card p-5">
+            <p className="text-sm text-muted-foreground">
+              Nothing is overdue. Upcoming deadlines are on the annual returns board.
+            </p>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

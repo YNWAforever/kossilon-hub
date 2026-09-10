@@ -1,0 +1,126 @@
+/**
+ * What this build cannot do, and what a person does instead.
+ *
+ * Six integrations are blocked, and four of them gate a capability the product
+ * otherwise appears to offer. Scattered `BLOCKED_INTEGRATION:` comments are
+ * enough for whoever is reading that file; they are not enough for a staff
+ * member deciding whether to trust a screen, and they are not enough for a pilot
+ * that has to know which steps stay on paper.
+ *
+ * So the same facts are declared once, in the product, and shown on the
+ * operations screen. `capabilities.test.ts` cross-checks these ids against the
+ * markers actually present in `src/` in BOTH directions -- a marker with no
+ * entry means a disabled capability nobody is told about, and an entry with no
+ * marker means this file is still claiming something is off after the code
+ * stopped saying so.
+ *
+ * The second direction is the one that matters in a year's time.
+ */
+
+export type BlockedIntegrationId =
+  | "malware-scanner-provider"
+  | "document-text-extraction"
+  | "ai-provider"
+  | "whatsapp-media-download"
+  | "external-handoff-destination"
+  | "local-postgres"
+  | "deployment-runtime";
+
+export type BlockedIntegration = {
+  id: BlockedIntegrationId;
+  /** The capability a user would reasonably expect to work. */
+  capability: string;
+  /** What actually happens instead. Never softened into "limited" or "partial". */
+  effect: string;
+  /** What a pilot does in its place. */
+  pilotFallback: string;
+  /** The specific input that would clear it. Not "more work". */
+  clearedBy: string;
+  /**
+   * Whether this one holds back a release gate, as opposed to degrading a
+   * convenience. Four of the seven do.
+   */
+  blocksRelease: boolean;
+};
+
+export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
+  {
+    id: "malware-scanner-provider",
+    capability: "上載文件的病毒掃描",
+    effect:
+      "沒有任何文件可以通過安全檢查，全部停留在隔離狀態。因此沒有任何套件可以被批准交件。" +
+      "舊檔案的重掃隊列會一直累積，不會自動清空。",
+    pilotFallback: "由職員在受管制的工作站自行掃描後，以人手記錄結論；系統不會代為判斷。",
+    clearedBy: "一個已批核的掃描供應商、它的 binding 名稱，以及它的資料處理條款。",
+    blocksRelease: true,
+  },
+  {
+    id: "document-text-extraction",
+    capability: "讀取文件內文（頁數、日期、年度、內容比對）",
+    effect:
+      "伺服器端沒有任何文字擷取。所有需要文件本身文字的檢查都無法執行，包括兩條日期規則。" +
+      "分析只能檢查檔案頭尾的格式標記與記錄之間的互相對照。",
+    pilotFallback: "文件內容仍由職員親自閱讀核對，一如現時做法。",
+    clearedBy:
+      "一個可在 Worker 執行的 PDF 文字層（新工作），或啟用 nodejs_compat 加 Node PDF 程式庫（改動部署面）。",
+    blocksRelease: false,
+  },
+  {
+    id: "ai-provider",
+    capability: "由模型協助審閱文件",
+    effect:
+      "第三層分析從不執行。倉庫內沒有任何 AI SDK、金鑰 binding 或供應商設定，" +
+      "介面上也沒有任何位置顯示模型的結論。",
+    pilotFallback: "全部審閱由人完成。這正是現時的實際做法，不是降級。",
+    clearedBy: "一個已批核的供應商、它的 binding 名稱，以及它的資料處理條款。",
+    blocksRelease: false,
+  },
+  {
+    id: "whatsapp-media-download",
+    capability: "接收客戶在 WhatsApp 傳來的附件",
+    effect:
+      "附件的存在會被記錄（類型、供應商的媒體編號、在訊息中的位置），但檔案本身取不到，" +
+      "所以不會成為一份文件，也不會出現在文件清單。",
+    pilotFallback: "職員在 WOZTELL 介面下載檔案後，用一般上載流程放進案件。",
+    clearedBy: "WOZTELL 媒體下載端點的正式文件與其認證方式。",
+    blocksRelease: false,
+  },
+  {
+    id: "external-handoff-destination",
+    capability: "把已批准的套件交去外部代理",
+    effect:
+      "沒有任何套件可以交出。每一個 handoff 都停在 prepared，transmitted_at 永遠是空的，" +
+      "因此「回件與異常」不會有任何回件——那裡的空白不代表沒有異常。",
+    pilotFallback: "沿用現時的人手交件與人手記錄；套件內容仍可在系統內準備和批核。",
+    clearedBy: "行方內部伺服器的通訊協定、位址、認證方式與存取權限。",
+    blocksRelease: true,
+  },
+  {
+    id: "local-postgres",
+    capability: "在本機執行資料庫整合測試",
+    effect: "倉庫層的整合測試只在 CI 執行。這份工作的每一項 SQL 判斷都來自閱讀，而不是執行。",
+    pilotFallback: "以 CI 的執行結果為準，不要把本機的通過當作資料庫已驗證。",
+    clearedBy: "一個可連線的 TEST_DATABASE_URL，或 PR 上的 CI 執行結果。",
+    blocksRelease: true,
+  },
+  {
+    id: "deployment-runtime",
+    capability: "五分鐘排程確實在部署環境執行",
+    effect:
+      "從未有人觀察過一次排程執行。在 maintenance_runs 之前，唯一的記錄是 console.log，" +
+      "而排程若從未註冊，每一個畫面看起來仍然完全正常。",
+    pilotFallback:
+      "上線後先看營運畫面的「最後一次執行」；在它出現第一筆記錄之前，排程一律當作沒有運行。",
+    clearedBy: "部署環境上一次排程被觸發的實際證據——現在就是 maintenance_runs 的第一筆資料。",
+    blocksRelease: true,
+  },
+];
+
+export function blockedIntegrationIds(): readonly BlockedIntegrationId[] {
+  return BLOCKED_INTEGRATIONS.map((integration) => integration.id);
+}
+
+/** The ones that hold back a release gate rather than degrade a convenience. */
+export function releaseBlockingIntegrations(): readonly BlockedIntegration[] {
+  return BLOCKED_INTEGRATIONS.filter((integration) => integration.blocksRelease);
+}

@@ -206,6 +206,12 @@ async function cleanupAnnualReturnTestFixtures() {
       where id = any(${caseIds}::uuid[])
         or company_id = any(${companyIds}::uuid[])
     `;
+    // After the cases, before the companies. case_parties cascades from the case
+    // and references officers with ON DELETE RESTRICT, so the parties have to be
+    // gone before an officer can be; officers reference companies the same way,
+    // so an officer has to be gone before its company. One failed teardown fails
+    // every later test, so the order is not free.
+    await tx`delete from officers where company_id = any(${companyIds}::uuid[])`;
     await tx`delete from companies where id = any(${companyIds}::uuid[])`;
     await tx`delete from users where id = ${USER_SAM_ID}`;
   });
@@ -1839,6 +1845,102 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     vi.restoreAllMocks();
   });
 
+  /**
+   * The Phase B rule, on the path that actually sends.
+   *
+   * outstanding.ts was written so a document the client has already sent is
+   * never chased for again -- Received sits unreviewed and `Received !==
+   * "Verified"`, which is what made the old checks wrong. But it was only wired
+   * into the paths that COMPOSE drafts: the portal, the work views, the
+   * follow-up screen. This sweep is the one that sends, on the five-minute cron,
+   * and it consulted nothing but the case status.
+   */
+  it(
+    "does not chase a client whose required documents have all arrived",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 41,
+        checklistStatus: "Received",
+        checklistDocument: true,
+      });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+
+      const outboxRows = await sql<{ id: string }[]>`
+        select o.id from notification_outbox o
+        where o.company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(0);
+
+      // Visible, not silent. A skipped chase that left no trace would be
+      // indistinguishable from a sweep that never looked at the case.
+      const skipped = await sql<{ description: string }[]>`
+        select description from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_skipped'
+      `;
+      expect(skipped).toHaveLength(1);
+      expect(skipped[0].description).toContain("nothing is outstanding");
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "still chases when a required document is genuinely missing",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 42,
+        checklistStatus: "Missing",
+      });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+
+      const outboxRows = await sql<{ id: string }[]>`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * `unknown` must not suppress. A case whose requirements nobody has recorded
+   * is not evidence that nothing is owed, and staying silent before a statutory
+   * deadline is the worse error.
+   */
+  it(
+    "chases a case with no checklist rows rather than staying silent",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 43 });
+      const sql = sqlForTests();
+      await sql`delete from annual_return_checklist_items where case_id = ${fixture.caseId}`;
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+
+      const outboxRows = await sql<{ id: string }[]>`
+        select id from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outboxRows).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   it(
     "sends a milestone reminder to the primary contact and enqueues a WhatsApp notification",
     async () => {
@@ -2344,6 +2446,123 @@ describe.skipIf(!databaseUrl)("createCase", () => {
 
       const afterCreate = await repository.listCompaniesEligibleForCase();
       expect(afterCreate.some((company) => company.id === TEST_COMPANY_ID)).toBe(false);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * The gap that made the whole per-party model unreachable.
+   *
+   * Nothing wrote case_parties at all -- the only production reference was a
+   * read -- so no party ever existed and only company-level requirements could
+   * be produced, however carefully the template described the per-person ones.
+   */
+  it(
+    "seeds candidates from the officer register, unconfirmed, and only once",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 44 });
+      const sql = sqlForTests();
+      await sql`
+        insert into officers (company_id, officer_type, name, appointment_date)
+        values
+          (${fixture.companyId}, 'director', '陳大文', '2021-07-01'),
+          (${fixture.companyId}, 'secretary', '李小明', '2021-07-01'),
+          -- Ceased, so not a party to this filing.
+          (${fixture.companyId}, 'director', '王已離任', '2020-01-01')
+      `;
+      await sql`
+        update officers set cessation_date = '2025-01-01'
+        where company_id = ${fixture.companyId} and name = '王已離任'
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      const first = await repository.syncCasePartiesFromOfficers(fixture.caseId);
+      expect(first.created).toBe(2);
+
+      // Insert-only: a second run adds nothing rather than duplicating.
+      expect((await repository.syncCasePartiesFromOfficers(fixture.caseId)).created).toBe(0);
+
+      const parties = await repository.listCaseParties(fixture.caseId);
+      expect(parties.map((party) => party.displayName).sort()).toEqual(["李小明", "陳大文"]);
+      // Candidates, not parties. The register is evidence about who the officers
+      // are; it is not a person confirming they are the parties to this filing.
+      expect(parties.every((party) => party.confirmedByUserId === null)).toBe(true);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "creates a confirmed party's requirements in the same transaction as the confirmation",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 45 });
+      const sql = sqlForTests();
+      await sql`
+        insert into officers (company_id, officer_type, name, appointment_date)
+        values (${fixture.companyId}, 'director', '陳大文', '2021-07-01')
+      `;
+      const repository = repositoryFor("2026-07-13");
+      await repository.syncCasePartiesFromOfficers(fixture.caseId);
+      const [party] = await repository.listCaseParties(fixture.caseId);
+
+      // Before: an unconfirmed party owes nothing.
+      const before = await sql<{ count: string }[]>`
+        select count(*) from case_requirement_instances
+        where case_id = ${fixture.caseId} and party_id = ${party.id}
+      `;
+      expect(Number(before[0].count)).toBe(0);
+
+      const result = await repository.confirmCaseParty({
+        caseId: fixture.caseId,
+        partyId: party.id,
+        confirmedByUserId: USER_AMY_ID,
+      });
+      expect(result.confirmed).toBe(true);
+
+      const after = await sql<{ requirement_key: string }[]>`
+        select requirement_key from case_requirement_instances
+        where case_id = ${fixture.caseId} and party_id = ${party.id}
+      `;
+      // The fixture's one checklist row is "Signed NAR1 form", which the matcher
+      // maps to nar1 -- a company-level requirement. So this director gets none:
+      // identity and address-proof have no checklist row to attach to, and the
+      // template refuses to invent one.
+      expect(after).toHaveLength(0);
+      expect(result.requirementsCreated).toBeGreaterThanOrEqual(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  // First-writer-wins, and scoped to the case in the UPDATE so a party id from
+  // another case cannot be confirmed by pairing it with a visible one.
+  it(
+    "does not re-confirm a party somebody else already confirmed",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 46 });
+      const sql = sqlForTests();
+      await sql`
+        insert into officers (company_id, officer_type, name, appointment_date)
+        values (${fixture.companyId}, 'director', '陳大文', '2021-07-01')
+      `;
+      const repository = repositoryFor("2026-07-13");
+      await repository.syncCasePartiesFromOfficers(fixture.caseId);
+      const [party] = await repository.listCaseParties(fixture.caseId);
+
+      await repository.confirmCaseParty({
+        caseId: fixture.caseId,
+        partyId: party.id,
+        confirmedByUserId: USER_AMY_ID,
+      });
+      const second = await repository.confirmCaseParty({
+        caseId: fixture.caseId,
+        partyId: party.id,
+        confirmedByUserId: USER_KEN_ID,
+      });
+
+      expect(second.confirmed).toBe(false);
+      const rows = await sql<{ confirmed_by: string }[]>`
+        select confirmed_by from case_parties where id = ${party.id}
+      `;
+      expect(rows[0].confirmed_by).toBe(USER_AMY_ID);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

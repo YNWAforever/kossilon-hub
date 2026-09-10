@@ -361,6 +361,11 @@ export function createServiceSubscriptionRepository(
           channel,
           notificationType: `service_subscription_reminder_${milestone}`,
           recipient,
+          // Scoped to the subscription AND its renewal date. The subscription id
+          // alone is not enough: a subscription renews annually under the same
+          // id, so without the date next year's reminder would collapse onto
+          // this year's spent row and never be queued.
+          idempotencyKey: `service-subscription-reminder:${candidate.id}:${subscription.renewalDate}:${milestone}:${channel}:${recipient}`,
           payload: {
             subscriptionId: candidate.id,
             milestone,

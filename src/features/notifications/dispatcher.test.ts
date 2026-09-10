@@ -38,6 +38,7 @@ function notification(overrides: Partial<NotificationOutboxRecord> = {}): Notifi
 function repository(rows: NotificationOutboxRecord[]): NotificationOutboxRepository {
   return {
     enqueue: vi.fn(),
+    cancelFixtureOriginNotifications: vi.fn(async () => ({ cancelled: 0 })),
     claimDue: vi.fn(async () => rows),
     markSent: vi.fn(async () => true),
     markRetry: vi.fn(async () => true),
@@ -649,5 +650,87 @@ describe("createNotificationTransport (live mode composite routing)", () => {
         resendConfig,
       }).dispatch(notification({ channel: "in_app" })),
     ).rejects.toThrow("Unsupported notification channel: in_app.");
+  });
+});
+
+/**
+ * The provider has the message; the database write that records it failed.
+ *
+ * markSent used to sit inside the same try as transport.dispatch, so this landed
+ * in the catch that labels anything without a `code` as 'dispatch_failed' and
+ * calls markRetry -- delivering a second copy to the client. The receipt-linkback
+ * twelve lines below already had its own catch and said exactly why; markSent,
+ * where the same hazard is worse, did not.
+ */
+describe("a send the database could not record", () => {
+  it("does not retry, because the client already has the message", async () => {
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+    const repo = repository([notification()]);
+    vi.mocked(repo.markSent).mockRejectedValue(new Error("connection terminated unexpectedly"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const summary = await createNotificationDispatcher(
+      repo,
+      createLocalNotificationTransport(),
+    ).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markRetry).not.toHaveBeenCalled();
+    expect(repo.markFailed).not.toHaveBeenCalled();
+    // Counted apart from `sent`, because nothing recorded it, and apart from
+    // `retried`, because retrying is the thing that must not happen.
+    expect(summary).toMatchObject({ sent: 0, retried: 0, sentButUnrecorded: 1 });
+  });
+});
+
+/**
+ * The plan's rule, finally enforced by code: do not send customer reminders
+ * during fixture replay.
+ *
+ * Nothing enforced it before. The only thing standing between a seeded reference
+ * company and a live WhatsApp message was that the seed happens not to create a
+ * company_contacts row, and evaluateReminders skips a case with no primary
+ * contact. That is an accident of what the seed omits, not a guard -- add
+ * contacts to the demo seed so the screens look populated and every seeded
+ * company becomes a live reminder target.
+ */
+describe("fixture-origin suppression", () => {
+  it("cancels fixture rows before anything is claimed, and counts them", async () => {
+    const repo = repository([]);
+    vi.mocked(repo.cancelFixtureOriginNotifications).mockResolvedValue({ cancelled: 3 });
+
+    const summary = await createNotificationDispatcher(
+      repo,
+      createLocalNotificationTransport(),
+    ).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    // Named in the summary rather than silently dropped: a replay that quietly
+    // discarded messages would look identical to a tick with nothing to send.
+    expect(summary.suppressedFixtureOrigin).toBe(3);
+    expect(summary.sent).toBe(0);
+  });
+
+  /**
+   * Order matters, and this is the reason. A fixture row that reached the
+   * claimed state is one transport failure away from being retried -- and a
+   * retry is a send. Cancelling has to happen before the claim, not after it.
+   */
+  it("suppresses before claiming, not after", async () => {
+    const order: string[] = [];
+    const repo = repository([]);
+    vi.mocked(repo.cancelFixtureOriginNotifications).mockImplementation(async () => {
+      order.push("cancel");
+      return { cancelled: 1 };
+    });
+    vi.mocked(repo.claimDue).mockImplementation(async () => {
+      order.push("claim");
+      return [];
+    });
+
+    await createNotificationDispatcher(repo, createLocalNotificationTransport()).dispatchDue(
+      "2026-07-12T00:00:00.000Z",
+    );
+
+    expect(order).toEqual(["cancel", "claim"]);
   });
 });

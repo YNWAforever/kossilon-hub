@@ -1,4 +1,5 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { assertApprovedTemplate } from "@/features/whatsapp/approved-templates";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -59,7 +60,10 @@ export async function listProductionFollowUpDraftsForActor(
   dependencies: ProductionFollowUpDependencies,
 ): Promise<ProductionFollowUpDraft[]> {
   const staff = staffIdentity(actor);
-  const cases = await dependencies.annualReturnRepository.listCases({});
+  // listCases({}) is the 200 earliest-due cases, so every client past that row
+  // was silently never chased at all. That is a correctness bug, not a display
+  // one, and it is why this drains pages instead.
+  const cases = await dependencies.annualReturnRepository.listAllCases({});
   const authorizedCases = cases.filter(
     (caseItem) => getAnnualReturnActionPermission(staff, caseItem, "record_reminder").allowed,
   );
@@ -119,13 +123,27 @@ async function sendFollowUpForActor(
   }
 
   const details = queueDetails(identity.source);
+  // Refused here rather than at WOZTELL. An unapproved name is rejected outside
+  // the 24-hour window with ok:0, and by the runbook's own account that failure
+  // reaches a console.error and is nulled out after 90 days -- so a permanently
+  // unapproved template shows up as an aggregate count and nothing else.
+  const approvedTemplate = assertApprovedTemplate({
+    templateName: details.templateName,
+    languageCode: "en",
+  });
+
   const message = await dependencies.whatsAppRepository.queueOutboundTemplateMessage({
     actorId: staff.id,
     caseId: identity.caseId,
     toPhone: draft.phone,
     contactName: draft.recipientName,
-    templateName: details.templateName,
-    languageCode: "en",
+    // Refused here rather than at WOZTELL. An unapproved name is rejected
+    // outside the 24-hour window with ok:0, and by the runbook's own account
+    // that failure reaches a console.error and is nulled out after 90 days --
+    // so a permanently unapproved template shows up as an aggregate count and
+    // nothing else.
+    templateName: approvedTemplate.templateName,
+    languageCode: approvedTemplate.languageCode,
     category: details.category,
     body: draft.messagePreview,
     idempotencyKey: stableFollowUpIdempotencyKey(identity),

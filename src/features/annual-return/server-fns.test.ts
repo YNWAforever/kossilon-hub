@@ -5,7 +5,9 @@ import type { CaseHistoryEntry } from "./case-history";
 import {
   addAnnualReturnCaseNoteForActor,
   assignAnnualReturnCaseOwnerForActor,
+  listAnnualReturnCaseFindingsForActor,
   listAnnualReturnCaseHistoryForActor,
+  resolveAnnualReturnCaseFindingForActor,
 } from "./server-fns";
 
 const caseId = "91000000-0000-0000-0000-000000000001";
@@ -155,5 +157,113 @@ describe("annual return case command authorization", () => {
     expect(history[0]).toMatchObject({ kind: "audit", action: "add_note" });
     expect(listAuditEventsForCase).toHaveBeenCalledWith(caseId);
     expect(listAssignmentEventsForCase).toHaveBeenCalledWith(caseId);
+  });
+});
+
+describe("case findings authorization", () => {
+  const visibleCase = {
+    id: caseId,
+    companyTeamId: staffActor.teamId,
+    ownerId: staffId,
+    reviewerId: null,
+  };
+
+  function dependenciesFor(
+    overrides: {
+      getCase?: () => Promise<unknown>;
+      resolveFinding?: (input: {
+        findingId: string;
+        caseId: string;
+        resolvedByUserId: string;
+        note: string | null;
+      }) => Promise<boolean>;
+    } = {},
+  ) {
+    return {
+      repository: {
+        getCase: overrides.getCase ?? vi.fn(async () => visibleCase),
+      } as unknown as AnnualReturnRepository,
+      analysis: {
+        listFindingsForCase: vi.fn(async () => []),
+        resolveFinding: overrides.resolveFinding ?? vi.fn(async () => true),
+      },
+    };
+  }
+
+  // Findings quote a document's own text, so reaching them at all is a decision
+  // about who may read the case.
+  it("does not read findings for a case the actor cannot see", async () => {
+    const dependencies = dependenciesFor({
+      getCase: vi.fn(async () => ({
+        id: caseId,
+        companyTeamId: "40000000-0000-0000-0000-000000000009",
+        ownerId: "40000000-0000-0000-0000-00000000000a",
+        reviewerId: null,
+      })),
+    });
+
+    await expect(
+      listAnnualReturnCaseFindingsForActor(staffActor, { caseId }, dependencies),
+    ).rejects.toThrow();
+    expect(dependencies.analysis.listFindingsForCase).not.toHaveBeenCalled();
+  });
+
+  it("does not touch the analysis repository when the case does not exist", async () => {
+    const dependencies = dependenciesFor({ getCase: vi.fn(async () => null) });
+    await expect(
+      listAnnualReturnCaseFindingsForActor(staffActor, { caseId }, dependencies),
+    ).rejects.toThrow(/not found/i);
+    expect(dependencies.analysis.listFindingsForCase).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A resolution is the record of who decided. A client has no staff user row,
+   * so letting one through would either violate the resolved_by/resolved_at
+   * constraint or record a decision attributable to nobody.
+   */
+  it("refuses a resolution from an actor with no staff identity", async () => {
+    const dependencies = dependenciesFor();
+    await expect(
+      resolveAnnualReturnCaseFindingForActor(
+        clientActor,
+        { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: null },
+        dependencies,
+      ),
+    ).rejects.toThrow(/staff access is required/i);
+    expect(dependencies.analysis.resolveFinding).not.toHaveBeenCalled();
+  });
+
+  // Never from the caller. The whole value of the field is that it names the
+  // person the request was authenticated as.
+  it("takes the resolving user from the actor, and scopes the write to the case", async () => {
+    const resolveFinding = vi.fn(async () => true);
+    const dependencies = dependenciesFor({ resolveFinding });
+
+    await resolveAnnualReturnCaseFindingForActor(
+      staffActor,
+      { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: "Checked by hand." },
+      dependencies,
+    );
+
+    expect(resolveFinding).toHaveBeenCalledWith({
+      findingId: "50000000-0000-0000-0000-000000000001",
+      caseId,
+      resolvedByUserId: staffId,
+      note: "Checked by hand.",
+    });
+  });
+
+  // Somebody else got there first, or it belongs to another case. Reported, not
+  // thrown: the reviewer's intent is satisfied either way and the refreshed list
+  // shows whose decision stands.
+  it("reports rather than throws when the write matched nothing", async () => {
+    const dependencies = dependenciesFor({ resolveFinding: vi.fn(async () => false) });
+    await expect(
+      resolveAnnualReturnCaseFindingForActor(
+        staffActor,
+        { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: null },
+        dependencies,
+      ),
+    ).resolves.toEqual({ applied: false });
   });
 });

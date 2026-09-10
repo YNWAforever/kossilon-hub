@@ -13,6 +13,8 @@ function item(id: string, input: Partial<PersistedWorkItem> = {}): PersistedWork
   return {
     id,
     companyId: "company-1",
+    companyName: "Acme Company Limited",
+    ownerName: null,
     caseType: "annual_return",
     annualReturnCaseId: "case-1",
     corporateChangeRequestId: null,

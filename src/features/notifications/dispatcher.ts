@@ -98,6 +98,10 @@ export function createNotificationDispatcher(
 ): NotificationDispatcher {
   return {
     async dispatchDue(now, limit = 50): Promise<DispatchSummary> {
+      // Before the claim, not after: a fixture-origin row must never become a
+      // claimed row, because a claimed row is one transport failure away from
+      // being retried at a real recipient.
+      const suppressed = await repository.cancelFixtureOriginNotifications(now);
       const due = await repository.claimDue(now, limit);
       const summary: DispatchSummary = {
         claimed: due.length,
@@ -105,6 +109,8 @@ export function createNotificationDispatcher(
         retried: 0,
         permanentlyFailed: 0,
         superseded: 0,
+        sentButUnrecorded: 0,
+        suppressedFixtureOrigin: suppressed.cancelled,
       };
       for (const notification of due) {
         // Every terminal write is fenced on the attempt_count this claim saw. A
@@ -123,41 +129,82 @@ export function createNotificationDispatcher(
                 }
               : undefined;
           const result = await transport.dispatch(notification, context);
-          const applied = await repository.markSent(notification.id, {
-            providerMessageId: result.delivery === "provider" ? result.providerMessageId : null,
-            // Recorded positively rather than left to be inferred from a null
-            // provider_message_id, which is also what a redacted row and a
-            // never-dispatched row look like. The transport is the only layer that
-            // knows, and the fact is already in hand right here.
-            delivery: result.delivery,
-            sentAt: now,
-            attemptCount: notification.attemptCount,
-          });
-          if (applied) summary.sent += 1;
-          else summary.superseded += 1;
 
-          // Receipt linkback — live sends only. A simulated dispatch has no
-          // provider id to link, and writing one flips whatsapp_messages to
-          // 'sent' with a fabricated provider_message_id on a row that asserts
-          // provider = 'woztell'. The row stays 'queued', which is what happened.
-          const whatsAppMessageId = notificationPayload(notification).whatsappMessageId;
-          if (
-            result.delivery === "provider" &&
-            notification.channel === "whatsapp" &&
-            typeof whatsAppMessageId === "string" &&
-            options.whatsAppRepository
-          ) {
-            try {
-              await options.whatsAppRepository.attachProviderMessageId({
-                messageId: whatsAppMessageId,
-                providerMessageId: result.providerMessageId,
-              });
-            } catch (linkError) {
-              // The message was sent. Letting this reach the outer catch would
-              // mark the row for retry and send the client a second copy — a
-              // missing receipt link is strictly the lesser failure.
-              console.error("whatsapp provider id could not be linked", linkError);
+          // From here the provider has the message. Everything below is
+          // record-keeping, and record-keeping must never reach the outer catch:
+          // that would call markRetry on a message the client already has and
+          // deliver a second copy. The linkback twelve lines down already had
+          // this guard and said so; markSent, where the same hazard is worse,
+          // did not.
+          try {
+            const applied = await repository.markSent(notification.id, {
+              providerMessageId: result.delivery === "provider" ? result.providerMessageId : null,
+              // Recorded positively rather than left to be inferred from a null
+              // provider_message_id, which is also what a redacted row and a
+              // never-dispatched row look like. The transport is the only layer that
+              // knows, and the fact is already in hand right here.
+              delivery: result.delivery,
+              sentAt: now,
+              attemptCount: notification.attemptCount,
+            });
+            if (applied) summary.sent += 1;
+            else summary.superseded += 1;
+
+            // Receipt linkback — live sends only. A simulated dispatch has no
+            // provider id to link, and writing one flips whatsapp_messages to
+            // 'sent' with a fabricated provider_message_id on a row that asserts
+            // provider = 'woztell'. The row stays 'queued', which is what happened.
+            const whatsAppMessageId = notificationPayload(notification).whatsappMessageId;
+            if (
+              result.delivery === "provider" &&
+              notification.channel === "whatsapp" &&
+              typeof whatsAppMessageId === "string" &&
+              options.whatsAppRepository
+            ) {
+              try {
+                // What actually went on the wire. `body` on that row is the
+                // draft, and outside the 24-hour window the template branch
+                // sends zero variables -- so for a template send the body is not
+                // what the client received, and the inbox has to be able to say
+                // so rather than presenting the draft as delivered.
+                //
+                // Spread rather than passed as undefined: local and simulated
+                // dispatch have no send-mode context, and this call stays exactly
+                // what it was for them.
+                const sendMode = context?.whatsAppSendMode;
+                await options.whatsAppRepository.attachProviderMessageId({
+                  messageId: whatsAppMessageId,
+                  providerMessageId: result.providerMessageId,
+                  ...(sendMode
+                    ? {
+                        sentAs: sendMode.kind,
+                        sentTemplateName:
+                          sendMode.kind === "template" ? sendMode.elementName : null,
+                      }
+                    : {}),
+                });
+              } catch (linkError) {
+                // The message was sent. Letting this reach the outer catch would
+                // mark the row for retry and send the client a second copy — a
+                // missing receipt link is strictly the lesser failure.
+                console.error("whatsapp provider id could not be linked", linkError);
+              }
             }
+          } catch (recordError) {
+            // The provider accepted it and we could not write that down. Not
+            // retried, because the client already has the message; not counted as
+            // sent, because nothing recorded it. The row stays 'processing' and
+            // the visibility timeout will reclaim it, so this is logged loudly
+            // enough to be acted on before that happens.
+            console.error("notification sent but not recorded", {
+              id: notification.id,
+              companyId: notification.companyId,
+              channel: notification.channel,
+              notificationType: notification.notificationType,
+              message:
+                recordError instanceof Error ? recordError.message : "Unknown recording failure.",
+            });
+            summary.sentButUnrecorded += 1;
           }
         } catch (error) {
           const errorMessage =

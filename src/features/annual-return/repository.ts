@@ -4,6 +4,13 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import {
+  buildRequirementInstances,
+  checklistLookupFor,
+  type PartyType,
+  type RequirementInstanceDraft,
+} from "./requirement-template";
+import { shouldChaseClient } from "./outstanding";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
@@ -41,6 +48,13 @@ import type {
   RiskLevel,
 } from "./types";
 import type { DocumentItem } from "@/features/checklist-templates/types";
+import { documentSafetyOf } from "@/features/documents/safety";
+import type { DocumentStatus, ScanVerdictSource } from "@/features/documents/types";
+import type {
+  RequirementApplicability,
+  RequirementEvidenceState,
+  RequirementInstanceState,
+} from "./requirements";
 
 type CaseRow = {
   id: string;
@@ -156,8 +170,91 @@ export type CaseFilters = {
   visibleToUserId?: string;
   /** The companies a client actor is a member of. Empty means no access at all. */
   companyIds?: readonly string[];
+  /**
+   * Free text over company name and CR number, as a SQL predicate.
+   *
+   * It used to be a client-side filter over whatever the 200-row page happened
+   * to contain -- board-filters.ts said so in its own comment -- so a case at
+   * row 201 could not be found by typing its name, and the owner dropdown that
+   * might have narrowed the query was itself built from the same truncated page.
+   */
+  q?: string;
+  /** Keyset position from a previous page. Opaque to the caller. */
+  cursor?: string;
   limit?: number;
 };
+
+/**
+ * A page of cases plus where to resume.
+ *
+ * `nextCursor` comes from the SQL rows, before the post-hydration `risk` filter
+ * runs, so "is there more" stays correct even when a page returns fewer rows
+ * than were asked for.
+ */
+export type AnnualReturnCasePage = {
+  cases: AnnualReturnCase[];
+  nextCursor: string | null;
+};
+
+export type BoardTotals = {
+  total: number;
+  overdue: number;
+  dueIn7: number;
+  dueIn30: number;
+  missingDocuments: number;
+  paymentPending: number;
+};
+
+/**
+ * The keyset is the full sort key, because none of its parts is unique on its
+ * own: two cases share a due date constantly, and two companies can share a
+ * name. Without the id a page boundary would silently skip or repeat rows.
+ *
+ * Base64url of the three parts, so the cursor stays opaque to the caller and
+ * carries no separator a company name could contain.
+ */
+export function encodeCaseCursor(row: {
+  filing_due_date: string | Date;
+  company_name: string;
+  id: string;
+}): string {
+  // selectCaseRows casts the column to text, but the row type still admits a Date
+  // because other reads of the same table do not. Normalising here keeps the
+  // cursor a date-only string whichever shape arrives.
+  const dueDate =
+    typeof row.filing_due_date === "string"
+      ? row.filing_due_date.slice(0, 10)
+      : row.filing_due_date.toISOString().slice(0, 10);
+  const payload = JSON.stringify([dueDate, row.company_name, row.id]);
+  return btoa(String.fromCharCode(...new TextEncoder().encode(payload)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+export function decodeCaseCursor(
+  cursor: string | undefined,
+): { dueDate: string; companyName: string; id: string } | null {
+  if (!cursor) return null;
+  try {
+    const normalized = cursor.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(normalized);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    if (!Array.isArray(parsed) || parsed.length !== 3) return null;
+    const [dueDate, companyName, id] = parsed;
+    if (typeof dueDate !== "string" || typeof companyName !== "string" || typeof id !== "string") {
+      return null;
+    }
+    // A cursor arrives from the client, so its shape is checked rather than
+    // trusted -- it goes straight into a SQL comparison.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return null;
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+    return { dueDate, companyName, id };
+  } catch {
+    return null;
+  }
+}
 
 export type AnnualReturnDashboardMetrics = {
   dueIn7: number;
@@ -228,6 +325,22 @@ export type EligibleCompanyForCase = {
   assignedTeamName: string;
 };
 
+/**
+ * A staff member an actor may name as an owner or reviewer.
+ *
+ * Exists so the case screen can offer people by name. It asked for an "Owner ID"
+ * in a text box and validated it with isUuid, which meant assigning a case
+ * required knowing a database identifier -- the plan's "no ordinary action needs
+ * a UUID" is exactly this.
+ */
+export type AssignableStaffMember = {
+  id: string;
+  name: string;
+  role: "Admin" | "Manager" | "Staff";
+  teamId: string | null;
+  teamName: string | null;
+};
+
 export type CreateAnnualReturnCaseInput = {
   companyId: string;
   templateId: string;
@@ -237,10 +350,77 @@ export type CreateAnnualReturnCaseInput = {
   actorId: string;
 };
 
+export type CasePartyRecord = {
+  id: string;
+  caseId: string;
+  officerId: string | null;
+  partyType: PartyType;
+  displayName: string;
+  confirmedByUserId: string | null;
+  confirmedAt: string | null;
+  active: boolean;
+};
+
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
+  listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]>;
+  /**
+   * Materialises the approved template's instances for a case.
+   *
+   * Insert-only, deliberately. An instance can carry a human decision -- a
+   * waiver, a not-applicable with a reason, an authorising user -- and a sync
+   * that deleted rows the template no longer produces would erase that decision
+   * the first time a director was removed from the party list. Pruning stale
+   * instances is a separate action a person takes, not a side effect of
+   * recomputing the template.
+   *
+   * Idempotent: the two partial unique indexes from migration 0026 make a repeat
+   * run a no-op rather than a duplicate.
+   */
+  syncRequirementInstances(
+    caseId: string,
+    drafts: readonly RequirementInstanceDraft[],
+  ): Promise<{ created: number }>;
+  /**
+   * Creates candidate parties from the company's officer register.
+   *
+   * Nothing wrote case_parties at all, so the per-party requirement model Phase B
+   * built was unreachable: no party ever existed, and only company-level
+   * requirements could ever be produced.
+   *
+   * Candidates, not parties. Every row lands unconfirmed, because `case_parties`
+   * states the rule plainly -- "a requirement must never be judged complete or
+   * incomplete against a guess about who the parties are". The register is
+   * evidence about who the officers are; it is not a person confirming that these
+   * are the parties for this filing.
+   *
+   * Serving officers only (cessation_date is null), and insert-only: the partial
+   * unique index on (case_id, officer_id) makes a repeat run a no-op rather than
+   * a duplicate, and a party somebody has already confirmed is never rewritten.
+   */
+  syncCasePartiesFromOfficers(caseId: string): Promise<{ created: number }>;
+  listCaseParties(caseId: string): Promise<CasePartyRecord[]>;
+  /**
+   * A person confirms a party, and the requirements that party owes appear.
+   *
+   * The sync runs in the same transaction as the confirmation: a confirmed party
+   * whose requirements were never created would read as a party owing nothing,
+   * which is precisely the false-completeness this model exists to prevent.
+   */
+  confirmCaseParty(input: {
+    caseId: string;
+    partyId: string;
+    confirmedByUserId: string;
+  }): Promise<{ confirmed: boolean; requirementsCreated: number }>;
+  listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage>;
+  listAllCases(
+    filters: CaseFilters,
+    options?: { pageSize?: number; maxPages?: number },
+  ): Promise<AnnualReturnCase[]>;
+  boardTotals(filters: CaseFilters): Promise<BoardTotals>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
   listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>;
+  listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
   createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>;
   dashboardMetrics(
     today: string,
@@ -646,6 +826,12 @@ export function createAnnualReturnRepository(
     // the kind of drift that made the evidence guards unsatisfiable. It is applied
     // to a wider window instead, so the LIMIT no longer truncates before filtering.
     const limit = filters.limit ?? (filters.risk ? RISK_FILTER_SCAN_LIMIT : DEFAULT_CASE_LIMIT);
+    // Escaped so a name containing % or _ matches literally rather than turning
+    // into a wildcard the user did not type.
+    const query = filters.q?.trim()
+      ? `%${filters.q.trim().replace(/[\\%_]/g, (character) => `\\${character}`)}%`
+      : null;
+    const cursor = decodeCaseCursor(filters.cursor);
 
     return sql<CaseRow[]>`
       select
@@ -708,7 +894,20 @@ export function createAnnualReturnRepository(
               )
           )
         )
-      order by arc.filing_due_date asc, c.company_name asc
+        and (
+          ${query}::text is null
+          or c.company_name ilike ${query} escape '\\'
+          or c.cr_number ilike ${query} escape '\\'
+        )
+        and (
+          ${cursor === null}
+          or (arc.filing_due_date, c.company_name, arc.id)
+             > (${cursor?.dueDate ?? null}::date, ${cursor?.companyName ?? ""}, ${cursor?.id ?? null}::uuid)
+        )
+      -- arc.id is part of the sort key, not decoration: without it the keyset
+      -- has no unique tiebreaker and a page boundary silently skips or repeats
+      -- rows whenever two cases share a due date and company name.
+      order by arc.filing_due_date asc, c.company_name asc, arc.id asc
       limit ${limit}
     `;
   }
@@ -781,8 +980,220 @@ export function createAnnualReturnRepository(
     return cases.filter((case_) => caseMatchesHydratedFilters(case_, filters));
   }
 
+  /**
+   * Requirement instances for one case, with their parties and evidence.
+   *
+   * Evidence carries both dimensions -- the reviewer's decision and the scan
+   * verdict source -- because a requirement is only answered when both agree,
+   * and the scan verdict lives on the upload intent rather than the document.
+   */
+  async function listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]> {
+    const rows = await sql<
+      {
+        id: string;
+        checklist_item_id: string;
+        party_id: string | null;
+        party_name: string | null;
+        requirement_key: string;
+        applicability: RequirementApplicability;
+        applicability_reason: string | null;
+        document_id: string | null;
+        review_status: "pending" | "verified" | "rejected" | null;
+        upload_status: DocumentStatus | null;
+        scan_verdict_source: ScanVerdictSource | null;
+        page_from: number | null;
+        page_to: number | null;
+      }[]
+    >`
+      select
+        r.id,
+        r.checklist_item_id,
+        r.party_id,
+        p.display_name as party_name,
+        r.requirement_key,
+        r.applicability,
+        r.applicability_reason,
+        d.id as document_id,
+        d.verification_status as review_status,
+        i.status as upload_status,
+        i.scan_verdict_source,
+        l.page_from,
+        l.page_to
+      from case_requirement_instances r
+      left join case_parties p on p.id = r.party_id
+      left join requirement_evidence_links l on l.requirement_instance_id = r.id
+      left join documents d on d.id = l.document_id
+      left join document_upload_intents i on i.document_id = d.id
+      where r.case_id = ${caseId}
+      order by p.display_name asc nulls first, r.requirement_key asc, l.created_at asc
+    `;
+
+    // One row per evidence link, so instances are folded back together here
+    // rather than issuing a query per requirement.
+    const byId = new Map<string, RequirementInstanceState>();
+    for (const row of rows) {
+      let instance = byId.get(row.id);
+      if (!instance) {
+        instance = {
+          id: row.id,
+          checklistItemId: row.checklist_item_id,
+          partyId: row.party_id,
+          partyName: row.party_name,
+          requirementKey: row.requirement_key,
+          applicability: row.applicability,
+          applicabilityReason: row.applicability_reason,
+          evidence: [],
+        };
+        byId.set(row.id, instance);
+      }
+      if (!row.document_id || !row.review_status) continue;
+      (instance.evidence as RequirementEvidenceState[]).push({
+        documentId: row.document_id,
+        reviewStatus: row.review_status,
+        safety: documentSafetyOf({
+          uploadStatus: row.upload_status ?? "created",
+          scanVerdictSource: row.scan_verdict_source,
+        }),
+        pageFrom: row.page_from,
+        pageTo: row.page_to,
+      });
+    }
+    return [...byId.values()];
+  }
+
   async function listCases(filters: CaseFilters): Promise<AnnualReturnCase[]> {
     return listCasesForToday(filters, readToday());
+  }
+
+  /**
+   * One page, plus where to resume.
+   *
+   * `nextCursor` is taken from the last SQL row, before the post-hydration `risk`
+   * filter runs. Deriving it from the returned cases instead would stall
+   * pagination the moment a whole page was filtered out, and deriving "has more"
+   * from `cases.length === limit` would be wrong for the same reason -- which is
+   * how the board's "Showing the first 200" warning could be absent while
+   * truncation had happened.
+   */
+  async function listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage> {
+    const today = readToday();
+    const rows = await selectCaseRows(filters, today);
+    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
+    const hydrated = await hydrateCases(rows, today);
+    const cases = hydrated.filter((case_) => caseMatchesHydratedFilters(case_, filters));
+    const last = rows.at(-1);
+    return {
+      cases,
+      nextCursor: rows.length === limit && last ? encodeCaseCursor(last) : null,
+    };
+  }
+
+  /**
+   * Every case matching the filters, drained page by page.
+   *
+   * For callers that must not silently stop at a page boundary. The production
+   * WhatsApp follow-up drafts were built from `listCases({})`, which is the 200
+   * earliest-due cases, so every client past that row was never chased at all --
+   * a correctness bug rather than a display one.
+   */
+  async function listAllCases(
+    filters: CaseFilters,
+    options: { pageSize?: number; maxPages?: number } = {},
+  ): Promise<AnnualReturnCase[]> {
+    const pageSize = options.pageSize ?? DEFAULT_CASE_LIMIT;
+    // A ceiling so a bug here cannot become an unbounded scan; at the default
+    // page size this is 20,000 cases, far beyond any real firm's book.
+    const maxPages = options.maxPages ?? 100;
+    const all: AnnualReturnCase[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < maxPages; page += 1) {
+      const result = await listCasePage({ ...filters, limit: pageSize, cursor });
+      all.push(...result.cases);
+      if (!result.nextCursor) return all;
+      cursor = result.nextCursor;
+    }
+    return all;
+  }
+
+  /**
+   * Board tiles, counted in SQL over the whole authorized scope.
+   *
+   * They were computed in the browser over the same truncated page the board
+   * rendered, so "12 overdue" meant "12 overdue among the 200 earliest-due cases
+   * we happened to load".
+   *
+   * `highRisk` is deliberately absent. riskForCase derives it from checklist,
+   * payment and filing state, and reproducing that in SQL is exactly the drift
+   * the selectCaseRows comment already warns about -- so the caller shows it as
+   * covering the loaded page rather than the scope.
+   */
+  async function boardTotals(filters: CaseFilters): Promise<BoardTotals> {
+    const today = readToday();
+    // Deliberately ignores `q` and `cursor`: these are the totals for the
+    // actor's scope, not for whatever they have typed into the search box, and
+    // the caller labels them that way.
+    const counted = await sql<
+      {
+        total: string;
+        overdue: string;
+        due_in_7: string;
+        due_in_30: string;
+        missing_documents: string;
+        payment_pending: string;
+      }[]
+    >`
+      select
+        count(*) total,
+        count(*) filter (where arc.filing_due_date < ${today}::date) overdue,
+        count(*) filter (
+          where arc.filing_due_date >= ${today}::date
+            and arc.filing_due_date <= ${today}::date + 7
+        ) due_in_7,
+        count(*) filter (
+          where arc.filing_due_date >= ${today}::date
+            and arc.filing_due_date <= ${today}::date + 30
+        ) due_in_30,
+        count(*) filter (
+          where exists (
+            select 1 from annual_return_checklist_items i
+            where i.case_id = arc.id and i.required = true
+              and (
+                i.status <> 'Verified' or i.received_at is null
+                or i.verified_at is null or i.document_id is null
+              )
+          )
+        ) missing_documents,
+        count(*) filter (
+          where exists (
+            select 1 from payments p
+            where p.case_id = arc.id and p.status = 'Payment pending'
+          )
+        ) payment_pending
+      from annual_return_cases arc
+      join companies c on c.id = arc.company_id
+      where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
+        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
+        and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
+        and (${filters.status ?? null}::text is null or arc.current_status = ${filters.status ?? null})
+        and (
+          ${filters.visibleToUserId ?? null}::uuid is null
+          or arc.owner_id = ${filters.visibleToUserId ?? null}::uuid
+          or arc.reviewer_id = ${filters.visibleToUserId ?? null}::uuid
+        )
+        and (
+          ${filters.companyIds ? [...filters.companyIds] : null}::uuid[] is null
+          or arc.company_id = any(${filters.companyIds ? [...filters.companyIds] : null}::uuid[])
+        )
+    `;
+    const row = counted[0];
+    return {
+      total: Number(row?.total ?? 0),
+      overdue: Number(row?.overdue ?? 0),
+      dueIn7: Number(row?.due_in_7 ?? 0),
+      dueIn30: Number(row?.due_in_30 ?? 0),
+      missingDocuments: Number(row?.missing_documents ?? 0),
+      paymentPending: Number(row?.payment_pending ?? 0),
+    };
   }
 
   async function getCase(id: string): Promise<AnnualReturnCase | null> {
@@ -848,6 +1259,38 @@ export function createAnnualReturnRepository(
       assignedOwnerId: row.assigned_owner_id,
       assignedTeamId: row.assigned_team_id,
       assignedTeamName: row.team_name,
+    }));
+  }
+
+  /**
+   * Scoped so the picker never offers a person the server would then refuse:
+   * assertAnnualReturnCaseCreatable and getAnnualReturnActionPermission both
+   * narrow by team for anyone who is not an Admin, so the list narrows the same
+   * way. An inactive user is never offered.
+   */
+  async function listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]> {
+    const rows = await sql<
+      {
+        id: string;
+        name: string;
+        role: "Admin" | "Manager" | "Staff";
+        team_id: string | null;
+        team_name: string | null;
+      }[]
+    >`
+      select u.id, u.name, u.role, u.team_id, t.name as team_name
+      from users u
+      left join teams t on t.id = u.team_id
+      where u.active = true
+        and (${scope.teamId ?? null}::uuid is null or u.team_id = ${scope.teamId ?? null})
+      order by u.name asc
+    `;
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      role: row.role,
+      teamId: row.team_id,
+      teamName: row.team_name,
     }));
   }
 
@@ -1975,6 +2418,42 @@ export function createAnnualReturnRepository(
         `;
         if (!insertedEvent[0]) return null;
 
+        // Does this client actually owe us anything?
+        //
+        // Phase B added outstanding.ts precisely so a document the client has
+        // already sent is never chased for again -- Received sits unreviewed and
+        // `Received !== "Verified"`, which is what made the old checks wrong.
+        // But it was only wired into the paths that COMPOSE drafts: the portal,
+        // the work views, the follow-up screen. This sweep is the one that
+        // actually sends, on the five-minute cron, and it consulted nothing but
+        // the case status. A client whose every required document was Received
+        // still got a live reminder asking for them.
+        //
+        // Re-read under the lock rather than trusting the pre-loop snapshot: the
+        // staleness window is small, but it runs in exactly the wrong direction
+        // -- a document that arrived since the snapshot would be chased for.
+        const checklistForChase = await tx<{ required: boolean; status: ChecklistStatus }[]>`
+          select required, status from annual_return_checklist_items
+          where case_id = ${case_.id}
+        `;
+
+        // `unknown` (no checklist rows at all) deliberately does NOT suppress.
+        // A case whose requirements nobody has recorded is not evidence that
+        // nothing is owed, and staying silent before a statutory deadline is the
+        // worse error.
+        if (!shouldChaseClient({ checklist: checklistForChase })) {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, 'Automated reminder skipped: nothing is outstanding from the client.',
+              ${tx.json({ milestone, reason: "nothing_outstanding" })}
+            )
+          `;
+          return "skipped" as const;
+        }
+
         const contactRows = await tx<
           { name: string; email: string | null; phone: string | null }[]
         >`
@@ -2019,11 +2498,23 @@ export function createAnnualReturnRepository(
           return "skipped" as const;
         }
 
-        await enqueueNotification(tx, {
+        const queued = await enqueueNotification(tx, {
           companyId: lockedCase.company_id,
           channel,
           notificationType: `annual_return_reminder_${milestone}`,
           recipient,
+          // Scoped to the CASE, not just the company.
+          //
+          // The default key is company + type + recipient, and the type carries
+          // only the milestone -- so next year's annual return for the same
+          // company produced a byte-identical key. `on conflict do nothing`
+          // matched last year's spent row, no message was queued, and the sweep
+          // counted it as sent anyway. From the second year onward the client was
+          // never reminded and the system reported that they were.
+          //
+          // One case per company per return year (unique on company_id,
+          // return_year), so the case id is the period.
+          idempotencyKey: `annual-return-reminder:${case_.id}:${milestone}:${channel}:${recipient}`,
           payload: {
             caseId: case_.id,
             milestone,
@@ -2031,6 +2522,21 @@ export function createAnnualReturnRepository(
             body: buildReminderDraft(case_, contact.name, now),
           },
         });
+
+        // A deduplicated enqueue is not a send. Counting one would repeat exactly
+        // the accounting lie this key fixes.
+        if (queued.idempotentReplay) {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, 'Automated reminder skipped: an identical notification was already queued.',
+              ${tx.json({ milestone, reason: "duplicate_notification" })}
+            )
+          `;
+          return "skipped" as const;
+        }
 
         await tx`
           update annual_return_cases
@@ -2069,10 +2575,178 @@ export function createAnnualReturnRepository(
     }
   }
 
+  async function syncRequirementInstances(
+    caseId: string,
+    drafts: readonly RequirementInstanceDraft[],
+  ): Promise<{ created: number }> {
+    if (drafts.length === 0) return { created: 0 };
+
+    let created = 0;
+    await withTransaction(sql, async (tx) => {
+      for (const draft of drafts) {
+        // `do nothing` against both partial unique indexes: (checklist_item_id,
+        // party_id) where party_id is not null, and (checklist_item_id) where it
+        // is null. A second run adds nothing and changes nothing.
+        const rows = await tx<{ id: string }[]>`
+          insert into case_requirement_instances (
+            case_id, checklist_item_id, party_id, requirement_key, template_version, reference_date
+          ) values (
+            ${caseId}, ${draft.checklistItemId}, ${draft.partyId}, ${draft.requirementKey},
+            ${draft.templateVersion}, ${draft.referenceDate}
+          )
+          on conflict do nothing
+          returning id
+        `;
+        if (rows.length === 1) created += 1;
+      }
+    });
+
+    return { created };
+  }
+
+  async function syncCasePartiesFromOfficers(caseId: string): Promise<{ created: number }> {
+    const rows = await sql<{ id: string }[]>`
+      insert into case_parties (case_id, officer_id, party_type, display_name)
+      select c.id, o.id, o.officer_type, o.name
+      from annual_return_cases c
+      join officers o on o.company_id = c.company_id
+      where c.id = ${caseId}
+        -- Serving officers only. A director who has ceased is not a party to
+        -- this filing, and the register records that with a cessation date.
+        and o.cessation_date is null
+      -- Unconfirmed by construction: confirmed_by and confirmed_at are left
+      -- null, so buildRequirementInstances produces nothing for these until a
+      -- person says they are right.
+      on conflict do nothing
+      returning id
+    `;
+    return { created: rows.length };
+  }
+
+  async function listCaseParties(caseId: string): Promise<CasePartyRecord[]> {
+    const rows = await sql<
+      {
+        id: string;
+        case_id: string;
+        officer_id: string | null;
+        party_type: PartyType;
+        display_name: string;
+        confirmed_by: string | null;
+        confirmed_at: string | Date | null;
+        active: boolean;
+      }[]
+    >`
+      select id, case_id, officer_id, party_type, display_name, confirmed_by, confirmed_at, active
+      from case_parties
+      where case_id = ${caseId}
+      order by party_type asc, display_name asc
+    `;
+
+    return rows.map((row) => ({
+      id: row.id,
+      caseId: row.case_id,
+      officerId: row.officer_id,
+      partyType: row.party_type,
+      displayName: row.display_name,
+      confirmedByUserId: row.confirmed_by,
+      confirmedAt: row.confirmed_at === null ? null : new Date(row.confirmed_at).toISOString(),
+      active: row.active,
+    }));
+  }
+
+  async function confirmCaseParty(input: {
+    caseId: string;
+    partyId: string;
+    confirmedByUserId: string;
+  }): Promise<{ confirmed: boolean; requirementsCreated: number }> {
+    return withTransaction(sql, async (tx) => {
+      // Scoped to the case in the UPDATE, so a party id from another case cannot
+      // be confirmed by pairing it with a case the actor may see. The check and
+      // the write are one statement; nothing can slip between them.
+      const confirmedRows = await tx<{ id: string }[]>`
+        update case_parties
+        set confirmed_by = ${input.confirmedByUserId}, confirmed_at = now(), updated_at = now()
+        where id = ${input.partyId}
+          and case_id = ${input.caseId}
+          and confirmed_by is null
+        returning id
+      `;
+      if (confirmedRows.length === 0) return { confirmed: false, requirementsCreated: 0 };
+
+      const partyRows = await tx<
+        { id: string; party_type: PartyType; display_name: string; active: boolean }[]
+      >`
+        select id, party_type, display_name, active from case_parties where case_id = ${input.caseId}
+      `;
+      const confirmedIds = new Set(
+        (
+          await tx<{ id: string }[]>`
+            select id from case_parties
+            where case_id = ${input.caseId} and confirmed_by is not null
+          `
+        ).map((row) => row.id),
+      );
+
+      const checklistRows = await tx<{ id: string; item_label: string }[]>`
+        select id, item_label from annual_return_checklist_items where case_id = ${input.caseId}
+      `;
+      const caseRows = await tx<{ made_up_date: string | Date }[]>`
+        select made_up_date from annual_return_cases where id = ${input.caseId}
+      `;
+
+      const lookup = checklistLookupFor(
+        checklistRows.map((row) => ({ id: row.id, itemLabel: row.item_label })),
+      );
+
+      const { drafts } = buildRequirementInstances({
+        parties: partyRows.map((row) => ({
+          id: row.id,
+          partyType: row.party_type,
+          displayName: row.display_name,
+          confirmed: confirmedIds.has(row.id),
+          active: row.active,
+        })),
+        checklistItemIdFor: lookup.checklistItemIdFor,
+        // The made-up date is the case's own stated anchor for evidence age.
+        // Never today: the schema forbids that, because it would silently re-age
+        // every document each time it was read.
+        referenceDate: caseRows[0]
+          ? new Date(caseRows[0].made_up_date).toISOString().slice(0, 10)
+          : null,
+      });
+
+      let requirementsCreated = 0;
+      for (const draft of drafts) {
+        const inserted = await tx<{ id: string }[]>`
+          insert into case_requirement_instances (
+            case_id, checklist_item_id, party_id, requirement_key, template_version, reference_date
+          ) values (
+            ${input.caseId}, ${draft.checklistItemId}, ${draft.partyId}, ${draft.requirementKey},
+            ${draft.templateVersion}, ${draft.referenceDate}
+          )
+          on conflict do nothing
+          returning id
+        `;
+        if (inserted.length === 1) requirementsCreated += 1;
+      }
+
+      return { confirmed: true, requirementsCreated };
+    });
+  }
+
   return {
     listCases,
+    listCaseRequirements,
+    syncRequirementInstances,
+    syncCasePartiesFromOfficers,
+    listCaseParties,
+    confirmCaseParty,
+    listCasePage,
+    listAllCases,
+    boardTotals,
     getCase,
     listCompaniesEligibleForCase,
+    listAssignableStaff,
     createCase,
     dashboardMetrics,
     assertCanMutateCase,

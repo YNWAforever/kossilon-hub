@@ -6,6 +6,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type {
+  EnqueuedNotification,
   DispatchSummary,
   EnqueueNotificationInput,
   NotificationDelivery,
@@ -113,7 +114,7 @@ function mapRow(row: NotificationRow): NotificationOutboxRecord {
 export async function enqueueNotification(
   client: QueryClient,
   input: EnqueueNotificationInput,
-): Promise<NotificationOutboxRecord> {
+): Promise<EnqueuedNotification> {
   const idempotencyKey =
     input.idempotencyKey ??
     notificationIdempotencyKey({
@@ -136,12 +137,16 @@ export async function enqueueNotification(
     on conflict (idempotency_key) do nothing
     returning *
   `;
-  if (rows[0]) return mapRow(rows[0]);
+  if (rows[0]) return { ...mapRow(rows[0]), idempotentReplay: false };
+
+  // The key already existed. Returning the old row silently is how a recurring
+  // reminder came to be counted as sent without ever being queued, so the fact
+  // travels with the value rather than being left for the caller to infer.
   const existing = await client<NotificationRow[]>`
     select * from notification_outbox where idempotency_key = ${idempotencyKey} limit 1
   `;
   if (!existing[0]) throw new Error("Unable to load idempotent notification outbox row.");
-  return mapRow(existing[0]);
+  return { ...mapRow(existing[0]), idempotentReplay: true };
 }
 
 function withTransaction<T>(
@@ -156,6 +161,11 @@ function withTransaction<T>(
 export type NotificationOutboxRepository = {
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
+  /**
+   * Cancels queued notifications belonging to fixture-origin companies, so a
+   * fixture replay cannot message a real recipient. Called before every claim.
+   */
+  cancelFixtureOriginNotifications(now: string): Promise<{ cancelled: number }>;
   /**
    * The terminal writes all take the attempt_count the claim returned and fence on
    * it, and all report whether they actually landed.
@@ -236,6 +246,50 @@ export function createNotificationOutboxRepository(
         `;
         return claimed.map(mapRow);
       });
+    },
+    /**
+     * Cancels anything queued for a company that is fixture data.
+     *
+     * The plan forbids sending customer reminders during fixture replay, and
+     * nothing enforced it: the only thing standing between a seeded company and
+     * a live message was that the seed happens not to create a contact row.
+     *
+     * Enforced here, at the last gate before dispatch, rather than in each
+     * producer. The annual-return sweep, the subscription sweep and the
+     * staff-initiated follow-up all queue through this table, and a guard in one
+     * of them is a guard the next producer will not have.
+     *
+     * 'cancelled' is a status notification_outbox has always permitted and
+     * nothing has ever written. It is the honest terminal state here: the row is
+     * not pending, not failed, and must never be retried.
+     */
+    async cancelFixtureOriginNotifications(now) {
+      const rows = await sql<{ id: string }[]>`
+        update notification_outbox
+        -- updated_at records when, because notification_outbox has no
+        -- completed_at column -- this query named one and threw on every call,
+        -- so the fixture-origin guard did not run at all. sent_at would be the
+        -- wrong column to reach for instead: nothing was sent, and that is the
+        -- entire point of cancelling.
+        set status = 'cancelled', updated_at = now(),
+          last_error_code = 'fixture-origin'
+        where status in ('pending', 'failed', 'processing')
+          -- Redacted rows are excluded, and this is not tidiness. The retention
+          -- constraint requires last_error_code to be null once redacted_at is
+          -- set, so writing 'fixture-origin' onto one throws -- and because this
+          -- runs at the head of the dispatch path, the whole dispatch pass would
+          -- then fail on every tick, forever, since the offending row never goes
+          -- away. redactExpired settles 'failed' rows past retention, which is
+          -- squarely inside the status filter above. Verified against Postgres.
+          --
+          -- Nothing is lost by skipping them: a redacted row is already settled,
+          -- its content is gone, and its attempts are spent.
+          and redacted_at is null
+          and next_attempt_at <= ${now}
+          and company_id in (select id from companies where data_origin <> 'client')
+        returning id
+      `;
+      return { cancelled: rows.length };
     },
     async markSent(id, input) {
       const rows = await sql<{ id: string }[]>`

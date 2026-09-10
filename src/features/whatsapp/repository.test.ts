@@ -15,6 +15,9 @@ const TEST_TEAM_ID = "95000000-0000-0000-0000-000000000001";
 const TEST_USER_ID = "95100000-0000-0000-0000-000000000001";
 const TEST_COMPANY_ID = "95200000-0000-0000-0000-000000000001";
 const TEST_CASE_ID = "95300000-0000-0000-0000-000000000001";
+/** A second client, so one phone number can be messaged by two of them. */
+const SHARED_COMPANY_ID = "95200000-0000-0000-0000-000000000002";
+const SHARED_CASE_ID = "95300000-0000-0000-0000-000000000002";
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 
 type ClosableRepository = ReturnType<typeof createWhatsAppRepository>;
@@ -45,7 +48,10 @@ async function cleanupWhatsAppFixtures() {
   await sql.begin(async (tx) => {
     await tx`
       delete from notification_outbox
-      where company_id = ${TEST_COMPANY_ID}
+      -- Both companies. The shared-number test introduced SHARED_COMPANY_ID and
+      -- this sweep still named only the first, so the companies delete below hit
+      -- notification_outbox_company_id_fkey and took the whole test with it.
+      where company_id in (${TEST_COMPANY_ID}, ${SHARED_COMPANY_ID})
         or idempotency_key like 'follow-up:phase2-test:%'
     `;
     await tx`
@@ -100,8 +106,8 @@ async function cleanupWhatsAppFixtures() {
     `;
     await tx`
       delete from annual_return_audit_events
-      where case_id = ${TEST_CASE_ID}
-        or company_id = ${TEST_COMPANY_ID}
+      where case_id in (${TEST_CASE_ID}, ${SHARED_CASE_ID})
+        or company_id in (${TEST_COMPANY_ID}, ${SHARED_COMPANY_ID})
     `;
     // work_items is itself the parent of three restrict-only children, so
     // clearing them has to come first or the delete below just trades one
@@ -130,12 +136,12 @@ async function cleanupWhatsAppFixtures() {
     `;
     await tx`
       delete from document_upload_intents
-      where case_id = ${TEST_CASE_ID}
-        or company_id = ${TEST_COMPANY_ID}
+      where case_id in (${TEST_CASE_ID}, ${SHARED_CASE_ID})
+        or company_id in (${TEST_COMPANY_ID}, ${SHARED_COMPANY_ID})
     `;
     await tx`
       delete from annual_return_cases
-      where id = ${TEST_CASE_ID}
+      where id in (${TEST_CASE_ID}, ${SHARED_CASE_ID})
     `;
     // companies has seven further restrict-only children that are deliberately
     // NOT swept here: client_company_memberships, corporate_change_requests,
@@ -150,7 +156,7 @@ async function cleanupWhatsAppFixtures() {
     // have to be removed innermost-first or the delete just moves the error.
     await tx`
       delete from companies
-      where id = ${TEST_COMPANY_ID}
+      where id in (${TEST_COMPANY_ID}, ${SHARED_COMPANY_ID})
     `;
     await tx`
       delete from users
@@ -213,6 +219,28 @@ async function createAnnualReturnCaseFixture() {
         'active',
         ${TEST_USER_ID},
         ${TEST_TEAM_ID}
+      )
+    `;
+    await tx`
+      insert into companies (
+        id, company_name, cr_number, br_number, incorporation_date,
+        annual_return_basis_date, registered_office, company_secretary, status,
+        assigned_owner_id, assigned_team_id
+      )
+      values (
+        ${SHARED_COMPANY_ID}, 'Phase 2 Shared Number Ltd', 'P2WCR0002', 'P2WBR0002',
+        '2021-07-02', '2026-07-02', 'Unit 3, WhatsApp Test Tower, Hong Kong',
+        'Kossilon Corporate Services Limited', 'active', ${TEST_USER_ID}, ${TEST_TEAM_ID}
+      )
+    `;
+    await tx`
+      insert into annual_return_cases (
+        id, company_id, return_year, made_up_date, filing_due_date,
+        current_status, risk_level, owner_id, reviewer_id, reminders_sent
+      )
+      values (
+        ${SHARED_CASE_ID}, ${SHARED_COMPANY_ID}, 2091, '2026-07-02', '2026-08-13',
+        'Upcoming', 'green', ${TEST_USER_ID}, ${TEST_USER_ID}, 0
       )
     `;
     await tx`
@@ -409,6 +437,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "Hello",
         receivedAt,
+        attachments: [],
         rawPayload: {},
       });
 
@@ -447,6 +476,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "Earlier",
         receivedAt: earlierAt,
+        attachments: [],
         rawPayload: {},
       });
       const later = await repository.recordInboundMessage({
@@ -459,6 +489,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "Later",
         receivedAt: laterAt,
+        attachments: [],
         rawPayload: {},
       });
 
@@ -981,6 +1012,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "seed row for receipt test",
         receivedAt: new Date().toISOString(),
+        attachments: [],
         rawPayload: {},
       });
 
@@ -1060,6 +1092,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "seed row for attach test",
         receivedAt: new Date().toISOString(),
+        attachments: [],
         rawPayload: {},
       });
 
@@ -1128,6 +1161,62 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       });
 
       expect(applied).toMatchObject({ matched: true, messageId: queued.id, status: "delivered" });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * A nominee director serving several shell companies from one number.
+   *
+   * company_id used to be `coalesce(input, existing, ...)`, so every staff send
+   * repointed the contact at whichever company messaged last. resolveInboundMatch
+   * prefers the last outbound message, so the primary path was unaffected -- but
+   * an unsolicited inbound, the one case that falls back to this column, was then
+   * filed against whichever client had messaged most recently.
+   */
+  it(
+    "clears a contact's company when two clients share the number, rather than picking one",
+    async () => {
+      const repository = repositoryFor();
+      const sql = sqlForTests();
+      const sharedPhone = "+852 6999 0042";
+
+      await repository.queueOutboundTemplateMessage({
+        actorId: TEST_USER_ID,
+        caseId: TEST_CASE_ID,
+        toPhone: sharedPhone,
+        toWhatsAppId: "phase2-shared-number",
+        contactName: "Nominee Director",
+        templateName: "phase2_test_annual_return_30_day",
+        languageCode: "en",
+        category: "annual_return",
+        body: "First client reminder.",
+      });
+
+      const afterFirst = await sql<{ company_id: string | null }[]>`
+        select company_id from whatsapp_contacts where whatsapp_id = 'phase2-shared-number'
+      `;
+      // Unambiguous so far: one client, one number.
+      expect(afterFirst[0]?.company_id).toBe(TEST_COMPANY_ID);
+
+      await repository.queueOutboundTemplateMessage({
+        actorId: TEST_USER_ID,
+        caseId: SHARED_CASE_ID,
+        toPhone: sharedPhone,
+        toWhatsAppId: "phase2-shared-number",
+        contactName: "Nominee Director",
+        templateName: "phase2_test_annual_return_30_day",
+        languageCode: "en",
+        category: "annual_return",
+        body: "Second client reminder.",
+      });
+
+      const afterSecond = await sql<{ company_id: string | null }[]>`
+        select company_id from whatsapp_contacts where whatsapp_id = 'phase2-shared-number'
+      `;
+      // Null, not the second company. A number two clients use belongs to
+      // neither, and naming one would file the other's reply against it.
+      expect(afterSecond[0]?.company_id).toBeNull();
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

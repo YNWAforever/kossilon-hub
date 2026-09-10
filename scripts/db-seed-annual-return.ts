@@ -924,6 +924,12 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
           status: "active",
           assigned_owner_id: company.ownerId,
           assigned_team_id: company.teamId,
+          // These are reference rows, not clients. The dispatcher cancels any
+          // notification queued for a fixture-origin company before it can be
+          // claimed, which is what stops a fixture replay reaching a real
+          // recipient. Until now the only thing standing in the way was that
+          // this seed happens not to create a company_contacts row.
+          data_origin: "fixture",
         })),
         "id",
         "company_name",
@@ -934,6 +940,7 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
         "registered_office",
         "company_secretary",
         "status",
+        "data_origin",
         "assigned_owner_id",
         "assigned_team_id",
       )}
@@ -946,6 +953,15 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
         registered_office = excluded.registered_office,
         company_secretary = excluded.company_secretary,
         status = excluded.status,
+        -- Set on conflict too, and that is not cosmetic. 0030 adds the column
+        -- with a 'client' default, so on a database seeded before it every one
+        -- of these fixture companies is backfilled to 'client'. Re-seeding takes
+        -- the conflict path, and while this line was missing it never repaired
+        -- them -- leaving cancelFixtureOriginNotifications matching zero rows
+        -- and the fixture-replay guard permanently inert on exactly the
+        -- databases it exists to protect. CI cannot catch this: it builds a
+        -- fresh Postgres each run, so only the INSERT path above ever executes.
+        data_origin = excluded.data_origin,
         assigned_owner_id = excluded.assigned_owner_id,
         assigned_team_id = excluded.assigned_team_id,
         updated_at = now()

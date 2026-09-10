@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkQueueRouteImport } from './routes/work-queue'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as TodayRouteImport } from './routes/today'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as OperationsRouteImport } from './routes/operations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncorporationRouteImport } from './routes/incorporation'
+import { Route as ImportsRouteImport } from './routes/imports'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as CorporateChangesRouteImport } from './routes/corporate-changes'
 import { Route as ClientsRouteImport } from './routes/clients'
@@ -38,6 +41,11 @@ const WhatsappRoute = WhatsappRouteImport.update({
   path: '/whatsapp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -53,6 +61,11 @@ const PaymentsRoute = PaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperationsRoute = OperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -61,6 +74,11 @@ const LoginRoute = LoginRouteImport.update({
 const IncorporationRoute = IncorporationRouteImport.update({
   id: '/incorporation',
   path: '/incorporation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportsRoute = ImportsRouteImport.update({
+  id: '/imports',
+  path: '/imports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -126,11 +144,14 @@ export interface FileRoutesByFullPath {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
+  '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
+  '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
@@ -146,11 +167,14 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
+  '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
+  '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
@@ -167,11 +191,14 @@ export interface FileRoutesById {
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
+  '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
+  '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
+  '/today': typeof TodayRoute
   '/whatsapp': typeof WhatsappRouteWithChildren
   '/work-queue': typeof WorkQueueRoute
   '/annual-returns/$id': typeof AnnualReturnsIdRoute
@@ -189,11 +216,14 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/documents'
+    | '/imports'
     | '/incorporation'
     | '/login'
+    | '/operations'
     | '/payments'
     | '/portal'
     | '/settings'
+    | '/today'
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
@@ -209,11 +239,14 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/documents'
+    | '/imports'
     | '/incorporation'
     | '/login'
+    | '/operations'
     | '/payments'
     | '/portal'
     | '/settings'
+    | '/today'
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
@@ -229,11 +262,14 @@ export interface FileRouteTypes {
     | '/clients'
     | '/corporate-changes'
     | '/documents'
+    | '/imports'
     | '/incorporation'
     | '/login'
+    | '/operations'
     | '/payments'
     | '/portal'
     | '/settings'
+    | '/today'
     | '/whatsapp'
     | '/work-queue'
     | '/annual-returns/$id'
@@ -250,11 +286,14 @@ export interface RootRouteChildren {
   ClientsRoute: typeof ClientsRouteWithChildren
   CorporateChangesRoute: typeof CorporateChangesRouteWithChildren
   DocumentsRoute: typeof DocumentsRoute
+  ImportsRoute: typeof ImportsRoute
   IncorporationRoute: typeof IncorporationRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OperationsRoute: typeof OperationsRoute
   PaymentsRoute: typeof PaymentsRoute
   PortalRoute: typeof PortalRoute
   SettingsRoute: typeof SettingsRoute
+  TodayRoute: typeof TodayRoute
   WhatsappRoute: typeof WhatsappRouteWithChildren
   WorkQueueRoute: typeof WorkQueueRoute
 }
@@ -273,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/whatsapp'
       fullPath: '/whatsapp'
       preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -296,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operations': {
+      id: '/operations'
+      path: '/operations'
+      fullPath: '/operations'
+      preLoaderRoute: typeof OperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -308,6 +361,13 @@ declare module '@tanstack/react-router' {
       path: '/incorporation'
       fullPath: '/incorporation'
       preLoaderRoute: typeof IncorporationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/imports': {
+      id: '/imports'
+      path: '/imports'
+      fullPath: '/imports'
+      preLoaderRoute: typeof ImportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -455,11 +515,14 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsRoute: ClientsRouteWithChildren,
   CorporateChangesRoute: CorporateChangesRouteWithChildren,
   DocumentsRoute: DocumentsRoute,
+  ImportsRoute: ImportsRoute,
   IncorporationRoute: IncorporationRouteWithChildren,
   LoginRoute: LoginRoute,
+  OperationsRoute: OperationsRoute,
   PaymentsRoute: PaymentsRoute,
   PortalRoute: PortalRoute,
   SettingsRoute: SettingsRoute,
+  TodayRoute: TodayRoute,
   WhatsappRoute: WhatsappRouteWithChildren,
   WorkQueueRoute: WorkQueueRoute,
 }

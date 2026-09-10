@@ -44,6 +44,20 @@ export type NotificationOutboxRecord = NotificationIdentity & {
 };
 
 /**
+ * What an enqueue returns: the row, and whether it was already there.
+ *
+ * The flag belongs to the operation rather than to the row, so nothing that
+ * merely reads an outbox row has to carry it. Without it a caller cannot
+ * distinguish "queued" from "deduplicated" -- and both recurring sweeps counted
+ * a dedupe as a send, incrementing reminders_sent, advancing the case status and
+ * writing an "Automated reminder sent." timeline event for a message that was
+ * never queued.
+ */
+export type EnqueuedNotification = NotificationOutboxRecord & {
+  idempotentReplay: boolean;
+};
+
+/**
  * The transport is the only layer that knows whether a provider acknowledged the
  * send, so that fact travels WITH the value rather than being re-derived by a
  * downstream consumer or by a second read of the provider mode.
@@ -99,9 +113,32 @@ export type DispatchSummary = {
   permanentlyFailed: number;
   /** Claims another run reclaimed and finished first, so this run did not record them. */
   superseded: number;
+  /**
+   * The provider accepted the message and the database write that records it
+   * failed.
+   *
+   * Counted apart from `sent` because the send happened and apart from `retried`
+   * because retrying would deliver a second copy. It is the one outcome a run
+   * cannot resolve on its own, so it is named rather than folded into a
+   * neighbour that reads as normal.
+   */
+  sentButUnrecorded: number;
+  /**
+   * Queued notifications cancelled because their company is fixture data.
+   *
+   * Named rather than silent: a replay that quietly dropped messages would be
+   * indistinguishable from a tick with nothing to send, and the difference is
+   * the whole point of the guard.
+   */
+  suppressedFixtureOrigin: number;
 };
 
 export type NotificationOutboxRepository = {
+  /**
+   * Cancels queued notifications belonging to fixture-origin companies, so a
+   * fixture replay cannot message a real recipient. Called before every claim.
+   */
+  cancelFixtureOriginNotifications(now: string): Promise<{ cancelled: number }>;
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
   /**

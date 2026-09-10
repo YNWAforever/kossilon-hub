@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { AnnualReturnRepository } from "./repository";
 import type { AnnualReturnCase, AnnualReturnStatus, PaymentStatus } from "./types";
+import { awaitingInternalReview, outstandingForClient } from "./outstanding";
 
 /**
  * The client-facing half of the annual return.
@@ -25,6 +26,8 @@ export type ClientPortalCaseSummary = {
   filingDueDate: string;
   currentStatus: AnnualReturnStatus;
   outstandingRequiredItems: number;
+  /** Sent by the client, waiting on us. Never counted as outstanding. */
+  awaitingOurReviewItems: number;
   paymentStatus: PaymentStatus | null;
 };
 
@@ -68,9 +71,11 @@ function toSummary(case_: AnnualReturnCase): ClientPortalCaseSummary {
     returnYear: case_.returnYear,
     filingDueDate: case_.filingDueDate,
     currentStatus: case_.currentStatus,
-    outstandingRequiredItems: case_.checklist.filter(
-      (item) => item.required && item.status !== "Verified",
-    ).length,
+    // Excludes Received: a document the client has sent is our work now, and
+    // counting it here is what produced "we are still waiting on N documents
+    // from you" for documents already in hand.
+    outstandingRequiredItems: outstandingForClient(case_.checklist).length,
+    awaitingOurReviewItems: awaitingInternalReview(case_.checklist).length,
     paymentStatus: case_.payment?.status ?? null,
   };
 }

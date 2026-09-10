@@ -1,4 +1,5 @@
 import type { AnnualReturnRepository, RecordAnnualReturnReminderInput } from "./repository";
+import { assertApprovedTemplate } from "@/features/whatsapp/approved-templates";
 import type { AnnualReturnCase } from "./types";
 import { buildReminderDraft } from "./workflow";
 import type {
@@ -68,6 +69,15 @@ export function buildAnnualReturnWhatsAppReminderRequest({
 }: BuildAnnualReturnWhatsAppReminderRequestInput): AnnualReturnWhatsAppReminderRequest {
   const draftBody = buildReminderDraft(case_, recipientName, today);
 
+  // Refused here rather than at WOZTELL. An unapproved name is rejected outside
+  // the 24-hour window with ok:0, and by the runbook's own account that failure
+  // reaches a console.error and is nulled out after 90 days -- so a permanently
+  // unapproved template shows up as an aggregate count and nothing else.
+  const approvedTemplate = assertApprovedTemplate({
+    templateName: ANNUAL_RETURN_REMINDER_TEMPLATE_NAME,
+    languageCode: "en",
+  });
+
   return {
     annualReturnReminder: {
       caseId: case_.id,
@@ -83,8 +93,8 @@ export function buildAnnualReturnWhatsAppReminderRequest({
       caseId: case_.id,
       toPhone: recipientPhone,
       contactName: recipientName,
-      templateName: ANNUAL_RETURN_REMINDER_TEMPLATE_NAME,
-      languageCode: "en",
+      templateName: approvedTemplate.templateName,
+      languageCode: approvedTemplate.languageCode,
       category: "annual_return",
       body: draftBody,
       idempotencyKey: annualReturnReminderIdempotencyKey({

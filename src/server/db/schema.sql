@@ -49,7 +49,13 @@ create table if not exists companies (
   assigned_owner_id uuid not null references users(id),
   assigned_team_id uuid not null references teams(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- from 0030: real client, or fixture data. The plan forbids sending customer
+  -- reminders during fixture replay, and nothing enforced it -- the only thing
+  -- stopping a seeded company being messaged was that the seed happens not to
+  -- create a contact row. The dispatcher refuses a notification whose company is
+  -- fixture-origin, at the last gate before the wire.
+  data_origin text not null default 'client' check (data_origin in ('client', 'fixture'))
 );
 
 create table if not exists documents (
@@ -437,11 +443,49 @@ create table if not exists document_upload_intents (
   ),
   scan_provider_reference text,
   scan_error_code text,
+  -- from 0023: where the verdict came from. NULL and 'deterministic' both mean
+  -- unknown safety, never verified safety.
+  scan_verdict_source text
+    check (scan_verdict_source is null or scan_verdict_source in ('provider', 'deterministic')),
+  -- from 0024: which checklist requirement this upload answers. Nullable, because
+  -- an upload that names none is unassigned evidence a person maps rather than a
+  -- guess the importer makes.
+  checklist_item_id uuid references annual_return_checklist_items(id) on delete set null,
+  -- Governs an upload that was never completed. Received files are governed by
+  -- quarantine_retention_until instead and are never deleted by the expiry sweep.
   expires_at timestamptz not null,
+  -- from 0023: how long received-but-unscanned bytes are held. Reaching it
+  -- escalates; it never deletes evidence.
+  quarantine_retention_until timestamptz,
   uploaded_at timestamptz,
   scanned_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+-- from 0023_document_scan_jobs_and_quarantine_retention.sql
+-- Durable scan work. Mechanics deliberately mirror notification_outbox: claim
+-- with `for update skip locked`, attempt_count incremented at claim and used as
+-- a fencing token in every terminal write, exponential backoff, and a
+-- visibility timeout that reclaims rows stranded by a Worker killed mid-scan.
+create table if not exists document_scan_jobs (
+  id uuid primary key default gen_random_uuid(),
+  intent_id uuid not null references document_upload_intents(id) on delete restrict,
+  checksum_sha256 text not null check (checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  reason text not null default 'initial' check (reason in ('initial', 'rescan', 'retry')),
+  idempotency_key text not null unique,
+  status text not null default 'pending' check (
+    status in ('pending', 'processing', 'succeeded', 'failed', 'cancelled')
+  ),
+  attempt_count integer not null default 0 check (attempt_count >= 0),
+  max_attempts integer not null default 5 check (max_attempts > 0),
+  next_attempt_at timestamptz not null default now(),
+  last_error_code text,
+  last_error_message text,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint document_scan_jobs_attempts_check check (attempt_count <= max_attempts)
 );
 
 create index if not exists work_items_open_queue_idx
@@ -484,9 +528,29 @@ create index if not exists client_company_memberships_lookup_idx
 create index if not exists staff_skills_active_lookup_idx
   on staff_skills (skill_key, active, staff_profile_id);
 
+-- 0023 narrowed this predicate. It used to include 'quarantined' -- the status a
+-- successfully received file holds -- so the sweep expired received evidence and
+-- maintenance.ts deleted its bytes 15 minutes after the intent was created.
 create index if not exists document_upload_intents_cleanup_idx
   on document_upload_intents (expires_at)
-  where status in ('created', 'uploaded', 'quarantined');
+  where status in ('created', 'uploaded');
+
+-- from 0023
+-- from 0024
+create index if not exists document_upload_intents_checklist_item_idx
+  on document_upload_intents (checklist_item_id)
+  where checklist_item_id is not null;
+
+create index if not exists document_upload_intents_quarantine_retention_idx
+  on document_upload_intents (quarantine_retention_until)
+  where status = 'quarantined';
+
+create index if not exists document_scan_jobs_claim_idx
+  on document_scan_jobs (next_attempt_at, updated_at, created_at)
+  where status in ('pending', 'failed', 'processing');
+
+create index if not exists document_scan_jobs_intent_idx
+  on document_scan_jobs (intent_id, created_at desc);
 
 create or replace function enforce_work_item_sla_snapshot_immutability()
 returns trigger language plpgsql as $$
@@ -966,6 +1030,12 @@ create table if not exists whatsapp_messages (
   phone_e164 text,
   whatsapp_id text,
   body text not null,
+  -- from 0029: which branch the dispatcher actually took. `body` is the draft;
+  -- outside the 24-hour window a zero-variable template goes out instead, so for
+  -- a 'template' row the body is NOT what the client received. Null means the
+  -- row predates this column, not that it was text.
+  sent_as text check (sent_as is null or sent_as in ('text', 'template')),
+  sent_template_name text,
   payload jsonb not null default '{}'::jsonb,
   sent_by uuid references users(id) on delete set null,
   received_at timestamptz,
@@ -1073,3 +1143,650 @@ create index if not exists whatsapp_contacts_phone_digits_idx
 create index if not exists whatsapp_messages_inbound_received_idx
   on whatsapp_messages (contact_id, received_at desc)
   where direction = 'inbound';
+
+-- from 0025_nar_import_staging.sql
+-- 0025: staging for the monthly NAR workbook import.
+--
+-- Nothing here writes a company or a case. That is the point.
+--
+-- `companies` requires cr_number, br_number, incorporation_date,
+-- annual_return_basis_date, registered_office, company_secretary,
+-- assigned_owner_id and assigned_team_id -- all NOT NULL, and the two registry
+-- numbers globally unique. The workbook supplies a client id and a name. A
+-- fabricated BR number would permanently burn a value the real one later needs,
+-- so an unmatched row stages here and waits for a person instead.
+--
+-- `payments` is the same shape of trap from the other direction: unique(case_id)
+-- and amount NOT NULL CHECK (amount > 0), and a case with no payment row renders
+-- normally on the board but can never be advanced -- staff hit "Annual return
+-- payment not found." with no UI anywhere to create one. The workbook has
+-- invoice numbers and no amounts, so the importer records the invoice
+-- observation here and the apply step asks a human for the fee.
+
+-- The identity column that did not exist. A repo-wide grep for
+-- external_ref|external_id|source_system|client_code returned nothing, so a
+-- per-firm client code from the spreadsheet had nowhere to land and a second
+-- import could not re-identify the row the first one created.
+create table if not exists company_external_references (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  source_system text not null,
+  external_client_id text not null,
+  -- Who confirmed the mapping, and when. A mapping is a human judgement about
+  -- which company a client code means, and it is worth being able to ask who.
+  mapped_by uuid references users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- One external id means one company, within its source system. Without this a
+  -- second import could quietly attach the same client code to a second company.
+  unique (source_system, external_client_id)
+);
+
+create index if not exists company_external_references_company_idx
+  on company_external_references (company_id);
+
+create table if not exists nar_import_batches (
+  id uuid primary key default gen_random_uuid(),
+  source_system text not null default 'nar-monthly-workbook',
+  source_file_name text not null,
+  -- The exact bytes, so a batch can be tied back to the file it came from and a
+  -- re-upload of the same file is recognised rather than duplicated.
+  source_sha256 text not null check (source_sha256 ~ '^[0-9a-f]{64}$'),
+  source_size_bytes bigint not null check (source_size_bytes > 0),
+  sheet_name text not null,
+  -- Which reader produced the parsed values. A later parser fix changes what a
+  -- row means, and without this there is no way to tell which rows predate it.
+  parser_version text not null,
+  -- The operating period staff chose. Null until they do: the supplied sheet is
+  -- named "8.2025" and historical, and reading a period out of a sheet name
+  -- would be a guess that silently activates the wrong year's cases.
+  period_year integer check (period_year is null or period_year between 1900 and 2100),
+  period_month integer check (period_month is null or period_month between 1 and 12),
+  status text not null default 'pending_review' check (
+    status in ('pending_review', 'applying', 'applied', 'cancelled', 'failed')
+  ),
+  row_count integer not null default 0 check (row_count >= 0),
+  created_by uuid references users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  applied_at timestamptz,
+  -- Re-importing the same bytes finds the same batch instead of making a second
+  -- one. Per sheet, because one workbook legitimately carries a sheet per month.
+  unique (source_sha256, sheet_name)
+);
+
+create index if not exists nar_import_batches_status_idx
+  on nar_import_batches (status, created_at desc);
+
+create table if not exists nar_import_rows (
+  id uuid primary key default gen_random_uuid(),
+  batch_id uuid not null references nar_import_batches(id) on delete cascade,
+  -- The sheet row, not an ordinal. Column A of the supplied worksheet is a row
+  -- number that has a single space on one row, so it is never an identity.
+  row_number integer not null check (row_number > 0),
+  external_client_id text not null,
+  company_name text not null,
+  -- Every cell verbatim, with its OOXML type and date-formatted flag, so a
+  -- mapping decision can be revisited without re-reading the file.
+  raw jsonb not null,
+  -- The normalized candidates, with explicit unknowns. A day and month with no
+  -- year stays a day and month with no year.
+  parsed jsonb not null,
+  issues jsonb not null default '[]'::jsonb,
+  disposition text not null check (
+    disposition in ('new', 'updated', 'unchanged', 'conflict', 'invalid', 'needs_company_mapping')
+  ),
+  matched_company_id uuid references companies(id) on delete set null,
+  matched_case_id uuid references annual_return_cases(id) on delete set null,
+  -- Row-level apply results, so an interrupted batch resumes instead of
+  -- restarting and a partial success is never presented as all applied.
+  applied_at timestamptz,
+  applied_case_id uuid references annual_return_cases(id) on delete set null,
+  apply_error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (batch_id, row_number)
+);
+
+create index if not exists nar_import_rows_batch_disposition_idx
+  on nar_import_rows (batch_id, disposition, row_number);
+
+-- Finds every staged row still waiting on a company mapping, across batches.
+create index if not exists nar_import_rows_unmapped_idx
+  on nar_import_rows (external_client_id)
+  where disposition = 'needs_company_mapping';
+
+-- from 0026_case_parties_and_requirement_instances.sql
+-- 0026: who a requirement applies to, and which pages answer it.
+--
+-- `annual_return_checklist_items` is one row per requirement per case, with a
+-- single `document_id`. That shape cannot express the thing this firm actually
+-- does: two directors need two identity documents, and one row with one document
+-- column has no way to say that the second one is missing. Five uploaded files
+-- containing duplicates and no CDD look, to that model, like plenty.
+--
+-- These three tables extend the checklist rather than replace it. Every
+-- requirement instance points at the checklist item it refines, so
+-- hasRequiredChecklistEvidence, the board metrics, the completion blockers and
+-- every existing read keep working on exactly the rows they always did. Nothing
+-- here is a second, competing checklist authority.
+--
+-- Parties reference `officers` where the person is already known to the company.
+-- Duplicating names into a new table would have created two spellings of the same
+-- director and no way to tell which was current.
+
+create table if not exists case_parties (
+  id uuid primary key default gen_random_uuid(),
+  case_id uuid not null references annual_return_cases(id) on delete cascade,
+  -- Set when this party is a company officer already on file. Null for a party
+  -- the officer register does not carry -- a corporate shareholder, say -- which
+  -- is real and must not be forced into the officer table to be representable.
+  officer_id uuid references officers(id) on delete restrict,
+  party_type text not null check (
+    party_type in (
+      'director', 'secretary', 'designated_representative', 'shareholder', 'company', 'other'
+    )
+  ),
+  display_name text not null,
+  -- Confirmation is a human act. An unconfirmed party is a candidate, and a
+  -- requirement must never be judged complete or incomplete against a guess
+  -- about who the parties are.
+  confirmed_by uuid references users(id),
+  confirmed_at timestamptz,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists case_parties_case_idx on case_parties (case_id, active);
+
+-- One row per officer per case. Partial, because officer_id is null for parties
+-- the officer register does not carry and several of those on one case is normal.
+create unique index if not exists case_parties_case_officer_uidx
+  on case_parties (case_id, officer_id)
+  where officer_id is not null;
+
+create table if not exists case_requirement_instances (
+  id uuid primary key default gen_random_uuid(),
+  case_id uuid not null references annual_return_cases(id) on delete cascade,
+  -- The checklist row this refines. The existing item stays the authority for
+  -- the case's overall state; this says who it applies to.
+  checklist_item_id uuid not null references annual_return_checklist_items(id) on delete cascade,
+  -- Null means the requirement is about the company rather than a person -- an
+  -- NAR1 is not owed by a director.
+  party_id uuid references case_parties(id) on delete cascade,
+  requirement_key text not null,
+  -- Which version of the approved template produced this. A rule change makes a
+  -- new instance rather than editing an old one, so a decision recorded under
+  -- the previous rule stays legible as a decision under the previous rule.
+  template_version text not null,
+  applicability text not null default 'required' check (
+    applicability in ('required', 'not_applicable', 'waived')
+  ),
+  applicability_reason text,
+  -- For age-limited evidence such as address proof: the date the age is measured
+  -- from. Null where the requirement has no such rule; never defaulted to today,
+  -- which would silently re-age every document each time it was read.
+  reference_date date,
+  -- A waiver is somebody's decision and is attributable.
+  authorized_by uuid references users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint case_requirement_waiver_needs_reason check (
+    applicability = 'required' or applicability_reason is not null
+  )
+);
+
+create index if not exists case_requirement_instances_case_idx
+  on case_requirement_instances (case_id);
+
+create index if not exists case_requirement_instances_item_idx
+  on case_requirement_instances (checklist_item_id);
+
+-- One instance per party per checklist item, and exactly one company-level
+-- instance per item. Split in two because a plain unique constraint treats every
+-- NULL party_id as distinct, which would let an item collect any number of
+-- company-level instances.
+create unique index if not exists case_requirement_instances_party_uidx
+  on case_requirement_instances (checklist_item_id, party_id)
+  where party_id is not null;
+
+create unique index if not exists case_requirement_instances_company_uidx
+  on case_requirement_instances (checklist_item_id)
+  where party_id is null;
+
+create table if not exists requirement_evidence_links (
+  id uuid primary key default gen_random_uuid(),
+  requirement_instance_id uuid not null
+    references case_requirement_instances(id) on delete cascade,
+  -- on delete restrict: the link is the record of why a document was accepted,
+  -- and losing it silently would leave a satisfied requirement with no evidence.
+  document_id uuid not null references documents(id) on delete restrict,
+  -- A single PDF can answer several requirements from different pages. Null means
+  -- the whole document.
+  page_from integer check (page_from is null or page_from >= 1),
+  page_to integer check (page_to is null or page_from is null or page_to >= page_from),
+  linked_by uuid references users(id),
+  note text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists requirement_evidence_links_instance_idx
+  on requirement_evidence_links (requirement_instance_id);
+
+create index if not exists requirement_evidence_links_document_idx
+  on requirement_evidence_links (document_id);
+
+-- coalesce, because the plain tuple would treat two whole-document links as
+-- distinct and let the same file be attached to one requirement repeatedly.
+create unique index if not exists requirement_evidence_links_uidx
+  on requirement_evidence_links (
+    requirement_instance_id, document_id, coalesce(page_from, 0), coalesce(page_to, 0)
+  );
+
+-- from 0027_document_versions.sql
+create table if not exists document_versions (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references documents(id) on delete cascade,
+  version_number integer not null check (version_number >= 1),
+
+  -- What the uploader said the bytes would be, from the intent. A claim.
+  declared_checksum_sha256 text
+    check (declared_checksum_sha256 is null or declared_checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  declared_byte_size bigint check (declared_byte_size is null or declared_byte_size > 0),
+
+  -- What the stored bytes actually hash to, computed server-side over the object
+  -- in R2. NULL means nobody has looked. That is the true state of every row
+  -- today, and it is left visible rather than backfilled from the declared value
+  -- -- copying a claim into a column named `verified` is how an unverifiable
+  -- document ends up in a signed manifest.
+  verified_checksum_sha256 text
+    check (verified_checksum_sha256 is null or verified_checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  verified_byte_size bigint check (verified_byte_size is null or verified_byte_size >= 0),
+  verified_at timestamptz,
+
+  -- Nullable: known only from the intent. Deliberately not defaulted from
+  -- documents.file_type, which despite its name holds the requirement category
+  -- ('identity', 'registry', 'payment', ...) and not a MIME type. There is no
+  -- 'address-proof' category; DOCUMENT_CATEGORIES is the vocabulary.
+  content_type text,
+  file_name text not null,
+  storage_url text not null,
+
+  intent_id uuid references document_upload_intents(id) on delete restrict,
+
+  -- Forward pointer, so "the current version" is one indexable predicate rather
+  -- than a not-exists over the whole chain.
+  superseded_by_version_id uuid references document_versions(id) on delete restrict,
+  superseded_at timestamptz,
+  superseded_reason text,
+
+  uploaded_by uuid references users(id),
+  created_at timestamptz not null default now(),
+
+  -- A version is either current or superseded. Without this, "current" quietly
+  -- depends on which of the two columns the reader happened to check.
+  constraint document_versions_supersede_agrees check (
+    (superseded_by_version_id is null and superseded_at is null)
+    or (superseded_by_version_id is not null and superseded_at is not null)
+  ),
+  constraint document_versions_no_self_supersede check (superseded_by_version_id <> id),
+  constraint document_versions_verified_pair check (
+    (verified_checksum_sha256 is null and verified_at is null)
+    or (verified_checksum_sha256 is not null and verified_at is not null)
+  )
+);
+
+create unique index if not exists document_versions_number_uidx
+  on document_versions (document_id, version_number);
+
+-- Exactly one current version per document, enforced rather than assumed by the
+-- code that reads it.
+create unique index if not exists document_versions_current_uidx
+  on document_versions (document_id)
+  where superseded_by_version_id is null;
+
+-- One upload produces at most one version.
+create unique index if not exists document_versions_intent_uidx
+  on document_versions (intent_id)
+  where intent_id is not null;
+
+create index if not exists document_versions_verified_checksum_idx
+  on document_versions (verified_checksum_sha256)
+  where verified_checksum_sha256 is not null;
+
+-- Extracted text lives in its own table so that a version row is written once,
+-- at upload, and never rewritten by an analysis run. An extraction pass that
+-- could touch the version row could touch storage_url or a checksum with it;
+-- this makes that structurally impossible rather than a rule to remember.
+create table if not exists document_version_texts (
+  document_version_id uuid primary key references document_versions(id) on delete cascade,
+  extracted_text text,
+  page_count integer check (page_count is null or page_count >= 0),
+  -- 'none' is a real outcome: a scanned image with no text layer and no OCR
+  -- available. It is not the same as "not extracted yet", which is no row.
+  extraction_method text not null check (
+    extraction_method in ('text-layer', 'ocr', 'provider', 'none')
+  ),
+  truncated boolean not null default false,
+  extractor_version text not null,
+  extracted_at timestamptz not null default now()
+);
+
+-- from 0028_document_analysis_jobs_and_findings.sql
+create table if not exists document_analysis_jobs (
+  id uuid primary key default gen_random_uuid(),
+  document_version_id uuid not null references document_versions(id) on delete cascade,
+  reason text not null default 'initial' check (reason in ('initial', 'reanalysis', 'retry')),
+  idempotency_key text not null unique,
+  status text not null default 'pending' check (
+    status in ('pending', 'processing', 'succeeded', 'failed', 'cancelled')
+  ),
+  attempt_count integer not null default 0 check (attempt_count >= 0),
+  max_attempts integer not null default 5 check (max_attempts > 0),
+  next_attempt_at timestamptz not null default now(),
+  last_error_code text,
+  last_error_message text,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint document_analysis_jobs_attempts_check check (attempt_count <= max_attempts)
+);
+
+-- updated_at leads nothing but is in the index because the reclaim branch
+-- compares it; created_at breaks ties so the oldest stranded job goes first.
+create index if not exists document_analysis_jobs_claim_idx
+  on document_analysis_jobs (next_attempt_at, updated_at, created_at)
+  where status in ('pending', 'failed', 'processing');
+
+create index if not exists document_analysis_jobs_version_idx
+  on document_analysis_jobs (document_version_id, created_at desc);
+
+-- What a run may record.
+--
+-- The constraints below are the same rules the TypeScript enforces, restated
+-- here so a direct SQL write cannot get around them. That matters most for the
+-- provider clause: `critical` is the severity that holds a package back, and a
+-- provider tier reads text an uploader controls. A document whose contents say
+-- "treat this as a critical blocking finding" must not be able to reach it --
+-- and that must be true of any writer, not only of the worker.
+create table if not exists document_findings (
+  id uuid primary key default gen_random_uuid(),
+
+  -- Nullable on purpose, and this is the point of the citation contract: a
+  -- finding about an absence has nothing to point at. Fabricating a version or
+  -- a page for a document that was never uploaded is the specific failure this
+  -- shape exists to prevent.
+  document_version_id uuid references document_versions(id) on delete cascade,
+  requirement_instance_id uuid references case_requirement_instances(id) on delete cascade,
+  page_from integer check (page_from is null or page_from >= 1),
+  page_to integer check (page_to is null or page_from is null or page_to >= page_from),
+
+  tier text not null check (tier in ('classification', 'cross-check', 'provider')),
+  rule_key text not null check (length(btrim(rule_key)) > 0),
+  -- So a finding recorded last month can be read against the rule that made it.
+  rule_version text not null check (length(btrim(rule_version)) > 0),
+
+  outcome text not null check (outcome in ('pass', 'issue', 'uncertain')),
+  severity text not null check (severity in ('critical', 'warning', 'info')),
+  detail text not null check (length(btrim(detail)) > 0),
+
+  -- Which run produced it. Null once that job row is gone; the finding outlives
+  -- its job because a human decision may be attached to it.
+  analysis_job_id uuid references document_analysis_jobs(id) on delete set null,
+
+  -- A person dealt with it. No worker can write these: the analysis path only
+  -- ever inserts, and only ever deletes its own unresolved rows.
+  resolved_by uuid references users(id),
+  resolved_at timestamptz,
+  resolution_note text,
+
+  created_at timestamptz not null default now(),
+
+  -- A citation is one of three things: specific bytes, a requirement, or
+  -- nothing. Never two at once, or "which did it mean" has no answer.
+  constraint document_findings_single_citation check (
+    document_version_id is null or requirement_instance_id is null
+  ),
+  -- Pages only mean something against bytes.
+  constraint document_findings_pages_need_a_version check (
+    page_from is null or document_version_id is not null
+  ),
+  -- A pass is not a problem.
+  constraint document_findings_pass_is_informational check (
+    outcome <> 'pass' or severity = 'info'
+  ),
+  -- "We could not check" is not evidence of a problem. Letting it be critical
+  -- would block every filing for as long as extraction is unavailable, which is
+  -- the present state.
+  constraint document_findings_uncertain_is_not_critical check (
+    outcome <> 'uncertain' or severity <> 'critical'
+  ),
+  -- The prompt-injection defence, in the database.
+  constraint document_findings_provider_is_advisory check (
+    tier <> 'provider' or severity <> 'critical'
+  ),
+  constraint document_findings_resolution_agrees check (
+    (resolved_by is null and resolved_at is null)
+    or (resolved_by is not null and resolved_at is not null)
+  )
+);
+
+create index if not exists document_findings_version_idx
+  on document_findings (document_version_id)
+  where document_version_id is not null;
+
+create index if not exists document_findings_requirement_idx
+  on document_findings (requirement_instance_id)
+  where requirement_instance_id is not null;
+
+-- The reviewer's queue and the manifest's blocker check: open problems only.
+create index if not exists document_findings_open_issue_idx
+  on document_findings (document_version_id, severity)
+  where resolved_by is null and outcome = 'issue';
+
+-- from 0029_whatsapp_send_mode.sql
+create index if not exists whatsapp_messages_sent_as_idx
+  on whatsapp_messages (contact_id, sent_as)
+  where sent_as = 'template';
+
+-- from 0030_company_data_origin.sql
+create index if not exists companies_data_origin_idx
+  on companies (data_origin)
+  where data_origin <> 'client';
+
+-- from 0031_whatsapp_message_media.sql
+create table if not exists whatsapp_message_media (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid not null references whatsapp_messages(id) on delete cascade,
+
+  -- WOZTELL's own identifier for the media. The only handle we have, and the
+  -- only thing a future download could be issued against.
+  provider_media_id text not null,
+
+  -- WOZTELL's vocabulary, stored as it arrives (documented payloads use
+  -- uppercase, e.g. 'VIDEO'). Deliberately unconstrained: the webhook
+  -- documentation shows one media example, so any CHECK here would be a guess
+  -- at the full set and would reject a real message rather than record it.
+  media_type text not null,
+
+  -- Order within the message. A client can attach several files, and "the third
+  -- one" has to stay the third one.
+  position integer not null check (position >= 0),
+
+  -- Set if this media ever becomes a document. Null on every row today.
+  -- on delete set null: losing the document must not erase the record that the
+  -- client sent something.
+  document_id uuid references documents(id) on delete set null,
+
+  created_at timestamptz not null default now(),
+
+  -- One row per attachment per message. A redelivered webhook re-records the
+  -- same attachments, and two rows for one file would show the client sending it
+  -- twice.
+  constraint whatsapp_message_media_uidx unique (message_id, provider_media_id, position)
+);
+
+create index if not exists whatsapp_message_media_message_idx
+  on whatsapp_message_media (message_id);
+
+-- Finding media nobody has turned into a document yet: the staff queue, and the
+-- backlog that will exist the moment a download endpoint is available.
+create index if not exists whatsapp_message_media_unattached_idx
+  on whatsapp_message_media (created_at)
+  where document_id is null;
+
+-- from 0032_package_handoffs_and_returns.sql
+create table if not exists package_handoffs (
+  id uuid primary key default gen_random_uuid(),
+  case_id uuid not null references annual_return_cases(id) on delete restrict,
+
+  -- The approval this handoff carries. Both the hash and the payload it was
+  -- computed over: the payload so a later reader can recompute and verify rather
+  -- than trust, and the hash so a comparison is cheap.
+  manifest_sha256 text not null check (manifest_sha256 ~ '^[0-9a-f]{64}$'),
+  manifest_payload text not null,
+
+  -- Who approved the package, and who released it. Deliberately two columns:
+  -- approving a package and handing it to an outside party are different acts,
+  -- and a firm may well want them to be different people.
+  approved_by uuid not null references users(id),
+  released_by uuid not null references users(id),
+
+  status text not null default 'prepared' check (
+    status in ('prepared', 'transmitted', 'acknowledged', 'returned', 'failed', 'cancelled')
+  ),
+
+  -- Null until something actually transmits. That is every row today.
+  transmitted_at timestamptz,
+  -- The destination's own identifier for the submission, when it gives one.
+  destination_reference text,
+  last_error_code text,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  -- A status that claims transmission must carry the moment it happened, or
+  -- "has this been sent" has two answers that can disagree.
+  constraint package_handoffs_transmission_agrees check (
+    (status in ('prepared', 'failed', 'cancelled') and transmitted_at is null)
+    or (status in ('transmitted', 'acknowledged', 'returned') and transmitted_at is not null)
+  )
+);
+
+-- One live handoff per case. A second prepared package for a case already out
+-- with the agent is a mistake, not a second filing; the partial predicate lets a
+-- cancelled or failed one be replaced.
+create unique index if not exists package_handoffs_live_uidx
+  on package_handoffs (case_id)
+  where status in ('prepared', 'transmitted', 'acknowledged');
+
+create index if not exists package_handoffs_status_idx
+  on package_handoffs (status, created_at desc);
+
+-- What came back.
+--
+-- A return is evidence about a handoff, so it points at one. It may also carry a
+-- document -- the stamped filing, a receipt -- which goes through the ordinary
+-- document pipeline and therefore the ordinary malware gate.
+create table if not exists handoff_returns (
+  id uuid primary key default gen_random_uuid(),
+  handoff_id uuid not null references package_handoffs(id) on delete restrict,
+
+  -- Null when no document accompanied the return, and null for a return nobody
+  -- could match to material we sent. An unmatched return is precisely the
+  -- exception this table exists to surface; discarding it would make the anomaly
+  -- invisible.
+  document_id uuid references documents(id) on delete set null,
+
+  outcome text not null check (
+    outcome in ('accepted', 'rejected', 'partial', 'unmatched')
+  ),
+  -- The agent's own words, kept verbatim. Never parsed into a decision.
+  detail text,
+  -- Whether the returned material corresponds to the manifest that was sent.
+  -- Null means nobody has checked yet, which is different from checked-and-fine.
+  reconciled_at timestamptz,
+  reconciled_by uuid references users(id),
+
+  received_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+
+  constraint handoff_returns_reconciliation_agrees check (
+    (reconciled_by is null and reconciled_at is null)
+    or (reconciled_by is not null and reconciled_at is not null)
+  )
+);
+
+create index if not exists handoff_returns_handoff_idx
+  on handoff_returns (handoff_id, received_at desc);
+
+-- The exception queue: returns nobody has reconciled, and returns that came back
+-- rejected. Both need a person.
+create index if not exists handoff_returns_open_idx
+  on handoff_returns (received_at)
+  where reconciled_at is null or outcome in ('rejected', 'partial', 'unmatched');
+
+-- Phase F: the scheduled tick leaves a trace.
+--
+-- The 5-minute cron's entire record used to be one console.log into the
+-- Cloudflare log stream: ephemeral, needs a person to go and look, and not
+-- readable by the product. So a cron that stopped firing -- or, under
+-- BLOCKED_INTEGRATION: deployment-runtime, one that never registered at all --
+-- left every screen looking normal, because every screen reads tables a human
+-- writes to. The first real signal would be a missed statutory deadline.
+create table if not exists maintenance_runs (
+  id uuid primary key default gen_random_uuid(),
+
+  -- The tick the trigger asked for, distinct from when the work actually
+  -- started. Firing late and running slowly are different faults.
+  scheduled_for timestamptz not null,
+  started_at timestamptz not null,
+  finished_at timestamptz not null,
+  duration_ms integer not null check (duration_ms >= 0),
+
+  -- succeeded: every pass ran. partial: the run completed and named which
+  -- passes threw. failed: it did not get far enough to have passes.
+  outcome text not null check (outcome in ('succeeded', 'partial', 'failed')),
+
+  -- The whole ScheduledMaintenanceResult. `null` inside it keeps meaning "this
+  -- pass produced no information", which is the distinction from `0` that the
+  -- result type exists to preserve.
+  --
+  -- Nullable, with the constraint below saying when. `not null` made a `failed`
+  -- run -- one that died before it had any passes -- impossible to insert, which
+  -- is exactly the run this table exists to capture.
+  passes jsonb,
+
+  failed_passes text[] not null default '{}',
+  -- Message only, never a thrown value: it can carry a provider payload or a
+  -- connection string, and this row is read by a screen.
+  failure_summary text,
+
+  -- So a lost cron can be told apart from a deployment nobody has invoked. An
+  -- operator running the entrypoint by hand must not make the schedule look
+  -- alive.
+  trigger_source text not null default 'scheduled'
+    check (trigger_source in ('scheduled', 'manual')),
+
+  created_at timestamptz not null default now(),
+
+  constraint maintenance_runs_finished_after_started check (finished_at >= started_at),
+
+  -- `failed` is deliberately unconstrained: a run that died before assembling
+  -- its passes has none to name.
+  constraint maintenance_runs_outcome_agrees check (
+    (outcome = 'succeeded' and cardinality(failed_passes) = 0)
+    or (outcome = 'partial' and cardinality(failed_passes) > 0)
+    or outcome = 'failed'
+  ),
+
+  -- A run that reached its passes must record them. Only `failed` may have none.
+  constraint maintenance_runs_passes_present check (
+    (outcome in ('succeeded', 'partial') and passes is not null)
+    or outcome = 'failed'
+  )
+);
+
+create index if not exists maintenance_runs_recent_idx
+  on maintenance_runs (scheduled_for desc);

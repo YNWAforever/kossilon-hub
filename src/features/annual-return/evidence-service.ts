@@ -4,6 +4,7 @@ import {
   type DocumentRepository,
   type PrivateDocument,
 } from "@/features/documents/repository";
+import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import { createAnnualReturnRepository, type AnnualReturnRepository } from "./repository";
 import type { AnnualReturnAction } from "./permissions";
@@ -122,6 +123,26 @@ export function createAnnualReturnEvidenceService(
 
           if (validated.document.reviewStatus !== "pending") {
             throw new Error("Document has already been reviewed.");
+          }
+
+          /**
+           * The same gate as `reviewDocument` in documents/server-fns.ts, on the
+           * path that is actually used.
+           *
+           * That one held the only production caller of `canApproveDocument`,
+           * and nothing calls it: /documents and /payments both review through
+           * `reviewAnnualReturnEvidenceAction`, which lands here. So Phase A's
+           * rule -- an approval is what later releases a file into a filing
+           * package, and it requires genuine scan evidence -- was enforced on a
+           * door nobody opens and absent from the one everybody does.
+           *
+           * Checked before `assertCanMutateCase` and before any write, so a
+           * refusal changes nothing.
+           */
+          if (!canApproveDocument(documentSafetyOf(validated.document))) {
+            throw new Error(
+              "Document safety is unverified, so it cannot be approved or rejected until a genuine scan completes.",
+            );
           }
 
           let action: AnnualReturnAction;

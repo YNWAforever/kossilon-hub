@@ -8,7 +8,33 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
-import { type DocumentCategory, type DocumentScanResult, type DocumentStatus } from "./types";
+import type { DocumentAccessSubject } from "./authorization";
+import { enqueueDocumentAnalysisJob } from "./analysis-jobs";
+import { enqueueDocumentScanJob } from "./scan-jobs";
+import {
+  type DocumentCategory,
+  type DocumentScanResult,
+  type DocumentStatus,
+  type ScanVerdictSource,
+} from "./types";
+
+/**
+ * How long received-but-unscanned bytes are held.
+ *
+ * Deliberately generous, and deliberately NOT the 15-minute upload-intent
+ * expiry it was accidentally sharing. `expires_at` answers "did the browser ever
+ * come back with the bytes"; this answers "how long may a received file wait for
+ * a scanner". Conflating them meant a file uploaded at minute 14 was deleted at
+ * minute 15 (see migration 0023). Reaching this window escalates for an operator;
+ * it never deletes evidence.
+ */
+export const QUARANTINE_RETENTION_DAYS = 14;
+
+export function quarantineRetentionUntil(receivedAt: string | Date): string {
+  return new Date(
+    new Date(receivedAt).getTime() + QUARANTINE_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+}
 
 export { DOCUMENT_CATEGORIES, type DocumentCategory } from "./types";
 
@@ -17,6 +43,8 @@ export type DocumentUploadIntent = {
   companyId: string;
   caseId: string | null;
   documentId: string | null;
+  /** Which checklist requirement this upload answers, when the uploader said. */
+  checklistItemId: string | null;
   requestedByAuthUserId: string;
   category: DocumentCategory;
   fileName: string;
@@ -27,7 +55,14 @@ export type DocumentUploadIntent = {
   status: DocumentStatus;
   scanProviderReference: string | null;
   scanErrorCode: string | null;
+  /**
+   * NULL means the verdict predates this distinction and is unverifiable, so it
+   * reads the same as 'deterministic': unknown safety, not verified safety.
+   */
+  scanVerdictSource: ScanVerdictSource | null;
   expiresAt: string;
+  /** Set at receipt; null until then and after a terminal verdict. */
+  quarantineRetentionUntil: string | null;
 };
 
 export type PrivateDocument = {
@@ -41,6 +76,13 @@ export type PrivateDocument = {
   sizeBytes: number;
   checksum: string;
   uploadStatus: DocumentStatus;
+  /**
+   * Carried onto the document because "is this file safe to open" is decided
+   * wherever the file is served, and a NULL or 'deterministic' verdict is not
+   * safety. Without it here every consumer would have to re-join the intent to
+   * find out, and the one that forgot would serve an unscanned file.
+   */
+  scanVerdictSource: ScanVerdictSource | null;
   reviewStatus: "pending" | "verified" | "rejected";
   uploadedBy: string | null;
   uploadedAt: string;
@@ -107,6 +149,7 @@ type IntentRow = {
   company_id: string;
   case_id: string | null;
   document_id: string | null;
+  checklist_item_id: string | null;
   requested_by_auth_user_id: string;
   category: DocumentCategory;
   file_name: string;
@@ -117,7 +160,9 @@ type IntentRow = {
   status: DocumentStatus;
   scan_provider_reference: string | null;
   scan_error_code: string | null;
+  scan_verdict_source: ScanVerdictSource | null;
   expires_at: string | Date;
+  quarantine_retention_until: string | Date | null;
 };
 type DocumentRow = {
   id: string;
@@ -133,7 +178,26 @@ type DocumentRow = {
   expected_size_bytes: string | number;
   checksum_sha256: string;
   upload_status: DocumentStatus;
+  scan_verdict_source: ScanVerdictSource | null;
 };
+
+type AccessSubjectRow = {
+  company_id: string;
+  assigned_team_id: string | null;
+  case_id: string | null;
+  owner_id: string | null;
+  reviewer_id: string | null;
+};
+
+function mapAccessSubject(row: AccessSubjectRow): DocumentAccessSubject {
+  return {
+    companyId: row.company_id,
+    companyTeamId: row.assigned_team_id,
+    caseId: row.case_id,
+    caseOwnerId: row.owner_id,
+    caseReviewerId: row.reviewer_id,
+  };
+}
 
 function mapIntent(row: IntentRow): DocumentUploadIntent {
   return {
@@ -141,6 +205,7 @@ function mapIntent(row: IntentRow): DocumentUploadIntent {
     companyId: row.company_id,
     caseId: row.case_id,
     documentId: row.document_id,
+    checklistItemId: row.checklist_item_id ?? null,
     requestedByAuthUserId: row.requested_by_auth_user_id,
     category: row.category,
     fileName: row.file_name,
@@ -151,7 +216,12 @@ function mapIntent(row: IntentRow): DocumentUploadIntent {
     status: row.status,
     scanProviderReference: row.scan_provider_reference,
     scanErrorCode: row.scan_error_code,
+    scanVerdictSource: row.scan_verdict_source,
     expiresAt: new Date(row.expires_at).toISOString(),
+    quarantineRetentionUntil:
+      row.quarantine_retention_until === null || row.quarantine_retention_until === undefined
+        ? null
+        : new Date(row.quarantine_retention_until).toISOString(),
   };
 }
 
@@ -167,6 +237,7 @@ function mapDocument(row: DocumentRow): PrivateDocument {
     sizeBytes: Number(row.expected_size_bytes),
     checksum: row.checksum_sha256,
     uploadStatus: row.upload_status,
+    scanVerdictSource: row.scan_verdict_source,
     reviewStatus: row.verification_status,
     uploadedBy: row.uploaded_by,
     uploadedAt: new Date(row.uploaded_at).toISOString(),
@@ -181,6 +252,7 @@ export type DocumentRepository = {
   createUploadIntent(input: {
     companyId: string;
     caseId?: string;
+    checklistItemId?: string;
     replacementDocumentId?: string;
     requestedByAuthUserId: string;
     category: DocumentCategory;
@@ -203,7 +275,35 @@ export type DocumentRepository = {
     caseId?: string;
     teamId?: string;
   }): Promise<PrivateDocument[]>;
-  recordScanResult(intentId: string, result: DocumentScanResult): Promise<DocumentUploadIntent>;
+  /**
+   * The authoritative scope of one document/intent/company, for
+   * `assertStaffDocumentAccess`. Loaded here rather than accepted from the
+   * caller: authorization that trusts a client-supplied company or case is not
+   * authorization.
+   */
+  getDocumentAccessSubject(documentId: string): Promise<DocumentAccessSubject | null>;
+  getIntentAccessSubject(intentId: string): Promise<DocumentAccessSubject | null>;
+  getCompanyAccessSubject(
+    companyId: string,
+    caseId?: string | null,
+  ): Promise<DocumentAccessSubject | null>;
+  recordScanResult(
+    intentId: string,
+    result: DocumentScanResult,
+    options?: {
+      verdictSource?: ScanVerdictSource;
+      expectedChecksum?: string;
+      /**
+       * Which current statuses may receive this verdict. Defaults to
+       * ['quarantined'] -- the normal first scan. A genuine re-scan of a legacy
+       * file also passes 'available', because those files sit at 'available'
+       * with an unverifiable verdict and must be able to receive a real one
+       * without first being pushed back through quarantine, which would change
+       * what `status` means for every existing consumer.
+       */
+      allowStatuses?: readonly DocumentStatus[];
+    },
+  ): Promise<DocumentUploadIntent>;
   reviewDocument(input: {
     documentId: string;
     reviewerId: string;
@@ -211,6 +311,7 @@ export type DocumentRepository = {
     reason?: string;
   }): Promise<PrivateDocument>;
   expireUploads(now: string): Promise<DocumentUploadIntent[]>;
+  listStalledQuarantine(now: string, limit?: number): Promise<DocumentUploadIntent[]>;
   close(): Promise<void>;
 };
 
@@ -244,7 +345,8 @@ export function createDocumentRepository(
     filters: { id?: string; companyId?: string; caseId?: string; teamId?: string } = {},
   ) {
     return sql<DocumentRow[]>`
-      select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status
+      select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
+             i.scan_verdict_source
       from documents d
       join document_upload_intents i on i.document_id = d.id
       join companies c on c.id = d.company_id
@@ -271,6 +373,17 @@ export function createDocumentRepository(
           if (!cases[0] || cases[0].company_id !== input.companyId)
             throw new Error("Case does not belong to the company.");
         }
+        if (input.checklistItemId) {
+          // Checked against the case, not merely for existence. A client-supplied
+          // checklist item id from another company's case would otherwise let one
+          // client's upload satisfy another client's requirement.
+          if (!input.caseId) throw new Error("A checklist item requires a case.");
+          const items = await tx<{ case_id: string }[]>`
+            select case_id from annual_return_checklist_items
+            where id = ${input.checklistItemId} for update`;
+          if (!items[0] || items[0].case_id !== input.caseId)
+            throw new Error("Checklist item does not belong to the case.");
+        }
         if (input.replacementDocumentId) {
           const replaced = await tx<
             { company_id: string; case_id: string | null; verification_status: string }[]
@@ -287,16 +400,31 @@ export function createDocumentRepository(
           if (replaced[0].verification_status !== "rejected")
             throw new Error("Only rejected documents may be replaced.");
         }
-        const accepted = await tx<{ id: string }[]>`
-          select d.id from documents d join document_upload_intents i on i.document_id = d.id
-          where d.company_id = ${input.companyId} and d.case_id is not distinct from ${input.caseId ?? null}
-            and i.category = ${input.category} and d.verification_status = 'verified' limit 1 for update of d`;
-        if (accepted[0]) throw new Error("Accepted documents are immutable.");
+        // There used to be a guard here refusing any new intent when a *verified*
+        // document already existed for (company, case, category). `category` is
+        // one of eight broad buckets with no notion of a person, so once one
+        // director's HKID was verified under 'identity', a second director's HKID
+        // could not be uploaded at all -- and replacementDocumentId was no escape
+        // because it requires the prior document to be 'rejected'.
+        //
+        // It was reaching for immutability of accepted bytes, which is real but
+        // belongs elsewhere and is already enforced there: an upload never
+        // mutates an existing row (finalizeUploadIntent inserts a new documents
+        // row), and reviewDocument refuses anything whose verification_status is
+        // not 'pending', so an accepted document cannot be re-decided.
+        //
+        // So additive uploads are permitted. A new file does not overwrite,
+        // supersede or inherit the approval of an old one. Until Phase B/C
+        // introduce person-level requirement slots, an extra document in an
+        // already-satisfied category is unassigned evidence a human must map:
+        // reviewAnnualReturnEvidenceAction already requires an explicit
+        // checklistItemId for checklist categories, so nothing auto-attaches.
         const rows = await tx<IntentRow[]>`
           insert into document_upload_intents (
-            company_id, case_id, requested_by_auth_user_id, category, file_name, content_type,
-            expected_size_bytes, checksum_sha256, object_key, expires_at
-          ) values (${input.companyId}, ${input.caseId ?? null}, ${input.requestedByAuthUserId},
+            company_id, case_id, checklist_item_id, requested_by_auth_user_id, category, file_name,
+            content_type, expected_size_bytes, checksum_sha256, object_key, expires_at
+          ) values (${input.companyId}, ${input.caseId ?? null}, ${input.checklistItemId ?? null},
+            ${input.requestedByAuthUserId},
             ${input.category}, ${input.fileName}, ${input.contentType}, ${input.expectedSizeBytes},
             ${input.checksum}, ${input.objectKey}, ${input.expiresAt}) returning *`;
         return mapIntent(rows[0]);
@@ -318,11 +446,88 @@ export function createDocumentRepository(
             verification_status, uploaded_by
           ) values (${intent.companyId}, ${intent.caseId}, ${intent.category}, ${intent.fileName},
             ${intent.objectKey}, ${input.source}, 'pending', ${input.uploadedBy}) returning id`;
+
+        // Version 1 of these bytes, in the same transaction as the document, so
+        // that no document can ever exist without a version and the rest of the
+        // codebase never has to special-case "documents that predate versioning".
+        //
+        // The checksum and size go into the *declared* columns. They came from
+        // the client when the intent was created, before the bytes existed, and
+        // nothing enabled has compared them to the stored object -- only the
+        // provider scanner reads and hashes it, and that is BLOCKED_INTEGRATION.
+        // verified_checksum_sha256 stays null until it does.
+        const versions = await tx<{ id: string }[]>`
+          insert into document_versions (
+            document_id, version_number, declared_checksum_sha256, declared_byte_size,
+            content_type, file_name, storage_url, intent_id, uploaded_by
+          ) values (${documents[0].id}, 1, ${intent.checksum}, ${intent.expectedSizeBytes},
+            ${intent.contentType}, ${intent.fileName}, ${intent.objectKey}, ${intent.id},
+            ${input.uploadedBy}) returning id`;
+
+        // Analysis work, enqueued in the same transaction and for the same
+        // reason as the scan job below: a version must never exist without the
+        // work that examines it. A Worker killed between the commit and a
+        // post-commit enqueue would leave a document nothing will ever look at,
+        // and no error anywhere to say so.
+        //
+        // Enqueued even though no scanner has passed the file yet. The worker
+        // itself holds the gate -- it refuses to read bytes whose safety is not
+        // `verified` and backs off -- so queuing now costs a cheap deferred
+        // claim, and means nothing has to remember to enqueue later when the
+        // verdict finally lands.
+        await enqueueDocumentAnalysisJob(tx, { documentVersionId: versions[0].id });
+
+        // quarantine_retention_until is set here, from the moment of actual
+        // receipt, and from now on it -- not expires_at -- governs these bytes.
+        // expires_at answers "did the upload ever complete"; this row has just
+        // proved that it did.
         const updated = await tx<IntentRow[]>`
           update document_upload_intents set document_id = ${documents[0].id}, status = 'quarantined',
-            uploaded_at = now(), updated_at = now() where id = ${intent.id} returning *`;
+            uploaded_at = now(), updated_at = now(),
+            quarantine_retention_until = now() + ${`${QUARANTINE_RETENTION_DAYS} days`}::interval
+          where id = ${intent.id} returning *`;
+
+        // Enqueued inside this transaction on purpose. Scanning used to be a
+        // staff-triggered HTTP call with zero production callers, so a received
+        // file simply waited forever. Enqueuing after the commit instead would
+        // reintroduce the same hole on a narrower window: a Worker killed between
+        // the two would leave a received object with no outstanding work and no
+        // error anywhere. Either both land or neither does.
+        await enqueueDocumentScanJob(tx, {
+          intentId: intent.id,
+          checksum: intent.checksum,
+          reason: "initial",
+        });
+
+        // The checklist finally hears about the upload.
+        //
+        // In the same transaction as the document, because a received file whose
+        // requirement still reads 'Missing' is the exact state that had the
+        // client chased for a document already in hand.
+        //
+        // Only from Missing or Rejected, and never over a Verified item: an
+        // approval is a human decision about specific bytes and a later upload
+        // does not undo it. A Received item stays Received -- the second upload
+        // is additional evidence for the same requirement, not a fresh receipt.
+        //
+        // Written here rather than through annual-return's updateChecklistItem
+        // deliberately. That path also calls ensureWorkItemForEvent, which throws
+        // when no active SLA policy exists for the work type, and an upload must
+        // not fail because of a missing policy row. The receipt is recorded; the
+        // internal review task is derived from the 'Received' status itself.
+        if (intent.checklistItemId) {
+          await tx`
+            update annual_return_checklist_items
+            set status = 'Received', received_at = now(), document_id = ${documents[0].id},
+              updated_at = now()
+            where id = ${intent.checklistItemId}
+              and case_id = ${intent.caseId}
+              and status in ('Missing', 'Rejected')`;
+        }
+
         const rows = await tx<DocumentRow[]>`
-          select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status
+          select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
+             i.scan_verdict_source
           from documents d join document_upload_intents i on i.document_id = d.id
           where d.id = ${documents[0].id}`;
         if (!updated[0] || !rows[0]) throw new Error("Unable to finalize document metadata.");
@@ -333,10 +538,41 @@ export function createDocumentRepository(
       const rows = await documentRows({ id });
       return rows[0] ? mapDocument(rows[0]) : null;
     },
+    async getDocumentAccessSubject(documentId) {
+      const rows = await sql<AccessSubjectRow[]>`
+        select d.company_id, c.assigned_team_id, d.case_id, a.owner_id, a.reviewer_id
+        from documents d
+        join companies c on c.id = d.company_id
+        left join annual_return_cases a on a.id = d.case_id
+        where d.id = ${documentId}`;
+      return rows[0] ? mapAccessSubject(rows[0]) : null;
+    },
+    async getIntentAccessSubject(intentId) {
+      const rows = await sql<AccessSubjectRow[]>`
+        select i.company_id, c.assigned_team_id, i.case_id, a.owner_id, a.reviewer_id
+        from document_upload_intents i
+        join companies c on c.id = i.company_id
+        left join annual_return_cases a on a.id = i.case_id
+        where i.id = ${intentId}`;
+      return rows[0] ? mapAccessSubject(rows[0]) : null;
+    },
+    async getCompanyAccessSubject(companyId, caseId) {
+      // The case is joined on its own id AND its company, so a caseId belonging
+      // to another company contributes no owner/reviewer rather than silently
+      // granting that company's assignees access here.
+      const rows = await sql<AccessSubjectRow[]>`
+        select c.id company_id, c.assigned_team_id,
+          a.id case_id, a.owner_id, a.reviewer_id
+        from companies c
+        left join annual_return_cases a
+          on a.id = ${caseId ?? null} and a.company_id = c.id
+        where c.id = ${companyId}`;
+      return rows[0] ? mapAccessSubject(rows[0]) : null;
+    },
     async listDocuments(filters = {}) {
       return (await documentRows(filters)).map(mapDocument);
     },
-    async recordScanResult(intentId, result) {
+    recordScanResult(intentId, result, options = {}) {
       const status =
         result.status === "clean"
           ? "available"
@@ -345,19 +581,57 @@ export function createDocumentRepository(
             : result.retryable
               ? "quarantined"
               : "failed";
-      const rows = await sql<IntentRow[]>`
+      // Transactional because a clean verdict from a scanner that actually read
+      // the bytes also establishes the document's content identity. The verdict
+      // and that identity are the same fact; committing one without the other
+      // would leave a released document whose hash nobody recorded, or a hash
+      // attached to a verdict that never landed.
+      return withTransaction(sql, async (tx) => {
+        // A verdict is only about the content it was computed over. If the intent
+        // now carries a different checksum, this result is a late answer about
+        // superseded bytes: it stays as job history and is never applied as the
+        // current status. Matching on the checksum in the UPDATE keeps that check
+        // and the write in one statement, so nothing can slip between them.
+        const rows = await tx<IntentRow[]>`
         update document_upload_intents set status = ${status},
           scan_provider_reference = ${"providerReference" in result ? result.providerReference : null},
           scan_error_code = ${result.status === "failed" || result.status === "rejected" ? ("errorCode" in result ? result.errorCode : result.reason) : null},
-          scanned_at = now(), updated_at = now()
-        where id = ${intentId} and status = 'quarantined' returning *`;
-      if (!rows[0]) throw new Error("Document is not quarantined.");
-      return mapIntent(rows[0]);
+          scan_verdict_source = ${options.verdictSource ?? null},
+          scanned_at = now(), updated_at = now(),
+          -- A terminal verdict ends the retention obligation; a retryable failure
+          -- leaves the file quarantined and keeps its window open.
+          quarantine_retention_until = case
+            when ${status} = 'quarantined' then quarantine_retention_until
+            else null
+          end
+        where id = ${intentId}
+          and status = any(${(options.allowStatuses ?? ["quarantined"]) as string[]}::text[])
+          and (${options.expectedChecksum ?? null}::text is null
+               or checksum_sha256 = ${options.expectedChecksum ?? null})
+        returning *`;
+        if (!rows[0]) throw new Error("Document is not quarantined.");
+
+        // Only from a scanner that read the object. `is null` in the predicate
+        // makes this write-once: a later verdict cannot quietly restate what the
+        // bytes are underneath a decision already recorded against them.
+        if (result.status === "clean" && result.verifiedChecksum) {
+          await tx`
+          update document_versions
+          set verified_checksum_sha256 = ${result.verifiedChecksum},
+            verified_byte_size = ${result.verifiedByteSize ?? null},
+            verified_at = now()
+          where intent_id = ${intentId}
+            and verified_checksum_sha256 is null`;
+        }
+
+        return mapIntent(rows[0]);
+      });
     },
     reviewDocument(input) {
       return withTransaction(sql, async (tx) => {
         const rows = await tx<DocumentRow[]>`
-          select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status
+          select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
+             i.scan_verdict_source
           from documents d join document_upload_intents i on i.document_id = d.id
           where d.id = ${input.documentId} for update of d`;
         if (!rows[0]) throw new Error("Document not found.");
@@ -381,9 +655,45 @@ export function createDocumentRepository(
       });
     },
     async expireUploads(now) {
+      // 'quarantined' used to be in this list. It is the status a SUCCESSFULLY
+      // RECEIVED file holds, and maintenance.ts deletes the R2 object for every
+      // row this returns -- so a file uploaded at minute 14 had its bytes deleted
+      // at minute 15, leaving an orphaned documents row that could never be
+      // scanned (recordScanResult matches only 'quarantined') and never be read
+      // (downloadDocumentForActor requires 'available'). Received evidence is now
+      // governed by quarantine_retention_until, which escalates rather than
+      // deletes. Never widen this predicate back.
+      //
+      // `document_id is null` is a second, independent guard on the same
+      // invariant: a row with a document attached has received evidence, and a
+      // lapsed expiry is not authority to delete that. It closes the window where
+      // a sweep that read the row before a concurrent finalize committed could
+      // still act on it -- the finalize sets document_id inside its own
+      // transaction, so this predicate cannot see a half-finished one.
       const rows = await sql<IntentRow[]>`
         update document_upload_intents set status = 'expired', updated_at = now()
-        where expires_at <= ${now} and status in ('created','uploaded','quarantined') returning *`;
+        where expires_at <= ${now}
+          and status in ('created','uploaded')
+          and document_id is null
+        returning *`;
+      return rows.map(mapIntent);
+    },
+
+    /**
+     * Received files whose retention window has lapsed without a verdict.
+     *
+     * Deliberately a read, not a sweep: the caller escalates: it does not delete.
+     * Losing evidence to a scanner outage is the exact failure this phase exists
+     * to remove, so nothing here may take a destructive action.
+     */
+    async listStalledQuarantine(now, limit = 100) {
+      const rows = await sql<IntentRow[]>`
+        select * from document_upload_intents
+        where status = 'quarantined'
+          and quarantine_retention_until is not null
+          and quarantine_retention_until <= ${now}
+        order by quarantine_retention_until asc
+        limit ${limit}`;
       return rows.map(mapIntent);
     },
     async close() {

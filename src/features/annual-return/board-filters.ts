@@ -16,6 +16,8 @@ export type AnnualReturnBoardSearch = {
 
 export type AnnualReturnBoardFilters = {
   limit: number;
+  q?: string;
+  cursor?: string;
   status?: AnnualReturnStatus;
   risk?: RiskLevel;
   ownerId?: string;
@@ -23,9 +25,13 @@ export type AnnualReturnBoardFilters = {
 };
 
 /**
- * Maps URL state onto the server filter set. `q` is deliberately absent: the
- * production case carries no contact name or phone, so company-name search is a
- * client-side filter over the returned rows rather than a server predicate.
+ * Maps URL state onto the server filter set.
+ *
+ * `q` used to be deliberately absent here, filtered in the browser over whatever
+ * the 200-row page happened to contain -- so a case at row 201 could not be found
+ * by typing its name, and the owner dropdown that might have narrowed the query
+ * was itself built from that same truncated page. It is now a SQL predicate over
+ * company name and CR number.
  *
  * Keys are omitted rather than set to undefined so the query key stays stable and
  * the Zod schema sees the same shape whether or not a filter is set.
@@ -33,9 +39,12 @@ export type AnnualReturnBoardFilters = {
 export function boardFiltersFromSearch(
   search: AnnualReturnBoardSearch,
   limit: number,
+  cursor?: string,
 ): AnnualReturnBoardFilters {
   return {
     limit,
+    ...(search.q ? { q: search.q } : {}),
+    ...(cursor ? { cursor } : {}),
     ...(search.status ? { status: search.status } : {}),
     ...(search.risk ? { risk: search.risk } : {}),
     ...(search.ownerId ? { ownerId: search.ownerId } : {}),

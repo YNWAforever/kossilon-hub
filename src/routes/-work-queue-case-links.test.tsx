@@ -6,6 +6,8 @@ function makeItem(overrides: Partial<PersistedWorkItem> = {}): PersistedWorkItem
   return {
     id: "wi-1",
     companyId: "company-1",
+    companyName: "Acme Company Limited",
+    ownerName: null,
     caseType: "annual_return",
     annualReturnCaseId: "case-1",
     corporateChangeRequestId: null,

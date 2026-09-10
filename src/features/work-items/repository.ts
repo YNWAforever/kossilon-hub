@@ -25,6 +25,14 @@ export type EscalationState = "none" | "warning" | "breach" | "acknowledged";
 export type PersistedWorkItem = {
   id: string;
   companyId: string;
+  /**
+   * Resolved on the read, because the queue rendered `companyId.slice(0, 8)` and
+   * `ownerId.slice(0, 8)` -- raw uuid prefixes where the company and the person
+   * belong. Nullable so a row whose company or owner is gone still renders
+   * rather than dropping out of the queue.
+   */
+  companyName: string | null;
+  ownerName: string | null;
   caseType: WorkItemCaseType;
   annualReturnCaseId: string | null;
   corporateChangeRequestId: string | null;
@@ -51,6 +59,9 @@ export type PersistedWorkItem = {
 type WorkItemRow = {
   id: string;
   company_id: string;
+  /** Present only on reads that join them; optional so other reads still map. */
+  company_name?: string | null;
+  owner_name?: string | null;
   case_type: WorkItemCaseType;
   annual_return_case_id: string | null;
   corporate_change_request_id: string | null;
@@ -134,6 +145,8 @@ function mapWorkItem(row: WorkItemRow): PersistedWorkItem {
   return {
     id: row.id,
     companyId: row.company_id,
+    companyName: row.company_name ?? null,
+    ownerName: row.owner_name ?? null,
     caseType: row.case_type,
     annualReturnCaseId: row.annual_return_case_id,
     corporateChangeRequestId: row.corporate_change_request_id,
@@ -432,13 +445,16 @@ export function createWorkItemRepository(
     async listQueue(filters = {}) {
       const statuses = filters.statuses ?? ["open", "in_progress", "blocked"];
       const rows = await sql<WorkItemRow[]>`
-        select * from work_items
-        where status = any(${statuses as WorkItemStatus[]})
-          and (${filters.ownerId ?? null}::uuid is null or owner_id = ${filters.ownerId ?? null})
-          and (${filters.teamId ?? null}::uuid is null or team_id = ${filters.teamId ?? null})
+        select w.*, c.company_name, owner.name as owner_name
+        from work_items w
+        left join companies c on c.id = w.company_id
+        left join users owner on owner.id = w.owner_id
+        where w.status = any(${statuses as WorkItemStatus[]})
+          and (${filters.ownerId ?? null}::uuid is null or w.owner_id = ${filters.ownerId ?? null})
+          and (${filters.teamId ?? null}::uuid is null or w.team_id = ${filters.teamId ?? null})
           and (${filters.escalationState ?? null}::text is null
-            or escalation_state = ${filters.escalationState ?? null})
-        order by (sla_breached_at is null), sla_due_at, priority desc, id
+            or w.escalation_state = ${filters.escalationState ?? null})
+        order by (w.sla_breached_at is null), w.sla_due_at, w.priority desc, w.id
       `;
       return rows.map(mapWorkItem);
     },
