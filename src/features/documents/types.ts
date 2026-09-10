@@ -46,7 +46,21 @@ export type DocumentStorage = {
 };
 
 export type DocumentScanResult =
-  | { status: "clean"; providerReference: string }
+  | {
+      status: "clean";
+      providerReference: string;
+      /**
+       * The hash of the bytes the scanner actually read, when it read them.
+       *
+       * Only a scanner that fetches the stored object can supply this. The
+       * deterministic fixture scanner never does, which is why it is optional
+       * and why a version with no verified hash is the normal state today. It
+       * is the difference between the identity of a document and the client's
+       * claim about it, and the package manifest depends on that difference.
+       */
+      verifiedChecksum?: string;
+      verifiedByteSize?: number;
+    }
   | { status: "rejected"; reason: string; providerReference: string }
   | { status: "failed"; retryable: boolean; errorCode: string };
 

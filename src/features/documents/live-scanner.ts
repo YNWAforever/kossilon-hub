@@ -136,7 +136,16 @@ export function createLiveDocumentScanner(
         };
       }
 
-      return { status: "clean", providerReference: parsed.reference };
+      // The identity of the document, carried out of the one place that has it.
+      // This scanner already read the object and hashed it to check it against
+      // the intent, so the version row can finally record what the bytes are
+      // rather than what the uploader said they would be.
+      return {
+        status: "clean",
+        providerReference: parsed.reference,
+        verifiedChecksum: actualChecksum,
+        verifiedByteSize: stored.body.byteLength,
+      };
     },
   };
 }

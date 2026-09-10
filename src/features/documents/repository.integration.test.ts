@@ -23,6 +23,18 @@ const INTEGRATION_TEST_TIMEOUT_MS = 30_000;
 const KEY_PREFIX = "documents/phase-a-integration/";
 const CHECKSUM_A = "a".repeat(64);
 const CHECKSUM_B = "b".repeat(64);
+const CHECKSUM_C = "c".repeat(64);
+
+type VersionRow = {
+  id: string;
+  document_id: string;
+  version_number: number;
+  declared_checksum_sha256: string | null;
+  verified_checksum_sha256: string | null;
+  verified_at: string | Date | null;
+  intent_id: string | null;
+  superseded_by_version_id: string | null;
+};
 
 let testSql: SqlClient | undefined;
 
@@ -561,6 +573,170 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
       const after = await sql<{ status: string }[]>`
         select status from annual_return_checklist_items where id = ${itemId}`;
       expect(after[0]?.status).toBe(before[0]?.status);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  // Phase C-1. The declared/verified split is the whole point of the version
+  // table, and it lives entirely in SQL: a source-text assertion would pass
+  // against a column that writes the client's claim into `verified`.
+  it(
+    "gives every received document a version 1 carrying the claim, not an identity",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      const versions = await sql<VersionRow[]>`
+        select * from document_versions where document_id = ${document.id}`;
+      expect(versions).toHaveLength(1);
+      expect(versions[0].version_number).toBe(1);
+      expect(versions[0].intent_id).toBe(intent.id);
+      expect(versions[0].superseded_by_version_id).toBeNull();
+
+      // The client supplied this before the bytes existed, so it is recorded as
+      // a claim and nothing has verified it.
+      expect(versions[0].declared_checksum_sha256).toBe(CHECKSUM_A);
+      expect(versions[0].verified_checksum_sha256).toBeNull();
+      expect(versions[0].verified_at).toBeNull();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "records a content identity only from a scanner that read the bytes",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      await repository.recordScanResult(
+        intent.id,
+        {
+          status: "clean",
+          providerReference: "integration-provider-ref",
+          verifiedChecksum: CHECKSUM_B,
+          verifiedByteSize: 4,
+        },
+        { verdictSource: "provider" },
+      );
+
+      const versions = await sql<VersionRow[]>`
+        select * from document_versions where document_id = ${document.id}`;
+      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_B);
+      expect(versions[0].verified_at).not.toBeNull();
+      // The claim is kept beside it rather than overwritten: the two disagreeing
+      // is itself a finding, and it cannot be one if only one value survives.
+      expect(versions[0].declared_checksum_sha256).toBe(CHECKSUM_A);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  // The load-bearing case. The fixture scanner returns clean for almost every
+  // input without reading anything, so if a clean verdict alone were enough to
+  // set an identity, every document in a non-provider deployment would carry a
+  // hash that certifies nothing -- and the package manifest would accept it.
+  it(
+    "leaves the identity unset when a clean verdict carries no hash",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      await repository.recordScanResult(
+        intent.id,
+        { status: "clean", providerReference: "fixture-clean" },
+        { verdictSource: "deterministic" },
+      );
+
+      const versions = await sql<VersionRow[]>`
+        select verified_checksum_sha256, verified_at from document_versions
+        where document_id = ${document.id}`;
+      expect(versions[0].verified_checksum_sha256).toBeNull();
+      expect(versions[0].verified_at).toBeNull();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "does not restate an identity a later verdict disagrees with",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      await repository.recordScanResult(
+        intent.id,
+        { status: "clean", providerReference: "first", verifiedChecksum: CHECKSUM_B },
+        { verdictSource: "provider" },
+      );
+      // A re-scan of an already-released file, which is the one path that may
+      // land a second verdict. It must not silently move the bytes underneath a
+      // decision already recorded against them.
+      await repository.recordScanResult(
+        intent.id,
+        { status: "clean", providerReference: "second", verifiedChecksum: CHECKSUM_C },
+        { verdictSource: "provider", allowStatuses: ["available"] },
+      );
+
+      const versions = await sql<VersionRow[]>`
+        select verified_checksum_sha256 from document_versions
+        where document_id = ${document.id}`;
+      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_B);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  // Enforced by the partial unique index rather than by the code that reads it,
+  // so that `currentVersion` never has to choose between two live rows.
+  it(
+    "refuses a second current version of the same document",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      await expect(
+        sql`
+          insert into document_versions (
+            document_id, version_number, file_name, storage_url
+          ) values (${document.id}, 2, 'second.pdf', ${`${KEY_PREFIX}second`})`,
+      ).rejects.toThrow();
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

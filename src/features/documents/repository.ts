@@ -445,6 +445,24 @@ export function createDocumentRepository(
             verification_status, uploaded_by
           ) values (${intent.companyId}, ${intent.caseId}, ${intent.category}, ${intent.fileName},
             ${intent.objectKey}, ${input.source}, 'pending', ${input.uploadedBy}) returning id`;
+
+        // Version 1 of these bytes, in the same transaction as the document, so
+        // that no document can ever exist without a version and the rest of the
+        // codebase never has to special-case "documents that predate versioning".
+        //
+        // The checksum and size go into the *declared* columns. They came from
+        // the client when the intent was created, before the bytes existed, and
+        // nothing enabled has compared them to the stored object -- only the
+        // provider scanner reads and hashes it, and that is BLOCKED_INTEGRATION.
+        // verified_checksum_sha256 stays null until it does.
+        await tx`
+          insert into document_versions (
+            document_id, version_number, declared_checksum_sha256, declared_byte_size,
+            content_type, file_name, storage_url, intent_id, uploaded_by
+          ) values (${documents[0].id}, 1, ${intent.checksum}, ${intent.expectedSizeBytes},
+            ${intent.contentType}, ${intent.fileName}, ${intent.objectKey}, ${intent.id},
+            ${input.uploadedBy})`;
+
         // quarantine_retention_until is set here, from the moment of actual
         // receipt, and from now on it -- not expires_at -- governs these bytes.
         // expires_at answers "did the upload ever complete"; this row has just
@@ -540,7 +558,7 @@ export function createDocumentRepository(
     async listDocuments(filters = {}) {
       return (await documentRows(filters)).map(mapDocument);
     },
-    async recordScanResult(intentId, result, options = {}) {
+    recordScanResult(intentId, result, options = {}) {
       const status =
         result.status === "clean"
           ? "available"
@@ -549,12 +567,18 @@ export function createDocumentRepository(
             : result.retryable
               ? "quarantined"
               : "failed";
-      // A verdict is only about the content it was computed over. If the intent
-      // now carries a different checksum, this result is a late answer about
-      // superseded bytes: it stays as job history and is never applied as the
-      // current status. Matching on the checksum in the UPDATE keeps that check
-      // and the write in one statement, so nothing can slip between them.
-      const rows = await sql<IntentRow[]>`
+      // Transactional because a clean verdict from a scanner that actually read
+      // the bytes also establishes the document's content identity. The verdict
+      // and that identity are the same fact; committing one without the other
+      // would leave a released document whose hash nobody recorded, or a hash
+      // attached to a verdict that never landed.
+      return withTransaction(sql, async (tx) => {
+        // A verdict is only about the content it was computed over. If the intent
+        // now carries a different checksum, this result is a late answer about
+        // superseded bytes: it stays as job history and is never applied as the
+        // current status. Matching on the checksum in the UPDATE keeps that check
+        // and the write in one statement, so nothing can slip between them.
+        const rows = await tx<IntentRow[]>`
         update document_upload_intents set status = ${status},
           scan_provider_reference = ${"providerReference" in result ? result.providerReference : null},
           scan_error_code = ${result.status === "failed" || result.status === "rejected" ? ("errorCode" in result ? result.errorCode : result.reason) : null},
@@ -571,8 +595,23 @@ export function createDocumentRepository(
           and (${options.expectedChecksum ?? null}::text is null
                or checksum_sha256 = ${options.expectedChecksum ?? null})
         returning *`;
-      if (!rows[0]) throw new Error("Document is not quarantined.");
-      return mapIntent(rows[0]);
+        if (!rows[0]) throw new Error("Document is not quarantined.");
+
+        // Only from a scanner that read the object. `is null` in the predicate
+        // makes this write-once: a later verdict cannot quietly restate what the
+        // bytes are underneath a decision already recorded against them.
+        if (result.status === "clean" && result.verifiedChecksum) {
+          await tx`
+          update document_versions
+          set verified_checksum_sha256 = ${result.verifiedChecksum},
+            verified_byte_size = ${result.verifiedByteSize ?? null},
+            verified_at = now()
+          where intent_id = ${intentId}
+            and verified_checksum_sha256 is null`;
+        }
+
+        return mapIntent(rows[0]);
+      });
     },
     reviewDocument(input) {
       return withTransaction(sql, async (tx) => {

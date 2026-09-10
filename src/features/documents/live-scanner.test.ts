@@ -53,6 +53,11 @@ describe("createLiveDocumentScanner", () => {
     await expect(scanner.scan(input)).resolves.toEqual({
       status: "clean",
       providerReference: "vendor-ref-1",
+      // The identity of the document. This adapter is the only code that reads
+      // the stored object and hashes it, so it is the only place a version can
+      // learn what its bytes actually are rather than what the client claimed.
+      verifiedChecksum: CHECKSUM,
+      verifiedByteSize: CONTENT.byteLength,
     });
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
