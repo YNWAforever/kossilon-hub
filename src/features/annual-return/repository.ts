@@ -41,6 +41,13 @@ import type {
   RiskLevel,
 } from "./types";
 import type { DocumentItem } from "@/features/checklist-templates/types";
+import { documentSafetyOf } from "@/features/documents/safety";
+import type { DocumentStatus, ScanVerdictSource } from "@/features/documents/types";
+import type {
+  RequirementApplicability,
+  RequirementEvidenceState,
+  RequirementInstanceState,
+} from "./requirements";
 
 type CaseRow = {
   id: string;
@@ -338,6 +345,7 @@ export type CreateAnnualReturnCaseInput = {
 
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
+  listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]>;
   listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage>;
   listAllCases(
     filters: CaseFilters,
@@ -904,6 +912,87 @@ export function createAnnualReturnRepository(
     const rows = await selectCaseRows(filters, today);
     const cases = await hydrateCases(rows, today);
     return cases.filter((case_) => caseMatchesHydratedFilters(case_, filters));
+  }
+
+  /**
+   * Requirement instances for one case, with their parties and evidence.
+   *
+   * Evidence carries both dimensions -- the reviewer's decision and the scan
+   * verdict source -- because a requirement is only answered when both agree,
+   * and the scan verdict lives on the upload intent rather than the document.
+   */
+  async function listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]> {
+    const rows = await sql<
+      {
+        id: string;
+        checklist_item_id: string;
+        party_id: string | null;
+        party_name: string | null;
+        requirement_key: string;
+        applicability: RequirementApplicability;
+        applicability_reason: string | null;
+        document_id: string | null;
+        review_status: "pending" | "verified" | "rejected" | null;
+        upload_status: DocumentStatus | null;
+        scan_verdict_source: ScanVerdictSource | null;
+        page_from: number | null;
+        page_to: number | null;
+      }[]
+    >`
+      select
+        r.id,
+        r.checklist_item_id,
+        r.party_id,
+        p.display_name as party_name,
+        r.requirement_key,
+        r.applicability,
+        r.applicability_reason,
+        d.id as document_id,
+        d.verification_status as review_status,
+        i.status as upload_status,
+        i.scan_verdict_source,
+        l.page_from,
+        l.page_to
+      from case_requirement_instances r
+      left join case_parties p on p.id = r.party_id
+      left join requirement_evidence_links l on l.requirement_instance_id = r.id
+      left join documents d on d.id = l.document_id
+      left join document_upload_intents i on i.document_id = d.id
+      where r.case_id = ${caseId}
+      order by p.display_name asc nulls first, r.requirement_key asc, l.created_at asc
+    `;
+
+    // One row per evidence link, so instances are folded back together here
+    // rather than issuing a query per requirement.
+    const byId = new Map<string, RequirementInstanceState>();
+    for (const row of rows) {
+      let instance = byId.get(row.id);
+      if (!instance) {
+        instance = {
+          id: row.id,
+          checklistItemId: row.checklist_item_id,
+          partyId: row.party_id,
+          partyName: row.party_name,
+          requirementKey: row.requirement_key,
+          applicability: row.applicability,
+          applicabilityReason: row.applicability_reason,
+          evidence: [],
+        };
+        byId.set(row.id, instance);
+      }
+      if (!row.document_id || !row.review_status) continue;
+      (instance.evidence as RequirementEvidenceState[]).push({
+        documentId: row.document_id,
+        reviewStatus: row.review_status,
+        safety: documentSafetyOf({
+          uploadStatus: row.upload_status ?? "created",
+          scanVerdictSource: row.scan_verdict_source,
+        }),
+        pageFrom: row.page_from,
+        pageTo: row.page_to,
+      });
+    }
+    return [...byId.values()];
   }
 
   async function listCases(filters: CaseFilters): Promise<AnnualReturnCase[]> {
@@ -2359,6 +2448,7 @@ export function createAnnualReturnRepository(
 
   return {
     listCases,
+    listCaseRequirements,
     listCasePage,
     listAllCases,
     boardTotals,

@@ -564,6 +564,34 @@ export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" })
   ),
 );
 
+/**
+ * Requirement instances for one case, scoped by the same visibility rule as the
+ * case itself so a requirement read cannot reach a case the board would hide.
+ */
+export async function listAnnualReturnCaseRequirementsForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string },
+  dependencies: {
+    repository: Pick<AnnualReturnRepository, "getCase" | "listCaseRequirements">;
+  },
+) {
+  const case_ = await dependencies.repository.getCase(input.caseId);
+  if (!case_) throw new Error("Annual return case not found.");
+  assertAnnualReturnCaseVisible(
+    { id: actor.userId, role: actor.role, teamId: actor.teamId, active: actor.active },
+    case_,
+  );
+  return dependencies.repository.listCaseRequirements(input.caseId);
+}
+
+export const listAnnualReturnCaseRequirements = createServerFn({ method: "GET" })
+  .validator(annualReturnCaseIdSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAnnualReturnCaseRequirementsForActor(actor, data, { repository }),
+    ),
+  );
+
 export const listAnnualReturnCasePage = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
   .handler(({ data }) =>
