@@ -37,6 +37,7 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
         permanentlyFailed: 0,
         superseded: 0,
         sentButUnrecorded: 0,
+        suppressedFixtureOrigin: 0,
       };
     }),
     drainDocumentScanJobs: vi.fn(async () => {
@@ -49,6 +50,7 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
         failed: 0,
         superseded: 0,
         sentButUnrecorded: 0,
+        suppressedFixtureOrigin: 0,
         scanner: "ran" as const,
       };
     }),
@@ -62,6 +64,7 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
         failed: 0,
         superseded: 0,
         sentButUnrecorded: 0,
+        suppressedFixtureOrigin: 0,
         providerSkipped: 1,
         worker: "ran" as const,
       };

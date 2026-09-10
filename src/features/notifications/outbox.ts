@@ -162,6 +162,11 @@ export type NotificationOutboxRepository = {
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
   /**
+   * Cancels queued notifications belonging to fixture-origin companies, so a
+   * fixture replay cannot message a real recipient. Called before every claim.
+   */
+  cancelFixtureOriginNotifications(now: string): Promise<{ cancelled: number }>;
+  /**
    * The terminal writes all take the attempt_count the claim returned and fence on
    * it, and all report whether they actually landed.
    *
@@ -241,6 +246,34 @@ export function createNotificationOutboxRepository(
         `;
         return claimed.map(mapRow);
       });
+    },
+    /**
+     * Cancels anything queued for a company that is fixture data.
+     *
+     * The plan forbids sending customer reminders during fixture replay, and
+     * nothing enforced it: the only thing standing between a seeded company and
+     * a live message was that the seed happens not to create a contact row.
+     *
+     * Enforced here, at the last gate before dispatch, rather than in each
+     * producer. The annual-return sweep, the subscription sweep and the
+     * staff-initiated follow-up all queue through this table, and a guard in one
+     * of them is a guard the next producer will not have.
+     *
+     * 'cancelled' is a status notification_outbox has always permitted and
+     * nothing has ever written. It is the honest terminal state here: the row is
+     * not pending, not failed, and must never be retried.
+     */
+    async cancelFixtureOriginNotifications(now) {
+      const rows = await sql<{ id: string }[]>`
+        update notification_outbox
+        set status = 'cancelled', completed_at = now(), updated_at = now(),
+          last_error_code = 'fixture-origin'
+        where status in ('pending', 'failed', 'processing')
+          and next_attempt_at <= ${now}
+          and company_id in (select id from companies where data_origin <> 'client')
+        returning id
+      `;
+      return { cancelled: rows.length };
     },
     async markSent(id, input) {
       const rows = await sql<{ id: string }[]>`

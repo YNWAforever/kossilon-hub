@@ -430,4 +430,70 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
+
+  /**
+   * The plan's rule, against a real database: do not send customer reminders
+   * during fixture replay.
+   *
+   * The seeded reference companies carry data_origin 'fixture'. Nothing enforced
+   * this before -- the only thing between a seeded company and a live WhatsApp
+   * message was that the seed happens not to create a company_contacts row.
+   */
+  it(
+    "cancels a queued notification whose company is fixture data, and leaves a client's alone",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const repository = createNotificationOutboxRepository({ sql });
+
+      const originRows = await sql<{ data_origin: string }[]>`
+        select data_origin from companies where id = ${companyId}
+      `;
+      const wasFixture = originRows[0]?.data_origin === "fixture";
+
+      const id = await enqueue(sql, companyId, "fixture-guard", {
+        status: "pending",
+        attemptCount: 0,
+        retentionUntil: "2099-01-01T00:00:00.000Z",
+      });
+      await sql`update notification_outbox set next_attempt_at = now() - interval '1 minute' where id = ${id}`;
+
+      // Mark it fixture data for the duration of this assertion, then restore
+      // whatever the seed actually set.
+      await sql`update companies set data_origin = 'fixture' where id = ${companyId}`;
+      const suppressed = await repository.cancelFixtureOriginNotifications(
+        new Date().toISOString(),
+      );
+      expect(suppressed.cancelled).toBeGreaterThanOrEqual(1);
+
+      const cancelled = await sql<{ status: string; last_error_code: string | null }[]>`
+        select status, last_error_code from notification_outbox where id = ${id}
+      `;
+      expect(cancelled[0]).toMatchObject({
+        status: "cancelled",
+        last_error_code: "fixture-origin",
+      });
+
+      // And a client's row in the same state is untouched.
+      await sql`update companies set data_origin = 'client' where id = ${companyId}`;
+      const clientId = await enqueue(sql, companyId, "client-untouched", {
+        status: "pending",
+        attemptCount: 0,
+        retentionUntil: "2099-01-01T00:00:00.000Z",
+      });
+      await sql`update notification_outbox set next_attempt_at = now() - interval '1 minute' where id = ${clientId}`;
+
+      await repository.cancelFixtureOriginNotifications(new Date().toISOString());
+      const untouched = await sql<{ status: string }[]>`
+        select status from notification_outbox where id = ${clientId}
+      `;
+      expect(untouched[0].status).toBe("pending");
+
+      await sql`
+        update companies set data_origin = ${wasFixture ? "fixture" : "client"}
+        where id = ${companyId}
+      `;
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });

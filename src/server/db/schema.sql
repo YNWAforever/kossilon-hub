@@ -49,7 +49,13 @@ create table if not exists companies (
   assigned_owner_id uuid not null references users(id),
   assigned_team_id uuid not null references teams(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- from 0030: real client, or fixture data. The plan forbids sending customer
+  -- reminders during fixture replay, and nothing enforced it -- the only thing
+  -- stopping a seeded company being messaged was that the seed happens not to
+  -- create a contact row. The dispatcher refuses a notification whose company is
+  -- fixture-origin, at the last gate before the wire.
+  data_origin text not null default 'client' check (data_origin in ('client', 'fixture'))
 );
 
 create table if not exists documents (
@@ -1583,3 +1589,8 @@ create index if not exists document_findings_open_issue_idx
 create index if not exists whatsapp_messages_sent_as_idx
   on whatsapp_messages (contact_id, sent_as)
   where sent_as = 'template';
+
+-- from 0030_company_data_origin.sql
+create index if not exists companies_data_origin_idx
+  on companies (data_origin)
+  where data_origin <> 'client';

@@ -98,6 +98,10 @@ export function createNotificationDispatcher(
 ): NotificationDispatcher {
   return {
     async dispatchDue(now, limit = 50): Promise<DispatchSummary> {
+      // Before the claim, not after: a fixture-origin row must never become a
+      // claimed row, because a claimed row is one transport failure away from
+      // being retried at a real recipient.
+      const suppressed = await repository.cancelFixtureOriginNotifications(now);
       const due = await repository.claimDue(now, limit);
       const summary: DispatchSummary = {
         claimed: due.length,
@@ -106,6 +110,7 @@ export function createNotificationDispatcher(
         permanentlyFailed: 0,
         superseded: 0,
         sentButUnrecorded: 0,
+        suppressedFixtureOrigin: suppressed.cancelled,
       };
       for (const notification of due) {
         // Every terminal write is fenced on the attempt_count this claim saw. A

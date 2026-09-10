@@ -924,6 +924,12 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
           status: "active",
           assigned_owner_id: company.ownerId,
           assigned_team_id: company.teamId,
+          // These are reference rows, not clients. The dispatcher cancels any
+          // notification queued for a fixture-origin company before it can be
+          // claimed, which is what stops a fixture replay reaching a real
+          // recipient. Until now the only thing standing in the way was that
+          // this seed happens not to create a company_contacts row.
+          data_origin: "fixture",
         })),
         "id",
         "company_name",
@@ -934,6 +940,7 @@ export async function seedAnnualReturn(sql: SqlClient, options: SeedAnnualReturn
         "registered_office",
         "company_secretary",
         "status",
+        "data_origin",
         "assigned_owner_id",
         "assigned_team_id",
       )}

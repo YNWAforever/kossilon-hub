@@ -123,9 +123,22 @@ export type DispatchSummary = {
    * neighbour that reads as normal.
    */
   sentButUnrecorded: number;
+  /**
+   * Queued notifications cancelled because their company is fixture data.
+   *
+   * Named rather than silent: a replay that quietly dropped messages would be
+   * indistinguishable from a tick with nothing to send, and the difference is
+   * the whole point of the guard.
+   */
+  suppressedFixtureOrigin: number;
 };
 
 export type NotificationOutboxRepository = {
+  /**
+   * Cancels queued notifications belonging to fixture-origin companies, so a
+   * fixture replay cannot message a real recipient. Called before every claim.
+   */
+  cancelFixtureOriginNotifications(now: string): Promise<{ cancelled: number }>;
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
   /**

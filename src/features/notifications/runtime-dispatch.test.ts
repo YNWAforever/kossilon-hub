@@ -32,6 +32,7 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
   let claimed = false;
   return {
     enqueue: vi.fn(),
+    cancelFixtureOriginNotifications: vi.fn(async () => ({ cancelled: 0 })),
     claimDue: vi.fn(async () => {
       if (claimed) return [];
       claimed = true;
@@ -107,6 +108,7 @@ describe("runtime notification dispatch", () => {
       permanentlyFailed: 0,
       superseded: 0,
       sentButUnrecorded: 0,
+      suppressedFixtureOrigin: 0,
     });
 
     expect(repo.markSent).toHaveBeenCalledWith(row.id, {
@@ -158,6 +160,7 @@ describe("runtime notification dispatch", () => {
       permanentlyFailed: 0,
       superseded: 0,
       sentButUnrecorded: 0,
+      suppressedFixtureOrigin: 0,
     });
 
     expect(repo.markSent).toHaveBeenCalledWith(row.id, {
@@ -341,6 +344,7 @@ describe("runtime notification dispatch", () => {
       permanentlyFailed: 0,
       superseded: 0,
       sentButUnrecorded: 0,
+      suppressedFixtureOrigin: 0,
     });
 
     expect(fetchImpl).toHaveBeenCalledWith(
@@ -385,6 +389,7 @@ describe("runtime notification dispatch", () => {
       permanentlyFailed: 0,
       superseded: 0,
       sentButUnrecorded: 0,
+      suppressedFixtureOrigin: 0,
     });
 
     expect(lastInboundAtForPhoneDigits).toHaveBeenCalledWith("85291234567");
@@ -435,6 +440,7 @@ describe("runtime notification dispatch", () => {
       permanentlyFailed: 0,
       superseded: 0,
       sentButUnrecorded: 0,
+      suppressedFixtureOrigin: 0,
     });
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
@@ -524,6 +530,7 @@ describe("dispatchDueNotificationsForActor", () => {
       permanentlyFailed: 0,
       superseded: 0,
       sentButUnrecorded: 0,
+      suppressedFixtureOrigin: 0,
     };
     const dispatch = vi.fn(async () => summary);
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
