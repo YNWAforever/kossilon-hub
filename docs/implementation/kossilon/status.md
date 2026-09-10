@@ -5,43 +5,43 @@ Current branch: `codex/kossilon-phase-f` · Current commit: `cde3cc5` · Base: `
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
 
-| Phase | Code | Real integration | Releasable | Blocked on |
-|---|---|---|---|---|
-| **A** Safe staff document workflow | ✅ complete | ❌ none | ❌ no | scanner provider, a database, a browser walkthrough |
-| **B** Monthly NAR intake and daily operations | ✅ complete | ❌ none | ❌ no | a database for the new tables |
-| **C** Document intelligence and Kossilon review | ✅ code complete | ❌ none | ❌ no | AI provider, text extraction, a database |
-| **D** Messaging, attachments and chasing | 🟨 partial | ❌ none | ❌ no | a WOZTELL media-download endpoint, real accounts, a database |
-| **E** External handoff and folder returns | 🟨 model complete, nothing transmits | ❌ none | ❌ no | the internal server's protocol, address and rights |
-| **F** Pilot, scale and operations | 🟨 the observability half is built; the pilot half cannot start here | ❌ none | ❌ no | a database, a deployment, pilot staff and representative cases |
+| Phase                                           | Code                                                                 | Real integration | Releasable | Blocked on                                                     |
+| ----------------------------------------------- | -------------------------------------------------------------------- | ---------------- | ---------- | -------------------------------------------------------------- |
+| **A** Safe staff document workflow              | ✅ complete                                                          | ❌ none          | ❌ no      | scanner provider, a database, a browser walkthrough            |
+| **B** Monthly NAR intake and daily operations   | ✅ complete                                                          | ❌ none          | ❌ no      | a database for the new tables                                  |
+| **C** Document intelligence and Kossilon review | ✅ code complete                                                     | ❌ none          | ❌ no      | AI provider, text extraction, a database                       |
+| **D** Messaging, attachments and chasing        | 🟨 partial                                                           | ❌ none          | ❌ no      | a WOZTELL media-download endpoint, real accounts, a database   |
+| **E** External handoff and folder returns       | 🟨 model complete, nothing transmits                                 | ❌ none          | ❌ no      | the internal server's protocol, address and rights             |
+| **F** Pilot, scale and operations               | 🟨 the observability half is built; the pilot half cannot start here | ❌ none          | ❌ no      | a database, a deployment, pilot staff and representative cases |
 
 ## Phase B, work package by work package
 
-| Package | State |
-|---|---|
-| **B-1a** Workbook reader (ZIP + OOXML, no dependency) | Complete, 22 tests, verified against the real supplied file locally |
-| **B-1b** Date/marker normalization | Complete, 30 tests |
-| **B-1c** Row mapping and disposition | Complete, 26 tests |
-| **B-1d** Staging schema, repository, server fns | Complete — migrations `0025`; not applied to any database |
-| **B-1e** Import review screen | Complete — `/imports`, in the primary navigation |
-| **B-2** A received document is not a missing document | Complete — migration `0024`; 18 unit + 4 integration tests |
-| **B-3** Server-side search and real pagination | Complete — including the follow-up-drafts correctness fix |
-| **B-4** The daily workspace | Complete — `/today` with the five work views, navigation regrouped into 今日工作 / 客戶與案件 / 文件審閱 / 訊息, plus the zero-overdue banner and work-queue name fixes |
-| **B-5** Person-level requirement foundation | Complete — migration `0026`; 15 tests including the plan's own two examples |
+| Package                                               | State                                                                                                                                                                   |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **B-1a** Workbook reader (ZIP + OOXML, no dependency) | Complete, 22 tests, verified against the real supplied file locally                                                                                                     |
+| **B-1b** Date/marker normalization                    | Complete, 30 tests                                                                                                                                                      |
+| **B-1c** Row mapping and disposition                  | Complete, 26 tests                                                                                                                                                      |
+| **B-1d** Staging schema, repository, server fns       | Complete — migrations `0025`; not applied to any database                                                                                                               |
+| **B-1e** Import review screen                         | Complete — `/imports`, in the primary navigation                                                                                                                        |
+| **B-2** A received document is not a missing document | Complete — migration `0024`; 18 unit + 4 integration tests                                                                                                              |
+| **B-3** Server-side search and real pagination        | Complete — including the follow-up-drafts correctness fix                                                                                                               |
+| **B-4** The daily workspace                           | Complete — `/today` with the five work views, navigation regrouped into 今日工作 / 客戶與案件 / 文件審閱 / 訊息, plus the zero-overdue banner and work-queue name fixes |
+| **B-5** Person-level requirement foundation           | Complete — migration `0026`; 15 tests including the plan's own two examples                                                                                             |
 
 **Design is complete for all of Phase B**:
 `docs/superpowers/specs/2026-09-10-kossilon-phase-b-nar-intake-design.md`.
 
 ## Phase C, work package by work package
 
-| Package | State |
-|---|---|
-| **C-0** Three claims the product could not support | Complete — dashboard heading, synthetic confidence, both Chinese-stripping tokenizers |
-| **C-1** Document versions and supersession | Complete — migration `0027`; 19 unit + 5 integration tests; not applied to any database |
-| **C-2** Analysis pipeline and provider adapter | ✅ complete — migration `0028`; queue, worker, two deterministic tiers, disabled provider adapter; wired end to end; 56 tests |
+| Package                                             | State                                                                                                                                                                                                                                                 |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **C-0** Three claims the product could not support  | Complete — dashboard heading, synthetic confidence, both Chinese-stripping tokenizers                                                                                                                                                                 |
+| **C-1** Document versions and supersession          | Complete — migration `0027`; 19 unit + 5 integration tests; not applied to any database                                                                                                                                                               |
+| **C-2** Analysis pipeline and provider adapter      | ✅ complete — migration `0028`; queue, worker, two deterministic tiers, disabled provider adapter; wired end to end; 56 tests                                                                                                                         |
 | **C-3** Approved annual-return requirement template | ✅ complete — NAR1/AGM/CDD company-level, identity and address proof per confirmed party; calendar-month freshness rule; parties seeded from the officer register and confirmed by a person, which creates their requirements in the same transaction |
-| **C-4a** No synthetic certainty percentage | Complete — `DraftGrounding` replaced `confidence: number`; 8 tests |
-| **C-4b** Findings in the review workspace | ✅ complete — findings on the case detail screen, with "not checked" said in words rather than shown as a blank; 27 tests |
-| **C-5** Package approval contract | Complete — 19 tests; AI holds no package-approve permission, structurally |
+| **C-4a** No synthetic certainty percentage          | Complete — `DraftGrounding` replaced `confidence: number`; 8 tests                                                                                                                                                                                    |
+| **C-4b** Findings in the review workspace           | ✅ complete — findings on the case detail screen, with "not checked" said in words rather than shown as a blank; 27 tests                                                                                                                             |
+| **C-5** Package approval contract                   | Complete — 19 tests; AI holds no package-approve permission, structurally                                                                                                                                                                             |
 
 **Design is complete for all of Phase C**:
 `docs/superpowers/specs/2026-09-10-kossilon-phase-c-document-intelligence-design.md`.
@@ -55,7 +55,7 @@ Three live claims, in descending severity:
   `buildDailyDigest`, a hardcoded severity weight table. Renamed to "Priority
   queue", with the ranking rule stated in the panel.
 - `draftReply` returned `confidence = min(96, 70 + faqs.length * 4 +
-  documents.length * 3 + 8)`. Both arrays are capped, so it was a pure arity
+documents.length * 3 + 8)`. Both arrays are capped, so it was a pure arity
   function bounded to 70–96 that printed **"Confidence 70%" over zero matched
   sources**; Regenerate decremented it without rerunning retrieval.
 - Both tokenizers normalised with an ASCII-only class, so every CJK codepoint
@@ -100,7 +100,7 @@ So the tiers as built:
 - **Tier 1, readability** — head and tail of the stored object only: format magic
   bytes against the declared content type, a PDF end-of-file marker, and whether
   the trailer references `/Encrypt`. Catches a file that will not open before a
-  reviewer spends a slot on it. Page count is *not* here; it needs a real parser.
+  reviewer spends a slot on it. Page count is _not_ here; it needs a real parser.
 - **Tier 2, cross-checks** — records against each other. The best one falls out
   of C-1: **stored bytes that do not hash to the checksum declared at upload** is
   a critical, deterministic issue. A version nobody has hashed is `uncertain`,
@@ -113,7 +113,7 @@ So the tiers as built:
 31 agents across six dimensions, each finding then verified by a separate agent
 told to refute it. One survived: the provider response schema and `makeFinding`
 stated the same rules and disagreed, so `{pageTo: 3}` with no `pageFrom` parsed
-cleanly and then threw *out of* `analyze()` — past its own promise to return
+cleanly and then threw _out of_ `analyze()` — past its own promise to return
 `malformed-response` — and the worker awaited it with no catch, unwinding the
 whole drain and stranding every job claimed after it in that batch. Fixed at
 three layers. Reachability was a two-binding config change, not a code change.
@@ -147,15 +147,15 @@ A model cannot ask.
 
 ## Phase F, work package by work package
 
-| Package | State |
-|---|---|
-| **F-1** The tick leaves a trace | ✅ complete — migration `0033` `maintenance_runs`; recorded on the success, partial and failed paths; not applied to any database |
-| **F-2** Maintenance health and the operations screen | ✅ complete — `maintenanceHealthOf`, `/operations`, queue depths; 25 tests |
-| **F-3** Capability inventory | ✅ complete — `capabilities.ts` plus a convention test cross-checking it against the `BLOCKED_INTEGRATION:` markers in `src/`, in both directions |
-| **F-4** Pilot runbook, measurement plan, next-service spec | ✅ records written |
-| **F-5** The pilot itself | ⬜ cannot start here — needs a database, a deployment, staff and cases |
-| **F-6** Scale and query plans | ⬜ blocked — no dataset, no measurement, and adding indexes without one is what plan F2 forbids |
-| **F-7** Backup/restore verification | ⬜ blocked — needs a database and a bucket to restore together |
+| Package                                                    | State                                                                                                                                             |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **F-1** The tick leaves a trace                            | ✅ complete — migration `0033` `maintenance_runs`; recorded on the success, partial and failed paths; not applied to any database                 |
+| **F-2** Maintenance health and the operations screen       | ✅ complete — `maintenanceHealthOf`, `/operations`, queue depths; 25 tests                                                                        |
+| **F-3** Capability inventory                               | ✅ complete — `capabilities.ts` plus a convention test cross-checking it against the `BLOCKED_INTEGRATION:` markers in `src/`, in both directions |
+| **F-4** Pilot runbook, measurement plan, next-service spec | ✅ records written                                                                                                                                |
+| **F-5** The pilot itself                                   | ⬜ cannot start here — needs a database, a deployment, staff and cases                                                                            |
+| **F-6** Scale and query plans                              | ⬜ blocked — no dataset, no measurement, and adding indexes without one is what plan F2 forbids                                                   |
+| **F-7** Backup/restore verification                        | ⬜ blocked — needs a database and a bucket to restore together                                                                                    |
 
 **Design:**
 `docs/superpowers/specs/2026-09-11-kossilon-phase-f-pilot-operations-design.md`.
@@ -250,7 +250,7 @@ After that, in order of what unblocks the most:
 3. **The internal server's handoff protocol.** Without it a pilot can prepare and
    approve packages but not send them, and 回件與異常 stays unreleased.
 4. **A pilot cohort and a baseline.** See `pilot-measurement-plan.md`: collect
-   the observed metrics for the current spreadsheet process *before* handing
+   the observed metrics for the current spreadsheet process _before_ handing
    anyone the product, or the pilot can only produce anecdotes.
 
 ### What five phases have and have not produced
@@ -261,7 +261,7 @@ integration-verified.** No migration (`0023`–`0033`) has been applied to any
 database; no provider account exists; the repository integration tests execute
 only in CI. Every SQL claim in this work rests on reading, not on running.
 
-The one thing that changed in F: the deployment can now *say* that it is not
+The one thing that changed in F: the deployment can now _say_ that it is not
 running. That does not clear `deployment-runtime` — only a real invocation on a
 real deployment can — but it turns an unverifiable blocker into a verifiable one.
 
@@ -281,15 +281,15 @@ is where that changes or is confirmed.
 
 ## Open blockers
 
-| ID | Effect | Cleared by |
-|---|---|---|
-| `BLOCKED_INTEGRATION: malware-scanner-provider` | Live document scanning stays disabled; the legacy re-scan backlog stays pending | An approved provider, its binding names, its data-handling terms |
-| `BLOCKED_INTEGRATION: local-postgres` | Repository tests run only in CI | A reachable `TEST_DATABASE_URL`, or the CI run on the PR |
-| `BLOCKED_INTEGRATION: external-handoff-destination` | No package can be transmitted to the filing agent; every handoff stays `prepared` and the 回件與異常 work view stays unreleased | The internal server's protocol, address, authentication and rights |
-| `BLOCKED_INTEGRATION: whatsapp-media-download` | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document | A documented WOZTELL media-download endpoint and its auth |
-| `BLOCKED_INTEGRATION: document-text-extraction` | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
-| `BLOCKED_INTEGRATION: ai-provider` | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms |
-| `BLOCKED_INTEGRATION: deployment-runtime` | Whether the 5-minute schedule really fires is still unverified — but no longer unverifiable. `maintenance_runs` records every invocation and `/operations` reports `never-observed` until the first one arrives | The first row on `/operations` with trigger 排程, from a real invocation on the deployed runtime |
+| ID                                                  | Effect                                                                                                                                                                                                            | Cleared by                                                                                                    |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `BLOCKED_INTEGRATION: malware-scanner-provider`     | Live document scanning stays disabled; the legacy re-scan backlog stays pending                                                                                                                                   | An approved provider, its binding names, its data-handling terms                                              |
+| `BLOCKED_INTEGRATION: local-postgres`               | Repository tests run only in CI                                                                                                                                                                                   | A reachable `TEST_DATABASE_URL`, or the CI run on the PR                                                      |
+| `BLOCKED_INTEGRATION: external-handoff-destination` | No package can be transmitted to the filing agent; every handoff stays `prepared` and the 回件與異常 work view stays unreleased                                                                                   | The internal server's protocol, address, authentication and rights                                            |
+| `BLOCKED_INTEGRATION: whatsapp-media-download`      | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document                                                                                         | A documented WOZTELL media-download endpoint and its auth                                                     |
+| `BLOCKED_INTEGRATION: document-text-extraction`     | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules                                                 | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
+| `BLOCKED_INTEGRATION: ai-provider`                  | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms                                              |
+| `BLOCKED_INTEGRATION: deployment-runtime`           | Whether the 5-minute schedule really fires is still unverified — but no longer unverifiable. `maintenance_runs` records every invocation and `/operations` reports `never-observed` until the first one arrives   | The first row on `/operations` with trigger 排程, from a real invocation on the deployed runtime              |
 
 ## Open business inputs
 
@@ -332,13 +332,13 @@ Not blocking the code — each has a safe default — but each is a real decisio
 
 ## Records
 
-| File | Holds |
-|---|---|
-| `baseline-and-decisions.md` | Baseline, architecture, the verified workbook contract, blockers, decisions |
-| `phase-a-report.md` | Phase A: defects, changes, commands run, gate status |
-| `pilot-measurement-plan.md` | Phase F: which metrics the system can compute, which need a person, the baseline to collect first, and what a pilot report may not claim |
-| `../../runbooks/pilot-operations.md` | Phase F: the pre-pilot checks, how to read `/operations`, capability pause and rollback |
-| `../../superpowers/specs/2026-09-11-kossilon-phase-f-pilot-operations-design.md` | Phase F design |
-| `../../superpowers/specs/2026-09-11-kossilon-next-service-government-mail-design.md` | Phase F4: the proposed next workflow, mapped onto the existing contracts. The choice is unconfirmed |
-| `../../superpowers/specs/2026-09-10-kossilon-phase-a-document-safety-design.md` | Phase A design |
-| `../../superpowers/specs/2026-09-10-kossilon-phase-b-nar-intake-design.md` | Phase B design |
+| File                                                                                 | Holds                                                                                                                                    |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseline-and-decisions.md`                                                          | Baseline, architecture, the verified workbook contract, blockers, decisions                                                              |
+| `phase-a-report.md`                                                                  | Phase A: defects, changes, commands run, gate status                                                                                     |
+| `pilot-measurement-plan.md`                                                          | Phase F: which metrics the system can compute, which need a person, the baseline to collect first, and what a pilot report may not claim |
+| `../../runbooks/pilot-operations.md`                                                 | Phase F: the pre-pilot checks, how to read `/operations`, capability pause and rollback                                                  |
+| `../../superpowers/specs/2026-09-11-kossilon-phase-f-pilot-operations-design.md`     | Phase F design                                                                                                                           |
+| `../../superpowers/specs/2026-09-11-kossilon-next-service-government-mail-design.md` | Phase F4: the proposed next workflow, mapped onto the existing contracts. The choice is unconfirmed                                      |
+| `../../superpowers/specs/2026-09-10-kossilon-phase-a-document-safety-design.md`      | Phase A design                                                                                                                           |
+| `../../superpowers/specs/2026-09-10-kossilon-phase-b-nar-intake-design.md`           | Phase B design                                                                                                                           |

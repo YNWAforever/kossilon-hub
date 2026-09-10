@@ -20,22 +20,22 @@ ends with no baseline.
 
 ### Derivable from tables that already exist
 
-| Metric | Source | Caveat |
-|---|---|---|
-| Review turnaround | `documents` received → the review decision on it | Needs the pilot to actually review in the product, not beside it. |
-| Repeated chases per case | `notification_outbox` rows per case/period | Only counts what the product sent. A staff member who also messaged by hand is invisible here — count that in the observed set. |
-| Cases completed through the workspace | `annual_return_cases` reaching `Filed`/`Completed` with a manifest | The denominator is every case in the pilot cohort, including the ones that fell back to the spreadsheet. |
-| Missing returned documents | `handoff_returns` unreconciled | **Unavailable.** `BLOCKED_INTEGRATION: external-handoff-destination` — nothing transmits, so nothing returns. |
-| Document matching errors | Findings resolved as wrong-match | Weak signal until text extraction exists; today a match is a human judgement the product only records. |
-| AI false positives / negatives | Provider findings vs. reviewer decisions | **Unavailable.** `BLOCKED_INTEGRATION: ai-provider` — no model runs, so the rate is not zero, it is undefined. |
+| Metric                                | Source                                                             | Caveat                                                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Review turnaround                     | `documents` received → the review decision on it                   | Needs the pilot to actually review in the product, not beside it.                                                               |
+| Repeated chases per case              | `notification_outbox` rows per case/period                         | Only counts what the product sent. A staff member who also messaged by hand is invisible here — count that in the observed set. |
+| Cases completed through the workspace | `annual_return_cases` reaching `Filed`/`Completed` with a manifest | The denominator is every case in the pilot cohort, including the ones that fell back to the spreadsheet.                        |
+| Missing returned documents            | `handoff_returns` unreconciled                                     | **Unavailable.** `BLOCKED_INTEGRATION: external-handoff-destination` — nothing transmits, so nothing returns.                   |
+| Document matching errors              | Findings resolved as wrong-match                                   | Weak signal until text extraction exists; today a match is a human judgement the product only records.                          |
+| AI false positives / negatives        | Provider findings vs. reviewer decisions                           | **Unavailable.** `BLOCKED_INTEGRATION: ai-provider` — no model runs, so the rate is not zero, it is undefined.                  |
 
 ### Requires a person observing
 
-| Metric | Why it cannot be derived |
-|---|---|
-| Staff minutes per case step | The product sees a request arrive and a row change. It cannot see the reading, the phone call, or the twenty minutes spent finding the right file. |
-| Steps still needing a parallel spreadsheet | By definition these happen outside the product. |
-| Steps needing an ID copied by hand | Same. This is the single most useful thing to watch for, because it names a missing link rather than a missing feature. |
+| Metric                                     | Why it cannot be derived                                                                                                                           |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Staff minutes per case step                | The product sees a request arrive and a row change. It cannot see the reading, the phone call, or the twenty minutes spent finding the right file. |
+| Steps still needing a parallel spreadsheet | By definition these happen outside the product.                                                                                                    |
+| Steps needing an ID copied by hand         | Same. This is the single most useful thing to watch for, because it names a missing link rather than a missing feature.                            |
 
 Plan F1 asks to "observe staff completing tasks, not just viewing screens".
 That instruction is aimed squarely at this second table.

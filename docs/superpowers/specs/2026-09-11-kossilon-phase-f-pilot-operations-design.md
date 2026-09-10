@@ -9,7 +9,7 @@ real cases. This repository has none of them. Its acceptance gate —
 "representative real staff scenarios pass with recorded browser/API/data/file
 evidence" — cannot be met here, and no amount of code changes that.
 
-What can be built is the part of F2 that is a *product capability* rather than an
+What can be built is the part of F2 that is a _product capability_ rather than an
 observation: **the system's ability to tell someone that it is not running.**
 
 ## F-1 The tick leaves no trace
@@ -25,7 +25,7 @@ ephemeral, requires a person to go and look, and is not readable by the product.
 
 So today, if the cron stops firing — or, the live possibility under
 `BLOCKED_INTEGRATION: deployment-runtime`, if the nitro `cloudflare:scheduled`
-hook never registers on the deployed runtime and it never fires *at all* — the
+hook never registers on the deployed runtime and it never fires _at all_ — the
 observable symptoms are:
 
 - SLA escalations are never evaluated.
@@ -34,7 +34,7 @@ observable symptoms are:
 - Expired upload intents are never reclaimed.
 
 ...and every screen looks completely normal, because every screen reads tables
-that a *human* still writes to. The first real signal is a missed statutory
+that a _human_ still writes to. The first real signal is a missed statutory
 deadline.
 
 F2 says "Prove scheduled jobs actually run on the deployment runtime… Record
@@ -42,7 +42,7 @@ last-success and lag." There is nothing to record it in.
 
 ### F-1 builds `maintenance_runs`
 
-Migration `0033`. One row per invocation, written on the success path *and* the
+Migration `0033`. One row per invocation, written on the success path _and_ the
 failure path, carrying the whole `ScheduledMaintenanceResult` as `jsonb` rather
 than a handful of columns somebody guessed at.
 
@@ -52,7 +52,7 @@ Two design points carry the weight:
 repositories cannot be constructed — no `DATABASE_URL`, Hyperdrive down — the
 row cannot be written either, and that is unavoidable: the record lives in the
 thing that broke. Which is exactly why the health rule below is built on the
-*absence* of a recent row rather than on the presence of a failed one. A failed
+_absence_ of a recent row rather than on the presence of a failed one. A failed
 row is a bonus, not the mechanism.
 
 **`outcome` distinguishes three things, not two.** `succeeded` (every pass ran),
@@ -66,13 +66,13 @@ enough to have passes).
 
 The states, and why each exists separately:
 
-| State | Meaning |
-|---|---|
+| State            | Meaning                                                                                                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `never-observed` | No run has ever been recorded. **Not healthy.** This is this repository's actual state, and it is what a fresh deployment whose cron never registered also looks like. |
-| `stale` | Runs exist, the most recent is older than the tolerance. This is the state that detects a cron that stopped. |
-| `failing` | The most recent run did not complete. |
-| `degraded` | Recent, completed, but passes threw. |
-| `healthy` | Recent, completed, no pass threw. |
+| `stale`          | Runs exist, the most recent is older than the tolerance. This is the state that detects a cron that stopped.                                                           |
+| `failing`        | The most recent run did not complete.                                                                                                                                  |
+| `degraded`       | Recent, completed, but passes threw.                                                                                                                                   |
+| `healthy`        | Recent, completed, no pass threw.                                                                                                                                      |
 
 `never-observed` is the whole point. A dashboard that showed a green tick over an
 empty table would be worse than no dashboard: it would be a positive claim, made
@@ -86,7 +86,7 @@ changing the schedule cannot silently make the staleness rule wrong.
 Six integrations are blocked and two of them make a pass report
 `scanner: "not-configured"` / `worker: "not-configured"` on every single tick,
 permanently. Folding that into `degraded` would paint the screen red forever and
-train staff to ignore it — and the day something *actually* broke, the colour
+train staff to ignore it — and the day something _actually_ broke, the colour
 would not change.
 
 So blocked capabilities are a separate channel of the same screen: listed,
