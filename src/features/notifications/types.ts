@@ -44,6 +44,20 @@ export type NotificationOutboxRecord = NotificationIdentity & {
 };
 
 /**
+ * What an enqueue returns: the row, and whether it was already there.
+ *
+ * The flag belongs to the operation rather than to the row, so nothing that
+ * merely reads an outbox row has to carry it. Without it a caller cannot
+ * distinguish "queued" from "deduplicated" -- and both recurring sweeps counted
+ * a dedupe as a send, incrementing reminders_sent, advancing the case status and
+ * writing an "Automated reminder sent." timeline event for a message that was
+ * never queued.
+ */
+export type EnqueuedNotification = NotificationOutboxRecord & {
+  idempotentReplay: boolean;
+};
+
+/**
  * The transport is the only layer that knows whether a provider acknowledged the
  * send, so that fact travels WITH the value rather than being re-derived by a
  * downstream consumer or by a second read of the provider mode.

@@ -2451,11 +2451,23 @@ export function createAnnualReturnRepository(
           return "skipped" as const;
         }
 
-        await enqueueNotification(tx, {
+        const queued = await enqueueNotification(tx, {
           companyId: lockedCase.company_id,
           channel,
           notificationType: `annual_return_reminder_${milestone}`,
           recipient,
+          // Scoped to the CASE, not just the company.
+          //
+          // The default key is company + type + recipient, and the type carries
+          // only the milestone -- so next year's annual return for the same
+          // company produced a byte-identical key. `on conflict do nothing`
+          // matched last year's spent row, no message was queued, and the sweep
+          // counted it as sent anyway. From the second year onward the client was
+          // never reminded and the system reported that they were.
+          //
+          // One case per company per return year (unique on company_id,
+          // return_year), so the case id is the period.
+          idempotencyKey: `annual-return-reminder:${case_.id}:${milestone}:${channel}:${recipient}`,
           payload: {
             caseId: case_.id,
             milestone,
@@ -2463,6 +2475,21 @@ export function createAnnualReturnRepository(
             body: buildReminderDraft(case_, contact.name, now),
           },
         });
+
+        // A deduplicated enqueue is not a send. Counting one would repeat exactly
+        // the accounting lie this key fixes.
+        if (queued.idempotentReplay) {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            ) values (
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, 'Automated reminder skipped: an identical notification was already queued.',
+              ${tx.json({ milestone, reason: "duplicate_notification" })}
+            )
+          `;
+          return "skipped" as const;
+        }
 
         await tx`
           update annual_return_cases

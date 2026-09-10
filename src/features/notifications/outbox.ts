@@ -6,6 +6,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type {
+  EnqueuedNotification,
   DispatchSummary,
   EnqueueNotificationInput,
   NotificationDelivery,
@@ -113,7 +114,7 @@ function mapRow(row: NotificationRow): NotificationOutboxRecord {
 export async function enqueueNotification(
   client: QueryClient,
   input: EnqueueNotificationInput,
-): Promise<NotificationOutboxRecord> {
+): Promise<EnqueuedNotification> {
   const idempotencyKey =
     input.idempotencyKey ??
     notificationIdempotencyKey({
@@ -136,12 +137,16 @@ export async function enqueueNotification(
     on conflict (idempotency_key) do nothing
     returning *
   `;
-  if (rows[0]) return mapRow(rows[0]);
+  if (rows[0]) return { ...mapRow(rows[0]), idempotentReplay: false };
+
+  // The key already existed. Returning the old row silently is how a recurring
+  // reminder came to be counted as sent without ever being queued, so the fact
+  // travels with the value rather than being left for the caller to infer.
   const existing = await client<NotificationRow[]>`
     select * from notification_outbox where idempotency_key = ${idempotencyKey} limit 1
   `;
   if (!existing[0]) throw new Error("Unable to load idempotent notification outbox row.");
-  return mapRow(existing[0]);
+  return { ...mapRow(existing[0]), idempotentReplay: true };
 }
 
 function withTransaction<T>(

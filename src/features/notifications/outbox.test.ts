@@ -276,3 +276,51 @@ describe("manual dispatch does not take its clock from the caller", () => {
     expect(schema).not.toContain("now:");
   });
 });
+
+describe("notificationIdempotencyKey", () => {
+  /**
+   * The recurring-reminder defect, stated as a test.
+   *
+   * The default key is company + workItem + channel + type + recipient. For an
+   * annual-return reminder the type carries only the milestone, and no workItem
+   * is passed -- so the same company's reminder for the SAME milestone in a
+   * different year produced a byte-identical key. `on conflict do nothing`
+   * matched the previous year's spent row, no message was queued, and the sweep
+   * counted it as sent.
+   *
+   * This pins the shape so the collision is visible here rather than in
+   * production two years later. Both recurring sweeps now pass an explicit,
+   * period-scoped key instead.
+   */
+  it("collides across periods when only company, type and recipient are used", () => {
+    const thisYear = notificationIdempotencyKey({
+      companyId: "company-1",
+      channel: "whatsapp",
+      notificationType: "annual_return_reminder_1_month",
+      recipient: "+85291234567",
+    });
+    const nextYear = notificationIdempotencyKey({
+      companyId: "company-1",
+      channel: "whatsapp",
+      notificationType: "annual_return_reminder_1_month",
+      recipient: "+85291234567",
+    });
+    expect(thisYear).toBe(nextYear);
+  });
+
+  it("separates different milestones, recipients and channels", () => {
+    const base = {
+      companyId: "company-1",
+      channel: "whatsapp" as const,
+      notificationType: "annual_return_reminder_1_month",
+      recipient: "+85291234567",
+    };
+    const keys = new Set([
+      notificationIdempotencyKey(base),
+      notificationIdempotencyKey({ ...base, notificationType: "annual_return_reminder_3_days" }),
+      notificationIdempotencyKey({ ...base, recipient: "+85299999999" }),
+      notificationIdempotencyKey({ ...base, channel: "email" }),
+    ]);
+    expect(keys.size).toBe(4);
+  });
+});
