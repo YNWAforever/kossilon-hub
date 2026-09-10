@@ -29,6 +29,14 @@ export type WhatsAppConversationMessage = {
    */
   sentAs: "text" | "template" | null;
   sentTemplateName: string | null;
+  /**
+   * Files the client attached, by reference.
+   *
+   * Empty for a text-only message, and never inferred from the body string --
+   * the body used to be the only trace, and a client who typed "[image]" was
+   * indistinguishable from one who sent a photograph.
+   */
+  attachments: { providerMediaId: string; mediaType: string; hasDocument: boolean }[];
 };
 
 export type WhatsAppConversation = {

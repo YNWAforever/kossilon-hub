@@ -3,6 +3,7 @@ import {
   classifyWoztellWebhookEvent,
   normalizeWoztellInboundMessage,
   sendWoztellMessage,
+  inboundAttachments,
 } from "./woztell";
 import {
   WOZTELL_API_OUTBOUND,
@@ -270,5 +271,100 @@ describe("sendWoztellMessage", () => {
         fetchImpl,
       ),
     ).resolves.toEqual({ providerMessageId: "wamid.from-event" });
+  });
+});
+
+/**
+ * The media a client sent, kept rather than reduced to a placeholder word.
+ *
+ * The payload shape here is WOZTELL's own, copied verbatim into
+ * woztell-fixtures.ts, which that file calls the contract: "if a fixture and the
+ * code disagree, the code is wrong."
+ */
+describe("inboundAttachments", () => {
+  it("keeps the provider media id from the documented payload", () => {
+    expect(inboundAttachments(WOZTELL_INBOUND_MISC_VIDEO as never)).toEqual([
+      {
+        providerMediaId: "e8a85916-2386-49dc-8f05-1cd0527bfb68",
+        mediaType: "VIDEO",
+        position: 0,
+      },
+    ]);
+  });
+
+  it("finds nothing in a text message", () => {
+    expect(inboundAttachments(WOZTELL_INBOUND_TEXT as never)).toEqual([]);
+  });
+
+  // A media row whose provider id we invented would be a handle that downloads
+  // nothing, so an incomplete entry is skipped rather than guessed at.
+  it("skips an entry missing either the type or the media id", () => {
+    const payload = {
+      data: {
+        attachments: [
+          { type: "IMAGE" },
+          { waMediaId: "abc" },
+          { type: "IMAGE", waMediaId: "keep-me" },
+        ],
+      },
+    };
+    expect(inboundAttachments(payload as never)).toEqual([
+      { providerMediaId: "keep-me", mediaType: "IMAGE", position: 2 },
+    ]);
+  });
+
+  // "The third one" has to stay the third one.
+  it("keeps the position of each attachment within the message", () => {
+    const payload = {
+      data: {
+        attachments: [
+          { type: "IMAGE", waMediaId: "first" },
+          { type: "DOCUMENT", waMediaId: "second" },
+        ],
+      },
+    };
+    expect(inboundAttachments(payload as never).map((a) => a.position)).toEqual([0, 1]);
+  });
+});
+
+/**
+ * The caption bug. `if (text) return text` returned before the attachments
+ * branch was reached, so a client who wrote "here is my HKID" and attached the
+ * photograph produced a body identical to one with no attachment -- and since
+ * nothing else recorded the media, the file vanished without trace.
+ */
+describe("a caption alongside an attachment", () => {
+  const captioned = {
+    from: "85260903521",
+    to: "85268227287",
+    timestamp: "1599536864",
+    type: "MISC",
+    data: {
+      text: "呢張係我嘅身分證",
+      attachments: [{ type: "IMAGE", waMediaId: "cap-1" }],
+    },
+    member: "memberId",
+    channel: "channeId",
+    app: "appId",
+  };
+
+  it("keeps the caption and still says a file arrived", () => {
+    const message = classifyWoztellWebhookEvent(captioned as never);
+    expect(message.kind).toBe("message");
+    if (message.kind !== "message") return;
+    expect(message.message.body).toContain("呢張係我嘅身分證");
+    expect(message.message.body).toContain("[image]");
+    expect(message.message.attachments).toEqual([
+      { providerMediaId: "cap-1", mediaType: "IMAGE", position: 0 },
+    ]);
+  });
+
+  // The documented shapes keep exactly the behaviour they had.
+  it("leaves a documented text-only and attachment-only payload unchanged", () => {
+    const text = classifyWoztellWebhookEvent(WOZTELL_INBOUND_TEXT as never);
+    const video = classifyWoztellWebhookEvent(WOZTELL_INBOUND_MISC_VIDEO as never);
+    if (text.kind !== "message" || video.kind !== "message") throw new Error("expected messages");
+    expect(text.message.body).not.toContain("[");
+    expect(video.message.body).toBe("[video]");
   });
 });

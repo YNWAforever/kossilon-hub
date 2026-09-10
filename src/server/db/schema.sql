@@ -1594,3 +1594,44 @@ create index if not exists whatsapp_messages_sent_as_idx
 create index if not exists companies_data_origin_idx
   on companies (data_origin)
   where data_origin <> 'client';
+
+-- from 0031_whatsapp_message_media.sql
+create table if not exists whatsapp_message_media (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid not null references whatsapp_messages(id) on delete cascade,
+
+  -- WOZTELL's own identifier for the media. The only handle we have, and the
+  -- only thing a future download could be issued against.
+  provider_media_id text not null,
+
+  -- WOZTELL's vocabulary, stored as it arrives (documented payloads use
+  -- uppercase, e.g. 'VIDEO'). Deliberately unconstrained: the webhook
+  -- documentation shows one media example, so any CHECK here would be a guess
+  -- at the full set and would reject a real message rather than record it.
+  media_type text not null,
+
+  -- Order within the message. A client can attach several files, and "the third
+  -- one" has to stay the third one.
+  position integer not null check (position >= 0),
+
+  -- Set if this media ever becomes a document. Null on every row today.
+  -- on delete set null: losing the document must not erase the record that the
+  -- client sent something.
+  document_id uuid references documents(id) on delete set null,
+
+  created_at timestamptz not null default now(),
+
+  -- One row per attachment per message. A redelivered webhook re-records the
+  -- same attachments, and two rows for one file would show the client sending it
+  -- twice.
+  constraint whatsapp_message_media_uidx unique (message_id, provider_media_id, position)
+);
+
+create index if not exists whatsapp_message_media_message_idx
+  on whatsapp_message_media (message_id);
+
+-- Finding media nobody has turned into a document yet: the staff queue, and the
+-- backlog that will exist the moment a download endpoint is available.
+create index if not exists whatsapp_message_media_unattached_idx
+  on whatsapp_message_media (created_at)
+  where document_id is null;

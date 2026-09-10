@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { Paperclip } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import {
@@ -253,6 +254,31 @@ export function ProductionWhatsAppInbox() {
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{message.body}</p>
+                  {/* A file the client actually sent. Until now the only trace
+                      was a placeholder word in the body, so a client who typed
+                      "[image]" and one who photographed their HKID produced the
+                      same row -- and the media id was thrown away.
+                      The bytes cannot be fetched: WOZTELL's webhook
+                      documentation shows no media-download endpoint
+                      (BLOCKED_INTEGRATION: whatsapp-media-download), so this
+                      says what arrived and does not offer a download it cannot
+                      honour. */}
+                  {message.attachments.length > 0 ? (
+                    <div className="mt-2 space-y-1">
+                      {message.attachments.map((attachment) => (
+                        <p
+                          key={attachment.providerMediaId}
+                          className="flex items-center gap-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow"
+                        >
+                          <Paperclip aria-hidden className="h-3 w-3" />
+                          客戶傳送了 {attachment.mediaType.toLowerCase()} 檔案
+                          {attachment.hasDocument
+                            ? "（已存檔）"
+                            : "（尚未能下載，需要客戶另行提交）"}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
                   {/* The draft is not always what went out. Outside WhatsApp's
                       24-hour window free-form text is forbidden, so a
                       zero-variable template is sent instead -- no company name,

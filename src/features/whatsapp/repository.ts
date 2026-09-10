@@ -381,6 +381,7 @@ type ConversationMessageRow = {
   direction: WhatsAppMessageDirection;
   status: WhatsAppMessageStatus;
   body: string;
+  attachments: { providerMediaId: string; mediaType: string; hasDocument: boolean }[] | null;
   sent_as: "text" | "template" | null;
   sent_template_name: string | null;
   case_id: string | null;
@@ -409,6 +410,7 @@ function mapConversationMessage(row: ConversationMessageRow): WhatsAppConversati
     direction: row.direction,
     status: row.status,
     body: row.body,
+    attachments: row.attachments ?? [],
     sentAs: row.sent_as,
     sentTemplateName: row.sent_template_name,
     caseId: row.case_id,
@@ -809,6 +811,29 @@ export function createWhatsAppRepository(
           created_at::text as created_at
       `;
       const [inserted] = rows;
+
+      // In the same transaction as the message, so a client's file reference can
+      // never exist without the message that carried it, nor the message without
+      // the reference. The unique constraint makes a redelivered webhook a no-op
+      // rather than showing the client sending the same file twice.
+      //
+      // Recording the reference is all this can do: fetching the bytes needs a
+      // WOZTELL media-download endpoint and none appears in the webhook
+      // documentation the fixtures are copied from.
+      // BLOCKED_INTEGRATION: whatsapp-media-download.
+      if (inserted && input.attachments.length > 0) {
+        for (const attachment of input.attachments) {
+          await tx`
+            insert into whatsapp_message_media (
+              message_id, provider_media_id, media_type, position
+            ) values (
+              ${inserted.id}, ${attachment.providerMediaId}, ${attachment.mediaType},
+              ${attachment.position}
+            )
+            on conflict do nothing
+          `;
+        }
+      }
 
       if (!inserted) {
         const conflictRows = await tx<MessageRow[]>`
@@ -1298,6 +1323,23 @@ export function createWhatsAppRepository(
         direction,
         status,
         body,
+        -- Aggregated rather than joined, so one message with three attachments
+        -- stays one row instead of three copies of the message.
+        (
+          select coalesce(
+            json_agg(
+              json_build_object(
+                'providerMediaId', m.provider_media_id,
+                'mediaType', m.media_type,
+                'hasDocument', m.document_id is not null
+              )
+              order by m.position asc
+            ),
+            '[]'::json
+          )
+          from whatsapp_message_media m
+          where m.message_id = whatsapp_messages.id
+        ) as attachments,
         sent_as,
         sent_template_name,
         case_id,

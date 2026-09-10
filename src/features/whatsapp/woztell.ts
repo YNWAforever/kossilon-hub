@@ -4,6 +4,7 @@ import type {
   WhatsAppProviderConfig,
   WoztellStatusType,
   WoztellWebhookEvent,
+  InboundAttachment,
 } from "./types";
 
 export type WoztellTemplateComponent = Record<string, unknown>;
@@ -338,6 +339,7 @@ export function normalizeWoztellInboundMessage(payload: unknown): NormalizedInbo
     contactName: null,
     messageType,
     body: inboundBody(payload, messageType),
+    attachments: inboundAttachments(payload),
     receivedAt,
     rawPayload: payload,
   };
@@ -352,18 +354,54 @@ export function normalizeWoztellInboundMessage(payload: unknown): NormalizedInbo
  */
 function inboundBody(payload: JsonRecord, messageType: string): string {
   const text = firstString(payload, [["data", "text"]]);
+  const attachments = inboundAttachments(payload);
+
+  // A caption used to hide the file. `if (text) return text` returned before the
+  // attachments branch was reached, so a client who wrote "here is my HKID" and
+  // attached the photograph produced a message body identical to one with no
+  // attachment at all -- and since nothing else recorded the media, the file
+  // vanished without trace.
+  //
+  // The caption is still the body; the attachment is named alongside it, because
+  // a staff member reading the thread has to be able to tell that something
+  // arrived. (WOZTELL's documented payloads carry no caption-plus-attachment
+  // example, so this branch is reasoning about a shape the docs do not show. The
+  // parts that ARE documented -- text alone, attachments alone -- keep exactly
+  // their previous behaviour.)
+  const label =
+    attachments.length > 0
+      ? `[${attachments.map((attachment) => attachment.mediaType.toLowerCase()).join(", ")}]`
+      : null;
+
+  if (text && label) return `${text} ${label}`;
   if (text) return text;
-
-  const attachments = valueAtPath(payload, ["data", "attachments"]);
-  if (Array.isArray(attachments)) {
-    const kinds = attachments
-      .map((attachment) => (isRecord(attachment) ? firstString(attachment, [["type"]]) : null))
-      .filter((kind): kind is string => typeof kind === "string");
-
-    if (kinds.length > 0) return `[${kinds.join(", ").toLowerCase()}]`;
-  }
+  if (label) return label;
 
   return `[${messageType}]`;
+}
+
+/**
+ * The media a message carried, as references rather than as a placeholder word.
+ *
+ * WOZTELL's documented shape is `data.attachments: [{ type, waMediaId }]`, copied
+ * verbatim into woztell-fixtures.ts, which that file calls the contract. An entry
+ * without both fields is skipped rather than guessed at: a media row whose
+ * provider id we invented would be a handle that downloads nothing.
+ */
+export function inboundAttachments(payload: JsonRecord): InboundAttachment[] {
+  const attachments = valueAtPath(payload, ["data", "attachments"]);
+  if (!Array.isArray(attachments)) return [];
+
+  const parsed: InboundAttachment[] = [];
+  attachments.forEach((attachment, index) => {
+    if (!isRecord(attachment)) return;
+    const mediaType = firstString(attachment, [["type"]]);
+    const providerMediaId = firstString(attachment, [["waMediaId"]]);
+    if (!mediaType || !providerMediaId) return;
+    parsed.push({ providerMediaId, mediaType, position: index });
+  });
+
+  return parsed;
 }
 
 /**

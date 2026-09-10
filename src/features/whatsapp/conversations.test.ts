@@ -16,6 +16,7 @@ function message(
     direction: "outbound",
     status: "queued",
     body: "body",
+    attachments: [],
     sentAs: null,
     sentTemplateName: null,
     caseId: null,

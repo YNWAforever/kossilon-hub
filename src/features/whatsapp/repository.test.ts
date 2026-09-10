@@ -434,6 +434,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "Hello",
         receivedAt,
+        attachments: [],
         rawPayload: {},
       });
 
@@ -472,6 +473,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "Earlier",
         receivedAt: earlierAt,
+        attachments: [],
         rawPayload: {},
       });
       const later = await repository.recordInboundMessage({
@@ -484,6 +486,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "Later",
         receivedAt: laterAt,
+        attachments: [],
         rawPayload: {},
       });
 
@@ -1006,6 +1009,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "seed row for receipt test",
         receivedAt: new Date().toISOString(),
+        attachments: [],
         rawPayload: {},
       });
 
@@ -1085,6 +1089,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         messageType: "text",
         body: "seed row for attach test",
         receivedAt: new Date().toISOString(),
+        attachments: [],
         rawPayload: {},
       });
 
