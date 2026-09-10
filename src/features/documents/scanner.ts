@@ -1,7 +1,21 @@
-import type { DocumentScanner } from "./types";
+import type { IdentifiedDocumentScanner } from "./types";
 
-export function createDeterministicDocumentScanner(): DocumentScanner {
+/**
+ * A fixed-response scanner for tests and local development.
+ *
+ * It inspects nothing: every input but two magic content types comes back
+ * "clean". That is fine for a test, and was a security hole in production --
+ * `loadDefaultDocumentContext` handed this to *live* mode unconditionally, so
+ * real malware was marked available. `createDocumentScannerForProviderMode` now
+ * owns that choice and refuses to return this one for live.
+ *
+ * It reports `verdictSource: "deterministic"` so every verdict it writes is
+ * recorded as unverifiable rather than having to be inferred later from the
+ * shape of its provider reference.
+ */
+export function createDeterministicDocumentScanner(): IdentifiedDocumentScanner {
   return {
+    verdictSource: "deterministic",
     async scan(input) {
       if (input.contentType === "application/x-test-malware") {
         return {

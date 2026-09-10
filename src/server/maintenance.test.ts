@@ -28,6 +28,7 @@ function dependencies(
     })),
     createDocumentRepository: () => ({
       expireUploads: vi.fn(async () => [{ objectKey: "a" }, { objectKey: "b" }]),
+      listStalledQuarantine: vi.fn(async () => []),
       close: vi.fn(async () => {}),
     }),
     createDocumentStorage: () => ({ delete: vi.fn(async () => {}) }),
@@ -50,6 +51,18 @@ describe("runFirmMaintenanceWithDependencies", () => {
     expect(result).toEqual({
       now: "2026-07-26T00:00:00.000Z",
       escalations: { warnings: 1, breaches: 2 },
+      // No createScanWorker is supplied here, so the pass reports zeros. Asserted
+      // explicitly rather than loosened away: zeros must mean "nothing was
+      // scanned", never "everything is clear".
+      documentScans: {
+        claimed: 0,
+        clean: 0,
+        rejected: 0,
+        retried: 0,
+        failed: 0,
+        superseded: 0,
+        stalled: 0,
+      },
       annualReturnReminders: { sent: 1, skipped: 0 },
       serviceSubscriptionReminders: { sent: 1, skipped: 0 },
       dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0, superseded: 0 },
@@ -109,6 +122,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
           }),
           createDocumentRepository: () => ({
             expireUploads: vi.fn(async () => []),
+            listStalledQuarantine: vi.fn(async () => []),
             close: closeDocuments,
           }),
         }),

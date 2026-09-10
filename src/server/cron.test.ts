@@ -23,6 +23,15 @@ describe("scheduled maintenance", () => {
           calls.push(`dispatch:${limit}`);
           return { claimed: 1, sent: 1, retried: 0, permanentlyFailed: 0, superseded: 0 };
         }),
+        drainDocumentScanJobs: vi.fn(async () => ({
+          claimed: 1,
+          clean: 1,
+          rejected: 0,
+          retried: 0,
+          failed: 0,
+          superseded: 0,
+        })),
+        escalateStalledQuarantine: vi.fn(async () => ({ stalled: 0 })),
         cleanupExpiredUploads: vi.fn(async () => {
           calls.push("uploads");
           return { expired: 3 };

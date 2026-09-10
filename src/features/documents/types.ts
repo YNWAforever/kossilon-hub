@@ -57,3 +57,26 @@ export type DocumentScanner = {
     contentType: string;
   }): Promise<DocumentScanResult>;
 };
+
+/**
+ * Where a scan verdict came from.
+ *
+ * `deterministic` is the fixed-response test scanner, which returns "clean" for
+ * every input but two magic content types. It was wired into live mode
+ * unconditionally, so its verdicts are evidence of nothing.
+ *
+ * A missing value means the verdict predates this distinction and is equally
+ * unverifiable. Both are unknown safety; only `provider` is verified safety.
+ * The union has no "unknown" member on purpose -- absence is the honest
+ * representation, and a named value would invite writing it as if it were a
+ * finding (the reasoning migration 0022 recorded for notification_outbox.delivery).
+ */
+export type ScanVerdictSource = "provider" | "deterministic";
+
+/**
+ * A scanner that reports which of those it is, so the caller records what it was
+ * handed instead of inferring it from the provider reference's shape.
+ */
+export type IdentifiedDocumentScanner = DocumentScanner & {
+  readonly verdictSource: ScanVerdictSource;
+};

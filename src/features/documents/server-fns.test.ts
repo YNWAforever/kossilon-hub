@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { R2BucketLike } from "@/server/runtime-env";
 import type { DocumentRepository, DocumentUploadIntent, PrivateDocument } from "./repository";
-import type { DocumentScanner, DocumentStorage } from "./types";
+import type { DocumentAccessSubject } from "./authorization";
+import type { DocumentStorage, IdentifiedDocumentScanner } from "./types";
 import {
   createDocumentStorageForProviderMode,
   createDocumentUploadIntentForActor,
@@ -57,7 +58,9 @@ const intent: DocumentUploadIntent = {
   status: "created",
   scanProviderReference: null,
   scanErrorCode: null,
+  scanVerdictSource: null,
   expiresAt: "2099-01-01T00:00:00.000Z",
+  quarantineRetentionUntil: null,
 };
 const document: PrivateDocument = {
   id: "50000000-0000-0000-0000-000000000001",
@@ -70,17 +73,29 @@ const document: PrivateDocument = {
   sizeBytes: intent.expectedSizeBytes,
   checksum: intent.checksum,
   uploadStatus: "quarantined",
+  scanVerdictSource: null,
   reviewStatus: "pending",
   uploadedBy: null,
   uploadedAt: "2026-07-12T00:00:00.000Z",
+};
+
+// The authoritative scope the repository resolves for this company/case. Staff
+// scoping is asserted directly in authorization.test.ts; here the stub simply
+// has to supply a well-formed subject so the wiring is exercised.
+const subject: DocumentAccessSubject = {
+  companyId,
+  companyTeamId: staffActor.teamId,
+  caseId: intent.caseId,
+  caseOwnerId: staffActor.userId,
+  caseReviewerId: null,
 };
 
 function dependencies(
   overrides: Partial<{
     repository: DocumentRepository;
     storage: DocumentStorage;
-    scanner: DocumentScanner;
-    authorizeCompany: (actor: AuthenticatedActor, companyId: string) => Promise<void>;
+    scanner: IdentifiedDocumentScanner;
+    authorizeDocument: (actor: AuthenticatedActor, subject: DocumentAccessSubject) => Promise<void>;
   }> = {},
 ) {
   return {
@@ -101,6 +116,10 @@ function dependencies(
       })),
       reviewDocument: vi.fn(async () => document),
       expireUploads: vi.fn(async () => []),
+      listStalledQuarantine: vi.fn(async () => []),
+      getDocumentAccessSubject: vi.fn(async () => subject),
+      getIntentAccessSubject: vi.fn(async () => subject),
+      getCompanyAccessSubject: vi.fn(async () => subject),
       close: vi.fn(async () => undefined),
     } as unknown as DocumentRepository,
     storage: {
@@ -120,9 +139,10 @@ function dependencies(
       delete: vi.fn(async () => undefined),
     } as DocumentStorage,
     scanner: {
+      verdictSource: "provider",
       scan: vi.fn(async () => ({ status: "clean", providerReference: "clean-1" })),
-    } as DocumentScanner,
-    authorizeCompany: vi.fn(async () => undefined),
+    } as IdentifiedDocumentScanner,
+    authorizeDocument: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -167,7 +187,10 @@ describe("document server orchestration", () => {
       deps,
     );
 
-    expect(deps.authorizeCompany).toHaveBeenCalledWith(actor, companyId);
+    expect(deps.authorizeDocument).toHaveBeenCalledWith(
+      actor,
+      expect.objectContaining({ companyId }),
+    );
     expect(deps.repository.createUploadIntent).toHaveBeenCalledWith(
       expect.objectContaining({ objectKey: expect.stringMatching(/^documents\/[0-9a-f-]{36}$/) }),
     );
@@ -208,13 +231,19 @@ describe("document server orchestration", () => {
       intent.id,
       cleanDeps,
     );
+    // The verdict carries which scanner produced it and which content version it
+    // is about. Without the first, a fixed-response scanner's "clean" is
+    // indistinguishable from a real provider's; without the second, a late result
+    // could be applied to bytes it never saw.
     expect(cleanDeps.repository.recordScanResult).toHaveBeenCalledWith(
       intent.id,
       expect.objectContaining({ status: "clean" }),
+      { verdictSource: "provider", expectedChecksum: intent.checksum },
     );
 
     const rejectedDeps = dependencies({
       scanner: {
+        verdictSource: "provider" as const,
         scan: vi.fn(async () => ({
           status: "rejected" as const,
           reason: "infected",
@@ -235,6 +264,7 @@ describe("document server orchestration", () => {
     expect(rejectedDeps.repository.recordScanResult).toHaveBeenCalledWith(
       intent.id,
       expect.objectContaining({ status: "rejected" }),
+      { verdictSource: "provider", expectedChecksum: intent.checksum },
     );
   });
 });
@@ -309,7 +339,10 @@ describe("listDocumentsForActor", () => {
     );
 
     await listDocumentsForActor(actor, { companyId }, deps);
-    expect(deps.authorizeCompany).toHaveBeenCalledWith(actor, companyId);
+    expect(deps.authorizeDocument).toHaveBeenCalledWith(
+      actor,
+      expect.objectContaining({ companyId }),
+    );
     expect(deps.repository.listDocuments).toHaveBeenCalledWith({ companyId });
   });
 });

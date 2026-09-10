@@ -66,6 +66,7 @@ const baseDocument: PrivateDocument = {
   sizeBytes: 128,
   checksum: "a".repeat(64),
   uploadStatus: "available",
+  scanVerdictSource: "provider",
   reviewStatus: "pending",
   uploadedBy: null,
   uploadedAt: "2026-07-12T00:00:00.000Z",

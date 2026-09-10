@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import {
+  drainDocumentScanJobs,
+  type ScanWorkerDependencies,
+} from "@/features/documents/scan-worker";
 import type { DispatchSummary } from "@/features/notifications/types";
 import { runScheduledMaintenance, type ScheduledMaintenanceResult } from "./cron";
 
@@ -47,6 +51,7 @@ type MaintenanceServiceSubscriptionRepository = {
 
 type MaintenanceDocumentRepository = {
   expireUploads(now: string): Promise<readonly { objectKey: string }[]>;
+  listStalledQuarantine(now: string, limit?: number): Promise<readonly { id: string }[]>;
   close(): Promise<void>;
 };
 
@@ -63,6 +68,14 @@ export type FirmMaintenanceDependencies = {
   dispatchDue(input: { now: string; limit: number }): Promise<DispatchSummary>;
   createDocumentRepository(): MaintenanceDocumentRepository;
   createDocumentStorage(): { delete(objectKey: string): Promise<void> };
+  /**
+   * The scan pass, assembled by the caller so this module stays free of provider
+   * resolution. It is optional because live mode has no scanner configured yet
+   * (BLOCKED_INTEGRATION: malware-scanner-provider) and a maintenance run must
+   * not fail wholesale for that -- the queue simply keeps its backlog, visibly,
+   * which is the accurate state.
+   */
+  createScanWorker?(): ScanWorkerDependencies & { close(): Promise<void> };
   createOutboxRepository(): MaintenanceOutboxRepository;
 };
 
@@ -91,6 +104,25 @@ export async function runFirmMaintenanceWithDependencies(
         evaluateAnnualReturnReminders: (now) => annualReturns.evaluateReminders(now),
         evaluateServiceSubscriptionReminders: (now) => serviceSubscriptions.evaluateReminders(now),
         dispatchDue: (now, limit) => dependencies.dispatchDue({ now, limit }),
+        drainDocumentScanJobs: async (now) => {
+          const worker = dependencies.createScanWorker?.();
+          if (!worker) {
+            // No scanner configured. Reporting zeros is honest: nothing was
+            // claimed and nothing was verdicted. It must never be read as "all
+            // clear" -- escalateStalledQuarantine below is what surfaces the
+            // backlog that results.
+            return { claimed: 0, clean: 0, rejected: 0, retried: 0, failed: 0, superseded: 0 };
+          }
+          try {
+            return await drainDocumentScanJobs({ now }, worker);
+          } finally {
+            await worker.close();
+          }
+        },
+        escalateStalledQuarantine: async (now) => {
+          const stalled = await documents.listStalledQuarantine(now);
+          return { stalled: stalled.length };
+        },
         cleanupExpiredUploads: async (now) => {
           const expired = await documents.expireUploads(now);
           const storage = dependencies.createDocumentStorage();
@@ -141,6 +173,7 @@ export async function runFirmMaintenance(
     import("@/server/runtime-env"),
     import("@/features/notifications/outbox"),
   ]);
+  const scanJobsModule = await import("@/features/documents/scan-jobs");
 
   return runFirmMaintenanceWithDependencies(input, {
     createWorkItemRepository: () => workItemsModule.createWorkItemRepository(),
@@ -149,6 +182,32 @@ export async function runFirmMaintenance(
       serviceSubscriptionsModule.createServiceSubscriptionRepository(),
     createDocumentRepository: () => documentsModule.createDocumentRepository(),
     createOutboxRepository: () => outboxModule.createNotificationOutboxRepository(),
+    createScanWorker: () => {
+      const providerMode = providerModeModule.currentProviderMode();
+      const storage = documentServerFnsModule.createDocumentStorageForProviderMode(
+        providerMode,
+        providerMode === "live" ? runtimeEnvModule.getDocumentsBucketBinding() : undefined,
+      );
+      // Throws in live when DOCUMENT_SCANNER_* is unset, which is deliberate:
+      // there is no fallback scanner, because a fallback is exactly how a fake
+      // "clean" reached production in the first place. The caller treats the
+      // absence as "no scan pass this tick" and the backlog stays visible.
+      const scanner = documentServerFnsModule.createDocumentScannerForProviderMode(providerMode, {
+        config: providerMode === "live" ? runtimeEnvModule.getDocumentScannerConfig() : null,
+        storage,
+      });
+      const jobs = scanJobsModule.createDocumentScanJobRepository();
+      const documents = documentsModule.createDocumentRepository();
+      return {
+        jobs,
+        documents,
+        storage,
+        scanner,
+        close: async () => {
+          await Promise.all([jobs.close(), documents.close()]);
+        },
+      };
+    },
     dispatchDue: (dispatchInput) => dispatchModule.dispatchDueNotificationsOnServer(dispatchInput),
     createDocumentStorage: () => {
       // Live mode throws without a real bucket, so resolve the binding the same

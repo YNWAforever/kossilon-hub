@@ -202,6 +202,33 @@ export function getResendConfig(
   return { apiKey: apiKey.trim(), from: from.trim() };
 }
 
+export type DocumentScannerConfig = { endpoint: string; apiKey: string };
+
+/**
+ * A third deliberate sibling to getFirmRuntimeEnv, not part of it. The same
+ * reasoning as getResendConfig: DOCUMENT_SCANNER_* must never join
+ * REQUIRED_BINDINGS, or one unrelated missing binding would take the scanner
+ * down, and a scanner that cannot start is the one failure mode that must never
+ * be silently absorbed — a missing scanner has to block release, not grant it.
+ *
+ * Returns null rather than throwing so the *selector* decides what an absent
+ * scanner means per provider mode: nothing for local/simulated, a hard refusal
+ * for live. Resolving it here would make that decision in the wrong place.
+ *
+ * No real provider is configured for this deployment yet
+ * (BLOCKED_INTEGRATION: malware-scanner-provider), so in practice this returns
+ * null in live and live document uploads stay disabled. That is the accurate
+ * state and it is what the runbook documents.
+ */
+export function getDocumentScannerConfig(
+  env: Record<string, unknown> = defaultRuntimeSource(),
+): DocumentScannerConfig | null {
+  const endpoint = env.DOCUMENT_SCANNER_URL;
+  const apiKey = env.DOCUMENT_SCANNER_API_KEY;
+  if (!hasText(endpoint) || !hasText(apiKey)) return null;
+  return { endpoint: endpoint.trim(), apiKey: apiKey.trim() };
+}
+
 /**
  * Another deliberate sibling to getFirmRuntimeEnv, not part of it — same
  * reasoning as getResendConfig above. Document storage only ever needs its own

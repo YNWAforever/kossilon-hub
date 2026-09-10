@@ -437,11 +437,45 @@ create table if not exists document_upload_intents (
   ),
   scan_provider_reference text,
   scan_error_code text,
+  -- from 0023: where the verdict came from. NULL and 'deterministic' both mean
+  -- unknown safety, never verified safety.
+  scan_verdict_source text
+    check (scan_verdict_source is null or scan_verdict_source in ('provider', 'deterministic')),
+  -- Governs an upload that was never completed. Received files are governed by
+  -- quarantine_retention_until instead and are never deleted by the expiry sweep.
   expires_at timestamptz not null,
+  -- from 0023: how long received-but-unscanned bytes are held. Reaching it
+  -- escalates; it never deletes evidence.
+  quarantine_retention_until timestamptz,
   uploaded_at timestamptz,
   scanned_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+-- from 0023_document_scan_jobs_and_quarantine_retention.sql
+-- Durable scan work. Mechanics deliberately mirror notification_outbox: claim
+-- with `for update skip locked`, attempt_count incremented at claim and used as
+-- a fencing token in every terminal write, exponential backoff, and a
+-- visibility timeout that reclaims rows stranded by a Worker killed mid-scan.
+create table if not exists document_scan_jobs (
+  id uuid primary key default gen_random_uuid(),
+  intent_id uuid not null references document_upload_intents(id) on delete restrict,
+  checksum_sha256 text not null check (checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  reason text not null default 'initial' check (reason in ('initial', 'rescan', 'retry')),
+  idempotency_key text not null unique,
+  status text not null default 'pending' check (
+    status in ('pending', 'processing', 'succeeded', 'failed', 'cancelled')
+  ),
+  attempt_count integer not null default 0 check (attempt_count >= 0),
+  max_attempts integer not null default 5 check (max_attempts > 0),
+  next_attempt_at timestamptz not null default now(),
+  last_error_code text,
+  last_error_message text,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint document_scan_jobs_attempts_check check (attempt_count <= max_attempts)
 );
 
 create index if not exists work_items_open_queue_idx
@@ -484,9 +518,24 @@ create index if not exists client_company_memberships_lookup_idx
 create index if not exists staff_skills_active_lookup_idx
   on staff_skills (skill_key, active, staff_profile_id);
 
+-- 0023 narrowed this predicate. It used to include 'quarantined' -- the status a
+-- successfully received file holds -- so the sweep expired received evidence and
+-- maintenance.ts deleted its bytes 15 minutes after the intent was created.
 create index if not exists document_upload_intents_cleanup_idx
   on document_upload_intents (expires_at)
-  where status in ('created', 'uploaded', 'quarantined');
+  where status in ('created', 'uploaded');
+
+-- from 0023
+create index if not exists document_upload_intents_quarantine_retention_idx
+  on document_upload_intents (quarantine_retention_until)
+  where status = 'quarantined';
+
+create index if not exists document_scan_jobs_claim_idx
+  on document_scan_jobs (next_attempt_at, updated_at, created_at)
+  where status in ('pending', 'failed', 'processing');
+
+create index if not exists document_scan_jobs_intent_idx
+  on document_scan_jobs (intent_id, created_at desc);
 
 create or replace function enforce_work_item_sla_snapshot_immutability()
 returns trigger language plpgsql as $$
