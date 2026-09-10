@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-b` · Current commit: `pending` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-b` · Current commit: `c3a9d8e` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
