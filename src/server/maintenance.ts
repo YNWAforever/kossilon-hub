@@ -5,6 +5,12 @@ import {
   type ScanWorkerDependencies,
 } from "@/features/documents/scan-worker";
 import type { DispatchSummary } from "@/features/notifications/types";
+import { createDocumentAiAnalyzerForProviderMode } from "@/features/documents/ai-provider";
+// Static, and honest about it. It was a dynamic import, which implied a
+// code-split that cannot happen: analysis-worker below imports ai-provider
+// statically, so the module is already in this graph either way. maintenance.ts
+// as a whole is still lazily imported by server.ts, which is where the cold-start
+// saving actually comes from.
 import {
   drainDocumentAnalysisJobs,
   type AnalysisWorkerDependencies,
@@ -229,7 +235,6 @@ export async function runFirmMaintenance(
   const scanJobsModule = await import("@/features/documents/scan-jobs");
   const analysisJobsModule = await import("@/features/documents/analysis-jobs");
   const analysisRepositoryModule = await import("@/features/documents/analysis-repository");
-  const aiProviderModule = await import("@/features/documents/ai-provider");
 
   return runFirmMaintenanceWithDependencies(input, {
     createWorkItemRepository: () => workItemsModule.createWorkItemRepository(),
@@ -294,7 +299,7 @@ export async function runFirmMaintenance(
         providerMode,
         providerMode === "live" ? runtimeEnvModule.getDocumentsBucketBinding() : undefined,
       );
-      const analyzer = aiProviderModule.createDocumentAiAnalyzerForProviderMode(providerMode, {
+      const analyzer = createDocumentAiAnalyzerForProviderMode(providerMode, {
         config: providerMode === "live" ? runtimeEnvModule.getDocumentAiConfig() : null,
       });
       const jobs = analysisJobsModule.createDocumentAnalysisJobRepository();
