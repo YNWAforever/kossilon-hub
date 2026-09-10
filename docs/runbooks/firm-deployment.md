@@ -27,6 +27,13 @@ Approval is required to use any staging or production `DATABASE_URL`, run migrat
 
 ## Runtime health
 
+After the deploy, open `/operations`. Until it shows a run with trigger 排程, the
+five-minute schedule has never been observed to fire on this runtime, and every
+reminder, escalation and scan it owns should be assumed not to have run —
+`BLOCKED_INTEGRATION: deployment-runtime`. Reading that screen day to day is
+covered in [the pilot operations runbook](pilot-operations.md), which also holds
+the capability-pause and rollback procedures.
+
 Verify the following bindings through the deployment provider's redacted environment view: `FIRM_ID`, Neon Auth URL and cookie secret, `DATABASE_URL`, `DOCUMENTS_BUCKET`, WOZTELL bindings, and `EMAIL_FROM`.
 
 `DOCUMENTS_BUCKET` is satisfied two ways. On Cloudflare Workers it is the R2 binding declared in `wrangler.template.jsonc`. On a runtime without Workers bindings (Vercel, Node) the same R2 bucket is reached over its S3-compatible API, and these names are required instead: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, plus optional `R2_ENDPOINT` to override the default `https://<account-id>.r2.cloudflarestorage.com`. Supply the R2 API token values per deployment; they never belong in source control. When both forms are present the Workers binding wins.

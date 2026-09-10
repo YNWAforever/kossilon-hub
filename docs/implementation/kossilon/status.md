@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-e` · Current commit: `f6176c7` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-f` · Current commit: `cde3cc5` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -12,7 +12,7 @@ its code is written.
 | **C** Document intelligence and Kossilon review | ✅ code complete | ❌ none | ❌ no | AI provider, text extraction, a database |
 | **D** Messaging, attachments and chasing | 🟨 partial | ❌ none | ❌ no | a WOZTELL media-download endpoint, real accounts, a database |
 | **E** External handoff and folder returns | 🟨 model complete, nothing transmits | ❌ none | ❌ no | the internal server's protocol, address and rights |
-| **F** Pilot, scale and operations | ⬜ not started | — | — | pilot staff and representative cases |
+| **F** Pilot, scale and operations | 🟨 the observability half is built; the pilot half cannot start here | ❌ none | ❌ no | a database, a deployment, pilot staff and representative cases |
 
 ## Phase B, work package by work package
 
@@ -145,24 +145,125 @@ holds a package back, so a provider finding can never reach it:
 There is no field anywhere in the contract for approving, resolving or releasing.
 A model cannot ask.
 
+## Phase F, work package by work package
+
+| Package | State |
+|---|---|
+| **F-1** The tick leaves a trace | ✅ complete — migration `0033` `maintenance_runs`; recorded on the success, partial and failed paths; not applied to any database |
+| **F-2** Maintenance health and the operations screen | ✅ complete — `maintenanceHealthOf`, `/operations`, queue depths; 25 tests |
+| **F-3** Capability inventory | ✅ complete — `capabilities.ts` plus a convention test cross-checking it against the `BLOCKED_INTEGRATION:` markers in `src/`, in both directions |
+| **F-4** Pilot runbook, measurement plan, next-service spec | ✅ records written |
+| **F-5** The pilot itself | ⬜ cannot start here — needs a database, a deployment, staff and cases |
+| **F-6** Scale and query plans | ⬜ blocked — no dataset, no measurement, and adding indexes without one is what plan F2 forbids |
+| **F-7** Backup/restore verification | ⬜ blocked — needs a database and a bucket to restore together |
+
+**Design:**
+`docs/superpowers/specs/2026-09-11-kossilon-phase-f-pilot-operations-design.md`.
+
+### What F-1 found
+
+`runScheduledMaintenanceForWorker` ran the nine passes and then
+`console.log`ged the result. That was the entire record. It goes to the
+Cloudflare log stream: ephemeral, requires a person to go and look, and
+unreadable by the product.
+
+So a cron that stopped firing — or, the live possibility under
+`BLOCKED_INTEGRATION: deployment-runtime`, one that never registered on the
+deployed runtime and never fired at all — produced **no visible symptom**. SLA
+escalations are never evaluated, reminders are never evaluated, the outbox is
+never dispatched, quarantined documents are never scanned, expired intents are
+never reclaimed, and every screen still looks completely normal, because every
+screen reads tables a human writes to. The first real signal is a missed
+statutory deadline.
+
+Three decisions carry the weight:
+
+- **The recorder is constructed before the repositories.** A tick that dies while
+  assembling them — a missing binding, a Hyperdrive that will not resolve — is
+  precisely the failure worth a row, and a recorder built after them would not
+  exist yet to write one. This also made `outcome: 'failed'` reachable; before
+  the reorder it was a branch nothing could enter.
+- **A failed record write never fails the run.** Nine passes did their work, and
+  losing the bookkeeping row is the smaller loss. It is not silent either: the
+  health goes `stale` after two missed records.
+- **`failure_summary` records an error class, never its message.** A top-level
+  failure here is usually the database, whose error text carries a host and can
+  carry a connection string, and this row is rendered on a screen. Same rule the
+  handoff destination already follows. The full text still goes to
+  `console.error` exactly as before.
+
+### What `never-observed` is for
+
+`maintenanceHealthOf` has five states, and the first is the point of the
+exercise. An empty `maintenance_runs` is **not** healthy: it is what a deployment
+whose cron never registered looks like, and it is this repository's actual state.
+A green tick over an empty table would be a positive claim made out of no
+evidence, about the one subsystem nobody watches.
+
+Two further rules:
+
+- **Staleness outranks the last run's outcome.** A cron that stopped after a
+  clean tick and one that stopped after a failed tick are the same emergency.
+- **A `not-configured` pass is not a fault.** Under six blocked integrations the
+  scan and analysis passes say that on every single tick, permanently. Folding it
+  into `degraded` would paint the screen red forever and train staff to ignore
+  it — and the day something actually broke, the colour would not change. Blocked
+  capabilities are their own channel of the same screen.
+
+`trigger_source` exists so an operator running the entrypoint by hand cannot make
+a dead cron look alive; the health rule counts scheduled runs only. It defaults
+to `manual`, so a caller that forgets under-reports rather than over-reports.
+
+### The inventory test is the part that lasts
+
+`capabilities.test.ts` compares the declared blocked integrations against the
+`BLOCKED_INTEGRATION:` markers in `src/`, both ways. The reverse direction — an
+entry claiming something is disabled after the code stopped saying so — is the
+one that rots quietly, because nothing else in a build would ever notice. Both
+directions were mutation-tested: removing the `ai-provider` entry fails naming
+the five files that carry its marker, and adding an entry with no marker fails
+naming it.
+
 ## Exact next step
 
-**Phase E's model is built and nothing can transmit.** `package_handoffs`,
-`handoff_returns`, the refusal rules, the reconciliation rule and the destination
-adapter all exist; the adapter returns null in every provider mode because the
-firm's internal server's protocol, address and rights are not known here.
+**Every phase A–F that can be built without a database, a deployment or a
+provider account has been built.** What remains is not code.
 
-**Phase F — pilot, scale and operations** is the last phase, and it is the one
-that most needs what none of A–E has had: a database, real provider accounts and
-real cases. Everything below is worth reading before starting it.
+The next step is to **apply migrations `0023`–`0033` to a database and deploy**,
+in that order, and then open `/operations`. That single screen answers the
+question five phases of work could not: whether the schedule fires at all. Until
+it shows a run with trigger 排程, `BLOCKED_INTEGRATION: deployment-runtime`
+stands, and every reminder, escalation and scan the tick owns should be assumed
+not to have run.
+
+Both steps need authorization that has not been given: `CLAUDE.md` requires
+explicit approval for any non-local `DATABASE_URL`, and no branch has been
+pushed.
+
+After that, in order of what unblocks the most:
+
+1. **A malware scanner provider.** It gates `verified` safety, which gates
+   package approval. Nothing can be filed until it exists, so it blocks the
+   pilot's most important step.
+2. **A `TEST_DATABASE_URL`, or the CI run on a PR.** Every SQL claim in A–F rests
+   on reading, not running.
+3. **The internal server's handoff protocol.** Without it a pilot can prepare and
+   approve packages but not send them, and 回件與異常 stays unreleased.
+4. **A pilot cohort and a baseline.** See `pilot-measurement-plan.md`: collect
+   the observed metrics for the current spreadsheet process *before* handing
+   anyone the product, or the pilot can only produce anecdotes.
 
 ### What five phases have and have not produced
 
-Code is complete for A, B, C, and for everything in D and E that a provider does
-not gate. **Nothing is integration-verified.** No migration (`0023`–`0032`) has
-been applied to any database; no provider account exists; the repository
-integration tests execute only in CI. Every SQL claim in this work rests on
-reading, not on running.
+Code is complete for A, B, C, for everything in D and E that a provider does not
+gate, and for the half of F that does not need a pilot. **Nothing is
+integration-verified.** No migration (`0023`–`0033`) has been applied to any
+database; no provider account exists; the repository integration tests execute
+only in CI. Every SQL claim in this work rests on reading, not on running.
+
+The one thing that changed in F: the deployment can now *say* that it is not
+running. That does not clear `deployment-runtime` — only a real invocation on a
+real deployment can — but it turns an unverifiable blocker into a verifiable one.
 
 Six integrations are blocked, and four of them gate a capability the product
 appears to offer:
@@ -188,7 +289,7 @@ is where that changes or is confirmed.
 | `BLOCKED_INTEGRATION: whatsapp-media-download` | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document | A documented WOZTELL media-download endpoint and its auth |
 | `BLOCKED_INTEGRATION: document-text-extraction` | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
 | `BLOCKED_INTEGRATION: ai-provider` | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms |
-| `BLOCKED_INTEGRATION: deployment-runtime` | Whether the 5-minute schedule really fires is unverified | Observed evidence of a scheduled invocation on the deployed runtime |
+| `BLOCKED_INTEGRATION: deployment-runtime` | Whether the 5-minute schedule really fires is still unverified — but no longer unverifiable. `maintenance_runs` records every invocation and `/operations` reports `never-observed` until the first one arrives | The first row on `/operations` with trigger 排程, from a real invocation on the deployed runtime |
 
 ## Open business inputs
 
@@ -213,10 +314,17 @@ Not blocking the code — each has a safe default — but each is a real decisio
 
 ## Not yet done, and deliberately so
 
-- **No migration has been applied to any database.** `CLAUDE.md` requires explicit
-  authorization for any non-local `DATABASE_URL`, and none was given.
+- **No migration has been applied to any database.** `0023`-`0033`. `CLAUDE.md`
+  requires explicit authorization for any non-local `DATABASE_URL`, and none was
+  given.
 - **No branch has been pushed and no PR opened.** Awaiting authorization.
-- **No browser walkthrough.**
+- **Almost no browser walkthrough.** One was done in Phase F, and it is worth
+  being precise about what it proved: on a local dev server, `/operations`
+  redirects an unauthenticated request to `/login` (so the gate does not depend
+  on navigation), and after a demo sign-in the route renders with `<h1>系統運作</h1>`
+  and its demo notice. The **production** branch of that screen — the health, the
+  queue depths, the run list — has never been rendered, because rendering it
+  needs a database.
 - **No customer message has been sent**, and nothing in this work can send one.
 - **The supplied client workbook is not committed.** The reader was verified
   against it locally and that verification file was deleted; committed fixtures
@@ -228,5 +336,9 @@ Not blocking the code — each has a safe default — but each is a real decisio
 |---|---|
 | `baseline-and-decisions.md` | Baseline, architecture, the verified workbook contract, blockers, decisions |
 | `phase-a-report.md` | Phase A: defects, changes, commands run, gate status |
+| `pilot-measurement-plan.md` | Phase F: which metrics the system can compute, which need a person, the baseline to collect first, and what a pilot report may not claim |
+| `../../runbooks/pilot-operations.md` | Phase F: the pre-pilot checks, how to read `/operations`, capability pause and rollback |
+| `../../superpowers/specs/2026-09-11-kossilon-phase-f-pilot-operations-design.md` | Phase F design |
+| `../../superpowers/specs/2026-09-11-kossilon-next-service-government-mail-design.md` | Phase F4: the proposed next workflow, mapped onto the existing contracts. The choice is unconfirmed |
 | `../../superpowers/specs/2026-09-10-kossilon-phase-a-document-safety-design.md` | Phase A design |
 | `../../superpowers/specs/2026-09-10-kossilon-phase-b-nar-intake-design.md` | Phase B design |
