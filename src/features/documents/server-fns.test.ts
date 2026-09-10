@@ -139,10 +139,12 @@ function dependencies(
       })),
       delete: vi.fn(async () => undefined),
     } as DocumentStorage,
-    scanner: {
-      verdictSource: "provider",
-      scan: vi.fn(async () => ({ status: "clean", providerReference: "clean-1" })),
-    } as IdentifiedDocumentScanner,
+    createScanner: () =>
+      (overrides.scanner ??
+        ({
+          verdictSource: "provider",
+          scan: vi.fn(async () => ({ status: "clean", providerReference: "clean-1" })),
+        } as unknown as IdentifiedDocumentScanner)) as IdentifiedDocumentScanner,
     authorizeDocument: vi.fn(async () => undefined),
     ...overrides,
   };
@@ -375,5 +377,52 @@ describe("upload body size is bounded at the validator", () => {
 
     expect(validatorAt).toBeGreaterThan(-1);
     expect(decodeAt).toBeGreaterThan(validatorAt);
+  });
+});
+
+/**
+ * The live-mode regression this laziness exists for.
+ *
+ * The scanner used to be constructed for every request. In live mode
+ * createDocumentScannerForProviderMode throws with no config -- correctly, so a
+ * missing scanner can never silently downgrade to the fixed-response one -- and
+ * DOCUMENT_SCANNER_* is unset under BLOCKED_INTEGRATION:
+ * malware-scanner-provider. The throw landed before any handler body, so every
+ * documents server function returned 500 in a live deployment: upload, finalize,
+ * list, download and review, none of which needs a scanner.
+ *
+ * A blocked scanner must disable scanning, not the documents feature.
+ */
+describe("a deployment with no scanner configured", () => {
+  function withThrowingScanner() {
+    return {
+      ...dependencies(),
+      createScanner: () => {
+        throw new Error(
+          "Live document scanning requires DOCUMENT_SCANNER_URL and DOCUMENT_SCANNER_API_KEY.",
+        );
+      },
+    };
+  }
+
+  it("still lists documents", async () => {
+    await expect(
+      listDocumentsForActor(staffActor, {}, withThrowingScanner()),
+    ).resolves.toBeDefined();
+  });
+
+  // And the one operation that genuinely needs a verdict still refuses, loudly.
+  it("refuses to scan, because that is the capability that is missing", async () => {
+    const deps = withThrowingScanner();
+    // The intent has to be reachable, or this would pass on "Document is not
+    // quarantined." and prove nothing about the scanner.
+    vi.mocked(deps.repository.getUploadIntent).mockResolvedValue({
+      ...intent,
+      status: "quarantined",
+    });
+
+    await expect(scanQuarantinedDocumentForActor(staffActor, intent.id, deps)).rejects.toThrow(
+      /DOCUMENT_SCANNER_URL/,
+    );
   });
 });

@@ -58,7 +58,24 @@ export function createDocumentScannerForProviderMode(
 export type DocumentOperationDependencies = {
   repository: DocumentRepository;
   storage: DocumentStorage;
-  scanner: IdentifiedDocumentScanner;
+  /**
+   * A factory, not an instance, and that is the whole point.
+   *
+   * This used to be built eagerly for every request. In live mode
+   * createDocumentScannerForProviderMode throws with no config -- correctly, so
+   * a missing scanner can never silently downgrade to the fixed-response one --
+   * and DOCUMENT_SCANNER_* is unset under BLOCKED_INTEGRATION:
+   * malware-scanner-provider. The throw happened before any handler body, so
+   * createDocumentUploadIntent, finalizeDocumentUpload, listDocuments,
+   * downloadDocument and reviewDocument all returned 500 in a live deployment.
+   *
+   * A blocked scanner must disable scanning, not the entire documents feature.
+   * The identical mistake was already found and fixed on the cron path; see the
+   * comment on createScanWorker in src/server/maintenance.ts. Deferring
+   * construction means only the operation that genuinely needs a verdict is
+   * refused.
+   */
+  createScanner(): IdentifiedDocumentScanner;
   /**
    * Replaces the old `authorizeCompany(actor, companyId)`, which for any
    * non-Client actor was exactly `assertStaffAccess` -- "is this an active staff
@@ -96,10 +113,11 @@ const loadDefaultDocumentContext = createServerOnlyFn(async () => {
     dependencies: {
       repository,
       storage,
-      scanner: createDocumentScannerForProviderMode(providerMode, {
-        config: providerMode === "live" ? getDocumentScannerConfig() : null,
-        storage,
-      }),
+      createScanner: () =>
+        createDocumentScannerForProviderMode(providerMode, {
+          config: providerMode === "live" ? getDocumentScannerConfig() : null,
+          storage,
+        }),
       authorizeDocument: async (candidate: AuthenticatedActor, subject: DocumentAccessSubject) => {
         if (candidate.role === "Client") {
           // Membership is a database fact, so it stays with the request-scoped
@@ -265,7 +283,10 @@ export async function scanQuarantinedDocumentForActor(
   ) {
     throw new Error("Stored object metadata does not match the upload intent.");
   }
-  const result = await dependencies.scanner.scan({
+  // Built here, so a deployment with no scanner refuses this operation and only
+  // this one.
+  const scanner = dependencies.createScanner();
+  const result = await scanner.scan({
     objectKey: intent.objectKey,
     checksum: intent.checksum,
     contentType: intent.contentType,
@@ -276,7 +297,7 @@ export async function scanQuarantinedDocumentForActor(
   // intent still carries the checksum that was scanned -- a late answer about
   // superseded bytes is history, never a current status.
   return dependencies.repository.recordScanResult(intent.id, result, {
-    verdictSource: dependencies.scanner.verdictSource,
+    verdictSource: scanner.verdictSource,
     expectedChecksum: intent.checksum,
   });
 }
