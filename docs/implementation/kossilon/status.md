@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-c` · Current commit: `b0309db` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-c` · Current commit: `ee687be` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -40,7 +40,7 @@ its code is written.
 | **C-2** Analysis pipeline and provider adapter | ✅ complete — migration `0028`; queue, worker, two deterministic tiers, disabled provider adapter; wired end to end; 56 tests |
 | **C-3** Approved annual-return requirement template | ⬜ not started — Phase B's `case_requirement_instances` already carries applicability per party |
 | **C-4a** No synthetic certainty percentage | Complete — `DraftGrounding` replaced `confidence: number`; 8 tests |
-| **C-4b** Findings in the review workspace | ⬜ not started — the data now exists; the screen does not |
+| **C-4b** Findings in the review workspace | ✅ complete — findings on the case detail screen, with "not checked" said in words rather than shown as a blank; 27 tests |
 | **C-5** Package approval contract | Complete — 19 tests; AI holds no package-approve permission, structurally |
 
 **Design is complete for all of Phase C**:
@@ -147,17 +147,33 @@ A model cannot ask.
 
 ## Exact next step
 
-**C-4b — findings in the review workspace.** The data exists and nothing shows
-it: requirement status, party, latest version, cited page, finding and the human
-decision on one screen, with `uncertain` rendered as a first-class outcome rather
-than a low number. Then **C-3**, the approved requirement template — note that a
-rule keyed on `requirement_key` matches nothing on existing rows, because
-migration 0026 backfilled it from free-text checklist labels under
-`template_version = 'legacy'`.
+**C-3 — the approved annual-return requirement template.** Phase B's
+`case_requirement_instances` already carries applicability per party and a
+template version; what is missing is the template that produces them (NAR1, CDD,
+AGM, updated HKID or passport, address proof).
+
+Two traps recorded from the reconnaissance, both of which would make a rule match
+nothing:
+
+- A rule keyed on `requirement_key` matches no existing row. Migration 0026
+  backfilled it from free-text checklist labels under `template_version =
+  'legacy'`, so real values read "Proof of address for each director", not
+  `address-proof` — and the repository query does not select `template_version`,
+  so a reader cannot currently tell the two apart.
+- There is **no `address-proof` document category**. `DOCUMENT_CATEGORIES` is
+  identity/registry/signature/payment/packet/submission/receipt/other, so a rule
+  selecting candidates by `file_type` would match zero rows.
+
+The three-calendar-month rule needs a calendar-month helper that does not exist:
+`date-math.ts` has only `oneYearLater` (which rolls forward on overflow) and
+`daysBetween`, and the repo's existing "1 month" is a 30-day approximation in
+`reminder-cadence.ts`. The clamp direction at month ends has no precedent here and
+must be chosen and tested, not inherited. `date-fns` is in `package.json` and
+imported by nothing.
 
 Applying `0023` through `0028` to a database needs explicit authorization under
-`CLAUDE.md`. No Postgres is reachable here (no `psql`, Docker daemon down,
-nothing on 5432), so the 20 repository integration tests execute only in CI.
+`CLAUDE.md`. No Postgres is reachable here, so the repository integration tests
+execute only in CI.
 
 ## Open blockers
 
