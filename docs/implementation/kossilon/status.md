@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-c` · Current commit: `d312596` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-c` · Current commit: `b0309db` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -37,10 +37,10 @@ its code is written.
 |---|---|
 | **C-0** Three claims the product could not support | Complete — dashboard heading, synthetic confidence, both Chinese-stripping tokenizers |
 | **C-1** Document versions and supersession | Complete — migration `0027`; 19 unit + 5 integration tests; not applied to any database |
-| **C-2** Analysis pipeline and provider adapter | ⬜ not started |
+| **C-2** Analysis pipeline and provider adapter | ✅ complete — migration `0028`; queue, worker, two deterministic tiers, disabled provider adapter; wired end to end; 56 tests |
 | **C-3** Approved annual-return requirement template | ⬜ not started — Phase B's `case_requirement_instances` already carries applicability per party |
 | **C-4a** No synthetic certainty percentage | Complete — `DraftGrounding` replaced `confidence: number`; 8 tests |
-| **C-4b** Findings in the review workspace | ⬜ not started — depends on C-2 |
+| **C-4b** Findings in the review workspace | ⬜ not started — the data now exists; the screen does not |
 | **C-5** Package approval contract | Complete — 19 tests; AI holds no package-approve permission, structurally |
 
 **Design is complete for all of Phase C**:
@@ -79,21 +79,63 @@ until something has actually read the bytes, and `canCiteInManifest` refuses a
 version without one. That refuses every version today — the same gate Phase A
 already applies to approval, from the same missing provider, not a new one.
 
+### What C-2 can actually compute, and what it cannot
+
+The design first assumed tiers 1 and 2 needed no provider. True, and beside the
+point: **they need extracted text, and there is none.** `doc-parser.ts` is
+browser-only by construction — `pdfjs-dist` evaluates `new DOMMatrix()` at module
+scope and `mammoth` requires `fs`, neither of which workerd has, and
+`nodejs_compat` appears zero times in the wrangler config. Its output never
+leaves `localStorage`, on a demo-only screen. And `EXTENSIONS_BY_CATEGORY`
+restricts every upload to **PDF or an image**, so the one reusable server-side
+reader — the dependency-free ZIP/OOXML parser in `nar-import` — matches nothing
+in the real corpus.
+
+`BLOCKED_INTEGRATION: document-text-extraction`. Both date rules the spec
+promised sit behind it: a document's age and its own year can only come from its
+content.
+
+So the tiers as built:
+
+- **Tier 1, readability** — head and tail of the stored object only: format magic
+  bytes against the declared content type, a PDF end-of-file marker, and whether
+  the trailer references `/Encrypt`. Catches a file that will not open before a
+  reviewer spends a slot on it. Page count is *not* here; it needs a real parser.
+- **Tier 2, cross-checks** — records against each other. The best one falls out
+  of C-1: **stored bytes that do not hash to the checksum declared at upload** is
+  a critical, deterministic issue. A version nobody has hashed is `uncertain`,
+  not an issue — that is every document today.
+- **Tier 3, provider** — `BLOCKED_INTEGRATION: ai-provider`. Written,
+  contract-tested against a stub, returns null in every mode.
+
+### The injection defence, in three layers
+
+A provider tier reads text an uploader controls. `critical` is the severity that
+holds a package back, so a provider finding can never reach it:
+
+1. `critical` is **absent from the provider response schema**, so a response
+   asking for it fails to parse and the whole run is rejected rather than
+   silently downgraded.
+2. `makeFinding` clamps provider severity regardless of what was requested.
+3. `document_findings` has a CHECK constraint refusing the combination, so even
+   a direct SQL write cannot create one.
+
+There is no field anywhere in the contract for approving, resolving or releasing.
+A model cannot ask.
+
 ## Exact next step
 
-**Phase C-2 — the analysis pipeline**, then C-3 and C-4b on top of it. C-2 is
-durable work claimed with the same lease-and-fence mechanics as
-`document_scan_jobs` and `notification_outbox`, running only after a real
-malware verdict, in three tiers: classification and readability, deterministic
-rule checks, and provider-assisted extraction under
-`BLOCKED_INTEGRATION: ai-provider` — written against a strict schema with an
-explicit `uncertain` outcome, contract-tested against a stub, and disabled via a
-sibling accessor rather than `REQUIRED_BINDINGS`. Extracted text is untrusted
-evidence: the adversarial fixture the plan requires (a document whose text says
-to approve the case) belongs to that package.
+**C-4b — findings in the review workspace.** The data exists and nothing shows
+it: requirement status, party, latest version, cited page, finding and the human
+decision on one screen, with `uncertain` rendered as a first-class outcome rather
+than a low number. Then **C-3**, the approved requirement template — note that a
+rule keyed on `requirement_key` matches nothing on existing rows, because
+migration 0026 backfilled it from free-text checklist labels under
+`template_version = 'legacy'`.
 
-Applying `0023` through `0027` to a database needs explicit authorization under
-`CLAUDE.md`. The CI run is what executes the 20 repository integration tests.
+Applying `0023` through `0028` to a database needs explicit authorization under
+`CLAUDE.md`. No Postgres is reachable here (no `psql`, Docker daemon down,
+nothing on 5432), so the 20 repository integration tests execute only in CI.
 
 ## Open blockers
 
@@ -101,6 +143,7 @@ Applying `0023` through `0027` to a database needs explicit authorization under
 |---|---|---|
 | `BLOCKED_INTEGRATION: malware-scanner-provider` | Live document scanning stays disabled; the legacy re-scan backlog stays pending | An approved provider, its binding names, its data-handling terms |
 | `BLOCKED_INTEGRATION: local-postgres` | Repository tests run only in CI | A reachable `TEST_DATABASE_URL`, or the CI run on the PR |
+| `BLOCKED_INTEGRATION: document-text-extraction` | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
 | `BLOCKED_INTEGRATION: ai-provider` | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms |
 | `BLOCKED_INTEGRATION: deployment-runtime` | Whether the 5-minute schedule really fires is unverified | Observed evidence of a scheduled invocation on the deployed runtime |
 
