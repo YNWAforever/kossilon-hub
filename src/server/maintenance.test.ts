@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { runFirmMaintenanceWithDependencies } from "./maintenance";
 import type { FirmMaintenanceDependencies } from "./maintenance";
 import { MaintenancePassesFailedError } from "./cron";
+import type { MaintenanceRunDraft } from "@/features/operations/repository";
 
 function dependencies(
   overrides: Partial<FirmMaintenanceDependencies> = {},
@@ -255,5 +256,148 @@ describe("runFirmMaintenanceWithDependencies", () => {
     await expect(
       runFirmMaintenanceWithDependencies({ now: "yesterday" }, dependencies()),
     ).rejects.toThrow();
+  });
+});
+
+/**
+ * The tick used to leave no trace at all: one console.log into an ephemeral log
+ * stream, unreadable by the product. So a cron that stopped firing -- or, under
+ * BLOCKED_INTEGRATION: deployment-runtime, one that never registered -- left
+ * every screen looking normal until a statutory deadline was missed.
+ */
+describe("maintenance run record", () => {
+  function recorder() {
+    return {
+      recordRun: vi.fn(async (_draft: MaintenanceRunDraft) => ({ id: "run-1" })),
+      close: vi.fn(async () => {}),
+    };
+  }
+
+  it("records a clean tick as succeeded, with no failed passes", async () => {
+    const record = recorder();
+
+    await runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z", triggerSource: "scheduled" },
+      dependencies({ createMaintenanceRunRecorder: () => record }),
+    );
+
+    expect(record.recordRun).toHaveBeenCalledTimes(1);
+    const draft = record.recordRun.mock.calls[0][0];
+    expect(draft.outcome).toBe("succeeded");
+    expect(draft.failedPasses).toEqual([]);
+    expect(draft.scheduledFor).toBe("2026-07-26T00:00:00.000Z");
+    expect(draft.triggerSource).toBe("scheduled");
+    expect(draft.failureSummary).toBeNull();
+    expect(record.close).toHaveBeenCalled();
+  });
+
+  /**
+   * A run whose passes failed still learned everything the others found, and
+   * that partial result rides along on the error. Recording it is the
+   * difference between "the tick was broken" and "the tick was broken and here
+   * is what the eight working passes saw".
+   */
+  it("records a partial tick and names the passes that threw", async () => {
+    const record = recorder();
+
+    await expect(
+      runFirmMaintenanceWithDependencies(
+        { now: "2026-07-26T00:00:00.000Z", triggerSource: "scheduled" },
+        dependencies({
+          createMaintenanceRunRecorder: () => record,
+          createOutboxRepository: () => ({
+            failStranded: vi.fn(async () => {
+              throw new Error("outbox unavailable");
+            }),
+            redactExpired: vi.fn(async () => ({ redacted: 0 })),
+            close: vi.fn(async () => {}),
+          }),
+        }),
+      ),
+    ).rejects.toBeInstanceOf(MaintenancePassesFailedError);
+
+    const draft = record.recordRun.mock.calls[0][0];
+    expect(draft.outcome).toBe("partial");
+    expect(draft.failedPasses).toEqual(["failStrandedNotifications"]);
+    // The other eight passes' findings survive in the stored result.
+    expect(draft.passes).toMatchObject({ escalations: { warnings: 1, breaches: 2 } });
+  });
+
+  /**
+   * By class, never by message. A top-level failure here is usually the database
+   * itself, whose error text can carry a host or a connection string, and this
+   * row is rendered on a screen.
+   */
+  it("records a run that never reached its passes without quoting the error text", async () => {
+    const record = recorder();
+
+    await expect(
+      runFirmMaintenanceWithDependencies(
+        { now: "2026-07-26T00:00:00.000Z" },
+        dependencies({
+          createMaintenanceRunRecorder: () => record,
+          // A repository that cannot be constructed -- a missing binding, a
+          // Hyperdrive that will not resolve -- kills the tick before any pass
+          // runs. This is the failure the recorder is created first in order to
+          // catch.
+          createOutboxRepository: () => {
+            throw new TypeError("connect ECONNREFUSED 10.1.2.3:5432 password=hunter2");
+          },
+        }),
+      ),
+    ).rejects.toThrow(TypeError);
+
+    const draft = record.recordRun.mock.calls[0][0];
+    expect(draft.outcome).toBe("failed");
+    expect(draft.passes).toBeNull();
+    expect(draft.failureSummary).toBe("run did not complete: TypeError");
+    expect(JSON.stringify(draft)).not.toContain("hunter2");
+  });
+
+  /**
+   * All nine passes did their work. Turning a successful tick into a failed
+   * invocation over a bookkeeping insert would be the worse outcome -- and the
+   * loss is not silent, because the health screen goes stale.
+   */
+  it("does not let a failed record write fail the run", async () => {
+    const record = {
+      recordRun: vi.fn(async () => {
+        throw new Error("insert failed");
+      }),
+      close: vi.fn(async () => {}),
+    };
+
+    const result = await runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z" },
+      dependencies({ createMaintenanceRunRecorder: () => record }),
+    );
+
+    expect(result.escalations).toEqual({ warnings: 1, breaches: 2 });
+    expect(result.failures).toEqual([]);
+  });
+
+  /**
+   * The default is `manual`, so a caller that forgets under-reports the
+   * schedule's health rather than over-reporting it. An invocation that quietly
+   * counted as scheduled could silence a dead cron.
+   */
+  it("does not let an unlabelled invocation claim to be the schedule", async () => {
+    const record = recorder();
+
+    await runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z" },
+      dependencies({ createMaintenanceRunRecorder: () => record }),
+    );
+
+    expect(record.recordRun.mock.calls[0][0].triggerSource).toBe("manual");
+  });
+
+  it("runs unchanged when no recorder is supplied", async () => {
+    const result = await runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z" },
+      dependencies(),
+    );
+
+    expect(result.failures).toEqual([]);
   });
 });

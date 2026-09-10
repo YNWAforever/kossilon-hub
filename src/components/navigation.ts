@@ -1,4 +1,5 @@
 import {
+  Activity,
   Building2,
   CalendarClock,
   CreditCard,
@@ -86,6 +87,10 @@ export const navGroups: NavGroup[] = [
     heading: "Administration",
     items: [
       { to: "/admin", label: "Admin", icon: ShieldCheck },
+      // Staff-visible rather than admin-only: the question it answers is "can I
+      // trust what the other screens are telling me", and the person who needs
+      // that is whoever is about to rely on the chase list.
+      { to: "/operations", label: "系統運作", icon: Activity },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },

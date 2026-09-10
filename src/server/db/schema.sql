@@ -1726,3 +1726,57 @@ create index if not exists handoff_returns_handoff_idx
 create index if not exists handoff_returns_open_idx
   on handoff_returns (received_at)
   where reconciled_at is null or outcome in ('rejected', 'partial', 'unmatched');
+
+-- Phase F: the scheduled tick leaves a trace.
+--
+-- The 5-minute cron's entire record used to be one console.log into the
+-- Cloudflare log stream: ephemeral, needs a person to go and look, and not
+-- readable by the product. So a cron that stopped firing -- or, under
+-- BLOCKED_INTEGRATION: deployment-runtime, one that never registered at all --
+-- left every screen looking normal, because every screen reads tables a human
+-- writes to. The first real signal would be a missed statutory deadline.
+create table if not exists maintenance_runs (
+  id uuid primary key default gen_random_uuid(),
+
+  -- The tick the trigger asked for, distinct from when the work actually
+  -- started. Firing late and running slowly are different faults.
+  scheduled_for timestamptz not null,
+  started_at timestamptz not null,
+  finished_at timestamptz not null,
+  duration_ms integer not null check (duration_ms >= 0),
+
+  -- succeeded: every pass ran. partial: the run completed and named which
+  -- passes threw. failed: it did not get far enough to have passes.
+  outcome text not null check (outcome in ('succeeded', 'partial', 'failed')),
+
+  -- The whole ScheduledMaintenanceResult. `null` inside it keeps meaning "this
+  -- pass produced no information", which is the distinction from `0` that the
+  -- result type exists to preserve.
+  passes jsonb not null,
+
+  failed_passes text[] not null default '{}',
+  -- Message only, never a thrown value: it can carry a provider payload or a
+  -- connection string, and this row is read by a screen.
+  failure_summary text,
+
+  -- So a lost cron can be told apart from a deployment nobody has invoked. An
+  -- operator running the entrypoint by hand must not make the schedule look
+  -- alive.
+  trigger_source text not null default 'scheduled'
+    check (trigger_source in ('scheduled', 'manual')),
+
+  created_at timestamptz not null default now(),
+
+  constraint maintenance_runs_finished_after_started check (finished_at >= started_at),
+
+  -- `failed` is deliberately unconstrained: a run that died before assembling
+  -- its passes has none to name.
+  constraint maintenance_runs_outcome_agrees check (
+    (outcome = 'succeeded' and cardinality(failed_passes) = 0)
+    or (outcome = 'partial' and cardinality(failed_passes) > 0)
+    or outcome = 'failed'
+  )
+);
+
+create index if not exists maintenance_runs_recent_idx
+  on maintenance_runs (scheduled_for desc);

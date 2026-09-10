@@ -66,7 +66,10 @@ function isH3SwallowedErrorBody(body: string): boolean {
  * derive an actor from — and is imported lazily so a `fetch` cold start does not
  * pull the database client in.
  */
-type MaintenanceRunner = (input: { now: string }) => Promise<unknown>;
+type MaintenanceRunner = (input: {
+  now: string;
+  triggerSource: "scheduled" | "manual";
+}) => Promise<unknown>;
 
 const defaultMaintenanceRunner: MaintenanceRunner = async (input) =>
   (await import("./server/maintenance")).runFirmMaintenance(input);
@@ -83,7 +86,13 @@ export async function runScheduledMaintenanceForWorker(
   run: MaintenanceRunner = defaultMaintenanceRunner,
 ): Promise<void> {
   try {
-    const result = await run({ now: new Date(scheduledTime).toISOString() });
+    // The only caller allowed to say `scheduled`. This is the cron hook itself,
+    // so a row it writes is real evidence that the schedule fired -- which is
+    // the one thing BLOCKED_INTEGRATION: deployment-runtime has never had.
+    const result = await run({
+      now: new Date(scheduledTime).toISOString(),
+      triggerSource: "scheduled",
+    });
     console.log("scheduled maintenance", JSON.stringify(result));
   } catch (error) {
     // A run where one pass failed still learned everything the other passes

@@ -15,6 +15,7 @@ import { Route as TodayRouteImport } from './routes/today'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as OperationsRouteImport } from './routes/operations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncorporationRouteImport } from './routes/incorporation'
 import { Route as ImportsRouteImport } from './routes/imports'
@@ -58,6 +59,11 @@ const PortalRoute = PortalRouteImport.update({
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsRoute = OperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
+  '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
+  '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/imports': typeof ImportsRoute
   '/incorporation': typeof IncorporationRouteWithChildren
   '/login': typeof LoginRoute
+  '/operations': typeof OperationsRoute
   '/payments': typeof PaymentsRoute
   '/portal': typeof PortalRoute
   '/settings': typeof SettingsRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/incorporation'
     | '/login'
+    | '/operations'
     | '/payments'
     | '/portal'
     | '/settings'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/incorporation'
     | '/login'
+    | '/operations'
     | '/payments'
     | '/portal'
     | '/settings'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/incorporation'
     | '/login'
+    | '/operations'
     | '/payments'
     | '/portal'
     | '/settings'
@@ -277,6 +289,7 @@ export interface RootRouteChildren {
   ImportsRoute: typeof ImportsRoute
   IncorporationRoute: typeof IncorporationRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OperationsRoute: typeof OperationsRoute
   PaymentsRoute: typeof PaymentsRoute
   PortalRoute: typeof PortalRoute
   SettingsRoute: typeof SettingsRoute
@@ -327,6 +340,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations': {
+      id: '/operations'
+      path: '/operations'
+      fullPath: '/operations'
+      preLoaderRoute: typeof OperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -498,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImportsRoute: ImportsRoute,
   IncorporationRoute: IncorporationRouteWithChildren,
   LoginRoute: LoginRoute,
+  OperationsRoute: OperationsRoute,
   PaymentsRoute: PaymentsRoute,
   PortalRoute: PortalRoute,
   SettingsRoute: SettingsRoute,
