@@ -77,6 +77,31 @@ in the app itself. Verify the language code in the dashboard exactly matches `zh
 **Both template names and the language code are code constants** in
 `src/features/whatsapp/fallback-templates.ts`; changing either requires changing it there.
 
+### Staff-initiated WhatsApp templates
+
+The two templates above cover the automated sweeps only. Three further templates reach the
+wire when a staff member sends a follow-up or a manual chase from the case screen, and
+until now they appeared in no runbook and on no checklist. They are subject to the same
+Meta approval requirement, and to the same silent-failure mode described below.
+
+They are currently sent in **`en`**, not `zh_HK`. That is recorded as the fact it is, not
+corrected: which language the firm submitted them under is a fact about the Meta dashboard
+that this repository cannot read, and changing the code to `zh_HK` would break a
+deployment where `en` is what was approved. **Confirm the language actually approved for
+each, and align the code to it.**
+
+- [ ] **`annual_return_document_replacement`** — language: `en`
+  - Sent when staff ask a client to replace a rejected document.
+- [ ] **`annual_return_payment_proof_replacement`** — language: `en`
+  - Sent when staff ask a client to replace a rejected payment proof.
+- [ ] **`annual_return_manual_reminder`** — language: `en`
+  - Sent by the manual chase action, and by `queueAnnualReturnWhatsAppReminder`.
+
+All five names are enumerated in `src/features/whatsapp/approved-templates.ts`, and a send
+whose template is not listed there is now refused at the call site rather than at WOZTELL.
+That converts a silent provider rejection into an immediate error naming the template, but
+it does **not** verify Meta approval — nothing in this repository can.
+
 **Error logging:** If a template is missing or unapproved, WOZTELL rejects the send and
 the dispatcher logs it as `console.error("notification dispatch failed", {...})` to the
 Cloudflare Worker logs (viewable via `wrangler tail`). The application UI has no way to
