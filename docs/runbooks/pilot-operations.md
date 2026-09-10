@@ -6,12 +6,32 @@ For the staff pilot (plan §9, Phase F). Read alongside
 
 ## Before the pilot begins
 
-Nothing in this repository has ever been run against a database or a provider.
+No provider account exists, and no deployed runtime has been observed. The SQL
+itself has now run: CI executes every repository test against a migrated, seeded
+Postgres, and `0023`–`0033` were rehearsed onto a populated database locally.
 Confirm each of these, in order. A "no" is a reason to delay, not a caveat to
 record.
 
-1. **Migrations `0023`–`0033` are applied.** None of them has been applied to any
-   database. Applying them to a non-local `DATABASE_URL` **requires explicit
+0. **Rehearse the migration against populated data first.** Not optional, and not
+   the same thing as a green CI run: CI builds an empty Postgres every run, so it
+   only ever exercises the INSERT path of the seed and cannot see a defect that
+   depends on rows already existing. One such defect was found exactly this way
+   (`0030` backfills `companies.data_origin` to `'client'`, and until the seed's
+   `on conflict` clause was fixed, re-seeding never repaired it — leaving the
+   fixture-replay guard matching zero rows). The rehearsal that catches it:
+
+   ```bash
+   docker run -d --name kossilon-rehearsal -e POSTGRES_PASSWORD=rehearsal -p 5544:5432 postgres:17-alpine
+   ```
+
+   Then, with `DATABASE_URL` pointing at it and `DATABASE_SSL=disable`: apply only
+   the migrations the target database already has, seed it with the seed script
+   **as it was at that commit**, apply the new migrations on top, re-seed, and
+   check the rows the new migration touched. Discard the container afterwards.
+
+1. **Migrations `0023`–`0033` are applied to the target.** They have been applied
+   to a local rehearsal container only; no staging or production database has
+   them. Applying them to a non-local `DATABASE_URL` **requires explicit
    approval** (`CLAUDE.md`).
 2. **`npm run verify:firm -- --dry-run` passes**, and the `BLOCKED` lines it
    prints are the ones you expect. It reads binding _names_ only and makes no
