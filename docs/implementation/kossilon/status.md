@@ -108,6 +108,28 @@ So the tiers as built:
 - **Tier 3, provider** — `BLOCKED_INTEGRATION: ai-provider`. Written,
   contract-tested against a stub, returns null in every mode.
 
+### C-2 was adversarially reviewed
+
+31 agents across six dimensions, each finding then verified by a separate agent
+told to refute it. One survived: the provider response schema and `makeFinding`
+stated the same rules and disagreed, so `{pageTo: 3}` with no `pageFrom` parsed
+cleanly and then threw *out of* `analyze()` — past its own promise to return
+`malformed-response` — and the worker awaited it with no catch, unwinding the
+whole drain and stranding every job claimed after it in that batch. Fixed at
+three layers. Reachability was a two-binding config change, not a code change.
+
+Two refutations conceded facts worth acting on anyway, and both were fixed:
+`blocksRelease` had no production caller because the manifest carried its own
+tier-less copy of a finding, and `0028` created no jobs for the versions `0027`
+backfilled.
+
+A third defect was found by tracing arithmetic rather than by the review:
+`markRetry` while awaiting a scan verdict spent an attempt, and since
+`attempt_count` increments at claim time, five waits exhausted `max_attempts`
+about fifteen minutes after upload — every document permanently unanalysable,
+including after a scanner is finally configured. `markDeferred` gives the attempt
+back.
+
 ### The injection defence, in three layers
 
 A provider tier reads text an uploader controls. `critical` is the severity that
