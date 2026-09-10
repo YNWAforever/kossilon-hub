@@ -1,0 +1,257 @@
+import { AI_RULE_VERSION, type DocumentAiAnalyzer } from "./ai-provider";
+import {
+  BYTES_SAMPLE_WINDOW,
+  crossCheckFindings,
+  readabilityFindings,
+  type EvidencePageClaim,
+} from "./analysis-checks";
+import type { DocumentAnalysisJobRepository } from "./analysis-jobs";
+import { makeFinding, type Finding } from "./findings";
+import { documentSafetyOf, type DocumentSafety } from "./safety";
+import type { DocumentStatus, DocumentStorage, ScanVerdictSource } from "./types";
+import type { DocumentVersionState } from "./versions";
+
+/**
+ * Drains the analysis queue.
+ *
+ * Mirrors `drainDocumentScanJobs`: claim a bounded batch, do the work, and write
+ * a terminal outcome fenced on the attempt_count the claim returned. A claim
+ * that loses the fence is not counted, because it was superseded by a reclaimer
+ * and its result describes a run somebody else already finished.
+ */
+
+/** Everything a run needs about the version, gathered before any tier starts. */
+export type AnalysisSubject = {
+  version: DocumentVersionState;
+  objectKey: string;
+  declaredContentType: string | null;
+  declaredByteSize: number | null;
+  verifiedByteSize: number | null;
+  /** From document_version_texts. Null everywhere today: nothing counts pages. */
+  knownPageCount: number | null;
+  pageClaims: readonly EvidencePageClaim[];
+  /** The upload this version came from, for the safety gate. */
+  uploadStatus: DocumentStatus;
+  scanVerdictSource: ScanVerdictSource | null;
+  fileName: string;
+};
+
+export type AnalysisWorkerDependencies = {
+  jobs: DocumentAnalysisJobRepository;
+  versions: { loadForAnalysis(documentVersionId: string): Promise<AnalysisSubject | null> };
+  findings: {
+    /**
+     * Replaces this run's machine opinion and leaves human work alone.
+     *
+     * A re-run must not duplicate findings, and must never delete one a person
+     * has resolved -- that resolution is the record of a decision, and the
+     * analysis path is not allowed to erase it.
+     */
+    replaceUnresolvedForVersion(input: {
+      documentVersionId: string;
+      analysisJobId: string;
+      findings: readonly Finding[];
+    }): Promise<void>;
+  };
+  /**
+   * Narrowed deliberately, the way scan-worker narrows to head/delete. This is
+   * the second server-side consumer of document bytes and should be able to do
+   * exactly one thing with them.
+   */
+  storage: Pick<DocumentStorage, "get">;
+  /** Null under BLOCKED_INTEGRATION: ai-provider, which is always, today. */
+  analyzer: DocumentAiAnalyzer | null;
+};
+
+export type AnalysisDrainSummary = {
+  claimed: number;
+  analysed: number;
+  /** Skipped because no real malware verdict exists yet. Not a failure. */
+  awaitingScan: number;
+  /** Retryable failure: the job backs off and tries again. */
+  retried: number;
+  /** Terminal failure: needs a human. */
+  failed: number;
+  /** The claim lost its fence, or the version is gone. */
+  superseded: number;
+  /** Runs where the provider tier was skipped because there is no provider. */
+  providerSkipped: number;
+};
+
+const DEFAULT_LIMIT = 20;
+
+function sampleOf(body: ArrayBuffer): { head: Uint8Array; tail: Uint8Array } {
+  const bytes = new Uint8Array(body);
+  return {
+    head: bytes.subarray(0, Math.min(BYTES_SAMPLE_WINDOW, bytes.length)),
+    tail: bytes.subarray(Math.max(0, bytes.length - BYTES_SAMPLE_WINDOW)),
+  };
+}
+
+function providerNote(documentVersionId: string, detail: string): Finding {
+  return makeFinding({
+    ruleKey: "provider:analysis",
+    ruleVersion: AI_RULE_VERSION,
+    tier: "provider",
+    outcome: "uncertain",
+    severity: "info",
+    detail,
+    citation: { kind: "version", documentVersionId, pageFrom: null, pageTo: null },
+  });
+}
+
+export async function drainDocumentAnalysisJobs(
+  input: { now: string; limit?: number },
+  dependencies: AnalysisWorkerDependencies,
+): Promise<AnalysisDrainSummary> {
+  const summary: AnalysisDrainSummary = {
+    claimed: 0,
+    analysed: 0,
+    awaitingScan: 0,
+    retried: 0,
+    failed: 0,
+    superseded: 0,
+    providerSkipped: 0,
+  };
+
+  const claimed = await dependencies.jobs.claimDue(input.now, input.limit ?? DEFAULT_LIMIT);
+  summary.claimed = claimed.length;
+
+  for (const job of claimed) {
+    const fence = { now: input.now, attemptCount: job.attemptCount };
+    const subject = await dependencies.versions.loadForAnalysis(job.documentVersionId);
+
+    if (!subject) {
+      // Terminal, not retryable: no number of retries brings a deleted row back.
+      const applied = await dependencies.jobs.markFailed(job.id, {
+        ...fence,
+        errorCode: "version-missing",
+        errorMessage: "The document version this job refers to no longer exists.",
+      });
+      if (applied) summary.failed += 1;
+      else summary.superseded += 1;
+      continue;
+    }
+
+    const safety: DocumentSafety = documentSafetyOf({
+      uploadStatus: subject.uploadStatus,
+      scanVerdictSource: subject.scanVerdictSource,
+    });
+
+    // The Phase A gate, inherited rather than restated. Analysis reads the bytes,
+    // so it must not touch anything a real scanner has not passed -- and
+    // `unknown` is not a pass, however long ago the fixture scanner said clean.
+    if (safety !== "verified") {
+      // A retry, not a failure. Nothing is wrong; the scan simply has not
+      // happened, and under BLOCKED_INTEGRATION: malware-scanner-provider it may
+      // not for a long time. The backoff means an unscannable document costs one
+      // claim an hour rather than one every tick.
+      const applied = await dependencies.jobs.markRetry(job.id, {
+        ...fence,
+        errorCode: "awaiting-scan-verdict",
+        errorMessage: `Document safety is '${safety}'; analysis waits for a real scanner verdict.`,
+      });
+      if (applied) summary.awaitingScan += 1;
+      else summary.superseded += 1;
+      continue;
+    }
+
+    let stored: Awaited<ReturnType<DocumentStorage["get"]>>;
+    try {
+      stored = await dependencies.storage.get(subject.objectKey);
+    } catch {
+      const applied = await dependencies.jobs.markRetry(job.id, {
+        ...fence,
+        errorCode: "storage-unreadable",
+        errorMessage: "The stored object could not be read.",
+      });
+      if (applied) summary.retried += 1;
+      else summary.superseded += 1;
+      continue;
+    }
+
+    if (!stored) {
+      // Retryable: an object that is not readable right now may be an eventual
+      // consistency window. It is not evidence that anything is wrong.
+      const applied = await dependencies.jobs.markRetry(job.id, {
+        ...fence,
+        errorCode: "stored-object-missing",
+        errorMessage: "The stored object was not found.",
+      });
+      if (applied) summary.retried += 1;
+      else summary.superseded += 1;
+      continue;
+    }
+
+    const { head, tail } = sampleOf(stored.body);
+    const findings: Finding[] = [
+      ...readabilityFindings(subject.version, {
+        declaredContentType: subject.declaredContentType,
+        byteSize: stored.body.byteLength,
+        head,
+        tail,
+      }),
+      ...crossCheckFindings({
+        version: subject.version,
+        knownPageCount: subject.knownPageCount,
+        declaredByteSize: subject.declaredByteSize,
+        verifiedByteSize: subject.verifiedByteSize,
+        pageClaims: subject.pageClaims,
+      }),
+    ];
+
+    if (!dependencies.analyzer) {
+      summary.providerSkipped += 1;
+    } else {
+      const analysis = await dependencies.analyzer.analyze({
+        documentVersionId: subject.version.id,
+        contentType: subject.declaredContentType ?? "application/octet-stream",
+        fileName: subject.fileName,
+        body: stored.body,
+      });
+
+      if (analysis.status === "analysed") {
+        findings.push(...analysis.findings);
+      } else if (analysis.status === "uncertain") {
+        // Recorded rather than dropped. A tier that ran and could not tell is
+        // information; silence would be indistinguishable from a tier that never
+        // ran at all.
+        findings.push(providerNote(subject.version.id, analysis.detail));
+      } else {
+        // The deterministic tiers already produced real findings. Discarding them
+        // because an advisory tier failed would make the whole run hostage to the
+        // optional part of it, so the failure becomes a finding and the run still
+        // completes.
+        findings.push(
+          providerNote(
+            subject.version.id,
+            `The model could not be consulted (${analysis.errorCode}).`,
+          ),
+        );
+      }
+    }
+
+    try {
+      await dependencies.findings.replaceUnresolvedForVersion({
+        documentVersionId: subject.version.id,
+        analysisJobId: job.id,
+        findings,
+      });
+    } catch {
+      const applied = await dependencies.jobs.markRetry(job.id, {
+        ...fence,
+        errorCode: "findings-not-written",
+        errorMessage: "The findings for this run could not be recorded.",
+      });
+      if (applied) summary.retried += 1;
+      else summary.superseded += 1;
+      continue;
+    }
+
+    const applied = await dependencies.jobs.markSucceeded(job.id, fence);
+    if (applied) summary.analysed += 1;
+    else summary.superseded += 1;
+  }
+
+  return summary;
+}
