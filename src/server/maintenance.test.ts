@@ -359,6 +359,10 @@ describe("maintenance run record", () => {
     const draft = record.recordRun.mock.calls[0][0];
     expect(draft.outcome).toBe("partial");
     expect(draft.failedPasses).toEqual(["failStrandedNotifications"]);
+    // The pass name is kept; its message is not. Persisting it would undo the
+    // sanitisation on failure_summary in the very next column.
+    expect(draft.passes).toMatchObject({ failures: [{ pass: "failStrandedNotifications" }] });
+    expect(JSON.stringify(draft.passes)).not.toContain("outbox unavailable");
     // The other eight passes' findings survive in the stored result.
     expect(draft.passes).toMatchObject({ escalations: { warnings: 1, breaches: 2 } });
   });

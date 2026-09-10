@@ -496,4 +496,63 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
+
+  /**
+   * The guard runs at the head of the dispatch path, so anything that makes it
+   * throw stops dispatch entirely -- and a redacted row never goes away, so it
+   * would stop it on every tick, forever.
+   *
+   * notification_outbox_redaction_check requires last_error_code to be null once
+   * redacted_at is set, and redactExpired settles 'failed' rows past retention,
+   * which is squarely inside this guard's status filter. Writing 'fixture-origin'
+   * onto one violated the constraint. Reproduced against Postgres before the fix.
+   */
+  it(
+    "does not break on a fixture-origin row that retention already redacted",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const repository = createNotificationOutboxRepository({ sql });
+
+      const originRows = await sql<{ data_origin: string }[]>`
+        select data_origin from companies where id = ${companyId}
+      `;
+      const wasFixture = originRows[0]?.data_origin === "fixture";
+
+      const id = await enqueue(sql, companyId, "redacted-fixture", {
+        status: "failed",
+        attemptCount: 5,
+        retentionUntil: "2000-01-01T00:00:00.000Z",
+      });
+      // Exactly what redactExpired leaves behind.
+      await sql`
+        update notification_outbox
+        set redacted_at = now(), recipient = null, payload = null,
+            provider_message_id = null, last_error_code = null, last_error_message = null,
+            next_attempt_at = now() - interval '1 minute'
+        where id = ${id}
+      `;
+
+      await sql`update companies set data_origin = 'fixture' where id = ${companyId}`;
+      try {
+        // The assertion is that this resolves at all. Before the fix it threw,
+        // and every later dispatch died with it.
+        await expect(
+          repository.cancelFixtureOriginNotifications(new Date().toISOString()),
+        ).resolves.toBeDefined();
+
+        const after = await sql<{ status: string; last_error_code: string | null }[]>`
+          select status, last_error_code from notification_outbox where id = ${id}
+        `;
+        // Skipped, not cancelled: it is already settled and its content is gone.
+        expect(after[0]).toMatchObject({ status: "failed", last_error_code: null });
+      } finally {
+        await sql`
+          update companies set data_origin = ${wasFixture ? "fixture" : "client"}
+          where id = ${companyId}
+        `;
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });

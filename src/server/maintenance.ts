@@ -239,7 +239,16 @@ export async function runFirmMaintenanceWithDependencies(
       // The whole result, so a later reader is not limited to the fields
       // somebody thought to make columns. Null when the run did not get far
       // enough to have one.
-      passes: result ?? null,
+      //
+      // Except the failure messages, which are stripped to pass names. Keeping
+      // them here would have quietly undone the sanitisation on failure_summary
+      // directly beside it: a pass that throws from postgres.js carries a host
+      // and can carry a connection string, and this column is read by a screen.
+      // The full text still goes to console.error in the worker, which is where
+      // it went before this table existed.
+      passes: result
+        ? { ...result, failures: result.failures.map(({ pass }) => ({ pass })) }
+        : null,
       failedPasses: result?.failures.map((failure) => failure.pass) ?? [],
       failureSummary:
         thrown && !result

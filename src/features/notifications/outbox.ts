@@ -274,6 +274,17 @@ export function createNotificationOutboxRepository(
         set status = 'cancelled', updated_at = now(),
           last_error_code = 'fixture-origin'
         where status in ('pending', 'failed', 'processing')
+          -- Redacted rows are excluded, and this is not tidiness. The retention
+          -- constraint requires last_error_code to be null once redacted_at is
+          -- set, so writing 'fixture-origin' onto one throws -- and because this
+          -- runs at the head of the dispatch path, the whole dispatch pass would
+          -- then fail on every tick, forever, since the offending row never goes
+          -- away. redactExpired settles 'failed' rows past retention, which is
+          -- squarely inside the status filter above. Verified against Postgres.
+          --
+          -- Nothing is lost by skipping them: a redacted row is already settled,
+          -- its content is gone, and its attempts are spent.
+          and redacted_at is null
           and next_attempt_at <= ${now}
           and company_id in (select id from companies where data_origin <> 'client')
         returning id

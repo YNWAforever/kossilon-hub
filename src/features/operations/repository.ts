@@ -29,6 +29,7 @@ type RunRow = {
 type DepthRow = {
   pending: string | number;
   processing: string | number;
+  retrying: string | number;
   failed: string | number;
   due_now: string | number;
   oldest_pending_at: string | Date | null;
@@ -55,11 +56,23 @@ export type MaintenanceRunDraft = {
 export type JobQueueDepth = {
   pending: number;
   processing: number;
+  /**
+   * Failed an attempt and waiting to run again.
+   *
+   * Counted apart from `failed`, because the two need opposite reactions and the
+   * screen previously merged them. `claimDue` matches
+   * `status in ('pending','failed')` while `attempt_count < max_attempts`, so a
+   * backing-off job is live work -- and folding it into a failure count made a
+   * queue that was entirely mid-retry render as idle with some dead rows.
+   */
+  retrying: number;
+  /** Attempts exhausted. The only genuinely terminal state, and it needs a person. */
   failed: number;
-  /** Pending and already due. What the next tick should pick up. */
+  /** Pending or retrying and already due. What the next tick should pick up. */
   dueNow: number;
   /**
-   * When the oldest pending job arrived. Null when nothing is pending.
+   * When the oldest unfinished job arrived -- pending or retrying. Null when
+   * there is none.
    *
    * A depth on its own cannot tell a busy queue from a stuck one -- fifty jobs
    * arriving every tick and fifty jobs that have sat there since March look
@@ -125,11 +138,12 @@ function mapRun(row: RunRow): MaintenanceRunRecord {
 
 function mapDepth(row: DepthRow | undefined): JobQueueDepth {
   if (!row) {
-    return { pending: 0, processing: 0, failed: 0, dueNow: 0, oldestPendingAt: null };
+    return { pending: 0, processing: 0, retrying: 0, failed: 0, dueNow: 0, oldestPendingAt: null };
   }
   return {
     pending: count(row.pending),
     processing: count(row.processing),
+    retrying: count(row.retrying),
     failed: count(row.failed),
     dueNow: count(row.due_now),
     oldestPendingAt: isoOrNull(row.oldest_pending_at),
@@ -156,10 +170,20 @@ export function createMaintenanceRunRepository(
         ? await sql<DepthRow[]>`
             select
               count(*) filter (where status = 'pending') pending,
-              count(*) filter (where status = 'processing') processing,
-              count(*) filter (where status = 'failed') failed,
-              count(*) filter (where status = 'pending' and next_attempt_at <= ${now}) due_now,
-              min(created_at) filter (where status = 'pending') oldest_pending_at
+                count(*) filter (where status = 'processing') processing,
+                -- Failed an attempt and scheduled to run again. claimDue matches
+                -- status in ('pending','failed') while attempts remain, so these
+                -- are live work, not wreckage.
+                count(*) filter (where status = 'failed' and attempt_count < max_attempts) retrying,
+                -- Attempts exhausted. This is the only genuinely terminal one.
+                count(*) filter (where status = 'failed' and attempt_count >= max_attempts) failed,
+                count(*) filter (
+                  where (status = 'pending' or (status = 'failed' and attempt_count < max_attempts))
+                    and next_attempt_at <= ${now}
+                ) due_now,
+                min(created_at) filter (
+                  where status = 'pending' or (status = 'failed' and attempt_count < max_attempts)
+                ) oldest_pending_at
             from document_scan_jobs
           `
         : table === "document_analysis_jobs"
@@ -167,18 +191,38 @@ export function createMaintenanceRunRepository(
               select
                 count(*) filter (where status = 'pending') pending,
                 count(*) filter (where status = 'processing') processing,
-                count(*) filter (where status = 'failed') failed,
-                count(*) filter (where status = 'pending' and next_attempt_at <= ${now}) due_now,
-                min(created_at) filter (where status = 'pending') oldest_pending_at
+                -- Failed an attempt and scheduled to run again. claimDue matches
+                -- status in ('pending','failed') while attempts remain, so these
+                -- are live work, not wreckage.
+                count(*) filter (where status = 'failed' and attempt_count < max_attempts) retrying,
+                -- Attempts exhausted. This is the only genuinely terminal one.
+                count(*) filter (where status = 'failed' and attempt_count >= max_attempts) failed,
+                count(*) filter (
+                  where (status = 'pending' or (status = 'failed' and attempt_count < max_attempts))
+                    and next_attempt_at <= ${now}
+                ) due_now,
+                min(created_at) filter (
+                  where status = 'pending' or (status = 'failed' and attempt_count < max_attempts)
+                ) oldest_pending_at
               from document_analysis_jobs
             `
           : await sql<DepthRow[]>`
               select
                 count(*) filter (where status = 'pending') pending,
                 count(*) filter (where status = 'processing') processing,
-                count(*) filter (where status = 'failed') failed,
-                count(*) filter (where status = 'pending' and next_attempt_at <= ${now}) due_now,
-                min(created_at) filter (where status = 'pending') oldest_pending_at
+                -- Failed an attempt and scheduled to run again. claimDue matches
+                -- status in ('pending','failed') while attempts remain, so these
+                -- are live work, not wreckage.
+                count(*) filter (where status = 'failed' and attempt_count < max_attempts) retrying,
+                -- Attempts exhausted. This is the only genuinely terminal one.
+                count(*) filter (where status = 'failed' and attempt_count >= max_attempts) failed,
+                count(*) filter (
+                  where (status = 'pending' or (status = 'failed' and attempt_count < max_attempts))
+                    and next_attempt_at <= ${now}
+                ) due_now,
+                min(created_at) filter (
+                  where status = 'pending' or (status = 'failed' and attempt_count < max_attempts)
+                ) oldest_pending_at
               from notification_outbox
             `;
 

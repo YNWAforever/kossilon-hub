@@ -45,6 +45,9 @@ function QueueRow({ label, depth }: { label: string; depth: JobQueueDepth }) {
       <td className="px-4 py-2 tabular-nums">{depth.pending}</td>
       <td className="px-4 py-2 tabular-nums">{depth.dueNow}</td>
       <td className="px-4 py-2 tabular-nums">{depth.processing}</td>
+      {/* Retrying is live work, not wreckage. Shown apart from 失敗 because the
+          two need opposite reactions: one resolves itself, one needs a person. */}
+      <td className="px-4 py-2 tabular-nums">{depth.retrying}</td>
       <td className="px-4 py-2 tabular-nums">{depth.failed}</td>
       <td className="px-4 py-2 text-muted-foreground">
         {/* A depth alone cannot tell a busy queue from a stuck one. */}
@@ -128,7 +131,9 @@ function OperationsRoute() {
             <div className="border-b p-4">
               <h2 className="text-base font-semibold">工作隊列</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                等待排程處理的工作。「最舊一件」比數量更能分辨隊列是繁忙還是卡住。
+                等待排程處理的工作。「重試中」仍會自動再試，「已放棄」才需要人手處理——
+                兩者分開列出，因為把它們合併會令一個正在重試的隊列看起來像沒有工作。
+                「最舊一件」比數量更能分辨隊列是繁忙還是卡住。
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -139,7 +144,8 @@ function OperationsRoute() {
                     <th className="px-4 py-2 font-medium">待處理</th>
                     <th className="px-4 py-2 font-medium">已到期</th>
                     <th className="px-4 py-2 font-medium">處理中</th>
-                    <th className="px-4 py-2 font-medium">失敗</th>
+                    <th className="px-4 py-2 font-medium">重試中</th>
+                    <th className="px-4 py-2 font-medium">已放棄</th>
                     <th className="px-4 py-2 font-medium">最舊一件</th>
                   </tr>
                 </thead>

@@ -7,7 +7,7 @@ import type { QueueDepths } from "./repository";
 const NOW = "2026-09-11T10:00:00.000Z";
 
 function emptyDepth() {
-  return { pending: 0, processing: 0, failed: 0, dueNow: 0, oldestPendingAt: null };
+  return { pending: 0, processing: 0, retrying: 0, failed: 0, dueNow: 0, oldestPendingAt: null };
 }
 
 function queues(overrides: Partial<QueueDepths> = {}): QueueDepths {

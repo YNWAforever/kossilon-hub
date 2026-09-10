@@ -51,6 +51,9 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
     await sqlForTests()`
       delete from maintenance_runs where failure_summary like ${`${TEST_MARKER}%`}
     `;
+    await sqlForTests()`
+      delete from notification_outbox where idempotency_key like ${`${TEST_MARKER}%`}
+    `;
   });
 
   afterAll(async () => {
@@ -189,6 +192,81 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  /**
+   * A job that failed an attempt is still live work: claimDue matches
+   * `status in ('pending','failed')` while attempts remain. Counting it as
+   * `failed` and excluding it from pending/due/oldest made a queue that was
+   * entirely mid-retry render as idle with some dead rows -- on the one screen
+   * built to show whether work is moving.
+   */
+  it(
+    "counts a backing-off job as retrying, not as failed",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        const before = await repository.queueDepths(new Date().toISOString());
+
+        await sql`
+          insert into notification_outbox (
+            company_id, channel, notification_type, idempotency_key,
+            recipient, payload, status, attempt_count, max_attempts,
+            next_attempt_at, retention_until
+          )
+          select id, 'email', 'probe', ${`${TEST_MARKER}retrying`},
+                 'probe@example.test', '{}'::jsonb, 'failed', 1, 5,
+                 now() - interval '1 minute', now() + interval '90 days'
+          from companies order by created_at asc limit 1
+        `;
+
+        const after = await repository.queueDepths(new Date().toISOString());
+
+        expect(after.notifications.retrying).toBe(before.notifications.retrying + 1);
+        // Not terminal, so not in the count that asks for a person.
+        expect(after.notifications.failed).toBe(before.notifications.failed);
+        // Due, because the next tick will claim it.
+        expect(after.notifications.dueNow).toBe(before.notifications.dueNow + 1);
+        // And visible as a backlog rather than as nothing at all.
+        expect(after.notifications.oldestPendingAt).not.toBeNull();
+      } finally {
+        await repository.close();
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "counts a job with no attempts left as failed, not as retrying",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        const before = await repository.queueDepths(new Date().toISOString());
+
+        await sql`
+          insert into notification_outbox (
+            company_id, channel, notification_type, idempotency_key,
+            recipient, payload, status, attempt_count, max_attempts,
+            next_attempt_at, retention_until
+          )
+          select id, 'email', 'probe', ${`${TEST_MARKER}exhausted`},
+                 'probe@example.test', '{}'::jsonb, 'failed', 5, 5,
+                 now() - interval '1 minute', now() + interval '90 days'
+          from companies order by created_at asc limit 1
+        `;
+
+        const after = await repository.queueDepths(new Date().toISOString());
+
+        expect(after.notifications.failed).toBe(before.notifications.failed + 1);
+        expect(after.notifications.retrying).toBe(before.notifications.retrying);
+        expect(after.notifications.dueNow).toBe(before.notifications.dueNow);
+      } finally {
+        await repository.close();
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   it(
     "reads every queue depth without writing to any of them",
     async () => {
@@ -200,7 +278,9 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
           expect(Number.isInteger(queue.pending)).toBe(true);
           expect(Number.isInteger(queue.dueNow)).toBe(true);
           // Counted, not sampled: a queue cannot have more due than pending.
-          expect(queue.dueNow).toBeLessThanOrEqual(queue.pending);
+          expect(Number.isInteger(queue.retrying)).toBe(true);
+          // Due is drawn from pending plus retrying, so it cannot exceed both.
+          expect(queue.dueNow).toBeLessThanOrEqual(queue.pending + queue.retrying);
         }
         expect(Number.isInteger(depths.handoffsAwaitingTransmission)).toBe(true);
       } finally {
