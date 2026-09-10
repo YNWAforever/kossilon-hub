@@ -2,7 +2,12 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import type { AnnualReturnRepository, CaseFilters, EligibleCompanyForCase } from "./repository";
+import type {
+  AnnualReturnRepository,
+  AssignableStaffMember,
+  CaseFilters,
+  EligibleCompanyForCase,
+} from "./repository";
 import {
   assertAnnualReturnCaseVisible,
   caseFiltersForActor,
@@ -264,6 +269,24 @@ export async function listAnnualReturnCaseHistoryForActor(
   return mergeCaseHistory(auditEvents, assignmentEvents);
 }
 
+/**
+ * The people this actor may name as an owner or reviewer.
+ *
+ * Scoped identically to listCompaniesEligibleForCaseForActor and to
+ * getAnnualReturnActionPermission itself, so the picker never offers someone the
+ * assignment would then be refused for.
+ */
+export async function listAssignableStaffForActor(
+  actor: AuthenticatedActor,
+  _input: Record<string, never>,
+  dependencies: { repository: Pick<AnnualReturnRepository, "listAssignableStaff"> },
+): Promise<AssignableStaffMember[]> {
+  requireStaffUserId(actor);
+  if (actor.role === "Admin") return dependencies.repository.listAssignableStaff({});
+  if (!actor.teamId) throw new Error("Forbidden: staff actor has no assigned team.");
+  return dependencies.repository.listAssignableStaff({ teamId: actor.teamId });
+}
+
 export async function assignAnnualReturnCaseOwnerForActor(
   actor: AuthenticatedActor,
   input: { caseId: string; ownerId: string },
@@ -497,6 +520,12 @@ export const getAnnualReturnDashboardMetrics = createServerFn({ method: "GET" })
 export const listCompaniesEligibleForCase = createServerFn({ method: "GET" }).handler(() =>
   withAnnualReturnActorRepository((repository, actor) =>
     listCompaniesEligibleForCaseForActor(actor, {}, { repository }),
+  ),
+);
+
+export const listAssignableStaff = createServerFn({ method: "GET" }).handler(() =>
+  withAnnualReturnActorRepository((repository, actor) =>
+    listAssignableStaffForActor(actor, {}, { repository }),
   ),
 );
 

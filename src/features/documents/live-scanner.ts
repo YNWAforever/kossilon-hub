@@ -93,6 +93,9 @@ export function createLiveDocumentScanner(
             // verdict is still computed over the body, not over these.
             "x-document-checksum-sha256": input.checksum,
             "x-document-content-type": input.contentType,
+            // Encoded: a file name can carry non-ASCII, and a raw header value
+            // would either throw or be silently mangled.
+            "x-document-file-name": encodeURIComponent(input.fileName),
           },
           body: stored.body,
           signal: controller.signal,

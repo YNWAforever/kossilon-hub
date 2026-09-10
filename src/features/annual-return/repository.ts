@@ -228,6 +228,22 @@ export type EligibleCompanyForCase = {
   assignedTeamName: string;
 };
 
+/**
+ * A staff member an actor may name as an owner or reviewer.
+ *
+ * Exists so the case screen can offer people by name. It asked for an "Owner ID"
+ * in a text box and validated it with isUuid, which meant assigning a case
+ * required knowing a database identifier -- the plan's "no ordinary action needs
+ * a UUID" is exactly this.
+ */
+export type AssignableStaffMember = {
+  id: string;
+  name: string;
+  role: "Admin" | "Manager" | "Staff";
+  teamId: string | null;
+  teamName: string | null;
+};
+
 export type CreateAnnualReturnCaseInput = {
   companyId: string;
   templateId: string;
@@ -241,6 +257,7 @@ export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
   listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>;
+  listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
   createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>;
   dashboardMetrics(
     today: string,
@@ -848,6 +865,38 @@ export function createAnnualReturnRepository(
       assignedOwnerId: row.assigned_owner_id,
       assignedTeamId: row.assigned_team_id,
       assignedTeamName: row.team_name,
+    }));
+  }
+
+  /**
+   * Scoped so the picker never offers a person the server would then refuse:
+   * assertAnnualReturnCaseCreatable and getAnnualReturnActionPermission both
+   * narrow by team for anyone who is not an Admin, so the list narrows the same
+   * way. An inactive user is never offered.
+   */
+  async function listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]> {
+    const rows = await sql<
+      {
+        id: string;
+        name: string;
+        role: "Admin" | "Manager" | "Staff";
+        team_id: string | null;
+        team_name: string | null;
+      }[]
+    >`
+      select u.id, u.name, u.role, u.team_id, t.name as team_name
+      from users u
+      left join teams t on t.id = u.team_id
+      where u.active = true
+        and (${scope.teamId ?? null}::uuid is null or u.team_id = ${scope.teamId ?? null})
+      order by u.name asc
+    `;
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      role: row.role,
+      teamId: row.team_id,
+      teamName: row.team_name,
     }));
   }
 
@@ -2073,6 +2122,7 @@ export function createAnnualReturnRepository(
     listCases,
     getCase,
     listCompaniesEligibleForCase,
+    listAssignableStaff,
     createCase,
     dashboardMetrics,
     assertCanMutateCase,

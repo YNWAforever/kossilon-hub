@@ -2,7 +2,7 @@ import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import { getAnnualReturnCase } from "../features/annual-return/server-fns";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -637,7 +637,13 @@ function ProductionDocumentPanel({
 }) {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<DocumentCategory>("other");
-  const [file, setFile] = useState<File | undefined>();
+  const [files, setFiles] = useState<File[]>([]);
+  // Per-file, because a batch where one file fails validation and four succeed
+  // has five different outcomes, and a single shared banner can only show the
+  // last of them. Keyed by name+size+lastModified so re-picking the same file
+  // reuses its row instead of accumulating duplicates.
+  const [outcomes, setOutcomes] = useState<Record<string, UploadOutcome>>({});
+  const [uploading, setUploading] = useState(false);
   const productionReady = isUuid(companyId) && isUuid(caseId);
   const documentsQuery = useQuery({
     queryKey: annualReturnQueryKeys.documents(caseId),
@@ -645,33 +651,55 @@ function ProductionDocumentPanel({
     enabled: productionReady,
     retry: false,
   });
-  const uploadMutation = useMutation({
-    mutationFn: async () => {
-      if (!file) throw new Error("Choose a document first.");
-      const bytes = new Uint8Array(await file.arrayBuffer());
+  async function uploadOne(candidate: File): Promise<void> {
+    const key = fileKey(candidate);
+    setOutcomes((current) => ({ ...current, [key]: { state: "uploading" } }));
+    try {
+      const bytes = new Uint8Array(await candidate.arrayBuffer());
       const checksum = await sha256Hex(bytes);
       const intent = await createDocumentUploadIntent({
         data: {
           companyId,
           caseId,
           category,
-          fileName: file.name,
-          contentType: file.type,
-          sizeBytes: file.size,
+          fileName: candidate.name,
+          contentType: candidate.type,
+          sizeBytes: candidate.size,
           checksum,
         },
       });
-      return finalizeDocumentUpload({
+      await finalizeDocumentUpload({
         data: { intentId: intent.id, bodyBase64: bytesToBase64(bytes) },
       });
-    },
-    onSuccess: () => {
-      setFile(undefined);
-      onWarning("Document uploaded and quarantined for staff scanning.");
+      // "Received, waiting to be scanned" -- not "done". A received file is not
+      // yet readable evidence, and saying so plainly is the difference between an
+      // honest state and the one this phase exists to remove.
+      setOutcomes((current) => ({ ...current, [key]: { state: "received" } }));
+    } catch (error) {
+      setOutcomes((current) => ({
+        ...current,
+        [key]: {
+          state: "failed",
+          message: error instanceof Error ? error.message : "Upload failed.",
+        },
+      }));
+    }
+  }
+
+  async function uploadAll(candidates: File[]): Promise<void> {
+    setUploading(true);
+    try {
+      // Sequential on purpose: each upload sends the whole body through a single
+      // Worker request, and firing a batch at once is how a large intake becomes
+      // a memory failure rather than a slow one.
+      for (const candidate of candidates) {
+        await uploadOne(candidate);
+      }
+    } finally {
+      setUploading(false);
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.documents(caseId) });
-    },
-    onError: (error) => onWarning(error instanceof Error ? error.message : "Upload failed."),
-  });
+    }
+  }
 
   async function handleDownload(documentId: string) {
     try {
@@ -725,19 +753,51 @@ function ProductionDocumentPanel({
               <input
                 className="rounded-md border bg-background px-3 py-2"
                 type="file"
+                multiple
                 accept=".pdf,.png,.jpg,.jpeg"
-                onChange={(event) => setFile(event.target.files?.[0])}
+                aria-label="Documents to upload"
+                onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
               />
             </label>
             <button
               className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-              disabled={!file || uploadMutation.isPending}
-              onClick={() => uploadMutation.mutate()}
+              disabled={files.length === 0 || uploading}
+              onClick={() => void uploadAll(files)}
               type="button"
             >
-              {uploadMutation.isPending ? "Uploading..." : "Upload securely"}
+              {uploading
+                ? "Uploading..."
+                : `Upload securely${files.length > 1 ? ` (${files.length})` : ""}`}
             </button>
           </div>
+
+          {files.length > 0 ? (
+            <ul aria-label="Upload results" className="mt-3 space-y-1">
+              {files.map((candidate) => {
+                const outcome = outcomes[fileKey(candidate)];
+                return (
+                  <li
+                    key={fileKey(candidate)}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 truncate">{candidate.name}</span>
+                    <span className="flex items-center gap-2">
+                      <UploadOutcomeLabel outcome={outcome} />
+                      {outcome?.state === "failed" ? (
+                        <button
+                          className="rounded-md border px-2 py-1 text-xs"
+                          onClick={() => void uploadOne(candidate)}
+                          type="button"
+                        >
+                          重試
+                        </button>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
           <div className="mt-4 divide-y">
             {documentsQuery.error ? (
               <p className="py-3 text-sm text-status-yellow">Production documents unavailable.</p>
@@ -821,4 +881,38 @@ function primaryActionLabel(action: ClientPortalRequiredAction): string {
   if (action.kind === "payment") return "Acknowledge payment";
   if (action.kind === "packet") return "Approve packet";
   return "View receipt";
+}
+
+/**
+ * What happened to one file in a batch.
+ *
+ * `received` deliberately does not say "uploaded" or "done": the file has
+ * reached private storage and is quarantined awaiting a malware verdict, and it
+ * is not readable evidence until that verdict exists. Telling a client the
+ * upload succeeded when the document has not been scanned is the same class of
+ * dishonesty as a queued reminder rendering as delivered.
+ */
+type UploadOutcome =
+  | { state: "uploading" }
+  | { state: "received" }
+  | { state: "failed"; message: string };
+
+/** Stable within one picker selection, without needing a generated id. */
+function fileKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+function UploadOutcomeLabel({ outcome }: { outcome?: UploadOutcome }) {
+  if (!outcome) return <span className="text-xs text-muted-foreground">等待上載</span>;
+  if (outcome.state === "uploading") {
+    return <span className="text-xs text-muted-foreground">上載中…</span>;
+  }
+  if (outcome.state === "received") {
+    return <span className="text-xs text-status-green">已收到，等待掃描</span>;
+  }
+  return (
+    <span className="text-xs text-status-red" title={outcome.message}>
+      失敗：{outcome.message}
+    </span>
+  );
 }

@@ -10,6 +10,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/checklist-templates/repository.test.ts",
   "src/features/clients/repository.test.ts",
   "src/features/corporate-changes/repository.test.ts",
+  "src/features/documents/repository.integration.test.ts",
   "src/features/incorporation/repository.test.ts",
   "src/features/notifications/outbox.integration.test.ts",
   "src/features/service-subscriptions/repository.test.ts",

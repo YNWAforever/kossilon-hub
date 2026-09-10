@@ -50,12 +50,22 @@ export type DocumentScanResult =
   | { status: "rejected"; reason: string; providerReference: string }
   | { status: "failed"; retryable: boolean; errorCode: string };
 
+export type DocumentScanInput = {
+  objectKey: string;
+  checksum: string;
+  contentType: string;
+  /**
+   * Carried because a real provider records what it was asked about, and because
+   * the local fixture scanner has nothing else reachable to key off: contentType
+   * is constrained to pdf/png/jpeg by validateDocumentUploadRequest, so the two
+   * magic content types the old fixture keyed on could never reach a persisted
+   * intent and its rejected/retry branches were dead code.
+   */
+  fileName: string;
+};
+
 export type DocumentScanner = {
-  scan(input: {
-    objectKey: string;
-    checksum: string;
-    contentType: string;
-  }): Promise<DocumentScanResult>;
+  scan(input: DocumentScanInput): Promise<DocumentScanResult>;
 };
 
 /**

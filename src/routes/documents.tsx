@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Download } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocuments } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import { CHECKLIST_EVIDENCE_FILE_TYPES } from "../features/annual-return/evidence-file-types";
-import { getAnnualReturnCase } from "../features/annual-return/server-fns";
+import { getAnnualReturnCase, listAnnualReturnCases } from "../features/annual-return/server-fns";
+import { documentSafetyOf, type DocumentSafety } from "../features/documents/safety";
+import {
+  DOCUMENT_REJECTION_REASONS,
+  composeRejectionReason,
+  type DocumentRejectionReasonCode,
+} from "../features/documents/rejection-reasons";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import type { PrivateDocument } from "../features/documents/repository";
 
@@ -52,6 +58,18 @@ function DocumentsRoute() {
     queryFn: () => listDocuments({ data: productionCaseId ? { caseId: productionCaseId } : {} }),
     retry: false,
   });
+  // The production section had no filter of its own: the only case <select> on
+  // this screen lived inside the demo branch and listed demo cases, so in
+  // production the case filter was reachable only by typing ?caseId=<uuid> into
+  // the URL -- which is why the section's own copy told staff to "filter to one
+  // production case" using a control that was not rendered.
+  const productionCasesQuery = useQuery({
+    queryKey: annualReturnQueryKeys.list({}),
+    queryFn: () => listAnnualReturnCases({ data: {} }),
+    enabled: dataMode === "production",
+    retry: false,
+    staleTime: 60_000,
+  });
   const productionCaseQuery = useQuery({
     queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "all"),
     queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
@@ -78,6 +96,28 @@ function DocumentsRoute() {
     onError: (error) =>
       setWarning(error instanceof Error ? error.message : "Unable to review document."),
   });
+
+  async function handlePreview(documentId: string, fileName: string) {
+    try {
+      const response = await downloadDocument({ data: { documentId } });
+      if (!response.ok) throw new Error(`Preview failed (${response.status}).`);
+      const href = URL.createObjectURL(await response.blob());
+      // Opened rather than saved: a reviewer needs to look at the file to decide,
+      // and forcing a download to disk for every pending document is how "review"
+      // became "approve without looking".
+      const opened = window.open(href, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        const anchor = document.createElement("a");
+        anchor.href = href;
+        anchor.download = fileName;
+        anchor.click();
+      }
+      // Revoked late so the new tab has time to load it.
+      setTimeout(() => URL.revokeObjectURL(href), 60_000);
+    } catch (error) {
+      setWarning(error instanceof Error ? error.message : "Unable to open document.");
+    }
+  }
 
   async function handleDownload(documentId: string) {
     try {
@@ -123,10 +163,15 @@ function DocumentsRoute() {
 
       <ProductionDocumentsSection
         caseItem={productionCaseQuery.data ?? undefined}
+        cases={productionCasesQuery.data ?? []}
+        casesLoading={productionCasesQuery.isLoading}
+        selectedCaseId={productionCaseId}
+        onSelectCase={(next) => setCaseFilter(next)}
         documents={productionDocumentsQuery.data ?? []}
         error={productionDocumentsQuery.error}
         loading={productionDocumentsQuery.isLoading}
         onDownload={handleDownload}
+        onPreview={handlePreview}
         onReview={(input) => reviewMutation.mutate({ data: input })}
         pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
       />
@@ -412,18 +457,28 @@ function ReviewCell({
 
 function ProductionDocumentsSection({
   caseItem,
+  cases,
+  casesLoading,
+  selectedCaseId,
+  onSelectCase,
   documents,
   error,
   loading,
   onDownload,
+  onPreview,
   onReview,
   pendingDocumentIds,
 }: {
   caseItem?: ProductionAnnualReturnCase;
+  cases: ProductionAnnualReturnCase[];
+  casesLoading: boolean;
+  selectedCaseId?: string;
+  onSelectCase: (caseId: string) => void;
   documents: PrivateDocument[];
   error: Error | null;
   loading: boolean;
   onDownload: (documentId: string) => void;
+  onPreview: (documentId: string, fileName: string) => void;
   onReview: (input: {
     caseId: string;
     documentId: string;
@@ -448,7 +503,27 @@ function ProductionDocumentsSection({
             Private records stay quarantined until scanning and case-aware staff review.
           </p>
         </div>
-        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
+        <div className="flex items-center gap-2">
+          <label className="sr-only" htmlFor="production-case-filter">
+            篩選案件
+          </label>
+          <select
+            id="production-case-filter"
+            aria-label="Filter production documents by case"
+            className="rounded-md border bg-background px-3 py-2 text-sm"
+            value={selectedCaseId ?? "all"}
+            disabled={casesLoading}
+            onChange={(event) => onSelectCase(event.target.value)}
+          >
+            <option value="all">{casesLoading ? "載入案件…" : "所有案件"}</option>
+            {cases.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.companyName} · {item.returnYear}
+              </option>
+            ))}
+          </select>
+          <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
+        </div>
       </div>
       {error ? (
         <p className="mt-4 text-sm text-status-yellow">Production records unavailable.</p>
@@ -472,9 +547,14 @@ function ProductionDocumentsSection({
             (item) => item.documentId === document.id,
           );
           const checklistItemId = checklistItemIds[document.id] ?? matchedChecklistItem?.id ?? "";
+          const safety = documentSafetyOf(document);
+          // Approving is what later releases a file to a client and into a
+          // filing package, so it needs a genuine scan verdict -- not the
+          // deterministic fixture's, however long ago it landed.
           const canReview =
             isUuid(document.caseId ?? undefined) &&
-            (!isChecklistEvidence || isUuid(checklistItemId));
+            (!isChecklistEvidence || isUuid(checklistItemId)) &&
+            safety === "verified";
           const pending = pendingDocumentIds.includes(document.id);
 
           return (
@@ -488,7 +568,7 @@ function ProductionDocumentsSection({
                   {labelValue(document.category)}
                 </p>
               </div>
-              <span>{labelValue(document.uploadStatus)}</span>
+              <SafetyBadge safety={documentSafetyOf(document)} status={document.uploadStatus} />
               <div>
                 <span>{labelValue(document.reviewStatus)}</span>
                 {isChecklistEvidence && document.reviewStatus === "pending" ? (
@@ -518,52 +598,17 @@ function ProductionDocumentsSection({
                   )
                 ) : null}
               </div>
-              <div className="flex flex-wrap justify-start gap-2 md:justify-end">
-                {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
-                  <button
-                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                    onClick={() => onDownload(document.id)}
-                    type="button"
-                  >
-                    <Download className="h-4 w-4" /> Download
-                  </button>
-                ) : null}
-                {document.uploadStatus === "available" && document.reviewStatus === "pending" ? (
-                  <>
-                    <button
-                      className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
-                      disabled={!canReview || pending}
-                      onClick={() =>
-                        onReview({
-                          caseId: document.caseId!,
-                          documentId: document.id,
-                          checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
-                          decision: "verified",
-                        })
-                      }
-                      type="button"
-                    >
-                      {pending ? "Reviewing..." : "Verify"}
-                    </button>
-                    <button
-                      className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-                      disabled={!canReview || pending}
-                      onClick={() =>
-                        onReview({
-                          caseId: document.caseId!,
-                          documentId: document.id,
-                          checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
-                          decision: "rejected",
-                          reason: "Rejected during staff review",
-                        })
-                      }
-                      type="button"
-                    >
-                      Reject
-                    </button>
-                  </>
-                ) : null}
-              </div>
+              <ReviewActions
+                document={document}
+                safety={safety}
+                canReview={canReview}
+                pending={pending}
+                isChecklistEvidence={isChecklistEvidence}
+                checklistItemId={checklistItemId}
+                onDownload={onDownload}
+                onPreview={onPreview}
+                onReview={onReview}
+              />
             </div>
           );
         })}
@@ -597,4 +642,196 @@ function formatTimestamp(value: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * Scan safety, rendered as its own thing.
+ *
+ * The row used to print the raw upload status beside the review status, which
+ * said "available" for a file whose only clean verdict came from the fixture
+ * scanner. Those are different facts and a reviewer has to be able to tell them
+ * apart before deciding anything.
+ */
+function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: string }) {
+  const presentation: Record<DocumentSafety, { label: string; className: string }> = {
+    verified: { label: "已掃描安全", className: "bg-status-green-soft text-status-green" },
+    pending: { label: "等待掃描", className: "bg-status-yellow-soft text-status-yellow" },
+    unknown: { label: "安全未經核實", className: "bg-status-orange-soft text-status-orange" },
+    unsafe: { label: "掃描拒絕", className: "bg-status-red-soft text-status-red" },
+  };
+  const { label, className } = presentation[safety];
+  return (
+    <span className="min-w-0">
+      <span className={`inline-block rounded-md px-2 py-1 text-xs font-medium ${className}`}>
+        {label}
+      </span>
+      <span className="mt-1 block text-xs text-muted-foreground">{labelValue(status)}</span>
+    </span>
+  );
+}
+
+/**
+ * The review controls for one production document.
+ *
+ * Preview exists because the one state where a staff member must look at a file
+ * -- pending review -- was the one state with no way to open it: Download
+ * rendered only for `available && verified`, so approve and reject were the only
+ * available actions and both were taken blind. The server never required that;
+ * downloadDocumentForActor checks upload status, not review status.
+ */
+function ReviewActions({
+  document: record,
+  safety,
+  canReview,
+  pending,
+  isChecklistEvidence,
+  checklistItemId,
+  onDownload,
+  onPreview,
+  onReview,
+}: {
+  document: PrivateDocument;
+  safety: DocumentSafety;
+  canReview: boolean;
+  pending: boolean;
+  isChecklistEvidence: boolean;
+  checklistItemId: string;
+  onDownload: (documentId: string) => void;
+  onPreview: (documentId: string, fileName: string) => void;
+  onReview: (input: {
+    caseId: string;
+    documentId: string;
+    checklistItemId?: string;
+    decision: "verified" | "rejected";
+    reason?: string;
+  }) => void;
+}) {
+  const [rejecting, setRejecting] = useState(false);
+  const [reasonCode, setReasonCode] = useState<DocumentRejectionReasonCode>("missing-page");
+  const [note, setNote] = useState("");
+
+  // "other" with no note records nothing a client could act on.
+  const noteRequired = reasonCode === "other";
+  const canSubmitRejection = canReview && !pending && (!noteRequired || note.trim().length > 0);
+
+  if (safety === "unsafe") {
+    return (
+      <p className="text-sm text-status-red md:text-right">
+        掃描發現惡意內容，檔案已刪除。請要求客戶重新提供。
+      </p>
+    );
+  }
+
+  if (safety === "pending") {
+    return (
+      <p className="text-sm text-muted-foreground md:text-right">等待掃描完成後才可預覽及覆核。</p>
+    );
+  }
+
+  if (safety === "unknown") {
+    return (
+      <p className="text-sm text-status-orange md:text-right">
+        此檔案只有測試掃描器的結果，不能視為已核實。已排隊重新掃描。
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 md:items-end">
+      <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+        <button
+          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+          onClick={() => onPreview(record.id, record.fileName)}
+          type="button"
+        >
+          <Eye className="h-4 w-4" /> 開啟原件
+        </button>
+        <button
+          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+          onClick={() => onDownload(record.id)}
+          type="button"
+        >
+          <Download className="h-4 w-4" /> Download
+        </button>
+        {record.reviewStatus === "pending" ? (
+          <>
+            <button
+              className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+              disabled={!canReview || pending}
+              onClick={() =>
+                onReview({
+                  caseId: record.caseId!,
+                  documentId: record.id,
+                  checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
+                  decision: "verified",
+                })
+              }
+              type="button"
+            >
+              {pending ? "Reviewing..." : "Verify"}
+            </button>
+            <button
+              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              disabled={!canReview || pending}
+              onClick={() => setRejecting((current) => !current)}
+              type="button"
+            >
+              Reject
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      {rejecting && record.reviewStatus === "pending" ? (
+        <div className="w-full space-y-2 rounded-md border p-2 md:max-w-sm">
+          <label className="sr-only" htmlFor={`reject-reason-${record.id}`}>
+            退件原因
+          </label>
+          <select
+            id={`reject-reason-${record.id}`}
+            aria-label={`Rejection reason for ${record.fileName}`}
+            className="w-full rounded-md border bg-background px-2 py-1 text-sm"
+            value={reasonCode}
+            onChange={(event) => setReasonCode(event.target.value as DocumentRejectionReasonCode)}
+          >
+            {DOCUMENT_REJECTION_REASONS.map((reason) => (
+              <option key={reason.code} value={reason.code}>
+                {reason.label}
+              </option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor={`reject-note-${record.id}`}>
+            給客戶的說明
+          </label>
+          <textarea
+            id={`reject-note-${record.id}`}
+            aria-label={`Client explanation for ${record.fileName}`}
+            className="w-full rounded-md border bg-background px-2 py-1 text-sm"
+            placeholder="給客戶的說明（例如：第 2 頁未有董事簽署）"
+            rows={2}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+          />
+          <button
+            className="w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            disabled={!canSubmitRejection}
+            onClick={() => {
+              onReview({
+                caseId: record.caseId!,
+                documentId: record.id,
+                checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
+                decision: "rejected",
+                reason: composeRejectionReason(reasonCode, note),
+              });
+              setRejecting(false);
+              setNote("");
+            }}
+            type="button"
+          >
+            確認退件
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }

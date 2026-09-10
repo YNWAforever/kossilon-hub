@@ -135,6 +135,7 @@ async function runOneJob(
       objectKey: intent.objectKey,
       checksum: intent.checksum,
       contentType: intent.contentType,
+      fileName: intent.fileName,
     });
   } catch (error) {
     // A scanner that throws is an outage, never a pass.

@@ -19,9 +19,19 @@ const serverFns = vi.hoisted(() => ({
   addAnnualReturnCaseNote: vi.fn(),
   queueAnnualReturnWhatsAppReminderMessage: vi.fn(),
   updateAnnualReturnFilingProof: vi.fn(),
+  listAssignableStaff: vi.fn(),
+}));
+
+// The Owner ID and receipt-document UUID boxes became scoped pickers, so the
+// screen now reads two lists. Mocked here rather than stubbed per-test so every
+// existing assertion keeps exercising the same commands.
+const documentServerFns = vi.hoisted(() => ({
+  listDocuments: vi.fn(),
+  downloadDocument: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => serverFns);
+vi.mock("@/features/documents/server-fns", () => documentServerFns);
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));
@@ -113,6 +123,47 @@ beforeEach(() => {
   serverFns.addAnnualReturnCaseNote.mockResolvedValue({});
   serverFns.queueAnnualReturnWhatsAppReminderMessage.mockResolvedValue({});
   serverFns.updateAnnualReturnFilingProof.mockResolvedValue(caseItem);
+  serverFns.listAssignableStaff.mockResolvedValue([
+    { id: ownerId, name: "Iris Wong", role: "Staff", teamId: null, teamName: "Annual return" },
+    { id: nextOwnerId, name: "Calvin Ho", role: "Staff", teamId: null, teamName: "Annual return" },
+  ]);
+  documentServerFns.listDocuments.mockResolvedValue([
+    {
+      id: receiptId,
+      companyId: caseItem.companyId,
+      caseId,
+      category: "receipt",
+      fileName: "filing-receipt.pdf",
+      objectKey: "documents/receipt",
+      contentType: "application/pdf",
+      sizeBytes: 4,
+      checksum: "a".repeat(64),
+      uploadStatus: "available",
+      // A picker that offers a file whose only "clean" came from the fixture
+      // scanner would be offering unverified evidence, so the fixture is a real
+      // provider verdict.
+      scanVerdictSource: "provider",
+      reviewStatus: "verified",
+      uploadedBy: null,
+      uploadedAt: "2026-07-12T00:00:00.000Z",
+    },
+    {
+      id: paymentProofId,
+      companyId: caseItem.companyId,
+      caseId,
+      category: "payment",
+      fileName: "payment-proof.pdf",
+      objectKey: "documents/payment",
+      contentType: "application/pdf",
+      sizeBytes: 4,
+      checksum: "b".repeat(64),
+      uploadStatus: "available",
+      scanVerdictSource: "provider",
+      reviewStatus: "verified",
+      uploadedBy: null,
+      uploadedAt: "2026-07-12T00:00:00.000Z",
+    },
+  ]);
 });
 
 describe("ProductionAnnualReturnCaseDetail", () => {
@@ -120,7 +171,11 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     const { queryClient, invalidateSpy } = renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    fireEvent.change(screen.getByLabelText("Owner ID"), { target: { value: nextOwnerId } });
+    // The picker offers people by name; the payload is still the id, which is
+    // the point -- no staff member has to know or type one.
+    const ownerPicker = await screen.findByLabelText("負責同事");
+    expect(within(ownerPicker as HTMLSelectElement).getByText(/Calvin Ho/)).toBeTruthy();
+    fireEvent.change(ownerPicker, { target: { value: nextOwnerId } });
     fireEvent.click(screen.getByRole("button", { name: "Assign" }));
 
     fireEvent.change(screen.getByLabelText("Case status"), {
@@ -153,9 +208,11 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     fireEvent.change(screen.getByLabelText("Filing reference"), {
       target: { value: "NAR1-2026-001" },
     });
-    fireEvent.change(screen.getByLabelText("Verified receipt document ID"), {
-      target: { value: receiptId },
-    });
+    const receiptPicker = await screen.findByLabelText("已核實回執文件");
+    expect(
+      within(receiptPicker as HTMLSelectElement).getByText(/filing-receipt\.pdf/),
+    ).toBeTruthy();
+    fireEvent.change(receiptPicker, { target: { value: receiptId } });
     fireEvent.click(screen.getByRole("button", { name: "Accept receipt" }));
 
     await waitFor(() => {

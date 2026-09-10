@@ -27,6 +27,7 @@ const input = {
   objectKey: "documents/opaque",
   checksum: CHECKSUM,
   contentType: "application/pdf",
+  fileName: "passport.pdf",
 };
 
 function jsonResponse(body: unknown, status = 200) {

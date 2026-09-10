@@ -264,6 +264,7 @@ export async function scanQuarantinedDocumentForActor(
     objectKey: intent.objectKey,
     checksum: intent.checksum,
     contentType: intent.contentType,
+    fileName: intent.fileName,
   });
   if (result.status === "rejected") await dependencies.storage.delete(intent.objectKey);
   // The verdict records which scanner produced it, and is applied only while the
