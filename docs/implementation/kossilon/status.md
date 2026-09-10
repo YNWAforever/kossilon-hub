@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-c` · Current commit: `ee687be` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-c` · Current commit: `7e2ab0c` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -9,7 +9,7 @@ its code is written.
 |---|---|---|---|---|
 | **A** Safe staff document workflow | ✅ complete | ❌ none | ❌ no | scanner provider, a database, a browser walkthrough |
 | **B** Monthly NAR intake and daily operations | ✅ complete | ❌ none | ❌ no | a database for the new tables |
-| **C** Document intelligence and Kossilon review | 🟨 partial (C-0, C-1, C-4a, C-5) | ❌ none | ❌ no | AI provider, a database |
+| **C** Document intelligence and Kossilon review | ✅ code complete | ❌ none | ❌ no | AI provider, text extraction, a database |
 | **D** Messaging, attachments and chasing | ⬜ not started | — | — | real accounts and conversations |
 | **E** External handoff and folder returns | ⬜ not started | — | — | the internal server, its protocol and rights |
 | **F** Pilot, scale and operations | ⬜ not started | — | — | pilot staff and representative cases |
@@ -38,7 +38,7 @@ its code is written.
 | **C-0** Three claims the product could not support | Complete — dashboard heading, synthetic confidence, both Chinese-stripping tokenizers |
 | **C-1** Document versions and supersession | Complete — migration `0027`; 19 unit + 5 integration tests; not applied to any database |
 | **C-2** Analysis pipeline and provider adapter | ✅ complete — migration `0028`; queue, worker, two deterministic tiers, disabled provider adapter; wired end to end; 56 tests |
-| **C-3** Approved annual-return requirement template | ⬜ not started — Phase B's `case_requirement_instances` already carries applicability per party |
+| **C-3** Approved annual-return requirement template | ✅ complete — NAR1/AGM/CDD company-level, identity and address proof per confirmed party; calendar-month freshness rule; 29 tests. `syncRequirementInstances` has no caller yet |
 | **C-4a** No synthetic certainty percentage | Complete — `DraftGrounding` replaced `confidence: number`; 8 tests |
 | **C-4b** Findings in the review workspace | ✅ complete — findings on the case detail screen, with "not checked" said in words rather than shown as a blank; 27 tests |
 | **C-5** Package approval contract | Complete — 19 tests; AI holds no package-approve permission, structurally |
@@ -147,29 +147,22 @@ A model cannot ask.
 
 ## Exact next step
 
-**C-3 — the approved annual-return requirement template.** Phase B's
-`case_requirement_instances` already carries applicability per party and a
-template version; what is missing is the template that produces them (NAR1, CDD,
-AGM, updated HKID or passport, address proof).
+**Phase C is code-complete.** All six packages are done; none is
+integration-verified, because no migration has been applied and no provider
+exists.
 
-Two traps recorded from the reconnaissance, both of which would make a rule match
-nothing:
+Two loose ends inside C, both deliberate and both small:
 
-- A rule keyed on `requirement_key` matches no existing row. Migration 0026
-  backfilled it from free-text checklist labels under `template_version =
-  'legacy'`, so real values read "Proof of address for each director", not
-  `address-proof` — and the repository query does not select `template_version`,
-  so a reader cannot currently tell the two apart.
-- There is **no `address-proof` document category**. `DOCUMENT_CATEGORIES` is
-  identity/registry/signature/payment/packet/submission/receipt/other, so a rule
-  selecting candidates by `file_type` would match zero rows.
+- `syncRequirementInstances` has no caller. The natural trigger is case creation
+  or party confirmation, and choosing which is a product decision rather than a
+  mechanical one.
+- `document_findings` is written and read, but nothing prunes a requirement
+  instance whose party has left the case. Insert-only was chosen so a sync can
+  never erase a human decision; pruning needs to be an action a person takes.
 
-The three-calendar-month rule needs a calendar-month helper that does not exist:
-`date-math.ts` has only `oneYearLater` (which rolls forward on overflow) and
-`daysBetween`, and the repo's existing "1 month" is a 30-day approximation in
-`reminder-cadence.ts`. The clamp direction at month ends has no precedent here and
-must be chosen and tested, not inherited. `date-fns` is in `package.json` and
-imported by nothing.
+**Phase D — messaging, attachments and chasing** is next under the whole-plan
+instruction. Its dependency (C) is code-complete, and Phase B already built the
+chase-suppression rule (`outstanding.ts`) and the daily work views D will drive.
 
 Applying `0023` through `0028` to a database needs explicit authorization under
 `CLAUDE.md`. No Postgres is reachable here, so the repository integration tests
@@ -184,6 +177,17 @@ execute only in CI.
 | `BLOCKED_INTEGRATION: document-text-extraction` | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
 | `BLOCKED_INTEGRATION: ai-provider` | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms |
 | `BLOCKED_INTEGRATION: deployment-runtime` | Whether the 5-minute schedule really fires is unverified | Observed evidence of a scheduled invocation on the deployed runtime |
+
+## Open business inputs
+
+**From Phase C-3, and it changes verdicts:** the three-calendar-month window
+clamps to the end of the target month, so three months before 31 May is
+28 February rather than 3 March. Clamping is the conventional legal reading and
+is the more lenient of the two by a few days at month ends. The alternative
+(rolling forward, as `oneYearLater` does for the statutory anniversary) is
+stricter. The difference only appears at month ends and only by a few days --
+which is enough to flip a verdict on evidence submitted near a deadline. Confirm
+which the firm intends.
 
 ## Open business inputs Phase B will need answered
 
