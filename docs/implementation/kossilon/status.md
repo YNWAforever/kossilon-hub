@@ -1,18 +1,51 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-f` · Current commit: `cde3cc5` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-f` · Current commit: `63cf43e` · Base: `main` = `fa02046`
+· PR [#59](https://github.com/YNWAforever/kossilon-hub/pull/59) · **CI green**
+
+## The SQL has now actually run
+
+This is the first integration evidence in the whole body of work, and it is
+worth reading before anything else here.
+
+The branch was pushed on 2026-09-11 and CI executed every repository test
+against a real migrated and seeded Postgres. **The first run failed: 30 tests
+across 4 files.** The second failed too: 23 across 3. The third passed —
+**165 files, 1586 tests, nothing skipped.**
+
+Eight defects, every one of them mine, none findable by reading and none
+findable by the local suite, which reports 1410 passing while skipping every
+database test:
+
+| Defect                                                                                                                                                         | What it meant                                                                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `whatsapp/repository.ts` — the shared-number `CASE` mixed a text branch with uuid branches, because `coalesce($1, $2)` over two null parameters infers as text | **Recording any inbound message threw.** The Phase D fix for a number two clients share did not work at all                                                                                       |
+| `outbox.ts` — `cancelFixtureOriginNotifications` set `completed_at`, a column `notification_outbox` does not have                                              | It threw on every call, so the guard that stops a fixture replay reaching a real recipient **never ran**                                                                                          |
+| `0033` — `passes jsonb not null`                                                                                                                               | A `failed` run was impossible to insert, and a failed run is exactly what the recorder was reordered to capture. The write threw, `recordMaintenanceRun` swallowed it by design, the row was lost |
+| `operations/repository.ts` — `sql.array`                                                                                                                       | Sent as plain `text` in both directions, so the insert was refused against `text[]`. A `::text[]` cast did not fix it either: the value is serialised before the cast sees it                     |
+| `documents/repository.integration.test.ts` — teardown order                                                                                                    | All 20 tests in the file failed in cleanup. Reordering it once moved the violation one table along rather than removing it                                                                        |
+| `whatsapp/repository.test.ts` — the `notification_outbox` sweep named one company                                                                              | The file's own comment claimed the sweep already covered it. It did not                                                                                                                           |
+
+Two of those are features that never worked at all in production code, not test
+bugs. The honest reading: **reasoning about unexecuted SQL was wrong roughly as
+often as it was right**, and two rounds of fixes were needed because the first
+round was itself partly wrong.
+
+`BLOCKED_INTEGRATION: local-postgres` is cleared **for CI**. It is not cleared
+locally: there is still no reachable `TEST_DATABASE_URL` here, so every future
+SQL change carries the same risk until CI runs it.
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
 
-| Phase                                           | Code                                                                 | Real integration | Releasable | Blocked on                                                     |
-| ----------------------------------------------- | -------------------------------------------------------------------- | ---------------- | ---------- | -------------------------------------------------------------- |
-| **A** Safe staff document workflow              | ✅ complete                                                          | ❌ none          | ❌ no      | scanner provider, a database, a browser walkthrough            |
-| **B** Monthly NAR intake and daily operations   | ✅ complete                                                          | ❌ none          | ❌ no      | a database for the new tables                                  |
-| **C** Document intelligence and Kossilon review | ✅ code complete                                                     | ❌ none          | ❌ no      | AI provider, text extraction, a database                       |
-| **D** Messaging, attachments and chasing        | 🟨 partial                                                           | ❌ none          | ❌ no      | a WOZTELL media-download endpoint, real accounts, a database   |
-| **E** External handoff and folder returns       | 🟨 model complete, nothing transmits                                 | ❌ none          | ❌ no      | the internal server's protocol, address and rights             |
-| **F** Pilot, scale and operations               | 🟨 the observability half is built; the pilot half cannot start here | ❌ none          | ❌ no      | a database, a deployment, pilot staff and representative cases |
+| Phase                                           | Code                                                                 | Real integration                           | Releasable | Blocked on                                                     |
+| ----------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ | ---------- | -------------------------------------------------------------- |
+| **A** Safe staff document workflow              | ✅ complete                                                          | 🟨 SQL green in CI; no scanner             | ❌ no      | scanner provider, a database, a browser walkthrough            |
+| **B** Monthly NAR intake and daily operations   | ✅ complete                                                          | 🟨 SQL green in CI                         | ❌ no      | a database for the new tables                                  |
+| **C** Document intelligence and Kossilon review | ✅ code complete                                                     | 🟨 SQL green in CI; no AI, no text         | ❌ no      | AI provider, text extraction, a database                       |
+| **D** Messaging, attachments and chasing        | 🟨 partial                                                           | 🟨 SQL green in CI; no live accounts       | ❌ no      | a WOZTELL media-download endpoint, real accounts, a database   |
+| **E** External handoff and folder returns       | 🟨 model complete, nothing transmits                                 | 🟨 SQL green in CI; nothing transmits      | ❌ no      | the internal server's protocol, address and rights             |
+| **F** Pilot, scale and operations               | 🟨 the observability half is built; the pilot half cannot start here | 🟨 SQL green in CI; no deployment observed | ❌ no      | a database, a deployment, pilot staff and representative cases |
 
 ## Phase B, work package by work package
 
@@ -274,22 +307,24 @@ appears to offer:
 - `ai-provider` — the third analysis tier never runs.
 - `whatsapp-media-download` — a client's attachment is recorded but never fetched.
 - `external-handoff-destination` — no package can be filed.
-- `local-postgres` / `deployment-runtime` — nothing has been executed or observed.
+- `local-postgres` — cleared for CI; every repository test now runs on a real
+  Postgres in the PR. Still open locally.
+- `deployment-runtime` — nothing has been observed on a deployed runtime.
 
 The honest reading is that the product is code-complete and integration-zero. F
 is where that changes or is confirmed.
 
 ## Open blockers
 
-| ID                                                  | Effect                                                                                                                                                                                                            | Cleared by                                                                                                    |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `BLOCKED_INTEGRATION: malware-scanner-provider`     | Live document scanning stays disabled; the legacy re-scan backlog stays pending                                                                                                                                   | An approved provider, its binding names, its data-handling terms                                              |
-| `BLOCKED_INTEGRATION: local-postgres`               | Repository tests run only in CI                                                                                                                                                                                   | A reachable `TEST_DATABASE_URL`, or the CI run on the PR                                                      |
-| `BLOCKED_INTEGRATION: external-handoff-destination` | No package can be transmitted to the filing agent; every handoff stays `prepared` and the 回件與異常 work view stays unreleased                                                                                   | The internal server's protocol, address, authentication and rights                                            |
-| `BLOCKED_INTEGRATION: whatsapp-media-download`      | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document                                                                                         | A documented WOZTELL media-download endpoint and its auth                                                     |
-| `BLOCKED_INTEGRATION: document-text-extraction`     | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules                                                 | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
-| `BLOCKED_INTEGRATION: ai-provider`                  | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms                                              |
-| `BLOCKED_INTEGRATION: deployment-runtime`           | Whether the 5-minute schedule really fires is still unverified — but no longer unverifiable. `maintenance_runs` records every invocation and `/operations` reports `never-observed` until the first one arrives   | The first row on `/operations` with trigger 排程, from a real invocation on the deployed runtime              |
+| ID                                                  | Effect                                                                                                                                                                                                                    | Cleared by                                                                                                    |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `BLOCKED_INTEGRATION: malware-scanner-provider`     | Live document scanning stays disabled; the legacy re-scan backlog stays pending                                                                                                                                           | An approved provider, its binding names, its data-handling terms                                              |
+| `BLOCKED_INTEGRATION: local-postgres`               | **Cleared for CI on 2026-09-11**: PR #59 ran all 1586 tests against a migrated, seeded Postgres and passed. Still open locally -- no reachable `TEST_DATABASE_URL` here, so any new SQL stays unexecuted until CI runs it | A reachable `TEST_DATABASE_URL` for local runs                                                                |
+| `BLOCKED_INTEGRATION: external-handoff-destination` | No package can be transmitted to the filing agent; every handoff stays `prepared` and the 回件與異常 work view stays unreleased                                                                                           | The internal server's protocol, address, authentication and rights                                            |
+| `BLOCKED_INTEGRATION: whatsapp-media-download`      | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document                                                                                                 | A documented WOZTELL media-download endpoint and its auth                                                     |
+| `BLOCKED_INTEGRATION: document-text-extraction`     | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules                                                         | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
+| `BLOCKED_INTEGRATION: ai-provider`                  | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity         | An approved provider, its binding names, its data-handling terms                                              |
+| `BLOCKED_INTEGRATION: deployment-runtime`           | Whether the 5-minute schedule really fires is still unverified — but no longer unverifiable. `maintenance_runs` records every invocation and `/operations` reports `never-observed` until the first one arrives           | The first row on `/operations` with trigger 排程, from a real invocation on the deployed runtime              |
 
 ## Open business inputs
 
