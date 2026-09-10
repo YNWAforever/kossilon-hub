@@ -1,3 +1,4 @@
+import { CaseFindings } from "./case-findings";
 import { useEffect, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -334,6 +335,8 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             </div>
             <MutationMessage error={checklistMutation.error} />
           </section>
+
+          <CaseFindings caseId={caseId} locked={locked} />
 
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Payment</h2>

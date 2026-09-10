@@ -24,6 +24,8 @@ import {
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 import { deriveWorkViews } from "./work-views";
+import type { DocumentFindingsView } from "@/features/documents/findings-review";
+import type { DocumentAnalysisRepository } from "@/features/documents/analysis-repository";
 
 const RISK_LEVELS = ["green", "yellow", "orange", "red"] as const;
 const CHECKLIST_STATUSES = ["Missing", "Received", "Verified", "Rejected"] as const;
@@ -274,6 +276,77 @@ export async function getAnnualReturnCaseForActor(
   if (!case_) return null;
 
   return isAnnualReturnCaseVisibleToActor(boardActorFrom(actor), case_) ? case_ : null;
+}
+
+/**
+ * Findings on a case, and the run state that says whether silence means
+ * anything.
+ *
+ * The case is loaded and checked first, and the analysis repository is only
+ * touched once it is visible: findings quote a document's own text, so reaching
+ * them at all is a decision about who may read the case.
+ */
+export async function listAnnualReturnCaseFindingsForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string },
+  dependencies: {
+    repository: Pick<AnnualReturnRepository, "getCase">;
+    analysis: { listFindingsForCase(caseId: string): Promise<DocumentFindingsView[]> };
+  },
+) {
+  const case_ = await dependencies.repository.getCase(input.caseId);
+  if (!case_) throw new Error("Annual return case not found.");
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
+
+  return dependencies.analysis.listFindingsForCase(input.caseId);
+}
+
+/**
+ * A person deals with a finding.
+ *
+ * Two independent checks, deliberately. The case must be visible to this actor,
+ * and the write itself joins the case in so a finding from another case cannot
+ * be resolved by pairing its id with a caseId this actor happens to be allowed
+ * to see.
+ *
+ * `resolvedByUserId` comes from the actor, never from the caller.
+ */
+export async function resolveAnnualReturnCaseFindingForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; findingId: string; note: string | null },
+  dependencies: {
+    repository: Pick<AnnualReturnRepository, "getCase">;
+    analysis: {
+      resolveFinding(input: {
+        findingId: string;
+        caseId: string;
+        resolvedByUserId: string;
+        note: string | null;
+      }): Promise<boolean>;
+    };
+  },
+) {
+  // Staff, and a real user row. A resolution is the record of who decided, so an
+  // actor with no staff user id must not be able to make one -- it would either
+  // violate the resolved_by/resolved_at constraint or, worse, record a decision
+  // attributable to nobody.
+  const resolvedByUserId = requireStaffUserId(actor);
+
+  const case_ = await dependencies.repository.getCase(input.caseId);
+  if (!case_) throw new Error("Annual return case not found.");
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
+
+  const applied = await dependencies.analysis.resolveFinding({
+    findingId: input.findingId,
+    caseId: input.caseId,
+    resolvedByUserId,
+    note: input.note,
+  });
+
+  // False means somebody else resolved it first, or it does not belong to this
+  // case. Reported rather than thrown: the reviewer's intent is satisfied either
+  // way, and the refreshed list shows whose decision stands.
+  return { applied };
 }
 
 export async function listAnnualReturnCaseNotesForActor(
@@ -677,6 +750,46 @@ export const listAnnualReturnCaseHistory = createServerFn({ method: "GET" })
   .handler(({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>
       listAnnualReturnCaseHistoryForActor(actor, data, { repository }),
+    ),
+  );
+
+async function withAnalysisRepository<T>(
+  handler: (analysis: DocumentAnalysisRepository) => Promise<T>,
+): Promise<T> {
+  const { createDocumentAnalysisRepository } =
+    await import("@/features/documents/analysis-repository");
+  const analysis = createDocumentAnalysisRepository();
+  try {
+    return await handler(analysis);
+  } finally {
+    await analysis.close();
+  }
+}
+
+export const listAnnualReturnCaseFindings = createServerFn({ method: "GET" })
+  .validator(annualReturnCaseIdSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      withAnalysisRepository((analysis) =>
+        listAnnualReturnCaseFindingsForActor(actor, data, { repository, analysis }),
+      ),
+    ),
+  );
+
+export const resolveAnnualReturnCaseFinding = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      caseId: z.string().uuid(),
+      findingId: z.string().uuid(),
+      // Bounded: this is a person's note, not a place to paste a document.
+      note: z.string().trim().min(1).max(1000).nullable().default(null),
+    }),
+  )
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      withAnalysisRepository((analysis) =>
+        resolveAnnualReturnCaseFindingForActor(actor, data, { repository, analysis }),
+      ),
     ),
   );
 

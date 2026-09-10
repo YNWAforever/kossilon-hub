@@ -59,6 +59,22 @@ export type Finding = {
 };
 
 /**
+ * A finding as it exists in the database, with its identity and its resolution.
+ *
+ * One shape, used by both the review workspace and the package manifest. They
+ * had two: the manifest carried its own tier-less copy, which is how it came to
+ * test severity itself instead of asking `blocksRelease`, and how a provider
+ * finding could have blocked a filing.
+ */
+export type PersistedFinding = {
+  id: string;
+  finding: Finding;
+  /** A person dealt with it. No worker can write this. */
+  resolvedByUserId: string | null;
+  resolvedAt: string | null;
+};
+
+/**
  * The severity a finding is actually allowed to carry.
  *
  * Clamped rather than trusted, because three different things would otherwise

@@ -75,6 +75,7 @@ function findingState(overrides: {
   return {
     id: overrides.id,
     resolvedByUserId: overrides.resolvedByUserId ?? null,
+    resolvedAt: overrides.resolvedByUserId ? "2026-09-10T03:00:00.000Z" : null,
     finding: makeFinding({
       ruleKey: "content-identity-matches-claim",
       ruleVersion: "1",

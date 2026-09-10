@@ -6,7 +6,8 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type { AnalysisSubject } from "./analysis-worker";
-import type { Finding } from "./findings";
+import type { Finding, PersistedFinding } from "./findings";
+import { analysisStateFrom, viewFor, type DocumentFindingsView } from "./findings-review";
 import type { DocumentStatus, ScanVerdictSource } from "./types";
 
 /**
@@ -42,6 +43,12 @@ type PageClaimRow = {
   requirement_instance_id: string;
   page_from: number | null;
   page_to: number | null;
+};
+
+type PersistedRow = {
+  id: string;
+  resolved_by: string | null;
+  resolved_at: string | Date | null;
 };
 
 type FindingRow = {
@@ -92,6 +99,28 @@ export type DocumentAnalysisRepository = {
     findings: readonly Finding[];
   }): Promise<void>;
   listFindingsForVersion(documentVersionId: string): Promise<Finding[]>;
+  /** Every current version on a case, with its findings and its run state. */
+  listFindingsForCase(caseId: string): Promise<DocumentFindingsView[]>;
+  /**
+   * A person deals with a finding.
+   *
+   * `resolved_by is null` in the predicate makes it first-writer-wins rather
+   * than last: one reviewer's decision is never silently replaced by another's,
+   * and a double click records one resolution rather than two.
+   */
+  resolveFinding(input: {
+    findingId: string;
+    /**
+     * Scopes the write, and is the authorization rather than a hint. A caller
+     * that checked "may this actor see case X" and then updated by finding id
+     * alone could be handed a visible caseId paired with a finding from a case
+     * the actor cannot see. Joining the case into the UPDATE keeps the check and
+     * the write in one statement, so nothing can slip between them.
+     */
+    caseId: string;
+    resolvedByUserId: string;
+    note: string | null;
+  }): Promise<boolean>;
   close(): Promise<void>;
 };
 
@@ -217,6 +246,91 @@ export function createDocumentAnalysisRepository(
         order by created_at asc
       `;
       return rows.map(mapFinding);
+    },
+
+    async listFindingsForCase(caseId) {
+      const versions = await sql<
+        {
+          document_id: string;
+          document_version_id: string;
+          file_name: string;
+          job_status: "pending" | "processing" | "succeeded" | "failed" | "cancelled" | null;
+          job_error_code: string | null;
+        }[]
+      >`
+        select
+          d.id document_id, v.id document_version_id, v.file_name,
+          j.status job_status, j.last_error_code job_error_code
+        from documents d
+        -- The current version only. A superseded one is not what a reviewer is
+        -- deciding about, and showing its findings beside the live ones would
+        -- invite approving bytes the client has already replaced.
+        join document_versions v
+          on v.document_id = d.id and v.superseded_by_version_id is null
+        -- The most recent run. Left, because a version with no job at all is a
+        -- real state the view has to be able to report.
+        left join lateral (
+          select status, last_error_code
+          from document_analysis_jobs
+          where document_version_id = v.id
+          order by created_at desc
+          limit 1
+        ) j on true
+        where d.case_id = ${caseId}
+        order by d.uploaded_at desc
+      `;
+      if (versions.length === 0) return [];
+
+      const versionIds = versions.map((row) => row.document_version_id);
+      const rows = await sql<(FindingRow & PersistedRow)[]>`
+        select id, document_version_id, requirement_instance_id, page_from, page_to,
+          tier, rule_key, rule_version, outcome, severity, detail, resolved_by, resolved_at
+        from document_findings
+        where document_version_id = any(${versionIds}::uuid[])
+      `;
+
+      const byVersion = new Map<string, PersistedFinding[]>();
+      for (const row of rows) {
+        if (!row.document_version_id) continue;
+        const bucket = byVersion.get(row.document_version_id) ?? [];
+        bucket.push({
+          id: row.id,
+          finding: mapFinding(row),
+          resolvedByUserId: row.resolved_by,
+          resolvedAt: row.resolved_at === null ? null : new Date(row.resolved_at).toISOString(),
+        });
+        byVersion.set(row.document_version_id, bucket);
+      }
+
+      return versions.map((row) =>
+        viewFor({
+          documentId: row.document_id,
+          documentVersionId: row.document_version_id,
+          fileName: row.file_name,
+          state: analysisStateFrom(
+            row.job_status === null
+              ? null
+              : { status: row.job_status, lastErrorCode: row.job_error_code },
+          ),
+          findings: byVersion.get(row.document_version_id) ?? [],
+        }),
+      );
+    },
+
+    async resolveFinding(input) {
+      const rows = await sql<{ id: string }[]>`
+        update document_findings f
+        set resolved_by = ${input.resolvedByUserId}, resolved_at = now(),
+          resolution_note = ${input.note}
+        from document_versions v
+        join documents d on d.id = v.document_id
+        where f.id = ${input.findingId}
+          and f.resolved_by is null
+          and v.id = f.document_version_id
+          and d.case_id = ${input.caseId}
+        returning f.id
+      `;
+      return rows.length === 1;
     },
 
     async close() {

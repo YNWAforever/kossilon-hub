@@ -1,4 +1,4 @@
-import { blocksRelease, type Finding } from "@/features/documents/findings";
+import { blocksRelease, type PersistedFinding } from "@/features/documents/findings";
 import {
   canCiteInManifest,
   isCurrent,
@@ -38,20 +38,14 @@ export type HumanDecision = {
 /**
  * A finding from the analysis pipeline, as the manifest sees it.
  *
- * Carries the whole `Finding` rather than a copy of two of its fields. The
- * copy was a real gap: this type was written before the analysis pipeline
- * existed, so it had no `tier`, and the blocker check below tested
- * `severity === "critical"` itself instead of asking `blocksRelease`. Two
- * statements of one rule, and `findings.ts` claimed the opposite -- that the
- * manifest "asks this question rather than inspecting severity directly, so the
- * rule lives in one place". It did not, until now.
+ * The shared shape, not a copy. The copy was a real gap: this type predated the
+ * analysis pipeline, so it carried only id and severity with no `tier`, and the
+ * blocker check below tested `severity === "critical"` itself instead of asking
+ * `blocksRelease`. Two statements of one rule, while `findings.ts` claimed the
+ * opposite -- that the manifest asks rather than inspects, "so the rule lives in
+ * one place". It did not, until they became the same type.
  */
-export type FindingState = {
-  id: string;
-  finding: Finding;
-  /** Whether a person has dealt with it. A worker cannot set this. */
-  resolvedByUserId: string | null;
-};
+export type FindingState = PersistedFinding;
 
 export type ManifestCandidateEntry = {
   requirement: RequirementInstanceState;
