@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-d` · Current commit: `5467ad3` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-e` · Current commit: `f6176c7` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -11,7 +11,7 @@ its code is written.
 | **B** Monthly NAR intake and daily operations | ✅ complete | ❌ none | ❌ no | a database for the new tables |
 | **C** Document intelligence and Kossilon review | ✅ code complete | ❌ none | ❌ no | AI provider, text extraction, a database |
 | **D** Messaging, attachments and chasing | 🟨 partial | ❌ none | ❌ no | a WOZTELL media-download endpoint, real accounts, a database |
-| **E** External handoff and folder returns | ⬜ not started | — | — | the internal server, its protocol and rights |
+| **E** External handoff and folder returns | 🟨 model complete, nothing transmits | ❌ none | ❌ no | the internal server's protocol, address and rights |
 | **F** Pilot, scale and operations | ⬜ not started | — | — | pilot staff and representative cases |
 
 ## Phase B, work package by work package
@@ -147,28 +147,36 @@ A model cannot ask.
 
 ## Exact next step
 
-**Phase D's two features are built.** The fixture-replay send guard (migration
-`0030`) and inbound media capture (migration `0031`). Eight pre-existing defects
-in the messaging code were found and fixed first; they are listed below.
+**Phase E's model is built and nothing can transmit.** `package_handoffs`,
+`handoff_returns`, the refusal rules, the reconciliation rule and the destination
+adapter all exist; the adapter returns null in every provider mode because the
+firm's internal server's protocol, address and rights are not known here.
 
-What remains in D is what a provider gates:
+**Phase F — pilot, scale and operations** is the last phase, and it is the one
+that most needs what none of A–E has had: a database, real provider accounts and
+real cases. Everything below is worth reading before starting it.
 
-- **Inbound media cannot become a document.** The reference is recorded, but
-  WOZTELL's webhook documentation shows no media-download endpoint, so nothing
-  can fetch the bytes. `BLOCKED_INTEGRATION: whatsapp-media-download`. When that
-  endpoint is known, the path is: fetch → upload intent (requested by the webhook
-  rather than a person) → R2 → document → version → scan job → analysis job, so
-  the file passes the same malware gate as every other document rather than
-  beside it.
-- **Nothing is integration-verified.** No migration has been applied and no
-  provider account is reachable.
+### What five phases have and have not produced
 
-**Phase E — external handoff and folder returns** is the next phase. Its
-dependency (D) is code-complete for everything a provider does not gate.
+Code is complete for A, B, C, and for everything in D and E that a provider does
+not gate. **Nothing is integration-verified.** No migration (`0023`–`0032`) has
+been applied to any database; no provider account exists; the repository
+integration tests execute only in CI. Every SQL claim in this work rests on
+reading, not on running.
 
-Applying `0023` through `0031` to a database needs explicit authorization under
-`CLAUDE.md`. No Postgres is reachable here, so the repository integration tests
-execute only in CI.
+Six integrations are blocked, and four of them gate a capability the product
+appears to offer:
+
+- `malware-scanner-provider` — no document can reach `verified` safety, so no
+  package can be approved.
+- `document-text-extraction` — no rule can read a document's own words.
+- `ai-provider` — the third analysis tier never runs.
+- `whatsapp-media-download` — a client's attachment is recorded but never fetched.
+- `external-handoff-destination` — no package can be filed.
+- `local-postgres` / `deployment-runtime` — nothing has been executed or observed.
+
+The honest reading is that the product is code-complete and integration-zero. F
+is where that changes or is confirmed.
 
 ## Open blockers
 
@@ -176,6 +184,7 @@ execute only in CI.
 |---|---|---|
 | `BLOCKED_INTEGRATION: malware-scanner-provider` | Live document scanning stays disabled; the legacy re-scan backlog stays pending | An approved provider, its binding names, its data-handling terms |
 | `BLOCKED_INTEGRATION: local-postgres` | Repository tests run only in CI | A reachable `TEST_DATABASE_URL`, or the CI run on the PR |
+| `BLOCKED_INTEGRATION: external-handoff-destination` | No package can be transmitted to the filing agent; every handoff stays `prepared` and the 回件與異常 work view stays unreleased | The internal server's protocol, address, authentication and rights |
 | `BLOCKED_INTEGRATION: whatsapp-media-download` | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document | A documented WOZTELL media-download endpoint and its auth |
 | `BLOCKED_INTEGRATION: document-text-extraction` | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
 | `BLOCKED_INTEGRATION: ai-provider` | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms |
