@@ -286,6 +286,59 @@ export async function getAnnualReturnCaseForActor(
  * touched once it is visible: findings quote a document's own text, so reaching
  * them at all is a decision about who may read the case.
  */
+/**
+ * The parties to a filing, seeded from the officer register on first read.
+ *
+ * Seeded here rather than at case creation because the register changes: a
+ * director appointed after the case was opened would otherwise never become a
+ * candidate. The seed is insert-only and idempotent, so reading this repeatedly
+ * costs nothing and never disturbs a party somebody has confirmed.
+ */
+export async function listAnnualReturnCasePartiesForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string },
+  dependencies: {
+    repository: Pick<
+      AnnualReturnRepository,
+      "getCase" | "syncCasePartiesFromOfficers" | "listCaseParties"
+    >;
+  },
+) {
+  requireStaffUserId(actor);
+  const case_ = await dependencies.repository.getCase(input.caseId);
+  if (!case_) throw new Error("Annual return case not found.");
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
+
+  await dependencies.repository.syncCasePartiesFromOfficers(input.caseId);
+  return dependencies.repository.listCaseParties(input.caseId);
+}
+
+/**
+ * A person confirms that a candidate really is a party to this filing.
+ *
+ * `confirmedByUserId` comes from the actor, never the caller: the whole value of
+ * the field is that it names who decided. The requirements that party owes are
+ * created in the same transaction as the confirmation.
+ */
+export async function confirmAnnualReturnCasePartyForActor(
+  actor: AuthenticatedActor,
+  input: { caseId: string; partyId: string },
+  dependencies: {
+    repository: Pick<AnnualReturnRepository, "getCase" | "confirmCaseParty">;
+  },
+) {
+  const confirmedByUserId = requireStaffUserId(actor);
+  const case_ = await dependencies.repository.getCase(input.caseId);
+  if (!case_) throw new Error("Annual return case not found.");
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
+
+  return dependencies.repository.confirmCaseParty({
+    caseId: input.caseId,
+    partyId: input.partyId,
+    confirmedByUserId,
+  });
+}
+
 export async function listAnnualReturnCaseFindingsForActor(
   actor: AuthenticatedActor,
   input: { caseId: string },
@@ -765,6 +818,22 @@ async function withAnalysisRepository<T>(
     await analysis.close();
   }
 }
+
+export const listAnnualReturnCaseParties = createServerFn({ method: "GET" })
+  .validator(annualReturnCaseIdSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAnnualReturnCasePartiesForActor(actor, data, { repository }),
+    ),
+  );
+
+export const confirmAnnualReturnCaseParty = createServerFn({ method: "POST" })
+  .validator(z.object({ caseId: z.string().uuid(), partyId: z.string().uuid() }))
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      confirmAnnualReturnCasePartyForActor(actor, data, { repository }),
+    ),
+  );
 
 export const listAnnualReturnCaseFindings = createServerFn({ method: "GET" })
   .validator(annualReturnCaseIdSchema)

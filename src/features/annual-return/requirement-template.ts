@@ -226,3 +226,76 @@ export function describeFreshness(freshness: EvidenceFreshness): string {
         : "未設定計算基準日期，因此未能檢查是否在有效期內。這不代表文件符合要求。";
   }
 }
+
+/**
+ * Which requirement, if any, a free-text checklist label refers to.
+ *
+ * The checklist predates the template. Its rows carry labels a person typed --
+ * "Signed NAR1 form", "身分證明文件" -- and migration 0026 backfilled
+ * `requirement_key` straight from those labels under template_version 'legacy',
+ * so nothing keyed on a tidy identifier matches a real row.
+ *
+ * This is deliberately conservative and deliberately not clever. Each key has a
+ * short list of markers that only that requirement uses; a label matching none
+ * of them, or matching two, returns null. A requirement with no checklist row is
+ * simply not instantiated -- the checklist item is the case's authority for
+ * overall state, and an instance attached to the wrong row would put one
+ * requirement's evidence under another's name, which is worse than having no
+ * instance at all.
+ */
+const REQUIREMENT_MARKERS: readonly { key: string; markers: readonly string[] }[] = [
+  { key: "nar1", markers: ["nar1", "nar 1", "周年申報表", "annual return form"] },
+  { key: "agm", markers: ["agm", "股東周年大會", "周年大會", "annual general meeting"] },
+  { key: "cdd", markers: ["cdd", "盡職審查", "due diligence", "know your client", "kyc"] },
+  {
+    key: "identity",
+    markers: [
+      "身分證",
+      "身份證",
+      "hkid",
+      "passport",
+      "護照",
+      "identity document",
+      "identification",
+    ],
+  },
+  { key: "address-proof", markers: ["地址證明", "address proof", "proof of address", "住址證明"] },
+];
+
+export function matchRequirementKey(checklistItemLabel: string): string | null {
+  const label = checklistItemLabel.toLowerCase();
+  const hits = REQUIREMENT_MARKERS.filter((entry) =>
+    entry.markers.some((marker) => label.includes(marker)),
+  );
+
+  // Exactly one, or nothing. Two markers hitting means the label is ambiguous to
+  // this table, and picking the first would be a guess dressed as a rule.
+  return hits.length === 1 ? hits[0].key : null;
+}
+
+/**
+ * Builds the lookup `buildRequirementInstances` needs, and says what it could not
+ * place.
+ *
+ * `unmatched` is not an error. It is the list a person has to look at: those
+ * requirements have no checklist row on this case, so nothing will track them
+ * until somebody adds one or renames an existing row.
+ */
+export function checklistLookupFor(
+  items: readonly { id: string; itemLabel: string }[],
+  requirements: readonly RequirementDefinition[] = ANNUAL_RETURN_REQUIREMENTS,
+): { checklistItemIdFor: (key: string) => string | null; unmatched: string[] } {
+  const byKey = new Map<string, string>();
+  for (const item of items) {
+    const key = matchRequirementKey(item.itemLabel);
+    // First row wins. A second row matching the same key is a duplicate
+    // checklist entry, not a second requirement, and creating an instance
+    // against each would double every count downstream.
+    if (key && !byKey.has(key)) byKey.set(key, item.id);
+  }
+
+  return {
+    checklistItemIdFor: (key) => byKey.get(key) ?? null,
+    unmatched: requirements.filter((entry) => !byKey.has(entry.key)).map((entry) => entry.key),
+  };
+}

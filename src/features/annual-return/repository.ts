@@ -4,7 +4,12 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
-import type { RequirementInstanceDraft } from "./requirement-template";
+import {
+  buildRequirementInstances,
+  checklistLookupFor,
+  type PartyType,
+  type RequirementInstanceDraft,
+} from "./requirement-template";
 import { shouldChaseClient } from "./outstanding";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
@@ -345,6 +350,17 @@ export type CreateAnnualReturnCaseInput = {
   actorId: string;
 };
 
+export type CasePartyRecord = {
+  id: string;
+  caseId: string;
+  officerId: string | null;
+  partyType: PartyType;
+  displayName: string;
+  confirmedByUserId: string | null;
+  confirmedAt: string | null;
+  active: boolean;
+};
+
 export type AnnualReturnRepository = {
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]>;
@@ -365,6 +381,37 @@ export type AnnualReturnRepository = {
     caseId: string,
     drafts: readonly RequirementInstanceDraft[],
   ): Promise<{ created: number }>;
+  /**
+   * Creates candidate parties from the company's officer register.
+   *
+   * Nothing wrote case_parties at all, so the per-party requirement model Phase B
+   * built was unreachable: no party ever existed, and only company-level
+   * requirements could ever be produced.
+   *
+   * Candidates, not parties. Every row lands unconfirmed, because `case_parties`
+   * states the rule plainly -- "a requirement must never be judged complete or
+   * incomplete against a guess about who the parties are". The register is
+   * evidence about who the officers are; it is not a person confirming that these
+   * are the parties for this filing.
+   *
+   * Serving officers only (cessation_date is null), and insert-only: the partial
+   * unique index on (case_id, officer_id) makes a repeat run a no-op rather than
+   * a duplicate, and a party somebody has already confirmed is never rewritten.
+   */
+  syncCasePartiesFromOfficers(caseId: string): Promise<{ created: number }>;
+  listCaseParties(caseId: string): Promise<CasePartyRecord[]>;
+  /**
+   * A person confirms a party, and the requirements that party owes appear.
+   *
+   * The sync runs in the same transaction as the confirmation: a confirmed party
+   * whose requirements were never created would read as a party owing nothing,
+   * which is precisely the false-completeness this model exists to prevent.
+   */
+  confirmCaseParty(input: {
+    caseId: string;
+    partyId: string;
+    confirmedByUserId: string;
+  }): Promise<{ confirmed: boolean; requirementsCreated: number }>;
   listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage>;
   listAllCases(
     filters: CaseFilters,
@@ -2557,10 +2604,143 @@ export function createAnnualReturnRepository(
     return { created };
   }
 
+  async function syncCasePartiesFromOfficers(caseId: string): Promise<{ created: number }> {
+    const rows = await sql<{ id: string }[]>`
+      insert into case_parties (case_id, officer_id, party_type, display_name)
+      select c.id, o.id, o.officer_type, o.name
+      from annual_return_cases c
+      join officers o on o.company_id = c.company_id
+      where c.id = ${caseId}
+        -- Serving officers only. A director who has ceased is not a party to
+        -- this filing, and the register records that with a cessation date.
+        and o.cessation_date is null
+      -- Unconfirmed by construction: confirmed_by and confirmed_at are left
+      -- null, so buildRequirementInstances produces nothing for these until a
+      -- person says they are right.
+      on conflict do nothing
+      returning id
+    `;
+    return { created: rows.length };
+  }
+
+  async function listCaseParties(caseId: string): Promise<CasePartyRecord[]> {
+    const rows = await sql<
+      {
+        id: string;
+        case_id: string;
+        officer_id: string | null;
+        party_type: PartyType;
+        display_name: string;
+        confirmed_by: string | null;
+        confirmed_at: string | Date | null;
+        active: boolean;
+      }[]
+    >`
+      select id, case_id, officer_id, party_type, display_name, confirmed_by, confirmed_at, active
+      from case_parties
+      where case_id = ${caseId}
+      order by party_type asc, display_name asc
+    `;
+
+    return rows.map((row) => ({
+      id: row.id,
+      caseId: row.case_id,
+      officerId: row.officer_id,
+      partyType: row.party_type,
+      displayName: row.display_name,
+      confirmedByUserId: row.confirmed_by,
+      confirmedAt: row.confirmed_at === null ? null : new Date(row.confirmed_at).toISOString(),
+      active: row.active,
+    }));
+  }
+
+  async function confirmCaseParty(input: {
+    caseId: string;
+    partyId: string;
+    confirmedByUserId: string;
+  }): Promise<{ confirmed: boolean; requirementsCreated: number }> {
+    return withTransaction(sql, async (tx) => {
+      // Scoped to the case in the UPDATE, so a party id from another case cannot
+      // be confirmed by pairing it with a case the actor may see. The check and
+      // the write are one statement; nothing can slip between them.
+      const confirmedRows = await tx<{ id: string }[]>`
+        update case_parties
+        set confirmed_by = ${input.confirmedByUserId}, confirmed_at = now(), updated_at = now()
+        where id = ${input.partyId}
+          and case_id = ${input.caseId}
+          and confirmed_by is null
+        returning id
+      `;
+      if (confirmedRows.length === 0) return { confirmed: false, requirementsCreated: 0 };
+
+      const partyRows = await tx<
+        { id: string; party_type: PartyType; display_name: string; active: boolean }[]
+      >`
+        select id, party_type, display_name, active from case_parties where case_id = ${input.caseId}
+      `;
+      const confirmedIds = new Set(
+        (
+          await tx<{ id: string }[]>`
+            select id from case_parties
+            where case_id = ${input.caseId} and confirmed_by is not null
+          `
+        ).map((row) => row.id),
+      );
+
+      const checklistRows = await tx<{ id: string; item_label: string }[]>`
+        select id, item_label from annual_return_checklist_items where case_id = ${input.caseId}
+      `;
+      const caseRows = await tx<{ made_up_date: string | Date }[]>`
+        select made_up_date from annual_return_cases where id = ${input.caseId}
+      `;
+
+      const lookup = checklistLookupFor(
+        checklistRows.map((row) => ({ id: row.id, itemLabel: row.item_label })),
+      );
+
+      const { drafts } = buildRequirementInstances({
+        parties: partyRows.map((row) => ({
+          id: row.id,
+          partyType: row.party_type,
+          displayName: row.display_name,
+          confirmed: confirmedIds.has(row.id),
+          active: row.active,
+        })),
+        checklistItemIdFor: lookup.checklistItemIdFor,
+        // The made-up date is the case's own stated anchor for evidence age.
+        // Never today: the schema forbids that, because it would silently re-age
+        // every document each time it was read.
+        referenceDate: caseRows[0]
+          ? new Date(caseRows[0].made_up_date).toISOString().slice(0, 10)
+          : null,
+      });
+
+      let requirementsCreated = 0;
+      for (const draft of drafts) {
+        const inserted = await tx<{ id: string }[]>`
+          insert into case_requirement_instances (
+            case_id, checklist_item_id, party_id, requirement_key, template_version, reference_date
+          ) values (
+            ${input.caseId}, ${draft.checklistItemId}, ${draft.partyId}, ${draft.requirementKey},
+            ${draft.templateVersion}, ${draft.referenceDate}
+          )
+          on conflict do nothing
+          returning id
+        `;
+        if (inserted.length === 1) requirementsCreated += 1;
+      }
+
+      return { confirmed: true, requirementsCreated };
+    });
+  }
+
   return {
     listCases,
     listCaseRequirements,
     syncRequirementInstances,
+    syncCasePartiesFromOfficers,
+    listCaseParties,
+    confirmCaseParty,
     listCasePage,
     listAllCases,
     boardTotals,

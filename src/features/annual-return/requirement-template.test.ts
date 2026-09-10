@@ -3,8 +3,10 @@ import {
   ANNUAL_RETURN_REQUIREMENTS,
   ANNUAL_RETURN_TEMPLATE_VERSION,
   buildRequirementInstances,
+  checklistLookupFor,
   describeFreshness,
   evidenceFreshness,
+  matchRequirementKey,
   type CaseParty,
   type PartyType,
 } from "./requirement-template";
@@ -232,5 +234,64 @@ describe("evidenceFreshness", () => {
     });
     expect(describeFreshness(freshness)).toContain("2026-03-30");
     expect(describeFreshness(freshness)).toContain("2026-01-01");
+  });
+});
+
+describe("matchRequirementKey", () => {
+  it("matches the labels a person actually types, in both languages", () => {
+    expect(matchRequirementKey("Signed NAR1 form")).toBe("nar1");
+    expect(matchRequirementKey("周年申報表 NAR1")).toBe("nar1");
+    expect(matchRequirementKey("AGM minutes")).toBe("agm");
+    expect(matchRequirementKey("股東周年大會記錄")).toBe("agm");
+    expect(matchRequirementKey("CDD pack")).toBe("cdd");
+    expect(matchRequirementKey("身分證明文件")).toBe("identity");
+    expect(matchRequirementKey("Proof of address for each director")).toBe("address-proof");
+    expect(matchRequirementKey("地址證明")).toBe("address-proof");
+  });
+
+  /**
+   * The whole point of being conservative. An instance attached to the wrong
+   * checklist row would file one requirement's evidence under another's name,
+   * which is worse than having no instance at all.
+   */
+  it("returns null rather than guessing at a label it does not recognise", () => {
+    expect(matchRequirementKey("Miscellaneous supporting papers")).toBeNull();
+    expect(matchRequirementKey("")).toBeNull();
+    expect(matchRequirementKey("Board resolution")).toBeNull();
+  });
+
+  it("returns null when a label could be two requirements at once", () => {
+    // Mentions both an identity document and an address proof; which row it is
+    // meant to be is not this table's to decide.
+    expect(matchRequirementKey("HKID and proof of address")).toBeNull();
+  });
+});
+
+describe("checklistLookupFor", () => {
+  it("maps each requirement onto the checklist row that refines it", () => {
+    const lookup = checklistLookupFor([
+      { id: "item-nar1", itemLabel: "Signed NAR1 form" },
+      { id: "item-id", itemLabel: "身分證明文件" },
+    ]);
+    expect(lookup.checklistItemIdFor("nar1")).toBe("item-nar1");
+    expect(lookup.checklistItemIdFor("identity")).toBe("item-id");
+    expect(lookup.checklistItemIdFor("cdd")).toBeNull();
+  });
+
+  // Not an error -- the list a person has to look at. Those requirements have no
+  // checklist row, so nothing tracks them until somebody adds or renames one.
+  it("reports the requirements it could not place", () => {
+    const lookup = checklistLookupFor([{ id: "item-nar1", itemLabel: "Signed NAR1 form" }]);
+    expect(lookup.unmatched.sort()).toEqual(["address-proof", "agm", "cdd", "identity"]);
+  });
+
+  // A second row matching the same key is a duplicate checklist entry, not a
+  // second requirement; an instance against each would double every count.
+  it("takes the first row when two labels match the same requirement", () => {
+    const lookup = checklistLookupFor([
+      { id: "item-a", itemLabel: "NAR1 draft" },
+      { id: "item-b", itemLabel: "NAR1 signed" },
+    ]);
+    expect(lookup.checklistItemIdFor("nar1")).toBe("item-a");
   });
 });
