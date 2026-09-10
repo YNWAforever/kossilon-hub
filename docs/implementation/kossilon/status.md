@@ -1,6 +1,6 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-d` · Current commit: `e3d91d3` · Base: `main` = `fa02046`
+Current branch: `codex/kossilon-phase-d` · Current commit: `5467ad3` · Base: `main` = `fa02046`
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
 its code is written.
@@ -10,7 +10,7 @@ its code is written.
 | **A** Safe staff document workflow | ✅ complete | ❌ none | ❌ no | scanner provider, a database, a browser walkthrough |
 | **B** Monthly NAR intake and daily operations | ✅ complete | ❌ none | ❌ no | a database for the new tables |
 | **C** Document intelligence and Kossilon review | ✅ code complete | ❌ none | ❌ no | AI provider, text extraction, a database |
-| **D** Messaging, attachments and chasing | ⬜ not started | — | — | real accounts and conversations |
+| **D** Messaging, attachments and chasing | 🟨 partial | ❌ none | ❌ no | a WOZTELL media-download endpoint, real accounts, a database |
 | **E** External handoff and folder returns | ⬜ not started | — | — | the internal server, its protocol and rights |
 | **F** Pilot, scale and operations | ⬜ not started | — | — | pilot staff and representative cases |
 
@@ -147,36 +147,26 @@ A model cannot ask.
 
 ## Exact next step
 
-**Phase C is complete.** All seven packages are done and the per-party model is
-reachable end to end: officers seed candidates, a person confirms one, and that
-party's requirements are created in the same transaction.
+**Phase D's two features are built.** The fixture-replay send guard (migration
+`0030`) and inbound media capture (migration `0031`). Eight pre-existing defects
+in the messaging code were found and fixed first; they are listed below.
 
-One thing deliberately left, and it is a product decision rather than an
-oversight: nothing prunes a requirement instance whose party has since left the
-case. Insert-only was chosen so a sync can never erase a human decision — a
-waiver, a not-applicable with a reason, an authorising user — and pruning needs
-to be an action a person takes rather than a side effect of recomputing a
-template.
+What remains in D is what a provider gates:
 
-Note also that `matchRequirementKey` is conservative by design. On a case whose
-checklist rows do not name a requirement (the seeded fixtures carry only "Signed
-NAR1 form"), the identity and address-proof requirements are simply not
-instantiated, because there is no row to attach them to. That is visible in the
-review workspace rather than silent, but it means a firm adopting the template
-will want its checklist labels to name what they are.
+- **Inbound media cannot become a document.** The reference is recorded, but
+  WOZTELL's webhook documentation shows no media-download endpoint, so nothing
+  can fetch the bytes. `BLOCKED_INTEGRATION: whatsapp-media-download`. When that
+  endpoint is known, the path is: fetch → upload intent (requested by the webhook
+  rather than a person) → R2 → document → version → scan job → analysis job, so
+  the file passes the same malware gate as every other document rather than
+  beside it.
+- **Nothing is integration-verified.** No migration has been applied and no
+  provider account is reachable.
 
-**Phase D — messaging, attachments and chasing** is where the work continues.
-Eight pre-existing defects in the messaging code have already been found and
-fixed (see the Phase D section below); none of Phase D's own features is built:
+**Phase E — external handoff and folder returns** is the next phase. Its
+dependency (D) is code-complete for everything a provider does not gate.
 
-- **Inbound media intake.** An attachment becomes the literal string `[image]`
-  today; `waMediaId` survives only in a JSONB blob no read query selects, nothing
-  downloads media, and the WhatsApp feature imports nothing from documents. A new
-  capability, not an extension.
-- **The fixture-replay send guard.** The plan requires "do not send customer
-  reminders during fixture replay" and nothing in code enforces it.
-
-Applying `0023` through `0029` to a database needs explicit authorization under
+Applying `0023` through `0031` to a database needs explicit authorization under
 `CLAUDE.md`. No Postgres is reachable here, so the repository integration tests
 execute only in CI.
 
@@ -186,6 +176,7 @@ execute only in CI.
 |---|---|---|
 | `BLOCKED_INTEGRATION: malware-scanner-provider` | Live document scanning stays disabled; the legacy re-scan backlog stays pending | An approved provider, its binding names, its data-handling terms |
 | `BLOCKED_INTEGRATION: local-postgres` | Repository tests run only in CI | A reachable `TEST_DATABASE_URL`, or the CI run on the PR |
+| `BLOCKED_INTEGRATION: whatsapp-media-download` | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document | A documented WOZTELL media-download endpoint and its auth |
 | `BLOCKED_INTEGRATION: document-text-extraction` | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
 | `BLOCKED_INTEGRATION: ai-provider` | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms |
 | `BLOCKED_INTEGRATION: deployment-runtime` | Whether the 5-minute schedule really fires is unverified | Observed evidence of a scheduled invocation on the deployed runtime |
