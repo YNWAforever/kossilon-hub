@@ -42,6 +42,8 @@ export type DocumentUploadIntent = {
   companyId: string;
   caseId: string | null;
   documentId: string | null;
+  /** Which checklist requirement this upload answers, when the uploader said. */
+  checklistItemId: string | null;
   requestedByAuthUserId: string;
   category: DocumentCategory;
   fileName: string;
@@ -146,6 +148,7 @@ type IntentRow = {
   company_id: string;
   case_id: string | null;
   document_id: string | null;
+  checklist_item_id: string | null;
   requested_by_auth_user_id: string;
   category: DocumentCategory;
   file_name: string;
@@ -201,6 +204,7 @@ function mapIntent(row: IntentRow): DocumentUploadIntent {
     companyId: row.company_id,
     caseId: row.case_id,
     documentId: row.document_id,
+    checklistItemId: row.checklist_item_id ?? null,
     requestedByAuthUserId: row.requested_by_auth_user_id,
     category: row.category,
     fileName: row.file_name,
@@ -247,6 +251,7 @@ export type DocumentRepository = {
   createUploadIntent(input: {
     companyId: string;
     caseId?: string;
+    checklistItemId?: string;
     replacementDocumentId?: string;
     requestedByAuthUserId: string;
     category: DocumentCategory;
@@ -367,6 +372,17 @@ export function createDocumentRepository(
           if (!cases[0] || cases[0].company_id !== input.companyId)
             throw new Error("Case does not belong to the company.");
         }
+        if (input.checklistItemId) {
+          // Checked against the case, not merely for existence. A client-supplied
+          // checklist item id from another company's case would otherwise let one
+          // client's upload satisfy another client's requirement.
+          if (!input.caseId) throw new Error("A checklist item requires a case.");
+          const items = await tx<{ case_id: string }[]>`
+            select case_id from annual_return_checklist_items
+            where id = ${input.checklistItemId} for update`;
+          if (!items[0] || items[0].case_id !== input.caseId)
+            throw new Error("Checklist item does not belong to the case.");
+        }
         if (input.replacementDocumentId) {
           const replaced = await tx<
             { company_id: string; case_id: string | null; verification_status: string }[]
@@ -404,9 +420,10 @@ export function createDocumentRepository(
         // checklistItemId for checklist categories, so nothing auto-attaches.
         const rows = await tx<IntentRow[]>`
           insert into document_upload_intents (
-            company_id, case_id, requested_by_auth_user_id, category, file_name, content_type,
-            expected_size_bytes, checksum_sha256, object_key, expires_at
-          ) values (${input.companyId}, ${input.caseId ?? null}, ${input.requestedByAuthUserId},
+            company_id, case_id, checklist_item_id, requested_by_auth_user_id, category, file_name,
+            content_type, expected_size_bytes, checksum_sha256, object_key, expires_at
+          ) values (${input.companyId}, ${input.caseId ?? null}, ${input.checklistItemId ?? null},
+            ${input.requestedByAuthUserId},
             ${input.category}, ${input.fileName}, ${input.contentType}, ${input.expectedSizeBytes},
             ${input.checksum}, ${input.objectKey}, ${input.expiresAt}) returning *`;
         return mapIntent(rows[0]);
@@ -449,6 +466,32 @@ export function createDocumentRepository(
           checksum: intent.checksum,
           reason: "initial",
         });
+
+        // The checklist finally hears about the upload.
+        //
+        // In the same transaction as the document, because a received file whose
+        // requirement still reads 'Missing' is the exact state that had the
+        // client chased for a document already in hand.
+        //
+        // Only from Missing or Rejected, and never over a Verified item: an
+        // approval is a human decision about specific bytes and a later upload
+        // does not undo it. A Received item stays Received -- the second upload
+        // is additional evidence for the same requirement, not a fresh receipt.
+        //
+        // Written here rather than through annual-return's updateChecklistItem
+        // deliberately. That path also calls ensureWorkItemForEvent, which throws
+        // when no active SLA policy exists for the work type, and an upload must
+        // not fail because of a missing policy row. The receipt is recorded; the
+        // internal review task is derived from the 'Received' status itself.
+        if (intent.checklistItemId) {
+          await tx`
+            update annual_return_checklist_items
+            set status = 'Received', received_at = now(), document_id = ${documents[0].id},
+              updated_at = now()
+            where id = ${intent.checklistItemId}
+              and case_id = ${intent.caseId}
+              and status in ('Missing', 'Rejected')`;
+        }
 
         const rows = await tx<DocumentRow[]>`
           select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,

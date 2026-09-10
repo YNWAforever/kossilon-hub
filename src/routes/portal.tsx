@@ -28,6 +28,10 @@ import {
   useAnnualReturnCases,
 } from "../lib/annual-return-store";
 import {
+  awaitingInternalReview,
+  outstandingForClient,
+} from "../features/annual-return/outstanding";
+import {
   getClientPortalActivity,
   getClientPortalProgress,
   getClientPortalRequiredActions,
@@ -462,9 +466,10 @@ function clientPortalStatusTone(status: ProductionAnnualReturnCase["currentStatu
  */
 function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }) {
   const [, setWarning] = useState<string | undefined>();
-  const outstanding = caseItem.checklist.filter(
-    (item) => item.required && item.status !== "Verified",
-  );
+  // Excludes Received. A document the client sent is awaiting our review, and
+  // listing it here asked them to send it a second time.
+  const outstanding = outstandingForClient(caseItem.checklist);
+  const awaitingOurReview = awaitingInternalReview(caseItem.checklist);
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -493,6 +498,18 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
             ))}
           </ul>
         ) : null}
+        {/* Said explicitly, because "nothing outstanding" and "we have your
+            documents and are checking them" are different things to a client
+            who has just uploaded, and the old screen showed neither. */}
+        {awaitingOurReview.length > 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            {`We have received ${awaitingOurReview.length} document${
+              awaitingOurReview.length === 1 ? "" : "s"
+            } from you and are reviewing ${awaitingOurReview.length === 1 ? "it" : "them"}. Nothing further is needed for ${
+              awaitingOurReview.length === 1 ? "it" : "them"
+            }.`}
+          </p>
+        ) : null}
         {caseItem.payment ? (
           <p className="mt-3 text-sm text-muted-foreground">
             Invoice {caseItem.payment.invoiceNumber} — {caseItem.payment.currency}{" "}
@@ -509,6 +526,7 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
       <ProductionDocumentPanel
         companyId={caseItem.companyId}
         caseId={caseItem.id}
+        requirements={outstanding}
         onWarning={setWarning}
       />
       <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/portal">
@@ -621,6 +639,7 @@ function ProductionPortalCaseView({ caseItem }: { caseItem: ProductionAnnualRetu
       <ProductionDocumentPanel
         companyId={caseItem.companyId}
         caseId={caseItem.id}
+        requirements={outstandingForClient(caseItem.checklist ?? [])}
         onWarning={setWarning}
       />
     </main>
@@ -629,14 +648,20 @@ function ProductionPortalCaseView({ caseItem }: { caseItem: ProductionAnnualRetu
 function ProductionDocumentPanel({
   companyId,
   caseId,
+  requirements = [],
   onWarning,
 }: {
+  requirements?: readonly { id: string; itemLabel: string }[];
   companyId: string;
   caseId: string;
   onWarning: (warning: string | undefined) => void;
 }) {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<DocumentCategory>("other");
+  // Which requirement this upload answers. Optional: an upload that names none
+  // is real, and lands as unassigned evidence for staff to map rather than being
+  // refused or guessed at.
+  const [checklistItemId, setChecklistItemId] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   // Per-file, because a batch where one file fails validation and four succeed
   // has five different outcomes, and a single shared banner can only show the
@@ -661,6 +686,7 @@ function ProductionDocumentPanel({
         data: {
           companyId,
           caseId,
+          ...(checklistItemId ? { checklistItemId } : {}),
           category,
           fileName: candidate.name,
           contentType: candidate.type,
@@ -748,6 +774,24 @@ function ProductionDocumentPanel({
                 ))}
               </select>
             </label>
+            {requirements.length > 0 ? (
+              <label className="grid gap-1 text-sm">
+                回應哪一項要求
+                <select
+                  aria-label="Which requirement this answers"
+                  className="rounded-md border bg-background px-3 py-2"
+                  value={checklistItemId}
+                  onChange={(event) => setChecklistItemId(event.target.value)}
+                >
+                  <option value="">未指定（由職員配對）</option>
+                  {requirements.map((requirement) => (
+                    <option key={requirement.id} value={requirement.id}>
+                      {requirement.itemLabel}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="grid gap-1 text-sm">
               File
               <input

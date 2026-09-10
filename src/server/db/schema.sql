@@ -441,6 +441,10 @@ create table if not exists document_upload_intents (
   -- unknown safety, never verified safety.
   scan_verdict_source text
     check (scan_verdict_source is null or scan_verdict_source in ('provider', 'deterministic')),
+  -- from 0024: which checklist requirement this upload answers. Nullable, because
+  -- an upload that names none is unassigned evidence a person maps rather than a
+  -- guess the importer makes.
+  checklist_item_id uuid references annual_return_checklist_items(id) on delete set null,
   -- Governs an upload that was never completed. Received files are governed by
   -- quarantine_retention_until instead and are never deleted by the expiry sweep.
   expires_at timestamptz not null,
@@ -526,6 +530,11 @@ create index if not exists document_upload_intents_cleanup_idx
   where status in ('created', 'uploaded');
 
 -- from 0023
+-- from 0024
+create index if not exists document_upload_intents_checklist_item_idx
+  on document_upload_intents (checklist_item_id)
+  where checklist_item_id is not null;
+
 create index if not exists document_upload_intents_quarantine_retention_idx
   on document_upload_intents (quarantine_retention_until)
   where status = 'quarantined';

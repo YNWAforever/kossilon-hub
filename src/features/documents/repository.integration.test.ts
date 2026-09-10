@@ -67,7 +67,17 @@ function intentInput(fixtureData: Fixture, overrides: Record<string, unknown> = 
   };
 }
 
+/** Checklist items this file marked Received, so the seed row is left as found. */
+const touchedChecklistItems = new Set<string>();
+
 async function cleanup(sql: SqlClient): Promise<void> {
+  for (const itemId of touchedChecklistItems) {
+    await sql`
+      update annual_return_checklist_items
+      set status = 'Missing', received_at = null, document_id = null
+      where id = ${itemId}`;
+  }
+  touchedChecklistItems.clear();
   await sql`
     delete from document_scan_jobs
     where intent_id in (
@@ -86,6 +96,14 @@ async function anyUserId(sql: SqlClient): Promise<string> {
   const rows = await sql<{ id: string }[]>`select id from users order by created_at asc limit 1`;
   if (!rows[0]) throw new Error("Document integration tests need a seeded user.");
   return rows[0].id;
+}
+
+
+async function checklistItemFor(sql: SqlClient, caseId: string): Promise<string | null> {
+  const rows = await sql<{ id: string }[]>`
+    select id from annual_return_checklist_items
+    where case_id = ${caseId} order by due_date asc, item_label asc limit 1`;
+  return rows[0]?.id ?? null;
 }
 
 describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
@@ -422,6 +440,126 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
       expect(await jobs.markSucceeded(mine!.id, { now, attemptCount: 1 })).toBe(true);
       // And the winning write is not applied twice.
       expect(await jobs.markSucceeded(mine!.id, { now, attemptCount: 1 })).toBe(false);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "marks the checklist item received in the same transaction as the document",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+      if (!data.caseId) return;
+      const itemId = await checklistItemFor(sql, data.caseId);
+      if (!itemId) return;
+      touchedChecklistItems.add(itemId);
+      await sql`
+        update annual_return_checklist_items
+        set status = 'Missing', received_at = null, document_id = null where id = ${itemId}`;
+
+      const intent = await repository.createUploadIntent(
+        intentInput(data, { checklistItemId: itemId }),
+      );
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      const rows = await sql<{ status: string; document_id: string | null; received_at: string | null }[]>`
+        select status, document_id, received_at::text as received_at
+        from annual_return_checklist_items where id = ${itemId}`;
+      // The whole point: the requirement can no longer read "Missing" while the
+      // document that answers it is sitting in quarantine.
+      expect(rows[0]?.status).toBe("Received");
+      expect(rows[0]?.document_id).toBe(document.id);
+      expect(rows[0]?.received_at).not.toBeNull();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "does not overwrite a verified requirement with a later upload",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+      if (!data.caseId) return;
+      const itemId = await checklistItemFor(sql, data.caseId);
+      if (!itemId) return;
+      touchedChecklistItems.add(itemId);
+      // An approval is a human decision about specific bytes; a later upload is
+      // additional evidence, not grounds to undo it.
+      await sql`
+        update annual_return_checklist_items
+        set status = 'Verified', verified_at = now() where id = ${itemId}`;
+
+      const intent = await repository.createUploadIntent(
+        intentInput(data, { checklistItemId: itemId, checksum: CHECKSUM_B }),
+      );
+      await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      const rows = await sql<{ status: string }[]>`
+        select status from annual_return_checklist_items where id = ${itemId}`;
+      expect(rows[0]?.status).toBe("Verified");
+
+      await sql`update annual_return_checklist_items set verified_at = null where id = ${itemId}`;
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "refuses a checklist item that belongs to another case",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+      if (!data.caseId) return;
+
+      const otherItem = await sql<{ id: string }[]>`
+        select i.id from annual_return_checklist_items i
+        where i.case_id <> ${data.caseId} limit 1`;
+      if (!otherItem[0]) return;
+
+      // Without this check a client-supplied item id from another company's case
+      // would let one client's upload satisfy another client's requirement.
+      await expect(
+        repository.createUploadIntent(intentInput(data, { checklistItemId: otherItem[0].id })),
+      ).rejects.toThrow(/does not belong to the case/i);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "leaves the checklist alone for an upload that names no requirement",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const data = await fixture(sql);
+      if (!data.caseId) return;
+      const itemId = await checklistItemFor(sql, data.caseId);
+      if (!itemId) return;
+
+      const before = await sql<{ status: string }[]>`
+        select status from annual_return_checklist_items where id = ${itemId}`;
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+
+      // Unassigned evidence a person maps, not a silent guess at which
+      // requirement it answers.
+      const after = await sql<{ status: string }[]>`
+        select status from annual_return_checklist_items where id = ${itemId}`;
+      expect(after[0]?.status).toBe(before[0]?.status);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

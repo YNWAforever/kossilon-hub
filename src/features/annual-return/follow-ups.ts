@@ -2,6 +2,7 @@ import type { DocumentCategory } from "@/features/documents/types";
 import type { NotificationStatus } from "@/features/notifications/types";
 import type { AnnualReturnCase } from "./types";
 import { buildReminderDraft } from "./workflow";
+import { shouldChaseClient } from "./outstanding";
 
 export const PRODUCTION_FOLLOW_UP_SOURCES = [
   "annual-return",
@@ -130,6 +131,10 @@ export function deriveProductionFollowUpDrafts(
   const drafts: ProductionFollowUpDraft[] = [];
 
   for (const caseItem of mutableCases) {
+    // The loop had no outstanding-work test whatsoever, so every mutable case
+    // produced a chase draft -- including cases whose client had already sent
+    // everything, whose draft then listed nothing to send.
+    if (!shouldChaseClient(caseItem)) continue;
     const recipient = recipients.get(caseItem.id);
     const identity: ProductionFollowUpIdentity = {
       source: "annual-return",

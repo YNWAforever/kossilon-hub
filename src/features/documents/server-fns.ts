@@ -183,6 +183,7 @@ export async function createDocumentUploadIntentForActor(
   input: {
     companyId: string;
     caseId?: string;
+    checklistItemId?: string;
     replacementDocumentId?: string;
     category: (typeof DOCUMENT_CATEGORIES)[number];
     fileName: string;
@@ -196,6 +197,10 @@ export async function createDocumentUploadIntentForActor(
   return dependencies.repository.createUploadIntent({
     companyId: input.companyId,
     caseId: input.caseId,
+    // Scoped against the case inside createUploadIntent's own transaction, so a
+    // client-supplied item id from another company's case cannot satisfy this
+    // one's requirement.
+    checklistItemId: input.checklistItemId,
     replacementDocumentId: input.replacementDocumentId,
     requestedByAuthUserId: actor.authUserId,
     category: input.category,
@@ -348,6 +353,7 @@ const createIntentSchema = z
   .object({
     companyId: z.string().uuid(),
     caseId: z.string().uuid().optional(),
+    checklistItemId: z.string().uuid().optional(),
     replacementDocumentId: z.string().uuid().optional(),
     category: z.enum(DOCUMENT_CATEGORIES),
     fileName: z.string().trim().min(1).max(255),

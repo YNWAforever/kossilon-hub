@@ -48,6 +48,7 @@ const intent: DocumentUploadIntent = {
   companyId,
   caseId: "40000000-0000-0000-0000-000000000001",
   documentId: null,
+  checklistItemId: null,
   requestedByAuthUserId: actor.authUserId,
   category: "identity",
   fileName: "passport.pdf",
