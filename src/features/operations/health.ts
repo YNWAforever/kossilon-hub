@@ -145,6 +145,19 @@ export function maintenanceHealthOf(input: {
   runs: readonly MaintenanceRunRecord[];
   now: string;
   toleranceSeconds: number;
+  /**
+   * The last clean scheduled run in all of history, supplied by the caller.
+   *
+   * `runs` is a window -- the most recent handful -- and a window can answer
+   * "is it running now" but not "when did it last work". Deriving the second
+   * from the first meant an hour of partial ticks pushed the last success out
+   * of view and the screen reported that the schedule had never succeeded.
+   *
+   * Optional so the pure rule stays callable with a window alone; when omitted
+   * it falls back to the window, which is right for a caller that has no more
+   * than that.
+   */
+  lastScheduledSuccessAt?: string | null;
 }): MaintenanceHealth {
   // Scheduled runs only. The question this answers is "is the schedule
   // running", and an operator invoking the entrypoint by hand -- during a
@@ -171,7 +184,11 @@ export function maintenanceHealthOf(input: {
   }
 
   const lagSeconds = secondsBetween(latest.finishedAt, input.now);
-  const lastSuccessAt = scheduled.find((run) => run.outcome === "succeeded")?.finishedAt ?? null;
+  // History first, window second. The window is a fallback, not the source.
+  const lastSuccessAt =
+    input.lastScheduledSuccessAt !== undefined
+      ? input.lastScheduledSuccessAt
+      : (scheduled.find((run) => run.outcome === "succeeded")?.finishedAt ?? null);
   const shared = {
     lastRunAt: latest.finishedAt,
     lastSuccessAt,

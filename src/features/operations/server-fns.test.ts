@@ -20,9 +20,17 @@ function queues(overrides: Partial<QueueDepths> = {}): QueueDepths {
   };
 }
 
-function repository(runs: MaintenanceRunRecord[], depths: QueueDepths = queues()) {
+function repository(
+  runs: MaintenanceRunRecord[],
+  depths: QueueDepths = queues(),
+  lastSuccess: string | null = null,
+) {
   return {
     listRecentRuns: vi.fn(async (_limit?: number) => runs),
+    listRecentScheduledRuns: vi.fn(async (_limit?: number) =>
+      runs.filter((run) => run.triggerSource === "scheduled"),
+    ),
+    lastScheduledSuccessAt: vi.fn(async () => lastSuccess),
     queueDepths: vi.fn(async (_now: string) => depths),
   };
 }
@@ -77,6 +85,54 @@ describe("buildOperationsHealth", () => {
 
     expect(view.recentRuns).toHaveLength(1);
     expect(view.maintenance.state).toBe("never-observed");
+  });
+});
+
+describe("history-scoped facts", () => {
+  /**
+   * The window answers "is it running now". It cannot answer "when did it last
+   * work", and deriving the second from the first meant an hour of partial ticks
+   * pushed the last success out of view -- so the screen told an operator the
+   * schedule had never once succeeded while the row proving otherwise sat just
+   * outside the twelve it looked at.
+   */
+  it("reports a last success older than the run window rather than claiming none", async () => {
+    const partial = (id: string, at: string): MaintenanceRunRecord => ({
+      id,
+      scheduledFor: at,
+      startedAt: at,
+      finishedAt: at,
+      durationMs: 10,
+      outcome: "partial",
+      failedPasses: ["dispatchDue"],
+      triggerSource: "scheduled",
+    });
+    const window = Array.from({ length: 12 }, (_, i) =>
+      partial(`p${i}`, `2026-09-11T09:${String(59 - i).padStart(2, "0")}:00.000Z`),
+    );
+
+    const view = await buildOperationsHealth(
+      { now: NOW },
+      { repository: repository(window, queues(), "2026-09-11T08:55:00.000Z") },
+    );
+
+    expect(view.maintenance.state).toBe("degraded");
+    // The fact the window could not see.
+    expect(view.maintenance.lastSuccessAt).toBe("2026-09-11T08:55:00.000Z");
+  });
+
+  /**
+   * And the converse still holds: a genuine "no scheduled run has ever
+   * succeeded" must stay distinguishable from "the last one is just old".
+   */
+  it("still reports no success when history really holds none", async () => {
+    const view = await buildOperationsHealth(
+      { now: NOW },
+      { repository: repository([], queues(), null) },
+    );
+
+    expect(view.maintenance.state).toBe("never-observed");
+    expect(view.maintenance.lastSuccessAt).toBeNull();
   });
 });
 

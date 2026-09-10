@@ -96,8 +96,27 @@ export type QueueDepths = {
 
 export type MaintenanceRunRepository = {
   recordRun(draft: MaintenanceRunDraft): Promise<{ id: string }>;
-  /** Most recent first. */
+  /** Most recent first, every trigger source. What the run table on screen shows. */
   listRecentRuns(limit?: number): Promise<MaintenanceRunRecord[]>;
+  /**
+   * Most recent scheduled runs only.
+   *
+   * The health rule judges the schedule, and a window filled with manual runs
+   * would leave it nothing to judge -- twelve invocations by hand would push
+   * every cron row out of view and make a healthy schedule read as
+   * `never-observed`.
+   */
+  listRecentScheduledRuns(limit?: number): Promise<MaintenanceRunRecord[]>;
+  /**
+   * The last clean scheduled run in ALL of history, not within a window.
+   *
+   * "When did this last work" is a question about the whole record. Deriving it
+   * from the same twelve rows the staleness rule uses meant that twelve
+   * consecutive partial ticks -- an hour of one pass failing -- made the screen
+   * say the schedule had never once succeeded, while the row proving otherwise
+   * sat just outside the window.
+   */
+  lastScheduledSuccessAt(): Promise<string | null>;
   queueDepths(now: string): Promise<QueueDepths>;
   close(): Promise<void>;
 };
@@ -266,6 +285,27 @@ export function createMaintenanceRunRepository(
         returning id
       `;
       return { id: rows[0].id };
+    },
+
+    async listRecentScheduledRuns(limit = DEFAULT_RUN_LIMIT) {
+      const rows = await sql<RunRow[]>`
+        select id, scheduled_for, started_at, finished_at, duration_ms,
+               outcome, failed_passes, trigger_source
+        from maintenance_runs
+        where trigger_source = 'scheduled'
+        order by scheduled_for desc
+        limit ${limit}
+      `;
+      return rows.map(mapRun);
+    },
+
+    async lastScheduledSuccessAt() {
+      const rows = await sql<{ finished_at: string | Date | null }[]>`
+        select max(finished_at) finished_at
+        from maintenance_runs
+        where trigger_source = 'scheduled' and outcome = 'succeeded'
+      `;
+      return isoOrNull(rows[0]?.finished_at ?? null);
     },
 
     async listRecentRuns(limit = DEFAULT_RUN_LIMIT) {
