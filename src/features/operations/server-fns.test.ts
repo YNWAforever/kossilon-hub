@@ -146,6 +146,28 @@ describe("buildOperationsHealth", () => {
 
     await expect(buildOperationsHealth({ now: NOW }, { repository: repo })).rejects.toThrow(boom);
   });
+
+  it("flags nothing while no scheduled run has been recorded", async () => {
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repository([]) });
+
+    expect(view.staleBlockers).toEqual([]);
+  });
+
+  /**
+   * Null maintenance means the reads failed and the state is unknown -- which is
+   * not evidence that a schedule ran. Guessing here would be the exact false
+   * reassurance this codebase refuses everywhere else.
+   */
+  it("flags nothing when the maintenance state could not be read at all", async () => {
+    const repo = repository([]);
+    repo.schemaLedger.mockResolvedValue({ present: false, applied: [] });
+    repo.queueDepths.mockRejectedValue(new Error('relation "maintenance_runs" does not exist'));
+
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+
+    expect(view.maintenance).toBeNull();
+    expect(view.staleBlockers).toEqual([]);
+  });
 });
 
 describe("history-scoped facts", () => {

@@ -1,5 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { BLOCKED_INTEGRATIONS, type BlockedIntegration } from "./capabilities";
+import {
+  BLOCKED_INTEGRATIONS,
+  staleBlockedIntegrations,
+  type BlockedIntegration,
+  type BlockedIntegrationId,
+} from "./capabilities";
 import {
   defaultToleranceSeconds,
   maintenanceHealthOf,
@@ -42,6 +47,12 @@ export type OperationsHealthView = {
    * would stop meaning anything.
    */
   blockedIntegrations: readonly BlockedIntegration[];
+  /**
+   * Blockers still declared whose runtime evidence has arrived, so somebody can
+   * go and delete them. Empty when the maintenance state is unknown -- an
+   * unreadable database is not evidence that a schedule ran.
+   */
+  staleBlockers: readonly BlockedIntegrationId[];
 };
 
 const RECENT_RUN_LIMIT = 12;
@@ -89,6 +100,7 @@ export async function buildOperationsHealth(
       recentRuns: null,
       queues: null,
       blockedIntegrations: BLOCKED_INTEGRATIONS,
+      staleBlockers: [],
     };
   }
 }
@@ -112,19 +124,25 @@ async function readOperationsState(
     dependencies.repository.queueDepths(input.now),
   ]);
 
+  const maintenance = maintenanceHealthOf({
+    runs: scheduledRuns,
+    now: input.now,
+    toleranceSeconds: defaultToleranceSeconds(),
+    // Scoped to all of history, so an hour of partial ticks cannot make the
+    // screen claim the schedule has never once succeeded.
+    lastScheduledSuccessAt,
+  });
+
   return {
     schema,
-    maintenance: maintenanceHealthOf({
-      runs: scheduledRuns,
-      now: input.now,
-      toleranceSeconds: defaultToleranceSeconds(),
-      // Scoped to all of history, so an hour of partial ticks cannot make the
-      // screen claim the schedule has never once succeeded.
-      lastScheduledSuccessAt,
-    }),
+    maintenance,
     recentRuns,
     queues,
     blockedIntegrations: BLOCKED_INTEGRATIONS,
+    staleBlockers: staleBlockedIntegrations({
+      blocked: BLOCKED_INTEGRATIONS,
+      maintenanceState: maintenance.state,
+    }),
   };
 }
 
