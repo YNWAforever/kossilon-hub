@@ -44,13 +44,12 @@
 
 - [ ] **Step 1: Add the type and the field**
 
-At the top of `src/features/operations/capabilities.ts`, add:
+Do **not** import `MaintenanceHealthState` yet. Nothing in this task uses it,
+and this repo compiles with `noUnusedLocals`, so an early import is a hard
+`tsc` error (`TS6133`), not a lint warning. Task 3 adds it at the point of use.
 
-```ts
-import type { MaintenanceHealthState } from "./health";
-```
-
-After the `BlockedIntegrationId` union, add:
+In `src/features/operations/capabilities.ts`, after the `BlockedIntegrationId`
+union, add:
 
 ```ts
 /**
@@ -345,7 +344,14 @@ Expected: FAIL — `staleBlockedIntegrations is not a function`.
 
 - [ ] **Step 3: Implement it**
 
-Append to `src/features/operations/capabilities.ts`:
+First add the import that Task 1 deliberately left out, now that there is a use
+for it. At the top of `src/features/operations/capabilities.ts`:
+
+```ts
+import type { MaintenanceHealthState } from "./health";
+```
+
+Then append to the same file:
 
 ```ts
 /**
