@@ -2,7 +2,11 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { BLOCKED_INTEGRATIONS, blockedIntegrationIds } from "./capabilities";
+import {
+  BLOCKED_INTEGRATIONS,
+  blockedIntegrationIds,
+  type BlockedIntegrationId,
+} from "./capabilities";
 
 /**
  * The inventory has to stay true to the code, in both directions.
@@ -89,5 +93,53 @@ describe("blocked integration inventory", () => {
 
   it("has no duplicate ids", () => {
     expect(new Set(blockedIntegrationIds()).size).toBe(BLOCKED_INTEGRATIONS.length);
+  });
+});
+
+/**
+ * What would have to be true for a `build`-kind blocker to be over.
+ *
+ * `local-postgres` says it is cleared by "a connectable TEST_DATABASE_URL, or
+ * the CI run result on a PR". In-process both look the same: the variable is
+ * set, so the `describe.skipIf(!databaseUrl)` suites ran. A developer with no
+ * database sees nothing here; CI, which sets it, fails.
+ */
+const BUILD_EVIDENCE: Partial<Record<BlockedIntegrationId, () => boolean>> = {
+  "local-postgres": () => Boolean(process.env.TEST_DATABASE_URL),
+};
+
+describe("blocked integrations that may have outlived their cause", () => {
+  /**
+   * A `build` entry with no evidence function would look checked and never be
+   * -- the same defect this mechanism exists to catch, one level up.
+   */
+  it("has an evidence check for every build-kind entry", () => {
+    const unchecked = BLOCKED_INTEGRATIONS.filter(
+      (item) => item.evidence.observable === "build" && !BUILD_EVIDENCE[item.id],
+    ).map((item) => item.id);
+
+    expect(unchecked).toEqual([]);
+  });
+
+  /**
+   * The check itself. It does not clear anything -- it fails, and a person
+   * deletes the entry. A product that re-asserted its own capabilities from a
+   * heuristic would be the dangerous direction of this same idea.
+   */
+  it("does not still list a blocker whose build evidence is present", () => {
+    const stale = BLOCKED_INTEGRATIONS.filter(
+      (item) => item.evidence.observable === "build" && BUILD_EVIDENCE[item.id]?.() === true,
+    ).map((item) => item.id);
+
+    expect(stale, `these blockers look cleared and should be deleted: ${stale.join(", ")}`).toEqual(
+      [],
+    );
+  });
+
+  it("gives every external entry a reason nothing can check it", () => {
+    for (const item of BLOCKED_INTEGRATIONS) {
+      if (item.evidence.observable !== "external") continue;
+      expect(item.evidence.why.length, `${item.id} needs a why`).toBeGreaterThan(10);
+    }
   });
 });
