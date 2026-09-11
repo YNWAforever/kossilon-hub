@@ -27,6 +27,14 @@ export type MaintenanceRunRecord = {
   durationMs: number;
   outcome: MaintenanceRunOutcome;
   failedPasses: readonly string[];
+  /**
+   * What the dispatch pass did on this run.
+   *
+   * Null when the run recorded no `passes` at all, or when the dispatch pass
+   * itself threw. Null is not zero: "nothing was sent" and "nobody knows what
+   * was sent" are different facts and only one of them is reassuring.
+   */
+  dispatch: { sent: number; suppressedFixtureOrigin: number } | null;
   triggerSource: "scheduled" | "manual";
 };
 
@@ -231,4 +239,15 @@ export function maintenanceHealthOf(input: {
     state: "healthy",
     summary: `排程正常運行，最後一次完成於 ${describeLag(lagSeconds)}。`,
   };
+}
+
+/**
+ * A count from a run's dispatch summary, or the fact that there is none.
+ *
+ * Separated from the JSX for the same reason `earliestMissingLabel` was: the
+ * distinction between "zero" and "unknown" is the whole point, and it is
+ * exactly the kind of thing a `?? 0` quietly destroys at the last moment.
+ */
+export function dispatchCountLabel(count: number | null): string {
+  return count === null ? "未知" : String(count);
 }

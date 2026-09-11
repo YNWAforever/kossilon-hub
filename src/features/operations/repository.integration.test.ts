@@ -277,6 +277,60 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
   );
 
   it(
+    "reads the dispatch outcome back out of the passes column",
+    async () => {
+      const repository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        await repository.recordRun(
+          draft({
+            passes: {
+              now: "2026-09-12T10:00:00.000Z",
+              dispatch: {
+                claimed: 3,
+                sent: 0,
+                retried: 0,
+                permanentlyFailed: 0,
+                superseded: 0,
+                sentButUnrecorded: 0,
+                suppressedFixtureOrigin: 3,
+              },
+              failures: [],
+            },
+          }),
+        );
+
+        const [latest] = await repository.listRecentRuns(1);
+
+        // The safety fact this whole deploy turns on: three fixture reminders
+        // cancelled, none sent.
+        expect(latest?.dispatch).toEqual({ sent: 0, suppressedFixtureOrigin: 3 });
+      } finally {
+        await repository.close();
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reports a run with no recorded dispatch as null rather than zero",
+    async () => {
+      const repository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        await repository.recordRun(
+          draft({ passes: { now: "2026-09-12T10:05:00.000Z", failures: [] } }),
+        );
+
+        const [latest] = await repository.listRecentRuns(1);
+
+        expect(latest?.dispatch).toBeNull();
+      } finally {
+        await repository.close();
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "reads every queue depth without writing to any of them",
     async () => {
       const repository = createMaintenanceRunRepository(databaseUrl);

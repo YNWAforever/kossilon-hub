@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { getOperationsHealth } from "@/features/operations/server-fns";
-import type { MaintenanceHealthState } from "@/features/operations/health";
+import { dispatchCountLabel, type MaintenanceHealthState } from "@/features/operations/health";
 import type { JobQueueDepth } from "@/features/operations/repository";
 import { earliestMissingLabel, type SchemaHealthState } from "@/features/operations/schema-health";
 
@@ -274,6 +274,8 @@ function OperationsRoute() {
                         <th className="px-4 py-2 font-medium">結果</th>
                         <th className="px-4 py-2 font-medium">耗時</th>
                         <th className="px-4 py-2 font-medium">觸發</th>
+                        <th className="px-4 py-2 font-medium">已派送</th>
+                        <th className="px-4 py-2 font-medium">已攔截</th>
                         <th className="px-4 py-2 font-medium">失敗環節</th>
                       </tr>
                     </thead>
@@ -287,6 +289,12 @@ function OperationsRoute() {
                           <td className="px-4 py-2 tabular-nums">{entry.durationMs} ms</td>
                           <td className="px-4 py-2">
                             {entry.triggerSource === "scheduled" ? "排程" : "人手"}
+                          </td>
+                          <td className="px-4 py-2 tabular-nums">
+                            {dispatchCountLabel(entry.dispatch?.sent ?? null)}
+                          </td>
+                          <td className="px-4 py-2 tabular-nums">
+                            {dispatchCountLabel(entry.dispatch?.suppressedFixtureOrigin ?? null)}
                           </td>
                           <td className="px-4 py-2 text-muted-foreground">
                             {entry.failedPasses.length > 0 ? entry.failedPasses.join("、") : "—"}

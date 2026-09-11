@@ -24,6 +24,8 @@ type RunRow = {
   duration_ms: number;
   outcome: MaintenanceRunOutcome;
   failed_passes: string[];
+  dispatch_sent: number | string | null;
+  dispatch_suppressed: number | string | null;
   trigger_source: "scheduled" | "manual";
 };
 
@@ -162,6 +164,17 @@ function mapRun(row: RunRow): MaintenanceRunRecord {
     durationMs: Number(row.duration_ms),
     outcome: row.outcome,
     failedPasses: row.failed_passes ?? [],
+    // Null when either half is missing -- a run recorded before this column
+    // existed, or one whose `passes` never reached the dispatch pass -- rather
+    // than defaulting a missing half to zero and reporting half a fact as a
+    // whole one.
+    dispatch:
+      row.dispatch_sent === null || row.dispatch_suppressed === null
+        ? null
+        : {
+            sent: Number(row.dispatch_sent),
+            suppressedFixtureOrigin: Number(row.dispatch_suppressed),
+          },
     triggerSource: row.trigger_source,
   };
 }
@@ -299,9 +312,14 @@ export function createMaintenanceRunRepository(
     },
 
     async listRecentScheduledRuns(limit = DEFAULT_RUN_LIMIT) {
+      // Column list duplicated in listRecentRuns below -- both read the same
+      // table for the same shape, and updating one without the other would
+      // leave whichever was missed reporting dispatch as permanently unknown.
       const rows = await sql<RunRow[]>`
         select id, scheduled_for, started_at, finished_at, duration_ms,
-               outcome, failed_passes, trigger_source
+               outcome, failed_passes, trigger_source,
+               (passes -> 'dispatch' ->> 'sent')::int dispatch_sent,
+               (passes -> 'dispatch' ->> 'suppressedFixtureOrigin')::int dispatch_suppressed
         from maintenance_runs
         where trigger_source = 'scheduled'
         order by scheduled_for desc
@@ -322,7 +340,9 @@ export function createMaintenanceRunRepository(
     async listRecentRuns(limit = DEFAULT_RUN_LIMIT) {
       const rows = await sql<RunRow[]>`
         select id, scheduled_for, started_at, finished_at, duration_ms,
-               outcome, failed_passes, trigger_source
+               outcome, failed_passes, trigger_source,
+               (passes -> 'dispatch' ->> 'sent')::int dispatch_sent,
+               (passes -> 'dispatch' ->> 'suppressedFixtureOrigin')::int dispatch_suppressed
         from maintenance_runs
         order by scheduled_for desc
         limit ${limit}
