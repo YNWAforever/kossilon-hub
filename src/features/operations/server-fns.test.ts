@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { buildOperationsHealth } from "./server-fns";
 import type { MaintenanceRunRecord } from "./health";
 import type { QueueDepths } from "./repository";
+import { EXPECTED_MIGRATIONS, type SchemaLedger } from "./schema-health";
 
 const NOW = "2026-09-11T10:00:00.000Z";
 
@@ -24,6 +25,9 @@ function repository(
   runs: MaintenanceRunRecord[],
   depths: QueueDepths = queues(),
   lastSuccess: string | null = null,
+  // Defaults to a fully migrated database, because that is the assumption every
+  // test written before the schema check existed was silently making.
+  ledger: SchemaLedger = { present: true, applied: [...EXPECTED_MIGRATIONS] },
 ) {
   return {
     listRecentRuns: vi.fn(async (_limit?: number) => runs),
@@ -32,6 +36,7 @@ function repository(
     ),
     lastScheduledSuccessAt: vi.fn(async () => lastSuccess),
     queueDepths: vi.fn(async (_now: string) => depths),
+    schemaLedger: vi.fn(async () => ledger),
   };
 }
 
@@ -44,7 +49,7 @@ describe("buildOperationsHealth", () => {
   it("reports never-observed when the table is empty", async () => {
     const view = await buildOperationsHealth({ now: NOW }, { repository: repository([]) });
 
-    expect(view.maintenance.state).toBe("never-observed");
+    expect(view.maintenance?.state).toBe("never-observed");
     expect(view.recentRuns).toEqual([]);
   });
 
@@ -65,7 +70,7 @@ describe("buildOperationsHealth", () => {
     const view = await buildOperationsHealth({ now: NOW }, { repository: repository([]) });
 
     expect(view.blockedIntegrations.length).toBeGreaterThan(0);
-    expect(view.maintenance.failedPasses).toEqual([]);
+    expect(view.maintenance?.failedPasses).toEqual([]);
     expect(view.blockedIntegrations.map((entry) => entry.id)).toContain("deployment-runtime");
   });
 
@@ -84,7 +89,62 @@ describe("buildOperationsHealth", () => {
     const view = await buildOperationsHealth({ now: NOW }, { repository: repository([manual]) });
 
     expect(view.recentRuns).toHaveLength(1);
-    expect(view.maintenance.state).toBe("never-observed");
+    expect(view.maintenance?.state).toBe("never-observed");
+  });
+
+  /**
+   * The case the whole schema check exists for.
+   *
+   * Every other read on this screen queries a table one of the migrations
+   * creates, so against a database that is behind they all throw
+   * `relation ... does not exist`. Without this, /operations would be the one
+   * screen that cannot load precisely when it is the one screen worth loading,
+   * and the operator would get a stack trace instead of "you are 11 migrations
+   * behind".
+   */
+  it("still reports when the schema is behind and every other read fails", async () => {
+    const repo = repository([]);
+    repo.schemaLedger.mockResolvedValue({ present: false, applied: [] });
+    const boom = new Error('relation "maintenance_runs" does not exist');
+    repo.queueDepths.mockRejectedValue(boom);
+    repo.listRecentRuns.mockRejectedValue(boom);
+    repo.listRecentScheduledRuns.mockRejectedValue(boom);
+
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+
+    expect(view.schema.state).toBe("no-ledger");
+    // Null, not an empty stand-in. A queue nobody could read is not an idle one.
+    expect(view.maintenance).toBeNull();
+    expect(view.queues).toBeNull();
+    expect(view.recentRuns).toBeNull();
+  });
+
+  it("names how far behind it is when the ledger exists but is short", async () => {
+    const repo = repository([]);
+    repo.schemaLedger.mockResolvedValue({
+      present: true,
+      applied: EXPECTED_MIGRATIONS.filter((id) => id < "0023"),
+    });
+    repo.queueDepths.mockRejectedValue(new Error('relation "document_scan_jobs" does not exist'));
+
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+
+    expect(view.schema.state).toBe("behind");
+    expect(view.schema.missing[0]).toBe("0023_document_scan_jobs_and_quarantine_retention.sql");
+  });
+
+  /**
+   * The other half, and the one that keeps this from becoming a blanket
+   * try/catch. A failure on a fully migrated database is a real fault; reporting
+   * it as a migration problem would send whoever is on call after the wrong
+   * thing entirely.
+   */
+  it("rethrows a read failure the schema does not account for", async () => {
+    const repo = repository([]);
+    const boom = new Error("connection terminated unexpectedly");
+    repo.queueDepths.mockRejectedValue(boom);
+
+    await expect(buildOperationsHealth({ now: NOW }, { repository: repo })).rejects.toThrow(boom);
   });
 });
 
@@ -116,9 +176,9 @@ describe("history-scoped facts", () => {
       { repository: repository(window, queues(), "2026-09-11T08:55:00.000Z") },
     );
 
-    expect(view.maintenance.state).toBe("degraded");
+    expect(view.maintenance?.state).toBe("degraded");
     // The fact the window could not see.
-    expect(view.maintenance.lastSuccessAt).toBe("2026-09-11T08:55:00.000Z");
+    expect(view.maintenance?.lastSuccessAt).toBe("2026-09-11T08:55:00.000Z");
   });
 
   /**
@@ -131,8 +191,8 @@ describe("history-scoped facts", () => {
       { repository: repository([], queues(), null) },
     );
 
-    expect(view.maintenance.state).toBe("never-observed");
-    expect(view.maintenance.lastSuccessAt).toBeNull();
+    expect(view.maintenance?.state).toBe("never-observed");
+    expect(view.maintenance?.lastSuccessAt).toBeNull();
   });
 });
 

@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type { MaintenanceRunOutcome, MaintenanceRunRecord } from "./health";
+import type { SchemaLedger } from "./schema-health";
 
 /**
  * Reads and writes the record of the scheduled tick.
@@ -118,6 +119,16 @@ export type MaintenanceRunRepository = {
    */
   lastScheduledSuccessAt(): Promise<string | null>;
   queueDepths(now: string): Promise<QueueDepths>;
+  /**
+   * What `schema_migrations` records, or that it is not there.
+   *
+   * The one read in this repository that must survive the database being in the
+   * wrong state, because that is the state it exists to report. It asks whether
+   * the table is visible before selecting from it, so a database that has never
+   * been migrated answers the question instead of throwing on the way to
+   * answering it.
+   */
+  schemaLedger(): Promise<SchemaLedger>;
   close(): Promise<void>;
 };
 
@@ -335,6 +346,20 @@ export function createMaintenanceRunRepository(
         notifications,
         handoffsAwaitingTransmission: count(handoffs[0]?.prepared ?? 0),
       };
+    },
+
+    async schemaLedger() {
+      // Unqualified, so it resolves through the same search_path db-migrate.ts
+      // created the table under. Hardcoding `public.` would report "no ledger"
+      // for a perfectly managed database served under any other schema.
+      const [presence] = await sql<{ present: boolean }[]>`
+        select to_regclass('schema_migrations') is not null present
+      `;
+
+      if (!presence?.present) return { present: false, applied: [] };
+
+      const rows = await sql<{ id: string }[]>`select id from schema_migrations`;
+      return { present: true, applied: rows.map((row) => row.id) };
     },
 
     async close() {

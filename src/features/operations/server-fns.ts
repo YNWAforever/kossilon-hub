@@ -7,6 +7,7 @@ import {
   type MaintenanceRunRecord,
 } from "./health";
 import type { MaintenanceRunRepository, QueueDepths } from "./repository";
+import { EXPECTED_MIGRATIONS, schemaHealthOf, type SchemaHealth } from "./schema-health";
 
 /**
  * What the operations screen reads.
@@ -18,10 +19,22 @@ import type { MaintenanceRunRepository, QueueDepths } from "./repository";
  */
 
 export type OperationsHealthView = {
-  maintenance: MaintenanceHealth;
+  /**
+   * Read first, and separately, because it is the only read here that works on
+   * a database this code cannot otherwise use.
+   */
+  schema: SchemaHealth;
+  /**
+   * Null when the schema is not current and these reads could not run.
+   *
+   * Nullable rather than absent, and never an empty stand-in: a zeroed queue
+   * and a queue nobody could read are different facts, and only one of them is
+   * good news.
+   */
+  maintenance: MaintenanceHealth | null;
   /** Most recent first, including manual runs, which the health rule ignores. */
-  recentRuns: MaintenanceRunRecord[];
-  queues: QueueDepths;
+  recentRuns: MaintenanceRunRecord[] | null;
+  queues: QueueDepths | null;
   /**
    * Shown beside the health, never folded into it. Under six blocked
    * integrations two passes report `not-configured` on every single tick,
@@ -38,9 +51,57 @@ export async function buildOperationsHealth(
   dependencies: {
     repository: Pick<
       MaintenanceRunRepository,
+      | "listRecentRuns"
+      | "listRecentScheduledRuns"
+      | "lastScheduledSuccessAt"
+      | "queueDepths"
+      | "schemaLedger"
+    >;
+  },
+): Promise<OperationsHealthView> {
+  // First, alone, and before anything that could throw. Every other read below
+  // queries a table one of the migrations creates, so against a database that
+  // is behind they all fail -- and the one screen whose job is to say why would
+  // be the one screen that cannot load.
+  const schema = schemaHealthOf({
+    expected: EXPECTED_MIGRATIONS,
+    ledger: await dependencies.repository.schemaLedger(),
+  });
+
+  try {
+    return await readOperationsState(input, dependencies, schema);
+  } catch (error) {
+    // Tolerated only where the schema already accounts for it. A failure on a
+    // current schema is a real fault, and dressing it up as a migration problem
+    // would send whoever reads this screen after the wrong thing entirely.
+    if (schema.state === "current") throw error;
+
+    // Logged, not discarded. The screen deliberately does not show this text --
+    // a connection error can name hosts and ports, and this is not the place to
+    // put them in front of staff -- but an error nothing records is an error
+    // nobody can debug, and "the schema explains it" is a reason to keep serving
+    // the page, not a reason to throw the evidence away.
+    console.error("operations health degraded read", { schemaState: schema.state, error });
+
+    return {
+      schema,
+      maintenance: null,
+      recentRuns: null,
+      queues: null,
+      blockedIntegrations: BLOCKED_INTEGRATIONS,
+    };
+  }
+}
+
+async function readOperationsState(
+  input: { now: string },
+  dependencies: {
+    repository: Pick<
+      MaintenanceRunRepository,
       "listRecentRuns" | "listRecentScheduledRuns" | "lastScheduledSuccessAt" | "queueDepths"
     >;
   },
+  schema: SchemaHealth,
 ): Promise<OperationsHealthView> {
   const [recentRuns, scheduledRuns, lastScheduledSuccessAt, queues] = await Promise.all([
     dependencies.repository.listRecentRuns(RECENT_RUN_LIMIT),
@@ -52,6 +113,7 @@ export async function buildOperationsHealth(
   ]);
 
   return {
+    schema,
     maintenance: maintenanceHealthOf({
       runs: scheduledRuns,
       now: input.now,
