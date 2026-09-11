@@ -36,19 +36,29 @@ const RECENT_RUN_LIMIT = 12;
 export async function buildOperationsHealth(
   input: { now: string },
   dependencies: {
-    repository: Pick<MaintenanceRunRepository, "listRecentRuns" | "queueDepths">;
+    repository: Pick<
+      MaintenanceRunRepository,
+      "listRecentRuns" | "listRecentScheduledRuns" | "lastScheduledSuccessAt" | "queueDepths"
+    >;
   },
 ): Promise<OperationsHealthView> {
-  const [recentRuns, queues] = await Promise.all([
+  const [recentRuns, scheduledRuns, lastScheduledSuccessAt, queues] = await Promise.all([
     dependencies.repository.listRecentRuns(RECENT_RUN_LIMIT),
+    // Judged separately from what the table displays: a window full of manual
+    // runs would leave the health rule nothing to judge the schedule by.
+    dependencies.repository.listRecentScheduledRuns(RECENT_RUN_LIMIT),
+    dependencies.repository.lastScheduledSuccessAt(),
     dependencies.repository.queueDepths(input.now),
   ]);
 
   return {
     maintenance: maintenanceHealthOf({
-      runs: recentRuns,
+      runs: scheduledRuns,
       now: input.now,
       toleranceSeconds: defaultToleranceSeconds(),
+      // Scoped to all of history, so an hour of partial ticks cannot make the
+      // screen claim the schedule has never once succeeded.
+      lastScheduledSuccessAt,
     }),
     recentRuns,
     queues,

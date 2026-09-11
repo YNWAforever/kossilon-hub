@@ -244,13 +244,29 @@ describe("drainDocumentAnalysisJobs", () => {
 });
 
 describe("the provider tier", () => {
-  it("is skipped, and counted as skipped, when there is no provider", async () => {
+  /**
+   * The skip is recorded ON THE VERSION, not only in the drain summary.
+   *
+   * This test used to assert the opposite -- that no provider finding existed at
+   * all -- under the comment "nothing pretends a model looked at it". The intent
+   * was right and the implementation inverted it: recording nothing made "no
+   * model is configured" indistinguishable from "a model read this and was
+   * happy", and made a provider that ran and FAILED read as less clean than one
+   * that never ran, because only the failure left a note.
+   */
+  it("is skipped, counted as skipped, and says so on the version", async () => {
     const test = harness({ analyzer: null });
     const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
 
     expect(summary.providerSkipped).toBe(1);
-    // Nothing pretends a model looked at it.
-    expect(test.written[0].some((finding) => finding.tier === "provider")).toBe(false);
+
+    const providerFindings = test.written[0].filter((finding) => finding.tier === "provider");
+    expect(providerFindings).toHaveLength(1);
+    // Uncertain, never a pass. That is what stops it pretending a model looked.
+    expect(providerFindings[0].outcome).toBe("uncertain");
+    expect(providerFindings[0].detail).toContain("No model is configured");
+    // And an advisory note must never hold a package back.
+    expect(providerFindings[0].severity).toBe("info");
   });
 
   it("adds a model's findings alongside the deterministic ones", async () => {

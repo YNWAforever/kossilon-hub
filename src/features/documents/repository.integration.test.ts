@@ -79,14 +79,41 @@ function intentInput(fixtureData: Fixture, overrides: Record<string, unknown> = 
   };
 }
 
-/** Checklist items this file marked Received, so the seed row is left as found. */
-const touchedChecklistItems = new Set<string>();
+/**
+ * Checklist rows this file mutated, with the state they were ACTUALLY in.
+ *
+ * This used to be a Set, and teardown reset every touched row to
+ * status 'Missing', received_at null, document_id null -- a hardcoded guess,
+ * not a restore, while the comment claimed the seed row was "left as found".
+ * The seeded row this file picks is 'Verified' with a document and a
+ * verified_at, so every run silently rewrote seeded data that later tests read,
+ * and never touched verified_at at all. Snapshot first, restore what was there.
+ */
+type ChecklistSnapshot = {
+  status: string;
+  received_at: string | Date | null;
+  verified_at: string | Date | null;
+  document_id: string | null;
+};
+const touchedChecklistItems = new Map<string, ChecklistSnapshot>();
+
+/** Read the row before touching it. Call this instead of recording the id. */
+async function claimChecklistItem(sql: SqlClient, itemId: string): Promise<void> {
+  if (touchedChecklistItems.has(itemId)) return;
+  const rows = await sql<ChecklistSnapshot[]>`
+    select status, received_at, verified_at, document_id
+    from annual_return_checklist_items where id = ${itemId}`;
+  if (rows[0]) touchedChecklistItems.set(itemId, rows[0]);
+}
 
 async function cleanup(sql: SqlClient): Promise<void> {
-  for (const itemId of touchedChecklistItems) {
+  for (const [itemId, snapshot] of touchedChecklistItems) {
     await sql`
       update annual_return_checklist_items
-      set status = 'Missing', received_at = null, document_id = null
+      set status = ${snapshot.status},
+          received_at = ${snapshot.received_at},
+          verified_at = ${snapshot.verified_at},
+          document_id = ${snapshot.document_id}
       where id = ${itemId}`;
   }
   touchedChecklistItems.clear();
@@ -566,7 +593,7 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
       if (!data.caseId) return;
       const itemId = await checklistItemFor(sql, data.caseId);
       if (!itemId) return;
-      touchedChecklistItems.add(itemId);
+      await claimChecklistItem(sql, itemId);
       await sql`
         update annual_return_checklist_items
         set status = 'Missing', received_at = null, document_id = null where id = ${itemId}`;
@@ -603,7 +630,7 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
       if (!data.caseId) return;
       const itemId = await checklistItemFor(sql, data.caseId);
       if (!itemId) return;
-      touchedChecklistItems.add(itemId);
+      await claimChecklistItem(sql, itemId);
       // An approval is a human decision about specific bytes; a later upload is
       // additional evidence, not grounds to undo it.
       await sql`

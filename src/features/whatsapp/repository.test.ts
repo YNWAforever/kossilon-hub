@@ -54,32 +54,68 @@ async function cleanupWhatsAppFixtures() {
       where company_id in (${TEST_COMPANY_ID}, ${SHARED_COMPANY_ID})
         or idempotency_key like 'follow-up:phase2-test:%'
     `;
+    // The two predicates below must stay identical: the first clears the
+    // children of exactly the rows the second removes, and a webhook event left
+    // pointing at a deleted message fails the delete and takes the run with it.
     await tx`
       delete from whatsapp_webhook_events
       where provider_event_id like 'phase2-test-%'
         or normalized_message_id in (
-          select id from whatsapp_messages where provider_message_id like 'phase2-test-%'
+          select id
+          from whatsapp_messages
+          where provider_message_id like 'phase2-test-%'
+            or provider_message_id like 'test-window-%'
+            or body like 'Phase 2 test%'
+            or case_id in (${TEST_CASE_ID}, ${SHARED_CASE_ID})
+            or contact_id in (
+              select id
+              from whatsapp_contacts
+              where whatsapp_id like 'phase2-%' or phone_e164 like '+8526999%'
+            )
         )
     `;
+    // `contact_id` is the durable handle, and it is here because every other
+    // column on these rows can be nulled out from under this delete.
+    //
+    // The shared-number test queues against SHARED_CASE_ID, which this predicate
+    // never named, so its two messages survived. The cases delete further down
+    // then set their case_id to NULL -- whatsapp_messages.case_id is
+    // ON DELETE SET NULL -- and a row with no provider id, no company and now no
+    // case matched nothing at all. Unreachable, and one more of them every run.
     await tx`
       delete from whatsapp_messages
       where provider_message_id like 'phase2-test-%'
         or provider_message_id like 'test-window-%'
         or body like 'Phase 2 test%'
-        or case_id = ${TEST_CASE_ID}
+        or case_id in (${TEST_CASE_ID}, ${SHARED_CASE_ID})
+        or contact_id in (
+          select id
+          from whatsapp_contacts
+          where whatsapp_id like 'phase2-%' or phone_e164 like '+8526999%'
+        )
     `;
     await tx`
       delete from whatsapp_templates
       where template_name like 'phase2_test_%'
     `;
     await tx`
+      -- 'phase2-%' rather than 'phase2-test-%', and the whole +8526999 fixture
+      -- range rather than the two numbers someone remembered to list.
+      --
+      -- "clears a contact's company when two clients share the number" ends, by
+      -- design, with company_id NULL and whatsapp_id 'phase2-shared-number'.
+      -- That matched neither predicate, so the row it deliberately orphans was
+      -- the one row this teardown could not see, and it survived every run.
+      -- The next run then found an extra conversation in the listing and failed
+      -- an assertion three hundred lines away. CI never saw it: a fresh Postgres
+      -- per job means there is never a next run.
       delete from whatsapp_contacts
-      where whatsapp_id like 'phase2-test-%'
+      where whatsapp_id like 'phase2-%'
+        or phone_e164 like '+8526999%'
         or phone_e164 in (
           '85260903521',
           '+85260903521',
           '85261234567',
-          '+85269990001',
           '+85261000001',
           '+85261000002',
           '+85261000003',

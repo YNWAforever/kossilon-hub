@@ -100,6 +100,7 @@ function createHarness(
     getCase: vi.fn(async () => caseItem),
     assertCanMutateCase: vi.fn(async () => undefined),
     updateChecklistItem: vi.fn(async () => updatedCase),
+    linkRequirementEvidence: vi.fn(async () => ({ linked: 1 })),
     updatePayment: vi.fn(async () => updatedCase),
     updateFilingProof: vi.fn(async () => updatedCase),
     close: vi.fn(async () => undefined),
@@ -297,6 +298,48 @@ describe("annual return evidence service", () => {
         actorId,
       }),
     ).rejects.toThrow("Document safety is unverified");
+  });
+
+  /**
+   * requirement_evidence_links had exactly one writer in the repository -- the
+   * one-shot backfill inside migration 0026 -- so every instance created at
+   * runtime afterwards was permanently `outstanding`: listCaseRequirements reads
+   * evidence only through that table. A document could be uploaded, scanned and
+   * approved and the requirement still reported the client as owing it.
+   */
+  it("records the document as evidence for the item's requirements when it is verified", async () => {
+    const harness = createHarness({ ...baseDocument, category: "identity" });
+
+    await harness.service.reviewEvidence({
+      caseId,
+      documentId,
+      checklistItemId,
+      decision: "verified",
+      actorId,
+    });
+
+    expect(harness.annualReturns.linkRequirementEvidence).toHaveBeenCalledWith({
+      caseId,
+      checklistItemId,
+      documentId,
+      linkedBy: actorId,
+    });
+  });
+
+  // A rejection is not evidence, and the link is the record of why a document
+  // was accepted.
+  it("records no evidence link when the document is rejected", async () => {
+    const harness = createHarness({ ...baseDocument, category: "identity" });
+
+    await harness.service.reviewEvidence({
+      caseId,
+      documentId,
+      checklistItemId,
+      decision: "rejected",
+      actorId,
+    });
+
+    expect(harness.annualReturns.linkRequirementEvidence).not.toHaveBeenCalled();
   });
 
   it("requires a checklist item for checklist evidence", async () => {

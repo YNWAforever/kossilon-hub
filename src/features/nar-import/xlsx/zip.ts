@@ -166,13 +166,22 @@ export function openZipArchive(bytes: Uint8Array): ZipArchive {
       const end = start + entry.compressedSize;
       if (end > bytes.byteLength) throw new ZipFormatError(`Archive entry ${name} is truncated.`);
 
+      // A cheap early reject, and nothing more. `uncompressedSize` is a number
+      // the archive declares about itself, so an attacker sets it to 1 and this
+      // check waves through a stream that inflates to 150 MB. The real guard is
+      // the byte counter below, which trusts only what actually comes out.
       if (entry.uncompressedSize > inflatedBudget) {
         throw new ZipFormatError("Archive exceeds the total decompression budget.");
       }
-      inflatedBudget -= entry.uncompressedSize;
 
       const body = bytes.subarray(start, end);
       if (entry.compressionMethod === METHOD_STORED) {
+        // Stored entries carry their real length in the archive itself, so
+        // there is nothing to inflate and nothing to lie about.
+        if (body.byteLength > inflatedBudget) {
+          throw new ZipFormatError("Archive exceeds the total decompression budget.");
+        }
+        inflatedBudget -= body.byteLength;
         return body.slice();
       }
       if (entry.compressionMethod !== METHOD_DEFLATE) {
@@ -181,14 +190,50 @@ export function openZipArchive(bytes: Uint8Array): ZipArchive {
         );
       }
 
-      const stream = new Blob([body as BlobPart])
+      /**
+       * Counted while inflating, and aborted mid-stream.
+       *
+       * This used to be `await new Response(stream).arrayBuffer()` followed by a
+       * size check -- which buffers the ENTIRE output before the check can run.
+       * A 153 KB archive declaring `uncompressedSize = 1` for an entry that
+       * expands to 150 MB was fully materialised first: on Workers the isolate
+       * exceeds its 128 MB memory limit and is killed, taking every other
+       * request sharing it, and the ZipFormatError this code intends to raise
+       * never runs. Checking after the fact detects a mismatch; it does not
+       * defend against one.
+       *
+       * The budget is decremented by what was ACTUALLY produced, never by the
+       * declared size, so a chain of entries each understating themselves cannot
+       * walk past the total either.
+       */
+      const limit = Math.min(MAX_ENTRY_BYTES, inflatedBudget);
+      const reader = new Blob([body as BlobPart])
         .stream()
-        .pipeThrough(new DecompressionStream("deflate-raw"));
-      const inflated = new Uint8Array(await new Response(stream).arrayBuffer());
-      // The declared size is a claim made by the file. Checking after the fact
-      // catches a mismatch that would otherwise be read as real content.
-      if (inflated.byteLength > MAX_ENTRY_BYTES) {
-        throw new ZipFormatError(`Archive entry ${name} inflated past the allowed size.`);
+        .pipeThrough(new DecompressionStream("deflate-raw"))
+        .getReader();
+
+      const chunks: Uint8Array[] = [];
+      let produced = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        produced += value.byteLength;
+        if (produced > limit) {
+          // Stops the inflate; nothing further is buffered.
+          await reader.cancel();
+          throw new ZipFormatError(`Archive entry ${name} inflated past the allowed size.`);
+        }
+        chunks.push(value);
+      }
+
+      inflatedBudget -= produced;
+
+      const inflated = new Uint8Array(produced);
+      let written = 0;
+      for (const chunk of chunks) {
+        inflated.set(chunk, written);
+        written += chunk.byteLength;
       }
       return inflated;
     },
