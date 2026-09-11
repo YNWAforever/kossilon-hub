@@ -239,7 +239,7 @@ function OperationsRoute() {
             {view.staleBlockers.length > 0 ? (
               <p className="border-b bg-status-yellow-soft px-4 py-3 text-sm text-status-yellow">
                 以下功能仍被列為停用，但它們所說的解除條件看來已經達成：
-                {view.staleBlockers.join("、")}。 這不代表功能已恢復——請由人確認後，把它從
+                {view.staleBlockers.join("、")}。這不代表功能已恢復——請由人確認後，把它從
                 capabilities.ts 移除。
               </p>
             ) : null}

@@ -97,16 +97,16 @@ fixture-origin messages, queued for dispatch, in a database a developer shares.
 
 Nothing failed at the time, which is why it survived. The fixture insert names
 its ids deterministically and has no `on conflict`, so the cost lands on the
-*next* run as a primary-key collision. **CI cannot see this defect at all**: it
+_next_ run as a primary-key collision. **CI cannot see this defect at all**: it
 builds an empty Postgres per job and runs once, so the second run never happens.
 A green CI badge was compatible with a suite that could only ever be run once.
 
 Measured both ways against one container:
 
-| | run 1 | leaked after | run 2 |
-| --- | --- | --- | --- |
-| Before | 56/56 pass | 6 companies | **11 failed** |
-| After | 56/56 pass | 0 | 56/56 pass |
+|        | run 1      | leaked after | run 2         |
+| ------ | ---------- | ------------ | ------------- |
+| Before | 56/56 pass | 6 companies  | **11 failed** |
+| After  | 56/56 pass | 0            | 56/56 pass    |
 
 The teardown now derives its ids from the `90000000`-`94000000` prefixes
 instead of a list, so a fixture added at any sequence is covered without anyone
@@ -382,8 +382,8 @@ The one thing that changed in F: the deployment can now _say_ that it is not
 running. That does not clear `deployment-runtime` — only a real invocation on a
 real deployment can — but it turns an unverifiable blocker into a verifiable one.
 
-Six integrations are blocked, and four of them gate a capability the product
-appears to offer:
+The integrations below are blocked, and some of them gate a capability the
+product appears to offer:
 
 - `malware-scanner-provider` — no document can reach `verified` safety, so no
   package can be approved.
@@ -441,7 +441,7 @@ Not blocking the code — each has a safe default — but each is a real decisio
   given, so the schema every environment actually serves is still pre-`0023`.
 - **The branch was pushed and PR #59 was merged**, at commit `470b5c6`. Two
   later commits -- `838ca72` and `f4b3226`, the last twelve review fixes -- were
-  pushed to the same branch *after* that merge, so they are on the branch and
+  pushed to the same branch _after_ that merge, so they are on the branch and
   not on `main`. **No CI run exists for either of them**: the workflow triggers
   on `pull_request` and on `push` to `main`, and a push to a branch whose PR is
   already merged matches neither. They need their own pull request, which is

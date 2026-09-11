@@ -41,8 +41,8 @@ export type OperationsHealthView = {
   recentRuns: MaintenanceRunRecord[] | null;
   queues: QueueDepths | null;
   /**
-   * Shown beside the health, never folded into it. Under six blocked
-   * integrations two passes report `not-configured` on every single tick,
+   * Shown beside the health, never folded into it. Blocked integrations make
+   * their maintenance passes report `not-configured` on every single tick,
    * permanently; a screen that counted those as faults would be red forever and
    * would stop meaning anything.
    */

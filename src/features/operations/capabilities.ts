@@ -9,10 +9,10 @@
  * same rot this file exists to prevent. `releaseBlockingIntegrations()` answers
  * it from the data, which cannot drift.
  *
- * Scattered `BLOCKED_INTEGRATION:` comments are
- * enough for whoever is reading that file; they are not enough for a staff
- * member deciding whether to trust a screen, and they are not enough for a pilot
- * that has to know which steps stay on paper.
+ * Scattered `BLOCKED_INTEGRATION:` comments are enough for whoever is reading
+ * that file; they are not enough for a staff member deciding whether to trust a
+ * screen, and they are not enough for a pilot that has to know which steps stay
+ * on paper.
  *
  * So the same facts are declared once, in the product, and shown on the
  * operations screen. `capabilities.test.ts` cross-checks these ids against the
@@ -69,7 +69,7 @@ export type BlockedIntegration = {
   clearedBy: string;
   /**
    * Whether this one holds back a release gate, as opposed to degrading a
-   * convenience. Three of the six do.
+   * convenience.
    */
   blocksRelease: boolean;
   /** Where a person or a test could see that this is no longer true. */
@@ -117,7 +117,7 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     blocksRelease: false,
     evidence: {
       observable: "external",
-      why: "與掃描供應商相同：合約與 binding 是否存在，不是這個系統可以自行查證的事。",
+      why: "已批核的供應商與其資料處理條款不會在系統內留下痕跡；binding 本身雖然可由 getDocumentAiConfig 觀察，但它存在並不代表供應商已獲批核。",
     },
   },
   {
@@ -156,7 +156,7 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
       "而排程若從未註冊，每一個畫面看起來仍然完全正常。",
     pilotFallback:
       "上線後先看營運畫面的「最後一次執行」；在它出現第一筆記錄之前，排程一律當作沒有運行。",
-    clearedBy: "部署環境上一次排程被觸發的實際證據——現在就是 maintenance_runs 的第一筆資料。",
+    clearedBy: "部署環境上一次排程被觸發的實際證據——現在就是 maintenance_runs 的第一筆排程資料。",
     blocksRelease: true,
     evidence: { observable: "runtime" },
   },

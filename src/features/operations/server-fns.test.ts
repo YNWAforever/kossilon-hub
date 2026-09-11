@@ -153,6 +153,45 @@ describe("buildOperationsHealth", () => {
     expect(view.staleBlockers).toEqual([]);
   });
 
+  it("flags the blocker once a scheduled run has been recorded", async () => {
+    const scheduled: MaintenanceRunRecord = {
+      id: "scheduled-1",
+      scheduledFor: NOW,
+      startedAt: NOW,
+      finishedAt: NOW,
+      durationMs: 10,
+      outcome: "succeeded",
+      failedPasses: [],
+      triggerSource: "scheduled",
+    };
+
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repository([scheduled]) });
+
+    expect(view.staleBlockers).toEqual(["deployment-runtime"]);
+  });
+
+  /**
+   * An operator invoking the entrypoint by hand must not be able to make the
+   * blocker look cleared. `maintenanceHealthOf` filters manual runs for exactly
+   * this reason, and this pins that the filtering survives the whole path.
+   */
+  it("does not flag it for a run somebody triggered by hand", async () => {
+    const manual: MaintenanceRunRecord = {
+      id: "manual-2",
+      scheduledFor: NOW,
+      startedAt: NOW,
+      finishedAt: NOW,
+      durationMs: 10,
+      outcome: "succeeded",
+      failedPasses: [],
+      triggerSource: "manual",
+    };
+
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repository([manual]) });
+
+    expect(view.staleBlockers).toEqual([]);
+  });
+
   /**
    * Null maintenance means the reads failed and the state is unknown -- which is
    * not evidence that a schedule ran. Guessing here would be the exact false

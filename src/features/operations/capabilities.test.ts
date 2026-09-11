@@ -7,6 +7,7 @@ import {
   blockedIntegrationIds,
   staleBlockedIntegrations,
   runtimeCheckedIds,
+  releaseBlockingIntegrations,
   type BlockedIntegrationId,
   type BlockedIntegration,
 } from "./capabilities";
@@ -96,6 +97,12 @@ describe("blocked integration inventory", () => {
 
   it("has no duplicate ids", () => {
     expect(new Set(blockedIntegrationIds()).size).toBe(BLOCKED_INTEGRATIONS.length);
+  });
+
+  it("reports the release-blocking entries from the data rather than a prose count", () => {
+    expect(releaseBlockingIntegrations().map((item) => item.id)).toEqual(
+      BLOCKED_INTEGRATIONS.filter((item) => item.blocksRelease).map((item) => item.id),
+    );
   });
 });
 
@@ -201,5 +208,20 @@ describe("staleBlockedIntegrations", () => {
     ).map((item) => item.id);
 
     expect(unchecked).toEqual([]);
+  });
+
+  /**
+   * The other direction, which is the one that rots quietly: reclassifying
+   * `deployment-runtime` to `external` would leave this key behind, switch off
+   * the only live check in the product, and pass every other test.
+   */
+  it("has no runtime check left over for an entry that no longer claims runtime evidence", () => {
+    const runtimeIds = new Set(
+      BLOCKED_INTEGRATIONS.filter((item) => item.evidence.observable === "runtime").map(
+        (item) => item.id,
+      ),
+    );
+
+    expect(runtimeCheckedIds().filter((id) => !runtimeIds.has(id))).toEqual([]);
   });
 });
