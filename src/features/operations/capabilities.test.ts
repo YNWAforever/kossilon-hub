@@ -97,16 +97,11 @@ describe("blocked integration inventory", () => {
 });
 
 /**
- * What would have to be true for a `build`-kind blocker to be over.
- *
- * `local-postgres` says it is cleared by "a connectable TEST_DATABASE_URL, or
- * the CI run result on a PR". In-process both look the same: the variable is
- * set, so the `describe.skipIf(!databaseUrl)` suites ran. A developer with no
- * database sees nothing here; CI, which sets it, fails.
+ * Empty since `local-postgres` was retired -- there are no build-kind blockers
+ * left. Kept because the next one needs somewhere to declare its evidence, and
+ * the guard below is what stops it being added without a check.
  */
-const BUILD_EVIDENCE: Partial<Record<BlockedIntegrationId, () => boolean>> = {
-  "local-postgres": () => Boolean(process.env.TEST_DATABASE_URL),
-};
+const BUILD_EVIDENCE: Partial<Record<BlockedIntegrationId, () => boolean>> = {};
 
 describe("blocked integrations that may have outlived their cause", () => {
   /**

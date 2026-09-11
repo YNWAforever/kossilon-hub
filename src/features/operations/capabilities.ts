@@ -23,7 +23,6 @@ export type BlockedIntegrationId =
   | "ai-provider"
   | "whatsapp-media-download"
   | "external-handoff-destination"
-  | "local-postgres"
   | "deployment-runtime";
 
 /**
@@ -61,7 +60,7 @@ export type BlockedIntegration = {
   clearedBy: string;
   /**
    * Whether this one holds back a release gate, as opposed to degrading a
-   * convenience. Four of the seven do.
+   * convenience. Three of the six do.
    */
   blocksRelease: boolean;
   /** Where a person or a test could see that this is no longer true. */
@@ -139,15 +138,6 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
       observable: "external",
       why: "行方內部伺服器的通訊協定與存取權限由另一個團隊掌握，本系統無法探測。",
     },
-  },
-  {
-    id: "local-postgres",
-    capability: "在本機執行資料庫整合測試",
-    effect: "倉庫層的整合測試只在 CI 執行。這份工作的每一項 SQL 判斷都來自閱讀，而不是執行。",
-    pilotFallback: "以 CI 的執行結果為準，不要把本機的通過當作資料庫已驗證。",
-    clearedBy: "一個可連線的 TEST_DATABASE_URL，或 PR 上的 CI 執行結果。",
-    blocksRelease: true,
-    evidence: { observable: "build" },
   },
   {
     id: "deployment-runtime",

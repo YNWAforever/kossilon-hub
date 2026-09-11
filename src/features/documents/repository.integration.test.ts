@@ -11,9 +11,9 @@ import { createDocumentScanJobRepository } from "./scan-jobs";
  * by one status value in a WHERE clause, and both compile. These run against a
  * real database.
  *
- * BLOCKED_INTEGRATION: local-postgres -- no Postgres is reachable in the
- * authoring environment, so these are skipped locally and executed by CI, which
- * provisions postgres:17-alpine, migrates and seeds. Skipped is not passed.
+ * No Postgres is reachable in the authoring environment, so these are skipped
+ * locally and executed by CI, which provisions postgres:17-alpine, migrates
+ * and seeds. Skipped is not passed.
  */
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
