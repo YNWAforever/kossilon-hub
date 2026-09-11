@@ -25,6 +25,24 @@ Approval is required to use any staging or production `DATABASE_URL`, run migrat
   Without it, creating a corporate change request fails with "No active SLA policy
   exists for work type corporate_change_request."
 
+## REQUIRES EXPLICIT APPROVAL: Render and deploy
+
+Approval is required before deploying to any hosted runtime.
+
+1. Render `wrangler.template.jsonc` into `wrangler.jsonc`. Six values must be
+   real, not placeholders: `FIRM_ID`, `NEON_AUTH_URL`, `WOZTELL_API_BASE_URL`,
+   `WOZTELL_CHANNEL_ID`, `EMAIL_FROM`, `RESEND_FROM`.
+   `scripts/validate-firm-runtime.ts` rejects a file whose placeholders survive.
+2. Set every secret through `wrangler secret put` or the provider dashboard.
+   Secrets never belong in the rendered file, in source control, or in a chat
+   transcript.
+3. Re-run the gate against the rendered file: `npm.cmd run verify:firm`.
+4. Deploy: `npx wrangler deploy`.
+
+Rendering `WOZTELL_API_BASE_URL` and `WOZTELL_CHANNEL_ID` is routing
+configuration and does not enable sending. Sending requires the auth secret,
+which is a separate decision and a separate approval.
+
 ## Runtime health
 
 After the deploy, open `/operations`. Until it shows a run with trigger 排程, the

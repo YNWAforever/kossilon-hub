@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { droppedTableNamesIn, tableNamesIn, verifyFirmDeployment } from "./verify-firm-deployment";
 
@@ -232,5 +233,31 @@ describe("droppedTableNamesIn", () => {
 
   it("ignores prose that merely mentions dropping a table", () => {
     expect([...droppedTableNamesIn("-- the work_items table is dropped elsewhere")]).toEqual([]);
+  });
+});
+
+describe("firm deployment runbook", () => {
+  const runbook = readFileSync(
+    new URL("../docs/runbooks/firm-deployment.md", import.meta.url),
+    "utf8",
+  );
+
+  /**
+   * The runbook used to jump from the migration rehearsal to a section opening
+   * "After the deploy", with nothing in between that deploys anything.
+   */
+  it("documents rendering the template before the deploy", () => {
+    expect(runbook).toContain("wrangler.template.jsonc");
+    expect(runbook).toContain("## REQUIRES EXPLICIT APPROVAL: Render and deploy");
+  });
+
+  it("orders render-and-deploy after the migration rehearsal and before runtime health", () => {
+    const rehearsal = runbook.indexOf("## REQUIRES EXPLICIT APPROVAL: Migration rehearsal");
+    const deploy = runbook.indexOf("## REQUIRES EXPLICIT APPROVAL: Render and deploy");
+    const health = runbook.indexOf("## Runtime health");
+
+    expect(rehearsal).toBeGreaterThanOrEqual(0);
+    expect(deploy).toBeGreaterThan(rehearsal);
+    expect(health).toBeGreaterThan(deploy);
   });
 });
