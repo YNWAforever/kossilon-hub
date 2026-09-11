@@ -281,7 +281,7 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
     async () => {
       const repository = createMaintenanceRunRepository(databaseUrl);
       try {
-        await repository.recordRun(
+        const { id } = await repository.recordRun(
           draft({
             passes: {
               now: "2026-09-12T10:00:00.000Z",
@@ -299,11 +299,18 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
           }),
         );
 
-        const [latest] = await repository.listRecentRuns(1);
+        // Found by id, not read as `listRecentRuns(1)[0]`: that call is
+        // `order by scheduled_for desc limit 1` over the WHOLE table, and
+        // `draft()` hardcodes a fixed `scheduledFor`. Against a real
+        // deployment a foreign row scheduled later outranks this one, and an
+        // assertion against `[0]` would silently start checking someone
+        // else's run instead of failing.
+        const runs = await repository.listRecentRuns(50);
+        const recorded = runs.find((run) => run.id === id);
 
         // The safety fact this whole deploy turns on: three fixture reminders
         // cancelled, none sent.
-        expect(latest?.dispatch).toEqual({ sent: 0, suppressedFixtureOrigin: 3 });
+        expect(recorded?.dispatch).toEqual({ sent: 0, suppressedFixtureOrigin: 3 });
       } finally {
         await repository.close();
       }
@@ -316,13 +323,48 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
     async () => {
       const repository = createMaintenanceRunRepository(databaseUrl);
       try {
-        await repository.recordRun(
+        const { id } = await repository.recordRun(
           draft({ passes: { now: "2026-09-12T10:05:00.000Z", failures: [] } }),
         );
 
-        const [latest] = await repository.listRecentRuns(1);
+        // Same reason as above: a test that can pass without observing its
+        // own row proves nothing about this assertion. Any foreign run that
+        // simply lacks a `dispatch` key would satisfy `toBeNull()` on `[0]`
+        // just as well as the row this test actually wrote.
+        const runs = await repository.listRecentRuns(50);
+        const recorded = runs.find((run) => run.id === id);
 
-        expect(latest?.dispatch).toBeNull();
+        expect(recorded?.dispatch).toBeNull();
+      } finally {
+        await repository.close();
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reports a run as null when the dispatch summary recorded only one of its two counts",
+    async () => {
+      const repository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        const { id } = await repository.recordRun(
+          draft({
+            passes: {
+              now: "2026-09-12T10:10:00.000Z",
+              dispatch: { sent: 5 },
+              failures: [],
+            },
+          }),
+        );
+
+        const runs = await repository.listRecentRuns(50);
+        const recorded = runs.find((run) => run.id === id);
+
+        // Guards the `||` in mapRun's null check specifically: changing it to
+        // `&&` still passes "both null -> null" and "both present -> object"
+        // above, but would report `{ sent: 5, suppressedFixtureOrigin: NaN }`
+        // here instead of the missing-half case this run actually is.
+        expect(recorded?.dispatch).toBeNull();
       } finally {
         await repository.close();
       }

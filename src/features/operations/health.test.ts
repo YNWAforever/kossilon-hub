@@ -258,7 +258,7 @@ describe("dispatchCountLabel", () => {
    * about a run where nobody knows what went out.
    */
   it("does not render an unknown count as zero", () => {
-    expect(dispatchCountLabel(null)).toBe("未知");
+    expect(dispatchCountLabel(null)).toBe("無法判斷");
     expect(dispatchCountLabel(0)).toBe("0");
     expect(dispatchCountLabel(null)).not.toBe(dispatchCountLabel(0));
   });

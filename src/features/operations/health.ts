@@ -30,9 +30,12 @@ export type MaintenanceRunRecord = {
   /**
    * What the dispatch pass did on this run.
    *
-   * Null when the run recorded no `passes` at all, or when the dispatch pass
-   * itself threw. Null is not zero: "nothing was sent" and "nobody knows what
-   * was sent" are different facts and only one of them is reassuring.
+   * Null when the run recorded no `passes` at all, when the dispatch pass
+   * itself threw, or when `passes.dispatch` had only one of `sent` and
+   * `suppressedFixtureOrigin` -- `mapRun` treats either count being absent as
+   * the whole fact being unavailable, rather than reporting half a summary as
+   * complete. Null is not zero: "nothing was sent" and "nobody knows what was
+   * sent" are different facts and only one of them is reassuring.
    */
   dispatch: { sent: number; suppressedFixtureOrigin: number } | null;
   triggerSource: "scheduled" | "manual";
@@ -249,5 +252,5 @@ export function maintenanceHealthOf(input: {
  * exactly the kind of thing a `?? 0` quietly destroys at the last moment.
  */
 export function dispatchCountLabel(count: number | null): string {
-  return count === null ? "未知" : String(count);
+  return count === null ? "無法判斷" : String(count);
 }
