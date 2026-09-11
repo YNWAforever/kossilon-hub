@@ -29,10 +29,26 @@ const TEST_CASE_UUID_PREFIX = "91000000";
 const TEST_DOCUMENT_UUID_PREFIX = "92000000";
 const TEST_CHECKLIST_UUID_PREFIX = "93000000";
 const TEST_PAYMENT_UUID_PREFIX = "94000000";
-const TEST_FIXTURE_SEQUENCES = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-  28, 29, 30, 31, 32,
-] as const;
+/**
+ * Teardown matches on these prefixes rather than on an enumerated sequence list.
+ *
+ * The list was silently short. It stopped at 32 while this file went on creating
+ * fixtures at 41-46, so six companies and everything hanging off them survived
+ * every teardown. Nothing failed at the time, because the leak only bites the
+ * NEXT run: a second run against the same database re-inserts those ids and dies
+ * on the primary key. CI builds an empty Postgres and runs once, so CI cannot
+ * see this at all -- it cost three local container rebuilds instead.
+ *
+ * A prefix covers a fixture added tomorrow at any sequence, with nobody having
+ * to remember to widen anything.
+ */
+const TEST_COMPANY_ID_LIKE = `${TEST_COMPANY_UUID_PREFIX}-%`;
+const TEST_CASE_ID_LIKE = `${TEST_CASE_UUID_PREFIX}-%`;
+const TEST_DOCUMENT_ID_LIKE = `${TEST_DOCUMENT_UUID_PREFIX}-%`;
+const TEST_CHECKLIST_ID_LIKE = `${TEST_CHECKLIST_UUID_PREFIX}-%`;
+const TEST_PAYMENT_ID_LIKE = `${TEST_PAYMENT_UUID_PREFIX}-%`;
+/** Keeps every `= any(...)` parameter non-empty so the driver can type it. */
+const NO_FIXTURE_MATCH_UUID = "00000000-0000-0000-0000-000000000000";
 const INTEGRATION_TEST_TIMEOUT_MS = 20_000;
 // Kept as a single literal so the raw-SQL insert and its expected-value
 // assertion in "returns numeric recommendation_score as a string" can never
@@ -98,25 +114,50 @@ async function cleanupAnnualReturnTestFixtures() {
   if (!databaseUrl) return;
 
   const sql = sqlForTests();
-  const companyIds = TEST_FIXTURE_SEQUENCES.map((sequence) =>
-    testUuid(TEST_COMPANY_UUID_PREFIX, sequence),
-  );
-  const caseIds = TEST_FIXTURE_SEQUENCES.map((sequence) =>
-    testUuid(TEST_CASE_UUID_PREFIX, sequence),
-  );
-  const checklistItemIds = TEST_FIXTURE_SEQUENCES.map((sequence) =>
-    testUuid(TEST_CHECKLIST_UUID_PREFIX, sequence),
-  );
-  const paymentIds = TEST_FIXTURE_SEQUENCES.map((sequence) =>
-    testUuid(TEST_PAYMENT_UUID_PREFIX, sequence),
-  );
-  const documentIds = TEST_FIXTURE_SEQUENCES.flatMap((sequence) => [
-    testUuid(TEST_DOCUMENT_UUID_PREFIX, sequence * 10 + 1),
-    testUuid(TEST_DOCUMENT_UUID_PREFIX, sequence * 10 + 2),
-    testUuid(TEST_DOCUMENT_UUID_PREFIX, sequence * 10 + 3),
-  ]);
 
   await sql.begin(async (tx) => {
+    const idsOf = (rows: readonly { id: string }[]): string[] =>
+      rows.length > 0 ? rows.map((row) => row.id) : [NO_FIXTURE_MATCH_UUID];
+
+    const companyIds = idsOf(
+      await tx<{ id: string }[]>`
+        select id from companies where id::text like ${TEST_COMPANY_ID_LIKE}
+      `,
+    );
+    const caseIds = idsOf(
+      await tx<{ id: string }[]>`
+        select id
+        from annual_return_cases
+        where id::text like ${TEST_CASE_ID_LIKE}
+          or company_id = any(${companyIds}::uuid[])
+      `,
+    );
+    const checklistItemIds = idsOf(
+      await tx<{ id: string }[]>`
+        select id
+        from annual_return_checklist_items
+        where id::text like ${TEST_CHECKLIST_ID_LIKE}
+          or case_id = any(${caseIds}::uuid[])
+      `,
+    );
+    const paymentIds = idsOf(
+      await tx<{ id: string }[]>`
+        select id
+        from payments
+        where id::text like ${TEST_PAYMENT_ID_LIKE}
+          or case_id = any(${caseIds}::uuid[])
+      `,
+    );
+    const documentIds = idsOf(
+      await tx<{ id: string }[]>`
+        select id
+        from documents
+        where id::text like ${TEST_DOCUMENT_ID_LIKE}
+          or case_id = any(${caseIds}::uuid[])
+          or company_id = any(${companyIds}::uuid[])
+      `,
+    );
+
     await tx`
       update annual_return_cases
       set confirmation_document_id = null
@@ -2288,7 +2329,23 @@ describe.skipIf(!databaseUrl)("createCase", () => {
   const TEST_TEMPLATE_ID = "95000000-0000-0000-0000-000000000001";
   const TEST_COMPANY_ID = "96000000-0000-0000-0000-000000000001";
 
+  /**
+   * Three tests here build fixtures through `createMutableAnnualReturnFixture`,
+   * which names its rows with the module-wide 90000000-prefixed ids rather than
+   * `TEST_COMPANY_ID`. The teardown below only ever named `TEST_COMPANY_ID`, so
+   * those three companies -- and their cases, documents, payments and officers
+   * -- survived every run of this file.
+   *
+   * Running it before each test as well as after is what makes a second run
+   * against the same database possible at all: the fixture insert has no
+   * `on conflict`, so a leftover row from a previous run is a primary-key
+   * collision rather than a stale read.
+   */
+  beforeEach(cleanupAnnualReturnTestFixtures);
+
   afterEach(async () => {
+    await cleanupAnnualReturnTestFixtures();
+
     const sql = sqlForTests();
     // Deleted in dependency order rather than relying on cascade behavior for
     // every table — explicit and correct regardless of each FK's own ON DELETE rule.

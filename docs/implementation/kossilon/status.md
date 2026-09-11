@@ -79,6 +79,58 @@ its code is written.
 | **E** External handoff and folder returns       | 🟨 model complete, nothing transmits                                 | 🟨 SQL green in CI; nothing transmits      | ❌ no      | the internal server's protocol, address and rights             |
 | **F** Pilot, scale and operations               | 🟨 the observability half is built; the pilot half cannot start here | 🟨 SQL green in CI; no deployment observed | ❌ no      | a database, a deployment, pilot staff and representative cases |
 
+## The test suite could not run twice against one database
+
+Found on 2026-09-11, after the shared local Postgres had been rebuilt three
+times in one session to get past "mystery" failures. The cause was not any of
+the three things blamed at the time, and it was not interruption.
+
+`annual-return/repository.test.ts` deleted its fixtures by an enumerated list,
+`TEST_FIXTURE_SEQUENCES`, which stopped at 32. The file creates fixtures at
+41-46. Three of those live in a `describe` whose teardown only ever named its
+own `TEST_COMPANY_ID`, so it never called the shared cleanup at all.
+
+Every successful run therefore left six companies behind, with their cases,
+documents, checklist items, payments, officers -- and two `pending` WhatsApp
+reminders sitting in `notification_outbox`, which is the part worth pausing on:
+fixture-origin messages, queued for dispatch, in a database a developer shares.
+
+Nothing failed at the time, which is why it survived. The fixture insert names
+its ids deterministically and has no `on conflict`, so the cost lands on the
+*next* run as a primary-key collision. **CI cannot see this defect at all**: it
+builds an empty Postgres per job and runs once, so the second run never happens.
+A green CI badge was compatible with a suite that could only ever be run once.
+
+Measured both ways against one container:
+
+| | run 1 | leaked after | run 2 |
+| --- | --- | --- | --- |
+| Before | 56/56 pass | 6 companies | **11 failed** |
+| After | 56/56 pass | 0 | 56/56 pass |
+
+The teardown now derives its ids from the `90000000`-`94000000` prefixes
+instead of a list, so a fixture added at any sequence is covered without anyone
+remembering to widen anything, and it runs before each test as well as after, so
+a run killed mid-flight cannot poison the next one.
+`src/test/fixture-sequence-coverage.convention.test.ts` holds the line for the
+one file still using an enumerated list.
+
+`whatsapp/repository.test.ts` had the same disease with a sharper mechanism. Its
+teardown deleted messages by `case_id`, and the shared-number test queues against
+`SHARED_CASE_ID`, which the predicate never named. Those rows survived; the cases
+delete further down then set their `case_id` to NULL, because
+`whatsapp_messages.case_id` is `ON DELETE SET NULL`. A row with no provider id,
+no company and now no case matched nothing at all -- **the teardown nulled the
+column it keys on, putting the rows permanently out of its own reach**, one more
+of them every run. The contact beside them escaped the same way: the test ends,
+by design, with `company_id` NULL and `whatsapp_id` `phase2-shared-number`, which
+matched neither `'phase2-test-%'` nor the enumerated phone list.
+
+The failure that exposed it was an assertion about conversation ordering three
+hundred lines away, in a test that had nothing to do with any of this.
+`contact_id` is now in the predicate, because it is the one handle on those rows
+that nothing else can null out.
+
 ## Phase B, work package by work package
 
 | Package                                               | State                                                                                                                                                                   |
@@ -381,10 +433,19 @@ Not blocking the code — each has a safe default — but each is a real decisio
 
 ## Not yet done, and deliberately so
 
-- **No migration has been applied to any database.** `0023`-`0033`. `CLAUDE.md`
-  requires explicit authorization for any non-local `DATABASE_URL`, and none was
-  given.
-- **No branch has been pushed and no PR opened.** Awaiting authorization.
+- **No migration has been applied to any database that matters.** `0023`-`0033`
+  have run exactly twice: in CI, against an empty Postgres built and destroyed
+  per job, and once against a local throwaway container populated with the seed
+  fixtures. Neither is staging and neither is production. `CLAUDE.md` requires
+  explicit authorization for any non-local `DATABASE_URL`, and none has been
+  given, so the schema every environment actually serves is still pre-`0023`.
+- **The branch was pushed and PR #59 was merged**, at commit `470b5c6`. Two
+  later commits -- `838ca72` and `f4b3226`, the last twelve review fixes -- were
+  pushed to the same branch *after* that merge, so they are on the branch and
+  not on `main`. **No CI run exists for either of them**: the workflow triggers
+  on `pull_request` and on `push` to `main`, and a push to a branch whose PR is
+  already merged matches neither. They need their own pull request, which is
+  what carries this change too.
 - **Almost no browser walkthrough.** One was done in Phase F, and it is worth
   being precise about what it proved: on a local dev server, `/operations`
   redirects an unauthenticated request to `/login` (so the gate does not depend
