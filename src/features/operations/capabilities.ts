@@ -24,6 +24,8 @@
  * The second direction is the one that matters in a year's time.
  */
 
+import type { MaintenanceHealthState } from "./health";
+
 export type BlockedIntegrationId =
   | "malware-scanner-provider"
   | "document-text-extraction"
@@ -167,4 +169,41 @@ export function blockedIntegrationIds(): readonly BlockedIntegrationId[] {
 /** The ones that hold back a release gate rather than degrade a convenience. */
 export function releaseBlockingIntegrations(): readonly BlockedIntegration[] {
   return BLOCKED_INTEGRATIONS.filter((integration) => integration.blocksRelease);
+}
+
+/**
+ * What would have to be true for a `runtime`-kind blocker to be over.
+ *
+ * A record rather than a switch, so `runtimeCheckedIds` can report what is
+ * covered and a test can fail on an entry nobody wired up.
+ */
+const RUNTIME_EVIDENCE: Partial<
+  Record<BlockedIntegrationId, (input: { maintenanceState: MaintenanceHealthState }) => boolean>
+> = {
+  // `never-observed` is the absence of any scheduled run at all, so every other
+  // state IS the evidence this blocker names. No extra query: the operations
+  // screen already computes this state.
+  "deployment-runtime": ({ maintenanceState }) => maintenanceState !== "never-observed",
+};
+
+/** The ids that have a runtime check, so a test can spot one that does not. */
+export function runtimeCheckedIds(): readonly BlockedIntegrationId[] {
+  return Object.keys(RUNTIME_EVIDENCE) as BlockedIntegrationId[];
+}
+
+/**
+ * Blockers still declared whose runtime evidence has arrived.
+ *
+ * Reports; never clears. The dangerous direction of this idea is a product that
+ * re-asserts its own capabilities from a heuristic, so the result is worded as a
+ * prompt for a person and the entry stays until somebody deletes it.
+ */
+export function staleBlockedIntegrations(input: {
+  blocked: readonly BlockedIntegration[];
+  maintenanceState: MaintenanceHealthState;
+}): readonly BlockedIntegrationId[] {
+  return input.blocked
+    .filter((item) => item.evidence.observable === "runtime")
+    .filter((item) => RUNTIME_EVIDENCE[item.id]?.(input) === true)
+    .map((item) => item.id);
 }

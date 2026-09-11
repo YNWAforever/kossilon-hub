@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 import {
   BLOCKED_INTEGRATIONS,
   blockedIntegrationIds,
+  staleBlockedIntegrations,
+  runtimeCheckedIds,
   type BlockedIntegrationId,
+  type BlockedIntegration,
 } from "./capabilities";
 
 /**
@@ -136,5 +139,67 @@ describe("blocked integrations that may have outlived their cause", () => {
       if (item.evidence.observable !== "external") continue;
       expect(item.evidence.why.length, `${item.id} needs a why`).toBeGreaterThan(10);
     }
+  });
+});
+
+function entry(overrides: Partial<BlockedIntegration>): BlockedIntegration {
+  return {
+    id: "deployment-runtime",
+    capability: "x",
+    effect: "x",
+    pilotFallback: "x",
+    clearedBy: "x",
+    blocksRelease: true,
+    evidence: { observable: "runtime" },
+    ...overrides,
+  };
+}
+
+describe("staleBlockedIntegrations", () => {
+  it("says nothing while the evidence is absent", () => {
+    expect(
+      staleBlockedIntegrations({ blocked: [entry({})], maintenanceState: "never-observed" }),
+    ).toEqual([]);
+  });
+
+  /**
+   * Any state other than `never-observed` means a scheduled run has been
+   * recorded, which is exactly what `deployment-runtime` says would clear it.
+   */
+  it("flags the entry once a scheduled run has been observed", () => {
+    expect(staleBlockedIntegrations({ blocked: [entry({})], maintenanceState: "healthy" })).toEqual(
+      ["deployment-runtime"],
+    );
+  });
+
+  it("flags it even when the schedule is unhealthy, because it still ran", () => {
+    expect(staleBlockedIntegrations({ blocked: [entry({})], maintenanceState: "stale" })).toEqual([
+      "deployment-runtime",
+    ]);
+  });
+
+  it("has nothing to say once the entry is gone", () => {
+    expect(staleBlockedIntegrations({ blocked: [], maintenanceState: "healthy" })).toEqual([]);
+  });
+
+  it("never flags an entry whose evidence does not live at runtime", () => {
+    const external = entry({ id: "ai-provider", evidence: { observable: "external", why: "x" } });
+
+    expect(staleBlockedIntegrations({ blocked: [external], maintenanceState: "healthy" })).toEqual(
+      [],
+    );
+  });
+
+  /**
+   * The same guard the build side has. A runtime entry with no check would look
+   * checked and never be.
+   */
+  it("has an evidence check for every runtime-kind entry", () => {
+    const checked = runtimeCheckedIds();
+    const unchecked = BLOCKED_INTEGRATIONS.filter(
+      (item) => item.evidence.observable === "runtime" && !checked.includes(item.id),
+    ).map((item) => item.id);
+
+    expect(unchecked).toEqual([]);
   });
 });
