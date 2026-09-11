@@ -1,8 +1,15 @@
 /**
  * What this build cannot do, and what a person does instead.
  *
- * Six integrations are blocked, and four of them gate a capability the product
- * otherwise appears to offer. Scattered `BLOCKED_INTEGRATION:` comments are
+ * Some of these gate a capability the product otherwise appears to offer.
+ *
+ * There is deliberately no count in that sentence. It used to read "six ... and
+ * four of them" while the array held seven entries of which four blocked a
+ * release -- a prose number sitting beside a list that nothing checks is the
+ * same rot this file exists to prevent. `releaseBlockingIntegrations()` answers
+ * it from the data, which cannot drift.
+ *
+ * Scattered `BLOCKED_INTEGRATION:` comments are
  * enough for whoever is reading that file; they are not enough for a staff
  * member deciding whether to trust a screen, and they are not enough for a pilot
  * that has to know which steps stay on paper.
