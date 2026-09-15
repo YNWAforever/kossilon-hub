@@ -236,6 +236,13 @@ function OperationsRoute() {
                 以下功能在這個部署上不會運作。它們不是故障，也不會自行恢復。
               </p>
             </div>
+            {view.staleBlockers.length > 0 ? (
+              <p className="border-b bg-status-yellow-soft px-4 py-3 text-sm text-status-yellow">
+                以下功能仍被列為停用，但它們所說的解除條件看來已經達成：
+                {view.staleBlockers.join("、")}。這不代表功能已恢復——請由人確認後，把它從
+                capabilities.ts 移除。
+              </p>
+            ) : null}
             <ul className="divide-y">
               {view.blockedIntegrations.map((integration) => (
                 <li className="space-y-1 p-4" key={integration.id}>

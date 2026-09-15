@@ -14,8 +14,8 @@ const INTEGRATION_TEST_TIMEOUT_MS = 30_000;
  * column and the outcome CHECK are exactly the three things a string assertion
  * cannot see. This exercises them against a real database.
  *
- * Skipped without TEST_DATABASE_URL, which is the permanent local state under
- * BLOCKED_INTEGRATION: local-postgres. It runs in CI.
+ * Skipped without TEST_DATABASE_URL, which is the common local state; it runs
+ * in CI, and locally too against a container when that variable is set.
  */
 
 const TEST_MARKER = "operations-integration:";
