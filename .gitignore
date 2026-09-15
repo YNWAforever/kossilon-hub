@@ -19,6 +19,9 @@ dist-ssr
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+# Rendered from wrangler.template.jsonc; carries deployment identity (worker
+# name, bucket, Hyperdrive id) and must never enter source control.
+wrangler.jsonc
 
 # Editor directories and files
 .vscode/*

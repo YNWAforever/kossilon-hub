@@ -353,17 +353,23 @@ it shows a run with trigger 排程, `BLOCKED_INTEGRATION: deployment-runtime`
 stands, and every reminder, escalation and scan the tick owns should be assumed
 not to have run.
 
-Both steps need authorization that has not been given: `CLAUDE.md` requires
-explicit approval for any non-local `DATABASE_URL`, and no branch has been
-pushed.
+Both steps still need authorization that has not been given: `CLAUDE.md`
+requires explicit approval for any non-local `DATABASE_URL`, and no deployment
+has been made to any runtime. The code itself has reached the remote --
+PRs #59 and #60 are merged and #61 is open -- so what is outstanding is a
+database and a deployment, not a branch.
 
 After that, in order of what unblocks the most:
 
 1. **A malware scanner provider.** It gates `verified` safety, which gates
    package approval. Nothing can be filed until it exists, so it blocks the
    pilot's most important step.
-2. **A `TEST_DATABASE_URL`, or the CI run on a PR.** Every SQL claim in A–F rests
-   on reading, not running.
+2. ~~A `TEST_DATABASE_URL`, or the CI run on a PR.~~ **Done.** CI runs every
+   repository test against a migrated and seeded Postgres on each pull request,
+   and the suite also runs locally against a container. The first CI run found
+   eight SQL defects; a rehearsal against a populated database found a ninth
+   that CI structurally cannot see, because CI builds an empty Postgres and only
+   ever exercises the INSERT path.
 3. **The internal server's handoff protocol.** Without it a pilot can prepare and
    approve packages but not send them, and 回件與異常 stays unreleased.
 4. **A pilot cohort and a baseline.** See `pilot-measurement-plan.md`: collect

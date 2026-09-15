@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   cronIntervalSeconds,
   defaultToleranceSeconds,
+  dispatchCountLabel,
   maintenanceHealthOf,
   SCHEDULED_MAINTENANCE_CRON,
   staleAfterSeconds,
@@ -23,6 +24,7 @@ function run(overrides: Partial<MaintenanceRunRecord> = {}): MaintenanceRunRecor
     durationMs: 4000,
     outcome: "succeeded",
     failedPasses: [],
+    dispatch: null,
     triggerSource: "scheduled",
     ...overrides,
   };
@@ -246,5 +248,22 @@ describe("maintenanceHealthOf", () => {
     });
 
     expect(health.state).toBe("healthy");
+  });
+});
+
+describe("dispatchCountLabel", () => {
+  /**
+   * A run with no recorded dispatch and a run that dispatched nothing are
+   * different facts. Rendering both as "0" would say "no messages went out"
+   * about a run where nobody knows what went out.
+   */
+  it("does not render an unknown count as zero", () => {
+    expect(dispatchCountLabel(null)).toBe("無法判斷");
+    expect(dispatchCountLabel(0)).toBe("0");
+    expect(dispatchCountLabel(null)).not.toBe(dispatchCountLabel(0));
+  });
+
+  it("renders a real count", () => {
+    expect(dispatchCountLabel(7)).toBe("7");
   });
 });

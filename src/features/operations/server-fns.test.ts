@@ -83,6 +83,7 @@ describe("buildOperationsHealth", () => {
       durationMs: 10,
       outcome: "succeeded",
       failedPasses: [],
+      dispatch: null,
       triggerSource: "manual",
     };
 
@@ -165,6 +166,7 @@ describe("history-scoped facts", () => {
       durationMs: 10,
       outcome: "partial",
       failedPasses: ["dispatchDue"],
+      dispatch: null,
       triggerSource: "scheduled",
     });
     const window = Array.from({ length: 12 }, (_, i) =>

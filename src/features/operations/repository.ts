@@ -24,6 +24,8 @@ type RunRow = {
   duration_ms: number;
   outcome: MaintenanceRunOutcome;
   failed_passes: string[];
+  dispatch_sent: number | string | null;
+  dispatch_suppressed: number | string | null;
   trigger_source: "scheduled" | "manual";
 };
 
@@ -162,6 +164,18 @@ function mapRun(row: RunRow): MaintenanceRunRecord {
     durationMs: Number(row.duration_ms),
     outcome: row.outcome,
     failedPasses: row.failed_passes ?? [],
+    // DispatchSummary always writes both counts together, so today this only
+    // fires when the pass produced no summary at all -- `passes` was absent,
+    // or the dispatch pass itself threw. Checked per half rather than as one
+    // presence check, so a future shape change that adds one count without
+    // the other cannot report half a fact as a whole one.
+    dispatch:
+      row.dispatch_sent === null || row.dispatch_suppressed === null
+        ? null
+        : {
+            sent: Number(row.dispatch_sent),
+            suppressedFixtureOrigin: Number(row.dispatch_suppressed),
+          },
     triggerSource: row.trigger_source,
   };
 }
@@ -188,6 +202,18 @@ export function createMaintenanceRunRepository(
   // Only a client this factory opened is a client this factory may close. The
   // shared singleton is used by every other repository in the request.
   const ownsClient = Boolean(databaseUrl);
+
+  // Shared by listRecentRuns and listRecentScheduledRuns below: both read the
+  // same table for the same shape, and a hand-copied second list is exactly
+  // the kind of thing one query can update without the other -- leaving
+  // whichever screen reads the missed copy reporting dispatch as permanently
+  // unknown. One fragment means there is nothing to fall out of sync.
+  const runColumns = sql`
+    id, scheduled_for, started_at, finished_at, duration_ms,
+    outcome, failed_passes, trigger_source,
+    (passes -> 'dispatch' ->> 'sent')::int dispatch_sent,
+    (passes -> 'dispatch' ->> 'suppressedFixtureOrigin')::int dispatch_suppressed
+  `;
 
   async function depthOf(
     table: "document_scan_jobs" | "document_analysis_jobs" | "notification_outbox",
@@ -300,8 +326,7 @@ export function createMaintenanceRunRepository(
 
     async listRecentScheduledRuns(limit = DEFAULT_RUN_LIMIT) {
       const rows = await sql<RunRow[]>`
-        select id, scheduled_for, started_at, finished_at, duration_ms,
-               outcome, failed_passes, trigger_source
+        select ${runColumns}
         from maintenance_runs
         where trigger_source = 'scheduled'
         order by scheduled_for desc
@@ -321,8 +346,7 @@ export function createMaintenanceRunRepository(
 
     async listRecentRuns(limit = DEFAULT_RUN_LIMIT) {
       const rows = await sql<RunRow[]>`
-        select id, scheduled_for, started_at, finished_at, duration_ms,
-               outcome, failed_passes, trigger_source
+        select ${runColumns}
         from maintenance_runs
         order by scheduled_for desc
         limit ${limit}
