@@ -1,7 +1,25 @@
 # Kossilon implementation status
 
-Current branch: `codex/kossilon-phase-f` · Current commit: `da55db1` · Base: `main` = `fa02046`
-· PR [#59](https://github.com/YNWAforever/kossilon-hub/pull/59) · **CI green**
+`main` = `c2051b5` (2026-09-18) · PRs #59–#64 merged · **CI green on `main`**
+
+## Since #59: what #61–#64 added
+
+- **#61 Schema drift check.** `/operations` reads `schema_migrations` and says
+  whether the database is `behind`, `ahead`, `diverged`, `current` or has
+  `no-ledger` at all, naming the earliest missing migration. A database eleven
+  migrations behind no longer looks like one bad query.
+- **#62 Staging deploy preparation.** Maintenance runs now record how many
+  notifications were dispatched and how many were suppressed as fixture-origin,
+  shown on `/operations` (null reads 無法判斷, never 0). The firm-deployment
+  runbook gained a `REQUIRES EXPLICIT APPROVAL` render-and-deploy step.
+- **#63 Retiring blocked integrations.** Every blocker declares where its
+  clearing evidence lives (`build`, `runtime` or `external` with a required
+  `why`). `/operations` flags a runtime blocker whose evidence has appeared, but
+  never clears it; a person removes the entry. `local-postgres` was retired,
+  leaving six entries, three of them release-blocking.
+- **#64** restored `main`'s typecheck. #62 and #63 were each green alone and
+  merged without a textual conflict, but together two test fixtures lacked the
+  field #62 made required. Neither PR's CI could see it.
 
 ## The SQL has now actually run
 
@@ -63,8 +81,9 @@ by construction, and was fixed blind. A rehearsal against populated data is the
 only place that class of defect can be caught, and it belongs in the runbook
 before any staging migration.
 
-`BLOCKED_INTEGRATION: local-postgres` is cleared **for CI and locally** — a local
-Postgres is reachable and the full suite runs against it. What remains unproven
+`local-postgres` was cleared **for CI and locally** and has since been removed
+from the inventory (#63) — a local Postgres is reachable and the full suite runs
+against it. What remains unproven
 is any real deployment: no staging or production database has been migrated.
 
 Four states are tracked separately, per plan §3.1. A phase is not "done" because
@@ -321,7 +340,7 @@ Two further rules:
 
 - **Staleness outranks the last run's outcome.** A cron that stopped after a
   clean tick and one that stopped after a failed tick are the same emergency.
-- **A `not-configured` pass is not a fault.** Under six blocked integrations the
+- **A `not-configured` pass is not a fault.** Under the blocked integrations the
   scan and analysis passes say that on every single tick, permanently. Folding it
   into `degraded` would paint the screen red forever and train staff to ignore
   it — and the day something actually broke, the colour would not change. Blocked
@@ -356,8 +375,11 @@ not to have run.
 Both steps still need authorization that has not been given: `CLAUDE.md`
 requires explicit approval for any non-local `DATABASE_URL`, and no deployment
 has been made to any runtime. The code itself has reached the remote --
-PRs #59 and #60 are merged and #61 is open -- so what is outstanding is a
-database and a deployment, not a branch.
+PRs #59–#64 are merged -- so what is outstanding is a database and a
+deployment, not a branch. The staging plan
+(`docs/superpowers/plans/2026-09-12-staging-deploy-tick-proof.md`, Tasks 5–9)
+waits on nine config values, whether the staging database holds rows, and
+approval given at the moment the migrations run.
 
 After that, in order of what unblocks the most:
 
@@ -381,8 +403,7 @@ After that, in order of what unblocks the most:
 Code is complete for A, B, C, for everything in D and E that a provider does not
 gate, and for the half of F that does not need a pilot. **Nothing is
 integration-verified.** No migration (`0023`–`0033`) has been applied to any
-database; no provider account exists; the repository integration tests execute
-only in CI. Every SQL claim in this work rests on reading, not on running.
+real database (only CI and a local rehearsal); no provider account exists.
 
 The one thing that changed in F: the deployment can now _say_ that it is not
 running. That does not clear `deployment-runtime` — only a real invocation on a
@@ -397,8 +418,6 @@ product appears to offer:
 - `ai-provider` — the third analysis tier never runs.
 - `whatsapp-media-download` — a client's attachment is recorded but never fetched.
 - `external-handoff-destination` — no package can be filed.
-- `local-postgres` — cleared. Every repository test runs on a real Postgres in
-  CI and locally, and the migrations were rehearsed onto populated data.
 - `deployment-runtime` — nothing has been observed on a deployed runtime.
 
 The honest reading is that the product is code-complete and integration-zero. F
@@ -406,15 +425,14 @@ is where that changes or is confirmed.
 
 ## Open blockers
 
-| ID                                                  | Effect                                                                                                                                                                                                                  | Cleared by                                                                                                    |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `BLOCKED_INTEGRATION: malware-scanner-provider`     | Live document scanning stays disabled; the legacy re-scan backlog stays pending                                                                                                                                         | An approved provider, its binding names, its data-handling terms                                              |
-| `BLOCKED_INTEGRATION: local-postgres`               | **Cleared 2026-09-11.** CI runs all 1591 tests against a migrated, seeded Postgres, and the same suite now runs locally against a container. `0023`-`0033` were rehearsed onto a populated database and applied cleanly | —                                                                                                             |
-| `BLOCKED_INTEGRATION: external-handoff-destination` | No package can be transmitted to the filing agent; every handoff stays `prepared` and the 回件與異常 work view stays unreleased                                                                                         | The internal server's protocol, address, authentication and rights                                            |
-| `BLOCKED_INTEGRATION: whatsapp-media-download`      | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document                                                                                               | A documented WOZTELL media-download endpoint and its auth                                                     |
-| `BLOCKED_INTEGRATION: document-text-extraction`     | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules                                                       | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
-| `BLOCKED_INTEGRATION: ai-provider`                  | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity       | An approved provider, its binding names, its data-handling terms                                              |
-| `BLOCKED_INTEGRATION: deployment-runtime`           | Whether the 5-minute schedule really fires is still unverified — but no longer unverifiable. `maintenance_runs` records every invocation and `/operations` reports `never-observed` until the first one arrives         | The first row on `/operations` with trigger 排程, from a real invocation on the deployed runtime              |
+| ID                                                  | Effect                                                                                                                                                                                                            | Cleared by                                                                                                    |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `BLOCKED_INTEGRATION: malware-scanner-provider`     | Live document scanning stays disabled; the legacy re-scan backlog stays pending                                                                                                                                   | An approved provider, its binding names, its data-handling terms                                              |
+| `BLOCKED_INTEGRATION: external-handoff-destination` | No package can be transmitted to the filing agent; every handoff stays `prepared` and the 回件與異常 work view stays unreleased                                                                                   | The internal server's protocol, address, authentication and rights                                            |
+| `BLOCKED_INTEGRATION: whatsapp-media-download`      | A client's attachment is recorded by reference but its bytes cannot be fetched, so inbound media never becomes a document                                                                                         | A documented WOZTELL media-download endpoint and its auth                                                     |
+| `BLOCKED_INTEGRATION: document-text-extraction`     | No server-side text extraction exists or can be lifted from the browser code; every rule needing a document's own words is unbuildable, including both date rules                                                 | A Worker-safe PDF text layer (new work), or `nodejs_compat` plus a Node PDF library (a deploy-surface change) |
+| `BLOCKED_INTEGRATION: ai-provider`                  | No model reads any document. There is no AI SDK, key binding, adapter or provider-mode gate anywhere in the repository; C-2's provider tier stays disabled and every C-1 version stays without a content identity | An approved provider, its binding names, its data-handling terms                                              |
+| `BLOCKED_INTEGRATION: deployment-runtime`           | Whether the 5-minute schedule really fires is still unverified — but no longer unverifiable. `maintenance_runs` records every invocation and `/operations` reports `never-observed` until the first one arrives   | The first row on `/operations` with trigger 排程, from a real invocation on the deployed runtime              |
 
 ## Open business inputs
 
