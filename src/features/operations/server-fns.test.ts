@@ -164,6 +164,7 @@ describe("buildOperationsHealth", () => {
       outcome: "succeeded",
       failedPasses: [],
       triggerSource: "scheduled",
+      dispatch: null,
     };
 
     const view = await buildOperationsHealth({ now: NOW }, { repository: repository([scheduled]) });
@@ -186,6 +187,7 @@ describe("buildOperationsHealth", () => {
       outcome: "succeeded",
       failedPasses: [],
       triggerSource: "manual",
+      dispatch: null,
     };
 
     const view = await buildOperationsHealth({ now: NOW }, { repository: repository([manual]) });
