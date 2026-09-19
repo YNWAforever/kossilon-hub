@@ -86,6 +86,33 @@ export function threePagePdf(): ArrayBuffer {
   );
 }
 
+/** `count` pages, each one short line reading "Page <n>". */
+export function manyPagePdf(count: number): ArrayBuffer {
+  return buildPdf(
+    document(
+      Array.from({ length: count }, (_, index) => line(`Page ${index + 1}`)),
+      helvetica,
+      fontResource,
+    ),
+  );
+}
+
+export const SECOND_PAGE_MARKER = "Second page marker";
+
+/**
+ * Page 1 is one line of `length` characters (see `longTextPdf`); page 2 reads
+ * `SECOND_PAGE_MARKER`. For proving the extractor stops before page 2.
+ */
+export function longFirstPagePdf(length: number): ArrayBuffer {
+  return buildPdf(
+    document(
+      [`BT /F1 0.001 Tf 1 720 Td (${"A".repeat(length)}) Tj ET`, line(SECOND_PAGE_MARKER)],
+      helvetica,
+      fontResource,
+    ),
+  );
+}
+
 /** One page with a filled rectangle and no text operators: what a scan looks like. */
 export function imageOnlyPdf(): ArrayBuffer {
   return buildPdf(

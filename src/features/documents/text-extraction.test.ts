@@ -2,19 +2,50 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHINESE_PHRASE,
   ENGLISH_PHRASE,
+  SECOND_PAGE_MARKER,
   chinesePdf,
   encryptedPdf,
   englishPdf,
   imageOnlyPdf,
+  longFirstPagePdf,
   longTextPdf,
+  manyPagePdf,
   pngBytes,
   threePagePdf,
   truncatedPdf,
 } from "@/test/synthetic-pdf";
-import { MAX_EXTRACTED_CHARS, cleanExtractedText, extractPdfText } from "./text-extraction";
+import {
+  MAX_EXTRACTED_CHARS,
+  MAX_EXTRACTED_PAGES,
+  cleanExtractedText,
+  extractPdfText,
+} from "./text-extraction";
+
+/**
+ * The real unpdf, with every document proxy's `getPage` recorded. Nothing is
+ * faked: the proxy is pdf.js's own, so the page numbers here are the pages the
+ * extractor actually asked pdf.js to parse.
+ */
+const pagesRead = vi.hoisted(() => [] as number[]);
+vi.mock("unpdf", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("unpdf")>();
+  return {
+    ...actual,
+    getDocumentProxy: async (...args: Parameters<typeof actual.getDocumentProxy>) => {
+      const pdf = await actual.getDocumentProxy(...args);
+      const getPage = pdf.getPage.bind(pdf);
+      pdf.getPage = (pageNumber: number) => {
+        pagesRead.push(pageNumber);
+        return getPage(pageNumber);
+      };
+      return pdf;
+    },
+  };
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
+  pagesRead.length = 0;
 });
 
 describe("extractPdfText", () => {
@@ -96,6 +127,55 @@ describe("extractPdfText", () => {
     if (result.method !== "text-layer") return;
     expect(result.text).toHaveLength(MAX_EXTRACTED_CHARS);
     expect(result.truncated).toBe(true);
+  });
+
+  /**
+   * The limit bounds work, not just storage: once page 1 alone passes it, no
+   * later page is parsed, yet the page count is still the document's own.
+   */
+  it("stops reading pages once the text limit is passed", async () => {
+    const result = await extractPdfText({
+      body: longFirstPagePdf(MAX_EXTRACTED_CHARS + 50),
+      contentType: "application/pdf",
+    });
+
+    expect(result).toMatchObject({ method: "text-layer", pageCount: 2, truncated: true });
+    if (result.method !== "text-layer") return;
+    expect(result.text).toHaveLength(MAX_EXTRACTED_CHARS);
+    expect(result.text).not.toContain(SECOND_PAGE_MARKER);
+    expect(pagesRead).toEqual([1]);
+  });
+
+  it("reads every page, one at a time, when the limit is not reached", async () => {
+    await extractPdfText({ body: threePagePdf(), contentType: "application/pdf" });
+
+    expect(pagesRead).toEqual([1, 2, 3]);
+  });
+
+  /** A hostile page count is refused before any page is parsed. */
+  it("refuses a PDF with more than MAX_EXTRACTED_PAGES pages without parsing a page", async () => {
+    const result = await extractPdfText({
+      body: manyPagePdf(MAX_EXTRACTED_PAGES + 1),
+      contentType: "application/pdf",
+    });
+
+    expect(result).toEqual({ method: "unreadable", errorClass: "too-many-pages" });
+    expect(pagesRead).toEqual([]);
+  });
+
+  it("still reads a PDF of exactly MAX_EXTRACTED_PAGES pages", async () => {
+    const result = await extractPdfText({
+      body: manyPagePdf(MAX_EXTRACTED_PAGES),
+      contentType: "application/pdf",
+    });
+
+    expect(result).toMatchObject({
+      method: "text-layer",
+      pageCount: MAX_EXTRACTED_PAGES,
+      truncated: false,
+    });
+    if (result.method !== "text-layer") return;
+    expect(result.text).toContain(`Page ${MAX_EXTRACTED_PAGES}`);
   });
 
   /**

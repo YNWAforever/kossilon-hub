@@ -1,3 +1,4 @@
+type PDFDocumentProxy = Awaited<ReturnType<typeof import("unpdf").getDocumentProxy>>;
 import { sniffContentType } from "./analysis-checks";
 
 /**
@@ -19,6 +20,13 @@ export const EXTRACTOR_VERSION = "1";
  * the point is that one pathological upload cannot put megabytes in a row.
  */
 export const MAX_EXTRACTED_CHARS = 200_000;
+
+/**
+ * A ceiling on pages parsed. Every page is parsed in the Worker's CPU budget,
+ * so a document claiming more is refused before any page is read: one hostile
+ * PDF must not exhaust the maintenance invocation and every job claimed after it.
+ */
+export const MAX_EXTRACTED_PAGES = 200;
 
 export type ExtractionResult =
   | { method: "text-layer"; text: string; pageCount: number; truncated: boolean }
@@ -63,6 +71,23 @@ export function cleanExtractedText(text: string): string {
   return text.replaceAll("\u0000", "").trim();
 }
 
+/** A page's text as unpdf's `extractText` builds it: each item, a newline after `hasEOL`. */
+async function pageText(pdf: PDFDocumentProxy, pageNumber: number): Promise<string> {
+  const content = await (await pdf.getPage(pageNumber)).getTextContent();
+  return content.items
+    .map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : "") : ""))
+    .join("");
+}
+
+/** unpdf's `mergePages` normalisation, applied to the pages actually read. */
+function mergePageTexts(texts: string[]): string {
+  return texts
+    .join("\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ ?\n ?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
 function errorClassOf(error: unknown): string {
   if (error instanceof Error && error.name) return error.name;
   return "unknown";
@@ -79,13 +104,27 @@ export async function extractPdfText(input: {
 
   try {
     // Loaded lazily so nothing that merely imports this module pays for pdf.js.
-    const { extractText, getDocumentProxy } = await import("unpdf");
+    const { getDocumentProxy } = await import("unpdf");
     // A copy: pdf.js takes ownership of the buffer it is handed and can detach
     // it, and the caller still needs its bytes.
     const pdf = await getDocumentProxy(new Uint8Array(input.body.slice(0)), PDF_OPTIONS);
     try {
-      const { totalPages, text } = await extractText(pdf, { mergePages: true });
-      const clean = cleanExtractedText(text);
+      const totalPages = pdf.numPages;
+      if (totalPages > MAX_EXTRACTED_PAGES) {
+        return { method: "unreadable", errorClass: "too-many-pages" };
+      }
+
+      // Page by page, stopping once the text limit is passed: the limit bounds
+      // the work done, not only what is stored.
+      const texts: string[] = [];
+      let length = 0;
+      for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
+        const text = await pageText(pdf, pageNumber);
+        texts.push(text);
+        length += text.length + 1;
+        if (length > MAX_EXTRACTED_CHARS) break;
+      }
+      const clean = cleanExtractedText(mergePageTexts(texts));
       if (clean.length === 0) return { method: "none", pageCount: totalPages };
 
       const truncated = clean.length > MAX_EXTRACTED_CHARS;

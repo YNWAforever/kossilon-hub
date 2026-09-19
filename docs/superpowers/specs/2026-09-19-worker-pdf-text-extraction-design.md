@@ -49,12 +49,13 @@ One pure unit. The only file that imports `unpdf`.
 ```ts
 export const EXTRACTOR_VERSION = "1";
 export const MAX_EXTRACTED_CHARS = 200_000;
+export const MAX_EXTRACTED_PAGES = 200;
 
 export type ExtractionResult =
   | { method: "text-layer"; text: string; pageCount: number; truncated: boolean }
   /** Opened, no text on any page (a scan), or not a PDF at all. */
   | { method: "none"; pageCount: number | null }
-  /** Encrypted or corrupt. `errorClass` only, never the message. */
+  /** Encrypted, corrupt, or over MAX_EXTRACTED_PAGES ("too-many-pages"). `errorClass` only, never the message. */
   | { method: "unreadable"; errorClass: string };
 
 export function extractPdfText(input: {
@@ -67,6 +68,12 @@ export function extractPdfText(input: {
   type) → `{ method: "none", pageCount: null }` without parsing.
 - Whitespace-only text across all pages → `none` with the real page count.
 - Text longer than `MAX_EXTRACTED_CHARS` is cut and `truncated: true`.
+- Both limits bound work, not just storage. A PDF with more than
+  `MAX_EXTRACTED_PAGES` pages is refused as `unreadable` / `too-many-pages`
+  before any page is parsed, and pages are read one at a time, stopping once
+  the accumulated text passes `MAX_EXTRACTED_CHARS` (`pageCount` stays the true
+  total). Without this a hostile PDF could exhaust the Worker's CPU and kill the
+  maintenance invocation and every job claimed after it.
 - No network fetches. pdf.js can fetch external CMaps and standard fonts for
   CJK text whose font is not embedded; the extractor disables that, so such a
   document yields `none` or partial text rather than a request to a CDN from
