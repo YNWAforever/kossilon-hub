@@ -103,10 +103,11 @@ export const SECOND_PAGE_MARKER = "Second page marker";
  * Page 1 is one line of `length` characters (see `longTextPdf`); page 2 reads
  * `SECOND_PAGE_MARKER`. For proving the extractor stops before page 2.
  */
-export function longFirstPagePdf(length: number): ArrayBuffer {
+export function longFirstPagePdf(length: number, unit = "A"): ArrayBuffer {
+  const body = unit.repeat(Math.ceil(length / unit.length)).slice(0, length);
   return buildPdf(
     document(
-      [`BT /F1 0.001 Tf 1 720 Td (${"A".repeat(length)}) Tj ET`, line(SECOND_PAGE_MARKER)],
+      [`BT /F1 0.001 Tf 1 720 Td (${body}) Tj ET`, line(SECOND_PAGE_MARKER)],
       helvetica,
       fontResource,
     ),

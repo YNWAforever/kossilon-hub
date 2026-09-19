@@ -146,6 +146,22 @@ describe("extractPdfText", () => {
     expect(pagesRead).toEqual([1]);
   });
 
+  /**
+   * Stopping early is itself truncation. What was read back can fit within the
+   * limit, and a result that skipped pages must not then claim to be complete.
+   */
+  it("reports truncation when it stopped early, even if the text fits", async () => {
+    // Exactly at the limit: the joining newline counted per page trips the
+    // early stop, yet the cleaned text is not longer than the limit.
+    const result = await extractPdfText({
+      body: longFirstPagePdf(MAX_EXTRACTED_CHARS),
+      contentType: "application/pdf",
+    });
+
+    expect(pagesRead).toEqual([1]);
+    expect(result).toMatchObject({ method: "text-layer", pageCount: 2, truncated: true });
+  });
+
   it("reads every page, one at a time, when the limit is not reached", async () => {
     await extractPdfText({ body: threePagePdf(), contentType: "application/pdf" });
 

@@ -127,7 +127,8 @@ export async function extractPdfText(input: {
       const clean = cleanExtractedText(mergePageTexts(texts));
       if (clean.length === 0) return { method: "none", pageCount: totalPages };
 
-      const truncated = clean.length > MAX_EXTRACTED_CHARS;
+      // Pages left unread are truncation too, even when what was read fits.
+      const truncated = clean.length > MAX_EXTRACTED_CHARS || texts.length < totalPages;
       return {
         method: "text-layer",
         text: truncated ? clean.slice(0, MAX_EXTRACTED_CHARS) : clean,
