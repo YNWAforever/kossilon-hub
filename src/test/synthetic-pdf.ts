@@ -69,6 +69,17 @@ export function englishPdf(text: string = ENGLISH_PHRASE): ArrayBuffer {
   return buildPdf(document([line(text)], helvetica, fontResource));
 }
 
+/**
+ * One line of `length` characters at a 0.001pt font size. pdf.js drops glyphs
+ * positioned outside the page, so a long line at 12pt would lose everything
+ * past the right edge; at this size the whole string stays on the page.
+ */
+export function longTextPdf(length: number): ArrayBuffer {
+  return buildPdf(
+    document([`BT /F1 0.001 Tf 1 720 Td (${"A".repeat(length)}) Tj ET`], helvetica, fontResource),
+  );
+}
+
 export function threePagePdf(): ArrayBuffer {
   return buildPdf(
     document([line("Page one"), line("Page two"), line("Page three")], helvetica, fontResource),
