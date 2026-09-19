@@ -42,15 +42,26 @@ export type StoredExtraction = Exclude<ExtractionResult, { method: "unreadable" 
  * pdf.js options for a Worker reading untrusted bytes.
  *
  * No eval, no system fonts, no font faces: nothing here renders, it only reads
- * text. With no `standardFontDataUrl` or `cMapUrl` there is nothing to fetch, so
- * a non-embedded CJK font yields less text rather than a request to a CDN.
+ * text. `standardFontDataUrl` and `cMapUrl` are set to `undefined` explicitly:
+ * unpdf fills both from the local `pdfjs-dist` whenever it thinks it is in Node
+ * (`process.release.name === "node"`, which `nodejs_compat` can make true in a
+ * Worker), and outside real Node pdf.js loads those URLs with `fetch()`. Our
+ * options are spread after unpdf's defaults, so `undefined` wins and there is
+ * nothing to fetch: a non-embedded font yields less text, not a request.
  */
 const PDF_OPTIONS = {
   isEvalSupported: false,
   useSystemFonts: false,
   disableFontFace: true,
   stopAtErrors: true,
+  standardFontDataUrl: undefined,
+  cMapUrl: undefined,
 } as const;
+
+/** Postgres `text` cannot store NUL; the rest is whitespace at the edges. */
+export function cleanExtractedText(text: string): string {
+  return text.replaceAll("\u0000", "").trim();
+}
 
 function errorClassOf(error: unknown): string {
   if (error instanceof Error && error.name) return error.name;
@@ -74,7 +85,7 @@ export async function extractPdfText(input: {
     const pdf = await getDocumentProxy(new Uint8Array(input.body.slice(0)), PDF_OPTIONS);
     try {
       const { totalPages, text } = await extractText(pdf, { mergePages: true });
-      const clean = text.replaceAll("\u0000", "").trim();
+      const clean = cleanExtractedText(text);
       if (clean.length === 0) return { method: "none", pageCount: totalPages };
 
       const truncated = clean.length > MAX_EXTRACTED_CHARS;

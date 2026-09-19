@@ -11,7 +11,7 @@ import {
   threePagePdf,
   truncatedPdf,
 } from "@/test/synthetic-pdf";
-import { MAX_EXTRACTED_CHARS, extractPdfText } from "./text-extraction";
+import { MAX_EXTRACTED_CHARS, cleanExtractedText, extractPdfText } from "./text-extraction";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -114,6 +114,33 @@ describe("extractPdfText", () => {
     expect(result.text).not.toContain("\u0000");
     expect(result.text).toContain("before");
     expect(result.text).toContain("after");
+  });
+
+  /**
+   * The PDF route cannot prove this: pdf.js maps `\000` in a simple font to a
+   * space before the text reaches us. The sanitize step is tested directly.
+   */
+  it("removes every NUL from extracted text", () => {
+    expect(cleanExtractedText("  a\u0000b\u0000\u0000c  ")).toBe("abc");
+  });
+
+  /**
+   * unpdf defaults `standardFontDataUrl` / `cMapUrl` to local files in Node; in
+   * a Worker the same URLs would be fetched. pdf.js logs the URL it failed to
+   * load, so no such log line means no URL was configured.
+   */
+  it("configures no font or CMap data URL", async () => {
+    const log = vi.spyOn(console, "log");
+    const warn = vi.spyOn(console, "warn");
+
+    await extractPdfText({ body: englishPdf(), contentType: "application/pdf" });
+    await extractPdfText({ body: chinesePdf(), contentType: "application/pdf" });
+
+    const urls = [...log.mock.calls, ...warn.mock.calls]
+      .flat()
+      .map(String)
+      .filter((line) => /standard_fonts|cmaps|file:\/\//.test(line));
+    expect(urls).toEqual([]);
   });
 
   /** The Worker must not reach out to a CDN for font or CMap data while reading a client's document. */
