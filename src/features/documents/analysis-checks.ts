@@ -4,17 +4,14 @@ import type { DocumentVersionState } from "./versions";
 /**
  * The two deterministic tiers, and only what they can honestly compute.
  *
- * The design first assumed these needed no provider, which is true and beside
- * the point: they needed extracted text, and there is no server-side text
- * extraction in this repository. `doc-parser.ts` is browser-only by
- * construction -- pdfjs evaluates `new DOMMatrix()` at module scope and mammoth
- * requires `fs`, neither of which exists in workerd, and `nodejs_compat` is not
- * enabled. Every upload is a PDF or an image, so the one reusable server-side
- * reader (the ZIP/OOXML parser in nar-import) matches nothing in the corpus.
- *
- * BLOCKED_INTEGRATION: document-text-extraction. So no rule here reads a
- * document's words. What is left is still worth having: whether the file will
- * open at all, and whether the records about it agree with each other.
+ * Text extraction now exists (`text-extraction.ts`, run by the analysis pass on
+ * scan-verified PDFs) and supplies the page count used below. It has not yet
+ * run on a deployed Worker, and under the scanner blocker it reaches no
+ * document, so BLOCKED_INTEGRATION: document-text-extraction stands until
+ * /operations shows a real text-layer row. No rule here reads a document's
+ * words; the two date rules are a separate design. What is here is still worth
+ * having: whether the file will open at all, and whether the records about it
+ * agree with each other.
  */
 
 export const READABILITY_RULE_VERSION = "1";

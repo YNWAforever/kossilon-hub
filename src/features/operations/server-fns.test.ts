@@ -37,6 +37,7 @@ function repository(
     lastScheduledSuccessAt: vi.fn(async () => lastSuccess),
     queueDepths: vi.fn(async (_now: string) => depths),
     schemaLedger: vi.fn(async () => ledger),
+    textLayerObserved: vi.fn(async () => false),
   };
 }
 
@@ -209,6 +210,15 @@ describe("buildOperationsHealth", () => {
 
     expect(view.maintenance).toBeNull();
     expect(view.staleBlockers).toEqual([]);
+  });
+
+  it("flags text extraction once a text-layer row exists", async () => {
+    const repo = repository([]);
+    repo.textLayerObserved.mockResolvedValue(true);
+
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+
+    expect(view.staleBlockers).toContain("document-text-extraction");
   });
 });
 

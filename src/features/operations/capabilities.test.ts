@@ -165,7 +165,11 @@ function entry(overrides: Partial<BlockedIntegration>): BlockedIntegration {
 describe("staleBlockedIntegrations", () => {
   it("says nothing while the evidence is absent", () => {
     expect(
-      staleBlockedIntegrations({ blocked: [entry({})], maintenanceState: "never-observed" }),
+      staleBlockedIntegrations({
+        blocked: [entry({})],
+        maintenanceState: "never-observed",
+        textLayerObserved: false,
+      }),
     ).toEqual([]);
   });
 
@@ -174,27 +178,45 @@ describe("staleBlockedIntegrations", () => {
    * recorded, which is exactly what `deployment-runtime` says would clear it.
    */
   it("flags the entry once a scheduled run has been observed", () => {
-    expect(staleBlockedIntegrations({ blocked: [entry({})], maintenanceState: "healthy" })).toEqual(
-      ["deployment-runtime"],
-    );
+    expect(
+      staleBlockedIntegrations({
+        blocked: [entry({})],
+        maintenanceState: "healthy",
+        textLayerObserved: false,
+      }),
+    ).toEqual(["deployment-runtime"]);
   });
 
   it("flags it even when the schedule is unhealthy, because it still ran", () => {
-    expect(staleBlockedIntegrations({ blocked: [entry({})], maintenanceState: "stale" })).toEqual([
-      "deployment-runtime",
-    ]);
+    expect(
+      staleBlockedIntegrations({
+        blocked: [entry({})],
+        maintenanceState: "stale",
+        textLayerObserved: false,
+      }),
+    ).toEqual(["deployment-runtime"]);
   });
 
   it("has nothing to say once the entry is gone", () => {
-    expect(staleBlockedIntegrations({ blocked: [], maintenanceState: "healthy" })).toEqual([]);
+    expect(
+      staleBlockedIntegrations({
+        blocked: [],
+        maintenanceState: "healthy",
+        textLayerObserved: false,
+      }),
+    ).toEqual([]);
   });
 
   it("never flags an entry whose evidence does not live at runtime", () => {
     const external = entry({ id: "ai-provider", evidence: { observable: "external", why: "x" } });
 
-    expect(staleBlockedIntegrations({ blocked: [external], maintenanceState: "healthy" })).toEqual(
-      [],
-    );
+    expect(
+      staleBlockedIntegrations({
+        blocked: [external],
+        maintenanceState: "healthy",
+        textLayerObserved: false,
+      }),
+    ).toEqual([]);
   });
 
   /**
@@ -223,5 +245,34 @@ describe("staleBlockedIntegrations", () => {
     );
 
     expect(runtimeCheckedIds().filter((id) => !runtimeIds.has(id))).toEqual([]);
+  });
+
+  describe("document-text-extraction", () => {
+    const extraction = entry({ id: "document-text-extraction", blocksRelease: false });
+
+    it("stays quiet until a deployed runtime has written a text-layer row", () => {
+      expect(
+        staleBlockedIntegrations({
+          blocked: [extraction],
+          maintenanceState: "healthy",
+          textLayerObserved: false,
+        }),
+      ).toEqual([]);
+    });
+
+    it("flags the entry once one has", () => {
+      expect(
+        staleBlockedIntegrations({
+          blocked: [extraction],
+          maintenanceState: "never-observed",
+          textLayerObserved: true,
+        }),
+      ).toEqual(["document-text-extraction"]);
+    });
+  });
+
+  it("declares document-text-extraction as runtime evidence", () => {
+    const declared = BLOCKED_INTEGRATIONS.find((item) => item.id === "document-text-extraction");
+    expect(declared?.evidence).toEqual({ observable: "runtime" });
   });
 });
