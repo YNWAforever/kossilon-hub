@@ -8,6 +8,7 @@ import {
 import type { DocumentAnalysisJobRepository } from "./analysis-jobs";
 import { makeFinding, type Finding } from "./findings";
 import { documentSafetyOf, type DocumentSafety } from "./safety";
+import { EXTRACTOR_VERSION, type ExtractionResult, type StoredExtraction } from "./text-extraction";
 import type { DocumentStatus, DocumentStorage, ScanVerdictSource } from "./types";
 import type { DocumentVersionState } from "./versions";
 
@@ -27,7 +28,7 @@ export type AnalysisSubject = {
   declaredContentType: string | null;
   declaredByteSize: number | null;
   verifiedByteSize: number | null;
-  /** From document_version_texts. Null everywhere today: nothing counts pages. */
+  /** From document_version_texts; null until an extraction has counted pages. */
   knownPageCount: number | null;
   pageClaims: readonly EvidencePageClaim[];
   /** The upload this version came from, for the safety gate. */
@@ -61,6 +62,14 @@ export type AnalysisWorkerDependencies = {
   storage: Pick<DocumentStorage, "get">;
   /** Null under BLOCKED_INTEGRATION: ai-provider, which is always, today. */
   analyzer: DocumentAiAnalyzer | null;
+  /**
+   * Reads a PDF's text layer. Injected, like the analyzer, so the pass can be
+   * tested without pdf.js and so a failure is the pass's to contain.
+   */
+  extractor: {
+    extract(input: { body: ArrayBuffer; contentType: string | null }): Promise<ExtractionResult>;
+  };
+  texts: { upsertText(documentVersionId: string, extraction: StoredExtraction): Promise<void> };
 };
 
 export type AnalysisDrainSummary = {
@@ -96,6 +105,18 @@ function providerNote(documentVersionId: string, detail: string): Finding {
     outcome: "uncertain",
     severity: "info",
     detail,
+    citation: { kind: "version", documentVersionId, pageFrom: null, pageTo: null },
+  });
+}
+
+function extractionNote(documentVersionId: string, errorClass: string): Finding {
+  return makeFinding({
+    ruleKey: "extraction:text-layer",
+    ruleVersion: EXTRACTOR_VERSION,
+    tier: "classification",
+    outcome: "uncertain",
+    severity: "info",
+    detail: `The document's text could not be read (${errorClass}), so no check that needs its words could run.`,
     citation: { kind: "version", documentVersionId, pageFrom: null, pageTo: null },
   });
 }
@@ -185,6 +206,40 @@ export async function drainDocumentAnalysisJobs(
       continue;
     }
 
+    // Wrapped for the same reason the model tier is: a throw would unwind this
+    // loop and strand every job claimed after this one.
+    let extraction: ExtractionResult;
+    try {
+      extraction = await dependencies.extractor.extract({
+        body: stored.body,
+        contentType: subject.declaredContentType,
+      });
+    } catch {
+      extraction = { method: "unreadable", errorClass: "extractor-threw" };
+    }
+
+    // What this run counted beats what was loaded: the loaded value is from an
+    // earlier run, or null because there was none.
+    let knownPageCount = subject.knownPageCount;
+    if (extraction.method !== "unreadable") {
+      try {
+        await dependencies.texts.upsertText(subject.version.id, {
+          ...extraction,
+          extractorVersion: EXTRACTOR_VERSION,
+        });
+      } catch {
+        const applied = await dependencies.jobs.markRetry(job.id, {
+          ...fence,
+          errorCode: "texts-not-written",
+          errorMessage: "The extracted text for this run could not be recorded.",
+        });
+        if (applied) summary.retried += 1;
+        else summary.superseded += 1;
+        continue;
+      }
+      knownPageCount = extraction.pageCount;
+    }
+
     const { head, tail } = sampleOf(stored.body);
     const findings: Finding[] = [
       ...readabilityFindings(subject.version, {
@@ -195,11 +250,14 @@ export async function drainDocumentAnalysisJobs(
       }),
       ...crossCheckFindings({
         version: subject.version,
-        knownPageCount: subject.knownPageCount,
+        knownPageCount,
         declaredByteSize: subject.declaredByteSize,
         verifiedByteSize: subject.verifiedByteSize,
         pageClaims: subject.pageClaims,
       }),
+      ...(extraction.method === "unreadable"
+        ? [extractionNote(subject.version.id, extraction.errorClass)]
+        : []),
     ];
 
     if (!dependencies.analyzer) {
