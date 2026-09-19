@@ -1,7 +1,7 @@
 # Worker-side PDF text extraction
 
 **Date:** 2026-09-19
-**Status:** design approved, implementation not started
+**Status:** implemented on `codex/worker-pdf-text`
 **Retires (eventually):** `BLOCKED_INTEGRATION: document-text-extraction`
 
 ## Why this, and why now
@@ -71,7 +71,14 @@ export function extractPdfText(input: {
   CJK text whose font is not embedded; the extractor disables that, so such a
   document yields `none` or partial text rather than a request to a CDN from
   the Worker. Embedded fonts with a ToUnicode map (the common case for
-  generated PDFs) need nothing external.
+  generated PDFs) need nothing external. As built, `standardFontDataUrl` and
+  `cMapUrl` are passed as `undefined` explicitly: `unpdf` fills both with local
+  `pdfjs-dist` paths whenever it believes it is in Node, and caller options are
+  spread after its defaults, so an explicit `undefined` is what disables them.
+- NUL characters are stripped: Postgres `text` refuses them, and a PDF text
+  layer can contain one.
+- Teardown uses `loadingTask.destroy()`. `PDFDocumentProxy.destroy()` does not
+  exist in pdf.js 6.
 - Never throws: any library error becomes `unreadable` with the error's class
   name. The message is dropped, same rule as `failure_summary`.
 
@@ -108,9 +115,10 @@ proves `unpdf` runs in workerd. So in `capabilities.ts`:
 - `document-text-extraction` evidence becomes `{ observable: "runtime" }`.
 - `clearedBy` becomes: the first `document_version_texts` row with
   `extraction_method = 'text-layer'` written on the deployed runtime.
-- `staleBlockedIntegrations` input gains `textLayerObserved: boolean | null`,
-  read by one `select exists(...)` in the operations repository. `null` (the
-  read failed or the table is missing) is **not** evidence.
+- `staleBlockedIntegrations` input gains `textLayerObserved: boolean`, read by
+  one `select exists(...)` in the operations repository. The only way for it to
+  be unknown is a failed operations read, and that path already reports no
+  stale blockers.
 - The #63 exhaustiveness guards require this runtime check to exist; the
   reverse guard requires the entry to still claim `runtime`.
 
@@ -124,8 +132,8 @@ a scanner and a deployment exist, and the runtime check is what will say so.
 
 ## Testing
 
-Fixtures: small **synthetic** PDFs generated for the purpose and committed under
-`src/features/documents/__fixtures__/pdf/`. Never client documents.
+Fixtures are generated in code by `src/test/synthetic-pdf.ts`: reviewable text,
+never binaries, never client documents.
 
 | Fixture                                            | Asserts                                            |
 | -------------------------------------------------- | -------------------------------------------------- |
@@ -145,10 +153,9 @@ Plus:
   throwing extractor leaves later jobs in the batch completed; an `unreadable`
   result writes no text row and one `uncertain` finding.
 - Repository (DB): upsert inserts, then replaces the row for the same version.
-- Capabilities: `textLayerObserved: true` flags the blocker; `false` and `null`
-  do not.
-- Build: the Worker bundle builds with `unpdf` included (catches a browser-only
-  import reaching the server bundle).
+- Capabilities: `textLayerObserved: true` flags the blocker; `false` does not.
+- Build: `npm run build` succeeds with `unpdf` in the server bundle, and a
+  convention test keeps `unpdf` imported by `text-extraction.ts` alone.
 
 ## Non-goals
 
