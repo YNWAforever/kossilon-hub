@@ -169,7 +169,20 @@ export type NotificationOutboxRepository = {
   ): Promise<boolean>;
   markFailed(
     id: string,
-    input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
+    input: {
+      errorCode: string;
+      errorMessage: string;
+      now: string;
+      attemptCount: number;
+      /**
+       * Settles the row so nothing can ever claim it again, by spending the whole
+       * attempt budget. `status = 'failed'` alone is not terminal while attempts
+       * remain — claimDue takes such a row as soon as next_attempt_at passes, and
+       * markFailed sets it to now. A send the provider already accepted must be
+       * settled this way or the client receives a second copy.
+       */
+      spendAttempts?: boolean;
+    },
   ): Promise<boolean>;
   close(): Promise<void>;
 };

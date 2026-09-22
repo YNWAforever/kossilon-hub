@@ -349,6 +349,21 @@ describe("the dispatch marker is written, cleared and escalated", () => {
     expect(stranded).toContain("attempt_count >= max_attempts");
   });
 
+  /**
+   * A provider-accepted send that could not be recorded is settled with markFailed
+   * from a row that may have attempts left. Without spending the budget, `failed`
+   * plus `next_attempt_at = now` is a row claimDue takes on the very next tick --
+   * a second copy of a statutory reminder -- and one redactExpired never settles,
+   * so the recipient's phone number outlives retention.
+   */
+  it("can spend the attempt budget on a failure that must never be retried", () => {
+    const start = source.indexOf("async markFailed(id");
+    const markFailed = source.slice(start, start + 1600);
+
+    expect(markFailed).toContain("spendAttempts");
+    expect(markFailed).toContain("max_attempts");
+  });
+
   it("carries the column in the migration and in the canonical schema", () => {
     expect(migration.replace(/\s+/g, " ")).toContain(
       "alter table notification_outbox add column if not exists dispatch_started_attempt integer",

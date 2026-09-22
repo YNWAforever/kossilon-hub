@@ -196,7 +196,24 @@ export type NotificationOutboxRepository = {
   ): Promise<boolean>;
   markFailed(
     id: string,
-    input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
+    input: {
+      errorCode: string;
+      errorMessage: string;
+      now: string;
+      attemptCount: number;
+      /**
+       * Settles the row so nothing can ever claim it again.
+       *
+       * `status = 'failed'` alone is not terminal: claimDue takes
+       * `status in ('pending','failed') and next_attempt_at <= now` for any row
+       * with attempt_count < max_attempts, and markFailed writes
+       * next_attempt_at = now. A provider-accepted send settled without this is
+       * re-claimed on the next tick and the client gets a second copy. It is also
+       * what makes the row redactable at all -- redactExpired only settles a
+       * 'failed' row once its attempts are spent.
+       */
+      spendAttempts?: boolean;
+    },
   ): Promise<boolean>;
   failStranded(now: string, limit?: number): Promise<{ failed: number }>;
   redactExpired(now: string, limit?: number): Promise<{ redacted: number }>;
@@ -373,7 +390,17 @@ export function createNotificationOutboxRepository(
         update notification_outbox set status = 'failed', next_attempt_at = ${input.now},
           last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now(),
           -- Terminal, and the outcome is written down; the marker is spent.
-          dispatch_started_attempt = null
+          dispatch_started_attempt = null,
+          -- 'failed' is not by itself terminal: claimDue takes a failed row whose
+          -- next_attempt_at has passed for as long as attempts remain, and the
+          -- line above sets next_attempt_at = now. A caller settling a send the
+          -- provider ALREADY accepted has to say so, or the next tick delivers a
+          -- second copy -- and redactExpired, which skips a failed row with
+          -- attempts left, would keep the recipient past retention forever.
+          attempt_count = case
+            when ${input.spendAttempts ?? false}::boolean then max_attempts
+            else attempt_count
+          end
         where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
         returning id
       `;

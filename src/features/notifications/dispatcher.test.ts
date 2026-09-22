@@ -113,6 +113,59 @@ describe("a dispatch whose outcome is unknown is never re-sent", () => {
     );
     expect(summary).toMatchObject({ sent: 0, retried: 0, sentButUnrecorded: 1 });
   });
+
+  /**
+   * markFailed on its own is NOT terminal for a row with attempts left. It writes
+   * status 'failed' with next_attempt_at = now, and claimDue takes
+   * `status in ('pending','failed') and next_attempt_at <= now` whenever
+   * attempt_count < max_attempts -- so the very next five-minute tick re-claims
+   * this row and sends the client a second copy of the reminder WOZTELL already
+   * accepted. That is the exact duplicate this branch exists to prevent.
+   *
+   * Spending the budget is also what makes the row redactable: redactExpired only
+   * settles a 'failed' row once attempt_count >= max_attempts, so a row left with
+   * attempts remaining would keep the client's phone number past retention,
+   * forever.
+   */
+  it("spends the attempt budget so the accepted send can never be claimed again", async () => {
+    const repo = repository([notification({ attemptCount: 1, maxAttempts: 3 })]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        throw Object.assign(new Error("WOZTELL accepted the send but returned no message ID."), {
+          code: "woztell_accepted_without_message_id",
+          providerAccepted: true,
+        });
+      }),
+    };
+
+    await createNotificationDispatcher(repo, transport).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markFailed).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.objectContaining({ spendAttempts: true }),
+    );
+  });
+
+  /**
+   * The ordinary exhausted-attempts path must not gain the flag: attempt_count is
+   * already at max there, and claiming otherwise would be a statement about the
+   * row this branch has no reason to make.
+   */
+  it("leaves the attempt budget alone on an ordinary permanent failure", async () => {
+    const repo = repository([notification({ attemptCount: 3, maxAttempts: 3 })]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        throw new Error("transport is down");
+      }),
+    };
+
+    await createNotificationDispatcher(repo, transport).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markFailed).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.not.objectContaining({ spendAttempts: true }),
+    );
+  });
 });
 
 describe("notification dispatcher", () => {

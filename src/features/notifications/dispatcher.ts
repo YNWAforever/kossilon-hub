@@ -256,7 +256,13 @@ export function createNotificationDispatcher(
               notificationType: notification.notificationType,
               errorCode,
             });
-            if (await repository.markFailed(notification.id, input)) summary.sentButUnrecorded += 1;
+            // spendAttempts, because markFailed writes next_attempt_at = now and
+            // claimDue takes a 'failed' row whose attempts are not exhausted. Left
+            // off, "terminal however many attempts remain" would be a comment and
+            // nothing else: the next tick re-claims the row and the client gets the
+            // second copy this whole branch exists to prevent.
+            if (await repository.markFailed(notification.id, { ...input, spendAttempts: true }))
+              summary.sentButUnrecorded += 1;
             else summary.superseded += 1;
             continue;
           }
