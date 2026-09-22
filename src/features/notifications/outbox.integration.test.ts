@@ -265,6 +265,11 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
     async () => {
       const sql = sqlForTests();
       const companyId = await seededCompanyId(sql);
+      const originRows = await sql<{ data_origin: string }[]>`
+        select data_origin from companies where id = ${companyId}
+      `;
+      const wasFixture = originRows[0]?.data_origin === "fixture";
+
       const id = await enqueue(sql, companyId, "stranded-retryable", {
         status: "processing",
         attemptCount: 1,
@@ -273,7 +278,23 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
 
       const repository = createNotificationOutboxRepository({ sql });
       expect((await repository.failStranded(new Date().toISOString())).failed).toBe(0);
-      expect(await claimedIdsWithoutCommitting(sql)).toContain(id);
+
+      // The seeded company this row hangs off is fixture data, and claimDue now
+      // refuses every fixture-origin row outright -- so leaving it as seeded
+      // would make the reclaim assertion below pass or fail for the wrong
+      // reason. Flip it to a client for the duration: the row under test is a
+      // real client's stranded reminder, which is the case the reclaim exists
+      // for. Restored in a `finally` so a failure here cannot leak into the
+      // shared database.
+      try {
+        await sql`update companies set data_origin = 'client' where id = ${companyId}`;
+        expect(await claimedIdsWithoutCommitting(sql, 500)).toContain(id);
+      } finally {
+        await sql`
+          update companies set data_origin = ${wasFixture ? "fixture" : "client"}
+          where id = ${companyId}
+        `;
+      }
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
