@@ -324,6 +324,22 @@ describe("the dispatch marker is written, cleared and escalated", () => {
     expect(markStarted).toContain("status = 'processing'");
   });
 
+  /**
+   * The fence above means the update can match zero rows -- another run reclaimed
+   * the row, so its attempt_count has moved on. That returned normally and the
+   * caller sent the message unmarked, which is the one thing this whole mechanism
+   * exists to prevent. Like every other fenced write here, it reports whether it
+   * actually landed.
+   */
+  it("reports whether the marker was actually applied", () => {
+    const markStarted = source.slice(
+      source.indexOf("async markDispatchStarted"),
+      source.indexOf("async markSent"),
+    );
+    expect(markStarted).toContain("returning id");
+    expect(markStarted).toContain("rows.length === 1");
+  });
+
   it("clears the marker on every terminal write", () => {
     for (const name of ["markSent", "markRetry", "markFailed"]) {
       const start = source.indexOf(`async ${name}(id`);

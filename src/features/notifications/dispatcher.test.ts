@@ -40,7 +40,7 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
     enqueue: vi.fn(),
     cancelFixtureOriginNotifications: vi.fn(async () => ({ cancelled: 0 })),
     claimDue: vi.fn(async () => rows),
-    markDispatchStarted: vi.fn(async () => undefined),
+    markDispatchStarted: vi.fn(async () => true),
     markSent: vi.fn(async () => true),
     markRetry: vi.fn(async () => true),
     markFailed: vi.fn(async () => true),
@@ -69,6 +69,7 @@ describe("a dispatch whose outcome is unknown is never re-sent", () => {
     const repo = repository([notification()]);
     repo.markDispatchStarted = vi.fn(async () => {
       order.push("marked");
+      return true;
     });
     const transport: NotificationTransport = {
       dispatch: vi.fn(async () => {
@@ -853,5 +854,63 @@ describe("fixture-origin suppression", () => {
     );
 
     expect(order).toEqual(["cancel", "claim"]);
+  });
+});
+
+/**
+ * markDispatchStarted documents that "if the write fails the dispatch must not
+ * proceed -- the whole point is that no send happens without a marker to say it
+ * might have". A THROW honoured that. A 0-row update did not: the update is
+ * fenced on `status = 'processing' and attempt_count = ${attemptCount}`, so a row
+ * reclaimed by another run (which re-enters 'processing' with the count moved on)
+ * matched nothing, the call returned normally, and the dispatcher sent the
+ * message anyway -- unmarked, and to a row another run is also dispatching. That
+ * is the double-SEND the marker exists to prevent, arriving through the marker
+ * itself.
+ */
+describe("a dispatch whose marker did not land is not sent", () => {
+  it("skips the transport call when the marker was not applied", async () => {
+    const repo = repository([notification()]);
+    repo.markDispatchStarted = vi.fn(async () => false);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => ({ delivery: "simulated" as const })),
+    };
+
+    const summary = await createNotificationDispatcher(repo, transport).dispatchDue(
+      "2026-07-12T00:00:00.000Z",
+    );
+
+    expect(transport.dispatch).not.toHaveBeenCalled();
+    expect(summary.sent).toBe(0);
+    // The row belongs to whoever reclaimed it, exactly like a lost terminal-write
+    // fence, and is counted the same way rather than as a failure of ours.
+    expect(summary.superseded).toBe(1);
+  });
+
+  it("does not settle a row it never dispatched", async () => {
+    const repo = repository([notification()]);
+    repo.markDispatchStarted = vi.fn(async () => false);
+
+    await createNotificationDispatcher(repo, {
+      dispatch: vi.fn(async () => ({ delivery: "simulated" as const })),
+    }).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markSent).not.toHaveBeenCalled();
+    expect(repo.markRetry).not.toHaveBeenCalled();
+    expect(repo.markFailed).not.toHaveBeenCalled();
+  });
+
+  it("still dispatches when the marker landed", async () => {
+    const repo = repository([notification()]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => ({ delivery: "simulated" as const })),
+    };
+
+    const summary = await createNotificationDispatcher(repo, transport).dispatchDue(
+      "2026-07-12T00:00:00.000Z",
+    );
+
+    expect(transport.dispatch).toHaveBeenCalledTimes(1);
+    expect(summary.sent).toBe(1);
   });
 });

@@ -169,8 +169,11 @@ export type NotificationOutboxRepository = {
   /**
    * Records that a transport call is about to be made, before it is made, so a
    * dispatch with no recorded outcome can never be silently re-sent.
+   *
+   * Fenced like the terminal writes, and `false` means it did not land, so the
+   * caller must not make the transport call.
    */
-  markDispatchStarted(id: string, input: { attemptCount: number }): Promise<void>;
+  markDispatchStarted(id: string, input: { attemptCount: number }): Promise<boolean>;
   /**
    * The terminal writes all take the attempt_count the claim returned and fence on
    * it, and all report whether they actually landed.
@@ -341,16 +344,22 @@ export function createNotificationOutboxRepository(
     /**
      * Records that a transport call is about to be made, before it is made.
      *
-     * Deliberately not fenced on succeeding: it runs on the row this claim just
-     * took, and if the write fails the dispatch must not proceed — the whole point
-     * is that no send happens without a marker to say it might have.
+     * If the write does not land the dispatch must not proceed — the whole point
+     * is that no send happens without a marker to say it might have. A throw
+     * honoured that; a 0-row update did not. The update is fenced on the claim's
+     * attempt_count, and a row another run has reclaimed re-enters 'processing'
+     * with the count moved on, so it matches nothing — and the caller went on to
+     * send, unmarked, a message the reclaimer is also sending. So this reports
+     * whether it applied, exactly like the terminal writes below.
      */
     async markDispatchStarted(id, input) {
-      await sql`
+      const rows = await sql<{ id: string }[]>`
         update notification_outbox
         set dispatch_started_attempt = ${input.attemptCount}, updated_at = now()
         where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
+        returning id
       `;
+      return rows.length === 1;
     },
     async markSent(id, input) {
       const rows = await sql<{ id: string }[]>`

@@ -215,9 +215,9 @@ describe("parseAnnualReturnReminderKey", () => {
    * about.
    */
   it("rejects a key whose case id is not a uuid rather than letting the cast throw", () => {
-    expect(parseAnnualReturnReminderKey("annual-return-reminder:not-a-uuid:1_week:whatsapp:x")).toBe(
-      null,
-    );
+    expect(
+      parseAnnualReturnReminderKey("annual-return-reminder:not-a-uuid:1_week:whatsapp:x"),
+    ).toBe(null);
     expect(parseAnnualReturnReminderKey("annual-return-reminder:")).toBe(null);
     expect(parseAnnualReturnReminderKey("follow-up:abc")).toBe(null);
   });

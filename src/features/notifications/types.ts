@@ -148,8 +148,13 @@ export type NotificationOutboxRepository = {
    * already hold the message — and claimDue refuses it rather than re-sending.
    * WOZTELL's BotAPI accepts no client-side idempotency key, so nothing
    * downstream could collapse a duplicate if one were sent.
+   *
+   * Fenced on the claim's attempt_count like every terminal write here. `false`
+   * means another run reclaimed the row and the marker did not land, so the
+   * transport call must NOT be made: sending unmarked is the double-send this
+   * marker exists to prevent.
    */
-  markDispatchStarted(id: string, input: { attemptCount: number }): Promise<void>;
+  markDispatchStarted(id: string, input: { attemptCount: number }): Promise<boolean>;
   /**
    * Fenced on the attempt_count the claim returned; `false` means another run
    * reclaimed the row and finished it first, so this outcome must not be counted.

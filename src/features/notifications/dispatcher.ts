@@ -134,9 +134,19 @@ export function createNotificationDispatcher(
           // next line on, the outcome may be unknown rather than merely bad, and a
           // row whose outcome is unknown must never be claimed again: the attempt
           // fence only stops a double COUNT, and by then the client has two copies.
-          await repository.markDispatchStarted(notification.id, {
+          const marked = await repository.markDispatchStarted(notification.id, {
             attemptCount: notification.attemptCount,
           });
+          // A marker that did not land means another run reclaimed this row, so
+          // the row is not ours to dispatch -- and sending it unmarked would be
+          // precisely the double-send the marker exists to prevent, with nothing
+          // left afterwards to say the outcome was ever in doubt. Counted as
+          // superseded, like every other lost fence, and left entirely alone: the
+          // run that holds the claim will settle it.
+          if (!marked) {
+            summary.superseded += 1;
+            continue;
+          }
           const result = await transport.dispatch(notification, context);
 
           // From here the provider has the message. Everything below is
