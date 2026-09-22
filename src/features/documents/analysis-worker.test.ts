@@ -6,6 +6,7 @@ import {
   type AnalysisWorkerDependencies,
 } from "./analysis-worker";
 import type { Finding } from "./findings";
+import type { ExtractionResult, StoredExtraction } from "./text-extraction";
 
 const NOW = "2026-09-10T02:00:00.000Z";
 const VERSION_ID = "11111111-1111-4111-8111-111111111111";
@@ -67,6 +68,9 @@ type HarnessOptions = {
   fenceHolds?: boolean;
   storageThrows?: boolean;
   findingsThrow?: boolean;
+  extraction?: ExtractionResult;
+  extractorThrows?: boolean;
+  textsThrow?: boolean;
 };
 
 function harness(options: HarnessOptions = {}) {
@@ -94,6 +98,12 @@ function harness(options: HarnessOptions = {}) {
         };
   });
 
+  const storedTexts: { documentVersionId: string; extraction: StoredExtraction }[] = [];
+  const extract = vi.fn(async (): Promise<ExtractionResult> => {
+    if (options.extractorThrows) throw new Error("pdf.js exploded");
+    return options.extraction ?? { method: "none", pageCount: null };
+  });
+
   const dependencies: AnalysisWorkerDependencies = {
     jobs: {
       claimDue: vi.fn(async () => options.claimed ?? [job()]),
@@ -112,9 +122,16 @@ function harness(options: HarnessOptions = {}) {
     },
     storage: { get: storageGet } as unknown as AnalysisWorkerDependencies["storage"],
     analyzer: options.analyzer ?? null,
+    extractor: { extract },
+    texts: {
+      upsertText: vi.fn(async (documentVersionId: string, extraction: StoredExtraction) => {
+        if (options.textsThrow) throw new Error("write failed");
+        storedTexts.push({ documentVersionId, extraction });
+      }),
+    },
   };
 
-  return { dependencies, written, jobs, storageGet };
+  return { dependencies, written, jobs, storageGet, extract, storedTexts };
 }
 
 describe("drainDocumentAnalysisJobs", () => {
@@ -376,5 +393,102 @@ describe("the provider tier", () => {
     expect(
       test.written[0].find((finding) => finding.ruleKey === "provider:analysis"),
     ).toMatchObject({ outcome: "uncertain" });
+  });
+});
+
+describe("text extraction in the analysis pass", () => {
+  /** The scan gate is the whole safety argument for parsing client PDFs. */
+  it("never hands an unverified document to the extractor", async () => {
+    const test = harness({ subject: subject({ scanVerdictSource: null }) });
+
+    await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    expect(test.extract).not.toHaveBeenCalled();
+  });
+
+  it("stores what it extracted against the version", async () => {
+    const test = harness({
+      extraction: { method: "text-layer", text: "hello", pageCount: 2, truncated: false },
+    });
+
+    await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    expect(test.storedTexts).toEqual([
+      {
+        documentVersionId: VERSION_ID,
+        extraction: {
+          method: "text-layer",
+          text: "hello",
+          pageCount: 2,
+          truncated: false,
+          extractorVersion: "1",
+        },
+      },
+    ]);
+  });
+
+  /**
+   * The payoff inside the same run: a page count just counted turns the
+   * cited-pages rule from `uncertain` into a real verdict, without waiting for
+   * a second run to read the row back.
+   */
+  it("checks cited pages against the page count it just counted", async () => {
+    const test = harness({
+      subject: subject({
+        knownPageCount: null,
+        pageClaims: [{ requirementInstanceId: "req-1", pageFrom: 3, pageTo: 4 }],
+      }),
+      extraction: { method: "text-layer", text: "hello", pageCount: 2, truncated: false },
+    });
+
+    await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    const cited = test.written[0].filter((finding) => finding.ruleKey === "cited-pages-exist");
+    expect(cited).toHaveLength(1);
+    expect(cited[0].outcome).not.toBe("uncertain");
+  });
+
+  it("records an unreadable document as uncertain and stores no text", async () => {
+    const test = harness({ extraction: { method: "unreadable", errorClass: "PasswordException" } });
+
+    const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    expect(summary.analysed).toBe(1);
+    expect(test.storedTexts).toEqual([]);
+    const notes = test.written[0].filter((finding) => finding.ruleKey === "extraction:text-layer");
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toMatchObject({ outcome: "uncertain", tier: "classification" });
+    expect(notes[0].detail).toContain("PasswordException");
+  });
+
+  /**
+   * Same rule as the model tier: a throw must not unwind the loop and strand
+   * every job claimed after this one in `processing`.
+   */
+  it("keeps draining when the extractor throws", async () => {
+    const test = harness({
+      claimed: [job({ id: "job-1" }), job({ id: "job-2" })],
+      extractorThrows: true,
+    });
+
+    const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    expect(summary.analysed).toBe(2);
+    expect(
+      test.written.flat().filter((finding) => finding.ruleKey === "extraction:text-layer"),
+    ).toHaveLength(2);
+  });
+
+  it("retries the job when the text cannot be written", async () => {
+    const test = harness({ extraction: { method: "none", pageCount: 1 }, textsThrow: true });
+
+    const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+
+    expect(summary.retried).toBe(1);
+    expect(test.jobs.markRetry).toHaveBeenCalledWith(
+      "job-1",
+      expect.objectContaining({ errorCode: "texts-not-written" }),
+    );
+    expect(test.written).toEqual([]);
   });
 });

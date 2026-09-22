@@ -394,6 +394,21 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
+
+  // Asserts that the query runs against the real schema, not its value: another
+  // suite may have written a text row. Do not insert rows from this file.
+  it(
+    "answers whether a text-layer extraction exists",
+    async () => {
+      const repository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        await expect(repository.textLayerObserved()).resolves.toEqual(expect.any(Boolean));
+      } finally {
+        await repository.close();
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });
 
 /**

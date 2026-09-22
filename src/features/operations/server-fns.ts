@@ -67,6 +67,7 @@ export async function buildOperationsHealth(
       | "lastScheduledSuccessAt"
       | "queueDepths"
       | "schemaLedger"
+      | "textLayerObserved"
     >;
   },
 ): Promise<OperationsHealthView> {
@@ -110,19 +111,25 @@ async function readOperationsState(
   dependencies: {
     repository: Pick<
       MaintenanceRunRepository,
-      "listRecentRuns" | "listRecentScheduledRuns" | "lastScheduledSuccessAt" | "queueDepths"
+      | "listRecentRuns"
+      | "listRecentScheduledRuns"
+      | "lastScheduledSuccessAt"
+      | "queueDepths"
+      | "textLayerObserved"
     >;
   },
   schema: SchemaHealth,
 ): Promise<OperationsHealthView> {
-  const [recentRuns, scheduledRuns, lastScheduledSuccessAt, queues] = await Promise.all([
-    dependencies.repository.listRecentRuns(RECENT_RUN_LIMIT),
-    // Judged separately from what the table displays: a window full of manual
-    // runs would leave the health rule nothing to judge the schedule by.
-    dependencies.repository.listRecentScheduledRuns(RECENT_RUN_LIMIT),
-    dependencies.repository.lastScheduledSuccessAt(),
-    dependencies.repository.queueDepths(input.now),
-  ]);
+  const [recentRuns, scheduledRuns, lastScheduledSuccessAt, queues, textLayerObserved] =
+    await Promise.all([
+      dependencies.repository.listRecentRuns(RECENT_RUN_LIMIT),
+      // Judged separately from what the table displays: a window full of manual
+      // runs would leave the health rule nothing to judge the schedule by.
+      dependencies.repository.listRecentScheduledRuns(RECENT_RUN_LIMIT),
+      dependencies.repository.lastScheduledSuccessAt(),
+      dependencies.repository.queueDepths(input.now),
+      dependencies.repository.textLayerObserved(),
+    ]);
 
   const maintenance = maintenanceHealthOf({
     runs: scheduledRuns,
@@ -142,6 +149,7 @@ async function readOperationsState(
     staleBlockers: staleBlockedIntegrations({
       blocked: BLOCKED_INTEGRATIONS,
       maintenanceState: maintenance.state,
+      textLayerObserved,
     }),
   };
 }

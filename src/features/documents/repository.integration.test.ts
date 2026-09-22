@@ -2,6 +2,7 @@ import "dotenv/config";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { createSqlClient, type SqlClient } from "@/server/db/client";
+import { createDocumentAnalysisRepository } from "./analysis-repository";
 import { createDocumentRepository } from "./repository";
 import { createDocumentScanJobRepository } from "./scan-jobs";
 
@@ -866,6 +867,65 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
             document_id, version_number, file_name, storage_url
           ) values (${document.id}, 2, 'second.pdf', ${`${KEY_PREFIX}second`})`,
       ).rejects.toThrow();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "stores an extraction and replaces it on a re-run",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const analysis = createDocumentAnalysisRepository({ sql });
+      const data = await fixture(sql);
+
+      const intent = await repository.createUploadIntent(intentInput(data));
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+      const [version] = await sql<{ id: string }[]>`
+        select id from document_versions where document_id = ${document.id}`;
+
+      await analysis.upsertText(version.id, {
+        method: "none",
+        pageCount: 2,
+        extractorVersion: "1",
+      });
+      await analysis.upsertText(version.id, {
+        method: "text-layer",
+        text: "周年申報表",
+        pageCount: 3,
+        truncated: true,
+        extractorVersion: "1",
+      });
+
+      const rows = await sql<
+        {
+          extracted_text: string | null;
+          page_count: number | null;
+          extraction_method: string;
+          truncated: boolean;
+          extractor_version: string;
+        }[]
+      >`
+        select extracted_text, page_count, extraction_method, truncated, extractor_version
+        from document_version_texts where document_version_id = ${version.id}`;
+
+      expect(rows).toEqual([
+        {
+          extracted_text: "周年申報表",
+          page_count: 3,
+          extraction_method: "text-layer",
+          truncated: true,
+          extractor_version: "1",
+        },
+      ]);
+
+      // And what the analysis pass reads back is the value just written.
+      const subject = await analysis.loadForAnalysis(version.id);
+      expect(subject?.knownPageCount).toBe(3);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

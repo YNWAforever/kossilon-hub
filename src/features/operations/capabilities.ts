@@ -95,16 +95,15 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     id: "document-text-extraction",
     capability: "讀取文件內文（頁數、日期、年度、內容比對）",
     effect:
-      "伺服器端沒有任何文字擷取。所有需要文件本身文字的檢查都無法執行，包括兩條日期規則。" +
-      "分析只能檢查檔案頭尾的格式標記與記錄之間的互相對照。",
+      "伺服器端的 PDF 文字層擷取已寫好，但尚未在部署環境中執行過；它只處理已通過真正惡意軟件掃描的文件，" +
+      "因此在掃描供應商到位前實際上不會擷取任何內容。掃描檔與相片沒有文字層，仍然讀不到。" +
+      "目前沒有任何規則讀取文件文字，包括兩條日期規則。",
     pilotFallback: "文件內容仍由職員親自閱讀核對，一如現時做法。",
     clearedBy:
-      "一個可在 Worker 執行的 PDF 文字層（新工作），或啟用 nodejs_compat 加 Node PDF 程式庫（改動部署面）。",
+      "部署環境寫入的第一筆 extraction_method 為 text-layer 的 document_version_texts 記錄。" +
+      "程式通過測試不算數：測試在 Node 執行，只有 Worker 上的真實執行才證明它可用。",
     blocksRelease: false,
-    evidence: {
-      observable: "external",
-      why: "是否具備 Worker 可用的文字抽取層，取決於尚未開始的工程與部署面決定，系統內無從觀察。",
-    },
+    evidence: { observable: "runtime" },
   },
   {
     id: "ai-provider",
@@ -177,14 +176,23 @@ export function releaseBlockingIntegrations(): readonly BlockedIntegration[] {
  * A record rather than a switch, so `runtimeCheckedIds` can report what is
  * covered and a test can fail on an entry nobody wired up.
  */
-const RUNTIME_EVIDENCE: Partial<
-  Record<BlockedIntegrationId, (input: { maintenanceState: MaintenanceHealthState }) => boolean>
-> = {
-  // `never-observed` is the absence of any scheduled run at all, so every other
-  // state IS the evidence this blocker names. No extra query: the operations
-  // screen already computes this state.
-  "deployment-runtime": ({ maintenanceState }) => maintenanceState !== "never-observed",
+/** What the runtime checks may look at: already on the screen, or one query away. */
+export type RuntimeEvidence = {
+  maintenanceState: MaintenanceHealthState;
+  /** Whether any version has a `text-layer` extraction recorded. */
+  textLayerObserved: boolean;
 };
+
+const RUNTIME_EVIDENCE: Partial<Record<BlockedIntegrationId, (input: RuntimeEvidence) => boolean>> =
+  {
+    // `never-observed` is the absence of any scheduled run at all, so every other
+    // state IS the evidence this blocker names. No extra query: the operations
+    // screen already computes this state.
+    "deployment-runtime": ({ maintenanceState }) => maintenanceState !== "never-observed",
+    // A text-layer row can only be written by the analysis pass running `unpdf`
+    // for real. Tests run in Node and prove nothing about workerd.
+    "document-text-extraction": ({ textLayerObserved }) => textLayerObserved,
+  };
 
 /** The ids that have a runtime check, so a test can spot one that does not. */
 export function runtimeCheckedIds(): readonly BlockedIntegrationId[] {
@@ -198,10 +206,9 @@ export function runtimeCheckedIds(): readonly BlockedIntegrationId[] {
  * re-asserts its own capabilities from a heuristic, so the result is worded as a
  * prompt for a person and the entry stays until somebody deletes it.
  */
-export function staleBlockedIntegrations(input: {
-  blocked: readonly BlockedIntegration[];
-  maintenanceState: MaintenanceHealthState;
-}): readonly BlockedIntegrationId[] {
+export function staleBlockedIntegrations(
+  input: { blocked: readonly BlockedIntegration[] } & RuntimeEvidence,
+): readonly BlockedIntegrationId[] {
   return input.blocked
     .filter((item) => item.evidence.observable === "runtime")
     .filter((item) => RUNTIME_EVIDENCE[item.id]?.(input) === true)

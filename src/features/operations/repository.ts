@@ -131,6 +131,11 @@ export type MaintenanceRunRepository = {
    * answering it.
    */
   schemaLedger(): Promise<SchemaLedger>;
+  /**
+   * Whether the analysis pass has ever recorded a text-layer extraction: the
+   * runtime evidence for `document-text-extraction` (see capabilities.ts).
+   */
+  textLayerObserved(): Promise<boolean>;
   close(): Promise<void>;
 };
 
@@ -384,6 +389,15 @@ export function createMaintenanceRunRepository(
 
       const rows = await sql<{ id: string }[]>`select id from schema_migrations`;
       return { present: true, applied: rows.map((row) => row.id) };
+    },
+
+    async textLayerObserved() {
+      const [row] = await sql<{ observed: boolean }[]>`
+        select exists(
+          select 1 from document_version_texts where extraction_method = 'text-layer'
+        ) observed
+      `;
+      return row?.observed === true;
     },
 
     async close() {

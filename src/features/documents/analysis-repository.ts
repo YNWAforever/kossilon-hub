@@ -8,6 +8,7 @@ import {
 import type { AnalysisSubject } from "./analysis-worker";
 import type { Finding, PersistedFinding } from "./findings";
 import { analysisStateFrom, viewFor, type DocumentFindingsView } from "./findings-review";
+import type { StoredExtraction } from "./text-extraction";
 import type { DocumentStatus, ScanVerdictSource } from "./types";
 
 /**
@@ -98,6 +99,13 @@ export type DocumentAnalysisRepository = {
     analysisJobId: string;
     findings: readonly Finding[];
   }): Promise<void>;
+  /**
+   * Records what extraction found for this version, replacing any earlier run.
+   *
+   * Its own table, never the version row: a pass that could write the version
+   * row could write its storage key or checksum with it (see migration 0027).
+   */
+  upsertText(documentVersionId: string, extraction: StoredExtraction): Promise<void>;
   listFindingsForVersion(documentVersionId: string): Promise<Finding[]>;
   /** Every current version on a case, with its findings and its run state. */
   listFindingsForCase(caseId: string): Promise<DocumentFindingsView[]>;
@@ -154,7 +162,7 @@ export function createDocumentAnalysisRepository(
           t.page_count
         from document_versions v
         -- Left joins: a staff- or system-created document has no upload intent,
-        -- and no version has an extracted-text row yet because nothing extracts.
+        -- and a version nobody has extracted yet has no text row.
         left join document_upload_intents i on i.id = v.intent_id
         left join document_version_texts t on t.document_version_id = v.id
         where v.id = ${documentVersionId}
@@ -235,6 +243,27 @@ export function createDocumentAnalysisRepository(
           `;
         }
       });
+    },
+
+    async upsertText(documentVersionId, extraction) {
+      const text = extraction.method === "text-layer" ? extraction.text : null;
+      const truncated = extraction.method === "text-layer" ? extraction.truncated : false;
+      await sql`
+        insert into document_version_texts (
+          document_version_id, extracted_text, page_count, extraction_method,
+          truncated, extractor_version, extracted_at
+        ) values (
+          ${documentVersionId}, ${text}, ${extraction.pageCount}, ${extraction.method},
+          ${truncated}, ${extraction.extractorVersion}, now()
+        )
+        on conflict (document_version_id) do update set
+          extracted_text = excluded.extracted_text,
+          page_count = excluded.page_count,
+          extraction_method = excluded.extraction_method,
+          truncated = excluded.truncated,
+          extractor_version = excluded.extractor_version,
+          extracted_at = excluded.extracted_at
+      `;
     },
 
     async listFindingsForVersion(documentVersionId) {

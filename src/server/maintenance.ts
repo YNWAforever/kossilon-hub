@@ -6,6 +6,7 @@ import {
 } from "@/features/documents/scan-worker";
 import type { DispatchSummary } from "@/features/notifications/types";
 import { createDocumentAiAnalyzerForProviderMode } from "@/features/documents/ai-provider";
+import { extractPdfText } from "@/features/documents/text-extraction";
 // Static, and honest about it. It was a dynamic import, which implied a
 // code-split that cannot happen: analysis-worker below imports ai-provider
 // statically, so the module is already in this graph either way. maintenance.ts
@@ -495,6 +496,10 @@ export async function runFirmMaintenance(
         findings: analysis,
         storage,
         analyzer,
+        // Not provider-gated: extraction is local work in every mode, and the
+        // scan gate inside the pass decides which bytes ever reach it.
+        extractor: { extract: extractPdfText },
+        texts: analysis,
         close: async () => {
           await Promise.all([jobs.close(), analysis.close()]);
         },
