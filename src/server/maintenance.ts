@@ -16,6 +16,7 @@ import {
   drainDocumentAnalysisJobs,
   type AnalysisWorkerDependencies,
 } from "@/features/documents/analysis-worker";
+import { toHongKongBusinessDate } from "@/lib/hong-kong-time";
 import type { MaintenanceRunDraft } from "@/features/operations/repository";
 import {
   maintenanceResultOf,
@@ -299,8 +300,13 @@ async function runScheduledMaintenancePasses(
     data.now,
     {
       evaluateEscalations: (now) => workItems.evaluateEscalations(now),
-      evaluateAnnualReturnReminders: (now) => annualReturns.evaluateReminders(now),
-      evaluateServiceSubscriptionReminders: (now) => serviceSubscriptions.evaluateReminders(now),
+      // These two sweep `date` columns and render the day count into a message
+      // the client reads, so they take the firm's Hong Kong day -- not the tick
+      // instant the passes above want. Between 16:00Z and 24:00Z the two differ.
+      evaluateAnnualReturnReminders: (now) =>
+        annualReturns.evaluateReminders(toHongKongBusinessDate(now)),
+      evaluateServiceSubscriptionReminders: (now) =>
+        serviceSubscriptions.evaluateReminders(toHongKongBusinessDate(now)),
       dispatchDue: (now, limit) => dependencies.dispatchDue({ now, limit }),
       failStrandedDocumentJobs: (now) => dependencies.failStrandedDocumentJobs({ now }),
       drainDocumentScanJobs: async (now) => {
