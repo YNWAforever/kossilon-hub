@@ -24,6 +24,7 @@ import {
   riskForCase,
 } from "./workflow";
 import { dueMilestone, type ReminderMilestone } from "./reminder-cadence";
+import { parseAnnualReturnReminderKey } from "./reminder-idempotency-key";
 import {
   assertAnnualReturnActionAllowed,
   assertAnnualReturnCaseCreatable,
@@ -2482,11 +2483,22 @@ export function createAnnualReturnRepository(
    * keep the false claim forever.
    */
   async function reconcileFailedReminders(now: string): Promise<{ retracted: number }> {
-    const rows = await sql<{ case_id: string; milestone: string; outbox_id: string }[]>`
+    const rows = await sql<
+      { idempotency_key: string; outbox_id: string; outcome_unknown: boolean }[]
+    >`
       select
-        split_part(idempotency_key, ':', 2) as case_id,
-        split_part(idempotency_key, ':', 3) as milestone,
-        id as outbox_id
+        -- The whole key, parsed in TypeScript rather than pulled apart with
+        -- split_part here. Two key shapes carry this prefix and segment 3 is the
+        -- milestone in only one of them; in the other it is the client's phone
+        -- number, which this function used to write into the timeline as
+        -- "milestone" -- mislabelled, and outside the outbox's 90-day redaction.
+        idempotency_key,
+        id as outbox_id,
+        -- 'dispatch_outcome_unknown' is failStranded saying the provider MAY
+        -- already hold the message. Such a row is 'failed' with its attempts
+        -- spent, so it matched this selector exactly and was retracted as a
+        -- definite non-delivery. It gets its own arm below instead.
+        last_error_code = 'dispatch_outcome_unknown' as outcome_unknown
       from notification_outbox
       where idempotency_key like 'annual-return-reminder:%'
         and (
@@ -2501,9 +2513,17 @@ export function createAnnualReturnRepository(
         -- reminders the window is entirely historical and a reminder that fails
         -- tomorrow never reaches the loop at all, so the case goes on claiming the
         -- client was reminded. The per-row dedupe cannot catch that; only this can.
+        --
+        -- BOTH outcomes are excluded here, not just the retraction: a row this
+        -- pass has already recorded as unresolved is as settled as one it has
+        -- retracted, and leaving it in the window would starve out new failures
+        -- exactly the same way.
         and not exists (
           select 1 from timeline_events
-          where event_type = 'annual_return_reminder_failed'
+          where event_type in (
+              'annual_return_reminder_failed',
+              'annual_return_reminder_outcome_unknown'
+            )
             and metadata->>'outboxId' = notification_outbox.id::text
         )
       order by updated_at asc
@@ -2512,47 +2532,96 @@ export function createAnnualReturnRepository(
 
     let retracted = 0;
     for (const row of rows) {
+      // `${row.case_id}::uuid` was the FIRST statement of every transaction here,
+      // on a value taken straight out of a key this function does not own. A
+      // producer using this prefix with a non-uuid second segment therefore threw
+      // before anything else ran -- and because the row is settled it never goes
+      // away, so the reminder sweep would die on it on every five-minute tick,
+      // forever. That is the failure mode the cancelFixtureOriginNotifications
+      // comment above warns about, and the fix is the same: skip the row, say so,
+      // and carry on reconciling the rest.
+      const parsed = parseAnnualReturnReminderKey(row.idempotency_key);
+      if (!parsed) {
+        console.error(
+          `Skipping annual-return reminder reconciliation for outbox row ${row.outbox_id}: malformed idempotency key.`,
+        );
+        continue;
+      }
+      const caseId = parsed.caseId;
+
       const applied = await withTransaction(sql, async (tx) => {
         const caseRows = await tx<{ id: string; company_id: string }[]>`
-          select id, company_id from annual_return_cases where id = ${row.case_id}::uuid for update
+          select id, company_id from annual_return_cases where id = ${caseId}::uuid for update
         `;
         if (!caseRows[0]) return false;
 
-        // One retraction per outbox row, whatever else shares the case. Without
-        // this the counter would be decremented again on every five-minute tick.
-        const inserted = await tx<{ id: string }[]>`
+        // The ordinary case: the outbox is certain nothing was delivered.
+        if (!row.outcome_unknown) {
+          // One retraction per outbox row, whatever else shares the case. Without
+          // this the counter would be decremented again on every five-minute tick.
+          const inserted = await tx<{ id: string }[]>`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            )
+            select
+              ${caseRows[0].company_id}, ${caseId}::uuid, 'annual_return_reminder_failed',
+              'system', null,
+              'Automated reminder could not be delivered. The client has NOT been reminded.',
+              -- Built from the parsed key and nothing else, so a manual reminder's
+              -- phone number can no longer arrive here labelled as a milestone.
+              ${tx.json({ milestone: parsed.milestone, outboxId: row.outbox_id, reconciledAt: now })}
+            where not exists (
+              select 1 from timeline_events
+              where case_id = ${caseId}::uuid
+                and event_type = 'annual_return_reminder_failed'
+                and metadata->>'outboxId' = ${row.outbox_id}
+            )
+            returning id
+          `;
+          if (!inserted[0]) return false;
+
+          await tx`
+            update annual_return_cases
+            set reminders_sent = greatest(reminders_sent - 1, 0),
+                -- Only the status this sweep itself set is rolled back. A person may
+                -- have moved the case on since, and undoing their work to correct our
+                -- bookkeeping would be the worse error.
+                current_status = case
+                  when current_status = 'Client reminder sent' then 'Upcoming'
+                  else current_status
+                end,
+                updated_at = now()
+            where id = ${caseId}::uuid
+          `;
+          return true;
+        }
+
+        // 'dispatch_outcome_unknown': deliberately no decrement and no status
+        // rollback. The outbox says the provider may already hold this message, so
+        // asserting either "sent" or "not sent" would be a guess -- and the
+        // retraction arm above guesses the one direction that tells a client's
+        // case file they were never reminded when they may be holding the message.
+        // The counter already reads as sent; the one honest action left is to put
+        // the doubt on the record where a person will see it and decide.
+        const noted = await tx<{ id: string }[]>`
           insert into timeline_events (
             company_id, case_id, event_type, actor_type, actor_id, description, metadata
           )
           select
-            ${caseRows[0].company_id}, ${row.case_id}::uuid, 'annual_return_reminder_failed',
+            ${caseRows[0].company_id}, ${caseId}::uuid,
+            'annual_return_reminder_outcome_unknown',
             'system', null,
-            'Automated reminder could not be delivered. The client has NOT been reminded.',
-            ${tx.json({ milestone: row.milestone, outboxId: row.outbox_id, reconciledAt: now })}
+            'A send was begun for this automated reminder and no outcome was recorded. Whether the client received it could not be determined -- please check before reminding again.',
+            ${tx.json({ milestone: parsed.milestone, outboxId: row.outbox_id, reconciledAt: now })}
           where not exists (
             select 1 from timeline_events
-            where case_id = ${row.case_id}::uuid
-              and event_type = 'annual_return_reminder_failed'
+            where case_id = ${caseId}::uuid
+              and event_type = 'annual_return_reminder_outcome_unknown'
               and metadata->>'outboxId' = ${row.outbox_id}
           )
           returning id
         `;
-        if (!inserted[0]) return false;
-
-        await tx`
-          update annual_return_cases
-          set reminders_sent = greatest(reminders_sent - 1, 0),
-              -- Only the status this sweep itself set is rolled back. A person may
-              -- have moved the case on since, and undoing their work to correct our
-              -- bookkeeping would be the worse error.
-              current_status = case
-                when current_status = 'Client reminder sent' then 'Upcoming'
-                else current_status
-              end,
-              updated_at = now()
-          where id = ${row.case_id}::uuid
-        `;
-        return true;
+        return Boolean(noted[0]);
       });
       if (applied) retracted += 1;
     }
