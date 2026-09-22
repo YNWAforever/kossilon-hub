@@ -92,6 +92,23 @@ describe("a reminder that never went out stops claiming it did", () => {
    * not decrement the counter again — and the key it matches on has to survive
    * retention redaction, which nulls the payload.
    */
+  /**
+   * The select is `order by updated_at asc limit 200` over EVERY terminally
+   * settled annual-return reminder row, and a reconciled row is not deleted,
+   * re-statused or touched -- redactExpired leaves idempotency_key alone, so it
+   * matches the prefix forever. Those rows are also the OLDEST, so they sit
+   * permanently at the front of the window: past 200 of them, a reminder that
+   * fails tomorrow is never in the 200 and its case goes on claiming, to staff and
+   * to any audit of the firm, that the client was reminded. The dedupe inside the
+   * loop cannot help -- the row never reaches the loop.
+   */
+  it("excludes rows it has already retracted, so new failures are not starved out", () => {
+    const select = reconcile.slice(0, reconcile.indexOf("let retracted"));
+
+    expect(select).toContain("not exists");
+    expect(select).toContain("annual_return_reminder_failed");
+  });
+
   it("is idempotent, and keyed on something redaction does not erase", () => {
     expect(reconcile).toContain("where not exists");
     expect(reconcile).toContain("split_part(idempotency_key");

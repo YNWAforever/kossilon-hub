@@ -2493,6 +2493,19 @@ export function createAnnualReturnRepository(
           status = 'cancelled'
           or (status = 'failed' and attempt_count >= max_attempts)
         )
+        -- Already-retracted rows are excluded HERE, not merely skipped inside the
+        -- loop. Nothing about reconciling a row changes it: redactExpired leaves
+        -- idempotency_key alone, so it keeps matching the prefix forever, and
+        -- because it is settled its updated_at never moves again -- which puts it
+        -- permanently at the front of "order by updated_at asc". Past 200 settled
+        -- reminders the window is entirely historical and a reminder that fails
+        -- tomorrow never reaches the loop at all, so the case goes on claiming the
+        -- client was reminded. The per-row dedupe cannot catch that; only this can.
+        and not exists (
+          select 1 from timeline_events
+          where event_type = 'annual_return_reminder_failed'
+            and metadata->>'outboxId' = notification_outbox.id::text
+        )
       order by updated_at asc
       limit 200
     `;
