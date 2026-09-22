@@ -128,6 +128,15 @@ export function createNotificationDispatcher(
                   ),
                 }
               : undefined;
+          // Before the send, not after. Everything above can still fail without a
+          // message having gone anywhere (a missing fallback template throws in
+          // resolveWhatsAppSendMode), and those failures retry normally. From the
+          // next line on, the outcome may be unknown rather than merely bad, and a
+          // row whose outcome is unknown must never be claimed again: the attempt
+          // fence only stops a double COUNT, and by then the client has two copies.
+          await repository.markDispatchStarted(notification.id, {
+            attemptCount: notification.attemptCount,
+          });
           const result = await transport.dispatch(notification, context);
 
           // From here the provider has the message. Everything below is
@@ -230,6 +239,28 @@ export function createNotificationDispatcher(
             now,
             attemptCount: notification.attemptCount,
           };
+
+          // The provider took the message and the failure is downstream of that
+          // — WOZTELL answering ok:1 with no message id is the case this exists
+          // for. Retrying delivers a second copy of a statutory reminder, so this
+          // is terminal however many attempts remain. Counted as sentButUnrecorded
+          // because that is exactly what it is: sent, and not written down.
+          if (
+            error instanceof Error &&
+            "providerAccepted" in error &&
+            error.providerAccepted === true
+          ) {
+            console.error("notification accepted by the provider but not recorded", {
+              id: notification.id,
+              companyId: notification.companyId,
+              notificationType: notification.notificationType,
+              errorCode,
+            });
+            if (await repository.markFailed(notification.id, input)) summary.sentButUnrecorded += 1;
+            else summary.superseded += 1;
+            continue;
+          }
+
           if (notification.attemptCount >= notification.maxAttempts) {
             if (await repository.markFailed(notification.id, input)) summary.permanentlyFailed += 1;
             else summary.superseded += 1;

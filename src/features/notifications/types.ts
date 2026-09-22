@@ -142,6 +142,15 @@ export type NotificationOutboxRepository = {
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
   /**
+   * Records that a transport call is about to be made, BEFORE it is made.
+   *
+   * A row still carrying the marker has an unknown outcome — the provider may
+   * already hold the message — and claimDue refuses it rather than re-sending.
+   * WOZTELL's BotAPI accepts no client-side idempotency key, so nothing
+   * downstream could collapse a duplicate if one were sent.
+   */
+  markDispatchStarted(id: string, input: { attemptCount: number }): Promise<void>;
+  /**
    * Fenced on the attempt_count the claim returned; `false` means another run
    * reclaimed the row and finished it first, so this outcome must not be counted.
    */

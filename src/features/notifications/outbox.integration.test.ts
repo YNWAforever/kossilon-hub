@@ -563,6 +563,53 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
   );
 
   /**
+   * The double-SEND guard, against a real database.
+   *
+   * A row stranded in 'processing' with attempts remaining is exactly what the
+   * reclaim branch was built to rescue — but if a transport call was already begun
+   * for it, rescuing it means sending the client a second copy of the same
+   * statutory reminder, and WOZTELL takes no idempotency key that would collapse
+   * them. So it must be refused by the claim AND settled visibly, not merely
+   * refused.
+   */
+  it(
+    "never reclaims a row whose dispatch was begun, and escalates it instead",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const id = await enqueue(sql, companyId, "outcome-unknown", {
+        status: "processing",
+        attemptCount: 1,
+        retentionUntil: "2099-01-01T00:00:00.000Z",
+      });
+      // Long past the visibility timeout, with four of five attempts left: without
+      // the marker this is precisely a reclaim candidate.
+      await sql`
+        update notification_outbox
+        set dispatch_started_attempt = 1, updated_at = now() - interval '2 hours',
+            next_attempt_at = now() - interval '2 hours'
+        where id = ${id}
+      `;
+
+      expect(await claimedIdsWithoutCommitting(sql, 500)).not.toContain(id);
+
+      await createNotificationOutboxRepository({ sql }).failStranded(new Date().toISOString());
+      const after = await sql<
+        { status: string; last_error_code: string | null; attempt_count: number }[]
+      >`
+        select status, last_error_code, attempt_count from notification_outbox where id = ${id}
+      `;
+      expect(after[0]).toMatchObject({
+        status: "failed",
+        last_error_code: "dispatch_outcome_unknown",
+      });
+      // Budget spent, or retention would never redact the recipient off this row.
+      expect(after[0].attempt_count).toBeGreaterThanOrEqual(5);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
    * The race the cancel pass cannot close, against a real database.
    *
    * cancelFixtureOriginNotifications and claimDue are two statements and the

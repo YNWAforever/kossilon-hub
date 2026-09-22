@@ -251,6 +251,28 @@ describe("sendWoztellMessage", () => {
     ).rejects.toThrow("User is not authorized.");
   });
 
+  /**
+   * ok:1 means WOZTELL took the message — the client HAS it. A missing id is a
+   * bookkeeping gap, not a failed send, and the bare Error this used to throw was
+   * indistinguishable from one, so the dispatcher retried and delivered a second
+   * copy. BotAPI accepts no client-side idempotency key that would collapse the
+   * two, so the distinction has to travel on the error.
+   */
+  it("marks a missing id on an ACCEPTED send as provider-accepted, not retryable", async () => {
+    const fetchImpl = async () => new Response(JSON.stringify({ ok: 1 }), { status: 200 });
+
+    await expect(
+      sendWoztellMessage(
+        config,
+        { toPhone: "+85290000000", mode: { kind: "text", body: "hi" } },
+        fetchImpl,
+      ),
+    ).rejects.toMatchObject({
+      code: "woztell_accepted_without_message_id",
+      providerAccepted: true,
+    });
+  });
+
   it("reads the id from messageEvent when the result carries one", async () => {
     const fetchImpl = async () =>
       new Response(

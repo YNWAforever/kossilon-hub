@@ -40,12 +40,80 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
     enqueue: vi.fn(),
     cancelFixtureOriginNotifications: vi.fn(async () => ({ cancelled: 0 })),
     claimDue: vi.fn(async () => rows),
+    markDispatchStarted: vi.fn(async () => undefined),
     markSent: vi.fn(async () => true),
     markRetry: vi.fn(async () => true),
     markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
 }
+
+/**
+ * The double-SEND, as opposed to the double-count the attempt fence already
+ * covers.
+ *
+ * Both the reclaim path (a dispatch stalling past the visibility timeout) and
+ * `sentButUnrecorded` leave a row in 'processing' after transport.dispatch has
+ * ALREADY been called. The fence only makes the loser's markSent fail; the
+ * message went out twice, and WOZTELL's BotAPI takes no client-side idempotency
+ * key to collapse them (Resend's transport does send one, so email was never
+ * exposed).
+ *
+ * The marker is therefore written BEFORE the transport call: a row carrying one
+ * is a row whose outcome is unknown, and the claim refuses it rather than
+ * guessing. The escalation belongs to a human.
+ */
+describe("a dispatch whose outcome is unknown is never re-sent", () => {
+  it("records that a transport call was begun before making it", async () => {
+    const order: string[] = [];
+    const repo = repository([notification()]);
+    repo.markDispatchStarted = vi.fn(async () => {
+      order.push("marked");
+    });
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        order.push("dispatched");
+        return { delivery: "simulated" as const };
+      }),
+    };
+
+    await createNotificationDispatcher(repo, transport).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(order).toEqual(["marked", "dispatched"]);
+    expect(repo.markDispatchStarted).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", {
+      attemptCount: 1,
+    });
+  });
+
+  /**
+   * WOZTELL answered ok:1 -- the client HAS the message -- and only the message id
+   * was missing. This used to throw a bare Error, land in the generic catch and
+   * call markRetry, which sent the same reminder again on the next tick.
+   */
+  it("fails rather than retries when the provider already accepted the send", async () => {
+    const repo = repository([notification()]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        throw Object.assign(new Error("WOZTELL response is missing a provider message ID."), {
+          code: "woztell_accepted_without_message_id",
+          providerAccepted: true,
+        });
+      }),
+    };
+
+    const summary = await createNotificationDispatcher(repo, transport).dispatchDue(
+      "2026-07-12T00:00:00.000Z",
+    );
+
+    // attemptCount 1 of maxAttempts 3, so the old code would have retried.
+    expect(repo.markRetry).not.toHaveBeenCalled();
+    expect(repo.markFailed).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.objectContaining({ errorCode: "woztell_accepted_without_message_id" }),
+    );
+    expect(summary).toMatchObject({ sent: 0, retried: 0, sentButUnrecorded: 1 });
+  });
+});
 
 describe("notification dispatcher", () => {
   /**

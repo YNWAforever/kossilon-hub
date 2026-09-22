@@ -167,6 +167,11 @@ export type NotificationOutboxRepository = {
    */
   cancelFixtureOriginNotifications(now: string): Promise<{ cancelled: number }>;
   /**
+   * Records that a transport call is about to be made, before it is made, so a
+   * dispatch with no recorded outcome can never be silently re-sent.
+   */
+  markDispatchStarted(id: string, input: { attemptCount: number }): Promise<void>;
+  /**
    * The terminal writes all take the attempt_count the claim returned and fence on
    * it, and all report whether they actually landed.
    *
@@ -241,6 +246,16 @@ export function createNotificationOutboxRepository(
             -- companies on every cron tick. companies.id is the primary key, so
             -- the subquery yields no nulls and NOT IN cannot collapse to unknown.
             and company_id not in (select id from companies where data_origin <> 'client')
+            -- A marker means a transport call was BEGUN for this row and no
+            -- outcome was ever recorded, so the provider may already have the
+            -- message. Re-claiming it is how the same statutory reminder reached a
+            -- client twice: the attempt fence only makes the loser's markSent
+            -- fail, long after both dispatches went out. WOZTELL takes no
+            -- client-side idempotency key, so nothing downstream can collapse the
+            -- duplicate. failStranded settles these for a human instead.
+            --
+            -- Terminal writes clear the marker, so an ordinary retry is unaffected.
+            and dispatch_started_attempt is null
             and (
               (status in ('pending', 'failed') and next_attempt_at <= ${now})
               -- Stranded by a Worker that died mid-dispatch. Without this the row
@@ -306,10 +321,27 @@ export function createNotificationOutboxRepository(
       `;
       return { cancelled: rows.length };
     },
+    /**
+     * Records that a transport call is about to be made, before it is made.
+     *
+     * Deliberately not fenced on succeeding: it runs on the row this claim just
+     * took, and if the write fails the dispatch must not proceed — the whole point
+     * is that no send happens without a marker to say it might have.
+     */
+    async markDispatchStarted(id, input) {
+      await sql`
+        update notification_outbox
+        set dispatch_started_attempt = ${input.attemptCount}, updated_at = now()
+        where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
+      `;
+    },
     async markSent(id, input) {
       const rows = await sql<{ id: string }[]>`
         update notification_outbox set status = 'sent', provider_message_id = ${input.providerMessageId},
-          delivery = ${input.delivery}, sent_at = ${input.sentAt}, updated_at = now()
+          delivery = ${input.delivery}, sent_at = ${input.sentAt}, updated_at = now(),
+          -- Outcome recorded, so the row is no longer unknown and the marker has
+          -- done its job. Left set, it would only make the row unclaimable.
+          dispatch_started_attempt = null
         where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
         returning id
       `;
@@ -324,7 +356,11 @@ export function createNotificationOutboxRepository(
         if (!rows[0]) throw new Error("Notification outbox row not found.");
         const updated = await tx<{ id: string }[]>`
           update notification_outbox set status = 'failed', next_attempt_at = ${nextRetryAt(rows[0].attempt_count, input.now)},
-            last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now()
+            last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now(),
+            -- The outcome is recorded, so the marker is spent. It must be cleared
+            -- or this row -- a perfectly ordinary retry -- would never be claimed
+            -- again.
+            dispatch_started_attempt = null
           where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
           returning id
         `;
@@ -335,7 +371,9 @@ export function createNotificationOutboxRepository(
     async markFailed(id, input) {
       const rows = await sql<{ id: string }[]>`
         update notification_outbox set status = 'failed', next_attempt_at = ${input.now},
-          last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now()
+          last_error_code = ${input.errorCode}, last_error_message = ${input.errorMessage}, updated_at = now(),
+          -- Terminal, and the outcome is written down; the marker is spent.
+          dispatch_started_attempt = null
         where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
         returning id
       `;
@@ -389,13 +427,36 @@ export function createNotificationOutboxRepository(
       const rows = await sql<{ id: string }[]>`
         update notification_outbox
         set status = 'failed',
-            last_error_code = 'dispatch_stranded',
-            last_error_message = 'Dispatch did not complete before the visibility timeout and no attempts remain.',
+            last_error_code = case
+              when dispatch_started_attempt is not null then 'dispatch_outcome_unknown'
+              else 'dispatch_stranded'
+            end,
+            last_error_message = case
+              when dispatch_started_attempt is not null
+                then 'A send was begun and no outcome was recorded. The provider may already have delivered it; decide by hand rather than re-sending.'
+              else 'Dispatch did not complete before the visibility timeout and no attempts remain.'
+            end,
+            -- Spending the budget on the marker arm is not bookkeeping tidiness:
+            -- redactExpired only settles a 'failed' row once attempt_count >=
+            -- max_attempts, so a row escalated with attempts left would keep its
+            -- recipient and message body past retention, forever. The attempts are
+            -- genuinely spent -- this row must never be dispatched again.
+            attempt_count = case
+              when dispatch_started_attempt is not null then max_attempts
+              else attempt_count
+            end,
             updated_at = now()
         where id in (
           select id from notification_outbox
           where status = 'processing'
-            and attempt_count >= max_attempts
+            -- Two distinct strandings settle here. The original: attempts are
+            -- spent, so nothing will ever claim this row again. The second: a
+            -- transport call was begun and no outcome was recorded, so claimDue
+            -- refuses the row NO MATTER how many attempts remain -- re-sending on
+            -- an unknown outcome is exactly what must not happen. Without this
+            -- arm such a row would be neither re-sent nor settled nor visible,
+            -- which is the silent loss the reclaim was written to end.
+            and (attempt_count >= max_attempts or dispatch_started_attempt is not null)
             and updated_at <= ${processingReclaimCutoff(now)}
           order by updated_at asc
           limit ${limit}

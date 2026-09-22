@@ -406,6 +406,14 @@ create table if not exists notification_outbox (
   -- by elimination. Nullable because rows written before 0022 genuinely are
   -- unknown -- a default would hand an auditor a value that looks like evidence.
   delivery text check (delivery is null or delivery in ('provider', 'simulated')),
+  -- Added by 0034. Written immediately before the transport call and cleared by
+  -- every terminal write, so a row still carrying one has an UNKNOWN outcome: the
+  -- provider may already have the message. claimDue refuses such a row rather than
+  -- re-sending it, and failStranded settles it as 'dispatch_outcome_unknown' for a
+  -- human. WOZTELL's BotAPI takes no client-side idempotency key, so this is the
+  -- only thing standing between a stalled dispatch and a second copy of a
+  -- statutory reminder reaching the client.
+  dispatch_started_attempt integer,
   last_error_code text,
   last_error_message text,
   sent_at timestamptz,

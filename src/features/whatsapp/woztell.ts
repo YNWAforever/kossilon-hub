@@ -66,7 +66,18 @@ export async function sendWoztellMessage(
   }
 
   const providerMessageId = providerMessageIdFromSendResult(payload);
-  if (!providerMessageId) throw new Error("WOZTELL response is missing a provider message ID.");
+  if (!providerMessageId) {
+    // ok:1 means WOZTELL ACCEPTED the send — the client has the message. Only the
+    // id is missing. This used to be a bare Error, indistinguishable to the
+    // dispatcher from a failed send, so it retried and delivered a second copy of
+    // the same statutory reminder. BotAPI /sendResponses takes no client-side
+    // idempotency key that could collapse the pair, so the distinction has to
+    // travel on the error itself.
+    throw Object.assign(new Error("WOZTELL accepted the send but returned no message ID."), {
+      code: "woztell_accepted_without_message_id",
+      providerAccepted: true,
+    });
+  }
   return { providerMessageId };
 }
 
