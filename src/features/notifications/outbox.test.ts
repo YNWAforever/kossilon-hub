@@ -80,6 +80,43 @@ describe("stranded outbox rows become claimable again", () => {
 });
 
 /**
+ * The fixture-origin guard was a SEPARATE statement run just before the claim, and
+ * the five-minute cron holds no lease. Two overlapping ticks, or a reminder
+ * enqueued in the window between the cancel pass and the claim, produced a
+ * fixture-origin row that the cancel had already swept past and the claim happily
+ * took — and a claimed row is one dispatch away from a real client's phone.
+ *
+ * Origin therefore has to be a predicate of the claim itself. The cancel pass
+ * stays: it is what settles those rows so they stop being retried forever.
+ */
+describe("claimDue refuses fixture-origin rows on its own", () => {
+  const source = readFileSync(new URL("./outbox.ts", import.meta.url), "utf8");
+  const claimQuery = source.slice(
+    source.indexOf("async claimDue"),
+    source.indexOf("async cancelFixtureOriginNotifications"),
+  );
+
+  it("filters on company data origin inside the claim", () => {
+    expect(claimQuery).toContain("data_origin <> 'client'");
+    expect(claimQuery).toContain("company_id not in (select id from companies");
+  });
+
+  /**
+   * companies_data_origin_idx is PARTIAL, `where data_origin <> 'client'`, so the
+   * index can only answer "which companies are fixtures". A positive predicate
+   * (`= 'client'`) would have to seq-scan companies on every cron tick.
+   */
+  it("phrases the predicate so the partial index can serve it", () => {
+    expect(claimQuery).not.toContain("data_origin = 'client'");
+  });
+
+  it("keeps the cancel pass that settles those rows", () => {
+    expect(source).toContain("cancelFixtureOriginNotifications");
+    expect(source).toContain("last_error_code = 'fixture-origin'");
+  });
+});
+
+/**
  * retention_until was written on every insert and read back on every row while
  * nothing ever acted on it, so notification_outbox grew without bound — carrying
  * recipient addresses and message bodies indefinitely.

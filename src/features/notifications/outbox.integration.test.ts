@@ -561,4 +561,56 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
+
+  /**
+   * The race the cancel pass cannot close, against a real database.
+   *
+   * cancelFixtureOriginNotifications and claimDue are two statements and the
+   * five-minute cron holds no lease, so a reminder enqueued for a fixture-origin
+   * company AFTER the cancel swept past is still sitting 'pending' when the claim
+   * runs. This enqueues in exactly that window -- cancel first, enqueue second,
+   * claim third -- and asserts the claim refuses it anyway.
+   */
+  it(
+    "never claims a fixture-origin row enqueued after the cancel pass ran",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const repository = createNotificationOutboxRepository({ sql });
+
+      const originRows = await sql<{ data_origin: string }[]>`
+        select data_origin from companies where id = ${companyId}
+      `;
+      const wasFixture = originRows[0]?.data_origin === "fixture";
+
+      try {
+        await sql`update companies set data_origin = 'fixture' where id = ${companyId}`;
+
+        // The cancel pass runs on an empty queue -- there is nothing to sweep yet.
+        await repository.cancelFixtureOriginNotifications(new Date().toISOString());
+
+        // ...and only now does the reminder arrive.
+        const id = await enqueue(sql, companyId, "fixture-after-cancel", {
+          status: "pending",
+          attemptCount: 0,
+          retentionUntil: "2099-01-01T00:00:00.000Z",
+        });
+        await sql`update notification_outbox set next_attempt_at = now() - interval '1 minute' where id = ${id}`;
+
+        expect(await claimedIdsWithoutCommitting(sql, 500)).not.toContain(id);
+
+        // Same row, same instant, client origin: it IS due and MUST be claimed,
+        // so the assertion above is the origin predicate and not an accident of
+        // the row's state.
+        await sql`update companies set data_origin = 'client' where id = ${companyId}`;
+        expect(await claimedIdsWithoutCommitting(sql, 500)).toContain(id);
+      } finally {
+        await sql`
+          update companies set data_origin = ${wasFixture ? "fixture" : "client"}
+          where id = ${companyId}
+        `;
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });
