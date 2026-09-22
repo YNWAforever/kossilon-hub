@@ -2482,13 +2482,40 @@ export function createAnnualReturnRepository(
         );
         if (!milestone) return null;
 
-        const insertedEvent = await tx<{ id: string }[]>`
-          insert into annual_return_reminder_events (case_id, milestone, occurred_at)
-          values (${case_.id}, ${milestone}, ${now})
-          on conflict (case_id, milestone) do nothing
-          returning id
-        `;
-        if (!insertedEvent[0]) return null;
+        /**
+         * Records a skip WITHOUT consuming the milestone, once per reason.
+         *
+         * The milestone row used to be inserted here, before any of the skip
+         * checks below, and those checks commit -- so a case skipped for having no
+         * primary contact spent its milestone on a reminder that was never sent.
+         * dueMilestone never fired again, and adding the contact the next day
+         * changed nothing: the client simply was not reminded before their
+         * statutory deadline.
+         *
+         * Not consuming it means the sweep re-evaluates this case every five
+         * minutes until the condition clears, so the timeline event is written
+         * only when an identical one is not already there. Otherwise the history
+         * that is supposed to explain the silence would bury it.
+         */
+        const recordSkip = async (reason: string, description: string) => {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            )
+            select
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, ${description},
+              ${tx.json({ milestone, reason })}
+            where not exists (
+              select 1 from timeline_events
+              where case_id = ${case_.id}
+                and event_type = 'annual_return_reminder_skipped'
+                and metadata->>'milestone' = ${milestone}
+                and metadata->>'reason' = ${reason}
+            )
+          `;
+          return "skipped" as const;
+        };
 
         // Does this client actually owe us anything?
         //
@@ -2514,16 +2541,10 @@ export function createAnnualReturnRepository(
         // nothing is owed, and staying silent before a statutory deadline is the
         // worse error.
         if (!shouldChaseClient({ checklist: checklistForChase })) {
-          await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: nothing is outstanding from the client.',
-              ${tx.json({ milestone, reason: "nothing_outstanding" })}
-            )
-          `;
-          return "skipped" as const;
+          return recordSkip(
+            "nothing_outstanding",
+            "Automated reminder skipped: nothing is outstanding from the client.",
+          );
         }
 
         const contactRows = await tx<
@@ -2536,16 +2557,10 @@ export function createAnnualReturnRepository(
         const contact = contactRows[0];
 
         if (!contact) {
-          await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: no primary contact on file.',
-              ${tx.json({ milestone, reason: "no_primary_contact" })}
-            )
-          `;
-          return "skipped" as const;
+          return recordSkip(
+            "no_primary_contact",
+            "Automated reminder skipped: no primary contact on file.",
+          );
         }
 
         const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
@@ -2558,17 +2573,22 @@ export function createAnnualReturnRepository(
         // abandon every case still queued behind this one for the rest of the sweep.
         // Skip this case the same way an entirely missing contact is skipped above.
         if (!recipient) {
-          await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: primary contact has neither phone nor email.',
-              ${tx.json({ milestone, reason: "unreachable_primary_contact" })}
-            )
-          `;
-          return "skipped" as const;
+          return recordSkip(
+            "unreachable_primary_contact",
+            "Automated reminder skipped: primary contact has neither phone nor email.",
+          );
         }
+
+        // Only now, with every reason to stay silent ruled out, is the milestone
+        // spent. `on conflict do nothing` still makes a concurrent sweep a no-op,
+        // so a milestone genuinely acted on is never acted on twice.
+        const insertedEvent = await tx<{ id: string }[]>`
+          insert into annual_return_reminder_events (case_id, milestone, occurred_at)
+          values (${case_.id}, ${milestone}, ${now})
+          on conflict (case_id, milestone) do nothing
+          returning id
+        `;
+        if (!insertedEvent[0]) return null;
 
         const queued = await enqueueNotification(tx, {
           companyId: lockedCase.company_id,

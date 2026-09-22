@@ -2140,6 +2140,48 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  /**
+   * The milestone row was inserted BEFORE the skip checks, and those checks
+   * commit. A case skipped for having no primary contact therefore spent its
+   * milestone on a reminder that was never sent: dueMilestone never fired again,
+   * and adding the contact the next day changed nothing.
+   */
+  it(
+    "does not spend the milestone on a case it skipped, so a later sweep still sends",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 33 });
+      const sql = sqlForTests();
+      const repository = repositoryFor("2026-07-13");
+
+      // No contact on file yet.
+      await repository.evaluateReminders();
+      expect(
+        await sql`select id from annual_return_reminder_events where case_id = ${fixture.caseId}`,
+      ).toHaveLength(0);
+
+      // ...and the contact arrives.
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      await repository.evaluateReminders();
+
+      expect(
+        await sql`select id from notification_outbox where company_id = ${fixture.companyId}`,
+      ).toHaveLength(1);
+
+      // The skip was recorded once, not on every one of those sweeps.
+      const skips = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId}
+          and event_type = 'annual_return_reminder_skipped'
+          and metadata->>'reason' = 'no_primary_contact'
+      `;
+      expect(skips).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   it(
     "skips rather than throws when the primary contact has neither a usable phone nor email",
     async () => {
