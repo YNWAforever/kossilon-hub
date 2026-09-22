@@ -226,6 +226,21 @@ export function createNotificationOutboxRepository(
         const rows = await tx<NotificationRow[]>`
           select * from notification_outbox
           where attempt_count < max_attempts
+            -- Origin is a predicate of the CLAIM, not only of the cancel pass that
+            -- runs just before it. Those are two statements and the five-minute
+            -- cron holds no lease, so a reminder enqueued for a fixture-origin
+            -- company after the cancel swept past -- or during an overlapping tick
+            -- -- was claimed, and a claimed row is one dispatch away from a real
+            -- client's phone. The cancel pass still runs: it is what SETTLES those
+            -- rows, so they stop sitting due forever.
+            --
+            -- Phrased as "not in (the fixtures)" rather than as a positive
+            -- data_origin test because companies_data_origin_idx is partial on
+            -- data_origin <> 'client': the index can answer "which companies are
+            -- fixtures" and nothing else, so the positive form would seq-scan
+            -- companies on every cron tick. companies.id is the primary key, so
+            -- the subquery yields no nulls and NOT IN cannot collapse to unknown.
+            and company_id not in (select id from companies where data_origin <> 'client')
             and (
               (status in ('pending', 'failed') and next_attempt_at <= ${now})
               -- Stranded by a Worker that died mid-dispatch. Without this the row
