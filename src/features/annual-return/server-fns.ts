@@ -15,6 +15,7 @@ import {
 } from "./permissions";
 import { mergeCaseHistory, type CaseHistoryEntry } from "./case-history";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
+import { toPhoneDigits } from "@/features/whatsapp/phone";
 import {
   buildReminderDraft,
   completionBlockers,
@@ -576,6 +577,29 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
 
   if (!caseItem) {
     throw new Error("Annual return case not found.");
+  }
+
+  // The recipient was whatever the caller typed: `z.string().min(3)` and nothing
+  // else. The draft this queues names the client's company and their statutory
+  // filing due date, so a single mistyped digit sends one client's confidential
+  // deadline to a stranger -- and the firm's own record would say the client was
+  // reminded. The number must belong to a contact the firm already holds FOR THIS
+  // CASE'S COMPANY.
+  //
+  // Compared as digits, not as strings: contacts are stored the way a person typed
+  // them ("+852 9123 4567") and the form collects them the same way, so a literal
+  // comparison would reject every legitimate reminder -- and a guard that blocks
+  // real work is a guard somebody removes.
+  const recipientDigits = toPhoneDigits(data.recipientPhone);
+  const contactDigits = new Set(
+    (await dependencies.annualReturnRepository.listCompanyContactPhones(caseItem.companyId))
+      .map((phone) => toPhoneDigits(phone))
+      .filter((digits): digits is string => digits !== null),
+  );
+  if (!recipientDigits || !contactDigits.has(recipientDigits)) {
+    throw new Error(
+      "Forbidden: a reminder may only be sent to a contact on file for this case's company.",
+    );
   }
 
   const result = await queueAnnualReturnWhatsAppReminder({

@@ -439,6 +439,15 @@ export type AnnualReturnRepository = {
   listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]>;
   listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]>;
   addNote(input: AddAnnualReturnCaseNoteInput): Promise<AnnualReturnCaseNote>;
+  /**
+   * The phone numbers the firm already holds for a company.
+   *
+   * Exists so an outbound message can be checked against the recipients the firm
+   * actually has a relationship with, rather than trusting a number typed into a
+   * form: a manual reminder carries the client's company name and statutory due
+   * date, and a mistyped digit sends that to a stranger.
+   */
+  listCompanyContactPhones(companyId: string): Promise<string[]>;
   recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase>;
   updateChecklistItem(input: UpdateAnnualReturnChecklistItemInput): Promise<AnnualReturnCase>;
   /**
@@ -1914,6 +1923,14 @@ export function createAnnualReturnRepository(
     return hydratedCaseAfterMutation(caseId, "status update");
   }
 
+  async function listCompanyContactPhones(companyId: string): Promise<string[]> {
+    const rows = await sql<{ phone: string }[]>`
+      select phone from company_contacts
+      where company_id = ${companyId} and phone is not null
+    `;
+    return rows.map((row) => row.phone);
+  }
+
   async function recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase> {
     const current = await getCase(input.caseId);
 
@@ -2812,6 +2829,7 @@ export function createAnnualReturnRepository(
     listAssignmentEventsForCase,
     addNote,
     updateStatus,
+    listCompanyContactPhones,
     recordReminder,
     updateChecklistItem,
     linkRequirementEvidence,
