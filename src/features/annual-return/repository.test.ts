@@ -2141,6 +2141,61 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
   );
 
   /**
+   * The case asserted the client had been reminded from the moment the
+   * notification was QUEUED. Nothing reconciled a terminal outbox failure, so a
+   * reminder that never left the building left behind reminders_sent + 1, a
+   * 'Client reminder sent' status and an "Automated reminder sent." timeline
+   * event — and a spent milestone, so it never fired again.
+   */
+  it(
+    "retracts the reminder claim when the notification can never be delivered",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 34 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+      const claimed = await sql<{ reminders_sent: number; current_status: string }[]>`
+        select reminders_sent, current_status from annual_return_cases where id = ${fixture.caseId}
+      `;
+      expect(claimed[0].reminders_sent).toBe(1);
+
+      // The dispatcher exhausts the attempt budget; the client has nothing.
+      await sql`
+        update notification_outbox
+        set status = 'failed', attempt_count = max_attempts, last_error_code = 'woztell_err_100'
+        where company_id = ${fixture.companyId}
+      `;
+
+      expect(await repository.reconcileFailedReminders("2026-07-13")).toEqual({ retracted: 1 });
+
+      const after = await sql<{ reminders_sent: number; current_status: string }[]>`
+        select reminders_sent, current_status from annual_return_cases where id = ${fixture.caseId}
+      `;
+      expect(after[0].reminders_sent).toBe(claimed[0].reminders_sent - 1);
+      expect(after[0].current_status).toBe("Upcoming");
+
+      const failures = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_failed'
+      `;
+      expect(failures).toHaveLength(1);
+
+      // Every five minutes, forever: a second pass must not decrement again.
+      expect(await repository.reconcileFailedReminders("2026-07-13")).toEqual({ retracted: 0 });
+      const settled = await sql<{ reminders_sent: number }[]>`
+        select reminders_sent from annual_return_cases where id = ${fixture.caseId}
+      `;
+      expect(settled[0].reminders_sent).toBe(after[0].reminders_sent);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
    * The milestone row was inserted BEFORE the skip checks, and those checks
    * commit. A case skipped for having no primary contact therefore spent its
    * milestone on a reminder that was never sent: dueMilestone never fired again,

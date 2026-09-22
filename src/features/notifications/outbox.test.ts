@@ -328,9 +328,7 @@ describe("the dispatch marker is written, cleared and escalated", () => {
     for (const name of ["markSent", "markRetry", "markFailed"]) {
       const start = source.indexOf(`async ${name}(id`);
       const body = source.slice(start, start + 1400);
-      expect(body, `${name} leaves the marker behind`).toContain(
-        "dispatch_started_attempt = null",
-      );
+      expect(body, `${name} leaves the marker behind`).toContain("dispatch_started_attempt = null");
     }
   });
 
