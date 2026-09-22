@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { AnnualReturnStatus } from "./types";
+import { toHongKongBusinessDate } from "@/lib/hong-kong-time";
 import {
   ANNUAL_RETURN_STATUSES,
   buildReminderDraft,
@@ -335,5 +336,66 @@ describe("isAllowedStatusTransition with an unrecognised status", () => {
     expect(isAllowedStatusTransition(ANNUAL_RETURN_STATUSES[1], ANNUAL_RETURN_STATUSES[0])).toBe(
       false,
     );
+  });
+});
+
+describe("reminder draft day count during the Hong Kong overnight window", () => {
+  // The sweep's `now` is rendered straight into 「尚餘 N 天」, a number the client
+  // reads and plans around. daysBetween slices the first ten characters, so a
+  // raw tick instant between 16:00Z and 24:00Z -- 00:00 to 08:00 in Hong Kong --
+  // silently counted from yesterday and overstated the remaining days by one.
+  it("counts from the Hong Kong day, not the UTC day, of the tick", () => {
+    const tick = "2026-07-05T17:00:00.000Z"; // 2026-07-06 01:00 in Hong Kong.
+    const case_ = { ...baseCase, filingDueDate: "2026-07-10" };
+
+    expect(buildReminderDraft(case_, "Ada Chan", toHongKongBusinessDate(tick))).toContain(
+      "距離現時尚餘 4 天",
+    );
+    // What the un-normalised tick produced, kept as the contrast: one day too many.
+    expect(buildReminderDraft(case_, "Ada Chan", tick)).toContain("距離現時尚餘 5 天");
+  });
+
+  it("flips an overdue case out of the remaining-days phrasing on the right day", () => {
+    const tick = "2026-07-10T17:00:00.000Z"; // 2026-07-11 in Hong Kong: one day late.
+    const case_ = { ...baseCase, filingDueDate: "2026-07-10" };
+
+    expect(buildReminderDraft(case_, "Ada Chan", toHongKongBusinessDate(tick))).toContain(
+      "已逾期 1 天",
+    );
+  });
+});
+
+describe("riskForCase at date boundaries", () => {
+  // The mid-month dates the other cases use never exercise the arithmetic that
+  // actually breaks: a month that is shorter than the one before it, a leap day,
+  // and a year rollover. daysBetween is UTC-midnight based, so all three are
+  // plain subtraction -- these pin that they stay so.
+  const incomplete = (filingDueDate: string) => ({ ...baseCase, filingDueDate });
+
+  it("treats the due date itself as not yet overdue", () => {
+    // daysLeft === 0 is the boundary the red/overdue split turns on: due today
+    // is red because evidence is missing, not because the case is late.
+    expect(riskForCase(incomplete("2026-07-13"), "2026-07-13")).toBe("red");
+    expect(riskForCase(incomplete("2026-07-13"), "2026-07-14")).toBe("red");
+    expect(riskForCase({ ...readyCase, filingDueDate: "2026-07-13" }, "2026-07-13")).toBe("green");
+  });
+
+  it("counts across a month end", () => {
+    // 31 Jan -> 28 Feb is 28 days, inside the 30-day yellow band but outside 14.
+    expect(riskForCase(incomplete("2026-02-28"), "2026-01-31")).toBe("yellow");
+    expect(riskForCase(incomplete("2026-02-14"), "2026-01-31")).toBe("orange");
+  });
+
+  it("counts across a leap day", () => {
+    // 2028 is a leap year: 2028-02-20 -> 2028-03-05 is 14 days, not 13.
+    expect(riskForCase(incomplete("2028-03-05"), "2028-02-20")).toBe("orange");
+    expect(riskForCase(incomplete("2028-02-29"), "2028-02-29")).toBe("red");
+  });
+
+  it("counts across a year end", () => {
+    // 2026-12-31 -> 2027-01-07 is 7 days: inside the red band, not a negative
+    // count from subtracting the calendar year.
+    expect(riskForCase(incomplete("2027-01-07"), "2026-12-31")).toBe("red");
+    expect(riskForCase(incomplete("2027-01-30"), "2026-12-31")).toBe("yellow");
   });
 });
