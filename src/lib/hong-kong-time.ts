@@ -43,6 +43,22 @@ const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
  */
 export function toHongKongBusinessDate(value: string | Date): string {
   if (typeof value === "string" && DATE_ONLY.test(value)) {
+    // Shape is not validity. "2026-13-45" is ten characters in the right
+    // pattern, and passing it through would make it a sweep window and a
+    // rendered due date for a day that does not exist. `Date.UTC` normalises
+    // out-of-range parts by rolling over, so the check is that the round trip
+    // lands back on the same three numbers.
+    const [year, month, day] = value.split("-").map(Number);
+    const roundTrip = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+      roundTrip.getUTCFullYear() !== year ||
+      roundTrip.getUTCMonth() !== month - 1 ||
+      roundTrip.getUTCDate() !== day
+    ) {
+      throw new Error(`Unable to derive a Hong Kong business date from "${value}".`);
+    }
+
     return value;
   }
 
