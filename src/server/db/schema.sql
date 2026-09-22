@@ -1798,3 +1798,14 @@ create table if not exists maintenance_runs (
 
 create index if not exists maintenance_runs_recent_idx
   on maintenance_runs (scheduled_for desc);
+
+-- from 0034_notification_outbox_dispatch_marker.sql
+
+-- Mirrored so a database built from this file matches one built from the
+-- migrations. Narrower than notification_outbox_stranded_idx, which already
+-- covers (updated_at) where status = 'processing' and therefore serves
+-- failStranded's marker arm too -- this exists because the migration creates it,
+-- and schema.sql is the canonical fresh-database schema, not a summary of it.
+create index if not exists notification_outbox_dispatch_marker_idx
+  on notification_outbox (updated_at)
+  where status = 'processing' and dispatch_started_attempt is not null;
