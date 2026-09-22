@@ -2051,11 +2051,31 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
       await repository.evaluateReminders();
       const secondResult = await repository.evaluateReminders();
 
-      expect(secondResult).toEqual({ sent: 0, skipped: 0 });
+      // Nothing anywhere in the book is sent a second time. This is the
+      // property the test exists for, and it is still a whole-book assertion:
+      // a duplicate reminder for ANY case would break it.
+      expect(secondResult.sent).toBe(0);
+      // `skipped` is deliberately not asserted as a whole-book total. Skips no
+      // longer consume the milestone, so a case that can never be reminded (the
+      // seeded reference companies have no primary contact / nothing
+      // outstanding) is re-examined and re-reported as skipped on every tick.
+      // That is the fix for a client silently losing their milestone, not a
+      // regression -- but it makes the book-wide total a number this test does
+      // not own. This fixture's own contribution is asserted exactly below.
+      const skipRows = await sql`
+        select id from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_skipped'
+      `;
+      expect(skipRows).toHaveLength(0);
+      const eventRows = await sql<{ milestone: string }[]>`
+        select milestone from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(eventRows).toEqual([{ milestone: "1_month" }]);
       const outboxRows = await sql`
         select id from notification_outbox where company_id = ${fixture.companyId}
       `;
       expect(outboxRows).toHaveLength(1);
+      expect((await repository.getCase(fixture.caseId))?.remindersSent).toBe(1);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
