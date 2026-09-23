@@ -445,3 +445,52 @@ describe("maintenance run record", () => {
     expect(result.failures).toEqual([]);
   });
 });
+
+describe("the reminder sweeps' business date", () => {
+  // The tick hands down `new Date(scheduledTime).toISOString()`. The escalation
+  // and dispatch passes want that instant -- they compare against timestamptz
+  // columns. The two reminder sweeps do not: they compare against date columns
+  // and render the result into a client-facing WhatsApp message, so they need
+  // the firm's Hong Kong day. 17:00Z is already tomorrow in Hong Kong, which is
+  // exactly the window where feeding the raw instant swept the wrong day.
+  const TICK = "2026-07-05T17:00:00.000Z";
+
+  async function passArguments() {
+    const annualReturns = vi.fn(async () => ({ sent: 0, skipped: 0 }));
+    const serviceSubscriptions = vi.fn(async () => ({ sent: 0, skipped: 0 }));
+    const escalations = vi.fn(async () => ({ warnings: 0, breaches: 0 }));
+
+    await runFirmMaintenanceWithDependencies(
+      { now: TICK },
+      dependencies({
+        createWorkItemRepository: () => ({
+          evaluateEscalations: escalations,
+          close: vi.fn(async () => {}),
+        }),
+        createAnnualReturnRepository: () => ({
+          evaluateReminders: annualReturns,
+          close: vi.fn(async () => {}),
+        }),
+        createServiceSubscriptionRepository: () => ({
+          evaluateReminders: serviceSubscriptions,
+          close: vi.fn(async () => {}),
+        }),
+      }),
+    );
+
+    return { annualReturns, serviceSubscriptions, escalations };
+  }
+
+  it("hands each reminder sweep the Hong Kong day of the tick", async () => {
+    const { annualReturns, serviceSubscriptions } = await passArguments();
+
+    expect(annualReturns).toHaveBeenCalledWith("2026-07-06");
+    expect(serviceSubscriptions).toHaveBeenCalledWith("2026-07-06");
+  });
+
+  it("still hands the instant-based passes the raw tick", async () => {
+    const { escalations } = await passArguments();
+
+    expect(escalations).toHaveBeenCalledWith(TICK);
+  });
+});

@@ -100,3 +100,45 @@ describe("daily AI digest", () => {
     expect(digest.counts).toEqual({ critical: 0, high: 0, medium: 0 });
   });
 });
+
+describe("daily AI digest during the Hong Kong overnight window", () => {
+  // 00:30 in Hong Kong is still the previous UTC day. Every day count the
+  // digest renders has to come from the firm's calendar day, not the runtime's,
+  // or the first staff to open the dashboard each morning is told a case due
+  // today is due tomorrow — and an overdue one merely due today.
+  const OVERNIGHT = new Date("2026-07-05T00:30:00+08:00");
+
+  it("reads a case due on the Hong Kong date as due today", () => {
+    const digest = buildDailyDigest({
+      now: OVERNIGHT,
+      annualReturnCases: [annualReturnCase({ id: "ar-today", filingDueDate: "2026-07-05" })],
+    });
+
+    expect(digest.items[0].detail).toContain("due today");
+  });
+
+  it("reads a case due yesterday as overdue", () => {
+    const digest = buildDailyDigest({
+      now: OVERNIGHT,
+      annualReturnCases: [annualReturnCase({ id: "ar-late", filingDueDate: "2026-07-04" })],
+    });
+
+    expect(digest.items[0].detail).toContain("1d overdue");
+    expect(digest.items[0].severity).toBe("critical");
+  });
+
+  it("scores an overdue case above one due today", () => {
+    const digest = buildDailyDigest({
+      now: OVERNIGHT,
+      annualReturnCases: [
+        annualReturnCase({ id: "ar-today", companyName: "A Co", filingDueDate: "2026-07-05" }),
+        annualReturnCase({ id: "ar-late", companyName: "B Co", filingDueDate: "2026-07-04" }),
+      ],
+    });
+
+    expect(digest.items.map((item) => item.id)).toEqual([
+      "annual-return:ar-late",
+      "annual-return:ar-today",
+    ]);
+  });
+});

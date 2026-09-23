@@ -1,5 +1,7 @@
 import type { RiskLevel } from "@/features/annual-return/types";
 import type { DashboardCase } from "@/features/dashboard/types";
+import { daysBetween } from "@/lib/date-math";
+import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 import type { StatusTone } from "@/lib/status";
 
 export type DailyDigestSeverity = "critical" | "high" | "medium";
@@ -38,12 +40,18 @@ const severityWeight: Record<DailyDigestSeverity, number> = {
   medium: 500,
 };
 
-function dayNumber(date: Date): number {
-  return Math.floor(date.getTime() / 86_400_000);
-}
-
-function daysUntil(dateValue: string, now: Date): number {
-  return dayNumber(new Date(dateValue)) - dayNumber(now);
+/**
+ * Days from the firm's operational today to a date-only due date.
+ *
+ * Deliberately NOT a UTC day index over the two instants. Hong Kong is UTC+8,
+ * so between 00:00 and 08:00 local time the UTC day is still yesterday: a case
+ * due today rendered as "due in 1d" and an overdue one as "due today" for the
+ * first eight hours of every working day -- precisely the hours the morning
+ * digest is read. Same primitive as the deadline pill so the two never disagree
+ * on the same screen.
+ */
+function daysUntil(dueDate: string, now: Date): number {
+  return daysBetween(hongKongBusinessDate(now), dueDate);
 }
 
 function dueLabel(daysLeft: number): string {
