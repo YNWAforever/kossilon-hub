@@ -1,3 +1,4 @@
+import { entityIdSchema } from "@/features/runtime/entity-id";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
@@ -6,9 +7,9 @@ import type { AnnualReturnEvidenceService } from "./evidence-service";
 
 const reviewEvidenceSchema = z
   .object({
-    caseId: z.string().uuid(),
-    documentId: z.string().uuid(),
-    checklistItemId: z.string().uuid().optional(),
+    caseId: entityIdSchema,
+    documentId: entityIdSchema,
+    checklistItemId: entityIdSchema.optional(),
     decision: z.enum(["verified", "rejected"]),
     reason: z.string().trim().min(1).max(500).optional(),
   })
@@ -16,8 +17,8 @@ const reviewEvidenceSchema = z
 
 const acceptFilingReceiptSchema = z
   .object({
-    caseId: z.string().uuid(),
-    documentId: z.string().uuid(),
+    caseId: entityIdSchema,
+    documentId: entityIdSchema,
     filingReference: z.string().trim().min(1).max(200),
   })
   .strict();

@@ -1,3 +1,5 @@
+import { safeRequestId } from "@/features/runtime/query-error";
+import { isEntityId, parseEntityId } from "@/features/runtime/entity-id";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import { getAnnualReturnCase } from "../features/annual-return/server-fns";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
@@ -60,7 +62,7 @@ function PortalRoute() {
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
   const navigate = useNavigate({ from: "/portal" });
-  const productionCaseId = caseId && isUuid(caseId) ? caseId : undefined;
+  const productionCaseId = parseEntityId(caseId);
   const productionCaseQuery = useQuery({
     queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "portal"),
     queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
@@ -84,6 +86,16 @@ function PortalRoute() {
   }, [caseId, dataMode, navigate, selectedCase]);
 
   if (dataMode !== "demo") {
+    if (caseId && !productionCaseId) {
+      return (
+        <main className="flex-1 space-y-3 p-6">
+          <PageHeader eyebrow="Operations" title="Invalid portal link" />
+          <p className="text-sm text-destructive">
+            The case link is invalid. Open the case from your filings list.
+          </p>
+        </main>
+      );
+    }
     // A Client sign-in gets its own companies' cases. Every other read in this
     // feature resolves a staff actor, so before this a client landed on the
     // "unavailable" branch below and had no route anywhere.
@@ -107,8 +119,28 @@ function PortalRoute() {
         </main>
       );
     }
-    if (productionCaseQuery.isLoading) {
+    if (productionCaseQuery.isPending) {
       return <div className="p-6 text-sm text-muted-foreground">Loading production portal...</div>;
+    }
+    if (productionCaseQuery.isError) {
+      return (
+        <main className="flex-1 space-y-3 p-6">
+          <PageHeader eyebrow="Operations" title="Portal case unavailable" />
+          <p role="alert" className="text-sm text-destructive">
+            Unable to load this case. Please retry.
+            {safeRequestId(productionCaseQuery.error)
+              ? ` Reference: ${safeRequestId(productionCaseQuery.error)}`
+              : null}
+          </p>
+          <button
+            type="button"
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={() => void productionCaseQuery.refetch()}
+          >
+            Retry
+          </button>
+        </main>
+      );
     }
     if (productionCaseQuery.data) {
       return <ProductionPortalCaseView caseItem={productionCaseQuery.data} />;
@@ -558,6 +590,21 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
     if (caseQuery.isPending) {
       return <div className="p-6 text-sm text-muted-foreground">Loading your annual return...</div>;
     }
+    if (caseQuery.isError) {
+      return (
+        <main className="p-6">
+          <p role="alert">
+            Unable to load your annual return. Please retry.
+            {safeRequestId(caseQuery.error)
+              ? ` Reference: ${safeRequestId(caseQuery.error)}`
+              : null}
+          </p>
+          <button type="button" onClick={() => void caseQuery.refetch()}>
+            Retry
+          </button>
+        </main>
+      );
+    }
     if (caseQuery.data) {
       return <ClientPortalCaseView caseItem={caseQuery.data} />;
     }
@@ -576,6 +623,22 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
 
   if (casesQuery.isPending) {
     return <div className="p-6 text-sm text-muted-foreground">Loading your filings...</div>;
+  }
+
+  if (casesQuery.isError) {
+    return (
+      <main className="p-6">
+        <p role="alert">
+          Unable to load your filings. Please retry.
+          {safeRequestId(casesQuery.error)
+            ? ` Reference: ${safeRequestId(casesQuery.error)}`
+            : null}
+        </p>
+        <button type="button" onClick={() => void casesQuery.refetch()}>
+          Retry
+        </button>
+      </main>
+    );
   }
 
   const cases = casesQuery.data ?? [];
@@ -669,7 +732,7 @@ function ProductionDocumentPanel({
   // reuses its row instead of accumulating duplicates.
   const [outcomes, setOutcomes] = useState<Record<string, UploadOutcome>>({});
   const [uploading, setUploading] = useState(false);
-  const productionReady = isUuid(companyId) && isUuid(caseId);
+  const productionReady = isEntityId(companyId) && isEntityId(caseId);
   const documentsQuery = useQuery({
     queryKey: annualReturnQueryKeys.documents(caseId),
     queryFn: () => listDocuments({ data: { companyId, caseId } }),
@@ -878,10 +941,6 @@ function ProductionDocumentPanel({
       )}
     </section>
   );
-}
-
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 async function sha256Hex(bytes: Uint8Array): Promise<string> {

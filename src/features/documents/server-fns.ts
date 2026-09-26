@@ -1,3 +1,4 @@
+import { entityIdSchema } from "@/features/runtime/entity-id";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
@@ -372,10 +373,10 @@ const MAX_UPLOAD_BASE64_LENGTH = Math.ceil(MAX_UPLOAD_BYTES / 3) * 4;
 
 const createIntentSchema = z
   .object({
-    companyId: z.string().uuid(),
-    caseId: z.string().uuid().optional(),
-    checklistItemId: z.string().uuid().optional(),
-    replacementDocumentId: z.string().uuid().optional(),
+    companyId: entityIdSchema,
+    caseId: entityIdSchema.optional(),
+    checklistItemId: entityIdSchema.optional(),
+    replacementDocumentId: entityIdSchema.optional(),
     category: z.enum(DOCUMENT_CATEGORIES),
     fileName: z.string().trim().min(1).max(255),
     contentType: z.string().trim().min(1).max(120),
@@ -383,8 +384,8 @@ const createIntentSchema = z
     checksum: z.string().regex(/^[0-9a-f]{64}$/),
   })
   .strict();
-const intentIdSchema = z.object({ intentId: z.string().uuid() }).strict();
-const documentIdSchema = z.object({ documentId: z.string().uuid() }).strict();
+const intentIdSchema = z.object({ intentId: entityIdSchema }).strict();
+const documentIdSchema = z.object({ documentId: entityIdSchema }).strict();
 
 export const createDocumentUploadIntent = createServerFn({ method: "POST" })
   .validator(createIntentSchema)
@@ -438,9 +439,7 @@ export const downloadDocument = createServerFn({ method: "GET" })
 
 export const listDocuments = createServerFn({ method: "GET" })
   .validator(
-    z
-      .object({ companyId: z.string().uuid().optional(), caseId: z.string().uuid().optional() })
-      .strict(),
+    z.object({ companyId: entityIdSchema.optional(), caseId: entityIdSchema.optional() }).strict(),
   )
   .handler(({ data }) =>
     withDefaultDocumentContext((actor, dependencies) =>

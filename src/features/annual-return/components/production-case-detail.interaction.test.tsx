@@ -345,7 +345,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     fireEvent.change(note, { target: { value: "Keep this draft." } });
     fireEvent.click(screen.getByRole("button", { name: "Add note" }));
 
-    expect((await screen.findByRole("alert")).textContent).toContain("Unable to save note.");
+    expect(await screen.findByText("Unable to save note.")).toBeTruthy();
     expect((note as HTMLTextAreaElement).value).toBe("Keep this draft.");
     expect((screen.getByRole("button", { name: "Add note" }) as HTMLButtonElement).disabled).toBe(
       false,

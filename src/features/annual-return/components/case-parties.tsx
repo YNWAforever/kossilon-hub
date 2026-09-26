@@ -1,3 +1,4 @@
+import { safeRequestId } from "@/features/runtime/query-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserCheck, Users } from "lucide-react";
 
@@ -60,17 +61,30 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
     <section className="border-b pb-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold">申報相關人士</h2>
-        {partiesQuery.isPending ? null : (
+        {!partiesQuery.isSuccess ? null : (
           <span className="text-sm text-muted-foreground">
             {parties.length - unconfirmed.length}/{parties.length} 已確認
           </span>
         )}
       </div>
 
-      {partiesQuery.error ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+      {partiesQuery.isError ? (
+        <div
+          role="alert"
+          className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
           無法載入相關人士名單。在確認之前，個人層面的要求不會出現。
-        </p>
+          {safeRequestId(partiesQuery.error)
+            ? ` 參考編號：${safeRequestId(partiesQuery.error)}`
+            : null}
+          <button
+            type="button"
+            className="ml-2 underline"
+            onClick={() => void partiesQuery.refetch()}
+          >
+            重試
+          </button>
+        </div>
       ) : null}
 
       {/* The requirement set is knowably incomplete while a candidate is
@@ -86,7 +100,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
 
       {partiesQuery.isPending ? (
         <p className="mt-3 text-sm text-muted-foreground">載入中…</p>
-      ) : parties.length === 0 ? (
+      ) : partiesQuery.isError ? null : parties.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
           公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。
         </p>

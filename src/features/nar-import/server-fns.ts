@@ -1,3 +1,4 @@
+import { entityIdSchema } from "@/features/runtime/entity-id";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
@@ -197,7 +198,7 @@ export const listNarImportBatches = createServerFn({ method: "GET" }).handler(()
 );
 
 export const getNarImportBatchReview = createServerFn({ method: "GET" })
-  .validator(z.object({ batchId: z.string().uuid() }).strict())
+  .validator(z.object({ batchId: entityIdSchema }).strict())
   .handler(({ data }) =>
     withContext((actor, dependencies) =>
       getNarImportBatchReviewForActor(actor, data, dependencies),
@@ -209,7 +210,7 @@ export const mapNarImportCompany = createServerFn({ method: "POST" })
     z
       .object({
         externalClientId: z.string().trim().min(1).max(120),
-        companyId: z.string().uuid(),
+        companyId: entityIdSchema,
       })
       .strict(),
   )

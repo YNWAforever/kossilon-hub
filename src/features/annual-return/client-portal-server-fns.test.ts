@@ -101,6 +101,16 @@ describe("listClientPortalCasesForActor", () => {
     expect(listCases).toHaveBeenCalledWith({ companyIds: [COMPANY_A] });
   });
 
+  it("keeps an out-of-scope row out of the Client case list if the repository misbehaves", async () => {
+    const foreignId = "40000000-0000-0000-0000-000000000003";
+    const { deps } = dependencies(
+      [COMPANY_A],
+      [caseRecord(), caseRecord({ id: foreignId, companyId: COMPANY_B })],
+    );
+    const cases = await listClientPortalCasesForActor(deps);
+    expect(cases.map((case_) => case_.id)).toEqual([CASE_A]);
+  });
+
   // An empty membership list must not become an unscoped read.
   it("returns nothing, and queries nothing, when the client has no memberships", async () => {
     const { deps, listCases } = dependencies([]);
@@ -180,6 +190,15 @@ describe("getClientPortalCaseForActor", () => {
     const { deps } = dependencies([COMPANY_A], []);
 
     await expect(getClientPortalCaseForActor({ caseId: CASE_A }, deps)).resolves.toBeNull();
+  });
+
+  it("rejects a guessed legacy ID from another company even if a repository returns it", async () => {
+    const guessedId = "40000000-0000-0000-0000-000000000002";
+    const { deps } = dependencies(
+      [COMPANY_A],
+      [caseRecord({ id: guessedId, companyId: COMPANY_B })],
+    );
+    await expect(getClientPortalCaseForActor({ caseId: guessedId }, deps)).resolves.toBeNull();
   });
 
   it("does not read at all when the client has no memberships", async () => {

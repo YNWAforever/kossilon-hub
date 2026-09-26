@@ -1,3 +1,4 @@
+import { safeRequestId } from "@/features/runtime/query-error";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -139,6 +140,43 @@ function ImportsRoute() {
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title="月表匯入" subtitle="NAR Monthly Working" />
 
+      {companiesQuery.isError ? (
+        <div
+          role="alert"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
+          無法載入公司清單，暫時不能對應公司。
+          {safeRequestId(companiesQuery.error)
+            ? ` 參考編號：${safeRequestId(companiesQuery.error)}`
+            : null}
+          <button
+            type="button"
+            className="ml-2 underline"
+            onClick={() => void companiesQuery.refetch()}
+          >
+            重試
+          </button>
+        </div>
+      ) : null}
+      {reviewQuery.isError ? (
+        <div
+          role="alert"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
+          無法載入批次覆核資料，請勿按空白資料作決定。
+          {safeRequestId(reviewQuery.error)
+            ? ` 參考編號：${safeRequestId(reviewQuery.error)}`
+            : null}
+          <button
+            type="button"
+            className="ml-2 underline"
+            onClick={() => void reviewQuery.refetch()}
+          >
+            重試
+          </button>
+        </div>
+      ) : null}
+
       {error ? (
         <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
           {error}
@@ -279,6 +317,7 @@ function ImportsRoute() {
                       aria-label={`Map ${row.externalClientId} to a company`}
                       className="rounded-md border bg-background px-2 py-1 text-sm"
                       defaultValue=""
+                      disabled={companiesQuery.isPending || companiesQuery.isError}
                       onChange={(event) => {
                         if (!event.target.value) return;
                         mapMutation.mutate({
@@ -323,7 +362,23 @@ function ImportsRoute() {
               </span>
             </button>
           ))}
-          {(batchesQuery.data ?? []).length === 0 ? (
+          {batchesQuery.isPending ? (
+            <p className="py-2 text-sm text-muted-foreground">載入匯入紀錄中…</p>
+          ) : batchesQuery.isError ? (
+            <div role="alert" className="py-2 text-sm text-status-yellow">
+              無法載入匯入紀錄。
+              {safeRequestId(batchesQuery.error)
+                ? ` 參考編號：${safeRequestId(batchesQuery.error)}`
+                : null}
+              <button
+                type="button"
+                className="ml-2 underline"
+                onClick={() => void batchesQuery.refetch()}
+              >
+                重試
+              </button>
+            </div>
+          ) : (batchesQuery.data ?? []).length === 0 ? (
             <p className="py-2 text-sm text-muted-foreground">尚未有匯入紀錄。</p>
           ) : null}
         </div>

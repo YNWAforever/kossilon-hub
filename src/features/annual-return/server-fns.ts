@@ -1,3 +1,4 @@
+import { entityIdSchema } from "@/features/runtime/entity-id";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
@@ -39,9 +40,9 @@ const PAYMENT_STATUSES = [
 const annualReturnStatusSchema = z.enum(ANNUAL_RETURN_STATUSES);
 const listAnnualReturnCasesSchema = z
   .object({
-    ownerId: z.string().uuid().optional(),
-    teamId: z.string().uuid().optional(),
-    reviewerId: z.string().uuid().optional(),
+    ownerId: entityIdSchema.optional(),
+    teamId: entityIdSchema.optional(),
+    reviewerId: entityIdSchema.optional(),
     risk: z.enum(RISK_LEVELS).optional(),
     status: annualReturnStatusSchema.optional(),
     missingDocuments: z.boolean().optional(),
@@ -56,31 +57,31 @@ const listAnnualReturnCasesSchema = z
   .default({});
 
 const annualReturnCaseIdSchema = z.object({
-  caseId: z.string().uuid(),
+  caseId: entityIdSchema,
 });
 const assignOwnerSchema = z
   .object({
-    caseId: z.string().uuid(),
-    ownerId: z.string().uuid(),
+    caseId: entityIdSchema,
+    ownerId: entityIdSchema,
   })
   .strict();
 const addNoteSchema = z
   .object({
-    caseId: z.string().uuid(),
+    caseId: entityIdSchema,
     body: z.string().trim().min(1).max(2000),
   })
   .strict();
 export const queueAnnualReturnWhatsAppReminderSchema = z.object({
-  caseId: z.string().uuid(),
+  caseId: entityIdSchema,
   recipientName: z.string().min(1),
   recipientPhone: z.string().min(3),
 });
 const updateChecklistItemSchema = z
   .object({
-    caseId: z.string().uuid(),
-    itemId: z.string().uuid(),
+    caseId: entityIdSchema,
+    itemId: entityIdSchema,
     status: z.enum(CHECKLIST_STATUSES),
-    documentId: z.string().uuid().nullable(),
+    documentId: entityIdSchema.nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.status === "Verified" && !data.documentId) {
@@ -93,17 +94,17 @@ const updateChecklistItemSchema = z
   });
 const updateFilingProofSchema = z
   .object({
-    caseId: z.string().uuid(),
+    caseId: entityIdSchema,
     filingReference: z.string().trim().min(1),
-    confirmationDocumentId: z.string().uuid(),
+    confirmationDocumentId: entityIdSchema,
   })
   .strict();
 
 const updatePaymentSchema = z
   .object({
-    caseId: z.string().uuid(),
+    caseId: entityIdSchema,
     status: z.enum(PAYMENT_STATUSES),
-    paymentProofDocumentId: z.string().uuid().nullable(),
+    paymentProofDocumentId: entityIdSchema.nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.status === "Payment received" && !data.paymentProofDocumentId) {
@@ -117,9 +118,9 @@ const updatePaymentSchema = z
 
 const createAnnualReturnCaseSchema = z
   .object({
-    companyId: z.string().uuid(),
-    templateId: z.string().uuid(),
-    ownerId: z.string().uuid(),
+    companyId: entityIdSchema,
+    templateId: entityIdSchema,
+    ownerId: entityIdSchema,
     invoiceNumber: z.string().trim().min(1),
     feeAmount: z.number().int().positive(),
   })
@@ -492,7 +493,7 @@ export async function updateAnnualReturnStatusForActor(
 ) {
   const data = z
     .object({
-      caseId: z.string().uuid(),
+      caseId: entityIdSchema,
       nextStatus: annualReturnStatusSchema,
     })
     .parse(input);
@@ -678,7 +679,7 @@ export const listAnnualReturnCases = createServerFn({ method: "GET" })
   );
 
 export const getAnnualReturnCase = createServerFn({ method: "GET" })
-  .validator(z.object({ id: z.string().uuid() }))
+  .validator(z.object({ id: entityIdSchema }))
   .handler(async ({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>
       getAnnualReturnCaseForActor(actor, { id: data.id }, { repository }),
@@ -828,7 +829,7 @@ export const listAnnualReturnCaseParties = createServerFn({ method: "GET" })
   );
 
 export const confirmAnnualReturnCaseParty = createServerFn({ method: "POST" })
-  .validator(z.object({ caseId: z.string().uuid(), partyId: z.string().uuid() }))
+  .validator(z.object({ caseId: entityIdSchema, partyId: entityIdSchema }))
   .handler(({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>
       confirmAnnualReturnCasePartyForActor(actor, data, { repository }),
@@ -848,8 +849,8 @@ export const listAnnualReturnCaseFindings = createServerFn({ method: "GET" })
 export const resolveAnnualReturnCaseFinding = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      caseId: z.string().uuid(),
-      findingId: z.string().uuid(),
+      caseId: entityIdSchema,
+      findingId: entityIdSchema,
       // Bounded: this is a person's note, not a place to paste a document.
       note: z.string().trim().min(1).max(1000).nullable().default(null),
     }),
@@ -872,7 +873,7 @@ export const addAnnualReturnCaseNote = createServerFn({ method: "POST" })
 export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      caseId: z.string().uuid(),
+      caseId: entityIdSchema,
       nextStatus: annualReturnStatusSchema,
     }),
   )
@@ -884,7 +885,7 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
 export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      caseId: z.string().uuid(),
+      caseId: entityIdSchema,
       templateLabel: z.string().min(1),
       recipientName: z.string().min(1),
       recipientPhone: z.string().min(3),
