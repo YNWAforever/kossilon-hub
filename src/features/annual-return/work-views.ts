@@ -1,6 +1,7 @@
 import { daysBetween } from "@/lib/date-math";
 import { awaitingInternalReview, outstandingSummary } from "./outstanding";
 import type { AnnualReturnCase } from "./types";
+import type { ReadinessResult } from "./readiness";
 
 /**
  * The five things a staff member does in a day.
@@ -54,8 +55,10 @@ export const WORK_VIEWS: readonly WorkViewDefinition[] = [
   {
     key: "readyToFile",
     label: "可以交件",
-    description: "所有需要的文件已齊備並覆核完成。",
-    released: true,
+    description: "已批准當前套件、付款及文件均已核實，可以記錄人手交件。",
+    released: false,
+    unavailableReason:
+      "套件批准及付款核實資料尚未接通，暫不能判定哪些案件可以交件。請開啟案件逐項覆核；空白不代表沒有工作。",
   },
   {
     key: "returnsAndExceptions",
@@ -122,6 +125,10 @@ export function deriveWorkViews(
   cases: readonly AnnualReturnCase[],
   today: string,
   viewer: { userId: string | null },
+  readiness?: {
+    complete: boolean;
+    byCaseId: ReadonlyMap<string, Pick<ReadinessResult, "canRecordSubmission">>;
+  },
 ): WorkViewResult[] {
   const mutable = cases.filter(isMutable);
 
@@ -161,11 +168,11 @@ export function deriveWorkViews(
       }
     }
 
-    // Nothing outstanding and nothing waiting on us. `unknown` is excluded on
-    // purpose: a case whose checklist we cannot see is not evidence of
-    // readiness, and putting it here would invite filing on an empty list.
-    if (summary.kind === "none" && received.length === 0) {
-      readyToFile.push(baseRow(case_, today, "文件齊備"));
+    // The package approval and verified payment are not on AnnualReturnCase.
+    // A complete server snapshot is required; a checklist-only case is never
+    // described as ready to file.
+    if (readiness?.complete && readiness.byCaseId.get(case_.id)?.canRecordSubmission) {
+      readyToFile.push(baseRow(case_, today, "套件已批准，待人手交件"));
     }
   }
 
@@ -182,5 +189,11 @@ export function deriveWorkViews(
     returnsAndExceptions: [],
   };
 
-  return WORK_VIEWS.map((definition) => ({ definition, rows: rowsByKey[definition.key] }));
+  return WORK_VIEWS.map((definition) => ({
+    definition:
+      definition.key === "readyToFile" && readiness?.complete
+        ? { ...definition, released: true, unavailableReason: undefined }
+        : definition,
+    rows: rowsByKey[definition.key],
+  }));
 }

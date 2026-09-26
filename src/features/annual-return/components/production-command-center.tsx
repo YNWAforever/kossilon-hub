@@ -236,16 +236,33 @@ export function ProductionAnnualReturnCommandCenter({
         </p>
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <Metric label="Due in 7 days" value={totals?.dueIn7 ?? 0} />
-        <Metric label="Due in 30 days" value={totals?.dueIn30 ?? 0} />
-        <Metric label="Overdue" value={totals?.overdue ?? 0} />
-        <Metric label="High risk (loaded)" value={pageMetrics.highRisk} />
-        <Metric label="Missing documents" value={totals?.missingDocuments ?? 0} />
-        <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
-        <Metric label="Cases in scope" value={totals?.total ?? 0} />
-      </div>
-
+      {casesQuery.isPending || totalsQuery.isPending ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          載入案件統計中…
+        </p>
+      ) : totalsQuery.isError ? (
+        <div role="alert" className="text-sm text-status-yellow">
+          無法載入案件統計，暫不顯示數字。
+          <button
+            type="button"
+            className="ml-2 underline"
+            onClick={() => void totalsQuery.refetch()}
+          >
+            重試
+          </button>
+        </div>
+      ) : casesQuery.isError ? null : (
+        <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
+          <Metric label="Due in 7 days" value={totals?.dueIn7 ?? 0} />
+          <Metric label="Due in 30 days" value={totals?.dueIn30 ?? 0} />
+          <Metric label="Overdue cases" value={totals?.overdue ?? 0} />
+          <Metric label="High risk (loaded)" value={pageMetrics.highRisk} />
+          <Metric label="Missing evidence cases" value={totals?.missingDocuments ?? 0} />
+          <Metric label="Missing evidence items" value={totals?.missingEvidenceItems ?? 0} />
+          <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
+          <Metric label="Cases in scope (search excluded)" value={totals?.total ?? 0} />
+        </div>
+      )}
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto_auto]">
           <input

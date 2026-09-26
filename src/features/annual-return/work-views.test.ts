@@ -103,11 +103,58 @@ describe("deriveWorkViews", () => {
     ).toEqual([mine.id, asReviewer.id].sort());
   });
 
-  it("calls a case ready only when nothing is outstanding and nothing waits on us", () => {
-    const ready = makeCase({ checklist: [item("Verified")] });
+  it("releases the ready view only with complete authoritative readiness snapshots", () => {
+    const ready = makeCase({
+      checklist: [item("Verified")],
+      payment: {
+        id: "payment-ready",
+        caseId: "case-ready",
+        invoiceNumber: "INV-1",
+        amount: 100,
+        currency: "HKD",
+        status: "Payment received",
+        dueDate: TODAY,
+        paidAt: TODAY,
+        paymentProofDocumentId: "proof-ready",
+      },
+    });
     const waiting = makeCase({ checklist: [item("Received")] });
-    const results = deriveWorkViews([ready, waiting], TODAY, { userId: ME });
+    const withoutSnapshot = deriveWorkViews([ready, waiting], TODAY, { userId: ME });
+    expect(view(withoutSnapshot, "readyToFile").definition.released).toBe(false);
+    expect(view(withoutSnapshot, "readyToFile").rows).toHaveLength(0);
+    const results = deriveWorkViews(
+      [ready, waiting],
+      TODAY,
+      { userId: ME },
+      {
+        complete: true,
+        byCaseId: new Map([
+          [ready.id, { canRecordSubmission: true }],
+          [waiting.id, { canRecordSubmission: false }],
+        ]),
+      },
+    );
+    expect(view(results, "readyToFile").definition.released).toBe(true);
     expect(view(results, "readyToFile").rows.map((row) => row.caseId)).toEqual([ready.id]);
+  });
+
+  it("t03_scenario_1 excludes documents complete but payment pending from ready to file", () => {
+    const unpaid = makeCase({
+      checklist: [item("Verified")],
+      payment: {
+        id: "payment-pending",
+        caseId: "case-pending",
+        invoiceNumber: "INV-2",
+        amount: 100,
+        currency: "HKD",
+        status: "Payment pending",
+        dueDate: TODAY,
+        paidAt: null,
+        paymentProofDocumentId: null,
+      },
+    });
+    const results = deriveWorkViews([unpaid], TODAY, { userId: ME });
+    expect(view(results, "readyToFile").rows).toHaveLength(0);
   });
 
   // A case whose checklist we cannot see is not evidence of readiness, and
