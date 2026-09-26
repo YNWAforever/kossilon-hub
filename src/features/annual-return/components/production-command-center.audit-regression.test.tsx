@@ -44,9 +44,12 @@ describe("T03 board metric query state", () => {
       defaultOptions: { queries: { retry: false, retryOnMount: false, refetchOnMount: false } },
     });
     const filters = boardFiltersFromSearch({}, 200);
-    queryClient.setQueryData(annualReturnQueryKeys.list(filters), { cases: [], nextCursor: null });
+    queryClient.setQueryData(annualReturnQueryKeys.boardPages(filters), {
+      pages: [{ cases: [], nextCursor: null }],
+      pageParams: [null],
+    });
     await queryClient.prefetchQuery({
-      queryKey: [...annualReturnQueryKeys.list(filters), "totals"],
+      queryKey: annualReturnQueryKeys.boardTotals({}),
       queryFn: () => Promise.reject(new Error("private SQL detail")),
     });
     const rootRoute = createRootRoute();

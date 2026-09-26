@@ -916,6 +916,83 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  it("rejects a malformed continuation cursor instead of silently restarting at page one", async () => {
+    const repository = repositoryFor("2026-07-05");
+    await expect(repository.listCasePage({ limit: 200, cursor: "not-a-cursor" })).rejects.toThrow(
+      "Invalid annual return case cursor.",
+    );
+  });
+  it(
+    "t04_scenario_1 distinguishes exact 200/400 boundaries from a 401st case",
+    async () => {
+      const sql = sqlForTests();
+      async function seed(from: number, to: number) {
+        await sql.begin(async (tx) => {
+          await tx`
+          insert into companies (
+            id, company_name, cr_number, br_number, incorporation_date,
+            annual_return_basis_date, registered_office, company_secretary,
+            status, assigned_owner_id, assigned_team_id
+          )
+          select
+            ('90000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+            'Page Company ' || lpad(i::text, 4, '0'),
+            'T4CR' || i::text,
+            'T4BR' || i::text,
+            '2021-07-01', '2026-07-01', 'Hong Kong', 'Kossilon',
+            'active', ${USER_AMY_ID}::uuid, ${TEAM_ANNUAL_RETURN_ID}::uuid
+          from generate_series(${from}::int, ${to}::int) i
+        `;
+          await tx`
+          insert into annual_return_cases (
+            id, company_id, return_year, made_up_date, filing_due_date,
+            current_status, risk_level, owner_id, reminders_sent
+          )
+          select
+            ('91000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+            ('90000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+            2090, '2026-07-01', '2026-08-12', 'Upcoming', 'green',
+            ${USER_AMY_ID}::uuid, 0
+          from generate_series(${from}::int, ${to}::int) i
+        `;
+        });
+      }
+
+      const repository = repositoryFor("2026-07-05");
+      const scope = {
+        companyIds: Array.from({ length: 401 }, (_, index) =>
+          testUuid(TEST_COMPANY_UUID_PREFIX, index + 1000),
+        ),
+        limit: 200,
+      };
+      await seed(1000, 1199);
+      const exact200 = await repository.listCasePage(scope);
+      expect(exact200.cases).toHaveLength(200);
+      expect(exact200.nextCursor).toBeNull();
+
+      await seed(1200, 1399);
+      const first400 = await repository.listCasePage(scope);
+      expect(first400.cases).toHaveLength(200);
+      expect(first400.nextCursor).not.toBeNull();
+      const exact400 = await repository.listCasePage({ ...scope, cursor: first400.nextCursor! });
+      expect(exact400.cases).toHaveLength(200);
+      expect(exact400.nextCursor).toBeNull();
+
+      await seed(1400, 1400);
+      const first401 = await repository.listCasePage(scope);
+      const second401 = await repository.listCasePage({ ...scope, cursor: first401.nextCursor! });
+      const last401 = await repository.listCasePage({ ...scope, cursor: second401.nextCursor! });
+      expect([first401.cases.length, second401.cases.length, last401.cases.length]).toEqual([
+        200, 200, 1,
+      ]);
+      expect(last401.nextCursor).toBeNull();
+      expect(
+        new Set([...first401.cases, ...second401.cases, ...last401.cases].map((item) => item.id))
+          .size,
+      ).toBe(401);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
   it(
     "t03_scenario_3 aligns scoped board and dashboard overdue while separating missing cases and items",
     async () => {

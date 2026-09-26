@@ -835,6 +835,9 @@ export function createAnnualReturnRepository(
       ? `%${filters.q.trim().replace(/[\\%_]/g, (character) => `\\${character}`)}%`
       : null;
     const cursor = decodeCaseCursor(filters.cursor);
+    if (filters.cursor !== undefined && cursor === null) {
+      throw new Error("Invalid annual return case cursor.");
+    }
 
     return sql<CaseRow[]>`
       select
@@ -1080,14 +1083,18 @@ export function createAnnualReturnRepository(
    */
   async function listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage> {
     const today = readToday();
-    const rows = await selectCaseRows(filters, today);
-    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
-    const hydrated = await hydrateCases(rows, today);
+    const limit = filters.limit ?? (filters.risk ? RISK_FILTER_SCAN_LIMIT : DEFAULT_CASE_LIMIT);
+    // Fetch one extra SQL row to distinguish an exact full final page from
+    // another page. Hydrate only the requested rows; the lookahead is solely
+    // an existence proof, never a row shown or included in the cursor.
+    const rows = await selectCaseRows({ ...filters, limit: limit + 1 }, today);
+    const pageRows = rows.slice(0, limit);
+    const hydrated = await hydrateCases(pageRows, today);
     const cases = hydrated.filter((case_) => caseMatchesHydratedFilters(case_, filters));
-    const last = rows.at(-1);
+    const last = pageRows.at(-1);
     return {
       cases,
-      nextCursor: rows.length === limit && last ? encodeCaseCursor(last) : null,
+      nextCursor: rows.length > limit && last ? encodeCaseCursor(last) : null,
     };
   }
 

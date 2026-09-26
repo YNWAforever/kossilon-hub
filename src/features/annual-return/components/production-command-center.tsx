@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
@@ -51,39 +51,46 @@ export function ProductionAnnualReturnCommandCenter({
   const today = hongKongBusinessDate();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [queryInput, setQueryInput] = useState(search.q ?? "");
+  const searchRef = useRef(search);
+  const queryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
+  useEffect(() => {
+    setQueryInput(search.q ?? "");
+  }, [search.q]);
+  useEffect(
+    () => () => {
+      if (queryTimerRef.current) clearTimeout(queryTimerRef.current);
+    },
+    [],
+  );
 
   const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
-  // Pages already loaded beyond the first. Reset whenever the filters change,
-  // because a cursor is only meaningful within the query that produced it.
-  const [extraPages, setExtraPages] = useState<AnnualReturnCase[][]>([]);
-  const [cursor, setCursor] = useState<string | undefined>();
-  const filtersKey = JSON.stringify(filters);
-  useEffect(() => {
-    setExtraPages([]);
-    setCursor(undefined);
-  }, [filtersKey]);
+  // These SQL totals intentionally describe the owner/status scope, rather
+  // than q, risk or cursor from the currently displayed result page.
+  const totalsFilters = {
+    ...(filters.ownerId ? { ownerId: filters.ownerId } : {}),
+    ...(filters.status ? { status: filters.status } : {}),
+  };
 
-  const casesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list(filters),
-    queryFn: () => listAnnualReturnCasePage({ data: filters }),
+  const casesQuery = useInfiniteQuery({
+    queryKey: annualReturnQueryKeys.boardPages(filters),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      listAnnualReturnCasePage({
+        data: pageParam ? { ...filters, cursor: pageParam } : filters,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     retry: false,
   });
 
-  // Counted in SQL across the actor's whole scope, not over the page on screen.
   const totalsQuery = useQuery({
-    queryKey: [...annualReturnQueryKeys.list(filters), "totals"],
-    queryFn: () => getAnnualReturnBoardTotals({ data: filters }),
+    queryKey: annualReturnQueryKeys.boardTotals(totalsFilters),
+    queryFn: () => getAnnualReturnBoardTotals({ data: totalsFilters }),
     retry: false,
   });
-
-  const nextPageMutation = useMutation({
-    mutationFn: (from: string) => listAnnualReturnCasePage({ data: { ...filters, cursor: from } }),
-    onSuccess: (page) => {
-      setExtraPages((current) => [...current, page.cases]);
-      setCursor(page.nextCursor ?? undefined);
-    },
-  });
-
   // Only fetched once the dialog is actually open — these are cheap reads, but
   // there is no reason to fire them on every board load when most visits never
   // open the dialog at all.
@@ -114,11 +121,17 @@ export function ProductionAnnualReturnCommandCenter({
     retry: false,
   });
 
-  const cases = useMemo(
-    () => [...(casesQuery.data?.cases ?? []), ...extraPages.flat()],
-    [casesQuery.data, extraPages],
-  );
-  const nextCursor = cursor ?? casesQuery.data?.nextCursor ?? undefined;
+  const cases = useMemo(() => {
+    const seen = new Set<string>();
+    return (casesQuery.data?.pages ?? []).flatMap((page) =>
+      page.cases.filter((case_) => {
+        if (seen.has(case_.id)) return false;
+        seen.add(case_.id);
+        return true;
+      }),
+    );
+  }, [casesQuery.data]);
+  const nextCursor = casesQuery.hasNextPage ? casesQuery.data?.pages.at(-1)?.nextCursor : null;
 
   const workItemsByCase = useMemo(() => {
     const map = new Map<string, PersistedWorkItem>();
@@ -215,7 +228,7 @@ export function ProductionAnnualReturnCommandCenter({
       {/* A fixed string, never query.error.message: the client rehydrates and
           rethrows the verbatim server error, which is a postgres ECONNREFUSED
           with host and port, or the DATABASE_URL message. */}
-      {casesQuery.isError ? (
+      {casesQuery.isError && !casesQuery.data ? (
         <p role="alert" className="text-sm text-destructive">
           Annual return data is unavailable. Try again shortly.
         </p>
@@ -260,7 +273,7 @@ export function ProductionAnnualReturnCommandCenter({
           <Metric label="Missing evidence cases" value={totals?.missingDocuments ?? 0} />
           <Metric label="Missing evidence items" value={totals?.missingEvidenceItems ?? 0} />
           <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
-          <Metric label="Cases in scope (search excluded)" value={totals?.total ?? 0} />
+          <Metric label="Cases in scope (owner/status)" value={totals?.total ?? 0} />
         </div>
       )}
       <section className="rounded-lg border bg-card">
@@ -269,8 +282,19 @@ export function ProductionAnnualReturnCommandCenter({
             aria-label="Search company"
             className="rounded-md border bg-background px-3 py-2 text-sm"
             placeholder="Search company"
-            value={search.q ?? ""}
-            onChange={(event) => update({ q: event.target.value })}
+            value={queryInput}
+            onChange={(event) => {
+              const next = event.target.value;
+              setQueryInput(next);
+              if (queryTimerRef.current) clearTimeout(queryTimerRef.current);
+              queryTimerRef.current = setTimeout(() => {
+                onSearchChange?.({
+                  ...searchRef.current,
+                  q: next.trim() ? next : undefined,
+                });
+                queryTimerRef.current = null;
+              }, 300);
+            }}
           />
           <select
             aria-label="Filter by owner"
@@ -350,15 +374,28 @@ export function ProductionAnnualReturnCommandCenter({
 
         {/* Gated on isError as well as isPending. payments.tsx omits the isError
             half and so renders "unavailable" and "nothing to review" together. */}
+        {casesQuery.isFetchNextPageError ? (
+          <p role="alert" className="border-t px-4 py-2 text-sm text-status-yellow">
+            下一頁載入失敗；已載入的案件仍可使用。請重試。
+          </p>
+        ) : null}
         {nextCursor ? (
           <div className="border-t p-4">
             <button
               className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              disabled={nextPageMutation.isPending}
-              onClick={() => nextPageMutation.mutate(nextCursor)}
+              disabled={casesQuery.isFetchingNextPage}
+              onClick={() => {
+                if (!casesQuery.isFetchingNextPage) {
+                  void casesQuery.fetchNextPage({ cancelRefetch: false });
+                }
+              }}
               type="button"
             >
-              {nextPageMutation.isPending ? "載入中…" : "載入更多"}
+              {casesQuery.isFetchingNextPage
+                ? "載入中…"
+                : casesQuery.isFetchNextPageError
+                  ? "重試載入更多"
+                  : "載入更多"}
             </button>
           </div>
         ) : null}
