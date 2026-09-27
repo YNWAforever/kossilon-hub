@@ -391,17 +391,20 @@ function SettingsPage() {
 type WhatsAppIntegrationStatusData = {
   deliveryMode: "live" | "simulated" | "blocked";
   missingLiveEnvVars: string[];
+  capabilityStatus: { state: "unconfigured" | "unverified" | "healthy" | "degraded" | "blocked" };
 };
 
 export function WhatsAppIntegrationStatus({ status }: { status: WhatsAppIntegrationStatusData }) {
   return (
     <div className="flex items-center justify-between">
-      <StatusPill tone={status.deliveryMode === "live" ? "green" : "yellow"}>
-        {status.deliveryMode === "live"
-          ? "Configured"
-          : status.deliveryMode === "simulated"
-            ? "Demo simulation"
-            : "Blocked"}
+      <StatusPill tone={status.capabilityStatus.state === "healthy" ? "green" : "yellow"}>
+        {status.deliveryMode === "simulated"
+          ? "Demo simulation"
+          : status.deliveryMode === "blocked"
+            ? "Blocked"
+            : status.capabilityStatus.state === "healthy"
+              ? "Verified connection"
+              : "Configured · unverified"}
       </StatusPill>
       {status.deliveryMode === "simulated" ? (
         <p className="text-xs text-muted-foreground">
