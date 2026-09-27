@@ -5,7 +5,12 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
-import type { AnalysisSubject } from "./analysis-worker";
+import type { AnalysisRunMetadata, AnalysisSubject } from "./analysis-worker";
+import {
+  buildAnalysisContext,
+  CONTEXT_RULE_SET_VERSION,
+  type AnalysisContextInput,
+} from "./analysis-context";
 import type { Finding, PersistedFinding } from "./findings";
 import { analysisStateFrom, viewFor, type DocumentFindingsView } from "./findings-review";
 import type { StoredExtraction } from "./text-extraction";
@@ -40,6 +45,17 @@ type SubjectRow = {
   page_count: number | null;
 };
 
+type ContextRow = {
+  case_id: string;
+  company_id: string;
+  company_name: string;
+  cr_number: string;
+  return_year: number;
+  verified_checksum_sha256: string;
+  party_snapshot: { id: string; name: string }[];
+  requirement_snapshot: { id: string; label: string }[];
+};
+
 type PageClaimRow = {
   requirement_instance_id: string;
   page_from: number | null;
@@ -63,6 +79,10 @@ type FindingRow = {
   outcome: Finding["outcome"];
   severity: Finding["severity"];
   detail: string;
+  evidence_quote: string | null;
+  evidence_confidence: string | number | null;
+  evidence_extraction_method: "text-layer" | "ocr" | null;
+  evidence_bbox: [number, number, number, number] | null;
 };
 
 function numberOrNull(value: string | number | null): number | null {
@@ -89,15 +109,33 @@ function mapFinding(row: FindingRow): Finding {
     severity: row.severity,
     detail: row.detail,
     citation,
+    ...(row.evidence_quote &&
+    row.document_version_id &&
+    row.page_from &&
+    row.evidence_extraction_method &&
+    row.evidence_confidence !== null
+      ? {
+          evidence: {
+            sourceVersionId: row.document_version_id,
+            page: row.page_from,
+            quote: row.evidence_quote,
+            confidence: Number(row.evidence_confidence),
+            extractionMethod: row.evidence_extraction_method,
+            bbox: row.evidence_bbox,
+          },
+        }
+      : {}),
   };
 }
 
 export type DocumentAnalysisRepository = {
   loadForAnalysis(documentVersionId: string): Promise<AnalysisSubject | null>;
+  loadAnalysisContextInput(documentVersionId: string): Promise<AnalysisContextInput | null>;
   replaceUnresolvedForVersion(input: {
     documentVersionId: string;
     analysisJobId: string;
     findings: readonly Finding[];
+    runMetadata?: AnalysisRunMetadata;
   }): Promise<void>;
   /**
    * Records what extraction found for this version, replacing any earlier run.
@@ -205,6 +243,44 @@ export function createDocumentAnalysisRepository(
       };
     },
 
+    async loadAnalysisContextInput(documentVersionId) {
+      // One statement gives a consistent server-side snapshot. No fact is taken
+      // from the uploaded file or caller-provided metadata.
+      const rows = await sql<ContextRow[]>`
+        select c.id case_id, co.id company_id, co.company_name, co.cr_number,
+          c.return_year, v.verified_checksum_sha256,
+          coalesce((
+            select jsonb_agg(jsonb_build_object('id', p.id, 'name', p.display_name) order by p.id)
+            from case_parties p where p.case_id = c.id and p.active
+          ), '[]'::jsonb) party_snapshot,
+          coalesce((
+            select jsonb_agg(jsonb_build_object('id', r.id, 'label', i.item_label) order by r.id)
+            from case_requirement_instances r
+            join annual_return_checklist_items i on i.id = r.checklist_item_id
+            where r.case_id = c.id
+          ), '[]'::jsonb) requirement_snapshot
+        from document_versions v
+        join documents d on d.id = v.document_id
+        join annual_return_cases c on c.id = d.case_id and c.company_id = d.company_id
+        join companies co on co.id = c.company_id
+        where v.id = ${documentVersionId}
+          and v.verified_checksum_sha256 is not null
+          and v.superseded_by_version_id is null
+      `;
+      const row = rows[0];
+      if (!row) return null;
+      return {
+        caseId: row.case_id,
+        company: { id: row.company_id, name: row.company_name, crNumber: row.cr_number },
+        returnYear: row.return_year,
+        partySnapshot: row.party_snapshot,
+        requirementSnapshot: row.requirement_snapshot,
+        documentVersionId,
+        contentSha256: row.verified_checksum_sha256,
+        ruleSetVersion: CONTEXT_RULE_SET_VERSION,
+      };
+    },
+
     async replaceUnresolvedForVersion(input) {
       await withTransaction(sql, async (tx) => {
         // `resolved_by is null` is the whole rule. A run replaces the machine's
@@ -234,12 +310,37 @@ export function createDocumentAnalysisRepository(
           await tx`
             insert into document_findings (
               document_version_id, requirement_instance_id, page_from, page_to,
-              tier, rule_key, rule_version, outcome, severity, detail, analysis_job_id
+              tier, rule_key, rule_version, outcome, severity, detail, analysis_job_id,
+              evidence_quote, evidence_confidence, evidence_extraction_method, evidence_bbox
             ) values (
               ${versionId}, ${requirementId}, ${pageFrom}, ${pageTo},
               ${finding.tier}, ${finding.ruleKey}, ${finding.ruleVersion},
-              ${finding.outcome}, ${finding.severity}, ${finding.detail}, ${input.analysisJobId}
+              ${finding.outcome}, ${finding.severity}, ${finding.detail}, ${input.analysisJobId},
+              ${finding.evidence?.quote ?? null}, ${finding.evidence?.confidence ?? null},
+              ${finding.evidence?.extractionMethod ?? null},
+              ${finding.evidence?.bbox ? JSON.stringify(finding.evidence.bbox) : null}::jsonb
             )
+          `;
+        }
+        if (input.runMetadata) {
+          const run = input.runMetadata;
+          await tx`
+            insert into document_analysis_run_metadata (
+              analysis_job_id, document_version_id, context_hash, rule_set_version,
+              extraction_method, model_version, prompt_version, cost_minor, latency_ms
+            ) values (
+              ${input.analysisJobId}, ${input.documentVersionId}, ${run.contextHash},
+              ${run.ruleSetVersion}, ${run.extractionMethod}, ${run.modelVersion},
+              ${run.promptVersion}, ${run.costMinor}, ${run.latencyMs}
+            )
+            on conflict (analysis_job_id) do update set
+              context_hash = excluded.context_hash,
+              rule_set_version = excluded.rule_set_version,
+              extraction_method = excluded.extraction_method,
+              model_version = excluded.model_version,
+              prompt_version = excluded.prompt_version,
+              cost_minor = excluded.cost_minor,
+              latency_ms = excluded.latency_ms
           `;
         }
       });
@@ -269,7 +370,8 @@ export function createDocumentAnalysisRepository(
     async listFindingsForVersion(documentVersionId) {
       const rows = await sql<FindingRow[]>`
         select document_version_id, requirement_instance_id, page_from, page_to,
-          tier, rule_key, rule_version, outcome, severity, detail
+          tier, rule_key, rule_version, outcome, severity, detail,
+          evidence_quote, evidence_confidence, evidence_extraction_method, evidence_bbox
         from document_findings
         where document_version_id = ${documentVersionId}
         order by created_at asc
@@ -285,11 +387,13 @@ export function createDocumentAnalysisRepository(
           file_name: string;
           job_status: "pending" | "processing" | "succeeded" | "failed" | "cancelled" | null;
           job_error_code: string | null;
+          context_hash: string | null;
         }[]
       >`
         select
           d.id document_id, v.id document_version_id, v.file_name,
-          j.status job_status, j.last_error_code job_error_code
+          j.status job_status, j.last_error_code job_error_code,
+          m.context_hash
         from documents d
         -- The current version only. A superseded one is not what a reviewer is
         -- deciding about, and showing its findings beside the live ones would
@@ -299,12 +403,13 @@ export function createDocumentAnalysisRepository(
         -- The most recent run. Left, because a version with no job at all is a
         -- real state the view has to be able to report.
         left join lateral (
-          select status, last_error_code
+          select id, status, last_error_code
           from document_analysis_jobs
           where document_version_id = v.id
           order by created_at desc
           limit 1
         ) j on true
+        left join document_analysis_run_metadata m on m.analysis_job_id = j.id
         where d.case_id = ${caseId}
         order by d.uploaded_at desc
       `;
@@ -313,7 +418,8 @@ export function createDocumentAnalysisRepository(
       const versionIds = versions.map((row) => row.document_version_id);
       const rows = await sql<(FindingRow & PersistedRow)[]>`
         select id, document_version_id, requirement_instance_id, page_from, page_to,
-          tier, rule_key, rule_version, outcome, severity, detail, resolved_by, resolved_at
+          tier, rule_key, rule_version, outcome, severity, detail, resolved_by, resolved_at,
+          evidence_quote, evidence_confidence, evidence_extraction_method, evidence_bbox
         from document_findings
         where document_version_id = any(${versionIds}::uuid[])
       `;
@@ -331,17 +437,30 @@ export function createDocumentAnalysisRepository(
         byVersion.set(row.document_version_id, bucket);
       }
 
-      return versions.map((row) =>
-        viewFor({
-          documentId: row.document_id,
-          documentVersionId: row.document_version_id,
-          fileName: row.file_name,
-          state: analysisStateFrom(
+      return Promise.all(
+        versions.map(async (row) => {
+          let state = analysisStateFrom(
             row.job_status === null
               ? null
               : { status: row.job_status, lastErrorCode: row.job_error_code },
-          ),
-          findings: byVersion.get(row.document_version_id) ?? [],
+          );
+          if (state === "analysed" && !row.context_hash) state = "stale";
+          if (state === "analysed" && row.context_hash) {
+            try {
+              const currentInput = await this.loadAnalysisContextInput(row.document_version_id);
+              const current = currentInput ? await buildAnalysisContext(currentInput) : null;
+              if (!current || current.contextHash !== row.context_hash) state = "stale";
+            } catch {
+              state = "stale";
+            }
+          }
+          return viewFor({
+            documentId: row.document_id,
+            documentVersionId: row.document_version_id,
+            fileName: row.file_name,
+            state,
+            findings: byVersion.get(row.document_version_id) ?? [],
+          });
         }),
       );
     },

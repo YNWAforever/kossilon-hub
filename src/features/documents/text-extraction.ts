@@ -29,7 +29,13 @@ export const MAX_EXTRACTED_CHARS = 200_000;
 export const MAX_EXTRACTED_PAGES = 200;
 
 export type ExtractionResult =
-  | { method: "text-layer"; text: string; pageCount: number; truncated: boolean }
+  | {
+      method: "text-layer";
+      text: string;
+      pageCount: number;
+      truncated: boolean;
+      pages?: readonly { page: number; text: string }[];
+    }
   /**
    * Opened, no text on any page (a scan), or not a PDF at all (`pageCount`
    * null). A real outcome, distinct from "not extracted yet", which is no row.
@@ -129,11 +135,18 @@ export async function extractPdfText(input: {
 
       // Pages left unread are truncation too, even when what was read fits.
       const truncated = clean.length > MAX_EXTRACTED_CHARS || texts.length < totalPages;
+      let pageCharsRemaining = MAX_EXTRACTED_CHARS;
+      const pages = texts.map((page, index) => {
+        const text = cleanExtractedText(page).slice(0, pageCharsRemaining);
+        pageCharsRemaining -= text.length;
+        return { page: index + 1, text };
+      });
       return {
         method: "text-layer",
         text: truncated ? clean.slice(0, MAX_EXTRACTED_CHARS) : clean,
         pageCount: totalPages,
         truncated,
+        pages,
       };
     } finally {
       // pdf.js 6 removed PDFDocumentProxy.destroy(); the loading task owns teardown.

@@ -1,4 +1,15 @@
-import { AI_RULE_VERSION, type AiAnalysisResult, type DocumentAiAnalyzer } from "./ai-provider";
+import {
+  AI_RULE_VERSION,
+  interpretContextualResponse,
+  type AiAnalysisResult,
+  type DocumentAiAnalyzer,
+} from "./ai-provider";
+import {
+  buildAnalysisContext,
+  type AnalysisContext,
+  type AnalysisContextInput,
+} from "./analysis-context";
+import { chooseOcrPath } from "./ocr-provider";
 import {
   BYTES_SAMPLE_WINDOW,
   crossCheckFindings,
@@ -39,7 +50,10 @@ export type AnalysisSubject = {
 
 export type AnalysisWorkerDependencies = {
   jobs: DocumentAnalysisJobRepository;
-  versions: { loadForAnalysis(documentVersionId: string): Promise<AnalysisSubject | null> };
+  versions: {
+    loadForAnalysis(documentVersionId: string): Promise<AnalysisSubject | null>;
+    loadAnalysisContextInput?(documentVersionId: string): Promise<AnalysisContextInput | null>;
+  };
   findings: {
     /**
      * Replaces this run's machine opinion and leaves human work alone.
@@ -52,6 +66,7 @@ export type AnalysisWorkerDependencies = {
       documentVersionId: string;
       analysisJobId: string;
       findings: readonly Finding[];
+      runMetadata?: AnalysisRunMetadata;
     }): Promise<void>;
   };
   /**
@@ -62,6 +77,13 @@ export type AnalysisWorkerDependencies = {
   storage: Pick<DocumentStorage, "get">;
   /** Null under BLOCKED_INTEGRATION: ai-provider, which is always, today. */
   analyzer: DocumentAiAnalyzer | null;
+  /** Provider-specific transport remains disabled until its reviewed contract exists. */
+  contextualAnalyzer?: {
+    analyze(input: {
+      context: AnalysisContext;
+      pages: readonly { page: number; text: string }[];
+    }): Promise<unknown>;
+  } | null;
   /**
    * Reads a PDF's text layer. Injected, like the analyzer, so the pass can be
    * tested without pdf.js and so a failure is the pass's to contain.
@@ -70,6 +92,16 @@ export type AnalysisWorkerDependencies = {
     extract(input: { body: ArrayBuffer; contentType: string | null }): Promise<ExtractionResult>;
   };
   texts: { upsertText(documentVersionId: string, extraction: StoredExtraction): Promise<void> };
+};
+
+export type AnalysisRunMetadata = {
+  contextHash: string | null;
+  ruleSetVersion: string;
+  extractionMethod: "text-layer" | "none" | "unreadable" | "ocr";
+  modelVersion: string | null;
+  promptVersion: string | null;
+  costMinor: number | null;
+  latencyMs: number | null;
 };
 
 export type AnalysisDrainSummary = {
@@ -117,6 +149,19 @@ function extractionNote(documentVersionId: string, errorClass: string): Finding 
     outcome: "uncertain",
     severity: "info",
     detail: `The document's text could not be read (${errorClass}), so no check that needs its words could run.`,
+    citation: { kind: "version", documentVersionId, pageFrom: null, pageTo: null },
+  });
+}
+
+function humanOcrNote(documentVersionId: string): Finding {
+  return makeFinding({
+    ruleKey: "extraction:ocr-unavailable",
+    ruleVersion: EXTRACTOR_VERSION,
+    tier: "classification",
+    outcome: "uncertain",
+    severity: "info",
+    detail:
+      "The text layer is absent, sparse or truncated. OCR is unavailable; human review is required.",
     citation: { kind: "version", documentVersionId, pageFrom: null, pageTo: null },
   });
 }
@@ -264,7 +309,77 @@ export async function drainDocumentAnalysisJobs(
         : []),
     ];
 
-    if (!dependencies.analyzer) {
+    let context: AnalysisContext | null = null;
+    try {
+      const contextInput = await dependencies.versions.loadAnalysisContextInput?.(
+        subject.version.id,
+      );
+      if (contextInput) context = await buildAnalysisContext(contextInput);
+    } catch {
+      // The case database is the sole source of context; no document fallback.
+    }
+    const runMetadata: AnalysisRunMetadata = {
+      contextHash: context?.contextHash ?? null,
+      ruleSetVersion: context?.ruleSetVersion ?? AI_RULE_VERSION,
+      extractionMethod: extraction.method,
+      modelVersion: null,
+      promptVersion: null,
+      costMinor: null,
+      latencyMs: null,
+    };
+    const ocrPath = chooseOcrPath({ extraction, ocrAvailable: false });
+    if (ocrPath === "human-only" && extraction.method !== "unreadable") {
+      findings.push(humanOcrNote(subject.version.id));
+    }
+
+    if (dependencies.contextualAnalyzer) {
+      if (
+        !context ||
+        extraction.method !== "text-layer" ||
+        ocrPath !== "text-layer" ||
+        !extraction.pages?.length
+      ) {
+        summary.providerSkipped += 1;
+        findings.push(
+          providerNote(
+            subject.version.id,
+            "Case context or verified page text is unavailable; human review is required.",
+          ),
+        );
+      } else {
+        try {
+          const raw = await dependencies.contextualAnalyzer.analyze({
+            context,
+            pages: extraction.pages,
+          });
+          const result = interpretContextualResponse({
+            context,
+            pages: extraction.pages,
+            response: raw,
+          });
+          if (result.status === "analysed") {
+            findings.push(...result.findings);
+            runMetadata.modelVersion = result.modelVersion;
+            runMetadata.promptVersion = result.promptVersion;
+            runMetadata.costMinor = result.costMinor;
+            runMetadata.latencyMs = result.latencyMs;
+          } else
+            findings.push(
+              providerNote(
+                subject.version.id,
+                `The contextual model result could not be verified (${result.reasonCode}).`,
+              ),
+            );
+        } catch {
+          findings.push(
+            providerNote(
+              subject.version.id,
+              "The contextual model timed out or failed; human review is required.",
+            ),
+          );
+        }
+      }
+    } else if (!dependencies.analyzer) {
       summary.providerSkipped += 1;
       // Recorded on the version, not only in the drain summary. Both
       // deterministic tiers emit an `uncertain` when they cannot check; silence
@@ -325,11 +440,47 @@ export async function drainDocumentAnalysisJobs(
       }
     }
 
+    // Recheck immediately before the write. A changed company, party or
+    // requirement snapshot invalidates model observations from the old context.
+    if (context && dependencies.versions.loadAnalysisContextInput) {
+      try {
+        const currentInput = await dependencies.versions.loadAnalysisContextInput(
+          subject.version.id,
+        );
+        const current = currentInput ? await buildAnalysisContext(currentInput) : null;
+        if (!current || current.contextHash !== context.contextHash) {
+          for (let index = findings.length - 1; index >= 0; index--) {
+            if (findings[index].tier === "provider") findings.splice(index, 1);
+          }
+          findings.push(
+            providerNote(
+              subject.version.id,
+              "The case context changed during analysis; reanalysis and human review are required.",
+            ),
+          );
+          runMetadata.contextHash = null;
+          runMetadata.modelVersion = null;
+          runMetadata.promptVersion = null;
+          runMetadata.costMinor = null;
+          runMetadata.latencyMs = null;
+        }
+      } catch {
+        findings.push(
+          providerNote(
+            subject.version.id,
+            "Current case context could not be confirmed; human review is required.",
+          ),
+        );
+        runMetadata.contextHash = null;
+      }
+    }
+
     try {
       await dependencies.findings.replaceUnresolvedForVersion({
         documentVersionId: subject.version.id,
         analysisJobId: job.id,
         findings,
+        runMetadata,
       });
     } catch {
       const applied = await dependencies.jobs.markRetry(job.id, {

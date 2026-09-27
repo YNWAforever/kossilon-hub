@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import type { DocumentAnalysisJob, DocumentAnalysisJobRepository } from "./analysis-jobs";
 import {
   drainDocumentAnalysisJobs,
+  type AnalysisRunMetadata,
   type AnalysisSubject,
   type AnalysisWorkerDependencies,
 } from "./analysis-worker";
 import type { Finding } from "./findings";
+import type { AnalysisContextInput } from "./analysis-context";
 import type { ExtractionResult, StoredExtraction } from "./text-extraction";
 
 const NOW = "2026-09-10T02:00:00.000Z";
@@ -65,6 +67,9 @@ type HarnessOptions = {
   subject?: AnalysisSubject | null;
   body?: ArrayBuffer | null;
   analyzer?: AnalysisWorkerDependencies["analyzer"];
+  contextualAnalyzer?: AnalysisWorkerDependencies["contextualAnalyzer"];
+  contextInput?: AnalysisContextInput | null;
+  contextInputs?: readonly (AnalysisContextInput | null)[];
   fenceHolds?: boolean;
   storageThrows?: boolean;
   findingsThrow?: boolean;
@@ -76,6 +81,8 @@ type HarnessOptions = {
 function harness(options: HarnessOptions = {}) {
   const fenceHolds = options.fenceHolds ?? true;
   const written: Finding[][] = [];
+  const recordedMetadata: AnalysisRunMetadata[] = [];
+  let contextLoadCount = 0;
 
   const jobs = {
     markSucceeded: vi.fn(async () => fenceHolds),
@@ -113,15 +120,26 @@ function harness(options: HarnessOptions = {}) {
       loadForAnalysis: vi.fn(async () =>
         options.subject === undefined ? subject() : options.subject,
       ),
+      loadAnalysisContextInput: vi.fn(async () =>
+        options.contextInputs
+          ? (options.contextInputs[
+              Math.min(contextLoadCount++, options.contextInputs.length - 1)
+            ] ?? null)
+          : (options.contextInput ?? null),
+      ),
     },
     findings: {
-      replaceUnresolvedForVersion: vi.fn(async (input: { findings: readonly Finding[] }) => {
-        if (options.findingsThrow) throw new Error("write failed");
-        written.push([...input.findings]);
-      }),
+      replaceUnresolvedForVersion: vi.fn(
+        async (input: { findings: readonly Finding[]; runMetadata?: AnalysisRunMetadata }) => {
+          if (options.findingsThrow) throw new Error("write failed");
+          written.push([...input.findings]);
+          if (input.runMetadata) recordedMetadata.push(input.runMetadata);
+        },
+      ),
     },
     storage: { get: storageGet } as unknown as AnalysisWorkerDependencies["storage"],
     analyzer: options.analyzer ?? null,
+    contextualAnalyzer: options.contextualAnalyzer ?? null,
     extractor: { extract },
     texts: {
       upsertText: vi.fn(async (documentVersionId: string, extraction: StoredExtraction) => {
@@ -131,7 +149,7 @@ function harness(options: HarnessOptions = {}) {
     },
   };
 
-  return { dependencies, written, jobs, storageGet, extract, storedTexts };
+  return { dependencies, written, recordedMetadata, jobs, storageGet, extract, storedTexts };
 }
 
 describe("drainDocumentAnalysisJobs", () => {
@@ -490,5 +508,130 @@ describe("text extraction in the analysis pass", () => {
       expect.objectContaining({ errorCode: "texts-not-written" }),
     );
     expect(test.written).toEqual([]);
+  });
+});
+
+const CONTEXT_INPUT: AnalysisContextInput = {
+  caseId: "22222222-2222-4222-8222-222222222222",
+  company: {
+    id: "33333333-3333-4333-8333-333333333333",
+    name: "Harbour Sample Limited",
+    crNumber: "7654321",
+  },
+  returnYear: 2026,
+  partySnapshot: [{ id: "44444444-4444-4444-8444-444444444444", name: "Alex Sample" }],
+  requirementSnapshot: [],
+  documentVersionId: VERSION_ID,
+  contentSha256: HASH,
+  ruleSetVersion: "t25-1",
+};
+
+describe("T25 contextual worker gates", () => {
+  it("uses server context and checked page text for advisory findings", async () => {
+    const analyze = vi.fn(async ({ context }: { context: { contextHash: string } }) => ({
+      contextHash: context.contextHash,
+      modelVersion: "contract-v1",
+      promptVersion: "prompt-v1",
+      ruleSetVersion: "t25-1",
+      latencyMs: 12,
+      costMinor: 1,
+      observations: [
+        {
+          ruleKey: "name",
+          outcome: "issue",
+          severity: "warning",
+          detail: "Check the name.",
+          evidence: {
+            sourceVersionId: VERSION_ID,
+            page: 1,
+            quote: "Harbour Sample Limited",
+            confidence: 0.95,
+            extractionMethod: "text-layer",
+          },
+        },
+      ],
+    }));
+    const test = harness({
+      contextInput: CONTEXT_INPUT,
+      contextualAnalyzer: { analyze },
+      extraction: {
+        method: "text-layer",
+        text: "Harbour Sample Limited ".repeat(10),
+        pageCount: 1,
+        truncated: false,
+        pages: [{ page: 1, text: "Harbour Sample Limited annual return" }],
+      },
+    });
+    const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+    expect(summary).toMatchObject({ analysed: 1, providerSkipped: 0 });
+    expect(analyze).toHaveBeenCalledTimes(1);
+    expect(test.recordedMetadata[0]).toMatchObject({
+      modelVersion: "contract-v1",
+      promptVersion: "prompt-v1",
+      costMinor: 1,
+      latencyMs: 12,
+      ruleSetVersion: "t25-1",
+    });
+    expect(
+      test.written[0].find((finding) => finding.ruleKey === "provider:name")?.evidence,
+    ).toMatchObject({ page: 1, quote: "Harbour Sample Limited" });
+  });
+
+  it("drops model observations when the server case context changes before persistence", async () => {
+    const analyze = vi.fn(async ({ context }: { context: { contextHash: string } }) => ({
+      contextHash: context.contextHash,
+      modelVersion: "contract-v1",
+      promptVersion: "prompt-v1",
+      ruleSetVersion: "t25-1",
+      latencyMs: 12,
+      costMinor: 1,
+      observations: [
+        {
+          ruleKey: "name",
+          outcome: "issue",
+          severity: "warning",
+          detail: "Check name",
+          evidence: {
+            sourceVersionId: VERSION_ID,
+            page: 1,
+            quote: "Harbour Sample Limited",
+            confidence: 0.95,
+            extractionMethod: "text-layer",
+          },
+        },
+      ],
+    }));
+    const test = harness({
+      contextInputs: [CONTEXT_INPUT, { ...CONTEXT_INPUT, returnYear: 2025 }],
+      contextualAnalyzer: { analyze },
+      extraction: {
+        method: "text-layer",
+        text: "Harbour Sample Limited ".repeat(10),
+        pageCount: 1,
+        truncated: false,
+        pages: [{ page: 1, text: "Harbour Sample Limited" }],
+      },
+    });
+    await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+    expect(test.written[0].some((finding) => finding.ruleKey === "provider:name")).toBe(false);
+    expect(test.written[0].some((finding) => finding.detail.includes("context changed"))).toBe(
+      true,
+    );
+    expect(test.recordedMetadata[0].contextHash).toBeNull();
+  });
+
+  it("requires human review for an image-only PDF and never calls the contextual model", async () => {
+    const analyze = vi.fn(async () => ({}));
+    const test = harness({
+      contextInput: CONTEXT_INPUT,
+      contextualAnalyzer: { analyze },
+      extraction: { method: "none", pageCount: 2 },
+    });
+    const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
+    expect(summary.providerSkipped).toBe(1);
+    expect(analyze).not.toHaveBeenCalled();
+    expect(
+      test.written[0].some((finding) => finding.detail.includes("human review is required")),
+    ).toBe(true);
   });
 });

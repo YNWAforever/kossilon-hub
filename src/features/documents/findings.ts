@@ -1,3 +1,5 @@
+import type { AnalysisEvidence } from "./analysis-context";
+
 /**
  * What an analysis pass is allowed to say, and what it can never say.
  *
@@ -56,6 +58,8 @@ export type Finding = {
   /** Plain text for a human. Never interpreted, never executed. */
   detail: string;
   citation: FindingCitation;
+  /** A checked text span, retained only when its version, page and quote match. */
+  evidence?: AnalysisEvidence;
 };
 
 /**
@@ -107,6 +111,7 @@ export function makeFinding(input: {
   severity: FindingSeverity;
   detail: string;
   citation: FindingCitation;
+  evidence?: AnalysisEvidence;
 }): Finding {
   if (!input.ruleKey.trim()) throw new Error("A finding must name the rule that produced it.");
   if (!input.ruleVersion.trim()) throw new Error("A finding must carry its rule version.");
@@ -131,6 +136,23 @@ export function makeFinding(input: {
     }
   }
 
+  if (input.evidence) {
+    const evidence = input.evidence;
+    if (
+      citation.kind !== "version" ||
+      citation.documentVersionId !== evidence.sourceVersionId ||
+      citation.pageFrom !== evidence.page ||
+      citation.pageTo !== evidence.page ||
+      !evidence.quote.trim() ||
+      !Number.isFinite(evidence.confidence) ||
+      evidence.confidence < 0.8 ||
+      evidence.confidence > 1 ||
+      (evidence.extractionMethod !== "text-layer" && evidence.extractionMethod !== "ocr")
+    ) {
+      throw new Error("A finding's evidence must match its verified version and page citation.");
+    }
+  }
+
   return {
     ruleKey: input.ruleKey,
     ruleVersion: input.ruleVersion,
@@ -139,6 +161,7 @@ export function makeFinding(input: {
     severity: allowedSeverity(input.tier, input.outcome, input.severity),
     detail: input.detail,
     citation,
+    ...(input.evidence ? { evidence: input.evidence } : {}),
   };
 }
 
@@ -155,7 +178,9 @@ export function makeFinding(input: {
  * the one thing a provider tier must never be able to do.
  */
 export function blocksRelease(finding: Finding): boolean {
-  return finding.outcome === "issue" && finding.severity === "critical";
+  return (
+    finding.tier !== "provider" && finding.outcome === "issue" && finding.severity === "critical"
+  );
 }
 
 /** Findings a reviewer should see first: real problems, worst first. */
