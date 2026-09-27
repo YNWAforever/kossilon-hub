@@ -509,7 +509,10 @@ export function createWorkItemRepository(
     async lastSlaEvaluationAt() {
       const rows = await sql<{ finished_at: string | Date | null }[]>`
         select max(finished_at) finished_at from maintenance_runs
-        where trigger_source = 'scheduled' and passes->>'escalations' is not null
+        where trigger_source = 'scheduled' and (
+            passes->>'escalations' is not null
+            or passes @> '{"jobs":[{"job":"evaluateEscalations","state":"succeeded"}]}'::jsonb
+          )
       `;
       return rows[0]?.finished_at ? iso(rows[0].finished_at) : null;
     },
