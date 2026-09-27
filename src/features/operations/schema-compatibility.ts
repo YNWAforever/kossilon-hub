@@ -279,6 +279,12 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
   {
     capability: "staff",
     kind: "column",
+    name: "annual_return_cases.assignment_revision",
+    expected: "integer",
+  },
+  {
+    capability: "staff",
+    kind: "column",
     name: "staff_profiles.access_revision",
     expected: "integer",
   },

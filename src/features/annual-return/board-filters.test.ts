@@ -62,6 +62,7 @@ describe("boardSearchFromUrl", () => {
     risk: undefined,
     ownerId: undefined,
     overdueOnly: undefined,
+    bulkOperation: undefined,
   };
 
   it("keeps a valid status and risk", () => {
@@ -84,6 +85,13 @@ describe("boardSearchFromUrl", () => {
     expect(boardSearchFromUrl({ overdueOnly: true }).overdueOnly).toBe(true);
     expect(boardSearchFromUrl({ overdueOnly: "true" }).overdueOnly).toBe(true);
     expect(boardSearchFromUrl({ overdueOnly: "false" }).overdueOnly).toBeUndefined();
+  });
+
+  it("preserves only a valid durable bulk operation ID in the URL", () => {
+    const id = "30000000-0000-0000-0000-000000000001";
+    expect(boardSearchFromUrl({ bulkOperation: id }).bulkOperation).toBe(id);
+    expect(boardSearchFromUrl({ bulkOperation: "invalid" }).bulkOperation).toBeUndefined();
+    expect(boardFiltersFromSearch({ bulkOperation: id }, 200)).toEqual({ limit: 200 });
   });
 
   it("treats an empty search box as no filter", () => {

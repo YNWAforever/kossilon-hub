@@ -6,6 +6,11 @@ import {
 import { importLogicalKey } from "@/features/nar-import/apply";
 import type { ImportPreviewRow } from "@/features/nar-import/preview";
 import { createSqlClient, getSqlClient, type SqlClient } from "@/server/db/client";
+import { createAnnualReturnRepository } from "@/features/annual-return/repository";
+import {
+  applyOneCaseOwnerAssignmentForActor,
+  previewCaseOwnerAssignmentsForActor,
+} from "./assignment-handler";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import {
   assignmentDecisionFor,
@@ -28,10 +33,12 @@ import {
 } from "./types";
 
 type QueryClient = SqlClient | postgres.TransactionSql;
+type WorkAssignInput = Extract<BulkPreviewInput, { action: "assign" }>;
+type CaseAssignInput = Extract<BulkPreviewInput, { action: "caseAssign" }>;
 type Tx = postgres.TransactionSql;
 type PreviewRow = {
   id: string;
-  action: "assign" | "importApply";
+  action: "assign" | "caseAssign" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   scope_role: "Admin" | "Manager";
@@ -48,16 +55,19 @@ type PreviewRow = {
 };
 type Snapshot = {
   revision: number;
-  state: "eligible" | "skipped" | "conflict";
+  state: "eligible" | "skipped" | "conflict" | "forbidden";
   teamId: string | null;
   status: string;
   ownerId: string | null;
   reviewerId: string | null;
+  reasonCode?: string | null;
+  newOwnerId?: string | null;
+  newTeamId?: string | null;
 };
 type OperationRow = {
   id: string;
   preview_id: string;
-  action: "assign" | "importApply";
+  action: "assign" | "caseAssign" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   state: BulkOperation["state"];
@@ -154,7 +164,10 @@ function mapOperation(row: OperationRow, items: ItemRow[]): BulkOperationView {
       resourceId: item.resource_id,
       state: item.state,
       reasonCode: item.reason_code,
-      revisionBefore: item.revision_before,
+      revisionBefore:
+        row.action === "caseAssign" && item.reason_code === "CASE_OUT_OF_SCOPE"
+          ? null
+          : item.revision_before,
       revisionAfter: item.revision_after,
       auditRef: item.audit_ref,
     })),
@@ -163,7 +176,7 @@ function mapOperation(row: OperationRow, items: ItemRow[]): BulkOperationView {
 async function snapshotRows(
   sql: QueryClient,
   actor: AuthenticatedActor,
-  input: BulkPreviewInput,
+  input: WorkAssignInput,
 ): Promise<PersistedWorkItem[]> {
   const repository = createWorkItemRepository({ sql });
   if (input.selection.kind === "ids") {
@@ -191,6 +204,41 @@ async function snapshotRows(
   const selected = await Promise.all(rows.map((row) => repository.get(row.id)));
   for (const row of selected) if (row) assertActorCanAssignWorkItem(actor, row);
   return selected.filter((row): row is PersistedWorkItem => row !== null);
+}
+
+async function caseIdsForSelection(
+  sql: QueryClient,
+  actor: AuthenticatedActor,
+  selection: CaseAssignInput["selection"],
+): Promise<string[]> {
+  if (selection.kind === "ids") {
+    if (new Set(selection.ids).size !== selection.ids.length)
+      throw new Error("Duplicate selected IDs.");
+    return [...selection.ids].sort();
+  }
+  if (new Set(selection.excludedIds).size !== selection.excludedIds.length)
+    throw new Error("Duplicate excluded IDs.");
+  if (actor.role === "Manager" && !actor.teamId)
+    throw new Error("Forbidden: manager team is unavailable.");
+  const repository = createAnnualReturnRepository({ sql });
+  const excluded = new Set(selection.excludedIds);
+  const ids = new Set<string>();
+  let cursor: string | undefined;
+  for (let pageNumber = 0; pageNumber < 100; pageNumber += 1) {
+    const page = await repository.listCasePage({
+      ...selection.filters,
+      ...(actor.role === "Manager" ? { teamId: actor.teamId! } : {}),
+      limit: 200,
+      ...(cursor ? { cursor } : {}),
+    });
+    for (const case_ of page.cases) {
+      if (!excluded.has(case_.id)) ids.add(case_.id);
+      if (ids.size > MAX_ITEMS) throw new Error("Selection exceeds the 1000-item preview limit.");
+    }
+    if (!page.nextCursor) return [...ids].sort();
+    cursor = page.nextCursor;
+  }
+  throw new Error("Matching case scan exceeded 100 pages; narrow the filter.");
 }
 
 export function createBulkOperationRepository(
@@ -237,49 +285,75 @@ export function createBulkOperationRepository(
       const input = bulkPreviewInputSchema.parse(rawInput);
       const current = await currentActor(sql, actor.authUserId);
       assertSameActor(current, actor);
-      const rows = await snapshotRows(sql, current, input);
       const snapshot: Record<string, Snapshot> = {};
-      const workRepository = createWorkItemRepository({ sql });
-      for (const row of rows.sort((a, b) => a.id.localeCompare(b.id))) {
-        const alreadyAssigned =
-          (input.parameters.assignmentTarget === "owner" ? row.ownerId : row.reviewerId) ===
-          input.parameters.assigneeId;
-        let state: Snapshot["state"] =
-          row.status === "completed" || row.status === "cancelled"
-            ? "conflict"
-            : alreadyAssigned
-              ? "skipped"
-              : "eligible";
-        if (state === "eligible") {
-          const recommendations = await workRepository.recommendAssignees(row.id, {
-            assignmentTarget: input.parameters.assignmentTarget,
-            expectedTeamId: current.role === "Manager" ? (current.teamId ?? undefined) : undefined,
-          });
-          try {
-            assignmentDecisionFor({
-              selectedUserId: input.parameters.assigneeId,
-              recommendations,
-              overrideReason: input.parameters.overrideReason,
-            });
-          } catch (error) {
-            if (
-              !(error instanceof Error) ||
-              !/^(Selected assignee is not eligible|An override reason is required)/.test(
-                error.message,
-              )
-            )
-              throw error;
-            state = "conflict";
-          }
+      if (input.action === "caseAssign") {
+        const caseIds = await caseIdsForSelection(sql, current, input.selection);
+        if (caseIds.length === 0) throw new Error("Selection has no eligible or reviewable items.");
+        const decisions = await previewCaseOwnerAssignmentsForActor(
+          current,
+          { caseIds, ownerId: input.parameters.ownerId },
+          { sql },
+        );
+        for (const item of decisions) {
+          snapshot[item.caseId] = {
+            // Forbidden explicit IDs deliberately use a sentinel that is never run.
+            // No existence, owner, team or revision metadata crosses this boundary.
+            revision: item.revision ?? 1,
+            state: item.state,
+            teamId: item.oldTeamId,
+            status: item.reasonCode ?? "assignable",
+            ownerId: item.oldOwnerId,
+            reviewerId: null,
+            reasonCode: item.reasonCode,
+            newOwnerId: item.newOwnerId,
+            newTeamId: item.newTeamId,
+          };
         }
-        snapshot[row.id] = {
-          revision: row.version,
-          state,
-          teamId: row.teamId,
-          status: row.status,
-          ownerId: row.ownerId,
-          reviewerId: row.reviewerId,
-        };
+      } else {
+        const rows = await snapshotRows(sql, current, input);
+        const workRepository = createWorkItemRepository({ sql });
+        for (const row of rows.sort((a, b) => a.id.localeCompare(b.id))) {
+          const alreadyAssigned =
+            (input.parameters.assignmentTarget === "owner" ? row.ownerId : row.reviewerId) ===
+            input.parameters.assigneeId;
+          let state: Snapshot["state"] =
+            row.status === "completed" || row.status === "cancelled"
+              ? "conflict"
+              : alreadyAssigned
+                ? "skipped"
+                : "eligible";
+          if (state === "eligible") {
+            const recommendations = await workRepository.recommendAssignees(row.id, {
+              assignmentTarget: input.parameters.assignmentTarget,
+              expectedTeamId:
+                current.role === "Manager" ? (current.teamId ?? undefined) : undefined,
+            });
+            try {
+              assignmentDecisionFor({
+                selectedUserId: input.parameters.assigneeId,
+                recommendations,
+                overrideReason: input.parameters.overrideReason,
+              });
+            } catch (error) {
+              if (
+                !(error instanceof Error) ||
+                !/^(Selected assignee is not eligible|An override reason is required)/.test(
+                  error.message,
+                )
+              )
+                throw error;
+              state = "conflict";
+            }
+          }
+          snapshot[row.id] = {
+            revision: row.version,
+            state,
+            teamId: row.teamId,
+            status: row.status,
+            ownerId: row.ownerId,
+            reviewerId: row.reviewerId,
+          };
+        }
       }
       const entries = Object.entries(snapshot);
       if (entries.length === 0) throw new Error("Selection has no eligible or reviewable items.");
@@ -292,7 +366,9 @@ export function createBulkOperationRepository(
       const counts = {
         eligible: entries.filter(([, value]) => value.state === "eligible").length,
         skipped: entries.filter(([, value]) => value.state === "skipped").length,
-        conflict: entries.filter(([, value]) => value.state === "conflict").length,
+        conflict: entries.filter(
+          ([, value]) => value.state === "conflict" || value.state === "forbidden",
+        ).length,
       };
       const [saved] = await sql<{ id: string; expires_at: string | Date }[]>`
         insert into bulk_previews (action,created_by_id,auth_user_id,scope_role,scope_team_id,
@@ -312,8 +388,16 @@ export function createBulkOperationRepository(
         expiresAt: iso(saved.expires_at),
         itemsPreview: entries.slice(0, 50).map(([resourceId, value]) => ({
           resourceId,
-          revision: value.revision,
+          revision:
+            input.action === "caseAssign" && value.reasonCode === "CASE_OUT_OF_SCOPE"
+              ? null
+              : value.revision,
           state: value.state,
+          reasonCode: value.reasonCode ?? null,
+          oldOwnerId: value.ownerId,
+          oldTeamId: value.teamId,
+          newOwnerId: value.newOwnerId ?? null,
+          newTeamId: value.newTeamId ?? null,
         })),
       };
     },
@@ -327,24 +411,30 @@ export function createBulkOperationRepository(
         >`select * from bulk_previews where id = ${input.previewId} for update`;
         if (!preview) throw new Error("Bulk preview not found.");
         assertPreviewScope(current, preview);
+        if (preview.action !== "assign" && preview.action !== "caseAssign")
+          throw new Error("Unsupported bulk preview action for generic commit.");
         if (
           preview.preview_hash !== input.previewHash ||
           Date.parse(iso(preview.expires_at)) <= Date.now()
         )
           throw new Error("Bulk preview is stale; revalidate before approval.");
         const selectedIds = Object.keys(preview.resource_snapshot);
-        const currentItems = await tx<{ id: string; version: number; team_id: string | null }[]>`
+        if (preview.action === "assign") {
+          const currentItems = await tx<{ id: string; version: number; team_id: string | null }[]>`
           select id,version,team_id from work_items
           where id = any(${selectedIds}::uuid[]) for share`;
-        if (currentItems.length !== selectedIds.length)
-          throw new Error("Bulk preview is stale; resource disappeared.");
-        for (const item of currentItems) {
-          const snapshot = preview.resource_snapshot[item.id];
-          if (item.version !== snapshot.revision || item.team_id !== snapshot.teamId)
-            throw new Error("Bulk preview is stale; revalidate changed work items.");
-          if (current.role === "Manager" && item.team_id !== current.teamId)
-            throw new Error("Forbidden: work item moved outside the actor's team.");
+          if (currentItems.length !== selectedIds.length)
+            throw new Error("Bulk preview is stale; resource disappeared.");
+          for (const item of currentItems) {
+            const snapshot = preview.resource_snapshot[item.id];
+            if (item.version !== snapshot.revision || item.team_id !== snapshot.teamId)
+              throw new Error("Bulk preview is stale; revalidate changed work items.");
+            if (current.role === "Manager" && item.team_id !== current.teamId)
+              throw new Error("Forbidden: work item moved outside the actor's team.");
+          }
         }
+        // Case assignments use per-item revision and authority checks in the runner.
+        // A changed case must not abort unrelated eligible cases at commit time.
         const logicalKey = preview.preview_hash;
         const [inserted] = await tx<{ id: string }[]>`
           insert into bulk_operations (preview_id,action,created_by_id,auth_user_id,idempotency_key,logical_key)
@@ -360,8 +450,11 @@ export function createBulkOperationRepository(
           return existing.id;
         }
         for (const [resourceId, value] of Object.entries(preview.resource_snapshot)) {
-          await tx`insert into bulk_operation_items (operation_id,resource_id,revision_before,state)
-            values (${inserted.id},${resourceId},${value.revision},${value.state === "eligible" ? "pending" : value.state})`;
+          await tx`insert into bulk_operation_items
+              (operation_id,resource_id,revision_before,state,reason_code)
+            values (${inserted.id},${resourceId},${value.revision},
+              ${value.state === "eligible" ? "pending" : value.state},
+              ${value.reasonCode ?? null})`;
         }
         return inserted.id;
       });
@@ -625,9 +718,57 @@ export function createBulkOperationRepository(
                 where item_id = ${claimed.item.id} and attempt_number = ${claimed.item.attempt_count}`;
               return;
             }
-            if (preview.action !== "assign")
+            if (preview.action === "caseAssign") {
+              if (claimed.operation.action !== "caseAssign")
+                throw new BulkItemFailure("conflict", "ACTION_MISMATCH");
+              const parameters = preview.parameters as { ownerId?: string };
+              if (!parameters.ownerId) throw new BulkItemFailure("conflict", "TARGET_MISSING");
+              let assigned: { caseId: string; revision: number };
+              try {
+                assigned = await applyOneCaseOwnerAssignmentForActor(
+                  actor,
+                  {
+                    caseId: claimed.item.resource_id,
+                    ownerId: parameters.ownerId,
+                    expectedAssignmentRevision: claimed.item.revision_before,
+                  },
+                  { sql: tx },
+                );
+              } catch (error) {
+                if (!(error instanceof Error)) throw error;
+                if (/revision changed/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "REVISION_CHANGED");
+                if (/locked|completed/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "CASE_LOCKED");
+                if (/inactive|unprovisioned/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "TARGET_UNAVAILABLE");
+                if (/forbidden|team/i.test(error.message))
+                  throw new BulkItemFailure("forbidden", "ITEM_OUT_OF_SCOPE");
+                throw error;
+              }
+              await options.afterDomainWrite?.();
+              const [audit] = await tx<{ id: string }[]>`
+                select id from timeline_events where case_id = ${assigned.caseId}
+                  and event_type = 'annual_return_owner_assigned'
+                  and actor_id = ${actor.userId}
+                  and metadata->>'ownerId' = ${parameters.ownerId}
+                order by created_at desc,id desc limit 1`;
+              if (!audit) throw new Error("Case owner audit event is missing.");
+              const [saved] = await tx<{ id: string }[]>`
+                update bulk_operation_items set state = 'succeeded',
+                  revision_after = ${assigned.revision},audit_ref = ${audit.id},
+                  lease_token = null,lease_until = null,updated_at = now()
+                where id = ${claimed.item.id} and lease_token = ${claimed.token}
+                  and state = 'running' returning id`;
+              if (!saved) throw new Error("Bulk item lease changed during case commit.");
+              await tx`update bulk_operation_attempts set state = 'succeeded',finished_at = now()
+                where item_id = ${claimed.item.id}
+                  and attempt_number = ${claimed.item.attempt_count}`;
+              return;
+            }
+            if (preview.action !== "assign" || claimed.operation.action !== "assign")
               throw new BulkItemFailure("conflict", "ACTION_MISMATCH");
-            const assignment = preview.parameters as BulkPreviewInput["parameters"];
+            const assignment = preview.parameters as WorkAssignInput["parameters"];
             const work = createWorkItemRepository({ sql: tx });
             const current = await work.get(claimed.item.resource_id);
             if (!current) throw new BulkItemFailure("conflict", "RESOURCE_MISSING");

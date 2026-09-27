@@ -4,6 +4,9 @@ type BulkSelectionToolbarProps = {
   notice: string | null;
   isBusy?: boolean;
   onSelectVisible: () => void;
+  onSelectMatching?: () => void;
+  selectionLabel?: string;
+  previewEnabled?: boolean;
   onClear: () => void;
   onPreview: () => void;
 };
@@ -15,6 +18,9 @@ export function BulkSelectionToolbar({
   notice,
   isBusy = false,
   onSelectVisible,
+  onSelectMatching,
+  selectionLabel,
+  previewEnabled,
   onClear,
   onPreview,
 }: BulkSelectionToolbarProps) {
@@ -23,7 +29,7 @@ export function BulkSelectionToolbar({
       aria-label="Bulk selection"
       className="sticky bottom-3 z-20 mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-3 shadow-lg"
     >
-      <span className="text-sm font-medium">{selectedCount} selected</span>
+      <span className="text-sm font-medium">{selectionLabel ?? `${selectedCount} selected`}</span>
       <button
         type="button"
         onClick={onSelectVisible}
@@ -32,10 +38,20 @@ export function BulkSelectionToolbar({
       >
         Select current view ({visibleCount})
       </button>
+      {onSelectMatching ? (
+        <button
+          type="button"
+          onClick={onSelectMatching}
+          disabled={isBusy}
+          className="rounded-md border border-border px-2.5 py-1.5 text-xs disabled:opacity-50"
+        >
+          Select all matching filter (max 1000)
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={onClear}
-        disabled={isBusy || selectedCount === 0}
+        disabled={isBusy || (selectedCount === 0 && !selectionLabel)}
         className="rounded-md border border-border px-2.5 py-1.5 text-xs disabled:opacity-50"
       >
         Clear
@@ -43,7 +59,7 @@ export function BulkSelectionToolbar({
       <button
         type="button"
         onClick={onPreview}
-        disabled={isBusy || selectedCount === 0}
+        disabled={isBusy || !(previewEnabled ?? selectedCount > 0)}
         className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
       >
         Preview assignment

@@ -1,5 +1,7 @@
 # T22 work-queue bulk assignment slice (in progress)
 
+The annual-return case-owner extension is documented in `case-bulk-assignment-2026-09-28.md`. T22 remains in progress for the client register, work-queue all-matching filters, tags and authenticated browser evidence.
+
 This local slice connects production work-queue selection to the existing T09 `assign` preview/commit/runner. It does not complete T22's annual-return case, client, tags or cross-surface assignment scope. Demo has no bulk controls. No production data, recipient, access role or deployment was changed.
 
 ## Local behavior
@@ -17,7 +19,7 @@ Only selected work-item IDs are sent to preview. The current work queue loads it
 
 ## Remaining T22 work
 
-1. Add a versioned annual-return case assignment handler that calls the existing single-case `assignOwner` transaction per item, including linked active work items, and returns individual cross-team/inactive-owner/locked-case decisions. Do not treat T09 work-item assignment as a case-owner change.
-2. Add case/client page and all-matching filter selection with bounded server snapshots, complete preview of old/new owner and team, and explicit retry of only failed items. Keep filter changes from silently broadening selection.
-3. Add authorized tags and CSV export on the case/client surfaces. Verify formula neutralization and row authorization with the real selected scope.
-4. Run the named `t22_scenario_2`, full disposable-Postgres suite, browser interaction and remote CI. Keep the task `in-progress` until those gates pass.
+1. Add client register bulk assignment with the existing single-client authority and audit path. Keep case-owner assignment separate from a company/client owner change.
+2. Complete work-queue all-matching filters and authorized tags without claiming a loaded client-side view is the full database match.
+3. Verify the case and work-queue controls in an authenticated browser with a real Admin/Manager profile. No production runtime or provider bindings were available for this local slice.
+4. Keep T22 `in-progress` until the client, tag, browser and runtime gates pass. See `case-bulk-assignment-2026-09-28.md` for the versioned case-owner implementation and full local test evidence.
