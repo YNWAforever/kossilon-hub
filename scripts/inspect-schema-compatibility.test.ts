@@ -40,6 +40,7 @@ describe("T01 schema compatibility release gate", () => {
       "parties",
       "payments",
       "returns",
+      "staff",
       "submissions",
     ]);
     for (const capability of Object.values(report.requiredCapabilities)) {

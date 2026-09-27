@@ -1,3 +1,4 @@
+import { assertAssignableStaffTarget } from "@/features/auth/staff-target";
 import {
   createSqlClient,
   getSqlClient,
@@ -555,6 +556,7 @@ export function createWorkItemRepository(
           recommendations,
           overrideReason: input.overrideReason,
         });
+        await assertAssignableStaffTarget(tx, input.selectedUserId, item.teamId);
         const previousAssigneeId = assignmentTarget === "owner" ? item.ownerId : item.reviewerId;
         const updated =
           assignmentTarget === "owner"
