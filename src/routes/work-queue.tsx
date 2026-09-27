@@ -3,6 +3,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
+import {
+  addPageToSelection,
+  changeSelectionFilter,
+  clearBulkSelection,
+  newBulkSelection,
+  removeFromSelection,
+  retryFailedSelection,
+} from "@/features/bulk-operations/selection";
+import {
+  WorkQueueBulkAssignmentDialog,
+  WorkQueueBulkOperationStatus,
+} from "@/features/bulk-operations/work-queue-bulk-controls";
 import {
   Dialog,
   DialogContent,
@@ -82,6 +95,10 @@ export const Route = createFileRoute("/work-queue")({
       search.status === "open" || search.status === "in_progress" || search.status === "blocked"
         ? (search.status as StatusFilter)
         : ("all" as StatusFilter),
+    ...(typeof search.bulkOperation === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search.bulkOperation)
+      ? { bulkOperation: search.bulkOperation }
+      : {}),
   }),
   component: WorkQueueRoute,
 });
@@ -95,6 +112,26 @@ function WorkQueueRoute() {
   const [query, setQuery] = useState("");
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const filterKey = JSON.stringify([
+    view,
+    owner,
+    workType,
+    sla,
+    priority,
+    status,
+    query.trim().toLowerCase(),
+  ]);
+  const [selection, setSelection] = useState(() => newBulkSelection(filterKey));
+  const currentSelection =
+    selection.filterKey === filterKey ? selection : changeSelectionFilter(selection, filterKey);
+  const selectedIds = useMemo(() => new Set(currentSelection.ids), [currentSelection.ids]);
+  useEffect(() => {
+    setSelection((previous) => changeSelectionFilter(previous, filterKey));
+    setSelectionError(null);
+    setBulkDialogOpen(false);
+  }, [filterKey]);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
   const filters = { view };
   const queueQuery = useQuery({
@@ -169,6 +206,16 @@ function WorkQueueRoute() {
 
   const setFilter = (key: "owner" | "workType" | "sla" | "priority" | "status", value: string) =>
     void navigate({ search: { ...search, [key]: value }, replace: true });
+
+  function addSelected(ids: string[]) {
+    try {
+      setSelection(addPageToSelection(currentSelection, ids));
+      setSelectionError(null);
+    } catch (error) {
+      setSelectionError(error instanceof Error ? error.message : "Selection unavailable.");
+    }
+  }
+  const representativeItem = items.find((item) => selectedIds.has(item.id));
 
   const metrics = {
     dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(asOf))
@@ -308,6 +355,50 @@ function WorkQueueRoute() {
           </FilterSelect>
         </div>
 
+        {canManage ? (
+          <>
+            <BulkSelectionToolbar
+              selectedCount={currentSelection.ids.length}
+              visibleCount={visibleItems.length}
+              notice={currentSelection.notice}
+              onSelectVisible={() => addSelected(visibleItems.map((item) => item.id))}
+              onClear={() => {
+                setSelection(clearBulkSelection(currentSelection));
+                setSelectionError(null);
+              }}
+              onPreview={() => {
+                if (!representativeItem) {
+                  setSelectionError(
+                    "Selected work items are no longer available in this view. Refresh or clear selection.",
+                  );
+                  return;
+                }
+                setBulkDialogOpen(true);
+              }}
+            />
+            {selectionError ? (
+              <p role="alert" className="mt-2 text-xs text-destructive">
+                {selectionError}
+              </p>
+            ) : null}
+            {search.bulkOperation ? (
+              <WorkQueueBulkOperationStatus
+                id={search.bulkOperation}
+                onRetryFailed={(results) => {
+                  try {
+                    setSelection(retryFailedSelection(filterKey, results));
+                    setSelectionError(null);
+                  } catch (error) {
+                    setSelectionError(
+                      error instanceof Error ? error.message : "Retry selection unavailable.",
+                    );
+                  }
+                }}
+              />
+            ) : null}
+          </>
+        ) : null}
+
         {queueQuery.isLoading ? <QueueMessage>Loading work queue...</QueueMessage> : null}
         {queueQuery.isError ? (
           <QueueMessage>Work queue could not be loaded. Refresh to try again.</QueueMessage>
@@ -348,6 +439,19 @@ function WorkQueueRoute() {
                     className="grid min-h-20 grid-cols-[1.4fr_110px_110px_110px_140px_90px_100px_110px] items-center gap-3 px-3 py-4 hover:bg-muted/30"
                   >
                     <div role="cell" className="min-w-0">
+                      {canManage ? (
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${item.title}`}
+                          checked={selectedIds.has(item.id)}
+                          onChange={(event) =>
+                            event.target.checked
+                              ? addSelected([item.id])
+                              : setSelection(removeFromSelection(currentSelection, item.id))
+                          }
+                          className="mr-2"
+                        />
+                      ) : null}
                       {/* Was `Company {item.companyId.slice(0, 8)}` -- a raw uuid
                           prefix where the company name belongs, on the screen
                           staff are supposed to work from. */}
@@ -402,6 +506,19 @@ function WorkQueueRoute() {
               {visibleItems.map((item) => (
                 <article key={item.id} className="grid gap-3 px-3 py-4">
                   <div>
+                    {canManage ? (
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${item.title}`}
+                        checked={selectedIds.has(item.id)}
+                        onChange={(event) =>
+                          event.target.checked
+                            ? addSelected([item.id])
+                            : setSelection(removeFromSelection(currentSelection, item.id))
+                        }
+                        className="mr-2"
+                      />
+                    ) : null}
                     <p className="text-xs text-muted-foreground">
                       {item.companyName ?? "Company no longer on file"}
                     </p>
@@ -444,6 +561,20 @@ function WorkQueueRoute() {
           </section>
         ) : null}
       </main>
+      {bulkDialogOpen && representativeItem && currentSelection.ids.length > 0 ? (
+        <WorkQueueBulkAssignmentDialog
+          ids={currentSelection.ids}
+          representativeItem={representativeItem}
+          selectedItems={items.filter((item) => selectedIds.has(item.id))}
+          onClose={() => setBulkDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setBulkDialogOpen(false);
+            setSelection(newBulkSelection(filterKey));
+            void navigate({ search: { ...search, bulkOperation: operationId }, replace: true });
+            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          }}
+        />
+      ) : null}
       {assignmentItem ? (
         <AssignmentDialog
           item={assignmentItem}
