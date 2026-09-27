@@ -415,19 +415,9 @@ export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" })
 // took `signatureValid` as a boolean from the caller and had no actor check at
 // all, so anyone could post a forged inbound message.
 
+/** Legacy arbitrary-phone endpoint is closed; T18 uses a durable case/contact preview. */
 export const queueWhatsAppTemplateMessage = createServerFn({ method: "POST" })
   .validator(queueWhatsAppTemplateMessageInputSchema)
-  .handler(async ({ data }) =>
-    withWhatsAppInboxRepository(async (repository, actor) => {
-      const message = await queueWhatsAppTemplateMessageForActor(actor, data, { repository });
-
-      return {
-        messageId: message.id,
-        provider: message.provider,
-        direction: message.direction,
-        status: message.status,
-        companyId: message.companyId,
-        caseId: message.caseId,
-      };
-    }),
-  );
+  .handler(async () => {
+    throw new Error("Direct template queueing requires an approved case/contact preview.");
+  });

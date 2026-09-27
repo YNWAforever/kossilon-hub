@@ -9,6 +9,9 @@ export type CompanyContact = {
   role: string;
   email: string | null;
   phone: string | null;
+  phoneE164: string | null;
+  phoneVerifiedAt: string | null;
+  preferredLanguage: string | null;
   isPrimary: boolean;
 };
 

@@ -53,6 +53,36 @@ describe.skipIf(!databaseUrl)("T06 durable delivery attempts", () => {
     await sql?.end();
   });
 
+  it("t18 stale preview preflight cancels without an automatic retry", async () => {
+    await withRollback(async (tx) => {
+      const companyId = await company(tx, "client");
+      const row = await enqueue(tx, companyId, "stale-preview");
+      const repository = createNotificationOutboxRepository({ sql: tx });
+      const claim = (await repository.claimDeliveryAttempt(now, 500)).find(
+        (item) => item.id === row.id,
+      )!;
+      expect(claim).toBeDefined();
+      expect(
+        await repository.abortClaimedAttempt(
+          claim.attemptId,
+          claim.leaseToken,
+          "whatsapp_preview_stale",
+          now,
+        ),
+      ).toBe("recorded");
+      const [state] = await tx<{ status: string; last_error_code: string }[]>`
+        select status,last_error_code from notification_outbox where id = ${row.id}
+      `;
+      expect(state).toEqual({
+        status: "cancelled",
+        last_error_code: "whatsapp_preview_stale",
+      });
+      expect(
+        (await repository.claimDeliveryAttempt(later, 500)).some((item) => item.id === row.id),
+      ).toBe(false);
+    });
+  });
+
   it("t06_scenario_1 never calls transport twice after accepted send with DB outcome failure", async () => {
     await withRollback(async (tx) => {
       const companyId = await company(tx, "client");

@@ -32,6 +32,8 @@ export type NotificationDispatcherOptions = {
    * to their previous behaviour.
    */
   lastInboundResolver?: LastInboundResolver;
+  /** Recheck queued preview/contact/case/template before any live provider call. */
+  previewGuard?: (notification: NotificationOutboxRecord, now: string) => Promise<void>;
 };
 
 /**
@@ -51,11 +53,37 @@ async function resolveWhatsAppSendMode(
 
   const phoneDigits = toPhoneDigits(notification.recipient);
   const lastInboundAt = phoneDigits ? await lastInboundResolver(phoneDigits) : null;
+  const insideWindow = isWithinSessionWindow(lastInboundAt, now);
+  if (
+    payload.source === "approved-message-preview" ||
+    payload.approvedPreviewKind === "follow-up"
+  ) {
+    const frozen = payload.frozenSendMode;
+    if (frozen !== "text" && frozen !== "template") {
+      throw Object.assign(new Error("Approved preview has no frozen send mode."), {
+        code: "whatsapp_preview_stale",
+      });
+    }
+    if ((frozen === "text") !== insideWindow) {
+      throw Object.assign(new Error("WhatsApp session changed since message approval."), {
+        code: "whatsapp_preview_stale",
+      });
+    }
+    if (frozen === "text") return { kind: "text", body };
+    const templateName = payload.templateName;
+    const languageCode = payload.languageCode;
+    if (typeof templateName !== "string" || typeof languageCode !== "string") {
+      throw Object.assign(new Error("Approved template preview is incomplete."), {
+        code: "whatsapp_preview_stale",
+      });
+    }
+    return { kind: "template", elementName: templateName, languageCode, components: [] };
+  }
 
   // Inside the window the composed body is sent even when the caller supplied a
   // template name — the TEMPLATE branch drops the body on the wire, which is how an
   // actively-engaged client used to lose their case-specific reminder.
-  if (isWithinSessionWindow(lastInboundAt, now)) {
+  if (insideWindow) {
     return { kind: "text", body };
   }
 
@@ -112,6 +140,20 @@ export function createNotificationDispatcher(
       for (const notification of due) {
         let context: NotificationDispatchContext | undefined;
         try {
+          if (
+            notification.channel === "whatsapp" &&
+            ((notificationPayload(notification).source === "approved-message-preview" &&
+              (!options.previewGuard || !options.lastInboundResolver)) ||
+              (notificationPayload(notification).approvedPreviewKind === "follow-up" &&
+                (!options.previewGuard || !options.lastInboundResolver)))
+          ) {
+            throw Object.assign(new Error("Approved preview preflight is not wired."), {
+              code: "whatsapp_preview_stale",
+            });
+          }
+          if (notification.channel === "whatsapp" && options.previewGuard) {
+            await options.previewGuard(notification, now);
+          }
           context =
             notification.channel === "whatsapp" && options.lastInboundResolver
               ? {
@@ -136,7 +178,10 @@ export function createNotificationDispatcher(
               now,
             );
             if (recorded === "stale") summary.superseded += 1;
-            else if (notification.attemptCount >= notification.maxAttempts)
+            else if (
+              errorCode === "whatsapp_preview_stale" ||
+              notification.attemptCount >= notification.maxAttempts
+            )
               summary.permanentlyFailed += 1;
             else summary.retried += 1;
           } catch (recordError) {

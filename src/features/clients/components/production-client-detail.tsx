@@ -16,6 +16,7 @@ import { InspectionRequestFormDialog } from "@/components/clients/inspection-req
 import { ResolveInspectionRequestDialog } from "@/components/clients/resolve-inspection-request-dialog";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { ServiceSubscriptionsSection } from "./service-subscriptions-section";
+import { ContactPhoneVerification } from "./contact-phone-verification";
 import {
   ceaseClientController,
   ceaseClientOfficer,
@@ -506,6 +507,11 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                 <p className="truncate text-xs text-muted-foreground">
                   {contact.role} · {contact.email ?? contact.phone ?? "No contact details"}
                 </p>
+                <ContactPhoneVerification
+                  contact={contact}
+                  companyId={clientId}
+                  onVerified={invalidate}
+                />
               </div>
               <div className="flex shrink-0 gap-2">
                 <button

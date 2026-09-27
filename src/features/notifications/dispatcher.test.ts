@@ -483,6 +483,72 @@ describe("WhatsApp session window resolution", () => {
     );
   });
 
+  it("cancels a frozen text preview when the session window closes before dispatch", async () => {
+    const send = vi.fn<NotificationTransport["dispatch"]>(async () => ({
+      delivery: "provider",
+      providerMessageId: "should-not-send",
+    }));
+    const repo = repository([
+      notification({
+        payload: {
+          source: "approved-message-preview",
+          previewId: "preview-1",
+          previewHash: "hash-1",
+          frozenSendMode: "text",
+          body: "case-specific reply",
+          templateName: "annual_return_manual_reminder",
+        },
+      }),
+    ]);
+    const summary = await createNotificationDispatcher(
+      repo,
+      { dispatch: send },
+      {
+        previewGuard: vi.fn(async () => undefined),
+        lastInboundResolver: vi.fn(async () => outsideWindow),
+      },
+    ).dispatchDue(now);
+    expect(send).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ claimed: 1, sent: 0, permanentlyFailed: 1 });
+    expect(repo.abortClaimedAttempt).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      "whatsapp_preview_stale",
+      now,
+    );
+  });
+
+  it("refuses a frozen follow-up if its final persisted-state guard is unavailable", async () => {
+    const send = vi.fn<NotificationTransport["dispatch"]>(async () => ({
+      delivery: "provider",
+      providerMessageId: "should-not-send",
+    }));
+    const repo = repository([
+      notification({
+        payload: {
+          approvedPreviewKind: "follow-up",
+          frozenSendMode: "text",
+          body: "case-specific follow-up",
+        },
+      }),
+    ]);
+    const summary = await createNotificationDispatcher(
+      repo,
+      { dispatch: send },
+      {
+        lastInboundResolver: vi.fn(async () => insideWindow),
+      },
+    ).dispatchDue(now);
+    expect(send).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ claimed: 1, sent: 0, permanentlyFailed: 1 });
+    expect(repo.abortClaimedAttempt).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      "whatsapp_preview_stale",
+      now,
+    );
+  });
+
   it("does not resolve at all when no resolver is supplied", async () => {
     const dispatch = vi.fn<NotificationTransport["dispatch"]>(async () => ({
       delivery: "provider" as const,

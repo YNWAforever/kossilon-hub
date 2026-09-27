@@ -14,6 +14,12 @@ const serverFns = vi.hoisted(() => ({
   getWhatsAppIntegrationStatus: vi.fn(),
 }));
 
+const previewFns = vi.hoisted(() => ({
+  listReplyTargets: vi.fn(),
+  prepareMessage: vi.fn(),
+  queueApprovedMessage: vi.fn(),
+}));
+vi.mock("../message-preview-server-fns", () => previewFns);
 vi.mock("../server-fns", () => serverFns);
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
@@ -72,6 +78,8 @@ describe("production WhatsApp inbox", () => {
     serverFns.getWhatsAppIntegrationStatus.mockReset();
     serverFns.listWhatsAppConversationMessages.mockResolvedValue([]);
     serverFns.getWhatsAppIntegrationStatus.mockResolvedValue(connected);
+    previewFns.listReplyTargets.mockReset();
+    previewFns.listReplyTargets.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -240,15 +248,14 @@ describe("production WhatsApp inbox", () => {
     expect(screen.getByText(/WOZTELL_WEBHOOK_SECRET/)).toBeTruthy();
   });
 
-  it("offers no free-text composer", async () => {
-    // Production sending is template-only — queueWhatsAppTemplateMessage requires a
-    // template name, a category and a case id. A reply box here could not be wired
-    // to anything, which is what made the demo one misleading.
+  it("requires a case contact before preparing a direct reply", async () => {
     serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
-    const { container } = renderInbox();
-
+    renderInbox();
     await screen.findByRole("heading", { name: "Ada Wong" });
-
-    expect(container.querySelector("textarea")).toBeNull();
+    expect(await screen.findByText(/No case contact matches this number/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Create or correct client contact" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Preview actual send" }).hasAttribute("disabled"),
+    ).toBe(true);
   });
 });
