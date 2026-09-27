@@ -1,8 +1,8 @@
 # T22 work-queue bulk assignment slice (in progress)
 
-The annual-return case-owner extension is documented in `case-bulk-assignment-2026-09-28.md`. T22 remains in progress for the client register, tags and authenticated browser evidence.
+The annual-return case-owner extension is documented in `case-bulk-assignment-2026-09-28.md`. T22 remains in progress for tags, client-data export and authenticated browser evidence.
 
-This local slice connects production work-queue selection to the existing T09 `assign` preview/commit/runner. The annual-return case-owner slice is documented separately; the client register and tags remain. Demo has no bulk controls. No production data, recipient, access role or deployment was changed.
+This local slice connects production work-queue selection to the existing T09 `assign` preview/commit/runner. The annual-return case-owner slice is documented separately; the client register now has a separate reviewed slice; tags and client-data export remain. Demo has no bulk controls. No production data, recipient, access role or deployment was changed.
 
 ## Local behavior
 
@@ -19,7 +19,7 @@ The work queue's existing server read loads the complete authorized open/in-prog
 
 ## Remaining T22 work
 
-1. Add client register bulk assignment with the existing single-client authority and audit path. Keep case-owner assignment separate from a company/client owner change.
+1. Client register bulk assignment now uses the single-client authority and audit path; see `client-bulk-assignment-2026-09-28.md`. Keep case-owner assignment separate from a company/client owner change.
 2. Add authorized tags to the applicable case, client and work-queue selection surfaces using a versioned per-item domain action.
 3. Verify the case and work-queue controls in an authenticated browser with a real Admin/Manager profile. No production runtime or provider bindings were available for this local slice.
 4. Keep T22 `in-progress` until the client, tag, browser and runtime gates pass. See `case-bulk-assignment-2026-09-28.md` for the versioned case-owner implementation and full local test evidence.

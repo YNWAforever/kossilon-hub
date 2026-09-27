@@ -78,6 +78,29 @@ export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
       parameters: z.object({ ownerId: uuid }).strict(),
     })
     .strict(),
+  z
+    .object({
+      action: z.literal("clientAssign"),
+      selection: z.discriminatedUnion("kind", [
+        z.object({ kind: z.literal("ids"), ids: z.array(uuid).min(1).max(1000) }).strict(),
+        z
+          .object({
+            kind: z.literal("filter"),
+            resource: z.literal("clients"),
+            filters: z
+              .object({
+                q: z.string().trim().max(200).optional(),
+                status: z.enum(["all", "active", "inactive"]).optional(),
+                teamId: uuid.optional(),
+              })
+              .strict(),
+            excludedIds: z.array(uuid).max(1000),
+          })
+          .strict(),
+      ]),
+      parameters: z.object({ ownerId: uuid }).strict(),
+    })
+    .strict(),
 ]);
 export type BulkPreviewInput = z.output<typeof bulkPreviewInputSchema>;
 export const bulkCommitInputSchema = z
@@ -107,7 +130,7 @@ export type BulkOperationState =
 export type BulkPreview = {
   id: string;
   previewHash: string;
-  action: "assign" | "caseAssign";
+  action: "assign" | "caseAssign" | "clientAssign";
   selectionCount: number;
   eligibleCount: number;
   skippedCount: number;
@@ -126,7 +149,7 @@ export type BulkPreview = {
 };
 export type BulkOperation = {
   id: string;
-  action: "assign" | "caseAssign" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "importApply";
   state: BulkOperationState;
   createdBy: string;
   createdAt: string;

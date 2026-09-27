@@ -1,6 +1,8 @@
 import type postgres from "postgres";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { createAnnualReturnRepository } from "@/features/annual-return/repository";
+import { assertClientCompanyWritable } from "@/features/clients/authorization";
+import { createClientRepository } from "@/features/clients/repository";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -133,5 +135,132 @@ export async function applyOneCaseOwnerAssignmentForActor(
       expectedAssignmentRevision: input.expectedAssignmentRevision,
     });
     return { caseId: input.caseId, revision: row.revision + 1 };
+  });
+}
+
+type ClientAssignmentRow = {
+  id: string;
+  ownerId: string;
+  teamId: string;
+  revision: number;
+};
+export type ClientAssignmentPreviewItem = {
+  clientId: string;
+  revision: number | null;
+  oldOwnerId: string | null;
+  oldTeamId: string | null;
+  newOwnerId: string;
+  newTeamId: string | null;
+  state: "eligible" | "skipped" | "conflict" | "forbidden";
+  reasonCode: string | null;
+};
+
+function validClientIds(ids: string[]): void {
+  if (ids.length < 1 || ids.length > 1000 || new Set(ids).size !== ids.length)
+    throw new Error("Select 1 to 1000 distinct clients.");
+  if (ids.some((id) => !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id)))
+    throw new Error("A valid client ID is required.");
+}
+
+async function activeClientOwner(sql: QueryClient, ownerId: string) {
+  const [target] = await sql<{ id: string; teamId: string | null }[]>`
+    select u.id,sp.team_id "teamId" from users u
+    join staff_profiles sp on sp.user_id=u.id
+    join teams t on t.id=sp.team_id and t.active
+    where u.id=${ownerId} and u.active=true and sp.active=true
+      and u.role=sp.role and u.team_id is not distinct from sp.team_id
+      and sp.role in ('Admin','Manager','Staff')`;
+  return target?.teamId ? { id: target.id, teamId: target.teamId } : null;
+}
+
+/** Freeze each client revision and disclose no owner/team metadata for foreign IDs. */
+export async function previewClientOwnerAssignmentsForActor(
+  actor: AuthenticatedActor,
+  input: { clientIds: string[]; ownerId: string },
+  dependencies: { sql?: QueryClient } = {},
+): Promise<ClientAssignmentPreviewItem[]> {
+  validClientIds(input.clientIds);
+  const sql = dependencies.sql ?? getSqlClient();
+  const current = await currentActor(sql, actor);
+  const target = await activeClientOwner(sql, input.ownerId);
+  const rows = await sql<ClientAssignmentRow[]>`
+    select id,assigned_owner_id "ownerId",assigned_team_id "teamId",
+      assignment_revision revision from companies where id=any(${input.clientIds}::uuid[])`;
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return input.clientIds.map((clientId) => {
+    const row = byId.get(clientId);
+    const outOfScope = !row || (current.role === "Manager" && row.teamId !== current.teamId);
+    const unavailable = !target || (current.role === "Manager" && target.teamId !== current.teamId);
+    const alreadyAssigned = Boolean(
+      target && row?.ownerId === target.id && row.teamId === target.teamId,
+    );
+    const state: ClientAssignmentPreviewItem["state"] = outOfScope
+      ? "forbidden"
+      : unavailable
+        ? "conflict"
+        : alreadyAssigned
+          ? "skipped"
+          : "eligible";
+    const reasonCode = outOfScope
+      ? "CLIENT_OUT_OF_SCOPE"
+      : unavailable
+        ? "TARGET_UNAVAILABLE"
+        : alreadyAssigned
+          ? "ALREADY_ASSIGNED"
+          : null;
+    return {
+      clientId,
+      revision: outOfScope ? null : row.revision,
+      oldOwnerId: outOfScope ? null : row.ownerId,
+      oldTeamId: outOfScope ? null : row.teamId,
+      newOwnerId: input.ownerId,
+      newTeamId: outOfScope || unavailable ? null : target.teamId,
+      state,
+      reasonCode,
+    };
+  });
+}
+
+/** One guarded domain write for the durable T09 runner. */
+export async function applyOneClientOwnerAssignmentForActor(
+  actor: AuthenticatedActor,
+  input: { clientId: string; ownerId: string; expectedAssignmentRevision: number },
+  dependencies: { sql?: QueryClient } = {},
+): Promise<{ clientId: string; revision: number }> {
+  validClientIds([input.clientId]);
+  if (
+    !Number.isSafeInteger(input.expectedAssignmentRevision) ||
+    input.expectedAssignmentRevision < 1
+  )
+    throw new Error("A valid assignment revision is required.");
+  const sql = dependencies.sql ?? getSqlClient();
+  return transaction(sql, async (tx) => {
+    await currentActor(tx, actor);
+    const [row] = await tx<ClientAssignmentRow[]>`
+      select id,assigned_owner_id "ownerId",assigned_team_id "teamId",
+        assignment_revision revision from companies where id=${input.clientId} for update`;
+    if (!row) throw new Error("Forbidden: client unavailable.");
+    assertClientCompanyWritable(actor, { assignedTeamId: row.teamId });
+    if (row.revision !== input.expectedAssignmentRevision)
+      throw new Error("Client owner assignment revision changed; preview again.");
+    const target = await activeClientOwner(tx, input.ownerId);
+    if (!target || (actor.role === "Manager" && target.teamId !== actor.teamId))
+      throw new Error("Client assignment target inactive or unavailable.");
+    if (row.ownerId === target.id && row.teamId === target.teamId)
+      throw new Error("Client owner already assigned; preview again.");
+    const repository = createClientRepository({ sql: tx });
+    const before = await repository.getClient(input.clientId);
+    if (!before) throw new Error("Client not found.");
+    const saved = await repository.updateClient({
+      id: input.clientId,
+      expectedAssignmentRevision: input.expectedAssignmentRevision,
+      companyName: before.companyName,
+      registeredOffice: before.registeredOffice,
+      status: before.status,
+      ownerId: target.id,
+      teamId: target.teamId,
+      actorId: actor.userId!,
+    });
+    return { clientId: saved.id, revision: saved.assignmentRevision };
   });
 }

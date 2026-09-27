@@ -516,6 +516,125 @@ describe.skipIf(!databaseUrl)("T09 durable bulk operations", () => {
     }
   }, 60_000);
 
+  it("t22 clientAssign uses scoped filter preview, durable per-item outcomes and crash resume", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const fx = await fixture();
+    const repo = createBulkOperationRepository({ sql });
+    const ids = Array.from({ length: 3 }, () => crypto.randomUUID());
+    const teamB = "10000000-0000-0000-0000-000000000002";
+    try {
+      for (const [index, id] of ids.entries()) {
+        const teamId = index === 1 ? teamB : fx.manager.teamId!;
+        await sql`insert into companies(id,company_name,cr_number,br_number,
+          incorporation_date,annual_return_basis_date,registered_office,
+          company_secretary,assigned_owner_id,assigned_team_id,data_origin)
+          values (${id},${`T22 client durable ${ids[0]} ${id}`},
+            ${`CR-${id}`},${`BR-${id}`},
+            '2020-01-01','2026-01-01','Test address','Test secretary',
+            ${fx.manager.userId},${teamId},'client')`;
+      }
+      const filtered = await repo.preview(fx.manager, {
+        action: "clientAssign",
+        selection: {
+          kind: "filter",
+          resource: "clients",
+          filters: { q: `T22 client durable ${ids[0]}`, status: "active" },
+          excludedIds: [ids[2]!],
+        },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      expect(filtered.itemsPreview.map((item) => item.resourceId)).toEqual([ids[0]]);
+      expect(filtered.itemsPreview[0]).toMatchObject({
+        oldOwnerId: fx.manager.userId,
+        oldTeamId: fx.manager.teamId,
+        newOwnerId: fx.assigneeId,
+        newTeamId: fx.manager.teamId,
+      });
+      const preview = await repo.preview(fx.manager, {
+        action: "clientAssign",
+        selection: { kind: "ids", ids: ids.slice(0, 2) },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      expect(preview).toMatchObject({ selectionCount: 2, eligibleCount: 1, conflictCount: 1 });
+      expect(preview.itemsPreview.find((item) => item.resourceId === ids[1])).toMatchObject({
+        state: "forbidden",
+        reasonCode: "CLIENT_OUT_OF_SCOPE",
+        revision: null,
+        oldOwnerId: null,
+        oldTeamId: null,
+      });
+      const key = crypto.randomUUID();
+      const operation = await repo.commit(fx.manager, {
+        previewId: preview.id,
+        previewHash: preview.previewHash,
+        idempotencyKey: key,
+      });
+      expect(
+        (
+          await repo.commit(fx.manager, {
+            previewId: preview.id,
+            previewHash: preview.previewHash,
+            idempotencyKey: key,
+          })
+        ).id,
+      ).toBe(operation.id);
+      await repo.runBatch(operation.id, { limit: 2 });
+      const view = await repo.get(fx.manager, operation.id);
+      expect(view.counts).toMatchObject({ succeeded: 1, forbidden: 1 });
+      expect(view.items.find((item) => item.resourceId === ids[0])).toMatchObject({
+        state: "succeeded",
+        revisionBefore: 1,
+        revisionAfter: 2,
+      });
+      expect(view.items.find((item) => item.resourceId === ids[0])?.auditRef).toBeTruthy();
+      expect(view.items.find((item) => item.resourceId === ids[1])?.revisionBefore).toBeNull();
+      const [updated] = await sql<{ assigned_owner_id: string; assignment_revision: number }[]>`
+        select assigned_owner_id,assignment_revision from companies where id=${ids[0]}`;
+      expect(updated).toMatchObject({ assigned_owner_id: fx.assigneeId, assignment_revision: 2 });
+      const [foreign] = await sql<{ assigned_owner_id: string; assignment_revision: number }[]>`
+        select assigned_owner_id,assignment_revision from companies where id=${ids[1]}`;
+      expect(foreign).toMatchObject({
+        assigned_owner_id: fx.manager.userId,
+        assignment_revision: 1,
+      });
+
+      const crashPreview = await repo.preview(fx.manager, {
+        action: "clientAssign",
+        selection: { kind: "ids", ids: [ids[2]!] },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      const crashOperation = await repo.commit(fx.manager, {
+        previewId: crashPreview.id,
+        previewHash: crashPreview.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      await repo.runBatch(crashOperation.id, {
+        limit: 1,
+        afterDomainWrite: () => {
+          throw new Error("simulated crash after client write");
+        },
+      });
+      expect((await repo.get(fx.manager, crashOperation.id)).items[0]?.state).toBe("failed");
+      await repo.runBatch(crashOperation.id, { limit: 1 });
+      expect((await repo.get(fx.manager, crashOperation.id)).items[0]).toMatchObject({
+        state: "succeeded",
+        revisionAfter: 2,
+      });
+      const [audit] = await sql<{ count: number }[]>`
+        select count(*)::int count from timeline_events
+        where company_id=${ids[2]} and event_type='client_updated'`;
+      expect(audit.count).toBe(1);
+    } finally {
+      await sql`delete from bulk_operations where preview_id in (
+        select id from bulk_previews where resource_snapshot ?| ${ids})`;
+      await sql`delete from bulk_previews where resource_snapshot ?| ${ids}`;
+      await sql`delete from timeline_events where company_id=any(${ids}::uuid[])`;
+      await sql`delete from companies where id=any(${ids}::uuid[])`;
+      await fx.cleanup();
+      await repo.close();
+    }
+  }, 60_000);
+
   it("reads and exports durable progress for 1000 items", async () => {
     if (!sql) throw new Error("TEST_DATABASE_URL is required");
     const fx = await fixture();

@@ -9,7 +9,9 @@ import { createSqlClient, getSqlClient, type SqlClient } from "@/server/db/clien
 import { createAnnualReturnRepository } from "@/features/annual-return/repository";
 import {
   applyOneCaseOwnerAssignmentForActor,
+  applyOneClientOwnerAssignmentForActor,
   previewCaseOwnerAssignmentsForActor,
+  previewClientOwnerAssignmentsForActor,
 } from "./assignment-handler";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { filterWorkQueueDisplay } from "@/features/work-items/queue-display-filters";
@@ -38,10 +40,11 @@ import {
 type QueryClient = SqlClient | postgres.TransactionSql;
 type WorkAssignInput = Extract<BulkPreviewInput, { action: "assign" }>;
 type CaseAssignInput = Extract<BulkPreviewInput, { action: "caseAssign" }>;
+type ClientAssignInput = Extract<BulkPreviewInput, { action: "clientAssign" }>;
 type Tx = postgres.TransactionSql;
 type PreviewRow = {
   id: string;
-  action: "assign" | "caseAssign" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   scope_role: "Admin" | "Manager";
@@ -70,7 +73,7 @@ type Snapshot = {
 type OperationRow = {
   id: string;
   preview_id: string;
-  action: "assign" | "caseAssign" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   state: BulkOperation["state"];
@@ -168,7 +171,8 @@ function mapOperation(row: OperationRow, items: ItemRow[]): BulkOperationView {
       state: item.state,
       reasonCode: item.reason_code,
       revisionBefore:
-        row.action === "caseAssign" && item.reason_code === "CASE_OUT_OF_SCOPE"
+        (row.action === "caseAssign" && item.reason_code === "CASE_OUT_OF_SCOPE") ||
+        (row.action === "clientAssign" && item.reason_code === "CLIENT_OUT_OF_SCOPE")
           ? null
           : item.revision_before,
       revisionAfter: item.revision_after,
@@ -276,6 +280,42 @@ async function caseIdsForSelection(
   throw new Error("Matching case scan exceeded 100 pages; narrow the filter.");
 }
 
+async function clientIdsForSelection(
+  sql: QueryClient,
+  actor: AuthenticatedActor,
+  selection: ClientAssignInput["selection"],
+): Promise<string[]> {
+  if (selection.kind === "ids") {
+    if (new Set(selection.ids).size !== selection.ids.length)
+      throw new Error("Duplicate selected IDs.");
+    return [...selection.ids].sort();
+  }
+  if (new Set(selection.excludedIds).size !== selection.excludedIds.length)
+    throw new Error("Duplicate excluded IDs.");
+  if (actor.role === "Manager" && !actor.teamId)
+    throw new Error("Forbidden: manager team is unavailable.");
+  if (
+    actor.role === "Manager" &&
+    selection.filters.teamId &&
+    selection.filters.teamId !== actor.teamId
+  )
+    throw new Error("Forbidden: filter is outside the manager's team.");
+  const teamId = actor.role === "Manager" ? actor.teamId : (selection.filters.teamId ?? null);
+  const status = selection.filters.status ?? "all";
+  const query = (selection.filters.q ?? "").toLowerCase();
+  const rows = await sql<{ id: string }[]>`
+    select id from companies
+    where (${teamId}::uuid is null or assigned_team_id=${teamId})
+      and (${status}='all' or status=${status})
+      and (${query}='' or strpos(lower(company_name),${query})>0
+        or strpos(lower(cr_number),${query})>0
+        or strpos(lower(br_number),${query})>0)
+      and not (id=any(${selection.excludedIds}::uuid[]))
+    order by id limit ${MAX_ITEMS + 1}`;
+  if (rows.length > MAX_ITEMS) throw new Error("Selection exceeds the 1000-item preview limit.");
+  return rows.map((row) => row.id);
+}
+
 export function createBulkOperationRepository(
   options: { sql?: QueryClient; databaseUrl?: string } = {},
 ) {
@@ -333,6 +373,28 @@ export function createBulkOperationRepository(
           snapshot[item.caseId] = {
             // Forbidden explicit IDs deliberately use a sentinel that is never run.
             // No existence, owner, team or revision metadata crosses this boundary.
+            revision: item.revision ?? 1,
+            state: item.state,
+            teamId: item.oldTeamId,
+            status: item.reasonCode ?? "assignable",
+            ownerId: item.oldOwnerId,
+            reviewerId: null,
+            reasonCode: item.reasonCode,
+            newOwnerId: item.newOwnerId,
+            newTeamId: item.newTeamId,
+          };
+        }
+      } else if (input.action === "clientAssign") {
+        const clientIds = await clientIdsForSelection(sql, current, input.selection);
+        if (clientIds.length === 0)
+          throw new Error("Selection has no eligible or reviewable items.");
+        const decisions = await previewClientOwnerAssignmentsForActor(
+          current,
+          { clientIds, ownerId: input.parameters.ownerId },
+          { sql },
+        );
+        for (const item of decisions) {
+          snapshot[item.clientId] = {
             revision: item.revision ?? 1,
             state: item.state,
             teamId: item.oldTeamId,
@@ -424,7 +486,8 @@ export function createBulkOperationRepository(
         itemsPreview: entries.slice(0, 50).map(([resourceId, value]) => ({
           resourceId,
           revision:
-            input.action === "caseAssign" && value.reasonCode === "CASE_OUT_OF_SCOPE"
+            (input.action === "caseAssign" && value.reasonCode === "CASE_OUT_OF_SCOPE") ||
+            (input.action === "clientAssign" && value.reasonCode === "CLIENT_OUT_OF_SCOPE")
               ? null
               : value.revision,
           state: value.state,
@@ -446,7 +509,11 @@ export function createBulkOperationRepository(
         >`select * from bulk_previews where id = ${input.previewId} for update`;
         if (!preview) throw new Error("Bulk preview not found.");
         assertPreviewScope(current, preview);
-        if (preview.action !== "assign" && preview.action !== "caseAssign")
+        if (
+          preview.action !== "assign" &&
+          preview.action !== "caseAssign" &&
+          preview.action !== "clientAssign"
+        )
           throw new Error("Unsupported bulk preview action for generic commit.");
         if (
           preview.preview_hash !== input.previewHash ||
@@ -468,8 +535,8 @@ export function createBulkOperationRepository(
               throw new Error("Forbidden: work item moved outside the actor's team.");
           }
         }
-        // Case assignments use per-item revision and authority checks in the runner.
-        // A changed case must not abort unrelated eligible cases at commit time.
+        // Case and client assignments use per-item revision and authority checks in
+        // the runner. One changed resource must not abort unrelated eligible items.
         const logicalKey = preview.preview_hash;
         const [inserted] = await tx<{ id: string }[]>`
           insert into bulk_operations (preview_id,action,created_by_id,auth_user_id,idempotency_key,logical_key)
@@ -799,6 +866,50 @@ export function createBulkOperationRepository(
               await tx`update bulk_operation_attempts set state = 'succeeded',finished_at = now()
                 where item_id = ${claimed.item.id}
                   and attempt_number = ${claimed.item.attempt_count}`;
+              return;
+            }
+            if (preview.action === "clientAssign") {
+              if (claimed.operation.action !== "clientAssign")
+                throw new BulkItemFailure("conflict", "ACTION_MISMATCH");
+              const parameters = preview.parameters as { ownerId?: string };
+              if (!parameters.ownerId) throw new BulkItemFailure("conflict", "TARGET_MISSING");
+              let assigned: { clientId: string; revision: number };
+              try {
+                assigned = await applyOneClientOwnerAssignmentForActor(
+                  actor,
+                  {
+                    clientId: claimed.item.resource_id,
+                    ownerId: parameters.ownerId,
+                    expectedAssignmentRevision: claimed.item.revision_before,
+                  },
+                  { sql: tx },
+                );
+              } catch (error) {
+                if (!(error instanceof Error)) throw error;
+                if (/revision changed/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "REVISION_CHANGED");
+                if (/inactive|unavailable|already assigned/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "TARGET_UNAVAILABLE");
+                if (/forbidden|team/i.test(error.message))
+                  throw new BulkItemFailure("forbidden", "ITEM_OUT_OF_SCOPE");
+                throw error;
+              }
+              await options.afterDomainWrite?.();
+              const [audit] = await tx<{ id: string }[]>`
+                select id from timeline_events where company_id=${assigned.clientId}
+                  and event_type='client_updated' and actor_id=${actor.userId}
+                order by created_at desc,id desc limit 1`;
+              if (!audit) throw new Error("Client assignment audit event is missing.");
+              const [saved] = await tx<{ id: string }[]>`
+                update bulk_operation_items set state='succeeded',
+                  revision_after=${assigned.revision},audit_ref=${audit.id},
+                  lease_token=null,lease_until=null,updated_at=now()
+                where id=${claimed.item.id} and lease_token=${claimed.token}
+                  and state='running' returning id`;
+              if (!saved) throw new Error("Bulk item lease changed during client commit.");
+              await tx`update bulk_operation_attempts set state='succeeded',finished_at=now()
+                where item_id=${claimed.item.id}
+                  and attempt_number=${claimed.item.attempt_count}`;
               return;
             }
             if (preview.action !== "assign" || claimed.operation.action !== "assign")

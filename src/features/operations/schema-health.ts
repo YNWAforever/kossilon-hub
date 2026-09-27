@@ -75,6 +75,7 @@ export const EXPECTED_MIGRATIONS = [
   "0048_case_assignment_revision.sql",
   "0049_bulk_case_assign_action.sql",
   "0050_client_assignment_revision.sql",
+  "0051_bulk_client_assign_action.sql",
 ] as const;
 
 export type SchemaLedger = {

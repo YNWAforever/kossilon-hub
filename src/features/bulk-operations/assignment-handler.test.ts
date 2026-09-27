@@ -3,7 +3,9 @@ import { createSqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import {
   applyOneCaseOwnerAssignmentForActor,
+  applyOneClientOwnerAssignmentForActor,
   previewCaseOwnerAssignmentsForActor,
+  previewClientOwnerAssignmentsForActor,
 } from "./assignment-handler";
 import {
   addPageToSelection,
@@ -154,6 +156,114 @@ describe.skipIf(!databaseUrl)("T22 case owner assignment on disposable PostgreSQ
             applyOneCaseOwnerAssignmentForActor(
               actor,
               { caseId: caseIds[0]!, ownerId: managerId, expectedAssignmentRevision: 1 },
+              { sql: tx },
+            ),
+          ).rejects.toThrow(/revision changed/i);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    } finally {
+      await db.end();
+    }
+  }, 60_000);
+});
+
+describe.skipIf(!databaseUrl)("T22 client owner assignment on disposable PostgreSQL", () => {
+  it("t22 client assignment rechecks team, target and revision per item while eligible clients succeed", async () => {
+    const db = createSqlClient(databaseUrl!, { max: 2 });
+    const rollback = new Error("T22 client fixture rollback");
+    try {
+      await expect(
+        db.begin(async (tx) => {
+          const teamA = crypto.randomUUID();
+          const teamB = crypto.randomUUID();
+          const managerId = crypto.randomUUID();
+          const targetId = crypto.randomUUID();
+          const inactiveId = crypto.randomUUID();
+          const actor: AuthenticatedActor = {
+            authUserId: `t22-client-${managerId}`,
+            userId: managerId,
+            role: "Manager",
+            teamId: teamA,
+            active: true,
+          };
+          await tx`insert into teams(id,name) values
+          (${teamA},${`T22 Client A ${teamA}`}),(${teamB},${`T22 Client B ${teamB}`})`;
+          for (const [id, role, teamId, active] of [
+            [managerId, "Manager", teamA, true],
+            [targetId, "Staff", teamA, true],
+            [inactiveId, "Staff", teamA, false],
+          ] as const) {
+            await tx`insert into users(id,name,email,role,team_id,active)
+            values (${id},${`T22 Client ${id}`},${`${id}@example.invalid`},
+              ${role},${teamId},${active})`;
+            await tx`insert into staff_profiles(user_id,auth_user_id,role,team_id,active)
+            values (${id},${id === managerId ? actor.authUserId : `t22-client-${id}`},
+              ${role},${teamId},${active})`;
+          }
+          const eligibleId = crypto.randomUUID();
+          const foreignId = crypto.randomUUID();
+          for (const [id, teamId] of [
+            [eligibleId, teamA],
+            [foreignId, teamB],
+          ] as const) {
+            await tx`insert into companies(id,company_name,cr_number,br_number,
+            incorporation_date,annual_return_basis_date,registered_office,
+            company_secretary,assigned_owner_id,assigned_team_id,data_origin)
+            values (${id},${`T22 Client ${id}`},${`CR-${id}`},${`BR-${id}`},
+              '2020-01-01','2026-01-01','Test address','Test secretary',
+              ${managerId},${teamId},'client')`;
+          }
+          const preview = await previewClientOwnerAssignmentsForActor(
+            actor,
+            { clientIds: [eligibleId, foreignId], ownerId: targetId },
+            { sql: tx },
+          );
+          expect(preview.map((item) => [item.state, item.reasonCode])).toEqual([
+            ["eligible", null],
+            ["forbidden", "CLIENT_OUT_OF_SCOPE"],
+          ]);
+          expect(preview[1]).toMatchObject({
+            revision: null,
+            oldOwnerId: null,
+            oldTeamId: null,
+          });
+          const inactive = await previewClientOwnerAssignmentsForActor(
+            actor,
+            { clientIds: [eligibleId], ownerId: inactiveId },
+            { sql: tx },
+          );
+          expect(inactive[0]).toMatchObject({
+            state: "conflict",
+            reasonCode: "TARGET_UNAVAILABLE",
+          });
+          await expect(
+            applyOneClientOwnerAssignmentForActor(
+              actor,
+              { clientId: foreignId, ownerId: targetId, expectedAssignmentRevision: 1 },
+              { sql: tx },
+            ),
+          ).rejects.toThrow(/forbidden|team/i);
+          await expect(
+            applyOneClientOwnerAssignmentForActor(
+              actor,
+              { clientId: eligibleId, ownerId: inactiveId, expectedAssignmentRevision: 1 },
+              { sql: tx },
+            ),
+          ).rejects.toThrow(/inactive|unavailable/i);
+          const applied = await applyOneClientOwnerAssignmentForActor(
+            actor,
+            { clientId: eligibleId, ownerId: targetId, expectedAssignmentRevision: 1 },
+            { sql: tx },
+          );
+          expect(applied).toMatchObject({ clientId: eligibleId, revision: 2 });
+          const [saved] = await tx<{ assigned_owner_id: string; assignment_revision: number }[]>`
+          select assigned_owner_id,assignment_revision from companies where id=${eligibleId}`;
+          expect(saved).toMatchObject({ assigned_owner_id: targetId, assignment_revision: 2 });
+          await expect(
+            applyOneClientOwnerAssignmentForActor(
+              actor,
+              { clientId: eligibleId, ownerId: managerId, expectedAssignmentRevision: 1 },
               { sql: tx },
             ),
           ).rejects.toThrow(/revision changed/i);
