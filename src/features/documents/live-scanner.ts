@@ -80,6 +80,30 @@ export function createLiveDocumentScanner(
         return { status: "failed", retryable: false, errorCode: "stored-checksum-mismatch" };
       }
 
+      // Declared MIME and extension are uploader claims. Check file signatures on
+      // the exact bytes sent to the vendor; a clean malware verdict does not make
+      // a text file a PDF (or an image). A vendor verdict is still required.
+      const bytes = new Uint8Array(stored.body);
+      const matchesMime =
+        input.contentType === "application/pdf"
+          ? bytes.length >= 5 &&
+            bytes[0] === 0x25 &&
+            bytes[1] === 0x50 &&
+            bytes[2] === 0x44 &&
+            bytes[3] === 0x46 &&
+            bytes[4] === 0x2d
+          : input.contentType === "image/png"
+            ? bytes.length >= 8 &&
+              [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every(
+                (value, index) => bytes[index] === value,
+              )
+            : input.contentType === "image/jpeg"
+              ? bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+              : false;
+      if (!matchesMime) {
+        return { status: "failed", retryable: false, errorCode: "content-mime-mismatch" };
+      }
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       let response: Response;

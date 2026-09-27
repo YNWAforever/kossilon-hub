@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { createLiveDocumentScanner } from "./live-scanner";
 import type { DocumentStorage } from "./types";
 
-const CONTENT = new Uint8Array([1, 2, 3, 4]);
+const CONTENT = new TextEncoder().encode("%PDF-1.7\n");
 // sha256 of the four bytes above, so the adapter's own re-derivation matches.
-const CHECKSUM = "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a";
+const CHECKSUM = "0716f9264c9fe19f5d7455276107f3ddcc1d3497f63d60689a73558ae8a1bf5e";
 const config = { endpoint: "https://scanner.example/scan", apiKey: "test-key" };
 
 function storage(overrides: Partial<DocumentStorage> = {}): DocumentStorage {
