@@ -1781,8 +1781,8 @@ create table if not exists whatsapp_message_media (
   id uuid primary key default gen_random_uuid(),
   message_id uuid not null references whatsapp_messages(id) on delete cascade,
 
-  -- WOZTELL's own identifier for the media. The only handle we have, and the
-  -- only thing a future download could be issued against.
+  -- WOZTELL media reference from the signed webhook; Open API fileId mapping
+  -- remains runtime-gated until the provider tenant verifies it.
   provider_media_id text not null,
 
   -- WOZTELL's vocabulary, stored as it arrives (documented payloads use
@@ -1795,10 +1795,40 @@ create table if not exists whatsapp_message_media (
   -- one" has to stay the third one.
   position integer not null check (position >= 0),
 
-  -- Set if this media ever becomes a document. Null on every row today.
+  -- Set after staff links quarantined bytes to a case through the document pipeline.
   -- on delete set null: losing the document must not erase the record that the
   -- client sent something.
   document_id uuid references documents(id) on delete set null,
+
+  -- from 0045: durable, fenced download from WOZTELL's approved media host.
+  download_status text not null default 'pending'
+    check (download_status in (
+      'pending','processing','quarantined','linked','manual_reupload','failed'
+    )),
+  download_attempt_count integer not null default 0 check (download_attempt_count >= 0),
+  download_max_attempts integer not null default 5 check (download_max_attempts > 0),
+  download_next_attempt_at timestamptz not null default now(),
+  download_lease_token uuid,
+  download_lease_expires_at timestamptz,
+  download_last_error_code text,
+  download_object_key text not null default ('whatsapp-media/' || gen_random_uuid()::text),
+  download_checksum_sha256 text
+    check (download_checksum_sha256 is null or download_checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  download_content_type text,
+  download_byte_size bigint
+    check (download_byte_size is null or download_byte_size between 1 and 10485760),
+  download_file_name text,
+  download_revision integer not null default 0 check (download_revision >= 0),
+  constraint whatsapp_media_attempt_limit
+    check (download_attempt_count <= download_max_attempts),
+  constraint whatsapp_media_lease_pair
+    check ((download_lease_token is null) = (download_lease_expires_at is null)),
+  constraint whatsapp_media_quarantine_metadata
+    check (
+      download_status not in ('quarantined','linked')
+      or (download_checksum_sha256 is not null and download_content_type is not null
+          and download_byte_size is not null and download_file_name is not null)
+    ),
 
   created_at timestamptz not null default now(),
 
@@ -1810,6 +1840,13 @@ create table if not exists whatsapp_message_media (
 
 create index if not exists whatsapp_message_media_message_idx
   on whatsapp_message_media (message_id);
+create unique index if not exists whatsapp_message_media_position_uidx
+  on whatsapp_message_media(message_id, position);
+create unique index if not exists whatsapp_message_media_object_key_uidx
+  on whatsapp_message_media(download_object_key);
+create index if not exists whatsapp_message_media_download_due_idx
+  on whatsapp_message_media(download_next_attempt_at, created_at)
+  where download_status in ('pending','processing');
 
 -- Finding media nobody has turned into a document yet: the staff queue, and the
 -- backlog that will exist the moment a download endpoint is available.
@@ -1978,7 +2015,7 @@ create table if not exists maintenance_job_runs (
   scheduled_for timestamptz not null,
   job_kind text not null check (job_kind in (
     'evaluateEscalations', 'settleNotificationAttempts',
-    'redactNotifications', 'escalateStalledQuarantine', 'runBulkOperations'
+    'redactNotifications', 'escalateStalledQuarantine', 'runBulkOperations', 'drainInboundMediaDownloads'
   )),
   trigger_source text not null check (trigger_source in ('scheduled', 'manual')),
   run_id text not null,

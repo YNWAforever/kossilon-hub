@@ -35,6 +35,7 @@ describe("T01 schema compatibility release gate", () => {
       "analysis",
       "documents",
       "maintenance",
+      "media",
       "packages",
       "parties",
       "payments",

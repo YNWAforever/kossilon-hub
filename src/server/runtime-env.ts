@@ -229,6 +229,34 @@ export function getDocumentScannerConfig(
   return { endpoint: endpoint.trim(), apiKey: apiKey.trim() };
 }
 
+export type WhatsAppMediaConfig = {
+  accessToken: string;
+  allowedMediaHosts: string[];
+};
+
+/**
+ * T19 is disabled until the tenant proves waMediaId resolves as Open API fileId.
+ * A general WhatsApp send token is not sufficient; this credential needs only
+ * the provider file:get scope. Absent proof leaves queued references untouched.
+ */
+export function getWhatsAppMediaConfig(
+  env: Record<string, unknown> = defaultRuntimeSource(),
+): WhatsAppMediaConfig | null {
+  if (env.WOZTELL_MEDIA_FILE_ID_MAPPING_VERIFIED !== "true") return null;
+  const token = env.WOZTELL_OPEN_API_TOKEN;
+  const hosts = env.WOZTELL_MEDIA_ALLOWED_HOSTS;
+  if (!hasText(token) || !hasText(hosts)) return null;
+  const allowedMediaHosts = hosts.split(",").map((host) => host.trim().toLowerCase());
+  if (
+    allowedMediaHosts.length === 0 ||
+    allowedMediaHosts.some(
+      (host) => !/^[a-z0-9.-]+$/.test(host) || !host.includes(".") || /^[0-9.]+$/.test(host),
+    )
+  )
+    return null;
+  return { accessToken: token.trim(), allowedMediaHosts };
+}
+
 export type DocumentAiConfig = { endpoint: string; apiKey: string };
 
 /**

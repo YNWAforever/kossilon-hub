@@ -4,7 +4,8 @@ export type MaintenanceJobKind =
   | "settleNotificationAttempts"
   | "redactNotifications"
   | "escalateStalledQuarantine"
-  | "runBulkOperations";
+  | "runBulkOperations"
+  | "drainInboundMediaDownloads";
 export type TriggerKind = "scheduled" | "manual";
 export type JobOutcome = "succeeded" | "failed";
 export type JobState = JobOutcome | "skipped" | "unknown";

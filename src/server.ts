@@ -65,13 +65,13 @@ type MaintenanceRunner = (input: {
 }) => Promise<unknown>;
 
 const defaultMaintenanceRunner: MaintenanceRunner = async (input) => {
-  const { runMaintenanceTickOnServer, INITIAL_SCHEDULED_JOBS } =
+  const { runMaintenanceTickOnServer, scheduledJobsForRuntime } =
     await import("./server/maintenance-trigger-runtime");
   return runMaintenanceTickOnServer({
     trigger: input.triggerSource,
     scheduledAt: input.now,
     runId: crypto.randomUUID(),
-    allowedJobs: [...INITIAL_SCHEDULED_JOBS],
+    allowedJobs: scheduledJobsForRuntime(),
   });
 };
 
@@ -130,13 +130,13 @@ export default {
         if (!authorizeMaintenanceRequest(request, process.env.CRON_SECRET)) {
           return new Response("Unauthorized", { status: 401 });
         }
-        const { runMaintenanceTickOnServer, scheduledSlot, INITIAL_SCHEDULED_JOBS } =
+        const { runMaintenanceTickOnServer, scheduledSlot, scheduledJobsForRuntime } =
           await import("./server/maintenance-trigger-runtime");
         const result = await runMaintenanceTickOnServer({
           trigger: "scheduled",
           scheduledAt: scheduledSlot(new Date()),
           runId: crypto.randomUUID(),
-          allowedJobs: [...INITIAL_SCHEDULED_JOBS],
+          allowedJobs: scheduledJobsForRuntime(),
         });
         return Response.json(result, {
           status: result.outcome === "partial" ? 500 : 200,
