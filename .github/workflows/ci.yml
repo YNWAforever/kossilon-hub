@@ -93,7 +93,9 @@ jobs:
       - name: Dev server import boundaries
         run: npm run verify:dev-server-imports
 
-      - name: Cron trigger has a handler in the built Worker
+      - name: Cron triggers have handlers in the build
         run: |
           grep -q 'hooks.hook("cloudflare:scheduled"' .output/server/index.mjs \
             || { echo "cloudflare:scheduled hook missing from the built Worker"; exit 1; }
+          grep -Rql '/api/cron/maintenance' .output/server \
+            || { echo "Vercel cron HTTP endpoint missing from the server build"; exit 1; }

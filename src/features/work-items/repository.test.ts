@@ -312,8 +312,8 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
             }),
           ).rejects.toThrow("stale");
 
-          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z");
-          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z");
+          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z", 1);
+          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z", 1);
           let events = await tx<{ work_item_id: string; threshold: string }[]>`
             select work_item_id, threshold from escalation_events
             where work_item_id in (${warningId}, ${breachId})

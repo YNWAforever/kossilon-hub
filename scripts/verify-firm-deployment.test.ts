@@ -27,12 +27,20 @@ const gateFiles = new Map<string, string>([
     "src/server/cron.ts",
     "export async function runScheduledMaintenance() {} dispatchDue cleanupExpiredUploads",
   ],
-  ["src/server.ts", "runScheduledMaintenanceForWorker runFirmMaintenance(input)"],
+  [
+    "src/server.ts",
+    'runScheduledMaintenanceForWorker runMaintenanceTickOnServer pathname === "/api/cron/maintenance" authorizeMaintenanceRequest(request, process.env.CRON_SECRET)',
+  ],
   ["src/server/maintenance.ts", "export async function runFirmMaintenance() {}"],
   [
     "src/server/nitro-scheduled.ts",
-    'definePlugin nitroApp.hooks.hook("cloudflare:scheduled", handler) runScheduledMaintenanceForWorker',
+    'definePlugin nitroApp.hooks.hook("cloudflare:scheduled", handler) runScheduledMaintenanceForWorker MAINTENANCE_SCHEDULER_OWNER !== "cloudflare"',
   ],
+  [
+    "src/server/maintenance-trigger-runtime.ts",
+    "INITIAL_SCHEDULED_JOBS createMaintenanceTrigger runSafeJob",
+  ],
+  ["vercel.json", '{"crons":[{"path":"/api/cron/maintenance","schedule":"*/5 * * * *"}]}'],
   ["vite.config.ts", 'nitro: { plugins: ["./src/server/nitro-scheduled.ts"] }'],
 ]);
 

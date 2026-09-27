@@ -114,7 +114,12 @@ const LOCAL_GATE_CONTRACTS = {
     // plugin only runs if vite.config.ts lists it.
     {
       file: "src/server.ts",
-      snippets: ["runScheduledMaintenanceForWorker", "runFirmMaintenance(input)"],
+      snippets: [
+        "runScheduledMaintenanceForWorker",
+        "runMaintenanceTickOnServer",
+        'pathname === "/api/cron/maintenance"',
+        "authorizeMaintenanceRequest(request, process.env.CRON_SECRET)",
+      ],
     },
     {
       file: "src/server/nitro-scheduled.ts",
@@ -122,7 +127,16 @@ const LOCAL_GATE_CONTRACTS = {
         "definePlugin",
         'hooks.hook("cloudflare:scheduled"',
         "runScheduledMaintenanceForWorker",
+        'MAINTENANCE_SCHEDULER_OWNER !== "cloudflare"',
       ],
+    },
+    {
+      file: "src/server/maintenance-trigger-runtime.ts",
+      snippets: ["INITIAL_SCHEDULED_JOBS", "createMaintenanceTrigger", "runSafeJob"],
+    },
+    {
+      file: "vercel.json",
+      snippets: ['"/api/cron/maintenance"', '"*/5 * * * *"'],
     },
     {
       file: "vite.config.ts",
