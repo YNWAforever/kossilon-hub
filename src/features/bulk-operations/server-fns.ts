@@ -126,6 +126,9 @@ export const commitBulkOperation = createServerFn({ method: "POST" })
       commitBulkOperationForActor(actor, data, repository),
     );
   });
+export const getBulkManualReviewQueue = createServerFn({ method: "GET" }).handler(() =>
+  withAuthorizedBulkRepository((repository, actor) => repository.listManualReviewQueue(actor)),
+);
 export const getBulkOperation = createServerFn({ method: "GET" })
   .validator(operationIdSchema)
   .handler(({ data }) =>

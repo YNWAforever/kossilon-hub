@@ -338,6 +338,17 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "bulk_operations_action_check",
     expected: "reminderDrafts",
   },
+  ...(
+    [
+      ["payments", "reconcilePayments"],
+      ["packages", "preparePackages"],
+      ["submissions", "recordSubmissions"],
+      ["returns", "matchReturns"],
+    ] as const
+  ).flatMap(([capability, expected]) => [
+    { capability, kind: "constraint" as const, name: "bulk_previews_action_check", expected },
+    { capability, kind: "constraint" as const, name: "bulk_operations_action_check", expected },
+  ]),
   {
     capability: "staff",
     kind: "column",
