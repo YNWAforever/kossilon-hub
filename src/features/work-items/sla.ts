@@ -42,3 +42,64 @@ export function thresholdFor(workItem: WorkItem, now: string): SlaThreshold {
   if (current >= timestamp(workItem.slaWarningAt, "SLA warning time")) return "warning";
   return "none";
 }
+
+export type SlaDisplayState =
+  | "not-configured"
+  | "not-started"
+  | "on-track"
+  | "at-risk"
+  | "breached"
+  | "acknowledged"
+  | "unavailable";
+
+export type SlaDisplayInput = {
+  status: WorkItem["status"];
+  escalationState: "none" | "warning" | "breach" | "acknowledged";
+  workDueAt: string | null;
+  slaPolicyVersionId: string | null;
+  slaStartedAt: string | null;
+  slaWarningAt: string | null;
+  slaDueAt: string | null;
+  slaBreachedAt: string | null;
+  evaluatedAt: string | null;
+};
+
+export type SlaDisplay = {
+  state: SlaDisplayState;
+  workDueAt: string | null;
+  workOverdue: boolean;
+  slaDueAt: string | null;
+  evaluatedAt: string | null;
+  policyVersionId: string | null;
+};
+
+export function deriveSlaDisplay(input: SlaDisplayInput, now: string): SlaDisplay {
+  const current = timestamp(now, "Current time");
+  const workDue = input.workDueAt ? Date.parse(input.workDueAt) : null;
+  const workOverdue = workDue !== null && Number.isFinite(workDue) && current >= workDue;
+  const common = {
+    workDueAt: input.workDueAt,
+    workOverdue,
+    slaDueAt: input.slaDueAt,
+    evaluatedAt: input.evaluatedAt,
+    policyVersionId: input.slaPolicyVersionId,
+  };
+  if (!input.slaPolicyVersionId) return { ...common, state: "not-configured" };
+  if (!input.slaStartedAt) return { ...common, state: "not-started" };
+  if (!input.slaWarningAt || !input.slaDueAt) return { ...common, state: "unavailable" };
+  const warning = Date.parse(input.slaWarningAt);
+  const due = Date.parse(input.slaDueAt);
+  if (!Number.isFinite(warning) || !Number.isFinite(due) || warning >= due) {
+    return { ...common, state: "unavailable" };
+  }
+  if (input.escalationState === "acknowledged" && (input.slaBreachedAt || current < due)) {
+    return { ...common, state: "acknowledged" };
+  }
+  if (input.escalationState === "breach" || input.slaBreachedAt || current >= due) {
+    return { ...common, state: "breached" };
+  }
+  if (input.escalationState === "warning" || current >= warning) {
+    return { ...common, state: "at-risk" };
+  }
+  return { ...common, state: "on-track" };
+}

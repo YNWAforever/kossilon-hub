@@ -14,6 +14,7 @@ import type {
   BusinessCalendar,
   SlaThreshold,
   StaffCandidate,
+  WorkQueuePerson,
   WorkItemCaseType,
   WorkItemStatus,
 } from "./types";
@@ -33,6 +34,8 @@ export type PersistedWorkItem = {
    */
   companyName: string | null;
   ownerName: string | null;
+  ownerPerson?: WorkQueuePerson | null;
+  workDueAt?: string | null;
   caseType: WorkItemCaseType;
   annualReturnCaseId: string | null;
   corporateChangeRequestId: string | null;
@@ -62,6 +65,11 @@ type WorkItemRow = {
   /** Present only on reads that join them; optional so other reads still map. */
   company_name?: string | null;
   owner_name?: string | null;
+  owner_role?: AssignmentRole | null;
+  owner_team_name?: string | null;
+  owner_staff_active?: boolean | null;
+  owner_user_active?: boolean | null;
+  work_due_at?: string | Date | null;
   case_type: WorkItemCaseType;
   annual_return_case_id: string | null;
   corporate_change_request_id: string | null;
@@ -147,6 +155,17 @@ function mapWorkItem(row: WorkItemRow): PersistedWorkItem {
     companyId: row.company_id,
     companyName: row.company_name ?? null,
     ownerName: row.owner_name ?? null,
+    ownerPerson:
+      row.owner_id && row.owner_name && row.owner_role
+        ? {
+            id: row.owner_id,
+            name: row.owner_name,
+            role: row.owner_role,
+            teamName: row.owner_team_name ?? null,
+            active: row.owner_staff_active === true && row.owner_user_active === true,
+          }
+        : null,
+    workDueAt: row.work_due_at ? iso(row.work_due_at) : null,
     caseType: row.case_type,
     annualReturnCaseId: row.annual_return_case_id,
     corporateChangeRequestId: row.corporate_change_request_id,
@@ -246,6 +265,9 @@ async function recommendationsFor(
       staff_id: string;
       user_id: string;
       role: AssignmentRole;
+      name: string;
+      team_name: string | null;
+      user_active: boolean;
       team_id: string | null;
       capacity_points: number;
       active: boolean;
@@ -254,9 +276,11 @@ async function recommendationsFor(
     }[]
   >`
     select sp.id staff_id, sp.user_id, sp.role, sp.team_id, sp.capacity_points,
-      sp.active, ss.skill_key, ss.proficiency
+      sp.active, ss.skill_key, ss.proficiency, u.name, t.name as team_name, u.active as user_active
     from staff_profiles sp join staff_skills ss on ss.staff_profile_id = sp.id
-    where sp.active = true and ss.active = true and sp.team_id = ${item.teamId}
+    join users u on u.id = sp.user_id
+    left join teams t on t.id = sp.team_id
+    where sp.active = true and u.active = true and ss.active = true and sp.team_id = ${item.teamId}
       and ss.skill_key = ${item.requiredSkillKey}
   `;
   const work = await client<
@@ -305,7 +329,7 @@ async function recommendationsFor(
       .filter((entry) => entry.user_id === row.user_id)
       .map((entry) => entry.annual_return_case_id),
   }));
-  return rankAssignmentCandidates({
+  const ranked = rankAssignmentCandidates({
     assignmentTarget: options.assignmentTarget ?? "owner",
     requiredRole: options.requiredRole ?? "Staff",
     requiredSkillKey: item.requiredSkillKey,
@@ -315,6 +339,22 @@ async function recommendationsFor(
     reviewerId: item.reviewerId,
     separationOfDuties: options.separationOfDuties ?? true,
     candidates,
+  });
+  const byUserId = new Map(rows.map((row) => [row.user_id, row]));
+  return ranked.map((recommendation) => {
+    const row = byUserId.get(recommendation.userId);
+    return {
+      ...recommendation,
+      person: row
+        ? {
+            id: row.user_id,
+            name: row.name,
+            role: row.role,
+            teamName: row.team_name,
+            active: row.active && row.user_active,
+          }
+        : undefined,
+    };
   });
 }
 
@@ -406,6 +446,7 @@ export async function ensureWorkItemForEvent(
 
 export type WorkItemRepository = {
   listQueue(filters?: QueueFilters): Promise<PersistedWorkItem[]>;
+  lastSlaEvaluationAt(): Promise<string | null>;
   get(id: string): Promise<PersistedWorkItem | null>;
   recommendAssignees(
     id: string,
@@ -445,10 +486,14 @@ export function createWorkItemRepository(
     async listQueue(filters = {}) {
       const statuses = filters.statuses ?? ["open", "in_progress", "blocked"];
       const rows = await sql<WorkItemRow[]>`
-        select w.*, c.company_name, owner.name as owner_name
+        select w.*, c.company_name, owner.name as owner_name,
+          owner_profile.role as owner_role, owner_team.name as owner_team_name,
+          owner_profile.active as owner_staff_active, owner.active as owner_user_active
         from work_items w
         left join companies c on c.id = w.company_id
         left join users owner on owner.id = w.owner_id
+        left join staff_profiles owner_profile on owner_profile.user_id = owner.id
+        left join teams owner_team on owner_team.id = owner_profile.team_id
         where w.status = any(${statuses as WorkItemStatus[]})
           and (${filters.ownerId ?? null}::uuid is null or w.owner_id = ${filters.ownerId ?? null})
           and (${filters.teamId ?? null}::uuid is null or w.team_id = ${filters.teamId ?? null})
@@ -457,6 +502,13 @@ export function createWorkItemRepository(
         order by (w.sla_breached_at is null), w.sla_due_at, w.priority desc, w.id
       `;
       return rows.map(mapWorkItem);
+    },
+    async lastSlaEvaluationAt() {
+      const rows = await sql<{ finished_at: string | Date | null }[]>`
+        select max(finished_at) finished_at from maintenance_runs
+        where trigger_source = 'scheduled' and passes->>'escalations' is not null
+      `;
+      return rows[0]?.finished_at ? iso(rows[0].finished_at) : null;
     },
     get(id) {
       return getWorkItem(sql, id);

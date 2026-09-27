@@ -105,4 +105,25 @@ export type AssignmentRecommendation = {
   userId: string;
   score: number;
   factors: AssignmentScoreFactors;
+  person?: {
+    id: string;
+    name: string;
+    role: AssignmentRole;
+    teamName: string | null;
+    active: boolean;
+  };
 };
+
+export type WorkQueuePerson = {
+  id: string;
+  name: string;
+  role: AssignmentRole;
+  teamName: string | null;
+  active: boolean;
+};
+
+export function workQueuePersonLabel(person: WorkQueuePerson): string {
+  const name = person.name.trim() || "Staff record unavailable";
+  const team = person.teamName?.trim() || "No team";
+  return `${name} · ${person.role} · ${team}${person.active ? "" : " · Inactive"}`;
+}
