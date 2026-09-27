@@ -12,6 +12,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/annual-return/repository.test.ts",
   "src/features/bulk-operations/assignment-handler.test.ts",
   "src/features/bulk-operations/repository.test.ts",
+  "src/features/bulk-operations/reminder-handler.integration.test.ts",
   "src/features/bulk-operations/resource-export.test.ts",
   "src/features/bulk-operations/resource-tags.test.ts",
   "src/features/checklist-templates/repository.test.ts",

@@ -2066,7 +2066,7 @@ create index if not exists maintenance_job_unresolved_idx
 -- T09: durable previews and per-item operation/attempt evidence.
 create table if not exists bulk_previews (
   id uuid primary key default gen_random_uuid(),
-  action text not null check (action in ('assign', 'caseAssign', 'clientAssign', 'tag', 'importApply')),
+  action text not null check (action in ('assign', 'caseAssign', 'clientAssign', 'tag', 'reminderDrafts', 'importApply')),
   created_by_id uuid not null references users(id) on delete restrict,
   auth_user_id text not null,
   scope_role text not null check (scope_role in ('Admin','Manager')),
@@ -2087,7 +2087,7 @@ create index if not exists bulk_previews_actor_recent_idx on bulk_previews (crea
 create table if not exists bulk_operations (
   id uuid primary key default gen_random_uuid(),
   preview_id uuid not null unique references bulk_previews(id) on delete restrict,
-  action text not null check (action in ('assign','caseAssign','clientAssign','tag','importApply')),
+  action text not null check (action in ('assign','caseAssign','clientAssign','tag','reminderDrafts','importApply')),
   created_by_id uuid not null references users(id) on delete restrict,
   auth_user_id text not null,
   idempotency_key text not null,
@@ -2478,3 +2478,28 @@ create index resource_tag_events_resource_idx
 
 -- from 0053_bulk_tag_action.sql
 -- Action constraints are represented above in the bulk table definitions.
+
+-- from 0054_bulk_reminder_drafts.sql
+create table bulk_reminder_reviews (
+  id uuid primary key default gen_random_uuid(),
+  operation_item_id uuid not null unique references bulk_operation_items(id) on delete restrict,
+  logical_key text not null,
+  case_id uuid not null references annual_return_cases(id) on delete restrict,
+  company_id uuid not null references companies(id) on delete restrict,
+  contact_id uuid not null references company_contacts(id) on delete restrict,
+  cadence_slot date not null,
+  preview_id uuid not null references whatsapp_message_previews(id) on delete restrict,
+  preview_hash text not null check (preview_hash ~ '^[a-f0-9]{64}$'),
+  created_by_id uuid not null references users(id) on delete restrict,
+  state text not null default 'draft'
+    check (state in ('draft','queued','needs-reconciliation','cancelled')),
+  message_id uuid references whatsapp_messages(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check ((state = 'queued' and message_id is not null)
+    or (state <> 'queued' and message_id is null))
+);
+create unique index bulk_reminder_reviews_logical_key_active_uidx
+  on bulk_reminder_reviews(logical_key) where state <> 'cancelled';
+create index bulk_reminder_reviews_case_idx
+  on bulk_reminder_reviews(case_id,created_at desc);

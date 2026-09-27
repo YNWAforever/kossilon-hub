@@ -21,7 +21,8 @@ export type SchemaCapability =
   | "returns"
   | "media"
   | "staff"
-  | "templates";
+  | "templates"
+  | "reminders";
 type Requirement = {
   capability: SchemaCapability;
   kind: "table" | "column" | "index" | "constraint";
@@ -300,6 +301,43 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
   { capability: "staff", kind: "table", name: "annual_return_case_tags" },
   { capability: "staff", kind: "table", name: "work_item_tags" },
   { capability: "staff", kind: "table", name: "resource_tag_events" },
+  { capability: "reminders", kind: "table", name: "bulk_reminder_reviews" },
+  {
+    capability: "reminders",
+    kind: "column",
+    name: "bulk_reminder_reviews.preview_hash",
+    expected: "text",
+  },
+  {
+    capability: "reminders",
+    kind: "column",
+    name: "bulk_reminder_reviews.message_id",
+    expected: "uuid",
+  },
+  {
+    capability: "reminders",
+    kind: "index",
+    name: "bulk_reminder_reviews_case_idx",
+    expected: "case_id",
+  },
+  {
+    capability: "reminders",
+    kind: "index",
+    name: "bulk_reminder_reviews_logical_key_active_uidx",
+    expected: "state <> 'cancelled'",
+  },
+  {
+    capability: "reminders",
+    kind: "constraint",
+    name: "bulk_previews_action_check",
+    expected: "reminderDrafts",
+  },
+  {
+    capability: "reminders",
+    kind: "constraint",
+    name: "bulk_operations_action_check",
+    expected: "reminderDrafts",
+  },
   {
     capability: "staff",
     kind: "column",
@@ -384,6 +422,7 @@ export function inspectSchemaCompatibility(input: {
     media: { ready: true, issues: [] as string[] },
     staff: { ready: true, issues: [] as string[] },
     templates: { ready: true, issues: [] as string[] },
+    reminders: { ready: true, issues: [] as string[] },
   };
   const definitionMismatch: DefinitionMismatch[] = [];
   const tables = new Set(input.catalog.tables.map(normalize));

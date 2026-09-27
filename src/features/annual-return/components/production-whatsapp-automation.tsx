@@ -10,6 +10,7 @@ import {
 } from "../follow-up-server-fns";
 import { getWhatsAppIntegrationStatus } from "@/features/whatsapp/server-fns";
 import { PageHeader } from "@/components/page-header";
+import { BulkReminderReview } from "./bulk-reminder-review";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to review follow-up.";
@@ -137,6 +138,11 @@ export function ProductionWhatsAppAutomation() {
           )}
         </div>
       </section>
+      <BulkReminderReview
+        drafts={drafts}
+        canQueue={Boolean(canQueue)}
+        live={integrationQuery.data?.deliveryMode === "live"}
+      />
     </main>
   );
 }
