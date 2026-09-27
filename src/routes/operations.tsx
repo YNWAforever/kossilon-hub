@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { getOperationsHealth } from "@/features/operations/server-fns";
+import type { BlockedIntegrationId } from "@/features/operations/capabilities";
+import type { CapabilityState } from "@/features/operations/capability-status";
 import { dispatchCountLabel, type MaintenanceHealthState } from "@/features/operations/health";
 import type { JobQueueDepth } from "@/features/operations/repository";
 import { earliestMissingLabel, type SchemaHealthState } from "@/features/operations/schema-health";
@@ -59,6 +61,29 @@ const SCHEMA_TONE: Record<SchemaHealthState, string> = {
   current: "bg-status-green-soft text-status-green",
 };
 
+const CAPABILITY_STATE_LABEL: Record<CapabilityState, string> = {
+  unconfigured: "未設定",
+  unverified: "未驗證",
+  healthy: "有部署證據",
+  degraded: "證據顯示異常",
+  blocked: "受阻",
+};
+const CAPABILITY_STATE_TONE: Record<CapabilityState, string> = {
+  unconfigured: "bg-status-yellow-soft text-status-yellow",
+  unverified: "bg-status-yellow-soft text-status-yellow",
+  healthy: "bg-status-green-soft text-status-green",
+  degraded: "bg-status-red-soft text-status-red",
+  blocked: "bg-status-red-soft text-status-red",
+};
+const CAPABILITY_OWNER: Record<BlockedIntegrationId, string> = {
+  "malware-scanner-provider": "文件安全負責人",
+  "document-text-extraction": "文件營運負責人",
+  "ai-provider": "供應商及資料保障負責人",
+  "whatsapp-media-download": "訊息整合負責人",
+  "external-handoff-destination": "外部交件負責人",
+  "deployment-runtime": "平台營運負責人",
+};
+
 function QueueRow({ label, depth }: { label: string; depth: JobQueueDepth }) {
   return (
     <tr className="border-t">
@@ -100,6 +125,8 @@ function OperationsRoute() {
   }
 
   const view = healthQuery.data;
+  const deploymentScheduleVerified =
+    view?.capabilities.find((item) => item.id === "deployment-runtime")?.state === "healthy";
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -159,9 +186,15 @@ function OperationsRoute() {
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-base font-semibold">五分鐘排程</h2>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${STATE_TONE[view.maintenance.state]}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    view.maintenance.state === "healthy" && !deploymentScheduleVerified
+                      ? "bg-status-yellow-soft text-status-yellow"
+                      : STATE_TONE[view.maintenance.state]
+                  }`}
                 >
-                  {STATE_LABEL[view.maintenance.state]}
+                  {view.maintenance.state === "healthy" && !deploymentScheduleVerified
+                    ? "此部署未驗證"
+                    : STATE_LABEL[view.maintenance.state]}
                 </span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{view.maintenance.summary}</p>
@@ -231,35 +264,59 @@ function OperationsRoute() {
 
           <section className="rounded-lg border bg-card">
             <div className="border-b p-4">
-              <h2 className="text-base font-semibold">已停用的功能</h2>
+              <h2 className="text-base font-semibold">部署能力與支援診斷</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                以下功能在這個部署上不會運作。它們不是故障，也不會自行恢復。
+                設定存在不等於可用；只有同一部署的成功證據才會顯示綠色。連接狀態未經受控探測時顯示「未知」。
               </p>
             </div>
-            {view.staleBlockers.length > 0 ? (
-              <p className="border-b bg-status-yellow-soft px-4 py-3 text-sm text-status-yellow">
-                以下功能仍被列為停用，但它們所說的解除條件看來已經達成：
-                {view.staleBlockers.join("、")}。這不代表功能已恢復——請由人確認後，把它從
-                capabilities.ts 移除。
-              </p>
-            ) : null}
             <ul className="divide-y">
-              {view.blockedIntegrations.map((integration) => (
-                <li className="space-y-1 p-4" key={integration.id}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{integration.capability}</span>
-                    {integration.blocksRelease ? (
-                      <span className="rounded-full bg-status-red-soft px-2 py-0.5 text-xs text-status-red">
-                        阻擋交件
+              {view.capabilities.map((status) => {
+                const integration = view.blockedIntegrations.find((item) => item.id === status.id);
+                const impact =
+                  status.state === "blocked" || status.state === "unconfigured"
+                    ? integration?.effect
+                    : status.state === "degraded"
+                      ? "最近的執行或探測證據顯示異常，這項能力需要覆核。"
+                      : status.state === "unverified"
+                        ? "尚未有可追溯至這次部署的成功證據，請勿假定這項能力可用。"
+                        : null;
+                return (
+                  <li className="space-y-2 p-4" key={status.id}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{integration?.capability ?? status.id}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${CAPABILITY_STATE_TONE[status.state]}`}
+                      >
+                        {CAPABILITY_STATE_LABEL[status.state]}
                       </span>
+                      <code className="text-xs text-muted-foreground">{status.id}</code>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      程式：{status.implemented ? "已實作" : "尚未實作"}； 設定：
+                      {status.configured ? "已提供" : "未齊備"}； 連接：
+                      {status.reachable === "unknown"
+                        ? "未知"
+                        : status.reachable === "yes"
+                          ? "已證實"
+                          : "不可達"}
+                      。 最後成功：
+                      {status.lastSuccessAt?.slice(0, 16).replace("T", " ") ?? "沒有紀錄"}。
+                    </p>
+                    {status.evidenceRef ? (
+                      <p className="text-xs text-muted-foreground">證據：{status.evidenceRef}</p>
                     ) : null}
-                    <code className="text-xs text-muted-foreground">{integration.id}</code>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{integration.effect}</p>
-                  <p className="text-sm">現時做法：{integration.pilotFallback}</p>
-                  <p className="text-sm text-muted-foreground">需要：{integration.clearedBy}</p>
-                </li>
-              ))}
+                    {impact ? <p className="text-sm">影響：{impact}</p> : null}
+                    {status.state !== "healthy" ? (
+                      <p className="text-sm">
+                        負責：{CAPABILITY_OWNER[status.id]}。下一步：
+                        {status.configured
+                          ? "在受控環境驗證此部署並記錄成功與失敗證據。"
+                          : (integration?.clearedBy ?? "補齊必要設定與可審核證據。")}
+                      </p>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           </section>
 

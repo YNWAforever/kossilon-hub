@@ -109,8 +109,8 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     id: "ai-provider",
     capability: "由模型協助審閱文件",
     effect:
-      "第三層分析從不執行。倉庫內沒有任何 AI SDK、金鑰 binding 或供應商設定，" +
-      "介面上也沒有任何位置顯示模型的結論。",
+      "第三層分析的通用 adapter 已實作，但此部署尚未證實有獲批核的供應商、完整設定及成功執行證據。" +
+      "模型建議仍不得作為文件覆核或批准依據。",
     pilotFallback: "全部審閱由人完成。這正是現時的實際做法，不是降級。",
     clearedBy: "一個已批核的供應商、它的 binding 名稱，以及它的資料處理條款。",
     blocksRelease: false,
@@ -151,8 +151,8 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     id: "deployment-runtime",
     capability: "五分鐘排程確實在部署環境執行",
     effect:
-      "從未有人觀察過一次排程執行。在 maintenance_runs 之前，唯一的記錄是 console.log，" +
-      "而排程若從未註冊，每一個畫面看起來仍然完全正常。",
+      "此部署的排程 ownership、執行及最近成功結果尚未經生產證據核實。" +
+      "排程若未註冊，其他畫面仍可能看起來正常。",
     pilotFallback:
       "上線後先看營運畫面的「最後一次執行」；在它出現第一筆記錄之前，排程一律當作沒有運行。",
     clearedBy: "部署環境上一次排程被觸發的實際證據——現在就是 maintenance_runs 的第一筆排程資料。",
