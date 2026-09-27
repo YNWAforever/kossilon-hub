@@ -3,7 +3,13 @@ import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import type { WoztellSendMode } from "@/features/whatsapp/woztell";
 
 export type NotificationChannel = "email" | "whatsapp" | "in_app";
-export type NotificationStatus = "pending" | "processing" | "sent" | "failed" | "cancelled";
+export type NotificationStatus =
+  | "pending"
+  | "processing"
+  | "sent"
+  | "failed"
+  | "cancelled"
+  | "needs_reconciliation";
 
 export type NotificationIdentity = {
   companyId: string;
@@ -123,6 +129,8 @@ export type DispatchSummary = {
    * neighbour that reads as normal.
    */
   sentButUnrecorded: number;
+  /** Provider outcome was unknown or could not be durably recorded. */
+  needsReconciliation?: number;
   /**
    * Queued notifications cancelled because their company is fixture data.
    *
@@ -140,7 +148,30 @@ export type NotificationOutboxRepository = {
    */
   cancelFixtureOriginNotifications(now: string): Promise<{ cancelled: number }>;
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
-  claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
+  claimDue(
+    now: string,
+    limit: number,
+  ): Promise<import("./delivery-attempts").ClaimedDeliveryAttempt[]>;
+  claimDeliveryAttempt(
+    now: string,
+    limit: number,
+  ): Promise<import("./delivery-attempts").ClaimedDeliveryAttempt[]>;
+  beginProviderCall(
+    attemptId: string,
+    leaseToken: string,
+  ): Promise<import("./delivery-attempts").BeginResult>;
+  abortClaimedAttempt(
+    attemptId: string,
+    leaseToken: string,
+    errorCode: string,
+    now: string,
+  ): Promise<import("./delivery-attempts").OutcomeResult>;
+  recordProviderOutcome(
+    attemptId: string,
+    leaseToken: string,
+    outcome: import("./delivery-attempts").ProviderOutcome,
+    now: string,
+  ): Promise<import("./delivery-attempts").OutcomeResult>;
   /**
    * Fenced on the attempt_count the claim returned; `false` means another run
    * reclaimed the row and finished it first, so this outcome must not be counted.

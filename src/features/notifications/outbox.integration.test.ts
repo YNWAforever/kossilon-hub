@@ -215,7 +215,7 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
    * skips it because 'processing' is not settled. Stuck forever and invisible.
    */
   it(
-    "finalises a row stranded on its last attempt so it stops being invisible",
+    "quarantines legacy processing without an attempt on the last attempt",
     async () => {
       const sql = sqlForTests();
       const companyId = await seededCompanyId(sql);
@@ -232,16 +232,14 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
       expect(await claimedIdsWithoutCommitting(sql)).not.toContain(id);
       expect((await repository.redactExpired(new Date().toISOString())).redacted).toBe(0);
 
-      expect((await repository.failStranded(new Date().toISOString())).failed).toBe(1);
-
+      const settled = await repository.failStranded(new Date().toISOString());
+      expect(settled).toMatchObject({ failed: 0, needsReconciliation: 1 });
       const rows = await sql<
         { status: string; last_error_code: string | null }[]
       >`select status, last_error_code from notification_outbox where id = ${id}`;
-      expect(rows[0].status).toBe("failed");
-      expect(rows[0].last_error_code).toBe("dispatch_stranded");
-
-      // Now terminal, so retention can redact it.
-      expect((await repository.redactExpired(new Date().toISOString())).redacted).toBe(1);
+      expect(rows[0].status).toBe("needs_reconciliation");
+      expect(rows[0].last_error_code).toBe("processing_without_attempt");
+      expect((await repository.redactExpired(new Date().toISOString())).redacted).toBe(0);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
@@ -261,7 +259,7 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
 
   // A stranded row that still has attempts left belongs to claimDue, not here.
   it(
-    "leaves a stranded row that still has attempts remaining to the reclaim path",
+    "quarantines legacy processing even when attempts remain",
     async () => {
       const sql = sqlForTests();
       const companyId = await seededCompanyId(sql);
@@ -272,8 +270,17 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
       await sql`update notification_outbox set updated_at = now() - interval '1 hour' where id = ${id}`;
 
       const repository = createNotificationOutboxRepository({ sql });
-      expect((await repository.failStranded(new Date().toISOString())).failed).toBe(0);
-      expect(await claimedIdsWithoutCommitting(sql)).toContain(id);
+      const settled = await repository.failStranded(new Date().toISOString());
+      expect(settled).toMatchObject({ failed: 0, needsReconciliation: 1 });
+      const rows = await sql<
+        { status: string }[]
+      >`select status from notification_outbox where id = ${id}`;
+      expect(rows[0].status).toBe("needs_reconciliation");
+      expect(
+        (await repository.claimDeliveryAttempt(new Date().toISOString(), 50)).some(
+          (item) => item.id === id,
+        ),
+      ).toBe(false);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

@@ -36,15 +36,61 @@ function notification(overrides: Partial<NotificationOutboxRecord> = {}): Notifi
 }
 
 function repository(rows: NotificationOutboxRecord[]): NotificationOutboxRepository {
-  return {
+  let claimed = false;
+  const attempts = rows.map((row) => ({
+    ...row,
+    attemptId: row.id,
+    leaseToken: "test-lease",
+  }));
+  const repo: NotificationOutboxRepository = {
     enqueue: vi.fn(),
     cancelFixtureOriginNotifications: vi.fn(async () => ({ cancelled: 0 })),
-    claimDue: vi.fn(async () => rows),
+    claimDue: vi.fn(async () => attempts),
+    claimDeliveryAttempt: vi.fn(async () => {
+      if (claimed) return [];
+      claimed = true;
+      return attempts;
+    }),
+    beginProviderCall: vi.fn(async () => "started" as const),
+    abortClaimedAttempt: vi.fn(async (attemptId, _token, errorCode, now) => {
+      const row = rows.find((item) => item.id === attemptId)!;
+      const input = {
+        errorCode,
+        errorMessage: "Preflight failed.",
+        now,
+        attemptCount: row.attemptCount,
+      };
+      if (row.attemptCount >= row.maxAttempts) await repo.markFailed(row.id, input);
+      else await repo.markRetry(row.id, input);
+      return "recorded" as const;
+    }),
+    recordProviderOutcome: vi.fn(async (attemptId, _token, outcome, now) => {
+      const row = rows.find((item) => item.id === attemptId)!;
+      if (outcome.kind === "accepted" || outcome.kind === "simulated") {
+        await repo.markSent(row.id, {
+          providerMessageId: outcome.kind === "accepted" ? outcome.providerMessageId : null,
+          delivery: outcome.kind === "accepted" ? "provider" : "simulated",
+          sentAt: now,
+          attemptCount: row.attemptCount,
+        });
+      } else if (outcome.kind === "definitelyRejected") {
+        const input = {
+          errorCode: outcome.code,
+          errorMessage: "Provider rejected.",
+          now,
+          attemptCount: row.attemptCount,
+        };
+        if (row.attemptCount >= row.maxAttempts) await repo.markFailed(row.id, input);
+        else await repo.markRetry(row.id, input);
+      }
+      return "recorded" as const;
+    }),
     markSent: vi.fn(async () => true),
     markRetry: vi.fn(async () => true),
     markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
+  return repo;
 }
 
 describe("notification dispatcher", () => {
@@ -186,28 +232,27 @@ describe("notification dispatcher", () => {
     });
   });
 
-  it("retries transient failures and permanently fails the final attempt", async () => {
-    const retryRepo = repository([notification({ attemptCount: 1 })]);
-    const retryDispatcher = createNotificationDispatcher(retryRepo, {
-      dispatch: vi.fn(async () => {
-        throw new Error("timeout");
-      }),
-    });
-    await expect(retryDispatcher.dispatchDue("2026-07-12T00:00:00.000Z")).resolves.toMatchObject({
-      retried: 1,
-    });
-    expect(retryRepo.markRetry).toHaveBeenCalled();
-
-    const failedRepo = repository([notification({ attemptCount: 3 })]);
-    const failedDispatcher = createNotificationDispatcher(failedRepo, {
-      dispatch: vi.fn(async () => {
-        throw new Error("rejected");
-      }),
-    });
-    await expect(failedDispatcher.dispatchDue("2026-07-12T00:00:00.000Z")).resolves.toMatchObject({
-      permanentlyFailed: 1,
-    });
-    expect(failedRepo.markFailed).toHaveBeenCalled();
+  it("quarantines ambiguous transport failures at every attempt count", async () => {
+    for (const attemptCount of [1, 3]) {
+      const repo = repository([notification({ attemptCount })]);
+      const transport = {
+        dispatch: vi.fn(async () => {
+          throw new Error("timeout");
+        }),
+      };
+      const summary = await createNotificationDispatcher(repo, transport).dispatchDue(
+        "2026-07-12T00:00:00.000Z",
+      );
+      expect(summary).toMatchObject({ retried: 0, permanentlyFailed: 0, needsReconciliation: 1 });
+      expect(repo.recordProviderOutcome).toHaveBeenCalledWith(
+        notification().id,
+        "test-lease",
+        expect.objectContaining({ kind: "unknown", attemptRef: notification().id }),
+        "2026-07-12T00:00:00.000Z",
+      );
+      expect(repo.markRetry).not.toHaveBeenCalled();
+      expect(repo.markFailed).not.toHaveBeenCalled();
+    }
   });
 
   // The outbox payload already carries whatsappMessageId — whatsapp/repository.ts
@@ -453,7 +498,7 @@ describe("WhatsApp session window resolution", () => {
 
     await expect(dispatcher.dispatchDue(now)).resolves.toMatchObject({ claimed: 1, sent: 1 });
     expect(dispatch).toHaveBeenCalledTimes(1);
-    expect(dispatch.mock.calls[0][0]).toBe(record);
+    expect(dispatch.mock.calls[0][0]).toEqual(record);
     // Strictly undefined, not merely falsy: local and simulated transports take one
     // argument, and an empty-object context would still be a behaviour change.
     expect(dispatch.mock.calls[0][1]).toBeUndefined();
@@ -695,6 +740,16 @@ describe("a send the database could not record", () => {
  * company becomes a live reminder target.
  */
 describe("fixture-origin suppression", () => {
+  it("fails closed when the atomic origin gate cannot be queried", async () => {
+    const repo = repository([notification()]);
+    vi.mocked(repo.claimDeliveryAttempt).mockRejectedValue(new Error("origin lookup failed"));
+    const transport = { dispatch: vi.fn() };
+    await expect(
+      createNotificationDispatcher(repo, transport).dispatchDue("2026-07-12T00:00:00.000Z"),
+    ).rejects.toThrow("origin lookup failed");
+    expect(transport.dispatch).not.toHaveBeenCalled();
+  });
+
   it("cancels fixture rows before anything is claimed, and counts them", async () => {
     const repo = repository([]);
     vi.mocked(repo.cancelFixtureOriginNotifications).mockResolvedValue({ cancelled: 3 });
@@ -722,7 +777,7 @@ describe("fixture-origin suppression", () => {
       order.push("cancel");
       return { cancelled: 1 };
     });
-    vi.mocked(repo.claimDue).mockImplementation(async () => {
+    vi.mocked(repo.claimDeliveryAttempt).mockImplementation(async () => {
       order.push("claim");
       return [];
     });

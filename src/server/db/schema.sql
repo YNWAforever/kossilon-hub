@@ -394,7 +394,7 @@ create table if not exists notification_outbox (
   recipient text,
   payload jsonb,
   status text not null default 'pending' check (
-    status in ('pending', 'processing', 'sent', 'failed', 'cancelled')
+    status in ('pending', 'processing', 'sent', 'failed', 'cancelled', 'needs_reconciliation')
   ),
   attempt_count integer not null default 0 check (attempt_count >= 0),
   max_attempts integer not null default 5 check (max_attempts > 0),
@@ -423,6 +423,36 @@ create table if not exists notification_outbox (
     )
   )
 );
+
+create table if not exists notification_delivery_attempts (
+  id uuid primary key default gen_random_uuid(),
+  outbox_id uuid not null references notification_outbox(id) on delete restrict,
+  attempt_count integer not null check (attempt_count > 0),
+  lease_token uuid not null default gen_random_uuid(),
+  delivery_key text not null,
+  state text not null check (state in (
+    'claimed', 'send_started', 'accepted', 'simulated',
+    'definitely_rejected', 'unknown', 'abandoned'
+  )),
+  claimed_at timestamptz not null,
+  lease_expires_at timestamptz not null,
+  send_started_at timestamptz,
+  finished_at timestamptz,
+  provider_message_id text,
+  error_code text,
+  attempt_ref text,
+  unique (outbox_id, attempt_count),
+  unique (lease_token),
+  constraint notification_delivery_attempt_started_check check (
+    state not in ('send_started', 'accepted', 'simulated', 'unknown')
+    or send_started_at is not null
+  )
+);
+create index if not exists notification_delivery_attempts_outbox_idx
+  on notification_delivery_attempts (outbox_id, attempt_count desc);
+create index if not exists notification_delivery_attempts_unresolved_idx
+  on notification_delivery_attempts (lease_expires_at)
+  where state in ('claimed', 'send_started');
 
 create table if not exists document_upload_intents (
   id uuid primary key default gen_random_uuid(),

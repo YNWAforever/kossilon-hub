@@ -30,19 +30,60 @@ const row: NotificationOutboxRecord = {
 
 function repository(rows: NotificationOutboxRecord[]): NotificationOutboxRepository {
   let claimed = false;
-  return {
+  const attempts = rows.map((row) => ({
+    ...row,
+    attemptId: row.id,
+    leaseToken: "test-lease",
+  }));
+  const repo: NotificationOutboxRepository = {
     enqueue: vi.fn(),
     cancelFixtureOriginNotifications: vi.fn(async () => ({ cancelled: 0 })),
-    claimDue: vi.fn(async () => {
+    claimDue: vi.fn(async () => attempts),
+    claimDeliveryAttempt: vi.fn(async () => {
       if (claimed) return [];
       claimed = true;
-      return rows;
+      return attempts;
+    }),
+    beginProviderCall: vi.fn(async () => "started" as const),
+    abortClaimedAttempt: vi.fn(async (attemptId, _token, errorCode, now) => {
+      const row = rows.find((item) => item.id === attemptId)!;
+      const input = {
+        errorCode,
+        errorMessage: "Preflight failed.",
+        now,
+        attemptCount: row.attemptCount,
+      };
+      if (row.attemptCount >= row.maxAttempts) await repo.markFailed(row.id, input);
+      else await repo.markRetry(row.id, input);
+      return "recorded" as const;
+    }),
+    recordProviderOutcome: vi.fn(async (attemptId, _token, outcome, now) => {
+      const row = rows.find((item) => item.id === attemptId)!;
+      if (outcome.kind === "accepted" || outcome.kind === "simulated") {
+        await repo.markSent(row.id, {
+          providerMessageId: outcome.kind === "accepted" ? outcome.providerMessageId : null,
+          delivery: outcome.kind === "accepted" ? "provider" : "simulated",
+          sentAt: now,
+          attemptCount: row.attemptCount,
+        });
+      } else if (outcome.kind === "definitelyRejected") {
+        const input = {
+          errorCode: outcome.code,
+          errorMessage: "Provider rejected.",
+          now,
+          attemptCount: row.attemptCount,
+        };
+        if (row.attemptCount >= row.maxAttempts) await repo.markFailed(row.id, input);
+        else await repo.markRetry(row.id, input);
+      }
+      return "recorded" as const;
     }),
     markSent: vi.fn(async () => true),
     markRetry: vi.fn(async () => true),
     markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
+  return repo;
 }
 
 const liveWhatsAppConfig = {
@@ -246,14 +287,17 @@ describe("runtime notification dispatch", () => {
           }),
         },
       ),
-    ).resolves.toMatchObject({ retried: 1, sent: 0 });
+    ).resolves.toMatchObject({ retried: 0, sent: 0, needsReconciliation: 1 });
     expect(createTransport).toHaveBeenCalledWith(
       expect.objectContaining({ providerMode: "live", config: expect.any(Object) }),
     );
-    expect(repo.markRetry).toHaveBeenCalledWith(
+    expect(repo.recordProviderOutcome).toHaveBeenCalledWith(
       row.id,
-      expect.objectContaining({ errorMessage: "temporary outage" }),
+      "test-lease",
+      expect.objectContaining({ kind: "unknown", attemptRef: row.id }),
+      "2026-07-14T09:00:00.000Z",
     );
+    expect(repo.markRetry).not.toHaveBeenCalled();
     expect(repo.close).toHaveBeenCalledTimes(1);
   });
 

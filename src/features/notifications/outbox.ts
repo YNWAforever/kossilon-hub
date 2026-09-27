@@ -1,5 +1,12 @@
 import type postgres from "postgres";
 import {
+  createDeliveryAttemptMethods,
+  type ClaimedDeliveryAttempt,
+  type ProviderOutcome,
+  type BeginResult,
+  type OutcomeResult,
+} from "./delivery-attempts";
+import {
   createSqlClient,
   getSqlClient,
   type CreateSqlClientOptions,
@@ -37,27 +44,6 @@ type NotificationRow = {
 
 const RETRY_BASE_SECONDS = 60;
 const RETRY_MAX_SECONDS = 60 * 60;
-
-/**
- * How long a row may sit in 'processing' before another run may claim it.
- *
- * claimDue used to select only 'pending' and 'failed', and nothing else ever
- * moved a row out of 'processing'. A Worker killed between the claim and
- * markSent/markRetry — a CPU limit, an eviction, a deploy — stranded that
- * notification permanently, with no error anywhere: the SLA escalation simply
- * never arrived.
- *
- * Generous relative to a dispatch (seconds) so a slow run is not double-sent
- * while it is still working; short enough that a stranded row recovers on the
- * next few cron ticks rather than never. attempt_count was already incremented
- * at claim time, so a row that strands repeatedly still exhausts max_attempts
- * instead of looping forever.
- */
-const PROCESSING_VISIBILITY_TIMEOUT_SECONDS = 15 * 60;
-
-export function processingReclaimCutoff(now: string): string {
-  return new Date(Date.parse(now) - PROCESSING_VISIBILITY_TIMEOUT_SECONDS * 1000).toISOString();
-}
 
 export function nextRetryAt(attempt: number, now: string): string {
   const normalizedAttempt = Math.max(1, Math.floor(attempt));
@@ -160,7 +146,21 @@ function withTransaction<T>(
 
 export type NotificationOutboxRepository = {
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
-  claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
+  claimDue(now: string, limit: number): Promise<ClaimedDeliveryAttempt[]>;
+  claimDeliveryAttempt(now: string, limit: number): Promise<ClaimedDeliveryAttempt[]>;
+  beginProviderCall(attemptId: string, leaseToken: string): Promise<BeginResult>;
+  abortClaimedAttempt(
+    attemptId: string,
+    leaseToken: string,
+    errorCode: string,
+    now: string,
+  ): Promise<OutcomeResult>;
+  recordProviderOutcome(
+    attemptId: string,
+    leaseToken: string,
+    outcome: ProviderOutcome,
+    now: string,
+  ): Promise<OutcomeResult>;
   /**
    * Cancels queued notifications belonging to fixture-origin companies, so a
    * fixture replay cannot message a real recipient. Called before every claim.
@@ -216,37 +216,15 @@ export function createNotificationOutboxRepository(
     typeof databaseUrlOrOptions === "string" ? maybeOptions : databaseUrlOrOptions;
   const sql = suppliedSql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = Boolean(databaseUrl) && !suppliedSql;
+  const attempts = createDeliveryAttemptMethods<NotificationRow>(sql, mapRow);
 
   return {
     enqueue: (input) => enqueueNotification(sql, input),
-    async claimDue(now, limit) {
-      if (!Number.isInteger(limit) || limit < 1 || limit > 500)
-        throw new Error("Outbox limit must be between 1 and 500.");
-      return withTransaction(sql, async (tx) => {
-        const rows = await tx<NotificationRow[]>`
-          select * from notification_outbox
-          where attempt_count < max_attempts
-            and (
-              (status in ('pending', 'failed') and next_attempt_at <= ${now})
-              -- Stranded by a Worker that died mid-dispatch. Without this the row
-              -- is never claimable again and the notification is silently lost.
-              or (status = 'processing' and updated_at <= ${processingReclaimCutoff(now)})
-            )
-          order by next_attempt_at asc, created_at asc
-          limit ${limit}
-          for update skip locked
-        `;
-        if (rows.length === 0) return [];
-        const ids = rows.map((row) => row.id);
-        const claimed = await tx<NotificationRow[]>`
-          update notification_outbox
-          set status = 'processing', attempt_count = attempt_count + 1, updated_at = now()
-          where id = any(${ids}::uuid[])
-          returning *
-        `;
-        return claimed.map(mapRow);
-      });
-    },
+    claimDeliveryAttempt: attempts.claimDeliveryAttempt,
+    claimDue: attempts.claimDeliveryAttempt,
+    beginProviderCall: attempts.beginProviderCall,
+    abortClaimedAttempt: attempts.abortClaimedAttempt,
+    recordProviderOutcome: attempts.recordProviderOutcome,
     /**
      * Cancels anything queued for a company that is fixture data.
      *
@@ -364,32 +342,10 @@ export function createNotificationOutboxRepository(
      *
      * Marking it 'failed' makes it terminal, gives it an error code an operator
      * can search for, and lets retention redact it in due course. It is NOT
-     * re-sent: the attempt budget is spent.
+     * re-sent: unknown outcomes remain isolated for manual reconciliation.
      */
     async failStranded(now, limit = 500) {
-      if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
-        throw new Error("Outbox stranded limit must be between 1 and 5000.");
-      }
-
-      const rows = await sql<{ id: string }[]>`
-        update notification_outbox
-        set status = 'failed',
-            last_error_code = 'dispatch_stranded',
-            last_error_message = 'Dispatch did not complete before the visibility timeout and no attempts remain.',
-            updated_at = now()
-        where id in (
-          select id from notification_outbox
-          where status = 'processing'
-            and attempt_count >= max_attempts
-            and updated_at <= ${processingReclaimCutoff(now)}
-          order by updated_at asc
-          limit ${limit}
-          for update skip locked
-        )
-        returning id
-      `;
-
-      return { failed: rows.length };
+      return attempts.settleStranded(now, limit);
     },
     async redactExpired(now, limit = 500) {
       if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
