@@ -25,6 +25,7 @@ import {
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 import { deriveWorkViews } from "./work-views";
+import { listReturnExceptionsForScopedCases, type ReturnRecord } from "./return-service";
 import type { DocumentFindingsView } from "@/features/documents/findings-review";
 import type { DocumentAnalysisRepository } from "@/features/documents/analysis-repository";
 
@@ -734,7 +735,10 @@ export const listAnnualReturnCaseRequirements = createServerFn({ method: "GET" }
  */
 export async function getAnnualReturnWorkViewsForActor(
   actor: AuthenticatedActor,
-  dependencies: { repository: Pick<AnnualReturnRepository, "listAllCases"> },
+  dependencies: {
+    repository: Pick<AnnualReturnRepository, "listAllCases">;
+    loadReturnExceptions?: (caseIds: readonly string[]) => Promise<ReturnRecord[]>;
+  },
 ) {
   const scope = caseFiltersForActor({
     id: actor.userId,
@@ -743,12 +747,28 @@ export async function getAnnualReturnWorkViewsForActor(
     active: actor.active,
   });
   const cases = await dependencies.repository.listAllCases(scope);
-  return deriveWorkViews(cases, hongKongBusinessDate(), { userId: actor.userId });
+  const exceptions = dependencies.loadReturnExceptions
+    ? await dependencies.loadReturnExceptions(cases.map((case_) => case_.id))
+    : null;
+  const counts = new Map<string, number>();
+  for (const entry of exceptions ?? []) {
+    counts.set(entry.caseId, (counts.get(entry.caseId) ?? 0) + 1);
+  }
+  return deriveWorkViews(
+    cases,
+    hongKongBusinessDate(),
+    { userId: actor.userId },
+    undefined,
+    exceptions ? { complete: true, openCountByCaseId: counts } : undefined,
+  );
 }
 
 export const getAnnualReturnWorkViews = createServerFn({ method: "GET" }).handler(() =>
   withAnnualReturnActorRepository((repository, actor) =>
-    getAnnualReturnWorkViewsForActor(actor, { repository }),
+    getAnnualReturnWorkViewsForActor(actor, {
+      repository,
+      loadReturnExceptions: (caseIds) => listReturnExceptionsForScopedCases(caseIds),
+    }),
   ),
 );
 

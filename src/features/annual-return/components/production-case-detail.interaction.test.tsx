@@ -35,6 +35,9 @@ const packageServerFns = vi.hoisted(() => ({
   getAnnualReturnSubmission: vi.fn(),
   listAnnualReturnSubmissionProofs: vi.fn(),
   recordAnnualReturnSubmission: vi.fn(),
+  getAnnualReturnReturnIntakes: vi.fn(),
+  recordAnnualReturnReturnIntake: vi.fn(),
+  reconcileAnnualReturnReturn: vi.fn(),
   prepareAnnualReturnPackage: vi.fn(),
   approveAnnualReturnPackage: vi.fn(),
   downloadAnnualReturnPackage: vi.fn(),
@@ -127,6 +130,13 @@ beforeEach(() => {
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
   packageServerFns.getAnnualReturnPackage.mockResolvedValue(null);
   packageServerFns.getAnnualReturnSubmission.mockResolvedValue(null);
+  packageServerFns.getAnnualReturnReturnIntakes.mockResolvedValue([]);
+  packageServerFns.recordAnnualReturnReturnIntake.mockResolvedValue({
+    id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+  });
+  packageServerFns.reconcileAnnualReturnReturn.mockResolvedValue({
+    id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+  });
   packageServerFns.listAnnualReturnSubmissionProofs.mockResolvedValue([]);
   packageServerFns.recordAnnualReturnSubmission.mockResolvedValue({
     id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",

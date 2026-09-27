@@ -7,6 +7,7 @@ import type { DocumentStorage } from "@/features/documents/types";
 import { createDocumentRepository } from "@/features/documents/repository";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
+import { ingestReturnForActor, reconcileReturnForActor } from "./return-service";
 import {
   getManualSubmissionForActor,
   listManualSubmissionProofsForActor,
@@ -90,6 +91,7 @@ type Fixture = {
   proofVersionId: string;
   storage: DocumentStorage;
   createSubmissionProof: () => Promise<string>;
+  createReturnProof: (suffix: string) => Promise<string>;
 };
 async function dbFixture(tx: postgres.TransactionSql): Promise<Fixture> {
   const [admin] = await tx<{ auth_user_id: string; user_id: string; team_id: string | null }[]>`
@@ -139,7 +141,10 @@ async function dbFixture(tx: postgres.TransactionSql): Promise<Fixture> {
     returning id`;
   const storage = memoryStorage();
   const documents = createDocumentRepository({ sql: tx });
-  async function reviewedDocument(category: "payment" | "registry" | "submission", suffix: string) {
+  async function reviewedDocument(
+    category: "payment" | "registry" | "submission" | "receipt",
+    suffix: string,
+  ) {
     const bytes = new TextEncoder().encode("%PDF-1.7\n" + suffix);
     const checksum = await packageSha256(bytes);
     const objectKey = "documents/t14-fixture/" + nonce + "/" + suffix;
@@ -226,6 +231,7 @@ async function dbFixture(tx: postgres.TransactionSql): Promise<Fixture> {
     storage,
     createSubmissionProof: async () =>
       (await reviewedDocument("submission", "submission-proof")).versionId,
+    createReturnProof: async (suffix) => (await reviewedDocument("receipt", suffix)).versionId,
   };
 }
 describe.skipIf(!databaseUrl)("T14 package approval against disposable Postgres", () => {
@@ -495,6 +501,235 @@ describe.skipIf(!databaseUrl)("T15 manual submission against disposable Postgres
       await expect(
         recordManualSubmissionForActor(fixture.actor, input, dependencies),
       ).rejects.toThrow(/newer package/i);
+    });
+  });
+});
+
+describe.skipIf(!databaseUrl)("T16 return intake against disposable Postgres", () => {
+  it("keeps download and recorded submission distinct, deduplicates return proof, and reconciles accepted only by a human", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const submissionProof = await fixture.createSubmissionProof();
+      const submitted = await recordManualSubmissionForActor(
+        fixture.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+          submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-" + crypto.randomUUID(),
+          proofVersionId: submissionProof,
+        },
+        deps,
+      );
+      const proofVersionId = await fixture.createReturnProof("accepted-return");
+      const input = {
+        caseId: fixture.caseId,
+        externalReference: submitted.externalReference,
+        manifestHash: draft.manifestHash,
+        outcome: "accepted" as const,
+        source: { kind: "manual" as const, proofVersionId },
+      };
+      const received = await ingestReturnForActor(fixture.actor, input, deps);
+      expect(received).toMatchObject({
+        matchState: "candidate",
+        candidateHandoffIds: [submitted.id],
+        open: true,
+        duplicate: false,
+      });
+      expect(await ingestReturnForActor(fixture.actor, input, deps)).toMatchObject({
+        id: received.id,
+        duplicate: true,
+      });
+      await expect(
+        ingestReturnForActor(fixture.actor, { ...input, outcome: "rejected" }, deps),
+      ).rejects.toThrow(/conflicting claims/i);
+      await expect(
+        ingestReturnForActor(
+          fixture.actor,
+          {
+            ...input,
+            source: { kind: "manual", proofVersionId: submissionProof },
+          },
+          deps,
+        ),
+      ).rejects.toThrow(/receipt|category/i);
+      await expect(
+        reconcileReturnForActor(
+          fixture.actor,
+          {
+            returnId: received.id,
+            submissionId: submitted.id,
+            expectedRevision: 2,
+            decision: "confirm",
+            reason: "",
+          },
+          deps,
+        ),
+      ).rejects.toThrow(/revision/i);
+      const [counts] = await tx<{ returns: number; source_cursors: number }[]>`
+        select (select count(*)::int from handoff_returns
+          where case_id = ${fixture.caseId}) as returns,
+          (select count(*)::int from filing_return_source_cursors) as source_cursors`;
+      expect(counts).toMatchObject({ returns: 1, source_cursors: 0 });
+      const decision = await reconcileReturnForActor(
+        fixture.actor,
+        {
+          returnId: received.id,
+          submissionId: submitted.id,
+          expectedRevision: 1,
+          decision: "confirm",
+          reason: "",
+        },
+        deps,
+      );
+      expect(decision).toMatchObject({
+        matchState: "reconciled",
+        outcome: "accepted",
+        open: false,
+        revision: 2,
+      });
+      expect(
+        await reconcileReturnForActor(
+          fixture.actor,
+          {
+            returnId: received.id,
+            submissionId: submitted.id,
+            expectedRevision: 1,
+            decision: "confirm",
+            reason: "",
+          },
+          deps,
+        ),
+      ).toMatchObject({ id: received.id, duplicate: true, revision: 2 });
+      const [caseRow] = await tx<{ current_status: string }[]>`
+        select current_status from annual_return_cases where id = ${fixture.caseId}`;
+      expect(caseRow.current_status).toBe("Payment pending");
+      const [audit] = await tx<{ intakes: number; reviews: number }[]>`
+        select count(*) filter (where action='record_return_intake')::int as intakes,
+          count(*) filter (where action='reconcile_return')::int as reviews
+        from annual_return_audit_events where case_id = ${fixture.caseId}`;
+      expect(audit).toMatchObject({ intakes: 1, reviews: 1 });
+    });
+  });
+
+  it("keeps partial and unmatched returns open and requires a reason when the manifest hash is absent", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+        },
+        deps,
+      );
+      const submitted = await recordManualSubmissionForActor(
+        fixture.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+          submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-" + crypto.randomUUID(),
+          proofVersionId: await fixture.createSubmissionProof(),
+        },
+        deps,
+      );
+      const partial = await ingestReturnForActor(
+        fixture.actor,
+        {
+          caseId: fixture.caseId,
+          externalReference: submitted.externalReference,
+          manifestHash: null,
+          outcome: "partial",
+          source: {
+            kind: "manual",
+            proofVersionId: await fixture.createReturnProof("partial-return"),
+          },
+        },
+        deps,
+      );
+      await expect(
+        reconcileReturnForActor(
+          fixture.actor,
+          {
+            returnId: partial.id,
+            submissionId: submitted.id,
+            expectedRevision: 1,
+            decision: "confirm",
+            reason: "",
+          },
+          deps,
+        ),
+      ).rejects.toThrow(/reason/i);
+      const matchedPartial = await reconcileReturnForActor(
+        fixture.actor,
+        {
+          returnId: partial.id,
+          submissionId: submitted.id,
+          expectedRevision: 1,
+          decision: "confirm",
+          reason: "Checked external reference and reviewed receipt",
+        },
+        deps,
+      );
+      expect(matchedPartial).toMatchObject({ outcome: "partial", open: true });
+      const unmatched = await ingestReturnForActor(
+        fixture.actor,
+        {
+          caseId: fixture.caseId,
+          externalReference: "UNKNOWN-" + crypto.randomUUID(),
+          manifestHash: null,
+          outcome: "rejected",
+          source: {
+            kind: "manual",
+            proofVersionId: await fixture.createReturnProof("unmatched-return"),
+          },
+        },
+        deps,
+      );
+      expect(unmatched).toMatchObject({
+        matchState: "unmatched",
+        candidateHandoffIds: [],
+        open: true,
+      });
+      const reviewedUnmatched = await reconcileReturnForActor(
+        fixture.actor,
+        {
+          returnId: unmatched.id,
+          submissionId: null,
+          expectedRevision: 1,
+          decision: "mark-unmatched",
+          reason: "No matching external submission reference",
+        },
+        deps,
+      );
+      expect(reviewedUnmatched).toMatchObject({
+        matchState: "unmatched",
+        outcome: "rejected",
+        open: true,
+      });
     });
   });
 });

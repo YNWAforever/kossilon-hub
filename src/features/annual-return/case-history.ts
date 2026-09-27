@@ -138,6 +138,8 @@ const AUDIT_ACTION_LABELS: Record<AnnualReturnAction, string> = {
   prepare_package: "Package prepared",
   approve_package: "Package approved",
   record_submission: "External submission recorded",
+  record_return: "Filing return intake recorded",
+  reconcile_return: "Filing return reconciled",
 };
 
 const ASSIGNMENT_DECISION_LABELS: Record<AssignmentEventRow["decision"], string> = {

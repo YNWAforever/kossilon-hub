@@ -48,6 +48,7 @@ export type ReturnState = {
   handoffId: string;
   outcome: ReturnOutcome;
   reconciledAt: string | null;
+  matchState?: "unmatched" | "candidate" | "reconciled";
 };
 
 /**
@@ -132,8 +133,10 @@ export function reconcileReturn(input: {
  * even once reconciled, because reconciling establishes what happened rather
  * than resolving it.
  */
-export function isOpenException(entry: ReturnState): boolean {
-  if (!entry.reconciledAt) return true;
+export function isOpenException(
+  entry: Pick<ReturnState, "outcome" | "reconciledAt" | "matchState">,
+): boolean {
+  if (!entry.reconciledAt || (entry.matchState && entry.matchState !== "reconciled")) return true;
   return entry.outcome !== "accepted";
 }
 

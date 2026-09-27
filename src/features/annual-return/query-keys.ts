@@ -1,5 +1,6 @@
 export const annualReturnQueryKeys = {
   all: ["annual-returns"] as const,
+  workViews: () => ["annual-return", "work-views"] as const,
   list: (filters: object) => ["annual-returns", "list", filters] as const,
   boardPages: (filters: object) => ["annual-returns", "board-pages", filters] as const,
   boardTotals: (scope: object) => ["annual-returns", "board-totals", scope] as const,

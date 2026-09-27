@@ -8,6 +8,13 @@ import {
 } from "./submission-service";
 import { entityIdSchema } from "@/features/runtime/entity-id";
 import {
+  getReturnIntakesForActor,
+  ingestReturnForActor,
+  reconcileReturnForActor,
+  returnDecisionSchema,
+  returnIntakeSchema,
+} from "./return-service";
+import {
   approvePackageForActor,
   downloadApprovedPackageForActor,
   getPackageForActor,
@@ -104,4 +111,25 @@ export const recordAnnualReturnSubmission = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { actor, storage } = await loadPackageContext();
     return recordManualSubmissionForActor(actor, data, { storage });
+  });
+
+export const getAnnualReturnReturnIntakes = createServerFn({ method: "GET" })
+  .validator(z.object({ caseId: entityIdSchema }).strict())
+  .handler(async ({ data }) => {
+    const { actor, storage } = await loadPackageContext();
+    return getReturnIntakesForActor(actor, data.caseId, { storage });
+  });
+
+export const recordAnnualReturnReturnIntake = createServerFn({ method: "POST" })
+  .validator(returnIntakeSchema)
+  .handler(async ({ data }) => {
+    const { actor, storage } = await loadPackageContext();
+    return ingestReturnForActor(actor, data, { storage });
+  });
+
+export const reconcileAnnualReturnReturn = createServerFn({ method: "POST" })
+  .validator(returnDecisionSchema)
+  .handler(async ({ data }) => {
+    const { actor, storage } = await loadPackageContext();
+    return reconcileReturnForActor(actor, data, { storage });
   });
