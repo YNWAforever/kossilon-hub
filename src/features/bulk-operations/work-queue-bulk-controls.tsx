@@ -12,6 +12,7 @@ import type { PersistedWorkItem } from "@/features/work-items/repository";
 import { recommendWorkItemAssignees } from "@/features/work-items/server-fns";
 import {
   commitBulkOperation,
+  cancelBulkOperation,
   exportBulkOperationCsv,
   getBulkOperation,
   previewBulkOperation,
@@ -210,6 +211,10 @@ export function WorkQueueBulkOperationStatus({
         : 5000,
   });
   const [exportError, setExportError] = useState<string | null>(null);
+  const cancel = useMutation({
+    mutationFn: () => cancelBulkOperation({ data: { id } }),
+    onSuccess: () => void operation.refetch(),
+  });
   async function downloadCsv() {
     try {
       const csv = await exportBulkOperationCsv({ data: { id } });
@@ -251,6 +256,16 @@ export function WorkQueueBulkOperationStatus({
             >
               Export authorized results CSV
             </button>
+            {operation.data.state === "queued" || operation.data.state === "running" ? (
+              <button
+                type="button"
+                onClick={() => cancel.mutate()}
+                disabled={cancel.isPending}
+                className="rounded-md border border-border px-2 py-1 text-xs disabled:opacity-50"
+              >
+                Cancel remaining items
+              </button>
+            ) : null}
             {operation.data.state === "completed-with-errors" &&
             operation.data.counts.failed > 0 ? (
               <button
@@ -262,6 +277,16 @@ export function WorkQueueBulkOperationStatus({
               </button>
             ) : null}
           </div>
+          {cancel.isError ? (
+            <p role="alert" className="text-xs text-destructive">
+              Cancellation failed: {errorText(cancel.error)}
+            </p>
+          ) : null}
+          {operation.data.state === "cancelled" ? (
+            <p className="text-xs text-muted-foreground">
+              Started or completed item results remain in the audit record.
+            </p>
+          ) : null}
           {exportError ? (
             <p role="alert" className="text-xs text-destructive">
               {exportError}
