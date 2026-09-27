@@ -4,7 +4,10 @@ import {
   approveAnnualReturnPackage,
   downloadAnnualReturnPackage,
   getAnnualReturnPackage,
+  getAnnualReturnSubmission,
+  listAnnualReturnSubmissionProofs,
   prepareAnnualReturnPackage,
+  recordAnnualReturnSubmission,
 } from "../package-server-fns";
 import { useEffect, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -99,12 +102,28 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     queryFn: () => getAnnualReturnPackage({ data: { caseId } }),
   });
 
+  const submissionKey = [...annualReturnQueryKeys.detail(caseId), "submission"];
+  const submissionQuery = useQuery({
+    queryKey: submissionKey,
+    queryFn: () => getAnnualReturnSubmission({ data: { caseId } }),
+  });
+  const submissionProofKey = [...annualReturnQueryKeys.detail(caseId), "submission-proofs"];
+  const submissionProofQuery = useQuery({
+    queryKey: submissionProofKey,
+    queryFn: () => listAnnualReturnSubmissionProofs({ data: { caseId } }),
+    enabled: packageQuery.data?.state === "approved",
+  });
+
   const [ownerId, setOwnerId] = useState("");
   const [nextStatus, setNextStatus] = useState<AnnualReturnStatus>("Upcoming");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("Payment pending");
   const [note, setNote] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
+  const [submissionAtHkt, setSubmissionAtHkt] = useState("");
+  const [submissionDestination, setSubmissionDestination] = useState("");
+  const [submissionReference, setSubmissionReference] = useState("");
+  const [submissionProofVersionId, setSubmissionProofVersionId] = useState("");
   const [filingReference, setFilingReference] = useState("");
   const [confirmationDocumentId, setConfirmationDocumentId] = useState("");
 
@@ -169,6 +188,29 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    },
+  });
+  const recordSubmissionMutation = useMutation({
+    mutationFn: () => {
+      const approved = packageQuery.data;
+      if (!approved || approved.state !== "approved") {
+        throw new Error("Approve the current package before recording submission.");
+      }
+      return recordAnnualReturnSubmission({
+        data: {
+          packageId: approved.id,
+          manifestHash: approved.manifestHash,
+          expectedRevision: approved.revision,
+          submittedAt: submissionAtHkt + (submissionAtHkt.length === 16 ? ":00+08:00" : "+08:00"),
+          destinationLabel: submissionDestination.trim(),
+          externalReference: submissionReference.trim(),
+          proofVersionId: submissionProofVersionId,
+        },
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: submissionKey });
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.history(caseId) });
     },
   });
   const receiptMutation = useMutation({
@@ -458,6 +500,107 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             <MutationMessage error={preparePackageMutation.error} />
             <MutationMessage error={approvePackageMutation.error} />
             <MutationMessage error={downloadPackageMutation.error} />
+          </section>
+
+          <section className="border-b pb-4">
+            <h2 className="text-base font-semibold">Record manual external submission</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              After a person uploads the approved ZIP outside Kossilon, record the external
+              destination and reference with a reviewed submission proof. This records the claim; it
+              does not confirm the registry accepted it or mark the case Filed.
+            </p>
+            {submissionQuery.isError && <MutationMessage error={submissionQuery.error} />}
+            {submissionProofQuery.isError && <MutationMessage error={submissionProofQuery.error} />}
+            {submissionQuery.data ? (
+              <div className="mt-3 text-sm">
+                <p>
+                  Recorded{" "}
+                  {new Date(submissionQuery.data.recordedAtUtc).toLocaleString("en-HK", {
+                    timeZone: "Asia/Hong_Kong",
+                  })}{" "}
+                  HKT.
+                </p>
+                <p>Destination: {submissionQuery.data.destinationLabel}</p>
+                <p>External reference: {submissionQuery.data.externalReference}</p>
+                <p>Status: submission recorded; external acceptance awaits return evidence.</p>
+              </div>
+            ) : packageQuery.data?.state === "approved" ? (
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="text-sm">
+                  External destination
+                  <input
+                    aria-label="External destination"
+                    className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+                    maxLength={120}
+                    value={submissionDestination}
+                    onChange={(event) => setSubmissionDestination(event.target.value)}
+                  />
+                </label>
+                <label className="text-sm">
+                  External reference
+                  <input
+                    aria-label="External reference"
+                    className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+                    maxLength={200}
+                    value={submissionReference}
+                    onChange={(event) => setSubmissionReference(event.target.value)}
+                  />
+                </label>
+                <label className="text-sm">
+                  Submission time (Hong Kong, UTC+08:00)
+                  <input
+                    aria-label="Submission time Hong Kong"
+                    className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+                    type="datetime-local"
+                    value={submissionAtHkt}
+                    onChange={(event) => setSubmissionAtHkt(event.target.value)}
+                  />
+                </label>
+                <label className="text-sm">
+                  Reviewed external submission proof
+                  <select
+                    aria-label="Reviewed external submission proof"
+                    className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+                    value={submissionProofVersionId}
+                    onChange={(event) => setSubmissionProofVersionId(event.target.value)}
+                  >
+                    <option value="">Select a reviewed submission or receipt document</option>
+                    {submissionProofQuery.data?.map((proof) => (
+                      <option key={proof.versionId} value={proof.versionId}>
+                        {proof.fileName} ({proof.category})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="md:col-span-2 flex flex-wrap gap-2">
+                  <button
+                    className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                    type="button"
+                    onClick={() => void submissionProofQuery.refetch()}
+                    disabled={submissionProofQuery.isFetching}
+                  >
+                    Refresh proof list
+                  </button>
+                  <button
+                    className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                    type="button"
+                    disabled={
+                      locked ||
+                      recordSubmissionMutation.isPending ||
+                      !submissionDestination.trim() ||
+                      !submissionReference.trim() ||
+                      !submissionAtHkt ||
+                      !submissionProofVersionId
+                    }
+                    onClick={() => recordSubmissionMutation.mutate()}
+                  >
+                    <PendingIcon pending={recordSubmissionMutation.isPending} />
+                    Record external submission
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            <MutationMessage error={recordSubmissionMutation.error} />
           </section>
 
           <section className="pb-2">

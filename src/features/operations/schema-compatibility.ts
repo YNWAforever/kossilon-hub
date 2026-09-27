@@ -16,7 +16,8 @@ export type SchemaCapability =
   | "parties"
   | "analysis"
   | "maintenance"
-  | "packages";
+  | "packages"
+  | "submissions";
 type Requirement = {
   capability: SchemaCapability;
   kind: "table" | "column" | "index" | "constraint";
@@ -129,6 +130,43 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "filing_packages_approval_agrees",
     expected: "approved_by is not null",
   },
+  { capability: "submissions", kind: "table", name: "package_handoffs" },
+  {
+    capability: "submissions",
+    kind: "column",
+    name: "package_handoffs.package_id",
+    expected: "uuid",
+  },
+  {
+    capability: "submissions",
+    kind: "column",
+    name: "package_handoffs.proof_version_id",
+    expected: "uuid",
+  },
+  {
+    capability: "submissions",
+    kind: "column",
+    name: "package_handoffs.submission_mode",
+    expected: "text",
+  },
+  {
+    capability: "submissions",
+    kind: "index",
+    name: "package_handoffs_live_uidx",
+    expected: "recorded_submission",
+  },
+  {
+    capability: "submissions",
+    kind: "index",
+    name: "package_handoffs_manual_package_uidx",
+    expected: "package_id",
+  },
+  {
+    capability: "submissions",
+    kind: "constraint",
+    name: "package_handoffs_manual_evidence",
+    expected: "proof_version_id is not null",
+  },
   { capability: "maintenance", kind: "table", name: "maintenance_runs" },
   {
     capability: "maintenance",
@@ -184,6 +222,7 @@ export function inspectSchemaCompatibility(input: {
     analysis: { ready: true, issues: [] as string[] },
     maintenance: { ready: true, issues: [] as string[] },
     packages: { ready: true, issues: [] as string[] },
+    submissions: { ready: true, issues: [] as string[] },
   };
   const definitionMismatch: DefinitionMismatch[] = [];
   const tables = new Set(input.catalog.tables.map(normalize));

@@ -66,6 +66,7 @@ export const EXPECTED_MIGRATIONS = [
   "0039_nar_import_approval_apply.sql",
   "0040_payment_reconciliation.sql",
   "0041_filing_packages.sql",
+  "0042_manual_package_submission.sql",
 ] as const;
 
 export type SchemaLedger = {

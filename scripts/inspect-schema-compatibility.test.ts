@@ -38,6 +38,7 @@ describe("T01 schema compatibility release gate", () => {
       "packages",
       "parties",
       "payments",
+      "submissions",
     ]);
     for (const capability of Object.values(report.requiredCapabilities)) {
       expect(capability.ready).toBe(false);
@@ -50,6 +51,7 @@ describe("T01 schema compatibility release gate", () => {
         expect.objectContaining({ artifact: "table:case_parties" }),
         expect.objectContaining({ artifact: "table:document_analysis_jobs" }),
         expect.objectContaining({ artifact: "table:maintenance_runs" }),
+        expect.objectContaining({ artifact: "column:package_handoffs.proof_version_id" }),
       ]),
     );
     expect(report.canRelease).toBe(false);

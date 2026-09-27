@@ -32,6 +32,9 @@ const documentServerFns = vi.hoisted(() => ({
 
 const packageServerFns = vi.hoisted(() => ({
   getAnnualReturnPackage: vi.fn(),
+  getAnnualReturnSubmission: vi.fn(),
+  listAnnualReturnSubmissionProofs: vi.fn(),
+  recordAnnualReturnSubmission: vi.fn(),
   prepareAnnualReturnPackage: vi.fn(),
   approveAnnualReturnPackage: vi.fn(),
   downloadAnnualReturnPackage: vi.fn(),
@@ -123,6 +126,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
   packageServerFns.getAnnualReturnPackage.mockResolvedValue(null);
+  packageServerFns.getAnnualReturnSubmission.mockResolvedValue(null);
+  packageServerFns.listAnnualReturnSubmissionProofs.mockResolvedValue([]);
+  packageServerFns.recordAnnualReturnSubmission.mockResolvedValue({
+    id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  });
   packageServerFns.prepareAnnualReturnPackage.mockResolvedValue({
     id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     caseId,
@@ -427,5 +435,54 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     await screen.findByRole("heading", { name: "Acme Company Limited" });
 
     expect(await screen.findByText("No history yet.")).toBeTruthy();
+  });
+});
+
+describe("T15 production manual submission controls", () => {
+  it("records an approved package only after a reviewed proof and explicit HKT details", async () => {
+    const packageId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const proofVersionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    packageServerFns.getAnnualReturnPackage.mockResolvedValue({
+      id: packageId,
+      caseId,
+      revision: 1,
+      state: "approved",
+      manifestHash: "a".repeat(64),
+      artifactSha256: "b".repeat(64),
+      artifactSizeBytes: 128,
+    });
+    packageServerFns.listAnnualReturnSubmissionProofs.mockResolvedValue([
+      { versionId: proofVersionId, fileName: "portal-confirmation.pdf", category: "submission" },
+    ]);
+    renderDetail();
+    await screen.findByRole("heading", { name: "Record manual external submission" });
+    const recordButton = screen.getByRole("button", { name: "Record external submission" });
+    expect((recordButton as HTMLButtonElement).disabled).toBe(true);
+    const proof = await screen.findByLabelText("Reviewed external submission proof");
+    fireEvent.change(screen.getByLabelText("External destination"), {
+      target: { value: "Companies Registry portal" },
+    });
+    fireEvent.change(screen.getByLabelText("External reference"), {
+      target: { value: "NAR1-2026-001" },
+    });
+    fireEvent.change(screen.getByLabelText("Submission time Hong Kong"), {
+      target: { value: "2026-09-27T15:00" },
+    });
+    fireEvent.change(proof, { target: { value: proofVersionId } });
+    fireEvent.click(recordButton);
+    await waitFor(() =>
+      expect(packageServerFns.recordAnnualReturnSubmission).toHaveBeenCalledWith({
+        data: {
+          packageId,
+          manifestHash: "a".repeat(64),
+          expectedRevision: 1,
+          submittedAt: "2026-09-27T15:00:00+08:00",
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-2026-001",
+          proofVersionId,
+        },
+      }),
+    );
+    expect(serverFns.updateAnnualReturnStatus).not.toHaveBeenCalled();
   });
 });

@@ -5,17 +5,17 @@
  * approval is recorded over. This decides whether an approved package may leave
  * the building, and whether what comes back corresponds to what went out.
  *
- * Nothing here transmits. The destination is the firm's internal server and its
- * protocol, address and rights are not known to this repository --
- * BLOCKED_INTEGRATION: external-handoff-destination -- so a handoff is prepared
- * and stays prepared. The adapter that would transmit it is written against a
- * declared contract and disabled, the same way the malware scanner and the AI
- * provider are.
+ * This module makes no outbound call. T15 records a human external submission
+ * separately from the disabled connector. The firm's internal server is a
+ * possible return source, not an external filing destination. Its protocol,
+ * address and rights remain unknown (BLOCKED_INTEGRATION: return-source).
  */
 
 export type HandoffStatus =
-  /** Approved and ready. Every row today, because nothing can transmit. */
+  /** Approved and ready for a separately authorized handoff. */
   | "prepared"
+  /** Staff recorded an external manual submission with proof; acceptance remains unknown. */
+  | "recorded_submission"
   /** The destination has it. */
   | "transmitted"
   /** The destination confirmed receipt. */
@@ -73,7 +73,9 @@ export function refusalForHandoff(input: {
 }): HandoffRefusal | null {
   if (
     input.existing &&
-    ["prepared", "transmitted", "acknowledged"].includes(input.existing.status)
+    ["prepared", "recorded_submission", "transmitted", "acknowledged"].includes(
+      input.existing.status,
+    )
   ) {
     return { kind: "already-out", status: input.existing.status };
   }
