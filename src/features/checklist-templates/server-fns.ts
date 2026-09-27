@@ -35,13 +35,32 @@ export async function createChecklistTemplateForActor(
 
 export async function updateChecklistTemplateForActor(
   actor: AuthenticatedActor,
-  input: { id: string; patch: ChecklistTemplatePatch },
+  input: { id: string; patch: ChecklistTemplatePatch; expectedRevision: number },
   dependencies: ChecklistTemplateDependencies,
 ) {
   assertAdminAccess(actor);
-  const updated = await dependencies.repository.updateTemplate(input.id, input.patch);
+  const updated = await dependencies.repository.updateTemplate(
+    input.id,
+    input.patch,
+    input.expectedRevision,
+  );
   if (!updated) throw new Error("Checklist template not found.");
   return updated;
+}
+
+export async function publishChecklistTemplateForActor(
+  actor: AuthenticatedActor,
+  input: { id: string; expectedRevision: number },
+  dependencies: ChecklistTemplateDependencies,
+) {
+  assertAdminAccess(actor);
+  if (!actor.userId) throw new Error("Forbidden: Admin user ID required.");
+  return dependencies.repository.publishTemplate(
+    input.id,
+    input.expectedRevision,
+    actor.userId,
+    actor.authUserId,
+  );
 }
 
 export async function duplicateChecklistTemplateForActor(
@@ -91,12 +110,17 @@ export async function listActiveAnnualReturnTemplatesForActor(
   const templates = await dependencies.repository.listTemplates();
   return templates
     .filter(
-      (template) => template.active && ANNUAL_RETURN_SERVICE_TYPES.includes(template.serviceType),
+      (template) =>
+        template.active &&
+        !!template.publishedVersionId &&
+        !!template.publishedName &&
+        !!template.publishedServiceType &&
+        ANNUAL_RETURN_SERVICE_TYPES.includes(template.publishedServiceType),
     )
     .map((template) => ({
       id: template.id,
-      name: template.name,
-      serviceType: template.serviceType,
+      name: template.publishedName!,
+      serviceType: template.publishedServiceType!,
     }));
 }
 
@@ -191,10 +215,28 @@ export const createChecklistTemplate = createServerFn({ method: "POST" })
   );
 
 export const updateChecklistTemplate = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string().uuid(), patch: patchSchema }).strict())
+  .validator(
+    z
+      .object({
+        id: z.string().uuid(),
+        patch: patchSchema,
+        expectedRevision: z.number().int().positive(),
+      })
+      .strict(),
+  )
   .handler(({ data }) =>
     withDefaultChecklistTemplateContext((actor, dependencies) =>
-      updateChecklistTemplateForActor(actor, { id: data.id, patch: data.patch }, dependencies),
+      updateChecklistTemplateForActor(actor, data, dependencies),
+    ),
+  );
+
+export const publishChecklistTemplate = createServerFn({ method: "POST" })
+  .validator(
+    z.object({ id: z.string().uuid(), expectedRevision: z.number().int().positive() }).strict(),
+  )
+  .handler(({ data }) =>
+    withDefaultChecklistTemplateContext((actor, dependencies) =>
+      publishChecklistTemplateForActor(actor, data, dependencies),
     ),
   );
 
@@ -212,4 +254,36 @@ export const deleteChecklistTemplate = createServerFn({ method: "POST" })
     withDefaultChecklistTemplateContext((actor, dependencies) =>
       deleteChecklistTemplateForActor(actor, { id: data.id }, dependencies),
     ),
+  );
+
+export const listTemplateUsage = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({ templateVersionId: z.string().uuid(), cursor: z.string().uuid().nullable() })
+      .strict(),
+  )
+  .handler(({ data }) =>
+    withDefaultChecklistTemplateContext(async (actor) => {
+      const { listTemplateUsageForActor } = await import("./usage");
+      return listTemplateUsageForActor(actor, data);
+    }),
+  );
+
+export const previewTemplateRollout = createServerFn({ method: "POST" })
+  .validator(
+    z
+      .object({
+        fromVersion: z.string().uuid(),
+        toVersion: z.string().uuid(),
+        selection: z
+          .object({ kind: z.literal("ids"), ids: z.array(z.string().uuid()).min(1).max(1000) })
+          .strict(),
+      })
+      .strict(),
+  )
+  .handler(({ data }) =>
+    withDefaultChecklistTemplateContext(async (actor) => {
+      const { previewTemplateRolloutForActor } = await import("./usage");
+      return previewTemplateRolloutForActor(actor, data);
+    }),
   );

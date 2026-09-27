@@ -20,7 +20,8 @@ export type SchemaCapability =
   | "submissions"
   | "returns"
   | "media"
-  | "staff";
+  | "staff"
+  | "templates";
 type Requirement = {
   capability: SchemaCapability;
   kind: "table" | "column" | "index" | "constraint";
@@ -236,6 +237,43 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "maintenance_job_runs_job_kind_check",
     expected: "drainInboundMediaDownloads",
   },
+  { capability: "templates", kind: "table", name: "checklist_template_versions" },
+  {
+    capability: "templates",
+    kind: "column",
+    name: "checklist_templates.revision",
+    expected: "integer",
+  },
+  {
+    capability: "templates",
+    kind: "column",
+    name: "checklist_templates.published_version_id",
+    expected: "uuid",
+  },
+  {
+    capability: "templates",
+    kind: "column",
+    name: "annual_return_cases.template_version_id",
+    expected: "uuid",
+  },
+  {
+    capability: "templates",
+    kind: "column",
+    name: "annual_return_checklist_items.template_document_id",
+    expected: "text",
+  },
+  {
+    capability: "templates",
+    kind: "index",
+    name: "annual_return_cases_template_version_idx",
+    expected: "template_version_id",
+  },
+  {
+    capability: "templates",
+    kind: "index",
+    name: "annual_return_checklist_template_document_uidx",
+    expected: "template_document_id",
+  },
   { capability: "staff", kind: "table", name: "staff_provisioning_requests" },
   { capability: "staff", kind: "table", name: "staff_access_events" },
   {
@@ -321,6 +359,7 @@ export function inspectSchemaCompatibility(input: {
     returns: { ready: true, issues: [] as string[] },
     media: { ready: true, issues: [] as string[] },
     staff: { ready: true, issues: [] as string[] },
+    templates: { ready: true, issues: [] as string[] },
   };
   const definitionMismatch: DefinitionMismatch[] = [];
   const tables = new Set(input.catalog.tables.map(normalize));

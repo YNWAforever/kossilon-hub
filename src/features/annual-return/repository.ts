@@ -150,6 +150,8 @@ type CompanyForCaseRow = {
 type TemplateForCaseRow = {
   id: string;
   active: boolean;
+  version_id: string;
+  service_type: string;
   documents: DocumentItem[];
 };
 
@@ -1433,15 +1435,27 @@ export function createAnnualReturnRepository(
       }
 
       const templateRows = await tx<TemplateForCaseRow[]>`
-        select id, active, documents
-        from checklist_templates
-        where id = ${input.templateId}
-        limit 1
+        select t.id,t.active,v.id version_id,v.service_type,v.documents
+        from checklist_templates t
+        join checklist_template_versions v on v.id=t.published_version_id
+        where t.id = ${input.templateId} and t.archived_at is null
+        for share of t,v
       `;
       const template = templateRows[0];
       if (!template || !template.active) {
         throw new Error("Checklist template not found or inactive.");
       }
+      if (
+        !["Annual Return — Private Ltd", "Annual Return — Public Ltd"].includes(
+          template.service_type,
+        )
+      )
+        throw new Error("An annual-return published template is required.");
+      if (
+        new Set(template.documents.map((document) => document.id)).size !==
+        template.documents.length
+      )
+        throw new Error("Published template has duplicate document IDs.");
 
       const ownerRows = await tx<{ id: string }[]>`
         select id
@@ -1458,10 +1472,12 @@ export function createAnnualReturnRepository(
 
       const caseRows = await tx<{ id: string }[]>`
         insert into annual_return_cases (
-          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id
+          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id,
+          template_version_id
         )
         values (
-          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId}
+          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId},
+          ${template.version_id}
         )
         returning id
       `;
@@ -1471,8 +1487,9 @@ export function createAnnualReturnRepository(
       for (const document of template.documents) {
         const dueDate = offsetDateOnly(filingDueDate, -document.daysBeforeDue);
         await tx`
-          insert into annual_return_checklist_items (case_id, item_label, required, status, due_date)
-          values (${newCaseId}, ${document.label}, ${document.required}, 'Missing', ${dueDate})
+          insert into annual_return_checklist_items
+            (case_id, item_label, required, status, due_date, template_document_id)
+          values (${newCaseId}, ${document.label}, ${document.required}, 'Missing', ${dueDate}, ${document.id})
         `;
       }
 
@@ -1504,7 +1521,7 @@ export function createAnnualReturnRepository(
         values (
           ${input.companyId}, ${newCaseId}, 'annual_return_case_created', 'user', ${input.actorId},
           'Annual return case created.',
-          ${tx.json({ templateId: input.templateId, returnYear })}
+          ${tx.json({ templateId: input.templateId, templateVersionId: template.version_id, returnYear })}
         )
       `;
 
@@ -1514,7 +1531,11 @@ export function createAnnualReturnRepository(
         actor,
         action: "create_case",
         summary: "Annual return case created.",
-        metadata: { templateId: input.templateId, returnYear },
+        metadata: {
+          templateId: input.templateId,
+          templateVersionId: template.version_id,
+          returnYear,
+        },
       });
 
       return newCaseId;

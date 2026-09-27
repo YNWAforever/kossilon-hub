@@ -41,6 +41,13 @@ export type ChecklistTemplate = {
   reminders: ReminderRule[];
   riskRules: RiskRule[];
   updatedAt: string;
+  /** Production templates carry these; demo fixtures are read-only. */
+  revision?: number;
+  publishedVersionId?: string | null;
+  publishedName?: string | null;
+  publishedServiceType?: ServiceType | null;
+  publicationOrigin?: "legacy_baseline" | "admin_publish" | null;
+  archivedAt?: string | null;
 };
 
 export type ChecklistTemplatePatch = Partial<
