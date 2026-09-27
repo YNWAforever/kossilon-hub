@@ -4,6 +4,8 @@ import {
   getNarImportBatchReviewForActor,
   mapNarImportCompanyForActor,
   stageNarImportForActor,
+  searchImportCompaniesForActor,
+  revalidateNarImportForActor,
 } from "./server-fns";
 
 /**
@@ -72,6 +74,38 @@ describe("import authority", () => {
         deps(),
       ),
     ).rejects.toThrow(/Forbidden: Admin access is required/);
+  });
+
+  it("keeps company search and preview behind import authority", async () => {
+    const repository = {
+      searchCompanies: vi.fn(async () => ({ items: [], nextCursor: null })),
+      revalidate: vi.fn(async () => ({ id: "preview-1" })),
+    };
+    const dependencies = { repository } as unknown as Parameters<
+      typeof searchImportCompaniesForActor
+    >[2];
+    await expect(
+      searchImportCompaniesForActor(
+        actor("Manager"),
+        { q: "", cursor: null, limit: 20 },
+        dependencies,
+      ),
+    ).rejects.toThrow(/Admin access/);
+    await expect(
+      revalidateNarImportForActor(
+        actor("Staff"),
+        { batchId: "33333333-3333-4333-8333-333333333333", expectedRevision: 1 },
+        dependencies,
+      ),
+    ).rejects.toThrow(/Admin access/);
+    expect(repository.searchCompanies).not.toHaveBeenCalled();
+    expect(repository.revalidate).not.toHaveBeenCalled();
+    await searchImportCompaniesForActor(
+      actor("Admin"),
+      { q: "", cursor: null, limit: 20 },
+      dependencies,
+    );
+    expect(repository.searchCompanies).toHaveBeenCalledTimes(1);
   });
 
   it("refuses ordinary staff", async () => {

@@ -1227,6 +1227,12 @@ create table if not exists nar_import_batches (
   -- Which reader produced the parsed values. A later parser fix changes what a
   -- row means, and without this there is no way to tell which rows predate it.
   parser_version text not null,
+  -- The return year is explicit. Legacy batches remain NULL until restaged.
+  return_year integer check (return_year between 1900 and 2100),
+  revision integer not null default 1 check (revision > 0),
+  mapping_revision integer not null default 0 check (mapping_revision >= 0),
+  semantic_key text,
+  column_mapping jsonb,
   -- The operating period staff chose. Null until they do: the supplied sheet is
   -- named "8.2025" and historical, and reading a period out of a sheet name
   -- would be a guess that silently activates the wrong year's cases.
@@ -1239,11 +1245,17 @@ create table if not exists nar_import_batches (
   created_by uuid references users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  applied_at timestamptz,
-  -- Re-importing the same bytes finds the same batch instead of making a second
-  -- one. Per sheet, because one workbook legitimately carries a sheet per month.
-  unique (source_sha256, sheet_name)
+  applied_at timestamptz
 );
+-- Semantic identity includes the explicit return year and parser version.
+-- A legacy batch with an unknown year retains one raw-byte identity until restaged.
+
+create unique index if not exists nar_import_batches_semantic_identity_idx
+  on nar_import_batches (source_sha256, sheet_name, return_year, parser_version)
+  where return_year is not null;
+create unique index if not exists nar_import_batches_legacy_identity_idx
+  on nar_import_batches (source_sha256, sheet_name)
+  where return_year is null;
 
 create index if not exists nar_import_batches_status_idx
   on nar_import_batches (status, created_at desc);
@@ -1263,6 +1275,8 @@ create table if not exists nar_import_rows (
   -- year stays a day and month with no year.
   parsed jsonb not null,
   issues jsonb not null default '[]'::jsonb,
+  source_issues jsonb,
+  revision integer not null default 1 check (revision > 0),
   disposition text not null check (
     disposition in ('new', 'updated', 'unchanged', 'conflict', 'invalid', 'needs_company_mapping')
   ),
@@ -1285,6 +1299,22 @@ create index if not exists nar_import_rows_batch_disposition_idx
 create index if not exists nar_import_rows_unmapped_idx
   on nar_import_rows (external_client_id)
   where disposition = 'needs_company_mapping';
+
+create table if not exists nar_import_previews (
+  id uuid primary key default gen_random_uuid(),
+  batch_id uuid not null references nar_import_batches(id) on delete restrict,
+  batch_revision integer not null check (batch_revision > 0),
+  semantic_key text not null,
+  preview_hash text not null check (preview_hash ~ '^[0-9a-f]{64}$'),
+  counts jsonb not null,
+  rows jsonb not null,
+  created_by uuid not null references users(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  constraint nar_import_previews_actor_snapshot_key unique (batch_id, batch_revision, preview_hash, created_by)
+);
+create index if not exists nar_import_previews_batch_recent_idx
+  on nar_import_previews (batch_id, created_at desc);
 
 -- from 0026_case_parties_and_requirement_instances.sql
 -- 0026: who a requirement applies to, and which pages answer it.

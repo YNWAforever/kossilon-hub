@@ -38,7 +38,7 @@ vi.mock("../features/nar-import/server-fns", () => ({
     Promise.reject(
       Object.assign(new Error("private DB connection detail"), { requestId: "req_T02ABC123" }),
     ),
-  listCompaniesEligibleForCase: () =>
+  searchImportCompanies: () =>
     Promise.reject(
       Object.assign(new Error("private DB connection detail"), { requestId: "req_T02ABC123" }),
     ),
@@ -48,6 +48,7 @@ vi.mock("../features/nar-import/server-fns", () => ({
     ),
   stageNarImportBatch: vi.fn(),
   mapNarImportCompany: vi.fn(),
+  revalidateNarImport: vi.fn(),
 }));
 
 import { routeTree } from "../routeTree.gen";
@@ -72,7 +73,7 @@ async function renderWithReadFailures() {
         ),
     }),
     queryClient.prefetchQuery({
-      queryKey: ["nar-import", "companies"],
+      queryKey: ["nar-import", "companies", "", null],
       queryFn: () =>
         Promise.reject(
           Object.assign(new Error("private DB connection detail"), { requestId: "req_T02ABC123" }),
