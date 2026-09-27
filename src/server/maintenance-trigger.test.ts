@@ -218,6 +218,8 @@ describe.skipIf(!databaseUrl)("T07 lease SQL against disposable Postgres", () =>
       Date.now() + 123456 + Math.floor(Math.random() * 100000),
     ).toISOString();
     const allowedJobs: MaintenanceJobKind[] = ["escalateStalledQuarantine"];
+    const priorDeployment = process.env.VERCEL_GIT_COMMIT_SHA;
+    process.env.VERCEL_GIT_COMMIT_SHA = "abcdef1234567";
     try {
       const manual = await runMaintenanceTickOnServer({
         trigger: "manual",
@@ -241,6 +243,20 @@ describe.skipIf(!databaseUrl)("T07 lease SQL against disposable Postgres", () =>
         { trigger_source: "manual", outcome: "succeeded" },
         { trigger_source: "scheduled", outcome: "succeeded" },
       ]);
+      const { createMaintenanceRunRepository } = await import("@/features/operations/repository");
+      const runRepository = createMaintenanceRunRepository(databaseUrl);
+      try {
+        const persisted = (await runRepository.listRecentRuns(20)).filter(
+          (run) => run.scheduledFor === scheduledAt,
+        );
+        expect(persisted).toHaveLength(2);
+        expect(persisted.map((run) => run.deploymentRef)).toEqual([
+          "abcdef1234567",
+          "abcdef1234567",
+        ]);
+      } finally {
+        await runRepository.close();
+      }
       const jobs = await sql<{ trigger_source: string; state: string }[]>`
         select trigger_source, state from maintenance_job_runs
         where scheduled_for = ${scheduledAt} order by trigger_source
@@ -250,6 +266,8 @@ describe.skipIf(!databaseUrl)("T07 lease SQL against disposable Postgres", () =>
         { trigger_source: "scheduled", state: "succeeded" },
       ]);
     } finally {
+      if (priorDeployment === undefined) delete process.env.VERCEL_GIT_COMMIT_SHA;
+      else process.env.VERCEL_GIT_COMMIT_SHA = priorDeployment;
       await sql`delete from maintenance_job_runs where scheduled_for = ${scheduledAt}`;
       await sql`delete from maintenance_runs where scheduled_for = ${scheduledAt}`;
     }
