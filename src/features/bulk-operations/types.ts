@@ -71,7 +71,7 @@ export type BulkPreview = {
 };
 export type BulkOperation = {
   id: string;
-  action: "assign";
+  action: "assign" | "importApply";
   state: BulkOperationState;
   createdBy: string;
   createdAt: string;
