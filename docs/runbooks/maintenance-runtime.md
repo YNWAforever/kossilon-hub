@@ -40,6 +40,8 @@ The last two queries require migration `0035_maintenance_job_runs.sql`; before m
 
 Local RED: three named scenarios failed before code. Local GREEN: controller, HTTP auth, owner gate and SQL concurrency/lease tests, including a real-Postgres resumed failure that persists as partial. Full disposable-Postgres suite: 187/187 files and 1753/1753 tests; typecheck, build, 12-route import check, offline verifier, and schema inspection passed. Lint had zero errors and one existing fast-refresh warning.
 
+Follow-up SLA freshness regression: the new scheduler stores successful escalation work under `passes.jobs`, while the work queue previously read only legacy `passes.escalations`. A disposable-Postgres RED test reproduced the stale timestamp; the query now accepts successful `evaluateEscalations` job evidence and ignores a later failed job. Focused 5/5, typecheck and lint (0 errors, 1 baseline warning) passed after the fix.
+
 Runtime acceptance requires **three consecutive actual scheduled** records from the chosen environment with UTC scheduled times, deployment SHA, owner, each job's state, and database identity. Confirm no second scheduler is consuming the same queues and that no provider send ran. Manual invocations cannot replace those three records.
 
 To stop the new path, unset `MAINTENANCE_SCHEDULER_OWNER` and disable the Vercel cron registration in project settings before rolling back code; Vercel's Instant Rollback alone leaves cron registration unchanged. Keep `maintenance_job_runs` as evidence when any rows exist. A schema reversal is safe to test only if the table is empty and no scheduled process is active:
