@@ -28,6 +28,7 @@ import { useAuth } from "@/features/auth/auth-context-neon";
 import { workQueuePersonLabel, type AssignmentRecommendation } from "@/features/work-items/types";
 import { deriveSlaDisplay, type SlaDisplay, type SlaDisplayState } from "@/features/work-items/sla";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
+import { filterWorkQueueDisplay } from "@/features/work-items/queue-display-filters";
 import {
   acknowledgeWorkItemEscalation,
   assignWorkItem,
@@ -37,10 +38,11 @@ import {
 } from "@/features/work-items/server-fns";
 import { cn } from "@/lib/utils";
 
+const QUEUE_PAGE_SIZE = 50;
 type QueueView = "mine" | "team" | "breached";
 type SlaFilter = "all" | SlaDisplayState;
 type PriorityFilter = "all" | "high" | "normal";
-type StatusFilter = "all" | PersistedWorkItem["status"];
+type StatusFilter = "all" | "open" | "in_progress" | "blocked";
 
 type CaseDetailLink =
   | { to: "/annual-returns/$id"; params: { id: string } }
@@ -70,6 +72,7 @@ export const Route = createFileRoute("/work-queue")({
         ? (search.view as QueueView)
         : ("mine" as QueueView),
     owner: typeof search.owner === "string" ? search.owner : "all",
+    q: typeof search.q === "string" ? search.q.slice(0, 200) : "",
     workType: typeof search.workType === "string" ? search.workType : "all",
     sla:
       search.sla === "none"
@@ -95,6 +98,10 @@ export const Route = createFileRoute("/work-queue")({
       search.status === "open" || search.status === "in_progress" || search.status === "blocked"
         ? (search.status as StatusFilter)
         : ("all" as StatusFilter),
+    page:
+      typeof search.page === "number" && Number.isSafeInteger(search.page) && search.page > 0
+        ? search.page
+        : 1,
     ...(typeof search.bulkOperation === "string" &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search.bulkOperation)
       ? { bulkOperation: search.bulkOperation }
@@ -108,8 +115,7 @@ function WorkQueueRoute() {
   const queryClient = useQueryClient();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { view, owner, workType, sla, priority, status } = search;
-  const [query, setQuery] = useState("");
+  const { view, owner, workType, sla, priority, status, q: query, page: requestedPage } = search;
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
@@ -124,6 +130,11 @@ function WorkQueueRoute() {
     query.trim().toLowerCase(),
   ]);
   const [selection, setSelection] = useState(() => newBulkSelection(filterKey));
+  const [matchingSelection, setMatchingSelection] = useState<{
+    filterKey: string;
+    excludedIds: string[];
+  } | null>(null);
+  const currentMatching = matchingSelection?.filterKey === filterKey ? matchingSelection : null;
   const currentSelection =
     selection.filterKey === filterKey ? selection : changeSelectionFilter(selection, filterKey);
   const selectedIds = useMemo(() => new Set(currentSelection.ids), [currentSelection.ids]);
@@ -131,6 +142,7 @@ function WorkQueueRoute() {
     setSelection((previous) => changeSelectionFilter(previous, filterKey));
     setSelectionError(null);
     setBulkDialogOpen(false);
+    setMatchingSelection(null);
   }, [filterKey]);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
   const filters = { view };
@@ -175,37 +187,22 @@ function WorkQueueRoute() {
     () => Array.from(new Set(items.map((item) => item.workType))).sort(),
     [items],
   );
-  const visibleItems = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return items.filter((item) => {
-      const matchesQuery =
-        !needle ||
-        `${item.title} ${item.workType} ${item.annualReturnCaseId ?? ""} ${item.companyId}`
-          .toLowerCase()
-          .includes(needle);
-      const matchesOwner =
-        owner === "all" || (owner === "unassigned" ? !item.ownerId : item.ownerId === owner);
-      const matchesWorkType = workType === "all" || item.workType === workType;
-      const state = displayFor(item).state;
-      const matchesSla = sla === "all" || state === sla;
-      const matchesView = view !== "breached" || state === "breached";
-      const matchesPriority =
-        priority === "all" || (priority === "high" ? item.priority >= 70 : item.priority < 70);
-      const matchesStatus = status === "all" || item.status === status;
-      return (
-        matchesView &&
-        matchesQuery &&
-        matchesOwner &&
-        matchesWorkType &&
-        matchesSla &&
-        matchesPriority &&
-        matchesStatus
-      );
-    });
-  }, [items, owner, priority, query, sla, status, workType, view, displayFor]);
+  const visibleItems = useMemo(
+    () =>
+      filterWorkQueueDisplay(
+        items,
+        { view, owner, workType, sla, priority, status, q: query },
+        (item) => displayFor(item).state,
+      ),
+    [items, owner, priority, query, sla, status, workType, view, displayFor],
+  );
+
+  const pageCount = Math.max(1, Math.ceil(visibleItems.length / QUEUE_PAGE_SIZE));
+  const page = Math.min(requestedPage, pageCount);
+  const pageItems = visibleItems.slice((page - 1) * QUEUE_PAGE_SIZE, page * QUEUE_PAGE_SIZE);
 
   const setFilter = (key: "owner" | "workType" | "sla" | "priority" | "status", value: string) =>
-    void navigate({ search: { ...search, [key]: value }, replace: true });
+    void navigate({ search: { ...search, [key]: value, page: 1 }, replace: true });
 
   function addSelected(ids: string[]) {
     try {
@@ -215,7 +212,22 @@ function WorkQueueRoute() {
       setSelectionError(error instanceof Error ? error.message : "Selection unavailable.");
     }
   }
-  const representativeItem = items.find((item) => selectedIds.has(item.id));
+  function toggleSelected(id: string, checked: boolean) {
+    if (currentMatching) {
+      setMatchingSelection({
+        ...currentMatching,
+        excludedIds: checked
+          ? currentMatching.excludedIds.filter((excluded) => excluded !== id)
+          : [...new Set([...currentMatching.excludedIds, id])],
+      });
+      return;
+    }
+    if (checked) addSelected([id]);
+    else setSelection(removeFromSelection(currentSelection, id));
+  }
+  const representativeItem = currentMatching
+    ? visibleItems.find((item) => !currentMatching.excludedIds.includes(item.id))
+    : items.find((item) => selectedIds.has(item.id));
 
   const metrics = {
     dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(asOf))
@@ -265,7 +277,7 @@ function WorkQueueRoute() {
               <Link
                 key={value}
                 to="/work-queue"
-                search={{ ...search, view: value }}
+                search={{ ...search, view: value, page: 1 }}
                 className={cn(
                   "min-h-9 border-b-2 px-3 py-2 text-sm font-medium",
                   view === value
@@ -282,7 +294,12 @@ function WorkQueueRoute() {
             <span className="sr-only">Search work queue</span>
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                void navigate({
+                  search: { ...search, q: event.target.value.slice(0, 200), page: 1 },
+                  replace: true,
+                });
+              }}
               placeholder="Search case or work type"
               className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
             />
@@ -358,12 +375,39 @@ function WorkQueueRoute() {
         {canManage ? (
           <>
             <BulkSelectionToolbar
-              selectedCount={currentSelection.ids.length}
-              visibleCount={visibleItems.length}
+              selectedCount={
+                currentMatching
+                  ? visibleItems.length - currentMatching.excludedIds.length
+                  : currentSelection.ids.length
+              }
+              visibleCount={pageItems.length}
               notice={currentSelection.notice}
-              onSelectVisible={() => addSelected(visibleItems.map((item) => item.id))}
+              selectionLabel={
+                currentMatching
+                  ? `All matching filter (${visibleItems.length - currentMatching.excludedIds.length} shown; server preview required)`
+                  : undefined
+              }
+              previewEnabled={
+                currentMatching
+                  ? visibleItems.length > currentMatching.excludedIds.length
+                  : undefined
+              }
+              onSelectVisible={() => {
+                setMatchingSelection(null);
+                addSelected(pageItems.map((item) => item.id));
+              }}
+              onSelectMatching={() => {
+                if (visibleItems.length > 1000) {
+                  setSelectionError("Selection exceeds the 1000-item preview limit.");
+                  return;
+                }
+                setSelection(clearBulkSelection(currentSelection));
+                setMatchingSelection({ filterKey, excludedIds: [] });
+                setSelectionError(null);
+              }}
               onClear={() => {
                 setSelection(clearBulkSelection(currentSelection));
+                setMatchingSelection(null);
                 setSelectionError(null);
               }}
               onPreview={() => {
@@ -387,6 +431,7 @@ function WorkQueueRoute() {
                 onRetryFailed={(results) => {
                   try {
                     setSelection(retryFailedSelection(filterKey, results));
+                    setMatchingSelection(null);
                     setSelectionError(null);
                   } catch (error) {
                     setSelectionError(
@@ -432,7 +477,7 @@ function WorkQueueRoute() {
                 </div>
               </div>
               <div role="rowgroup" className="divide-y divide-border">
-                {visibleItems.map((item) => (
+                {pageItems.map((item) => (
                   <div
                     key={item.id}
                     role="row"
@@ -443,12 +488,12 @@ function WorkQueueRoute() {
                         <input
                           type="checkbox"
                           aria-label={`Select ${item.title}`}
-                          checked={selectedIds.has(item.id)}
-                          onChange={(event) =>
-                            event.target.checked
-                              ? addSelected([item.id])
-                              : setSelection(removeFromSelection(currentSelection, item.id))
+                          checked={
+                            currentMatching
+                              ? !currentMatching.excludedIds.includes(item.id)
+                              : selectedIds.has(item.id)
                           }
+                          onChange={(event) => toggleSelected(item.id, event.target.checked)}
                           className="mr-2"
                         />
                       ) : null}
@@ -503,19 +548,19 @@ function WorkQueueRoute() {
               </div>
             </div>
             <div className="divide-y divide-border lg:hidden">
-              {visibleItems.map((item) => (
+              {pageItems.map((item) => (
                 <article key={item.id} className="grid gap-3 px-3 py-4">
                   <div>
                     {canManage ? (
                       <input
                         type="checkbox"
                         aria-label={`Select ${item.title}`}
-                        checked={selectedIds.has(item.id)}
-                        onChange={(event) =>
-                          event.target.checked
-                            ? addSelected([item.id])
-                            : setSelection(removeFromSelection(currentSelection, item.id))
+                        checked={
+                          currentMatching
+                            ? !currentMatching.excludedIds.includes(item.id)
+                            : selectedIds.has(item.id)
                         }
+                        onChange={(event) => toggleSelected(item.id, event.target.checked)}
                         className="mr-2"
                       />
                     ) : null}
@@ -558,18 +603,71 @@ function WorkQueueRoute() {
                 </article>
               ))}
             </div>
+            {pageCount > 1 ? (
+              <nav
+                aria-label="Work queue pages"
+                className="flex items-center justify-between gap-2 border-t border-border px-3 py-3 text-sm"
+              >
+                <span>
+                  Page {page} of {pageCount} · {visibleItems.length} matching
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={page === 1}
+                    onClick={() =>
+                      void navigate({ search: { ...search, page: page - 1 }, replace: true })
+                    }
+                    className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
+                  >
+                    Previous page
+                  </button>
+                  <button
+                    type="button"
+                    disabled={page === pageCount}
+                    onClick={() =>
+                      void navigate({ search: { ...search, page: page + 1 }, replace: true })
+                    }
+                    className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
+                  >
+                    Next page
+                  </button>
+                </div>
+              </nav>
+            ) : null}
           </section>
         ) : null}
       </main>
-      {bulkDialogOpen && representativeItem && currentSelection.ids.length > 0 ? (
+      {bulkDialogOpen &&
+      representativeItem &&
+      (currentMatching || currentSelection.ids.length > 0) ? (
         <WorkQueueBulkAssignmentDialog
-          ids={currentSelection.ids}
+          selection={
+            currentMatching
+              ? {
+                  kind: "filter",
+                  resource: "work-items",
+                  filters: { view, owner, workType, sla, priority, status, q: query },
+                  excludedIds: currentMatching.excludedIds,
+                }
+              : { kind: "ids", ids: currentSelection.ids }
+          }
+          selectedCount={
+            currentMatching
+              ? visibleItems.length - currentMatching.excludedIds.length
+              : currentSelection.ids.length
+          }
           representativeItem={representativeItem}
-          selectedItems={items.filter((item) => selectedIds.has(item.id))}
+          selectedItems={
+            currentMatching
+              ? visibleItems.filter((item) => !currentMatching.excludedIds.includes(item.id))
+              : items.filter((item) => selectedIds.has(item.id))
+          }
           onClose={() => setBulkDialogOpen(false)}
           onCommitted={(operationId) => {
             setBulkDialogOpen(false);
             setSelection(newBulkSelection(filterKey));
+            setMatchingSelection(null);
             void navigate({ search: { ...search, bulkOperation: operationId }, replace: true });
             void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
           }}

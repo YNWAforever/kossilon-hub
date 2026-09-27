@@ -12,12 +12,34 @@ export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
           .object({
             kind: z.literal("filter"),
             resource: z.literal("work-items"),
-            filters: z
-              .object({
-                teamId: uuid.optional(),
-                statuses: z.array(z.enum(["open", "in_progress", "blocked"])).optional(),
-              })
-              .strict(),
+            filters: z.union([
+              z
+                .object({
+                  teamId: uuid.optional(),
+                  statuses: z.array(z.enum(["open", "in_progress", "blocked"])).optional(),
+                })
+                .strict(),
+              z
+                .object({
+                  view: z.enum(["mine", "team", "breached"]),
+                  owner: z.union([z.literal("all"), z.literal("unassigned"), uuid]),
+                  workType: z.string().max(100),
+                  sla: z.enum([
+                    "all",
+                    "not-configured",
+                    "not-started",
+                    "on-track",
+                    "at-risk",
+                    "breached",
+                    "acknowledged",
+                    "unavailable",
+                  ]),
+                  priority: z.enum(["all", "high", "normal"]),
+                  status: z.enum(["all", "open", "in_progress", "blocked"]),
+                  q: z.string().max(200),
+                })
+                .strict(),
+            ]),
             excludedIds: z.array(uuid).max(1000),
           })
           .strict(),

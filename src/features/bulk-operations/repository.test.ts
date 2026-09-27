@@ -87,6 +87,59 @@ describe.skipIf(!databaseUrl)("T09 durable bulk operations", () => {
     await sql?.end();
   });
 
+  it("t22 queue all-matching preview stores a server-owned filter and excludes one displayed row", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const fx = await fixture();
+    const repo = createBulkOperationRepository({ sql });
+    const laterId = crypto.randomUUID();
+    try {
+      const preview = await repo.preview(fx.manager, {
+        ...assignment(fx.ids, fx.assigneeId),
+        selection: {
+          kind: "filter",
+          resource: "work-items",
+          filters: {
+            view: "team",
+            owner: "all",
+            workType: "all",
+            sla: "all",
+            priority: "all",
+            status: "all",
+            q: "Bulk test",
+          },
+          excludedIds: [fx.ids[1]],
+        },
+      });
+      expect(preview.itemsPreview.some((item) => item.resourceId === fx.ids[0])).toBe(true);
+      expect(preview.itemsPreview.some((item) => item.resourceId === fx.ids[1])).toBe(false);
+      const [saved] = await sql<{ selection: { kind: string; filters: { view: string } } }[]>`
+        select selection from bulk_previews where id = ${preview.id}`;
+      expect(saved.selection.kind).toBe("filter");
+      expect(saved.selection.filters.view).toBe("team");
+      await sql`
+        insert into work_items (
+          id, company_id, case_type, annual_return_case_id, corporate_change_request_id,
+          source_event_key, source_event_type, work_type, required_skill_key, title,
+          status, team_id, sla_policy_version_id, sla_started_at, sla_warning_at, sla_due_at
+        ) select ${laterId}, company_id, case_type, annual_return_case_id, corporate_change_request_id,
+          ${`bulk-test:${crypto.randomUUID()}`}, source_event_type, work_type, required_skill_key,
+          'Bulk test added after preview', 'open', team_id, sla_policy_version_id,
+          sla_started_at, sla_warning_at, sla_due_at
+        from work_items where id = ${fx.ids[0]}`;
+      const operation = await repo.commit(fx.manager, {
+        previewId: preview.id,
+        previewHash: preview.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const view = await repo.get(fx.manager, operation.id);
+      expect(view.items.some((item) => item.resourceId === laterId)).toBe(false);
+    } finally {
+      await sql`delete from work_items where id = ${laterId}`;
+      await fx.cleanup();
+      await repo.close();
+    }
+  });
+
   it("t09_scenario_1 rejects a stale second actor instead of overwriting", async () => {
     if (!sql) throw new Error("TEST_DATABASE_URL is required");
     const fx = await fixture();

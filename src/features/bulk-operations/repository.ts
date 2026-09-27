@@ -12,6 +12,8 @@ import {
   previewCaseOwnerAssignmentsForActor,
 } from "./assignment-handler";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { filterWorkQueueDisplay } from "@/features/work-items/queue-display-filters";
+import { deriveSlaDisplay } from "@/features/work-items/sla";
 import {
   assignmentDecisionFor,
   createWorkItemRepository,
@@ -20,6 +22,7 @@ import {
 import {
   assertActorCanAssignWorkItem,
   assignWorkItemForActor,
+  queueFiltersForActor,
 } from "@/features/work-items/server-fns";
 import {
   bulkCommitInputSchema,
@@ -186,6 +189,38 @@ async function snapshotRows(
     if (rows.some((row) => !row)) throw new Error("Forbidden: selected work item is unavailable.");
     for (const row of rows) assertActorCanAssignWorkItem(actor, row!);
     return rows as PersistedWorkItem[];
+  }
+  if (new Set(input.selection.excludedIds).size !== input.selection.excludedIds.length)
+    throw new Error("Duplicate excluded IDs.");
+  if ("view" in input.selection.filters) {
+    const filters = input.selection.filters;
+    const evaluatedAt = await repository.lastSlaEvaluationAt();
+    const now = new Date().toISOString();
+    const queue = await repository.listQueue(queueFiltersForActor(actor, { view: filters.view }));
+    const excluded = new Set(input.selection.excludedIds);
+    const selected = filterWorkQueueDisplay(
+      queue,
+      filters,
+      (item) =>
+        deriveSlaDisplay(
+          {
+            status: item.status,
+            escalationState: item.escalationState,
+            workDueAt: item.workDueAt ?? null,
+            slaPolicyVersionId: item.slaPolicyVersionId,
+            slaStartedAt: item.slaStartedAt,
+            slaWarningAt: item.slaWarningAt,
+            slaDueAt: item.slaDueAt,
+            slaBreachedAt: item.slaBreachedAt,
+            evaluatedAt,
+          },
+          now,
+        ).state,
+    ).filter((item) => !excluded.has(item.id));
+    if (selected.length > MAX_ITEMS)
+      throw new Error("Selection exceeds the 1000-item preview limit.");
+    for (const row of selected) assertActorCanAssignWorkItem(actor, row);
+    return selected;
   }
   if (
     actor.role === "Manager" &&

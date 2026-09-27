@@ -16,20 +16,22 @@ import {
   getBulkOperation,
   previewBulkOperation,
 } from "./server-fns";
-import type { BulkOperationView } from "./types";
+import type { BulkOperationView, BulkPreviewInput } from "./types";
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : "Operation unavailable.";
 }
 
 export function WorkQueueBulkAssignmentDialog({
-  ids,
+  selection,
+  selectedCount,
   representativeItem,
   selectedItems,
   onClose,
   onCommitted,
 }: {
-  ids: string[];
+  selection: Extract<BulkPreviewInput, { action: "assign" }>["selection"];
+  selectedCount: number;
   representativeItem: PersistedWorkItem;
   selectedItems: PersistedWorkItem[];
   onClose: () => void;
@@ -47,7 +49,7 @@ export function WorkQueueBulkAssignmentDialog({
       previewBulkOperation({
         data: {
           action: "assign",
-          selection: { kind: "ids", ids },
+          selection,
           parameters: {
             assigneeId,
             assignmentTarget: "owner",
@@ -77,8 +79,8 @@ export function WorkQueueBulkAssignmentDialog({
         <DialogHeader>
           <DialogTitle>Bulk work-item assignment</DialogTitle>
           <DialogDescription>
-            {ids.length} selected work items. Preview checks each item and its current authorization
-            before approval.
+            {selectedCount} work items in this view. Server preview freezes the exact matching IDs
+            and checks each item's current authorization before approval.
           </DialogDescription>
         </DialogHeader>
         <label className="grid gap-1 text-sm">

@@ -254,6 +254,8 @@ export function ProductionAnnualReturnCommandCenter({
               search={{
                 view: "team",
                 owner: "all",
+                q: "",
+                page: 1,
                 workType: "all",
                 sla: "all",
                 priority: "all",
