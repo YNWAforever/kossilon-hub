@@ -2,6 +2,82 @@ import { z } from "zod";
 import { ANNUAL_RETURN_STATUSES } from "@/features/annual-return/types";
 
 const uuid = z.string().uuid();
+export const bulkResourceSelectionSchema = z.union([
+  z
+    .object({
+      kind: z.literal("ids"),
+      resource: z.enum(["clients", "annual-return-cases", "work-items"]),
+      ids: z.array(uuid).min(1).max(1000),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("filter"),
+      resource: z.literal("clients"),
+      filters: z
+        .object({
+          q: z.string().trim().max(200).optional(),
+          status: z.enum(["all", "active", "inactive"]).optional(),
+          teamId: uuid.optional(),
+        })
+        .strict(),
+      excludedIds: z.array(uuid).max(1000),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("filter"),
+      resource: z.literal("annual-return-cases"),
+      filters: z
+        .object({
+          q: z.string().trim().max(200).optional(),
+          status: z.enum(ANNUAL_RETURN_STATUSES).optional(),
+          risk: z.enum(["green", "yellow", "orange", "red"]).optional(),
+          ownerId: uuid.optional(),
+          overdueOnly: z.boolean().optional(),
+        })
+        .strict(),
+      excludedIds: z.array(uuid).max(1000),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("filter"),
+      resource: z.literal("work-items"),
+      filters: z.union([
+        z
+          .object({
+            teamId: uuid.optional(),
+            statuses: z.array(z.enum(["open", "in_progress", "blocked"])).optional(),
+          })
+          .strict(),
+        z
+          .object({
+            view: z.enum(["mine", "team", "breached"]),
+            owner: z.union([z.literal("all"), z.literal("unassigned"), uuid]),
+            workType: z.string().max(100),
+            sla: z.enum([
+              "all",
+              "not-configured",
+              "not-started",
+              "on-track",
+              "at-risk",
+              "breached",
+              "acknowledged",
+              "unavailable",
+            ]),
+            priority: z.enum(["all", "high", "normal"]),
+            status: z.enum(["all", "open", "in_progress", "blocked"]),
+            q: z.string().max(200),
+          })
+          .strict(),
+      ]),
+      excludedIds: z.array(uuid).max(1000),
+    })
+    .strict(),
+]);
+export const bulkExportInputSchema = z.object({ selection: bulkResourceSelectionSchema }).strict();
+export type BulkExportInput = z.output<typeof bulkExportInputSchema>;
 export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
   z
     .object({
@@ -101,6 +177,28 @@ export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
       parameters: z.object({ ownerId: uuid }).strict(),
     })
     .strict(),
+  z
+    .object({
+      action: z.literal("tag"),
+      selection: bulkResourceSelectionSchema,
+      parameters: z
+        .object({
+          tag: z
+            .string()
+            .trim()
+            .min(1)
+            .max(64)
+            .refine((value) =>
+              [...value].every((char) => {
+                const code = char.codePointAt(0)!;
+                return code >= 32 && code !== 127;
+              }),
+            ),
+          mode: z.enum(["add", "remove"]),
+        })
+        .strict(),
+    })
+    .strict(),
 ]);
 export type BulkPreviewInput = z.output<typeof bulkPreviewInputSchema>;
 export const bulkCommitInputSchema = z
@@ -130,7 +228,7 @@ export type BulkOperationState =
 export type BulkPreview = {
   id: string;
   previewHash: string;
-  action: "assign" | "caseAssign" | "clientAssign";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag";
   selectionCount: number;
   eligibleCount: number;
   skippedCount: number;
@@ -149,7 +247,7 @@ export type BulkPreview = {
 };
 export type BulkOperation = {
   id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "importApply";
   state: BulkOperationState;
   createdBy: string;
   createdAt: string;

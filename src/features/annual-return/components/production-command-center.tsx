@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { CaseBulkAssignmentDialog } from "@/features/bulk-operations/case-bulk-controls";
+import { ResourceTagDialog } from "@/features/bulk-operations/resource-tag-dialog";
 import { WorkQueueBulkOperationStatus } from "@/features/bulk-operations/work-queue-bulk-controls";
 import {
   addPageToSelection,
@@ -73,6 +74,7 @@ export function ProductionAnnualReturnCommandCenter({
   const [selection, setSelection] = useState(() => newBulkSelection(filterKey));
   const [selectionMode, setSelectionMode] = useState<"ids" | "filter">("ids");
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const currentSelection =
     selection.filterKey === filterKey ? selection : changeSelectionFilter(selection, filterKey);
@@ -81,6 +83,7 @@ export function ProductionAnnualReturnCommandCenter({
     setSelection((previous) => changeSelectionFilter(previous, filterKey));
     setSelectionMode("ids");
     setBulkDialogOpen(false);
+    setTagDialogOpen(false);
     setSelectionError(null);
   }, [filterKey]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -382,6 +385,18 @@ export function ProductionAnnualReturnCommandCenter({
               setSelectionError(null);
             }}
             onPreview={() => setBulkDialogOpen(true)}
+            onTag={() => setTagDialogOpen(true)}
+            tagEnabled={
+              !searchPending && (selectionMode === "filter" || currentSelection.ids.length > 0)
+            }
+            exportSelection={
+              selectionInput.kind === "ids"
+                ? { ...selectionInput, resource: "annual-return-cases" }
+                : selectionInput
+            }
+            exportEnabled={
+              !searchPending && (selectionMode === "filter" || currentSelection.ids.length > 0)
+            }
           />
           {searchPending ? (
             <p role="status" className="text-xs text-muted-foreground">
@@ -553,6 +568,23 @@ export function ProductionAnnualReturnCommandCenter({
           onClose={() => setBulkDialogOpen(false)}
           onCommitted={(operationId) => {
             setBulkDialogOpen(false);
+            setSelectionMode("ids");
+            setSelection(newBulkSelection(filterKey));
+            update({ bulkOperation: operationId });
+            void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
+          }}
+        />
+      ) : null}
+      {canManage && tagDialogOpen ? (
+        <ResourceTagDialog
+          selection={
+            selectionInput.kind === "ids"
+              ? { ...selectionInput, resource: "annual-return-cases" }
+              : selectionInput
+          }
+          onClose={() => setTagDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setTagDialogOpen(false);
             setSelectionMode("ids");
             setSelection(newBulkSelection(filterKey));
             update({ bulkOperation: operationId });

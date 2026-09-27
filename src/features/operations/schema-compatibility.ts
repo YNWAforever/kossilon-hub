@@ -288,6 +288,18 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "companies.assignment_revision",
     expected: "integer",
   },
+  { capability: "staff", kind: "column", name: "companies.tag_revision", expected: "integer" },
+  {
+    capability: "staff",
+    kind: "column",
+    name: "annual_return_cases.tag_revision",
+    expected: "integer",
+  },
+  { capability: "staff", kind: "column", name: "work_items.tag_revision", expected: "integer" },
+  { capability: "staff", kind: "table", name: "company_tags" },
+  { capability: "staff", kind: "table", name: "annual_return_case_tags" },
+  { capability: "staff", kind: "table", name: "work_item_tags" },
+  { capability: "staff", kind: "table", name: "resource_tag_events" },
   {
     capability: "staff",
     kind: "column",

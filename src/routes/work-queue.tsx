@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
+import { ResourceTagDialog } from "@/features/bulk-operations/resource-tag-dialog";
 import {
   addPageToSelection,
   changeSelectionFilter,
@@ -119,6 +120,7 @@ function WorkQueueRoute() {
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const filterKey = JSON.stringify([
     view,
@@ -142,6 +144,7 @@ function WorkQueueRoute() {
     setSelection((previous) => changeSelectionFilter(previous, filterKey));
     setSelectionError(null);
     setBulkDialogOpen(false);
+    setTagDialogOpen(false);
     setMatchingSelection(null);
   }, [filterKey]);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
@@ -410,6 +413,27 @@ function WorkQueueRoute() {
                 setMatchingSelection(null);
                 setSelectionError(null);
               }}
+              exportSelection={
+                currentMatching
+                  ? {
+                      kind: "filter",
+                      resource: "work-items",
+                      filters: { view, owner, workType, sla, priority, status, q: query },
+                      excludedIds: currentMatching.excludedIds,
+                    }
+                  : { kind: "ids", resource: "work-items", ids: currentSelection.ids }
+              }
+              exportEnabled={
+                currentMatching
+                  ? visibleItems.length > currentMatching.excludedIds.length
+                  : currentSelection.ids.length > 0
+              }
+              onTag={() => setTagDialogOpen(true)}
+              tagEnabled={
+                currentMatching
+                  ? visibleItems.length > currentMatching.excludedIds.length
+                  : currentSelection.ids.length > 0
+              }
               onPreview={() => {
                 if (!representativeItem) {
                   setSelectionError(
@@ -666,6 +690,28 @@ function WorkQueueRoute() {
           onClose={() => setBulkDialogOpen(false)}
           onCommitted={(operationId) => {
             setBulkDialogOpen(false);
+            setSelection(newBulkSelection(filterKey));
+            setMatchingSelection(null);
+            void navigate({ search: { ...search, bulkOperation: operationId }, replace: true });
+            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          }}
+        />
+      ) : null}
+      {tagDialogOpen ? (
+        <ResourceTagDialog
+          selection={
+            currentMatching
+              ? {
+                  kind: "filter",
+                  resource: "work-items",
+                  filters: { view, owner, workType, sla, priority, status, q: query },
+                  excludedIds: currentMatching.excludedIds,
+                }
+              : { kind: "ids", resource: "work-items", ids: currentSelection.ids }
+          }
+          onClose={() => setTagDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setTagDialogOpen(false);
             setSelection(newBulkSelection(filterKey));
             setMatchingSelection(null);
             void navigate({ search: { ...search, bulkOperation: operationId }, replace: true });

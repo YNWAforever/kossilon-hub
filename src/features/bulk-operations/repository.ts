@@ -4,6 +4,8 @@ import {
   ImportApplyError,
 } from "@/features/nar-import/apply-repository";
 import { importLogicalKey } from "@/features/nar-import/apply";
+import { applyOneResourceTagForActor, previewResourceTagsForActor } from "./resource-tags";
+import { exportResourceRowsForActor } from "./resource-export";
 import type { ImportPreviewRow } from "@/features/nar-import/preview";
 import { createSqlClient, getSqlClient, type SqlClient } from "@/server/db/client";
 import { createAnnualReturnRepository } from "@/features/annual-return/repository";
@@ -30,6 +32,7 @@ import {
   bulkCommitInputSchema,
   bulkPreviewInputSchema,
   type BulkCommitInput,
+  type BulkExportInput,
   type BulkItemState,
   type BulkOperation,
   type BulkOperationView,
@@ -41,10 +44,11 @@ type QueryClient = SqlClient | postgres.TransactionSql;
 type WorkAssignInput = Extract<BulkPreviewInput, { action: "assign" }>;
 type CaseAssignInput = Extract<BulkPreviewInput, { action: "caseAssign" }>;
 type ClientAssignInput = Extract<BulkPreviewInput, { action: "clientAssign" }>;
+type TagInput = Extract<BulkPreviewInput, { action: "tag" }>;
 type Tx = postgres.TransactionSql;
 type PreviewRow = {
   id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   scope_role: "Admin" | "Manager";
@@ -73,7 +77,7 @@ type Snapshot = {
 type OperationRow = {
   id: string;
   preview_id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   state: BulkOperation["state"];
@@ -106,7 +110,9 @@ function iso(value: string | Date): string {
   return new Date(value).toISOString();
 }
 function transaction<T>(client: QueryClient, fn: (tx: Tx) => Promise<T>): Promise<T> {
-  return "begin" in client ? (client.begin(fn) as Promise<T>) : fn(client);
+  return "begin" in client
+    ? (client.begin(fn) as Promise<T>)
+    : (client.savepoint(fn) as Promise<T>);
 }
 async function digest(value: unknown): Promise<string> {
   const bytes = new TextEncoder().encode(JSON.stringify(value));
@@ -172,7 +178,8 @@ function mapOperation(row: OperationRow, items: ItemRow[]): BulkOperationView {
       reasonCode: item.reason_code,
       revisionBefore:
         (row.action === "caseAssign" && item.reason_code === "CASE_OUT_OF_SCOPE") ||
-        (row.action === "clientAssign" && item.reason_code === "CLIENT_OUT_OF_SCOPE")
+        (row.action === "clientAssign" && item.reason_code === "CLIENT_OUT_OF_SCOPE") ||
+        (row.action === "tag" && item.reason_code === "RESOURCE_OUT_OF_SCOPE")
           ? null
           : item.revision_before,
       revisionAfter: item.revision_after,
@@ -316,6 +323,27 @@ async function clientIdsForSelection(
   return rows.map((row) => row.id);
 }
 
+async function tagIdsForSelection(
+  sql: QueryClient,
+  actor: AuthenticatedActor,
+  selection: TagInput["selection"],
+): Promise<string[]> {
+  if (selection.kind === "ids") {
+    if (new Set(selection.ids).size !== selection.ids.length)
+      throw new Error("Duplicate selected IDs.");
+    return [...selection.ids].sort();
+  }
+  if (selection.resource === "clients") return clientIdsForSelection(sql, actor, selection);
+  if (selection.resource === "annual-return-cases")
+    return caseIdsForSelection(sql, actor, selection);
+  const workSelection: WorkAssignInput = {
+    action: "assign",
+    selection,
+    parameters: { assigneeId: actor.userId!, assignmentTarget: "owner" },
+  };
+  return (await snapshotRows(sql, actor, workSelection)).map((row) => row.id).sort();
+}
+
 export function createBulkOperationRepository(
   options: { sql?: QueryClient; databaseUrl?: string } = {},
 ) {
@@ -406,6 +434,30 @@ export function createBulkOperationRepository(
             newTeamId: item.newTeamId,
           };
         }
+      } else if (input.action === "tag") {
+        const ids = await tagIdsForSelection(sql, current, input.selection);
+        if (ids.length === 0) throw new Error("Selection has no eligible or reviewable items.");
+        const decisions = await previewResourceTagsForActor(
+          current,
+          {
+            resource: input.selection.resource,
+            ids,
+            tag: input.parameters.tag,
+            mode: input.parameters.mode,
+          },
+          { sql },
+        );
+        for (const item of decisions) {
+          snapshot[item.resourceId] = {
+            revision: item.revision ?? 1,
+            state: item.state,
+            teamId: null,
+            status: item.reasonCode ?? "taggable",
+            ownerId: null,
+            reviewerId: null,
+            reasonCode: item.reasonCode,
+          };
+        }
       } else {
         const rows = await snapshotRows(sql, current, input);
         const workRepository = createWorkItemRepository({ sql });
@@ -457,6 +509,7 @@ export function createBulkOperationRepository(
       const hash = await digest({
         actor: { userId: current.userId, role: current.role, teamId: current.teamId },
         action: input.action,
+        ...(input.action === "tag" ? { resource: input.selection.resource } : {}),
         parameters: input.parameters,
         snapshot,
       });
@@ -487,7 +540,8 @@ export function createBulkOperationRepository(
           resourceId,
           revision:
             (input.action === "caseAssign" && value.reasonCode === "CASE_OUT_OF_SCOPE") ||
-            (input.action === "clientAssign" && value.reasonCode === "CLIENT_OUT_OF_SCOPE")
+            (input.action === "clientAssign" && value.reasonCode === "CLIENT_OUT_OF_SCOPE") ||
+            (input.action === "tag" && value.reasonCode === "RESOURCE_OUT_OF_SCOPE")
               ? null
               : value.revision,
           state: value.state,
@@ -512,7 +566,8 @@ export function createBulkOperationRepository(
         if (
           preview.action !== "assign" &&
           preview.action !== "caseAssign" &&
-          preview.action !== "clientAssign"
+          preview.action !== "clientAssign" &&
+          preview.action !== "tag"
         )
           throw new Error("Unsupported bulk preview action for generic commit.");
         if (
@@ -535,8 +590,8 @@ export function createBulkOperationRepository(
               throw new Error("Forbidden: work item moved outside the actor's team.");
           }
         }
-        // Case and client assignments use per-item revision and authority checks in
-        // the runner. One changed resource must not abort unrelated eligible items.
+        // Case/client assignment and tags use per-item revision and authority
+        // checks in the runner. One changed resource must not abort other items.
         const logicalKey = preview.preview_hash;
         const [inserted] = await tx<{ id: string }[]>`
           insert into bulk_operations (preview_id,action,created_by_id,auth_user_id,idempotency_key,logical_key)
@@ -679,6 +734,17 @@ export function createBulkOperationRepository(
       });
       await updateOperationState(id);
       return loadView(id);
+    },
+    async exportSelection(
+      actor: AuthenticatedActor,
+      input: BulkExportInput,
+    ): Promise<{ csv: string; exportedCount: number; selectedCount: number }> {
+      return transaction(sql, async (tx) => {
+        const current = await currentActor(tx, actor.authUserId);
+        assertSameActor(current, actor);
+        const ids = await tagIdsForSelection(tx, current, input.selection);
+        return exportResourceRowsForActor(current, input.selection.resource, ids, tx);
+      });
     },
     async get(actor: AuthenticatedActor, id: string): Promise<BulkOperationView> {
       const current = await currentActor(sql, actor.authUserId);
@@ -907,6 +973,47 @@ export function createBulkOperationRepository(
                 where id=${claimed.item.id} and lease_token=${claimed.token}
                   and state='running' returning id`;
               if (!saved) throw new Error("Bulk item lease changed during client commit.");
+              await tx`update bulk_operation_attempts set state='succeeded',finished_at=now()
+                where item_id=${claimed.item.id}
+                  and attempt_number=${claimed.item.attempt_count}`;
+              return;
+            }
+            if (preview.action === "tag") {
+              if (claimed.operation.action !== "tag")
+                throw new BulkItemFailure("conflict", "ACTION_MISMATCH");
+              const selection = preview.selection as TagInput["selection"];
+              const parameters = preview.parameters as TagInput["parameters"];
+              let result;
+              try {
+                result = await applyOneResourceTagForActor(
+                  actor,
+                  {
+                    resource: selection.resource,
+                    resourceId: claimed.item.resource_id,
+                    tag: parameters.tag,
+                    mode: parameters.mode,
+                    expectedRevision: claimed.item.revision_before,
+                  },
+                  { sql: tx },
+                );
+              } catch (error) {
+                if (!(error instanceof Error)) throw error;
+                if (/revision changed/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "REVISION_CHANGED");
+                if (/forbidden|scope/i.test(error.message))
+                  throw new BulkItemFailure("forbidden", "RESOURCE_OUT_OF_SCOPE");
+                if (/tag must/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "INVALID_TAG");
+                throw error;
+              }
+              await options.afterDomainWrite?.();
+              const [saved] = await tx<{ id: string }[]>`
+                update bulk_operation_items set state=${result.state},
+                  revision_after=${result.revision},audit_ref=${result.auditRef},
+                  reason_code=${result.reasonCode},lease_token=null,lease_until=null,
+                  updated_at=now() where id=${claimed.item.id}
+                  and lease_token=${claimed.token} and state='running' returning id`;
+              if (!saved) throw new Error("Bulk item lease changed during tag commit.");
               await tx`update bulk_operation_attempts set state='succeeded',finished_at=now()
                 where item_id=${claimed.item.id}
                   and attempt_number=${claimed.item.attempt_count}`;

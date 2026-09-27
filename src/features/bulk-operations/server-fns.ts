@@ -3,7 +3,13 @@ import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { createBulkOperationRepository } from "./repository";
-import { bulkCommitInputSchema, bulkPreviewInputSchema, type BulkOperationView } from "./types";
+import {
+  bulkCommitInputSchema,
+  bulkExportInputSchema,
+  bulkPreviewInputSchema,
+  type BulkOperationView,
+} from "./types";
+import { csvCell } from "./resource-export";
 
 const operationIdSchema = z.object({ id: z.string().uuid() }).strict();
 type Repository = ReturnType<typeof createBulkOperationRepository>;
@@ -70,11 +76,6 @@ export async function cancelBulkOperationForActor(
   return repository.cancel(actor, operationIdSchema.parse({ id }).id);
 }
 
-function csvCell(value: unknown): string {
-  const raw = value === null || value === undefined ? "" : String(value);
-  const neutral = /^[=+@\-\t\r]/.test(raw) ? `'${raw}` : raw;
-  return `"${neutral.replaceAll('"', '""')}"`;
-}
 /** Export only operational identifiers and fixed reason codes; no customer or provider payload. */
 export function bulkOperationCsv(view: BulkOperationView): string {
   const header = [
@@ -134,4 +135,10 @@ export const exportBulkOperationCsv = createServerFn({ method: "GET" })
     withAuthorizedBulkRepository(async (repository, actor) =>
       bulkOperationCsv(await getBulkOperationForActor(actor, data.id, repository)),
     ),
+  );
+
+export const exportResourceSelectionCsv = createServerFn({ method: "POST" })
+  .validator(bulkExportInputSchema)
+  .handler(({ data }) =>
+    withAuthorizedBulkRepository((repository, actor) => repository.exportSelection(actor, data)),
   );

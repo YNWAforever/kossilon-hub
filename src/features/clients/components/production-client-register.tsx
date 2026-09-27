@@ -13,6 +13,7 @@ import {
   retryFailedSelection,
 } from "@/features/bulk-operations/selection";
 import { ClientBulkAssignmentDialog } from "@/features/bulk-operations/client-bulk-controls";
+import { ResourceTagDialog } from "@/features/bulk-operations/resource-tag-dialog";
 import { WorkQueueBulkOperationStatus } from "@/features/bulk-operations/work-queue-bulk-controls";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
@@ -65,6 +66,7 @@ export function ProductionClientRegister({
   const teamFilter = currentSearch.team ?? "all";
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const filterKey = JSON.stringify([query.trim().toLowerCase(), statusFilter, teamFilter]);
   const [selection, setSelection] = useState(() => newBulkSelection(filterKey));
@@ -80,6 +82,7 @@ export function ProductionClientRegister({
     setSelection((previous) => changeSelectionFilter(previous, filterKey));
     setMatchingSelection(null);
     setBulkDialogOpen(false);
+    setTagDialogOpen(false);
     setSelectionError(null);
   }, [filterKey]);
   function updateSearch(patch: Partial<ClientRegisterSearch>) {
@@ -335,6 +338,14 @@ export function ProductionClientRegister({
             (Boolean(currentMatching) || currentSelection.ids.length > 0)
           }
           onPreview={() => setBulkDialogOpen(true)}
+          onTag={() => setTagDialogOpen(true)}
+          tagEnabled={Boolean(currentMatching) || currentSelection.ids.length > 0}
+          exportSelection={
+            selectionInput.kind === "ids"
+              ? { ...selectionInput, resource: "clients" }
+              : selectionInput
+          }
+          exportEnabled={Boolean(currentMatching) || currentSelection.ids.length > 0}
         />
       ) : null}
       {selectionError ? (
@@ -358,6 +369,24 @@ export function ProductionClientRegister({
           onClose={() => setBulkDialogOpen(false)}
           onCommitted={(operationId) => {
             setBulkDialogOpen(false);
+            setSelection(newBulkSelection(filterKey));
+            setMatchingSelection(null);
+            updateSearch({ bulkOperation: operationId });
+            void queryClient.invalidateQueries({ queryKey: ["clients"] });
+          }}
+        />
+      ) : null}
+
+      {canManage && tagDialogOpen ? (
+        <ResourceTagDialog
+          selection={
+            selectionInput.kind === "ids"
+              ? { ...selectionInput, resource: "clients" }
+              : selectionInput
+          }
+          onClose={() => setTagDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setTagDialogOpen(false);
             setSelection(newBulkSelection(filterKey));
             setMatchingSelection(null);
             updateSearch({ bulkOperation: operationId });

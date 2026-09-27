@@ -1,3 +1,6 @@
+import { ResourceExportButton } from "@/features/bulk-operations/resource-export-button";
+import type { BulkExportInput } from "@/features/bulk-operations/types";
+
 type BulkSelectionToolbarProps = {
   selectedCount: number;
   visibleCount: number;
@@ -9,6 +12,10 @@ type BulkSelectionToolbarProps = {
   previewEnabled?: boolean;
   onClear: () => void;
   onPreview: () => void;
+  onTag?: () => void;
+  tagEnabled?: boolean;
+  exportSelection?: BulkExportInput["selection"];
+  exportEnabled?: boolean;
 };
 
 /** Selection only. The caller must use a server preview before any batch commit. */
@@ -23,6 +30,10 @@ export function BulkSelectionToolbar({
   previewEnabled,
   onClear,
   onPreview,
+  onTag,
+  tagEnabled,
+  exportSelection,
+  exportEnabled,
 }: BulkSelectionToolbarProps) {
   return (
     <div
@@ -64,6 +75,22 @@ export function BulkSelectionToolbar({
       >
         Preview assignment
       </button>
+      {onTag ? (
+        <button
+          type="button"
+          onClick={onTag}
+          disabled={isBusy || !(tagEnabled ?? previewEnabled ?? selectedCount > 0)}
+          className="rounded-md border border-border px-2.5 py-1.5 text-xs disabled:opacity-50"
+        >
+          Tag selected
+        </button>
+      ) : null}
+      {exportSelection ? (
+        <ResourceExportButton
+          selection={exportSelection}
+          disabled={isBusy || !(exportEnabled ?? previewEnabled ?? selectedCount > 0)}
+        />
+      ) : null}
       {notice ? (
         <p role="status" className="w-full text-xs text-muted-foreground">
           {notice}
