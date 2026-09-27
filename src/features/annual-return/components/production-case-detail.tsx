@@ -100,7 +100,6 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
   const [ownerId, setOwnerId] = useState("");
   const [nextStatus, setNextStatus] = useState<AnnualReturnStatus>("Upcoming");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("Payment pending");
-  const [paymentProofDocumentId, setPaymentProofDocumentId] = useState("");
   const [note, setNote] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
@@ -159,9 +158,6 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     setOwnerId((current) => current || caseItem.ownerId);
     setNextStatus(caseItem.currentStatus);
     setPaymentStatus(caseItem.payment?.status ?? "Not invoiced");
-    setPaymentProofDocumentId(
-      (current) => current || caseItem.payment?.paymentProofDocumentId || "",
-    );
     setFilingReference((current) => current || caseItem.filingReference || "");
     setConfirmationDocumentId((current) => current || caseItem.confirmationDocumentId || "");
   }, [caseItem]);
@@ -343,7 +339,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Payment</h2>
-            <div className="mt-3 grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto]">
+            <div className="mt-3 grid gap-3 md:grid-cols-[12rem_auto]">
               <select
                 aria-label="Payment status"
                 className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -351,30 +347,20 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 onChange={(event) => setPaymentStatus(event.target.value as PaymentStatus)}
               >
                 {paymentStatuses.map((status) => (
-                  <option key={status}>{status}</option>
+                  <option key={status} disabled={status === "Payment received"}>
+                    {status}
+                  </option>
                 ))}
               </select>
-              <DocumentPicker
-                id="payment-proof-document"
-                label="付款證明文件"
-                caseId={caseItem.id}
-                categories={["payment", "receipt", "other"]}
-                value={paymentProofDocumentId}
-                onChange={setPaymentProofDocumentId}
-                disabled={locked || paymentMutation.isPending}
-              />
               <button
                 className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
                 disabled={
-                  locked ||
-                  paymentMutation.isPending ||
-                  (paymentStatus === "Payment received" && !isUuid(paymentProofDocumentId))
+                  locked || paymentMutation.isPending || paymentStatus === "Payment received"
                 }
                 onClick={() =>
                   paymentMutation.mutate({
                     status: paymentStatus,
-                    paymentProofDocumentId:
-                      paymentStatus === "Payment received" ? paymentProofDocumentId : null,
+                    paymentProofDocumentId: null,
                   })
                 }
                 type="button"
@@ -383,6 +369,10 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 Update payment
               </button>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Payment received is set only after staff reconcile a reviewed proof to the invoice on
+              Payments.
+            </p>
             <MutationMessage error={paymentMutation.error} />
           </section>
 

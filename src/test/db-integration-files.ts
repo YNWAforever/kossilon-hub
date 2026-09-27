@@ -20,6 +20,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/notifications/delivery-attempts.test.ts",
   "src/features/notifications/outbox.integration.test.ts",
   "src/features/operations/repository.integration.test.ts",
+  "src/features/payments/reconciliation.test.ts",
   "src/features/service-subscriptions/repository.test.ts",
   "src/features/whatsapp/repository.test.ts",
   "src/features/work-items/repository.test.ts",
