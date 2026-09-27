@@ -3,7 +3,8 @@ export type MaintenanceJobKind =
   | "evaluateEscalations"
   | "settleNotificationAttempts"
   | "redactNotifications"
-  | "escalateStalledQuarantine";
+  | "escalateStalledQuarantine"
+  | "runBulkOperations";
 export type TriggerKind = "scheduled" | "manual";
 export type JobOutcome = "succeeded" | "failed";
 export type JobState = JobOutcome | "skipped" | "unknown";
