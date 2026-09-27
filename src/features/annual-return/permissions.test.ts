@@ -88,6 +88,16 @@ describe("annual return action permissions", () => {
     expect(getAnnualReturnActionPermission(reviewer, case_, "complete").allowed).toBe(true);
   });
 
+  it("keeps package approval at completion-level permission while owners can prepare", () => {
+    const owner = actor({ id: OWNER_ID, role: "Staff" });
+    const reviewer = actor({ id: REVIEWER_ID, role: "Staff" });
+    const manager = actor({ id: OTHER_STAFF_ID, role: "Manager", teamId: TEAM_ALPHA_ID });
+    expect(getAnnualReturnActionPermission(owner, case_, "prepare_package").allowed).toBe(true);
+    expect(getAnnualReturnActionPermission(owner, case_, "approve_package").allowed).toBe(false);
+    expect(getAnnualReturnActionPermission(reviewer, case_, "approve_package").allowed).toBe(true);
+    expect(getAnnualReturnActionPermission(manager, case_, "approve_package").allowed).toBe(true);
+  });
+
   it("throws a useful error when an action is denied", () => {
     expect(() =>
       assertAnnualReturnActionAllowed(

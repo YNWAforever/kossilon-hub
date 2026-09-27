@@ -23,7 +23,9 @@ const ROUTE_PATHS = [
 ] as const;
 
 const READY_TIMEOUT_MS = 30_000;
-const ROUTE_REQUEST_TIMEOUT_MS = 15_000;
+// The first request triggers Vite SSR compilation after the ready banner.
+// Keep a bounded cold-start allowance; every route still must return HTTP.
+const ROUTE_REQUEST_TIMEOUT_MS = 30_000;
 const IMPORT_PROTECTION_MARKER = "[import-protection]";
 
 export function findImportProtectionViolation(output: string): string | null {
