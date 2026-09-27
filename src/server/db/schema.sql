@@ -2429,3 +2429,8 @@ create unique index annual_return_checklist_template_document_uidx
 alter table annual_return_cases
   add column assignment_revision integer not null default 1
     check (assignment_revision > 0);
+
+-- from 0050_client_assignment_revision.sql
+alter table companies
+  add column assignment_revision integer not null default 1
+    check (assignment_revision > 0);

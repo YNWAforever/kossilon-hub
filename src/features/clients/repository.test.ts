@@ -466,6 +466,7 @@ describe.skipIf(!databaseUrl)(
 
       const updated = await repository.updateClient({
         id: companyId,
+        expectedAssignmentRevision: 1,
         companyName: "Aaa Update Test Ltd",
         registeredOffice: "New Office, Central, Hong Kong",
         status: "inactive",
@@ -488,12 +489,33 @@ describe.skipIf(!databaseUrl)(
       expect(updated.timeline[0].description).not.toContain("companyName");
     });
 
+    it("t22 client owner assignment refuses a stale single-client edit", async () => {
+      const companyId = await seedCompany({ sequence: 2, companyName: "Client Version Test Ltd" });
+      const repository = repositoryForTests();
+      const edit = {
+        id: companyId,
+        companyName: "Client Version Test Ltd",
+        registeredOffice: "Unit 1, Test Tower, Hong Kong",
+        status: "active" as const,
+        teamId: TEAM_ANNUAL_RETURN_ID,
+        actorId: USER_AMY_ID,
+        expectedAssignmentRevision: 1,
+      };
+      await repository.updateClient({ ...edit, ownerId: USER_KEN_ID });
+      await expect(repository.updateClient({ ...edit, ownerId: USER_AMY_ID })).rejects.toThrow(
+        /revision|stale/i,
+      );
+      const current = await repository.getClient(companyId);
+      expect(current?.ownerId).toBe(USER_KEN_ID);
+    });
+
     it("rejects updating an unknown company", async () => {
       const repository = repositoryForTests();
 
       await expect(
         repository.updateClient({
           id: "99999999-0000-0000-0000-000000000000",
+          expectedAssignmentRevision: 1,
           companyName: "Nowhere Ltd",
           registeredOffice: "Nowhere",
           status: "active",
