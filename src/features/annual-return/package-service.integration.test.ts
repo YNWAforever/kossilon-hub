@@ -9,6 +9,7 @@ import { createBulkOperationRepository } from "@/features/bulk-operations/reposi
 import { createAnnualReturnRepository } from "./repository";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
+import { inspectCaseSubmissionReadinessForActor } from "./submission-readiness-service";
 import { ingestReturnForActor, reconcileReturnForActor } from "./return-service";
 import {
   getManualSubmissionForActor,
@@ -976,6 +977,103 @@ describe.skipIf(!databaseUrl)("T29 local filing journey", () => {
         cases.updateStatus(fixture.caseId, "Completed", fixture.actor.userId!),
       ).rejects.toThrow(/approved package.*submission proof.*accepted return/i);
       expect((await cases.getCase(fixture.caseId))?.currentStatus).toBe("Payment pending");
+    });
+  });
+});
+
+describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
+  it("uses a real read-only transaction for the server path", async () => {
+    const [admin] = await sqlForTests()<
+      {
+        auth_user_id: string;
+        user_id: string;
+        team_id: string | null;
+      }[]
+    >`
+      select sp.auth_user_id, sp.user_id, sp.team_id
+      from staff_profiles sp join users u on u.id=sp.user_id and u.active
+      where sp.role='Admin' and sp.active limit 1`;
+    const [caseRow] = await sqlForTests()<{ id: string }[]>`
+      select id from annual_return_cases
+      where current_status not in ('Filed', 'Completed')
+      and not exists (select 1 from filing_packages p where p.case_id=annual_return_cases.id)
+      limit 1`;
+    if (!admin || !caseRow) throw new Error("T03 fixture needs an Admin and an open case.");
+    await expect(
+      inspectCaseSubmissionReadinessForActor(
+        {
+          authUserId: admin.auth_user_id,
+          userId: admin.user_id,
+          role: "Admin",
+          teamId: admin.team_id,
+          active: true,
+        },
+        caseRow.id,
+        { storage: memoryStorage() },
+      ),
+    ).resolves.toMatchObject({ state: "blocked", reason: "package-missing" });
+  });
+
+  it("t03_snapshot blocks missing, draft, stale and unreadable packages before showing ready", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      await expect(
+        inspectCaseSubmissionReadinessForActor(
+          { ...fixture.actor, authUserId: crypto.randomUUID() },
+          fixture.caseId,
+          deps,
+        ),
+      ).rejects.toThrow(/Forbidden/i);
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "blocked", reason: "package-missing" });
+
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "blocked", reason: "package-unapproved" });
+
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({
+        state: "ready",
+        packageId: draft.id,
+        revision: 1,
+        manifestHash: draft.manifestHash,
+      });
+
+      await tx`update users set role='Staff' where id=${fixture.actor.userId}`;
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).rejects.toThrow(/Only admins, team managers, or assigned reviewers/i);
+      await tx`update users set role='Admin' where id=${fixture.actor.userId}`;
+
+      await tx`update case_requirement_instances
+        set requirement_key='Changed NAR1', updated_at=now()
+        where id=${fixture.requirementId}`;
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
+
+      await tx`update case_requirement_instances
+        set requirement_key='Signed NAR1', updated_at=now()
+        where id=${fixture.requirementId}`;
+      const [artifact] = await tx<{ artifact_key: string }[]>`
+        select artifact_key from filing_packages where id=${draft.id}`;
+      await fixture.storage.delete(artifact.artifact_key);
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
     });
   });
 });

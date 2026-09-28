@@ -7,6 +7,7 @@ import {
   recordManualSubmissionForActor,
 } from "./submission-service";
 import { entityIdSchema } from "@/features/runtime/entity-id";
+import { inspectCaseSubmissionReadinessForActor } from "./submission-readiness-service";
 import {
   getReturnIntakesForActor,
   ingestReturnForActor,
@@ -55,6 +56,12 @@ export const getAnnualReturnPackage = createServerFn({ method: "GET" })
     return getPackageForActor(actor, data.caseId, { storage });
   });
 
+export const getAnnualReturnSubmissionReadiness = createServerFn({ method: "GET" })
+  .validator(z.object({ caseId: entityIdSchema }).strict())
+  .handler(async ({ data }) => {
+    const { actor, storage } = await loadPackageContext();
+    return inspectCaseSubmissionReadinessForActor(actor, data.caseId, { storage });
+  });
 export const prepareAnnualReturnPackage = createServerFn({ method: "POST" })
   .validator(z.object({ caseId: entityIdSchema, expectedRevision: revisionSchema }).strict())
   .handler(async ({ data }) => {

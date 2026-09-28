@@ -6,6 +6,7 @@ import {
   downloadAnnualReturnPackage,
   getAnnualReturnPackage,
   getAnnualReturnSubmission,
+  getAnnualReturnSubmissionReadiness,
   listAnnualReturnSubmissionProofs,
   prepareAnnualReturnPackage,
   recordAnnualReturnSubmission,
@@ -114,6 +115,12 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     queryKey: submissionKey,
     queryFn: () => getAnnualReturnSubmission({ data: { caseId } }),
   });
+  const submissionReadinessKey = [...annualReturnQueryKeys.detail(caseId), "submission-readiness"];
+  const submissionReadinessQuery = useQuery({
+    queryKey: [...submissionReadinessKey, packageQuery.data?.id, packageQuery.data?.state],
+    queryFn: () => getAnnualReturnSubmissionReadiness({ data: { caseId } }),
+    enabled: packageQuery.data?.state === "approved" && !submissionQuery.data,
+  });
   const submissionProofKey = [...annualReturnQueryKeys.detail(caseId), "submission-proofs"];
   const submissionProofQuery = useQuery({
     queryKey: submissionProofKey,
@@ -217,6 +224,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: submissionKey });
+      void queryClient.invalidateQueries({ queryKey: submissionReadinessKey });
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.history(caseId) });
     },
   });
@@ -553,6 +561,31 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
               後，請由負責同事填寫外部目的地、參考編號及已覆核交件證明。這只記錄交件主張，不代表註冊處已接納，亦不會標記為已交件。
             </p>
             {submissionQuery.isError && <MutationMessage error={submissionQuery.error} />}
+            {packageQuery.data?.state === "approved" && !submissionQuery.data && (
+              <div className="mt-3 text-sm" role="status">
+                {submissionReadinessQuery.isPending
+                  ? "正在核實套件、付款及文件證據…"
+                  : submissionReadinessQuery.isError
+                    ? "目前無法核實交件條件，請稍後重新檢查。"
+                    : submissionReadinessQuery.data?.state === "ready"
+                      ? "已核實目前套件；完成外部人手上載後，才能在此記錄交件證明。"
+                      : submissionReadinessQuery.data?.reason === "existing-handoff"
+                        ? "案件已有交件記錄，請先核對現有交件及回件。"
+                        : submissionReadinessQuery.data?.reason === "case-closed"
+                          ? "已申報或已結案的案件不能再記錄新交件。"
+                          : "目前套件或證據未能核實，請重新準備及批准套件後再檢查。"}
+                {(submissionReadinessQuery.isError ||
+                  submissionReadinessQuery.data?.state === "unknown") && (
+                  <button
+                    className="ml-2 underline"
+                    type="button"
+                    onClick={() => void submissionReadinessQuery.refetch()}
+                  >
+                    重新核實交件條件
+                  </button>
+                )}
+              </div>
+            )}
             {submissionProofQuery.isError && <MutationMessage error={submissionProofQuery.error} />}
             {submissionQuery.data ? (
               <div className="mt-3 text-sm">
@@ -630,6 +663,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     disabled={
                       locked ||
                       recordSubmissionMutation.isPending ||
+                      submissionReadinessQuery.data?.state !== "ready" ||
                       !submissionDestination.trim() ||
                       !submissionReference.trim() ||
                       !submissionAtHkt ||
