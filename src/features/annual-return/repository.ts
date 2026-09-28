@@ -3000,7 +3000,7 @@ export function createAnnualReturnRepository(
           if (!milestone) return null;
 
           const skip = async (reason: string, description: string) => {
-            await tx`
+            const inserted = await tx<{ id: string }[]>`
               insert into timeline_events (
                 company_id, case_id, event_type, actor_type, actor_id, description, metadata
               )
@@ -3014,8 +3014,9 @@ export function createAnnualReturnRepository(
                   and metadata->>'milestone' = ${milestone}
                   and metadata->>'reason' = ${reason}
               )
+              returning id
             `;
-            return "skipped" as const;
+            return inserted[0] ? ("skipped" as const) : null;
           };
 
           // Does this client actually owe us anything?
