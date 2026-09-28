@@ -63,21 +63,11 @@ export const WORK_VIEWS: readonly WorkViewDefinition[] = [
   {
     key: "returnsAndExceptions",
     label: "回件與異常",
-    // Phase E built the model behind this -- package_handoffs, handoff_returns,
-    // the reconciliation rule and the destination adapter -- but the destination
-    // itself is the firm's internal server, and its protocol, address and rights
-    // are not known to this repository.
-    //
-    // So the view stays unreleased, and the reason names the specific thing that
-    // is missing rather than a phase number. An empty list here would read as
-    // "no exceptions", which is a claim nothing in this build can make: no
-    // package has been transmitted, so no return can have arrived, so the
-    // absence of exceptions is the absence of the whole process.
-    description: "外部交件後的回件核對。",
+    // A complete scoped server snapshot is required to claim the queue is empty.
+    description: "已登記回件中的待核對、拒件與部分回件；內部伺服器同步仍待設定。",
     released: false,
     unavailableReason:
-      "回件核對需要外部交件連接器（BLOCKED_INTEGRATION: external-handoff-destination）。" +
-      "尚未有任何套件成功交出，因此不會有回件。現時請沿用人手記錄；這裡的空白不代表沒有異常。",
+      "回件清單尚未取得完整的當前伺服器資料。" + "請開啟案件核對人手回件；空白不代表沒有異常。",
   },
 ];
 
@@ -129,6 +119,10 @@ export function deriveWorkViews(
     complete: boolean;
     byCaseId: ReadonlyMap<string, Pick<ReadinessResult, "canRecordSubmission">>;
   },
+  returnExceptions?: {
+    complete: boolean;
+    openCountByCaseId: ReadonlyMap<string, number>;
+  },
 ): WorkViewResult[] {
   const mutable = cases.filter(isMutable);
 
@@ -136,6 +130,7 @@ export function deriveWorkViews(
   const newlyReceived: WorkViewRow[] = [];
   const awaitingMyReview: WorkViewRow[] = [];
   const readyToFile: WorkViewRow[] = [];
+  const returnsAndExceptions: WorkViewRow[] = [];
 
   for (const case_ of mutable) {
     const summary = outstandingSummary(case_);
@@ -176,6 +171,16 @@ export function deriveWorkViews(
     }
   }
 
+  if (returnExceptions?.complete) {
+    // A return can arrive after a case was filed or locked. Never hide it.
+    for (const case_ of cases) {
+      const count = returnExceptions.openCountByCaseId.get(case_.id) ?? 0;
+      if (count > 0) {
+        returnsAndExceptions.push(baseRow(case_, today, count + " 份回件待核對或處理"));
+      }
+    }
+  }
+
   const byUrgency = (left: WorkViewRow, right: WorkViewRow) =>
     left.daysRemaining - right.daysRemaining || left.companyName.localeCompare(right.companyName);
 
@@ -184,14 +189,13 @@ export function deriveWorkViews(
     newlyReceived: newlyReceived.sort(byUrgency),
     awaitingMyReview: awaitingMyReview.sort(byUrgency),
     readyToFile: readyToFile.sort(byUrgency),
-    // Deliberately empty, and the definition says why rather than letting an
-    // empty list be read as "no exceptions".
-    returnsAndExceptions: [],
+    returnsAndExceptions: returnsAndExceptions.sort(byUrgency),
   };
 
   return WORK_VIEWS.map((definition) => ({
     definition:
-      definition.key === "readyToFile" && readiness?.complete
+      (definition.key === "readyToFile" && readiness?.complete) ||
+      (definition.key === "returnsAndExceptions" && returnExceptions?.complete)
         ? { ...definition, released: true, unavailableReason: undefined }
         : definition,
     rows: rowsByKey[definition.key],

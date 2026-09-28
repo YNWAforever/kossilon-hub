@@ -1,4 +1,5 @@
 import { CaseFindings } from "./case-findings";
+import { ManualReturnPanel } from "./manual-return-panel";
 import { CaseParties } from "./case-parties";
 import {
   approveAnnualReturnPackage,
@@ -602,6 +603,8 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             ) : null}
             <MutationMessage error={recordSubmissionMutation.error} />
           </section>
+
+          <ManualReturnPanel caseId={caseId} />
 
           <section className="pb-2">
             <h2 className="text-base font-semibold">Accept filing receipt</h2>

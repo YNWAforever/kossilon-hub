@@ -4,6 +4,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { getAnnualReturnWorkViews } from "@/features/annual-return/server-fns";
+import { annualReturnQueryKeys } from "@/features/annual-return/query-keys";
 import type { WorkViewKey } from "@/features/annual-return/work-views";
 
 /**
@@ -27,7 +28,7 @@ function TodayRoute() {
   const [active, setActive] = useState<WorkViewKey>("chaseToday");
 
   const viewsQuery = useQuery({
-    queryKey: ["annual-return", "work-views"],
+    queryKey: annualReturnQueryKeys.workViews(),
     queryFn: () => getAnnualReturnWorkViews(),
     enabled: dataMode === "production",
     retry: false,
