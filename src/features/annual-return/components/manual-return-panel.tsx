@@ -37,35 +37,44 @@ function ReviewReturn({ item, caseId }: { item: ReturnRecord; caseId: string }) 
   return (
     <li className="rounded-md border p-3 text-sm">
       <p>
-        {item.outcome} claim · {item.matchState} · {item.open ? "Needs attention" : "Reconciled"}
+        {item.outcome === "accepted" ? "接納" : item.outcome === "rejected" ? "拒件" : "部分接納"} ·
+        {item.matchState === "candidate"
+          ? "有候選交件"
+          : item.matchState === "reconciled"
+            ? "已對應交件"
+            : "未對應交件"}{" "}
+        ·{item.open ? "待核對" : "已核對"}
       </p>
-      <p>External reference: {item.externalReference}</p>
-      <p>Manifest hash: {item.manifestHash ?? "Not supplied by source"}</p>
-      <p>
-        Source: {item.sourceKind} · version {item.revision}
-      </p>
+      <p>外部參考編號： {item.externalReference}</p>
+      <details>
+        <summary>回件技術資料</summary>
+        <p>Manifest SHA-256：{item.manifestHash ?? "來源未提供"}</p>
+        <p>
+          來源：{item.sourceKind} · 版本 {item.revision}
+        </p>
+      </details>
       {!item.reconciledAt && (
         <div className="mt-2 grid gap-2">
           <label>
-            Submission to compare
+            要核對的交件紀錄
             <select
-              aria-label={"Submission to compare for return " + item.id}
+              aria-label={"要核對的交件紀錄：" + item.externalReference}
               className="mt-1 w-full rounded-md border bg-background px-3 py-2"
               value={submissionId}
               onChange={(event) => setSubmissionId(event.target.value)}
             >
-              <option value="">Choose a candidate submission</option>
+              <option value="">選擇候選交件紀錄</option>
               {item.candidateHandoffIds.map((candidateId) => (
                 <option key={candidateId} value={candidateId}>
-                  {candidateId}
+                  {`交件紀錄 …${candidateId.slice(-8)}`}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Review reason
+            核對原因
             <input
-              aria-label={"Review reason for return " + item.id}
+              aria-label={"核對原因：" + item.externalReference}
               className="mt-1 w-full rounded-md border bg-background px-3 py-2"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
@@ -78,7 +87,7 @@ function ReviewReturn({ item, caseId }: { item: ReturnRecord; caseId: string }) 
               disabled={mutation.isPending || !submissionId}
               onClick={() => mutation.mutate("confirm")}
             >
-              Confirm match
+              確認對應
             </button>
             <button
               type="button"
@@ -86,7 +95,7 @@ function ReviewReturn({ item, caseId }: { item: ReturnRecord; caseId: string }) 
               disabled={mutation.isPending || reason.trim().length < 10}
               onClick={() => mutation.mutate("mark-unmatched")}
             >
-              Mark unmatched
+              標記無法對應
             </button>
           </div>
           {mutation.isError && (
@@ -141,12 +150,10 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
     },
   });
   return (
-    <section className="border-b pb-4">
-      <h2 className="text-base font-semibold">Manual filing return intake</h2>
+    <section id="returns" className="scroll-mt-8 border-b pb-4">
+      <h2 className="text-base font-semibold">人手登記交件回件</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Upload a receipt through Documents, obtain a genuine scan and human review, then record the
-        external claim here. The internal server connection is unavailable; this form does not claim
-        that it synced. Reconciliation never marks the case Filed.
+        請先在文件庫上載真實回執，完成掃描及人手覆核，再由負責同事登記外部回件主張。內部伺服器同步尚未接通；此表格不代表已同步。核對也不會自動標記為已交件。
       </p>
       {returns.isError && (
         <p role="alert" className="text-sm text-destructive">
@@ -160,9 +167,9 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
       )}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <label className="text-sm">
-          Return external reference
+          回件外部參考編號
           <input
-            aria-label="Return external reference"
+            aria-label="回件外部參考編號"
             className="mt-1 w-full rounded-md border bg-background px-3 py-2"
             maxLength={200}
             value={externalReference}
@@ -170,22 +177,22 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
           />
         </label>
         <label className="text-sm">
-          Claimed outcome
+          回件聲稱結果
           <select
-            aria-label="Return claimed outcome"
+            aria-label="回件聲稱結果"
             className="mt-1 w-full rounded-md border bg-background px-3 py-2"
             value={outcome}
             onChange={(event) => setOutcome(event.target.value as typeof outcome)}
           >
-            <option value="accepted">Accepted</option>
-            <option value="rejected">Rejected</option>
-            <option value="partial">Partial</option>
+            <option value="accepted">接納</option>
+            <option value="rejected">拒件</option>
+            <option value="partial">部分接納</option>
           </select>
         </label>
         <label className="text-sm">
-          Manifest hash quoted by return (optional)
+          回件聲稱的 Manifest SHA-256（可選）
           <input
-            aria-label="Return manifest hash"
+            aria-label="回件 Manifest SHA-256"
             className="mt-1 w-full rounded-md border bg-background px-3 py-2"
             maxLength={64}
             value={manifestHash}
@@ -193,14 +200,14 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
           />
         </label>
         <label className="text-sm">
-          Reviewed return receipt
+          已覆核回執
           <select
-            aria-label="Reviewed return receipt"
+            aria-label="已覆核回執"
             className="mt-1 w-full rounded-md border bg-background px-3 py-2"
             value={proofVersionId}
             onChange={(event) => setProofVersionId(event.target.value)}
           >
-            <option value="">Select reviewed receipt</option>
+            <option value="">選擇已覆核回執</option>
             {proofs.data
               ?.filter((proof) => proof.category === "receipt")
               .map((proof) => (
@@ -211,9 +218,9 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
           </select>
         </label>
         <label className="text-sm md:col-span-2">
-          External detail (optional)
+          外部回件詳情（可選）
           <textarea
-            aria-label="Return external detail"
+            aria-label="回件外部詳情"
             className="mt-1 w-full rounded-md border bg-background px-3 py-2"
             maxLength={2000}
             value={detail}
@@ -227,7 +234,7 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
             onClick={() => void proofs.refetch()}
             disabled={proofs.isFetching}
           >
-            Refresh reviewed receipts
+            重新載入已覆核回執
           </button>
           <button
             type="button"
@@ -235,7 +242,7 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
             disabled={intake.isPending || !externalReference.trim() || !proofVersionId}
             onClick={() => intake.mutate()}
           >
-            Record return claim
+            登記回件主張
           </button>
         </div>
       </div>
@@ -251,7 +258,7 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
       </ul>
       {returns.data && returns.data.length === 0 && (
         <p className="mt-3 text-sm text-muted-foreground">
-          No manual returns recorded for this case. Internal source sync is still blocked.
+          此案件暫未有人手登記回件。內部來源同步尚未接通，請由負責同事核對外部回執。
         </p>
       )}
     </section>

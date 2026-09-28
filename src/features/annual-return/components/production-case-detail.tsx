@@ -16,6 +16,12 @@ import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import {
+  annualReturnStatusLabel,
+  checklistStatusLabel,
+  riskLevelLabel,
+  paymentStatusLabel,
+} from "@/features/runtime/operational-copy";
+import {
   CheckSquare,
   FileCheck2,
   Loader2,
@@ -234,7 +240,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     return (
       <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
         <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        Loading annual return case
+        正在載入周年申報案件…
       </div>
     );
   }
@@ -242,12 +248,19 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
   if (caseQuery.isError) {
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Annual return case" title="Annual return case unavailable" />
+        <PageHeader eyebrow="周年申報案件" title="暫時無法讀取案件" />
         <p role="alert" className="text-sm text-destructive">
-          {caseQuery.error.message}
+          無法載入此案件。請由負責同事重試；持續失敗時聯絡系統管理員。
         </p>
+        <button
+          className="inline-flex rounded-md border px-3 py-2 text-sm"
+          onClick={() => void caseQuery.refetch()}
+          type="button"
+        >
+          重試載入
+        </button>
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          Back to annual returns
+          返回周年申報案件板
         </Link>
       </main>
     );
@@ -256,9 +269,10 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
   if (!caseItem) {
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Annual return case" title="Case not found" />
+        <PageHeader eyebrow="周年申報案件" title="找不到案件" />
+        <p className="text-sm text-muted-foreground">請由負責同事返回案件板核對公司及年度。</p>
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          Back to annual returns
+          返回周年申報案件板
         </Link>
       </main>
     );
@@ -270,9 +284,9 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     <main className="flex-1 space-y-4 p-4 md:p-6">
       <div className="border-b pb-4">
         <PageHeader
-          eyebrow="Annual return case"
+          eyebrow="周年申報案件"
           title={caseItem.companyName}
-          subtitle={`Return year ${caseItem.returnYear} / Due ${caseItem.filingDueDate}`}
+          subtitle={`${caseItem.returnYear} 年申報 · 到期日 ${caseItem.filingDueDate}（香港時間）`}
           actions={
             <div className="flex items-center gap-3">
               {/* The demo case detail has always had this. Without it in
@@ -283,21 +297,42 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 to="/portal"
                 search={{ caseId: caseItem.id }}
               >
-                Open portal
+                開啟客戶門戶
               </Link>
               <div className="text-right text-sm">
-                <p className="font-medium">{caseItem.currentStatus}</p>
-                <p className="text-muted-foreground">{caseItem.riskLevel} risk</p>
+                <p className="font-medium">{annualReturnStatusLabel(caseItem.currentStatus)}</p>
+                <p className="text-muted-foreground">{riskLevelLabel(caseItem.riskLevel)}</p>
               </div>
             </div>
           }
         />
       </div>
 
+      <nav aria-label="案件部分" className="flex flex-wrap gap-2 text-sm">
+        <a className="rounded-md border px-3 py-2" href="#documents">
+          文件
+        </a>
+        <a className="rounded-md border px-3 py-2" href="#payment">
+          付款
+        </a>
+        <a className="rounded-md border px-3 py-2" href="#reminders">
+          追件訊息
+        </a>
+        <a className="rounded-md border px-3 py-2" href="#filing">
+          交件
+        </a>
+        <a className="rounded-md border px-3 py-2" href="#returns">
+          回件
+        </a>
+        <a className="rounded-md border px-3 py-2" href="#audit">
+          審計紀錄
+        </a>
+      </nav>
+
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
           <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Case controls</h2>
+            <h2 className="text-base font-semibold">案件控制</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
                 <StaffPicker
@@ -315,14 +350,14 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 >
                   <PendingIcon pending={ownerMutation.isPending} />
                   <UserRoundCheck aria-hidden className="h-4 w-4" />
-                  Assign
+                  指派
                 </button>
                 <MutationMessage error={ownerMutation.error} />
               </div>
 
               <div>
                 <label className="text-sm font-medium" htmlFor="case-status">
-                  Case status
+                  案件狀態
                 </label>
                 <div className="mt-1 flex gap-2">
                   <select
@@ -336,7 +371,9 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                         (status !== "NAR1 prepared" && status !== "Filed") ||
                         status === caseItem.currentStatus,
                     ).map((status) => (
-                      <option key={status}>{status}</option>
+                      <option key={status} value={status}>
+                        {annualReturnStatusLabel(status)}
+                      </option>
                     ))}
                   </select>
                   <button
@@ -348,7 +385,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     type="button"
                   >
                     <PendingIcon pending={statusMutation.isPending} />
-                    Update
+                    更新
                   </button>
                 </div>
                 <MutationMessage error={statusMutation.error} />
@@ -358,10 +395,10 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
           <section className="border-b pb-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-base font-semibold">Required checklist</h2>
+              <h2 className="text-base font-semibold">所需文件清單</h2>
               <span className="text-sm text-muted-foreground">
                 {caseItem.checklist.filter((item) => item.status === "Verified").length}/
-                {caseItem.checklist.length} verified
+                {caseItem.checklist.length} 已核實
               </span>
             </div>
             <div className="mt-3 divide-y border-y">
@@ -376,7 +413,9 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   <div key={item.id} className="flex items-center justify-between gap-3 py-3">
                     <div>
                       <p className="text-sm font-medium">{item.itemLabel}</p>
-                      <p className="text-xs text-muted-foreground">{item.status}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {checklistStatusLabel(item.status)}
+                      </p>
                     </div>
                     <button
                       className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
@@ -392,10 +431,10 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     >
                       <CheckSquare aria-hidden className="h-4 w-4" />
                       {nextChecklistStatus === "Verified"
-                        ? "Verify evidence"
+                        ? "核實證據"
                         : nextChecklistStatus === "Missing"
-                          ? "Mark missing"
-                          : "Mark received"}
+                          ? "標記欠缺"
+                          : "標記已收到"}
                     </button>
                   </div>
                 );
@@ -408,18 +447,18 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
           <CaseFindings caseId={caseId} locked={locked} />
 
-          <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Payment</h2>
+          <section id="payment" className="scroll-mt-8 border-b pb-4">
+            <h2 className="text-base font-semibold">付款</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[12rem_auto]">
               <select
-                aria-label="Payment status"
+                aria-label="付款狀態"
                 className="rounded-md border bg-background px-3 py-2 text-sm"
                 value={paymentStatus}
                 onChange={(event) => setPaymentStatus(event.target.value as PaymentStatus)}
               >
                 {paymentStatuses.map((status) => (
-                  <option key={status} disabled={status === "Payment received"}>
-                    {status}
+                  <option key={status} value={status} disabled={status === "Payment received"}>
+                    {paymentStatusLabel(status)}
                   </option>
                 ))}
               </select>
@@ -437,28 +476,32 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 type="button"
               >
                 <PendingIcon pending={paymentMutation.isPending} />
-                Update payment
+                更新付款狀態
               </button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Payment received is set only after staff reconcile a reviewed proof to the invoice on
-              Payments.
+              只有負責同事在付款頁面以已覆核憑證對應發票後，系統才會標記「已核實付款」。
             </p>
             <MutationMessage error={paymentMutation.error} />
           </section>
 
           <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Filing package</h2>
+            <h2 className="text-base font-semibold">交件套件</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Prepare a versioned ZIP, approve its exact manifest, then download it for the external
-              filing step. Download does not record submission.
+              先準備有版本的 ZIP，批准其確切清單，再下載供人手外部上載。下載不代表已交件。
             </p>
             {packageQuery.isError && <MutationMessage error={packageQuery.error} />}
             {packageQuery.data && (
-              <p className="mt-2 text-sm">
-                Revision {packageQuery.data.revision}: {packageQuery.data.state}. Manifest SHA-256:{" "}
-                <code className="break-all">{packageQuery.data.manifestHash}</code>
-              </p>
+              <details className="mt-2 text-sm">
+                <summary>套件技術詳情</summary>
+                <p>
+                  版本 {packageQuery.data.revision} · 狀態 {packageQuery.data.state}
+                </p>
+                <p>
+                  Manifest SHA-256：
+                  <code className="break-all">{packageQuery.data.manifestHash}</code>
+                </p>
+              </details>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -469,7 +512,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
               >
                 <PendingIcon pending={preparePackageMutation.isPending} />
                 <FileCheck2 aria-hidden className="h-4 w-4" />
-                Prepare package
+                準備套件
               </button>
               {packageQuery.data?.state === "draft" && (
                 <button
@@ -484,7 +527,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   }
                   type="button"
                 >
-                  Approve package
+                  批准套件
                 </button>
               )}
               {packageQuery.data?.state === "approved" && (
@@ -494,7 +537,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   onClick={() => downloadPackageMutation.mutate(packageQuery.data!.id)}
                   type="button"
                 >
-                  Download approved ZIP
+                  下載已批准 ZIP
                 </button>
               )}
             </div>
@@ -503,12 +546,11 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             <MutationMessage error={downloadPackageMutation.error} />
           </section>
 
-          <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Record manual external submission</h2>
+          <section id="filing" className="scroll-mt-8 border-b pb-4">
+            <h2 className="text-base font-semibold">記錄人手交件</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              After a person uploads the approved ZIP outside Kossilon, record the external
-              destination and reference with a reviewed submission proof. This records the claim; it
-              does not confirm the registry accepted it or mark the case Filed.
+              有人在 Kossilon 以外上載已批准 ZIP
+              後，請由負責同事填寫外部目的地、參考編號及已覆核交件證明。這只記錄交件主張，不代表註冊處已接納，亦不會標記為已交件。
             </p>
             {submissionQuery.isError && <MutationMessage error={submissionQuery.error} />}
             {submissionProofQuery.isError && <MutationMessage error={submissionProofQuery.error} />}
@@ -521,16 +563,16 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   })}{" "}
                   HKT.
                 </p>
-                <p>Destination: {submissionQuery.data.destinationLabel}</p>
-                <p>External reference: {submissionQuery.data.externalReference}</p>
-                <p>Status: submission recorded; external acceptance awaits return evidence.</p>
+                <p>目的地： {submissionQuery.data.destinationLabel}</p>
+                <p>外部參考編號： {submissionQuery.data.externalReference}</p>
+                <p>狀態：已記錄交件主張；仍待外部回件證據確認是否接納。</p>
               </div>
             ) : packageQuery.data?.state === "approved" ? (
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="text-sm">
-                  External destination
+                  外部交件目的地
                   <input
-                    aria-label="External destination"
+                    aria-label="外部交件目的地"
                     className="mt-1 w-full rounded-md border bg-background px-3 py-2"
                     maxLength={120}
                     value={submissionDestination}
@@ -538,9 +580,9 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   />
                 </label>
                 <label className="text-sm">
-                  External reference
+                  外部參考編號
                   <input
-                    aria-label="External reference"
+                    aria-label="外部參考編號"
                     className="mt-1 w-full rounded-md border bg-background px-3 py-2"
                     maxLength={200}
                     value={submissionReference}
@@ -548,9 +590,9 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   />
                 </label>
                 <label className="text-sm">
-                  Submission time (Hong Kong, UTC+08:00)
+                  交件時間（香港時間 UTC+08:00）
                   <input
-                    aria-label="Submission time Hong Kong"
+                    aria-label="交件時間（香港）"
                     className="mt-1 w-full rounded-md border bg-background px-3 py-2"
                     type="datetime-local"
                     value={submissionAtHkt}
@@ -558,14 +600,14 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   />
                 </label>
                 <label className="text-sm">
-                  Reviewed external submission proof
+                  已覆核外部交件證明
                   <select
-                    aria-label="Reviewed external submission proof"
+                    aria-label="已覆核外部交件證明"
                     className="mt-1 w-full rounded-md border bg-background px-3 py-2"
                     value={submissionProofVersionId}
                     onChange={(event) => setSubmissionProofVersionId(event.target.value)}
                   >
-                    <option value="">Select a reviewed submission or receipt document</option>
+                    <option value="">選擇已覆核交件或回執文件</option>
                     {submissionProofQuery.data?.map((proof) => (
                       <option key={proof.versionId} value={proof.versionId}>
                         {proof.fileName} ({proof.category})
@@ -580,7 +622,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     onClick={() => void submissionProofQuery.refetch()}
                     disabled={submissionProofQuery.isFetching}
                   >
-                    Refresh proof list
+                    重新載入證明清單
                   </button>
                   <button
                     className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
@@ -596,7 +638,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     onClick={() => recordSubmissionMutation.mutate()}
                   >
                     <PendingIcon pending={recordSubmissionMutation.isPending} />
-                    Record external submission
+                    記錄外部交件
                   </button>
                 </div>
               </div>
@@ -607,12 +649,12 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           <ManualReturnPanel caseId={caseId} />
 
           <section className="pb-2">
-            <h2 className="text-base font-semibold">Accept filing receipt</h2>
+            <h2 className="text-base font-semibold">確認交件回執</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               <input
-                aria-label="Filing reference"
+                aria-label="交件參考編號"
                 className="min-w-0 rounded-md border bg-background px-3 py-2 text-sm"
-                placeholder="Filing reference"
+                placeholder="交件參考編號"
                 value={filingReference}
                 onChange={(event) => setFilingReference(event.target.value)}
               />
@@ -643,7 +685,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
               >
                 <PendingIcon pending={receiptMutation.isPending} />
                 <ReceiptText aria-hidden className="h-4 w-4" />
-                Accept receipt
+                確認回執
               </button>
             </div>
             <MutationMessage error={receiptMutation.error} />
@@ -652,9 +694,9 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
         <aside className="space-y-4 border-t pt-4 xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
           <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Notes</h2>
+            <h2 className="text-base font-semibold">備註</h2>
             <textarea
-              aria-label="Case note"
+              aria-label="案件備註"
               className="mt-3 min-h-24 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm"
               value={note}
               onChange={(event) => setNote(event.target.value)}
@@ -667,24 +709,26 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             >
               <PendingIcon pending={noteMutation.isPending} />
               <MessageSquarePlus aria-hidden className="h-4 w-4" />
-              Add note
+              新增備註
             </button>
             <MutationMessage error={noteMutation.error} />
             <div className="mt-4 space-y-3">
               {notesQuery.isPending ? (
-                <p className="text-sm text-muted-foreground">Loading notes</p>
+                <p className="text-sm text-muted-foreground">正在載入備註…</p>
               ) : notesQuery.isError ? (
                 <p role="alert" className="text-sm text-destructive">
                   {notesQuery.error.message}
                 </p>
               ) : notesQuery.data.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No notes yet.</p>
+                <p className="text-sm text-muted-foreground">暫無備註。</p>
               ) : (
                 notesQuery.data.map((entry) => (
                   <div key={entry.id} className="border-l-2 pl-3">
                     <p className="text-sm">{entry.body}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(entry.createdAt).toLocaleString("en-HK")}
+                      {new Date(entry.createdAt).toLocaleString("zh-HK", {
+                        timeZone: "Asia/Hong_Kong",
+                      })}
                     </p>
                   </div>
                 ))
@@ -692,16 +736,16 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             </div>
           </section>
 
-          <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Audit history</h2>
+          <section id="audit" className="scroll-mt-8 border-b pb-4">
+            <h2 className="text-base font-semibold">審計紀錄</h2>
             {historyQuery.isPending ? (
-              <p className="mt-3 text-sm text-muted-foreground">Loading history</p>
+              <p className="mt-3 text-sm text-muted-foreground">正在載入紀錄…</p>
             ) : historyQuery.isError ? (
               <p role="alert" className="mt-3 text-sm text-destructive">
                 {historyQuery.error.message}
               </p>
             ) : historyQuery.data.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">No history yet.</p>
+              <p className="mt-3 text-sm text-muted-foreground">暫無紀錄。</p>
             ) : (
               <ul className="mt-3 space-y-3">
                 {/* mergeCaseHistory already returns newest-first (with an id tiebreak for
@@ -714,17 +758,19 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                   .map((entry) => {
                     const { label, description } = describeCaseHistoryEntry(entry);
                     const actorName =
-                      entry.kind === "audit" ? (entry.actorName ?? "System") : entry.assignedByName;
+                      entry.kind === "audit" ? (entry.actorName ?? "系統") : entry.assignedByName;
                     return (
                       <li key={entry.id} className="border-l-2 pl-3">
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm font-medium">{label}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(entry.createdAt).toLocaleString("en-HK")}
+                            {new Date(entry.createdAt).toLocaleString("zh-HK", {
+                              timeZone: "Asia/Hong_Kong",
+                            })}
                           </p>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">by {actorName}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">執行者：{actorName}</p>
                       </li>
                     );
                   })}
@@ -732,18 +778,18 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             )}
           </section>
 
-          <section>
-            <h2 className="text-base font-semibold">WhatsApp reminder</h2>
+          <section id="reminders" className="scroll-mt-8">
+            <h2 className="text-base font-semibold">WhatsApp 追件</h2>
             <div className="mt-3 space-y-2">
               <input
-                aria-label="Reminder recipient name"
+                aria-label="追件收件人姓名"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                placeholder="Recipient name"
+                placeholder="收件人姓名"
                 value={recipientName}
                 onChange={(event) => setRecipientName(event.target.value)}
               />
               <input
-                aria-label="Reminder phone"
+                aria-label="追件電話"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                 placeholder="+852..."
                 value={recipientPhone}
@@ -767,7 +813,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
               >
                 <PendingIcon pending={reminderMutation.isPending} />
                 <Send aria-hidden className="h-4 w-4" />
-                Send reminder
+                發送追件訊息
               </button>
             </div>
             <MutationMessage error={reminderMutation.error} />

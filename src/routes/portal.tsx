@@ -89,9 +89,9 @@ function PortalRoute() {
     if (caseId && !productionCaseId) {
       return (
         <main className="flex-1 space-y-3 p-6">
-          <PageHeader eyebrow="Operations" title="Invalid portal link" />
+          <PageHeader eyebrow="Operations" title="案件連結無效" />
           <p className="text-sm text-destructive">
-            The case link is invalid. Open the case from your filings list.
+            案件連結無效。請由負責同事從周年申報案件板重新開啟。
           </p>
         </main>
       );
@@ -106,28 +106,28 @@ function PortalRoute() {
     if (!productionCaseId) {
       return (
         <main className="flex-1 space-y-3 p-6">
-          <PageHeader eyebrow="Operations" title="Production portal" />
+          <PageHeader eyebrow="Operations" title="客戶門戶" />
           {/* The sidebar links here with no caseId, so this is the screen staff
               actually land on. It used to stop at a sentence, leaving the only
               route onward as editing the URL by hand. */}
           <p className="text-sm text-muted-foreground">
-            Open a case from the annual returns board to see its client portal.
+            請由負責同事在周年申報案件板選擇案件，再開啟客戶門戶。
           </p>
           <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-            Browse annual returns
+            瀏覽周年申報案件
           </Link>
         </main>
       );
     }
     if (productionCaseQuery.isPending) {
-      return <div className="p-6 text-sm text-muted-foreground">Loading production portal...</div>;
+      return <div className="p-6 text-sm text-muted-foreground">正在載入客戶門戶…</div>;
     }
     if (productionCaseQuery.isError) {
       return (
         <main className="flex-1 space-y-3 p-6">
-          <PageHeader eyebrow="Operations" title="Portal case unavailable" />
+          <PageHeader eyebrow="Operations" title="暫時無法讀取門戶案件" />
           <p role="alert" className="text-sm text-destructive">
-            Unable to load this case. Please retry.
+            無法讀取此案件。請由負責同事重試；持續失敗時聯絡系統管理員。
             {safeRequestId(productionCaseQuery.error)
               ? ` Reference: ${safeRequestId(productionCaseQuery.error)}`
               : null}
@@ -147,9 +147,9 @@ function PortalRoute() {
     }
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Operations" title="Portal case unavailable" />
+        <PageHeader eyebrow="Operations" title="暫時無法讀取門戶案件" />
         <p className="text-sm text-destructive">
-          Unable to load the production annual return case.
+          無法讀取周年申報案件。請由負責同事返回案件板核對。
         </p>
       </main>
     );

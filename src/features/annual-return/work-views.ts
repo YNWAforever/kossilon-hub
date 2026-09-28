@@ -83,6 +83,8 @@ export type WorkViewRow = {
   ownerName: string;
   /** Why this row is here, in words a staff member can act on. */
   blocker: string;
+  /** Current reviewed document target, when this row is about a received file. */
+  documentId?: string | null;
 };
 
 export type WorkViewResult = {
@@ -99,7 +101,12 @@ function isMutable(case_: AnnualReturnCase): boolean {
   );
 }
 
-function baseRow(case_: AnnualReturnCase, today: string, blocker: string): WorkViewRow {
+function baseRow(
+  case_: AnnualReturnCase,
+  today: string,
+  blocker: string,
+  documentId?: string | null,
+): WorkViewRow {
   return {
     caseId: case_.id,
     companyName: case_.companyName,
@@ -108,6 +115,7 @@ function baseRow(case_: AnnualReturnCase, today: string, blocker: string): WorkV
     daysRemaining: daysBetween(today, case_.filingDueDate),
     ownerName: case_.ownerName,
     blocker,
+    ...(documentId ? { documentId } : {}),
   };
 }
 
@@ -152,14 +160,14 @@ export function deriveWorkViews(
 
     if (received.length > 0) {
       const blocker = `${received.length} 份文件待覆核`;
-      newlyReceived.push(baseRow(case_, today, blocker));
+      newlyReceived.push(baseRow(case_, today, blocker, received[0].documentId));
       // Owner or reviewer, matching who getAnnualReturnActionPermission lets act
       // on the case -- so this tab never shows work the viewer cannot do.
       if (
         viewer.userId &&
         (case_.ownerId === viewer.userId || case_.reviewerId === viewer.userId)
       ) {
-        awaitingMyReview.push(baseRow(case_, today, blocker));
+        awaitingMyReview.push(baseRow(case_, today, blocker, received[0].documentId));
       }
     }
 

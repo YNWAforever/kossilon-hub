@@ -92,10 +92,10 @@ describe("T04 production board pagination", () => {
     serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
     const onSearchChange = vi.fn();
     const view = board({}, onSearchChange);
-    await screen.findByText("No annual return cases match these filters.");
+    await screen.findByText("目前沒有符合篩選條件的案件。請由負責同事核對篩選條件。");
     vi.useFakeTimers();
     try {
-      fireEvent.change(screen.getByLabelText("Search company"), { target: { value: "Alpha" } });
+      fireEvent.change(screen.getByLabelText("搜尋公司"), { target: { value: "Alpha" } });
       view.rerenderSearch({ ownerId: "owner-2" });
       await act(async () => vi.advanceTimersByTime(299));
       expect(onSearchChange).not.toHaveBeenCalled();
