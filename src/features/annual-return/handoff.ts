@@ -8,7 +8,7 @@
  * This module makes no outbound call. T15 records a human external submission
  * separately from the disabled connector. The firm's internal server is a
  * possible return source, not an external filing destination. Its protocol,
- * address and rights remain unknown (BLOCKED_INTEGRATION: return-source).
+ * address and rights remain unknown; T16 registers the return-source blocker.
  */
 
 export type HandoffStatus =
