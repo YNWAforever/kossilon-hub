@@ -4,8 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { exportBulkOperationCsv, getBulkOperation } from "@/features/bulk-operations/server-fns";
+import type { ImportApproval } from "@/features/nar-import/apply-repository";
 import type { NarRowDisposition } from "@/features/nar-import/mapping";
 import {
+  applyNarImport,
+  approveNarImport,
   getNarImportBatchReview,
   listNarImportBatches,
   mapNarImportCompany,
@@ -73,6 +77,8 @@ function ImportsRoute() {
   const [legacyReturnYear, setLegacyReturnYear] = useState("");
   const [companyCursor, setCompanyCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | undefined>();
+  const [approval, setApproval] = useState<ImportApproval | undefined>();
+  const [operationId, setOperationId] = useState<string | undefined>();
 
   const batchesQuery = useQuery({
     queryKey: ["nar-import", "batches"],
@@ -109,6 +115,59 @@ function ImportsRoute() {
     retry: false,
   });
 
+  const operationQuery = useQuery({
+    queryKey: ["nar-import", "operation", operationId],
+    queryFn: () => getBulkOperation({ data: { id: operationId! } }),
+    enabled: Boolean(operationId),
+    retry: false,
+    refetchInterval: (query) =>
+      query.state.data?.state === "queued" || query.state.data?.state === "running" ? 3000 : false,
+  });
+  const approveMutation = useMutation({
+    mutationFn: () => {
+      const preview = revalidateMutation.data;
+      if (!preview) throw new Error("Revalidate the batch before approval.");
+      return approveNarImport({
+        data: { previewId: preview.id, previewHash: preview.previewHash },
+      });
+    },
+    onSuccess: (result) => {
+      setError(undefined);
+      setApproval(result);
+    },
+    onError: (cause) =>
+      setError(cause instanceof Error ? cause.message : "Unable to approve import."),
+  });
+  const applyMutation = useMutation({
+    mutationFn: () => {
+      if (!approval) throw new Error("Approve the current preview before applying.");
+      return applyNarImport({
+        data: { approvalId: approval.id, idempotencyKey: crypto.randomUUID() },
+      });
+    },
+    onSuccess: (result) => {
+      setError(undefined);
+      setOperationId(result.id);
+      void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
+    },
+    onError: (cause) =>
+      setError(cause instanceof Error ? cause.message : "Unable to queue import."),
+  });
+  async function downloadOperationCsv() {
+    if (!operationId) return;
+    try {
+      const csv = await exportBulkOperationCsv({ data: { id: operationId } });
+      const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `nar-import-${operationId}.csv`;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to export import results.");
+    }
+  }
+
   const stageMutation = useMutation({
     mutationFn: async () => {
       if (!file) throw new Error("Choose a workbook first.");
@@ -128,6 +187,8 @@ function ImportsRoute() {
       setReviewCursor(undefined);
       setReviewHistory([]);
       revalidateMutation.reset();
+      setApproval(undefined);
+      setOperationId(undefined);
       void queryClient.invalidateQueries({ queryKey: ["nar-import", "batches"] });
     },
     // The parser's refusals are the useful part of its output; surfaced verbatim
@@ -141,6 +202,8 @@ function ImportsRoute() {
       mapNarImportCompany({ data: input }),
     onSuccess: () => {
       revalidateMutation.reset();
+      setApproval(undefined);
+      setOperationId(undefined);
       void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
     },
     onError: (cause) =>
@@ -163,6 +226,8 @@ function ImportsRoute() {
     },
     onSuccess: () => {
       setError(undefined);
+      setApproval(undefined);
+      setOperationId(undefined);
       void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
     },
     onError: (cause) =>
@@ -382,6 +447,56 @@ function ImportsRoute() {
               <p className="mt-1 break-all text-xs text-muted-foreground">
                 {`語意鍵 ${revalidateMutation.data.semanticKey}`}
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                  disabled={approveMutation.isPending || Boolean(approval)}
+                  onClick={() => approveMutation.mutate()}
+                >
+                  {approval
+                    ? "已批准這份預覽"
+                    : approveMutation.isPending
+                      ? "批准中…"
+                      : "批准這份預覽"}
+                </button>
+                {approval ? (
+                  <button
+                    type="button"
+                    className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+                    disabled={applyMutation.isPending || Boolean(operationId)}
+                    onClick={() => applyMutation.mutate()}
+                  >
+                    {applyMutation.isPending ? "排程中…" : "按批准內容逐列套用"}
+                  </button>
+                ) : null}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                批准後仍需明確按套用；逐列結果可下載。匯入不會發提醒，付款日期只會待核對。
+              </p>
+              {operationQuery.data ? (
+                <div
+                  className="mt-3 rounded-md border bg-card p-3 text-sm"
+                  aria-label="Import operation progress"
+                >
+                  <p>{`套用狀態：${operationQuery.data.state} · 成功 ${operationQuery.data.counts.succeeded} · 跳過 ${operationQuery.data.counts.skipped} · 衝突 ${operationQuery.data.counts.conflict} · 失敗 ${operationQuery.data.counts.failed}`}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    排程處理逐列交易；有衝突時重新驗證，再批准新的預覽。
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-2 underline"
+                    onClick={() => void downloadOperationCsv()}
+                  >
+                    下載逐列結果 CSV
+                  </button>
+                </div>
+              ) : null}
+              {operationQuery.isError ? (
+                <p role="alert" className="mt-2 text-sm text-status-yellow">
+                  無法讀取套用進度；請重試。
+                </p>
+              ) : null}
               <div className="mt-3 max-h-80 space-y-3 overflow-auto text-xs">
                 {revalidateMutation.data.rows.map((row) => (
                   <div key={row.rowId} className="rounded-md border bg-card p-2">
@@ -504,6 +619,8 @@ function ImportsRoute() {
                 setReviewCursor(undefined);
                 setReviewHistory([]);
                 revalidateMutation.reset();
+                setApproval(undefined);
+                setOperationId(undefined);
               }}
               type="button"
             >
