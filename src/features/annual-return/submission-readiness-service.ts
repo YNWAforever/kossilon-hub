@@ -35,19 +35,6 @@ export async function inspectCaseSubmissionReadinessForActor(
     try {
       const caseItem = await repository.getCase(caseId);
       if (!caseItem) throw new Error("Annual return case not found.");
-      if (
-        caseItem.lockedAt ||
-        caseItem.completedAt ||
-        caseItem.currentStatus === "Filed" ||
-        caseItem.currentStatus === "Completed"
-      ) {
-        return { state: "blocked", reason: "case-closed" };
-      }
-      if (!currentPackage) return { state: "blocked", reason: "package-missing" };
-      if (currentPackage.state !== "approved") {
-        return { state: "blocked", reason: "package-unapproved" };
-      }
-
       const staff = assertStaffAccess(actor);
       if (!staff.userId) throw new Error("Forbidden: staff database identity is required.");
       const [currentActor] = await tx<
@@ -72,6 +59,18 @@ export async function inspectCaseSubmissionReadinessForActor(
         },
         "record_submission",
       );
+      if (
+        caseItem.lockedAt ||
+        caseItem.completedAt ||
+        caseItem.currentStatus === "Filed" ||
+        caseItem.currentStatus === "Completed"
+      ) {
+        return { state: "blocked", reason: "case-closed" };
+      }
+      if (!currentPackage) return { state: "blocked", reason: "package-missing" };
+      if (currentPackage.state !== "approved") {
+        return { state: "blocked", reason: "package-unapproved" };
+      }
     } finally {
       await repository.close();
     }

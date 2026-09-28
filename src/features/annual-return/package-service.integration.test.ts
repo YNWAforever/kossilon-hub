@@ -982,6 +982,18 @@ describe.skipIf(!databaseUrl)("T29 local filing journey", () => {
 });
 
 describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
+  it("t03_authorization checks record-submission permission before missing-package readiness", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      await tx`update users set role='Staff' where id=${fixture.actor.userId}`;
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, {
+          sql: tx,
+          storage: fixture.storage,
+        }),
+      ).rejects.toThrow(/Only admins, team managers, or assigned reviewers/i);
+    });
+  });
   it("uses a real read-only transaction for the server path", async () => {
     const [admin] = await sqlForTests()<
       {
