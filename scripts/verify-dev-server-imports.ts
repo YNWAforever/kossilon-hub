@@ -12,6 +12,7 @@ const ROUTE_PATHS = [
   "/annual-returns",
   "/annual-returns/11111111-1111-4111-8111-111111111111",
   "/documents",
+  "/imports",
   "/login",
   "/payments",
   "/portal",
