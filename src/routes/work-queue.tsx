@@ -233,8 +233,9 @@ function WorkQueueRoute() {
     : items.find((item) => selectedIds.has(item.id));
 
   const metrics = {
-    dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(asOf))
-      .length,
+    dueToday: items.filter(
+      (item) => item.slaDueAt && hongKongDateKey(item.slaDueAt) === hongKongDateKey(asOf),
+    ).length,
     atRisk: items.filter((item) => displayFor(item).state === "at-risk").length,
     breached: items.filter((item) => displayFor(item).state === "breached").length,
     unassigned: items.filter((item) => !item.ownerId).length,

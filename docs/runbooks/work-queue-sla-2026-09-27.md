@@ -11,22 +11,31 @@ Local changes:
 
 Limits and next dependency:
 
-- Current `work_items` columns `sla_policy_version_id`, `sla_started_at`, `sla_warning_at`, and `sla_due_at` are all non-null; `ensureWorkItemForEvent` rejects a missing policy. The no-policy presentation contract is tested, but creating and assigning a policy-setup work item is not yet implemented. It needs a schema and domain transition that preserves immutable snapshots, recommendation authorization, and escalation behavior. This is an outstanding T05 requirement, not a claimed production fix.
+- The 2026-09-28 local migration 0063 now permits an all-null SLA snapshot. `ensureWorkItemForEvent` retains a no-policy work item in the queue without inventing due dates or escalation. The existing immutable-snapshot trigger remains in force. A reviewed backfill preview and one-time policy attachment service, plus real assignment acceptance, remain outstanding T05 requirements; do not treat the visible item as a completed policy setup.
 - No production scheduler invocation or approved live role session was available. Production migrations 0021–0033 remain absent, including the `maintenance_runs` table used for freshness. Current local behavior is not production evidence.
 
-Read-only backfill preview for a **selected existing policy version** (bind `$1` as the selected UUID in an authorized local or staged database; this does not update rows):
+Read-only candidate preview for a **selected policy version** (bind `$1` as the selected UUID in an authorized local or staged database; this does not update rows). This identifies no-policy items with a matching work type only; it is not a commit operation:
 
 ```sql
-select w.id, w.company_id, w.work_type, w.sla_policy_version_id,
-       w.sla_due_at, w.escalation_state,
-       (w.status in ('open','in_progress','blocked')
-        and w.sla_due_at <= now()
-        and w.sla_breached_at is null) as needs_escalation_review
+select w.id, w.company_id, w.work_type, w.version,
+       w.created_at, w.status, p.id as selected_policy_id,
+       p.business_calendar_id
 from work_items w
-where w.sla_policy_version_id = $1::uuid
-order by w.sla_due_at, w.id;
+join sla_policies p on p.id = $1::uuid
+  and p.work_type = w.work_type and p.active = true
+where w.sla_policy_version_id is null
+  and w.status in ('open','in_progress','blocked')
+order by w.created_at, w.id;
 ```
 
 Do not apply a backfill from this preview without a selected policy, matching domain migration, and separately authorized database change. No production write, send, or deployment was performed.
 
 Local verification: RED 3/3 named T05 scenarios; focused domain/route/PostgreSQL 10/10; full PostgreSQL-backed suite 185 files/1,744 tests passed; lint exit 0 with one existing fast-refresh warning; typecheck exit 0; verify:firm dry-run exit 0 with live provider/binding blocks; build exit 0. A test/build import-protection failure introduced during this slice was fixed by moving the pure label helper to the shared types module; the failing route suite and build were rerun successfully.
+
+## 2026-09-28 no-policy persistence and migration 0063
+
+RED on disposable PostgreSQL: `t05_no_policy` received `No active SLA policy exists for work type t05_unconfigured_policy_fixture.` instead of persisting the item. Migration 0063 makes the four SLA snapshot columns nullable as a group and rejects partial snapshots. The event service now inserts a current immutable policy snapshot when a policy exists, or all-null SLA fields when none exists. Queue mapping and display preserve null; sorting places these rows after known SLA deadlines; the scheduler requires a policy and skips them. A no-policy work item remains visible with its source event and owner, but this slice does not implement a new assignment override or policy attachment.
+
+Focused regression after the local 0062→0063 upgrade and rollback/reapply: work-item repository, SLA audit regression and schema-health 3 files / 23 tests passed. The database rejected an invalid partial-SLA insert; the existing immutable-SLA trigger also rejected an attempted update. `db:inspect` on the disposable database reported ledger current, no missing/unknown/definition mismatches, 12/12 capabilities ready and `canRelease:true`; this is local only. The review-only rollback SQL restored the 0062 schema and ledger, then normal migration reapplied 0063. With a temporary unconfigured row, the rollback guard refused; cleanup left 63 ledger rows and zero guard rows. Typecheck, lint (0 errors, 1 inherited fast-refresh warning) and build passed.
+
+A full PostgreSQL suite was attempted but did not pass: the first run found the 0063 schema allowlist omission and several unrelated database tests timed out in setup/cleanup hooks. The allowlist was fixed and its 13/13 test passed; the isolated corporate-change case still timed out in `beforeEach`/`afterEach` before business assertions while Docker Desktop was slow. The full run was stopped, so T05 stays `in-progress`. The selected-policy backfill preview/commit with immutable transition and authorized assignment, complete DB regression gate, live scheduler/role verification, production schema reconciliation and separate production migration/deployment authorization remain open. No production change or live send occurred.

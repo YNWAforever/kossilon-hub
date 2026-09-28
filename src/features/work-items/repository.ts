@@ -51,10 +51,10 @@ export type PersistedWorkItem = {
   ownerId: string | null;
   reviewerId: string | null;
   teamId: string | null;
-  slaPolicyVersionId: string;
-  slaStartedAt: string;
-  slaWarningAt: string;
-  slaDueAt: string;
+  slaPolicyVersionId: string | null;
+  slaStartedAt: string | null;
+  slaWarningAt: string | null;
+  slaDueAt: string | null;
   slaBreachedAt: string | null;
   version: number;
   completedAt: string | null;
@@ -85,10 +85,10 @@ type WorkItemRow = {
   owner_id: string | null;
   reviewer_id: string | null;
   team_id: string | null;
-  sla_policy_version_id: string;
-  sla_started_at: string | Date;
-  sla_warning_at: string | Date;
-  sla_due_at: string | Date;
+  sla_policy_version_id: string | null;
+  sla_started_at: string | Date | null;
+  sla_warning_at: string | Date | null;
+  sla_due_at: string | Date | null;
   sla_breached_at: string | Date | null;
   version: number;
   completed_at: string | Date | null;
@@ -182,9 +182,9 @@ function mapWorkItem(row: WorkItemRow): PersistedWorkItem {
     reviewerId: row.reviewer_id,
     teamId: row.team_id,
     slaPolicyVersionId: row.sla_policy_version_id,
-    slaStartedAt: iso(row.sla_started_at),
-    slaWarningAt: iso(row.sla_warning_at),
-    slaDueAt: iso(row.sla_due_at),
+    slaStartedAt: nullableIso(row.sla_started_at),
+    slaWarningAt: nullableIso(row.sla_warning_at),
+    slaDueAt: nullableIso(row.sla_due_at),
     slaBreachedAt: nullableIso(row.sla_breached_at),
     version: row.version,
     completedAt: nullableIso(row.completed_at),
@@ -195,7 +195,8 @@ export function sortWorkItemQueue(items: readonly PersistedWorkItem[]): Persiste
   return [...items].sort(
     (a, b) =>
       Number(a.slaBreachedAt === null) - Number(b.slaBreachedAt === null) ||
-      Date.parse(a.slaDueAt) - Date.parse(b.slaDueAt) ||
+      (a.slaDueAt ? Date.parse(a.slaDueAt) : Number.POSITIVE_INFINITY) -
+        (b.slaDueAt ? Date.parse(b.slaDueAt) : Number.POSITIVE_INFINITY) ||
       b.priority - a.priority ||
       (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
   );
@@ -289,8 +290,8 @@ async function recommendationsFor(
       user_id: string;
       annual_return_case_id: string | null;
       priority: number;
-      sla_warning_at: string | Date;
-      sla_due_at: string | Date;
+      sla_warning_at: string | Date | null;
+      sla_due_at: string | Date | null;
       sla_breached_at: string | Date | null;
     }[]
   >`
@@ -318,8 +319,8 @@ async function recommendationsFor(
             priority: entry.priority,
             ownerId: row.user_id,
             reviewerId: null,
-            slaWarningAt: iso(entry.sla_warning_at),
-            slaDueAt: iso(entry.sla_due_at),
+            slaWarningAt: nullableIso(entry.sla_warning_at),
+            slaDueAt: nullableIso(entry.sla_due_at),
             slaBreachedAt: nullableIso(entry.sla_breached_at),
           },
           now,
@@ -393,35 +394,38 @@ export async function ensureWorkItemForEvent(
     order by p.version desc limit 1
   `;
   const policy = policies[0];
-  if (!policy) throw new Error(`No active SLA policy exists for work type ${event.workType}.`);
-  const holidays = await tx<
-    {
-      holiday_date: string | Date;
-      closed: boolean;
-      working_intervals: BusinessCalendar["holidays"][number]["workingIntervals"] | null;
-    }[]
-  >`
+  const holidays = policy
+    ? await tx<
+        {
+          holiday_date: string | Date;
+          closed: boolean;
+          working_intervals: BusinessCalendar["holidays"][number]["workingIntervals"] | null;
+        }[]
+      >`
     select holiday_date, closed, working_intervals from business_calendar_holidays
     where business_calendar_id = ${policy.calendar_id}
-  `;
-  const snapshot = snapshotSla(
-    {
-      id: policy.policy_id,
-      warningMinutes: policy.warning_minutes,
-      dueMinutes: policy.due_minutes,
-    },
-    startedAt,
-    {
-      id: policy.calendar_id,
-      timezone: policy.timezone,
-      weeklySchedule: policy.weekly_schedule,
-      holidays: holidays.map((holiday) => ({
-        date: iso(holiday.holiday_date).slice(0, 10),
-        closed: holiday.closed,
-        workingIntervals: holiday.working_intervals ?? undefined,
-      })),
-    },
-  );
+  `
+    : [];
+  const snapshot = policy
+    ? snapshotSla(
+        {
+          id: policy.policy_id,
+          warningMinutes: policy.warning_minutes,
+          dueMinutes: policy.due_minutes,
+        },
+        startedAt,
+        {
+          id: policy.calendar_id,
+          timezone: policy.timezone,
+          weeklySchedule: policy.weekly_schedule,
+          holidays: holidays.map((holiday) => ({
+            date: iso(holiday.holiday_date).slice(0, 10),
+            closed: holiday.closed,
+            workingIntervals: holiday.working_intervals ?? undefined,
+          })),
+        },
+      )
+    : null;
   const inserted = await tx<WorkItemRow[]>`
     insert into work_items (
       company_id, case_type, annual_return_case_id, corporate_change_request_id,
@@ -433,8 +437,8 @@ export async function ensureWorkItemForEvent(
       ${event.corporateChangeRequestId ?? null}, ${event.sourceEventKey},
       ${event.sourceEventType}, ${event.workType}, ${event.requiredSkillKey ?? null},
       ${event.title}, ${event.priority ?? 50}, ${event.ownerId ?? null}, ${event.reviewerId ?? null},
-      ${event.teamId ?? null}, ${snapshot.policyVersionId}, ${snapshot.startedAt},
-      ${snapshot.warningAt}, ${snapshot.dueAt}
+      ${event.teamId ?? null}, ${snapshot?.policyVersionId ?? null}, ${snapshot?.startedAt ?? null},
+      ${snapshot?.warningAt ?? null}, ${snapshot?.dueAt ?? null}
     ) on conflict (source_event_key) do nothing returning *
   `;
   if (inserted[0]) return mapWorkItem(inserted[0]);
@@ -637,6 +641,7 @@ export function createWorkItemRepository(
       const items = await sql<{ id: string }[]>`
         select w.id from work_items w
         where w.status not in ('completed', 'cancelled')
+          and w.sla_policy_version_id is not null
           and (
             (w.sla_warning_at <= ${now} and not exists (
               select 1 from escalation_events e
@@ -659,7 +664,7 @@ export function createWorkItemRepository(
       for (const candidate of items) {
         await withTransaction(sql, async (tx) => {
           const item = await getWorkItem(tx, candidate.id, true);
-          if (!item) return;
+          if (!item || !item.slaPolicyVersionId || !item.slaWarningAt || !item.slaDueAt) return;
           const recorded = await tx<{ threshold: "warning" | "breach" }[]>`
             select threshold from escalation_events where work_item_id = ${item.id}`;
           for (const threshold of escalationTransitionsFor(

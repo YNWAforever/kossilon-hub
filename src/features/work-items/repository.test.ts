@@ -58,6 +58,20 @@ describe("work-item repository contracts", () => {
     expect(sorted.map(({ id }) => id)).toEqual(["a", "c", "b", "d"]);
   });
 
+  it("t05_no_policy keeps unconfigured work visible without an SLA escalation", () => {
+    const unconfigured = item("unconfigured", {
+      slaPolicyVersionId: null,
+      slaStartedAt: null,
+      slaWarningAt: null,
+      slaDueAt: null,
+    });
+    expect(sortWorkItemQueue([unconfigured, item("configured")]).map(({ id }) => id)).toEqual([
+      "configured",
+      "unconfigured",
+    ]);
+    expect(escalationTransitionsFor(unconfigured, "2030-01-01T00:00:00.000Z", [])).toEqual([]);
+  });
+
   it("requires an override reason when a non-top recommendation is chosen", () => {
     expect(() =>
       assignmentDecisionFor({
@@ -380,6 +394,57 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
 });
 
 describe.skipIf(!databaseUrl)("ensureWorkItemForEvent", () => {
+  it("t05_no_policy persists an assignable work item without inventing SLA dates", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+    const rollbackMessage = "rollback no-policy work item fixture";
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const [caseRow] = await tx<
+            { id: string; company_id: string; owner_id: string }[]
+          >`select id, company_id, owner_id from annual_return_cases limit 1`;
+          if (!caseRow) throw new Error("T05 fixture needs a seeded annual return case.");
+          const item = await ensureWorkItemForEvent(tx, {
+            companyId: caseRow.company_id,
+            caseType: "annual_return",
+            annualReturnCaseId: caseRow.id,
+            sourceEventKey: "t05-unconfigured:" + crypto.randomUUID(),
+            sourceEventType: "sla_policy_configuration_required",
+            workType: "t05_unconfigured_policy_fixture",
+            title: "Configure SLA policy for this work type",
+            ownerId: caseRow.owner_id,
+          });
+          expect(item).toMatchObject({
+            status: "open",
+            slaPolicyVersionId: null,
+            slaStartedAt: null,
+            slaWarningAt: null,
+            slaDueAt: null,
+            slaBreachedAt: null,
+          });
+          const repository = createWorkItemRepository({ sql: tx });
+          expect((await repository.listQueue()).some((queued) => queued.id === item.id)).toBe(true);
+          await expect(
+            tx.savepoint(
+              async (savepoint) =>
+                savepoint`insert into work_items
+                (company_id, case_type, annual_return_case_id, source_event_key,
+                 source_event_type, work_type, title, sla_started_at)
+                values (${caseRow.company_id}, 'annual_return', ${caseRow.id},
+                  ${"t05-partial:" + crypto.randomUUID()}, 'sla_policy_configuration_required',
+                  't05_unconfigured_policy_fixture', 'Invalid partial SLA', now())`,
+            ),
+          ).rejects.toThrow(/work_items_sla_snapshot_check/);
+          expect(
+            await tx<{ id: string }[]>`select id from work_items where id=${item.id}`,
+          ).toHaveLength(1);
+          throw new Error(rollbackMessage);
+        }),
+      ).rejects.toThrow(rollbackMessage);
+    } finally {
+      await sql.end();
+    }
+  }, 20_000);
   it("creates a work item for a corporate_change_request case using its own FK column", async () => {
     const sql = createSqlClient(databaseUrl!, { max: 1 });
     const rollbackMessage = "rollback corporate change request work item fixture";

@@ -35,6 +35,7 @@ export function snapshotSla(
 
 export function thresholdFor(workItem: WorkItem, now: string): SlaThreshold {
   if (workItem.status === "completed" || workItem.status === "cancelled") return "none";
+  if (!workItem.slaWarningAt || !workItem.slaDueAt) return "none";
   if (workItem.slaBreachedAt) return "breach";
 
   const current = timestamp(now, "Current time");
