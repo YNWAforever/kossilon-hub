@@ -9,6 +9,7 @@ export type AnnualReturnAction =
   | "complete"
   | "prepare_package"
   | "approve_package"
+  | "record_submission"
   | "create_case";
 
 export type AnnualReturnActorRole = "Admin" | "Manager" | "Staff";
@@ -43,6 +44,8 @@ const COMPLETION_DENIAL_REASON =
   "Only admins, team managers, or assigned reviewers can complete annual return cases.";
 const PACKAGE_APPROVAL_DENIAL_REASON =
   "Only admins, team managers, or assigned reviewers can approve filing packages.";
+const SUBMISSION_DENIAL_REASON =
+  "Only admins, team managers, or assigned reviewers can record external submissions.";
 
 function actorOwnsOrReviewsCase(
   actor: AnnualReturnActionActor,
@@ -74,7 +77,7 @@ export function getAnnualReturnActionPermission(
     return { allowed: true };
   }
 
-  if (action === "complete" || action === "approve_package") {
+  if (action === "complete" || action === "approve_package" || action === "record_submission") {
     if (actorManagesCaseTeam(actor, case_) || actor.id === case_.reviewerId) {
       return { allowed: true };
     }
@@ -82,7 +85,11 @@ export function getAnnualReturnActionPermission(
     return {
       allowed: false,
       reason:
-        action === "approve_package" ? PACKAGE_APPROVAL_DENIAL_REASON : COMPLETION_DENIAL_REASON,
+        action === "approve_package"
+          ? PACKAGE_APPROVAL_DENIAL_REASON
+          : action === "record_submission"
+            ? SUBMISSION_DENIAL_REASON
+            : COMPLETION_DENIAL_REASON,
     };
   }
 
