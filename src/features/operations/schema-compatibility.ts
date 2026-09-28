@@ -18,7 +18,8 @@ export type SchemaCapability =
   | "maintenance"
   | "packages"
   | "submissions"
-  | "returns";
+  | "returns"
+  | "media";
 type Requirement = {
   capability: SchemaCapability;
   kind: "table" | "column" | "index" | "constraint";
@@ -197,6 +198,43 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "handoff_returns_manual_evidence",
     expected: "document_version_id is not null",
   },
+  { capability: "media", kind: "table", name: "whatsapp_message_media" },
+  {
+    capability: "media",
+    kind: "column",
+    name: "whatsapp_message_media.download_status",
+    expected: "text",
+  },
+  {
+    capability: "media",
+    kind: "column",
+    name: "whatsapp_message_media.download_object_key",
+    expected: "text",
+  },
+  {
+    capability: "media",
+    kind: "column",
+    name: "whatsapp_message_media.download_revision",
+    expected: "integer",
+  },
+  {
+    capability: "media",
+    kind: "index",
+    name: "whatsapp_message_media_position_uidx",
+    expected: "message_id",
+  },
+  {
+    capability: "media",
+    kind: "index",
+    name: "whatsapp_message_media_download_due_idx",
+    expected: "download_next_attempt_at",
+  },
+  {
+    capability: "media",
+    kind: "constraint",
+    name: "maintenance_job_runs_job_kind_check",
+    expected: "drainInboundMediaDownloads",
+  },
   { capability: "maintenance", kind: "table", name: "maintenance_runs" },
   {
     capability: "maintenance",
@@ -254,6 +292,7 @@ export function inspectSchemaCompatibility(input: {
     packages: { ready: true, issues: [] as string[] },
     submissions: { ready: true, issues: [] as string[] },
     returns: { ready: true, issues: [] as string[] },
+    media: { ready: true, issues: [] as string[] },
   };
   const definitionMismatch: DefinitionMismatch[] = [];
   const tables = new Set(input.catalog.tables.map(normalize));

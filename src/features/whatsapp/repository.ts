@@ -382,7 +382,7 @@ type ConversationMessageRow = {
   direction: WhatsAppMessageDirection;
   status: WhatsAppMessageStatus;
   body: string;
-  attachments: { providerMediaId: string; mediaType: string; hasDocument: boolean }[] | null;
+  attachments: WhatsAppConversationMessage["attachments"] | null;
   sent_as: "text" | "template" | null;
   sent_template_name: string | null;
   case_id: string | null;
@@ -825,10 +825,9 @@ export function createWhatsAppRepository(
       // the reference. The unique constraint makes a redelivered webhook a no-op
       // rather than showing the client sending the same file twice.
       //
-      // Recording the reference is all this can do: fetching the bytes needs a
-      // WOZTELL media-download endpoint and none appears in the webhook
-      // documentation the fixtures are copied from.
-      // BLOCKED_INTEGRATION: whatsapp-media-download.
+      // The background download job uses this durable reference only after the
+      // provider tenant proves the waMediaId -> fileId mapping and supplies a
+      // scoped Open API credential. This webhook never fetches or releases bytes.
       if (inserted && input.attachments.length > 0) {
         for (const attachment of input.attachments) {
           await tx`
@@ -1344,6 +1343,11 @@ export function createWhatsAppRepository(
               json_build_object(
                 'providerMediaId', m.provider_media_id,
                 'mediaType', m.media_type,
+                'position', m.position,
+                'downloadStatus', m.download_status,
+                'downloadRevision', m.download_revision,
+                'downloadErrorCode', m.download_last_error_code,
+                'documentCaseId', d.case_id,
                 'hasDocument', m.document_id is not null
               )
               order by m.position asc
@@ -1351,6 +1355,7 @@ export function createWhatsAppRepository(
             '[]'::json
           )
           from whatsapp_message_media m
+          left join documents d on d.id = m.document_id
           where m.message_id = whatsapp_messages.id
         ) as attachments,
         sent_as,

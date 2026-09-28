@@ -36,7 +36,22 @@ export type WhatsAppConversationMessage = {
    * the body used to be the only trace, and a client who typed "[image]" was
    * indistinguishable from one who sent a photograph.
    */
-  attachments: { providerMediaId: string; mediaType: string; hasDocument: boolean }[];
+  attachments: {
+    providerMediaId: string;
+    mediaType: string;
+    hasDocument: boolean;
+    position?: number;
+    downloadStatus?:
+      | "pending"
+      | "processing"
+      | "quarantined"
+      | "linked"
+      | "manual_reupload"
+      | "failed";
+    downloadRevision?: number;
+    downloadErrorCode?: string | null;
+    documentCaseId?: string | null;
+  }[];
 };
 
 export type WhatsAppConversation = {

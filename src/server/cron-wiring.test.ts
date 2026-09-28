@@ -13,6 +13,25 @@ const wranglerTemplate = parse(
  * nothing ever invoked it. Testing the pure function proved nothing about
  * whether it runs. These tests check the wiring instead.
  */
+describe("T19 media scheduler gate", () => {
+  it("schedules inbound download only after the scoped token, host and tenant ID mapping proof", async () => {
+    const { scheduledJobsForRuntime } = await import("./maintenance-trigger-runtime");
+    const valid = {
+      WOZTELL_OPEN_API_TOKEN: "scoped-test-token",
+      WOZTELL_MEDIA_ALLOWED_HOSTS: "media.example.test",
+      WOZTELL_MEDIA_FILE_ID_MAPPING_VERIFIED: "true",
+    };
+    expect(scheduledJobsForRuntime({})).not.toContain("drainInboundMediaDownloads");
+    expect(
+      scheduledJobsForRuntime({ ...valid, WOZTELL_MEDIA_FILE_ID_MAPPING_VERIFIED: "false" }),
+    ).not.toContain("drainInboundMediaDownloads");
+    expect(
+      scheduledJobsForRuntime({ ...valid, WOZTELL_MEDIA_ALLOWED_HOSTS: "localhost" }),
+    ).not.toContain("drainInboundMediaDownloads");
+    expect(scheduledJobsForRuntime(valid)).toContain("drainInboundMediaDownloads");
+  });
+});
+
 describe("scheduled maintenance wiring", () => {
   it("declares one Vercel HTTP cron with a server-secret gate", () => {
     const config = JSON.parse(

@@ -281,7 +281,7 @@ export type DocumentRepository = {
   finalizeUploadIntent(input: {
     intentId: string;
     uploadedBy: string | null;
-    source: "staff" | "client";
+    source: "staff" | "client" | "system";
   }): Promise<PrivateDocument>;
   getDocument(id: string): Promise<PrivateDocument | null>;
   listDocuments(filters?: {
