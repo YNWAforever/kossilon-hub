@@ -100,6 +100,7 @@ create table if not exists annual_return_cases (
   reminders_sent integer not null default 0 constraint annual_return_cases_reminders_sent_nonnegative_check check (reminders_sent >= 0),
   filing_reference text,
   confirmation_document_id uuid references documents(id),
+  legacy_completion_eligible boolean not null default false,
   locked_at timestamptz,
   completed_at timestamptz,
   created_at timestamptz not null default now(),

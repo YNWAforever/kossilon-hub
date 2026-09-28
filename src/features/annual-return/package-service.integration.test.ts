@@ -958,4 +958,24 @@ describe.skipIf(!databaseUrl)("T29 local filing journey", () => {
       expect(completed).toMatchObject({ currentStatus: "Completed" });
     });
   });
+  it("t29_review blocks a new case with legacy filing fields but no approved package or return", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const proofVersionId = await fixture.createSubmissionProof();
+      const [proof] = await tx<{ document_id: string }[]>`
+        select document_id from document_versions where id = ${proofVersionId}
+      `;
+      await tx`
+        update annual_return_cases
+        set filing_reference = 'LEGACY-T29-REVIEW',
+            confirmation_document_id = ${proof.document_id}
+        where id = ${fixture.caseId}
+      `;
+      const cases = createAnnualReturnRepository({ sql: tx });
+      await expect(
+        cases.updateStatus(fixture.caseId, "Completed", fixture.actor.userId!),
+      ).rejects.toThrow(/approved package.*submission proof.*accepted return/i);
+      expect((await cases.getCase(fixture.caseId))?.currentStatus).toBe("Payment pending");
+    });
+  });
 });

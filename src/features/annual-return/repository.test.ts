@@ -70,6 +70,7 @@ type MutableAnnualReturnFixtureOptions = {
   paymentStatus?: PaymentStatus;
   paymentProof?: boolean;
   filingProof?: boolean;
+  legacyCompletionEligible?: boolean;
   ownerId?: string;
   reviewerId?: string;
   teamId?: string;
@@ -298,6 +299,7 @@ async function createMutableAnnualReturnFixture({
   paymentStatus = "Payment pending",
   paymentProof = false,
   filingProof = false,
+  legacyCompletionEligible = false,
   ownerId = USER_AMY_ID,
   reviewerId = USER_KEN_ID,
   teamId = TEAM_ANNUAL_RETURN_ID,
@@ -361,6 +363,7 @@ async function createMutableAnnualReturnFixture({
         reviewer_id,
         reminders_sent,
         filing_reference,
+        legacy_completion_eligible,
         locked_at,
         completed_at
       )
@@ -376,6 +379,7 @@ async function createMutableAnnualReturnFixture({
         ${reviewerId},
         ${remindersSent},
         ${filingReference},
+        ${legacyCompletionEligible},
         ${lockedAt},
         ${completedAt}
       )
@@ -1511,6 +1515,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       const readyFixture = await createMutableAnnualReturnFixture({
         sequence: 4,
         currentStatus: "Filed",
+        legacyCompletionEligible: true,
         checklistStatus: "Verified",
         checklistDocument: true,
         paymentStatus: "Payment received",
@@ -2060,6 +2065,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       const fixture = await createMutableAnnualReturnFixture({
         sequence: 19,
         currentStatus: "Filed",
+        legacyCompletionEligible: true,
         checklistStatus: "Verified",
         checklistDocument: true,
         paymentStatus: "Payment received",

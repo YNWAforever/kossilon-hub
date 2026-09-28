@@ -130,6 +130,7 @@ type LockedCaseRow = {
   reviewer_id: string | null;
   filing_reference: string | null;
   confirmation_document_id: string | null;
+  legacy_completion_eligible: boolean;
   assignment_revision: number;
 };
 
@@ -767,6 +768,7 @@ export function createAnnualReturnRepository(
         arc.reviewer_id,
         arc.filing_reference,
         arc.confirmation_document_id,
+        arc.legacy_completion_eligible,
         arc.assignment_revision
       from annual_return_cases arc
       join companies c on c.id = arc.company_id
@@ -1764,6 +1766,8 @@ export function createAnnualReturnRepository(
     companyId: string,
     filingReference: string | null,
     confirmationDocumentId: string | null,
+    currentStatus: AnnualReturnStatus,
+    legacyCompletionEligible: boolean,
   ): Promise<string[]> {
     const blockers: string[] = [];
     const unverifiedRequiredRows = await tx<{ id: string }[]>`
@@ -1828,10 +1832,8 @@ export function createAnnualReturnRepository(
       blockers.push("Verified payment proof document is required.");
     }
 
-    // Cases on the package/handoff workflow must have the exact approved
-    // revision, a reviewed same-case submission proof, and a human-confirmed
-    // accepted return. Legacy cases without packages keep their earlier
-    // filing-reference and confirmation-document acceptance path.
+    // A pre-migration Filed case may retain its verified legacy confirmation path.
+    // All other cases require the approved package, submission and accepted return.
     const packageRows = await tx<{ id: string }[]>`
       select id from filing_packages where case_id = ${caseId} limit 1
     `;
@@ -1894,7 +1896,7 @@ export function createAnnualReturnRepository(
           "Current approved package, recorded submission proof and reconciled accepted return are required.",
         );
       }
-    } else {
+    } else if (legacyCompletionEligible && currentStatus === "Filed") {
       if (!hasText(filingReference)) {
         blockers.push("Filing reference is required.");
       }
@@ -1917,6 +1919,10 @@ export function createAnnualReturnRepository(
           blockers.push("Verified filing confirmation document is required.");
         }
       }
+    } else {
+      blockers.push(
+        "Current approved package, recorded submission proof and reconciled accepted return are required.",
+      );
     }
     return blockers;
   }
@@ -2183,6 +2189,8 @@ export function createAnnualReturnRepository(
           lockedCase.company_id,
           lockedCase.filing_reference,
           lockedCase.confirmation_document_id,
+          lockedCase.current_status,
+          lockedCase.legacy_completion_eligible,
         );
 
         if (blockers.length > 0) {
