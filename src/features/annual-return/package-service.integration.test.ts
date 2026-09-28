@@ -7,6 +7,7 @@ import type { DocumentStorage } from "@/features/documents/types";
 import { createDocumentRepository } from "@/features/documents/repository";
 import { createBulkOperationRepository } from "@/features/bulk-operations/repository";
 import { createAnnualReturnRepository } from "./repository";
+import { listWorkViewForActor } from "./server-fns";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
 import { inspectCaseSubmissionReadinessForActor } from "./submission-readiness-service";
@@ -1060,6 +1061,75 @@ describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
       await expect(inspectApprovedPackageForActor(fixture.actor, draft.id, deps)).rejects.toThrow(
         /stale/i,
       );
+    });
+  });
+
+  it("t03_ready_candidates use indexed approved-package state within actor scope", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const [caseRow] = await tx<
+        { company_id: string }[]
+      >`select company_id from annual_return_cases where id=${fixture.caseId}`;
+      const repository = createAnnualReturnRepository({ sql: tx });
+      const input = {
+        scope: { companyIds: [caseRow.company_id] },
+        viewerId: fixture.actor.userId,
+        view: "readyToFile" as const,
+        limit: 50,
+        asOf: "2026-09-28",
+      };
+      try {
+        expect((await repository.listWorkViewPage(input)).rows).toEqual([]);
+        const draft = await preparePackageForActor(
+          fixture.actor,
+          { caseId: fixture.caseId, expectedRevision: 0 },
+          { sql: tx, storage: fixture.storage },
+        );
+        expect((await repository.listWorkViewPage(input)).rows).toEqual([]);
+        await approvePackageForActor(
+          fixture.actor,
+          { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+          { sql: tx, storage: fixture.storage },
+        );
+        const candidates = await repository.listWorkViewPage(input);
+        expect(candidates.definition.released).toBe(false);
+        expect(candidates.rows.map((row) => row.caseId)).toEqual([fixture.caseId]);
+
+        const [company] = await tx<
+          { company_name: string }[]
+        >`select company_name from companies where id=${caseRow.company_id}`;
+        const queueInput = {
+          view: "readyToFile" as const,
+          filters: { q: company.company_name },
+          limit: 50,
+          asOf: "2026-09-28",
+        };
+        const inspectSubmission = (actor: AuthenticatedActor, caseId: string) =>
+          inspectCaseSubmissionReadinessForActor(actor, caseId, {
+            sql: tx,
+            storage: fixture.storage,
+          });
+        const readyPage = await listWorkViewForActor(fixture.actor, queueInput, {
+          repository,
+          inspectSubmission,
+        });
+        expect(readyPage.rows.map((row) => row.caseId)).toEqual([fixture.caseId]);
+        expect(readyPage.total).toBeNull();
+
+        const [artifact] = await tx<
+          { artifact_key: string }[]
+        >`select artifact_key from filing_packages where id=${draft.id}`;
+        await fixture.storage.delete(artifact.artifact_key);
+        const unreadablePage = await listWorkViewForActor(fixture.actor, queueInput, {
+          repository,
+          inspectSubmission,
+        });
+        expect(unreadablePage.rows).toEqual([]);
+        expect(unreadablePage.unverifiedCount).toBe(1);
+        expect(unreadablePage.total).toBeNull();
+      } finally {
+        await repository.close();
+      }
     });
   });
 

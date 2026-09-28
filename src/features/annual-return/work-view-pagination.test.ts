@@ -5,6 +5,7 @@ import { ImportPreviewPage } from "@/features/nar-import/components/import-previ
 import type { ImportPreviewRow } from "@/features/nar-import/preview";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { listWorkViewForActor, getOperationalMetricsForActor } from "./server-fns";
+import type { CaseSubmissionReadiness } from "./submission-readiness-service";
 
 const actor: AuthenticatedActor = {
   authUserId: "auth-staff",
@@ -67,6 +68,112 @@ describe("T27 work-view pagination", () => {
         }),
       );
     }
+  });
+
+  it("t03_ready_queue releases only verified candidates and never reports candidate count as ready", async () => {
+    const readyId = "33333333-3333-4333-8333-333333333333";
+    const unreadableId = "44444444-4444-4444-8444-444444444444";
+    const row = (caseId: string) => ({
+      caseId,
+      companyName: "Scoped company",
+      returnYear: 2026,
+      filingDueDate: "2026-10-01",
+      daysRemaining: 3,
+      ownerName: "Ada",
+      blocker: "待核實",
+    });
+    const listAllCases = vi.fn(() => {
+      throw new Error("full case scan is forbidden");
+    });
+    const listWorkViewPage = vi.fn(async () => ({
+      definition: {
+        key: "readyToFile" as const,
+        label: "可以交件",
+        description: "",
+        released: false,
+      },
+      rows: [row(readyId), row(unreadableId)],
+      total: 20_001,
+      nextCursor: "next-candidate-page",
+      asOf,
+    }));
+    const inspectSubmission = vi.fn(
+      async (_actor: AuthenticatedActor, caseId: string): Promise<CaseSubmissionReadiness> =>
+        caseId === readyId
+          ? {
+              state: "ready",
+              packageId: "approved-package",
+              revision: 1,
+              manifestHash: "verified-hash",
+              readiness: {
+                documentsComplete: true,
+                paymentConfirmed: true,
+                canApprovePackage: true,
+                canRecordSubmission: true,
+                canComplete: false,
+                blockers: [],
+                snapshotRevision: 1,
+              },
+            }
+          : { state: "unknown", reason: "package-unverifiable" },
+    );
+    const page = await listWorkViewForActor(
+      actor,
+      { view: "readyToFile", limit: 50, asOf },
+      { repository: { listWorkViewPage, listAllCases }, inspectSubmission },
+    );
+    expect(page.definition.released).toBe(true);
+    expect(page.rows.map((item) => item.caseId)).toEqual([readyId]);
+    expect(page.total).toBeNull();
+    expect(page.nextCursor).toBe("next-candidate-page");
+    expect(page.unverifiedCount).toBe(1);
+    expect(inspectSubmission).toHaveBeenCalledWith(actor, readyId);
+    expect(inspectSubmission).toHaveBeenCalledWith(actor, unreadableId);
+    expect(listAllCases).not.toHaveBeenCalled();
+  });
+
+  it("t03_ready_queue bounds storage verification to four concurrent cases", async () => {
+    let active = 0;
+    let peak = 0;
+    const rows = Array.from({ length: 9 }, (_, index) => ({
+      caseId: String(index + 1),
+      companyName: "Scoped",
+      returnYear: 2026,
+      filingDueDate: asOf,
+      daysRemaining: 0,
+      ownerName: "Ada",
+      blocker: "candidate",
+    }));
+    const listWorkViewPage = vi.fn(async () => ({
+      definition: {
+        key: "readyToFile" as const,
+        label: "可以交件",
+        description: "",
+        released: false,
+      },
+      rows,
+      total: rows.length,
+      nextCursor: null,
+      asOf,
+    }));
+    const inspectSubmission = vi.fn(async (): Promise<CaseSubmissionReadiness> => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      active -= 1;
+      return { state: "blocked", reason: "package-missing" };
+    });
+    const page = await listWorkViewForActor(
+      actor,
+      { view: "readyToFile", asOf },
+      {
+        repository: { listWorkViewPage },
+        inspectSubmission,
+      },
+    );
+    expect(peak).toBe(4);
+    expect(page.rows).toEqual([]);
+    expect(inspectSubmission).toHaveBeenCalledTimes(9);
   });
 
   it("t27_scenario_2: a 10k-row monthly preview renders only one 50-row DOM page", async () => {

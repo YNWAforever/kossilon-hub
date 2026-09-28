@@ -1174,11 +1174,6 @@ export function createAnnualReturnRepository(
     if (!Number.isInteger(input.limit) || input.limit < 1 || input.limit > 200) {
       throw new Error("Work-view page limit must be between 1 and 200.");
     }
-    // Package readiness has no complete indexed snapshot yet. Preserve the
-    // existing explicit unavailable state instead of presenting false zeroes.
-    if (input.view === "readyToFile") {
-      return { definition, rows: [], total: 0, nextCursor: null, asOf: input.asOf };
-    }
     const cursor = decodeCaseCursor(input.cursor);
     if (input.cursor && !cursor) throw new Error("Invalid work-view cursor.");
     const teamId = input.scope.teamId ?? null;
@@ -1219,6 +1214,24 @@ export function createAnnualReturnRepository(
                or c.company_name ilike ${query} escape '\\'
                or c.cr_number ilike ${query} escape '\\')
           and (
+            (${view} = 'readyToFile'
+             and arc.current_status not in ('Filed','Completed')
+             and arc.locked_at is null and arc.completed_at is null
+             and exists (
+               select 1 from filing_packages fp
+               where fp.case_id = arc.id and fp.state = 'approved'
+                 and fp.approved_by is not null
+                 and not exists (
+                   select 1 from filing_packages newer
+                   where newer.case_id = arc.id and newer.revision > fp.revision
+                 )
+             )
+             and not exists (
+               select 1 from package_handoffs ph
+               where ph.case_id = arc.id
+                 and ph.status in ('prepared','recorded_submission','transmitted','acknowledged')
+             ))
+            or
             (${view} = 'returnsAndExceptions'
              and exists (
                select 1 from handoff_returns hr
@@ -1260,6 +1273,7 @@ export function createAnnualReturnRepository(
       )
       select counted.total, page.*,
         case
+          when ${view} = 'readyToFile' then '已批准套件，待核實當前文件、付款及儲存檔案'
           when ${view} = 'chaseToday' then (
             select string_agg(i.item_label, '、' order by i.id)
             from annual_return_checklist_items i
