@@ -56,6 +56,16 @@ export function deriveCapabilityStatuses(input: {
 }): CapabilityStatus[] {
   const names = new Set(input.bindingNames);
   const latestScheduled = input.recentRuns?.find((run) => run.triggerSource === "scheduled");
+  const currentScheduled =
+    input.deploymentRef && latestScheduled?.deploymentRef === input.deploymentRef
+      ? latestScheduled
+      : null;
+  const lastCurrentSuccess = input.recentRuns?.find(
+    (run) =>
+      run.triggerSource === "scheduled" &&
+      run.deploymentRef === input.deploymentRef &&
+      run.outcome === "succeeded",
+  );
   return BLOCKED_INTEGRATIONS.map(({ id }) => {
     const implemented = IMPLEMENTED.has(id);
     const required = BINDINGS[id];
@@ -84,20 +94,13 @@ export function deriveCapabilityStatuses(input: {
       : !configured
         ? "unconfigured"
         : "unverified";
-    if (id === "deployment-runtime" && input.maintenance) {
-      lastSuccessAt = input.maintenance.lastSuccessAt;
-      evidenceRef = latestScheduled ? `maintenance_runs:${latestScheduled.id}` : null;
-      if (input.maintenance.state === "stale") reachable = "no";
-      else if (latestScheduled) reachable = "yes";
+    if (id === "deployment-runtime" && configured && input.maintenance && currentScheduled) {
+      lastSuccessAt = lastCurrentSuccess?.finishedAt ?? null;
+      evidenceRef = "maintenance_runs:" + currentScheduled.id;
+      reachable = input.maintenance.state === "stale" ? "no" : "yes";
       if (["stale", "failing", "degraded"].includes(input.maintenance.state)) state = "degraded";
-      else if (
-        configured &&
-        input.maintenance.state === "healthy" &&
-        latestScheduled?.deploymentRef &&
-        latestScheduled.deploymentRef === input.deploymentRef
-      )
-        state = "healthy";
-      // Legacy rows without a deployment reference stay unverified.
+      else if (configured && input.maintenance.state === "healthy") state = "healthy";
+      // Foreign and legacy rows cannot certify or degrade the active deployment.
     } else if (configured && currentProbe) {
       if (currentProbe.reachable === "no")
         state = currentProbe.lastSuccessAt ? "degraded" : "blocked";

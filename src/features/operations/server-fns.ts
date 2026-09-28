@@ -189,7 +189,7 @@ async function readOperationsState(
       schedulerOwner: input.schedulerOwner,
       bindingNames: input.bindingNames ?? [],
       maintenance,
-      recentRuns,
+      recentRuns: scheduledRuns,
     }),
   };
 }

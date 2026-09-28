@@ -61,11 +61,26 @@ describe("T08 dynamic capability status", () => {
       failedPasses: ["evaluateEscalations"],
       dispatch: null,
       triggerSource: "scheduled",
+      deploymentRef: "abcdef1234567",
     };
-    const degradedRepo = repository([failed]);
-    degradedRepo.lastScheduledSuccessAt.mockResolvedValue("2026-09-27T01:55:00.000Z");
+    const priorSuccess: MaintenanceRunRecord = {
+      ...failed,
+      id: "scheduled-prior-success",
+      scheduledFor: "2026-09-27T01:55:00.000Z",
+      startedAt: "2026-09-27T01:55:00.000Z",
+      finishedAt: "2026-09-27T01:55:00.000Z",
+      outcome: "succeeded",
+      failedPasses: [],
+    };
+    const degradedRepo = repository([failed, priorSuccess]);
+    degradedRepo.lastScheduledSuccessAt.mockResolvedValue(priorSuccess.finishedAt);
     const degraded = await buildOperationsHealth(
-      { now: NOW, bindingNames: ["MAINTENANCE_SCHEDULER_OWNER", "CRON_SECRET"] },
+      {
+        now: NOW,
+        bindingNames: ["MAINTENANCE_SCHEDULER_OWNER", "CRON_SECRET"],
+        schedulerOwner: "vercel",
+        deploymentRef: "abcdef1234567",
+      },
       { repository: degradedRepo },
     );
     expect(capability(degraded, "deployment-runtime")).toMatchObject({
@@ -147,12 +162,87 @@ describe("T08 dynamic capability status", () => {
       { ...base, schedulerOwner: null, deploymentRef: "abcdef1234567" },
       { repository: repository([run]) },
     );
-    expect(capability(ownerMissing, "deployment-runtime")?.state).toBe("unconfigured");
+    expect(capability(ownerMissing, "deployment-runtime")).toMatchObject({
+      state: "unconfigured",
+      reachable: "unknown",
+      lastSuccessAt: null,
+      evidenceRef: null,
+    });
     expect(deploymentRefFromRuntime({ DEPLOYMENT_SHA: "private-token.example" })).toBeNull();
     expect(deploymentRefFromRuntime({ VERCEL_GIT_COMMIT_SHA: "ABCDEF1234567" })).toBe(
       "abcdef1234567",
     );
     expect(schedulerOwnerFromRuntime({ MAINTENANCE_SCHEDULER_OWNER: "both" })).toBeNull();
+  });
+
+  it("uses scheduled history when manual runs fill the general recent-run window", async () => {
+    const scheduled: MaintenanceRunRecord = {
+      id: "scheduled-current",
+      scheduledFor: NOW,
+      startedAt: NOW,
+      finishedAt: NOW,
+      durationMs: 1,
+      outcome: "succeeded",
+      failedPasses: [],
+      dispatch: null,
+      triggerSource: "scheduled",
+      deploymentRef: "abcdef1234567",
+    };
+    const repo = repository([scheduled]);
+    repo.listRecentRuns.mockResolvedValue([
+      { ...scheduled, id: "manual-only", triggerSource: "manual" },
+    ]);
+    const view = await buildOperationsHealth(
+      {
+        now: NOW,
+        bindingNames: ["MAINTENANCE_SCHEDULER_OWNER", "CRON_SECRET"],
+        schedulerOwner: "vercel",
+        deploymentRef: "abcdef1234567",
+      },
+      { repository: repo },
+    );
+    expect(view.maintenance?.state).toBe("healthy");
+    expect(capability(view, "deployment-runtime")).toMatchObject({
+      state: "healthy",
+      evidenceRef: "maintenance_runs:scheduled-current",
+    });
+  });
+
+  it("does not attribute a foreign deployment scheduler failure to the active deployment", () => {
+    const foreign: MaintenanceRunRecord = {
+      id: "scheduled-foreign-failure",
+      scheduledFor: NOW,
+      startedAt: NOW,
+      finishedAt: NOW,
+      durationMs: 1,
+      outcome: "partial",
+      failedPasses: ["evaluateEscalations"],
+      dispatch: null,
+      triggerSource: "scheduled",
+      deploymentRef: "deadbeef1234567",
+    };
+    const status = deriveCapabilityStatuses({
+      now: NOW,
+      bindingNames: ["MAINTENANCE_SCHEDULER_OWNER", "CRON_SECRET"],
+      schedulerOwner: "vercel",
+      deploymentRef: "abcdef1234567",
+      maintenance: {
+        state: "degraded",
+        lastRunAt: NOW,
+        lastSuccessAt: "2026-09-27T01:55:00.000Z",
+        lagSeconds: 0,
+        toleranceSeconds: 900,
+        failedPasses: ["evaluateEscalations"],
+        summary: "foreign deployment failure",
+      },
+      recentRuns: [foreign],
+    }).find((item) => item.id === "deployment-runtime");
+    expect(status).toMatchObject({
+      state: "unverified",
+      reachable: "unknown",
+      lastSuccessAt: null,
+      evidenceRef: null,
+    });
   });
 
   it("t08_scenario_3 never exposes provider tokens, signed URLs, or DB hosts in response or logs", async () => {
