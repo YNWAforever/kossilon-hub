@@ -19,6 +19,7 @@ import { blocksRelease, type Finding, type PersistedFinding } from "./findings";
 export type AnalysisRunState =
   /** A run finished. An empty list here really does mean nothing was found. */
   | "analysed"
+  | "stale"
   /** Queued and not yet run. */
   | "pending"
   /** Claimed, and it could not proceed -- today, waiting for a scan verdict. */
@@ -85,6 +86,8 @@ export function describeSilence(state: AnalysisRunState): string {
   switch (state) {
     case "analysed":
       return "已完成自動檢查，未發現問題。";
+    case "stale":
+      return "案件資料在分析後已更改；舊結果需要重新檢查。";
     case "deferred":
       // The honest and, today, universal case.
       return "尚未檢查：仍在等待防毒掃描結果。這不代表文件沒有問題。";
