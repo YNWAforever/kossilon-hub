@@ -57,6 +57,7 @@ describe("extractPdfText", () => {
       text: ENGLISH_PHRASE,
       pageCount: 1,
       truncated: false,
+      pages: [{ page: 1, text: ENGLISH_PHRASE }],
     });
   });
 
@@ -76,7 +77,11 @@ describe("extractPdfText", () => {
   it("counts every page", async () => {
     const result = await extractPdfText({ body: threePagePdf(), contentType: "application/pdf" });
 
-    expect(result).toMatchObject({ method: "text-layer", pageCount: 3 });
+    expect(result).toMatchObject({
+      method: "text-layer",
+      pageCount: 3,
+      pages: [{ page: 1 }, { page: 2 }, { page: 3 }],
+    });
   });
 
   /**

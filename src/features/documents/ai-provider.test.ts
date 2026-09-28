@@ -46,10 +46,10 @@ describe("createDocumentAiAnalyzerForProviderMode", () => {
 
   // A stand-in third tier would produce findings that look like a model's and
   // are not -- the exact confusion Phase C-0 spent its time removing.
-  it("has no fixture analyzer to fall back to outside live", () => {
+  it("keeps the generic byte-only analyzer disabled even with configuration", () => {
     expect(createDocumentAiAnalyzerForProviderMode("local", { config })).toBeNull();
     expect(createDocumentAiAnalyzerForProviderMode("simulated", { config })).toBeNull();
-    expect(createDocumentAiAnalyzerForProviderMode("live", { config })).not.toBeNull();
+    expect(createDocumentAiAnalyzerForProviderMode("live", { config })).toBeNull();
   });
 });
 

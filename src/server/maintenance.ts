@@ -483,9 +483,9 @@ export async function runFirmMaintenance(
 
       // No `return null` for a missing model here, unlike the scan worker. The
       // deterministic tiers are the pass; the model is its optional third tier,
-      // and createDocumentAiAnalyzerForProviderMode already returns null when
-      // there is no provider (BLOCKED_INTEGRATION: ai-provider, which is always
-      // today). The pass runs, does the real work, and reports providerSkipped.
+      // and createDocumentAiAnalyzerForProviderMode remains null until a
+      // contextual provider contract is approved. The pass still runs the
+      // deterministic checks and reports providerSkipped.
       const storage = documentServerFnsModule.createDocumentStorageForProviderMode(
         providerMode,
         providerMode === "live" ? runtimeEnvModule.getDocumentsBucketBinding() : undefined,

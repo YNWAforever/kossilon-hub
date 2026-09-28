@@ -2,6 +2,12 @@ import { z } from "zod";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { DocumentAiConfig } from "@/server/runtime-env";
 import { makeFinding, type Finding } from "./findings";
+import {
+  compareContextEvidence,
+  parseAdvisoryResponse,
+  validateModelEvidence,
+  type AnalysisContext,
+} from "./analysis-context";
 
 /**
  * Tier 3: a model reads the document.
@@ -220,7 +226,7 @@ export function createLiveDocumentAiAnalyzer(options: {
 }
 
 /**
- * Null when there is no provider, in every mode.
+ * Null in every mode until a provider-specific contextual contract is approved.
  *
  * Unlike `createDocumentScannerForProviderMode`, this does not throw in live.
  * The asymmetry is the point: a missing scanner must block release, because a
@@ -237,10 +243,114 @@ export function createDocumentAiAnalyzerForProviderMode(
   providerMode: ProviderMode,
   options: { config?: DocumentAiConfig | null; fetchImpl?: typeof fetch } = {},
 ): DocumentAiAnalyzer | null {
-  if (providerMode !== "live") return null;
-  if (!options.config) return null;
-  return createLiveDocumentAiAnalyzer({
-    config: options.config,
-    fetchImpl: options.fetchImpl,
+  // A generic endpoint and key are insufficient to activate contextual review.
+  // Vendor request/response, provenance and retention terms need approval first.
+  // The old byte-only transport is retained for contract tests but cannot be
+  // selected by maintenance, even if somebody accidentally adds a binding.
+  void providerMode;
+  void options;
+  return null;
+}
+
+/** Strict interpretation for a future approved contextual provider adapter. */
+export function interpretContextualResponse(input: {
+  context: AnalysisContext;
+  pages: readonly { page: number; text: string }[];
+  response: unknown;
+}):
+  | {
+      status: "analysed";
+      findings: Finding[];
+      modelVersion: string;
+      promptVersion: string;
+      ruleSetVersion: string;
+      latencyMs: number;
+      costMinor: number;
+    }
+  | { status: "uncertain"; reasonCode: string } {
+  const parsed = parseAdvisoryResponse(input.response, input.context.contextHash);
+  if (parsed.status !== "analysed") return parsed;
+  const response = parsed.response;
+  if (response.ruleSetVersion !== input.context.ruleSetVersion)
+    return { status: "uncertain", reasonCode: "RULE_SET_CHANGED" };
+  const findings = response.observations.map((observation) => {
+    const checked = validateModelEvidence(input.context, observation.evidence, input.pages);
+    const supported = checked.outcome === "supported";
+    return makeFinding({
+      ruleKey: `provider:${observation.ruleKey}`,
+      ruleVersion: response.ruleSetVersion,
+      tier: "provider",
+      outcome: supported ? observation.outcome : "uncertain",
+      severity: supported ? observation.severity : "info",
+      detail: supported
+        ? observation.detail
+        : `The model citation could not be verified (${checked.reasonCode}).`,
+      citation: {
+        kind: "version",
+        documentVersionId: input.context.documentVersionId,
+        pageFrom: supported ? observation.evidence.page : null,
+        pageTo: supported ? observation.evidence.page : null,
+      },
+      ...(supported ? { evidence: observation.evidence } : {}),
+    });
   });
+  for (const claim of response.claims ?? []) {
+    const checked = validateModelEvidence(input.context, claim.evidence, input.pages);
+    if (checked.outcome !== "supported") {
+      findings.push(
+        makeFinding({
+          ruleKey: "provider-context:unverified-claim",
+          ruleVersion: response.ruleSetVersion,
+          tier: "provider",
+          outcome: "uncertain",
+          severity: "info",
+          detail: `The model's extracted claim could not be verified (${checked.reasonCode}).`,
+          citation: {
+            kind: "version",
+            documentVersionId: input.context.documentVersionId,
+            pageFrom: null,
+            pageTo: null,
+          },
+        }),
+      );
+      continue;
+    }
+    const value = claim.value;
+    const observed =
+      claim.kind === "company-name" && typeof value === "string"
+        ? { companyName: value }
+        : claim.kind === "cr-number" && typeof value === "string"
+          ? { crNumber: value }
+          : claim.kind === "return-year" && typeof value === "number"
+            ? { returnYear: value }
+            : claim.kind === "party" && typeof value === "string"
+              ? { partyNames: [value] }
+              : claim.kind === "requirement" && typeof value === "string"
+                ? { requirementLabels: [value] }
+                : null;
+    if (!observed) continue;
+    for (const mismatch of compareContextEvidence(input.context, observed)) {
+      findings.push(
+        makeFinding({
+          ...mismatch,
+          citation: {
+            kind: "version",
+            documentVersionId: input.context.documentVersionId,
+            pageFrom: claim.evidence.page,
+            pageTo: claim.evidence.page,
+          },
+          evidence: claim.evidence,
+        }),
+      );
+    }
+  }
+  return {
+    status: "analysed",
+    findings,
+    modelVersion: response.modelVersion,
+    promptVersion: response.promptVersion,
+    ruleSetVersion: response.ruleSetVersion,
+    latencyMs: response.latencyMs,
+    costMinor: response.costMinor,
+  };
 }

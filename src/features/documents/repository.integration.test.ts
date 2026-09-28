@@ -3,6 +3,8 @@ import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { createDocumentAnalysisRepository } from "./analysis-repository";
+import { buildAnalysisContext } from "./analysis-context";
+import { makeFinding } from "./findings";
 import { createDocumentRepository } from "./repository";
 import { createDocumentScanJobRepository } from "./scan-jobs";
 
@@ -887,6 +889,97 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
             document_id, version_number, file_name, storage_url
           ) values (${document.id}, 2, 'second.pdf', ${`${KEY_PREFIX}second`})`,
       ).rejects.toThrow();
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "records a server case context and page-backed model provenance in the disposable database",
+    async () => {
+      const sql = sqlForTests();
+      const repository = createDocumentRepository({ sql });
+      const analysis = createDocumentAnalysisRepository({ sql });
+      const data = await fixture(sql);
+      if (!data.caseId) throw new Error("A seeded case is required.");
+      const intent = await repository.createUploadIntent(intentInput(data));
+      const document = await repository.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: null,
+        source: "client",
+      });
+      const [version] = await sql<{ id: string }[]>`
+        select id from document_versions where document_id = ${document.id}`;
+      await sql`update document_versions set verified_checksum_sha256 = ${CHECKSUM_A}, verified_at = now(), verified_byte_size = 4 where id = ${version.id}`;
+      const input = await analysis.loadAnalysisContextInput(version.id);
+      expect(input).toMatchObject({
+        caseId: data.caseId,
+        documentVersionId: version.id,
+        contentSha256: CHECKSUM_A,
+      });
+      const context = await buildAnalysisContext(input!);
+      const [job] = await sql<{ id: string }[]>`
+        select id from document_analysis_jobs where document_version_id = ${version.id} limit 1`;
+      await analysis.replaceUnresolvedForVersion({
+        documentVersionId: version.id,
+        analysisJobId: job.id,
+        findings: [
+          makeFinding({
+            ruleKey: "provider:quoted-identity",
+            ruleVersion: context.ruleSetVersion,
+            tier: "provider",
+            outcome: "issue",
+            severity: "warning",
+            detail: "Check the printed name.",
+            citation: { kind: "version", documentVersionId: version.id, pageFrom: 1, pageTo: 1 },
+            evidence: {
+              sourceVersionId: version.id,
+              page: 1,
+              quote: "Sample Limited",
+              confidence: 0.92,
+              extractionMethod: "text-layer",
+            },
+          }),
+        ],
+        runMetadata: {
+          contextHash: context.contextHash,
+          ruleSetVersion: context.ruleSetVersion,
+          extractionMethod: "text-layer",
+          modelVersion: "contract-v1",
+          promptVersion: "prompt-v1",
+          costMinor: 1,
+          latencyMs: 12,
+        },
+      });
+      const findings = await analysis.listFindingsForVersion(version.id);
+      expect(findings[0].evidence).toMatchObject({
+        sourceVersionId: version.id,
+        page: 1,
+        quote: "Sample Limited",
+      });
+      const [metadata] = await sql<{ context_hash: string; model_version: string }[]>`
+        select context_hash, model_version from document_analysis_run_metadata where analysis_job_id = ${job.id}`;
+      expect(metadata).toMatchObject({
+        context_hash: context.contextHash,
+        model_version: "contract-v1",
+      });
+      await sql`update document_analysis_jobs set status = 'succeeded' where id = ${job.id}`;
+      expect(
+        (await analysis.listFindingsForCase(data.caseId)).find(
+          (view) => view.documentId === document.id,
+        )?.state,
+      ).toBe("analysed");
+      const [party] = await sql<{ id: string }[]>`
+        insert into case_parties (case_id, party_type, display_name)
+        values (${data.caseId}, 'director', 'Synthetic Context Change') returning id`;
+      try {
+        expect(
+          (await analysis.listFindingsForCase(data.caseId)).find(
+            (view) => view.documentId === document.id,
+          )?.state,
+        ).toBe("stale");
+      } finally {
+        await sql`delete from case_parties where id = ${party.id}`;
+      }
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
