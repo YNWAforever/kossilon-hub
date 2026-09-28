@@ -134,6 +134,8 @@ describe("describeCaseHistoryEntry", () => {
     update_filing_proof: "Filing proof updated",
     change_status: "Status changed",
     complete: "Case completed",
+    prepare_package: "Package prepared",
+    approve_package: "Package approved",
   };
 
   it.each(Object.entries(auditActionLabels) as [AuditEventRow["action"], string][])(

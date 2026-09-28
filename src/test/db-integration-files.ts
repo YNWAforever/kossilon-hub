@@ -7,6 +7,7 @@
  */
 export const DB_INTEGRATION_TEST_FILES = [
   "scripts/inspect-schema-compatibility.test.ts",
+  "src/features/annual-return/package-service.integration.test.ts",
   "src/features/annual-return/repository.test.ts",
   "src/features/bulk-operations/repository.test.ts",
   "src/features/checklist-templates/repository.test.ts",

@@ -30,7 +30,15 @@ const documentServerFns = vi.hoisted(() => ({
   downloadDocument: vi.fn(),
 }));
 
+const packageServerFns = vi.hoisted(() => ({
+  getAnnualReturnPackage: vi.fn(),
+  prepareAnnualReturnPackage: vi.fn(),
+  approveAnnualReturnPackage: vi.fn(),
+  downloadAnnualReturnPackage: vi.fn(),
+}));
+
 vi.mock("../server-fns", () => serverFns);
+vi.mock("../package-server-fns", () => packageServerFns);
 vi.mock("@/features/documents/server-fns", () => documentServerFns);
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
@@ -114,6 +122,16 @@ afterEach(() => {
 beforeEach(() => {
   vi.clearAllMocks();
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
+  packageServerFns.getAnnualReturnPackage.mockResolvedValue(null);
+  packageServerFns.prepareAnnualReturnPackage.mockResolvedValue({
+    id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    caseId,
+    revision: 1,
+    state: "draft",
+    manifestHash: "a".repeat(64),
+    artifactSha256: "b".repeat(64),
+    artifactSizeBytes: 128,
+  });
   serverFns.listAnnualReturnCaseNotes.mockResolvedValue([]);
   serverFns.listAnnualReturnCaseHistory.mockResolvedValue([]);
   serverFns.assignAnnualReturnCaseOwner.mockResolvedValue(caseItem);
@@ -209,7 +227,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Send reminder" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Submit packet" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Prepare package" }));
 
     fireEvent.change(screen.getByLabelText("Filing reference"), {
       target: { value: "NAR1-2026-001" },
@@ -253,9 +271,10 @@ describe("ProductionAnnualReturnCaseDetail", () => {
           recipientPhone: "+85291234567",
         },
       });
-      expect(serverFns.updateAnnualReturnStatus).toHaveBeenNthCalledWith(2, {
-        data: { caseId, nextStatus: "NAR1 prepared" },
+      expect(packageServerFns.prepareAnnualReturnPackage).toHaveBeenCalledWith({
+        data: { caseId, expectedRevision: 0 },
       });
+      expect(serverFns.updateAnnualReturnStatus).toHaveBeenCalledTimes(1);
       expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledWith({
         data: {
           caseId,

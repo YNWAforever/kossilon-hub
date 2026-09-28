@@ -1,5 +1,11 @@
 import { CaseFindings } from "./case-findings";
 import { CaseParties } from "./case-parties";
+import {
+  approveAnnualReturnPackage,
+  downloadAnnualReturnPackage,
+  getAnnualReturnPackage,
+  prepareAnnualReturnPackage,
+} from "../package-server-fns";
 import { useEffect, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -53,15 +59,6 @@ function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-function caseIsPacketReady(caseItem: AnnualReturnCase): boolean {
-  return (
-    caseItem.checklist
-      .filter((item) => item.required)
-      .every((item) => item.status === "Verified") &&
-    caseItem.payment?.status === "Payment received"
-  );
-}
-
 function MutationMessage({ error }: { error: MutationError }) {
   const message = errorMessage(error);
   if (!message) return null;
@@ -95,6 +92,11 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
   const historyQuery = useQuery({
     queryKey: annualReturnQueryKeys.history(caseId),
     queryFn: () => listAnnualReturnCaseHistory({ data: { caseId } }),
+  });
+  const packageKey = [...annualReturnQueryKeys.detail(caseId), "package"];
+  const packageQuery = useQuery({
+    queryKey: packageKey,
+    queryFn: () => getAnnualReturnPackage({ data: { caseId } }),
   });
 
   const [ownerId, setOwnerId] = useState("");
@@ -142,9 +144,32 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notifications(caseId) });
     },
   });
-  const packetMutation = useMutation({
-    mutationFn: actions.submitPacket,
-    onSuccess: updateCaseCache,
+  const preparePackageMutation = useMutation({
+    mutationFn: (expectedRevision: number) =>
+      prepareAnnualReturnPackage({ data: { caseId, expectedRevision } }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: packageKey }),
+  });
+  const approvePackageMutation = useMutation({
+    mutationFn: (data: { packageId: string; manifestHash: string; expectedRevision: number }) =>
+      approveAnnualReturnPackage({ data }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: packageKey }),
+  });
+  const downloadPackageMutation = useMutation({
+    mutationFn: async (packageId: string) => {
+      const response = await downloadAnnualReturnPackage({ data: { packageId } });
+      if (!response.ok) throw new Error("Approved package download failed.");
+      const blob = await response.blob();
+      const filename =
+        response.headers.get("content-disposition")?.match(/filename="([^"]+)"/)?.[1] ?? "NAR1.zip";
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    },
   });
   const receiptMutation = useMutation({
     mutationFn: actions.acceptReceipt,
@@ -196,7 +221,6 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     );
   }
 
-  const packetReady = caseIsPacketReady(caseItem);
   const locked = caseItem.currentStatus === "Completed";
 
   return (
@@ -264,7 +288,11 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                     value={nextStatus}
                     onChange={(event) => setNextStatus(event.target.value as AnnualReturnStatus)}
                   >
-                    {ANNUAL_RETURN_STATUSES.map((status) => (
+                    {ANNUAL_RETURN_STATUSES.filter(
+                      (status) =>
+                        (status !== "NAR1 prepared" && status !== "Filed") ||
+                        status === caseItem.currentStatus,
+                    ).map((status) => (
                       <option key={status}>{status}</option>
                     ))}
                   </select>
@@ -377,23 +405,59 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           </section>
 
           <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Filing packet</h2>
+            <h2 className="text-base font-semibold">Filing package</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Required items must be verified and payment received before packet submission.
+              Prepare a versioned ZIP, approve its exact manifest, then download it for the external
+              filing step. Download does not record submission.
             </p>
+            {packageQuery.isError && <MutationMessage error={packageQuery.error} />}
+            {packageQuery.data && (
+              <p className="mt-2 text-sm">
+                Revision {packageQuery.data.revision}: {packageQuery.data.state}. Manifest SHA-256:{" "}
+                <code className="break-all">{packageQuery.data.manifestHash}</code>
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-                disabled={locked || packetMutation.isPending || !packetReady}
-                onClick={() => packetMutation.mutate()}
+                disabled={locked || packageQuery.isPending || preparePackageMutation.isPending}
+                onClick={() => preparePackageMutation.mutate(packageQuery.data?.revision ?? 0)}
                 type="button"
               >
-                <PendingIcon pending={packetMutation.isPending} />
+                <PendingIcon pending={preparePackageMutation.isPending} />
                 <FileCheck2 aria-hidden className="h-4 w-4" />
-                Submit packet
+                Prepare package
               </button>
+              {packageQuery.data?.state === "draft" && (
+                <button
+                  className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                  disabled={locked || approvePackageMutation.isPending}
+                  onClick={() =>
+                    approvePackageMutation.mutate({
+                      packageId: packageQuery.data!.id,
+                      manifestHash: packageQuery.data!.manifestHash,
+                      expectedRevision: packageQuery.data!.revision,
+                    })
+                  }
+                  type="button"
+                >
+                  Approve package
+                </button>
+              )}
+              {packageQuery.data?.state === "approved" && (
+                <button
+                  className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                  disabled={downloadPackageMutation.isPending}
+                  onClick={() => downloadPackageMutation.mutate(packageQuery.data!.id)}
+                  type="button"
+                >
+                  Download approved ZIP
+                </button>
+              )}
             </div>
-            <MutationMessage error={packetMutation.error} />
+            <MutationMessage error={preparePackageMutation.error} />
+            <MutationMessage error={approvePackageMutation.error} />
+            <MutationMessage error={downloadPackageMutation.error} />
           </section>
 
           <section className="pb-2">

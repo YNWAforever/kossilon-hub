@@ -602,6 +602,10 @@ export function assertAnnualReturnStatusActionAllowed(
   current: AnnualReturnCase,
   nextStatus: AnnualReturnStatus,
 ): void {
+  if (nextStatus === "NAR1 prepared" || nextStatus === "Filed") {
+    throw new Error("Package approval and filing proof use their dedicated audited workflows.");
+  }
+
   if (nextStatus === "Completed") {
     const blockers = completionBlockers(current);
 
