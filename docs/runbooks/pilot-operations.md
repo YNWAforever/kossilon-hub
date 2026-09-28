@@ -1,114 +1,28 @@
-# Pilot Operations Runbook
+# Pilot operations runbook
 
-For the staff pilot (plan §9, Phase F). Read alongside
-[the firm deployment runbook](firm-deployment.md) and
-[the backup and restore runbook](backup-restore.md).
+This is a gate for a small internal pilot, read with [release acceptance](release-acceptance-2026-09-27.md), [firm deployment](firm-deployment.md) and [backup and restore](backup-restore.md). The audit observed a Vercel deployment at the old audit SHA; the T29 branch has not been deployed. Local source tests and disposable PostgreSQL through migration 0061 do not prove the target database or runtime is current.
 
-## Before the pilot begins
+## Before any pilot
 
-No provider account exists, and no deployed runtime has been observed. The SQL
-itself has now run: CI executes every repository test against a migrated, seeded
-Postgres, and `0023`–`0033` were rehearsed onto a populated database locally.
-Confirm each of these, in order. A "no" is a reason to delay, not a caveat to
-record.
+1. Bind the exact reviewed commit SHA, deployment ID, database identity and migration ledger. Resolve the T03 unknown legacy ledger entry read-only. Obtain separate authorization before any non-local schema write.
+2. Rehearse the exact forward migration on a populated isolated clone, including existing outbox and package rows. Record row counts, checksums, failed/processing states and a named restore point. The T28 local 0001–0060 to 0061 rehearsal is evidence for that change only.
+3. Run `npm run verify:firm -- --dry-run` and resolve every blocked binding against an approved provider contract. This command checks names only; it neither tests a provider nor sends anything.
+4. On the deployed SHA, run the role matrix and the three end-to-end journeys with permitted test identities and non-sensitive cases. Record the case, audit and document-version IDs. Keep demo read-only.
+5. Observe three consecutive scheduled ticks and one controlled failure/recovery. A manual tick is not scheduler evidence. Verify the built Vercel scheduler handler and the runtime trigger.
+6. Obtain an internal pilot acceptance decision on the release record. Start with a small set of authorized cases; enable bulk scope only after the single-item workflow is accepted. Do not send to a live recipient or invite staff without the required separate authorization.
 
-0. **Rehearse the migration against populated data first.** Not optional, and not
-   the same thing as a green CI run: CI builds an empty Postgres every run, so it
-   only ever exercises the INSERT path of the seed and cannot see a defect that
-   depends on rows already existing. One such defect was found exactly this way
-   (`0030` backfills `companies.data_origin` to `'client'`, and until the seed's
-   `on conflict` clause was fixed, re-seeding never repaired it — leaving the
-   fixture-replay guard matching zero rows). The rehearsal that catches it:
+## Daily operations
 
-   ```bash
-   docker run -d --name kossilon-rehearsal -e POSTGRES_PASSWORD=rehearsal -p 5544:5432 postgres:17-alpine
-   ```
+Open `/operations` → 五分鐘排程. Record the last scheduled run ID, time and pass results. `從未觀察到執行` means the trigger has not been proven on that runtime; `排程已停止` means ticks were missed; `最近一次執行失敗` and `部分環節失敗` require the named pass and deployment logs. A manual run must not clear a missing-schedule finding.
 
-   Then, with `DATABASE_URL` pointing at it and `DATABASE_SSL=disable`: apply only
-   the migrations the target database already has, seed it with the seed script
-   **as it was at that commit**, apply the new migrations on top, re-seed, and
-   check the rows the new migration touched. Discard the container afterwards.
+Work in this order: monthly import preview and mapping → approved apply → chase draft and approval → clean scanned document and human review → payment proof and human reconciliation → immutable package approval → human external upload with submission proof → internal server return or manual intake → human reconciliation → completion. Downloading a package is preparation, not a filing. A date in a monthly table is not payment evidence. An unknown provider send remains unknown until provider reconciliation; never auto-retry it.
 
-1. **Migrations `0023`–`0033` are applied to the target.** They have been applied
-   to a local rehearsal container only; no staging or production database has
-   them. Applying them to a non-local `DATABASE_URL` **requires explicit
-   approval** (`CLAUDE.md`).
-2. **`npm run verify:firm -- --dry-run` passes**, and the `BLOCKED` lines it
-   prints are the ones you expect. It reads binding _names_ only and makes no
-   network calls.
-3. **The `/operations` screen shows a scheduled run.** Until it does, the
-   schedule has never been observed to fire on this runtime — see below.
-4. **The disabled capabilities on `/operations` have been read by the staff
-   running the pilot**, and each has a person who knows the manual fallback.
+## Pause and recovery
 
-## The one thing to check every morning
+Stop the affected scheduler/worker or remove its approved provider binding through deployment configuration. Preserve pending and unknown outbox rows, package manifests, proof versions, return candidates and audit IDs. Do not delete evidence or reverse a forward migration to pause a capability. Missing scanner or AI bindings leave documents in manual review; missing messaging bindings leave drafts/queued outcomes for inspection. A processing or unknown external outcome needs provider evidence before replay.
 
-`/operations` → 五分鐘排程.
+If a write or release check fails, stop consumers, keep the current records, and use the named pre-change snapshot in an isolated restore rehearsal. Compare the database and R2 object versions together before any traffic switch; see [backup and restore](backup-restore.md). Roll back an application deployment only after checking its compatibility with the current schema. Report the exact failed gate and owner in the release record.
 
-| What it says     | What it means                                                | What to do                                                                                                                          |
-| ---------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 從未觀察到執行   | No run has **ever** been recorded. Not "quiet" — unobserved. | The cron is not firing, or the deployment is new. Check the trigger is registered before trusting any reminder, escalation or scan. |
-| 排程已停止       | Two consecutive ticks were missed.                           | Nothing has been evaluated or dispatched since 最後一次執行. Treat every chase list and deadline as unrefreshed.                    |
-| 最近一次執行失敗 | The tick did not complete.                                   | Read the Worker logs; the row records the error's class only.                                                                       |
-| 部分環節失敗     | Some passes threw; the rest ran.                             | The named pass did no work this tick. The others did.                                                                               |
-| 正常             | A clean run inside the tolerance.                            | Nothing.                                                                                                                            |
+## Open runtime gates
 
-A run listed as 人手 does **not** count towards the health of the schedule. Only
-the cron hook may write a `scheduled` row, so running the entrypoint by hand
-cannot make a dead cron look alive.
-
-### Why the blank matters
-
-Every other screen reads tables a person writes to. A schedule that stops firing
-leaves all of them looking completely normal — the chase list still lists, the
-board still boards — because the only thing that changed is that nothing is being
-_re-evaluated_. This is the only screen where an absence is the finding.
-
-## Pausing a capability
-
-There is no feature-flag table, and deliberately so: a capability is disabled by
-removing the binding it needs. That is a real pause, it survives a restart, and
-it cannot be half-applied.
-
-| To pause                   | Remove                                             | What happens                                                                                                                                        |
-| -------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live document scanning     | `DOCUMENT_SCANNER_URL`, `DOCUMENT_SCANNER_API_KEY` | The scan pass reports `not-configured` on every tick. Documents stay quarantined and stay visible. Nothing is deleted; no document is marked clean. |
-| The model tier of analysis | the AI provider binding                            | Tier 3 is skipped. Tiers 1 and 2 still run. No finding disappears.                                                                                  |
-| WhatsApp sending           | `WOZTELL_ACCESS_TOKEN`                             | The dispatch pass fails, loudly, and the outbox retains its rows. Messages queue; none is lost and none is sent twice.                              |
-| Email sending              | `RESEND_API_KEY`                                   | Same shape as above.                                                                                                                                |
-
-**Do not pause a capability by deleting rows, dropping a table, or reversing a
-migration.** Every one of those destroys evidence, and the evidence is what a
-filing is defended with. `db/migrations/` is forward-only.
-
-### After a pause
-
-The paused pass reports `not-configured`, which the health rule treats as a
-disabled capability rather than a fault — so `/operations` stays 正常. That is
-intended: an alarm that is red permanently is an alarm nobody reads. The pause is
-visible in 已停用的功能 instead, which is where a person should be looking for
-it.
-
-## Rollback
-
-Roll back the **deployment**, not the data. A previous Worker version reads the
-same schema; the migrations in this range are additive, and no screen depends on
-a column that a rollback would remove.
-
-If a restore is genuinely required, use
-[the backup and restore runbook](backup-restore.md) — and note its open gap: a
-restore must be verified for the database **and** the object store _together_,
-because a document row whose bytes are missing from R2, and an R2 object whose
-row is gone, both read as "fine" from one side alone. That verification has never
-been performed.
-
-## What this runbook cannot tell you yet
-
-- Whether the schedule fires on the deployed runtime — this is
-  `BLOCKED_INTEGRATION: deployment-runtime`, and the first 排程 row on
-  `/operations` is the answer.
-- Whether search and the board hold up past 200 cases. No dataset that size
-  exists, and no query plan has been read. Adding indexes before measuring is
-  explicitly out of scope (plan F2).
-- Any measured benefit. No baseline has been collected. Do not report saved
-  hours, accuracy or adoption without it (plan F3).
+The observed T00 deployment is not the T29 branch. Target schema identity, authenticated browser role and E2E evidence, real provider and recipient contracts, three scheduled runs, joint DB/R2 restore, deployed performance and pilot acceptance remain unverified. The T27 local 20k-case benchmark is a source baseline, not a deployed SLA result.

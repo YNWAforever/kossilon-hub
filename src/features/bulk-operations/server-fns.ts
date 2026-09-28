@@ -1,6 +1,7 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { assertStaffAccess } from "@/features/auth/authorization";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { createBulkOperationRepository } from "./repository";
@@ -39,7 +40,7 @@ export async function withAuthorizedBulkRepository<T>(
   supplied?: BulkServerDependencies,
 ): Promise<T> {
   const dependencies = supplied ?? (await loadBulkServerDependencies());
-  const actor = await dependencies.requireActor(dependencies.request);
+  const actor = assertStaffAccess(await dependencies.requireActor(dependencies.request));
   const repository = dependencies.createRepository();
   try {
     return await handler(repository, actor);
@@ -53,6 +54,7 @@ export async function previewBulkOperationForActor(
   input: z.input<typeof bulkPreviewInputSchema>,
   repository: Repository,
 ) {
+  assertStaffAccess(actor);
   return repository.preview(actor, bulkPreviewInputSchema.parse(input));
 }
 export async function commitBulkOperationForActor(
@@ -60,6 +62,7 @@ export async function commitBulkOperationForActor(
   input: z.input<typeof bulkCommitInputSchema>,
   repository: Repository,
 ) {
+  assertStaffAccess(actor);
   return repository.commit(actor, bulkCommitInputSchema.parse(input));
 }
 export async function getBulkOperationForActor(
@@ -67,6 +70,7 @@ export async function getBulkOperationForActor(
   id: string,
   repository: Repository,
 ) {
+  assertStaffAccess(actor);
   return repository.get(actor, operationIdSchema.parse({ id }).id);
 }
 export async function cancelBulkOperationForActor(
@@ -74,6 +78,7 @@ export async function cancelBulkOperationForActor(
   id: string,
   repository: Repository,
 ) {
+  assertStaffAccess(actor);
   return repository.cancel(actor, operationIdSchema.parse({ id }).id);
 }
 
