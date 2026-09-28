@@ -87,16 +87,26 @@ const completeCaseSchema = z.object({
 
 export const listIncorporationCases = createServerFn({ method: "GET" }).handler(async () => {
   const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
-  await requireStaffActor(getRequest());
-  return withIncorporationRepository((repository) => repository.listCases());
+  const actor = await requireStaffActor(getRequest());
+  if (actor.role !== "Admin" && !actor.teamId) {
+    throw new Error("Forbidden: staff actor has no assigned team.");
+  }
+  return withIncorporationRepository((repository) =>
+    repository.listCases(actor.role === "Admin" ? undefined : actor.teamId!),
+  );
 });
 
 export const getIncorporationCase = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
-    await requireStaffActor(getRequest());
-    return withIncorporationRepository((repository) => repository.getCase(data.id));
+    const actor = await requireStaffActor(getRequest());
+    return withIncorporationRepository(async (repository) => {
+      const teamId = await repository.getCaseTeamId(data.id);
+      if (!teamId) return null;
+      assertIncorporationCaseWritable(actor, { teamId });
+      return repository.getCase(data.id);
+    });
   });
 
 export const createIncorporationCase = createServerFn({ method: "POST" })

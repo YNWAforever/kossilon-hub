@@ -4,6 +4,7 @@ import type { WoztellSendMode } from "@/features/whatsapp/woztell";
 
 export type NotificationChannel = "email" | "whatsapp" | "in_app";
 export type NotificationStatus =
+  | "draft"
   | "pending"
   | "processing"
   | "sent"
@@ -29,6 +30,8 @@ export type NotificationIdentity = {
 export type EnqueueNotificationInput = Omit<NotificationIdentity, "recipient"> & {
   recipient: string;
   idempotencyKey?: string;
+  /** A draft cannot be claimed by the delivery worker before explicit approval. */
+  initialStatus?: "draft";
   payload?: postgres.JSONValue;
   maxAttempts?: number;
   retentionUntil?: string;

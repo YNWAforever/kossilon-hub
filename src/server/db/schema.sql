@@ -419,7 +419,7 @@ create table if not exists notification_outbox (
   recipient text,
   payload jsonb,
   status text not null default 'pending' check (
-    status in ('pending', 'processing', 'sent', 'failed', 'cancelled', 'needs_reconciliation')
+    status in ('draft', 'pending', 'processing', 'sent', 'failed', 'cancelled', 'needs_reconciliation')
   ),
   attempt_count integer not null default 0 check (attempt_count >= 0),
   max_attempts integer not null default 5 check (max_attempts > 0),
@@ -434,11 +434,14 @@ create table if not exists notification_outbox (
   last_error_code text,
   last_error_message text,
   sent_at timestamptz,
+  approved_by uuid references users(id) on delete restrict,
+  approved_at timestamptz,
   retention_until timestamptz not null default (now() + interval '90 days'),
   redacted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint notification_outbox_attempts_check check (attempt_count <= max_attempts),
+  constraint notification_outbox_approval_pair_check check ((approved_by is null) = (approved_at is null)),
   constraint notification_outbox_redaction_check check (
     (redacted_at is null and recipient is not null and payload is not null)
     or (
@@ -920,9 +923,12 @@ create table if not exists service_subscription_reminder_events (
   subscription_id uuid not null references service_subscriptions(id) on delete cascade,
   milestone text not null check (milestone in ('1_month', '2_week', '1_week')),
   occurred_at timestamptz not null,
-  created_at timestamptz not null default now(),
-  unique (subscription_id, milestone)
+  renewal_date date,
+  created_at timestamptz not null default now()
 );
+create unique index if not exists service_subscription_reminder_period_uidx
+  on service_subscription_reminder_events (subscription_id, renewal_date, milestone)
+  where renewal_date is not null;
 
 create table corporate_change_requests (
   id uuid primary key default gen_random_uuid(),

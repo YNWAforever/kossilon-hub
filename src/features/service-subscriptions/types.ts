@@ -39,4 +39,4 @@ export type CancelSubscriptionInput = {
   actorId: string;
 };
 
-export type EvaluateRemindersResult = { sent: number; skipped: number };
+export type EvaluateRemindersResult = { drafted: number; skipped: number };

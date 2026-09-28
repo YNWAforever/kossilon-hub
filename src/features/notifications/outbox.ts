@@ -113,11 +113,11 @@ export async function enqueueNotification(
   const rows = await client<NotificationRow[]>`
     insert into notification_outbox (
       work_item_id, company_id, channel, notification_type, idempotency_key,
-      recipient, payload, max_attempts, retention_until
+      recipient, payload, status, max_attempts, retention_until
     ) values (
       ${input.workItemId ?? null}, ${input.companyId}, ${input.channel},
       ${input.notificationType}, ${idempotencyKey}, ${input.recipient ?? null},
-      ${client.json(input.payload ?? {})}, ${input.maxAttempts ?? 5},
+      ${client.json(input.payload ?? {})}, ${input.initialStatus ?? "pending"}, ${input.maxAttempts ?? 5},
       coalesce(${input.retentionUntil ?? null}, now() + interval '90 days')
     )
     on conflict (idempotency_key) do nothing
@@ -355,6 +355,7 @@ export function createNotificationOutboxRepository(
       const rows = await sql<{ id: string }[]>`
         update notification_outbox
         set redacted_at = now(),
+            status = case when status = 'draft' then 'cancelled' else status end,
             recipient = null,
             payload = null,
             provider_message_id = null,
@@ -366,7 +367,7 @@ export function createNotificationOutboxRepository(
           where redacted_at is null
             and retention_until <= ${now}
             and (
-              status in ('sent', 'cancelled')
+              status in ('draft', 'sent', 'cancelled')
               or (status = 'failed' and attempt_count >= max_attempts)
             )
           order by retention_until asc

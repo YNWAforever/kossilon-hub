@@ -27,7 +27,7 @@ export type CreateIncorporationRepositoryOptions = CreateSqlClientOptions & {
 };
 
 export type IncorporationRepository = {
-  listCases(): Promise<IncorporationCaseSummary[]>;
+  listCases(teamId?: string): Promise<IncorporationCaseSummary[]>;
   getCase(id: string): Promise<IncorporationCase | null>;
   getCaseTeamId(caseId: string): Promise<string | null>;
   createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase>;
@@ -138,7 +138,7 @@ export function createIncorporationRepository(
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
 
-  async function listCases(): Promise<IncorporationCaseSummary[]> {
+  async function listCases(teamId?: string): Promise<IncorporationCaseSummary[]> {
     const rows = await sql<CaseRow[]>`
       select
         ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
@@ -149,6 +149,7 @@ export function createIncorporationRepository(
       from incorporation_cases ic
       join users u on u.id = ic.owner_id
       join teams t on t.id = ic.team_id
+      where (${teamId ?? null}::uuid is null or ic.team_id = ${teamId ?? null}::uuid)
       order by ic.created_at desc
     `;
     return rows.map(mapCaseSummary);
@@ -295,6 +296,9 @@ export function createIncorporationRepository(
       await assertActor(tx, input.actorId);
 
       const current = await hydrateOrThrow(tx, input.caseId);
+      if (input.status === "Completed") {
+        throw new Error("Use the completion service to complete an incorporation case.");
+      }
       if (!isAllowedIntakeStatusTransition(current.status, input.status)) {
         throw new Error(`Cannot move a case from ${current.status} to ${input.status}.`);
       }
@@ -315,6 +319,24 @@ export function createIncorporationRepository(
         await tx`select id from incorporation_cases where id = ${input.caseId} for update`;
 
         const current = await hydrateOrThrow(tx, input.caseId);
+        if (current.status === "Completed" && current.companyId) {
+          const [existing] = await tx<
+            {
+              cr_number: string;
+              br_number: string;
+              incorporation_date: string;
+            }[]
+          >`select cr_number, br_number, incorporation_date::text
+              from companies where id = ${current.companyId}`;
+          if (
+            existing?.cr_number === input.crNumber &&
+            existing.br_number === input.brNumber &&
+            existing.incorporation_date === input.incorporationDate
+          ) {
+            return current;
+          }
+          throw new Error("Completion replay conflicts with existing company data.");
+        }
         if (current.status !== "Filed with Registrar") {
           throw new Error(
             `Cannot complete a case from status ${current.status}; it must be Filed with Registrar.`,

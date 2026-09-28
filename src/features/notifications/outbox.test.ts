@@ -90,7 +90,10 @@ describe("outbox retention redacts rather than deletes", () => {
   });
 
   it("never redacts a notification still awaiting delivery", () => {
-    expect(redact).toContain("status in ('sent', 'cancelled')");
+    expect(redact).toContain("status in ('draft', 'sent', 'cancelled')");
+    expect(redact).toContain(
+      "status = case when status = 'draft' then 'cancelled' else status end",
+    );
     expect(redact).toContain("status = 'failed' and attempt_count >= max_attempts");
     expect(redact).not.toContain("status = 'pending'");
     expect(redact).not.toContain("status = 'processing'");
