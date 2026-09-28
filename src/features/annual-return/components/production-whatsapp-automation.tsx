@@ -32,9 +32,12 @@ function sameIdentity(draft: ProductionFollowUpDraft, preview: ProductionFollowU
 export function ProductionWhatsAppAutomation() {
   const queryClient = useQueryClient();
   const [review, setReview] = useState<ProductionFollowUpPreview | null>(null);
+  const [pageCursors, setPageCursors] = useState<(string | undefined)[]>([undefined]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageCursor = pageCursors[pageIndex];
   const draftsQuery = useQuery({
-    queryKey: annualReturnQueryKeys.automationNotifications,
-    queryFn: () => listProductionFollowUpDrafts(),
+    queryKey: [...annualReturnQueryKeys.automationNotifications, pageCursor],
+    queryFn: () => listProductionFollowUpDrafts({ data: { cursor: pageCursor, limit: 50 } }),
   });
   const integrationQuery = useQuery({
     queryKey: ["whatsapp-integration-status"],
@@ -63,7 +66,7 @@ export function ProductionWhatsAppAutomation() {
     },
   });
 
-  const drafts = draftsQuery.data ?? [];
+  const drafts = draftsQuery.data?.drafts ?? [];
   const canQueue =
     integrationQuery.data?.deliveryMode === "live" &&
     integrationQuery.data.capabilityStatus.state === "healthy";
@@ -109,7 +112,7 @@ export function ProductionWhatsAppAutomation() {
             <p className="p-4 text-sm text-muted-foreground">Loading follow-ups...</p>
           ) : drafts.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
-              No production follow-ups are queued.
+              No production follow-ups on this page.
             </p>
           ) : (
             drafts.map((draft) => (
@@ -138,6 +141,34 @@ export function ProductionWhatsAppAutomation() {
           )}
         </div>
       </section>
+      <nav className="flex items-center justify-between gap-3 text-sm" aria-label="Follow-up pages">
+        <button
+          type="button"
+          className="rounded-md border px-3 py-2 disabled:opacity-50"
+          disabled={pageIndex === 0 || draftsQuery.isPending}
+          onClick={() => {
+            setReview(null);
+            setPageIndex((index) => index - 1);
+          }}
+        >
+          Previous page
+        </button>
+        <span>Page {pageIndex + 1}. Bulk review includes the drafts shown on this page.</span>
+        <button
+          type="button"
+          className="rounded-md border px-3 py-2 disabled:opacity-50"
+          disabled={!draftsQuery.data?.nextCursor || draftsQuery.isPending}
+          onClick={() => {
+            const nextCursor = draftsQuery.data?.nextCursor;
+            if (!nextCursor) return;
+            setReview(null);
+            setPageCursors((cursors) => [...cursors.slice(0, pageIndex + 1), nextCursor]);
+            setPageIndex((index) => index + 1);
+          }}
+        >
+          Next page
+        </button>
+      </nav>
       <BulkReminderReview
         drafts={drafts}
         canQueue={Boolean(canQueue)}

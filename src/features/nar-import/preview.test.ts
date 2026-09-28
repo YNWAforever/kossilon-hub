@@ -187,6 +187,63 @@ describe.skipIf(!databaseUrl)("T10 monthly import preview", () => {
     }
   });
 
+  it.skipIf(process.env.RUN_T27_IMPORT_SCALE !== "1")(
+    "t27_scenario_2 stages 10000 parsed workbook rows atomically and reuses the upload on retry",
+    async () => {
+      if (!sql) throw new Error("TEST_DATABASE_URL is required");
+      const [admin] = await sql<{ user_id: string }[]>`
+        select sp.user_id from staff_profiles sp join users u on u.id = sp.user_id and u.active
+        where sp.role = 'Admin' and sp.active limit 1`;
+      if (!admin) throw new Error("Seeded Admin is required");
+      const workbookSheet = sheet("T27-FIRST", "First fixture");
+      const nonce = crypto.randomUUID();
+      for (let index = 1; index < 10_000; index += 1) {
+        const rowNumber = index + 2;
+        workbookSheet.rows.set(
+          rowNumber,
+          new Map([
+            ["B", cell("B", rowNumber, `T27-${nonce}-${index}`)],
+            ["C", cell("C", rowNumber, `Fixture ${index}`)],
+            ["G", cell("G", rowNumber, "45913", 45913)],
+          ]),
+        );
+      }
+      const read = readNarSheet(workbookSheet, false);
+      expect(read.rows).toHaveLength(10_000);
+      const hash = randomHash();
+      const repository = createNarImportRepository({ sql });
+      const stage = () =>
+        repository.stageBatch({
+          sourceFileName: "t27-10k.xlsx",
+          sourceSha256: hash,
+          sourceSizeBytes: 2_000_000,
+          parserVersion: "t27-scale-fixture",
+          returnYear: 2025,
+          createdBy: admin.user_id,
+          read,
+        });
+      try {
+        const first = await stage();
+        expect(first.reused).toBe(false);
+        const replay = await stage();
+        expect(replay.reused).toBe(true);
+        expect(replay.batch.id).toBe(first.batch.id);
+        const [count] = await sql<{ count: string }[]>`
+          select count(*) from nar_import_rows where batch_id = ${first.batch.id}`;
+        expect(Number(count.count)).toBe(10_000);
+        const firstPage = await repository.listRowsPage(first.batch.id, null, 50);
+        expect(firstPage.items).toHaveLength(50);
+        expect(firstPage.nextCursor).not.toBeNull();
+        const lastPage = await repository.listRowsPage(first.batch.id, 9_951, 50);
+        expect(lastPage.items).toHaveLength(50);
+        expect(lastPage.nextCursor).toBeNull();
+      } finally {
+        await sql`delete from nar_import_batches where source_sha256 = ${hash}`;
+      }
+    },
+    180_000,
+  );
+
   it("t10_scenario_3 retains serial, text, Nil, formula and duplicate-ID issues", () => {
     const read = readNarSheet(sheet("T10-ID", "Same Name Limited"), false);
     const row = read.rows[0];

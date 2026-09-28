@@ -1,21 +1,27 @@
 import { safeRequestId } from "@/features/runtime/query-error";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { exportBulkOperationCsv, getBulkOperation } from "@/features/bulk-operations/server-fns";
 import type { ImportApproval } from "@/features/nar-import/apply-repository";
+import {
+  ImportPreviewPage,
+  IMPORT_PREVIEW_PAGE_SIZE,
+} from "@/features/nar-import/components/import-preview-page";
 import type { NarRowDisposition } from "@/features/nar-import/mapping";
 import {
   applyNarImport,
   approveNarImport,
   getNarImportBatchReview,
+  getNarImportPreviewPage,
   listNarImportBatches,
   mapNarImportCompany,
   revalidateNarImport,
   searchImportCompanies,
-  stageNarImportBatch,
+  queueNarImportStageJob,
+  getNarImportStageJob,
 } from "@/features/nar-import/server-fns";
 
 /**
@@ -71,8 +77,14 @@ function ImportsRoute() {
   const [returnYear, setReturnYear] = useState(new Date().getUTCFullYear());
   const [sheetName, setSheetName] = useState("");
   const [batchId, setBatchId] = useState<string | undefined>();
+  const [stageJobId, setStageJobId] = useState<string | undefined>(() =>
+    typeof window === "undefined"
+      ? undefined
+      : (window.sessionStorage.getItem("nar-import-stage-job") ?? undefined),
+  );
   const [reviewCursor, setReviewCursor] = useState<number | undefined>();
   const [reviewHistory, setReviewHistory] = useState<number[]>([]);
+  const [previewPage, setPreviewPage] = useState(0);
   const [companySearch, setCompanySearch] = useState("");
   const [legacyReturnYear, setLegacyReturnYear] = useState("");
   const [companyCursor, setCompanyCursor] = useState<string | null>(null);
@@ -123,6 +135,16 @@ function ImportsRoute() {
     refetchInterval: (query) =>
       query.state.data?.state === "queued" || query.state.data?.state === "running" ? 3000 : false,
   });
+  const stageJobQuery = useQuery({
+    queryKey: ["nar-import", "stage-job", stageJobId],
+    queryFn: () => getNarImportStageJob({ data: { jobId: stageJobId! } }),
+    enabled: dataMode === "production" && Boolean(stageJobId),
+    retry: false,
+    refetchInterval: (query) =>
+      query.state.data?.state === "queued" || query.state.data?.state === "processing"
+        ? 3000
+        : false,
+  });
   const approveMutation = useMutation({
     mutationFn: () => {
       const preview = revalidateMutation.data;
@@ -172,7 +194,7 @@ function ImportsRoute() {
     mutationFn: async () => {
       if (!file) throw new Error("Choose a workbook first.");
       const bytes = new Uint8Array(await file.arrayBuffer());
-      return stageNarImportBatch({
+      return queueNarImportStageJob({
         data: {
           fileName: file.name,
           bodyBase64: bytesToBase64(bytes),
@@ -183,18 +205,15 @@ function ImportsRoute() {
     },
     onSuccess: (result) => {
       setError(undefined);
-      setBatchId(result.batch.id);
-      setReviewCursor(undefined);
-      setReviewHistory([]);
-      revalidateMutation.reset();
-      setApproval(undefined);
-      setOperationId(undefined);
-      void queryClient.invalidateQueries({ queryKey: ["nar-import", "batches"] });
+      setStageJobId(result.id);
+      window.sessionStorage.setItem("nar-import-stage-job", result.id);
     },
-    // The parser's refusals are the useful part of its output; surfaced verbatim
-    // rather than replaced with a generic failure.
     onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Unable to read the workbook."),
+      setError(
+        `無法排入月表背景解析。請重試或聯絡管理員。${
+          safeRequestId(cause) ? ` 參考編號：${safeRequestId(cause)}` : ""
+        }`,
+      ),
   });
 
   const mapMutation = useMutation({
@@ -226,12 +245,47 @@ function ImportsRoute() {
     },
     onSuccess: () => {
       setError(undefined);
+      setPreviewPage(0);
       setApproval(undefined);
       setOperationId(undefined);
       void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
     },
     onError: (cause) =>
       setError(cause instanceof Error ? cause.message : "Unable to revalidate the import."),
+  });
+
+  useEffect(() => {
+    const job = stageJobQuery.data;
+    if (job?.state === "failed") {
+      setError(
+        job.errorDetail ??
+          `月表背景解析失敗（${job.errorCode ?? "unknown"}）。請檢查檔案後重新上載。`,
+      );
+      return;
+    }
+    if (job?.state !== "succeeded" || !job.result || batchId === job.result.batchId) return;
+    setBatchId(job.result.batchId);
+    setReviewCursor(undefined);
+    setReviewHistory([]);
+    setPreviewPage(0);
+    revalidateMutation.reset();
+    setApproval(undefined);
+    setOperationId(undefined);
+    void queryClient.invalidateQueries({ queryKey: ["nar-import", "batches"] });
+  }, [stageJobQuery.data, batchId, queryClient, revalidateMutation]);
+
+  const previewPageQuery = useQuery({
+    queryKey: ["nar-import", "preview-page", revalidateMutation.data?.id, previewPage],
+    queryFn: () =>
+      getNarImportPreviewPage({
+        data: {
+          previewId: revalidateMutation.data!.id,
+          offset: previewPage * IMPORT_PREVIEW_PAGE_SIZE,
+          limit: IMPORT_PREVIEW_PAGE_SIZE,
+        },
+      }),
+    enabled: previewPage > 0 && Boolean(revalidateMutation.data?.id),
+    retry: false,
   });
 
   if (dataMode !== "production") {
@@ -312,6 +366,24 @@ function ImportsRoute() {
         </div>
       ) : null}
 
+      {stageJobQuery.isError ? (
+        <div
+          role="alert"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
+          無法載入月表解析進度，請勿假設已完成。
+          {safeRequestId(stageJobQuery.error)
+            ? ` 參考編號：${safeRequestId(stageJobQuery.error)}`
+            : null}
+          <button
+            type="button"
+            className="ml-2 underline"
+            onClick={() => void stageJobQuery.refetch()}
+          >
+            重試
+          </button>
+        </div>
+      ) : null}
       {error ? (
         <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
           {error}
@@ -364,21 +436,27 @@ function ImportsRoute() {
             onClick={() => stageMutation.mutate()}
             type="button"
           >
-            {stageMutation.isPending ? "讀取中…" : "讀取並預覽"}
+            {stageMutation.isPending ? "上載中…" : "上載並排入背景解析"}
           </button>
         </div>
 
+        {stageJobQuery.data?.state === "queued" || stageJobQuery.data?.state === "processing" ? (
+          <p className="mt-3 text-sm text-muted-foreground" role="status">
+            月表正在背景解析；重新開啟此頁仍可查看工作進度。已嘗試 {stageJobQuery.data.attempts}{" "}
+            次。
+          </p>
+        ) : null}
         {stageMutation.data?.reused ? (
           <p className="mt-3 text-sm text-muted-foreground">
             這份檔案之前已上載過，顯示的是原來的待覆核清單。
           </p>
         ) : null}
-        {stageMutation.data && stageMutation.data.skippedRowNumbers.length > 0 ? (
+        {stageJobQuery.data?.result && stageJobQuery.data.result.skippedRowNumbers.length > 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            {`第 ${stageMutation.data.skippedRowNumbers.join("、")} 行沒有客戶編號，已略過。`}
+            {`第 ${stageJobQuery.data.result.skippedRowNumbers.join("、")} 行沒有客戶編號，已略過。`}
           </p>
         ) : null}
-        {stageMutation.data?.sheetIssues.map((issue) => (
+        {stageJobQuery.data?.result?.sheetIssues.map((issue) => (
           <p key={issue.code + issue.message} className="mt-2 text-sm text-status-yellow">
             {issue.message}
           </p>
@@ -442,7 +520,7 @@ function ImportsRoute() {
           {revalidateMutation.data ? (
             <section className="border-b bg-muted/20 p-4" aria-label="Import preview diff">
               <p className="text-sm font-medium">
-                {`預覽版本 ${revalidateMutation.data.revision} · ${revalidateMutation.data.rows.length} 行`}
+                {`預覽版本 ${revalidateMutation.data.revision} · ${revalidateMutation.data.totalRows} 行`}
               </p>
               <p className="mt-1 break-all text-xs text-muted-foreground">
                 {`語意鍵 ${revalidateMutation.data.semanticKey}`}
@@ -497,17 +575,46 @@ function ImportsRoute() {
                   無法讀取套用進度；請重試。
                 </p>
               ) : null}
-              <div className="mt-3 max-h-80 space-y-3 overflow-auto text-xs">
-                {revalidateMutation.data.rows.map((row) => (
-                  <div key={row.rowId} className="rounded-md border bg-card p-2">
-                    <p className="font-medium">{`第 ${row.rowNumber} 行 · ${row.externalClientId} · ${DISPOSITION_LABELS[row.disposition]}`}</p>
-                    {row.fields.map((field) => (
-                      <p key={field.field} className="mt-1 break-words">
-                        {`${field.field}: ${field.before ?? "空"} → ${field.after ?? "空"} · ${field.policy} · ${field.source}`}
-                      </p>
-                    ))}
-                  </div>
-                ))}
+              {previewPageQuery.isError ? (
+                <p role="alert" className="mt-3 text-sm text-status-yellow">
+                  無法載入這一頁預覽，請重試或重新驗證。
+                </p>
+              ) : previewPage > 0 && previewPageQuery.isPending ? (
+                <p className="mt-3 text-sm text-muted-foreground">載入中…</p>
+              ) : (
+                <ImportPreviewPage
+                  rows={
+                    previewPage === 0
+                      ? revalidateMutation.data.rows
+                      : (previewPageQuery.data?.rows ?? [])
+                  }
+                  page={0}
+                  labels={DISPOSITION_LABELS}
+                />
+              )}
+              <div className="mt-3 flex items-center gap-3 text-sm">
+                <button
+                  type="button"
+                  className="rounded-md border px-3 py-2 disabled:opacity-50"
+                  disabled={previewPage === 0}
+                  onClick={() => setPreviewPage((value) => Math.max(0, value - 1))}
+                >
+                  上一頁
+                </button>
+                <span>
+                  {`第 ${previewPage + 1} 頁 · 總共 ${revalidateMutation.data.totalRows} 行`}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-md border px-3 py-2 disabled:opacity-50"
+                  disabled={
+                    (previewPage + 1) * IMPORT_PREVIEW_PAGE_SIZE >=
+                    revalidateMutation.data.totalRows
+                  }
+                  onClick={() => setPreviewPage((value) => value + 1)}
+                >
+                  下一頁
+                </button>
               </div>
             </section>
           ) : null}
@@ -618,6 +725,7 @@ function ImportsRoute() {
                 setBatchId(batch.id);
                 setReviewCursor(undefined);
                 setReviewHistory([]);
+                setPreviewPage(0);
                 revalidateMutation.reset();
                 setApproval(undefined);
                 setOperationId(undefined);

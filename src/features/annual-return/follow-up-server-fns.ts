@@ -7,7 +7,7 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DispatchSummary } from "@/features/notifications/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
-import { getAnnualReturnActionPermission } from "./permissions";
+import { caseFiltersForActor, getAnnualReturnActionPermission } from "./permissions";
 import type { AnnualReturnRepository } from "./repository";
 import { hongKongBusinessDate } from "./workflow";
 import { toPhoneDigits } from "@/features/whatsapp/phone";
@@ -64,22 +64,38 @@ function staffIdentity(actor: AuthenticatedActor) {
   };
 }
 
+export type ProductionFollowUpDraftPage = {
+  drafts: ProductionFollowUpDraft[];
+  nextCursor: string | null;
+};
+
 export async function listProductionFollowUpDraftsForActor(
   actor: AuthenticatedActor,
   dependencies: ProductionFollowUpDependencies,
-): Promise<ProductionFollowUpDraft[]> {
+  input: { cursor?: string; limit?: number } = {},
+): Promise<ProductionFollowUpDraftPage> {
   const staff = staffIdentity(actor);
-  // listCases({}) is the 200 earliest-due cases, so every client past that row
-  // was silently never chased at all. That is a correctness bug, not a display
-  // one, and it is why this drains pages instead.
-  const cases = await dependencies.annualReturnRepository.listAllCases({});
-  const authorizedCases = cases.filter(
+  const scope = caseFiltersForActor({
+    id: staff.id,
+    role: staff.role,
+    teamId: staff.teamId,
+    active: staff.active,
+  });
+  const page = await dependencies.annualReturnRepository.listCasePage({
+    ...scope,
+    cursor: input.cursor,
+    limit: input.limit ?? 50,
+  });
+  const authorizedCases = page.cases.filter(
     (caseItem) => getAnnualReturnActionPermission(staff, caseItem, "record_reminder").allowed,
   );
   const state = await dependencies.followUpRepository.listPersistedState(
     authorizedCases.map((caseItem) => caseItem.id),
   );
-  return deriveProductionFollowUpDrafts(authorizedCases, state, hongKongBusinessDate());
+  return {
+    drafts: deriveProductionFollowUpDrafts(authorizedCases, state, hongKongBusinessDate()),
+    nextCursor: page.nextCursor,
+  };
 }
 
 type FollowUpQueryClient = SqlClient | postgres.TransactionSql;
@@ -93,8 +109,13 @@ export async function prepareProductionFollowUpForActor(
   now: Date,
 ): Promise<ProductionFollowUpPreview> {
   const data = productionFollowUpSchema.parse(identity);
-  const drafts = await listProductionFollowUpDraftsForActor(actor, dependencies);
-  const draft = drafts.find(
+  const staff = staffIdentity(actor);
+  const caseItem = await dependencies.annualReturnRepository.getCase(data.caseId);
+  if (!caseItem || !getAnnualReturnActionPermission(staff, caseItem, "record_reminder").allowed) {
+    throw new Error("No current authorized follow-up draft exists.");
+  }
+  const state = await dependencies.followUpRepository.listPersistedState([caseItem.id]);
+  const draft = deriveProductionFollowUpDrafts([caseItem], state, hongKongBusinessDate()).find(
     (candidate) =>
       candidate.source === data.source &&
       candidate.caseId === data.caseId &&
@@ -384,32 +405,45 @@ const loadProductionFollowUpDependencies = createServerOnlyFn(async () => {
   };
 });
 
-export const listProductionFollowUpDrafts = createServerFn({ method: "GET" }).handler(async () => {
-  const {
-    getRequest,
-    getCurrentAnnualReturnActor,
-    createAnnualReturnRepository,
-    createProductionFollowUpRepository,
-    createWhatsAppRepository,
-  } = await loadProductionFollowUpDependencies();
-  const actor = await getCurrentAnnualReturnActor(getRequest());
-  const annualReturnRepository = createAnnualReturnRepository();
-  const followUpRepository = createProductionFollowUpRepository();
-  const whatsAppRepository = createWhatsAppRepository();
-  try {
-    return await listProductionFollowUpDraftsForActor(actor, {
-      annualReturnRepository,
-      followUpRepository,
-      whatsAppRepository,
-    });
-  } finally {
-    await Promise.all([
-      annualReturnRepository.close(),
-      followUpRepository.close(),
-      whatsAppRepository.close(),
-    ]);
-  }
-});
+const productionFollowUpPageSchema = z
+  .object({
+    cursor: z.string().min(1).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+  })
+  .strict();
+
+export const listProductionFollowUpDrafts = createServerFn({ method: "GET" })
+  .validator(productionFollowUpPageSchema)
+  .handler(async ({ data }) => {
+    const {
+      getRequest,
+      getCurrentAnnualReturnActor,
+      createAnnualReturnRepository,
+      createProductionFollowUpRepository,
+      createWhatsAppRepository,
+    } = await loadProductionFollowUpDependencies();
+    const actor = await getCurrentAnnualReturnActor(getRequest());
+    const annualReturnRepository = createAnnualReturnRepository();
+    const followUpRepository = createProductionFollowUpRepository();
+    const whatsAppRepository = createWhatsAppRepository();
+    try {
+      return await listProductionFollowUpDraftsForActor(
+        actor,
+        {
+          annualReturnRepository,
+          followUpRepository,
+          whatsAppRepository,
+        },
+        data,
+      );
+    } finally {
+      await Promise.all([
+        annualReturnRepository.close(),
+        followUpRepository.close(),
+        whatsAppRepository.close(),
+      ]);
+    }
+  });
 
 export const previewProductionFollowUp = createServerFn({ method: "GET" })
   .validator(productionFollowUpSchema)

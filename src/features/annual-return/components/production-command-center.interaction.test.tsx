@@ -198,7 +198,7 @@ describe("production annual return command center", () => {
     renderBoard();
 
     await waitFor(() =>
-      expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({ data: { limit: 200 } }),
+      expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({ data: { limit: 50 } }),
     );
   });
 });

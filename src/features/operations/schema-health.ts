@@ -81,6 +81,10 @@ export const EXPECTED_MIGRATIONS = [
   "0054_bulk_reminder_drafts.sql",
   "0055_bulk_domain_actions.sql",
   "0056_document_analysis_context.sql",
+  "0057_import_preview_scale.sql",
+  "0058_import_apply_selection_limit.sql",
+  "0059_nar_import_stage_jobs.sql",
+  "0060_nar_import_stage_error_detail.sql",
 ] as const;
 
 export type SchemaLedger = {

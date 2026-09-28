@@ -108,7 +108,7 @@ const simulated = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  serverFns.listProductionFollowUpDrafts.mockResolvedValue(drafts);
+  serverFns.listProductionFollowUpDrafts.mockResolvedValue({ drafts, nextCursor: null });
   serverFns.previewProductionFollowUp.mockImplementation(({ data }) => {
     const draft = drafts.find(
       (item) => item.source === data.source && item.entityId === data.entityId,
@@ -195,6 +195,26 @@ describe("ProductionWhatsAppAutomation", () => {
       }),
     );
   });
+  it("t27_scenario_1 renders only one follow-up page and advances by server cursor", async () => {
+    serverFns.listProductionFollowUpDrafts.mockImplementation(({ data }) =>
+      Promise.resolve(
+        data.cursor
+          ? { drafts: [drafts[1]], nextCursor: null }
+          : { drafts: [drafts[0]], nextCursor: "next-case" },
+      ),
+    );
+    renderAutomation();
+    expect(await screen.findByText("Annual return follow-up")).toBeTruthy();
+    expect(screen.queryByText("Photo page is cropped.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(await screen.findByText("Photo page is cropped.")).toBeTruthy();
+    expect(screen.queryByText("Annual return follow-up")).toBeNull();
+    expect(serverFns.listProductionFollowUpDrafts).toHaveBeenCalledWith({
+      data: { cursor: "next-case", limit: 50 },
+    });
+    expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+  });
+
   it("keeps demo read-only even after reviewing an actual send", async () => {
     whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue(simulated);
     renderAutomation();

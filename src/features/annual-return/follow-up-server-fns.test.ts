@@ -7,6 +7,7 @@ import type { ProductionFollowUpRepository } from "./follow-up-repository";
 import {
   dispatchSimulatedFollowUpIfNeeded,
   listProductionFollowUpDraftsForActor,
+  prepareProductionFollowUpForActor,
   sendAnnualReturnFollowUpForActor,
   sendDocumentReviewFollowUpForActor,
   sendPaymentProofFollowUpForActor,
@@ -73,9 +74,10 @@ const message: WhatsAppMessageRecord = {
 function dependencies(overrides: Record<string, unknown> = {}) {
   const annualReturnRepository = {
     listCases: vi.fn(async () => [caseItem]),
-    // The drafts read drains pages now: listCases({}) is only the 200
-    // earliest-due cases, so clients past that row were never chased.
-    listAllCases: vi.fn(async () => [caseItem]),
+    listCasePage: vi.fn(async () => ({ cases: [caseItem], nextCursor: "next-case" })),
+    listAllCases: vi.fn(async () => {
+      throw new Error("Unbounded case scan");
+    }),
     getCase: vi.fn(async () => caseItem),
     assertCanMutateCase: vi.fn(async () => undefined),
     recordReminder: vi.fn(async () => ({ ...caseItem, remindersSent: 2 })),
@@ -121,6 +123,7 @@ function dependencies(overrides: Record<string, unknown> = {}) {
   } as unknown as ProductionFollowUpRepository;
   const whatsAppRepository = {
     queueOutboundTemplateMessage: vi.fn(async () => message),
+    lastInboundAtForPhoneDigits: vi.fn(async () => "2026-07-16T08:00:00.000Z"),
   } as unknown as WhatsAppRepository;
 
   return {
@@ -170,12 +173,44 @@ describe("production follow-up server orchestration", () => {
     const deps = dependencies();
     const drafts = await listProductionFollowUpDraftsForActor(actor, deps);
 
-    expect(drafts).toHaveLength(3);
+    expect(drafts.drafts).toHaveLength(3);
+    expect(drafts.nextCursor).toBe("next-case");
+    expect(deps.annualReturnRepository.listCasePage).toHaveBeenCalledWith({
+      teamId,
+      visibleToUserId: staffId,
+      cursor: undefined,
+      limit: 50,
+    });
+    expect(deps.annualReturnRepository.listAllCases).not.toHaveBeenCalled();
     expect(deps.followUpRepository.listPersistedState).toHaveBeenCalledWith([caseId]);
 
     await expect(
       listProductionFollowUpDraftsForActor({ ...actor, role: "Client", userId: null }, deps),
     ).rejects.toThrow(/staff access is required/i);
+  });
+
+  it("t27_scenario_1 rechecks one follow-up case without an interactive full scan", async () => {
+    const deps = dependencies();
+    const sql = vi.fn(async () => [
+      {
+        id: crypto.randomUUID(),
+        name: "Chris Client",
+        phone_e164: "+85291234567",
+        preferred_language: "zh-HK",
+        updated_at: "2026-07-14T09:00:00.000Z",
+      },
+    ]);
+    const preview = await prepareProductionFollowUpForActor(
+      actor,
+      { source: "annual-return", caseId, entityId: caseId },
+      deps,
+      sql as never,
+      new Date("2026-07-16T09:00:00.000Z"),
+    );
+    expect(preview.identity.caseId).toBe(caseId);
+    expect(deps.annualReturnRepository.getCase).toHaveBeenCalledWith(caseId);
+    expect(deps.annualReturnRepository.listAllCases).not.toHaveBeenCalled();
+    expect(deps.followUpRepository.listPersistedState).toHaveBeenCalledWith([caseId]);
   });
 
   it.each([
