@@ -94,6 +94,7 @@ const createClientSchema = z.object({
 
 const updateClientSchema = z.object({
   id: z.string().uuid(),
+  expectedAssignmentRevision: z.number().int().positive(),
   companyName: z.string().min(1),
   registeredOffice: z.string().min(1),
   status: z.enum(["active", "inactive"]),

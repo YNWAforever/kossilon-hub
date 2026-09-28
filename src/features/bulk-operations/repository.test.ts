@@ -87,6 +87,59 @@ describe.skipIf(!databaseUrl)("T09 durable bulk operations", () => {
     await sql?.end();
   });
 
+  it("t22 queue all-matching preview stores a server-owned filter and excludes one displayed row", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const fx = await fixture();
+    const repo = createBulkOperationRepository({ sql });
+    const laterId = crypto.randomUUID();
+    try {
+      const preview = await repo.preview(fx.manager, {
+        ...assignment(fx.ids, fx.assigneeId),
+        selection: {
+          kind: "filter",
+          resource: "work-items",
+          filters: {
+            view: "team",
+            owner: "all",
+            workType: "all",
+            sla: "all",
+            priority: "all",
+            status: "all",
+            q: "Bulk test",
+          },
+          excludedIds: [fx.ids[1]],
+        },
+      });
+      expect(preview.itemsPreview.some((item) => item.resourceId === fx.ids[0])).toBe(true);
+      expect(preview.itemsPreview.some((item) => item.resourceId === fx.ids[1])).toBe(false);
+      const [saved] = await sql<{ selection: { kind: string; filters: { view: string } } }[]>`
+        select selection from bulk_previews where id = ${preview.id}`;
+      expect(saved.selection.kind).toBe("filter");
+      expect(saved.selection.filters.view).toBe("team");
+      await sql`
+        insert into work_items (
+          id, company_id, case_type, annual_return_case_id, corporate_change_request_id,
+          source_event_key, source_event_type, work_type, required_skill_key, title,
+          status, team_id, sla_policy_version_id, sla_started_at, sla_warning_at, sla_due_at
+        ) select ${laterId}, company_id, case_type, annual_return_case_id, corporate_change_request_id,
+          ${`bulk-test:${crypto.randomUUID()}`}, source_event_type, work_type, required_skill_key,
+          'Bulk test added after preview', 'open', team_id, sla_policy_version_id,
+          sla_started_at, sla_warning_at, sla_due_at
+        from work_items where id = ${fx.ids[0]}`;
+      const operation = await repo.commit(fx.manager, {
+        previewId: preview.id,
+        previewHash: preview.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const view = await repo.get(fx.manager, operation.id);
+      expect(view.items.some((item) => item.resourceId === laterId)).toBe(false);
+    } finally {
+      await sql`delete from work_items where id = ${laterId}`;
+      await fx.cleanup();
+      await repo.close();
+    }
+  });
+
   it("t09_scenario_1 rejects a stale second actor instead of overwriting", async () => {
     if (!sql) throw new Error("TEST_DATABASE_URL is required");
     const fx = await fixture();
@@ -266,6 +319,322 @@ describe.skipIf(!databaseUrl)("T09 durable bulk operations", () => {
       await repo.close();
     }
   });
+  it("does not approve importApply previews through the generic assignment commit", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const fx = await fixture();
+    const repo = createBulkOperationRepository({ sql });
+    const hash = "a".repeat(64);
+    let previewId: string | null = null;
+    try {
+      const [preview] = await sql<{ id: string }[]>`
+        insert into bulk_previews (
+          action,created_by_id,auth_user_id,scope_role,scope_team_id,
+          parameters,selection,resource_snapshot,preview_hash,selection_count,
+          eligible_count,skipped_count,conflict_count,expires_at
+        ) values (
+          'importApply',${fx.manager.userId},${fx.manager.authUserId},'Manager',
+          ${fx.manager.teamId},${sql.json({ approvalId: crypto.randomUUID() })},
+          ${sql.json({ kind: "ids", ids: [fx.ids[0]] })},
+          ${sql.json({
+            [fx.ids[0]]: {
+              revision: 1,
+              state: "eligible",
+              teamId: fx.manager.teamId,
+              status: "open",
+              ownerId: null,
+              reviewerId: null,
+            },
+          })},
+          ${hash},1,1,0,0,now()+interval '15 minutes'
+        ) returning id`;
+      previewId = preview.id;
+      await expect(
+        repo.commit(fx.manager, {
+          previewId,
+          previewHash: hash,
+          idempotencyKey: crypto.randomUUID(),
+        }),
+      ).rejects.toThrow(/unsupported|import/i);
+    } finally {
+      if (previewId) {
+        await sql`delete from bulk_operations where preview_id=${previewId}`;
+        await sql`delete from bulk_previews where id=${previewId}`;
+      }
+      await fx.cleanup();
+      await repo.close();
+    }
+  });
+
+  it("t22_scenario_2 durably applies only eligible case owners and resumes without duplicate linked audits", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const fx = await fixture();
+    const repo = createBulkOperationRepository({ sql });
+    const caseIds = Array.from({ length: 4 }, () => crypto.randomUUID());
+    const companyIds = Array.from({ length: 4 }, () => crypto.randomUUID());
+    const teamB = "10000000-0000-0000-0000-000000000002";
+    try {
+      for (const [index, caseId] of caseIds.entries()) {
+        const companyId = companyIds[index]!;
+        const teamId = index === 1 ? teamB : fx.manager.teamId!;
+        await sql`insert into companies(id,company_name,cr_number,br_number,
+          incorporation_date,annual_return_basis_date,registered_office,
+          company_secretary,assigned_owner_id,assigned_team_id,data_origin)
+          values (${companyId},${`T22 durable ${caseIds[0]} ${caseId}`},${`CR-${companyId}`},
+            ${`BR-${companyId}`},'2020-01-01','2026-01-01','Test address',
+            'Test secretary',${fx.manager.userId},${teamId},'fixture')`;
+        await sql`insert into annual_return_cases(id,company_id,return_year,made_up_date,
+          filing_due_date,current_status,owner_id,locked_at)
+          values (${caseId},${companyId},2026,'2026-01-01','2026-02-11',
+            'Upcoming',${fx.manager.userId},
+            ${index === 2 ? new Date().toISOString() : null})`;
+      }
+      await sql`update work_items set company_id=${companyIds[0]},
+        annual_return_case_id=${caseIds[0]},owner_id=${fx.manager.userId}
+        where id=${fx.ids[0]}`;
+      const filtered = await repo.preview(fx.manager, {
+        action: "caseAssign",
+        selection: {
+          kind: "filter",
+          resource: "annual-return-cases",
+          filters: { q: `T22 durable ${caseIds[0]}`, status: "Upcoming" },
+          excludedIds: [caseIds[3]!],
+        },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      expect(filtered.selectionCount).toBe(2);
+      expect(filtered.itemsPreview.map((item) => item.resourceId).sort()).toEqual(
+        [caseIds[0], caseIds[2]].sort(),
+      );
+      expect(filtered.itemsPreview[0]).toMatchObject({
+        oldOwnerId: fx.manager.userId,
+        oldTeamId: fx.manager.teamId,
+        newOwnerId: fx.assigneeId,
+        newTeamId: fx.manager.teamId,
+      });
+      const input = {
+        action: "caseAssign" as const,
+        selection: { kind: "ids" as const, ids: caseIds.slice(0, 3) },
+        parameters: { ownerId: fx.assigneeId },
+      };
+      const preview = await repo.preview(fx.manager, input);
+      expect(preview).toMatchObject({
+        selectionCount: 3,
+        eligibleCount: 1,
+        conflictCount: 2,
+      });
+      const decisions = new Map(preview.itemsPreview.map((item) => [item.resourceId, item]));
+      expect(decisions.get(caseIds[0]!)).toMatchObject({ state: "eligible", reasonCode: null });
+      expect(decisions.get(caseIds[1]!)).toMatchObject({
+        state: "forbidden",
+        reasonCode: "CASE_OUT_OF_SCOPE",
+        revision: null,
+        oldOwnerId: null,
+        oldTeamId: null,
+      });
+      expect(decisions.get(caseIds[2]!)).toMatchObject({
+        state: "conflict",
+        reasonCode: "CASE_LOCKED",
+      });
+      const key = crypto.randomUUID();
+      const operation = await repo.commit(fx.manager, {
+        previewId: preview.id,
+        previewHash: preview.previewHash,
+        idempotencyKey: key,
+      });
+      expect(
+        (
+          await repo.commit(fx.manager, {
+            previewId: preview.id,
+            previewHash: preview.previewHash,
+            idempotencyKey: key,
+          })
+        ).id,
+      ).toBe(operation.id);
+      await repo.runBatch(operation.id, { limit: 3 });
+      const view = await repo.get(fx.manager, operation.id);
+      expect(view.counts).toMatchObject({ succeeded: 1, forbidden: 1, conflict: 1 });
+      expect(view.items.find((item) => item.resourceId === caseIds[0])).toMatchObject({
+        state: "succeeded",
+        revisionBefore: 1,
+        revisionAfter: 2,
+      });
+      expect(view.items.find((item) => item.resourceId === caseIds[0])?.auditRef).toBeTruthy();
+      expect(view.items.find((item) => item.resourceId === caseIds[1])).toMatchObject({
+        state: "forbidden",
+        reasonCode: "CASE_OUT_OF_SCOPE",
+        revisionBefore: null,
+      });
+      const [owner] = await sql<{ owner_id: string; assignment_revision: number }[]>`
+        select owner_id,assignment_revision from annual_return_cases where id=${caseIds[0]}`;
+      expect(owner).toMatchObject({ owner_id: fx.assigneeId, assignment_revision: 2 });
+      const [linked] = await sql<{ owner_id: string; version: number }[]>`
+        select owner_id,version from work_items where id=${fx.ids[0]}`;
+      expect(linked).toMatchObject({ owner_id: fx.assigneeId, version: 2 });
+      const [linkedAudit] = await sql<{ count: number }[]>`
+        select count(*)::int count from assignment_events where work_item_id=${fx.ids[0]}`;
+      expect(linkedAudit.count).toBe(1);
+      for (const caseId of caseIds.slice(1, 3)) {
+        const [untouched] = await sql<{ owner_id: string; assignment_revision: number }[]>`
+          select owner_id,assignment_revision from annual_return_cases where id=${caseId}`;
+        expect(untouched).toMatchObject({ owner_id: fx.manager.userId, assignment_revision: 1 });
+      }
+
+      const crashPreview = await repo.preview(fx.manager, {
+        action: "caseAssign",
+        selection: { kind: "ids", ids: [caseIds[3]!] },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      const crashOperation = await repo.commit(fx.manager, {
+        previewId: crashPreview.id,
+        previewHash: crashPreview.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      await repo.runBatch(crashOperation.id, {
+        limit: 1,
+        afterDomainWrite: () => {
+          throw new Error("simulated crash after case owner write");
+        },
+      });
+      expect((await repo.get(fx.manager, crashOperation.id)).items[0]?.state).toBe("failed");
+      await repo.runBatch(crashOperation.id, { limit: 1 });
+      const resumed = await repo.get(fx.manager, crashOperation.id);
+      expect(resumed.items[0]).toMatchObject({ state: "succeeded", revisionAfter: 2 });
+      const [audit] = await sql<{ count: number }[]>`
+        select count(*)::int count from timeline_events
+        where case_id=${caseIds[3]} and event_type='annual_return_owner_assigned'`;
+      expect(audit.count).toBe(1);
+    } finally {
+      await sql`delete from bulk_operations where preview_id in (
+        select id from bulk_previews where resource_snapshot ?| ${caseIds})`;
+      await sql`delete from bulk_previews where resource_snapshot ?| ${caseIds}`;
+      await sql`delete from annual_return_audit_events where case_id=any(${caseIds}::uuid[])`;
+      await sql`delete from timeline_events where case_id=any(${caseIds}::uuid[])`;
+      await fx.cleanup();
+      await sql`delete from annual_return_cases where id=any(${caseIds}::uuid[])`;
+      await sql`delete from companies where id=any(${companyIds}::uuid[])`;
+      await repo.close();
+    }
+  }, 60_000);
+
+  it("t22 clientAssign uses scoped filter preview, durable per-item outcomes and crash resume", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const fx = await fixture();
+    const repo = createBulkOperationRepository({ sql });
+    const ids = Array.from({ length: 3 }, () => crypto.randomUUID());
+    const teamB = "10000000-0000-0000-0000-000000000002";
+    try {
+      for (const [index, id] of ids.entries()) {
+        const teamId = index === 1 ? teamB : fx.manager.teamId!;
+        await sql`insert into companies(id,company_name,cr_number,br_number,
+          incorporation_date,annual_return_basis_date,registered_office,
+          company_secretary,assigned_owner_id,assigned_team_id,data_origin)
+          values (${id},${`T22 client durable ${ids[0]} ${id}`},
+            ${`CR-${id}`},${`BR-${id}`},
+            '2020-01-01','2026-01-01','Test address','Test secretary',
+            ${fx.manager.userId},${teamId},'client')`;
+      }
+      const filtered = await repo.preview(fx.manager, {
+        action: "clientAssign",
+        selection: {
+          kind: "filter",
+          resource: "clients",
+          filters: { q: `T22 client durable ${ids[0]}`, status: "active" },
+          excludedIds: [ids[2]!],
+        },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      expect(filtered.itemsPreview.map((item) => item.resourceId)).toEqual([ids[0]]);
+      expect(filtered.itemsPreview[0]).toMatchObject({
+        oldOwnerId: fx.manager.userId,
+        oldTeamId: fx.manager.teamId,
+        newOwnerId: fx.assigneeId,
+        newTeamId: fx.manager.teamId,
+      });
+      const preview = await repo.preview(fx.manager, {
+        action: "clientAssign",
+        selection: { kind: "ids", ids: ids.slice(0, 2) },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      expect(preview).toMatchObject({ selectionCount: 2, eligibleCount: 1, conflictCount: 1 });
+      expect(preview.itemsPreview.find((item) => item.resourceId === ids[1])).toMatchObject({
+        state: "forbidden",
+        reasonCode: "CLIENT_OUT_OF_SCOPE",
+        revision: null,
+        oldOwnerId: null,
+        oldTeamId: null,
+      });
+      const key = crypto.randomUUID();
+      const operation = await repo.commit(fx.manager, {
+        previewId: preview.id,
+        previewHash: preview.previewHash,
+        idempotencyKey: key,
+      });
+      expect(
+        (
+          await repo.commit(fx.manager, {
+            previewId: preview.id,
+            previewHash: preview.previewHash,
+            idempotencyKey: key,
+          })
+        ).id,
+      ).toBe(operation.id);
+      await repo.runBatch(operation.id, { limit: 2 });
+      const view = await repo.get(fx.manager, operation.id);
+      expect(view.counts).toMatchObject({ succeeded: 1, forbidden: 1 });
+      expect(view.items.find((item) => item.resourceId === ids[0])).toMatchObject({
+        state: "succeeded",
+        revisionBefore: 1,
+        revisionAfter: 2,
+      });
+      expect(view.items.find((item) => item.resourceId === ids[0])?.auditRef).toBeTruthy();
+      expect(view.items.find((item) => item.resourceId === ids[1])?.revisionBefore).toBeNull();
+      const [updated] = await sql<{ assigned_owner_id: string; assignment_revision: number }[]>`
+        select assigned_owner_id,assignment_revision from companies where id=${ids[0]}`;
+      expect(updated).toMatchObject({ assigned_owner_id: fx.assigneeId, assignment_revision: 2 });
+      const [foreign] = await sql<{ assigned_owner_id: string; assignment_revision: number }[]>`
+        select assigned_owner_id,assignment_revision from companies where id=${ids[1]}`;
+      expect(foreign).toMatchObject({
+        assigned_owner_id: fx.manager.userId,
+        assignment_revision: 1,
+      });
+
+      const crashPreview = await repo.preview(fx.manager, {
+        action: "clientAssign",
+        selection: { kind: "ids", ids: [ids[2]!] },
+        parameters: { ownerId: fx.assigneeId },
+      });
+      const crashOperation = await repo.commit(fx.manager, {
+        previewId: crashPreview.id,
+        previewHash: crashPreview.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      await repo.runBatch(crashOperation.id, {
+        limit: 1,
+        afterDomainWrite: () => {
+          throw new Error("simulated crash after client write");
+        },
+      });
+      expect((await repo.get(fx.manager, crashOperation.id)).items[0]?.state).toBe("failed");
+      await repo.runBatch(crashOperation.id, { limit: 1 });
+      expect((await repo.get(fx.manager, crashOperation.id)).items[0]).toMatchObject({
+        state: "succeeded",
+        revisionAfter: 2,
+      });
+      const [audit] = await sql<{ count: number }[]>`
+        select count(*)::int count from timeline_events
+        where company_id=${ids[2]} and event_type='client_updated'`;
+      expect(audit.count).toBe(1);
+    } finally {
+      await sql`delete from bulk_operations where preview_id in (
+        select id from bulk_previews where resource_snapshot ?| ${ids})`;
+      await sql`delete from bulk_previews where resource_snapshot ?| ${ids}`;
+      await sql`delete from timeline_events where company_id=any(${ids}::uuid[])`;
+      await sql`delete from companies where id=any(${ids}::uuid[])`;
+      await fx.cleanup();
+      await repo.close();
+    }
+  }, 60_000);
+
   it("reads and exports durable progress for 1000 items", async () => {
     if (!sql) throw new Error("TEST_DATABASE_URL is required");
     const fx = await fixture();

@@ -3,6 +3,18 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
+import { CaseBulkAssignmentDialog } from "@/features/bulk-operations/case-bulk-controls";
+import { ResourceTagDialog } from "@/features/bulk-operations/resource-tag-dialog";
+import { WorkQueueBulkOperationStatus } from "@/features/bulk-operations/work-queue-bulk-controls";
+import {
+  addPageToSelection,
+  changeSelectionFilter,
+  clearBulkSelection,
+  newBulkSelection,
+  removeFromSelection,
+  retryFailedSelection,
+} from "@/features/bulk-operations/selection";
 import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
 import { listWorkQueue } from "@/features/work-items/server-fns";
@@ -31,8 +43,8 @@ const BOARD_PAGE_SIZE = 200;
 // of minmax(0, …) collapses to zero and lets its text draw over the neighbouring
 // column, which is what happened on the demo board.
 const BOARD_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.6fr)_140px_150px_96px_minmax(130px,1fr)_110px_120px_90px_72px]";
-const BOARD_GRID_MIN_WIDTH = "lg:min-w-[1200px]";
+  "lg:grid-cols-[32px_minmax(220px,1.6fr)_140px_150px_96px_minmax(130px,1fr)_110px_120px_90px_72px]";
+const BOARD_GRID_MIN_WIDTH = "lg:min-w-[1240px]";
 
 const riskToneClasses: Record<RiskLevel, string> = {
   red: "bg-red-100 text-red-700",
@@ -44,12 +56,36 @@ const riskToneClasses: Record<RiskLevel, string> = {
 export function ProductionAnnualReturnCommandCenter({
   search,
   onSearchChange,
+  canManage = false,
 }: {
   search: AnnualReturnBoardSearch;
   onSearchChange?: (next: AnnualReturnBoardSearch) => void;
+  canManage?: boolean;
 }) {
   const today = hongKongBusinessDate();
   const queryClient = useQueryClient();
+  const filterKey = JSON.stringify([
+    search.q ?? "",
+    search.status ?? "",
+    search.risk ?? "",
+    search.ownerId ?? "",
+    search.overdueOnly ?? false,
+  ]);
+  const [selection, setSelection] = useState(() => newBulkSelection(filterKey));
+  const [selectionMode, setSelectionMode] = useState<"ids" | "filter">("ids");
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const currentSelection =
+    selection.filterKey === filterKey ? selection : changeSelectionFilter(selection, filterKey);
+  const selectedIds = useMemo(() => new Set(currentSelection.ids), [currentSelection.ids]);
+  useEffect(() => {
+    setSelection((previous) => changeSelectionFilter(previous, filterKey));
+    setSelectionMode("ids");
+    setBulkDialogOpen(false);
+    setTagDialogOpen(false);
+    setSelectionError(null);
+  }, [filterKey]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [queryInput, setQueryInput] = useState(search.q ?? "");
   const searchRef = useRef(search);
@@ -172,6 +208,36 @@ export function ProductionAnnualReturnCommandCenter({
     onSearchChange?.({ ...search, ...patch });
   }
 
+  function toggleCase(id: string) {
+    try {
+      setSelection(
+        selectedIds.has(id)
+          ? removeFromSelection(currentSelection, id)
+          : addPageToSelection(currentSelection, [id]),
+      );
+      setSelectionError(null);
+    } catch (error) {
+      setSelectionError(error instanceof Error ? error.message : "Selection unavailable.");
+    }
+  }
+
+  const selectionInput =
+    selectionMode === "filter"
+      ? {
+          kind: "filter" as const,
+          resource: "annual-return-cases" as const,
+          filters: {
+            ...(search.q ? { q: search.q } : {}),
+            ...(search.status ? { status: search.status } : {}),
+            ...(search.risk ? { risk: search.risk } : {}),
+            ...(search.ownerId ? { ownerId: search.ownerId } : {}),
+            ...(search.overdueOnly ? { overdueOnly: true } : {}),
+          },
+          excludedIds: currentSelection.ids,
+        }
+      : { kind: "ids" as const, ids: currentSelection.ids };
+  const searchPending = queryInput !== (search.q ?? "");
+
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
@@ -191,6 +257,8 @@ export function ProductionAnnualReturnCommandCenter({
               search={{
                 view: "team",
                 owner: "all",
+                q: "",
+                page: 1,
                 workType: "all",
                 sla: "all",
                 priority: "all",
@@ -276,6 +344,86 @@ export function ProductionAnnualReturnCommandCenter({
           <Metric label="Cases in scope (owner/status)" value={totals?.total ?? 0} />
         </div>
       )}
+      {canManage ? (
+        <>
+          <BulkSelectionToolbar
+            selectedCount={currentSelection.ids.length}
+            visibleCount={visibleCases.length}
+            notice={currentSelection.notice}
+            selectionLabel={
+              selectionMode === "filter"
+                ? "All matching filter, excluding " + currentSelection.ids.length
+                : undefined
+            }
+            previewEnabled={
+              !searchPending && (selectionMode === "filter" || currentSelection.ids.length > 0)
+            }
+            onSelectVisible={() => {
+              try {
+                setSelectionMode("ids");
+                setSelection(
+                  addPageToSelection(
+                    selectionMode === "filter" ? newBulkSelection(filterKey) : currentSelection,
+                    visibleCases.map((case_) => case_.id),
+                  ),
+                );
+                setSelectionError(null);
+              } catch (error) {
+                setSelectionError(
+                  error instanceof Error ? error.message : "Selection unavailable.",
+                );
+              }
+            }}
+            onSelectMatching={() => {
+              setSelectionMode("filter");
+              setSelection(newBulkSelection(filterKey));
+              setSelectionError(null);
+            }}
+            onClear={() => {
+              setSelectionMode("ids");
+              setSelection(clearBulkSelection(currentSelection));
+              setSelectionError(null);
+            }}
+            onPreview={() => setBulkDialogOpen(true)}
+            onTag={() => setTagDialogOpen(true)}
+            tagEnabled={
+              !searchPending && (selectionMode === "filter" || currentSelection.ids.length > 0)
+            }
+            exportSelection={
+              selectionInput.kind === "ids"
+                ? { ...selectionInput, resource: "annual-return-cases" }
+                : selectionInput
+            }
+            exportEnabled={
+              !searchPending && (selectionMode === "filter" || currentSelection.ids.length > 0)
+            }
+          />
+          {searchPending ? (
+            <p role="status" className="text-xs text-muted-foreground">
+              Wait for the company search to apply before previewing this selection.
+            </p>
+          ) : null}
+          {selectionError ? (
+            <p role="alert" className="text-xs text-destructive">
+              {selectionError}
+            </p>
+          ) : null}
+          {search.bulkOperation ? (
+            <WorkQueueBulkOperationStatus
+              id={search.bulkOperation}
+              onRetryFailed={(items) => {
+                try {
+                  setSelectionMode("ids");
+                  setSelection(retryFailedSelection(filterKey, items));
+                  setSelectionError(null);
+                } catch (error) {
+                  setSelectionError(error instanceof Error ? error.message : "Retry unavailable.");
+                }
+              }}
+            />
+          ) : null}
+        </>
+      ) : null}
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto_auto]">
           <input
@@ -343,6 +491,7 @@ export function ProductionAnnualReturnCommandCenter({
             <div
               className={`hidden gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid ${BOARD_GRID_COLUMNS}`}
             >
+              <span>Select</span>
               <span>Company</span>
               <span>Due</span>
               <span>Status</span>
@@ -362,6 +511,13 @@ export function ProductionAnnualReturnCommandCenter({
                   today={today}
                   workItem={workItemsByCase.get(case_.id)}
                   workItemsUnavailable={workItemsQuery.isError}
+                  canSelect={canManage}
+                  selected={
+                    selectionMode === "filter"
+                      ? !selectedIds.has(case_.id)
+                      : selectedIds.has(case_.id)
+                  }
+                  onToggle={() => toggleCase(case_.id)}
                 />
               ))}
             </div>
@@ -405,6 +561,37 @@ export function ProductionAnnualReturnCommandCenter({
           </p>
         ) : null}
       </section>
+      {canManage && bulkDialogOpen ? (
+        <CaseBulkAssignmentDialog
+          selection={selectionInput}
+          owners={ownersQuery.data ?? []}
+          onClose={() => setBulkDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setBulkDialogOpen(false);
+            setSelectionMode("ids");
+            setSelection(newBulkSelection(filterKey));
+            update({ bulkOperation: operationId });
+            void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
+          }}
+        />
+      ) : null}
+      {canManage && tagDialogOpen ? (
+        <ResourceTagDialog
+          selection={
+            selectionInput.kind === "ids"
+              ? { ...selectionInput, resource: "annual-return-cases" }
+              : selectionInput
+          }
+          onClose={() => setTagDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setTagDialogOpen(false);
+            setSelectionMode("ids");
+            setSelection(newBulkSelection(filterKey));
+            update({ bulkOperation: operationId });
+            void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
+          }}
+        />
+      ) : null}
     </main>
   );
 }
@@ -414,11 +601,17 @@ function BoardRow({
   today,
   workItem,
   workItemsUnavailable,
+  canSelect,
+  selected,
+  onToggle,
 }: {
   caseItem: AnnualReturnCase;
   today: string;
   workItem: PersistedWorkItem | undefined;
   workItemsUnavailable: boolean;
+  canSelect: boolean;
+  selected: boolean;
+  onToggle: () => void;
 }) {
   const daysRemaining = daysBetween(today, caseItem.filingDueDate);
   const required = caseItem.checklist.filter((item) => item.required);
@@ -426,6 +619,15 @@ function BoardRow({
 
   return (
     <div className={`grid gap-3 px-4 py-3 text-sm lg:grid ${BOARD_GRID_COLUMNS}`}>
+      <label className="flex items-start">
+        <input
+          type="checkbox"
+          aria-label={"Select " + caseItem.companyName}
+          checked={canSelect && selected}
+          disabled={!canSelect}
+          onChange={onToggle}
+        />
+      </label>
       <div className="min-w-0">
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">

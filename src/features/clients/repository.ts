@@ -76,6 +76,7 @@ type SummaryRow = {
   cr_number: string;
   br_number: string;
   status: CompanyStatus;
+  assignment_revision: number;
   owner_id: string;
   owner_name: string;
   team_id: string;
@@ -256,6 +257,7 @@ function mapSummary(row: SummaryRow): ClientSummary {
     crNumber: row.cr_number,
     brNumber: row.br_number,
     status: row.status,
+    assignmentRevision: row.assignment_revision,
     ownerId: row.owner_id,
     ownerName: row.owner_name,
     ownerInitials: initialsFor(row.owner_name),
@@ -328,6 +330,7 @@ export function createClientRepository(
         c.cr_number,
         c.br_number,
         c.status,
+        c.assignment_revision,
         u.id as owner_id,
         u.name as owner_name,
         t.id as team_id,
@@ -363,6 +366,7 @@ export function createClientRepository(
         c.cr_number,
         c.br_number,
         c.status,
+        c.assignment_revision,
         c.incorporation_date,
         c.annual_return_basis_date,
         c.registered_office,
@@ -671,9 +675,26 @@ export function createClientRepository(
     try {
       return await withTransaction(sql, async (tx) => {
         await assertActor(tx, input.actorId);
+        if (
+          !Number.isSafeInteger(input.expectedAssignmentRevision) ||
+          input.expectedAssignmentRevision < 1
+        ) {
+          throw new Error("A valid client assignment revision is required.");
+        }
+
+        const [locked] = await tx<{ assignment_revision: number }[]>`
+          select assignment_revision from companies where id = ${input.id} for update
+        `;
+        if (!locked) {
+          throw new Error("Client not found.");
+        }
+        if (locked.assignment_revision !== input.expectedAssignmentRevision) {
+          throw new Error("Client assignment revision changed; reload before saving.");
+        }
 
         const before = await hydrateOrThrow(tx, input.id);
         const changed = changedFields(before, input);
+        const assignmentChanged = changed.includes("ownerId") || changed.includes("teamId");
 
         await tx`
           update companies
@@ -682,6 +703,7 @@ export function createClientRepository(
               status = ${input.status},
               assigned_owner_id = ${input.ownerId},
               assigned_team_id = ${input.teamId},
+              assignment_revision = assignment_revision + ${assignmentChanged ? 1 : 0},
               updated_at = now()
           where id = ${input.id}
         `;

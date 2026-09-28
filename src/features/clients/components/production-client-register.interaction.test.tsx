@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -27,6 +27,7 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
     crNumber: "CR1234567",
     brNumber: "BR7654321",
     status: "active",
+    assignmentRevision: 1,
     ownerId: "22222222-2222-4222-8222-222222222222",
     ownerName: "Ada Chan",
     ownerInitials: "AC",
@@ -52,12 +53,12 @@ function makeOptions(): ClientAssignmentOptions {
   };
 }
 
-function renderRegister() {
+function renderRegister(props: ComponentProps<typeof ProductionClientRegister> = {}) {
   return render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <ProductionClientRegister />
+      <ProductionClientRegister {...props} />
     </QueryClientProvider>,
   );
 }
@@ -110,6 +111,40 @@ describe("production client register", () => {
 
     await waitFor(() => expect(screen.queryByText("Acme Company Limited")).toBeNull());
     expect(screen.getByText("Beta Holdings")).toBeTruthy();
+  });
+
+  it("selects clients across pages and clears selection when the filter changes", async () => {
+    serverFns.listClients.mockResolvedValue(
+      Array.from({ length: 51 }, (_, index) =>
+        makeClient({
+          id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+          companyName: `Client ${String(index + 1).padStart(3, "0")}`,
+        }),
+      ),
+    );
+    renderRegister({ canManage: true });
+    await screen.findByText("Client 001");
+    fireEvent.click(screen.getByRole("button", { name: "Select current view (50)" }));
+    expect(screen.getByText("50 selected")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(await screen.findByText("Client 051")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Select current view (1)" }));
+    expect(screen.getByText("51 selected")).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText("Search company, CR or BR number"), {
+      target: { value: "Client 001" },
+    });
+    await waitFor(() => expect(screen.queryByText("Client 051")).toBeNull());
+    expect(screen.getByText("0 selected")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("Selection cleared");
+    fireEvent.click(screen.getByRole("button", { name: "Select all matching filter (max 1000)" }));
+    expect(screen.getByText("All matching clients (max 1000), server evaluated")).toBeTruthy();
+    expect(
+      (screen.getByRole("checkbox", { name: "Select Client 001" }) as HTMLInputElement).checked,
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Client 001" }));
+    expect(
+      (screen.getByRole("checkbox", { name: "Select Client 001" }) as HTMLInputElement).checked,
+    ).toBe(false);
   });
 
   it("disables New client until assignment options resolve", async () => {

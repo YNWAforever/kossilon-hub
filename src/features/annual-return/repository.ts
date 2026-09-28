@@ -128,6 +128,7 @@ type LockedCaseRow = {
   reviewer_id: string | null;
   filing_reference: string | null;
   confirmation_document_id: string | null;
+  assignment_revision: number;
 };
 
 type EligibleCompanyRow = {
@@ -275,6 +276,7 @@ export type AssignAnnualReturnOwnerInput = {
   caseId: string;
   ownerId: string;
   actorId: string;
+  expectedAssignmentRevision?: number;
 };
 
 export type AddAnnualReturnCaseNoteInput = {
@@ -754,7 +756,8 @@ export function createAnnualReturnRepository(
         arc.owner_id,
         arc.reviewer_id,
         arc.filing_reference,
-        arc.confirmation_document_id
+        arc.confirmation_document_id,
+        arc.assignment_revision
       from annual_return_cases arc
       join companies c on c.id = arc.company_id
       where arc.id = ${caseId}
@@ -1686,6 +1689,14 @@ export function createAnnualReturnRepository(
         lockedCase,
         "assign_owner",
       );
+      if (input.expectedAssignmentRevision !== undefined) {
+        if (
+          !Number.isSafeInteger(input.expectedAssignmentRevision) ||
+          input.expectedAssignmentRevision < 1 ||
+          lockedCase.assignment_revision !== input.expectedAssignmentRevision
+        )
+          throw new Error("Case owner assignment revision changed; preview again.");
+      }
       await assertAssignableStaffTarget(
         tx,
         input.ownerId,
@@ -1695,6 +1706,7 @@ export function createAnnualReturnRepository(
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases
         set owner_id = ${input.ownerId},
+            assignment_revision = assignment_revision + 1,
             updated_at = now()
         where id = ${input.caseId}
           and locked_at is null
