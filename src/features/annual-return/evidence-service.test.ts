@@ -137,7 +137,7 @@ function createHarness(
 }
 
 describe("annual return evidence service", () => {
-  it("verifies payment proof and updates payment in one transaction", async () => {
+  it("reviews payment proof but leaves payment pending until reconciliation", async () => {
     const harness = createHarness();
 
     const result = await harness.service.reviewEvidence({
@@ -148,22 +148,12 @@ describe("annual return evidence service", () => {
     });
 
     expect(result.document.reviewStatus).toBe("verified");
-    expect(harness.annualReturns.updatePayment).toHaveBeenCalledWith({
-      caseId,
-      status: "Payment received",
-      paymentProofDocumentId: documentId,
-      actorId,
-    });
-    expect(result.caseItem.payment).toEqual(
-      expect.objectContaining({
-        status: "Payment received",
-        paymentProofDocumentId: documentId,
-      }),
-    );
+    expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
+    expect(result.caseItem.payment?.status).toBe("Payment pending");
     expect(harness.sql.begin).toHaveBeenCalledOnce();
   });
 
-  it("rejects payment proof and clears any accepted proof", async () => {
+  it("rejects payment proof without changing canonical payment", async () => {
     const harness = createHarness();
 
     await harness.service.reviewEvidence({
@@ -181,12 +171,7 @@ describe("annual return evidence service", () => {
       expectedVersion: 1,
       reason: "Amount mismatch",
     });
-    expect(harness.annualReturns.updatePayment).toHaveBeenCalledWith({
-      caseId,
-      status: "Payment pending",
-      paymentProofDocumentId: null,
-      actorId,
-    });
+    expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
   });
 
   it("maps checklist evidence decisions to the matching checklist state", async () => {
@@ -412,7 +397,7 @@ describe("annual return evidence service", () => {
     expect(harness.documents.reviewDocument).not.toHaveBeenCalled();
   });
 
-  it("locks the document review before changing payment state", async () => {
+  it("reviews the document without changing payment state", async () => {
     const harness = createHarness();
 
     await harness.service.reviewEvidence({
@@ -422,12 +407,11 @@ describe("annual return evidence service", () => {
       actorId,
     });
 
-    const reviewOrder = vi.mocked(harness.documents.reviewDocument).mock.invocationCallOrder[0];
-    const updateOrder = vi.mocked(harness.annualReturns.updatePayment).mock.invocationCallOrder[0];
-    expect(reviewOrder).toBeLessThan(updateOrder);
+    expect(harness.documents.reviewDocument).toHaveBeenCalledOnce();
+    expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
   });
 
-  it("allows only one case mutation when concurrent reviews race on the same document", async () => {
+  it("allows only one proof review when concurrent reviews race on the same document", async () => {
     const harness = createHarness();
     vi.mocked(harness.documents.reviewDocument)
       .mockResolvedValueOnce(harness.reviewedDocument)
@@ -445,7 +429,8 @@ describe("annual return evidence service", () => {
     ]);
 
     expect(results.map((result) => result.status)).toEqual(["fulfilled", "rejected"]);
-    expect(harness.annualReturns.updatePayment).toHaveBeenCalledOnce();
+    expect(harness.documents.reviewDocument).toHaveBeenCalledTimes(2);
+    expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
   });
 
   it("preserves payment evidence accepted while a replacement rejection waits for the case lock", async () => {

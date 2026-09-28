@@ -1250,16 +1250,16 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
       const afterPayment = await repository.updatePayment({
         caseId: fixture.caseId,
-        status: "Payment received",
-        paymentProofDocumentId: fixture.paymentProofDocumentId,
+        status: "Overdue",
+        paymentProofDocumentId: null,
         actorId: USER_AMY_ID,
       });
       expect(afterPayment.payment).toMatchObject({
         id: fixture.paymentId,
-        status: "Payment received",
-        paymentProofDocumentId: fixture.paymentProofDocumentId,
+        status: "Overdue",
+        paymentProofDocumentId: null,
       });
-      expect(afterPayment.payment?.paidAt).toEqual(expect.any(String));
+      expect(afterPayment.payment?.paidAt).toBeNull();
 
       const afterFiling = await repository.updateFilingProof({
         caseId: fixture.caseId,
@@ -1363,8 +1363,8 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
       await repository.updatePayment({
         caseId: fixture.caseId,
-        status: "Payment received",
-        paymentProofDocumentId: fixture.paymentProofDocumentId,
+        status: "Overdue",
+        paymentProofDocumentId: null,
         actorId: USER_AMY_ID,
       });
 
@@ -1394,12 +1394,12 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           actor_role: "Admin",
           action: "update_payment",
           result: "succeeded",
-          summary: "Payment status changed to Payment received.",
+          summary: "Payment status changed to Overdue.",
           metadata: {
             invoiceNumber: "KOS-T5-0020",
             paymentId: fixture.paymentId,
-            paymentProofDocumentId: fixture.paymentProofDocumentId,
-            status: "Payment received",
+            paymentProofDocumentId: null,
+            status: "Overdue",
           },
         },
       ]);
@@ -1665,6 +1665,28 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
           }),
         ],
       });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "t13_scenario_3 refuses a direct Payment received transition without reconciled proof allocation",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 50,
+        currentStatus: "Payment pending",
+        paymentProof: true,
+      });
+      const repository = repositoryFor("2026-07-05");
+      await expect(
+        repository.updatePayment({
+          caseId: fixture.caseId,
+          status: "Payment received",
+          paymentProofDocumentId: fixture.paymentProofDocumentId,
+          actorId: USER_AMY_ID,
+        }),
+      ).rejects.toThrow(/reconciled proof allocation/i);
+      expect((await repository.getCase(fixture.caseId))?.payment?.status).toBe("Payment pending");
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

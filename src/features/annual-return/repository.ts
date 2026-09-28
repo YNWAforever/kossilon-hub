@@ -2281,15 +2281,40 @@ export function createAnnualReturnRepository(
       }
 
       const currentPaymentRows = await tx<
-        { status: PaymentStatus; payment_proof_document_id: string | null }[]
+        { id: string; status: PaymentStatus; payment_proof_document_id: string | null }[]
       >`
-        select status, payment_proof_document_id from payments
+        select id, status, payment_proof_document_id from payments
         where case_id = ${input.caseId} for update
       `;
       if (!currentPaymentRows[0]) throw new Error("Annual return payment not found.");
       const eventChanged =
         currentPaymentRows[0].status !== input.status ||
         currentPaymentRows[0].payment_proof_document_id !== paymentProofDocumentId;
+      if (isPaymentReceived && eventChanged) {
+        // A verified document is evidence about bytes, not an amount or an
+        // invoice. Only the T13 reconciliation service can create this unique
+        // allocation, in the same transaction, after checking the canonical
+        // invoice, amount, currency and current proof version. Direct case
+        // commands cannot bypass it by sending Payment received plus a doc id.
+        const allocations = await tx<{ id: string }[]>`
+          select a.id from payment_proof_allocations a
+          join payments p on p.id = a.payment_id
+          join document_versions v on v.id = a.proof_version_id
+            and v.superseded_by_version_id is null
+          join document_upload_intents i on i.id = v.intent_id
+          where a.payment_id = ${currentPaymentRows[0].id}
+            and v.document_id = ${paymentProofDocumentId}
+            and a.amount_minor = p.amount::bigint * 100
+            and a.currency = p.currency
+            and a.invoice_ref = p.invoice_number
+            and i.status = 'available' and i.scan_verdict_source = 'provider'
+            and v.verified_checksum_sha256 = i.checksum_sha256
+            and v.verified_byte_size = i.expected_size_bytes
+          limit 1`;
+        if (allocations.length !== 1) {
+          throw new Error("Payment received requires a reconciled proof allocation.");
+        }
+      }
 
       const updatedRows = await tx<
         { id: string; invoice_number: string; updated_at: string | Date }[]

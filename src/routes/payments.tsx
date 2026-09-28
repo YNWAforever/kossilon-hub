@@ -6,6 +6,10 @@ import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import { listAnnualReturnCases } from "../features/annual-return/server-fns";
 import { listDocuments } from "../features/documents/server-fns";
 import { PageHeader } from "@/components/page-header";
+import type { AnnualReturnCase as ProductionCase } from "@/features/annual-return/types";
+import type { PrivateDocument } from "@/features/documents/repository";
+import { listPaymentObservations, reconcilePaymentAction } from "@/features/payments/server-fns";
+import type { PaymentObservation } from "@/features/payments/reconciliation";
 
 import {
   type AnnualReturnCase,
@@ -36,6 +40,249 @@ const paymentLabels: Record<AnnualReturnPaymentStatus, string> = {
 function PaymentsRoute() {
   const { dataMode } = Route.useRouteContext();
   return dataMode === "demo" ? <DemoPaymentsRoute /> : <ProductionPaymentsRoute />;
+}
+
+function parseMinorUnits(value: string): number | null {
+  if (!/^(0|[1-9]\d*)(?:\.(\d{1,2}))?$/.test(value.trim())) return null;
+  const [whole, fraction = ""] = value.trim().split(".");
+  const amount = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+  return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
+}
+
+function ObservationDecision({
+  observation,
+  caseItem,
+  proofs,
+}: {
+  observation: PaymentObservation;
+  caseItem: ProductionCase;
+  proofs: PrivateDocument[];
+}) {
+  const queryClient = useQueryClient();
+  const [proofVersionId, setProofVersionId] = useState("");
+  const [invoiceRef, setInvoiceRef] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("");
+  const [reason, setReason] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const decision = useMutation({
+    mutationFn: reconcilePaymentAction,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["payment-observations", observation.caseId],
+      });
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
+      setValidationError(null);
+    },
+  });
+  const decided = observation.status === "matched" || observation.status === "rejected";
+  const expectedMinor = caseItem.payment ? caseItem.payment.amount * 100 : null;
+
+  function match() {
+    const amountMinor = parseMinorUnits(amount);
+    if (
+      !proofVersionId ||
+      !invoiceRef.trim() ||
+      !amountMinor ||
+      !/^[A-Z]{3}$/.test(currency.trim().toUpperCase())
+    ) {
+      setValidationError(
+        "Choose a reviewed proof and enter the invoice, exact amount and currency.",
+      );
+      return;
+    }
+    setValidationError(null);
+    decision.mutate({
+      data: {
+        observationId: observation.id,
+        caseId: observation.caseId,
+        proofVersionId,
+        expectedRevision: observation.revision,
+        decision: "match",
+        reason: reason.trim() || undefined,
+        confirmation: {
+          invoiceRef: invoiceRef.trim(),
+          amountMinor,
+          currency: currency.trim().toUpperCase(),
+        },
+      },
+    });
+  }
+
+  function reject() {
+    if (!reason.trim()) {
+      setValidationError("A rejection reason is required.");
+      return;
+    }
+    setValidationError(null);
+    decision.mutate({
+      data: {
+        observationId: observation.id,
+        caseId: observation.caseId,
+        expectedRevision: observation.revision,
+        decision: "reject",
+        reason: reason.trim(),
+      },
+    });
+  }
+
+  return (
+    <div className="space-y-3 border-b px-4 py-4 text-sm">
+      <div className="flex flex-wrap items-center gap-3">
+        <strong>Workbook date {observation.receivedOn}</strong>
+        <span>Observation: {observation.status}</span>
+        <span>Revision {observation.revision}</span>
+        {observation.decisionReason ? <span>Reason: {observation.decisionReason}</span> : null}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Canonical invoice {caseItem.payment?.invoiceNumber ?? "missing"} · Amount{" "}
+        {expectedMinor === null
+          ? "unknown"
+          : `${(expectedMinor / 100).toFixed(2)} ${caseItem.payment?.currency}`}{" "}
+        · Status {caseItem.payment?.status ?? "unknown"}. Confirm the actual payment details below.
+      </p>
+      {!decided ? (
+        <div className="grid gap-2 md:grid-cols-4">
+          <select
+            aria-label="Reviewed payment proof"
+            className="rounded-md border bg-background px-3 py-2"
+            disabled={decision.isPending}
+            onChange={(event) => setProofVersionId(event.target.value)}
+            value={proofVersionId}
+          >
+            <option value="">Select reviewed proof</option>
+            {proofs.map((proof) => (
+              <option key={proof.currentVersionId} value={proof.currentVersionId ?? ""}>
+                {proof.fileName} · version {proof.versionNumber}
+              </option>
+            ))}
+          </select>
+          <input
+            aria-label="Confirmed invoice reference"
+            className="rounded-md border bg-background px-3 py-2"
+            placeholder="Invoice reference"
+            value={invoiceRef}
+            onChange={(event) => setInvoiceRef(event.target.value)}
+          />
+          <input
+            aria-label="Confirmed amount"
+            className="rounded-md border bg-background px-3 py-2"
+            inputMode="decimal"
+            placeholder="Amount (e.g. 1800.00)"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+          />
+          <input
+            aria-label="Confirmed currency"
+            className="rounded-md border bg-background px-3 py-2"
+            maxLength={3}
+            placeholder="HKD"
+            value={currency}
+            onChange={(event) => setCurrency(event.target.value)}
+          />
+          <input
+            aria-label="Reconciliation reason"
+            className="rounded-md border bg-background px-3 py-2 md:col-span-2"
+            placeholder="Review note or rejection reason"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <div className="flex gap-2 md:col-span-2">
+            <button
+              className="rounded-md bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50"
+              disabled={decision.isPending}
+              onClick={match}
+              type="button"
+            >
+              Match payment
+            </button>
+            <button
+              className="rounded-md border px-3 py-2 disabled:opacity-50"
+              disabled={decision.isPending}
+              onClick={reject}
+              type="button"
+            >
+              Reject observation
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {validationError || decision.error ? (
+        <p role="alert" className="text-destructive">
+          {validationError ?? decision.error?.message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function PaymentReconciliationPanel({
+  cases,
+  paymentDocuments,
+}: {
+  cases: ProductionCase[];
+  paymentDocuments: PrivateDocument[];
+}) {
+  const [selectedCaseId, setSelectedCaseId] = useState("");
+  const selectedCase = cases.find((item) => item.id === selectedCaseId);
+  const observations = useQuery({
+    queryKey: ["payment-observations", selectedCaseId],
+    queryFn: () => listPaymentObservations({ data: { caseId: selectedCaseId } }),
+    enabled: Boolean(selectedCaseId),
+    retry: false,
+  });
+  const proofs = paymentDocuments.filter(
+    (document) =>
+      document.caseId === selectedCaseId &&
+      document.reviewStatus === "verified" &&
+      document.uploadStatus === "available" &&
+      document.scanVerdictSource === "provider" &&
+      document.verifiedChecksum === document.checksum &&
+      document.verifiedByteSize === document.sizeBytes &&
+      Boolean(document.currentVersionId),
+  );
+  return (
+    <section className="space-y-3 border-y py-4">
+      <div className="px-4">
+        <h2 className="font-semibold">Payment observations and reconciliation</h2>
+        <p className="text-xs text-muted-foreground">
+          A workbook payment date is an observation. Staff must confirm the invoice, amount,
+          currency and reviewed proof before the canonical payment changes.
+        </p>
+        <select
+          aria-label="Case for payment reconciliation"
+          className="mt-2 w-full max-w-md rounded-md border bg-background px-3 py-2 text-sm"
+          onChange={(event) => setSelectedCaseId(event.target.value)}
+          value={selectedCaseId}
+        >
+          <option value="">Select a case</option>
+          {cases.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.companyName} · {item.returnYear}
+            </option>
+          ))}
+        </select>
+      </div>
+      {observations.isLoading ? <p className="px-4 text-sm">Loading observations...</p> : null}
+      {observations.error ? (
+        <p role="alert" className="px-4 text-sm text-destructive">
+          {observations.error.message}
+        </p>
+      ) : null}
+      {selectedCase && observations.data?.length === 0 ? (
+        <p className="px-4 text-sm text-muted-foreground">No payment observations for this case.</p>
+      ) : null}
+      {selectedCase &&
+        observations.data?.map((item) => (
+          <ObservationDecision
+            key={`${item.id}:${item.revision}`}
+            observation={item}
+            caseItem={selectedCase}
+            proofs={proofs}
+          />
+        ))}
+    </section>
+  );
 }
 
 // Exported for -payments.interaction.test.tsx. The dataMode branch lives in the
@@ -131,7 +378,7 @@ export function ProductionPaymentsRoute() {
                         }
                         type="button"
                       >
-                        {pending ? "Reviewing..." : "Verify payment"}
+                        {pending ? "Reviewing..." : "Verify proof"}
                       </button>
                       <button
                         className="rounded-md border px-3 py-2 disabled:opacity-50"
@@ -173,6 +420,8 @@ export function ProductionPaymentsRoute() {
           ) : null}
         </div>
       </section>
+
+      <PaymentReconciliationPanel cases={cases} paymentDocuments={paymentDocuments} />
 
       {reviewMutation.error ? (
         <p role="alert" className="text-sm text-destructive">

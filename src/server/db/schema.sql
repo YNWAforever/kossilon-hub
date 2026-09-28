@@ -1345,21 +1345,6 @@ create table if not exists nar_import_apply_events (
 );
 create index if not exists nar_import_apply_events_case_idx on nar_import_apply_events (case_id,created_at desc);
 
-create table if not exists nar_import_payment_observations (
-  id uuid primary key default gen_random_uuid(),
-  source_row_id uuid not null unique references nar_import_rows(id) on delete restrict,
-  case_id uuid not null references annual_return_cases(id) on delete restrict,
-  company_id uuid not null references companies(id) on delete restrict,
-  observed_date date not null,
-  raw_value text not null,
-  status text not null default 'pending_review' check (status in ('pending_review','matched','rejected')),
-  created_by uuid not null references users(id) on delete restrict,
-  created_at timestamptz not null default now()
-);
-create index if not exists nar_import_payment_observations_pending_idx
-  on nar_import_payment_observations (status,created_at) where status = 'pending_review';
-
-
 -- from 0026_case_parties_and_requirement_instances.sql
 -- 0026: who a requirement applies to, and which pages answer it.
 --
@@ -1576,6 +1561,64 @@ create table if not exists document_version_texts (
   extractor_version text not null,
   extracted_at timestamptz not null default now()
 );
+
+-- T13 observation and allocation tables require document_versions above.
+create table if not exists nar_import_payment_observations (
+  id uuid primary key default gen_random_uuid(),
+  source_row_id uuid not null unique references nar_import_rows(id) on delete restrict,
+  case_id uuid not null references annual_return_cases(id) on delete restrict,
+  company_id uuid not null references companies(id) on delete restrict,
+  observed_date date not null,
+  raw_value text not null,
+  status text not null default 'pending_review' check (status in ('pending_review','matched','rejected','exception')),
+  revision integer not null default 1 check (revision > 0),
+  invoice_ref text,
+  amount_minor bigint check (amount_minor is null or amount_minor > 0),
+  currency text check (currency is null or currency ~ '^[A-Z]{3}$'),
+  proof_version_id uuid references document_versions(id) on delete restrict,
+  reviewed_by uuid references users(id) on delete restrict,
+  reviewed_at timestamptz,
+  decision_reason text,
+  created_by uuid not null references users(id) on delete restrict,
+  created_at timestamptz not null default now()
+);
+create index if not exists nar_import_payment_observations_pending_idx
+  on nar_import_payment_observations (status,created_at) where status = 'pending_review';
+create unique index if not exists nar_import_payment_observations_matched_invoice_uidx
+  on nar_import_payment_observations (company_id,invoice_ref)
+  where status = 'matched' and invoice_ref is not null;
+
+create table if not exists payment_reconciliation_events (
+  id uuid primary key default gen_random_uuid(),
+  observation_id uuid not null references nar_import_payment_observations(id) on delete restrict,
+  payment_id uuid references payments(id) on delete restrict,
+  proof_version_id uuid references document_versions(id) on delete restrict,
+  actor_id uuid not null references users(id) on delete restrict,
+  decision text not null check (decision in ('match','reject')),
+  result text not null check (result in ('matched','rejected','exception')),
+  observation_revision integer not null check (observation_revision > 0),
+  reason text,
+  before_values jsonb not null,
+  after_values jsonb not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists payment_reconciliation_events_observation_idx
+  on payment_reconciliation_events (observation_id,created_at desc);
+
+create table if not exists payment_proof_allocations (
+  id uuid primary key default gen_random_uuid(),
+  observation_id uuid not null unique references nar_import_payment_observations(id) on delete restrict,
+  payment_id uuid not null references payments(id) on delete restrict,
+  proof_version_id uuid not null unique references document_versions(id) on delete restrict,
+  amount_minor bigint not null check (amount_minor > 0),
+  currency text not null check (currency ~ '^[A-Z]{3}$'),
+  invoice_ref text not null,
+  created_by uuid not null references users(id) on delete restrict,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists payment_proof_allocations_payment_uidx
+  on payment_proof_allocations (payment_id);
+
 
 -- from 0028_document_analysis_jobs_and_findings.sql
 create table if not exists document_analysis_jobs (
