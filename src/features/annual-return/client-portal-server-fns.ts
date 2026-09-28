@@ -1,3 +1,4 @@
+import { entityIdSchema } from "@/features/runtime/entity-id";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -90,7 +91,8 @@ export async function listClientPortalCasesForActor(
   if (companyIds.length === 0) return [];
 
   const cases = await dependencies.repository.listCases({ companyIds });
-  return cases.map(toSummary);
+  const authorized = new Set(companyIds);
+  return cases.filter((case_) => authorized.has(case_.companyId)).map(toSummary);
 }
 
 export async function getClientPortalCaseForActor(
@@ -103,7 +105,10 @@ export async function getClientPortalCaseForActor(
   // Filtered by membership rather than fetched by id and checked afterwards, so a
   // case outside the client's companies is not read at all.
   const cases = await dependencies.repository.listCases({ companyIds });
-  const case_ = cases.find((candidate) => candidate.id === input.caseId);
+  const authorized = new Set(companyIds);
+  const case_ = cases.find(
+    (candidate) => candidate.id === input.caseId && authorized.has(candidate.companyId),
+  );
   return case_ ? toClientDetail(case_) : null;
 }
 
@@ -178,7 +183,7 @@ export const listClientPortalCases = createServerFn({ method: "GET" })
   .handler(() => withClientPortalDependencies(listClientPortalCasesForActor));
 
 export const getClientPortalCase = createServerFn({ method: "GET" })
-  .validator(z.object({ caseId: z.string().uuid() }).strict())
+  .validator(z.object({ caseId: entityIdSchema }).strict())
   .handler(({ data }) =>
     withClientPortalDependencies((dependencies) => getClientPortalCaseForActor(data, dependencies)),
   );

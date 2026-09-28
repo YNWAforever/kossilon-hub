@@ -7,13 +7,13 @@ import { createSqlClient, type SqlClient } from "@/server/db/client";
 import {
   createAnnualReturnRepository,
   hongKongBusinessDate,
-  DASHBOARD_METRICS_SCAN_LIMIT,
   DEFAULT_CASE_LIMIT,
   RISK_FILTER_SCAN_LIMIT,
 } from "./repository";
 import { assertAnnualReturnStatusActionAllowed } from "./server-fns";
 import type { AnnualReturnStatus, ChecklistStatus, PaymentStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
+import { summarizeOperationalCases } from "./operational-metrics";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 
@@ -902,20 +902,132 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         dueIn30: 1,
         overdue: 0,
         highRisk: 0,
-        missingDocuments: 4,
+        missingDocuments: 1,
         paymentPending: 2,
         assignedToMe: 1,
       });
 
       await expect(repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID)).resolves.toMatchObject(
         {
-          assignedToMe: 1,
+          assignedToMe: 0,
         },
       );
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  it("rejects a malformed continuation cursor instead of silently restarting at page one", async () => {
+    const repository = repositoryFor("2026-07-05");
+    await expect(repository.listCasePage({ limit: 200, cursor: "not-a-cursor" })).rejects.toThrow(
+      "Invalid annual return case cursor.",
+    );
+  });
+  it(
+    "t04_scenario_1 distinguishes exact 200/400 boundaries from a 401st case",
+    async () => {
+      const sql = sqlForTests();
+      async function seed(from: number, to: number) {
+        await sql.begin(async (tx) => {
+          await tx`
+          insert into companies (
+            id, company_name, cr_number, br_number, incorporation_date,
+            annual_return_basis_date, registered_office, company_secretary,
+            status, assigned_owner_id, assigned_team_id
+          )
+          select
+            ('90000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+            'Page Company ' || lpad(i::text, 4, '0'),
+            'T4CR' || i::text,
+            'T4BR' || i::text,
+            '2021-07-01', '2026-07-01', 'Hong Kong', 'Kossilon',
+            'active', ${USER_AMY_ID}::uuid, ${TEAM_ANNUAL_RETURN_ID}::uuid
+          from generate_series(${from}::int, ${to}::int) i
+        `;
+          await tx`
+          insert into annual_return_cases (
+            id, company_id, return_year, made_up_date, filing_due_date,
+            current_status, risk_level, owner_id, reminders_sent
+          )
+          select
+            ('91000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+            ('90000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+            2090, '2026-07-01', '2026-08-12', 'Upcoming', 'green',
+            ${USER_AMY_ID}::uuid, 0
+          from generate_series(${from}::int, ${to}::int) i
+        `;
+        });
+      }
+
+      const repository = repositoryFor("2026-07-05");
+      const scope = {
+        companyIds: Array.from({ length: 401 }, (_, index) =>
+          testUuid(TEST_COMPANY_UUID_PREFIX, index + 1000),
+        ),
+        limit: 200,
+      };
+      await seed(1000, 1199);
+      const exact200 = await repository.listCasePage(scope);
+      expect(exact200.cases).toHaveLength(200);
+      expect(exact200.nextCursor).toBeNull();
+
+      await seed(1200, 1399);
+      const first400 = await repository.listCasePage(scope);
+      expect(first400.cases).toHaveLength(200);
+      expect(first400.nextCursor).not.toBeNull();
+      const exact400 = await repository.listCasePage({ ...scope, cursor: first400.nextCursor! });
+      expect(exact400.cases).toHaveLength(200);
+      expect(exact400.nextCursor).toBeNull();
+
+      await seed(1400, 1400);
+      const first401 = await repository.listCasePage(scope);
+      const second401 = await repository.listCasePage({ ...scope, cursor: first401.nextCursor! });
+      const last401 = await repository.listCasePage({ ...scope, cursor: second401.nextCursor! });
+      expect([first401.cases.length, second401.cases.length, last401.cases.length]).toEqual([
+        200, 200, 1,
+      ]);
+      expect(last401.nextCursor).toBeNull();
+      expect(
+        new Set([...first401.cases, ...second401.cases, ...last401.cases].map((item) => item.id))
+          .size,
+      ).toBe(401);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+  it(
+    "t03_scenario_3 aligns scoped board and dashboard overdue while separating missing cases and items",
+    async () => {
+      const active = await createMutableAnnualReturnFixture({ sequence: 71 });
+      const filed = await createMutableAnnualReturnFixture({
+        sequence: 72,
+        currentStatus: "Filed",
+      });
+      const sql = sqlForTests();
+      await sql`
+      update annual_return_cases
+      set filing_due_date = '2026-07-04'
+      where id in (${active.caseId}, ${filed.caseId})
+    `;
+      await sql`
+      insert into annual_return_checklist_items (id, case_id, item_label, required, status, due_date)
+      values (${testUuid(TEST_CHECKLIST_UUID_PREFIX, 73)}, ${active.caseId}, 'Second missing item', true, 'Missing', '2026-07-04')
+    `;
+      const repository = repositoryFor("2026-07-05");
+      const scope = { companyIds: [active.companyId, filed.companyId] };
+      const board = await repository.boardTotals(scope);
+      const dashboard = await repository.dashboardMetrics("2026-07-05", USER_AMY_ID, scope);
+      expect(board.overdue).toBe(1);
+      expect(dashboard.overdue).toBe(board.overdue);
+      expect(board.missingDocuments).toBe(1);
+      expect(dashboard.missingDocuments).toBe(1);
+      const operational = await repository.operationalMetrics(scope, "2026-07-05", USER_AMY_ID);
+      expect(operational.missingEvidenceCases).toBe(1);
+      expect(operational.missingEvidenceItems).toBe(2);
+      const hydrated = await repository.listCases(scope);
+      const oracle = summarizeOperationalCases(hydrated, "2026-07-05", USER_AMY_ID);
+      expect(operational).toEqual(oracle);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
   it(
     "records reminders, increments the case counter, moves upcoming cases, and writes timeline",
     async () => {
@@ -2259,9 +2371,8 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
 
 /**
  * risk, missingDocuments and overdueOnly used to be applied in JS *after* the SQL
- * LIMIT, so past DEFAULT_CASE_LIMIT a filtered board silently omitted matches and
- * the dashboard tiles counted the same truncated page. Two of the three are SQL
- * predicates now; the third scans a wider window.
+ * LIMIT, so past DEFAULT_CASE_LIMIT a filtered board silently omitted matches.
+ * Two of the three filters are SQL predicates; risk scans a wider window.
  */
 describe("case filters narrow before the limit", () => {
   const source = readFileSync(new URL("./repository.ts", import.meta.url), "utf8");
@@ -2279,49 +2390,9 @@ describe("case filters narrow before the limit", () => {
     expect(selectCaseRows).toContain("i.required = true");
   });
 
-  it("leaves only the derived risk filter to run after hydration", () => {
-    const hydrated = source.slice(
-      source.indexOf("function caseMatchesHydratedFilters"),
-      source.indexOf("function countOutstandingRequiredEvidence"),
-    );
-
-    expect(hydrated).toContain("filters.risk");
-    expect(hydrated).not.toContain("missingDocuments");
-    expect(hydrated).not.toContain("overdueOnly");
-  });
-
   it("scans a wider window when the derived risk filter is active", () => {
     expect(RISK_FILTER_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
     expect(selectCaseRows).toContain("RISK_FILTER_SCAN_LIMIT");
-  });
-
-  it("counts dashboard tiles over more than one page of cases, within the actor's scope", () => {
-    expect(DASHBOARD_METRICS_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    // The tiles were firm-wide for every role while the board was scoped, so a
-    // Staff user saw headline numbers for books they cannot open.
-    expect(source).toContain("scope: CaseFilters = {}");
-    expect(source).toContain("{ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }");
-    expect(source).toContain("limit: DASHBOARD_METRICS_SCAN_LIMIT");
-  });
-
-  // The SQL EXISTS clause and hasOutstandingRequiredEvidence must agree, or a
-  // filtered board and the case detail behind it disagree about the same case.
-  it("keeps the SQL predicate identical to hasOutstandingRequiredEvidence", () => {
-    const js = source.slice(
-      source.indexOf("function hasOutstandingRequiredEvidence"),
-      source.indexOf("function hasText"),
-    );
-
-    for (const [jsClause, sqlClause] of [
-      ["item.required", "i.required = true"],
-      ['item.status !== "Verified"', "i.status <> 'Verified'"],
-      ["item.receivedAt === null", "i.received_at is null"],
-      ["item.verifiedAt === null", "i.verified_at is null"],
-      ["item.documentId === null", "i.document_id is null"],
-    ]) {
-      expect(js, `JS side missing ${jsClause}`).toContain(jsClause);
-      expect(selectCaseRows, `SQL side missing ${sqlClause}`).toContain(sqlClause);
-    }
   });
 });
 

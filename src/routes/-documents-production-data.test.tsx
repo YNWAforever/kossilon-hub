@@ -77,10 +77,12 @@ async function render(options: {
   documents: unknown[];
   caseData?: unknown;
   withCaseId: boolean;
+  caseId?: string;
   dataMode?: "demo" | "production";
 }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const path = options.withCaseId ? `/documents?caseId=${CASE_ID}` : "/documents";
+  const selectedCaseId = options.caseId ?? CASE_ID;
+  const path = options.withCaseId ? `/documents?caseId=${selectedCaseId}` : "/documents";
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
@@ -89,7 +91,7 @@ async function render(options: {
   });
   await router.load();
   await queryClient.prefetchQuery({
-    queryKey: ["documents", "archive", options.withCaseId ? CASE_ID : "all"],
+    queryKey: ["documents", "archive", options.withCaseId ? selectedCaseId : "all"],
     queryFn: () => Promise.resolve(options.documents),
   });
   if (options.withCaseId) {
@@ -97,7 +99,7 @@ async function render(options: {
       // Was ["annual-return", ...] — singular. The factory produces
       // ["annual-returns", ...], so this prefetch never matched and the
       // case-backed branch these tests claim to cover was never rendered.
-      queryKey: annualReturnQueryKeys.detail(CASE_ID),
+      queryKey: annualReturnQueryKeys.detail(selectedCaseId),
       queryFn: () => Promise.resolve(options.caseData),
     });
   }
@@ -105,6 +107,23 @@ async function render(options: {
 }
 
 describe("/documents against data the types say is impossible", () => {
+  it("accepts an existing legacy UUID-shaped case link", async () => {
+    const legacyId = "40000000-0000-0000-0000-000000000002";
+    const html = await render({
+      documents: [{ ...baseDocument, caseId: legacyId }],
+      withCaseId: true,
+      caseId: legacyId,
+    });
+    expect(html).toContain("director-passport.pdf");
+    expect(html).not.toContain("案件連結無效");
+  });
+
+  it("does not treat an invalid case link as an unscoped all-documents read", async () => {
+    const html = await render({ documents: [], withCaseId: true, caseId: "not-a-case" });
+    expect(html).toContain("案件連結無效");
+    expect(html).not.toContain("No production documents match this scope.");
+  });
+
   it("a production case with no checklist array", async () => {
     const html = await render({
       documents: [baseDocument],

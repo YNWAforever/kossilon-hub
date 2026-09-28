@@ -1,3 +1,5 @@
+import { safeRequestId } from "@/features/runtime/query-error";
+import { isEntityId, parseEntityId } from "@/features/runtime/entity-id";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -52,11 +54,14 @@ function DocumentsRoute() {
   const [status, setStatus] = useState("all");
   const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
   const [warning, setWarning] = useState<string | undefined>();
-  const productionCaseId = isUuid(caseFilter) ? caseFilter : undefined;
+  const productionCaseId = parseEntityId(caseFilter);
+  const invalidProductionCaseFilter =
+    dataMode === "production" && caseFilter !== "all" && !productionCaseId;
   const productionDocumentsQuery = useQuery({
     queryKey: ["documents", "archive", productionCaseId ?? "all"],
     queryFn: () => listDocuments({ data: productionCaseId ? { caseId: productionCaseId } : {} }),
     retry: false,
+    enabled: dataMode === "production" && !invalidProductionCaseFilter,
   });
   // The production section had no filter of its own: the only case <select> on
   // this screen lived inside the demo branch and listed demo cases, so in
@@ -73,9 +78,11 @@ function DocumentsRoute() {
   const productionCaseQuery = useQuery({
     queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "all"),
     queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
-    enabled: Boolean(productionCaseId),
+    enabled: dataMode === "production" && Boolean(productionCaseId),
     retry: false,
   });
+  const productionReadError =
+    productionDocumentsQuery.error ?? productionCasesQuery.error ?? productionCaseQuery.error;
   const evidenceMutationKey = [...annualReturnQueryKeys.all, "evidence-review"];
   const pendingEvidenceIds = useMutationState({
     filters: { mutationKey: evidenceMutationKey, status: "pending" },
@@ -161,20 +168,31 @@ function DocumentsRoute() {
         </div>
       ) : null}
 
-      <ProductionDocumentsSection
-        caseItem={productionCaseQuery.data ?? undefined}
-        cases={productionCasesQuery.data ?? []}
-        casesLoading={productionCasesQuery.isLoading}
-        selectedCaseId={productionCaseId}
-        onSelectCase={(next) => setCaseFilter(next)}
-        documents={productionDocumentsQuery.data ?? []}
-        error={productionDocumentsQuery.error}
-        loading={productionDocumentsQuery.isLoading}
-        onDownload={handleDownload}
-        onPreview={handlePreview}
-        onReview={(input) => reviewMutation.mutate({ data: input })}
-        pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
-      />
+      {invalidProductionCaseFilter ? (
+        <p role="alert" className="rounded-md bg-status-yellow-soft p-3 text-sm text-status-yellow">
+          案件連結無效，請從案件清單重新開啟。
+        </p>
+      ) : (
+        <ProductionDocumentsSection
+          caseItem={productionCaseQuery.data ?? undefined}
+          cases={productionCasesQuery.data ?? []}
+          casesLoading={dataMode === "production" && productionCasesQuery.isPending}
+          selectedCaseId={productionCaseId}
+          onSelectCase={(next) => setCaseFilter(next)}
+          documents={productionReadError ? [] : (productionDocumentsQuery.data ?? [])}
+          error={productionReadError}
+          onRetry={() => {
+            if (productionDocumentsQuery.isError) void productionDocumentsQuery.refetch();
+            if (productionCasesQuery.isError) void productionCasesQuery.refetch();
+            if (productionCaseQuery.isError) void productionCaseQuery.refetch();
+          }}
+          loading={dataMode === "production" && productionDocumentsQuery.isPending}
+          onDownload={handleDownload}
+          onPreview={handlePreview}
+          onReview={(input) => reviewMutation.mutate({ data: input })}
+          pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
+        />
+      )}
 
       {/* The archive below is fixture-backed: getDocumentArchiveRows reads the
           demo stores. Rendering it in production showed staff invented records
@@ -321,7 +339,7 @@ function DocumentRow({
     decision: ClientPortalDocumentReviewDecision,
     options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
   ) {
-    if (!row.documentId || !isUuid(row.documentId) || !isUuid(row.caseId)) {
+    if (!row.documentId || !isEntityId(row.documentId) || !isEntityId(row.caseId)) {
       onWarning("Demo archive rows are read-only; production records are reviewed above.");
       return;
     }
@@ -463,6 +481,7 @@ function ProductionDocumentsSection({
   onSelectCase,
   documents,
   error,
+  onRetry,
   loading,
   onDownload,
   onPreview,
@@ -476,6 +495,7 @@ function ProductionDocumentsSection({
   onSelectCase: (caseId: string) => void;
   documents: PrivateDocument[];
   error: Error | null;
+  onRetry: () => void;
   loading: boolean;
   onDownload: (documentId: string) => void;
   onPreview: (documentId: string, fileName: string) => void;
@@ -526,7 +546,13 @@ function ProductionDocumentsSection({
         </div>
       </div>
       {error ? (
-        <p className="mt-4 text-sm text-status-yellow">Production records unavailable.</p>
+        <div role="alert" className="mt-4 text-sm text-status-yellow">
+          Production records unavailable.
+          {safeRequestId(error) ? ` Reference: ${safeRequestId(error)}` : null}
+          <button type="button" className="ml-2 underline" onClick={onRetry}>
+            Retry
+          </button>
+        </div>
       ) : null}
       {loading ? (
         <p className="mt-4 text-sm text-muted-foreground">Loading production records...</p>
@@ -552,8 +578,8 @@ function ProductionDocumentsSection({
           // filing package, so it needs a genuine scan verdict -- not the
           // deterministic fixture's, however long ago it landed.
           const canReview =
-            isUuid(document.caseId ?? undefined) &&
-            (!isChecklistEvidence || isUuid(checklistItemId)) &&
+            isEntityId(document.caseId ?? undefined) &&
+            (!isChecklistEvidence || isEntityId(checklistItemId)) &&
             safety === "verified";
           const pending = pendingDocumentIds.includes(document.id);
 
@@ -614,12 +640,6 @@ function ProductionDocumentsSection({
         })}
       </div>
     </section>
-  );
-}
-function isUuid(value: string | undefined): value is string {
-  return Boolean(
-    value &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
   );
 }
 

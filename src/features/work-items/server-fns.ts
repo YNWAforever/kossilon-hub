@@ -193,6 +193,10 @@ export const listWorkQueue = createServerFn({ method: "GET" })
     ),
   );
 
+export const workQueueLastSlaEvaluation = createServerFn({ method: "GET" }).handler(() =>
+  withDefaultAuthorizedWorkItemRepository(async (repository) => repository.lastSlaEvaluationAt()),
+);
+
 export const recommendWorkItemAssignees = createServerFn({ method: "GET" })
   .validator(workItemIdInputSchema)
   .handler(({ data }) =>

@@ -226,6 +226,20 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
           `;
 
           const repository = createWorkItemRepository({ sql: tx });
+          await tx`
+            insert into maintenance_runs (
+              scheduled_for, started_at, finished_at, duration_ms, outcome, passes, trigger_source
+            ) values (
+              '2099-01-01T00:00:00.000Z', '2099-01-01T00:00:00.000Z',
+              '2099-01-01T00:00:01.000Z', 1000, 'succeeded',
+              ${tx.json({ escalations: { warnings: 0, breaches: 0 } })}, 'scheduled'
+            ), (
+              '2099-01-02T00:00:00.000Z', '2099-01-02T00:00:00.000Z',
+              '2099-01-02T00:00:01.000Z', 1000, 'succeeded',
+              ${tx.json({ escalations: null })}, 'scheduled'
+            )
+          `;
+          expect(await repository.lastSlaEvaluationAt()).toBe("2099-01-01T00:00:01.000Z");
           const queue = await repository.listQueue({ teamId: fixture.team_id });
           expect(
             queue
@@ -257,6 +271,8 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
 
           const recommendations = await repository.recommendAssignees(warningId);
           expect(recommendations.length).toBeGreaterThan(0);
+          expect(recommendations[0].person?.name).toBeTruthy();
+          expect(recommendations[0].person?.teamName).toBeTruthy();
           const assigned = await repository.assign({
             workItemId: warningId,
             selectedUserId: recommendations[0].userId,
@@ -265,6 +281,13 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
             overrideReason: "Integration fixture capacity exception",
           });
           expect(assigned.version).toBe(2);
+          const assignedQueueItem = (await repository.listQueue({ teamId: fixture.team_id })).find(
+            (entry) => entry.id === warningId,
+          );
+          expect(assignedQueueItem?.ownerPerson?.name).toBe(recommendations[0].person?.name);
+          expect(assignedQueueItem?.ownerPerson?.teamName).toBe(
+            recommendations[0].person?.teamName,
+          );
           const assignmentEvents = await tx<
             {
               recommendation_factors: {

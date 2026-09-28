@@ -17,7 +17,6 @@ import type postgres from "postgres";
 import {
   buildReminderDraft,
   calculateFilingDueDate,
-  daysBetween,
   hongKongBusinessDate,
   isAllowedStatusTransition,
   offsetDateOnly,
@@ -50,6 +49,7 @@ import type {
 } from "./types";
 import type { DocumentItem } from "@/features/checklist-templates/types";
 import { documentSafetyOf } from "@/features/documents/safety";
+import type { OperationalMetrics } from "./operational-metrics";
 import type { DocumentStatus, ScanVerdictSource } from "@/features/documents/types";
 import type {
   RequirementApplicability,
@@ -203,6 +203,7 @@ export type BoardTotals = {
   dueIn7: number;
   dueIn30: number;
   missingDocuments: number;
+  missingEvidenceItems: number;
   paymentPending: number;
 };
 
@@ -419,6 +420,11 @@ export type AnnualReturnRepository = {
     options?: { pageSize?: number; maxPages?: number },
   ): Promise<AnnualReturnCase[]>;
   boardTotals(filters: CaseFilters): Promise<BoardTotals>;
+  operationalMetrics(
+    filters: CaseFilters,
+    today: string,
+    currentUserId: string | null,
+  ): Promise<OperationalMetrics>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
   listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>;
   listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
@@ -511,7 +517,6 @@ export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
  */
 export const CASE_HISTORY_ROW_LIMIT = 200;
 
-const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
 // Accepted `documents.file_type` values per evidence kind. Previously three bare
 // literals that only the seed script wrote — see ./evidence-file-types.
@@ -541,22 +546,8 @@ function requiredTimestampString(value: string | Date): string {
   return timestamp;
 }
 
-function hasOutstandingRequiredEvidence(item: AnnualReturnChecklistItem): boolean {
-  return (
-    item.required &&
-    (item.status !== "Verified" ||
-      item.receivedAt === null ||
-      item.verifiedAt === null ||
-      item.documentId === null)
-  );
-}
-
 function hasText(value: string | null): boolean {
   return typeof value === "string" && value.trim().length > 0;
-}
-
-function isFiledOrCompleted(case_: AnnualReturnCase): boolean {
-  return FILED_OR_COMPLETED_STATUSES.has(case_.currentStatus);
 }
 
 function isLockedOrCompleted(case_: AnnualReturnCase): boolean {
@@ -575,10 +566,6 @@ function assertSingleMutatedRow(rows: { id: string }[], message: string): void {
   if (rows.length !== 1) {
     throw new Error(message);
   }
-}
-
-function isActiveForOperationalMetrics(case_: AnnualReturnCase): boolean {
-  return !isFiledOrCompleted(case_);
 }
 
 function mapChecklist(row: ChecklistRow): AnnualReturnChecklistItem {
@@ -650,10 +637,6 @@ function hydrateCase(
  */
 function caseMatchesHydratedFilters(case_: AnnualReturnCase, filters: CaseFilters): boolean {
   return !filters.risk || case_.riskLevel === filters.risk;
-}
-
-function countOutstandingRequiredEvidence(case_: AnnualReturnCase): number {
-  return case_.checklist.filter(hasOutstandingRequiredEvidence).length;
 }
 
 function withTransaction<T>(
@@ -852,6 +835,9 @@ export function createAnnualReturnRepository(
       ? `%${filters.q.trim().replace(/[\\%_]/g, (character) => `\\${character}`)}%`
       : null;
     const cursor = decodeCaseCursor(filters.cursor);
+    if (filters.cursor !== undefined && cursor === null) {
+      throw new Error("Invalid annual return case cursor.");
+    }
 
     return sql<CaseRow[]>`
       select
@@ -900,7 +886,7 @@ export function createAnnualReturnRepository(
         and (
           ${missingDocuments}::date is null
           or ${wantsMissingDocuments} = exists (
-            -- Mirrors hasOutstandingRequiredEvidence exactly; the two are pinned
+            -- Mirrors the domain evidence oracle; the two are pinned
             -- together by a test.
             select 1
             from annual_return_checklist_items i
@@ -1097,14 +1083,18 @@ export function createAnnualReturnRepository(
    */
   async function listCasePage(filters: CaseFilters): Promise<AnnualReturnCasePage> {
     const today = readToday();
-    const rows = await selectCaseRows(filters, today);
-    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
-    const hydrated = await hydrateCases(rows, today);
+    const limit = filters.limit ?? (filters.risk ? RISK_FILTER_SCAN_LIMIT : DEFAULT_CASE_LIMIT);
+    // Fetch one extra SQL row to distinguish an exact full final page from
+    // another page. Hydrate only the requested rows; the lookahead is solely
+    // an existence proof, never a row shown or included in the cursor.
+    const rows = await selectCaseRows({ ...filters, limit: limit + 1 }, today);
+    const pageRows = rows.slice(0, limit);
+    const hydrated = await hydrateCases(pageRows, today);
     const cases = hydrated.filter((case_) => caseMatchesHydratedFilters(case_, filters));
-    const last = rows.at(-1);
+    const last = pageRows.at(-1);
     return {
       cases,
-      nextCursor: rows.length === limit && last ? encodeCaseCursor(last) : null,
+      nextCursor: rows.length > limit && last ? encodeCaseCursor(last) : null,
     };
   }
 
@@ -1147,50 +1137,84 @@ export function createAnnualReturnRepository(
    * the selectCaseRows comment already warns about -- so the caller shows it as
    * covering the loaded page rather than the scope.
    */
-  async function boardTotals(filters: CaseFilters): Promise<BoardTotals> {
-    const today = readToday();
-    // Deliberately ignores `q` and `cursor`: these are the totals for the
-    // actor's scope, not for whatever they have typed into the search box, and
-    // the caller labels them that way.
+  async function aggregateOperationalMetrics(
+    filters: CaseFilters,
+    today: string,
+    currentUserId: string | null,
+  ): Promise<
+    OperationalMetrics & {
+      totalCases: number;
+      dueIn7: number;
+      dueIn30: number;
+      highRisk: number;
+    }
+  > {
+    // One authorized scope and one as-of date for both board and dashboard.
+    // Each checklist row is counted once in the lateral aggregate, while cases
+    // with any missing row are counted once in the separate case metric.
     const counted = await sql<
       {
         total: string;
+        active_cases: string;
         overdue: string;
         due_in_7: string;
         due_in_30: string;
-        missing_documents: string;
+        missing_evidence_cases: string;
+        missing_evidence_items: string;
         payment_pending: string;
+        assigned_to_me: string;
+        high_risk: string;
       }[]
     >`
       select
         count(*) total,
-        count(*) filter (where arc.filing_due_date < ${today}::date) overdue,
+        count(*) filter (where arc.current_status not in ('Filed', 'Completed')) active_cases,
         count(*) filter (
-          where arc.filing_due_date >= ${today}::date
-            and arc.filing_due_date <= ${today}::date + 7
+          where arc.current_status not in ('Filed', 'Completed')
+            and arc.filing_due_date < ${today}::date
+        ) overdue,
+        count(*) filter (
+          where arc.current_status not in ('Filed', 'Completed')
+            and arc.filing_due_date between ${today}::date and ${today}::date + 7
         ) due_in_7,
         count(*) filter (
-          where arc.filing_due_date >= ${today}::date
-            and arc.filing_due_date <= ${today}::date + 30
+          where arc.current_status not in ('Filed', 'Completed')
+            and arc.filing_due_date between ${today}::date and ${today}::date + 30
         ) due_in_30,
         count(*) filter (
-          where exists (
-            select 1 from annual_return_checklist_items i
-            where i.case_id = arc.id and i.required = true
-              and (
-                i.status <> 'Verified' or i.received_at is null
-                or i.verified_at is null or i.document_id is null
-              )
-          )
-        ) missing_documents,
+          where arc.current_status not in ('Filed', 'Completed')
+            and missing.missing_items > 0
+        ) missing_evidence_cases,
+        coalesce(sum(missing.missing_items) filter (
+          where arc.current_status not in ('Filed', 'Completed')
+        ), 0) missing_evidence_items,
         count(*) filter (
-          where exists (
-            select 1 from payments p
-            where p.case_id = arc.id and p.status = 'Payment pending'
-          )
-        ) payment_pending
+          where arc.current_status not in ('Filed', 'Completed')
+            and (coalesce(p.status, '') <> 'Payment received' or p.payment_proof_document_id is null)
+        ) payment_pending,
+        count(*) filter (
+          where arc.current_status not in ('Filed', 'Completed')
+            and arc.owner_id = ${currentUserId}::uuid
+        ) assigned_to_me,
+        count(*) filter (
+          where arc.current_status not in ('Filed', 'Completed')
+            and arc.risk_level = 'red'
+        ) high_risk
       from annual_return_cases arc
       join companies c on c.id = arc.company_id
+      left join payments p on p.case_id = arc.id
+      left join lateral (
+        select count(*) missing_items
+        from annual_return_checklist_items i
+        where i.case_id = arc.id
+          and i.required = true
+          and (
+            i.status <> 'Verified'
+            or i.received_at is null
+            or i.verified_at is null
+            or i.document_id is null
+          )
+      ) missing on true
       where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
         and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
         and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
@@ -1207,15 +1231,51 @@ export function createAnnualReturnRepository(
     `;
     const row = counted[0];
     return {
-      total: Number(row?.total ?? 0),
-      overdue: Number(row?.overdue ?? 0),
+      totalCases: Number(row?.total ?? 0),
+      activeCases: Number(row?.active_cases ?? 0),
+      overdueCases: Number(row?.overdue ?? 0),
       dueIn7: Number(row?.due_in_7 ?? 0),
       dueIn30: Number(row?.due_in_30 ?? 0),
-      missingDocuments: Number(row?.missing_documents ?? 0),
-      paymentPending: Number(row?.payment_pending ?? 0),
+      missingEvidenceCases: Number(row?.missing_evidence_cases ?? 0),
+      missingEvidenceItems: Number(row?.missing_evidence_items ?? 0),
+      paymentPendingCases: Number(row?.payment_pending ?? 0),
+      assignedToMe: Number(row?.assigned_to_me ?? 0),
+      highRisk: Number(row?.high_risk ?? 0),
+      scopeLabel: filters.visibleToUserId ? "本人可見案件" : "可見案件",
+      asOf: today,
     };
   }
 
+  async function operationalMetrics(
+    filters: CaseFilters,
+    today: string,
+    currentUserId: string | null,
+  ): Promise<OperationalMetrics> {
+    const counts = await aggregateOperationalMetrics(filters, today, currentUserId);
+    return {
+      activeCases: counts.activeCases,
+      overdueCases: counts.overdueCases,
+      missingEvidenceCases: counts.missingEvidenceCases,
+      missingEvidenceItems: counts.missingEvidenceItems,
+      paymentPendingCases: counts.paymentPendingCases,
+      assignedToMe: counts.assignedToMe,
+      scopeLabel: counts.scopeLabel,
+      asOf: counts.asOf,
+    };
+  }
+
+  async function boardTotals(filters: CaseFilters): Promise<BoardTotals> {
+    const counts = await aggregateOperationalMetrics(filters, readToday(), null);
+    return {
+      total: counts.totalCases,
+      overdue: counts.overdueCases,
+      dueIn7: counts.dueIn7,
+      dueIn30: counts.dueIn30,
+      missingDocuments: counts.missingEvidenceCases,
+      missingEvidenceItems: counts.missingEvidenceItems,
+      paymentPending: counts.paymentPendingCases,
+    };
+  }
   async function getCase(id: string): Promise<AnnualReturnCase | null> {
     const rows = await sql<CaseRow[]>`
       select
@@ -1459,33 +1519,19 @@ export function createAnnualReturnRepository(
     currentUserId: string,
     scope: CaseFilters = {},
   ): Promise<AnnualReturnDashboardMetrics> {
-    // TODO: Move dashboard tiles to SQL aggregates and paginated reads as case volume grows.
-    const cases = await listCasesForToday({ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }, today);
-    const activeCases = cases.filter(isActiveForOperationalMetrics);
-
+    const counts = await aggregateOperationalMetrics(scope, today, currentUserId);
     return {
-      dueIn7: activeCases.filter((case_) => {
-        const daysLeft = daysBetween(today, case_.filingDueDate);
-        return daysLeft >= 0 && daysLeft <= 7;
-      }).length,
-      dueIn30: activeCases.filter((case_) => {
-        const daysLeft = daysBetween(today, case_.filingDueDate);
-        return daysLeft >= 0 && daysLeft <= 30;
-      }).length,
-      overdue: activeCases.filter((case_) => daysBetween(today, case_.filingDueDate) < 0).length,
-      highRisk: activeCases.filter((case_) => case_.riskLevel === "red").length,
-      missingDocuments: activeCases.reduce(
-        (count, case_) => count + countOutstandingRequiredEvidence(case_),
-        0,
-      ),
-      paymentPending: activeCases.filter((case_) => case_.payment?.status !== "Payment received")
-        .length,
-      assignedToMe: cases.filter(
-        (case_) => case_.ownerId === currentUserId && case_.currentStatus !== "Completed",
-      ).length,
+      dueIn7: counts.dueIn7,
+      dueIn30: counts.dueIn30,
+      overdue: counts.overdueCases,
+      highRisk: counts.highRisk,
+      // This public tile counts cases. The separate operational contract
+      // retains the item count for staff who need to plan document chasing.
+      missingDocuments: counts.missingEvidenceCases,
+      paymentPending: counts.paymentPendingCases,
+      assignedToMe: counts.assignedToMe,
     };
   }
-
   async function hydratedCaseAfterMutation(caseId: string, actionLabel: string) {
     const updated = await getCase(caseId);
 
@@ -2806,6 +2852,7 @@ export function createAnnualReturnRepository(
     listCasePage,
     listAllCases,
     boardTotals,
+    operationalMetrics,
     getCase,
     listCompaniesEligibleForCase,
     listAssignableStaff,

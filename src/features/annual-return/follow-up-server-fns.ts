@@ -1,3 +1,4 @@
+import { entityIdSchema } from "@/features/runtime/entity-id";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { assertApprovedTemplate } from "@/features/whatsapp/approved-templates";
 import { z } from "zod";
@@ -20,8 +21,8 @@ import {
 import type { ProductionFollowUpRepository } from "./follow-up-repository";
 
 const followUpIdentityFields = {
-  caseId: z.string().uuid(),
-  entityId: z.string().uuid(),
+  caseId: entityIdSchema,
+  entityId: entityIdSchema,
 };
 
 export const annualReturnFollowUpSchema = z

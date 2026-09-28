@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
@@ -12,18 +12,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/features/auth/auth-context-neon";
-import type { AssignmentRecommendation } from "@/features/work-items/types";
+import { workQueuePersonLabel, type AssignmentRecommendation } from "@/features/work-items/types";
+import { deriveSlaDisplay, type SlaDisplay, type SlaDisplayState } from "@/features/work-items/sla";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
 import {
   acknowledgeWorkItemEscalation,
   assignWorkItem,
   listWorkQueue,
   recommendWorkItemAssignees,
+  workQueueLastSlaEvaluation,
 } from "@/features/work-items/server-fns";
 import { cn } from "@/lib/utils";
 
 type QueueView = "mine" | "team" | "breached";
-type SlaFilter = "all" | PersistedWorkItem["escalationState"];
+type SlaFilter = "all" | SlaDisplayState;
 type PriorityFilter = "all" | "high" | "normal";
 type StatusFilter = "all" | PersistedWorkItem["status"];
 
@@ -57,12 +59,21 @@ export const Route = createFileRoute("/work-queue")({
     owner: typeof search.owner === "string" ? search.owner : "all",
     workType: typeof search.workType === "string" ? search.workType : "all",
     sla:
-      search.sla === "none" ||
-      search.sla === "warning" ||
-      search.sla === "breach" ||
-      search.sla === "acknowledged"
-        ? (search.sla as SlaFilter)
-        : ("all" as SlaFilter),
+      search.sla === "none"
+        ? ("on-track" as SlaFilter)
+        : search.sla === "warning"
+          ? ("at-risk" as SlaFilter)
+          : search.sla === "breach"
+            ? ("breached" as SlaFilter)
+            : search.sla === "not-configured" ||
+                search.sla === "not-started" ||
+                search.sla === "on-track" ||
+                search.sla === "at-risk" ||
+                search.sla === "breached" ||
+                search.sla === "acknowledged" ||
+                search.sla === "unavailable"
+              ? (search.sla as SlaFilter)
+              : ("all" as SlaFilter),
     priority:
       search.priority === "high" || search.priority === "normal"
         ? (search.priority as PriorityFilter)
@@ -85,15 +96,40 @@ function WorkQueueRoute() {
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
-  const filters = {
-    view,
-    escalationState: view === "breached" ? ("breach" as const) : undefined,
-  };
+  const filters = { view };
   const queueQuery = useQuery({
     queryKey: ["work-queue", view],
     queryFn: () => listWorkQueue({ data: filters }),
   });
+  const evaluationQuery = useQuery({
+    queryKey: ["work-queue", "last-sla-evaluation"],
+    queryFn: () => workQueueLastSlaEvaluation(),
+    retry: false,
+  });
   const items = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
+  const [asOf, setAsOf] = useState(() => new Date().toISOString());
+  useEffect(() => {
+    const interval = setInterval(() => setAsOf(new Date().toISOString()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+  const displayFor = useCallback(
+    (item: PersistedWorkItem): SlaDisplay =>
+      deriveSlaDisplay(
+        {
+          status: item.status,
+          escalationState: item.escalationState,
+          workDueAt: item.workDueAt ?? null,
+          slaPolicyVersionId: item.slaPolicyVersionId,
+          slaStartedAt: item.slaStartedAt,
+          slaWarningAt: item.slaWarningAt,
+          slaDueAt: item.slaDueAt,
+          slaBreachedAt: item.slaBreachedAt,
+          evaluatedAt: evaluationQuery.data ?? null,
+        },
+        asOf,
+      ),
+    [asOf, evaluationQuery.data],
+  );
   const owners = useMemo(
     () => Array.from(new Set(items.flatMap((item) => (item.ownerId ? [item.ownerId] : [])))).sort(),
     [items],
@@ -113,11 +149,14 @@ function WorkQueueRoute() {
       const matchesOwner =
         owner === "all" || (owner === "unassigned" ? !item.ownerId : item.ownerId === owner);
       const matchesWorkType = workType === "all" || item.workType === workType;
-      const matchesSla = sla === "all" || item.escalationState === sla;
+      const state = displayFor(item).state;
+      const matchesSla = sla === "all" || state === sla;
+      const matchesView = view !== "breached" || state === "breached";
       const matchesPriority =
         priority === "all" || (priority === "high" ? item.priority >= 70 : item.priority < 70);
       const matchesStatus = status === "all" || item.status === status;
       return (
+        matchesView &&
         matchesQuery &&
         matchesOwner &&
         matchesWorkType &&
@@ -126,16 +165,16 @@ function WorkQueueRoute() {
         matchesStatus
       );
     });
-  }, [items, owner, priority, query, sla, status, workType]);
+  }, [items, owner, priority, query, sla, status, workType, view, displayFor]);
 
   const setFilter = (key: "owner" | "workType" | "sla" | "priority" | "status", value: string) =>
     void navigate({ search: { ...search, [key]: value }, replace: true });
 
   const metrics = {
-    dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(new Date()))
+    dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(asOf))
       .length,
-    atRisk: items.filter((item) => item.escalationState === "warning").length,
-    breached: items.filter((item) => item.escalationState === "breach").length,
+    atRisk: items.filter((item) => displayFor(item).state === "at-risk").length,
+    breached: items.filter((item) => displayFor(item).state === "breached").length,
     unassigned: items.filter((item) => !item.ownerId).length,
   };
 
@@ -147,12 +186,25 @@ function WorkQueueRoute() {
           title="Work queue"
           subtitle="Assignment, capacity, and SLA control"
         />
-        <div className="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4">
-          <Counter label="Due today" value={metrics.dueToday} />
-          <Counter label="At risk" value={metrics.atRisk} tone="warning" />
-          <Counter label="Breached" value={metrics.breached} tone="danger" />
-          <Counter label="Unassigned" value={metrics.unassigned} />
-        </div>
+        <p role="status" className="mt-3 text-xs text-muted-foreground">
+          Last successful scheduled SLA evaluation:{" "}
+          {evaluationQuery.isError
+            ? "Unavailable"
+            : evaluationQuery.isPending
+              ? "Loading…"
+              : evaluationQuery.data
+                ? formatDateTime(evaluationQuery.data)
+                : "No run recorded"}
+          . Statuses below also compare deadlines with the current time.
+        </p>
+        {!queueQuery.isPending && !queueQuery.isError ? (
+          <div className="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4">
+            <Counter label="SLA due today" value={metrics.dueToday} />
+            <Counter label="At risk" value={metrics.atRisk} tone="warning" />
+            <Counter label="Breached" value={metrics.breached} tone="danger" />
+            <Counter label="Unassigned" value={metrics.unassigned} />
+          </div>
+        ) : null}
 
         <div className="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
           <nav aria-label="Queue views" className="flex min-w-0 gap-1">
@@ -198,11 +250,16 @@ function WorkQueueRoute() {
           >
             <option value="all">All owners</option>
             <option value="unassigned">Unassigned</option>
-            {owners.map((ownerId) => (
-              <option key={ownerId} value={ownerId}>
-                Staff {ownerId.slice(0, 8)}
-              </option>
-            ))}
+            {owners.map((ownerId) => {
+              const item = items.find((entry) => entry.ownerId === ownerId);
+              return (
+                <option key={ownerId} value={ownerId} title={ownerId}>
+                  {item?.ownerPerson
+                    ? workQueuePersonLabel(item.ownerPerson)
+                    : `${item?.ownerName ?? "Staff record unavailable"} · Profile unavailable`}
+                </option>
+              );
+            })}
           </FilterSelect>
           <FilterSelect
             label="Filter by work type"
@@ -222,10 +279,13 @@ function WorkQueueRoute() {
             onChange={(value) => setFilter("sla", value)}
           >
             <option value="all">All SLA states</option>
-            <option value="none">On track</option>
-            <option value="warning">At risk</option>
-            <option value="breach">Breached</option>
+            <option value="not-configured">Not configured</option>
+            <option value="not-started">Not started</option>
+            <option value="on-track">On track</option>
+            <option value="at-risk">At risk</option>
+            <option value="breached">Breached</option>
             <option value="acknowledged">Acknowledged</option>
+            <option value="unavailable">Unavailable</option>
           </FilterSelect>
           <FilterSelect
             label="Filter by priority"
@@ -269,7 +329,7 @@ function WorkQueueRoute() {
                     "Owner",
                     "SLA",
                     "Blocker",
-                    "Due",
+                    "Due dates",
                     "Priority",
                     "Status",
                     "Actions",
@@ -312,16 +372,14 @@ function WorkQueueRoute() {
                           : ""}
                       </p>
                     </div>
-                    <span role="cell" className="truncate">
-                      {/* "Unknown owner" and "Unassigned" are different facts: one
-                          is a person we cannot resolve, the other is nobody. */}
-                      {item.ownerName ?? (item.ownerId ? "Unknown owner" : "Unassigned")}
-                    </span>
+                    <WorkQueueOwnerDisplay item={item} variant="desktop" />
                     <span role="cell">
-                      <SlaPill state={item.escalationState} />
+                      <SlaPill state={displayFor(item).state} />
                     </span>
                     <span role="cell">{item.status === "blocked" ? "Blocked" : "None"}</span>
-                    <span role="cell">{formatDateTime(item.slaDueAt)}</span>
+                    <span role="cell" className="text-xs">
+                      {dueDatesLabel(item)}
+                    </span>
                     <span role="cell" className="tabular-nums">
                       {item.priority}
                     </span>
@@ -345,7 +403,7 @@ function WorkQueueRoute() {
                 <article key={item.id} className="grid gap-3 px-3 py-4">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      Company {item.companyId.slice(0, 8)}
+                      {item.companyName ?? "Company no longer on file"}
                     </p>
                     {caseDetailLinkFor(item) ? (
                       <Link
@@ -365,16 +423,14 @@ function WorkQueueRoute() {
                         : ""}
                     </p>
                   </div>
-                  <QueueField label="Owner">
-                    {item.ownerId ? item.ownerId.slice(0, 8) : "Unassigned"}
-                  </QueueField>
+                  <WorkQueueOwnerDisplay item={item} variant="mobile" />
                   <QueueField label="SLA">
-                    <SlaPill state={item.escalationState} />
+                    <SlaPill state={displayFor(item).state} />
                   </QueueField>
                   <QueueField label="Blocker">
                     {item.status === "blocked" ? "Blocked" : "None"}
                   </QueueField>
-                  <QueueField label="Due">{formatDateTime(item.slaDueAt)}</QueueField>
+                  <QueueField label="Due dates">{dueDatesLabel(item)}</QueueField>
                   <QueueField label="Priority">{item.priority}</QueueField>
                   <QueueActions
                     item={item}
@@ -577,7 +633,9 @@ function RecommendationOption({
     >
       <span className="font-semibold tabular-nums">#{option.rank}</span>
       <span>
-        <span className="block text-sm font-medium">Staff {option.userId.slice(0, 8)}</span>
+        <span className="block text-sm font-medium" title={option.userId}>
+          {option.person ? workQueuePersonLabel(option.person) : "Staff record unavailable"}
+        </span>
         <span className="mt-1 block text-xs text-muted-foreground">
           Skill {option.factors.skillProficiency}/5 · Load {option.factors.capacityUtilization}%
         </span>
@@ -679,9 +737,9 @@ function QueueField({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-function SlaPill({ state }: { state: PersistedWorkItem["escalationState"] }) {
+function SlaPill({ state }: { state: SlaDisplayState }) {
   const icon =
-    state === "breach" ? (
+    state === "breached" ? (
       <AlertTriangle className="h-3.5 w-3.5" />
     ) : (
       <Clock3 className="h-3.5 w-3.5" />
@@ -690,12 +748,12 @@ function SlaPill({ state }: { state: PersistedWorkItem["escalationState"] }) {
     <span
       className={cn(
         "inline-flex min-h-7 items-center gap-1 rounded-md border px-2 text-xs font-medium capitalize",
-        state === "breach" && "border-destructive/40 bg-destructive/10 text-destructive",
-        state === "warning" && "border-amber-300 bg-amber-50 text-amber-800",
+        state === "breached" && "border-destructive/40 bg-destructive/10 text-destructive",
+        state === "at-risk" && "border-amber-300 bg-amber-50 text-amber-800",
       )}
     >
       {icon}
-      {state}
+      {slaStateLabel(state)}
     </span>
   );
 }
@@ -725,4 +783,53 @@ function hongKongDateKey(value: string | Date): string {
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((candidate) => candidate.type === type)?.value ?? "";
   return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+export function WorkQueueOwnerDisplay({
+  item,
+  variant,
+}: {
+  item: PersistedWorkItem;
+  variant: "desktop" | "mobile";
+}) {
+  const label = queueOwnerLabel(item);
+  return variant === "desktop" ? (
+    <span role="cell" className="truncate" title={item.ownerId ?? undefined}>
+      {label}
+    </span>
+  ) : (
+    <QueueField label="Owner">
+      <span title={item.ownerId ?? undefined}>{label}</span>
+    </QueueField>
+  );
+}
+
+function queueOwnerLabel(item: PersistedWorkItem): string {
+  if (!item.ownerId) return "Unassigned";
+  return item.ownerPerson
+    ? workQueuePersonLabel(item.ownerPerson)
+    : `${item.ownerName ?? "Staff record unavailable"} · Profile unavailable`;
+}
+
+function dueDatesLabel(item: PersistedWorkItem): string {
+  return `Work: ${item.workDueAt ? formatDateTime(item.workDueAt) : "not set"} · SLA: ${item.slaDueAt ? formatDateTime(item.slaDueAt) : "not available"}`;
+}
+
+function slaStateLabel(state: SlaDisplayState): string {
+  switch (state) {
+    case "not-configured":
+      return "未設定";
+    case "not-started":
+      return "未開始";
+    case "on-track":
+      return "正常";
+    case "at-risk":
+      return "接近截止";
+    case "breached":
+      return "已逾期";
+    case "acknowledged":
+      return "已確認";
+    case "unavailable":
+      return "無法確認";
+  }
 }

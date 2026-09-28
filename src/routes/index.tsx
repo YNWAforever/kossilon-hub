@@ -123,9 +123,9 @@ function DashboardPage() {
           unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
-          label="Missing documents"
+          label="Missing evidence cases"
           value={m.missingDocs}
-          hint="Across all cases"
+          hint="Across active cases in scope"
           icon={FileWarning}
           tone="yellow"
           unavailable={!annualReturnDataAvailable}

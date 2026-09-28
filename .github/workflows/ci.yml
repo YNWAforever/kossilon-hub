@@ -63,6 +63,9 @@ jobs:
       # The integration tests assert against reference rows — users, teams,
       # service packages — that only the seed creates. Without this they fail
       # rather than skip.
+      - name: Inspect migrated schema capabilities
+        run: npm run db:inspect
+
       - name: Seed reference data
         run: bun scripts/db-seed-annual-return.ts
 
