@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Paperclip } from "lucide-react";
+import { CaseScopedReply } from "./case-scoped-reply";
 
 import { PageHeader } from "@/components/page-header";
 import {
@@ -35,11 +36,7 @@ type InboxConnection = "checking" | "unknown" | "blocked" | "simulated" | "unver
 /**
  * The production WhatsApp inbox.
  *
- * Narrower than the demo screen by necessity rather than by omission:
- *
- * - No reply composer. `queueWhatsAppTemplateMessage` needs a template name, a
- *   category and a case id, so free text has nowhere to go. Template sends live on
- *   /whatsapp/automation, which is already wired to production.
+ * The reply composer requires an authorized case and verified company contact.
  * - No AI assistant panel. `AiAssistantPanel` reads the demo annual-return and
  *   client-portal stores, so it cannot appear on a production screen at all.
  * - No intent or conversation status chips. Neither has a column behind it;
@@ -314,16 +311,12 @@ export function ProductionWhatsAppInbox() {
               ))}
             </div>
 
-            <div className="border-t bg-card p-4 text-sm text-muted-foreground">
-              Replies are sent as approved templates from{" "}
-              {/* /whatsapp declares validateSearch, so its children must state a
-                  search value. `enquiry` addresses a demo fixture and has no
-                  production meaning. */}
-              <Link className="underline" to="/whatsapp/automation" search={{ enquiry: undefined }}>
-                WhatsApp Automation
-              </Link>
-              .
-            </div>
+            <CaseScopedReply
+              key={selected.contactId}
+              conversation={selected}
+              canPreview={connection === "live" || connection === "unverified"}
+              canQueue={connection === "live"}
+            />
           </>
         ) : (
           <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">

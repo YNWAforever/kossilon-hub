@@ -24,6 +24,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/operations/repository.integration.test.ts",
   "src/features/payments/reconciliation.test.ts",
   "src/features/service-subscriptions/repository.test.ts",
+  "src/features/whatsapp/message-preview-repository.integration.test.ts",
   "src/features/whatsapp/provider-contract.test.ts",
   "src/features/whatsapp/repository.test.ts",
   "src/features/work-items/repository.test.ts",

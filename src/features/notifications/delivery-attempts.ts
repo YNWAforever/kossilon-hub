@@ -281,7 +281,8 @@ export function createDeliveryAttemptMethods<Row extends OutboxRow>(
           where id = ${attemptId}
         `;
         await tx`
-          update notification_outbox set status = 'failed',
+          update notification_outbox
+          set status = ${errorCode === "whatsapp_preview_stale" ? "cancelled" : "failed"},
             next_attempt_at = ${retryAt(attempt.attempt_count, now)},
             last_error_code = ${errorCode},
             last_error_message = 'Dispatch preflight failed before provider call.',
