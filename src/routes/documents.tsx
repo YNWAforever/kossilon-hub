@@ -145,6 +145,17 @@ function DocumentsRoute() {
     setCaseFilter(caseId ?? "all");
   }, [caseId]);
 
+  // The document list arrives after navigation; scroll to the exact current
+  // document only when its server row has rendered.
+  useEffect(() => {
+    if (dataMode !== "production" || productionDocumentsQuery.isPending) return;
+    const id = window.location.hash.slice(1);
+    if (!id.startsWith("document-")) return;
+    const target = document.getElementById(id);
+    target?.scrollIntoView({ block: "center" });
+    target?.focus({ preventScroll: true });
+  }, [dataMode, productionDocumentsQuery.data, productionDocumentsQuery.isPending]);
+
   const rows = useMemo(() => getDocumentArchiveRows(cases, snapshot), [cases, snapshot]);
   const visibleRows = rows.filter((row) => {
     const queryText =
@@ -587,7 +598,9 @@ function ProductionDocumentsSection({
           return (
             <div
               key={document.id}
-              className="grid gap-3 py-3 text-sm md:grid-cols-[minmax(0,1fr)_120px_180px_minmax(220px,1fr)] md:items-center"
+              id={`document-${document.id}`}
+              tabIndex={-1}
+              className="grid scroll-mt-8 gap-3 py-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:grid-cols-[minmax(0,1fr)_120px_180px_minmax(220px,1fr)] md:items-center"
             >
               <div className="min-w-0">
                 <p className="truncate font-medium">{document.fileName}</p>

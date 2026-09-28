@@ -103,9 +103,9 @@ describe("work queue route contract", () => {
 
   it("registers the daily queue with its operational views", () => {
     expect(routeSource).toContain('createFileRoute("/work-queue")');
-    expect(routeSource).toContain("My work");
-    expect(routeSource).toContain("Team queue");
-    expect(routeSource).toContain("Breached");
+    expect(routeSource).toContain("我的工作");
+    expect(routeSource).toContain("團隊工作");
+    expect(routeSource).toContain("已逾期");
     expect(sidebarSource).toContain("/work-queue");
     expect(routeSource).toContain('role="table"');
     expect(routeSource).toContain("Filter by owner");

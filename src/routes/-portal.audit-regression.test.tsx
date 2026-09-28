@@ -86,12 +86,12 @@ describe("T02 portal link regression", () => {
   it("t02_scenario_2 opens a legacy UUID-shaped case ID from the staff case link", async () => {
     const html = await render(`/portal?caseId=${LEGACY_ID}`, true);
     expect(html).toContain("T02 Legacy Company");
-    expect(html).not.toContain("Browse annual returns");
+    expect(html).not.toContain("瀏覽周年申報案件");
   });
 
   it("t02_scenario_2 shows an invalid-link state instead of a case chooser", async () => {
     const html = await render("/portal?caseId=not-a-case");
-    expect(html).toContain("Invalid portal link");
-    expect(html).not.toContain("Browse annual returns");
+    expect(html).toContain("案件連結無效");
+    expect(html).not.toContain("瀏覽周年申報案件");
   });
 });

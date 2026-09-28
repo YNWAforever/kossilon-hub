@@ -41,15 +41,15 @@ afterEach(cleanup);
 describe("T16 production manual return panel", () => {
   it("records a reviewed receipt as a claim without inventing a manifest hash", async () => {
     renderPanel();
-    const proof = await screen.findByLabelText("Reviewed return receipt");
-    fireEvent.change(screen.getByLabelText("Return external reference"), {
+    const proof = await screen.findByLabelText("已覆核回執");
+    fireEvent.change(screen.getByLabelText("回件外部參考編號"), {
       target: { value: "NAR1-2026-001" },
     });
-    fireEvent.change(screen.getByLabelText("Return claimed outcome"), {
+    fireEvent.change(screen.getByLabelText("回件聲稱結果"), {
       target: { value: "partial" },
     });
     fireEvent.change(proof, { target: { value: proofVersionId } });
-    fireEvent.click(screen.getByRole("button", { name: "Record return claim" }));
+    fireEvent.click(screen.getByRole("button", { name: "登記回件主張" }));
     await waitFor(() =>
       expect(server.recordAnnualReturnReturnIntake).toHaveBeenCalledWith({
         data: {
@@ -85,12 +85,12 @@ describe("T16 production manual return panel", () => {
       },
     ]);
     renderPanel();
-    await screen.findByText(/partial claim/);
-    expect(screen.getByText(/Needs attention/)).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Review reason for return " + returnId), {
+    await screen.findByText(/部分接納/);
+    expect(await screen.findByText(/待核對/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("核對原因：NAR1-2026-001"), {
       target: { value: "Matched reference to the external portal receipt" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Confirm match" }));
+    fireEvent.click(screen.getByRole("button", { name: "確認對應" }));
     await waitFor(() =>
       expect(server.reconcileAnnualReturnReturn).toHaveBeenCalledWith({
         data: {

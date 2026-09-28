@@ -243,38 +243,34 @@ function WorkQueueRoute() {
   return (
     <>
       <main className="min-w-0 flex-1 p-4 md:p-6">
-        <PageHeader
-          eyebrow="Operations"
-          title="Work queue"
-          subtitle="Assignment, capacity, and SLA control"
-        />
+        <PageHeader eyebrow="Operations" title="工作佇列" subtitle="分工、工作量及服務時限" />
         <p role="status" className="mt-3 text-xs text-muted-foreground">
-          Last successful scheduled SLA evaluation:{" "}
+          上次成功執行服務時限評估：{" "}
           {evaluationQuery.isError
             ? "Unavailable"
             : evaluationQuery.isPending
               ? "Loading…"
               : evaluationQuery.data
                 ? formatDateTime(evaluationQuery.data)
-                : "No run recorded"}
-          . Statuses below also compare deadlines with the current time.
+                : "未有執行紀錄"}
+          . 下方狀態亦會按目前香港時間比較期限。
         </p>
         {!queueQuery.isPending && !queueQuery.isError ? (
           <div className="mt-5 grid grid-cols-2 border-y border-border md:grid-cols-4">
-            <Counter label="SLA due today" value={metrics.dueToday} />
-            <Counter label="At risk" value={metrics.atRisk} tone="warning" />
-            <Counter label="Breached" value={metrics.breached} tone="danger" />
-            <Counter label="Unassigned" value={metrics.unassigned} />
+            <Counter label="今日到期" value={metrics.dueToday} />
+            <Counter label="需留意" value={metrics.atRisk} tone="warning" />
+            <Counter label="已逾期" value={metrics.breached} tone="danger" />
+            <Counter label="未指派" value={metrics.unassigned} />
           </div>
         ) : null}
 
         <div className="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
-          <nav aria-label="Queue views" className="flex min-w-0 gap-1">
+          <nav aria-label="工作視圖" className="flex min-w-0 gap-1">
             {(
               [
-                ["mine", "My work"],
-                ["team", "Team queue"],
-                ["breached", "Breached"],
+                ["mine", "我的工作"],
+                ["team", "團隊工作"],
+                ["breached", "已逾期"],
               ] as const
             ).map(([value, label]) => (
               <Link
@@ -468,12 +464,14 @@ function WorkQueueRoute() {
           </>
         ) : null}
 
-        {queueQuery.isLoading ? <QueueMessage>Loading work queue...</QueueMessage> : null}
+        {queueQuery.isLoading ? <QueueMessage>正在載入工作佇列…</QueueMessage> : null}
         {queueQuery.isError ? (
-          <QueueMessage>Work queue could not be loaded. Refresh to try again.</QueueMessage>
+          <QueueMessage>無法載入工作佇列。請由負責同事重新整理；這不代表沒有工作。</QueueMessage>
         ) : null}
         {!queueQuery.isLoading && !queueQuery.isError && visibleItems.length === 0 ? (
-          <QueueMessage>No work items match this view.</QueueMessage>
+          <QueueMessage>
+            此視圖暫無工作項目。如預期應有案件，請由負責同事核對篩選條件。
+          </QueueMessage>
         ) : null}
 
         {visibleItems.length > 0 ? (

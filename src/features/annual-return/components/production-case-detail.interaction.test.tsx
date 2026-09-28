@@ -218,36 +218,36 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     const ownerPicker = await screen.findByLabelText("負責同事");
     expect(within(ownerPicker as HTMLSelectElement).getByText(/Calvin Ho/)).toBeTruthy();
     fireEvent.change(ownerPicker, { target: { value: nextOwnerId } });
-    fireEvent.click(screen.getByRole("button", { name: "Assign" }));
+    fireEvent.click(screen.getByRole("button", { name: "指派" }));
 
-    fireEvent.change(screen.getByLabelText("Case status"), {
+    fireEvent.change(screen.getByLabelText("案件狀態"), {
       target: { value: "Ready to file" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    fireEvent.click(screen.getByRole("button", { name: "更新" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Mark missing" }));
+    fireEvent.click(screen.getByRole("button", { name: "標記欠缺" }));
 
-    fireEvent.change(screen.getByLabelText("Payment status"), {
+    fireEvent.change(screen.getByLabelText("付款狀態"), {
       target: { value: "Payment pending" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Update payment" }));
+    fireEvent.click(screen.getByRole("button", { name: "更新付款狀態" }));
 
-    fireEvent.change(screen.getByLabelText("Case note"), {
+    fireEvent.change(screen.getByLabelText("案件備註"), {
       target: { value: "Checked with the client." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "新增備註" }));
 
-    fireEvent.change(screen.getByLabelText("Reminder recipient name"), {
+    fireEvent.change(screen.getByLabelText("追件收件人姓名"), {
       target: { value: "Ada Chan" },
     });
-    fireEvent.change(screen.getByLabelText("Reminder phone"), {
+    fireEvent.change(screen.getByLabelText("追件電話"), {
       target: { value: "+85291234567" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send reminder" }));
+    fireEvent.click(screen.getByRole("button", { name: "發送追件訊息" }));
 
-    fireEvent.click(await screen.findByRole("button", { name: "Prepare package" }));
+    fireEvent.click(await screen.findByRole("button", { name: "準備套件" }));
 
-    fireEvent.change(screen.getByLabelText("Filing reference"), {
+    fireEvent.change(screen.getByLabelText("交件參考編號"), {
       target: { value: "NAR1-2026-001" },
     });
     const receiptPicker = await screen.findByLabelText("已核實回執文件");
@@ -255,7 +255,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
       within(receiptPicker as HTMLSelectElement).getByText(/filing-receipt\.pdf/),
     ).toBeTruthy();
     fireEvent.change(receiptPicker, { target: { value: receiptId } });
-    fireEvent.click(screen.getByRole("button", { name: "Accept receipt" }));
+    fireEvent.click(screen.getByRole("button", { name: "確認回執" }));
 
     await waitFor(() => {
       expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledWith({
@@ -317,23 +317,23 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
-    fireEvent.change(screen.getByLabelText("Case status"), {
+    fireEvent.change(screen.getByLabelText("案件狀態"), {
       target: { value: "Ready to file" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Assign" }));
+    fireEvent.click(screen.getByRole("button", { name: "指派" }));
 
     await waitFor(() =>
-      expect((screen.getByRole("button", { name: "Assign" }) as HTMLButtonElement).disabled).toBe(
+      expect((screen.getByRole("button", { name: "指派" }) as HTMLButtonElement).disabled).toBe(
         true,
       ),
     );
-    expect((screen.getByRole("button", { name: "Update" }) as HTMLButtonElement).disabled).toBe(
+    expect((screen.getByRole("button", { name: "更新" }) as HTMLButtonElement).disabled).toBe(
       false,
     );
 
     await act(async () => resolveAssignment(caseItem));
     await waitFor(() =>
-      expect((screen.getByRole("button", { name: "Assign" }) as HTMLButtonElement).disabled).toBe(
+      expect((screen.getByRole("button", { name: "指派" }) as HTMLButtonElement).disabled).toBe(
         false,
       ),
     );
@@ -362,7 +362,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
-    const checklistButtons = screen.getAllByRole("button", { name: "Mark missing" });
+    const checklistButtons = screen.getAllByRole("button", { name: "標記欠缺" });
     fireEvent.click(checklistButtons[0]);
 
     await waitFor(() => expect((checklistButtons[0] as HTMLButtonElement).disabled).toBe(true));
@@ -384,13 +384,13 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
-    const note = screen.getByLabelText("Case note");
+    const note = screen.getByLabelText("案件備註");
     fireEvent.change(note, { target: { value: "Keep this draft." } });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "新增備註" }));
 
     expect(await screen.findByText("Unable to save note.")).toBeTruthy();
     expect((note as HTMLTextAreaElement).value).toBe("Keep this draft.");
-    expect((screen.getByRole("button", { name: "Add note" }) as HTMLButtonElement).disabled).toBe(
+    expect((screen.getByRole("button", { name: "新增備註" }) as HTMLButtonElement).disabled).toBe(
       false,
     );
   });
@@ -431,20 +431,20 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    const history = (await screen.findByText("Audit history")).closest("section")!;
+    const history = (await screen.findByRole("heading", { name: "審計紀錄" })).closest("section")!;
     await within(history).findByText("Assignment: manual");
     const [firstEntry, secondEntry] = within(history).getAllByRole("listitem");
     expect(firstEntry.textContent).toContain("Assignment: manual");
     expect(secondEntry.textContent).toContain("Note added");
-    expect(firstEntry.textContent).toContain("by Mei Lam");
-    expect(secondEntry.textContent).toContain("by System");
+    expect(firstEntry.textContent).toContain("執行者：Mei Lam");
+    expect(secondEntry.textContent).toContain("執行者：系統");
   });
 
   it("shows an empty state when no history exists", async () => {
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    expect(await screen.findByText("No history yet.")).toBeTruthy();
+    expect(await screen.findByText("暫無紀錄。")).toBeTruthy();
   });
 });
 
@@ -465,17 +465,17 @@ describe("T15 production manual submission controls", () => {
       { versionId: proofVersionId, fileName: "portal-confirmation.pdf", category: "submission" },
     ]);
     renderDetail();
-    await screen.findByRole("heading", { name: "Record manual external submission" });
-    const recordButton = screen.getByRole("button", { name: "Record external submission" });
+    await screen.findByRole("heading", { name: "記錄人手交件" });
+    const recordButton = screen.getByRole("button", { name: "記錄外部交件" });
     expect((recordButton as HTMLButtonElement).disabled).toBe(true);
-    const proof = await screen.findByLabelText("Reviewed external submission proof");
-    fireEvent.change(screen.getByLabelText("External destination"), {
+    const proof = await screen.findByLabelText("已覆核外部交件證明");
+    fireEvent.change(screen.getByLabelText("外部交件目的地"), {
       target: { value: "Companies Registry portal" },
     });
-    fireEvent.change(screen.getByLabelText("External reference"), {
+    fireEvent.change(screen.getByLabelText("外部參考編號"), {
       target: { value: "NAR1-2026-001" },
     });
-    fireEvent.change(screen.getByLabelText("Submission time Hong Kong"), {
+    fireEvent.change(screen.getByLabelText("交件時間（香港）"), {
       target: { value: "2026-09-27T15:00" },
     });
     fireEvent.change(proof, { target: { value: proofVersionId } });
