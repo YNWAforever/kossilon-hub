@@ -62,6 +62,7 @@ export const EXPECTED_MIGRATIONS = [
   "0035_maintenance_job_runs.sql",
   "0036_bulk_operations.sql",
   "0037_bulk_scheduler_job.sql",
+  "0038_nar_import_preview.sql",
 ] as const;
 
 export type SchemaLedger = {

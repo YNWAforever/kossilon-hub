@@ -145,17 +145,41 @@ export async function stageNarImportForActor(
 
 export async function getNarImportBatchReviewForActor(
   actor: AuthenticatedActor,
-  input: { batchId: string },
+  input: { batchId: string; cursor?: number; limit?: number },
   dependencies: NarImportDependencies,
 ) {
   assertImportAuthority(actor);
   const batch = await dependencies.repository.getBatch(input.batchId);
   if (!batch) throw new Error("Import batch not found.");
-  const [rows, counts] = await Promise.all([
-    dependencies.repository.listRows(input.batchId),
+  const [page, counts] = await Promise.all([
+    dependencies.repository.listRowsPage(input.batchId, input.cursor ?? null, input.limit ?? 50),
     dependencies.repository.countByDisposition(input.batchId),
   ]);
-  return { batch, rows, counts };
+  return { batch, rows: page.items, nextCursor: page.nextCursor, counts };
+}
+
+export async function searchImportCompaniesForActor(
+  actor: AuthenticatedActor,
+  input: { q: string; cursor: string | null; limit: number },
+  dependencies: NarImportDependencies,
+) {
+  assertImportAuthority(actor);
+  return dependencies.repository.searchCompanies(input);
+}
+
+export async function revalidateNarImportForActor(
+  actor: AuthenticatedActor,
+  input: { batchId: string; expectedRevision: number; returnYear?: number },
+  dependencies: NarImportDependencies,
+) {
+  const staff = assertImportAuthority(actor);
+  if (!staff.userId) throw new Error("Forbidden: active staff identity is required.");
+  return dependencies.repository.revalidate(
+    input.batchId,
+    staff.userId,
+    input.expectedRevision,
+    input.returnYear,
+  );
 }
 
 export async function mapNarImportCompanyForActor(
@@ -198,11 +222,47 @@ export const listNarImportBatches = createServerFn({ method: "GET" }).handler(()
 );
 
 export const getNarImportBatchReview = createServerFn({ method: "GET" })
-  .validator(z.object({ batchId: entityIdSchema }).strict())
+  .validator(
+    z
+      .object({
+        batchId: entityIdSchema,
+        cursor: z.number().int().positive().optional(),
+        limit: z.number().int().min(1).max(100).optional(),
+      })
+      .strict(),
+  )
   .handler(({ data }) =>
     withContext((actor, dependencies) =>
       getNarImportBatchReviewForActor(actor, data, dependencies),
     ),
+  );
+
+export const searchImportCompanies = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({
+        q: z.string().trim().max(120),
+        cursor: entityIdSchema.nullable(),
+        limit: z.number().int().min(1).max(50),
+      })
+      .strict(),
+  )
+  .handler(({ data }) =>
+    withContext((actor, dependencies) => searchImportCompaniesForActor(actor, data, dependencies)),
+  );
+
+export const revalidateNarImport = createServerFn({ method: "POST" })
+  .validator(
+    z
+      .object({
+        batchId: entityIdSchema,
+        expectedRevision: z.number().int().positive(),
+        returnYear: z.number().int().min(1900).max(2100).optional(),
+      })
+      .strict(),
+  )
+  .handler(({ data }) =>
+    withContext((actor, dependencies) => revalidateNarImportForActor(actor, data, dependencies)),
   );
 
 export const mapNarImportCompany = createServerFn({ method: "POST" })

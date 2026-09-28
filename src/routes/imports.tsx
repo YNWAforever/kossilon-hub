@@ -4,12 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
-import { listCompaniesEligibleForCase } from "@/features/annual-return/server-fns";
 import type { NarRowDisposition } from "@/features/nar-import/mapping";
 import {
   getNarImportBatchReview,
   listNarImportBatches,
   mapNarImportCompany,
+  revalidateNarImport,
+  searchImportCompanies,
   stageNarImportBatch,
 } from "@/features/nar-import/server-fns";
 
@@ -66,6 +67,11 @@ function ImportsRoute() {
   const [returnYear, setReturnYear] = useState(new Date().getUTCFullYear());
   const [sheetName, setSheetName] = useState("");
   const [batchId, setBatchId] = useState<string | undefined>();
+  const [reviewCursor, setReviewCursor] = useState<number | undefined>();
+  const [reviewHistory, setReviewHistory] = useState<number[]>([]);
+  const [companySearch, setCompanySearch] = useState("");
+  const [legacyReturnYear, setLegacyReturnYear] = useState("");
+  const [companyCursor, setCompanyCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | undefined>();
 
   const batchesQuery = useQuery({
@@ -76,15 +82,29 @@ function ImportsRoute() {
   });
 
   const reviewQuery = useQuery({
-    queryKey: ["nar-import", "batch", batchId],
-    queryFn: () => getNarImportBatchReview({ data: { batchId: batchId! } }),
+    queryKey: ["nar-import", "batch", batchId, reviewCursor],
+    queryFn: () =>
+      getNarImportBatchReview({
+        data: {
+          batchId: batchId!,
+          ...(reviewCursor ? { cursor: reviewCursor } : {}),
+          limit: 50,
+        },
+      }),
     enabled: Boolean(batchId),
     retry: false,
   });
 
   const companiesQuery = useQuery({
-    queryKey: ["nar-import", "companies"],
-    queryFn: () => listCompaniesEligibleForCase(),
+    queryKey: ["nar-import", "companies", companySearch, companyCursor],
+    queryFn: () =>
+      searchImportCompanies({
+        data: {
+          q: companySearch,
+          cursor: companyCursor,
+          limit: 20,
+        },
+      }),
     enabled: dataMode === "production",
     retry: false,
   });
@@ -105,6 +125,9 @@ function ImportsRoute() {
     onSuccess: (result) => {
       setError(undefined);
       setBatchId(result.batch.id);
+      setReviewCursor(undefined);
+      setReviewHistory([]);
+      revalidateMutation.reset();
       void queryClient.invalidateQueries({ queryKey: ["nar-import", "batches"] });
     },
     // The parser's refusals are the useful part of its output; surfaced verbatim
@@ -117,10 +140,33 @@ function ImportsRoute() {
     mutationFn: (input: { externalClientId: string; companyId: string }) =>
       mapNarImportCompany({ data: input }),
     onSuccess: () => {
+      revalidateMutation.reset();
       void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
     },
     onError: (cause) =>
       setError(cause instanceof Error ? cause.message : "Unable to map that company."),
+  });
+
+  const revalidateMutation = useMutation({
+    mutationFn: () => {
+      const batch = reviewQuery.data?.batch;
+      if (!batch) throw new Error("Load the batch review before revalidation.");
+      return revalidateNarImport({
+        data: {
+          batchId: batch.id,
+          expectedRevision: batch.revision,
+          ...(batch.returnYear === null && legacyReturnYear
+            ? { returnYear: Number(legacyReturnYear) }
+            : {}),
+        },
+      });
+    },
+    onSuccess: () => {
+      setError(undefined);
+      void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
+    },
+    onError: (cause) =>
+      setError(cause instanceof Error ? cause.message : "Unable to revalidate the import."),
   });
 
   if (dataMode !== "production") {
@@ -139,6 +185,30 @@ function ImportsRoute() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title="月表匯入" subtitle="NAR Monthly Working" />
+
+      <section className="rounded-lg border bg-card p-4">
+        <label className="grid max-w-md gap-1 text-sm">
+          搜尋對應公司（名稱或 CR 編號）
+          <input
+            aria-label="Search companies for import mapping"
+            className="rounded-md border bg-background px-3 py-2"
+            value={companySearch}
+            onChange={(event) => {
+              setCompanySearch(event.target.value);
+              setCompanyCursor(null);
+            }}
+          />
+        </label>
+        {companiesQuery.data?.nextCursor ? (
+          <button
+            type="button"
+            className="mt-2 text-sm underline"
+            onClick={() => setCompanyCursor(companiesQuery.data.nextCursor)}
+          >
+            載入更多公司
+          </button>
+        ) : null}
+      </section>
 
       {companiesQuery.isError ? (
         <div
@@ -258,7 +328,7 @@ function ImportsRoute() {
                 {review.batch.sourceFileName} · {review.batch.sheetName}
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                {`${review.batch.rowCount} 筆候選記錄 · 解析器 ${review.batch.parserVersion}`}
+                {`${review.batch.rowCount} 筆候選記錄 · 申報年度 ${review.batch.returnYear ?? "待確認"} · 解析器 ${review.batch.parserVersion} · 版本 ${review.batch.revision}`}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -273,6 +343,59 @@ function ImportsRoute() {
             </div>
           </div>
 
+          <div className="border-b p-4">
+            {review.batch.returnYear === null ? (
+              <label className="mb-3 grid max-w-xs gap-1 text-sm">
+                此舊批次欠申報年度，請先核實並選擇年度
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  required
+                  aria-label="Legacy import return year"
+                  className="rounded-md border bg-background px-3 py-2"
+                  value={legacyReturnYear}
+                  onChange={(event) => setLegacyReturnYear(event.target.value)}
+                />
+              </label>
+            ) : null}
+            <button
+              type="button"
+              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              disabled={
+                revalidateMutation.isPending ||
+                (review.batch.returnYear === null && !legacyReturnYear)
+              }
+              onClick={() => revalidateMutation.mutate()}
+            >
+              {revalidateMutation.isPending ? "重新驗證中…" : "重新驗證並查看逐欄預覽"}
+            </button>
+            <p className="mt-1 text-xs text-muted-foreground">
+              預覽只顯示候選變更與來源；付款日期不會直接標記已付款。
+            </p>
+          </div>
+          {revalidateMutation.data ? (
+            <section className="border-b bg-muted/20 p-4" aria-label="Import preview diff">
+              <p className="text-sm font-medium">
+                {`預覽版本 ${revalidateMutation.data.revision} · ${revalidateMutation.data.rows.length} 行`}
+              </p>
+              <p className="mt-1 break-all text-xs text-muted-foreground">
+                {`語意鍵 ${revalidateMutation.data.semanticKey}`}
+              </p>
+              <div className="mt-3 max-h-80 space-y-3 overflow-auto text-xs">
+                {revalidateMutation.data.rows.map((row) => (
+                  <div key={row.rowId} className="rounded-md border bg-card p-2">
+                    <p className="font-medium">{`第 ${row.rowNumber} 行 · ${row.externalClientId} · ${DISPOSITION_LABELS[row.disposition]}`}</p>
+                    {row.fields.map((field) => (
+                      <p key={field.field} className="mt-1 break-words">
+                        {`${field.field}: ${field.before ?? "空"} → ${field.after ?? "空"} · ${field.policy} · ${field.source}`}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
           <div className="divide-y">
             {review.rows.map((row) => (
               <div key={row.id} className="space-y-2 p-4 text-sm">
@@ -327,19 +450,44 @@ function ImportsRoute() {
                       }}
                     >
                       <option value="">選擇對應的公司…</option>
-                      {(companiesQuery.data ?? []).map((company) => (
+                      {(companiesQuery.data?.items ?? []).map((company) => (
                         <option key={company.id} value={company.id}>
                           {company.companyName} · {company.crNumber}
                         </option>
                       ))}
                     </select>
                     <span className="text-xs text-muted-foreground">
-                      對應後重新上載同一份檔案即可更新這一行。
+                      對應後此批次即時更新；按「重新驗證」查看變更。
                     </span>
                   </div>
                 ) : null}
               </div>
             ))}
+          </div>
+          <div className="flex gap-3 border-t p-4 text-sm">
+            <button
+              type="button"
+              className="underline disabled:opacity-50"
+              disabled={reviewHistory.length === 0}
+              onClick={() => {
+                const previous = reviewHistory[reviewHistory.length - 1];
+                setReviewHistory(reviewHistory.slice(0, -1));
+                setReviewCursor(previous || undefined);
+              }}
+            >
+              上一頁
+            </button>
+            <button
+              type="button"
+              className="underline disabled:opacity-50"
+              disabled={review.nextCursor === null}
+              onClick={() => {
+                setReviewHistory([...reviewHistory, reviewCursor ?? 0]);
+                setReviewCursor(review.nextCursor ?? undefined);
+              }}
+            >
+              下一頁
+            </button>
           </div>
         </section>
       ) : null}
@@ -351,7 +499,12 @@ function ImportsRoute() {
             <button
               key={batch.id}
               className="flex w-full flex-wrap items-center justify-between gap-2 py-2 text-left text-sm hover:bg-muted/30"
-              onClick={() => setBatchId(batch.id)}
+              onClick={() => {
+                setBatchId(batch.id);
+                setReviewCursor(undefined);
+                setReviewHistory([]);
+                revalidateMutation.reset();
+              }}
               type="button"
             >
               <span className="truncate">
