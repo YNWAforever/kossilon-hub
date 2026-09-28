@@ -18,6 +18,7 @@ import type postgres from "postgres";
 import {
   buildReminderDraft,
   calculateFilingDueDate,
+  daysBetween,
   hongKongBusinessDate,
   isAllowedStatusTransition,
   offsetDateOnly,
@@ -51,6 +52,7 @@ import type {
 import type { DocumentItem } from "@/features/checklist-templates/types";
 import { documentSafetyOf } from "@/features/documents/safety";
 import type { OperationalMetrics } from "./operational-metrics";
+import { WORK_VIEWS, type WorkViewPage, type WorkViewKey } from "./work-views";
 import type { DocumentStatus, ScanVerdictSource } from "@/features/documents/types";
 import type {
   RequirementApplicability,
@@ -424,6 +426,15 @@ export type AnnualReturnRepository = {
     filters: CaseFilters,
     options?: { pageSize?: number; maxPages?: number },
   ): Promise<AnnualReturnCase[]>;
+  listWorkViewPage(input: {
+    scope: CaseFilters;
+    viewerId: string | null;
+    view: import("./work-views").WorkViewKey;
+    filters?: { q?: string; ownerId?: string };
+    cursor?: string;
+    limit: number;
+    asOf: string;
+  }): Promise<import("./work-views").WorkViewPage>;
   boardTotals(filters: CaseFilters): Promise<BoardTotals>;
   operationalMetrics(
     filters: CaseFilters,
@@ -487,7 +498,7 @@ export { hongKongBusinessDate };
  * checklist and payment children for at most this many cases instead of for the
  * whole table.
  */
-export const DEFAULT_CASE_LIMIT = 200;
+export const DEFAULT_CASE_LIMIT = 50;
 
 /**
  * The window scanned when a `risk` filter is active.
@@ -501,13 +512,12 @@ export const DEFAULT_CASE_LIMIT = 200;
  * limit. risk is derived from hydrated children, so it still filters afterwards
  * and instead widens the window it filters over.
  */
-export const RISK_FILTER_SCAN_LIMIT = 2000;
+export const RISK_FILTER_SCAN_LIMIT = 200;
 
 /**
  * Dashboard tiles count the whole active book rather than a page of it. Still
  * bounded, because hydrateCases loads checklist and payment children per case.
  */
-export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
 
 /**
  * Row cap for each of the two case-history sources (audit events and
@@ -1129,9 +1139,8 @@ export function createAnnualReturnRepository(
     filters: CaseFilters,
     options: { pageSize?: number; maxPages?: number } = {},
   ): Promise<AnnualReturnCase[]> {
-    const pageSize = options.pageSize ?? DEFAULT_CASE_LIMIT;
-    // A ceiling so a bug here cannot become an unbounded scan; at the default
-    // page size this is 20,000 cases, far beyond any real firm's book.
+    const pageSize = options.pageSize ?? 200;
+    // Non-interactive callers must fail visibly if their safety ceiling is hit.
     const maxPages = options.maxPages ?? 100;
     const all: AnnualReturnCase[] = [];
     let cursor: string | undefined;
@@ -1141,7 +1150,172 @@ export function createAnnualReturnRepository(
       if (!result.nextCursor) return all;
       cursor = result.nextCursor;
     }
-    return all;
+    throw new Error("Annual return case scan exceeded its page safety ceiling.");
+  }
+
+  /**
+   * One SQL statement counts the authorized view and selects its keyset page
+   * against the same database snapshot. Expensive blocker aggregation happens
+   * only for the selected page, never for every case in the firm.
+   */
+  async function listWorkViewPage(input: {
+    scope: CaseFilters;
+    viewerId: string | null;
+    view: WorkViewKey;
+    filters?: { q?: string; ownerId?: string };
+    cursor?: string;
+    limit: number;
+    asOf: string;
+  }): Promise<WorkViewPage> {
+    const definition = WORK_VIEWS.find((item) => item.key === input.view);
+    if (!definition) throw new Error("Unknown work view.");
+    if (!Number.isInteger(input.limit) || input.limit < 1 || input.limit > 200) {
+      throw new Error("Work-view page limit must be between 1 and 200.");
+    }
+    // Package readiness has no complete indexed snapshot yet. Preserve the
+    // existing explicit unavailable state instead of presenting false zeroes.
+    if (input.view === "readyToFile") {
+      return { definition, rows: [], total: 0, nextCursor: null, asOf: input.asOf };
+    }
+    const cursor = decodeCaseCursor(input.cursor);
+    if (input.cursor && !cursor) throw new Error("Invalid work-view cursor.");
+    const teamId = input.scope.teamId ?? null;
+    const visibleToUserId = input.scope.visibleToUserId ?? null;
+    const companyIds = input.scope.companyIds ? [...input.scope.companyIds] : null;
+    const ownerId = input.filters?.ownerId ?? null;
+    const query = input.filters?.q?.trim()
+      ? `%${input.filters.q.trim().replace(/[\\%_]/g, (character) => `\\${character}`)}%`
+      : null;
+    const viewerId = input.viewerId;
+    const view = input.view;
+    const asOf = input.asOf;
+    const limit = input.limit;
+    type WorkViewSqlRow = {
+      total: string | number;
+      id: string | null;
+      company_name: string | null;
+      return_year: number | null;
+      filing_due_date: string | null;
+      owner_name: string | null;
+      blocker: string | null;
+      document_id: string | null;
+    };
+    const result = await sql<WorkViewSqlRow[]>`
+      with eligible as materialized (
+        select arc.id, c.company_name, arc.return_year,
+               arc.filing_due_date::text as filing_due_date, owner.name as owner_name
+        from annual_return_cases arc
+        join companies c on c.id = arc.company_id
+        join users owner on owner.id = arc.owner_id
+        where (${teamId}::uuid is null or c.assigned_team_id = ${teamId}::uuid)
+          and (${visibleToUserId}::uuid is null
+               or arc.owner_id = ${visibleToUserId}::uuid
+               or arc.reviewer_id = ${visibleToUserId}::uuid)
+          and (${companyIds}::uuid[] is null or arc.company_id = any(${companyIds}::uuid[]))
+          and (${ownerId}::uuid is null or arc.owner_id = ${ownerId}::uuid)
+          and (${query}::text is null
+               or c.company_name ilike ${query} escape '\\'
+               or c.cr_number ilike ${query} escape '\\')
+          and (
+            (${view} = 'returnsAndExceptions'
+             and exists (
+               select 1 from handoff_returns hr
+               where hr.case_id = arc.id and hr.source_kind is not null
+                 and (hr.reconciled_at is null or hr.match_state <> 'reconciled'
+                      or hr.outcome in ('rejected','partial','unmatched'))
+             ))
+            or
+            (arc.current_status not in ('Filed','Completed')
+             and arc.locked_at is null and arc.completed_at is null
+             and (
+               (${view} = 'chaseToday'
+                and arc.filing_due_date <= ${asOf}::date + 30
+                and exists (
+                  select 1 from annual_return_checklist_items i
+                  where i.case_id = arc.id and i.required = true
+                    and i.status in ('Missing','Rejected')
+                ))
+               or
+               (${view} in ('newlyReceived','awaitingMyReview')
+                and (${view} <> 'awaitingMyReview'
+                     or arc.owner_id = ${viewerId}::uuid
+                     or arc.reviewer_id = ${viewerId}::uuid)
+                and exists (
+                  select 1 from annual_return_checklist_items i
+                  where i.case_id = arc.id and i.status = 'Received'
+                ))
+             ))
+          )
+      ),
+      counted as (select count(*)::bigint as total from eligible),
+      page as (
+        select * from eligible
+        where (${cursor === null}
+               or (filing_due_date::date, company_name, id)
+                  > (${cursor?.dueDate ?? null}::date, ${cursor?.companyName ?? ""}, ${cursor?.id ?? null}::uuid))
+        order by filing_due_date asc, company_name asc, id asc
+        limit ${limit + 1}
+      )
+      select counted.total, page.*,
+        case
+          when ${view} = 'chaseToday' then (
+            select string_agg(i.item_label, '、' order by i.id)
+            from annual_return_checklist_items i
+            where i.case_id = page.id and i.required = true
+              and i.status in ('Missing','Rejected')
+          )
+          when ${view} in ('newlyReceived','awaitingMyReview') then (
+            select count(*)::text || ' 份文件待覆核'
+            from annual_return_checklist_items i
+            where i.case_id = page.id and i.status = 'Received'
+          )
+          else (
+            select count(*)::text || ' 份回件待核對或處理'
+            from handoff_returns hr
+            where hr.case_id = page.id and hr.source_kind is not null
+              and (hr.reconciled_at is null or hr.match_state <> 'reconciled'
+                   or hr.outcome in ('rejected','partial','unmatched'))
+          )
+        end as blocker,
+        case when ${view} in ('newlyReceived','awaitingMyReview') then (
+          select i.document_id from annual_return_checklist_items i
+          where i.case_id = page.id and i.status = 'Received'
+          order by i.id asc limit 1
+        ) else null end as document_id
+      from counted left join page on true
+      order by page.filing_due_date asc nulls last, page.company_name asc, page.id asc
+    `;
+    const pageRows = result.filter((row): row is WorkViewSqlRow & { id: string } =>
+      Boolean(row.id),
+    );
+    const rows = pageRows.slice(0, limit);
+    const last = rows.at(-1);
+    return {
+      definition:
+        input.view === "returnsAndExceptions"
+          ? { ...definition, released: true, unavailableReason: undefined }
+          : definition,
+      rows: rows.map((row) => ({
+        caseId: row.id,
+        companyName: row.company_name ?? "",
+        returnYear: row.return_year ?? 0,
+        filingDueDate: row.filing_due_date ?? "",
+        daysRemaining: daysBetween(asOf, row.filing_due_date ?? asOf),
+        ownerName: row.owner_name ?? "",
+        blocker: row.blocker ?? "待負責同事核對",
+        ...(row.document_id ? { documentId: row.document_id } : {}),
+      })),
+      total: Number(result[0]?.total ?? 0),
+      nextCursor:
+        pageRows.length > limit && last
+          ? encodeCaseCursor({
+              filing_due_date: last.filing_due_date ?? asOf,
+              company_name: last.company_name ?? "",
+              id: last.id,
+            })
+          : null,
+      asOf,
+    };
   }
 
   /**
@@ -1169,8 +1343,9 @@ export function createAnnualReturnRepository(
     }
   > {
     // One authorized scope and one as-of date for both board and dashboard.
-    // Each checklist row is counted once in the lateral aggregate, while cases
-    // with any missing row are counted once in the separate case metric.
+    // Aggregate checklist rows once within the authorized case set. A lateral
+    // count per case can degrade to repeated full scans when planner statistics
+    // lag a large import; this plan stays set-based at 20k+ cases.
     const counted = await sql<
       {
         total: string;
@@ -1185,6 +1360,34 @@ export function createAnnualReturnRepository(
         high_risk: string;
       }[]
     >`
+      with scoped as materialized (
+        select arc.id,arc.company_id,arc.current_status,arc.filing_due_date,
+          arc.owner_id,arc.risk_level
+        from annual_return_cases arc
+        join companies c on c.id = arc.company_id
+        where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
+          and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
+          and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
+          and (${filters.status ?? null}::text is null or arc.current_status = ${filters.status ?? null})
+          and (
+            ${filters.visibleToUserId ?? null}::uuid is null
+            or arc.owner_id = ${filters.visibleToUserId ?? null}::uuid
+            or arc.reviewer_id = ${filters.visibleToUserId ?? null}::uuid
+          )
+          and (
+            ${filters.companyIds ? [...filters.companyIds] : null}::uuid[] is null
+            or arc.company_id = any(${filters.companyIds ? [...filters.companyIds] : null}::uuid[])
+          )
+      ),
+      missing as (
+        select i.case_id,count(*)::bigint as missing_items
+        from annual_return_checklist_items i
+        join scoped s on s.id = i.case_id
+        where i.required = true
+          and (i.status <> 'Verified' or i.received_at is null
+               or i.verified_at is null or i.document_id is null)
+        group by i.case_id
+      )
       select
         count(*) total,
         count(*) filter (where arc.current_status not in ('Filed', 'Completed')) active_cases,
@@ -1219,34 +1422,9 @@ export function createAnnualReturnRepository(
           where arc.current_status not in ('Filed', 'Completed')
             and arc.risk_level = 'red'
         ) high_risk
-      from annual_return_cases arc
-      join companies c on c.id = arc.company_id
+      from scoped arc
       left join payments p on p.case_id = arc.id
-      left join lateral (
-        select count(*) missing_items
-        from annual_return_checklist_items i
-        where i.case_id = arc.id
-          and i.required = true
-          and (
-            i.status <> 'Verified'
-            or i.received_at is null
-            or i.verified_at is null
-            or i.document_id is null
-          )
-      ) missing on true
-      where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
-        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
-        and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
-        and (${filters.status ?? null}::text is null or arc.current_status = ${filters.status ?? null})
-        and (
-          ${filters.visibleToUserId ?? null}::uuid is null
-          or arc.owner_id = ${filters.visibleToUserId ?? null}::uuid
-          or arc.reviewer_id = ${filters.visibleToUserId ?? null}::uuid
-        )
-        and (
-          ${filters.companyIds ? [...filters.companyIds] : null}::uuid[] is null
-          or arc.company_id = any(${filters.companyIds ? [...filters.companyIds] : null}::uuid[])
-        )
+      left join missing on missing.case_id = arc.id
     `;
     const row = counted[0];
     return {
@@ -2554,69 +2732,72 @@ export function createAnnualReturnRepository(
     // a raw cron instant must not be able to make this sweep run on the UTC day:
     // 16:00Z onward is already tomorrow in Hong Kong.
     const now = toHongKongBusinessDate(businessDateOrInstant);
-    const candidates = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, now);
-    const openCases = candidates.filter(
-      (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
-    );
-
     let sent = 0;
     let skipped = 0;
+    let cursor: string | undefined;
+    // The scheduled sweep keeps a bounded page in memory and advances by the
+    // stable SQL sort key. A 5,000-case cutoff silently omitted later clients.
+    while (true) {
+      const candidates = await listCasesForToday({ limit: 200, cursor }, now);
+      if (candidates.length === 0) break;
+      const openCases = candidates.filter(
+        (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
+      );
+      for (const case_ of openCases) {
+        const outcome = await withTransaction(sql, async (tx) => {
+          const lockedCase = await tryLockWritableCase(tx, case_.id);
+          if (!lockedCase) return null;
+          // openCases is a snapshot taken before this loop started. tryLockWritableCase's
+          // WHERE clause re-checks locked_at/completed_at/<> 'Completed', but 'Filed' is a
+          // distinct, earlier status than 'Completed' in this workflow, so a case a staff
+          // member marks Filed while an earlier case in this same sweep is still processing
+          // would otherwise pass the fresh re-fetch and receive a live client-facing
+          // reminder about a case that no longer needs one.
+          if (lockedCase.current_status === "Filed") return null;
 
-    for (const case_ of openCases) {
-      const outcome = await withTransaction(sql, async (tx) => {
-        const lockedCase = await tryLockWritableCase(tx, case_.id);
-        if (!lockedCase) return null;
-        // openCases is a snapshot taken before this loop started. tryLockWritableCase's
-        // WHERE clause re-checks locked_at/completed_at/<> 'Completed', but 'Filed' is a
-        // distinct, earlier status than 'Completed' in this workflow, so a case a staff
-        // member marks Filed while an earlier case in this same sweep is still processing
-        // would otherwise pass the fresh re-fetch and receive a live client-facing
-        // reminder about a case that no longer needs one.
-        if (lockedCase.current_status === "Filed") return null;
-
-        const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
+          const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
           select milestone from annual_return_reminder_events where case_id = ${case_.id}
         `;
-        const milestone = dueMilestone(
-          case_.filingDueDate,
-          now,
-          firedRows.map((row) => row.milestone),
-        );
-        if (!milestone) return null;
+          const milestone = dueMilestone(
+            case_.filingDueDate,
+            now,
+            firedRows.map((row) => row.milestone),
+          );
+          if (!milestone) return null;
 
-        const insertedEvent = await tx<{ id: string }[]>`
+          const insertedEvent = await tx<{ id: string }[]>`
           insert into annual_return_reminder_events (case_id, milestone, occurred_at)
           values (${case_.id}, ${milestone}, ${now})
           on conflict (case_id, milestone) do nothing
           returning id
         `;
-        if (!insertedEvent[0]) return null;
+          if (!insertedEvent[0]) return null;
 
-        // Does this client actually owe us anything?
-        //
-        // Phase B added outstanding.ts precisely so a document the client has
-        // already sent is never chased for again -- Received sits unreviewed and
-        // `Received !== "Verified"`, which is what made the old checks wrong.
-        // But it was only wired into the paths that COMPOSE drafts: the portal,
-        // the work views, the follow-up screen. This sweep is the one that
-        // actually sends, on the five-minute cron, and it consulted nothing but
-        // the case status. A client whose every required document was Received
-        // still got a live reminder asking for them.
-        //
-        // Re-read under the lock rather than trusting the pre-loop snapshot: the
-        // staleness window is small, but it runs in exactly the wrong direction
-        // -- a document that arrived since the snapshot would be chased for.
-        const checklistForChase = await tx<{ required: boolean; status: ChecklistStatus }[]>`
+          // Does this client actually owe us anything?
+          //
+          // Phase B added outstanding.ts precisely so a document the client has
+          // already sent is never chased for again -- Received sits unreviewed and
+          // `Received !== "Verified"`, which is what made the old checks wrong.
+          // But it was only wired into the paths that COMPOSE drafts: the portal,
+          // the work views, the follow-up screen. This sweep is the one that
+          // actually sends, on the five-minute cron, and it consulted nothing but
+          // the case status. A client whose every required document was Received
+          // still got a live reminder asking for them.
+          //
+          // Re-read under the lock rather than trusting the pre-loop snapshot: the
+          // staleness window is small, but it runs in exactly the wrong direction
+          // -- a document that arrived since the snapshot would be chased for.
+          const checklistForChase = await tx<{ required: boolean; status: ChecklistStatus }[]>`
           select required, status from annual_return_checklist_items
           where case_id = ${case_.id}
         `;
 
-        // `unknown` (no checklist rows at all) deliberately does NOT suppress.
-        // A case whose requirements nobody has recorded is not evidence that
-        // nothing is owed, and staying silent before a statutory deadline is the
-        // worse error.
-        if (!shouldChaseClient({ checklist: checklistForChase })) {
-          await tx`
+          // `unknown` (no checklist rows at all) deliberately does NOT suppress.
+          // A case whose requirements nobody has recorded is not evidence that
+          // nothing is owed, and staying silent before a statutory deadline is the
+          // worse error.
+          if (!shouldChaseClient({ checklist: checklistForChase })) {
+            await tx`
             insert into timeline_events (
               company_id, case_id, event_type, actor_type, actor_id, description, metadata
             ) values (
@@ -2625,20 +2806,20 @@ export function createAnnualReturnRepository(
               ${tx.json({ milestone, reason: "nothing_outstanding" })}
             )
           `;
-          return "skipped" as const;
-        }
+            return "skipped" as const;
+          }
 
-        const contactRows = await tx<
-          { name: string; email: string | null; phone: string | null }[]
-        >`
+          const contactRows = await tx<
+            { name: string; email: string | null; phone: string | null }[]
+          >`
           select name, email, phone from company_contacts
           where company_id = ${lockedCase.company_id} and is_primary = true
           limit 1
         `;
-        const contact = contactRows[0];
+          const contact = contactRows[0];
 
-        if (!contact) {
-          await tx`
+          if (!contact) {
+            await tx`
             insert into timeline_events (
               company_id, case_id, event_type, actor_type, actor_id, description, metadata
             ) values (
@@ -2647,20 +2828,20 @@ export function createAnnualReturnRepository(
               ${tx.json({ milestone, reason: "no_primary_contact" })}
             )
           `;
-          return "skipped" as const;
-        }
+            return "skipped" as const;
+          }
 
-        const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
-        const recipient = contact.phone ?? contact.email;
+          const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
+          const recipient = contact.phone ?? contact.email;
 
-        // company_contacts only guarantees email IS NOT NULL OR phone IS NOT NULL, not
-        // that either is a non-empty string, so this is reachable on a data anomaly (e.g.
-        // phone: ''). withTransaction's `for` loop has no try/catch around it, so throwing
-        // here would propagate out of the whole evaluateReminders() call and silently
-        // abandon every case still queued behind this one for the rest of the sweep.
-        // Skip this case the same way an entirely missing contact is skipped above.
-        if (!recipient) {
-          await tx`
+          // company_contacts only guarantees email IS NOT NULL OR phone IS NOT NULL, not
+          // that either is a non-empty string, so this is reachable on a data anomaly (e.g.
+          // phone: ''). withTransaction's `for` loop has no try/catch around it, so throwing
+          // here would propagate out of the whole evaluateReminders() call and silently
+          // abandon every case still queued behind this one for the rest of the sweep.
+          // Skip this case the same way an entirely missing contact is skipped above.
+          if (!recipient) {
+            await tx`
             insert into timeline_events (
               company_id, case_id, event_type, actor_type, actor_id, description, metadata
             ) values (
@@ -2669,38 +2850,38 @@ export function createAnnualReturnRepository(
               ${tx.json({ milestone, reason: "unreachable_primary_contact" })}
             )
           `;
-          return "skipped" as const;
-        }
+            return "skipped" as const;
+          }
 
-        const queued = await enqueueNotification(tx, {
-          companyId: lockedCase.company_id,
-          channel,
-          notificationType: `annual_return_reminder_${milestone}`,
-          recipient,
-          // Scoped to the CASE, not just the company.
-          //
-          // The default key is company + type + recipient, and the type carries
-          // only the milestone -- so next year's annual return for the same
-          // company produced a byte-identical key. `on conflict do nothing`
-          // matched last year's spent row, no message was queued, and the sweep
-          // counted it as sent anyway. From the second year onward the client was
-          // never reminded and the system reported that they were.
-          //
-          // One case per company per return year (unique on company_id,
-          // return_year), so the case id is the period.
-          idempotencyKey: `annual-return-reminder:${case_.id}:${milestone}:${channel}:${recipient}`,
-          payload: {
-            caseId: case_.id,
-            milestone,
-            subject: `「${case_.companyName}」周年申報表提醒 — 請於 ${case_.filingDueDate} 前提供文件`,
-            body: buildReminderDraft(case_, contact.name, now),
-          },
-        });
+          const queued = await enqueueNotification(tx, {
+            companyId: lockedCase.company_id,
+            channel,
+            notificationType: `annual_return_reminder_${milestone}`,
+            recipient,
+            // Scoped to the CASE, not just the company.
+            //
+            // The default key is company + type + recipient, and the type carries
+            // only the milestone -- so next year's annual return for the same
+            // company produced a byte-identical key. `on conflict do nothing`
+            // matched last year's spent row, no message was queued, and the sweep
+            // counted it as sent anyway. From the second year onward the client was
+            // never reminded and the system reported that they were.
+            //
+            // One case per company per return year (unique on company_id,
+            // return_year), so the case id is the period.
+            idempotencyKey: `annual-return-reminder:${case_.id}:${milestone}:${channel}:${recipient}`,
+            payload: {
+              caseId: case_.id,
+              milestone,
+              subject: `「${case_.companyName}」周年申報表提醒 — 請於 ${case_.filingDueDate} 前提供文件`,
+              body: buildReminderDraft(case_, contact.name, now),
+            },
+          });
 
-        // A deduplicated enqueue is not a send. Counting one would repeat exactly
-        // the accounting lie this key fixes.
-        if (queued.idempotentReplay) {
-          await tx`
+          // A deduplicated enqueue is not a send. Counting one would repeat exactly
+          // the accounting lie this key fixes.
+          if (queued.idempotentReplay) {
+            await tx`
             insert into timeline_events (
               company_id, case_id, event_type, actor_type, actor_id, description, metadata
             ) values (
@@ -2709,10 +2890,10 @@ export function createAnnualReturnRepository(
               ${tx.json({ milestone, reason: "duplicate_notification" })}
             )
           `;
-          return "skipped" as const;
-        }
+            return "skipped" as const;
+          }
 
-        await tx`
+          await tx`
           update annual_return_cases
           set reminders_sent = reminders_sent + 1,
               current_status = case
@@ -2723,7 +2904,7 @@ export function createAnnualReturnRepository(
           where id = ${case_.id}
         `;
 
-        await tx`
+          await tx`
           insert into timeline_events (
             company_id, case_id, event_type, actor_type, actor_id, description, metadata
           ) values (
@@ -2733,11 +2914,19 @@ export function createAnnualReturnRepository(
           )
         `;
 
-        return "sent" as const;
-      });
+          return "sent" as const;
+        });
 
-      if (outcome === "sent") sent += 1;
-      else if (outcome === "skipped") skipped += 1;
+        if (outcome === "sent") sent += 1;
+        else if (outcome === "skipped") skipped += 1;
+      }
+      if (candidates.length < 200) break;
+      const last = candidates[candidates.length - 1];
+      cursor = encodeCaseCursor({
+        filing_due_date: last.filingDueDate,
+        company_name: last.companyName,
+        id: last.id,
+      });
     }
 
     return { sent, skipped };
@@ -2917,6 +3106,7 @@ export function createAnnualReturnRepository(
     confirmCaseParty,
     listCasePage,
     listAllCases,
+    listWorkViewPage,
     boardTotals,
     operationalMetrics,
     getCase,

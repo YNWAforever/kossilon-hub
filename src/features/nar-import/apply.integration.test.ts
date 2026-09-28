@@ -151,6 +151,78 @@ describe.skipIf(!databaseUrl)("T11 approved import transaction", () => {
   afterAll(async () => {
     await sql?.end();
   });
+  it("t27_scenario_2 approves and queues at least 1001 preview rows for resumable background apply", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const fx = await fixture();
+    const targetRows = process.env.RUN_T27_IMPORT_SCALE === "1" ? 10_000 : 1_001;
+    try {
+      const [source] = await sql<
+        {
+          raw: unknown;
+          parsed: unknown;
+          issues: unknown;
+          source_issues: unknown;
+        }[]
+      >`
+        select raw,parsed,issues,source_issues from nar_import_rows
+        where batch_id = ${fx.batchId} and row_number = 5`;
+      await sql`
+        insert into nar_import_rows (
+          batch_id,row_number,external_client_id,company_name,raw,parsed,issues,
+          source_issues,disposition,matched_company_id,matched_case_id
+        )
+        select ${fx.batchId}, n,
+          'T27-UNMAPPED-' || ${fx.batchId}::text || '-' || n::text,
+          'Unmapped scale fixture',${sql.json(source.raw as never)},
+          ${sql.json(source.parsed as never)},${sql.json(source.issues as never)},
+          ${sql.json(source.source_issues as never)},'needs_company_mapping',null,null
+        from generate_series(6,${targetRows + 1}::integer) n
+      `;
+      await sql`update nar_import_batches set row_count = ${targetRows} where id = ${fx.batchId}`;
+      const batch = await fx.importRepository.getBatch(fx.batchId);
+      const preview = await fx.importRepository.revalidate(
+        fx.batchId,
+        fx.actor.userId,
+        batch!.revision,
+      );
+      expect(preview.totalRows).toBe(targetRows);
+      expect(preview.rows).toHaveLength(50);
+      const next = await fx.importRepository.listPreviewPage({
+        previewId: preview.id,
+        actorId: fx.actor.userId,
+        offset: 50,
+        limit: 50,
+      });
+      expect(next.rows).toHaveLength(50);
+      expect(next.nextOffset).toBe(100);
+      await expect(
+        fx.importRepository.listPreviewPage({
+          previewId: preview.id,
+          actorId: crypto.randomUUID(),
+          offset: 0,
+          limit: 50,
+        }),
+      ).rejects.toThrow("Import preview not found.");
+      const approval = await fx.applyRepository.approve(fx.actor, {
+        previewId: preview.id,
+        previewHash: preview.previewHash,
+      });
+      const operation = await fx.bulkRepository.commitImportApproval(fx.actor, {
+        approvalId: approval.id,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const [count] = await sql<{ count: string }[]>`
+        select count(*) from bulk_operation_items where operation_id = ${operation.id}`;
+      expect(Number(count.count)).toBe(targetRows);
+      const partial = await fx.bulkRepository.runBatch(operation.id, { limit: 1 });
+      expect(partial.counts.succeeded + partial.counts.skipped).toBe(1);
+      const resumed = await fx.bulkRepository.runBatch(operation.id, { limit: 100 });
+      expect(resumed.counts.succeeded + resumed.counts.skipped).toBe(3);
+    } finally {
+      await fx.cleanup();
+    }
+  }, 180_000);
+
   it("t11_database_replay_and_resume keeps one case and observation per row with auditable partial results", async () => {
     if (!sql) throw new Error("TEST_DATABASE_URL is required");
     const fx = await fixture();

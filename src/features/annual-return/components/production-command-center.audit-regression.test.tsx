@@ -43,7 +43,7 @@ describe("T03 board metric query state", () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, retryOnMount: false, refetchOnMount: false } },
     });
-    const filters = boardFiltersFromSearch({}, 200);
+    const filters = boardFiltersFromSearch({}, 50);
     queryClient.setQueryData(annualReturnQueryKeys.boardPages(filters), {
       pages: [{ cases: [], nextCursor: null }],
       pageParams: [null],

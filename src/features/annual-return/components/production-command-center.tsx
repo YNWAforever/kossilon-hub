@@ -42,7 +42,7 @@ import {
 import { daysBetween, hongKongBusinessDate } from "../workflow";
 import { CreateCaseDialog } from "./create-case-dialog";
 
-const BOARD_PAGE_SIZE = 200;
+const BOARD_PAGE_SIZE = 50;
 
 // One template, defined once, with real floors on both flexible tracks. A track
 // of minmax(0, …) collapses to zero and lets its text draw over the neighbouring

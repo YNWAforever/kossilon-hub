@@ -32,6 +32,18 @@ describe("T19 media scheduler gate", () => {
   });
 });
 
+describe("T27 import parsing scheduler gate", () => {
+  it("schedules durable parsing in live mode and leaves demo read-only", async () => {
+    const { scheduledJobsForRuntime } = await import("./maintenance-trigger-runtime");
+    expect(scheduledJobsForRuntime({ VITE_PROVIDER_MODE: "live" })).toContain(
+      "runNarImportStageJobs",
+    );
+    expect(scheduledJobsForRuntime({ VITE_PROVIDER_MODE: "simulated" })).not.toContain(
+      "runNarImportStageJobs",
+    );
+  });
+});
+
 describe("scheduled maintenance wiring", () => {
   it("declares one Vercel HTTP cron with a server-secret gate", () => {
     const config = JSON.parse(

@@ -2,6 +2,7 @@ import { createMaintenanceJobRepository } from "@/features/operations/maintenanc
 import { createMaintenanceRunRepository } from "@/features/operations/repository";
 import { deploymentRefFromRuntime } from "@/features/operations/deployment-identity";
 import { getWhatsAppMediaConfig } from "./runtime-env";
+import { normalizeProviderMode } from "./provider-mode";
 import {
   createMaintenanceTrigger,
   type MaintenanceJobKind,
@@ -22,9 +23,14 @@ export function scheduledJobsForRuntime(
 ): MaintenanceJobKind[] {
   // The unverified provider mapping must not create a falsely successful cron
   // pass or start fetching real client attachments.
-  return getWhatsAppMediaConfig(env)
-    ? [...INITIAL_SCHEDULED_JOBS, "drainInboundMediaDownloads"]
-    : [...INITIAL_SCHEDULED_JOBS];
+  const jobs: MaintenanceJobKind[] = [...INITIAL_SCHEDULED_JOBS];
+  if (
+    normalizeProviderMode(env.VITE_PROVIDER_MODE ?? import.meta.env.VITE_PROVIDER_MODE) === "live"
+  ) {
+    jobs.push("runNarImportStageJobs");
+  }
+  if (getWhatsAppMediaConfig(env)) jobs.push("drainInboundMediaDownloads");
+  return jobs;
 }
 
 async function runSafeJob(job: MaintenanceJobKind, scheduledAt: string): Promise<unknown> {
@@ -65,6 +71,34 @@ async function runSafeJob(job: MaintenanceJobKind, scheduledAt: string): Promise
       return await repository.evaluateEscalations(scheduledAt, 100);
     } finally {
       await repository.close();
+    }
+  }
+  if (job === "runNarImportStageJobs") {
+    const [
+      { createNarImportStageJobRepository },
+      { createNarImportRepository },
+      { createDocumentStorage },
+      { getDocumentsBucketBinding },
+      { stageNarImportBytesForActor },
+      { drainNarImportStageJobs },
+    ] = await Promise.all([
+      import("@/features/nar-import/stage-jobs"),
+      import("@/features/nar-import/repository"),
+      import("@/features/documents/storage"),
+      import("./runtime-env"),
+      import("@/features/nar-import/server-fns"),
+      import("@/features/nar-import/stage-worker"),
+    ]);
+    const jobs = createNarImportStageJobRepository();
+    const repository = createNarImportRepository();
+    try {
+      return await drainNarImportStageJobs(scheduledAt, {
+        jobs,
+        storage: createDocumentStorage(getDocumentsBucketBinding()),
+        stage: (actor, input) => stageNarImportBytesForActor(actor, input, { repository }),
+      });
+    } finally {
+      await Promise.all([jobs.close(), repository.close()]);
     }
   }
   if (job === "runBulkOperations") {

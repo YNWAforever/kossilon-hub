@@ -2537,3 +2537,61 @@ create table document_analysis_run_metadata (
 );
 create index document_analysis_run_metadata_version_idx
   on document_analysis_run_metadata (document_version_id, created_at desc);
+
+-- from 0057_import_preview_scale.sql
+-- T27: direct, versioned lookup of one approved import preview row.
+-- The full immutable rows array remains the approval/hash source of truth.
+-- Existing previews are populated without changing their hash or approvals.
+alter table nar_import_previews
+  add column rows_by_id jsonb not null default '{}'::jsonb,
+  add constraint nar_import_previews_rows_by_id_object check (jsonb_typeof(rows_by_id) = 'object');
+update nar_import_previews p
+set rows_by_id = coalesce((
+  select jsonb_object_agg(item->>'rowId', item)
+  from jsonb_array_elements(p.rows) item
+), '{}'::jsonb);
+
+-- from 0058_import_apply_selection_limit.sql
+-- T27: only importApply may exceed the generic 1000-item bulk selection ceiling.
+alter table bulk_previews drop constraint bulk_previews_selection_count_check;
+alter table bulk_previews add constraint bulk_previews_selection_count_check
+  check (selection_count >= 0 and selection_count <=
+    case when action = 'importApply' then 10000 else 1000 end);
+
+-- T27: durable, actor-owned workbook parsing with private object storage.
+-- An upload remains encrypted/private in R2; only its opaque object key and hash are here.
+create table nar_import_stage_jobs (
+  id uuid primary key default gen_random_uuid(),
+  source_file_name text not null,
+  source_sha256 text not null check (source_sha256 ~ '^[0-9a-f]{64}$'),
+  source_size_bytes integer not null check (source_size_bytes > 0 and source_size_bytes <= 26214400),
+  object_key text not null unique,
+  sheet_name text,
+  return_year integer not null check (return_year between 1900 and 2100),
+  created_by uuid not null references users(id),
+  state text not null default 'queued' check (state in ('queued','processing','succeeded','failed')),
+  attempts integer not null default 0 check (attempts between 0 and 3),
+  lease_token uuid,
+  lease_expires_at timestamptz,
+  result jsonb,
+  error_code text,
+  object_deleted_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint nar_import_stage_jobs_result_object check (result is null or jsonb_typeof(result) = 'object')
+);
+create unique index nar_import_stage_jobs_active_upload
+  on nar_import_stage_jobs (source_sha256, coalesce(sheet_name,''), return_year, created_by)
+  where state <> 'failed';
+create index nar_import_stage_jobs_claim
+  on nar_import_stage_jobs (created_at,id) where state in ('queued','processing');
+create index nar_import_stage_jobs_cleanup
+  on nar_import_stage_jobs (updated_at,id)
+  where state in ('succeeded','failed') and object_deleted_at is null;
+
+-- T27: only parser-owned validation refusals may be shown to the uploading Admin.
+-- Provider, SQL and storage errors remain codes with no raw detail.
+alter table nar_import_stage_jobs
+  add column error_detail text,
+  add constraint nar_import_stage_jobs_error_detail_limit
+    check (error_detail is null or length(error_detail) <= 500);

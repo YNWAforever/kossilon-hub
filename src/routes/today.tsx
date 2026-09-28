@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
-import { getAnnualReturnWorkViews } from "@/features/annual-return/server-fns";
+import { listAnnualReturnWorkViewPage } from "@/features/annual-return/server-fns";
 import { annualReturnQueryKeys } from "@/features/annual-return/query-keys";
-import type { WorkViewKey } from "@/features/annual-return/work-views";
+import { WORK_VIEWS, type WorkViewKey } from "@/features/annual-return/work-views";
 import { DailyWorkRow } from "@/features/annual-return/components/daily-work-row";
 
 /**
@@ -36,10 +37,20 @@ function TodayRoute() {
   const { view: active } = Route.useSearch();
   const navigate = Route.useNavigate();
 
+  const [savedPage, setSavedPage] = useState<{
+    view: WorkViewKey;
+    cursor?: string;
+    asOf?: string;
+    history: { cursor?: string; asOf?: string }[];
+  }>({ view: active, history: [] });
+  const page = savedPage.view === active ? savedPage : { view: active, history: [] };
   const viewsQuery = useQuery({
-    queryKey: annualReturnQueryKeys.workViews(),
-    queryFn: () => getAnnualReturnWorkViews(),
-    enabled: dataMode === "production",
+    queryKey: annualReturnQueryKeys.workViewPage(active, page.cursor, page.asOf),
+    queryFn: () =>
+      listAnnualReturnWorkViewPage({
+        data: { view: active, limit: 50, cursor: page.cursor, asOf: page.asOf },
+      }),
+    enabled: dataMode === "production" && active !== "readyToFile",
     retry: false,
   });
 
@@ -57,8 +68,12 @@ function TodayRoute() {
     );
   }
 
-  const views = viewsQuery.data ?? [];
-  const current = views.find((view) => view.definition.key === active);
+  const current = WORK_VIEWS.find((view) => view.key === active);
+  const definition = viewsQuery.data?.definition ?? current;
+  const rows = viewsQuery.data?.rows ?? [];
+  const total = viewsQuery.data?.total;
+  const released =
+    active === "readyToFile" ? false : (viewsQuery.data?.definition.released ?? true);
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -77,51 +92,91 @@ function TodayRoute() {
       ) : null}
 
       <div className="flex flex-wrap gap-2" role="tablist">
-        {views.map((view) => (
+        {WORK_VIEWS.map((view) => (
           <button
-            key={view.definition.key}
+            key={view.key}
             role="tab"
-            aria-selected={view.definition.key === active}
+            aria-selected={view.key === active}
             className={`rounded-md border px-3 py-2 text-sm ${
-              view.definition.key === active ? "bg-primary text-primary-foreground" : ""
+              view.key === active ? "bg-primary text-primary-foreground" : ""
             }`}
-            onClick={() =>
-              void navigate({ search: { view: view.definition.key }, resetScroll: false })
-            }
+            onClick={() => void navigate({ search: { view: view.key }, resetScroll: false })}
             type="button"
           >
-            {view.definition.label}
+            {view.label}
             {/* A count is only shown for a view that can actually count. An
                 unreleased view showing "0" would be a claim it cannot make. */}
-            {view.definition.released ? ` (${view.rows.length})` : ""}
+            {view.key === active && released && total !== undefined ? ` (${total})` : ""}
           </button>
         ))}
       </div>
 
-      {current ? (
+      {definition ? (
         <section className="rounded-lg border bg-card">
           <div className="border-b p-4">
-            <h2 className="text-base font-semibold">{current.definition.label}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{current.definition.description}</p>
+            <h2 className="text-base font-semibold">{definition.label}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{definition.description}</p>
           </div>
 
-          {!current.definition.released ? (
+          {!released ? (
             <p className="p-4 text-sm text-status-yellow" role="status">
-              {current.definition.unavailableReason} 負責同事請開啟相關案件逐項核對。
+              {definition.unavailableReason} 負責同事請開啟相關案件逐項核對。
             </p>
-          ) : current.rows.length === 0 ? (
+          ) : rows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
               {viewsQuery.isPending
                 ? "載入中…"
-                : "現時沒有這一類工作。如預期應有案件，請由負責同事在案件板核對。"}
+                : viewsQuery.error
+                  ? "載入失敗；請由負責同事在案件板核對。"
+                  : "現時沒有這一類工作。如預期應有案件，請由負責同事在案件板核對。"}
             </p>
           ) : (
             <div className="divide-y">
-              {current.rows.map((row) => (
-                <DailyWorkRow key={row.caseId} row={row} viewKey={current.definition.key} />
+              {rows.map((row) => (
+                <DailyWorkRow key={row.caseId} row={row} viewKey={active} />
               ))}
             </div>
           )}
+          {released && (page.history.length > 0 || viewsQuery.data?.nextCursor) ? (
+            <div className="flex flex-wrap items-center gap-3 border-t p-4">
+              {page.history.length > 0 ? (
+                <button
+                  className="rounded-md border px-3 py-2 text-sm"
+                  onClick={() => {
+                    const previous = page.history[page.history.length - 1];
+                    setSavedPage({
+                      view: active,
+                      cursor: previous.cursor,
+                      asOf: previous.asOf,
+                      history: page.history.slice(0, -1),
+                    });
+                  }}
+                  type="button"
+                >
+                  上一頁
+                </button>
+              ) : null}
+              {viewsQuery.data?.nextCursor ? (
+                <button
+                  className="rounded-md border px-3 py-2 text-sm"
+                  onClick={() =>
+                    setSavedPage({
+                      view: active,
+                      cursor: viewsQuery.data.nextCursor ?? undefined,
+                      asOf: viewsQuery.data.asOf,
+                      history: [...page.history, { cursor: page.cursor, asOf: page.asOf }],
+                    })
+                  }
+                  type="button"
+                >
+                  下一頁
+                </button>
+              ) : null}
+              <span className="text-sm text-muted-foreground">
+                本頁 {rows.length} 筆 · 總數 {total ?? 0}
+              </span>
+            </div>
+          ) : null}
         </section>
       ) : null}
     </main>

@@ -241,6 +241,16 @@ export type NarImportRepository = {
     expectedRevision: number,
     returnYear?: number,
   ): Promise<ImportPreview>;
+  listPreviewPage(input: {
+    previewId: string;
+    actorId: string;
+    offset: number;
+    limit: number;
+  }): Promise<{
+    rows: ImportPreview["rows"];
+    totalRows: number;
+    nextOffset: number | null;
+  }>;
   searchCompanies(input: { q: string; cursor: string | null; limit: number }): Promise<{
     items: { id: string; companyName: string; crNumber: string; brNumber: string }[];
     nextCursor: string | null;
@@ -370,7 +380,7 @@ export function createNarImportRepository(
           : [];
         const caseByCompanyId = new Map(cases.map((row) => [row.company_id, row]));
 
-        for (const row of input.read.rows) {
+        const stagedRows = input.read.rows.map((row) => {
           const matchedCompanyId = companyByExternalId.get(row.externalClientId) ?? null;
           const existingCase = matchedCompanyId ? caseByCompanyId.get(matchedCompanyId) : undefined;
           const decision = dispositionFor(row, {
@@ -385,19 +395,35 @@ export function createNarImportRepository(
               : null,
             returnYear: input.returnYear,
           });
-
+          return {
+            row_number: row.rowNumber,
+            external_client_id: row.externalClientId,
+            company_name: row.companyName,
+            raw: row.raw,
+            parsed: parsedPayload(row),
+            issues: [...row.issues, ...decision.issues],
+            source_issues: row.issues,
+            disposition: DISPOSITION_TO_COLUMN[decision.disposition],
+            matched_company_id: matchedCompanyId,
+            matched_case_id: existingCase?.id ?? null,
+          };
+        });
+        if (stagedRows.length > 0) {
           await tx`
             insert into nar_import_rows (
-              batch_id, row_number, external_client_id, company_name, raw, parsed, issues,
-              source_issues, disposition, matched_company_id, matched_case_id
-            ) values (
-              ${batch.id}, ${row.rowNumber}, ${row.externalClientId}, ${row.companyName},
-              ${tx.json(row.raw as never)}, ${tx.json(parsedPayload(row) as never)},
-              ${tx.json([...row.issues, ...decision.issues] as never)},
-              ${tx.json(row.issues as never)}, ${DISPOSITION_TO_COLUMN[decision.disposition]}, ${matchedCompanyId},
-              ${existingCase?.id ?? null}
+              batch_id,row_number,external_client_id,company_name,raw,parsed,issues,
+              source_issues,disposition,matched_company_id,matched_case_id
             )
-            on conflict (batch_id, row_number) do nothing`;
+            select ${batch.id}, r.row_number, r.external_client_id, r.company_name,
+              r.raw, r.parsed, r.issues, r.source_issues, r.disposition,
+              r.matched_company_id, r.matched_case_id
+            from jsonb_to_recordset(${tx.json(stagedRows as never)}::jsonb) as r(
+              row_number integer, external_client_id text, company_name text,
+              raw jsonb, parsed jsonb, issues jsonb, source_issues jsonb,
+              disposition text, matched_company_id uuid, matched_case_id uuid
+            )
+            on conflict (batch_id,row_number) do nothing
+          `;
         }
 
         return { batch: mapBatch(batch), reused: false };
@@ -561,11 +587,13 @@ export function createNarImportRepository(
         );
         const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", hashBytes));
         const previewHash = Array.from(hash, (byte) => byte.toString(16).padStart(2, "0")).join("");
+        const rowsById = Object.fromEntries(rows.map((row) => [row.rowId, row]));
         const [preview] = await tx<{ id: string; expires_at: string | Date }[]>`
           insert into nar_import_previews (
-            batch_id,batch_revision,semantic_key,preview_hash,counts,rows,created_by,expires_at
+            batch_id,batch_revision,semantic_key,preview_hash,counts,rows,rows_by_id,created_by,expires_at
           ) values (${batchId},${mapped.revision},${semanticKey},${previewHash},
-            ${tx.json(counts as never)},${tx.json(rows as never)},${actorId},
+            ${tx.json(counts as never)},${tx.json(rows as never)},
+            ${tx.json(rowsById as never)},${actorId},
             ${new Date(Date.now() + 15 * 60_000).toISOString()})
           on conflict (batch_id,batch_revision,preview_hash,created_by)
           do update set expires_at = excluded.expires_at returning id,expires_at`;
@@ -576,10 +604,39 @@ export function createNarImportRepository(
           semanticKey,
           previewHash,
           counts,
-          rows,
+          rows: rows.slice(0, 50),
+          totalRows: rows.length,
           expiresAt: new Date(preview.expires_at).toISOString(),
         };
       });
+    },
+
+    async listPreviewPage(input) {
+      if (
+        !Number.isInteger(input.offset) ||
+        input.offset < 0 ||
+        !Number.isInteger(input.limit) ||
+        input.limit < 1 ||
+        input.limit > 50
+      )
+        throw new Error("Invalid import preview page.");
+      const [page] = await sql<{ rows: ImportPreview["rows"]; total: number }[]>`
+        select jsonb_array_length(p.rows) as total,
+          coalesce((
+            select jsonb_agg(p.rows -> index_ order by index_)
+            from generate_series(${input.offset}::integer, ${input.offset + input.limit - 1}::integer) index_
+            where index_ < jsonb_array_length(p.rows)
+          ), '[]'::jsonb) as rows
+        from nar_import_previews p
+        where p.id = ${input.previewId} and p.created_by = ${input.actorId}
+      `;
+      if (!page) throw new Error("Import preview not found.");
+      return {
+        rows: page.rows,
+        totalRows: page.total,
+        nextOffset:
+          input.offset + page.rows.length < page.total ? input.offset + page.rows.length : null,
+      };
     },
 
     async searchCompanies(input) {

@@ -6,6 +6,8 @@ import {
   getNarImportBatchReviewForActor,
   mapNarImportCompanyForActor,
   stageNarImportForActor,
+  queueNarImportStageForActor,
+  getNarImportStageJobForActor,
   searchImportCompaniesForActor,
   revalidateNarImportForActor,
 } from "./server-fns";
@@ -135,6 +137,56 @@ describe("import authority", () => {
       approvalRepository as unknown as Parameters<typeof approveNarImportForActor>[2],
     );
     expect(approvalRepository.approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("t27_scenario_2 queues private bytes only for Admin and scopes job status to its creator", async () => {
+    const storage = { put: vi.fn(async () => ({})), delete: vi.fn(async () => undefined) };
+    const job = {
+      id: "33333333-3333-4333-8333-333333333333",
+      state: "queued",
+      attempts: 0,
+      result: null,
+      errorCode: null,
+    };
+    const jobs = {
+      enqueue: vi.fn(async () => ({ job, reused: false })),
+      getForActor: vi.fn(async (_id: string, userId: string) =>
+        userId === actor("Admin").userId ? job : null,
+      ),
+    };
+    const dependencies = { jobs, storage } as unknown as Parameters<
+      typeof queueNarImportStageForActor
+    >[2];
+    const input = {
+      fileName: "synthetic.xlsx",
+      bodyBase64: btoa("synthetic workbook"),
+      returnYear: 2026,
+    };
+    await expect(
+      queueNarImportStageForActor(actor("Manager"), input, dependencies),
+    ).rejects.toThrow(/Admin access/);
+    expect(storage.put).not.toHaveBeenCalled();
+    const queued = await queueNarImportStageForActor(actor("Admin"), input, dependencies);
+    expect(queued).toMatchObject({ id: job.id, state: "queued" });
+    expect(storage.put).toHaveBeenCalledWith(
+      expect.objectContaining({
+        objectKey: expect.stringMatching(/^nar-import\/staging\//),
+        sizeBytes: 18,
+        checksum: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+    );
+    expect(jobs.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdBy: actor("Admin").userId,
+        returnYear: 2026,
+      }),
+    );
+    expect(await getNarImportStageJobForActor(actor("Admin"), job.id, jobs as never)).toMatchObject(
+      { id: job.id, state: "queued" },
+    );
+    await expect(
+      getNarImportStageJobForActor(actor("Staff"), job.id, jobs as never),
+    ).rejects.toThrow(/Admin access/);
   });
 
   it("refuses ordinary staff", async () => {

@@ -945,6 +945,71 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     INTEGRATION_TEST_TIMEOUT_MS,
   );
 
+  it(
+    "t27_scenario_1 pages and counts authorized daily work in one SQL snapshot",
+    async () => {
+      const first = await createMutableAnnualReturnFixture({ sequence: 501 });
+      const second = await createMutableAnnualReturnFixture({ sequence: 502 });
+      const foreign = await createMutableAnnualReturnFixture({
+        sequence: 503,
+        teamId: TEAM_EVIDENCE_ID,
+      });
+      const repository = repositoryFor("2026-08-01");
+      const scope = {
+        teamId: TEAM_ANNUAL_RETURN_ID,
+        companyIds: [first.companyId, second.companyId, foreign.companyId],
+      };
+      const input = {
+        scope,
+        viewerId: USER_AMY_ID,
+        view: "chaseToday" as const,
+        limit: 1,
+        asOf: "2026-08-01",
+      };
+      const page1 = await repository.listWorkViewPage(input);
+      expect(page1.total).toBe(2);
+      expect(page1.rows).toHaveLength(1);
+      expect(page1.nextCursor).toBeTruthy();
+      const page2 = await repository.listWorkViewPage({ ...input, cursor: page1.nextCursor! });
+      expect(page2.total).toBe(2);
+      expect(page2.rows).toHaveLength(1);
+      expect(page2.nextCursor).toBeNull();
+      expect(new Set([...page1.rows, ...page2.rows].map((row) => row.caseId))).toEqual(
+        new Set([first.caseId, second.caseId]),
+      );
+      expect(page1.rows[0]?.blocker).toContain("Signed NAR1 form");
+      await expect(repository.listWorkViewPage({ ...input, cursor: "bad" })).rejects.toThrow(
+        "Invalid work-view cursor.",
+      );
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "t27_scenario_3 counts received work only for the authorized reviewer",
+    async () => {
+      const received = await createMutableAnnualReturnFixture({
+        sequence: 504,
+        checklistStatus: "Received",
+        checklistDocument: true,
+      });
+      const repository = repositoryFor("2026-08-01");
+      const base = {
+        scope: { companyIds: [received.companyId] },
+        view: "awaitingMyReview" as const,
+        limit: 50,
+        asOf: "2026-08-01",
+      };
+      const mine = await repository.listWorkViewPage({ ...base, viewerId: USER_AMY_ID });
+      expect(mine.total).toBe(1);
+      expect(mine.rows[0]?.documentId).toBe(received.evidenceDocumentId);
+      const other = await repository.listWorkViewPage({ ...base, viewerId: USER_PRIYA_ID });
+      expect(other.total).toBe(0);
+      expect(other.rows).toEqual([]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   it("rejects a malformed continuation cursor instead of silently restarting at page one", async () => {
     const repository = repositoryFor("2026-07-05");
     await expect(repository.listCasePage({ limit: 200, cursor: "not-a-cursor" })).rejects.toThrow(
