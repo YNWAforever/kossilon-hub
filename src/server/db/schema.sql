@@ -703,11 +703,41 @@ create table if not exists company_contacts (
   role text not null,
   email text,
   phone text,
+  phone_e164 text,
+  phone_verified_at timestamptz,
+  phone_verified_by uuid references users(id) on delete restrict,
+  phone_verification_evidence text,
+  preferred_language text,
   is_primary boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint company_contacts_reachable_check check (email is not null or phone is not null)
+  constraint company_contacts_reachable_check check (email is not null or phone is not null),
+  constraint company_contacts_phone_e164_check
+    check (phone_e164 is null or phone_e164 ~ '^\+[1-9][0-9]{7,14}$'),
+  constraint company_contacts_phone_verification_check
+    check ((phone_e164 is null and phone_verified_at is null and phone_verified_by is null
+      and phone_verification_evidence is null)
+      or (phone_e164 is not null and phone_verified_at is not null and phone_verified_by is not null
+      and length(trim(phone_verification_evidence)) >= 8)),
+  constraint company_contacts_preferred_language_check
+    check (preferred_language is null or preferred_language in ('en','zh_HK'))
 );
+
+create or replace function invalidate_verified_contact_phone()
+returns trigger language plpgsql as $$
+begin
+  if new.phone is distinct from old.phone then
+    new.phone_e164 := null;
+    new.phone_verified_at := null;
+    new.phone_verified_by := null;
+    new.phone_verification_evidence := null;
+  end if;
+  return new;
+end
+$$;
+create trigger company_contacts_phone_change_invalidates_verification
+before update on company_contacts
+for each row execute function invalidate_verified_contact_phone();
 
 create index if not exists company_contacts_company_id_idx
   on company_contacts (company_id);
@@ -1037,6 +1067,10 @@ create table if not exists whatsapp_templates (
     status in ('draft', 'active', 'paused', 'archived')
   ),
   body text not null,
+  provider_approval_verified_at timestamptz,
+  provider_approval_evidence text,
+  constraint whatsapp_templates_provider_approval_pair_check
+    check ((provider_approval_verified_at is null) = (provider_approval_evidence is null)),
   created_by uuid references users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -2223,3 +2257,22 @@ create unique index handoff_returns_source_identity_uidx
 create index handoff_returns_case_open_idx
   on handoff_returns (case_id,received_at desc)
   where reconciled_at is null or outcome in ('rejected','partial','unmatched');
+
+-- from 0044_message_preview.sql
+create table if not exists whatsapp_message_previews (
+  id uuid primary key,
+  case_id uuid not null references annual_return_cases(id) on delete restrict,
+  company_id uuid not null references companies(id) on delete restrict,
+  contact_id uuid not null,
+  conversation_id uuid,
+  created_by uuid not null references users(id) on delete restrict,
+  preview_hash text not null check (preview_hash ~ '^[0-9a-f]{64}$'),
+  payload jsonb not null,
+  created_at timestamptz not null,
+  expires_at timestamptz not null,
+  queued_message_id uuid references whatsapp_messages(id) on delete restrict,
+  check (expires_at > created_at),
+  check (expires_at <= created_at + interval '10 minutes')
+);
+create index if not exists whatsapp_message_previews_case_created_idx
+  on whatsapp_message_previews(case_id, created_at desc);

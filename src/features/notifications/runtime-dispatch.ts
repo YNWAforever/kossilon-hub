@@ -2,11 +2,17 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
+import { validateQueuedMessagePreview } from "@/features/whatsapp/message-preview-repository";
+import { validateQueuedFollowUpPreview } from "@/features/annual-return/follow-up-preview-repository";
 import type { WhatsAppProviderConfig } from "@/features/whatsapp/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { ResendConfig } from "@/server/runtime-env";
 import { createNotificationDispatcher, createNotificationTransport } from "./dispatcher";
-import type { NotificationOutboxRepository, NotificationTransport } from "./types";
+import {
+  notificationPayload,
+  type NotificationOutboxRepository,
+  type NotificationTransport,
+} from "./types";
 
 const dispatchInputSchema = z
   .object({
@@ -52,6 +58,32 @@ export async function dispatchDueNotificationsWithDependencies(
       lastInboundResolver:
         providerMode === "live" && whatsAppRepository
           ? (phoneDigits) => whatsAppRepository.lastInboundAtForPhoneDigits(phoneDigits)
+          : undefined,
+      previewGuard:
+        providerMode === "live"
+          ? async (notification, now) => {
+              const payload = notificationPayload(notification);
+              if (payload.approvedPreviewKind === "follow-up") {
+                await validateQueuedFollowUpPreview(notification);
+                return;
+              }
+              if (payload.source !== "approved-message-preview") return;
+              if (
+                typeof payload.previewId !== "string" ||
+                typeof payload.previewHash !== "string" ||
+                typeof payload.whatsappMessageId !== "string"
+              ) {
+                throw Object.assign(new Error("Approved preview metadata is incomplete."), {
+                  code: "whatsapp_preview_stale",
+                });
+              }
+              await validateQueuedMessagePreview({
+                previewId: payload.previewId,
+                previewHash: payload.previewHash,
+                messageId: payload.whatsappMessageId,
+                now,
+              });
+            }
           : undefined,
     }).dispatchDue(data.now, data.limit);
   } finally {

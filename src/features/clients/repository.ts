@@ -99,6 +99,9 @@ type ContactRow = {
   role: string;
   email: string | null;
   phone: string | null;
+  phone_e164: string | null;
+  phone_verified_at: string | null;
+  preferred_language: string | null;
   is_primary: boolean;
 };
 
@@ -183,6 +186,9 @@ function mapContact(row: ContactRow): CompanyContact {
     role: row.role,
     email: row.email,
     phone: row.phone,
+    phoneE164: row.phone_e164,
+    phoneVerifiedAt: row.phone_verified_at,
+    preferredLanguage: row.preferred_language,
     isPrimary: row.is_primary,
   };
 }
@@ -403,7 +409,8 @@ export function createClientRepository(
       documents,
     ] = await Promise.all([
       client<ContactRow[]>`
-        select id, company_id, name, role, email, phone, is_primary
+        select id, company_id, name, role, email, phone, phone_e164,
+          phone_verified_at::text as phone_verified_at, preferred_language, is_primary
         from company_contacts
         where company_id = ${id}
         order by is_primary desc, name asc
@@ -701,7 +708,8 @@ export function createClientRepository(
     contactId: string,
   ): Promise<ContactRow> {
     const rows = await tx<ContactRow[]>`
-      select id, company_id, name, role, email, phone, is_primary
+      select id, company_id, name, role, email, phone, phone_e164,
+          phone_verified_at::text as phone_verified_at, preferred_language, is_primary
       from company_contacts
       where id = ${contactId} and company_id = ${companyId}
       limit 1

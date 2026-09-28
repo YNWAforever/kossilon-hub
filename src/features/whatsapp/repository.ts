@@ -247,6 +247,7 @@ type CaseAuthorizationRow = {
 
 type TemplateRow = {
   id: string;
+  status: string;
 };
 
 type MessageRow = {
@@ -649,12 +650,14 @@ export function createWhatsAppRepository(
       )
       on conflict (provider, template_name, language_code)
       do update set category = excluded.category,
-                    status = excluded.status,
                     body = excluded.body,
                     updated_at = now()
-      returning id
+      returning id, status
     `;
 
+    if (rows[0].status !== "active") {
+      throw new Error("WhatsApp template is disabled; prepare a new approved preview.");
+    }
     return rows[0].id;
   }
 
@@ -997,13 +1000,18 @@ export function createWhatsAppRepository(
         displayName: input.contactName ?? null,
         companyId: caseRow.company_id,
       });
-      const templateId = await upsertTemplate(tx, {
-        templateName: input.templateName,
-        languageCode: input.languageCode ?? "en",
-        category: input.category,
-        body: input.body,
-        actorId: input.actorId,
-      });
+      // A frozen session-text reply uses the body only. Creating or reactivating
+      // a template for that path would misstate what can go on the wire.
+      const templateId =
+        input.metadata?.frozenSendMode === "text"
+          ? null
+          : await upsertTemplate(tx, {
+              templateName: input.templateName,
+              languageCode: input.languageCode ?? "en",
+              category: input.category,
+              body: input.body,
+              actorId: input.actorId,
+            });
       const payload = {
         source: "phase2-whatsapp-test",
         templateName: input.templateName,

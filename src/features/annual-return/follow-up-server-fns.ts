@@ -10,6 +10,13 @@ import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import { getAnnualReturnActionPermission } from "./permissions";
 import type { AnnualReturnRepository } from "./repository";
 import { hongKongBusinessDate } from "./workflow";
+import { toPhoneDigits } from "@/features/whatsapp/phone";
+import {
+  buildProductionFollowUpPreview,
+  type ProductionFollowUpPreview,
+} from "./follow-up-preview";
+import type { SqlClient } from "@/server/db/client";
+import type postgres from "postgres";
 import {
   deriveProductionFollowUpDrafts,
   PRODUCTION_FOLLOW_UP_SOURCES,
@@ -44,6 +51,7 @@ export type ProductionFollowUpDependencies = {
   annualReturnRepository: AnnualReturnRepository;
   followUpRepository: ProductionFollowUpRepository;
   whatsAppRepository: WhatsAppRepository;
+  approvedPreview?: ProductionFollowUpPreview;
 };
 
 function staffIdentity(actor: AuthenticatedActor) {
@@ -73,6 +81,74 @@ export async function listProductionFollowUpDraftsForActor(
   );
   return deriveProductionFollowUpDrafts(authorizedCases, state, hongKongBusinessDate());
 }
+
+type FollowUpQueryClient = SqlClient | postgres.TransactionSql;
+
+/** Read-only review of the exact persisted recipient and in-window body. */
+export async function prepareProductionFollowUpForActor(
+  actor: AuthenticatedActor,
+  identity: ProductionFollowUpIdentity,
+  dependencies: ProductionFollowUpDependencies,
+  sql: FollowUpQueryClient,
+  now: Date,
+): Promise<ProductionFollowUpPreview> {
+  const data = productionFollowUpSchema.parse(identity);
+  const drafts = await listProductionFollowUpDraftsForActor(actor, dependencies);
+  const draft = drafts.find(
+    (candidate) =>
+      candidate.source === data.source &&
+      candidate.caseId === data.caseId &&
+      candidate.entityId === data.entityId,
+  );
+  if (!draft) throw new Error("No current authorized follow-up draft exists.");
+  const digits = toPhoneDigits(draft.phone);
+  if (!digits) throw new Error("Follow-up recipient has no saved phone.");
+  const contacts = await sql<
+    {
+      id: string;
+      name: string;
+      phone_e164: string;
+      preferred_language: string;
+      updated_at: string;
+    }[]
+  >`
+    select id, name, phone_e164, preferred_language, updated_at::text as updated_at
+    from company_contacts
+    where company_id = ${draft.companyId}
+      and name = ${draft.recipientName}
+      and phone_e164 is not null and phone_verified_at is not null
+      and preferred_language is not null
+      and regexp_replace(phone_e164, '[^0-9]', '', 'g') = ${digits}
+    order by id
+    limit 2
+    for share
+  `;
+  if (contacts.length > 1) throw new Error("Multiple verified contacts match this recipient.");
+  const contact = contacts[0];
+  const lastInboundAt = await dependencies.whatsAppRepository.lastInboundAtForPhoneDigits(digits);
+  return buildProductionFollowUpPreview({
+    draft,
+    contact: contact
+      ? {
+          id: contact.id,
+          name: contact.name,
+          phoneE164: contact.phone_e164,
+          languageCode: contact.preferred_language,
+          updatedAt: contact.updated_at,
+        }
+      : null,
+    lastInboundAt,
+    now,
+  });
+}
+
+export const productionFollowUpApprovalSchema = z
+  .object({
+    source: z.enum(["annual-return", "document-review", "payment-proof-review"]),
+    ...followUpIdentityFields,
+    previewHash: z.string().regex(/^[0-9a-f]{64}$/),
+  })
+  .strict();
 
 function queueDetails(source: ProductionFollowUpSource) {
   if (source === "document-review") {
@@ -122,6 +198,18 @@ async function sendFollowUpForActor(
   if (draft.status === "blocked" || !draft.recipientName || !draft.phone) {
     throw new Error("Follow-up is blocked because no persisted recipient is available.");
   }
+  const approved = dependencies.approvedPreview;
+  if (
+    approved &&
+    (draft.status !== "draft" ||
+      approved.caseId !== draft.caseId ||
+      approved.companyId !== draft.companyId ||
+      approved.renderedText !== draft.messagePreview ||
+      approved.recipientName !== draft.recipientName ||
+      toPhoneDigits(approved.recipientE164) !== toPhoneDigits(draft.phone))
+  ) {
+    throw new Error("Follow-up changed since approval; prepare a new preview.");
+  }
 
   const details = queueDetails(identity.source);
   // Refused here rather than at WOZTELL. An unapproved name is rejected outside
@@ -153,9 +241,39 @@ async function sendFollowUpForActor(
       source: identity.source,
       entityId: identity.entityId,
       documentId: identity.source === "annual-return" ? null : identity.entityId,
+      ...(approved
+        ? {
+            approvedPreviewKind: "follow-up",
+            frozenSendMode: approved.sendMode,
+            previewHash: approved.previewHash,
+            renderedText: approved.renderedText,
+            contactId: approved.contactId,
+            contactVersion: approved.contactVersion,
+            companyId: approved.companyId,
+            recipientName: approved.recipientName,
+            recipientE164: approved.recipientE164,
+            languageCode: approved.languageCode,
+          }
+        : {}),
     },
   });
   const replayed = message.idempotentReplay === true;
+  if (replayed && approved) {
+    const payload =
+      message.payload &&
+      typeof message.payload === "object" &&
+      !Array.isArray(message.payload) &&
+      !(message.payload instanceof Date)
+        ? (message.payload as Record<string, unknown>)
+        : {};
+    if (
+      payload.approvedPreviewKind !== "follow-up" ||
+      payload.previewHash !== approved.previewHash ||
+      payload.contactId !== approved.contactId
+    ) {
+      throw new Error("Existing follow-up has different approval; inspect its delivery.");
+    }
+  }
 
   if (!replayed) {
     await dependencies.annualReturnRepository.recordReminder({
@@ -293,7 +411,7 @@ export const listProductionFollowUpDrafts = createServerFn({ method: "GET" }).ha
   }
 });
 
-export const sendProductionFollowUp = createServerFn({ method: "POST" })
+export const previewProductionFollowUp = createServerFn({ method: "GET" })
   .validator(productionFollowUpSchema)
   .handler(async ({ data }) => {
     const {
@@ -305,16 +423,76 @@ export const sendProductionFollowUp = createServerFn({ method: "POST" })
       createWhatsAppRepository,
     } = await loadProductionFollowUpDependencies();
     const actor = await getCurrentAnnualReturnActor(getRequest());
+    const annualReturnRepository = createAnnualReturnRepository();
+    const followUpRepository = createProductionFollowUpRepository();
+    const whatsAppRepository = createWhatsAppRepository();
+    try {
+      return await prepareProductionFollowUpForActor(
+        actor,
+        data,
+        {
+          annualReturnRepository,
+          followUpRepository,
+          whatsAppRepository,
+        },
+        getSqlClient(),
+        new Date(),
+      );
+    } finally {
+      await Promise.all([
+        annualReturnRepository.close(),
+        followUpRepository.close(),
+        whatsAppRepository.close(),
+      ]);
+    }
+  });
+
+export const sendProductionFollowUp = createServerFn({ method: "POST" })
+  .validator(productionFollowUpApprovalSchema)
+  .handler(async ({ data }) => {
+    const { previewHash, ...identity } = data;
+    const {
+      getRequest,
+      getCurrentAnnualReturnActor,
+      getSqlClient,
+      createAnnualReturnRepository,
+      createProductionFollowUpRepository,
+      createWhatsAppRepository,
+    } = await loadProductionFollowUpDependencies();
+    const actor = await getCurrentAnnualReturnActor(getRequest());
+    const [{ currentProviderMode }, { getWhatsAppIntegrationStatusForActor }] = await Promise.all([
+      import("@/server/provider-mode"),
+      import("@/features/whatsapp/server-fns"),
+    ]);
+    const providerMode = currentProviderMode();
+    const providerStatus = getWhatsAppIntegrationStatusForActor(actor, process.env, providerMode);
+    if (providerMode !== "live" || providerStatus.capabilityStatus.state !== "healthy") {
+      throw new Error("Provider delivery is unverified; this follow-up cannot be queued.");
+    }
     const sql = getSqlClient();
     const result = await sql.begin(async (tx) => {
       const annualReturnRepository = createAnnualReturnRepository({ sql: tx });
       const followUpRepository = createProductionFollowUpRepository({ sql: tx });
       const whatsAppRepository = createWhatsAppRepository({ sql: tx });
       try {
-        return await sendProductionFollowUpForActor(actor, data, {
+        const dependencies = {
           annualReturnRepository,
           followUpRepository,
           whatsAppRepository,
+        };
+        const preview = await prepareProductionFollowUpForActor(
+          actor,
+          identity,
+          dependencies,
+          tx,
+          new Date(),
+        );
+        if (preview.previewHash !== previewHash) {
+          throw new Error("Follow-up preview changed. Review and approve it again.");
+        }
+        return await sendProductionFollowUpForActor(actor, identity, {
+          ...dependencies,
+          approvedPreview: preview,
         });
       } finally {
         await Promise.all([
@@ -323,15 +501,6 @@ export const sendProductionFollowUp = createServerFn({ method: "POST" })
           whatsAppRepository.close(),
         ]);
       }
-    });
-    const [{ currentProviderMode }, { dispatchDueNotificationsOnServer }] = await Promise.all([
-      import("@/server/provider-mode"),
-      import("@/features/notifications/runtime-dispatch"),
-    ]);
-    await dispatchSimulatedFollowUpIfNeeded({
-      currentProviderMode,
-      dispatchDue: dispatchDueNotificationsOnServer,
-      now: () => new Date(),
     });
     return result;
   });
