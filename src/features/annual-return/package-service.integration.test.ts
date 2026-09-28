@@ -6,6 +6,7 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DocumentStorage } from "@/features/documents/types";
 import { createDocumentRepository } from "@/features/documents/repository";
 import { createBulkOperationRepository } from "@/features/bulk-operations/repository";
+import { createAnnualReturnRepository } from "./repository";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
 import { ingestReturnForActor, reconcileReturnForActor } from "./return-service";
@@ -212,9 +213,9 @@ async function dbFixture(tx: postgres.TransactionSql): Promise<Fixture> {
   const nar1 = await reviewedDocument("registry", "nar1");
   const [checklist] = await tx<{ id: string }[]>`
     insert into annual_return_checklist_items
-      (case_id,item_label,required,status,due_date,document_id,verified_at)
+      (case_id,item_label,required,status,due_date,document_id,received_at,verified_at)
     values (${annualCase.id},'Signed NAR1',true,'Verified','2026-08-10',
-      ${nar1.documentId},now()) returning id`;
+      ${nar1.documentId},now(),now()) returning id`;
   const [requirement] = await tx<{ id: string }[]>`
     insert into case_requirement_instances
       (case_id,checklist_item_id,requirement_key,template_version,applicability)
@@ -864,6 +865,97 @@ describe.skipIf(!databaseUrl)("T24 package, submission and return batch service 
       const [caseRow] = await tx<{ current_status: string }[]>`
         select current_status from annual_return_cases where id=${fx.caseId}`;
       expect(caseRow.current_status).not.toBe("Filed");
+    });
+  });
+});
+
+describe.skipIf(!databaseUrl)("T29 local filing journey", () => {
+  it("t29_scenario_2 requires approved bytes, external submission proof and accepted return before completion", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      const cases = createAnnualReturnRepository({ sql: tx });
+      await expect(
+        cases.updateStatus(fixture.caseId, "Completed", fixture.actor.userId!),
+      ).rejects.toThrow(/Cannot complete/i);
+
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const downloaded = await downloadApprovedPackageForActor(fixture.actor, draft.id, deps);
+      expect(downloaded.checksum).toBe(draft.artifactSha256);
+      await expect(
+        cases.updateStatus(fixture.caseId, "Completed", fixture.actor.userId!),
+      ).rejects.toThrow(/recorded submission proof and reconciled accepted return/i);
+
+      expect((await cases.getCase(fixture.caseId))?.currentStatus).toBe("Payment pending");
+
+      const submitted = await recordManualSubmissionForActor(
+        fixture.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+          submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-" + crypto.randomUUID(),
+          proofVersionId: await fixture.createSubmissionProof(),
+        },
+        deps,
+      );
+      expect(submitted.status).toBe("recorded_submission");
+      await expect(
+        cases.updateStatus(fixture.caseId, "Completed", fixture.actor.userId!),
+      ).rejects.toThrow(/recorded submission proof and reconciled accepted return/i);
+
+      expect((await cases.getCase(fixture.caseId))?.currentStatus).toBe("Payment pending");
+
+      const received = await ingestReturnForActor(
+        fixture.actor,
+        {
+          caseId: fixture.caseId,
+          externalReference: submitted.externalReference,
+          manifestHash: draft.manifestHash,
+          outcome: "accepted",
+          source: {
+            kind: "manual",
+            proofVersionId: await fixture.createReturnProof("t29-accepted"),
+          },
+        },
+        deps,
+      );
+      expect(received.matchState).toBe("candidate");
+      await expect(
+        cases.updateStatus(fixture.caseId, "Completed", fixture.actor.userId!),
+      ).rejects.toThrow(/recorded submission proof and reconciled accepted return/i);
+
+      const reviewed = await reconcileReturnForActor(
+        fixture.actor,
+        {
+          returnId: received.id,
+          submissionId: submitted.id,
+          expectedRevision: 1,
+          decision: "confirm",
+          reason: "",
+        },
+        deps,
+      );
+      expect(reviewed).toMatchObject({ matchState: "reconciled", outcome: "accepted" });
+      expect((await cases.getCase(fixture.caseId))?.currentStatus).toBe("Payment pending");
+
+      const completed = await cases.updateStatus(
+        fixture.caseId,
+        "Completed",
+        fixture.actor.userId!,
+      );
+      expect(completed).toMatchObject({ currentStatus: "Completed" });
     });
   });
 });

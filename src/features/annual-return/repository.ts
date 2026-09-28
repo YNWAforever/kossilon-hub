@@ -1828,29 +1828,96 @@ export function createAnnualReturnRepository(
       blockers.push("Verified payment proof document is required.");
     }
 
-    if (!hasText(filingReference)) {
-      blockers.push("Filing reference is required.");
-    }
-
-    if (!confirmationDocumentId) {
-      blockers.push("Filing confirmation document is required.");
-    } else {
-      const filingConfirmationRows = await tx<{ id: string }[]>`
-        select id
-        from documents
-        where id = ${confirmationDocumentId}
-          and case_id = ${caseId}
-          and company_id = ${companyId}
-          and verification_status = 'verified'
-          and file_type = any(${FILING_CONFIRMATION_FILE_TYPE})
+    // Cases on the package/handoff workflow must have the exact approved
+    // revision, a reviewed same-case submission proof, and a human-confirmed
+    // accepted return. Legacy cases without packages keep their earlier
+    // filing-reference and confirmation-document acceptance path.
+    const packageRows = await tx<{ id: string }[]>`
+      select id from filing_packages where case_id = ${caseId} limit 1
+    `;
+    if (packageRows.length > 0) {
+      const completeHandoffRows = await tx<{ id: string }[]>`
+        select fp.id
+        from filing_packages fp
+        join package_handoffs ph on ph.package_id = fp.id
+          and ph.case_id = fp.case_id
+          and ph.manifest_sha256 = fp.manifest_sha256
+          and ph.submission_mode = 'manual'
+          and ph.status = 'recorded_submission'
+          and ph.submitted_at is not null
+          and ph.recorded_at is not null
+        join document_versions sv on sv.id = ph.proof_version_id
+          and sv.superseded_by_version_id is null
+          and sv.verified_checksum_sha256 is not null
+        join documents sd on sd.id = sv.document_id
+          and sd.case_id = fp.case_id
+          and sd.company_id = ${companyId}
+          and sd.file_type = 'submission'
+          and sd.verification_status = 'verified'
+        join handoff_returns hr on hr.handoff_id = ph.id
+          and hr.case_id = fp.case_id
+          and hr.company_id = ${companyId}
+          and hr.external_reference = ph.destination_reference
+          and hr.manifest_sha256 = fp.manifest_sha256
+          and hr.match_state = 'reconciled'
+          and hr.outcome = 'accepted'
+          and hr.reconciliation_decision = 'confirm'
+          and hr.reconciled_at is not null
+          and hr.reconciled_by is not null
+        join document_versions rv on rv.id = hr.document_version_id
+          and rv.superseded_by_version_id is null
+          and rv.verified_checksum_sha256 = hr.source_sha256
+        join documents rd on rd.id = rv.document_id
+          and rd.case_id = fp.case_id
+          and rd.company_id = ${companyId}
+          and rd.file_type = 'receipt'
+          and rd.verification_status = 'verified'
+        where fp.case_id = ${caseId}
+          and fp.state = 'approved'
+          and fp.revision = (
+            select max(revision) from filing_packages where case_id = ${caseId}
+          )
+          and not exists (
+            select 1 from handoff_returns outstanding
+            where outstanding.case_id = ${caseId}
+              and outstanding.source_kind is not null
+              and (
+                outstanding.reconciled_at is null
+                or outstanding.match_state <> 'reconciled'
+                or outstanding.outcome <> 'accepted'
+              )
+          )
         limit 1
       `;
+      if (completeHandoffRows.length === 0) {
+        blockers.push(
+          "Current approved package, recorded submission proof and reconciled accepted return are required.",
+        );
+      }
+    } else {
+      if (!hasText(filingReference)) {
+        blockers.push("Filing reference is required.");
+      }
 
-      if (filingConfirmationRows.length !== 1) {
-        blockers.push("Verified filing confirmation document is required.");
+      if (!confirmationDocumentId) {
+        blockers.push("Filing confirmation document is required.");
+      } else {
+        const filingConfirmationRows = await tx<{ id: string }[]>`
+          select id
+          from documents
+          where id = ${confirmationDocumentId}
+            and case_id = ${caseId}
+            and company_id = ${companyId}
+            and verification_status = 'verified'
+            and file_type = any(${FILING_CONFIRMATION_FILE_TYPE})
+          limit 1
+        `;
+
+        if (filingConfirmationRows.length !== 1) {
+          blockers.push("Verified filing confirmation document is required.");
+        }
       }
     }
-
     return blockers;
   }
 
