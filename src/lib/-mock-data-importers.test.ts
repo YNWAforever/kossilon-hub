@@ -14,14 +14,9 @@ const SELF = "lib/-mock-data-importers.test.ts";
 const IMPORT_PATTERN =
   /(?:from|import|require|vi\.mock)\s*\(?\s*["'][^"']*lib\/mock-data(?:\.tsx?)?["']/;
 
-// lib/mock-data is the demo fixture set. Sixteen files imported it before the
-// orphaned screens were deleted, and the dashboard dropped off it when
-// formatDate moved out. Settings is the last one, and its usage is demo-gated.
-// Emptying this list retires the fixture module — the assertion is exact, so
-// the list shrinks by deliberate edit and never drifts.
-const EXPECTED_IMPORTERS = [
-  "routes/settings.tsx", // cases only, demo-gated by settingsSectionsForMode
-];
+// lib/mock-data is now retired from app source imports. Keep this exact
+// allowlist empty so a later fixture dependency cannot silently reappear.
+const EXPECTED_IMPORTERS: string[] = [];
 
 function sourcesUnder(dir: URL): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

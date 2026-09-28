@@ -36,6 +36,10 @@ const sampleTemplate: ChecklistTemplate = {
   reminders: [],
   riskRules: [],
   updatedAt: "2026-08-18T00:00:00.000Z",
+  revision: 1,
+  publishedVersionId: "30000000-0000-0000-0000-000000000001",
+  publishedName: "Sample",
+  publishedServiceType: "Annual Return — Private Ltd",
 };
 
 function repositoryFor(overrides: Partial<Record<string, ReturnType<typeof vi.fn>>> = {}) {
@@ -43,6 +47,7 @@ function repositoryFor(overrides: Partial<Record<string, ReturnType<typeof vi.fn
     listTemplates: vi.fn(async () => [sampleTemplate]),
     createTemplate: vi.fn(async () => sampleTemplate),
     updateTemplate: vi.fn(async () => sampleTemplate),
+    publishTemplate: vi.fn(async () => sampleTemplate),
     duplicateTemplate: vi.fn(async () => sampleTemplate),
     deleteTemplate: vi.fn(async () => undefined),
     close: vi.fn(async () => undefined),
@@ -120,7 +125,7 @@ describe("updateChecklistTemplateForActor", () => {
     await expect(
       updateChecklistTemplateForActor(
         staffActor,
-        { id: "tpl-1", patch: { active: false } },
+        { id: "tpl-1", patch: { active: false }, expectedRevision: 1 },
         { repository },
       ),
     ).rejects.toThrow("Forbidden: Admin access is required.");
@@ -132,11 +137,11 @@ describe("updateChecklistTemplateForActor", () => {
 
     await updateChecklistTemplateForActor(
       adminActor,
-      { id: "tpl-1", patch: { active: false } },
+      { id: "tpl-1", patch: { active: false }, expectedRevision: 1 },
       { repository },
     );
 
-    expect(repository.updateTemplate).toHaveBeenCalledWith("tpl-1", { active: false });
+    expect(repository.updateTemplate).toHaveBeenCalledWith("tpl-1", { active: false }, 1);
   });
 
   it("throws when the template does not exist", async () => {
@@ -145,7 +150,7 @@ describe("updateChecklistTemplateForActor", () => {
     await expect(
       updateChecklistTemplateForActor(
         adminActor,
-        { id: "missing", patch: { active: false } },
+        { id: "missing", patch: { active: false }, expectedRevision: 1 },
         { repository },
       ),
     ).rejects.toThrow("Checklist template not found.");
@@ -208,6 +213,7 @@ describe("listActiveAnnualReturnTemplatesForActor", () => {
     ...sampleTemplate,
     id: "tpl-incorporation",
     serviceType: "Incorporation — HK Ltd",
+    publishedServiceType: "Incorporation — HK Ltd",
   };
   const inactiveTemplate: ChecklistTemplate = {
     ...sampleTemplate,
@@ -243,6 +249,27 @@ describe("listActiveAnnualReturnTemplatesForActor", () => {
 
     expect(result).toEqual([
       { id: sampleTemplate.id, name: sampleTemplate.name, serviceType: sampleTemplate.serviceType },
+    ]);
+  });
+
+  it("keeps the published annual-return choice when an unpublished draft changes its name and service", async () => {
+    const editedDraft = {
+      ...sampleTemplate,
+      name: "Draft director service",
+      serviceType: "Change of Director" as const,
+      publishedName: "Published annual return",
+      publishedServiceType: "Annual Return — Private Ltd" as const,
+    };
+    const { repository } = repositoryFor({ listTemplates: vi.fn(async () => [editedDraft]) });
+
+    await expect(
+      listActiveAnnualReturnTemplatesForActor(staffActor, {}, { repository }),
+    ).resolves.toEqual([
+      {
+        id: editedDraft.id,
+        name: "Published annual return",
+        serviceType: "Annual Return — Private Ltd",
+      },
     ]);
   });
 
