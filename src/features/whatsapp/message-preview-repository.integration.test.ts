@@ -139,6 +139,33 @@ describe.skipIf(!databaseUrl)("T18 persisted message preview", () => {
         select queued_message_id from whatsapp_message_previews where id = ${second.previewId}
       `;
       expect(stored.queued_message_id).toBe(delivery.messageId);
+      const third = await prepare();
+      const rollback = new Error("T23 nested approval rollback");
+      await expect(
+        sql.begin(async (tx) => {
+          const nested = createMessagePreviewRepository(tx);
+          const inside = await queueApprovedMessageForActor(
+            actor,
+            {
+              previewId: third.previewId,
+              previewHash: third.previewHash,
+              idempotencyKey: "third",
+            },
+            { now: () => now, repository: nested },
+          );
+          expect(inside.messageId).toBeTruthy();
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+      const [rolledBack] = await sql<{ queued_message_id: string | null }[]>`
+        select queued_message_id from whatsapp_message_previews where id = ${third.previewId}
+      `;
+      expect(rolledBack.queued_message_id).toBeNull();
+      const [outboxCount] = await sql<{ count: number }[]>`
+        select count(*)::int count from notification_outbox
+        where idempotency_key = ${"message-preview:" + third.previewId}
+      `;
+      expect(outboxCount.count).toBe(0);
       const [verifiedContact] = await sql<{ updated_at: string }[]>`
         select updated_at::text as updated_at from company_contacts where id = ${contactId}
       `;

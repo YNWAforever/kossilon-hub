@@ -143,7 +143,7 @@ async function loadContext(
 }
 
 export function createMessagePreviewRepository(
-  sql: SqlClient = getSqlClient(),
+  sql: QueryClient = getSqlClient(),
 ): MessagePreviewDependencies["repository"] {
   return {
     getContext: (input) => loadContext(sql, input, false),
@@ -161,7 +161,7 @@ export function createMessagePreviewRepository(
       `;
     },
     queueIfCurrent(previewId, callback) {
-      return sql.begin(async (tx) => {
+      const work = async (tx: postgres.TransactionSql) => {
         const rows = await tx<PreviewRow[]>`
           select payload, queued_message_id
           from whatsapp_message_previews where id = ${previewId}
@@ -193,7 +193,10 @@ export function createMessagePreviewRepository(
           where id = ${previewId} and queued_message_id is null
         `;
         return result;
-      }) as Promise<Awaited<ReturnType<typeof callback>>>;
+      };
+      return ("begin" in sql ? sql.begin(work) : sql.savepoint(work)) as Promise<
+        Awaited<ReturnType<typeof callback>>
+      >;
     },
   };
 }

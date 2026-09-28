@@ -1,6 +1,7 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import type { ProviderMode } from "@/server/provider-mode";
 import type { requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { createBulkOperationRepository } from "./repository";
 import {
@@ -101,20 +102,30 @@ export function bulkOperationCsv(view: BulkOperationView): string {
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
 
+export function assertBulkMutationMode(mode: ProviderMode) {
+  if (mode === "simulated") throw new Error("Demo bulk operations are read-only.");
+}
+async function assertLiveBulkMutation() {
+  const { currentProviderMode } = await import("@/server/provider-mode");
+  assertBulkMutationMode(currentProviderMode());
+}
+
 export const previewBulkOperation = createServerFn({ method: "POST" })
   .validator(bulkPreviewInputSchema)
-  .handler(({ data }) =>
-    withAuthorizedBulkRepository((repository, actor) =>
+  .handler(async ({ data }) => {
+    await assertLiveBulkMutation();
+    return withAuthorizedBulkRepository((repository, actor) =>
       previewBulkOperationForActor(actor, data, repository),
-    ),
-  );
+    );
+  });
 export const commitBulkOperation = createServerFn({ method: "POST" })
   .validator(bulkCommitInputSchema)
-  .handler(({ data }) =>
-    withAuthorizedBulkRepository((repository, actor) =>
+  .handler(async ({ data }) => {
+    await assertLiveBulkMutation();
+    return withAuthorizedBulkRepository((repository, actor) =>
       commitBulkOperationForActor(actor, data, repository),
-    ),
-  );
+    );
+  });
 export const getBulkOperation = createServerFn({ method: "GET" })
   .validator(operationIdSchema)
   .handler(({ data }) =>
@@ -124,11 +135,12 @@ export const getBulkOperation = createServerFn({ method: "GET" })
   );
 export const cancelBulkOperation = createServerFn({ method: "POST" })
   .validator(operationIdSchema)
-  .handler(({ data }) =>
-    withAuthorizedBulkRepository((repository, actor) =>
+  .handler(async ({ data }) => {
+    await assertLiveBulkMutation();
+    return withAuthorizedBulkRepository((repository, actor) =>
       cancelBulkOperationForActor(actor, data.id, repository),
-    ),
-  );
+    );
+  });
 export const exportBulkOperationCsv = createServerFn({ method: "GET" })
   .validator(operationIdSchema)
   .handler(({ data }) =>
