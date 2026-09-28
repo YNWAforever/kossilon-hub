@@ -131,7 +131,9 @@ describe.skipIf(!databaseUrl)("T27 durable import staging", () => {
       const bytes = syntheticNarWorkbook(10_000);
       const workbook = await readXlsxWorkbook(bytes);
       expect(readNarSheet(workbook.sheets[0], workbook.date1904).rows).toHaveLength(10_000);
-      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes).buffer));
+      const digest = new Uint8Array(
+        await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes).buffer),
+      );
       const sourceSha256 = [...digest].map((value) => value.toString(16).padStart(2, "0")).join("");
       const objectKey = `nar-import/staging/${crypto.randomUUID()}`;
       const jobs = createNarImportStageJobRepository({ sql });
@@ -208,7 +210,9 @@ describe.skipIf(!databaseUrl)("T27 durable import staging", () => {
       where sp.role='Admin' and sp.active limit 1`;
     if (!admin) throw new Error("Seeded Admin is required");
     const bytes = syntheticNarWorkbook(1);
-    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes).buffer));
+    const digest = new Uint8Array(
+      await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes).buffer),
+    );
     const sourceSha256 = [...digest].map((value) => value.toString(16).padStart(2, "0")).join("");
     const objectKey = `nar-import/staging/${crypto.randomUUID()}`;
     const jobs = createNarImportStageJobRepository({ sql });
