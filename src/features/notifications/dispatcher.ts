@@ -98,11 +98,8 @@ export function createNotificationDispatcher(
 ): NotificationDispatcher {
   return {
     async dispatchDue(now, limit = 50): Promise<DispatchSummary> {
-      // Before the claim, not after: a fixture-origin row must never become a
-      // claimed row, because a claimed row is one transport failure away from
-      // being retried at a real recipient.
       const suppressed = await repository.cancelFixtureOriginNotifications(now);
-      const due = await repository.claimDue(now, limit);
+      const due = await repository.claimDeliveryAttempt(now, limit);
       const summary: DispatchSummary = {
         claimed: due.length,
         sent: 0,
@@ -113,12 +110,9 @@ export function createNotificationDispatcher(
         suppressedFixtureOrigin: suppressed.cancelled,
       };
       for (const notification of due) {
-        // Every terminal write is fenced on the attempt_count this claim saw. A
-        // false return means another run reclaimed the row and finished it first,
-        // so this outcome is not ours to count — previously both runs reported a
-        // send and only one of them was recorded.
+        let context: NotificationDispatchContext | undefined;
         try {
-          const context: NotificationDispatchContext | undefined =
+          context =
             notification.channel === "whatsapp" && options.lastInboundResolver
               ? {
                   whatsAppSendMode: await resolveWhatsAppSendMode(
@@ -128,115 +122,155 @@ export function createNotificationDispatcher(
                   ),
                 }
               : undefined;
-          const result = await transport.dispatch(notification, context);
-
-          // From here the provider has the message. Everything below is
-          // record-keeping, and record-keeping must never reach the outer catch:
-          // that would call markRetry on a message the client already has and
-          // deliver a second copy. The linkback twelve lines down already had
-          // this guard and said so; markSent, where the same hazard is worse,
-          // did not.
-          try {
-            const applied = await repository.markSent(notification.id, {
-              providerMessageId: result.delivery === "provider" ? result.providerMessageId : null,
-              // Recorded positively rather than left to be inferred from a null
-              // provider_message_id, which is also what a redacted row and a
-              // never-dispatched row look like. The transport is the only layer that
-              // knows, and the fact is already in hand right here.
-              delivery: result.delivery,
-              sentAt: now,
-              attemptCount: notification.attemptCount,
-            });
-            if (applied) summary.sent += 1;
-            else summary.superseded += 1;
-
-            // Receipt linkback — live sends only. A simulated dispatch has no
-            // provider id to link, and writing one flips whatsapp_messages to
-            // 'sent' with a fabricated provider_message_id on a row that asserts
-            // provider = 'woztell'. The row stays 'queued', which is what happened.
-            const whatsAppMessageId = notificationPayload(notification).whatsappMessageId;
-            if (
-              result.delivery === "provider" &&
-              notification.channel === "whatsapp" &&
-              typeof whatsAppMessageId === "string" &&
-              options.whatsAppRepository
-            ) {
-              try {
-                // What actually went on the wire. `body` on that row is the
-                // draft, and outside the 24-hour window the template branch
-                // sends zero variables -- so for a template send the body is not
-                // what the client received, and the inbox has to be able to say
-                // so rather than presenting the draft as delivered.
-                //
-                // Spread rather than passed as undefined: local and simulated
-                // dispatch have no send-mode context, and this call stays exactly
-                // what it was for them.
-                const sendMode = context?.whatsAppSendMode;
-                await options.whatsAppRepository.attachProviderMessageId({
-                  messageId: whatsAppMessageId,
-                  providerMessageId: result.providerMessageId,
-                  ...(sendMode
-                    ? {
-                        sentAs: sendMode.kind,
-                        sentTemplateName:
-                          sendMode.kind === "template" ? sendMode.elementName : null,
-                      }
-                    : {}),
-                });
-              } catch (linkError) {
-                // The message was sent. Letting this reach the outer catch would
-                // mark the row for retry and send the client a second copy — a
-                // missing receipt link is strictly the lesser failure.
-                console.error("whatsapp provider id could not be linked", linkError);
-              }
-            }
-          } catch (recordError) {
-            // The provider accepted it and we could not write that down. Not
-            // retried, because the client already has the message; not counted as
-            // sent, because nothing recorded it. The row stays 'processing' and
-            // the visibility timeout will reclaim it, so this is logged loudly
-            // enough to be acted on before that happens.
-            console.error("notification sent but not recorded", {
-              id: notification.id,
-              companyId: notification.companyId,
-              channel: notification.channel,
-              notificationType: notification.notificationType,
-              message:
-                recordError instanceof Error ? recordError.message : "Unknown recording failure.",
-            });
-            summary.sentButUnrecorded += 1;
-          }
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Notification dispatch failed.";
+          // No external call has begun. A preflight error is safe to retry.
           const errorCode =
             error instanceof Error && "code" in error && typeof error.code === "string"
               ? error.code
-              : "dispatch_failed";
-          // The only screen that reads notification_outbox filters on
-          // idempotency_key like 'follow-up:%', so sweep failures are otherwise
-          // invisible — and redactExpired nulls last_error_code/message at
-          // retention, putting the evidence on a 90-day fuse. A permanently
-          // unapproved fallback template would surface only as an aggregate count.
-          console.error("notification dispatch failed", {
+              : "dispatch_preflight_failed";
+          try {
+            const recorded = await repository.abortClaimedAttempt(
+              notification.attemptId,
+              notification.leaseToken,
+              errorCode,
+              now,
+            );
+            if (recorded === "stale") summary.superseded += 1;
+            else if (notification.attemptCount >= notification.maxAttempts)
+              summary.permanentlyFailed += 1;
+            else summary.retried += 1;
+          } catch (recordError) {
+            console.error("notification preflight outcome not recorded", {
+              id: notification.id,
+              attemptId: notification.attemptId,
+              errorCode,
+              recordError,
+            });
+          }
+          continue;
+        }
+
+        // This transaction commits before any provider call. A crash or timeout
+        // after this point is unknown and must never enter automatic reclaim.
+        let begun: "started" | "stale";
+        try {
+          begun = await repository.beginProviderCall(
+            notification.attemptId,
+            notification.leaseToken,
+          );
+        } catch (error) {
+          console.error("notification begin boundary failed", {
             id: notification.id,
-            notificationType: notification.notificationType,
-            channel: notification.channel,
-            errorCode,
+            attemptId: notification.attemptId,
+            error,
           });
-          const input = {
-            errorCode,
-            errorMessage,
+          continue;
+        }
+        if (begun === "stale") {
+          summary.superseded += 1;
+          continue;
+        }
+
+        let result: Awaited<ReturnType<NotificationTransport["dispatch"]>>;
+        try {
+          // Attempt credentials stay in the service, never in transport payloads.
+          const { attemptId: _attemptId, leaseToken: _leaseToken, ...message } = notification;
+          result = await transport.dispatch(message, context);
+        } catch (error) {
+          const errorCode =
+            error instanceof Error && "code" in error && typeof error.code === "string"
+              ? error.code
+              : "dispatch_outcome_unknown";
+          // Only the provider's explicit unreachable-recipient response proves
+          // non-acceptance. Network failures and ambiguous HTTP errors do not.
+          const definitelyRejected =
+            error instanceof Error &&
+            "unreachableRecipient" in error &&
+            error.unreachableRecipient === true &&
+            errorCode === "woztell_err_100";
+          try {
+            const outcome = definitelyRejected
+              ? { kind: "definitelyRejected" as const, code: errorCode }
+              : {
+                  kind: "unknown" as const,
+                  errorCode,
+                  attemptRef: notification.attemptId,
+                };
+            const recorded = await repository.recordProviderOutcome(
+              notification.attemptId,
+              notification.leaseToken,
+              outcome,
+              now,
+            );
+            if (recorded === "stale") summary.superseded += 1;
+            else if (definitelyRejected) {
+              if (notification.attemptCount >= notification.maxAttempts)
+                summary.permanentlyFailed += 1;
+              else summary.retried += 1;
+            } else {
+              summary.needsReconciliation = (summary.needsReconciliation ?? 0) + 1;
+            }
+          } catch (recordError) {
+            console.error("notification provider failure outcome not recorded", {
+              id: notification.id,
+              attemptId: notification.attemptId,
+              errorCode,
+              recordError,
+            });
+            summary.needsReconciliation = (summary.needsReconciliation ?? 0) + 1;
+          }
+          continue;
+        }
+
+        try {
+          const recorded = await repository.recordProviderOutcome(
+            notification.attemptId,
+            notification.leaseToken,
+            result.delivery === "provider"
+              ? { kind: "accepted", providerMessageId: result.providerMessageId }
+              : { kind: "simulated" },
             now,
-            attemptCount: notification.attemptCount,
-          };
-          if (notification.attemptCount >= notification.maxAttempts) {
-            if (await repository.markFailed(notification.id, input)) summary.permanentlyFailed += 1;
-            else summary.superseded += 1;
-          } else if (await repository.markRetry(notification.id, input)) {
-            summary.retried += 1;
-          } else {
+          );
+          if (recorded === "stale") {
             summary.superseded += 1;
+            continue;
+          }
+          summary.sent += 1;
+        } catch (recordError) {
+          // Provider acceptance is possible or known, so never mark for retry.
+          // The send_started attempt is quarantined by the next stranded sweep.
+          console.error("notification sent but not recorded", {
+            id: notification.id,
+            attemptId: notification.attemptId,
+            message:
+              recordError instanceof Error ? recordError.message : "Unknown recording failure.",
+          });
+          summary.sentButUnrecorded += 1;
+          summary.needsReconciliation = (summary.needsReconciliation ?? 0) + 1;
+          continue;
+        }
+
+        const whatsAppMessageId = notificationPayload(notification).whatsappMessageId;
+        if (
+          result.delivery === "provider" &&
+          notification.channel === "whatsapp" &&
+          typeof whatsAppMessageId === "string" &&
+          options.whatsAppRepository
+        ) {
+          try {
+            const sendMode = context?.whatsAppSendMode;
+            await options.whatsAppRepository.attachProviderMessageId({
+              messageId: whatsAppMessageId,
+              providerMessageId: result.providerMessageId,
+              ...(sendMode
+                ? {
+                    sentAs: sendMode.kind,
+                    sentTemplateName: sendMode.kind === "template" ? sendMode.elementName : null,
+                  }
+                : {}),
+            });
+          } catch (linkError) {
+            console.error("whatsapp provider id could not be linked", linkError);
           }
         }
       }
