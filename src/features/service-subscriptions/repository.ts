@@ -23,6 +23,18 @@ import type {
 type QueryClient = SqlClient | postgres.TransactionSql;
 type TransactionSqlClient = postgres.TransactionSql;
 
+export type ServiceSubscriptionReminderDraft = {
+  id: string;
+  subscriptionId: string;
+  status: "draft";
+  channel: "email" | "whatsapp";
+  recipient: string;
+  subject: string;
+  body: string;
+  renewalDate: string;
+  milestone: string;
+};
+
 export type CreateServiceSubscriptionRepositoryOptions = CreateSqlClientOptions & {
   sql?: QueryClient;
 };
@@ -35,6 +47,12 @@ export type ServiceSubscriptionRepository = {
   cancelSubscription(input: CancelSubscriptionInput): Promise<ServiceSubscription>;
   /** A Hong Kong business date (YYYY-MM-DD); a full ISO instant is normalised to one. */
   evaluateReminders(businessDateOrInstant?: string): Promise<EvaluateRemindersResult>;
+  listReminderDrafts(companyId: string): Promise<ServiceSubscriptionReminderDraft[]>;
+  approveReminderDraft(input: {
+    companyId: string;
+    draftId: string;
+    actorId: string;
+  }): Promise<{ id: string; state: "approved" | "already_approved" }>;
   close(): Promise<void>;
 };
 
@@ -234,6 +252,13 @@ export function createServiceSubscriptionRepository(
         set renewal_date = ${nextRenewalDate}, updated_at = now()
         where id = ${input.subscriptionId} and company_id = ${input.companyId}
       `;
+      await tx`
+        update notification_outbox set status='cancelled',updated_at=now()
+        where company_id=${input.companyId}
+          and notification_type like 'service_subscription_reminder_%'
+          and payload->>'subscriptionId'=${input.subscriptionId}
+          and status in ('draft','pending') and redacted_at is null
+      `;
 
       return hydrateByIdForCompany(tx, input.subscriptionId, input.companyId);
     });
@@ -261,6 +286,13 @@ export function createServiceSubscriptionRepository(
         set status = 'Cancelled', cancelled_at = now(), updated_at = now()
         where id = ${input.subscriptionId} and company_id = ${input.companyId}
       `;
+      await tx`
+        update notification_outbox set status='cancelled',updated_at=now()
+        where company_id=${input.companyId}
+          and notification_type like 'service_subscription_reminder_%'
+          and payload->>'subscriptionId'=${input.subscriptionId}
+          and status in ('draft','pending') and redacted_at is null
+      `;
 
       return hydrateByIdForCompany(tx, input.subscriptionId, input.companyId);
     });
@@ -283,13 +315,20 @@ export function createServiceSubscriptionRepository(
         and ss.renewal_date <= (${now}::date + interval '30 days')
     `;
 
-    let sent = 0;
+    let drafted = 0;
     let skipped = 0;
 
     for (const candidate of candidates) {
       const outcome = await withTransaction(sql, async (tx) => {
-        const lockedRows = await tx<{ id: string; status: "Active" | "Cancelled" }[]>`
-          select id, status from service_subscriptions where id = ${candidate.id} for update
+        const lockedRows = await tx<
+          {
+            id: string;
+            status: "Active" | "Cancelled";
+            renewal_date: string;
+          }[]
+        >`
+          select id, status, renewal_date::text from service_subscriptions
+          where id = ${candidate.id} for update
         `;
         const locked = lockedRows[0];
         // Re-check under lock: a subscription cancelled by staff while this
@@ -297,10 +336,18 @@ export function createServiceSubscriptionRepository(
         // reminder for a service that's no longer active — the same race
         // annual-return's evaluateReminders guards against for a case
         // marked Filed mid-sweep.
-        if (!locked || locked.status !== "Active") return null;
+        if (!locked || locked.status !== "Active" || locked.renewal_date !== candidate.renewal_date)
+          return null;
 
         const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
-          select milestone from service_subscription_reminder_events where subscription_id = ${candidate.id}
+          select milestone from service_subscription_reminder_events
+          where subscription_id = ${candidate.id}
+            and (
+              renewal_date = ${candidate.renewal_date}::date
+              or (renewal_date is null and occurred_at::date between
+                  ${candidate.renewal_date}::date - interval '31 days'
+                  and ${candidate.renewal_date}::date)
+            )
         `;
         const milestone = dueMilestone(
           candidate.renewal_date,
@@ -308,14 +355,6 @@ export function createServiceSubscriptionRepository(
           firedRows.map((row) => row.milestone),
         );
         if (!milestone) return null;
-
-        const insertedEvent = await tx<{ id: string }[]>`
-          insert into service_subscription_reminder_events (subscription_id, milestone, occurred_at)
-          values (${candidate.id}, ${milestone}, ${now})
-          on conflict (subscription_id, milestone) do nothing
-          returning id
-        `;
-        if (!insertedEvent[0]) return null;
 
         const contactRows = await tx<
           { name: string; email: string | null; phone: string | null }[]
@@ -355,14 +394,25 @@ export function createServiceSubscriptionRepository(
           return "skipped" as const;
         }
 
+        // A missing or unreachable contact must not consume this renewal milestone.
+        const insertedEvent = await tx<{ id: string }[]>`
+          insert into service_subscription_reminder_events
+            (subscription_id, renewal_date, milestone, occurred_at)
+          values (${candidate.id}, ${candidate.renewal_date}, ${milestone}, ${now})
+          on conflict do nothing
+          returning id
+        `;
+        if (!insertedEvent[0]) return null;
+
         const fullRows = await tx<SubscriptionRow[]>`
           select id, company_id, service_type, fee, status, renewal_date, cancelled_at
           from service_subscriptions where id = ${candidate.id}
         `;
         const subscription = mapSubscription(fullRows[0]);
 
-        await enqueueNotification(tx, {
+        const queued = await enqueueNotification(tx, {
           companyId: candidate.company_id,
+          initialStatus: "draft",
           channel,
           notificationType: `service_subscription_reminder_${milestone}`,
           recipient,
@@ -373,6 +423,7 @@ export function createServiceSubscriptionRepository(
           idempotencyKey: `service-subscription-reminder:${candidate.id}:${subscription.renewalDate}:${milestone}:${channel}:${recipient}`,
           payload: {
             subscriptionId: candidate.id,
+            renewalDate: subscription.renewalDate,
             milestone,
             subject: `「${candidate.company_name}」服務續期提醒`,
             body: buildServiceSubscriptionReminderDraft(
@@ -384,24 +435,204 @@ export function createServiceSubscriptionRepository(
           },
         });
 
+        if (queued.idempotentReplay) return "skipped" as const;
         await tx`
           insert into timeline_events (
             company_id, event_type, actor_type, actor_id, description, metadata
           ) values (
-            ${candidate.company_id}, 'service_subscription_reminder_sent',
-            'system', null, 'Automated reminder sent.',
-            ${tx.json({ subscriptionId: candidate.id, milestone, channel })}
+            ${candidate.company_id}, 'service_subscription_reminder_drafted',
+            'system', null, 'Reminder draft awaiting staff approval.',
+            ${tx.json({
+              subscriptionId: candidate.id,
+              renewalDate: subscription.renewalDate,
+              milestone,
+              channel,
+              outboxId: queued.id,
+            })}
           )
         `;
 
-        return "sent" as const;
+        return "drafted" as const;
       });
 
-      if (outcome === "sent") sent += 1;
+      if (outcome === "drafted") drafted += 1;
       else if (outcome === "skipped") skipped += 1;
     }
 
-    return { sent, skipped };
+    return { drafted, skipped };
+  }
+
+  async function listReminderDrafts(
+    companyId: string,
+  ): Promise<ServiceSubscriptionReminderDraft[]> {
+    const rows = await sql<
+      {
+        id: string;
+        subscription_id: string | null;
+        channel: "email" | "whatsapp";
+        recipient: string;
+        subject: string | null;
+        body: string | null;
+        renewal_date: string | null;
+        milestone: string | null;
+      }[]
+    >`
+      select id,payload->>'subscriptionId' as subscription_id,channel,recipient,
+             payload->>'subject' as subject,payload->>'body' as body,
+             payload->>'renewalDate' as renewal_date,payload->>'milestone' as milestone
+      from notification_outbox
+      where company_id=${companyId} and status='draft'
+        and notification_type like 'service_subscription_reminder_%'
+        and redacted_at is null
+      order by created_at,id
+      limit 100
+    `;
+    return rows.flatMap((row) =>
+      row.subscription_id &&
+      row.recipient &&
+      row.subject &&
+      row.body &&
+      row.renewal_date &&
+      row.milestone
+        ? [
+            {
+              id: row.id,
+              subscriptionId: row.subscription_id,
+              status: "draft" as const,
+              channel: row.channel,
+              recipient: row.recipient,
+              subject: row.subject,
+              body: row.body,
+              renewalDate: row.renewal_date,
+              milestone: row.milestone,
+            },
+          ]
+        : [],
+    );
+  }
+
+  async function approveReminderDraft(input: {
+    companyId: string;
+    draftId: string;
+    actorId: string;
+  }): Promise<{ id: string; state: "approved" | "already_approved" }> {
+    return withTransaction(sql, async (tx) => {
+      const [actor] = await tx<
+        {
+          role: string;
+          team_id: string | null;
+        }[]
+      >`
+        select role,team_id from users where id=${input.actorId} and active limit 1
+      `;
+      if (!actor || (actor.role !== "Admin" && actor.role !== "Manager")) {
+        throw new Error("Forbidden: Manager or Admin approval required.");
+      }
+      const [company] = await tx<{ assigned_team_id: string }[]>`
+        select assigned_team_id from companies where id=${input.companyId} limit 1
+      `;
+      if (!company || (actor.role === "Manager" && actor.team_id !== company.assigned_team_id)) {
+        throw new Error("Forbidden: company is outside the approver's team.");
+      }
+      const [reference] = await tx<{ subscription_id: string | null }[]>`
+        select payload->>'subscriptionId' as subscription_id
+        from notification_outbox
+        where id=${input.draftId} and company_id=${input.companyId}
+          and notification_type like 'service_subscription_reminder_%'
+          and redacted_at is null
+        limit 1
+      `;
+      if (!reference?.subscription_id || !/^[0-9a-f-]{36}$/i.test(reference.subscription_id)) {
+        throw new Error("Subscription reminder draft not found.");
+      }
+      // Match the sweep's lock order: subscription first, outbox second.
+      const [subscription] = await tx<{ status: string; renewal_date: string }[]>`
+        select status,renewal_date::text from service_subscriptions
+        where id=${reference.subscription_id} and company_id=${input.companyId}
+        for update
+      `;
+      const [draft] = await tx<
+        {
+          id: string;
+          status: string;
+          approved_by: string | null;
+          channel: string;
+          recipient: string | null;
+          notification_type: string;
+          payload: unknown;
+          retention_until: string | Date;
+        }[]
+      >`
+        select id,status,approved_by,channel,recipient,notification_type,
+               payload,retention_until
+        from notification_outbox
+        where id=${input.draftId} and company_id=${input.companyId}
+          and redacted_at is null
+        for update
+      `;
+      if (!draft) throw new Error("Subscription reminder draft not found.");
+      if (
+        draft.approved_by &&
+        ["pending", "processing", "sent", "failed", "needs_reconciliation"].includes(draft.status)
+      ) {
+        return { id: draft.id, state: "already_approved" };
+      }
+      if (draft.status !== "draft") throw new Error("Reminder draft is no longer approvable.");
+      const payload =
+        draft.payload && typeof draft.payload === "object" && !Array.isArray(draft.payload)
+          ? (draft.payload as Record<string, unknown>)
+          : null;
+      if (
+        !subscription ||
+        subscription.status !== "Active" ||
+        !payload ||
+        payload.subscriptionId !== reference.subscription_id ||
+        payload.renewalDate !== subscription.renewal_date ||
+        typeof payload.milestone !== "string" ||
+        draft.notification_type !== "service_subscription_reminder_" + payload.milestone ||
+        typeof payload.subject !== "string" ||
+        typeof payload.body !== "string" ||
+        new Date(draft.retention_until).getTime() <= Date.now()
+      ) {
+        throw new Error(
+          "Reminder draft is stale; review the current subscription before approval.",
+        );
+      }
+      const [contact] = await tx<{ email: string | null; phone: string | null }[]>`
+        select email,phone from company_contacts
+        where company_id=${input.companyId} and is_primary=true limit 1
+      `;
+      const currentChannel = contact?.phone ? "whatsapp" : "email";
+      const currentRecipient = contact?.phone ?? contact?.email ?? null;
+      if (
+        !currentRecipient ||
+        draft.channel !== currentChannel ||
+        draft.recipient !== currentRecipient
+      ) {
+        throw new Error("Reminder draft recipient changed; review a refreshed draft.");
+      }
+      await tx`
+        update notification_outbox
+        set status='pending',approved_by=${input.actorId},approved_at=now(),
+            next_attempt_at=now(),updated_at=now()
+        where id=${draft.id} and status='draft'
+      `;
+      await tx`
+        insert into timeline_events (
+          company_id,event_type,actor_type,actor_id,description,metadata
+        ) values (
+          ${input.companyId},'service_subscription_reminder_approved',
+          'user',${input.actorId},'Reminder draft approved for outbox delivery.',
+          ${tx.json({
+            subscriptionId: reference.subscription_id,
+            outboxId: draft.id,
+            renewalDate: subscription.renewal_date,
+            milestone: payload.milestone,
+          })}
+        )
+      `;
+      return { id: draft.id, state: "approved" };
+    });
   }
 
   async function close(): Promise<void> {
@@ -415,6 +646,8 @@ export function createServiceSubscriptionRepository(
     renewSubscription,
     cancelSubscription,
     evaluateReminders,
+    listReminderDrafts,
+    approveReminderDraft,
     close,
   };
 }

@@ -27,7 +27,7 @@ function passingDependencies(calls: string[]): ScheduledMaintenanceDependencies 
     }),
     evaluateServiceSubscriptionReminders: vi.fn(async () => {
       calls.push("service-subscription-reminders");
-      return { sent: 1, skipped: 0 };
+      return { drafted: 1, skipped: 0 };
     }),
     dispatchDue: vi.fn(async (_now: string, limit: number) => {
       calls.push(`dispatch:${limit}`);
@@ -120,7 +120,7 @@ describe("scheduled maintenance", () => {
     expect(result).toMatchObject({
       escalations: { warnings: 1, breaches: 2 },
       annualReturnReminders: { sent: 1, skipped: 0 },
-      serviceSubscriptionReminders: { sent: 1, skipped: 0 },
+      serviceSubscriptionReminders: { drafted: 1, skipped: 0 },
       dispatch: { sent: 1 },
       uploads: { expired: 3 },
       notifications: { strandedFailed: 2, redacted: 4 },

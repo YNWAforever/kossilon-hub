@@ -17,7 +17,9 @@ import {
 import { SERVICE_TYPES, type ServiceType } from "@/features/service-subscriptions/types";
 import {
   addServiceSubscription,
+  approveServiceSubscriptionReminderDraft,
   cancelServiceSubscription,
+  listServiceSubscriptionReminderDrafts,
   listServiceSubscriptions,
   renewServiceSubscription,
 } from "@/features/service-subscriptions/server-fns";
@@ -39,6 +41,23 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
     queryKey,
     queryFn: () => listServiceSubscriptions({ data: { companyId } }),
     retry: false,
+  });
+
+  const draftsQuery = useQuery({
+    queryKey: ["service-subscription-drafts", companyId],
+    queryFn: () => listServiceSubscriptionReminderDrafts({ data: { companyId } }),
+    retry: false,
+  });
+
+  const approveDraftMutation = useMutation({
+    mutationFn: (draftId: string) =>
+      approveServiceSubscriptionReminderDraft({ data: { companyId, draftId } }),
+    onSuccess: () => {
+      toast.success("Reminder approved and queued.");
+      void queryClient.invalidateQueries({ queryKey: ["service-subscription-drafts", companyId] });
+    },
+    onError: () =>
+      toast.error("Unable to approve the reminder. Refresh the draft and review again."),
   });
 
   const renewMutation = useMutation({
@@ -129,6 +148,41 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
         ))}
         {!subscriptionsQuery.isPending && subscriptions.length === 0 ? (
           <p className="py-3 text-sm text-muted-foreground">No subscriptions on file.</p>
+        ) : null}
+      </div>
+
+      <div className="mt-4 border-t pt-4">
+        <h3 className="text-sm font-semibold">Renewal reminder drafts</h3>
+        {draftsQuery.isError ? (
+          <p role="alert" className="mt-2 text-sm text-destructive">
+            Drafts are unavailable. No reminder should be assumed sent.
+          </p>
+        ) : null}
+        {draftsQuery.data?.drafts.map((draft) => (
+          <article key={draft.id} className="mt-3 rounded-md border p-3 text-sm">
+            <p className="font-medium">{draft.subject}</p>
+            <p className="mt-1 text-muted-foreground">
+              {draft.channel}: {draft.recipient} · {draft.milestone} · {draft.renewalDate}
+            </p>
+            <p className="mt-2 whitespace-pre-wrap">{draft.body}</p>
+            {draftsQuery.data?.canApprove ? (
+              <button
+                type="button"
+                className="mt-3 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-60"
+                disabled={approveDraftMutation.isPending}
+                onClick={() => approveDraftMutation.mutate(draft.id)}
+              >
+                Approve and queue reminder
+              </button>
+            ) : (
+              <p className="mt-2 text-muted-foreground">Manager or Admin approval required.</p>
+            )}
+          </article>
+        ))}
+        {!draftsQuery.isPending && draftsQuery.data?.drafts.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            No reminder drafts awaiting approval.
+          </p>
         ) : null}
       </div>
 

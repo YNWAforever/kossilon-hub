@@ -227,7 +227,7 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
           incorporationDate: "2026-08-01",
           actorId: owner.id,
         }),
-      ).rejects.toThrow("Cannot complete a case from status Completed");
+      ).rejects.toThrow("Completion replay conflicts with existing company data.");
     } finally {
       // incorporation_cases.company_id is `on delete restrict` — delete the
       // case row BEFORE the company row it points at, or this cleanup itself
@@ -345,7 +345,7 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
       expect(rejected).toHaveLength(1);
       expect(rejected[0].reason).toBeInstanceOf(Error);
       expect((rejected[0].reason as Error).message).toContain(
-        "Cannot complete a case from status Completed",
+        "Completion replay conflicts with existing company data.",
       );
 
       const finalCase = await repository.getCase(created.id);

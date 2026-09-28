@@ -76,7 +76,7 @@ type MaintenanceAnnualReturnRepository = {
 };
 
 type MaintenanceServiceSubscriptionRepository = {
-  evaluateReminders(now?: string): Promise<{ sent: number; skipped: number }>;
+  evaluateReminders(now?: string): Promise<{ drafted: number; skipped: number }>;
   close(): Promise<void>;
 };
 

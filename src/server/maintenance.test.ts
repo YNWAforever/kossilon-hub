@@ -19,7 +19,7 @@ function dependencies(
       close: vi.fn(async () => {}),
     }),
     createServiceSubscriptionRepository: () => ({
-      evaluateReminders: vi.fn(async () => ({ sent: 1, skipped: 0 })),
+      evaluateReminders: vi.fn(async () => ({ drafted: 1, skipped: 0 })),
       close: vi.fn(async () => {}),
     }),
     dispatchDue: vi.fn(async () => ({
@@ -85,7 +85,7 @@ describe("runFirmMaintenanceWithDependencies", () => {
       strandedDocumentJobs: { scans: 0, analyses: 0 },
       stalledQuarantine: { stalled: 0 },
       annualReturnReminders: { sent: 1, skipped: 0 },
-      serviceSubscriptionReminders: { sent: 1, skipped: 0 },
+      serviceSubscriptionReminders: { drafted: 1, skipped: 0 },
       dispatch: {
         claimed: 4,
         sent: 3,
@@ -457,7 +457,7 @@ describe("the reminder sweeps' business date", () => {
 
   async function passArguments() {
     const annualReturns = vi.fn(async () => ({ sent: 0, skipped: 0 }));
-    const serviceSubscriptions = vi.fn(async () => ({ sent: 0, skipped: 0 }));
+    const serviceSubscriptions = vi.fn(async () => ({ drafted: 0, skipped: 0 }));
     const escalations = vi.fn(async () => ({ warnings: 0, breaches: 0 }));
 
     await runFirmMaintenanceWithDependencies(

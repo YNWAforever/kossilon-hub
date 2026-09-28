@@ -80,9 +80,10 @@ export const listServiceSubscriptions = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultServiceSubscriptionContext();
     await requireStaffActor(getRequest());
-    return withServiceSubscriptionRepository((repository) =>
-      repository.listSubscriptions(data.companyId),
-    );
+    return withServiceSubscriptionRepository(async (repository) => {
+      await requireWritableCompany(repository, data.companyId);
+      return repository.listSubscriptions(data.companyId);
+    });
   });
 
 export const addServiceSubscription = createServerFn({ method: "POST" })
@@ -116,4 +117,41 @@ export const cancelServiceSubscription = createServerFn({ method: "POST" })
         actorId: await requireWritableCompany(repository, data.companyId),
       }),
     ),
+  );
+
+const reminderDraftsSchema = z.object({ companyId: z.string().uuid() });
+
+export const listServiceSubscriptionReminderDrafts = createServerFn({ method: "GET" })
+  .validator(reminderDraftsSchema)
+  .handler(async ({ data }) =>
+    withServiceSubscriptionRepository(async (repository) => {
+      const actor = await getCurrentServiceSubscriptionActor();
+      const assignedTeamId = await repository.getCompanyTeamId(data.companyId);
+      if (!assignedTeamId) throw new Error("Company not found.");
+      assertServiceSubscriptionWritable(actor, { assignedTeamId });
+      return {
+        drafts: await repository.listReminderDrafts(data.companyId),
+        canApprove: actor.role === "Admin" || actor.role === "Manager",
+      };
+    }),
+  );
+
+export const approveServiceSubscriptionReminderDraft = createServerFn({ method: "POST" })
+  .validator(z.object({ companyId: z.string().uuid(), draftId: z.string().uuid() }))
+  .handler(async ({ data }) =>
+    withServiceSubscriptionRepository(async (repository) => {
+      const actor = await getCurrentServiceSubscriptionActor();
+      const assignedTeamId = await repository.getCompanyTeamId(data.companyId);
+      if (!assignedTeamId) throw new Error("Company not found.");
+      assertServiceSubscriptionWritable(actor, { assignedTeamId });
+      const { currentProviderMode } = await import("@/server/provider-mode");
+      if (currentProviderMode() !== "live") {
+        throw new Error("Reminder approval is read-only in demo mode.");
+      }
+      return repository.approveReminderDraft({
+        companyId: data.companyId,
+        draftId: data.draftId,
+        actorId: actor.userId,
+      });
+    }),
   );

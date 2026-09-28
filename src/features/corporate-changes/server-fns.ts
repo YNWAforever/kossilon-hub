@@ -207,6 +207,9 @@ export const listCorporateChangeRequests = createServerFn({ method: "GET" })
     withRepository(async (repository) => {
       const { getRequest, requireStaffActor } = await loadDefaultCorporateChangeContext();
       const actor = await requireStaffActor(getRequest());
+      if (actor.role !== "Admin" && !actor.teamId) {
+        throw new Error("Forbidden: staff actor has no assigned team.");
+      }
       return repository.listRequests({
         ...data,
         teamId: actor.role === "Admin" ? undefined : (actor.teamId ?? undefined),
@@ -219,5 +222,9 @@ export const getCorporateChangeRequest = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultCorporateChangeContext();
     await requireStaffActor(getRequest());
-    return withRepository((repository) => repository.getRequest(data.requestId));
+    return withRepository(async (repository) => {
+      const request = await repository.getRequest(data.requestId);
+      await requireWritableRequestCompany(repository, request.companyId);
+      return request;
+    });
   });

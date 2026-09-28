@@ -253,6 +253,35 @@ export function createCorporateChangeRequestRepository(
         const company = companyRows[0];
         if (!company) throw new Error("Company not found.");
 
+        // Foreign company register entries must never be attached to this request.
+        // Check at intake and recheck under locks when completion applies the change.
+        if (input.changeType === "share_transfer") {
+          const [transferor] = await tx<{ id: string }[]>`
+            select id from shareholdings
+            where id = ${input.transferorShareholdingId}
+              and company_id = ${input.companyId} and cessation_date is null
+          `;
+          if (!transferor)
+            throw new Error("Transferor shareholding does not belong to this company.");
+          if (input.transfereeShareholdingId) {
+            const [transferee] = await tx<{ id: string }[]>`
+              select id from shareholdings
+              where id = ${input.transfereeShareholdingId}
+                and company_id = ${input.companyId} and cessation_date is null
+            `;
+            if (!transferee)
+              throw new Error("Transferee shareholding does not belong to this company.");
+          }
+        }
+        if (input.changeType === "officer_change" && input.officerAction !== "appoint") {
+          const [officer] = await tx<{ id: string }[]>`
+            select id from officers
+            where id = ${input.officerId} and company_id = ${input.companyId}
+              and cessation_date is null
+          `;
+          if (!officer) throw new Error("Officer does not belong to this company.");
+        }
+
         let insertedId: string;
 
         if (input.changeType === "name_change") {
@@ -363,6 +392,9 @@ export function createCorporateChangeRequestRepository(
       `;
       const current = rows[0];
       if (!current) throw new Error("Corporate change request not found.");
+      if (input.toStatus === "Completed") {
+        throw new Error("Use the completion service to complete a corporate change request.");
+      }
       if (!isAllowedCorporateChangeStatusTransition(current.status, input.toStatus)) {
         throw new Error(`Cannot transition from ${current.status} to ${input.toStatus}.`);
       }
@@ -406,6 +438,7 @@ export function createCorporateChangeRequestRepository(
     return withTransaction(sql, async (tx) => {
       await tx`select id from corporate_change_requests where id = ${input.requestId} for update`;
       const current = await hydrateOrThrow(tx, input.requestId);
+      if (current.status === "Completed") return current;
 
       if (current.status !== "Filed with Registrar") {
         throw new Error(
@@ -491,11 +524,24 @@ export function createCorporateChangeRequestRepository(
           await tx`select id from shareholdings where id = ${id} for update`;
         }
 
-        const transferorRows = await tx<{ number_of_shares: number }[]>`
-          select number_of_shares from shareholdings where id = ${current.transferorShareholdingId}
+        const transferorRows = await tx<
+          {
+            number_of_shares: number;
+            company_id: string;
+            cessation_date: string | null;
+          }[]
+        >`
+          select number_of_shares,company_id,cessation_date::text
+          from shareholdings where id = ${current.transferorShareholdingId}
         `;
         const transferor = transferorRows[0];
-        if (!transferor) throw new Error("Transferor shareholding not found.");
+        if (
+          !transferor ||
+          transferor.company_id !== current.companyId ||
+          transferor.cessation_date
+        ) {
+          throw new Error("Transferor shareholding does not belong to this company.");
+        }
 
         const remaining = transferor.number_of_shares - current.sharesTransferred!;
         if (remaining < 0)
@@ -521,10 +567,24 @@ export function createCorporateChangeRequestRepository(
         }
 
         if (current.transfereeShareholdingId) {
-          const transfereeRows = await tx<{ id: string }[]>`
-            select id from shareholdings where id = ${current.transfereeShareholdingId}
+          const transfereeRows = await tx<
+            {
+              id: string;
+              company_id: string;
+              cessation_date: string | null;
+            }[]
+          >`
+            select id,company_id,cessation_date::text from shareholdings
+            where id = ${current.transfereeShareholdingId}
           `;
-          if (!transfereeRows[0]) throw new Error("Transferee shareholding not found.");
+          const transferee = transfereeRows[0];
+          if (
+            !transferee ||
+            transferee.company_id !== current.companyId ||
+            transferee.cessation_date
+          ) {
+            throw new Error("Transferee shareholding does not belong to this company.");
+          }
 
           await tx`
             update shareholdings
