@@ -13,6 +13,7 @@ export const INITIAL_SCHEDULED_JOBS: readonly MaintenanceJobKind[] = [
   "settleNotificationAttempts",
   "redactNotifications",
   "escalateStalledQuarantine",
+  "runBulkOperations",
 ];
 
 async function runSafeJob(job: MaintenanceJobKind, scheduledAt: string): Promise<unknown> {
@@ -24,6 +25,10 @@ async function runSafeJob(job: MaintenanceJobKind, scheduledAt: string): Promise
     } finally {
       await repository.close();
     }
+  }
+  if (job === "runBulkOperations") {
+    const { runDueBulkOperations } = await import("@/features/bulk-operations/runner");
+    return runDueBulkOperations({ maxOperations: 2, maxItemsPerOperation: 25 });
   }
   if (job === "settleNotificationAttempts" || job === "redactNotifications") {
     const { createNotificationOutboxRepository } = await import("@/features/notifications/outbox");
