@@ -5,7 +5,7 @@ import type { DispatchSummary } from "@/features/notifications/types";
 export type ScheduledMaintenanceDependencies = {
   evaluateEscalations(now: string): Promise<{ warnings: number; breaches: number }>;
   evaluateAnnualReturnReminders(now: string): Promise<{ sent: number; skipped: number }>;
-  evaluateServiceSubscriptionReminders(now: string): Promise<{ sent: number; skipped: number }>;
+  evaluateServiceSubscriptionReminders(now: string): Promise<{ drafted: number; skipped: number }>;
   dispatchDue(now: string, limit: number): Promise<DispatchSummary>;
   /**
    * Received files waiting on a malware verdict. This is the only thing that
@@ -78,7 +78,7 @@ export type ScheduledMaintenanceResult = {
   now: string;
   escalations: { warnings: number; breaches: number } | null;
   annualReturnReminders: { sent: number; skipped: number } | null;
-  serviceSubscriptionReminders: { sent: number; skipped: number } | null;
+  serviceSubscriptionReminders: { drafted: number; skipped: number } | null;
   dispatch: DispatchSummary | null;
   documentScans: (ScanDrainSummary & { scanner: ScannerAvailability }) | null;
   documentAnalysis: (AnalysisDrainSummary & { worker: WorkerAvailability }) | null;

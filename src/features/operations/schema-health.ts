@@ -85,6 +85,7 @@ export const EXPECTED_MIGRATIONS = [
   "0058_import_apply_selection_limit.sql",
   "0059_nar_import_stage_jobs.sql",
   "0060_nar_import_stage_error_detail.sql",
+  "0061_subscription_reminder_drafts.sql",
 ] as const;
 
 export type SchemaLedger = {
