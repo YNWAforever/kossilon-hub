@@ -1,6 +1,7 @@
 import { BLOCKED_INTEGRATIONS, type BlockedIntegrationId } from "./capabilities";
 import type { MaintenanceHealth, MaintenanceRunRecord } from "./health";
 import type { SchedulerOwner } from "./deployment-identity";
+import { WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "@/features/whatsapp/config";
 
 export type CapabilityState = "unconfigured" | "unverified" | "healthy" | "degraded" | "blocked";
 export type CapabilityProbeEvidence = {
@@ -26,12 +27,14 @@ const BINDINGS: Partial<Record<BlockedIntegrationId, readonly string[]>> = {
   "document-text-extraction": ["DOCUMENT_SCANNER_URL", "DOCUMENT_SCANNER_API_KEY"],
   "ai-provider": ["DOCUMENT_AI_URL", "DOCUMENT_AI_API_KEY"],
   "deployment-runtime": ["MAINTENANCE_SCHEDULER_OWNER", "CRON_SECRET"],
+  "whatsapp-provider": WHATSAPP_LIVE_PROVIDER_ENV_KEYS,
 };
 const IMPLEMENTED = new Set<BlockedIntegrationId>([
   "malware-scanner-provider",
   "document-text-extraction",
   "ai-provider",
   "deployment-runtime",
+  "whatsapp-provider",
 ]);
 /** Only names cross the server response boundary; binding values never enter status data. */
 export const CAPABILITY_BINDING_NAMES = [...new Set(Object.values(BINDINGS).flat())];

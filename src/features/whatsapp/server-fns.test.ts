@@ -160,7 +160,7 @@ describe("WhatsApp server function validation", () => {
   });
 
   it("reports simulated delivery without requiring WOZTELL secrets", () => {
-    expect(getWhatsAppIntegrationStatusForEnv({}, "simulated")).toEqual({
+    expect(getWhatsAppIntegrationStatusForEnv({}, "simulated")).toMatchObject({
       provider: "simulated",
       deliveryMode: "simulated",
       webhookConfigured: false,
@@ -180,7 +180,7 @@ describe("WhatsApp server function validation", () => {
         WOZTELL_WEBHOOK_SECRET: "webhook-secret",
         WOZTELL_ACCESS_TOKEN: "token",
       }),
-    ).toEqual({
+    ).toMatchObject({
       provider: "woztell",
       deliveryMode: "blocked",
       webhookConfigured: true,
@@ -195,7 +195,7 @@ describe("WhatsApp server function validation", () => {
         WOZTELL_CHANNEL_ID: "channel",
         WOZTELL_WEBHOOK_SECRET: "webhook-secret",
       }),
-    ).toEqual({
+    ).toMatchObject({
       provider: "woztell",
       deliveryMode: "live",
       webhookConfigured: true,

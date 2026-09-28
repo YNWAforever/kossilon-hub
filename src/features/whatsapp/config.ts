@@ -2,6 +2,7 @@ import type { WhatsAppProviderConfig, WhatsAppWebhookConfig } from "./types";
 
 type Env = Record<string, string | undefined>;
 
+// BLOCKED_INTEGRATION: whatsapp-provider until deployment-matched provider evidence exists.
 export const WHATSAPP_LIVE_PROVIDER_ENV_KEYS = [
   "WOZTELL_API_BASE_URL",
   "WOZTELL_ACCESS_TOKEN",
