@@ -4,9 +4,9 @@
  * Pure, and clock-injected. Everything this decides comes from `maintenance_runs`
  * rows plus a `now`; nothing here reads a database or a binding.
  *
- * The tick is the only thing in the product that evaluates SLA escalations,
- * evaluates reminders, dispatches the outbox, scans quarantined documents and
- * reclaims expired uploads. It is also the only subsystem with no user watching
+ * The owner-gated tick currently evaluates SLA escalations and runs bounded
+ * non-send maintenance passes. Provider sends and document scans require
+ * separate activation gates. It is also the only subsystem with no user watching
  * it: every screen reads tables a human writes to, so a cron that stopped firing
  * leaves every screen looking completely normal until a statutory deadline is
  * missed.
@@ -39,6 +39,7 @@ export type MaintenanceRunRecord = {
    */
   dispatch: { sent: number; suppressedFixtureOrigin: number } | null;
   triggerSource: "scheduled" | "manual";
+  deploymentRef?: string | null;
 };
 
 export type MaintenanceHealthState =
@@ -190,7 +191,7 @@ export function maintenanceHealthOf(input: {
       // to say that rather than leave a blank panel to be read as reassurance.
       summary:
         "從未記錄過任何排程執行。這不代表系統正常，而是代表沒有任何證據顯示排程有運行過：" +
-        "逾期升級、提醒評估、訊息派送、檔案掃描都由這個排程負責。",
+        "逾期升級與已啟用的維護工作需要真實排程證據。",
     };
   }
 
@@ -217,7 +218,7 @@ export function maintenanceHealthOf(input: {
       state: "stale",
       summary:
         `排程最後一次執行是 ${describeLag(lagSeconds)}，已超過容許的 ` +
-        `${Math.round(input.toleranceSeconds / 60)} 分鐘。期間逾期升級、提醒與訊息派送都沒有執行。`,
+        `${Math.round(input.toleranceSeconds / 60)} 分鐘。期間已啟用的維護工作沒有執行。`,
     };
   }
 
@@ -240,7 +241,7 @@ export function maintenanceHealthOf(input: {
   return {
     ...shared,
     state: "healthy",
-    summary: `排程正常運行，最後一次完成於 ${describeLag(lagSeconds)}。`,
+    summary: `資料庫最近一筆排程紀錄完成於 ${describeLag(lagSeconds)}；請核對它是否來自目前部署。`,
   };
 }
 

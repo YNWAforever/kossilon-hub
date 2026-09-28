@@ -1,5 +1,6 @@
 import { createMaintenanceJobRepository } from "@/features/operations/maintenance-job-repository";
 import { createMaintenanceRunRepository } from "@/features/operations/repository";
+import { deploymentRefFromRuntime } from "@/features/operations/deployment-identity";
 import {
   createMaintenanceTrigger,
   type MaintenanceJobKind,
@@ -69,7 +70,11 @@ export async function runMaintenanceTickOnServer(data: MaintenanceTickInput) {
           finishedAt: finishedAt.toISOString(),
           durationMs: finishedAt.getTime() - startedAt.getTime(),
           outcome: result.outcome === "partial" ? "partial" : "succeeded",
-          passes: { runId: data.runId, jobs: result.jobs },
+          passes: {
+            runId: data.runId,
+            jobs: result.jobs,
+            deploymentRef: deploymentRefFromRuntime(process.env),
+          },
           failedPasses,
           failureSummary: null,
           triggerSource: data.trigger,

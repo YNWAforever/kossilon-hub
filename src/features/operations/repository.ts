@@ -27,6 +27,7 @@ type RunRow = {
   dispatch_sent: number | string | null;
   dispatch_suppressed: number | string | null;
   trigger_source: "scheduled" | "manual";
+  deployment_ref: string | null;
 };
 
 type DepthRow = {
@@ -182,6 +183,7 @@ function mapRun(row: RunRow): MaintenanceRunRecord {
             suppressedFixtureOrigin: Number(row.dispatch_suppressed),
           },
     triggerSource: row.trigger_source,
+    deploymentRef: row.deployment_ref,
   };
 }
 
@@ -216,6 +218,7 @@ export function createMaintenanceRunRepository(
   const runColumns = sql`
     id, scheduled_for, started_at, finished_at, duration_ms,
     outcome, failed_passes, trigger_source,
+    passes ->> 'deploymentRef' deployment_ref,
     (passes -> 'dispatch' ->> 'sent')::int dispatch_sent,
     (passes -> 'dispatch' ->> 'suppressedFixtureOrigin')::int dispatch_suppressed
   `;
