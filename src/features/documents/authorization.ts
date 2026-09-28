@@ -44,7 +44,7 @@ export function isDocumentVisibleToStaffActor(
   // Checked before the Admin shortcut, matching caseFiltersForActor: an inactive
   // admin may not act, so they may not read either.
   if (!actor.active) return false;
-  if (actor.role === "Client") return false;
+  if (actor.role !== "Admin" && actor.role !== "Manager" && actor.role !== "Staff") return false;
   if (!actor.userId) return false;
 
   if (actor.role === "Admin") return true;
@@ -83,7 +83,11 @@ export function assertStaffDocumentAccess(
   subject: DocumentAccessSubject,
 ): AuthenticatedActor {
   if (!actor.active) throw forbidden("inactive users cannot access documents.");
-  if (actor.role === "Client" || !actor.userId) throw forbidden("staff access is required.");
+  if (
+    (actor.role !== "Admin" && actor.role !== "Manager" && actor.role !== "Staff") ||
+    !actor.userId
+  )
+    throw forbidden("staff access is required.");
   if (actor.role !== "Admin" && !actor.teamId) throw forbidden("staff actor has no assigned team.");
 
   if (!isDocumentVisibleToStaffActor(actor, subject)) {

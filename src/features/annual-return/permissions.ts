@@ -218,18 +218,16 @@ export function caseFiltersForActor(actor: AnnualReturnBoardActor): AnnualReturn
     throw new Error("Forbidden: inactive users cannot list annual return cases.");
   }
 
-  if (actor.role === "Admin") {
-    return {};
-  }
-
-  // Role first: a Client is refused for being a Client, not incidentally for
-  // having no staff row.
-  if (actor.role !== "Manager" && actor.role !== "Staff") {
+  if (actor.role !== "Admin" && actor.role !== "Manager" && actor.role !== "Staff") {
     throw new Error("Forbidden: staff access is required.");
   }
 
   if (!actor.id) {
     throw new Error("Forbidden: a staff database identity is required.");
+  }
+
+  if (actor.role === "Admin") {
+    return {};
   }
 
   if (!actor.teamId) {

@@ -14,7 +14,10 @@ export function assertStaffAccess(actor: AuthenticatedActor): AuthenticatedActor
     throw forbidden("staff account is inactive.");
   }
 
-  if (actor.role === "Client" || !actor.userId) {
+  if (
+    (actor.role !== "Admin" && actor.role !== "Manager" && actor.role !== "Staff") ||
+    !actor.userId
+  ) {
     throw forbidden("staff access is required.");
   }
 
