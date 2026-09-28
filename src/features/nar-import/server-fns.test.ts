@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import {
+  applyNarImportForActor,
+  approveNarImportForActor,
   getNarImportBatchReviewForActor,
   mapNarImportCompanyForActor,
   stageNarImportForActor,
@@ -106,6 +108,33 @@ describe("import authority", () => {
       dependencies,
     );
     expect(repository.searchCompanies).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps T11 approval and apply behind Admin authority before repository access", async () => {
+    const approvalRepository = { approve: vi.fn(async () => ({ id: "approval" })) };
+    const bulkRepository = { commitImportApproval: vi.fn(async () => ({ id: "operation" })) };
+    await expect(
+      approveNarImportForActor(
+        actor("Manager"),
+        { previewId: "11111111-1111-4111-8111-111111111111", previewHash: "a".repeat(64) },
+        approvalRepository as unknown as Parameters<typeof approveNarImportForActor>[2],
+      ),
+    ).rejects.toThrow(/Admin access/);
+    await expect(
+      applyNarImportForActor(
+        actor("Staff"),
+        { approvalId: "11111111-1111-4111-8111-111111111111", idempotencyKey: "T11-test-key" },
+        bulkRepository as unknown as Parameters<typeof applyNarImportForActor>[2],
+      ),
+    ).rejects.toThrow(/Admin access/);
+    expect(approvalRepository.approve).not.toHaveBeenCalled();
+    expect(bulkRepository.commitImportApproval).not.toHaveBeenCalled();
+    await approveNarImportForActor(
+      actor("Admin"),
+      { previewId: "11111111-1111-4111-8111-111111111111", previewHash: "a".repeat(64) },
+      approvalRepository as unknown as Parameters<typeof approveNarImportForActor>[2],
+    );
+    expect(approvalRepository.approve).toHaveBeenCalledTimes(1);
   });
 
   it("refuses ordinary staff", async () => {

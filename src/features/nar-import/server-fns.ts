@@ -81,6 +81,25 @@ function assertImportAuthority(actor: AuthenticatedActor): AuthenticatedActor {
   return staff;
 }
 
+export async function approveNarImportForActor(
+  actor: AuthenticatedActor,
+  input: { previewId: string; previewHash: string },
+  repository: ReturnType<typeof import("./apply-repository").createNarImportApplyRepository>,
+) {
+  assertImportAuthority(actor);
+  return repository.approve(actor, input);
+}
+export async function applyNarImportForActor(
+  actor: AuthenticatedActor,
+  input: { approvalId: string; idempotencyKey: string },
+  repository: ReturnType<
+    typeof import("@/features/bulk-operations/repository").createBulkOperationRepository
+  >,
+) {
+  assertImportAuthority(actor);
+  return repository.commitImportApproval(actor, input);
+}
+
 export type StageNarImportInput = {
   fileName: string;
   bodyBase64: string;
@@ -277,3 +296,56 @@ export const mapNarImportCompany = createServerFn({ method: "POST" })
   .handler(({ data }) =>
     withContext((actor, dependencies) => mapNarImportCompanyForActor(actor, data, dependencies)),
   );
+
+const approveImportSchema = z
+  .object({
+    previewId: entityIdSchema,
+    previewHash: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+const applyImportSchema = z
+  .object({
+    approvalId: entityIdSchema,
+    idempotencyKey: z.string().trim().min(8).max(128),
+  })
+  .strict();
+const loadImportApplyContext = createServerOnlyFn(async () => {
+  const [
+    { getRequest },
+    { requireStaffActor },
+    { createNarImportApplyRepository },
+    { createBulkOperationRepository },
+  ] = await Promise.all([
+    import("@tanstack/react-start/server"),
+    import("@/features/auth/neon-auth-server"),
+    import("./apply-repository"),
+    import("@/features/bulk-operations/repository"),
+  ]);
+  return {
+    actor: await requireStaffActor(getRequest()),
+    createApplyRepository: createNarImportApplyRepository,
+    createBulkRepository: createBulkOperationRepository,
+  };
+});
+export const approveNarImport = createServerFn({ method: "POST" })
+  .validator(approveImportSchema)
+  .handler(async ({ data }) => {
+    const context = await loadImportApplyContext();
+    const repository = context.createApplyRepository();
+    try {
+      return await approveNarImportForActor(context.actor, data, repository);
+    } finally {
+      await repository.close();
+    }
+  });
+export const applyNarImport = createServerFn({ method: "POST" })
+  .validator(applyImportSchema)
+  .handler(async ({ data }) => {
+    const context = await loadImportApplyContext();
+    const repository = context.createBulkRepository();
+    try {
+      return await applyNarImportForActor(context.actor, data, repository);
+    } finally {
+      await repository.close();
+    }
+  });

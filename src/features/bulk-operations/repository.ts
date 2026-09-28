@@ -1,4 +1,10 @@
 import type postgres from "postgres";
+import {
+  createNarImportApplyRepository,
+  ImportApplyError,
+} from "@/features/nar-import/apply-repository";
+import { importLogicalKey } from "@/features/nar-import/apply";
+import type { ImportPreviewRow } from "@/features/nar-import/preview";
 import { createSqlClient, getSqlClient, type SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import {
@@ -25,13 +31,13 @@ type QueryClient = SqlClient | postgres.TransactionSql;
 type Tx = postgres.TransactionSql;
 type PreviewRow = {
   id: string;
-  action: "assign";
+  action: "assign" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   scope_role: "Admin" | "Manager";
   scope_team_id: string | null;
-  parameters: BulkPreviewInput["parameters"];
-  selection: BulkPreviewInput["selection"];
+  parameters: BulkPreviewInput["parameters"] | { approvalId: string };
+  selection: BulkPreviewInput["selection"] | { kind: "ids"; ids: string[] };
   resource_snapshot: Record<string, Snapshot>;
   preview_hash: string;
   selection_count: number;
@@ -51,7 +57,7 @@ type Snapshot = {
 type OperationRow = {
   id: string;
   preview_id: string;
-  action: "assign";
+  action: "assign" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   state: BulkOperation["state"];
@@ -213,8 +219,18 @@ export function createBulkOperationRepository(
     );
     if (active) return;
     const allGood = items.every((item) => item.state === "succeeded" || item.state === "skipped");
-    await sql`update bulk_operations set state = ${allGood ? "completed" : "completed-with-errors"},
-      updated_at = now() where id = ${id} and state <> 'cancelled'`;
+    const [operation] = await sql<{ action: string; preview_id: string }[]>`
+      update bulk_operations set state = ${allGood ? "completed" : "completed-with-errors"},
+        updated_at = now() where id = ${id} and state in ('queued','running')
+        returning action,preview_id`;
+    if (operation?.action === "importApply") {
+      await sql`update nar_import_batches b set status = ${allGood ? "applied" : "failed"},
+        applied_at = ${allGood ? new Date().toISOString() : null},updated_at = now()
+        from nar_import_approvals a,bulk_previews p
+        where p.id = ${operation.preview_id}
+          and a.id = (p.parameters->>'approvalId')::uuid and b.id = a.batch_id
+          and b.revision = a.batch_revision and b.status = 'applying'`;
+    }
   }
   return {
     async preview(actor: AuthenticatedActor, rawInput: BulkPreviewInput): Promise<BulkPreview> {
@@ -352,6 +368,123 @@ export function createBulkOperationRepository(
       const view = await loadView(id);
       return view;
     },
+    async commitImportApproval(
+      actor: AuthenticatedActor,
+      input: { approvalId: string; idempotencyKey: string },
+    ): Promise<BulkOperationView> {
+      if (input.idempotencyKey.trim().length < 8 || input.idempotencyKey.length > 128)
+        throw new Error("An idempotency key of 8 to 128 characters is required.");
+      const id = await transaction(sql, async (tx) => {
+        const current = await currentActor(tx, actor.authUserId);
+        assertSameActor(current, actor);
+        if (current.role !== "Admin")
+          throw new Error("Forbidden: Admin import authority required.");
+        const [approval] = await tx<
+          {
+            id: string;
+            preview_id: string;
+            batch_id: string;
+            preview_hash: string;
+            batch_revision: number;
+            approved_by: string;
+          }[]
+        >`select * from nar_import_approvals where id = ${input.approvalId} for update`;
+        if (!approval || approval.approved_by !== current.userId)
+          throw new Error("Forbidden: import approval belongs to another actor.");
+        const [source] = await tx<
+          {
+            id: string;
+            rows: ImportPreviewRow[];
+            semantic_key: string;
+            preview_hash: string;
+            created_by: string;
+          }[]
+        >`select * from nar_import_previews where id = ${approval.preview_id}`;
+        const [batch] = await tx<
+          {
+            id: string;
+            revision: number;
+            semantic_key: string | null;
+            status: string;
+          }[]
+        >`select * from nar_import_batches where id = ${approval.batch_id} for update`;
+        if (
+          !source ||
+          !batch ||
+          source.created_by !== current.userId ||
+          source.preview_hash !== approval.preview_hash ||
+          batch.revision !== approval.batch_revision ||
+          batch.semantic_key !== source.semantic_key
+        )
+          throw new Error("Approved import changed; revalidate before applying.");
+        const logicalKey = importLogicalKey(source.semantic_key, source.preview_hash);
+        await tx`select pg_advisory_xact_lock(hashtextextended(${logicalKey},0))`;
+        const [existingKey] = await tx<{ id: string; logical_key: string }[]>`
+          select id,logical_key from bulk_operations
+          where created_by_id = ${current.userId} and idempotency_key = ${input.idempotencyKey}`;
+        if (existingKey && existingKey.logical_key !== logicalKey)
+          throw new Error("Idempotency key belongs to another operation.");
+        const [existing] = await tx<{ id: string }[]>`
+          select id from bulk_operations where logical_key = ${logicalKey}`;
+        if (existing) return existing.id;
+        const [activeImport] = await tx<{ id: string }[]>`
+          select o.id from bulk_operations o
+          join bulk_previews p on p.id = o.preview_id
+          join nar_import_approvals a on a.id = (p.parameters->>'approvalId')::uuid
+          where a.batch_id = ${batch.id} and o.action = 'importApply'
+            and o.state in ('queued','running') limit 1`;
+        if (activeImport)
+          throw new Error("An approved operation is already applying this import batch.");
+        if (!["pending_review", "applying", "failed"].includes(batch.status))
+          throw new Error("Approved import is no longer pending application.");
+        if (!Array.isArray(source.rows) || source.rows.length < 1 || source.rows.length > MAX_ITEMS)
+          throw new Error("Approved import must contain 1 to 1000 rows.");
+        const snapshot: Record<string, Snapshot> = {};
+        for (const row of source.rows) {
+          if (snapshot[row.rowId]) throw new Error("Approved import contains duplicate rows.");
+          snapshot[row.rowId] = {
+            revision: row.rowRevision,
+            state:
+              row.matchedCompanyId &&
+              !["invalid", "needsCompanyMapping", "conflict"].includes(row.disposition)
+                ? "eligible"
+                : "conflict",
+            teamId: null,
+            status: row.disposition,
+            ownerId: null,
+            reviewerId: null,
+          };
+        }
+        const entries = Object.entries(snapshot);
+        const eligible = entries.filter(([, value]) => value.state === "eligible").length;
+        const [preview] = await tx<{ id: string }[]>`
+          insert into bulk_previews
+            (action,created_by_id,auth_user_id,scope_role,scope_team_id,parameters,selection,
+              resource_snapshot,preview_hash,selection_count,eligible_count,skipped_count,conflict_count,expires_at)
+          values ('importApply',${current.userId},${current.authUserId},${current.role},${current.teamId},
+            ${tx.json({ approvalId: approval.id })},
+            ${tx.json({ kind: "ids", ids: entries.map(([resourceId]) => resourceId) })},
+            ${tx.json(snapshot)},${source.preview_hash},${entries.length},${eligible},0,
+            ${entries.length - eligible},${new Date(Date.now() + 15 * 60_000).toISOString()}) returning id`;
+        const [operation] = await tx<{ id: string }[]>`
+          insert into bulk_operations
+            (preview_id,action,created_by_id,auth_user_id,idempotency_key,logical_key)
+          values (${preview.id},'importApply',${current.userId},${current.authUserId},
+            ${input.idempotencyKey},${logicalKey}) returning id`;
+        for (const [resourceId, value] of entries) {
+          await tx`insert into bulk_operation_items
+            (operation_id,resource_id,revision_before,state,reason_code)
+          values (${operation.id},${resourceId},${value.revision},
+            ${value.state === "eligible" ? "pending" : "conflict"},
+            ${value.state === "conflict" ? "ROW_NOT_APPROVABLE" : null})`;
+        }
+        await tx`update nar_import_batches set status = 'applying',updated_at = now()
+          where id = ${batch.id}`;
+        return operation.id;
+      });
+      await updateOperationState(id);
+      return loadView(id);
+    },
     async get(actor: AuthenticatedActor, id: string): Promise<BulkOperationView> {
       const current = await currentActor(sql, actor.authUserId);
       assertSameActor(current, actor);
@@ -370,9 +503,19 @@ export function createBulkOperationRepository(
         if (!operation) throw new Error("Bulk operation not found.");
         if (current.role !== "Admin" && operation.created_by_id !== current.userId)
           throw new Error("Forbidden: operation belongs to another actor.");
+        if (operation.state === "cancelled") return;
+        if (operation.state === "completed" || operation.state === "completed-with-errors")
+          throw new Error("A completed operation cannot be cancelled.");
         await tx`update bulk_operations set state = 'cancelled',updated_at = now() where id = ${id}`;
         await tx`update bulk_operation_items set state = 'cancelled',updated_at = now()
           where operation_id = ${id} and state in ('pending','failed')`;
+        if (operation.action === "importApply") {
+          await tx`update nar_import_batches b set status = 'failed',updated_at = now()
+            from nar_import_approvals a,bulk_previews p
+            where p.id = ${operation.preview_id}
+              and a.id = (p.parameters->>'approvalId')::uuid and b.id = a.batch_id
+              and b.revision = a.batch_revision and b.status = 'applying'`;
+        }
       });
     },
     async listDueOperationIds(limit = 5): Promise<string[]> {
@@ -427,6 +570,19 @@ export function createBulkOperationRepository(
         seen.push(claimed.item.id);
         try {
           await transaction(sql, async (tx) => {
+            // Serialize a running domain write with cancellation. Once cancel returns,
+            // no claimed item may still apply a case or assignment.
+            const [live] = await tx<{ state: BulkOperation["state"] }[]>`
+              select state from bulk_operations where id = ${id} for share`;
+            if (!live || live.state === "cancelled") {
+              await tx`update bulk_operation_items set state = 'cancelled',reason_code = 'OPERATION_CANCELLED',
+                lease_token = null,lease_until = null,updated_at = now()
+                where id = ${claimed.item.id} and lease_token = ${claimed.token} and state = 'running'`;
+              await tx`update bulk_operation_attempts set state = 'failed',
+                reason_code = 'OPERATION_CANCELLED',finished_at = now()
+                where item_id = ${claimed.item.id} and attempt_number = ${claimed.item.attempt_count}`;
+              return;
+            }
             const [preview] = await tx<PreviewRow[]>`select p.* from bulk_previews p
               join bulk_operations o on o.preview_id = p.id where o.id = ${id}`;
             if (!preview) throw new BulkItemFailure("conflict", "PREVIEW_MISSING");
@@ -443,6 +599,35 @@ export function createBulkOperationRepository(
               preview.created_by_id !== actor.userId
             )
               throw new BulkItemFailure("forbidden", "SCOPE_CHANGED");
+            if (claimed.operation.action === "importApply") {
+              if (actor.role !== "Admin" || preview.action !== "importApply")
+                throw new BulkItemFailure("forbidden", "ADMIN_REQUIRED");
+              const approvalId = (preview.parameters as { approvalId?: string }).approvalId;
+              if (!approvalId) throw new BulkItemFailure("conflict", "APPROVAL_MISSING");
+              const imported = await createNarImportApplyRepository({ sql: tx }).applyRow(
+                tx,
+                actor,
+                {
+                  approvalId,
+                  rowId: claimed.item.resource_id,
+                  expectedRevision: claimed.item.revision_before,
+                },
+              );
+              await options.afterDomainWrite?.();
+              const [saved] = await tx<{ id: string }[]>`
+                update bulk_operation_items set state = ${imported.state},
+                  revision_after = ${imported.revisionAfter},audit_ref = ${imported.auditRef},
+                  reason_code = ${imported.reasonCode},lease_token = null,lease_until = null,
+                  updated_at = now() where id = ${claimed.item.id}
+                  and lease_token = ${claimed.token} and state = 'running' returning id`;
+              if (!saved) throw new Error("Bulk item lease changed during import commit.");
+              await tx`update bulk_operation_attempts set state = 'succeeded',finished_at = now()
+                where item_id = ${claimed.item.id} and attempt_number = ${claimed.item.attempt_count}`;
+              return;
+            }
+            if (preview.action !== "assign")
+              throw new BulkItemFailure("conflict", "ACTION_MISMATCH");
+            const assignment = preview.parameters as BulkPreviewInput["parameters"];
             const work = createWorkItemRepository({ sql: tx });
             const current = await work.get(claimed.item.resource_id);
             if (!current) throw new BulkItemFailure("conflict", "RESOURCE_MISSING");
@@ -454,9 +639,8 @@ export function createBulkOperationRepository(
             if (current.version !== claimed.item.revision_before)
               throw new BulkItemFailure("conflict", "REVISION_CHANGED");
             const alreadyAssigned =
-              (preview.parameters.assignmentTarget === "owner"
-                ? current.ownerId
-                : current.reviewerId) === preview.parameters.assigneeId;
+              (assignment.assignmentTarget === "owner" ? current.ownerId : current.reviewerId) ===
+              assignment.assigneeId;
             if (alreadyAssigned) {
               const rows = await tx<
                 { id: string }[]
@@ -470,10 +654,10 @@ export function createBulkOperationRepository(
             }
             const assigned = await assignWorkItemForActor(work, actor, {
               workItemId: current.id,
-              assigneeId: preview.parameters.assigneeId,
+              assigneeId: assignment.assigneeId,
               expectedVersion: claimed.item.revision_before,
-              assignmentTarget: preview.parameters.assignmentTarget,
-              overrideReason: preview.parameters.overrideReason,
+              assignmentTarget: assignment.assignmentTarget,
+              overrideReason: assignment.overrideReason,
             });
             await options.afterDomainWrite?.();
             const [audit] = await tx<{ id: string }[]>`
@@ -495,17 +679,21 @@ export function createBulkOperationRepository(
           const staleDomainWrite =
             error instanceof Error && /assignment is stale/i.test(error.message);
           const state =
-            error instanceof BulkItemFailure
+            error instanceof ImportApplyError
               ? error.state
-              : staleDomainWrite
-                ? "conflict"
-                : "failed";
+              : error instanceof BulkItemFailure
+                ? error.state
+                : staleDomainWrite
+                  ? "conflict"
+                  : "failed";
           const reasonCode =
-            error instanceof BulkItemFailure
+            error instanceof ImportApplyError
               ? error.reasonCode
-              : staleDomainWrite
-                ? "REVISION_CHANGED"
-                : "DOMAIN_WRITE_FAILED";
+              : error instanceof BulkItemFailure
+                ? error.reasonCode
+                : staleDomainWrite
+                  ? "REVISION_CHANGED"
+                  : "DOMAIN_WRITE_FAILED";
           await transaction(sql, async (tx) => {
             await tx`update bulk_operation_items set state = ${state},reason_code = ${reasonCode},
               lease_token = null,lease_until = null,updated_at = now()

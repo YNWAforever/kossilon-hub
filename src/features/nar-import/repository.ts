@@ -461,8 +461,20 @@ export function createNarImportRepository(
         let [locked] = await tx<BatchRow[]>`
           select * from nar_import_batches where id = ${batchId} for update`;
         if (!locked) throw new Error("Import batch not found.");
-        if (locked.status !== "pending_review")
-          throw new Error("Only a pending import can be revalidated.");
+        if (locked.status !== "pending_review" && locked.status !== "failed")
+          throw new Error("Only a pending or failed import can be revalidated.");
+        const wasFailed = locked.status === "failed";
+        if (wasFailed) {
+          const [active] = await tx<{ id: string }[]>`
+            select o.id from bulk_operations o
+            join bulk_previews p on p.id = o.preview_id
+            join nar_import_approvals a on a.id = (p.parameters->>'approvalId')::uuid
+            where a.batch_id = ${batchId} and o.action = 'importApply'
+              and o.state in ('queued','running') limit 1`;
+          if (active) throw new Error("An approved import is still running.");
+          await tx`update nar_import_batches set status = 'pending_review',updated_at = now()
+            where id = ${batchId}`;
+        }
         if (locked.revision !== expectedRevision)
           throw new Error("Import preview is stale; refresh the batch before revalidation.");
         let assignedLegacyYear = false;
@@ -494,7 +506,7 @@ export function createNarImportRepository(
           throw new Error("Return year differs from this batch; create a new semantic preview.");
         }
         const changed = await refreshImportRows(tx, locked);
-        if (changed && !assignedLegacyYear)
+        if ((changed || wasFailed) && !assignedLegacyYear)
           await tx`update nar_import_batches set revision = revision + 1,
           updated_at = now() where id = ${batchId}`;
         const [fresh] = await tx<
@@ -513,9 +525,12 @@ export function createNarImportRepository(
                 id: string;
                 filing_due_date: string;
                 has_progress: boolean;
+                current_status: string;
+                updated_at: string | Date;
               }[]
             >`
           select arc.id,arc.filing_due_date::text filing_due_date,
+            arc.current_status,arc.updated_at,
             (arc.current_status <> 'Upcoming' or arc.reminders_sent > 0 or arc.locked_at is not null
               or arc.completed_at is not null or arc.filing_reference is not null
               or exists (select 1 from annual_return_checklist_items i
@@ -532,6 +547,8 @@ export function createNarImportRepository(
               ? {
                   filingDueDate: existing.filing_due_date,
                   hasStaffProgress: existing.has_progress,
+                  status: existing.current_status,
+                  updatedAt: new Date(existing.updated_at).toISOString(),
                 }
               : null,
             mapped.columnMapping,

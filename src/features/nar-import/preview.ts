@@ -23,6 +23,7 @@ export type ImportPreviewRow = {
   externalClientId: string;
   matchedCompanyId: string | null;
   matchedCaseId: string | null;
+  caseSnapshot: { status: string; updatedAt: string; filingDueDate: string } | null;
   disposition: NarRowDisposition;
   issues: RowIssue[];
   fields: ImportFieldPreview[];
@@ -55,7 +56,12 @@ export function semanticKeyFor(
 }
 export function previewRowFor(
   row: NarImportRow,
-  existingCase: { filingDueDate: string; hasStaffProgress: boolean } | null,
+  existingCase: {
+    filingDueDate: string;
+    hasStaffProgress: boolean;
+    status: string;
+    updatedAt: string;
+  } | null,
   columns: Record<NarColumnKey, string> | null,
 ): ImportPreviewRow {
   const parsed = row.parsed as ParsedImportRow;
@@ -115,6 +121,13 @@ export function previewRowFor(
     externalClientId: row.externalClientId,
     matchedCompanyId: row.matchedCompanyId,
     matchedCaseId: row.matchedCaseId,
+    caseSnapshot: existingCase
+      ? {
+          status: existingCase.status,
+          updatedAt: existingCase.updatedAt,
+          filingDueDate: existingCase.filingDueDate,
+        }
+      : null,
     disposition: row.disposition,
     issues: row.issues,
     fields,
