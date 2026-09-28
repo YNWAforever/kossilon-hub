@@ -116,7 +116,9 @@ export function evaluateCaseReadiness(snapshot: CaseReadinessSnapshot): Readines
   const manifestReady =
     snapshot.manifestResult.kind === "releasable" && Boolean(snapshot.currentManifestHash);
   const mutable = !snapshot.caseLocked && snapshot.currentStatus !== "Completed";
-  const canApprovePackage = documentsComplete && paymentConfirmed && manifestReady && mutable;
+  const packageMutable = mutable && snapshot.currentStatus !== "Filed";
+  const canApprovePackage =
+    documentsComplete && paymentConfirmed && manifestReady && packageMutable;
 
   if (!snapshot.approval) add("review-required");
   else if (

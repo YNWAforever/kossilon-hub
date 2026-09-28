@@ -108,6 +108,7 @@ describe("evaluateCaseReadiness", () => {
     expect(beforeSubmission.canRecordSubmission).toBe(true);
     expect(beforeSubmission.canComplete).toBe(false);
     const filed = evaluateCaseReadiness({ ...BASE, currentStatus: "Filed" });
+    expect(filed.canApprovePackage).toBe(false);
     expect(filed.canRecordSubmission).toBe(false);
     expect(filed.canComplete).toBe(true);
     const changed = evaluateCaseReadiness({
