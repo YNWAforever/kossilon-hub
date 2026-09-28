@@ -56,6 +56,28 @@ export const previewWorkItemPolicyInputSchema = z
   })
   .strict();
 
+export const previewWorkItemPolicyBackfillInputSchema = z
+  .object({
+    policyVersionId: z.string().uuid(),
+    items: z
+      .array(
+        z
+          .object({
+            workItemId: z.string().uuid(),
+            expectedVersion: z.number().int().positive(),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(100),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (new Set(value.items.map((item) => item.workItemId)).size !== value.items.length) {
+      context.addIssue({ code: z.ZodIssueCode.custom, message: "Duplicate work item IDs." });
+    }
+  });
+
 export const attachWorkItemPolicyInputSchema = previewWorkItemPolicyInputSchema
   .extend({
     startedAt: z.string().datetime(),
@@ -215,6 +237,15 @@ export async function previewWorkItemPolicyForActor(
   return repository.previewPolicyAttachment(data);
 }
 
+export async function previewWorkItemPolicyBackfillForActor(
+  repository: ReturnType<typeof createWorkItemRepository>,
+  actor: AuthenticatedActor,
+  data: z.output<typeof previewWorkItemPolicyBackfillInputSchema>,
+) {
+  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+  return repository.previewPolicyBackfill({ ...data, actorId: requireStaffUserId(actor) });
+}
+
 export async function attachWorkItemPolicyForActor(
   repository: ReturnType<typeof createWorkItemRepository>,
   actor: AuthenticatedActor,
@@ -279,6 +310,14 @@ export const previewWorkItemPolicyAttachment = createServerFn({ method: "POST" }
   .handler(({ data }) =>
     withDefaultAuthorizedWorkItemRepository((repository, actor) =>
       previewWorkItemPolicyForActor(repository, actor, data),
+    ),
+  );
+
+export const previewWorkItemPolicyBackfill = createServerFn({ method: "POST" })
+  .validator(previewWorkItemPolicyBackfillInputSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      previewWorkItemPolicyBackfillForActor(repository, actor, data),
     ),
   );
 

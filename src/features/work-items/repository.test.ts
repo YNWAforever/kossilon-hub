@@ -559,6 +559,70 @@ describe.skipIf(!databaseUrl)("ensureWorkItemForEvent", () => {
             workItemId: item.id,
             expectedVersion: item.version,
           });
+          const mismatched = await ensureWorkItemForEvent(tx, {
+            companyId: fixture.company_id,
+            caseType: "annual_return",
+            annualReturnCaseId: fixture.case_id,
+            sourceEventKey: `t05-attach-other:${crypto.randomUUID()}`,
+            sourceEventType: "policy_configuration_required",
+            workType: `t05_other_${crypto.randomUUID()}`,
+            title: "Different work type",
+          });
+          const batchPreview = await repository.previewPolicyBackfill({
+            actorId: fixture.admin_id,
+            policyVersionId: policy.id,
+            items: [
+              { workItemId: item.id, expectedVersion: item.version },
+              { workItemId: mismatched.id, expectedVersion: mismatched.version },
+            ],
+          });
+          expect(batchPreview).toEqual([
+            expect.objectContaining({
+              workItemId: item.id,
+              state: "eligible",
+              preview: expect.objectContaining({ policyVersionId: policy.id }),
+            }),
+            expect.objectContaining({
+              workItemId: mismatched.id,
+              state: "conflict",
+              reasonCode: "POLICY_WORK_TYPE_MISMATCH",
+              preview: null,
+            }),
+          ]);
+          expect(
+            await tx<
+              { work_item_id: string }[]
+            >`select work_item_id from work_item_sla_attachments where work_item_id in (${item.id}, ${mismatched.id})`,
+          ).toHaveLength(0);
+          await expect(
+            repository.previewPolicyBackfill({
+              actorId: fixture.admin_id,
+              policyVersionId: policy.id,
+              items: [
+                { workItemId: item.id, expectedVersion: item.version },
+                { workItemId: item.id, expectedVersion: item.version },
+              ],
+            }),
+          ).rejects.toThrow(/unique/i);
+          const staleBackfill = await repository.previewPolicyBackfill({
+            actorId: fixture.admin_id,
+            policyVersionId: policy.id,
+            items: [{ workItemId: item.id, expectedVersion: item.version + 1 }],
+          });
+          expect(staleBackfill[0]).toMatchObject({
+            state: "conflict",
+            reasonCode: "REVISION_CHANGED",
+            preview: null,
+          });
+          await tx`update staff_profiles set active = false where user_id = ${fixture.admin_id}`;
+          await expect(
+            repository.previewPolicyBackfill({
+              actorId: fixture.admin_id,
+              policyVersionId: policy.id,
+              items: [{ workItemId: item.id, expectedVersion: item.version }],
+            }),
+          ).rejects.toThrow(/Admin/);
+          await tx`update staff_profiles set active = true where user_id = ${fixture.admin_id}`;
           expect(choices).toEqual([
             expect.objectContaining({
               id: policy.id,

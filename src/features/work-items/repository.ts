@@ -147,6 +147,18 @@ export type PolicyAttachmentSelection = Pick<
 >;
 export type AttachPolicyInput = PolicyAttachmentPreview & { actorId: string };
 
+export type PolicyBackfillDecision = {
+  workItemId: string;
+  state: "eligible" | "conflict";
+  reasonCode:
+    | "WORK_ITEM_UNAVAILABLE"
+    | "REVISION_CHANGED"
+    | "POLICY_WORK_TYPE_MISMATCH"
+    | "WORK_ITEM_NOT_ELIGIBLE"
+    | null;
+  preview: PolicyAttachmentPreview | null;
+};
+
 export type EnsureWorkItemEvent = {
   companyId: string;
   caseType: WorkItemCaseType;
@@ -567,6 +579,11 @@ export type WorkItemRepository = {
     input: Pick<PolicyAttachmentSelection, "workItemId" | "expectedVersion">,
   ): Promise<PolicyAttachmentChoice[]>;
   previewPolicyAttachment(input: PolicyAttachmentSelection): Promise<PolicyAttachmentPreview>;
+  previewPolicyBackfill(input: {
+    actorId: string;
+    policyVersionId: string;
+    items: { workItemId: string; expectedVersion: number }[];
+  }): Promise<PolicyBackfillDecision[]>;
   attachPolicy(input: AttachPolicyInput): Promise<PersistedWorkItem>;
   assign(input: AssignWorkItemInput): Promise<PersistedWorkItem>;
   acknowledgeEscalation(input: AcknowledgeEscalationInput): Promise<PersistedWorkItem>;
@@ -691,6 +708,64 @@ export function createWorkItemRepository(
           throw new Error("Work item policy preview is stale.");
         }
         return policyAttachmentPreview(tx, item, input.policyVersionId, readNow());
+      });
+    },
+    async previewPolicyBackfill(input) {
+      if (
+        input.items.length < 1 ||
+        input.items.length > 100 ||
+        new Set(input.items.map((item) => item.workItemId)).size !== input.items.length ||
+        input.items.some(
+          (item) => !Number.isSafeInteger(item.expectedVersion) || item.expectedVersion < 1,
+        )
+      ) {
+        throw new Error("Policy backfill preview needs 1 to 100 unique, versioned work items.");
+      }
+      return withTransaction(sql, async (tx) => {
+        const [admin] = await tx<{ id: string }[]>`
+          select u.id from users u join staff_profiles sp on sp.user_id = u.id
+          where u.id = ${input.actorId} and u.active = true
+            and sp.active = true and sp.role = 'Admin'
+        `;
+        if (!admin) throw new Error("Forbidden: current Admin access is required.");
+        const startedAt = readNow();
+        const [policy] = await tx<{ work_type: string }[]>`
+          select p.work_type from sla_policies p
+          join business_calendars c on c.id = p.business_calendar_id
+          where p.id = ${input.policyVersionId} and p.active = true
+            and c.active = true and p.effective_from <= ${startedAt}
+        `;
+        if (!policy) throw new Error("Selected SLA policy is unavailable.");
+        const decisions: PolicyBackfillDecision[] = [];
+        for (const selection of input.items) {
+          const item = await getWorkItem(tx, selection.workItemId);
+          let reasonCode: PolicyBackfillDecision["reasonCode"] = null;
+          if (!item) reasonCode = "WORK_ITEM_UNAVAILABLE";
+          else if (item.version !== selection.expectedVersion) reasonCode = "REVISION_CHANGED";
+          else if (item.workType !== policy.work_type) reasonCode = "POLICY_WORK_TYPE_MISMATCH";
+          else if (
+            item.status === "completed" ||
+            item.status === "cancelled" ||
+            item.slaPolicyVersionId ||
+            item.slaStartedAt ||
+            item.slaWarningAt ||
+            item.slaDueAt
+          ) {
+            reasonCode = "WORK_ITEM_NOT_ELIGIBLE";
+          }
+          if (reasonCode || !item) {
+            decisions.push({
+              workItemId: selection.workItemId,
+              state: "conflict",
+              reasonCode,
+              preview: null,
+            });
+            continue;
+          }
+          const preview = await policyAttachmentPreview(tx, item, input.policyVersionId, startedAt);
+          decisions.push({ workItemId: item.id, state: "eligible", reasonCode: null, preview });
+        }
+        return decisions;
       });
     },
     attachPolicy(input) {
