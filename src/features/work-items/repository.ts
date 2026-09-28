@@ -155,6 +155,7 @@ export type PolicyBackfillDecision = {
     | "REVISION_CHANGED"
     | "POLICY_WORK_TYPE_MISMATCH"
     | "WORK_ITEM_NOT_ELIGIBLE"
+    | "PREVIEW_CHANGED"
     | null;
   preview: PolicyAttachmentPreview | null;
 };
@@ -582,7 +583,9 @@ export type WorkItemRepository = {
   previewPolicyBackfill(input: {
     actorId: string;
     policyVersionId: string;
-    items: { workItemId: string; expectedVersion: number }[];
+    items: (Pick<PolicyAttachmentPreview, "workItemId" | "expectedVersion"> & {
+      preview?: Pick<PolicyAttachmentPreview, "startedAt" | "warningAt" | "dueAt" | "previewHash">;
+    })[];
   }): Promise<PolicyBackfillDecision[]>;
   attachPolicy(input: AttachPolicyInput): Promise<PersistedWorkItem>;
   assign(input: AssignWorkItemInput): Promise<PersistedWorkItem>;
@@ -762,7 +765,41 @@ export function createWorkItemRepository(
             });
             continue;
           }
-          const preview = await policyAttachmentPreview(tx, item, input.policyVersionId, startedAt);
+          const selectedAt = selection.preview?.startedAt ?? startedAt;
+          if (
+            selection.preview &&
+            (!Number.isFinite(Date.parse(selectedAt)) ||
+              Date.parse(selectedAt) > Date.parse(startedAt) ||
+              Date.parse(startedAt) - Date.parse(selectedAt) > 15 * 60_000)
+          ) {
+            decisions.push({
+              workItemId: item.id,
+              state: "conflict",
+              reasonCode: "PREVIEW_CHANGED",
+              preview: null,
+            });
+            continue;
+          }
+          const preview = await policyAttachmentPreview(
+            tx,
+            item,
+            input.policyVersionId,
+            selectedAt,
+          );
+          if (
+            selection.preview &&
+            (selection.preview.previewHash !== preview.previewHash ||
+              selection.preview.warningAt !== preview.warningAt ||
+              selection.preview.dueAt !== preview.dueAt)
+          ) {
+            decisions.push({
+              workItemId: item.id,
+              state: "conflict",
+              reasonCode: "PREVIEW_CHANGED",
+              preview: null,
+            });
+            continue;
+          }
           decisions.push({ workItemId: item.id, state: "eligible", reasonCode: null, preview });
         }
         return decisions;

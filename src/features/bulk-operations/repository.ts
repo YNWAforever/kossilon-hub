@@ -497,7 +497,8 @@ export function createBulkOperationRepository(
         }
       } else if (isDomainAction(input.action)) {
         const domain = input as DomainBatchInput;
-        if (domain.action !== "reconcilePayments") await domainStorage(suppliedStorage);
+        if (domain.action !== "reconcilePayments" && domain.action !== "attachSlaPolicies")
+          await domainStorage(suppliedStorage);
         const decisions = await previewDomainItemsForActor(current, domain, sql);
         for (const item of decisions) {
           snapshot[item.resourceId] = {
@@ -855,7 +856,7 @@ export function createBulkOperationRepository(
         from bulk_operation_items i
         join bulk_operations o on o.id=i.operation_id
         join bulk_previews p on p.id=o.preview_id
-        where o.action in ('reconcilePayments','preparePackages','recordSubmissions','matchReturns')
+        where o.action in ('attachSlaPolicies','reconcilePayments','preparePackages','recordSubmissions','matchReturns')
           and i.state in ('conflict','forbidden','failed','needs-reconciliation')
           and (${current.role}='Admin' or
             (o.created_by_id=${current.userId} and p.scope_team_id is not distinct from ${current.teamId}))
@@ -1163,7 +1164,7 @@ export function createBulkOperationRepository(
                 parameters: preview.parameters,
               }) as DomainBatchInput;
               const storage =
-                domain.action === "reconcilePayments"
+                domain.action === "reconcilePayments" || domain.action === "attachSlaPolicies"
                   ? undefined
                   : await domainStorage(suppliedStorage);
               let result;
@@ -1174,6 +1175,15 @@ export function createBulkOperationRepository(
                 });
               } catch (error) {
                 if (!(error instanceof Error)) throw error;
+                if (domain.action === "attachSlaPolicies") {
+                  if (/forbidden|admin/i.test(error.message))
+                    throw new BulkItemFailure("forbidden", "ADMIN_REQUIRED");
+                  if (/stale|version|preview|expired/i.test(error.message))
+                    throw new BulkItemFailure("conflict", "PREVIEW_CHANGED");
+                  if (/policy|snapshot|closed/i.test(error.message))
+                    throw new BulkItemFailure("conflict", "POLICY_OR_ITEM_CHANGED");
+                  throw error;
+                }
                 if (/forbidden|scope|permission/i.test(error.message))
                   throw new BulkItemFailure("forbidden", "CASE_OUT_OF_SCOPE");
                 if (/revision changed|stale|changed; reload/i.test(error.message))

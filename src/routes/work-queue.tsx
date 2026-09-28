@@ -17,6 +17,7 @@ import {
   WorkQueueBulkAssignmentDialog,
   WorkQueueBulkOperationStatus,
 } from "@/features/bulk-operations/work-queue-bulk-controls";
+import { WorkQueueBulkPolicyDialog } from "@/features/bulk-operations/work-queue-bulk-policy-dialog";
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,7 @@ function WorkQueueRoute() {
   const [policyItem, setPolicyItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkPolicyDialogOpen, setBulkPolicyDialogOpen] = useState(false);
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const filterKey = JSON.stringify([
@@ -146,6 +148,7 @@ function WorkQueueRoute() {
     setSelection((previous) => changeSelectionFilter(previous, filterKey));
     setSelectionError(null);
     setBulkDialogOpen(false);
+    setBulkPolicyDialogOpen(false);
     setTagDialogOpen(false);
     setMatchingSelection(null);
   }, [filterKey]);
@@ -234,6 +237,7 @@ function WorkQueueRoute() {
   const representativeItem = currentMatching
     ? visibleItems.find((item) => !currentMatching.excludedIds.includes(item.id))
     : items.find((item) => selectedIds.has(item.id));
+  const selectedPolicyItems = items.filter((item) => selectedIds.has(item.id));
 
   const metrics = {
     dueToday: items.filter(
@@ -444,6 +448,24 @@ function WorkQueueRoute() {
                 setBulkDialogOpen(true);
               }}
             />
+            {canConfigurePolicy && !currentMatching && currentSelection.ids.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentSelection.ids.length > 100) {
+                    setSelectionError("每次最多可為 100 項工作預覽服務時限。");
+                  } else if (selectedPolicyItems.length !== currentSelection.ids.length) {
+                    setSelectionError("所選工作已不在目前工作佇列；請重新整理或清除選取。");
+                  } else {
+                    setSelectionError(null);
+                    setBulkPolicyDialogOpen(true);
+                  }
+                }}
+                className="mt-2 rounded-md border border-border px-3 py-2 text-sm"
+              >
+                批量設定服務時限
+              </button>
+            ) : null}
             {selectionError ? (
               <p role="alert" className="mt-2 text-xs text-destructive">
                 {selectionError}
@@ -698,6 +720,18 @@ function WorkQueueRoute() {
             setBulkDialogOpen(false);
             setSelection(newBulkSelection(filterKey));
             setMatchingSelection(null);
+            void navigate({ search: { ...search, bulkOperation: operationId }, replace: true });
+            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          }}
+        />
+      ) : null}
+      {bulkPolicyDialogOpen && !currentMatching && selectedPolicyItems.length > 0 ? (
+        <WorkQueueBulkPolicyDialog
+          items={selectedPolicyItems}
+          onClose={() => setBulkPolicyDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setBulkPolicyDialogOpen(false);
+            setSelection(newBulkSelection(filterKey));
             void navigate({ search: { ...search, bulkOperation: operationId }, replace: true });
             void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
           }}

@@ -1,6 +1,7 @@
 import type postgres from "postgres";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { createAnnualReturnRepository } from "@/features/annual-return/repository";
+import { createWorkItemRepository } from "@/features/work-items/repository";
 import type { AnnualReturnAction } from "@/features/annual-return/permissions";
 import type { SqlClient } from "@/server/db/client";
 import type { ActiveDomainAction, BulkPreviewInput } from "./types";
@@ -16,13 +17,24 @@ export type DomainPreviewDecision = {
 };
 
 export function isDomainAction(action: string): action is ActiveDomainAction {
-  return ["reconcilePayments", "preparePackages", "recordSubmissions", "matchReturns"].includes(
-    action,
-  );
+  return [
+    "attachSlaPolicies",
+    "reconcilePayments",
+    "preparePackages",
+    "recordSubmissions",
+    "matchReturns",
+  ].includes(action);
 }
 
 export function domainResourceId(action: ActiveDomainAction, item: DomainItem): string {
   switch (action) {
+    case "attachSlaPolicies":
+      return (
+        item as Extract<
+          DomainBatchInput,
+          { action: "attachSlaPolicies" }
+        >["parameters"]["items"][number]
+      ).workItemId;
     case "reconcilePayments":
       return (
         item as Extract<
@@ -53,7 +65,9 @@ export function domainResourceId(action: ActiveDomainAction, item: DomainItem): 
   }
 }
 
-function actionPermission(action: ActiveDomainAction): AnnualReturnAction {
+function actionPermission(
+  action: Exclude<ActiveDomainAction, "attachSlaPolicies">,
+): AnnualReturnAction {
   switch (action) {
     case "reconcilePayments":
       return "update_payment";
@@ -83,12 +97,37 @@ export async function previewDomainItemsForActor(
 
   if (!actor.userId) throw new Error("Forbidden: staff database identity is required.");
   const actorId = actor.userId;
+  if (input.action === "attachSlaPolicies") {
+    if (actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+    const repository = createWorkItemRepository({ sql });
+    const decisions = await repository.previewPolicyBackfill({
+      actorId,
+      policyVersionId: input.parameters.policyVersionId,
+      items: input.parameters.items.map((item) => ({
+        workItemId: item.workItemId,
+        expectedVersion: item.expectedVersion,
+        preview: {
+          startedAt: item.startedAt,
+          warningAt: item.warningAt,
+          dueAt: item.dueAt,
+          previewHash: item.previewHash,
+        },
+      })),
+    });
+    return decisions.map((decision) => ({
+      resourceId: decision.workItemId,
+      revision: input.parameters.items.find((item) => item.workItemId === decision.workItemId)!
+        .expectedVersion,
+      state: decision.state,
+      reasonCode: decision.reasonCode,
+    }));
+  }
   const repository = createAnnualReturnRepository({ sql });
   const decisions: DomainPreviewDecision[] = [];
   try {
     for (const item of items) {
       const resourceId = domainResourceId(input.action, item);
-      const caseId = item.caseId;
+      const caseId = (item as { caseId: string }).caseId;
       try {
         await repository.assertCanMutateCase(caseId, actorId, actionPermission(input.action));
       } catch {
