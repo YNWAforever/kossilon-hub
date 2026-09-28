@@ -105,6 +105,7 @@ type PackageRow = {
 };
 type ProofRow = {
   id: string;
+  document_id: string;
   company_id: string;
   case_id: string | null;
   file_type: string;
@@ -159,15 +160,16 @@ function asRecord(row: HandoffRow): SubmissionRecord {
   };
 }
 
-async function assertProofCurrentAndSafe(
+export async function assertProofCurrentAndSafe(
   tx: Db,
   proofVersionId: string,
   caseId: string,
   companyId: string,
   storage: DocumentStorage,
-): Promise<void> {
+  allowedCategories: readonly string[] = ["submission", "receipt"],
+): Promise<{ documentId: string; checksum: string; byteSize: number }> {
   const [proof] = await tx<ProofRow[]>`
-    select v.id,v.storage_url,v.content_type,
+    select v.id,v.document_id,v.storage_url,v.content_type,
       v.verified_checksum_sha256,v.verified_byte_size,v.superseded_by_version_id,
       d.company_id,d.case_id,d.file_type,d.verification_status,
       i.status upload_status,i.scan_verdict_source,i.checksum_sha256,i.expected_size_bytes
@@ -179,7 +181,7 @@ async function assertProofCurrentAndSafe(
     !proof ||
     proof.case_id !== caseId ||
     proof.company_id !== companyId ||
-    !["submission", "receipt"].includes(proof.file_type) ||
+    !allowedCategories.includes(proof.file_type) ||
     proof.verification_status !== "verified" ||
     proof.superseded_by_version_id !== null ||
     !proof.verified_checksum_sha256 ||
@@ -211,6 +213,11 @@ async function assertProofCurrentAndSafe(
   ) {
     throw new Error("Submission proof stored bytes do not match the reviewed version.");
   }
+  return {
+    documentId: proof.document_id,
+    checksum: proof.verified_checksum_sha256,
+    byteSize: Number(proof.verified_byte_size),
+  };
 }
 export async function recordManualSubmissionForActor(
   actor: AuthenticatedActor,

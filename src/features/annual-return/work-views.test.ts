@@ -193,9 +193,25 @@ describe("deriveWorkViews", () => {
     // says outright that the blank is not "no exceptions". No package has been
     // transmitted, so no return can have arrived, so the absence here is the
     // absence of the whole process.
-    expect(returns.definition.unavailableReason).toContain("external-handoff-destination");
+    expect(returns.definition.unavailableReason).toContain("伺服器資料");
     expect(returns.definition.unavailableReason).toContain("空白不代表沒有異常");
     expect(returns.rows).toHaveLength(0);
+  });
+
+  it("t16_scenario_2 releases real scoped exceptions and keeps a filed case visible for return review", () => {
+    const filed = makeCase({ currentStatus: "Filed" });
+    const open = makeCase();
+    const results = deriveWorkViews([filed, open], TODAY, { userId: ME }, undefined, {
+      complete: true,
+      openCountByCaseId: new Map([
+        [filed.id, 1],
+        [open.id, 2],
+      ]),
+    });
+    const returns = view(results, "returnsAndExceptions");
+    expect(returns.definition.released).toBe(true);
+    expect(returns.rows.map((row) => row.caseId).sort()).toEqual([filed.id, open.id].sort());
+    expect(returns.rows.find((row) => row.caseId === open.id)?.blocker).toContain("2");
   });
 
   it("shows no personal review queue for a viewer with no staff identity", () => {

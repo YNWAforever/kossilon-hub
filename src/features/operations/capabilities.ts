@@ -32,6 +32,7 @@ export type BlockedIntegrationId =
   | "ai-provider"
   | "whatsapp-media-download"
   | "external-handoff-destination"
+  | "return-source"
   | "deployment-runtime";
 
 /**
@@ -137,14 +138,28 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     id: "external-handoff-destination",
     capability: "把已批准的套件交去外部代理",
     effect:
-      "沒有任何套件可以交出。每一個 handoff 都停在 prepared，transmitted_at 永遠是空的，" +
-      "因此「回件與異常」不會有任何回件——那裡的空白不代表沒有異常。",
-    pilotFallback: "沿用現時的人手交件與人手記錄；套件內容仍可在系統內準備和批核。",
+      "系統不能自動把套件傳送到行方內部伺服器；人手交件及提交證明可獨立記錄。" +
+      "自動傳送成功與否不可由下載套件或人手紀錄推斷。",
+    pilotFallback:
+      "使用已批准套件的人手交件流程，上載真實提交證明並由職員記錄；不得宣稱自動傳送成功。",
     clearedBy: "行方內部伺服器的通訊協定、位址、認證方式與存取權限。",
     blocksRelease: true,
     evidence: {
       observable: "external",
       why: "行方內部伺服器的通訊協定與存取權限由另一個團隊掌握，本系統無法探測。",
+    },
+  },
+  {
+    id: "return-source",
+    capability: "由行方內部伺服器唯讀同步回件",
+    effect:
+      "內部來源的實際協定、存取權限及測試資料夾未知，因此同步 adapter 不會連接或推進來源 cursor。",
+    pilotFallback: "由獲授權職員在案件內上載真實回件，完成掃描及文件覆核後，人手核對交件紀錄。",
+    clearedBy: "內部伺服器協定、唯讀權限、穩定檔案識別方式及測試資料夾，並完成斷線重試驗證。",
+    blocksRelease: false,
+    evidence: {
+      observable: "external",
+      why: "內部伺服器的協定和授權由行方持有；此程式庫不能自行驗證連接器已獲准使用。",
     },
   },
   {

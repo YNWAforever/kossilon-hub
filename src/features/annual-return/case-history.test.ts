@@ -137,6 +137,8 @@ describe("describeCaseHistoryEntry", () => {
     prepare_package: "Package prepared",
     approve_package: "Package approved",
     record_submission: "External submission recorded",
+    record_return: "Filing return intake recorded",
+    reconcile_return: "Filing return reconciled",
   };
 
   it.each(Object.entries(auditActionLabels) as [AuditEventRow["action"], string][])(

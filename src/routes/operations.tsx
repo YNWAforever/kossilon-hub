@@ -81,6 +81,7 @@ const CAPABILITY_OWNER: Record<BlockedIntegrationId, string> = {
   "ai-provider": "供應商及資料保障負責人",
   "whatsapp-media-download": "訊息整合負責人",
   "external-handoff-destination": "外部交件負責人",
+  "return-source": "內部回件來源負責人",
   "deployment-runtime": "平台營運負責人",
 };
 

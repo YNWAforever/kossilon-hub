@@ -17,7 +17,8 @@ export type SchemaCapability =
   | "analysis"
   | "maintenance"
   | "packages"
-  | "submissions";
+  | "submissions"
+  | "returns";
 type Requirement = {
   capability: SchemaCapability;
   kind: "table" | "column" | "index" | "constraint";
@@ -167,6 +168,35 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "package_handoffs_manual_evidence",
     expected: "proof_version_id is not null",
   },
+  { capability: "returns", kind: "table", name: "handoff_returns" },
+  { capability: "returns", kind: "table", name: "filing_return_source_cursors" },
+  { capability: "returns", kind: "table", name: "filing_return_source_objects" },
+  {
+    capability: "returns",
+    kind: "column",
+    name: "handoff_returns.source_sha256",
+    expected: "text",
+  },
+  { capability: "returns", kind: "column", name: "handoff_returns.match_state", expected: "text" },
+  { capability: "returns", kind: "column", name: "handoff_returns.revision", expected: "integer" },
+  {
+    capability: "returns",
+    kind: "index",
+    name: "handoff_returns_source_identity_uidx",
+    expected: "source_object_id",
+  },
+  {
+    capability: "returns",
+    kind: "index",
+    name: "handoff_returns_case_open_idx",
+    expected: "case_id",
+  },
+  {
+    capability: "returns",
+    kind: "constraint",
+    name: "handoff_returns_manual_evidence",
+    expected: "document_version_id is not null",
+  },
   { capability: "maintenance", kind: "table", name: "maintenance_runs" },
   {
     capability: "maintenance",
@@ -223,6 +253,7 @@ export function inspectSchemaCompatibility(input: {
     maintenance: { ready: true, issues: [] as string[] },
     packages: { ready: true, issues: [] as string[] },
     submissions: { ready: true, issues: [] as string[] },
+    returns: { ready: true, issues: [] as string[] },
   };
   const definitionMismatch: DefinitionMismatch[] = [];
   const tables = new Set(input.catalog.tables.map(normalize));
