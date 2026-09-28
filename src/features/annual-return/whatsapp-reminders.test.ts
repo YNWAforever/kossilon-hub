@@ -117,6 +117,7 @@ describe("annual return WhatsApp reminders", () => {
       createdAt: "2026-07-05T12:00:00.000Z",
     };
     const annualReturnRepository = {
+      listCompanyContactPhones: async () => ["+85261234567"],
       recordReminder: async () => {
         calls.push("record-reminder");
         return updatedCase;
@@ -145,6 +146,7 @@ describe("annual return WhatsApp reminders", () => {
 
   it("does not record the compliance reminder when WhatsApp queueing fails", async () => {
     const annualReturnRepository = {
+      listCompanyContactPhones: vi.fn(async () => ["+85261234567"]),
       recordReminder: vi.fn(),
     } as unknown as AnnualReturnRepository;
     const whatsAppRepository = {
@@ -164,6 +166,58 @@ describe("annual return WhatsApp reminders", () => {
         today: "2026-07-13",
       }),
     ).rejects.toThrow("WhatsApp queue unavailable.");
+    expect(annualReturnRepository.recordReminder).not.toHaveBeenCalled();
+  });
+
+  it("does not log a second compliance reminder for an idempotent queue replay", async () => {
+    const message = {
+      id: "message-1",
+      idempotentReplay: true,
+    } as Awaited<ReturnType<WhatsAppRepository["queueOutboundTemplateMessage"]>>;
+    const annualReturnRepository = {
+      listCompanyContactPhones: vi.fn(async () => ["+85261234567"]),
+      getCase: vi.fn(async () => harbourCase),
+      recordReminder: vi.fn(),
+    } as unknown as AnnualReturnRepository;
+    const whatsAppRepository = {
+      queueOutboundTemplateMessage: vi.fn(async () => message),
+    } as unknown as WhatsAppRepository;
+
+    await expect(
+      queueAnnualReturnWhatsAppReminder({
+        annualReturnRepository,
+        whatsAppRepository,
+        case_: harbourCase,
+        actorId,
+        recipientName: "Ada Director",
+        recipientPhone: "+85261234567",
+        today: "2026-07-13",
+      }),
+    ).resolves.toEqual({ case: harbourCase, message });
+    expect(annualReturnRepository.recordReminder).not.toHaveBeenCalled();
+  });
+
+  it("refuses a recipient outside the case company's contacts before queueing", async () => {
+    const annualReturnRepository = {
+      listCompanyContactPhones: vi.fn(async () => ["+85261234567"]),
+      recordReminder: vi.fn(),
+    } as unknown as AnnualReturnRepository;
+    const whatsAppRepository = {
+      queueOutboundTemplateMessage: vi.fn(),
+    } as unknown as WhatsAppRepository;
+
+    await expect(
+      queueAnnualReturnWhatsAppReminder({
+        annualReturnRepository,
+        whatsAppRepository,
+        case_: harbourCase,
+        actorId,
+        recipientName: "Wrong contact",
+        recipientPhone: "+85269999999",
+        today: "2026-07-13",
+      }),
+    ).rejects.toThrow(/company contact/i);
+    expect(whatsAppRepository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
     expect(annualReturnRepository.recordReminder).not.toHaveBeenCalled();
   });
 

@@ -465,6 +465,7 @@ export type AnnualReturnRepository = {
   listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]>;
   addNote(input: AddAnnualReturnCaseNoteInput): Promise<AnnualReturnCaseNote>;
   recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase>;
+  listCompanyContactPhones(companyId: string): Promise<string[]>;
   updateChecklistItem(input: UpdateAnnualReturnChecklistItemInput): Promise<AnnualReturnCase>;
   /**
    * Record that a document satisfies the requirement instances on a checklist
@@ -2821,6 +2822,141 @@ export function createAnnualReturnRepository(
     });
   }
 
+  async function listCompanyContactPhones(companyId: string): Promise<string[]> {
+    const rows = await sql<{ phone: string }[]>`
+      select phone from company_contacts
+      where company_id = ${companyId} and phone is not null
+    `;
+    return rows.map((row) => row.phone);
+  }
+
+  // Only the automated key carries a milestone. The manual reminder key uses
+  // the same prefix but puts a phone number in that position.
+  const automatedReminderKey =
+    /^annual-return-reminder:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):(1_month|2_week|1_week):(whatsapp|email):.+$/i;
+
+  async function reconcileFailedReminders(now: string): Promise<void> {
+    const rows = await sql<{ id: string; idempotency_key: string }[]>`
+      select o.id, o.idempotency_key
+      from notification_outbox o
+      where o.idempotency_key ~* '^annual-return-reminder:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:(1_month|2_week|1_week):(whatsapp|email):.+$'
+        and (
+          o.status = 'needs_reconciliation'
+          or o.status = 'cancelled'
+          or (o.status = 'failed' and o.attempt_count >= o.max_attempts)
+        )
+        and not exists (
+          select 1 from timeline_events t
+          where t.event_type in (
+            'annual_return_reminder_failed',
+            'annual_return_reminder_outcome_unknown'
+          )
+          and t.metadata->>'outboxId' = o.id::text
+        )
+      order by o.updated_at, o.id
+      limit 200
+    `;
+
+    for (const row of rows) {
+      const match = automatedReminderKey.exec(row.idempotency_key);
+      if (!match) continue;
+      const [, caseId, milestone] = match;
+      await withTransaction(sql, async (tx) => {
+        const caseRows = await tx<{ company_id: string }[]>`
+          select company_id from annual_return_cases where id = ${caseId}::uuid for update
+        `;
+        if (!caseRows[0]) return;
+        const outboxRows = await tx<
+          {
+            company_id: string;
+            status: string;
+            attempt_count: number;
+            max_attempts: number;
+            delivery: string | null;
+            unsafe_attempt: boolean;
+          }[]
+        >`
+          select o.company_id, o.status, o.attempt_count, o.max_attempts, o.delivery,
+            exists (
+              select 1 from notification_delivery_attempts a
+              where a.outbox_id = o.id
+                and a.state in ('send_started', 'unknown', 'accepted', 'simulated')
+            ) as unsafe_attempt
+          from notification_outbox o where o.id = ${row.id} for update
+        `;
+        const outbox = outboxRows[0];
+        if (!outbox || outbox.company_id !== caseRows[0].company_id) return;
+        const isUnknown =
+          outbox.status === "needs_reconciliation" ||
+          outbox.unsafe_attempt ||
+          outbox.delivery !== null;
+        const definitelyUnsent =
+          outbox.status === "cancelled" ||
+          (outbox.status === "failed" && outbox.attempt_count >= outbox.max_attempts);
+        if (!isUnknown && !definitelyUnsent) return;
+
+        const fired = await tx<{ id: string }[]>`
+          select id from annual_return_reminder_events
+          where case_id = ${caseId}::uuid and milestone = ${milestone}
+        `;
+        if (!fired[0]) return;
+
+        if (isUnknown) {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            )
+            select ${caseRows[0].company_id}, ${caseId}::uuid,
+              'annual_return_reminder_outcome_unknown', 'system', null,
+              'Automated reminder outcome is unknown; check the provider before further contact.',
+              ${tx.json({ milestone, outboxId: row.id, reconciledAt: now })}
+            where not exists (
+              select 1 from timeline_events
+              where case_id = ${caseId}::uuid
+                and event_type in (
+                  'annual_return_reminder_failed',
+                  'annual_return_reminder_outcome_unknown'
+                )
+                and metadata->>'outboxId' = ${row.id}
+            )
+          `;
+          return;
+        }
+
+        const inserted = await tx<{ id: string }[]>`
+          insert into timeline_events (
+            company_id, case_id, event_type, actor_type, actor_id, description, metadata
+          )
+          select ${caseRows[0].company_id}, ${caseId}::uuid,
+            'annual_return_reminder_failed', 'system', null,
+            'Automated reminder was not delivered; the client still needs contact.',
+            ${tx.json({ milestone, outboxId: row.id, reconciledAt: now })}
+          where not exists (
+            select 1 from timeline_events
+            where case_id = ${caseId}::uuid
+              and event_type in (
+                'annual_return_reminder_failed',
+                'annual_return_reminder_outcome_unknown'
+              )
+              and metadata->>'outboxId' = ${row.id}
+          )
+          returning id
+        `;
+        if (!inserted[0]) return;
+        await tx`
+          update annual_return_cases
+          set reminders_sent = greatest(reminders_sent - 1, 0),
+              current_status = case
+                when current_status = 'Client reminder sent' then 'Upcoming'
+                else current_status
+              end,
+              updated_at = now()
+          where id = ${caseId}::uuid
+        `;
+      });
+    }
+  }
+
   async function evaluateReminders(
     businessDateOrInstant: string = readToday(),
   ): Promise<{ sent: number; skipped: number }> {
@@ -2829,6 +2965,7 @@ export function createAnnualReturnRepository(
     // a raw cron instant must not be able to make this sweep run on the UTC day:
     // 16:00Z onward is already tomorrow in Hong Kong.
     const now = toHongKongBusinessDate(businessDateOrInstant);
+    await reconcileFailedReminders(now);
     let sent = 0;
     let skipped = 0;
     let cursor: string | undefined;
@@ -2862,13 +2999,25 @@ export function createAnnualReturnRepository(
           );
           if (!milestone) return null;
 
-          const insertedEvent = await tx<{ id: string }[]>`
-          insert into annual_return_reminder_events (case_id, milestone, occurred_at)
-          values (${case_.id}, ${milestone}, ${now})
-          on conflict (case_id, milestone) do nothing
-          returning id
-        `;
-          if (!insertedEvent[0]) return null;
+          const skip = async (reason: string, description: string) => {
+            const inserted = await tx<{ id: string }[]>`
+              insert into timeline_events (
+                company_id, case_id, event_type, actor_type, actor_id, description, metadata
+              )
+              select ${lockedCase.company_id}, ${case_.id},
+                'annual_return_reminder_skipped', 'system', null,
+                ${description}, ${tx.json({ milestone, reason })}
+              where not exists (
+                select 1 from timeline_events
+                where case_id = ${case_.id}
+                  and event_type = 'annual_return_reminder_skipped'
+                  and metadata->>'milestone' = ${milestone}
+                  and metadata->>'reason' = ${reason}
+              )
+              returning id
+            `;
+            return inserted[0] ? ("skipped" as const) : null;
+          };
 
           // Does this client actually owe us anything?
           //
@@ -2894,16 +3043,10 @@ export function createAnnualReturnRepository(
           // nothing is owed, and staying silent before a statutory deadline is the
           // worse error.
           if (!shouldChaseClient({ checklist: checklistForChase })) {
-            await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: nothing is outstanding from the client.',
-              ${tx.json({ milestone, reason: "nothing_outstanding" })}
-            )
-          `;
-            return "skipped" as const;
+            return skip(
+              "nothing_outstanding",
+              "Automated reminder skipped: nothing is outstanding from the client.",
+            );
           }
 
           const contactRows = await tx<
@@ -2916,16 +3059,10 @@ export function createAnnualReturnRepository(
           const contact = contactRows[0];
 
           if (!contact) {
-            await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: no primary contact on file.',
-              ${tx.json({ milestone, reason: "no_primary_contact" })}
-            )
-          `;
-            return "skipped" as const;
+            return skip(
+              "no_primary_contact",
+              "Automated reminder skipped: no primary contact on file.",
+            );
           }
 
           const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
@@ -2938,16 +3075,10 @@ export function createAnnualReturnRepository(
           // abandon every case still queued behind this one for the rest of the sweep.
           // Skip this case the same way an entirely missing contact is skipped above.
           if (!recipient) {
-            await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: primary contact has neither phone nor email.',
-              ${tx.json({ milestone, reason: "unreachable_primary_contact" })}
-            )
-          `;
-            return "skipped" as const;
+            return skip(
+              "unreachable_primary_contact",
+              "Automated reminder skipped: primary contact has neither phone nor email.",
+            );
           }
 
           const queued = await enqueueNotification(tx, {
@@ -2978,17 +3109,19 @@ export function createAnnualReturnRepository(
           // A deduplicated enqueue is not a send. Counting one would repeat exactly
           // the accounting lie this key fixes.
           if (queued.idempotentReplay) {
-            await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: an identical notification was already queued.',
-              ${tx.json({ milestone, reason: "duplicate_notification" })}
-            )
-          `;
-            return "skipped" as const;
+            return skip(
+              "duplicate_notification",
+              "Automated reminder skipped: an identical notification was already queued.",
+            );
           }
+
+          const insertedEvent = await tx<{ id: string }[]>`
+            insert into annual_return_reminder_events (case_id, milestone, occurred_at)
+            values (${case_.id}, ${milestone}, ${now})
+            on conflict (case_id, milestone) do nothing
+            returning id
+          `;
+          if (!insertedEvent[0]) return null;
 
           await tx`
           update annual_return_cases
@@ -3213,6 +3346,7 @@ export function createAnnualReturnRepository(
     dashboardMetrics,
     assertCanMutateCase,
     evaluateReminders,
+    listCompanyContactPhones,
     assignOwner,
     listNotes,
     listAuditEventsForCase,

@@ -23,7 +23,10 @@ export type AnnualReturnWhatsAppReminderRequest = {
 
 export type QueueAnnualReturnWhatsAppReminderInput =
   BuildAnnualReturnWhatsAppReminderRequestInput & {
-    annualReturnRepository: Pick<AnnualReturnRepository, "recordReminder">;
+    annualReturnRepository: Pick<
+      AnnualReturnRepository,
+      "recordReminder" | "listCompanyContactPhones" | "getCase"
+    >;
     whatsAppRepository: Pick<WhatsAppRepository, "queueOutboundTemplateMessage">;
   };
 
@@ -111,8 +114,20 @@ export async function queueAnnualReturnWhatsAppReminder({
   whatsAppRepository,
   ...input
 }: QueueAnnualReturnWhatsAppReminderInput): Promise<QueueAnnualReturnWhatsAppReminderResult> {
+  const contactPhones = await annualReturnRepository.listCompanyContactPhones(
+    input.case_.companyId,
+  );
+  const digits = input.recipientPhone.replace(/\D/g, "");
+  if (!digits || !contactPhones.some((phone) => phone.replace(/\D/g, "") === digits)) {
+    throw new Error("WhatsApp reminder recipient must be a current company contact.");
+  }
   const request = buildAnnualReturnWhatsAppReminderRequest(input);
   const message = await whatsAppRepository.queueOutboundTemplateMessage(request.whatsAppMessage);
+  if (message.idempotentReplay) {
+    const currentCase = await annualReturnRepository.getCase(input.case_.id);
+    if (!currentCase) throw new Error("Annual return case not found after reminder replay.");
+    return { case: currentCase, message };
+  }
   const updatedCase = await annualReturnRepository.recordReminder(request.annualReturnReminder);
 
   return {

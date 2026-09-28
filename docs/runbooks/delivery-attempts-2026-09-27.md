@@ -10,7 +10,7 @@ This runbook covers the local implementation on `codex/kossilon-delivery-safety`
 
 - Four named T06 scenarios were RED before implementation. Focused dispatcher/runtime/Postgres tests: 47/47 GREEN, including concurrent claim and origin lookup failure.
 - Disposable PostgreSQL 17: migration `0034_notification_delivery_attempts.sql` applied; `npm run db:inspect` reported current ledger, no missing or unknown entries, and `canRelease: true` for that local database only.
-- Full disposable-Postgres suite: 186 files / 1745 tests passed. Lint: 0 errors, one pre-existing fast-refresh warning. Typecheck and build passed. `verify:firm -- --dry-run` passed its local structure/migration/cron checks with zero network calls and zero resource writes; live bindings and external providers remained blocked. External GitHub CI remains blocked by the account billing/spending-limit gate; no CI job steps started.
+- Full disposable-Postgres suite: 186 files / 1745 tests passed. Lint: 0 errors, one pre-existing fast-refresh warning. Typecheck and build passed. `verify:firm -- --dry-run` passed its local structure/migration/cron checks with zero network calls and zero resource writes; live bindings and external providers remained blocked. GitHub PR #71 exact-head CI passed before its merge into the nonproduction integration branch. Later PR #95 CI passed the full disposable-PostgreSQL suite through migration 0065. These checks are source and isolated-database evidence; production bindings and provider receipts remain unverified.
 
 ## Production read-only preview
 
@@ -61,3 +61,9 @@ commit;
 ```
 
 The forward and reversal SQL were rehearsed on a second disposable PostgreSQL 17 database: migrations 0001–0034 applied, the guarded rollback committed, and both the attempt table and 0034 ledger entry were absent afterward. That database was then removed. The reversal remains a review artifact only. Deployment, production migration, live recipient sends, and runtime acceptance require separate authorization and evidence.
+
+## Annual-return reminder follow-up (#68 comparison)
+
+The integrated T06 outbox already records `send_started` before transport, isolates uncertain outcomes as `needs_reconciliation`, and never automatically retries them. Follow-up commit `cab722b39170ac63ba1317d76a6c3bc59bf06c95` adds the missing annual-return accounting path: the scheduled sweep marks definitely terminal, unsent automated reminders as failed once and retracts their counter; uncertain outcomes get a separate timeline event for human review without asserting non-delivery. A skipped reminder no longer consumes its milestone. Manual WhatsApp reminders require a current company-contact phone, and an idempotent queue replay no longer writes a second compliance record.
+
+Five targeted cases were RED before implementation, then 73/73 affected tests passed on disposable PostgreSQL. The full local database suite passed 228 files/1964 tests before the final replay guard; that guard passed its focused test and still needs exact-head full CI. No live recipient send or production migration was run. The old #68 branch remains unmerged because its current outbox model conflicts with this integration; only the verified missing behavior was adapted.
