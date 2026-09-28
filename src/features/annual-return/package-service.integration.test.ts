@@ -5,6 +5,7 @@ import { createSqlClient, type SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DocumentStorage } from "@/features/documents/types";
 import { createDocumentRepository } from "@/features/documents/repository";
+import { createBulkOperationRepository } from "@/features/bulk-operations/repository";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
 import { ingestReturnForActor, reconcileReturnForActor } from "./return-service";
@@ -730,6 +731,139 @@ describe.skipIf(!databaseUrl)("T16 return intake against disposable Postgres", (
         outcome: "rejected",
         open: true,
       });
+    });
+  });
+});
+
+describe.skipIf(!databaseUrl)("T24 package, submission and return batch service reuse", () => {
+  it("keeps package draft, manual proof and return candidate as separate per-item approvals", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fx = await dbFixture(tx);
+      const repo = createBulkOperationRepository({ sql: tx, storage: fx.storage });
+      const prepare = await repo.preview(fx.actor, {
+        action: "preparePackages",
+        selection: { kind: "ids", ids: [fx.caseId] },
+        parameters: { items: [{ caseId: fx.caseId, expectedRevision: 0 }] },
+      });
+      expect(prepare.eligibleCount).toBe(1);
+      const prepareOperation = await repo.commit(fx.actor, {
+        previewId: prepare.id,
+        previewHash: prepare.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const prepared = await repo.runBatch(prepareOperation.id, { limit: 1 });
+      expect(prepared.items[0].state).toBe("succeeded");
+      const [draft] = await tx<
+        { id: string; state: string; revision: number; manifest_sha256: string }[]
+      >`
+        select id,state,revision,manifest_sha256 from filing_packages where case_id=${fx.caseId}`;
+      expect(draft).toMatchObject({ state: "draft", revision: 1 });
+      const stale = await repo.preview(fx.actor, {
+        action: "preparePackages",
+        selection: { kind: "ids", ids: [fx.caseId] },
+        parameters: { items: [{ caseId: fx.caseId, expectedRevision: 0 }] },
+      });
+      expect(stale.itemsPreview[0]).toMatchObject({
+        state: "conflict",
+        reasonCode: "REVISION_CHANGED",
+      });
+      await approvePackageForActor(
+        fx.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifest_sha256,
+          expectedRevision: 1,
+        },
+        { sql: tx, storage: fx.storage },
+      );
+      const submissionProof = await fx.createSubmissionProof();
+      const reference = "T24-PORTAL-" + crypto.randomUUID();
+      const submissionInput = {
+        caseId: fx.caseId,
+        packageId: draft.id,
+        manifestHash: draft.manifest_sha256,
+        expectedRevision: 1,
+        submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+        destinationLabel: "Companies Registry portal",
+        externalReference: reference,
+        proofVersionId: submissionProof,
+      };
+      const badProof = await repo.preview(fx.actor, {
+        action: "recordSubmissions",
+        selection: { kind: "ids", ids: [draft.id] },
+        parameters: { items: [{ ...submissionInput, proofVersionId: crypto.randomUUID() }] },
+      });
+      expect(badProof.itemsPreview[0]).toMatchObject({
+        state: "conflict",
+        reasonCode: "SUBMISSION_PROOF_NOT_READY",
+      });
+      const submission = await repo.preview(fx.actor, {
+        action: "recordSubmissions",
+        selection: { kind: "ids", ids: [draft.id] },
+        parameters: { items: [submissionInput] },
+      });
+      expect(submission.eligibleCount).toBe(1);
+      const submissionOperation = await repo.commit(fx.actor, {
+        previewId: submission.id,
+        previewHash: submission.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const recorded = await repo.runBatch(submissionOperation.id, { limit: 1 });
+      expect(recorded.items[0]).toMatchObject({ state: "succeeded", auditRef: expect.any(String) });
+      const [handoff] = await tx<{ id: string; status: string; destination_reference: string }[]>`
+        select id,status,destination_reference from package_handoffs where case_id=${fx.caseId}`;
+      expect(handoff).toMatchObject({
+        status: "recorded_submission",
+        destination_reference: reference,
+      });
+      const receiptProof = await fx.createReturnProof("t24-receipt");
+      const intake = {
+        caseId: fx.caseId,
+        externalReference: reference,
+        manifestHash: draft.manifest_sha256,
+        outcome: "accepted" as const,
+        source: { kind: "manual" as const, proofVersionId: receiptProof },
+      };
+      const returnPreview = await repo.preview(fx.actor, {
+        action: "matchReturns",
+        selection: { kind: "ids", ids: [receiptProof] },
+        parameters: { items: [intake] },
+      });
+      expect(returnPreview.eligibleCount).toBe(1);
+      const returnOperation = await repo.commit(fx.actor, {
+        previewId: returnPreview.id,
+        previewHash: returnPreview.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const matched = await repo.runBatch(returnOperation.id, { limit: 1 });
+      expect(matched.items[0]).toMatchObject({
+        state: "succeeded",
+        reasonCode: "RETURN_CANDIDATE_ONLY",
+      });
+      const [returnRow] = await tx<{ match_state: string; reconciled_at: Date | null }[]>`
+        select match_state,reconciled_at from handoff_returns where document_version_id=${receiptProof}`;
+      expect(returnRow).toMatchObject({ match_state: "candidate", reconciled_at: null });
+      const replayPreview = await repo.preview(fx.actor, {
+        action: "matchReturns",
+        selection: { kind: "ids", ids: [receiptProof] },
+        parameters: { items: [{ ...intake, detail: "Duplicate source reread" }] },
+      });
+      const replayOperation = await repo.commit(fx.actor, {
+        previewId: replayPreview.id,
+        previewHash: replayPreview.previewHash,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const replayed = await repo.runBatch(replayOperation.id, { limit: 1 });
+      expect(replayed.items[0]).toMatchObject({
+        state: "skipped",
+        reasonCode: "RETURN_ALREADY_INGESTED",
+      });
+      const [count] = await tx<{ count: number }[]>`
+        select count(*)::int count from handoff_returns where document_version_id=${receiptProof}`;
+      expect(count.count).toBe(1);
+      const [caseRow] = await tx<{ current_status: string }[]>`
+        select current_status from annual_return_cases where id=${fx.caseId}`;
+      expect(caseRow.current_status).not.toBe("Filed");
     });
   });
 });
