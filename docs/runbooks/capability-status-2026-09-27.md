@@ -12,6 +12,10 @@ The capability reader now uses the dedicated scheduled-run history already fetch
 
 Regression tests first reproduced the manual-window, foreign-deployment and missing-owner failures, then passed after the correction. Commit: c06ff47. Five affected test files passed 61/61 tests; typecheck and production build passed; lint had zero errors and one existing Fast Refresh warning. This is local evidence only.
 
+## Probe success timestamp correction (2026-09-29)
+
+A fresh provider check cannot make the capability healthy using an old or future last-success timestamp. Success must precede the check and be no more than 15 minutes old to support a healthy state. A prior plausible but older success remains visible for a degraded failed check; an impossible future success is discarded. The negative cases were RED first and then GREEN in commit dbe431c. Five affected test files passed 62/62 tests; typecheck and build passed, lint had zero errors and one existing warning, and formatting passed. This validates the pure rule only; no provider probe was run against a live endpoint.
+
 ## Evidence and remaining dependency
 
 Named T08 scenarios were RED before implementation, then passed locally. A disposable PostgreSQL test verifies that the scheduled run records the deployment reference in the existing `maintenance_runs.passes` JSON and that the repository reads it back. No migration was needed for this evidence field.
