@@ -1190,6 +1190,10 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     async () => {
       const fixture = await createMutableAnnualReturnFixture({ sequence: 21 });
       const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Director', 'Director', '+85261234567', true)
+      `;
 
       await sql.begin(async (tx) => {
         const annualReturnRepository = createAnnualReturnRepository({
@@ -2337,6 +2341,103 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
         select event_type from timeline_events where case_id = ${fixture.caseId}
       `;
       expect(timelineRows).toEqual([{ event_type: "annual_return_reminder_skipped" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reconciles a definite terminal outbox failure exactly once",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 51 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Failure Contact', 'Director', 'failure@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+      await repository.evaluateReminders();
+      await sql`
+        update notification_outbox
+        set status = 'failed', attempt_count = max_attempts,
+            last_error_code = 'woztell_err_100'
+        where company_id = ${fixture.companyId}
+      `;
+
+      await repository.evaluateReminders();
+      const corrected = await repository.getCase(fixture.caseId);
+      expect(corrected?.remindersSent).toBe(0);
+      expect(corrected?.currentStatus).toBe("Upcoming");
+      const failed = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_failed'
+      `;
+      expect(failed).toHaveLength(1);
+
+      await repository.evaluateReminders();
+      const repeated = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_failed'
+      `;
+      expect(repeated).toHaveLength(1);
+      expect((await repository.getCase(fixture.caseId))?.remindersSent).toBe(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "records an unknown send for human reconciliation without asserting non-delivery",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 52 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Unknown Contact', 'Director', 'unknown@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+      await repository.evaluateReminders();
+      await sql`
+        update notification_outbox
+        set status = 'needs_reconciliation', last_error_code = 'dispatch_outcome_unknown'
+        where company_id = ${fixture.companyId}
+      `;
+
+      await repository.evaluateReminders();
+      expect((await repository.getCase(fixture.caseId))?.remindersSent).toBe(1);
+      const unknown = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId}
+          and event_type = 'annual_return_reminder_outcome_unknown'
+      `;
+      expect(unknown).toHaveLength(1);
+      const failed = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_failed'
+      `;
+      expect(failed).toHaveLength(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "records a skipped reminder once without consuming its due milestone",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 53 });
+      const sql = sqlForTests();
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+      await repository.evaluateReminders();
+
+      const milestones = await sql<{ id: string }[]>`
+        select id from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(milestones).toHaveLength(0);
+      const skips = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId}
+          and event_type = 'annual_return_reminder_skipped'
+      `;
+      expect(skips).toHaveLength(1);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
