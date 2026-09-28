@@ -123,6 +123,21 @@ export type AcknowledgeEscalationInput = {
   note: string;
   expectedTeamId?: string;
 };
+export type PolicyAttachmentPreview = {
+  workItemId: string;
+  policyVersionId: string;
+  expectedVersion: number;
+  startedAt: string;
+  warningAt: string;
+  dueAt: string;
+  previewHash: string;
+};
+export type PolicyAttachmentSelection = Pick<
+  PolicyAttachmentPreview,
+  "workItemId" | "policyVersionId" | "expectedVersion"
+>;
+export type AttachPolicyInput = PolicyAttachmentPreview & { actorId: string };
+
 export type EnsureWorkItemEvent = {
   companyId: string;
   caseType: WorkItemCaseType;
@@ -369,6 +384,83 @@ type PolicyCalendarRow = {
   weekly_schedule: BusinessCalendar["weeklySchedule"];
 };
 
+async function attachmentPreviewHash(
+  input: Omit<PolicyAttachmentPreview, "previewHash">,
+): Promise<string> {
+  const payload = new TextEncoder().encode(
+    JSON.stringify([
+      input.workItemId,
+      input.policyVersionId,
+      input.expectedVersion,
+      input.startedAt,
+      input.warningAt,
+      input.dueAt,
+    ]),
+  );
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", payload));
+  return Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function policyAttachmentPreview(
+  tx: QueryClient,
+  item: PersistedWorkItem,
+  policyVersionId: string,
+  startedAt: string,
+): Promise<PolicyAttachmentPreview> {
+  if (item.slaPolicyVersionId || item.slaStartedAt || item.slaWarningAt || item.slaDueAt) {
+    throw new Error("Work item already has an SLA policy snapshot.");
+  }
+  if (item.status === "completed" || item.status === "cancelled") {
+    throw new Error("Closed work items cannot receive an SLA policy.");
+  }
+  const [policy] = await tx<PolicyCalendarRow[]>`
+    select p.id policy_id, p.warning_minutes, p.due_minutes,
+      c.id calendar_id, c.timezone, c.weekly_schedule
+    from sla_policies p join business_calendars c on c.id = p.business_calendar_id
+    where p.id = ${policyVersionId} and p.work_type = ${item.workType}
+      and p.active = true and c.active = true and p.effective_from <= ${startedAt}
+    for share of p, c
+  `;
+  if (!policy) throw new Error("Selected SLA policy is unavailable for this work type.");
+  const holidays = await tx<
+    {
+      holiday_date: string | Date;
+      closed: boolean;
+      working_intervals: BusinessCalendar["holidays"][number]["workingIntervals"] | null;
+    }[]
+  >`
+    select holiday_date, closed, working_intervals from business_calendar_holidays
+    where business_calendar_id = ${policy.calendar_id}
+  `;
+  const snapshot = snapshotSla(
+    {
+      id: policy.policy_id,
+      warningMinutes: policy.warning_minutes,
+      dueMinutes: policy.due_minutes,
+    },
+    startedAt,
+    {
+      id: policy.calendar_id,
+      timezone: policy.timezone,
+      weeklySchedule: policy.weekly_schedule,
+      holidays: holidays.map((holiday) => ({
+        date: iso(holiday.holiday_date).slice(0, 10),
+        closed: holiday.closed,
+        workingIntervals: holiday.working_intervals ?? undefined,
+      })),
+    },
+  );
+  const preview = {
+    workItemId: item.id,
+    policyVersionId: policy.policy_id,
+    expectedVersion: item.version,
+    startedAt: snapshot.startedAt,
+    warningAt: snapshot.warningAt,
+    dueAt: snapshot.dueAt,
+  };
+  return { ...preview, previewHash: await attachmentPreviewHash(preview) };
+}
+
 export async function ensureWorkItemForEvent(
   tx: Tx,
   event: EnsureWorkItemEvent,
@@ -462,6 +554,8 @@ export type WorkItemRepository = {
       expectedTeamId?: string;
     },
   ): Promise<AssignmentRecommendation[]>;
+  previewPolicyAttachment(input: PolicyAttachmentSelection): Promise<PolicyAttachmentPreview>;
+  attachPolicy(input: AttachPolicyInput): Promise<PersistedWorkItem>;
   assign(input: AssignWorkItemInput): Promise<PersistedWorkItem>;
   acknowledgeEscalation(input: AcknowledgeEscalationInput): Promise<PersistedWorkItem>;
   evaluateEscalations(
@@ -535,6 +629,87 @@ export function createWorkItemRepository(
           throw new Error("Forbidden: work item moved outside the actor's team.");
         }
         return recommendationsFor(tx, item, readNow(), recommendationOptions);
+      });
+    },
+    previewPolicyAttachment(input) {
+      return withTransaction(sql, async (tx) => {
+        const item = await getWorkItem(tx, input.workItemId);
+        if (!item) throw new Error("Work item not found.");
+        if (item.version !== input.expectedVersion) {
+          throw new Error("Work item policy preview is stale.");
+        }
+        return policyAttachmentPreview(tx, item, input.policyVersionId, readNow());
+      });
+    },
+    attachPolicy(input) {
+      return withTransaction(sql, async (tx) => {
+        const item = await getWorkItem(tx, input.workItemId, true);
+        if (!item) throw new Error("Work item not found.");
+        if (item.version !== input.expectedVersion) {
+          throw new Error("Work item policy preview is stale.");
+        }
+        // The request actor was authorized before the transaction. Recheck and
+        // lock the current database role so a revocation cannot race the write.
+        const [admin] = await tx<{ id: string }[]>`
+          select u.id from users u
+          join staff_profiles sp on sp.user_id = u.id
+          where u.id = ${input.actorId} and u.active = true
+            and sp.active = true and sp.role = 'Admin'
+          for share of u, sp
+        `;
+        if (!admin) throw new Error("Forbidden: current Admin access is required.");
+        const now = Date.parse(readNow());
+        const started = Date.parse(input.startedAt);
+        if (!Number.isFinite(started) || started > now || now - started > 15 * 60_000) {
+          throw new Error("SLA policy preview expired; request a fresh preview.");
+        }
+        const preview = await policyAttachmentPreview(
+          tx,
+          item,
+          input.policyVersionId,
+          input.startedAt,
+        );
+        if (
+          preview.previewHash !== input.previewHash ||
+          preview.warningAt !== input.warningAt ||
+          preview.dueAt !== input.dueAt
+        ) {
+          throw new Error("SLA policy preview changed; request a fresh preview.");
+        }
+        await tx`
+          insert into work_item_sla_attachments (
+            work_item_id, policy_version_id, expected_version, actor_id,
+            sla_started_at, sla_warning_at, sla_due_at, preview_hash
+          ) values (
+            ${item.id}, ${input.policyVersionId}, ${item.version}, ${input.actorId},
+            ${preview.startedAt}, ${preview.warningAt}, ${preview.dueAt}, ${preview.previewHash}
+          )`;
+        const [updated] = await tx<WorkItemRow[]>`
+          update work_items set
+            sla_policy_version_id = ${input.policyVersionId},
+            sla_started_at = ${preview.startedAt},
+            sla_warning_at = ${preview.warningAt},
+            sla_due_at = ${preview.dueAt},
+            version = version + 1, updated_at = now()
+          where id = ${item.id} and version = ${item.version}
+            and sla_policy_version_id is null returning *
+        `;
+        if (!updated) throw new Error("Work item policy preview is stale.");
+        await tx`
+          insert into timeline_events (
+            company_id, case_id, event_type, actor_type, actor_id, description, metadata
+          ) values (${item.companyId}, ${item.annualReturnCaseId}, 'work_item_sla_policy_attached',
+            'user', ${input.actorId}, 'Selected SLA policy attached to work item.',
+            ${tx.json({
+              workItemId: item.id,
+              policyVersionId: input.policyVersionId,
+              expectedVersion: item.version,
+              previewHash: preview.previewHash,
+              startedAt: preview.startedAt,
+              warningAt: preview.warningAt,
+              dueAt: preview.dueAt,
+            })})`;
+        return mapWorkItem(updated);
       });
     },
     assign(input) {
