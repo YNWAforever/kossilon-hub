@@ -29,6 +29,7 @@ describe("WhatsAppIntegrationStatus", () => {
       <WhatsAppIntegrationStatus
         status={{
           deliveryMode: "simulated",
+          capabilityStatus: { state: "blocked" },
           missingLiveEnvVars: [
             "WOZTELL_API_BASE_URL",
             "WOZTELL_ACCESS_TOKEN",
@@ -49,6 +50,7 @@ describe("WhatsAppIntegrationStatus", () => {
       <WhatsAppIntegrationStatus
         status={{
           deliveryMode: "blocked",
+          capabilityStatus: { state: "unconfigured" },
           missingLiveEnvVars: ["WOZTELL_API_BASE_URL", "WOZTELL_CHANNEL_ID"],
         }}
       />,
@@ -60,10 +62,18 @@ describe("WhatsAppIntegrationStatus", () => {
     ).toBeTruthy();
   });
 
-  it("shows configured without a demo notice for live delivery", () => {
-    render(<WhatsAppIntegrationStatus status={{ deliveryMode: "live", missingLiveEnvVars: [] }} />);
+  it("shows configured but unverified until current deployment has success evidence", () => {
+    render(
+      <WhatsAppIntegrationStatus
+        status={{
+          deliveryMode: "live",
+          missingLiveEnvVars: [],
+          capabilityStatus: { state: "unverified" },
+        }}
+      />,
+    );
 
-    expect(screen.getByText("Configured")).toBeTruthy();
+    expect(screen.getByText("Configured · unverified")).toBeTruthy();
     expect(screen.queryByText("Demo simulation")).toBeNull();
     expect(screen.queryByText(/Missing bindings:/)).toBeNull();
   });

@@ -31,6 +31,7 @@ export type BlockedIntegrationId =
   | "document-text-extraction"
   | "ai-provider"
   | "whatsapp-media-download"
+  | "whatsapp-provider"
   | "external-handoff-destination"
   | "return-source"
   | "deployment-runtime";
@@ -121,17 +122,33 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     },
   },
   {
+    id: "whatsapp-provider",
+    capability: "WOZTELL WhatsApp 收發連線",
+    effect:
+      "設定存在不能證明此部署成功收發；未有當前部署的成功證據時，收件匣不得聲稱連線正常或沒有新訊息。",
+    pilotFallback:
+      "由職員在 WOZTELL 介面核對已批准的測試號碼、實際 webhook 和回執；系統不會自行傳送測試訊息。",
+    clearedBy:
+      "四個必要 binding、相同部署的無發送連線檢查，以及經批准測試號碼的 inbound、outbound 和 receipt 證據。",
+    blocksRelease: true,
+    evidence: {
+      observable: "external",
+      why: "測試號碼及 WOZTELL 租戶權限需要行方批准，程式不能自行提供這些授權或真實訊息證據。",
+    },
+  },
+  {
     id: "whatsapp-media-download",
     capability: "接收客戶在 WhatsApp 傳來的附件",
     effect:
       "附件的存在會被記錄（類型、供應商的媒體編號、在訊息中的位置），但檔案本身取不到，" +
       "所以不會成為一份文件，也不會出現在文件清單。",
     pilotFallback: "職員在 WOZTELL 介面下載檔案後，用一般上載流程放進案件。",
-    clearedBy: "WOZTELL 媒體下載端點的正式文件與其認證方式。",
+    clearedBy:
+      "獲授權的 WOZTELL Open API file:get 權限、真實 webhook fileId，以及受限下載與掃描的租戶測試證據。",
     blocksRelease: false,
     evidence: {
       observable: "external",
-      why: "WOZTELL 是否已提供媒體下載端點的正式文件，是對方的決定，系統內看不到。",
+      why: "租戶的 file:get 權限及測試媒體由 WOZTELL 和行方管理；此程式不能自行取得授權。",
     },
   },
   {
