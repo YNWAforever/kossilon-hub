@@ -1099,6 +1099,13 @@ describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
         packageId: draft.id,
         revision: 1,
         manifestHash: draft.manifestHash,
+        readiness: {
+          documentsComplete: true,
+          paymentConfirmed: true,
+          canRecordSubmission: true,
+          canComplete: false,
+          snapshotRevision: 1,
+        },
       });
 
       await tx`update users set role='Staff' where id=${fixture.actor.userId}`;

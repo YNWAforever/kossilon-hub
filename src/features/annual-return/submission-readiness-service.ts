@@ -4,14 +4,22 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DocumentStorage } from "@/features/documents/types";
 import { entityIdSchema } from "@/features/runtime/entity-id";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
-import { downloadApprovedPackageForActor, getPackageForActor } from "./package-service";
+import { getPackageForActor, inspectApprovedPackageForActor } from "./package-service";
 import { assertAnnualReturnActionAllowed, type AnnualReturnActorRole } from "./permissions";
 import { createAnnualReturnRepository } from "./repository";
+import { evaluateCaseReadiness, type ReadinessResult } from "./readiness";
+import { completionBlockers } from "./workflow";
 
 type Db = SqlClient | postgres.TransactionSql;
 
 export type CaseSubmissionReadiness =
-  | { state: "ready"; packageId: string; revision: number; manifestHash: string }
+  | {
+      state: "ready";
+      packageId: string;
+      revision: number;
+      manifestHash: string;
+      readiness: ReadinessResult;
+    }
   | {
       state: "blocked";
       reason: "case-closed" | "package-missing" | "package-unapproved" | "existing-handoff";
@@ -32,8 +40,9 @@ export async function inspectCaseSubmissionReadinessForActor(
       storage: dependencies.storage,
     });
     const repository = createAnnualReturnRepository({ sql: tx });
+    let caseItem: Awaited<ReturnType<typeof repository.getCase>> = null;
     try {
-      const caseItem = await repository.getCase(caseId);
+      caseItem = await repository.getCase(caseId);
       if (!caseItem) throw new Error("Annual return case not found.");
       const staff = assertStaffAccess(actor);
       if (!staff.userId) throw new Error("Forbidden: staff database identity is required.");
@@ -74,6 +83,7 @@ export async function inspectCaseSubmissionReadinessForActor(
     } finally {
       await repository.close();
     }
+    if (!caseItem) throw new Error("Annual return case not found.");
 
     const [existing] = await tx<{ id: string }[]>`
       select id from package_handoffs
@@ -87,19 +97,38 @@ export async function inspectCaseSubmissionReadinessForActor(
     // enforced by the download and manual-submission paths. Any uncertainty
     // blocks the UI; the mutation still revalidates in its own transaction.
     try {
-      await downloadApprovedPackageForActor(actor, currentPackage.id, {
+      const verified = await inspectApprovedPackageForActor(actor, currentPackage.id, {
         sql: tx,
         storage: dependencies.storage,
       });
+      const readiness = evaluateCaseReadiness({
+        caseId,
+        revision: verified.revision,
+        asOf: new Date().toISOString(),
+        currentStatus: caseItem.currentStatus,
+        caseLocked: Boolean(caseItem.lockedAt || caseItem.completedAt),
+        requiredEvidenceState: "confirmed",
+        paymentEvidenceState: "confirmed",
+        manifestResult: { kind: "releasable", manifest: verified.manifest },
+        currentManifestHash: verified.manifestHash,
+        approval: { manifestHash: verified.manifestHash, approverId: verified.approvedBy },
+        submission: null,
+        activeHandoffId: null,
+        returnReconciliation: null,
+        completionBlockers: completionBlockers(caseItem),
+      });
+      if (!readiness.canRecordSubmission)
+        return { state: "unknown", reason: "package-unverifiable" };
+      return {
+        state: "ready",
+        packageId: verified.packageId,
+        revision: verified.revision,
+        manifestHash: verified.manifestHash,
+        readiness,
+      };
     } catch {
       return { state: "unknown", reason: "package-unverifiable" };
     }
-    return {
-      state: "ready",
-      packageId: currentPackage.id,
-      revision: currentPackage.revision,
-      manifestHash: currentPackage.manifestHash,
-    };
   };
 
   return "begin" in db
