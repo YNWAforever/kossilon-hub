@@ -166,12 +166,20 @@ export async function inspectCaseReadinessForActor(
           and hr.match_state = 'reconciled' and hr.outcome = 'accepted'
           and hr.reconciliation_decision = 'confirm' and hr.reconciled_at is not null
           and hr.reconciled_by is not null
-          and hr.source_kind = 'manual'
-          and exists (
-            select 1 from document_versions rv
-            where rv.id = hr.document_version_id
-              and rv.superseded_by_version_id is null
-              and rv.verified_checksum_sha256 = hr.source_sha256
+          and (
+            (hr.source_kind = 'manual' and exists (
+              select 1 from document_versions rv
+              where rv.id = hr.document_version_id
+                and rv.superseded_by_version_id is null
+                and rv.verified_checksum_sha256 = hr.source_sha256
+            ))
+            or (hr.source_kind = 'internal' and exists (
+              select 1 from filing_return_source_objects fso
+              where fso.id::text = hr.source_object_id
+                and fso.source_sha256 = hr.source_sha256
+                and fso.object_version = hr.source_version
+                and fso.scan_state = 'verified'
+            ))
           )
           and not exists (
             select 1 from handoff_returns outstanding

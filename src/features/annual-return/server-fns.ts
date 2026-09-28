@@ -1014,9 +1014,34 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
     }),
   )
   .handler(({ data }) =>
-    withAnnualReturnActorRepository((repository, actor) =>
-      updateAnnualReturnStatusForActor(actor, data, { repository }),
-    ),
+    withAnnualReturnActorRepository(async (repository, actor) => {
+      if (data.nextStatus === "Completed") {
+        const [
+          { inspectCaseReadinessForActor },
+          { createDocumentStorageForProviderMode },
+          { currentProviderMode },
+          { getDocumentsBucketBinding },
+        ] = await Promise.all([
+          import("./readiness-reader"),
+          import("@/features/documents/server-fns"),
+          import("@/server/provider-mode"),
+          import("@/server/runtime-env"),
+        ]);
+        const mode = currentProviderMode();
+        const storage = createDocumentStorageForProviderMode(
+          mode,
+          mode === "live" ? getDocumentsBucketBinding() : undefined,
+        );
+        const current = await inspectCaseReadinessForActor(actor, data.caseId, { storage });
+        // The legacy pre-package Filed path remains subject to the repository gate.
+        if (current.snapshot.revision > 0 && !current.readiness.canComplete) {
+          throw new Error(
+            "Current package, submission or return proof bytes are not ready for completion.",
+          );
+        }
+      }
+      return updateAnnualReturnStatusForActor(actor, data, { repository });
+    }),
   );
 export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
   .validator(

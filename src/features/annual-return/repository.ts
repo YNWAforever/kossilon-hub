@@ -1880,16 +1880,24 @@ export function createAnnualReturnRepository(
           and hr.reconciliation_decision = 'confirm'
           and hr.reconciled_at is not null
           and hr.reconciled_by is not null
-        join document_versions rv on rv.id = hr.document_version_id
+        left join document_versions rv on rv.id = hr.document_version_id
           and rv.superseded_by_version_id is null
           and rv.verified_checksum_sha256 = hr.source_sha256
-        join documents rd on rd.id = rv.document_id
+        left join documents rd on rd.id = rv.document_id
           and rd.case_id = fp.case_id
           and rd.company_id = ${companyId}
           and rd.file_type = 'receipt'
           and rd.verification_status = 'verified'
+        left join filing_return_source_objects fso on fso.id::text = hr.source_object_id
+          and fso.source_sha256 = hr.source_sha256
+          and fso.object_version = hr.source_version
+          and fso.scan_state = 'verified'
         where fp.case_id = ${caseId}
           and fp.state = 'approved'
+          and (
+            (hr.source_kind = 'internal' and fso.id is not null)
+            or (hr.source_kind is distinct from 'internal' and rv.id is not null and rd.id is not null)
+          )
           and fp.revision = (
             select max(revision) from filing_packages where case_id = ${caseId}
           )

@@ -962,6 +962,97 @@ describe.skipIf(!databaseUrl)("T29 local filing journey", () => {
       expect(completed).toMatchObject({ currentStatus: "Completed" });
     });
   });
+  it("t29_internal_reconciled_return_can_complete after human confirmation", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fx = await dbFixture(tx);
+      const deps = { sql: tx, storage: fx.storage };
+      const cases = createAnnualReturnRepository({ sql: tx });
+      const draft = await preparePackageForActor(
+        fx.actor,
+        { caseId: fx.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fx.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const submitted = await recordManualSubmissionForActor(
+        fx.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+          submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-" + crypto.randomUUID(),
+          proofVersionId: await fx.createSubmissionProof(),
+        },
+        deps,
+      );
+      const sourceKey = "t29-" + crypto.randomUUID();
+      const objectKey = "returns/" + sourceKey + "/accepted.pdf";
+      const body = new TextEncoder().encode("%PDF-1.7\ninternal-accepted");
+      const checksum = await packageSha256(body);
+      await fx.storage.put({
+        objectKey,
+        body,
+        checksum,
+        sizeBytes: body.byteLength,
+        contentType: "application/pdf",
+      });
+      await tx`insert into filing_return_source_cursors (source_key) values (${sourceKey})`;
+      const [source] = await tx<{ id: string }[]>`insert into filing_return_source_objects
+        (source_key,object_id,object_version,source_sha256,file_name,content_type,byte_size,object_key,scan_state,provider_reference)
+        values (${sourceKey},${"accepted-" + sourceKey},${"v1"},${checksum},${"accepted.pdf"},${"application/pdf"},${body.byteLength},${objectKey},${"verified"},${"t29-provider"}) returning id`;
+      const received = await ingestReturnForActor(
+        fx.actor,
+        {
+          caseId: fx.caseId,
+          externalReference: submitted.externalReference,
+          manifestHash: draft.manifestHash,
+          outcome: "accepted",
+          source: { kind: "internal", sourceObjectRecordId: source.id },
+        },
+        deps,
+      );
+      await reconcileReturnForActor(
+        fx.actor,
+        {
+          returnId: received.id,
+          submissionId: submitted.id,
+          expectedRevision: 1,
+          decision: "confirm",
+          reason: "",
+        },
+        deps,
+      );
+      const readiness = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(readiness.readiness.canComplete).toBe(true);
+      await fx.storage.delete(objectKey);
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).readiness.canComplete,
+      ).toBe(false);
+      await fx.storage.put({
+        objectKey,
+        body,
+        checksum,
+        sizeBytes: body.byteLength,
+        contentType: "application/pdf",
+      });
+      await tx`update filing_return_source_objects set scan_state='unsafe' where id=${source.id}`;
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).readiness.canComplete,
+      ).toBe(false);
+      await expect(cases.updateStatus(fx.caseId, "Completed", fx.actor.userId!)).rejects.toThrow(
+        /accepted return/i,
+      );
+      await tx`update filing_return_source_objects set scan_state='verified' where id=${source.id}`;
+      await expect(
+        cases.updateStatus(fx.caseId, "Completed", fx.actor.userId!),
+      ).resolves.toMatchObject({ currentStatus: "Completed" });
+    });
+  });
   it("t29_review blocks a new case with legacy filing fields but no approved package or return", async () => {
     await inRollbackFixture(async (tx) => {
       const fixture = await dbFixture(tx);
