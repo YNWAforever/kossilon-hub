@@ -42,6 +42,7 @@ describe("T01 schema compatibility release gate", () => {
       "returns",
       "staff",
       "submissions",
+      "templates",
     ]);
     for (const capability of Object.values(report.requiredCapabilities)) {
       expect(capability.ready).toBe(false);

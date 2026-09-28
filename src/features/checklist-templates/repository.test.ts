@@ -47,12 +47,16 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
     const created = await repository.createTemplate("Annual Return — Private Ltd");
 
-    const updated = await repository.updateTemplate(created.id, {
-      name: "Test template round-trip",
-      documents: [{ id: "d1", label: "Doc one", required: true, daysBeforeDue: 5 }],
-      reminders: [{ id: "r1", label: "Rem one", daysBeforeDue: 10, channel: "Email" }],
-      riskRules: [{ id: "k1", label: "Risk one", severity: "High", trigger: "x", enabled: true }],
-    });
+    const updated = await repository.updateTemplate(
+      created.id,
+      {
+        name: "Test template round-trip",
+        documents: [{ id: "d1", label: "Doc one", required: true, daysBeforeDue: 5 }],
+        reminders: [{ id: "r1", label: "Rem one", daysBeforeDue: 10, channel: "Email" }],
+        riskRules: [{ id: "k1", label: "Risk one", severity: "High", trigger: "x", enabled: true }],
+      },
+      created.revision!,
+    );
 
     expect(updated?.documents).toEqual([
       { id: "d1", label: "Doc one", required: true, daysBeforeDue: 5 },
@@ -71,7 +75,11 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
     const created = await repository.createTemplate("Annual Return — Private Ltd");
 
-    const updated = await repository.updateTemplate(created.id, { active: false });
+    const updated = await repository.updateTemplate(
+      created.id,
+      { active: false },
+      created.revision!,
+    );
 
     expect(updated?.name).toBe("Untitled template");
     expect(updated?.active).toBe(false);
@@ -82,10 +90,14 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
   it("duplicates a template with fresh item ids", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
     const created = await repository.createTemplate("Annual Return — Private Ltd");
-    await repository.updateTemplate(created.id, {
-      name: "Test template dup-source",
-      documents: [{ id: "orig-1", label: "Doc", required: true, daysBeforeDue: 1 }],
-    });
+    await repository.updateTemplate(
+      created.id,
+      {
+        name: "Test template dup-source",
+        documents: [{ id: "orig-1", label: "Doc", required: true, daysBeforeDue: 1 }],
+      },
+      created.revision!,
+    );
 
     const duplicated = await repository.duplicateTemplate(created.id);
 
@@ -96,14 +108,15 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
     await repository.close();
   });
 
-  it("deletes a template", async () => {
+  it("archives a template while retaining its history", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
     const created = await repository.createTemplate("Annual Return — Private Ltd");
 
     await repository.deleteTemplate(created.id);
     const all = await repository.listTemplates();
 
-    expect(all.find((t) => t.id === created.id)).toBeUndefined();
+    expect(all.find((t) => t.id === created.id)).toMatchObject({ active: false });
+    expect(all.find((t) => t.id === created.id)?.archivedAt).toBeTruthy();
 
     await repository.close();
   });
@@ -137,7 +150,11 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
   it("translates a duplicate name into a friendly ChecklistTemplateWriteError on duplicate", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
     const created = await repository.createTemplate("Annual Return — Private Ltd");
-    await repository.updateTemplate(created.id, { name: "Test template dup-collision" });
+    await repository.updateTemplate(
+      created.id,
+      { name: "Test template dup-collision" },
+      created.revision!,
+    );
 
     // Duplicating the same source twice produces the identical "<name> (copy)" name
     // both times — an entirely ordinary "click Duplicate twice" Admin workflow.
@@ -155,13 +172,21 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
   it("translates a rename collision on updateTemplate into a friendly ChecklistTemplateWriteError", async () => {
     const repository = createChecklistTemplateRepository({ sql: testSql! });
     const first = await repository.createTemplate("Annual Return — Private Ltd");
-    await repository.updateTemplate(first.id, { name: "Test template rename-collision" });
+    await repository.updateTemplate(
+      first.id,
+      { name: "Test template rename-collision" },
+      first.revision!,
+    );
     const second = await repository.createTemplate("Annual Return — Private Ltd");
 
     // Renaming a second template to a name already taken by another row is an
     // entirely ordinary Admin workflow, not an edge case.
     await expect(
-      repository.updateTemplate(second.id, { name: "Test template rename-collision" }),
+      repository.updateTemplate(
+        second.id,
+        { name: "Test template rename-collision" },
+        second.revision!,
+      ),
     ).rejects.toMatchObject({
       name: "ChecklistTemplateWriteError",
       field: "name",

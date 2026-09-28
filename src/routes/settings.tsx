@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
 import { useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
@@ -32,11 +32,12 @@ import {
   deleteChecklistTemplate,
   duplicateChecklistTemplate,
   listChecklistTemplates,
+  listTemplateUsage,
+  publishChecklistTemplate,
   updateChecklistTemplate,
 } from "@/features/checklist-templates/server-fns";
 import type { DataMode } from "@/features/runtime/data-mode";
 import { guardMutation } from "@/lib/guard-mutation";
-import { cases } from "@/lib/mock-data";
 import { formatDate } from "@/lib/format-date";
 import { KnowledgeBaseSection } from "@/components/knowledge-base-section";
 import { cn } from "@/lib/utils";
@@ -124,13 +125,27 @@ function SettingsPage() {
     onSettled: clearMutationInFlight,
   });
   const updateMutation = useMutation({
-    mutationFn: (input: { id: string; patch: ChecklistTemplatePatch }) =>
-      updateChecklistTemplate({ data: input }),
+    mutationFn: (input: { id: string; patch: ChecklistTemplatePatch }) => {
+      const current = productionTemplatesQuery.data?.find((template) => template.id === input.id);
+      if (!current?.revision)
+        throw new Error("Template revision unavailable; reload before saving.");
+      return updateChecklistTemplate({ data: { ...input, expectedRevision: current.revision } });
+    },
     onSuccess: async () => {
       setWarning(undefined);
       await invalidateTemplates();
     },
     onError: (error) => setWarning(describeMutationError(error, "Unable to save the change.")),
+    onSettled: clearMutationInFlight,
+  });
+  const publishMutation = useMutation({
+    mutationFn: (input: { id: string; expectedRevision: number }) =>
+      publishChecklistTemplate({ data: input }),
+    onSuccess: async () => {
+      setWarning(undefined);
+      await invalidateTemplates();
+    },
+    onError: (error) => setWarning(describeMutationError(error, "Unable to publish the version.")),
     onSettled: clearMutationInFlight,
   });
   const duplicateMutation = useMutation({
@@ -169,6 +184,10 @@ function SettingsPage() {
   const guardedDuplicateTemplate = guardMutation(mutationInFlightRef, (id: string) =>
     duplicateMutation.mutate(id),
   );
+  const guardedPublishTemplate = guardMutation(
+    mutationInFlightRef,
+    (input: { id: string; expectedRevision: number }) => publishMutation.mutate(input),
+  );
 
   // True for the entire round trip of any in-flight template mutation (see the comment on
   // `invalidateTemplates` above). Threaded down alongside `dataMode` so every mutating control
@@ -176,6 +195,7 @@ function SettingsPage() {
   const isSaving =
     createMutation.isPending ||
     updateMutation.isPending ||
+    publishMutation.isPending ||
     duplicateMutation.isPending ||
     deleteMutation.isPending;
 
@@ -185,6 +205,18 @@ function SettingsPage() {
   const [warning, setWarning] = useState<string | undefined>();
 
   const selected = templates.find((t) => t.id === selectedId) ?? templates[0];
+  const usageQuery = useInfiniteQuery({
+    queryKey: ["template-usage", selected?.publishedVersionId],
+    queryFn: ({ pageParam }) =>
+      listTemplateUsage({
+        data: { templateVersionId: selected!.publishedVersionId!, cursor: pageParam },
+      }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: dataMode === "production" && !!selected?.publishedVersionId,
+    retry: false,
+  });
+  const usageItems = usageQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const filtered = useMemo(
     () =>
       templates.filter(
@@ -220,9 +252,36 @@ function SettingsPage() {
         }
       />
       {warning ? (
-        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
-          {warning}
+        <div
+          role="alert"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
+          Failed: {warning}
+          {updateMutation.isError && updateMutation.variables ? (
+            <button
+              type="button"
+              className="ml-3 underline"
+              onClick={() => guardedUpdateMutation.mutate(updateMutation.variables!)}
+            >
+              Retry save
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="ml-3 underline"
+            onClick={() => void invalidateTemplates()}
+          >
+            Reload latest
+          </button>
         </div>
+      ) : isSaving ? (
+        <p role="status" className="text-xs text-muted-foreground">
+          Saving…
+        </p>
+      ) : updateMutation.isSuccess || publishMutation.isSuccess ? (
+        <p role="status" className="text-xs text-muted-foreground">
+          Saved
+        </p>
       ) : null}
       {sections.checklistTemplates ? (
         <section className="rounded-xl border border-border bg-card">
@@ -267,12 +326,6 @@ function SettingsPage() {
               <ul className="max-h-[520px] overflow-y-auto pb-2">
                 {filtered.map((t) => {
                   const active = selected?.id === t.id;
-                  const usage = cases.filter(
-                    () =>
-                      t.serviceType.startsWith("Annual Return") &&
-                      // simplistic: assume all AR cases use the AR template
-                      t.serviceType === "Annual Return — Private Ltd",
-                  ).length;
                   return (
                     <li key={t.id}>
                       <button
@@ -288,13 +341,20 @@ function SettingsPage() {
                           <span className="truncate text-sm font-medium text-foreground">
                             {t.name}
                           </span>
-                          <StatusPill tone={t.active ? "green" : "yellow"}>
-                            {t.active ? "Active" : "Draft"}
+                          <StatusPill tone={t.active && t.publishedVersionId ? "green" : "yellow"}>
+                            {dataMode === "demo"
+                              ? "Demo"
+                              : t.archivedAt
+                                ? "Archived"
+                                : t.publicationOrigin === "legacy_baseline"
+                                  ? "Legacy baseline"
+                                  : t.active && t.publishedVersionId
+                                    ? "Published"
+                                    : "Draft"}
                           </StatusPill>
                         </div>
                         <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
                           {t.serviceType}
-                          {usage > 0 && ` · ${usage} cases`}
                         </div>
                       </button>
                     </li>
@@ -306,23 +366,89 @@ function SettingsPage() {
             {/* Right: editor */}
             <div className="p-5">
               {selected ? (
-                <TemplateEditor
-                  key={selected.id}
-                  t={selected}
-                  tab={tab}
-                  setTab={setTab}
-                  dataMode={dataMode}
-                  isSaving={isSaving}
-                  updateMutation={guardedUpdateMutation}
-                  onDuplicate={() => guardedDuplicateTemplate(selected.id)}
-                  onDelete={() => {
-                    if (mutationInFlightRef.current) return;
-                    mutationInFlightRef.current = true;
-                    deleteMutation.mutate(selected.id);
-                    const next = templates.find((t) => t.id !== selected.id);
-                    if (next) setSelectedId(next.id);
-                  }}
-                />
+                <>
+                  <TemplateEditor
+                    key={selected.id + ":" + (selected.revision ?? 0)}
+                    t={selected}
+                    tab={tab}
+                    setTab={setTab}
+                    dataMode={dataMode}
+                    isSaving={isSaving}
+                    updateMutation={guardedUpdateMutation}
+                    onDuplicate={() => guardedDuplicateTemplate(selected.id)}
+                    onPublish={() => {
+                      if (!selected.revision) return;
+                      guardedPublishTemplate({
+                        id: selected.id,
+                        expectedRevision: selected.revision,
+                      });
+                    }}
+                    onDelete={() => {
+                      if (mutationInFlightRef.current) return;
+                      mutationInFlightRef.current = true;
+                      deleteMutation.mutate(selected.id);
+                      const next = templates.find((t) => t.id !== selected.id);
+                      if (next) setSelectedId(next.id);
+                    }}
+                  />
+                  {dataMode === "production" && selected.publishedVersionId ? (
+                    <section
+                      className="mt-6 border-t border-border pt-4"
+                      aria-label="Template version usage"
+                    >
+                      <h3 className="text-sm font-semibold">
+                        Published version usage · all linked cases
+                      </h3>
+                      {usageQuery.isPending ? (
+                        <p role="status" className="text-xs">
+                          Loading case usage…
+                        </p>
+                      ) : usageQuery.isError ? (
+                        <p role="alert" className="text-xs">
+                          Usage unavailable. Reload to retry.
+                        </p>
+                      ) : usageQuery.data ? (
+                        <>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {usageItems.length}
+                            {usageQuery.hasNextPage ? "+" : ""} linked cases loaded. Unknown legacy
+                            version across all annual-return cases:{" "}
+                            {usageQuery.data.pages[0]?.unknownLegacyCount ?? 0}.
+                          </p>
+                          <ul className="mt-2 space-y-1 text-xs">
+                            {usageItems.map((item) => (
+                              <li key={item.caseId}>
+                                <Link
+                                  to="/annual-returns/$id"
+                                  params={{ id: item.caseId }}
+                                  className="underline"
+                                >
+                                  {item.companyName}
+                                </Link>
+                                {" · "}
+                                {item.status}
+                              </li>
+                            ))}
+                          </ul>
+                          {usageQuery.hasNextPage ? (
+                            <button
+                              type="button"
+                              onClick={() => void usageQuery.fetchNextPage()}
+                              disabled={usageQuery.isFetchingNextPage}
+                              className="mt-2 text-xs font-medium text-primary underline disabled:opacity-70"
+                            >
+                              {usageQuery.isFetchingNextPage ? "Loading…" : "Load more cases"}
+                            </button>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </section>
+                  ) : dataMode === "production" ? (
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      Draft has no published case usage.
+                    </p>
+                  ) : null}
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   No templates yet. Create one to get started.
@@ -429,6 +555,7 @@ function TemplateEditor({
   isSaving,
   updateMutation,
   onDuplicate,
+  onPublish,
   onDelete,
 }: {
   t: ChecklistTemplate;
@@ -438,6 +565,7 @@ function TemplateEditor({
   isSaving: boolean;
   updateMutation: UpdateTemplateMutation;
   onDuplicate: () => void;
+  onPublish: () => void;
   onDelete: () => void;
 }) {
   const [name, setName] = useState(t.name);
@@ -454,7 +582,7 @@ function TemplateEditor({
             onBlur={() => {
               if (name !== t.name) updateMutation.mutate({ id: t.id, patch: { name } });
             }}
-            disabled={dataMode === "demo" || isSaving}
+            disabled={dataMode === "demo" || isSaving || !!t.archivedAt}
             className="w-full border-b border-transparent bg-transparent font-display text-xl font-semibold text-foreground outline-none focus:border-border disabled:cursor-not-allowed disabled:opacity-70"
           />
           <textarea
@@ -466,7 +594,7 @@ function TemplateEditor({
             }}
             placeholder="Describe when this template applies…"
             rows={2}
-            disabled={dataMode === "demo" || isSaving}
+            disabled={dataMode === "demo" || isSaving || !!t.archivedAt}
             className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
           />
           <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -480,7 +608,7 @@ function TemplateEditor({
                     patch: { serviceType: e.target.value as ServiceType },
                   })
                 }
-                disabled={dataMode === "demo" || isSaving}
+                disabled={dataMode === "demo" || isSaving || !!t.archivedAt}
                 className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {SERVICE_TYPES.map((s) => (
@@ -490,22 +618,19 @@ function TemplateEditor({
                 ))}
               </select>
             </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={t.active}
-                onChange={(e) =>
-                  updateMutation.mutate({ id: t.id, patch: { active: e.target.checked } })
-                }
-                disabled={dataMode === "demo" || isSaving}
-              />
-              <span className="text-muted-foreground">Active</span>
-            </label>
             <span className="text-muted-foreground">Updated {formatDate(t.updatedAt)}</span>
           </div>
         </div>
         {dataMode === "production" && (
           <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onPublish}
+              disabled={isSaving || !!t.archivedAt || !t.revision}
+              className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+            >
+              Publish version
+            </button>
             <button
               onClick={onDuplicate}
               disabled={isSaving}
@@ -515,10 +640,10 @@ function TemplateEditor({
             </button>
             <button
               onClick={onDelete}
-              disabled={isSaving}
+              disabled={isSaving || !!t.archivedAt}
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <Trash2 className="h-3.5 w-3.5" /> Delete
+              <Trash2 className="h-3.5 w-3.5" /> Archive
             </button>
           </div>
         )}
@@ -633,6 +758,7 @@ export function DocumentsTab({
           <DocumentRow
             key={d.id}
             doc={d}
+            archived={!!t.archivedAt}
             dataMode={dataMode}
             isSaving={isSaving}
             onUpdate={(patch) => updateDocument(d.id, patch)}
@@ -644,7 +770,7 @@ export function DocumentsTab({
         <div className="border-t border-border p-2">
           <button
             onClick={addDocument}
-            disabled={isSaving}
+            disabled={isSaving || !!t.archivedAt}
             className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Plus className="h-3.5 w-3.5" /> Add document
@@ -659,12 +785,14 @@ function DocumentRow({
   doc,
   dataMode,
   isSaving,
+  archived,
   onUpdate,
   onRemove,
 }: {
   doc: DocumentItem;
   dataMode: DataMode;
   isSaving: boolean;
+  archived: boolean;
   onUpdate: (patch: Partial<DocumentItem>) => void;
   onRemove: () => void;
 }) {
@@ -679,7 +807,7 @@ function DocumentRow({
         onBlur={() => {
           if (label !== doc.label) onUpdate({ label });
         }}
-        disabled={dataMode === "demo" || isSaving}
+        disabled={dataMode === "demo" || isSaving || archived}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-1 text-xs">
@@ -692,7 +820,7 @@ function DocumentRow({
           onBlur={() => {
             if (daysBeforeDue !== doc.daysBeforeDue) onUpdate({ daysBeforeDue });
           }}
-          disabled={dataMode === "demo" || isSaving}
+          disabled={dataMode === "demo" || isSaving || archived}
           className="w-14 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
         <span className="text-muted-foreground">days</span>
@@ -702,7 +830,7 @@ function DocumentRow({
           type="checkbox"
           checked={doc.required}
           onChange={(e) => onUpdate({ required: e.target.checked })}
-          disabled={dataMode === "demo" || isSaving}
+          disabled={dataMode === "demo" || isSaving || archived}
         />
         <span className="text-muted-foreground">Required</span>
       </label>
@@ -710,7 +838,7 @@ function DocumentRow({
         {dataMode === "production" && (
           <button
             onClick={onRemove}
-            disabled={isSaving}
+            disabled={isSaving || archived}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
             aria-label="Remove document"
           >
@@ -775,6 +903,7 @@ function RemindersTab({
           <ReminderRow
             key={r.id}
             reminder={r}
+            archived={!!t.archivedAt}
             channels={channels}
             dataMode={dataMode}
             isSaving={isSaving}
@@ -787,7 +916,7 @@ function RemindersTab({
         <div className="border-t border-border p-2">
           <button
             onClick={addReminder}
-            disabled={isSaving}
+            disabled={isSaving || !!t.archivedAt}
             className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Plus className="h-3.5 w-3.5" /> Add reminder
@@ -803,6 +932,7 @@ function ReminderRow({
   channels,
   dataMode,
   isSaving,
+  archived,
   onUpdate,
   onRemove,
 }: {
@@ -810,6 +940,7 @@ function ReminderRow({
   channels: ReminderRule["channel"][];
   dataMode: DataMode;
   isSaving: boolean;
+  archived: boolean;
   onUpdate: (patch: Partial<ReminderRule>) => void;
   onRemove: () => void;
 }) {
@@ -824,7 +955,7 @@ function ReminderRow({
         onBlur={() => {
           if (label !== reminder.label) onUpdate({ label });
         }}
-        disabled={dataMode === "demo" || isSaving}
+        disabled={dataMode === "demo" || isSaving || archived}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-1 text-xs">
@@ -837,7 +968,7 @@ function ReminderRow({
           onBlur={() => {
             if (daysBeforeDue !== reminder.daysBeforeDue) onUpdate({ daysBeforeDue });
           }}
-          disabled={dataMode === "demo" || isSaving}
+          disabled={dataMode === "demo" || isSaving || archived}
           className="w-16 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
         <span className="text-muted-foreground">days</span>
@@ -845,7 +976,7 @@ function ReminderRow({
       <select
         value={reminder.channel}
         onChange={(e) => onUpdate({ channel: e.target.value as ReminderRule["channel"] })}
-        disabled={dataMode === "demo" || isSaving}
+        disabled={dataMode === "demo" || isSaving || archived}
         className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       >
         {channels.map((c) => (
@@ -858,7 +989,7 @@ function ReminderRow({
         {dataMode === "production" && (
           <button
             onClick={onRemove}
-            disabled={isSaving}
+            disabled={isSaving || archived}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
             aria-label="Remove reminder"
           >
@@ -927,6 +1058,7 @@ function RisksTab({
           <RiskRow
             key={r.id}
             risk={r}
+            archived={!!t.archivedAt}
             severities={severities}
             tone={tone}
             dataMode={dataMode}
@@ -940,7 +1072,7 @@ function RisksTab({
         <div className="border-t border-border p-2">
           <button
             onClick={addRisk}
-            disabled={isSaving}
+            disabled={isSaving || !!t.archivedAt}
             className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Plus className="h-3.5 w-3.5" /> Add risk rule
@@ -957,6 +1089,7 @@ function RiskRow({
   tone,
   dataMode,
   isSaving,
+  archived,
   onUpdate,
   onRemove,
 }: {
@@ -965,6 +1098,7 @@ function RiskRow({
   tone: (s: RiskRule["severity"]) => "red" | "orange" | "yellow";
   dataMode: DataMode;
   isSaving: boolean;
+  archived: boolean;
   onUpdate: (patch: Partial<RiskRule>) => void;
   onRemove: () => void;
 }) {
@@ -979,7 +1113,7 @@ function RiskRow({
         onBlur={() => {
           if (label !== risk.label) onUpdate({ label });
         }}
-        disabled={dataMode === "demo" || isSaving}
+        disabled={dataMode === "demo" || isSaving || archived}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <input
@@ -988,7 +1122,7 @@ function RiskRow({
         onBlur={() => {
           if (trigger !== risk.trigger) onUpdate({ trigger });
         }}
-        disabled={dataMode === "demo" || isSaving}
+        disabled={dataMode === "demo" || isSaving || archived}
         className="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-2">
@@ -996,7 +1130,7 @@ function RiskRow({
         <select
           value={risk.severity}
           onChange={(e) => onUpdate({ severity: e.target.value as RiskRule["severity"] })}
-          disabled={dataMode === "demo" || isSaving}
+          disabled={dataMode === "demo" || isSaving || archived}
           className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         >
           {severities.map((s) => (
@@ -1011,7 +1145,7 @@ function RiskRow({
           type="checkbox"
           checked={risk.enabled}
           onChange={(e) => onUpdate({ enabled: e.target.checked })}
-          disabled={dataMode === "demo" || isSaving}
+          disabled={dataMode === "demo" || isSaving || archived}
         />
         <span className="text-muted-foreground">On</span>
       </label>
@@ -1019,7 +1153,7 @@ function RiskRow({
         {dataMode === "production" && (
           <button
             onClick={onRemove}
-            disabled={isSaving}
+            disabled={isSaving || archived}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
             aria-label="Remove risk rule"
           >

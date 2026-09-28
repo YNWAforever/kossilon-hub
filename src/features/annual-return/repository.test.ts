@@ -2451,7 +2451,7 @@ describe.skipIf(!databaseUrl)("createCase", () => {
     )`;
     await sql`delete from annual_return_cases where company_id = ${TEST_COMPANY_ID}`;
     await sql`delete from companies where id = ${TEST_COMPANY_ID}`;
-    await sql`delete from checklist_templates where id = ${TEST_TEMPLATE_ID}`;
+    // The immutable publication is a stable disposable-DB fixture across runs.
   });
 
   async function seedCompanyAndTemplate(basisDate: string) {
@@ -2471,7 +2471,7 @@ describe.skipIf(!databaseUrl)("createCase", () => {
     await sql`
       insert into checklist_templates (id, name, service_type, description, active, documents, reminders, risk_rules)
       values (
-        ${TEST_TEMPLATE_ID}, 'Test template', 'Annual Return — Private Ltd', '', true,
+        ${TEST_TEMPLATE_ID}, 'Case creation fixture', 'Annual Return — Private Ltd', '', true,
         ${sql.json([
           { id: "doc-1", label: "Signed NAR1", required: true, daysBeforeDue: 14 },
           { id: "doc-2", label: "Register extract", required: false, daysBeforeDue: 7 },
@@ -2479,6 +2479,19 @@ describe.skipIf(!databaseUrl)("createCase", () => {
         '[]'::jsonb, '[]'::jsonb
       )
       on conflict (id) do nothing
+    `;
+    await sql`update checklist_templates set active=true where id=${TEST_TEMPLATE_ID}`;
+    await sql`
+      insert into checklist_template_versions
+        (template_id,version_number,origin,name,service_type,description,documents,reminders,risk_rules)
+      select id,1,'legacy_baseline',name,service_type,description,documents,reminders,risk_rules
+      from checklist_templates where id=${TEST_TEMPLATE_ID}
+      on conflict (template_id,version_number) do nothing
+    `;
+    await sql`
+      update checklist_templates t set published_version_id=v.id
+      from checklist_template_versions v
+      where t.id=${TEST_TEMPLATE_ID} and v.template_id=t.id and v.version_number=1
     `;
   }
 

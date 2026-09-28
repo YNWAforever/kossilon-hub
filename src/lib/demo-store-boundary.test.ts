@@ -31,7 +31,6 @@ const ALLOWED_READERS: Record<string, "gated" | "demo-only"> = {
   "routes/documents.tsx": "gated",
   "routes/payments.tsx": "gated",
   "routes/portal.tsx": "gated",
-  "routes/settings.tsx": "gated",
   "routes/whatsapp.automation.tsx": "gated",
   "routes/whatsapp.tsx": "gated",
 };
