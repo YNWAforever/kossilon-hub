@@ -201,21 +201,11 @@ export function createAnnualReturnEvidenceService(
 
           let updatedCase = lockedCaseItem;
           if (validated.document.category === "payment") {
-            const acceptedProofId = lockedCaseItem.payment?.paymentProofDocumentId;
-            const preservesAcceptedProof =
-              input.decision === "rejected" &&
-              acceptedProofId !== null &&
-              acceptedProofId !== undefined &&
-              acceptedProofId !== input.documentId;
-
-            if (!preservesAcceptedProof) {
-              updatedCase = await annualReturns.updatePayment({
-                caseId: input.caseId,
-                status: input.decision === "verified" ? "Payment received" : "Payment pending",
-                paymentProofDocumentId: input.decision === "verified" ? input.documentId : null,
-                actorId: input.actorId,
-              });
-            }
+            // Reviewing the file answers whether these bytes are acceptable
+            // evidence. It does not certify an invoice, amount or currency. T13
+            // reconciliation is the only path that allocates a reviewed proof
+            // and then changes the canonical payment state. A workbook date is
+            // an observation, never proof of money received.
           } else if (validated.document.category !== "receipt" && checklistItem) {
             const preservesAcceptedProof =
               input.decision === "rejected" &&
