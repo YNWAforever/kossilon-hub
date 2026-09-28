@@ -41,6 +41,13 @@ export const assignWorkItemInputSchema = z
   })
   .strict();
 
+export const workItemPolicyChoicesInputSchema = z
+  .object({
+    workItemId: z.string().uuid(),
+    expectedVersion: z.number().int().positive(),
+  })
+  .strict();
+
 export const previewWorkItemPolicyInputSchema = z
   .object({
     workItemId: z.string().uuid(),
@@ -188,6 +195,16 @@ export async function assignWorkItemForActor(
   });
 }
 
+export async function listWorkItemPolicyChoicesForActor(
+  repository: ReturnType<typeof createWorkItemRepository>,
+  actor: AuthenticatedActor,
+  data: z.output<typeof workItemPolicyChoicesInputSchema>,
+) {
+  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+  requireStaffUserId(actor);
+  return repository.listAttachablePolicies(data);
+}
+
 export async function previewWorkItemPolicyForActor(
   repository: ReturnType<typeof createWorkItemRepository>,
   actor: AuthenticatedActor,
@@ -246,6 +263,14 @@ export const assignWorkItem = createServerFn({ method: "POST" })
   .handler(({ data }) =>
     withDefaultAuthorizedWorkItemRepository((repository, actor) =>
       assignWorkItemForActor(repository, actor, data),
+    ),
+  );
+
+export const listWorkItemPolicyChoices = createServerFn({ method: "GET" })
+  .validator(workItemPolicyChoicesInputSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      listWorkItemPolicyChoicesForActor(repository, actor, data),
     ),
   );
 

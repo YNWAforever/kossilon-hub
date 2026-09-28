@@ -555,6 +555,17 @@ describe.skipIf(!databaseUrl)("ensureWorkItemForEvent", () => {
             ) returning id
           `;
           const repository = createWorkItemRepository({ sql: tx });
+          const choices = await repository.listAttachablePolicies({
+            workItemId: item.id,
+            expectedVersion: item.version,
+          });
+          expect(choices).toEqual([
+            expect.objectContaining({
+              id: policy.id,
+              name: "T05 selected policy",
+              version: 1,
+            }),
+          ]);
           await expect(
             repository.previewPolicyAttachment({
               workItemId: item.id,

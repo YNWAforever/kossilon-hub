@@ -123,6 +123,15 @@ export type AcknowledgeEscalationInput = {
   note: string;
   expectedTeamId?: string;
 };
+export type PolicyAttachmentChoice = {
+  id: string;
+  name: string;
+  version: number;
+  calendarName: string;
+  warningMinutes: number;
+  dueMinutes: number;
+};
+
 export type PolicyAttachmentPreview = {
   workItemId: string;
   policyVersionId: string;
@@ -554,6 +563,9 @@ export type WorkItemRepository = {
       expectedTeamId?: string;
     },
   ): Promise<AssignmentRecommendation[]>;
+  listAttachablePolicies(
+    input: Pick<PolicyAttachmentSelection, "workItemId" | "expectedVersion">,
+  ): Promise<PolicyAttachmentChoice[]>;
   previewPolicyAttachment(input: PolicyAttachmentSelection): Promise<PolicyAttachmentPreview>;
   attachPolicy(input: AttachPolicyInput): Promise<PersistedWorkItem>;
   assign(input: AssignWorkItemInput): Promise<PersistedWorkItem>;
@@ -629,6 +641,46 @@ export function createWorkItemRepository(
           throw new Error("Forbidden: work item moved outside the actor's team.");
         }
         return recommendationsFor(tx, item, readNow(), recommendationOptions);
+      });
+    },
+    listAttachablePolicies(input) {
+      return withTransaction(sql, async (tx) => {
+        const item = await getWorkItem(tx, input.workItemId);
+        if (!item) throw new Error("Work item not found.");
+        if (item.version !== input.expectedVersion) {
+          throw new Error("Work item policy selection is stale.");
+        }
+        if (item.slaPolicyVersionId || item.slaStartedAt || item.slaWarningAt || item.slaDueAt) {
+          throw new Error("Work item already has an SLA policy snapshot.");
+        }
+        if (item.status === "completed" || item.status === "cancelled") {
+          throw new Error("Closed work items cannot receive an SLA policy.");
+        }
+        const rows = await tx<
+          {
+            id: string;
+            name: string;
+            version: number;
+            calendar_name: string;
+            warning_minutes: number;
+            due_minutes: number;
+          }[]
+        >`
+          select p.id, p.name, p.version, c.name calendar_name,
+            p.warning_minutes, p.due_minutes
+          from sla_policies p join business_calendars c on c.id = p.business_calendar_id
+          where p.work_type = ${item.workType} and p.active = true and c.active = true
+            and p.effective_from <= ${readNow()}
+          order by p.version desc, p.id
+        `;
+        return rows.map((row) => ({
+          id: row.id,
+          name: row.name,
+          version: row.version,
+          calendarName: row.calendar_name,
+          warningMinutes: row.warning_minutes,
+          dueMinutes: row.due_minutes,
+        }));
       });
     },
     previewPolicyAttachment(input) {

@@ -6,6 +6,8 @@ import {
   attachWorkItemPolicyForActor,
   attachWorkItemPolicyInputSchema,
   assignWorkItemInputSchema,
+  listWorkItemPolicyChoicesForActor,
+  workItemPolicyChoicesInputSchema,
   previewWorkItemPolicyForActor,
   previewWorkItemPolicyInputSchema,
   assertActorCanAssignWorkItem,
@@ -74,11 +76,17 @@ describe("work queue server authorization", () => {
       dueAt: "2026-09-28T03:00:00.000Z",
       previewHash: "a".repeat(64),
     };
+    const listAttachablePolicies = vi.fn().mockResolvedValue([]);
     const previewPolicyAttachment = vi.fn().mockResolvedValue(preview);
     const attachPolicy = vi.fn().mockResolvedValue(workItem);
-    const repository = { previewPolicyAttachment, attachPolicy } as unknown as ReturnType<
-      typeof createWorkItemRepository
-    >;
+    const repository = {
+      listAttachablePolicies,
+      previewPolicyAttachment,
+      attachPolicy,
+    } as unknown as ReturnType<typeof createWorkItemRepository>;
+    expect(
+      workItemPolicyChoicesInputSchema.safeParse({ ...selection, actorId: userId }).success,
+    ).toBe(false);
     expect(
       previewWorkItemPolicyInputSchema.safeParse({ ...selection, actorId: userId }).success,
     ).toBe(false);
@@ -87,14 +95,21 @@ describe("work queue server authorization", () => {
     );
     for (const role of ["Staff", "Manager"] as const) {
       await expect(
+        listWorkItemPolicyChoicesForActor(repository, actor(role), selection),
+      ).rejects.toThrow(/Admin/);
+      await expect(
         previewWorkItemPolicyForActor(repository, actor(role), selection),
       ).rejects.toThrow(/Admin/);
       await expect(attachWorkItemPolicyForActor(repository, actor(role), preview)).rejects.toThrow(
         /Admin/,
       );
     }
+    expect(listAttachablePolicies).not.toHaveBeenCalled();
     expect(previewPolicyAttachment).not.toHaveBeenCalled();
     expect(attachPolicy).not.toHaveBeenCalled();
+    await expect(
+      listWorkItemPolicyChoicesForActor(repository, actor("Admin"), selection),
+    ).resolves.toEqual([]);
     await expect(
       previewWorkItemPolicyForActor(repository, actor("Admin"), selection),
     ).resolves.toEqual(preview);

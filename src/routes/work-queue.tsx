@@ -29,6 +29,7 @@ import { useAuth } from "@/features/auth/auth-context-neon";
 import { workQueuePersonLabel, type AssignmentRecommendation } from "@/features/work-items/types";
 import { deriveSlaDisplay, type SlaDisplay, type SlaDisplayState } from "@/features/work-items/sla";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
+import { PolicyAttachmentDialog } from "@/features/work-items/policy-attachment-dialog";
 import { filterWorkQueueDisplay } from "@/features/work-items/queue-display-filters";
 import {
   acknowledgeWorkItemEscalation,
@@ -118,6 +119,7 @@ function WorkQueueRoute() {
   const navigate = Route.useNavigate();
   const { view, owner, workType, sla, priority, status, q: query, page: requestedPage } = search;
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
+  const [policyItem, setPolicyItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
@@ -148,6 +150,7 @@ function WorkQueueRoute() {
     setMatchingSelection(null);
   }, [filterKey]);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
+  const canConfigurePolicy = session?.role === "Admin";
   const filters = { view };
   const queueQuery = useQuery({
     queryKey: ["work-queue", view],
@@ -564,6 +567,8 @@ function WorkQueueRoute() {
                         canManage={canManage}
                         onAssign={setAssignmentItem}
                         onAcknowledge={setAcknowledgementItem}
+                        canConfigurePolicy={canConfigurePolicy}
+                        onConfigurePolicy={setPolicyItem}
                       />
                     </span>
                   </div>
@@ -622,6 +627,8 @@ function WorkQueueRoute() {
                     canManage={canManage}
                     onAssign={setAssignmentItem}
                     onAcknowledge={setAcknowledgementItem}
+                    canConfigurePolicy={canConfigurePolicy}
+                    onConfigurePolicy={setPolicyItem}
                   />
                 </article>
               ))}
@@ -724,6 +731,16 @@ function WorkQueueRoute() {
           onClose={() => setAssignmentItem(null)}
           onAssigned={() => {
             setAssignmentItem(null);
+            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          }}
+        />
+      ) : null}
+      {policyItem ? (
+        <PolicyAttachmentDialog
+          item={policyItem}
+          onClose={() => setPolicyItem(null)}
+          onAttached={() => {
+            setPolicyItem(null);
             void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
           }}
         />
@@ -947,11 +964,15 @@ function QueueActions({
   canManage,
   onAssign,
   onAcknowledge,
+  canConfigurePolicy,
+  onConfigurePolicy,
 }: {
   item: PersistedWorkItem;
   canManage: boolean;
   onAssign: (item: PersistedWorkItem) => void;
   onAcknowledge: (item: PersistedWorkItem) => void;
+  canConfigurePolicy: boolean;
+  onConfigurePolicy: (item: PersistedWorkItem) => void;
 }) {
   return (
     <div className="flex justify-end gap-2">
@@ -962,6 +983,17 @@ function QueueActions({
           className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
         >
           <UserRoundPlus className="h-4 w-4" />
+        </button>
+      ) : null}
+      {canConfigurePolicy && !item.slaPolicyVersionId ? (
+        <button
+          type="button"
+          title="設定工作服務時限"
+          aria-label={`設定 ${item.title} 的服務時限`}
+          onClick={() => onConfigurePolicy(item)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
+        >
+          <Clock3 className="h-4 w-4" />
         </button>
       ) : null}
       {canManage && (item.escalationState === "warning" || item.escalationState === "breach") ? (
