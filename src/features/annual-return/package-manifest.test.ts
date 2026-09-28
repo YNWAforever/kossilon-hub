@@ -53,6 +53,7 @@ function candidate(overrides: Partial<ManifestCandidateEntry> = {}): ManifestCan
   return {
     requirement: requirement(),
     version: version(),
+    safety: "verified",
     pageFrom: null,
     pageTo: null,
     decision: approval,
@@ -162,6 +163,11 @@ describe("buildPackageManifest", () => {
     const result = build([
       candidate({
         version: null,
+        requirement: {
+          ...candidate().requirement,
+          applicability: "not_applicable",
+          applicabilityReason: "Sole director; no second identity document exists.",
+        },
         decision: {
           ...approval,
           decision: "authorized-not-applicable",
@@ -276,6 +282,11 @@ describe("canonicalManifestPayload", () => {
       entries: entryIds.map((id) => ({
         requirementInstanceId: id,
         requirementKey: "NAR1",
+        templateVersion: "annual-return-v1",
+        applicability: "required",
+        applicabilityReason: null,
+        decision: "approve",
+        decisionReason: null,
         partyId: null,
         documentId: `doc-${id}`,
         documentVersionId: `ver-${id}`,

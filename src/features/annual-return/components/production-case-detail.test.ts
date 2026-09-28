@@ -37,7 +37,6 @@ describe("createProductionCaseActions", () => {
       recipientName: "Ada Chan",
       recipientPhone: "+85291234567",
     });
-    await actions.submitPacket();
     await actions.acceptReceipt({
       filingReference: "NAR1-2026-001",
       confirmationDocumentId: confirmationId,
@@ -62,9 +61,6 @@ describe("createProductionCaseActions", () => {
         recipientName: "Ada Chan",
         recipientPhone: "+85291234567",
       },
-    });
-    expect(commands.updateStatus).toHaveBeenNthCalledWith(2, {
-      data: { caseId, nextStatus: "NAR1 prepared" },
     });
     expect(commands.updateFilingProof).toHaveBeenCalledWith({
       data: {

@@ -10,7 +10,13 @@ export type SchemaCatalog = {
   constraints: Readonly<Record<string, string>>;
 };
 
-export type SchemaCapability = "documents" | "payments" | "parties" | "analysis" | "maintenance";
+export type SchemaCapability =
+  | "documents"
+  | "payments"
+  | "parties"
+  | "analysis"
+  | "maintenance"
+  | "packages";
 type Requirement = {
   capability: SchemaCapability;
   kind: "table" | "column" | "index" | "constraint";
@@ -98,6 +104,31 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "document_analysis_jobs_claim_idx",
     expected: "document_analysis_jobs",
   },
+  { capability: "packages", kind: "table", name: "filing_packages" },
+  {
+    capability: "packages",
+    kind: "column",
+    name: "filing_packages.manifest_sha256",
+    expected: "text",
+  },
+  {
+    capability: "packages",
+    kind: "column",
+    name: "filing_packages.artifact_sha256",
+    expected: "text",
+  },
+  {
+    capability: "packages",
+    kind: "index",
+    name: "filing_packages_case_latest_idx",
+    expected: "case_id, revision desc",
+  },
+  {
+    capability: "packages",
+    kind: "constraint",
+    name: "filing_packages_approval_agrees",
+    expected: "approved_by is not null",
+  },
   { capability: "maintenance", kind: "table", name: "maintenance_runs" },
   {
     capability: "maintenance",
@@ -152,6 +183,7 @@ export function inspectSchemaCompatibility(input: {
     parties: { ready: true, issues: [] as string[] },
     analysis: { ready: true, issues: [] as string[] },
     maintenance: { ready: true, issues: [] as string[] },
+    packages: { ready: true, issues: [] as string[] },
   };
   const definitionMismatch: DefinitionMismatch[] = [];
   const tables = new Set(input.catalog.tables.map(normalize));

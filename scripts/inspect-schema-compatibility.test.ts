@@ -25,7 +25,7 @@ describe("T01 schema compatibility release gate", () => {
     expect(noLedger.canRelease).toBe(false);
   });
 
-  it("t01_scenario_3 reports missing Documents, Payments, parties, analysis and maintenance capabilities", () => {
+  it("t01_scenario_3 reports missing Documents, Payments, parties, analysis, maintenance and package capabilities", () => {
     const report = inspectSchemaCompatibility({
       expected: EXPECTED_MIGRATIONS,
       ledger: { present: true, applied: [...EXPECTED_MIGRATIONS] },
@@ -35,6 +35,7 @@ describe("T01 schema compatibility release gate", () => {
       "analysis",
       "documents",
       "maintenance",
+      "packages",
       "parties",
       "payments",
     ]);

@@ -7,6 +7,8 @@ export type AnnualReturnAction =
   | "update_filing_proof"
   | "change_status"
   | "complete"
+  | "prepare_package"
+  | "approve_package"
   | "create_case";
 
 export type AnnualReturnActorRole = "Admin" | "Manager" | "Staff";
@@ -39,6 +41,8 @@ const OPERATIONAL_DENIAL_REASON =
   "Only assigned staff, reviewers, team managers, or admins can update this case.";
 const COMPLETION_DENIAL_REASON =
   "Only admins, team managers, or assigned reviewers can complete annual return cases.";
+const PACKAGE_APPROVAL_DENIAL_REASON =
+  "Only admins, team managers, or assigned reviewers can approve filing packages.";
 
 function actorOwnsOrReviewsCase(
   actor: AnnualReturnActionActor,
@@ -70,14 +74,15 @@ export function getAnnualReturnActionPermission(
     return { allowed: true };
   }
 
-  if (action === "complete") {
+  if (action === "complete" || action === "approve_package") {
     if (actorManagesCaseTeam(actor, case_) || actor.id === case_.reviewerId) {
       return { allowed: true };
     }
 
     return {
       allowed: false,
-      reason: COMPLETION_DENIAL_REASON,
+      reason:
+        action === "approve_package" ? PACKAGE_APPROVAL_DENIAL_REASON : COMPLETION_DENIAL_REASON,
     };
   }
 

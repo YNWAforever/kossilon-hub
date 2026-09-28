@@ -1,4 +1,5 @@
 import { blocksRelease, type PersistedFinding } from "@/features/documents/findings";
+import type { DocumentSafety } from "@/features/documents/safety";
 import {
   canCiteInManifest,
   isCurrent,
@@ -49,11 +50,14 @@ export type FindingState = PersistedFinding;
 
 export type ManifestCandidateEntry = {
   requirement: RequirementInstanceState;
+  templateVersion?: string;
   /**
    * The version being filed, and the pages of it that answer the requirement.
    * Null for a requirement deliberately resolved without evidence.
    */
   version: DocumentVersionState | null;
+  /** Genuine provider scan plus verified stored-byte identity, from the shared safety gate. */
+  safety: DocumentSafety;
   pageFrom: number | null;
   pageTo: number | null;
   decision: HumanDecision | null;
@@ -63,6 +67,11 @@ export type ManifestCandidateEntry = {
 export type ManifestEntry = {
   requirementInstanceId: string;
   requirementKey: string;
+  templateVersion: string | null;
+  applicability: RequirementInstanceState["applicability"];
+  applicabilityReason: string | null;
+  decision: HumanDecision["decision"];
+  decisionReason: string | null;
   partyId: string | null;
   documentId: string | null;
   documentVersionId: string | null;
@@ -94,6 +103,15 @@ export type PackageManifest = {
   /** Which rule set produced these requirements, so the claim is reproducible. */
   requirementTemplateVersion: string;
   entries: readonly ManifestEntry[];
+  /** Canonical payment allocation identity; a reversal changes the approval hash. */
+  payment?: {
+    status: string;
+    allocationId: string | null;
+    proofVersionId?: string | null;
+    amountMinor?: number | null;
+    currency?: string | null;
+    invoiceRef?: string | null;
+  } | null;
 };
 
 export type ManifestResult =
@@ -131,10 +149,24 @@ function blockersFor(candidate: ManifestCandidateEntry): ManifestBlocker[] {
     });
   }
 
+  if (
+    candidate.decision &&
+    ((candidate.requirement.applicability === "required" &&
+      candidate.decision.decision === "authorized-not-applicable") ||
+      (candidate.requirement.applicability !== "required" &&
+        candidate.decision.decision !== "authorized-not-applicable"))
+  ) {
+    blockers.push({
+      kind: "decision-not-approval",
+      requirement,
+      decision: candidate.decision.decision,
+    });
+  }
+
   // A requirement someone authorised as not applicable is settled by that
   // decision and needs no bytes. Everything else needs evidence.
   const resolvedWithoutEvidence =
-    candidate.decision?.decision === "authorized-not-applicable" ||
+    candidate.decision?.decision === "authorized-not-applicable" &&
     candidate.requirement.applicability !== "required";
 
   if (!candidate.version) {
@@ -153,7 +185,7 @@ function blockersFor(candidate: ManifestCandidateEntry): ManifestBlocker[] {
     });
   }
 
-  if (!canCiteInManifest(candidate.version)) {
+  if (candidate.safety !== "verified" || !canCiteInManifest(candidate.version)) {
     blockers.push({
       kind: "evidence-unverifiable",
       requirement,
@@ -184,6 +216,11 @@ export function buildPackageManifest(input: {
     entries.push({
       requirementInstanceId: candidate.requirement.id,
       requirementKey: candidate.requirement.requirementKey,
+      templateVersion: candidate.templateVersion ?? null,
+      applicability: candidate.requirement.applicability,
+      applicabilityReason: candidate.requirement.applicabilityReason ?? null,
+      decision: decision.decision,
+      decisionReason: decision.reason,
       partyId: candidate.requirement.partyId,
       documentId: candidate.version?.documentId ?? null,
       documentVersionId: candidate.version?.id ?? null,
@@ -225,6 +262,11 @@ export function canonicalManifestPayload(manifest: PackageManifest): string {
     .map((entry) => ({
       requirementInstanceId: entry.requirementInstanceId,
       requirementKey: entry.requirementKey,
+      templateVersion: entry.templateVersion,
+      applicability: entry.applicability,
+      applicabilityReason: entry.applicabilityReason,
+      decision: entry.decision,
+      decisionReason: entry.decisionReason,
       partyId: entry.partyId,
       documentId: entry.documentId,
       documentVersionId: entry.documentVersionId,
@@ -239,6 +281,7 @@ export function canonicalManifestPayload(manifest: PackageManifest): string {
     caseId: manifest.caseId,
     returnYear: manifest.returnYear,
     requirementTemplateVersion: manifest.requirementTemplateVersion,
+    payment: manifest.payment ?? null,
     entries,
   });
 }
