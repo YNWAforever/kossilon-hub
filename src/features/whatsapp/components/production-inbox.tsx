@@ -30,7 +30,7 @@ function errorMessage(error: unknown): string {
  * different thing under each one, and only `live` licenses the claim that no
  * client has messaged the firm.
  */
-type InboxConnection = "checking" | "unknown" | "blocked" | "simulated" | "live";
+type InboxConnection = "checking" | "unknown" | "blocked" | "simulated" | "unverified" | "live";
 
 /**
  * The production WhatsApp inbox.
@@ -102,7 +102,9 @@ export function ProductionWhatsAppInbox() {
         ? "blocked"
         : integrationQuery.data.deliveryMode === "simulated"
           ? "simulated"
-          : "live";
+          : integrationQuery.data.capabilityStatus.state === "healthy"
+            ? "live"
+            : "unverified";
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]">
@@ -139,6 +141,19 @@ export function ProductionWhatsAppInbox() {
           </div>
         ) : null}
 
+        {connection === "unverified" ? (
+          <div
+            className="border-b bg-status-yellow-soft p-4 text-sm text-status-yellow"
+            role="status"
+          >
+            <p className="font-medium">WhatsApp connection is unverified</p>
+            <p className="mt-1">
+              Bindings are configured, but this deployment has no current successful provider
+              evidence. An empty inbox does not prove that no client message arrived.
+            </p>
+          </div>
+        ) : null}
+
         {connection === "simulated" ? (
           <div className="border-b bg-status-blue-soft p-4 text-sm text-status-blue" role="status">
             <p className="font-medium">Demo simulation</p>
@@ -169,7 +184,7 @@ export function ProductionWhatsAppInbox() {
           ) : null}
 
           {/* Only a confirmed-live provider licenses this claim. Under checking,
-              unknown, blocked or simulated an empty list says nothing about
+              unknown, blocked, simulated or unverified an empty list says nothing about
               whether a client has messaged the firm. */}
           {!conversationsQuery.isPending &&
           !conversationsQuery.isError &&

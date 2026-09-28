@@ -7,6 +7,12 @@ import {
   type AnnualReturnActorRole,
 } from "@/features/annual-return/permissions";
 import type { ProviderMode } from "@/server/provider-mode";
+import {
+  deriveCapabilityStatuses,
+  presentCapabilityBindingNames,
+  type CapabilityProbeEvidence,
+} from "@/features/operations/capability-status";
+import { deploymentRefFromRuntime } from "@/features/operations/deployment-identity";
 import { missingWhatsAppEnvVars, WHATSAPP_LIVE_PROVIDER_ENV_KEYS } from "./config";
 import type { WhatsAppConversation, WhatsAppConversationMessage } from "./conversations";
 import type {
@@ -74,27 +80,74 @@ export const queueWhatsAppTemplateMessageInputSchema = z.object({
 });
 
 export type WhatsAppDeliveryMode = "live" | "simulated" | "blocked";
+export type WhatsAppIntegrationEvidence = {
+  now?: string;
+  deploymentRef?: string | null;
+  probe?: CapabilityProbeEvidence;
+};
 
+/** Binding names and runtime proof only; secret values never enter the response. */
 export function getWhatsAppIntegrationStatusForEnv(
   env: Env = process.env,
   providerMode: ProviderMode = "live",
+  evidence: WhatsAppIntegrationEvidence = {},
 ) {
   const missingLiveEnvVars = missingWhatsAppEnvVars(env, WHATSAPP_LIVE_PROVIDER_ENV_KEYS);
   const deliveryMode: WhatsAppDeliveryMode =
-    providerMode === "simulated"
-      ? "simulated"
-      : missingLiveEnvVars.length === 0
-        ? "live"
-        : "blocked";
+    providerMode !== "live" ? "simulated" : missingLiveEnvVars.length === 0 ? "live" : "blocked";
+  const now = evidence.now ?? new Date().toISOString();
+  const deploymentRef = evidence.deploymentRef ?? deploymentRefFromRuntime(env);
+  // A current probe with an old or future success timestamp cannot certify
+  // that this deployment has actually exchanged a provider event now.
+  const successAge = evidence.probe?.lastSuccessAt
+    ? Date.parse(now) - Date.parse(evidence.probe.lastSuccessAt)
+    : NaN;
+  const validSuccess = Number.isFinite(successAge) && successAge >= 0 && successAge <= 15 * 60_000;
+  const probe =
+    evidence.probe && !validSuccess
+      ? { ...evidence.probe, lastSuccessAt: null, evidenceRef: null }
+      : evidence.probe;
+  const [capability] = deriveCapabilityStatuses({
+    now,
+    bindingNames: presentCapabilityBindingNames(env),
+    maintenance: null,
+    recentRuns: null,
+    deploymentRef,
+    probes: probe ? { "whatsapp-provider": probe } : undefined,
+  }).filter((item) => item.id === "whatsapp-provider");
+  if (!capability) throw new Error("WhatsApp capability inventory is incomplete.");
+  const capabilityStatus =
+    providerMode !== "live"
+      ? {
+          ...capability,
+          configured: false,
+          reachable: "unknown" as const,
+          lastSuccessAt: null,
+          evidenceRef: null,
+          state: "blocked" as const,
+        }
+      : capability;
 
   return {
-    provider: providerMode === "simulated" ? ("simulated" as const) : ("woztell" as const),
+    provider: providerMode !== "live" ? ("simulated" as const) : ("woztell" as const),
     deliveryMode,
     webhookConfigured:
       providerMode === "live" && !missingLiveEnvVars.includes("WOZTELL_WEBHOOK_SECRET"),
     liveSendConfigured: deliveryMode === "live",
     missingLiveEnvVars,
+    missingBindingNames: missingLiveEnvVars,
+    capabilityStatus,
   };
+}
+
+export function getWhatsAppIntegrationStatusForActor(
+  actor: AuthenticatedActor,
+  env: Env = process.env,
+  providerMode: ProviderMode = "live",
+  evidence: WhatsAppIntegrationEvidence = {},
+) {
+  assertStaffAccess(actor);
+  return getWhatsAppIntegrationStatusForEnv(env, providerMode, evidence);
 }
 
 export type WhatsAppInboundWebhookResponse = {
@@ -352,8 +405,8 @@ export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" })
       import("@/features/auth/neon-auth-server"),
       import("@/server/provider-mode"),
     ]);
-    await requireStaffActor(getRequest());
-    return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
+    const actor = await requireStaffActor(getRequest());
+    return getWhatsAppIntegrationStatusForActor(actor, process.env, currentProviderMode());
   });
 
 // Inbound ingestion is NOT a server function. WOZTELL authenticates with an HMAC

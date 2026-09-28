@@ -43,6 +43,7 @@ const connected = {
   webhookConfigured: true,
   liveSendConfigured: true,
   missingLiveEnvVars: [] as string[],
+  capabilityStatus: { state: "healthy" as const },
 };
 
 const notConnected = {
@@ -51,6 +52,7 @@ const notConnected = {
   webhookConfigured: false,
   liveSendConfigured: false,
   missingLiveEnvVars: ["WOZTELL_ACCESS_TOKEN", "WOZTELL_WEBHOOK_SECRET"],
+  capabilityStatus: { state: "unconfigured" as const },
 };
 
 function renderInbox() {
@@ -116,6 +118,18 @@ describe("production WhatsApp inbox", () => {
     renderInbox();
 
     expect(await screen.findByText(/WhatsApp is not connected/i)).toBeTruthy();
+    expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
+  });
+
+  it("keeps a configured but unverified inbox from claiming there are no messages", async () => {
+    serverFns.listWhatsAppConversations.mockResolvedValue([]);
+    serverFns.getWhatsAppIntegrationStatus.mockResolvedValue({
+      ...connected,
+      capabilityStatus: { state: "unverified" },
+    });
+    renderInbox();
+
+    expect(await screen.findByText(/WhatsApp connection is unverified/i)).toBeTruthy();
     expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
   });
 
