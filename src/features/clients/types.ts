@@ -80,6 +80,7 @@ export type ClientSummary = {
   crNumber: string;
   brNumber: string;
   status: CompanyStatus;
+  assignmentRevision: number;
   ownerId: string;
   ownerName: string;
   ownerInitials: string;
@@ -161,6 +162,7 @@ export type CreateClientInput = {
 
 export type UpdateClientInput = {
   id: string;
+  expectedAssignmentRevision: number;
   companyName: string;
   registeredOffice: string;
   status: CompanyStatus;

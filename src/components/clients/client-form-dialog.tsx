@@ -135,6 +135,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
         const saved = await updateClient({
           data: {
             id: client.id,
+            expectedAssignmentRevision: client.assignmentRevision,
             companyName: form.companyName,
             registeredOffice: form.registeredOffice,
             status: form.status,

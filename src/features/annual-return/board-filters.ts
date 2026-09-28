@@ -12,6 +12,7 @@ export type AnnualReturnBoardSearch = {
   risk?: RiskLevel;
   ownerId?: string;
   overdueOnly?: boolean;
+  bulkOperation?: string;
 };
 
 export type AnnualReturnBoardFilters = {
@@ -72,5 +73,10 @@ export function boardSearchFromUrl(search: Record<string, unknown>): AnnualRetur
     ownerId:
       typeof search.ownerId === "string" && search.ownerId.length > 0 ? search.ownerId : undefined,
     overdueOnly: search.overdueOnly === true || search.overdueOnly === "true" ? true : undefined,
+    bulkOperation:
+      typeof search.bulkOperation === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search.bulkOperation)
+        ? search.bulkOperation
+        : undefined,
   };
 }

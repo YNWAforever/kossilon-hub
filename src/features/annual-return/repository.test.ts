@@ -617,6 +617,35 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   );
 
   it(
+    "t22_scenario_2 rejects a stale case owner revision before changing linked work items",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 224 });
+      const repository = repositoryFor("2026-07-05");
+      await repository.updateStatus(fixture.caseId, "Client reminder sent", USER_AMY_ID);
+      const first = {
+        caseId: fixture.caseId,
+        ownerId: USER_MEI_ID,
+        actorId: USER_KEN_ID,
+        expectedAssignmentRevision: 1,
+      };
+      await repository.assignOwner(first);
+      await expect(repository.assignOwner({ ...first, ownerId: USER_AMY_ID })).rejects.toThrow(
+        /assignment revision changed/i,
+      );
+      const sql = sqlForTests();
+      const [caseRow] = await sql<{ owner_id: string }[]>`
+        select owner_id from annual_return_cases where id=${fixture.caseId}`;
+      expect(caseRow.owner_id).toBe(USER_MEI_ID);
+      const linked = await sql<{ owner_id: string | null }[]>`
+        select owner_id from work_items where annual_return_case_id=${fixture.caseId}
+          and status in ('open','in_progress','blocked')`;
+      expect(linked.length).toBeGreaterThan(0);
+      expect(linked.every((row) => row.owner_id === USER_MEI_ID)).toBe(true);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "reads audit and assignment history for a case",
     async () => {
       const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });

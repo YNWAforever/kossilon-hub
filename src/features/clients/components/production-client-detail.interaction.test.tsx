@@ -42,6 +42,7 @@ function makeClient(overrides: Partial<ClientDetail> = {}): ClientDetail {
     crNumber: "CR1234567",
     brNumber: "BR7654321",
     status: "active",
+    assignmentRevision: 1,
     ownerId: "22222222-2222-4222-8222-222222222222",
     ownerName: "Ada Chan",
     ownerInitials: "AC",

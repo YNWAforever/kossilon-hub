@@ -72,6 +72,12 @@ export const EXPECTED_MIGRATIONS = [
   "0045_whatsapp_media_download.sql",
   "0046_staff_lifecycle.sql",
   "0047_checklist_template_versions.sql",
+  "0048_case_assignment_revision.sql",
+  "0049_bulk_case_assign_action.sql",
+  "0050_client_assignment_revision.sql",
+  "0051_bulk_client_assign_action.sql",
+  "0052_resource_tags.sql",
+  "0053_bulk_tag_action.sql",
 ] as const;
 
 export type SchemaLedger = {
