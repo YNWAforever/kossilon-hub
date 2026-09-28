@@ -503,6 +503,7 @@ function ProductionDocumentsSection({
     caseId: string;
     documentId: string;
     checklistItemId?: string;
+    expectedVersion?: number;
     decision: "verified" | "rejected";
     reason?: string;
   }) => void;
@@ -722,6 +723,7 @@ function ReviewActions({
     caseId: string;
     documentId: string;
     checklistItemId?: string;
+    expectedVersion?: number;
     decision: "verified" | "rejected";
     reason?: string;
   }) => void;
@@ -782,6 +784,7 @@ function ReviewActions({
                 onReview({
                   caseId: record.caseId!,
                   documentId: record.id,
+                  expectedVersion: record.versionNumber ?? undefined,
                   checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
                   decision: "verified",
                 })
@@ -839,6 +842,7 @@ function ReviewActions({
               onReview({
                 caseId: record.caseId!,
                 documentId: record.id,
+                expectedVersion: record.versionNumber ?? undefined,
                 checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
                 decision: "rejected",
                 reason: composeRejectionReason(reasonCode, note),

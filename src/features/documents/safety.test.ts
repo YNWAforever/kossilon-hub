@@ -20,8 +20,19 @@ function actor(overrides: Partial<AuthenticatedActor> = {}): AuthenticatedActor 
 
 describe("documentSafetyOf", () => {
   it("treats a provider verdict on an available file as verified", () => {
+    const checksum = "a".repeat(64);
+    expect(
+      documentSafetyOf({
+        uploadStatus: "available",
+        scanVerdictSource: "provider",
+        checksum,
+        sizeBytes: 4,
+        verifiedChecksum: checksum,
+        verifiedByteSize: 4,
+      }),
+    ).toBe("verified");
     expect(documentSafetyOf({ uploadStatus: "available", scanVerdictSource: "provider" })).toBe(
-      "verified",
+      "unknown",
     );
   });
 

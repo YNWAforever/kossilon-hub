@@ -157,6 +157,10 @@ export async function drainDocumentAnalysisJobs(
     const safety: DocumentSafety = documentSafetyOf({
       uploadStatus: subject.uploadStatus,
       scanVerdictSource: subject.scanVerdictSource,
+      checksum: subject.version.declaredChecksum ?? undefined,
+      sizeBytes: subject.declaredByteSize ?? undefined,
+      verifiedChecksum: subject.version.verifiedChecksum,
+      verifiedByteSize: subject.verifiedByteSize,
     });
 
     // The Phase A gate, inherited rather than restated. Analysis reads the bytes,

@@ -138,6 +138,9 @@ beforeEach(() => {
       contentType: "application/pdf",
       sizeBytes: 4,
       checksum: "a".repeat(64),
+      verifiedChecksum: "a".repeat(64),
+      verifiedByteSize: 4,
+      versionNumber: 1,
       uploadStatus: "available",
       // A picker that offers a file whose only "clean" came from the fixture
       // scanner would be offering unverified evidence, so the fixture is a real
@@ -157,6 +160,9 @@ beforeEach(() => {
       contentType: "application/pdf",
       sizeBytes: 4,
       checksum: "b".repeat(64),
+      verifiedChecksum: "b".repeat(64),
+      verifiedByteSize: 4,
+      versionNumber: 1,
       uploadStatus: "available",
       scanVerdictSource: "provider",
       reviewStatus: "verified",

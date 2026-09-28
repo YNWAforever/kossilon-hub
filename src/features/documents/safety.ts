@@ -28,10 +28,22 @@ export type DocumentSafety =
 export function documentSafetyOf(input: {
   uploadStatus: DocumentStatus;
   scanVerdictSource: ScanVerdictSource | null;
+  checksum?: string;
+  sizeBytes?: number;
+  verifiedChecksum?: string | null;
+  verifiedByteSize?: number | null;
 }): DocumentSafety {
   if (input.uploadStatus === "rejected") return "unsafe";
   if (input.uploadStatus !== "available") return "pending";
-  return input.scanVerdictSource === "provider" ? "verified" : "unknown";
+  return input.scanVerdictSource === "provider" &&
+    input.verifiedChecksum !== undefined &&
+    input.verifiedChecksum !== null &&
+    input.verifiedChecksum === input.checksum &&
+    input.verifiedByteSize !== undefined &&
+    input.verifiedByteSize !== null &&
+    input.verifiedByteSize === input.sizeBytes
+    ? "verified"
+    : "unknown";
 }
 
 /**

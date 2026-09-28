@@ -65,6 +65,10 @@ const baseDocument: PrivateDocument = {
   contentType: "application/pdf",
   sizeBytes: 128,
   checksum: "a".repeat(64),
+  verifiedChecksum: "a".repeat(64),
+  verifiedByteSize: 128,
+  currentVersionId: "77777777-7777-4777-8777-777777777778",
+  versionNumber: 1,
   uploadStatus: "available",
   scanVerdictSource: "provider",
   reviewStatus: "pending",
@@ -174,6 +178,7 @@ describe("annual return evidence service", () => {
       documentId,
       reviewerId: actorId,
       decision: "rejected",
+      expectedVersion: 1,
       reason: "Amount mismatch",
     });
     expect(harness.annualReturns.updatePayment).toHaveBeenCalledWith({

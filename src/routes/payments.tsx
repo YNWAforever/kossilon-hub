@@ -124,6 +124,7 @@ export function ProductionPaymentsRoute() {
                             data: {
                               caseId: document.caseId!,
                               documentId: document.id,
+                              expectedVersion: document.versionNumber ?? undefined,
                               decision: "verified",
                             },
                           })
@@ -140,6 +141,7 @@ export function ProductionPaymentsRoute() {
                             data: {
                               caseId: document.caseId!,
                               documentId: document.id,
+                              expectedVersion: document.versionNumber ?? undefined,
                               decision: "rejected",
                               reason: "Payment evidence rejected during staff review",
                             },
