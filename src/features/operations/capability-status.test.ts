@@ -127,6 +127,36 @@ describe("T08 dynamic capability status", () => {
     expect(status("sha-old", "2026-09-27T01:30:00.000Z")?.state).toBe("unverified");
   });
 
+  it("does not mark a fresh probe healthy using stale or future provider success", () => {
+    const base = {
+      now: NOW,
+      bindingNames: ["DOCUMENT_SCANNER_URL", "DOCUMENT_SCANNER_API_KEY"],
+      maintenance: null,
+      recentRuns: null,
+      deploymentRef: "abcdef1234567",
+    };
+    const status = (lastSuccessAt: string, reachable: "yes" | "no" = "yes") =>
+      deriveCapabilityStatuses({
+        ...base,
+        probes: {
+          "malware-scanner-provider": {
+            reachable,
+            lastSuccessAt,
+            evidenceRef: "probe:scanner-1",
+            deploymentRef: "abcdef1234567",
+            checkedAt: NOW,
+          },
+        },
+      }).find((item) => item.id === "malware-scanner-provider");
+    expect(status("2026-09-27T01:30:00.000Z")?.state).toBe("unverified");
+    expect(status("2026-09-27T02:01:00.000Z")).toMatchObject({
+      state: "unverified",
+      lastSuccessAt: null,
+    });
+    expect(status("2026-09-27T01:30:00.000Z", "no")?.state).toBe("degraded");
+    expect(status("2026-09-27T02:01:00.000Z", "no")?.state).toBe("blocked");
+  });
+
   it("only trusts scheduler success from the active deployment and a valid owner", async () => {
     const run: MaintenanceRunRecord = {
       id: "scheduled-success",

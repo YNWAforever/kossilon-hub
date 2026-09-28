@@ -86,8 +86,19 @@ export function deriveCapabilityStatuses(input: {
       probeAge <= 15 * 60_000
         ? probe
         : null;
+    const successAge = currentProbe?.lastSuccessAt
+      ? Date.parse(input.now) - Date.parse(currentProbe.lastSuccessAt)
+      : NaN;
+    const successBeforeCheck = currentProbe?.lastSuccessAt
+      ? Date.parse(currentProbe.checkedAt) - Date.parse(currentProbe.lastSuccessAt)
+      : NaN;
+    const plausibleSuccess =
+      Number.isFinite(successAge) &&
+      successAge >= 0 &&
+      Number.isFinite(successBeforeCheck) &&
+      successBeforeCheck >= 0;
     let reachable: CapabilityStatus["reachable"] = currentProbe?.reachable ?? "unknown";
-    let lastSuccessAt = currentProbe?.lastSuccessAt ?? null;
+    let lastSuccessAt = plausibleSuccess ? (currentProbe?.lastSuccessAt ?? null) : null;
     let evidenceRef = currentProbe?.evidenceRef ?? null;
     let state: CapabilityState = !implemented
       ? "blocked"
@@ -102,11 +113,11 @@ export function deriveCapabilityStatuses(input: {
       else if (configured && input.maintenance.state === "healthy") state = "healthy";
       // Foreign and legacy rows cannot certify or degrade the active deployment.
     } else if (configured && currentProbe) {
-      if (currentProbe.reachable === "no")
-        state = currentProbe.lastSuccessAt ? "degraded" : "blocked";
+      if (currentProbe.reachable === "no") state = lastSuccessAt ? "degraded" : "blocked";
       else if (
         currentProbe.reachable === "yes" &&
-        currentProbe.lastSuccessAt &&
+        lastSuccessAt &&
+        successAge <= 15 * 60_000 &&
         currentProbe.deploymentRef &&
         currentProbe.evidenceRef
       )
