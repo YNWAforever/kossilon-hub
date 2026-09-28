@@ -55,31 +55,29 @@ function isH3SwallowedErrorBody(body: string): boolean {
 }
 
 /**
- * The other half of the five-minute cron trigger in `wrangler.template.jsonc`.
- *
- * Without this export the Worker only ever answered `fetch`, so the 5-minute
- * trigger had nothing to invoke: SLA escalations were never evaluated, the
- * notification outbox was only dispatched as a side effect of a staff member
- * sending a follow-up, and expired upload intents were never reclaimed.
- *
- * `runFirmMaintenance` is actor-free by design — a scheduler has no request to
- * derive an actor from — and is imported lazily so a `fetch` cold start does not
- * pull the database client in.
+ * Cloudflare's owner-gated scheduled hook and Vercel's authenticated HTTP cron
+ * both enter the per-job maintenance trigger. The trigger is imported lazily so
+ * a normal page request does not load database clients during cold start.
  */
 type MaintenanceRunner = (input: {
   now: string;
   triggerSource: "scheduled" | "manual";
 }) => Promise<unknown>;
 
-const defaultMaintenanceRunner: MaintenanceRunner = async (input) =>
-  (await import("./server/maintenance")).runFirmMaintenance(input);
+const defaultMaintenanceRunner: MaintenanceRunner = async (input) => {
+  const { runMaintenanceTickOnServer, INITIAL_SCHEDULED_JOBS } =
+    await import("./server/maintenance-trigger-runtime");
+  return runMaintenanceTickOnServer({
+    trigger: input.triggerSource,
+    scheduledAt: input.now,
+    runId: crypto.randomUUID(),
+    allowedJobs: [...INITIAL_SCHEDULED_JOBS],
+  });
+};
 
 /**
- * `run` is injectable so a test can assert the wiring without executing it. That
- * matters more than it sounds: this function dispatches notifications, deletes R2
- * objects and rewrites outbox rows, and it resolves its own bindings from the
- * environment. A test that called it for real would do all of that against
- * whatever DATABASE_URL happened to be in scope — a developer's .env, or CI's.
+ * Injectable for the hook wiring test; the default opens the real maintenance
+ * repositories and must never be executed against an ambient developer DB.
  */
 export async function runScheduledMaintenanceForWorker(
   scheduledTime: number,
@@ -94,6 +92,14 @@ export async function runScheduledMaintenanceForWorker(
       triggerSource: "scheduled",
     });
     console.log("scheduled maintenance", JSON.stringify(result));
+    if (
+      result &&
+      typeof result === "object" &&
+      "outcome" in result &&
+      result.outcome === "partial"
+    ) {
+      throw new Error("Scheduled maintenance completed with failed or unknown jobs.");
+    }
   } catch (error) {
     // A run where one pass failed still learned everything the other passes
     // found, and that ride-along result is logged in the same shape as a clean
@@ -116,6 +122,27 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const pathname = new URL(request.url).pathname;
+      if (pathname === "/api/cron/maintenance") {
+        const { authorizeMaintenanceRequest } = await import("./server/maintenance-trigger");
+        if (process.env.MAINTENANCE_SCHEDULER_OWNER !== "vercel") {
+          return new Response("Scheduler owner is not Vercel.", { status: 503 });
+        }
+        if (!authorizeMaintenanceRequest(request, process.env.CRON_SECRET)) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        const { runMaintenanceTickOnServer, scheduledSlot, INITIAL_SCHEDULED_JOBS } =
+          await import("./server/maintenance-trigger-runtime");
+        const result = await runMaintenanceTickOnServer({
+          trigger: "scheduled",
+          scheduledAt: scheduledSlot(new Date()),
+          runId: crypto.randomUUID(),
+          allowedJobs: [...INITIAL_SCHEDULED_JOBS],
+        });
+        return Response.json(result, {
+          status: result.outcome === "partial" ? 500 : 200,
+          headers: { "cache-control": "no-store" },
+        });
+      }
       const isAuthProxyRequest = pathname.startsWith("/api/auth/");
       const isMagicLinkWebhook = pathname === "/api/webhooks/neon-auth";
       const isMagicLinkConfirmation = pathname === "/auth/magic-link/confirm";

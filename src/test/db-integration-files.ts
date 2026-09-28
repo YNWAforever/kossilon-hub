@@ -19,4 +19,5 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/service-subscriptions/repository.test.ts",
   "src/features/whatsapp/repository.test.ts",
   "src/features/work-items/repository.test.ts",
+  "src/server/maintenance-trigger.test.ts",
 ] as const;

@@ -14,6 +14,15 @@ const wranglerTemplate = parse(
  * whether it runs. These tests check the wiring instead.
  */
 describe("scheduled maintenance wiring", () => {
+  it("declares one Vercel HTTP cron with a server-secret gate", () => {
+    const config = JSON.parse(
+      readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"),
+    ) as { crons?: { path: string; schedule: string }[] };
+    expect(config.crons).toEqual([{ path: "/api/cron/maintenance", schedule: "*/5 * * * *" }]);
+    expect(serverEntry).toContain('pathname === "/api/cron/maintenance"');
+    expect(serverEntry).toContain("authorizeMaintenanceRequest(request, process.env.CRON_SECRET)");
+  });
+
   it("declares a cron trigger", () => {
     expect(wranglerTemplate.triggers?.crons ?? []).not.toHaveLength(0);
   });
@@ -45,8 +54,11 @@ describe("scheduled maintenance wiring", () => {
 
   it("routes the hook to the real maintenance entrypoint", () => {
     expect(serverEntry).toContain("runScheduledMaintenanceForWorker");
-    expect(serverEntry).toContain('import("./server/maintenance")');
-    expect(serverEntry).toContain("runFirmMaintenance(");
+    expect(serverEntry).toContain('import("./server/maintenance-trigger-runtime")');
+    expect(serverEntry).toContain("runMaintenanceTickOnServer(");
+    expect(readFileSync(new URL("./nitro-scheduled.ts", import.meta.url), "utf8")).toContain(
+      'MAINTENANCE_SCHEDULER_OWNER !== "cloudflare"',
+    );
   });
 });
 
@@ -82,11 +94,29 @@ describe("runScheduledMaintenanceForWorker", () => {
     );
   });
 
+  it("reports partial scheduled jobs as a platform failure", async () => {
+    const { runScheduledMaintenanceForWorker } = await import("../server.ts");
+    const run = vi.fn(async () => ({
+      outcome: "partial",
+      jobs: [{ job: "evaluateEscalations", state: "failed" }],
+    }));
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      await expect(runScheduledMaintenanceForWorker(Date.now(), run)).rejects.toThrow(
+        "Scheduled maintenance completed with failed or unknown jobs.",
+      );
+    } finally {
+      error.mockRestore();
+      log.mockRestore();
+    }
+  });
+
   it("defaults to the real maintenance entrypoint", async () => {
     const source = readFileSync(new URL("../server.ts", import.meta.url), "utf8");
 
-    expect(source).toContain('import("./server/maintenance")');
-    expect(source).toContain("runFirmMaintenance(input)");
+    expect(source).toContain('import("./server/maintenance-trigger-runtime")');
+    expect(source).toContain("runMaintenanceTickOnServer({");
   });
 
   /**

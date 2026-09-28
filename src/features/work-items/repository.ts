@@ -459,7 +459,10 @@ export type WorkItemRepository = {
   ): Promise<AssignmentRecommendation[]>;
   assign(input: AssignWorkItemInput): Promise<PersistedWorkItem>;
   acknowledgeEscalation(input: AcknowledgeEscalationInput): Promise<PersistedWorkItem>;
-  evaluateEscalations(now?: string): Promise<{ warnings: number; breaches: number }>;
+  evaluateEscalations(
+    now?: string,
+    limit?: number,
+  ): Promise<{ warnings: number; breaches: number }>;
   close(): Promise<void>;
 };
 
@@ -506,7 +509,10 @@ export function createWorkItemRepository(
     async lastSlaEvaluationAt() {
       const rows = await sql<{ finished_at: string | Date | null }[]>`
         select max(finished_at) finished_at from maintenance_runs
-        where trigger_source = 'scheduled' and passes->>'escalations' is not null
+        where trigger_source = 'scheduled' and (
+            passes->>'escalations' is not null
+            or passes @> '{"jobs":[{"job":"evaluateEscalations","state":"succeeded"}]}'::jsonb
+          )
       `;
       return rows[0]?.finished_at ? iso(rows[0].finished_at) : null;
     },
@@ -620,8 +626,32 @@ export function createWorkItemRepository(
         return mapWorkItem(rows[0]);
       });
     },
-    async evaluateEscalations(now = readNow()) {
-      const items = await repository.listQueue();
+    async evaluateEscalations(now = readNow(), limit = 100) {
+      if (!Number.isInteger(limit) || limit < 1 || limit > 500)
+        throw new Error("Escalation batch limit must be between 1 and 500.");
+      // The prior pass loaded every work item before deciding which ones were
+      // due. Select only unrecorded thresholds, so the next tick drains the
+      // following batch instead of repeatedly examining the same first page.
+      const items = await sql<{ id: string }[]>`
+        select w.id from work_items w
+        where w.status not in ('completed', 'cancelled')
+          and (
+            (w.sla_warning_at <= ${now} and not exists (
+              select 1 from escalation_events e
+              where e.work_item_id = w.id
+                and e.sla_policy_version_id = w.sla_policy_version_id
+                and e.threshold = 'warning'
+            ))
+            or ((w.sla_due_at <= ${now} or w.sla_breached_at is not null) and not exists (
+              select 1 from escalation_events e
+              where e.work_item_id = w.id
+                and e.sla_policy_version_id = w.sla_policy_version_id
+                and e.threshold = 'breach'
+            ))
+          )
+        order by w.sla_due_at, w.id
+        limit ${limit}
+      `;
       let warnings = 0;
       let breaches = 0;
       for (const candidate of items) {

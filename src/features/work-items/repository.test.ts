@@ -237,9 +237,17 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
               '2099-01-02T00:00:00.000Z', '2099-01-02T00:00:00.000Z',
               '2099-01-02T00:00:01.000Z', 1000, 'succeeded',
               ${tx.json({ escalations: null })}, 'scheduled'
+            ), (
+              '2099-01-03T00:00:00.000Z', '2099-01-03T00:00:00.000Z',
+              '2099-01-03T00:00:01.000Z', 1000, 'succeeded',
+              ${tx.json({ jobs: [{ job: "evaluateEscalations", state: "succeeded" }] })}, 'scheduled'
+            ), (
+              '2099-01-04T00:00:00.000Z', '2099-01-04T00:00:00.000Z',
+              '2099-01-04T00:00:01.000Z', 1000, 'failed',
+              ${tx.json({ jobs: [{ job: "evaluateEscalations", state: "failed" }] })}, 'scheduled'
             )
           `;
-          expect(await repository.lastSlaEvaluationAt()).toBe("2099-01-01T00:00:01.000Z");
+          expect(await repository.lastSlaEvaluationAt()).toBe("2099-01-03T00:00:01.000Z");
           const queue = await repository.listQueue({ teamId: fixture.team_id });
           expect(
             queue
@@ -312,8 +320,8 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
             }),
           ).rejects.toThrow("stale");
 
-          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z");
-          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z");
+          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z", 1);
+          await repository.evaluateEscalations("2026-07-01T02:00:00.000Z", 1);
           let events = await tx<{ work_item_id: string; threshold: string }[]>`
             select work_item_id, threshold from escalation_events
             where work_item_id in (${warningId}, ${breachId})
