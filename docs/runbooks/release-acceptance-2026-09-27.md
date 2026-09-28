@@ -2,6 +2,10 @@
 
 **Decision: NO-GO for production promotion.** The implementation branch is reviewable local source evidence. It is not the observed deployed commit, and no production migration, live send, invitation, restore, or rollout was performed by this task.
 
+## Integrated source verification
+
+PR #95 at exact head `b0b383f76525f8da680824ea4f01abd678592036` passed [GitHub CI](https://github.com/YNWAforever/kossilon-hub/actions/runs/36470280512): disposable PostgreSQL migrations through 0065, 228 test files and 1,960 tests passed (1 file and 5 tests skipped), lint, typecheck, pre-deploy gate, Vercel build, dev-server imports and built scheduler check. The nonproduction integration merge `122a47542be400a9930349bd6c576e587947a231` has the same source tree as that tested head. This is source and disposable-database evidence; production remains NO-GO pending the runtime gates below.
+
 ## ReleaseEvidence
 
 | Field           | Observed value / gate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
