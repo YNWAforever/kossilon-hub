@@ -18,6 +18,8 @@ export type CaseReadinessSnapshot = {
   currentManifestHash: string | null;
   approval: { manifestHash: string; approverId: string } | null;
   submission: { id: string; reference: string; verifiedAt: string } | null;
+  /** Existing live handoff, including one prepared but not yet submitted. */
+  activeHandoffId?: string | null;
   returnReconciliation: {
     id: string;
     status: "matched" | "exception";
@@ -110,6 +112,7 @@ export function evaluateCaseReadiness(snapshot: CaseReadinessSnapshot): Readines
   }
 
   if (snapshot.caseLocked || snapshot.currentStatus === "Completed") add("case-locked");
+  if (snapshot.activeHandoffId) add("case-locked", snapshot.activeHandoffId);
 
   const documentsComplete = snapshot.requiredEvidenceState === "confirmed";
   const paymentConfirmed = snapshot.paymentEvidenceState === "confirmed";
@@ -136,7 +139,8 @@ export function evaluateCaseReadiness(snapshot: CaseReadinessSnapshot): Readines
     canApprovePackage &&
     approvalCurrent &&
     snapshot.currentStatus !== "Filed" &&
-    snapshot.submission === null;
+    snapshot.submission === null &&
+    !snapshot.activeHandoffId;
 
   if (
     !snapshot.submission?.id ||

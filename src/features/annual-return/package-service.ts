@@ -620,11 +620,23 @@ export async function approvePackageForActor(
   });
 }
 
-export async function downloadApprovedPackageForActor(
+export type VerifiedPackageSnapshot = {
+  packageId: string;
+  caseId: string;
+  revision: number;
+  manifestHash: string;
+  manifest: PackageManifest;
+  approvedBy: string;
+  body: ArrayBuffer;
+  checksum: string;
+};
+
+/** The same current manifest and stored-byte gate used by approved downloads. */
+export async function inspectApprovedPackageForActor(
   actor: AuthenticatedActor,
   packageId: string,
   dependencies: PackageDependencies,
-): Promise<AuthorizedDownload> {
+): Promise<VerifiedPackageSnapshot> {
   entityIdSchema.parse(packageId);
   userId(actor);
   const db = dependencies.sql ?? getSqlClient();
@@ -632,7 +644,7 @@ export async function downloadApprovedPackageForActor(
     select * from filing_packages where id = ${packageId}`;
   if (!packageRow) throw new Error("Filing package not found.");
   await requireCaseRead(db, actor, packageRow.case_id);
-  if (packageRow.state !== "approved") {
+  if (packageRow.state !== "approved" || !packageRow.approved_by) {
     throw new Error("Only an approved package can be downloaded.");
   }
   const latest = await latestPackage(db, packageRow.case_id);
@@ -650,10 +662,27 @@ export async function downloadApprovedPackageForActor(
     sizeBytes: Number(packageRow.artifact_size_bytes),
   });
   return {
+    packageId: packageRow.id,
+    caseId: packageRow.case_id,
+    revision: packageRow.revision,
+    manifestHash: snapshot.hash,
+    manifest: snapshot.manifest,
+    approvedBy: packageRow.approved_by,
     body,
-    fileName:
-      safePackageFilename("NAR1-" + packageRow.case_id + "-v" + packageRow.revision) + ".zip",
-    contentType: "application/zip",
     checksum: packageRow.artifact_sha256,
+  };
+}
+
+export async function downloadApprovedPackageForActor(
+  actor: AuthenticatedActor,
+  packageId: string,
+  dependencies: PackageDependencies,
+): Promise<AuthorizedDownload> {
+  const verified = await inspectApprovedPackageForActor(actor, packageId, dependencies);
+  return {
+    body: verified.body,
+    fileName: safePackageFilename("NAR1-" + verified.caseId + "-v" + verified.revision) + ".zip",
+    contentType: "application/zip",
+    checksum: verified.checksum,
   };
 }

@@ -159,4 +159,19 @@ describe("evaluateCaseReadiness", () => {
       expect.arrayContaining([expect.objectContaining({ code: "return-unresolved" })]),
     );
   });
+
+  it("t03_active_handoff never offers a second external submission", () => {
+    const result = evaluateCaseReadiness({
+      ...BASE,
+      submission: null,
+      returnReconciliation: null,
+      activeHandoffId: "handoff-in-progress",
+    });
+    expect(result.canRecordSubmission).toBe(false);
+    expect(result.blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "case-locked", targetId: "handoff-in-progress" }),
+      ]),
+    );
+  });
 });

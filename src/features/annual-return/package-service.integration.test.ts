@@ -19,6 +19,7 @@ import {
 import {
   approvePackageForActor,
   downloadApprovedPackageForActor,
+  inspectApprovedPackageForActor,
   preparePackageForActor,
 } from "./package-service";
 
@@ -1024,6 +1025,42 @@ describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
         { storage: memoryStorage() },
       ),
     ).resolves.toMatchObject({ state: "blocked", reason: "package-missing" });
+  });
+
+  it("t03_verified_package exposes the current canonical manifest only while its bytes are verifiable", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const verified = await inspectApprovedPackageForActor(fixture.actor, draft.id, deps);
+      expect(verified).toMatchObject({
+        packageId: draft.id,
+        caseId: fixture.caseId,
+        revision: 1,
+        manifestHash: draft.manifestHash,
+        approvedBy: fixture.actor.userId,
+        manifest: {
+          caseId: fixture.caseId,
+          payment: { status: "Payment received" },
+        },
+      });
+      await tx.unsafe(
+        "update case_requirement_instances set requirement_key='Changed NAR1', updated_at=now() where id=$1",
+        [fixture.requirementId],
+      );
+      await expect(inspectApprovedPackageForActor(fixture.actor, draft.id, deps)).rejects.toThrow(
+        /stale/i,
+      );
+    });
   });
 
   it("t03_snapshot blocks missing, draft, stale and unreadable packages before showing ready", async () => {
