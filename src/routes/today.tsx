@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -6,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { getAnnualReturnWorkViews } from "@/features/annual-return/server-fns";
 import { annualReturnQueryKeys } from "@/features/annual-return/query-keys";
 import type { WorkViewKey } from "@/features/annual-return/work-views";
+import { DailyWorkRow } from "@/features/annual-return/components/daily-work-row";
 
 /**
  * 今日工作 — what to do now, rather than what exists.
@@ -20,12 +20,21 @@ import type { WorkViewKey } from "@/features/annual-return/work-views";
  */
 
 export const Route = createFileRoute("/today")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    view: (search.view === "newlyReceived" ||
+    search.view === "awaitingMyReview" ||
+    search.view === "readyToFile" ||
+    search.view === "returnsAndExceptions"
+      ? search.view
+      : "chaseToday") as WorkViewKey,
+  }),
   component: TodayRoute,
 });
 
 function TodayRoute() {
   const { dataMode } = Route.useRouteContext();
-  const [active, setActive] = useState<WorkViewKey>("chaseToday");
+  const { view: active } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const viewsQuery = useQuery({
     queryKey: annualReturnQueryKeys.workViews(),
@@ -56,9 +65,15 @@ function TodayRoute() {
       <PageHeader eyebrow="Operations" title="今日工作" />
 
       {viewsQuery.error ? (
-        <p className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
-          無法載入今日工作。這不代表沒有工作，請直接開啟案件板。
-        </p>
+        <div
+          role="alert"
+          className="space-y-2 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
+          <p>無法載入今日工作。這不代表沒有工作，請由負責同事核對案件板。</p>
+          <Link className="inline-flex rounded-md border px-3 py-2" to="/annual-returns">
+            開啟案件板
+          </Link>
+        </div>
       ) : null}
 
       <div className="flex flex-wrap gap-2" role="tablist">
@@ -70,7 +85,9 @@ function TodayRoute() {
             className={`rounded-md border px-3 py-2 text-sm ${
               view.definition.key === active ? "bg-primary text-primary-foreground" : ""
             }`}
-            onClick={() => setActive(view.definition.key)}
+            onClick={() =>
+              void navigate({ search: { view: view.definition.key }, resetScroll: false })
+            }
             type="button"
           >
             {view.definition.label}
@@ -89,41 +106,19 @@ function TodayRoute() {
           </div>
 
           {!current.definition.released ? (
-            <p className="p-4 text-sm text-status-yellow">{current.definition.unavailableReason}</p>
+            <p className="p-4 text-sm text-status-yellow" role="status">
+              {current.definition.unavailableReason} 負責同事請開啟相關案件逐項核對。
+            </p>
           ) : current.rows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
-              {viewsQuery.isPending ? "載入中…" : "現時沒有這一類工作。"}
+              {viewsQuery.isPending
+                ? "載入中…"
+                : "現時沒有這一類工作。如預期應有案件，請由負責同事在案件板核對。"}
             </p>
           ) : (
             <div className="divide-y">
               {current.rows.map((row) => (
-                <div
-                  key={row.caseId}
-                  className="grid gap-2 p-4 text-sm md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_140px_auto] md:items-center"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{row.companyName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {`${row.returnYear} · ${row.ownerName}`}
-                    </p>
-                  </div>
-                  {/* The reason this row is here, named. */}
-                  <p className="truncate text-muted-foreground">{row.blocker}</p>
-                  <p
-                    className={row.daysRemaining < 0 ? "text-status-red" : "text-muted-foreground"}
-                  >
-                    {row.daysRemaining < 0
-                      ? `逾期 ${-row.daysRemaining} 天`
-                      : `尚餘 ${row.daysRemaining} 天`}
-                  </p>
-                  <Link
-                    className="justify-self-start rounded-md border px-3 py-2 text-sm md:justify-self-end"
-                    to="/annual-returns/$id"
-                    params={{ id: row.caseId }}
-                  >
-                    開啟案件
-                  </Link>
-                </div>
+                <DailyWorkRow key={row.caseId} row={row} viewKey={current.definition.key} />
               ))}
             </div>
           )}

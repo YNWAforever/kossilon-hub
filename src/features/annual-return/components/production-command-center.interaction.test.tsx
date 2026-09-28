@@ -104,7 +104,7 @@ describe("production annual return command center", () => {
 
     const alert = await screen.findByRole("alert");
 
-    expect(alert.textContent).toContain("Annual return data is unavailable.");
+    expect(alert.textContent).toContain("無法讀取周年申報案件。");
     expect(alert.textContent).not.toContain("ECONNREFUSED");
     expect(screen.queryByText(/10\.0\.0\.4/)).toBeNull();
   });
@@ -118,14 +118,16 @@ describe("production annual return command center", () => {
 
     await screen.findByRole("alert");
 
-    expect(screen.queryByText("No annual return cases match these filters.")).toBeNull();
+    expect(screen.queryByText("目前沒有符合篩選條件的案件。請由負責同事核對篩選條件。")).toBeNull();
   });
 
   it("shows the empty state when the query succeeds with no cases", async () => {
     serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
     renderBoard();
 
-    expect(await screen.findByText("No annual return cases match these filters.")).toBeTruthy();
+    expect(
+      await screen.findByText("目前沒有符合篩選條件的案件。請由負責同事核對篩選條件。"),
+    ).toBeTruthy();
   });
 
   it("surfaces a work queue failure as a banner instead of silent per-row text", async () => {
@@ -141,7 +143,7 @@ describe("production annual return command center", () => {
           .getAllByRole("status")
           .map((node) => node.textContent ?? "")
           .join(" "),
-      ).toContain("Assignment and SLA data is unavailable."),
+      ).toContain("暫時無法讀取分工及服務時限；"),
     );
   });
 

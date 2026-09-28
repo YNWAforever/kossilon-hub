@@ -3,6 +3,11 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import {
+  annualReturnStatusLabel,
+  paymentStatusLabel,
+  riskLevelLabel,
+} from "@/features/runtime/operational-copy";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { CaseBulkAssignmentDialog } from "@/features/bulk-operations/case-bulk-controls";
 import { ResourceTagDialog } from "@/features/bulk-operations/resource-tag-dialog";
@@ -250,7 +255,7 @@ export function ProductionAnnualReturnCommandCenter({
               onClick={() => setIsCreateOpen(true)}
               className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
-              New case
+              建立案件
             </button>
             <Link
               to="/work-queue"
@@ -266,7 +271,7 @@ export function ProductionAnnualReturnCommandCenter({
               }}
               className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
             >
-              Open work queue
+              開啟工作佇列
             </Link>
           </div>
         }
@@ -298,13 +303,13 @@ export function ProductionAnnualReturnCommandCenter({
           with host and port, or the DATABASE_URL message. */}
       {casesQuery.isError && !casesQuery.data ? (
         <p role="alert" className="text-sm text-destructive">
-          Annual return data is unavailable. Try again shortly.
+          無法讀取周年申報案件。請由負責同事重試；這不代表沒有案件。
         </p>
       ) : null}
 
       {workItemsQuery.isError ? (
         <p role="status" className="text-sm text-status-yellow">
-          Assignment and SLA data is unavailable. Case details below are unaffected.
+          暫時無法讀取分工及服務時限；請由負責同事直接查看案件詳情。
         </p>
       ) : null}
 
@@ -334,14 +339,14 @@ export function ProductionAnnualReturnCommandCenter({
         </div>
       ) : casesQuery.isError ? null : (
         <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
-          <Metric label="Due in 7 days" value={totals?.dueIn7 ?? 0} />
-          <Metric label="Due in 30 days" value={totals?.dueIn30 ?? 0} />
-          <Metric label="Overdue cases" value={totals?.overdue ?? 0} />
-          <Metric label="High risk (loaded)" value={pageMetrics.highRisk} />
-          <Metric label="Missing evidence cases" value={totals?.missingDocuments ?? 0} />
-          <Metric label="Missing evidence items" value={totals?.missingEvidenceItems ?? 0} />
-          <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
-          <Metric label="Cases in scope (owner/status)" value={totals?.total ?? 0} />
+          <Metric label="七日內到期" value={totals?.dueIn7 ?? 0} />
+          <Metric label="三十日內到期" value={totals?.dueIn30 ?? 0} />
+          <Metric label="逾期案件" value={totals?.overdue ?? 0} />
+          <Metric label="已載入高風險" value={pageMetrics.highRisk} />
+          <Metric label="欠文件案件" value={totals?.missingDocuments ?? 0} />
+          <Metric label="欠文件項目" value={totals?.missingEvidenceItems ?? 0} />
+          <Metric label="待付款" value={totals?.paymentPending ?? 0} />
+          <Metric label="範圍內案件" value={totals?.total ?? 0} />
         </div>
       )}
       {canManage ? (
@@ -427,9 +432,9 @@ export function ProductionAnnualReturnCommandCenter({
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto_auto]">
           <input
-            aria-label="Search company"
+            aria-label="搜尋公司"
             className="rounded-md border bg-background px-3 py-2 text-sm"
-            placeholder="Search company"
+            placeholder="搜尋公司"
             value={queryInput}
             onChange={(event) => {
               const next = event.target.value;
@@ -445,12 +450,12 @@ export function ProductionAnnualReturnCommandCenter({
             }}
           />
           <select
-            aria-label="Filter by owner"
+            aria-label="按負責人篩選"
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={search.ownerId ?? ""}
             onChange={(event) => update({ ownerId: event.target.value || undefined })}
           >
-            <option value="">All owners</option>
+            <option value="">所有負責人</option>
             {owners.map((owner) => (
               <option key={owner.id} value={owner.id}>
                 {owner.name}
@@ -458,31 +463,31 @@ export function ProductionAnnualReturnCommandCenter({
             ))}
           </select>
           <select
-            aria-label="Filter by status"
+            aria-label="按狀態篩選"
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={search.status ?? ""}
             onChange={(event) =>
               update({ status: (event.target.value as AnnualReturnStatus) || undefined })
             }
           >
-            <option value="">All statuses</option>
+            <option value="">所有狀態</option>
             {ANNUAL_RETURN_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {status}
+                {annualReturnStatusLabel(status)}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter by risk"
+            aria-label="按風險篩選"
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={search.risk ?? ""}
             onChange={(event) => update({ risk: (event.target.value as RiskLevel) || undefined })}
           >
-            <option value="">All risk levels</option>
-            <option value="red">Red</option>
-            <option value="orange">Orange</option>
-            <option value="yellow">Yellow</option>
-            <option value="green">Green</option>
+            <option value="">所有風險級別</option>
+            <option value="red">高風險</option>
+            <option value="orange">較高風險</option>
+            <option value="yellow">需留意</option>
+            <option value="green">低風險</option>
           </select>
         </div>
 
@@ -491,16 +496,16 @@ export function ProductionAnnualReturnCommandCenter({
             <div
               className={`hidden gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid ${BOARD_GRID_COLUMNS}`}
             >
-              <span>Select</span>
-              <span>Company</span>
-              <span>Due</span>
-              <span>Status</span>
-              <span>Risk</span>
-              <span>Owner</span>
-              <span>Checklist</span>
-              <span>Payment</span>
-              <span>Reminders</span>
-              <span className="text-right">Open</span>
+              <span>選取</span>
+              <span className="sticky left-[60px] z-10 bg-card">公司</span>
+              <span>到期日</span>
+              <span>狀態</span>
+              <span>風險</span>
+              <span>負責人</span>
+              <span>文件</span>
+              <span>付款</span>
+              <span>追件</span>
+              <span className="sticky right-0 z-10 bg-card text-right">操作</span>
             </div>
 
             <div className="divide-y">
@@ -525,7 +530,7 @@ export function ProductionAnnualReturnCommandCenter({
         </div>
 
         {casesQuery.isPending ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">Loading annual return cases...</p>
+          <p className="px-4 py-6 text-sm text-muted-foreground">正在載入周年申報案件…</p>
         ) : null}
 
         {/* Gated on isError as well as isPending. payments.tsx omits the isError
@@ -557,7 +562,7 @@ export function ProductionAnnualReturnCommandCenter({
         ) : null}
         {!casesQuery.isPending && !casesQuery.isError && visibleCases.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">
-            No annual return cases match these filters.
+            目前沒有符合篩選條件的案件。請由負責同事核對篩選條件。
           </p>
         ) : null}
       </section>
@@ -622,49 +627,56 @@ function BoardRow({
       <label className="flex items-start">
         <input
           type="checkbox"
-          aria-label={"Select " + caseItem.companyName}
+          aria-label={"選取 " + caseItem.companyName}
           checked={canSelect && selected}
           disabled={!canSelect}
           onChange={onToggle}
         />
       </label>
-      <div className="min-w-0">
-        <p className="truncate font-medium">{caseItem.companyName}</p>
+      <div className="min-w-0 lg:sticky lg:left-[60px] lg:z-10 lg:bg-card">
+        <Link
+          className="block truncate font-medium underline-offset-2 hover:underline focus-visible:underline"
+          to="/annual-returns/$id"
+          params={{ id: caseItem.id }}
+        >
+          {caseItem.companyName}
+        </Link>
         <p className="truncate text-sm text-muted-foreground">
-          {caseItem.returnYear} · made up {caseItem.madeUpDate}
+          {caseItem.returnYear} 年 · 結算日 {caseItem.madeUpDate}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          SLA:{" "}
+          工作期限：{" "}
           {workItemsUnavailable
-            ? "Unavailable"
+            ? "暫時無法讀取，請由負責同事核對"
             : workItem
               ? workItem.escalationState
-              : "No work item"}
+              : "未有工作項目"}
         </p>
       </div>
-      <Field label="Due" value={formatDue(caseItem.filingDueDate, daysRemaining)} />
-      <Field label="Status" value={caseItem.currentStatus} />
+      <Field label="到期日" value={formatDue(caseItem.filingDueDate, daysRemaining)} />
+      <Field label="狀態" value={annualReturnStatusLabel(caseItem.currentStatus)} />
       <Field
-        label="Risk"
+        label="風險"
         value={
           <span
             className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClasses[caseItem.riskLevel]}`}
           >
-            {caseItem.riskLevel}
+            {riskLevelLabel(caseItem.riskLevel)}
           </span>
         }
       />
-      <Field label="Owner" value={caseItem.ownerName} />
-      <Field label="Checklist" value={`${verified.length}/${required.length} verified`} />
-      <Field label="Payment" value={caseItem.payment?.status ?? "Not invoiced"} />
-      <Field label="Reminders" value={`${caseItem.remindersSent}`} />
-      <div className="flex justify-start lg:justify-end">
+      <Field label="負責人" value={caseItem.ownerName} />
+      <Field label="文件" value={`${verified.length}/${required.length} 已核實`} />
+      <Field label="付款" value={paymentStatusLabel(caseItem.payment?.status ?? "Not invoiced")} />
+      <Field label="追件" value={`${caseItem.remindersSent}`} />
+      <div className="flex justify-start lg:sticky lg:right-0 lg:z-10 lg:justify-end lg:bg-card">
         <Link
-          className="rounded-md border px-3 py-1.5 text-sm"
+          className="inline-flex min-h-10 items-center rounded-md border px-3 py-1.5 text-sm"
           to="/annual-returns/$id"
           params={{ id: caseItem.id }}
+          aria-label={`開啟案件：${caseItem.companyName}（${caseItem.returnYear}）`}
         >
-          Open
+          開啟
         </Link>
       </div>
     </div>
@@ -690,6 +702,6 @@ function Metric({ label, value }: { label: string; value: number }) {
 }
 
 function formatDue(dueDate: string, daysRemaining: number): string {
-  if (daysRemaining < 0) return `${dueDate} (${Math.abs(daysRemaining)}d overdue)`;
-  return `${dueDate} (${daysRemaining}d)`;
+  if (daysRemaining < 0) return `${dueDate}（逾期 ${Math.abs(daysRemaining)} 天）`;
+  return `${dueDate}（尚餘 ${daysRemaining} 天）`;
 }

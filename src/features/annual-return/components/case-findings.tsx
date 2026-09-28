@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { AlertTriangle, CircleHelp, FileSearch, Sparkles } from "lucide-react";
 
 import {
@@ -68,9 +69,12 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
   const summary = summarize(views);
 
   return (
-    <section className="border-b pb-4">
+    <section id="documents" className="scroll-mt-8 border-b pb-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">自動檢查</h2>
+        <h2 className="text-base font-semibold">文件及自動檢查</h2>
+        <Link className="rounded-md border px-3 py-2 text-sm" to="/documents" search={{ caseId }}>
+          開啟文件庫及覆核
+        </Link>
         {findingsQuery.isPending ? null : (
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-status-red-soft px-2 py-1 text-status-red">
