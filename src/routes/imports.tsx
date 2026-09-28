@@ -1,5 +1,5 @@
 import { safeRequestId } from "@/features/runtime/query-error";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -20,7 +20,8 @@ import {
   mapNarImportCompany,
   revalidateNarImport,
   searchImportCompanies,
-  stageNarImportBatch,
+  queueNarImportStageJob,
+  getNarImportStageJob,
 } from "@/features/nar-import/server-fns";
 
 /**
@@ -76,6 +77,11 @@ function ImportsRoute() {
   const [returnYear, setReturnYear] = useState(new Date().getUTCFullYear());
   const [sheetName, setSheetName] = useState("");
   const [batchId, setBatchId] = useState<string | undefined>();
+  const [stageJobId, setStageJobId] = useState<string | undefined>(() =>
+    typeof window === "undefined"
+      ? undefined
+      : (window.sessionStorage.getItem("nar-import-stage-job") ?? undefined),
+  );
   const [reviewCursor, setReviewCursor] = useState<number | undefined>();
   const [reviewHistory, setReviewHistory] = useState<number[]>([]);
   const [previewPage, setPreviewPage] = useState(0);
@@ -129,6 +135,16 @@ function ImportsRoute() {
     refetchInterval: (query) =>
       query.state.data?.state === "queued" || query.state.data?.state === "running" ? 3000 : false,
   });
+  const stageJobQuery = useQuery({
+    queryKey: ["nar-import", "stage-job", stageJobId],
+    queryFn: () => getNarImportStageJob({ data: { jobId: stageJobId! } }),
+    enabled: dataMode === "production" && Boolean(stageJobId),
+    retry: false,
+    refetchInterval: (query) =>
+      query.state.data?.state === "queued" || query.state.data?.state === "processing"
+        ? 3000
+        : false,
+  });
   const approveMutation = useMutation({
     mutationFn: () => {
       const preview = revalidateMutation.data;
@@ -178,7 +194,7 @@ function ImportsRoute() {
     mutationFn: async () => {
       if (!file) throw new Error("Choose a workbook first.");
       const bytes = new Uint8Array(await file.arrayBuffer());
-      return stageNarImportBatch({
+      return queueNarImportStageJob({
         data: {
           fileName: file.name,
           bodyBase64: bytesToBase64(bytes),
@@ -189,19 +205,15 @@ function ImportsRoute() {
     },
     onSuccess: (result) => {
       setError(undefined);
-      setBatchId(result.batch.id);
-      setReviewCursor(undefined);
-      setReviewHistory([]);
-      setPreviewPage(0);
-      revalidateMutation.reset();
-      setApproval(undefined);
-      setOperationId(undefined);
-      void queryClient.invalidateQueries({ queryKey: ["nar-import", "batches"] });
+      setStageJobId(result.id);
+      window.sessionStorage.setItem("nar-import-stage-job", result.id);
     },
-    // The parser's refusals are the useful part of its output; surfaced verbatim
-    // rather than replaced with a generic failure.
     onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Unable to read the workbook."),
+      setError(
+        `無法排入月表背景解析。請重試或聯絡管理員。${
+          safeRequestId(cause) ? ` 參考編號：${safeRequestId(cause)}` : ""
+        }`,
+      ),
   });
 
   const mapMutation = useMutation({
@@ -241,6 +253,26 @@ function ImportsRoute() {
     onError: (cause) =>
       setError(cause instanceof Error ? cause.message : "Unable to revalidate the import."),
   });
+
+  useEffect(() => {
+    const job = stageJobQuery.data;
+    if (job?.state === "failed") {
+      setError(
+        job.errorDetail ??
+          `月表背景解析失敗（${job.errorCode ?? "unknown"}）。請檢查檔案後重新上載。`,
+      );
+      return;
+    }
+    if (job?.state !== "succeeded" || !job.result || batchId === job.result.batchId) return;
+    setBatchId(job.result.batchId);
+    setReviewCursor(undefined);
+    setReviewHistory([]);
+    setPreviewPage(0);
+    revalidateMutation.reset();
+    setApproval(undefined);
+    setOperationId(undefined);
+    void queryClient.invalidateQueries({ queryKey: ["nar-import", "batches"] });
+  }, [stageJobQuery.data, batchId, queryClient, revalidateMutation]);
 
   const previewPageQuery = useQuery({
     queryKey: ["nar-import", "preview-page", revalidateMutation.data?.id, previewPage],
@@ -334,6 +366,24 @@ function ImportsRoute() {
         </div>
       ) : null}
 
+      {stageJobQuery.isError ? (
+        <div
+          role="alert"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
+          無法載入月表解析進度，請勿假設已完成。
+          {safeRequestId(stageJobQuery.error)
+            ? ` 參考編號：${safeRequestId(stageJobQuery.error)}`
+            : null}
+          <button
+            type="button"
+            className="ml-2 underline"
+            onClick={() => void stageJobQuery.refetch()}
+          >
+            重試
+          </button>
+        </div>
+      ) : null}
       {error ? (
         <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
           {error}
@@ -386,21 +436,27 @@ function ImportsRoute() {
             onClick={() => stageMutation.mutate()}
             type="button"
           >
-            {stageMutation.isPending ? "讀取中…" : "讀取並預覽"}
+            {stageMutation.isPending ? "上載中…" : "上載並排入背景解析"}
           </button>
         </div>
 
+        {stageJobQuery.data?.state === "queued" || stageJobQuery.data?.state === "processing" ? (
+          <p className="mt-3 text-sm text-muted-foreground" role="status">
+            月表正在背景解析；重新開啟此頁仍可查看工作進度。已嘗試 {stageJobQuery.data.attempts}{" "}
+            次。
+          </p>
+        ) : null}
         {stageMutation.data?.reused ? (
           <p className="mt-3 text-sm text-muted-foreground">
             這份檔案之前已上載過，顯示的是原來的待覆核清單。
           </p>
         ) : null}
-        {stageMutation.data && stageMutation.data.skippedRowNumbers.length > 0 ? (
+        {stageJobQuery.data?.result && stageJobQuery.data.result.skippedRowNumbers.length > 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            {`第 ${stageMutation.data.skippedRowNumbers.join("、")} 行沒有客戶編號，已略過。`}
+            {`第 ${stageJobQuery.data.result.skippedRowNumbers.join("、")} 行沒有客戶編號，已略過。`}
           </p>
         ) : null}
-        {stageMutation.data?.sheetIssues.map((issue) => (
+        {stageJobQuery.data?.result?.sheetIssues.map((issue) => (
           <p key={issue.code + issue.message} className="mt-2 text-sm text-status-yellow">
             {issue.message}
           </p>

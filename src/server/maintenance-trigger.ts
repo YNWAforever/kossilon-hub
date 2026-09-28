@@ -5,6 +5,7 @@ export type MaintenanceJobKind =
   | "redactNotifications"
   | "escalateStalledQuarantine"
   | "runBulkOperations"
+  | "runNarImportStageJobs"
   | "drainInboundMediaDownloads";
 export type TriggerKind = "scheduled" | "manual";
 export type JobOutcome = "succeeded" | "failed";

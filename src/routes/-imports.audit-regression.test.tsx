@@ -46,7 +46,8 @@ vi.mock("../features/nar-import/server-fns", () => ({
     Promise.reject(
       Object.assign(new Error("private DB connection detail"), { requestId: "req_T02ABC123" }),
     ),
-  stageNarImportBatch: vi.fn(),
+  queueNarImportStageJob: vi.fn(),
+  getNarImportStageJob: vi.fn(),
   mapNarImportCompany: vi.fn(),
   revalidateNarImport: vi.fn(),
 }));

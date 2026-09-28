@@ -5,6 +5,8 @@ import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { readNarSheet, type NarSheetReadResult } from "./mapping";
 import type { NarImportRepository } from "./repository";
+import type { NarImportStageJobRepository } from "./stage-jobs";
+import type { DocumentStorage } from "@/features/documents/types";
 import { readXlsxWorkbook, XlsxFormatError } from "./xlsx/workbook";
 
 /**
@@ -65,7 +67,7 @@ async function sha256Hex(body: Uint8Array): Promise<string> {
  * ordinary staff action -- the same reasoning that makes `cleanupExpiredUploads`
  * Admin-only, being the other operation that reaches across every company at once.
  */
-function assertImportAuthority(actor: AuthenticatedActor): AuthenticatedActor {
+export function assertImportAuthority(actor: AuthenticatedActor): AuthenticatedActor {
   const staff = assertStaffAccess(actor);
   // Admin only, which is what the reasoning above always argued for and what the
   // code did not do. A Manager passed this check and then read the whole batch:
@@ -100,6 +102,13 @@ export async function applyNarImportForActor(
   return repository.commitImportApproval(actor, input);
 }
 
+export class NarImportValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NarImportValidationError";
+  }
+}
+
 export type StageNarImportInput = {
   fileName: string;
   bodyBase64: string;
@@ -112,9 +121,28 @@ export async function stageNarImportForActor(
   input: StageNarImportInput,
   dependencies: NarImportDependencies,
 ) {
+  return stageNarImportBytesForActor(
+    actor,
+    {
+      fileName: input.fileName,
+      bytes: bytesFromBase64(input.bodyBase64),
+      sheetName: input.sheetName,
+      returnYear: input.returnYear,
+    },
+    dependencies,
+  );
+}
+
+/** One domain staging path for direct tests and the durable background worker. */
+export async function stageNarImportBytesForActor(
+  actor: AuthenticatedActor,
+  input: { fileName: string; bytes: Uint8Array; sheetName?: string; returnYear: number },
+  dependencies: NarImportDependencies,
+) {
   const staff = assertImportAuthority(actor);
-  const bytes = bytesFromBase64(input.bodyBase64);
+  const bytes = input.bytes;
   if (bytes.byteLength === 0) throw new Error("The uploaded workbook is empty.");
+  if (bytes.byteLength > MAX_WORKBOOK_BYTES) throw new Error("Workbook exceeds the 25 MB limit.");
 
   let workbook;
   try {
@@ -123,7 +151,7 @@ export async function stageNarImportForActor(
     // The parser's refusals are the useful part of its output -- "this workbook
     // contains macros" tells an operator what to do, where a generic failure
     // does not -- so they are surfaced rather than flattened.
-    if (error instanceof XlsxFormatError) throw new Error(error.message);
+    if (error instanceof XlsxFormatError) throw error;
     throw error;
   }
 
@@ -138,7 +166,9 @@ export async function stageNarImportForActor(
 
   const read: NarSheetReadResult = readNarSheet(sheet, workbook.date1904);
   if (read.headerRowNumber === -1) {
-    throw new Error(read.issues[0]?.message ?? "The sheet has no recognisable header row.");
+    throw new NarImportValidationError(
+      read.issues[0]?.message ?? "The sheet has no recognisable header row.",
+    );
   }
 
   const result = await dependencies.repository.stageBatch({
@@ -159,6 +189,68 @@ export async function stageNarImportForActor(
     // member should see that it was.
     skippedRowNumbers: read.skippedRowNumbers,
     sheetIssues: read.issues,
+  };
+}
+
+export async function queueNarImportStageForActor(
+  actor: AuthenticatedActor,
+  input: StageNarImportInput,
+  dependencies: { jobs: NarImportStageJobRepository; storage: DocumentStorage },
+) {
+  const staff = assertImportAuthority(actor);
+  if (!staff.userId) throw new Error("Forbidden: active staff identity is required.");
+  const bytes = bytesFromBase64(input.bodyBase64);
+  if (bytes.byteLength === 0) throw new Error("The uploaded workbook is empty.");
+  if (bytes.byteLength > MAX_WORKBOOK_BYTES) throw new Error("Workbook exceeds the 25 MB limit.");
+  const sourceSha256 = await sha256Hex(bytes);
+  const objectKey = `nar-import/staging/${crypto.randomUUID()}`;
+  await dependencies.storage.put({
+    objectKey,
+    body: bytes,
+    checksum: sourceSha256,
+    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    sizeBytes: bytes.byteLength,
+  });
+  try {
+    const queued = await dependencies.jobs.enqueue({
+      sourceFileName: input.fileName,
+      sourceSha256,
+      sourceSizeBytes: bytes.byteLength,
+      objectKey,
+      sheetName: input.sheetName ?? null,
+      returnYear: input.returnYear,
+      createdBy: staff.userId,
+    });
+    if (queued.reused) await dependencies.storage.delete(objectKey);
+    return { id: queued.job.id, state: queued.job.state, reused: queued.reused };
+  } catch (error) {
+    // Storage is private, but an object with no job is still an orphan. Report
+    // cleanup failure explicitly instead of claiming the upload was queued.
+    try {
+      await dependencies.storage.delete(objectKey);
+    } catch {
+      throw new Error("Import upload could not be recorded or cleaned up.");
+    }
+    throw error;
+  }
+}
+
+export async function getNarImportStageJobForActor(
+  actor: AuthenticatedActor,
+  jobId: string,
+  jobs: NarImportStageJobRepository,
+) {
+  const staff = assertImportAuthority(actor);
+  if (!staff.userId) throw new Error("Forbidden: active staff identity is required.");
+  const job = await jobs.getForActor(jobId, staff.userId);
+  if (!job) throw new Error("Import stage job not found.");
+  return {
+    id: job.id,
+    state: job.state,
+    attempts: job.attempts,
+    result: job.result,
+    errorCode: job.errorCode,
+    errorDetail: job.errorDetail,
   };
 }
 
@@ -237,11 +329,51 @@ const stageSchema = z
   })
   .strict();
 
-export const stageNarImportBatch = createServerFn({ method: "POST" })
+const loadStageJobContext = createServerOnlyFn(async () => {
+  const [{ getRequest }, { requireActor }, { createNarImportStageJobRepository }] =
+    await Promise.all([
+      import("@tanstack/react-start/server"),
+      import("@/features/auth/neon-auth-server"),
+      import("./stage-jobs"),
+    ]);
+  return {
+    actor: await requireActor(getRequest()),
+    jobs: createNarImportStageJobRepository(),
+  };
+});
+
+export const queueNarImportStageJob = createServerFn({ method: "POST" })
   .validator(stageSchema)
-  .handler(({ data }) =>
-    withContext((actor, dependencies) => stageNarImportForActor(actor, data, dependencies)),
-  );
+  .handler(async ({ data }) => {
+    const { actor, jobs } = await loadStageJobContext();
+    try {
+      assertImportAuthority(actor);
+      const [{ currentProviderMode }, { getDocumentsBucketBinding }, { createDocumentStorage }] =
+        await Promise.all([
+          import("@/server/provider-mode"),
+          import("@/server/runtime-env"),
+          import("@/features/documents/storage"),
+        ]);
+      if (currentProviderMode() !== "live") {
+        throw new Error("Workbook staging is read-only in demo mode.");
+      }
+      const storage = createDocumentStorage(getDocumentsBucketBinding());
+      return await queueNarImportStageForActor(actor, data, { jobs, storage });
+    } finally {
+      await jobs.close();
+    }
+  });
+
+export const getNarImportStageJob = createServerFn({ method: "GET" })
+  .validator(z.object({ jobId: entityIdSchema }).strict())
+  .handler(async ({ data }) => {
+    const { actor, jobs } = await loadStageJobContext();
+    try {
+      return await getNarImportStageJobForActor(actor, data.jobId, jobs);
+    } finally {
+      await jobs.close();
+    }
+  });
 
 export const listNarImportBatches = createServerFn({ method: "GET" }).handler(() =>
   withContext(async (actor, dependencies) => {

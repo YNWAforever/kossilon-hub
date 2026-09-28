@@ -25,6 +25,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/documents/repository.integration.test.ts",
   "src/features/incorporation/repository.test.ts",
   "src/features/nar-import/preview.test.ts",
+  "src/features/nar-import/stage-jobs.integration.test.ts",
   "src/features/nar-import/apply.integration.test.ts",
   "src/features/notifications/delivery-attempts.test.ts",
   "src/features/notifications/outbox.integration.test.ts",
