@@ -12,6 +12,16 @@ import {
   type MaintenanceRunRecord,
 } from "./health";
 import type { MaintenanceRunRepository, QueueDepths } from "./repository";
+import {
+  deriveCapabilityStatuses,
+  presentCapabilityBindingNames,
+  type CapabilityStatus,
+} from "./capability-status";
+import {
+  deploymentRefFromRuntime,
+  schedulerOwnerFromRuntime,
+  type SchedulerOwner,
+} from "./deployment-identity";
 import { EXPECTED_MIGRATIONS, schemaHealthOf, type SchemaHealth } from "./schema-health";
 
 /**
@@ -53,12 +63,18 @@ export type OperationsHealthView = {
    * unreadable database is not evidence that a schedule ran.
    */
   staleBlockers: readonly BlockedIntegrationId[];
+  capabilities: readonly CapabilityStatus[];
 };
 
 const RECENT_RUN_LIMIT = 12;
 
 export async function buildOperationsHealth(
-  input: { now: string },
+  input: {
+    now: string;
+    bindingNames?: readonly string[];
+    deploymentRef?: string | null;
+    schedulerOwner?: SchedulerOwner | null;
+  },
   dependencies: {
     repository: Pick<
       MaintenanceRunRepository,
@@ -93,7 +109,10 @@ export async function buildOperationsHealth(
     // put them in front of staff -- but an error nothing records is an error
     // nobody can debug, and "the schema explains it" is a reason to keep serving
     // the page, not a reason to throw the evidence away.
-    console.error("operations health degraded read", { schemaState: schema.state, error });
+    console.error("operations health degraded read", {
+      schemaState: schema.state,
+      reason: "dependent-read-failed",
+    });
 
     return {
       schema,
@@ -102,12 +121,25 @@ export async function buildOperationsHealth(
       queues: null,
       blockedIntegrations: BLOCKED_INTEGRATIONS,
       staleBlockers: [],
+      capabilities: deriveCapabilityStatuses({
+        now: input.now,
+        deploymentRef: input.deploymentRef,
+        schedulerOwner: input.schedulerOwner,
+        bindingNames: input.bindingNames ?? [],
+        maintenance: null,
+        recentRuns: null,
+      }),
     };
   }
 }
 
 async function readOperationsState(
-  input: { now: string },
+  input: {
+    now: string;
+    bindingNames?: readonly string[];
+    deploymentRef?: string | null;
+    schedulerOwner?: SchedulerOwner | null;
+  },
   dependencies: {
     repository: Pick<
       MaintenanceRunRepository,
@@ -151,7 +183,28 @@ async function readOperationsState(
       maintenanceState: maintenance.state,
       textLayerObserved,
     }),
+    capabilities: deriveCapabilityStatuses({
+      now: input.now,
+      deploymentRef: input.deploymentRef,
+      schedulerOwner: input.schedulerOwner,
+      bindingNames: input.bindingNames ?? [],
+      maintenance,
+      recentRuns,
+    }),
   };
+}
+
+/** Keep raw database/provider errors inside the server boundary. */
+export async function buildSafeOperationsHealth(
+  input: Parameters<typeof buildOperationsHealth>[0],
+  dependencies: Parameters<typeof buildOperationsHealth>[1],
+): Promise<OperationsHealthView> {
+  try {
+    return await buildOperationsHealth(input, dependencies);
+  } catch {
+    console.error("operations health read failed", { reason: "internal-read-failed" });
+    throw new Error("系統運作狀態暫時無法讀取。請聯絡平台營運負責人。");
+  }
 }
 
 /**
@@ -179,7 +232,15 @@ export const getOperationsHealth = createServerFn({ method: "GET" }).handler(asy
 
   const repository = createMaintenanceRunRepository();
   try {
-    return await buildOperationsHealth({ now: new Date().toISOString() }, { repository });
+    return await buildSafeOperationsHealth(
+      {
+        now: new Date().toISOString(),
+        bindingNames: presentCapabilityBindingNames(process.env),
+        deploymentRef: deploymentRefFromRuntime(process.env),
+        schedulerOwner: schedulerOwnerFromRuntime(process.env),
+      },
+      { repository },
+    );
   } finally {
     await repository.close();
   }
