@@ -17,6 +17,7 @@ export type ReviewAnnualReturnEvidenceInput = {
   caseId: string;
   documentId: string;
   checklistItemId?: string;
+  expectedVersion?: number;
   decision: "verified" | "rejected";
   reason?: string;
   actorId: string;
@@ -194,6 +195,7 @@ export function createAnnualReturnEvidenceService(
             documentId: input.documentId,
             reviewerId: input.actorId,
             decision: input.decision,
+            expectedVersion: input.expectedVersion ?? validated.document.versionNumber ?? undefined,
             reason: input.reason,
           });
 
@@ -279,6 +281,11 @@ export function createAnnualReturnEvidenceService(
           }
           if (validated.document.reviewStatus !== "verified") {
             throw new Error("Filing receipt must be verified before acceptance.");
+          }
+          if (!canApproveDocument(documentSafetyOf(validated.document))) {
+            throw new Error(
+              "Filing receipt safety is unverified; genuine scan evidence is required.",
+            );
           }
 
           const filingReference = input.filingReference.trim();

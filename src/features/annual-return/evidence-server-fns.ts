@@ -10,6 +10,7 @@ const reviewEvidenceSchema = z
     caseId: entityIdSchema,
     documentId: entityIdSchema,
     checklistItemId: entityIdSchema.optional(),
+    expectedVersion: z.number().int().positive().optional(),
     decision: z.enum(["verified", "rejected"]),
     reason: z.string().trim().min(1).max(500).optional(),
   })

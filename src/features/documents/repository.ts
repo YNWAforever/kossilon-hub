@@ -11,6 +11,7 @@ import type postgres from "postgres";
 import type { DocumentAccessSubject } from "./authorization";
 import { enqueueDocumentAnalysisJob } from "./analysis-jobs";
 import { enqueueDocumentScanJob } from "./scan-jobs";
+import { canApproveDocument, documentSafetyOf } from "./safety";
 import {
   type DocumentCategory,
   type DocumentScanResult,
@@ -83,6 +84,11 @@ export type PrivateDocument = {
    * find out, and the one that forgot would serve an unscanned file.
    */
   scanVerdictSource: ScanVerdictSource | null;
+  /** Hash and size of the current version as read from stored bytes by a provider scanner. */
+  verifiedChecksum?: string | null;
+  verifiedByteSize?: number | null;
+  currentVersionId?: string | null;
+  versionNumber?: number | null;
   reviewStatus: "pending" | "verified" | "rejected";
   uploadedBy: string | null;
   uploadedAt: string;
@@ -179,6 +185,10 @@ type DocumentRow = {
   checksum_sha256: string;
   upload_status: DocumentStatus;
   scan_verdict_source: ScanVerdictSource | null;
+  verified_checksum_sha256: string | null;
+  verified_byte_size: string | number | null;
+  current_version_id: string | null;
+  version_number: string | number | null;
 };
 
 type AccessSubjectRow = {
@@ -238,6 +248,10 @@ function mapDocument(row: DocumentRow): PrivateDocument {
     checksum: row.checksum_sha256,
     uploadStatus: row.upload_status,
     scanVerdictSource: row.scan_verdict_source,
+    verifiedChecksum: row.verified_checksum_sha256,
+    verifiedByteSize: row.verified_byte_size === null ? null : Number(row.verified_byte_size),
+    currentVersionId: row.current_version_id,
+    versionNumber: row.version_number === null ? null : Number(row.version_number),
     reviewStatus: row.verification_status,
     uploadedBy: row.uploaded_by,
     uploadedAt: new Date(row.uploaded_at).toISOString(),
@@ -309,6 +323,8 @@ export type DocumentRepository = {
     reviewerId: string;
     decision: "verified" | "rejected";
     reason?: string;
+    /** Optional for legacy internal callers; supplied by all actor-facing review paths. */
+    expectedVersion?: number;
   }): Promise<PrivateDocument>;
   expireUploads(now: string): Promise<DocumentUploadIntent[]>;
   listStalledQuarantine(now: string, limit?: number): Promise<DocumentUploadIntent[]>;
@@ -346,9 +362,11 @@ export function createDocumentRepository(
   ) {
     return sql<DocumentRow[]>`
       select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
-             i.scan_verdict_source
+             i.scan_verdict_source, v.id current_version_id, v.version_number,
+             v.verified_checksum_sha256, v.verified_byte_size
       from documents d
       join document_upload_intents i on i.document_id = d.id
+      left join document_versions v on v.document_id = d.id and v.superseded_by_version_id is null
       join companies c on c.id = d.company_id
       where (${filters.id ?? null}::uuid is null or d.id = ${filters.id ?? null})
         and (${filters.companyId ?? null}::uuid is null or d.company_id = ${filters.companyId ?? null})
@@ -452,10 +470,10 @@ export function createDocumentRepository(
         // codebase never has to special-case "documents that predate versioning".
         //
         // The checksum and size go into the *declared* columns. They came from
-        // the client when the intent was created, before the bytes existed, and
-        // nothing enabled has compared them to the stored object -- only the
-        // provider scanner reads and hashes it, and that is BLOCKED_INTEGRATION.
-        // verified_checksum_sha256 stays null until it does.
+        // the client when the intent was created. The upload endpoint hashes a
+        // storage readback, but only a genuine provider scan can release the
+        // file or write verified_checksum_sha256. Without that provider the
+        // version remains quarantined or unknown-safety.
         const versions = await tx<{ id: string }[]>`
           insert into document_versions (
             document_id, version_number, declared_checksum_sha256, declared_byte_size,
@@ -527,8 +545,10 @@ export function createDocumentRepository(
 
         const rows = await tx<DocumentRow[]>`
           select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
-             i.scan_verdict_source
+             i.scan_verdict_source, v.id current_version_id, v.version_number,
+             v.verified_checksum_sha256, v.verified_byte_size
           from documents d join document_upload_intents i on i.document_id = d.id
+          left join document_versions v on v.document_id = d.id and v.superseded_by_version_id is null
           where d.id = ${documents[0].id}`;
         if (!updated[0] || !rows[0]) throw new Error("Unable to finalize document metadata.");
         return mapDocument(rows[0]);
@@ -572,7 +592,7 @@ export function createDocumentRepository(
     async listDocuments(filters = {}) {
       return (await documentRows(filters)).map(mapDocument);
     },
-    recordScanResult(intentId, result, options = {}) {
+    async recordScanResult(intentId, result, options = {}) {
       const status =
         result.status === "clean"
           ? "available"
@@ -581,6 +601,15 @@ export function createDocumentRepository(
             : result.retryable
               ? "quarantined"
               : "failed";
+      if (result.status === "clean" && options.verdictSource === "provider") {
+        if (
+          !/^[0-9a-f]{64}$/.test(result.verifiedChecksum ?? "") ||
+          !Number.isSafeInteger(result.verifiedByteSize) ||
+          (result.verifiedByteSize ?? 0) <= 0
+        ) {
+          throw new Error("Provider clean verdict requires verified stored-byte identity.");
+        }
+      }
       // Transactional because a clean verdict from a scanner that actually read
       // the bytes also establishes the document's content identity. The verdict
       // and that identity are the same fact; committing one without the other
@@ -610,18 +639,30 @@ export function createDocumentRepository(
                or checksum_sha256 = ${options.expectedChecksum ?? null})
         returning *`;
         if (!rows[0]) throw new Error("Document is not quarantined.");
+        if (
+          result.status === "clean" &&
+          options.verdictSource === "provider" &&
+          (result.verifiedChecksum !== rows[0].checksum_sha256 ||
+            result.verifiedByteSize !== Number(rows[0].expected_size_bytes))
+        ) {
+          throw new Error("Verified stored-byte identity does not match upload intent.");
+        }
 
         // Only from a scanner that read the object. `is null` in the predicate
         // makes this write-once: a later verdict cannot quietly restate what the
         // bytes are underneath a decision already recorded against them.
-        if (result.status === "clean" && result.verifiedChecksum) {
-          await tx`
-          update document_versions
-          set verified_checksum_sha256 = ${result.verifiedChecksum},
-            verified_byte_size = ${result.verifiedByteSize ?? null},
-            verified_at = now()
-          where intent_id = ${intentId}
-            and verified_checksum_sha256 is null`;
+        if (result.status === "clean" && options.verdictSource === "provider") {
+          const versions = await tx<{ id: string }[]>`
+            update document_versions
+            set verified_checksum_sha256 = ${result.verifiedChecksum!},
+                verified_byte_size = ${result.verifiedByteSize!}, verified_at = now()
+            where intent_id = ${intentId} and superseded_by_version_id is null
+              and (verified_checksum_sha256 is null or verified_checksum_sha256 = ${result.verifiedChecksum!})
+              and (verified_byte_size is null or verified_byte_size = ${result.verifiedByteSize!})
+            returning id`;
+          if (versions.length !== 1) {
+            throw new Error("Current document version has conflicting stored-byte identity.");
+          }
         }
 
         return mapIntent(rows[0]);
@@ -631,14 +672,29 @@ export function createDocumentRepository(
       return withTransaction(sql, async (tx) => {
         const rows = await tx<DocumentRow[]>`
           select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
-             i.scan_verdict_source
+             i.scan_verdict_source, v.id current_version_id, v.version_number,
+             v.verified_checksum_sha256, v.verified_byte_size
           from documents d join document_upload_intents i on i.document_id = d.id
-          where d.id = ${input.documentId} for update of d`;
+          left join document_versions v on v.document_id = d.id and v.superseded_by_version_id is null
+          where d.id = ${input.documentId} for update of d, i`;
         if (!rows[0]) throw new Error("Document not found.");
         if (rows[0].upload_status !== "available")
           throw new Error("Only available documents may be reviewed.");
         if (rows[0].verification_status !== "pending")
           throw new Error("Reviewed documents are immutable.");
+        const selected = mapDocument(rows[0]);
+        if (
+          !selected.currentVersionId ||
+          selected.versionNumber === null ||
+          (input.expectedVersion !== undefined && input.expectedVersion !== selected.versionNumber)
+        ) {
+          throw new Error("Document version changed; reload before review.");
+        }
+        if (!canApproveDocument(documentSafetyOf(selected))) {
+          throw new Error(
+            "Document safety is unverified; genuine stored-byte scan evidence is required.",
+          );
+        }
         await tx`update documents set verification_status = ${input.decision}, verified_by = ${input.reviewerId}, verified_at = now() where id = ${input.documentId}`;
         if (rows[0].case_id) {
           await tx`

@@ -12,6 +12,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/checklist-templates/repository.test.ts",
   "src/features/clients/repository.test.ts",
   "src/features/corporate-changes/repository.test.ts",
+  "src/features/documents/document-lifecycle.integration.test.ts",
   "src/features/documents/repository.integration.test.ts",
   "src/features/incorporation/repository.test.ts",
   "src/features/nar-import/preview.test.ts",

@@ -257,6 +257,20 @@ export async function finalizeDocumentUploadForActor(
     contentType: intent.contentType,
     sizeBytes: intent.expectedSizeBytes,
   });
+  // Confirm what storage will return, not just the bytes we attempted to put.
+  // A failed or inconsistent readback leaves the intent unfinalized; no scan job
+  // or business receipt is created for bytes whose identity is unknown.
+  const stored = await dependencies.storage.get(intent.objectKey);
+  if (
+    !stored ||
+    stored.checksum !== intent.checksum ||
+    stored.contentType !== intent.contentType ||
+    stored.sizeBytes !== intent.expectedSizeBytes ||
+    stored.body.byteLength !== intent.expectedSizeBytes ||
+    (await sha256Hex(new Uint8Array(stored.body))) !== intent.checksum
+  ) {
+    throw new Error("Stored upload bytes do not match upload intent.");
+  }
   return dependencies.repository.finalizeUploadIntent({
     intentId,
     uploadedBy: actor.userId,
@@ -318,8 +332,20 @@ export async function downloadDocumentForActor(
   assertDocumentServable(actor, documentSafetyOf(document));
   const stored = await dependencies.storage.get(document.objectKey);
   if (!stored) throw new Error("Authorized document object was not found.");
-  if (stored.checksum !== document.checksum || stored.sizeBytes !== document.sizeBytes) {
+  if (
+    stored.checksum !== document.checksum ||
+    stored.sizeBytes !== document.sizeBytes ||
+    stored.contentType !== document.contentType
+  ) {
     throw new Error("Stored object metadata does not match document metadata.");
+  }
+  const actualChecksum = await sha256Hex(new Uint8Array(stored.body));
+  if (
+    stored.body.byteLength !== document.sizeBytes ||
+    actualChecksum !== document.checksum ||
+    (document.verifiedChecksum && actualChecksum !== document.verifiedChecksum)
+  ) {
+    throw new Error("Stored document bytes do not match verified checksum.");
   }
   return { document, body: stored.body };
 }
@@ -452,6 +478,7 @@ export const reviewDocument = createServerFn({ method: "POST" })
     documentIdSchema
       .extend({
         decision: z.enum(["verified", "rejected"]),
+        expectedVersion: z.number().int().positive().optional(),
         reason: z.string().trim().max(500).optional(),
       })
       .strict(),
@@ -477,6 +504,7 @@ export const reviewDocument = createServerFn({ method: "POST" })
         documentId: data.documentId,
         reviewerId: staff.userId!,
         decision: data.decision,
+        expectedVersion: data.expectedVersion ?? document.versionNumber ?? undefined,
         reason: data.reason,
       });
     }),

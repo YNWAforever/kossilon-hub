@@ -1007,6 +1007,10 @@ export function createAnnualReturnRepository(
         review_status: "pending" | "verified" | "rejected" | null;
         upload_status: DocumentStatus | null;
         scan_verdict_source: ScanVerdictSource | null;
+        checksum_sha256: string | null;
+        expected_size_bytes: string | number | null;
+        verified_checksum_sha256: string | null;
+        verified_byte_size: string | number | null;
         page_from: number | null;
         page_to: number | null;
       }[]
@@ -1023,6 +1027,10 @@ export function createAnnualReturnRepository(
         d.verification_status as review_status,
         i.status as upload_status,
         i.scan_verdict_source,
+        i.checksum_sha256,
+        i.expected_size_bytes,
+        v.verified_checksum_sha256,
+        v.verified_byte_size,
         l.page_from,
         l.page_to
       from case_requirement_instances r
@@ -1030,6 +1038,7 @@ export function createAnnualReturnRepository(
       left join requirement_evidence_links l on l.requirement_instance_id = r.id
       left join documents d on d.id = l.document_id
       left join document_upload_intents i on i.document_id = d.id
+      left join document_versions v on v.document_id = d.id and v.superseded_by_version_id is null
       where r.case_id = ${caseId}
       order by p.display_name asc nulls first, r.requirement_key asc, l.created_at asc
     `;
@@ -1059,6 +1068,10 @@ export function createAnnualReturnRepository(
         safety: documentSafetyOf({
           uploadStatus: row.upload_status ?? "created",
           scanVerdictSource: row.scan_verdict_source,
+          checksum: row.checksum_sha256 ?? undefined,
+          sizeBytes: row.expected_size_bytes === null ? undefined : Number(row.expected_size_bytes),
+          verifiedChecksum: row.verified_checksum_sha256,
+          verifiedByteSize: row.verified_byte_size === null ? null : Number(row.verified_byte_size),
         }),
         pageFrom: row.page_from,
         pageTo: row.page_to,

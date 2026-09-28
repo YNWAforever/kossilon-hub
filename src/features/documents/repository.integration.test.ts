@@ -332,7 +332,12 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
       });
       await repository.recordScanResult(
         first.id,
-        { status: "clean", providerReference: "integration-clean" },
+        {
+          status: "clean",
+          providerReference: "integration-clean",
+          verifiedChecksum: CHECKSUM_A,
+          verifiedByteSize: 4,
+        },
         { verdictSource: "provider", expectedChecksum: CHECKSUM_A },
       );
       const verified = await repository.reviewDocument({
@@ -372,7 +377,12 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
       await expect(
         repository.recordScanResult(
           intent.id,
-          { status: "clean", providerReference: "stale" },
+          {
+            status: "clean",
+            providerReference: "stale",
+            verifiedChecksum: CHECKSUM_A,
+            verifiedByteSize: 4,
+          },
           { verdictSource: "provider", expectedChecksum: CHECKSUM_B },
         ),
       ).rejects.toThrow(/not quarantined/i);
@@ -759,7 +769,7 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
         {
           status: "clean",
           providerReference: "integration-provider-ref",
-          verifiedChecksum: CHECKSUM_B,
+          verifiedChecksum: CHECKSUM_A,
           verifiedByteSize: 4,
         },
         { verdictSource: "provider" },
@@ -767,10 +777,8 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
 
       const versions = await sql<VersionRow[]>`
         select * from document_versions where document_id = ${document.id}`;
-      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_B);
+      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_A);
       expect(versions[0].verified_at).not.toBeNull();
-      // The claim is kept beside it rather than overwritten: the two disagreeing
-      // is itself a finding, and it cannot be one if only one value survives.
       expect(versions[0].declared_checksum_sha256).toBe(CHECKSUM_A);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
@@ -825,22 +833,34 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
 
       await repository.recordScanResult(
         intent.id,
-        { status: "clean", providerReference: "first", verifiedChecksum: CHECKSUM_B },
+        {
+          status: "clean",
+          providerReference: "first",
+          verifiedChecksum: CHECKSUM_A,
+          verifiedByteSize: 4,
+        },
         { verdictSource: "provider" },
       );
       // A re-scan of an already-released file, which is the one path that may
       // land a second verdict. It must not silently move the bytes underneath a
       // decision already recorded against them.
-      await repository.recordScanResult(
-        intent.id,
-        { status: "clean", providerReference: "second", verifiedChecksum: CHECKSUM_C },
-        { verdictSource: "provider", allowStatuses: ["available"] },
-      );
+      await expect(
+        repository.recordScanResult(
+          intent.id,
+          {
+            status: "clean",
+            providerReference: "second",
+            verifiedChecksum: CHECKSUM_C,
+            verifiedByteSize: 4,
+          },
+          { verdictSource: "provider", allowStatuses: ["available"] },
+        ),
+      ).rejects.toThrow(/identity/);
 
       const versions = await sql<VersionRow[]>`
         select verified_checksum_sha256 from document_versions
         where document_id = ${document.id}`;
-      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_B);
+      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_A);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
