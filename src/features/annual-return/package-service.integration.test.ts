@@ -1064,6 +1064,49 @@ describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
     });
   });
 
+  it("t03_payment_proof_bytes must remain readable before an approved package is ready", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "ready" });
+      const [proof] = await tx<
+        {
+          storage_url: string;
+          verified_checksum_sha256: string;
+          verified_byte_size: number;
+          content_type: string;
+        }[]
+      >`select storage_url,verified_checksum_sha256,verified_byte_size,content_type from document_versions where id=${fixture.proofVersionId}`;
+      await fixture.storage.delete(proof.storage_url);
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
+
+      await fixture.storage.put({
+        objectKey: proof.storage_url,
+        body: new Uint8Array(Number(proof.verified_byte_size)).fill(1).buffer,
+        checksum: proof.verified_checksum_sha256,
+        sizeBytes: Number(proof.verified_byte_size),
+        contentType: proof.content_type,
+      });
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
+    });
+  });
+
   it("t03_ready_candidates use indexed approved-package state within actor scope", async () => {
     await inRollbackFixture(async (tx) => {
       const fixture = await dbFixture(tx);

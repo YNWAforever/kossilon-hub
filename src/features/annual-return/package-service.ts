@@ -17,6 +17,7 @@ import {
   buildPackageArtifact,
   packageSha256,
   readVerifiedPackageArtifact,
+  readVerifiedSourceBytes,
   safePackageFilename,
   type PackageSource,
 } from "./package-download";
@@ -77,6 +78,8 @@ type PaymentRow = {
   proof_expected_size_bytes: number | string | null;
   proof_verified_checksum_sha256: string | null;
   proof_verified_byte_size: number | string | null;
+  proof_storage_url: string | null;
+  proof_content_type: string | null;
   observation_status: string | null;
 };
 type PackageRow = {
@@ -210,7 +213,11 @@ type PackageSnapshot = {
   sources: PackageSource[];
 };
 
-async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnapshot> {
+async function loadPackageSnapshot(
+  tx: Db,
+  caseId: string,
+  storage: DocumentStorage,
+): Promise<PackageSnapshot> {
   const [caseRow] = await tx<CaseRow[]>`
     select id,company_id,return_year,current_status
     from annual_return_cases where id = ${caseId}`;
@@ -378,6 +385,7 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
       i.expected_size_bytes proof_expected_size_bytes,
       v.verified_checksum_sha256 proof_verified_checksum_sha256,
       v.verified_byte_size proof_verified_byte_size,
+      v.storage_url proof_storage_url,v.content_type proof_content_type,
       o.status observation_status
     from payments p
     left join payment_proof_allocations a on a.payment_id = p.id
@@ -396,6 +404,10 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
     payment.proof_verification_status !== "verified" ||
     payment.proof_upload_status !== "available" ||
     payment.proof_scan_verdict_source !== "provider" ||
+    !payment.proof_storage_url ||
+    !payment.proof_content_type ||
+    !payment.proof_verified_checksum_sha256 ||
+    payment.proof_verified_byte_size === null ||
     payment.proof_checksum_sha256 !== payment.proof_verified_checksum_sha256 ||
     Number(payment.proof_expected_size_bytes) !== Number(payment.proof_verified_byte_size) ||
     Number(payment.amount) * 100 !== Number(payment.amount_minor) ||
@@ -404,6 +416,16 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
   ) {
     throw new Error("Package requires a current reconciled payment and verified proof.");
   }
+  await readVerifiedSourceBytes(
+    storage,
+    {
+      objectKey: payment.proof_storage_url,
+      checksum: payment.proof_verified_checksum_sha256,
+      sizeBytes: Number(payment.proof_verified_byte_size),
+      contentType: payment.proof_content_type,
+    },
+    "Payment proof",
+  );
   const templateVersions = [...new Set(rows.map((row) => row.template_version))].sort();
   const result = buildPackageManifest({
     caseId,
@@ -468,7 +490,7 @@ export async function preparePackageForActor(
   }
   const db = dependencies.sql ?? getSqlClient();
   await requireCaseMutation(db, actor, input.caseId, "prepare_package");
-  const initial = await loadPackageSnapshot(db, input.caseId);
+  const initial = await loadPackageSnapshot(db, input.caseId, dependencies.storage);
   requireOpenCase(initial.caseRow);
   const latest = await latestPackage(db, input.caseId);
   if ((latest?.revision ?? 0) !== input.expectedRevision) {
@@ -510,7 +532,7 @@ export async function preparePackageForActor(
   });
   return withTx(db, async (tx) => {
     await requireCaseMutation(tx, actor, input.caseId, "prepare_package");
-    const current = await loadPackageSnapshot(tx, input.caseId);
+    const current = await loadPackageSnapshot(tx, input.caseId, dependencies.storage);
     requireOpenCase(current.caseRow);
     if (current.hash !== initial.hash || current.payload !== initial.payload) {
       throw new Error("Package evidence changed during preparation; retry from current case.");
@@ -590,7 +612,7 @@ export async function approvePackageForActor(
     ) {
       throw new Error("Package approval identity is stale or already decided.");
     }
-    const snapshot = await loadPackageSnapshot(tx, packageRow.case_id);
+    const snapshot = await loadPackageSnapshot(tx, packageRow.case_id, dependencies.storage);
     requireOpenCase(snapshot.caseRow);
     if (snapshot.hash !== latest.manifest_sha256 || snapshot.payload !== latest.manifest_payload) {
       throw new Error("Case evidence or payment changed; prepare a new package revision.");
@@ -649,7 +671,7 @@ export async function inspectApprovedPackageForActor(
   }
   const latest = await latestPackage(db, packageRow.case_id);
   if (latest?.id !== packageId) throw new Error("A newer package revision exists.");
-  const snapshot = await loadPackageSnapshot(db, packageRow.case_id);
+  const snapshot = await loadPackageSnapshot(db, packageRow.case_id, dependencies.storage);
   if (
     snapshot.hash !== packageRow.manifest_sha256 ||
     snapshot.payload !== packageRow.manifest_payload

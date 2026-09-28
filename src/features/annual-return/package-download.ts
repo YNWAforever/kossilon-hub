@@ -35,6 +35,28 @@ export function safePackageFilename(name: string): string {
   return normalized || "document";
 }
 
+/** Re-read the exact stored bytes and provider-reviewed identity before a filing claim. */
+export async function readVerifiedSourceBytes(
+  storage: DocumentStorage,
+  source: { objectKey: string; checksum: string; sizeBytes: number; contentType: string },
+  label = "Package source",
+): Promise<Uint8Array> {
+  const object = await storage.get(source.objectKey);
+  if (
+    !object ||
+    object.checksum !== source.checksum ||
+    object.sizeBytes !== source.sizeBytes ||
+    object.contentType !== source.contentType
+  ) {
+    throw new Error(label + " object metadata is missing or changed.");
+  }
+  const bytes = new Uint8Array(object.body);
+  if (bytes.byteLength !== source.sizeBytes || (await packageSha256(bytes)) !== source.checksum) {
+    throw new Error(label + " bytes do not match the verified version.");
+  }
+  return bytes;
+}
+
 export async function buildPackageArtifact(
   manifest: PackageManifest,
   sources: readonly PackageSource[],
@@ -59,19 +81,7 @@ export async function buildPackageArtifact(
     if (!source || source.checksum !== expectedHash) {
       throw new Error("Package source identity does not match the manifest.");
     }
-    const object = await storage.get(source.objectKey);
-    if (
-      !object ||
-      object.checksum !== expectedHash ||
-      object.sizeBytes !== source.sizeBytes ||
-      object.contentType !== source.contentType
-    ) {
-      throw new Error("Package source object metadata is missing or changed.");
-    }
-    const bytes = new Uint8Array(object.body);
-    if (bytes.byteLength !== source.sizeBytes || (await packageSha256(bytes)) !== expectedHash) {
-      throw new Error("Package source bytes do not match the verified version.");
-    }
+    const bytes = await readVerifiedSourceBytes(storage, source);
     index += 1;
     zip.file(
       `documents/${String(index).padStart(3, "0")}-${safePackageFilename(source.fileName)}`,
