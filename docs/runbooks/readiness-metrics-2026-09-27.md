@@ -16,4 +16,10 @@ Board and dashboard now share one authorized SQL aggregate and date, exclude Fil
 
 ## Verification boundary
 
-The SQL aggregate was compared with `summarizeOperationalCases` over scoped disposable-Postgres fixtures, including an active case with two missing items and a Filed overdue case. This is local evidence, not production proof. Production still lacks migrations 0021–0033. T03 remains in progress until the T14 package approval/snapshot reader, server mutation re-evaluation, authorized live role checks, and deployment verification are complete.
+The SQL aggregate was compared with `summarizeOperationalCases` over scoped disposable-Postgres fixtures, including an active case with two missing items and a Filed overdue case. This is local evidence, not production proof. The 2026-09-28 read-only production ledger still has 21 entries through 0020 plus unknown legacy 0006; the deployed app DB binding is unverified. T14 package approval persistence and transactional revalidation now exist. T03 remains in progress until a consistent snapshot reader, indexed readyToFile view, authorized runtime role checks and deployment verification are complete.
+
+## T03 return acceptance follow-up — 2026-09-28
+
+A named RED test found that `evaluateCaseReadiness` returned `canComplete=true` for a matched, timestamped but **rejected** return. The existing return service and server completion path require outcome `accepted` and human reconciliation decision `confirm`; the pure readiness snapshot omitted both fields. Its contract now carries the return service outcome and decision, and reports `return-unresolved` unless ID, matched status, accepted outcome, confirmed decision and verification time are all present. A second negative case covers `mark-unmatched`.
+
+Focused readiness, work-view, package and return tests passed 5 files / 33 tests against disposable PostgreSQL. Typecheck and Vercel preset build passed; lint had 0 errors and 1 inherited warning. No migration or provider call was needed. The evaluator still has no production snapshot reader/caller, so this is a local contract fix only. T03 remains in progress until the package and payment snapshot can be read consistently and the indexed `readyToFile` view can show complete scoped results without false zeroes; server mutations continue to revalidate inside their transactions.

@@ -1,4 +1,5 @@
 import type { ManifestBlocker, ManifestResult } from "./package-manifest";
+import type { ReturnDecisionInput, ReturnOutcome } from "./return-service";
 import type { AnnualReturnStatus, CompletionBlocker } from "./types";
 
 export type EvidenceReadState = "confirmed" | "outstanding" | "unknown";
@@ -20,6 +21,8 @@ export type CaseReadinessSnapshot = {
   returnReconciliation: {
     id: string;
     status: "matched" | "exception";
+    outcome: ReturnOutcome;
+    decision: ReturnDecisionInput["decision"] | null;
     verifiedAt: string | null;
   } | null;
   completionBlockers: readonly CompletionBlocker[];
@@ -140,13 +143,13 @@ export function evaluateCaseReadiness(snapshot: CaseReadinessSnapshot): Readines
   ) {
     add("submission-missing");
   }
-  if (
-    !snapshot.returnReconciliation?.id ||
-    snapshot.returnReconciliation.status !== "matched" ||
-    !snapshot.returnReconciliation.verifiedAt
-  ) {
-    add("return-unresolved");
-  }
+  const returnAccepted =
+    Boolean(snapshot.returnReconciliation?.id) &&
+    snapshot.returnReconciliation?.status === "matched" &&
+    snapshot.returnReconciliation.outcome === "accepted" &&
+    snapshot.returnReconciliation.decision === "confirm" &&
+    Boolean(snapshot.returnReconciliation.verifiedAt);
+  if (!returnAccepted) add("return-unresolved");
 
   for (const blocker of snapshot.completionBlockers) {
     switch (blocker.code) {
@@ -173,8 +176,7 @@ export function evaluateCaseReadiness(snapshot: CaseReadinessSnapshot): Readines
     Boolean(
       snapshot.submission?.id && snapshot.submission.reference && snapshot.submission.verifiedAt,
     ) &&
-    snapshot.returnReconciliation?.status === "matched" &&
-    Boolean(snapshot.returnReconciliation.verifiedAt) &&
+    returnAccepted &&
     snapshot.completionBlockers.length === 0;
 
   return {

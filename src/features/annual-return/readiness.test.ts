@@ -24,6 +24,8 @@ const BASE: CaseReadinessSnapshot = {
   returnReconciliation: {
     id: "return-1",
     status: "matched",
+    outcome: "accepted",
+    decision: "confirm",
     verifiedAt: "2026-09-27T00:00:00.000Z",
   },
   completionBlockers: [],
@@ -123,6 +125,36 @@ describe("evaluateCaseReadiness", () => {
     expect(unresolved.canRecordSubmission).toBe(false);
     expect(unresolved.canComplete).toBe(false);
     expect(unresolved.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "return-unresolved" })]),
+    );
+  });
+
+  it("t03_review requires an accepted and confirmed return before completion", () => {
+    const rejectedReturn = {
+      ...BASE.returnReconciliation!,
+      outcome: "rejected" as const,
+      decision: "confirm" as const,
+    };
+    const rejected = evaluateCaseReadiness({
+      ...BASE,
+      returnReconciliation: rejectedReturn,
+    });
+    expect(rejected.canComplete).toBe(false);
+    expect(rejected.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "return-unresolved" })]),
+    );
+
+    const unconfirmedReturn = {
+      ...BASE.returnReconciliation!,
+      outcome: "accepted" as const,
+      decision: "mark-unmatched" as const,
+    };
+    const unconfirmed = evaluateCaseReadiness({
+      ...BASE,
+      returnReconciliation: unconfirmedReturn,
+    });
+    expect(unconfirmed.canComplete).toBe(false);
+    expect(unconfirmed.blockers).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: "return-unresolved" })]),
     );
   });
