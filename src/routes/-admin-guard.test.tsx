@@ -65,8 +65,10 @@ describe("/admin production console, gated by role", () => {
 
     const html = await renderAdmin();
 
-    expect(html).toContain("Not available in this deployment");
+    expect(html).toContain("Staff access and handover");
+    expect(html).toContain("Loading staff administration");
     expect(html).not.toContain("Admin access required");
+    expect(html).not.toContain("Amy Chan");
   });
 
   it("shows a denied state to a non-admin", async () => {
@@ -75,6 +77,6 @@ describe("/admin production console, gated by role", () => {
     const html = await renderAdmin();
 
     expect(html).toContain("Admin access required");
-    expect(html).not.toContain("Not available in this deployment");
+    expect(html).not.toContain("Loading staff administration");
   });
 });

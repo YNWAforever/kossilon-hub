@@ -19,7 +19,8 @@ export type SchemaCapability =
   | "packages"
   | "submissions"
   | "returns"
-  | "media";
+  | "media"
+  | "staff";
 type Requirement = {
   capability: SchemaCapability;
   kind: "table" | "column" | "index" | "constraint";
@@ -235,6 +236,32 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "maintenance_job_runs_job_kind_check",
     expected: "drainInboundMediaDownloads",
   },
+  { capability: "staff", kind: "table", name: "staff_provisioning_requests" },
+  { capability: "staff", kind: "table", name: "staff_access_events" },
+  {
+    capability: "staff",
+    kind: "column",
+    name: "staff_profiles.access_revision",
+    expected: "integer",
+  },
+  {
+    capability: "staff",
+    kind: "column",
+    name: "staff_provisioning_requests.provider_call_started_at",
+    expected: "timestamp with time zone",
+  },
+  {
+    capability: "staff",
+    kind: "index",
+    name: "staff_access_events_target_idx",
+    expected: "target_user_id",
+  },
+  {
+    capability: "staff",
+    kind: "constraint",
+    name: "staff_provisioning_link_pair",
+    expected: "provider_auth_user_id is not null",
+  },
   { capability: "maintenance", kind: "table", name: "maintenance_runs" },
   {
     capability: "maintenance",
@@ -293,6 +320,7 @@ export function inspectSchemaCompatibility(input: {
     submissions: { ready: true, issues: [] as string[] },
     returns: { ready: true, issues: [] as string[] },
     media: { ready: true, issues: [] as string[] },
+    staff: { ready: true, issues: [] as string[] },
   };
   const definitionMismatch: DefinitionMismatch[] = [];
   const tables = new Set(input.catalog.tables.map(normalize));
