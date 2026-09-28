@@ -5,6 +5,7 @@ import {
   approveAnnualReturnPackage,
   downloadAnnualReturnPackage,
   getAnnualReturnPackage,
+  getAnnualReturnCaseReadiness,
   getAnnualReturnSubmission,
   getAnnualReturnSubmissionReadiness,
   listAnnualReturnSubmissionProofs,
@@ -110,6 +111,12 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     queryFn: () => getAnnualReturnPackage({ data: { caseId } }),
   });
 
+  const caseReadinessKey = [...annualReturnQueryKeys.detail(caseId), "case-readiness"];
+  const caseReadinessQuery = useQuery({
+    queryKey: caseReadinessKey,
+    queryFn: () => getAnnualReturnCaseReadiness({ data: { caseId } }),
+  });
+
   const submissionKey = [...annualReturnQueryKeys.detail(caseId), "submission"];
   const submissionQuery = useQuery({
     queryKey: submissionKey,
@@ -180,12 +187,14 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
   const preparePackageMutation = useMutation({
     mutationFn: (expectedRevision: number) =>
       prepareAnnualReturnPackage({ data: { caseId, expectedRevision } }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: packageKey }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) }),
   });
   const approvePackageMutation = useMutation({
     mutationFn: (data: { packageId: string; manifestHash: string; expectedRevision: number }) =>
       approveAnnualReturnPackage({ data }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: packageKey }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) }),
   });
   const downloadPackageMutation = useMutation({
     mutationFn: async (packageId: string) => {
@@ -225,6 +234,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: submissionKey });
       void queryClient.invalidateQueries({ queryKey: submissionReadinessKey });
+      void queryClient.invalidateQueries({ queryKey: caseReadinessKey });
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.history(caseId) });
     },
   });
@@ -491,6 +501,45 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
               只有負責同事在付款頁面以已覆核憑證對應發票後，系統才會標記「已核實付款」。
             </p>
             <MutationMessage error={paymentMutation.error} />
+          </section>
+
+          <section className="border-b pb-4" aria-label="案件準備狀態">
+            <h2 className="text-base font-semibold">案件準備狀態</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              按目前文件、付款、交件及回件證據即時核實；實際操作仍會在伺服器重新檢查。
+            </p>
+            {caseReadinessQuery.isPending ? (
+              <p className="mt-2 text-sm" role="status">
+                正在核實證據…
+              </p>
+            ) : caseReadinessQuery.isError ? (
+              <p className="mt-2 text-sm" role="alert">
+                暫時無法核實案件準備狀態。
+              </p>
+            ) : (
+              <ul className="mt-2 grid gap-1 text-sm md:grid-cols-2">
+                <li>
+                  必需文件：
+                  {caseReadinessQuery.data?.readiness.documentsComplete ? "已核實" : "待核實"}
+                </li>
+                <li>
+                  付款證據：
+                  {caseReadinessQuery.data?.readiness.paymentConfirmed ? "已核實" : "待核實"}
+                </li>
+                <li>
+                  套件批准條件：
+                  {caseReadinessQuery.data?.readiness.canApprovePackage ? "符合" : "未符合"}
+                </li>
+                <li>
+                  人手交件記錄條件：
+                  {caseReadinessQuery.data?.readiness.canRecordSubmission ? "符合" : "未符合"}
+                </li>
+                <li>
+                  套件流程結案證據：
+                  {caseReadinessQuery.data?.readiness.canComplete ? "符合" : "未符合"}
+                </li>
+              </ul>
+            )}
           </section>
 
           <section className="border-b pb-4">

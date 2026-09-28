@@ -11,6 +11,7 @@ import { listWorkViewForActor } from "./server-fns";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
 import { inspectCaseSubmissionReadinessForActor } from "./submission-readiness-service";
+import { inspectCaseReadinessForActor } from "./readiness-reader";
 import { ingestReturnForActor, reconcileReturnForActor } from "./return-service";
 import {
   getManualSubmissionForActor,
@@ -1064,6 +1065,161 @@ describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
     });
   });
 
+  it("t03_c2_snapshot confirms current documents before package approval", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const decision = await inspectCaseReadinessForActor(fixture.actor, fixture.caseId, {
+        sql: tx,
+        storage: fixture.storage,
+      });
+      expect(decision.snapshot).toMatchObject({
+        caseId: fixture.caseId,
+        revision: 0,
+        requiredEvidenceState: "confirmed",
+        paymentEvidenceState: "confirmed",
+        approval: null,
+      });
+      expect(decision.readiness).toMatchObject({
+        documentsComplete: true,
+        paymentConfirmed: true,
+        canApprovePackage: true,
+        canRecordSubmission: false,
+      });
+
+      await tx`update payments set status='Payment pending' where case_id=${fixture.caseId}`;
+      const pending = await inspectCaseReadinessForActor(fixture.actor, fixture.caseId, {
+        sql: tx,
+        storage: fixture.storage,
+      });
+      expect(pending.readiness).toMatchObject({
+        documentsComplete: true,
+        paymentConfirmed: false,
+        canApprovePackage: false,
+        canRecordSubmission: false,
+      });
+    });
+  });
+
+  it("t03_c2_snapshot blocks an approved package whose ZIP bytes disappeared", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fx = await dbFixture(tx);
+      const deps = { sql: tx, storage: fx.storage };
+      const draft = await preparePackageForActor(
+        fx.actor,
+        { caseId: fx.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fx.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const [artifact] = await tx<
+        { artifact_key: string }[]
+      >`select artifact_key from filing_packages where id=${draft.id}`;
+      await fx.storage.delete(artifact.artifact_key);
+      const result = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(result.readiness.canRecordSubmission).toBe(false);
+      expect(result.snapshot.requiredEvidenceState).toBe("unknown");
+    });
+  });
+  it("t03_c2_snapshot tracks submission and accepted return proof", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fx = await dbFixture(tx);
+      const deps = { sql: tx, storage: fx.storage };
+      const draft = await preparePackageForActor(
+        fx.actor,
+        { caseId: fx.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fx.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).readiness
+          .canRecordSubmission,
+      ).toBe(true);
+      const submissionProofId = await fx.createSubmissionProof();
+      const submitted = await recordManualSubmissionForActor(
+        fx.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+          submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-" + crypto.randomUUID(),
+          proofVersionId: submissionProofId,
+        },
+        deps,
+      );
+      const filed = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(filed.snapshot.submission?.id).toBe(submitted.id);
+      expect(filed.readiness).toMatchObject({ canRecordSubmission: false, canComplete: false });
+      const returnProofId = await fx.createReturnProof("t03-c2-return");
+      const received = await ingestReturnForActor(
+        fx.actor,
+        {
+          caseId: fx.caseId,
+          externalReference: submitted.externalReference,
+          manifestHash: draft.manifestHash,
+          outcome: "accepted",
+          source: { kind: "manual", proofVersionId: returnProofId },
+        },
+        deps,
+      );
+      const awaitingReview = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(awaitingReview.snapshot.returnReconciliation).toBeNull();
+      expect(awaitingReview.readiness.canComplete).toBe(false);
+      await reconcileReturnForActor(
+        fx.actor,
+        {
+          returnId: received.id,
+          submissionId: submitted.id,
+          expectedRevision: 1,
+          decision: "confirm",
+          reason: "",
+        },
+        deps,
+      );
+      const accepted = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(accepted.snapshot.returnReconciliation).toMatchObject({
+        id: received.id,
+        status: "matched",
+        outcome: "accepted",
+        decision: "confirm",
+      });
+      expect(accepted.readiness.canComplete).toBe(true);
+      const [returnVersion] = await tx<
+        { storage_url: string }[]
+      >`select storage_url from document_versions where id=${returnProofId}`;
+      const storedReturn = await fx.storage.get(returnVersion.storage_url);
+      if (!storedReturn) throw new Error("Return fixture bytes missing.");
+      await fx.storage.delete(returnVersion.storage_url);
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).snapshot
+          .returnReconciliation,
+      ).toBeNull();
+      await fx.storage.put({
+        objectKey: returnVersion.storage_url,
+        body: storedReturn.body,
+        checksum: storedReturn.checksum,
+        sizeBytes: storedReturn.sizeBytes,
+        contentType: storedReturn.contentType,
+      });
+      const [submissionVersion] = await tx<
+        { storage_url: string }[]
+      >`select storage_url from document_versions where id=${submissionProofId}`;
+      await fx.storage.delete(submissionVersion.storage_url);
+      const lostSubmission = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(lostSubmission.snapshot.submission).toBeNull();
+      expect(lostSubmission.readiness.canComplete).toBe(false);
+      await tx`update users set active=false where id=${fx.actor.userId}`;
+      await expect(inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).rejects.toThrow();
+    });
+  });
   it("t03_payment_proof_bytes must remain readable before an approved package is ready", async () => {
     await inRollbackFixture(async (tx) => {
       const fixture = await dbFixture(tx);

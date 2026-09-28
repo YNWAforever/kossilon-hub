@@ -213,11 +213,13 @@ type PackageSnapshot = {
   sources: PackageSource[];
 };
 
-async function loadPackageSnapshot(
-  tx: Db,
-  caseId: string,
-  storage: DocumentStorage,
-): Promise<PackageSnapshot> {
+type DocumentSnapshot = {
+  caseRow: CaseRow;
+  manifest: PackageManifest;
+  sources: PackageSource[];
+};
+
+async function loadDocumentSnapshot(tx: Db, caseId: string): Promise<DocumentSnapshot> {
   const [caseRow] = await tx<CaseRow[]>`
     select id,company_id,return_year,current_status
     from annual_return_cases where id = ${caseId}`;
@@ -374,6 +376,26 @@ async function loadPackageSnapshot(
     limit 1`;
   if (finding) throw new Error("Unresolved critical finding blocks package preparation.");
 
+  const templateVersions = [...new Set(rows.map((row) => row.template_version))].sort();
+  const result = buildPackageManifest({
+    caseId,
+    returnYear: caseRow.return_year,
+    requirementTemplateVersion: templateVersions.join("+"),
+    entries: candidates,
+  });
+  if (result.kind === "blocked") {
+    throw new Error(
+      "Package manifest blocked: " + result.blockers.map((blocker) => blocker.kind).join(", "),
+    );
+  }
+  return { caseRow, manifest: result.manifest, sources };
+}
+
+async function loadVerifiedPayment(
+  tx: Db,
+  caseId: string,
+  storage: DocumentStorage,
+): Promise<PaymentRow> {
   const [payment] = await tx<PaymentRow[]>`
     select p.id,p.status,p.invoice_number,p.amount,p.currency,
       a.id allocation_id,a.amount_minor,a.currency allocation_currency,
@@ -426,20 +448,18 @@ async function loadPackageSnapshot(
     },
     "Payment proof",
   );
-  const templateVersions = [...new Set(rows.map((row) => row.template_version))].sort();
-  const result = buildPackageManifest({
-    caseId,
-    returnYear: caseRow.return_year,
-    requirementTemplateVersion: templateVersions.join("+"),
-    entries: candidates,
-  });
-  if (result.kind === "blocked") {
-    throw new Error(
-      "Package manifest blocked: " + result.blockers.map((blocker) => blocker.kind).join(", "),
-    );
-  }
+  return payment;
+}
+
+async function loadPackageSnapshot(
+  tx: Db,
+  caseId: string,
+  storage: DocumentStorage,
+): Promise<PackageSnapshot> {
+  const { caseRow, manifest: documentManifest, sources } = await loadDocumentSnapshot(tx, caseId);
+  const payment = await loadVerifiedPayment(tx, caseId, storage);
   const manifest: PackageManifest = {
-    ...result.manifest,
+    ...documentManifest,
     payment: {
       status: payment.status,
       allocationId: payment.allocation_id,
@@ -452,6 +472,44 @@ async function loadPackageSnapshot(
   const payload = canonicalManifestPayload(manifest);
   const hash = await packageSha256(new TextEncoder().encode(payload));
   return { caseRow, manifest, payload, hash, sources };
+}
+
+export async function inspectCurrentDocumentManifestForActor(
+  actor: AuthenticatedActor,
+  caseId: string,
+  dependencies: PackageDependencies,
+): Promise<PackageManifest> {
+  entityIdSchema.parse(caseId);
+  const db = dependencies.sql ?? getSqlClient();
+  await requireCaseRead(db, actor, caseId);
+  const snapshot = await loadDocumentSnapshot(db, caseId);
+  // The manifest metadata alone is insufficient: re-read the cited source bytes.
+  await buildPackageArtifact(snapshot.manifest, snapshot.sources, dependencies.storage);
+  return snapshot.manifest;
+}
+
+export async function inspectCurrentPackageSnapshotForActor(
+  actor: AuthenticatedActor,
+  caseId: string,
+  dependencies: PackageDependencies,
+): Promise<{ manifest: PackageManifest; manifestHash: string }> {
+  entityIdSchema.parse(caseId);
+  const db = dependencies.sql ?? getSqlClient();
+  await requireCaseRead(db, actor, caseId);
+  const snapshot = await loadPackageSnapshot(db, caseId, dependencies.storage);
+  await buildPackageArtifact(snapshot.manifest, snapshot.sources, dependencies.storage);
+  return { manifest: snapshot.manifest, manifestHash: snapshot.hash };
+}
+
+export async function inspectVerifiedPaymentForActor(
+  actor: AuthenticatedActor,
+  caseId: string,
+  dependencies: PackageDependencies,
+): Promise<void> {
+  entityIdSchema.parse(caseId);
+  const db = dependencies.sql ?? getSqlClient();
+  await requireCaseRead(db, actor, caseId);
+  await loadVerifiedPayment(db, caseId, dependencies.storage);
 }
 async function latestPackage(
   tx: Db,
