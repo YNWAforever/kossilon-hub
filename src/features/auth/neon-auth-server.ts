@@ -19,6 +19,10 @@ type StaffProfileRow = {
   role: string;
   team_id: string | null;
   active: boolean;
+  user_role: string;
+  user_team_id: string | null;
+  user_active: boolean;
+  has_client_membership: boolean;
 };
 
 type ClientMembershipRow = {
@@ -111,20 +115,29 @@ export async function requireActor(
   }
 
   const staffRows = await sql<StaffProfileRow[]>`
-    select user_id, role, team_id, active
-    from staff_profiles
-    where auth_user_id = ${session.user.id}
+    select sp.user_id, sp.role, sp.team_id, sp.active,
+      u.role user_role, u.team_id user_team_id, u.active user_active,
+      exists (select 1 from client_company_memberships cm
+        where cm.auth_user_id=sp.auth_user_id) has_client_membership
+    from staff_profiles sp join users u on u.id=sp.user_id
+    where sp.auth_user_id = ${session.user.id}
     limit 1
   `;
   const staff = staffRows[0];
 
   if (staff) {
+    if (staff.has_client_membership) {
+      throw new Error("Forbidden: provider identity has both staff and client membership.");
+    }
+    if (staff.role !== staff.user_role || staff.team_id !== staff.user_team_id) {
+      throw new Error("Forbidden: staff profile and user access state disagree.");
+    }
     return {
       authUserId: session.user.id,
       userId: staff.user_id,
       role: normalizeRole(staff.role),
       teamId: staff.team_id,
-      active: staff.active,
+      active: staff.active && staff.user_active,
     };
   }
 

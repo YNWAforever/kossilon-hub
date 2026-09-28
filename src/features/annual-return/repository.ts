@@ -1,3 +1,4 @@
+import { assertAssignableStaffTarget } from "@/features/auth/staff-target";
 import {
   createSqlClient,
   getSqlClient,
@@ -1664,17 +1665,11 @@ export function createAnnualReturnRepository(
         lockedCase,
         "assign_owner",
       );
-      const ownerRows = await tx<{ id: string }[]>`
-        select id
-        from users
-        where id = ${input.ownerId}
-          and active = true
-        limit 1
-      `;
-
-      if (ownerRows.length !== 1) {
-        throw new Error("Annual return owner not found or inactive.");
-      }
+      await assertAssignableStaffTarget(
+        tx,
+        input.ownerId,
+        actor.role === "Admin" ? undefined : lockedCase.company_team_id,
+      );
 
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases

@@ -41,6 +41,10 @@ describe("Neon Auth server mapping", () => {
           role: seededAdminProfile.role,
           team_id: seededAdminProfile.teamId,
           active: true,
+          user_active: true,
+          has_client_membership: false,
+          user_role: seededAdminProfile.role,
+          user_team_id: seededAdminProfile.teamId,
         },
       ]),
     });
@@ -52,6 +56,44 @@ describe("Neon Auth server mapping", () => {
       teamId: seededAdminProfile.teamId,
       active: true,
     });
+  });
+
+  it("rejects a disabled users row even when its staff profile is stale-active", async () => {
+    const actor = await requireActor(new Request("https://example.test/protected"), {
+      auth: fakeSession(seededAdminProfile.authUserId),
+      sql: fakeSql([
+        {
+          user_id: seededAdminProfile.userId,
+          role: "Admin",
+          team_id: seededAdminProfile.teamId,
+          active: true,
+          user_role: "Admin",
+          user_team_id: seededAdminProfile.teamId,
+          user_active: false,
+        },
+      ]),
+    });
+    expect(actor.active).toBe(false);
+  });
+
+  it("rejects a provider identity that has both staff and client membership", async () => {
+    await expect(
+      requireActor(new Request("https://example.test/protected"), {
+        auth: fakeSession(seededAdminProfile.authUserId),
+        sql: fakeSql([
+          {
+            user_id: seededAdminProfile.userId,
+            role: "Admin",
+            team_id: seededAdminProfile.teamId,
+            active: true,
+            user_role: "Admin",
+            user_team_id: seededAdminProfile.teamId,
+            user_active: true,
+            has_client_membership: true,
+          },
+        ]),
+      }),
+    ).rejects.toThrow(/client|membership|Forbidden/i);
   });
 
   it("forbids an unknown identity when only the seeded Admin has a staff profile", async () => {
