@@ -2066,7 +2066,7 @@ create index if not exists maintenance_job_unresolved_idx
 -- T09: durable previews and per-item operation/attempt evidence.
 create table if not exists bulk_previews (
   id uuid primary key default gen_random_uuid(),
-  action text not null check (action in ('assign', 'caseAssign', 'clientAssign', 'tag', 'reminderDrafts', 'importApply')),
+  action text not null check (action in ('assign', 'caseAssign', 'clientAssign', 'tag', 'reminderDrafts', 'reconcilePayments', 'preparePackages', 'recordSubmissions', 'matchReturns', 'importApply')),
   created_by_id uuid not null references users(id) on delete restrict,
   auth_user_id text not null,
   scope_role text not null check (scope_role in ('Admin','Manager')),
@@ -2087,7 +2087,7 @@ create index if not exists bulk_previews_actor_recent_idx on bulk_previews (crea
 create table if not exists bulk_operations (
   id uuid primary key default gen_random_uuid(),
   preview_id uuid not null unique references bulk_previews(id) on delete restrict,
-  action text not null check (action in ('assign','caseAssign','clientAssign','tag','reminderDrafts','importApply')),
+  action text not null check (action in ('assign','caseAssign','clientAssign','tag','reminderDrafts','reconcilePayments','preparePackages','recordSubmissions','matchReturns','importApply')),
   created_by_id uuid not null references users(id) on delete restrict,
   auth_user_id text not null,
   idempotency_key text not null,
@@ -2503,3 +2503,6 @@ create unique index bulk_reminder_reviews_logical_key_active_uidx
   on bulk_reminder_reviews(logical_key) where state <> 'cancelled';
 create index bulk_reminder_reviews_case_idx
   on bulk_reminder_reviews(case_id,created_at desc);
+
+-- from 0055_bulk_domain_actions.sql
+-- Four actor-scoped domain batch actions are registered in the bulk checks above.

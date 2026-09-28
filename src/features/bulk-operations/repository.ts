@@ -1,4 +1,11 @@
 import type postgres from "postgres";
+import type { DocumentStorage } from "@/features/documents/types";
+import {
+  isDomainAction,
+  previewDomainItemsForActor,
+  type DomainBatchInput,
+} from "./domain-preview";
+import { applyDomainItemForActor } from "./domain-runner";
 import {
   createNarImportApplyRepository,
   ImportApplyError,
@@ -39,6 +46,7 @@ import {
   type BulkOperationView,
   type BulkPreview,
   type BulkPreviewInput,
+  type BulkManualReviewItem,
 } from "./types";
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -49,7 +57,7 @@ type TagInput = Extract<BulkPreviewInput, { action: "tag" }>;
 type Tx = postgres.TransactionSql;
 type PreviewRow = {
   id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts" | "importApply";
+  action: BulkPreviewInput["action"] | "importApply";
   created_by_id: string;
   auth_user_id: string;
   scope_role: "Admin" | "Manager";
@@ -87,7 +95,7 @@ type Snapshot = {
 type OperationRow = {
   id: string;
   preview_id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts" | "importApply";
+  action: BulkPreviewInput["action"] | "importApply";
   created_by_id: string;
   auth_user_id: string;
   state: BulkOperation["state"];
@@ -124,6 +132,22 @@ function transaction<T>(client: QueryClient, fn: (tx: Tx) => Promise<T>): Promis
     ? (client.begin(fn) as Promise<T>)
     : (client.savepoint(fn) as Promise<T>);
 }
+async function domainStorage(provided?: DocumentStorage): Promise<DocumentStorage> {
+  if (provided) return provided;
+  const [
+    { currentProviderMode },
+    { getDocumentsBucketBinding },
+    { createDocumentStorageForProviderMode },
+  ] = await Promise.all([
+    import("@/server/provider-mode"),
+    import("@/server/runtime-env"),
+    import("@/features/documents/server-fns"),
+  ]);
+  if (currentProviderMode() !== "live")
+    throw new Error("Document batch actions require live storage.");
+  return createDocumentStorageForProviderMode("live", getDocumentsBucketBinding());
+}
+
 async function digest(value: unknown): Promise<string> {
   const bytes = new TextEncoder().encode(JSON.stringify(value));
   return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), (byte) =>
@@ -356,11 +380,12 @@ async function tagIdsForSelection(
 }
 
 export function createBulkOperationRepository(
-  options: { sql?: QueryClient; databaseUrl?: string } = {},
+  options: { sql?: QueryClient; databaseUrl?: string; storage?: DocumentStorage } = {},
 ) {
   const sql =
     options.sql ?? (options.databaseUrl ? createSqlClient(options.databaseUrl) : getSqlClient());
   const ownsClient = Boolean(options.databaseUrl) && !options.sql;
+  const suppliedStorage = options.storage;
   async function loadView(id: string): Promise<BulkOperationView> {
     const [operation] = await sql<OperationRow[]>`select * from bulk_operations where id = ${id}`;
     if (!operation) throw new Error("Bulk operation not found.");
@@ -469,6 +494,21 @@ export function createBulkOperationRepository(
             sendMode: item.preview?.sendMode ?? null,
           };
         }
+      } else if (isDomainAction(input.action)) {
+        const domain = input as DomainBatchInput;
+        if (domain.action !== "reconcilePayments") await domainStorage(suppliedStorage);
+        const decisions = await previewDomainItemsForActor(current, domain, sql);
+        for (const item of decisions) {
+          snapshot[item.resourceId] = {
+            revision: item.revision,
+            state: item.state,
+            teamId: null,
+            status: item.reasonCode ?? "single-item-service-required",
+            ownerId: null,
+            reviewerId: null,
+            reasonCode: item.reasonCode,
+          };
+        }
       } else if (input.action === "tag") {
         const ids = await tagIdsForSelection(sql, current, input.selection);
         if (ids.length === 0) throw new Error("Selection has no eligible or reviewable items.");
@@ -493,7 +533,7 @@ export function createBulkOperationRepository(
             reasonCode: item.reasonCode,
           };
         }
-      } else {
+      } else if (input.action === "assign") {
         const rows = await snapshotRows(sql, current, input);
         const workRepository = createWorkItemRepository({ sql });
         for (const row of rows.sort((a, b) => a.id.localeCompare(b.id))) {
@@ -608,7 +648,8 @@ export function createBulkOperationRepository(
           preview.action !== "caseAssign" &&
           preview.action !== "clientAssign" &&
           preview.action !== "tag" &&
-          preview.action !== "reminderDrafts"
+          preview.action !== "reminderDrafts" &&
+          !isDomainAction(preview.action)
         )
           throw new Error("Unsupported bulk preview action for generic commit.");
         if (
@@ -786,6 +827,42 @@ export function createBulkOperationRepository(
         const ids = await tagIdsForSelection(tx, current, input.selection);
         return exportResourceRowsForActor(current, input.selection.resource, ids, tx);
       });
+    },
+    async listManualReviewQueue(actor: AuthenticatedActor): Promise<BulkManualReviewItem[]> {
+      const current = await currentActor(sql, actor.authUserId);
+      assertSameActor(current, actor);
+      const rows = await sql<
+        {
+          operation_id: string;
+          item_id: string;
+          action: BulkManualReviewItem["action"];
+          resource_id: string;
+          state: BulkManualReviewItem["state"];
+          reason_code: string | null;
+          audit_ref: string | null;
+          updated_at: Date | string;
+        }[]
+      >`
+        select o.id operation_id,i.id item_id,o.action,i.resource_id,i.state,
+          i.reason_code,i.audit_ref,i.updated_at
+        from bulk_operation_items i
+        join bulk_operations o on o.id=i.operation_id
+        join bulk_previews p on p.id=o.preview_id
+        where o.action in ('reconcilePayments','preparePackages','recordSubmissions','matchReturns')
+          and i.state in ('conflict','forbidden','failed','needs-reconciliation')
+          and (${current.role}='Admin' or
+            (o.created_by_id=${current.userId} and p.scope_team_id is not distinct from ${current.teamId}))
+        order by i.updated_at desc,i.id desc limit 200`;
+      return rows.map((row) => ({
+        operationId: row.operation_id,
+        itemId: row.item_id,
+        action: row.action,
+        resourceId: row.resource_id,
+        state: row.state,
+        reasonCode: row.reason_code,
+        auditRef: row.audit_ref,
+        updatedAt: iso(row.updated_at),
+      }));
     },
     async get(actor: AuthenticatedActor, id: string): Promise<BulkOperationView> {
       const current = await currentActor(sql, actor.authUserId);
@@ -1065,6 +1142,51 @@ export function createBulkOperationRepository(
                   updated_at=now() where id=${claimed.item.id}
                     and lease_token=${claimed.token} and state='running' returning id`;
               if (!saved) throw new Error("Bulk item lease changed during reminder draft.");
+              await tx`update bulk_operation_attempts set state='succeeded',finished_at=now()
+                where item_id=${claimed.item.id}
+                  and attempt_number=${claimed.item.attempt_count}`;
+              return;
+            }
+            if (isDomainAction(preview.action)) {
+              if (claimed.operation.action !== preview.action)
+                throw new BulkItemFailure("conflict", "ACTION_MISMATCH");
+              const domain = bulkPreviewInputSchema.parse({
+                action: preview.action,
+                selection: preview.selection,
+                parameters: preview.parameters,
+              }) as DomainBatchInput;
+              const storage =
+                domain.action === "reconcilePayments"
+                  ? undefined
+                  : await domainStorage(suppliedStorage);
+              let result;
+              try {
+                result = await applyDomainItemForActor(actor, domain, claimed.item.resource_id, {
+                  sql: tx,
+                  storage,
+                });
+              } catch (error) {
+                if (!(error instanceof Error)) throw error;
+                if (/forbidden|scope|permission/i.test(error.message))
+                  throw new BulkItemFailure("forbidden", "CASE_OUT_OF_SCOPE");
+                if (/revision changed|stale|changed; reload/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "REVISION_CHANGED");
+                if (
+                  /scan|proof|quarantined|not ready|not approved|already|duplicate/i.test(
+                    error.message,
+                  )
+                )
+                  throw new BulkItemFailure("conflict", "EVIDENCE_NOT_READY_OR_DUPLICATE");
+                throw error;
+              }
+              await options.afterDomainWrite?.();
+              const [saved] = await tx<{ id: string }[]>`
+                update bulk_operation_items set state=${result.state},
+                  revision_after=${result.revision},audit_ref=${result.auditRef},
+                  reason_code=${result.reasonCode},lease_token=null,lease_until=null,
+                  updated_at=now() where id=${claimed.item.id}
+                    and lease_token=${claimed.token} and state='running' returning id`;
+              if (!saved) throw new Error("Bulk item lease changed during domain action.");
               await tx`update bulk_operation_attempts set state='succeeded',finished_at=now()
                 where item_id=${claimed.item.id}
                   and attempt_number=${claimed.item.attempt_count}`;

@@ -78,6 +78,58 @@ export const bulkResourceSelectionSchema = z.union([
 ]);
 export const bulkExportInputSchema = z.object({ selection: bulkResourceSelectionSchema }).strict();
 export type BulkExportInput = z.output<typeof bulkExportInputSchema>;
+const domainSelection = z
+  .object({ kind: z.literal("ids"), ids: z.array(uuid).min(1).max(1000) })
+  .strict();
+const paymentItem = z
+  .object({
+    observationId: uuid,
+    caseId: uuid,
+    expectedRevision: z.number().int().positive(),
+    decision: z.enum(["match", "reject"]),
+    reason: z.string().trim().max(500).optional(),
+    proofVersionId: uuid.optional(),
+    confirmation: z
+      .object({
+        invoiceRef: z.string().trim().min(1).max(200),
+        amountMinor: z.number().int().positive(),
+        currency: z.string().regex(/^[A-Z]{3}$/),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+const prepareItem = z
+  .object({ caseId: uuid, expectedRevision: z.number().int().nonnegative() })
+  .strict();
+const submissionItem = z
+  .object({
+    caseId: uuid,
+    packageId: uuid,
+    manifestHash: z.string().regex(/^[a-f0-9]{64}$/),
+    submittedAt: z.string().min(1).max(40),
+    destinationLabel: z.string().trim().min(1).max(120),
+    externalReference: z.string().trim().min(1).max(200),
+    proofVersionId: uuid,
+    expectedRevision: z.number().int().positive(),
+  })
+  .strict();
+const returnItem = z
+  .object({
+    caseId: uuid,
+    externalReference: z.string().trim().min(1).max(200),
+    manifestHash: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .nullable(),
+    outcome: z.enum(["accepted", "rejected", "partial"]),
+    detail: z.string().trim().max(2000).nullable().optional(),
+    source: z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("manual"), proofVersionId: uuid }).strict(),
+      z.object({ kind: z.literal("internal"), sourceObjectRecordId: uuid }).strict(),
+    ]),
+  })
+  .strict();
 export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
   z
     .object({
@@ -224,8 +276,47 @@ export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
         .strict(),
     })
     .strict(),
+  z
+    .object({
+      action: z.literal("reconcilePayments"),
+      selection: domainSelection,
+      parameters: z.object({ items: z.array(paymentItem).min(1).max(1000) }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("preparePackages"),
+      selection: domainSelection,
+      parameters: z.object({ items: z.array(prepareItem).min(1).max(1000) }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("recordSubmissions"),
+      selection: domainSelection,
+      parameters: z.object({ items: z.array(submissionItem).min(1).max(1000) }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("matchReturns"),
+      selection: domainSelection,
+      parameters: z.object({ items: z.array(returnItem).min(1).max(1000) }).strict(),
+    })
+    .strict(),
 ]);
 export type BulkPreviewInput = z.output<typeof bulkPreviewInputSchema>;
+export type ActiveDomainAction =
+  | "reconcilePayments"
+  | "preparePackages"
+  | "recordSubmissions"
+  | "matchReturns";
+export type BulkAction =
+  | BulkPreviewInput["action"]
+  | "classifyDocuments"
+  | "assignReview"
+  | "retryAnalysis"
+  | "importApply";
 export const bulkCommitInputSchema = z
   .object({
     previewId: uuid,
@@ -253,7 +344,7 @@ export type BulkOperationState =
 export type BulkPreview = {
   id: string;
   previewHash: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts";
+  action: BulkPreviewInput["action"];
   selectionCount: number;
   eligibleCount: number;
   skippedCount: number;
@@ -277,7 +368,7 @@ export type BulkPreview = {
 };
 export type BulkOperation = {
   id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts" | "importApply";
+  action: BulkPreviewInput["action"] | "importApply";
   state: BulkOperationState;
   createdBy: string;
   createdAt: string;
@@ -294,4 +385,16 @@ export type BulkOperationView = BulkOperation & {
     auditRef: string | null;
     reviewId?: string | null;
   }[];
+};
+
+/** Fixed identifiers and reason codes only; evidence bytes stay in domain records. */
+export type BulkManualReviewItem = {
+  operationId: string;
+  itemId: string;
+  action: ActiveDomainAction;
+  resourceId: string;
+  state: "conflict" | "forbidden" | "failed" | "needs-reconciliation";
+  reasonCode: string | null;
+  auditRef: string | null;
+  updatedAt: string;
 };
