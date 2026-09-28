@@ -6,6 +6,7 @@ import {
 import { importLogicalKey } from "@/features/nar-import/apply";
 import { applyOneResourceTagForActor, previewResourceTagsForActor } from "./resource-tags";
 import { exportResourceRowsForActor } from "./resource-export";
+import { applyOneReminderReviewForActor, previewReminderDraftsForActor } from "./reminder-handler";
 import type { ImportPreviewRow } from "@/features/nar-import/preview";
 import { createSqlClient, getSqlClient, type SqlClient } from "@/server/db/client";
 import { createAnnualReturnRepository } from "@/features/annual-return/repository";
@@ -48,7 +49,7 @@ type TagInput = Extract<BulkPreviewInput, { action: "tag" }>;
 type Tx = postgres.TransactionSql;
 type PreviewRow = {
   id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   scope_role: "Admin" | "Manager";
@@ -73,11 +74,20 @@ type Snapshot = {
   reasonCode?: string | null;
   newOwnerId?: string | null;
   newTeamId?: string | null;
+  contactId?: string | null;
+  messagePreviewId?: string | null;
+  messagePreviewHash?: string | null;
+  logicalReminderKey?: string | null;
+  cadenceSlot?: string | null;
+  recipientName?: string | null;
+  recipientE164?: string | null;
+  renderedText?: string | null;
+  sendMode?: "text" | "template" | null;
 };
 type OperationRow = {
   id: string;
   preview_id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts" | "importApply";
   created_by_id: string;
   auth_user_id: string;
   state: BulkOperation["state"];
@@ -184,6 +194,7 @@ function mapOperation(row: OperationRow, items: ItemRow[]): BulkOperationView {
           : item.revision_before,
       revisionAfter: item.revision_after,
       auditRef: item.audit_ref,
+      reviewId: row.action === "reminderDrafts" ? item.audit_ref : null,
     })),
   };
 }
@@ -434,6 +445,30 @@ export function createBulkOperationRepository(
             newTeamId: item.newTeamId,
           };
         }
+      } else if (input.action === "reminderDrafts") {
+        const ids = await caseIdsForSelection(sql, current, input.selection);
+        if (ids.length === 0) throw new Error("Selection has no reviewable cases.");
+        const decisions = await previewReminderDraftsForActor(current, ids, { sql });
+        for (const item of decisions) {
+          snapshot[item.caseId] = {
+            revision: item.revision ?? 1,
+            state: item.state,
+            teamId: null,
+            status: item.reasonCode ?? "reminder-review",
+            ownerId: null,
+            reviewerId: null,
+            reasonCode: item.reasonCode,
+            contactId: item.preview?.contactId ?? null,
+            messagePreviewId: item.preview?.previewId ?? null,
+            messagePreviewHash: item.preview?.previewHash ?? null,
+            logicalReminderKey: item.logicalKey,
+            cadenceSlot: item.cadenceSlot,
+            recipientName: item.preview?.recipientName ?? null,
+            recipientE164: item.preview?.recipientE164 ?? null,
+            renderedText: item.preview?.renderedText ?? null,
+            sendMode: item.preview?.sendMode ?? null,
+          };
+        }
       } else if (input.action === "tag") {
         const ids = await tagIdsForSelection(sql, current, input.selection);
         if (ids.length === 0) throw new Error("Selection has no eligible or reviewable items.");
@@ -541,7 +576,8 @@ export function createBulkOperationRepository(
           revision:
             (input.action === "caseAssign" && value.reasonCode === "CASE_OUT_OF_SCOPE") ||
             (input.action === "clientAssign" && value.reasonCode === "CLIENT_OUT_OF_SCOPE") ||
-            (input.action === "tag" && value.reasonCode === "RESOURCE_OUT_OF_SCOPE")
+            (input.action === "tag" && value.reasonCode === "RESOURCE_OUT_OF_SCOPE") ||
+            (input.action === "reminderDrafts" && value.reasonCode === "CASE_OUT_OF_SCOPE")
               ? null
               : value.revision,
           state: value.state,
@@ -550,6 +586,10 @@ export function createBulkOperationRepository(
           oldTeamId: value.teamId,
           newOwnerId: value.newOwnerId ?? null,
           newTeamId: value.newTeamId ?? null,
+          recipientName: value.recipientName,
+          recipientE164: value.recipientE164,
+          renderedText: value.renderedText,
+          sendMode: value.sendMode,
         })),
       };
     },
@@ -567,7 +607,8 @@ export function createBulkOperationRepository(
           preview.action !== "assign" &&
           preview.action !== "caseAssign" &&
           preview.action !== "clientAssign" &&
-          preview.action !== "tag"
+          preview.action !== "tag" &&
+          preview.action !== "reminderDrafts"
         )
           throw new Error("Unsupported bulk preview action for generic commit.");
         if (
@@ -973,6 +1014,57 @@ export function createBulkOperationRepository(
                 where id=${claimed.item.id} and lease_token=${claimed.token}
                   and state='running' returning id`;
               if (!saved) throw new Error("Bulk item lease changed during client commit.");
+              await tx`update bulk_operation_attempts set state='succeeded',finished_at=now()
+                where item_id=${claimed.item.id}
+                  and attempt_number=${claimed.item.attempt_count}`;
+              return;
+            }
+            if (preview.action === "reminderDrafts") {
+              if (claimed.operation.action !== "reminderDrafts")
+                throw new BulkItemFailure("conflict", "ACTION_MISMATCH");
+              const snapshot = preview.resource_snapshot[claimed.item.resource_id];
+              if (
+                !snapshot?.contactId ||
+                !snapshot.messagePreviewId ||
+                !snapshot.messagePreviewHash ||
+                !snapshot.logicalReminderKey ||
+                !snapshot.cadenceSlot
+              )
+                throw new BulkItemFailure("conflict", "PREVIEW_MISSING");
+              let result;
+              try {
+                result = await applyOneReminderReviewForActor(
+                  actor,
+                  {
+                    operationItemId: claimed.item.id,
+                    caseId: claimed.item.resource_id,
+                    contactId: snapshot.contactId,
+                    previewId: snapshot.messagePreviewId,
+                    previewHash: snapshot.messagePreviewHash,
+                    logicalKey: snapshot.logicalReminderKey,
+                    cadenceSlot: snapshot.cadenceSlot,
+                    expectedRevision: claimed.item.revision_before,
+                  },
+                  { sql: tx },
+                );
+              } catch (error) {
+                if (!(error instanceof Error)) throw error;
+                if (/revision changed/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "REVISION_CHANGED");
+                if (/forbidden|scope|permission/i.test(error.message))
+                  throw new BulkItemFailure("forbidden", "CASE_OUT_OF_SCOPE");
+                if (/preview|eligible|identity|cooldown|reminder/i.test(error.message))
+                  throw new BulkItemFailure("conflict", "REMINDER_PREVIEW_STALE");
+                throw error;
+              }
+              await options.afterDomainWrite?.();
+              const [saved] = await tx<{ id: string }[]>`
+                update bulk_operation_items set state=${result.state},
+                  revision_after=${result.revision},audit_ref=${result.auditRef},
+                  reason_code=${result.reasonCode},lease_token=null,lease_until=null,
+                  updated_at=now() where id=${claimed.item.id}
+                    and lease_token=${claimed.token} and state='running' returning id`;
+              if (!saved) throw new Error("Bulk item lease changed during reminder draft.");
               await tx`update bulk_operation_attempts set state='succeeded',finished_at=now()
                 where item_id=${claimed.item.id}
                   and attempt_number=${claimed.item.attempt_count}`;

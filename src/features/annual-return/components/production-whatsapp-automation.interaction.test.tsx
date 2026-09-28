@@ -14,6 +14,18 @@ const serverFns = vi.hoisted(() => ({
 const whatsAppServerFns = vi.hoisted(() => ({ getWhatsAppIntegrationStatus: vi.fn() }));
 vi.mock("../follow-up-server-fns", () => serverFns);
 vi.mock("@/features/whatsapp/server-fns", () => whatsAppServerFns);
+const bulkFns = vi.hoisted(() => ({
+  previewBulkOperation: vi.fn(),
+  commitBulkOperation: vi.fn(),
+  getBulkOperation: vi.fn(),
+}));
+const reminderFns = vi.hoisted(() => ({
+  getBulkReminderReview: vi.fn(),
+  approveBulkReminderReview: vi.fn(),
+  cancelBulkReminderReview: vi.fn(),
+}));
+vi.mock("@/features/bulk-operations/server-fns", () => bulkFns);
+vi.mock("@/features/bulk-operations/reminder-server-fns", () => reminderFns);
 
 const caseId = "11111111-1111-4111-8111-111111111111";
 const companyId = "22222222-2222-4222-8222-222222222222";
@@ -105,14 +117,91 @@ beforeEach(() => {
   });
   serverFns.sendProductionFollowUp.mockResolvedValue({ replayed: false });
   whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue(healthy);
+  bulkFns.previewBulkOperation.mockResolvedValue({
+    id: "55555555-5555-4555-8555-555555555555",
+    previewHash: "b".repeat(64),
+    action: "reminderDrafts",
+    selectionCount: 1,
+    eligibleCount: 1,
+    skippedCount: 0,
+    conflictCount: 0,
+    expiresAt: "2099-01-01T00:00:00.000Z",
+    itemsPreview: [
+      {
+        resourceId: caseId,
+        revision: 1,
+        state: "eligible",
+        reasonCode: null,
+        recipientName: "Chris Client",
+        recipientE164: "+85291234567",
+        renderedText: "Approved exact reminder template",
+        sendMode: "template",
+      },
+    ],
+  });
+  bulkFns.commitBulkOperation.mockResolvedValue({ id: "66666666-6666-4666-8666-666666666666" });
+  bulkFns.getBulkOperation.mockResolvedValue({
+    id: "66666666-6666-4666-8666-666666666666",
+    action: "reminderDrafts",
+    state: "completed",
+    counts: { succeeded: 1, skipped: 0, conflict: 0, failed: 0 },
+    items: [
+      {
+        itemId: "77777777-7777-4777-8777-777777777777",
+        resourceId: caseId,
+        state: "succeeded",
+        reasonCode: null,
+        reviewId: "88888888-8888-4888-8888-888888888888",
+      },
+    ],
+  });
+  reminderFns.getBulkReminderReview.mockResolvedValue({
+    reviewId: "88888888-8888-4888-8888-888888888888",
+    caseId,
+    companyName: "Acme Company Limited",
+    reviewState: "draft",
+    previewHash: "c".repeat(64),
+    recipientName: "Chris Client",
+    recipientE164: "+85291234567",
+    renderedText: "Approved exact reminder template",
+    sendMode: "template",
+    languageCode: "en",
+    expiresAt: "2099-01-01T00:00:00.000Z",
+    delivery: null,
+  });
+  reminderFns.approveBulkReminderReview.mockResolvedValue({
+    state: "queued",
+    messageId: "99999999-9999-4999-8999-999999999999",
+    replayed: false,
+  });
 });
 afterEach(cleanup);
 
 describe("ProductionWhatsAppAutomation", () => {
+  it("creates only review drafts until one recipient is explicitly approved", async () => {
+    renderAutomation();
+    await screen.findByText("Bulk annual return reminder drafts");
+    fireEvent.click(await screen.findByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Preview 1 drafts" }));
+    expect(await screen.findByText("Approved exact reminder template")).toBeTruthy();
+    expect(reminderFns.approveBulkReminderReview).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Create review drafts" }));
+    const approve = await screen.findByRole("button", { name: "Approve and queue this message" });
+    expect(reminderFns.approveBulkReminderReview).not.toHaveBeenCalled();
+    fireEvent.click(approve);
+    await waitFor(() =>
+      expect(reminderFns.approveBulkReminderReview).toHaveBeenCalledWith({
+        data: { reviewId: "88888888-8888-4888-8888-888888888888", previewHash: "c".repeat(64) },
+      }),
+    );
+  });
   it("keeps demo read-only even after reviewing an actual send", async () => {
     whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue(simulated);
     renderAutomation();
     expect(await screen.findByText("Demo simulation")).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: /Select available/ }) as HTMLButtonElement).disabled,
+    ).toBe(true);
     const buttons = await screen.findAllByRole("button", { name: "Review actual send" });
     fireEvent.click(buttons[0]);
     expect(await screen.findByText("Actual send preview")).toBeTruthy();

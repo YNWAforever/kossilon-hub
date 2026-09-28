@@ -156,6 +156,31 @@ export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
     .strict(),
   z
     .object({
+      action: z.literal("reminderDrafts"),
+      selection: z.discriminatedUnion("kind", [
+        z.object({ kind: z.literal("ids"), ids: z.array(uuid).min(1).max(1000) }).strict(),
+        z
+          .object({
+            kind: z.literal("filter"),
+            resource: z.literal("annual-return-cases"),
+            filters: z
+              .object({
+                q: z.string().trim().max(200).optional(),
+                status: z.enum(ANNUAL_RETURN_STATUSES).optional(),
+                risk: z.enum(["green", "yellow", "orange", "red"]).optional(),
+                ownerId: uuid.optional(),
+                overdueOnly: z.boolean().optional(),
+              })
+              .strict(),
+            excludedIds: z.array(uuid).max(1000),
+          })
+          .strict(),
+      ]),
+      parameters: z.object({}).strict(),
+    })
+    .strict(),
+  z
+    .object({
       action: z.literal("clientAssign"),
       selection: z.discriminatedUnion("kind", [
         z.object({ kind: z.literal("ids"), ids: z.array(uuid).min(1).max(1000) }).strict(),
@@ -228,7 +253,7 @@ export type BulkOperationState =
 export type BulkPreview = {
   id: string;
   previewHash: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts";
   selectionCount: number;
   eligibleCount: number;
   skippedCount: number;
@@ -243,11 +268,16 @@ export type BulkPreview = {
     oldTeamId?: string | null;
     newOwnerId?: string | null;
     newTeamId?: string | null;
+    recipientName?: string | null;
+    recipientE164?: string | null;
+    renderedText?: string | null;
+    sendMode?: "text" | "template" | null;
+    reviewId?: string | null;
   }[];
 };
 export type BulkOperation = {
   id: string;
-  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "importApply";
+  action: "assign" | "caseAssign" | "clientAssign" | "tag" | "reminderDrafts" | "importApply";
   state: BulkOperationState;
   createdBy: string;
   createdAt: string;
@@ -262,5 +292,6 @@ export type BulkOperationView = BulkOperation & {
     revisionBefore: number | null;
     revisionAfter: number | null;
     auditRef: string | null;
+    reviewId?: string | null;
   }[];
 };

@@ -1,9 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
-import { bulkOperationCsv, withAuthorizedBulkRepository } from "./server-fns";
+import {
+  assertBulkMutationMode,
+  bulkOperationCsv,
+  withAuthorizedBulkRepository,
+} from "./server-fns";
 import type { createBulkOperationRepository } from "./repository";
 import type { BulkOperationView } from "./types";
 
 describe("T09 bulk status export", () => {
+  it("keeps the simulated demo read-only while local development remains available", () => {
+    expect(() => assertBulkMutationMode("simulated")).toThrow(/demo.*read-only/i);
+    expect(() => assertBulkMutationMode("local")).not.toThrow();
+    expect(() => assertBulkMutationMode("live")).not.toThrow();
+  });
   it("exports 1000 progress rows without CSV formulas or customer payload", () => {
     const view: BulkOperationView = {
       id: "operation-1",
