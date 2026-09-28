@@ -1,5 +1,11 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  getManualSubmissionForActor,
+  listManualSubmissionProofsForActor,
+  manualSubmissionInputSchema,
+  recordManualSubmissionForActor,
+} from "./submission-service";
 import { entityIdSchema } from "@/features/runtime/entity-id";
 import {
   approvePackageForActor,
@@ -77,4 +83,25 @@ export const downloadAnnualReturnPackage = createServerFn({ method: "GET" })
         "x-content-sha256": file.checksum,
       },
     });
+  });
+
+export const getAnnualReturnSubmission = createServerFn({ method: "GET" })
+  .validator(z.object({ caseId: entityIdSchema }).strict())
+  .handler(async ({ data }) => {
+    const { actor, storage } = await loadPackageContext();
+    return getManualSubmissionForActor(actor, data.caseId, { storage });
+  });
+
+export const listAnnualReturnSubmissionProofs = createServerFn({ method: "GET" })
+  .validator(z.object({ caseId: entityIdSchema }).strict())
+  .handler(async ({ data }) => {
+    const { actor, storage } = await loadPackageContext();
+    return listManualSubmissionProofsForActor(actor, data.caseId, { storage });
+  });
+
+export const recordAnnualReturnSubmission = createServerFn({ method: "POST" })
+  .validator(manualSubmissionInputSchema)
+  .handler(async ({ data }) => {
+    const { actor, storage } = await loadPackageContext();
+    return recordManualSubmissionForActor(actor, data, { storage });
   });

@@ -8,6 +8,11 @@ import { createDocumentRepository } from "@/features/documents/repository";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
 import {
+  getManualSubmissionForActor,
+  listManualSubmissionProofsForActor,
+  recordManualSubmissionForActor,
+} from "./submission-service";
+import {
   approvePackageForActor,
   downloadApprovedPackageForActor,
   preparePackageForActor,
@@ -84,6 +89,7 @@ type Fixture = {
   observationId: string;
   proofVersionId: string;
   storage: DocumentStorage;
+  createSubmissionProof: () => Promise<string>;
 };
 async function dbFixture(tx: postgres.TransactionSql): Promise<Fixture> {
   const [admin] = await tx<{ auth_user_id: string; user_id: string; team_id: string | null }[]>`
@@ -133,7 +139,7 @@ async function dbFixture(tx: postgres.TransactionSql): Promise<Fixture> {
     returning id`;
   const storage = memoryStorage();
   const documents = createDocumentRepository({ sql: tx });
-  async function reviewedDocument(category: "payment" | "registry", suffix: string) {
+  async function reviewedDocument(category: "payment" | "registry" | "submission", suffix: string) {
     const bytes = new TextEncoder().encode("%PDF-1.7\n" + suffix);
     const checksum = await packageSha256(bytes);
     const objectKey = "documents/t14-fixture/" + nonce + "/" + suffix;
@@ -218,6 +224,8 @@ async function dbFixture(tx: postgres.TransactionSql): Promise<Fixture> {
     observationId: observation.id,
     proofVersionId: proof.versionId,
     storage,
+    createSubmissionProof: async () =>
+      (await reviewedDocument("submission", "submission-proof")).versionId,
   };
 }
 describe.skipIf(!databaseUrl)("T14 package approval against disposable Postgres", () => {
@@ -310,6 +318,183 @@ describe.skipIf(!databaseUrl)("T14 package approval against disposable Postgres"
       await expect(
         downloadApprovedPackageForActor(fixture.actor, draft.id, dependencies),
       ).rejects.toThrow(/payment/i);
+    });
+  });
+});
+
+function asHongKongDateTime(value: Date): string {
+  return new Date(value.getTime() + 8 * 60 * 60_000).toISOString().slice(0, 19) + "+08:00";
+}
+
+describe.skipIf(!databaseUrl)("T15 manual submission against disposable Postgres", () => {
+  it("records exactly one external submission, preserving evidence and leaving case unfiled", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const dependencies = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        dependencies,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        dependencies,
+      );
+      await downloadApprovedPackageForActor(fixture.actor, draft.id, dependencies);
+      const [before] = await tx<{ count: number }[]>`
+        select count(*)::int as count from package_handoffs where case_id = ${fixture.caseId}`;
+      expect(before.count).toBe(0);
+      expect(
+        await getManualSubmissionForActor(fixture.actor, fixture.caseId, dependencies),
+      ).toBeNull();
+      const proofVersionId = await fixture.createSubmissionProof();
+      expect(
+        await listManualSubmissionProofsForActor(fixture.actor, fixture.caseId, dependencies),
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ versionId: proofVersionId, category: "submission" }),
+        ]),
+      );
+      const input = {
+        packageId: draft.id,
+        manifestHash: draft.manifestHash,
+        expectedRevision: draft.revision,
+        submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+        destinationLabel: "Companies Registry portal",
+        externalReference: "NAR1-" + crypto.randomUUID(),
+        proofVersionId,
+      };
+      const first = await recordManualSubmissionForActor(fixture.actor, input, dependencies);
+      const replay = await recordManualSubmissionForActor(fixture.actor, input, dependencies);
+      expect(replay.id).toBe(first.id);
+      expect(
+        await getManualSubmissionForActor(fixture.actor, fixture.caseId, dependencies),
+      ).toMatchObject({ id: first.id });
+      expect(first).toMatchObject({
+        packageId: draft.id,
+        manifestHash: draft.manifestHash,
+        proofVersionId,
+        status: "recorded_submission",
+      });
+      expect(first.submittedAtUtc).toBe(new Date(input.submittedAt).toISOString());
+      const [state] = await tx<{ status: string; transmitted_at: Date | null; count: number }[]>`
+        select arc.current_status as status, ph.transmitted_at,
+          (select count(*)::int from package_handoffs where case_id = ${fixture.caseId}) as count
+        from annual_return_cases arc join package_handoffs ph on ph.case_id=arc.id
+        where arc.id = ${fixture.caseId}`;
+      expect(state).toMatchObject({ status: "Payment pending", transmitted_at: null, count: 1 });
+      const events = await tx<{ action: string }[]>`
+        select action from annual_return_audit_events
+        where case_id = ${fixture.caseId} and action = 'record_submission'`;
+      expect(events).toHaveLength(1);
+      await expect(
+        recordManualSubmissionForActor(
+          fixture.actor,
+          { ...input, externalReference: "different-reference" },
+          dependencies,
+        ),
+      ).rejects.toThrow(/already|live/i);
+    });
+  });
+
+  it("refuses old approval, wrong proof category, unauthorized actor and preapproval time", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const dependencies = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        dependencies,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        dependencies,
+      );
+      const proofVersionId = await fixture.createSubmissionProof();
+      const input = {
+        packageId: draft.id,
+        manifestHash: draft.manifestHash,
+        expectedRevision: 1,
+        submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+        destinationLabel: "Companies Registry portal",
+        externalReference: "NAR1-" + crypto.randomUUID(),
+        proofVersionId,
+      };
+      await expect(
+        recordManualSubmissionForActor(
+          fixture.actor,
+          { ...input, proofVersionId: fixture.proofVersionId },
+          dependencies,
+        ),
+      ).rejects.toThrow(/submission or receipt/i);
+      await expect(
+        recordManualSubmissionForActor(
+          fixture.actor,
+          { ...input, expectedRevision: 2 },
+          dependencies,
+        ),
+      ).rejects.toThrow(/exact approved/i);
+      await expect(
+        recordManualSubmissionForActor(
+          fixture.actor,
+          { ...input, submittedAt: "2020-01-01T12:00:00+08:00" },
+          dependencies,
+        ),
+      ).rejects.toThrow(/precede/i);
+      await expect(
+        recordManualSubmissionForActor(
+          { ...fixture.actor, role: "Client" } as AuthenticatedActor,
+          input,
+          dependencies,
+        ),
+      ).rejects.toThrow(/staff/i);
+      const [unassigned] = await tx<
+        {
+          auth_user_id: string;
+          user_id: string;
+          team_id: string | null;
+        }[]
+      >`
+        select auth_user_id,user_id,team_id from staff_profiles
+        where role = 'Staff' and active and user_id <> ${fixture.actor.userId}
+        limit 1`;
+      expect(unassigned).toBeTruthy();
+      await expect(
+        recordManualSubmissionForActor(
+          {
+            authUserId: unassigned.auth_user_id,
+            userId: unassigned.user_id,
+            role: "Staff",
+            teamId: unassigned.team_id,
+            active: true,
+          },
+          input,
+          dependencies,
+        ),
+      ).rejects.toThrow(/record external submissions/i);
+      await tx`
+        update case_requirement_instances
+        set requirement_key = 'Changed after approval',updated_at=now()
+        where id = ${fixture.requirementId}`;
+      await expect(
+        recordManualSubmissionForActor(fixture.actor, input, dependencies),
+      ).rejects.toThrow(/stale/i);
+      const newer = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 1 },
+        dependencies,
+      );
+      expect(newer.revision).toBe(2);
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: newer.id, manifestHash: newer.manifestHash, expectedRevision: 2 },
+        dependencies,
+      );
+      await expect(
+        recordManualSubmissionForActor(fixture.actor, input, dependencies),
+      ).rejects.toThrow(/newer package/i);
     });
   });
 });

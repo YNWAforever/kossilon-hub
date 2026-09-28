@@ -137,6 +137,7 @@ const AUDIT_ACTION_LABELS: Record<AnnualReturnAction, string> = {
   complete: "Case completed",
   prepare_package: "Package prepared",
   approve_package: "Package approved",
+  record_submission: "External submission recorded",
 };
 
 const ASSIGNMENT_DECISION_LABELS: Record<AssignmentEventRow["decision"], string> = {
