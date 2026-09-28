@@ -57,8 +57,7 @@ export const WORK_VIEWS: readonly WorkViewDefinition[] = [
     label: "可以交件",
     description: "已批准當前套件、付款及文件均已核實，可以記錄人手交件。",
     released: false,
-    unavailableReason:
-      "套件批准及付款核實資料尚未接通，暫不能判定哪些案件可以交件。請開啟案件逐項覆核；空白不代表沒有工作。",
+    unavailableReason: "需等候當前套件、付款與儲存檔案的伺服器核實；空白不代表沒有工作。",
   },
   {
     key: "returnsAndExceptions",
@@ -104,7 +103,10 @@ export type WorkViewPageInput = {
 export type WorkViewPage = {
   definition: WorkViewDefinition;
   rows: WorkViewRow[];
-  total: number;
+  /** Null when only candidate count is known; never present it as ready count. */
+  total: number | null;
+  /** Candidate packages whose current bytes or manifest could not be verified. */
+  unverifiedCount?: number;
   nextCursor: string | null;
   asOf: string;
 };

@@ -60,3 +60,7 @@ drop table filing_return_source_cursors;
 delete from schema_migrations where id = '0043_filing_return_intake.sql';
 commit;
 ```
+
+## Accepted internal return completion follow-up (2026-09-29)
+
+The local completion path now admits a named human-reconciled accepted internal return only when the stored source object ID, version, SHA-256 and verified scan state match. The C2 case preview re-reads the actual stored bytes; the production completion handler checks that preview before the repository's locked database gate. A deleted object blocks the preview, and a source demoted to unsafe blocks the repository mutation. The disposable-Postgres journey is recorded in the T29 release runbook. No live source protocol, credentials, scanner or R2 return has been used.

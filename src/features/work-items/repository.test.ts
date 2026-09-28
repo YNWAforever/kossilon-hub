@@ -58,6 +58,20 @@ describe("work-item repository contracts", () => {
     expect(sorted.map(({ id }) => id)).toEqual(["a", "c", "b", "d"]);
   });
 
+  it("t05_no_policy keeps unconfigured work visible without an SLA escalation", () => {
+    const unconfigured = item("unconfigured", {
+      slaPolicyVersionId: null,
+      slaStartedAt: null,
+      slaWarningAt: null,
+      slaDueAt: null,
+    });
+    expect(sortWorkItemQueue([unconfigured, item("configured")]).map(({ id }) => id)).toEqual([
+      "configured",
+      "unconfigured",
+    ]);
+    expect(escalationTransitionsFor(unconfigured, "2030-01-01T00:00:00.000Z", [])).toEqual([]);
+  });
+
   it("requires an override reason when a non-top recommendation is chosen", () => {
     expect(() =>
       assignmentDecisionFor({
@@ -380,6 +394,368 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
 });
 
 describe.skipIf(!databaseUrl)("ensureWorkItemForEvent", () => {
+  it("t05_no_policy persists an assignable work item without inventing SLA dates", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+    const rollbackMessage = "rollback no-policy work item fixture";
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const [caseRow] = await tx<
+            { id: string; company_id: string; owner_id: string }[]
+          >`select id, company_id, owner_id from annual_return_cases limit 1`;
+          if (!caseRow) throw new Error("T05 fixture needs a seeded annual return case.");
+          const item = await ensureWorkItemForEvent(tx, {
+            companyId: caseRow.company_id,
+            caseType: "annual_return",
+            annualReturnCaseId: caseRow.id,
+            sourceEventKey: "t05-unconfigured:" + crypto.randomUUID(),
+            sourceEventType: "sla_policy_configuration_required",
+            workType: "t05_unconfigured_policy_fixture",
+            title: "Configure SLA policy for this work type",
+            ownerId: caseRow.owner_id,
+          });
+          expect(item).toMatchObject({
+            status: "open",
+            slaPolicyVersionId: null,
+            slaStartedAt: null,
+            slaWarningAt: null,
+            slaDueAt: null,
+            slaBreachedAt: null,
+          });
+          const repository = createWorkItemRepository({ sql: tx });
+          expect((await repository.listQueue()).some((queued) => queued.id === item.id)).toBe(true);
+          await expect(
+            tx.savepoint(
+              async (savepoint) =>
+                savepoint`insert into work_items
+                (company_id, case_type, annual_return_case_id, source_event_key,
+                 source_event_type, work_type, title, sla_started_at)
+                values (${caseRow.company_id}, 'annual_return', ${caseRow.id},
+                  ${"t05-partial:" + crypto.randomUUID()}, 'sla_policy_configuration_required',
+                  't05_unconfigured_policy_fixture', 'Invalid partial SLA', now())`,
+            ),
+          ).rejects.toThrow(/work_items_sla_snapshot_check/);
+          expect(
+            await tx<{ id: string }[]>`select id from work_items where id=${item.id}`,
+          ).toHaveLength(1);
+          throw new Error(rollbackMessage);
+        }),
+      ).rejects.toThrow(rollbackMessage);
+    } finally {
+      await sql.end();
+    }
+  }, 20_000);
+
+  it("t05_no_policy assigns a same-team active Staff without creating an SLA deadline", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+    const rollbackMessage = "rollback no-policy assignment fixture";
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const [fixture] = await tx<
+            {
+              case_id: string;
+              company_id: string;
+              team_id: string;
+              skill_key: string;
+              candidate_id: string;
+            }[]
+          >`
+            select arc.id case_id, arc.company_id, c.assigned_team_id team_id,
+              ss.skill_key, sp.user_id candidate_id
+            from annual_return_cases arc
+            join companies c on c.id = arc.company_id
+            join staff_profiles sp on sp.team_id = c.assigned_team_id
+              and sp.role = 'Staff' and sp.active = true
+            join users u on u.id = sp.user_id and u.active = true
+            join staff_skills ss on ss.staff_profile_id = sp.id and ss.active = true
+            limit 1
+          `;
+          const [admin] = await tx<{ user_id: string }[]>`
+            select sp.user_id from staff_profiles sp
+            join users u on u.id = sp.user_id and u.active = true
+            where sp.role = 'Admin' and sp.active = true limit 1
+          `;
+          if (!fixture || !admin)
+            throw new Error("T05 fixture needs same-team Staff skill and Admin.");
+          const item = await ensureWorkItemForEvent(tx, {
+            companyId: fixture.company_id,
+            caseType: "annual_return",
+            annualReturnCaseId: fixture.case_id,
+            sourceEventKey: "t05-assign-unconfigured:" + crypto.randomUUID(),
+            sourceEventType: "sla_policy_configuration_required",
+            workType: "t05_unconfigured_policy_fixture",
+            requiredSkillKey: fixture.skill_key,
+            title: "Configure SLA policy for this work type",
+            teamId: fixture.team_id,
+          });
+          const repository = createWorkItemRepository({ sql: tx });
+          const recommendations = await repository.recommendAssignees(item.id);
+          expect(
+            recommendations.some((candidate) => candidate.userId === fixture.candidate_id),
+          ).toBe(true);
+          const assigned = await repository.assign({
+            workItemId: item.id,
+            selectedUserId: fixture.candidate_id,
+            assignedById: admin.user_id,
+            expectedVersion: item.version,
+            overrideReason: "Policy setup assignment",
+            expectedTeamId: fixture.team_id,
+          });
+          expect(assigned).toMatchObject({
+            ownerId: fixture.candidate_id,
+            status: "in_progress",
+            slaPolicyVersionId: null,
+            slaDueAt: null,
+          });
+          throw new Error(rollbackMessage);
+        }),
+      ).rejects.toThrow(rollbackMessage);
+    } finally {
+      await sql.end();
+    }
+  }, 30_000);
+
+  it("t05_policy_attach previews without writes and commits one selected policy once", async () => {
+    const sql = createSqlClient(databaseUrl!, { max: 1 });
+    const rollbackMessage = "rollback selected-policy attachment fixture";
+    try {
+      await expect(
+        sql.begin(async (tx) => {
+          const [fixture] = await tx<
+            { case_id: string; company_id: string; admin_id: string; calendar_id: string }[]
+          >`
+            select arc.id case_id, arc.company_id, sp.user_id admin_id,
+              p.business_calendar_id calendar_id
+            from annual_return_cases arc
+            cross join staff_profiles sp
+            cross join sla_policies p
+            where sp.role = 'Admin' and sp.active = true and p.active = true
+            limit 1
+          `;
+          if (!fixture) throw new Error("T05 fixture needs case, Admin, and calendar.");
+          const workType = `t05_policy_attach_${crypto.randomUUID()}`;
+          const item = await ensureWorkItemForEvent(tx, {
+            companyId: fixture.company_id,
+            caseType: "annual_return",
+            annualReturnCaseId: fixture.case_id,
+            sourceEventKey: `t05-attach:${crypto.randomUUID()}`,
+            sourceEventType: "policy_configuration_required",
+            workType,
+            title: "Attach selected policy",
+          });
+          expect(item.slaPolicyVersionId).toBeNull();
+          const [policy] = await tx<{ id: string }[]>`
+            insert into sla_policies (
+              policy_key, version, name, work_type, business_calendar_id,
+              warning_minutes, due_minutes, effective_from, active, created_by
+            ) values (
+              ${workType}, 1, 'T05 selected policy', ${workType}, ${fixture.calendar_id},
+              60, 120, '2026-01-01T00:00:00.000Z', true, ${fixture.admin_id}
+            ) returning id
+          `;
+          const repository = createWorkItemRepository({ sql: tx });
+          const choices = await repository.listAttachablePolicies({
+            workItemId: item.id,
+            expectedVersion: item.version,
+          });
+          const mismatched = await ensureWorkItemForEvent(tx, {
+            companyId: fixture.company_id,
+            caseType: "annual_return",
+            annualReturnCaseId: fixture.case_id,
+            sourceEventKey: `t05-attach-other:${crypto.randomUUID()}`,
+            sourceEventType: "policy_configuration_required",
+            workType: `t05_other_${crypto.randomUUID()}`,
+            title: "Different work type",
+          });
+          const batchPreview = await repository.previewPolicyBackfill({
+            actorId: fixture.admin_id,
+            policyVersionId: policy.id,
+            items: [
+              { workItemId: item.id, expectedVersion: item.version },
+              { workItemId: mismatched.id, expectedVersion: mismatched.version },
+            ],
+          });
+          expect(batchPreview).toEqual([
+            expect.objectContaining({
+              workItemId: item.id,
+              state: "eligible",
+              preview: expect.objectContaining({ policyVersionId: policy.id }),
+            }),
+            expect.objectContaining({
+              workItemId: mismatched.id,
+              state: "conflict",
+              reasonCode: "POLICY_WORK_TYPE_MISMATCH",
+              preview: null,
+            }),
+          ]);
+          expect(
+            await tx<
+              { work_item_id: string }[]
+            >`select work_item_id from work_item_sla_attachments where work_item_id in (${item.id}, ${mismatched.id})`,
+          ).toHaveLength(0);
+          await expect(
+            repository.previewPolicyBackfill({
+              actorId: fixture.admin_id,
+              policyVersionId: policy.id,
+              items: [
+                { workItemId: item.id, expectedVersion: item.version },
+                { workItemId: item.id, expectedVersion: item.version },
+              ],
+            }),
+          ).rejects.toThrow(/unique/i);
+          const staleBackfill = await repository.previewPolicyBackfill({
+            actorId: fixture.admin_id,
+            policyVersionId: policy.id,
+            items: [{ workItemId: item.id, expectedVersion: item.version + 1 }],
+          });
+          expect(staleBackfill[0]).toMatchObject({
+            state: "conflict",
+            reasonCode: "REVISION_CHANGED",
+            preview: null,
+          });
+          await tx`update staff_profiles set active = false where user_id = ${fixture.admin_id}`;
+          await expect(
+            repository.previewPolicyBackfill({
+              actorId: fixture.admin_id,
+              policyVersionId: policy.id,
+              items: [{ workItemId: item.id, expectedVersion: item.version }],
+            }),
+          ).rejects.toThrow(/Admin/);
+          await tx`update staff_profiles set active = true where user_id = ${fixture.admin_id}`;
+          expect(choices).toEqual([
+            expect.objectContaining({
+              id: policy.id,
+              name: "T05 selected policy",
+              version: 1,
+            }),
+          ]);
+          await expect(
+            repository.previewPolicyAttachment({
+              workItemId: item.id,
+              policyVersionId: crypto.randomUUID(),
+              expectedVersion: item.version,
+            }),
+          ).rejects.toThrow(/policy/i);
+          const preview = await repository.previewPolicyAttachment({
+            workItemId: item.id,
+            policyVersionId: policy.id,
+            expectedVersion: item.version,
+          });
+          expect(preview).toMatchObject({
+            workItemId: item.id,
+            policyVersionId: policy.id,
+            expectedVersion: item.version,
+          });
+          expect(Date.parse(preview.warningAt)).toBeGreaterThan(Date.parse(preview.startedAt));
+          expect(Date.parse(preview.dueAt)).toBeGreaterThan(Date.parse(preview.warningAt));
+          expect(await repository.get(item.id)).toMatchObject({
+            version: item.version,
+            slaPolicyVersionId: null,
+          });
+          expect(
+            await tx<{ work_item_id: string }[]>`
+            select work_item_id from work_item_sla_attachments where work_item_id = ${item.id}
+          `,
+          ).toHaveLength(0);
+          await expect(
+            tx.savepoint(
+              async (savepoint) => savepoint`
+            update work_items set
+              sla_policy_version_id = ${policy.id},
+              sla_started_at = ${preview.startedAt},
+              sla_warning_at = ${preview.warningAt},
+              sla_due_at = ${preview.dueAt}
+            where id = ${item.id}
+          `,
+            ),
+          ).rejects.toThrow(/immutable/i);
+          await expect(
+            repository.attachPolicy({
+              ...preview,
+              previewHash: "0".repeat(64),
+              actorId: fixture.admin_id,
+            }),
+          ).rejects.toThrow(/preview/i);
+          await expect(
+            repository.attachPolicy({
+              ...preview,
+              expectedVersion: item.version + 1,
+              actorId: fixture.admin_id,
+            }),
+          ).rejects.toThrow(/stale/i);
+          await tx`update staff_profiles set active = false where user_id = ${fixture.admin_id}`;
+          await expect(
+            repository.attachPolicy({
+              ...preview,
+              actorId: fixture.admin_id,
+            }),
+          ).rejects.toThrow(/Admin/i);
+          await tx`update staff_profiles set active = true where user_id = ${fixture.admin_id}`;
+          await tx`update sla_policies set active = false where id = ${policy.id}`;
+          await expect(
+            repository.attachPolicy({
+              ...preview,
+              actorId: fixture.admin_id,
+            }),
+          ).rejects.toThrow(/policy/i);
+          await tx`update sla_policies set active = true where id = ${policy.id}`;
+          const expiredRepository = createWorkItemRepository({
+            sql: tx,
+            now: new Date(Date.parse(preview.startedAt) + 16 * 60_000).toISOString(),
+          });
+          await expect(
+            expiredRepository.attachPolicy({
+              ...preview,
+              actorId: fixture.admin_id,
+            }),
+          ).rejects.toThrow(/expired/i);
+          const attached = await repository.attachPolicy({
+            ...preview,
+            actorId: fixture.admin_id,
+          });
+          expect(attached).toMatchObject({
+            slaPolicyVersionId: policy.id,
+            slaStartedAt: preview.startedAt,
+            slaWarningAt: preview.warningAt,
+            slaDueAt: preview.dueAt,
+            version: item.version + 1,
+          });
+          const audit = await tx<{ actor_id: string; policy_version_id: string }[]>`
+            select actor_id, policy_version_id from work_item_sla_attachments
+            where work_item_id = ${item.id}
+          `;
+          expect(audit).toEqual([{ actor_id: fixture.admin_id, policy_version_id: policy.id }]);
+          await expect(
+            tx.savepoint(
+              async (savepoint) => savepoint`
+            update work_item_sla_attachments set preview_hash = ${"b".repeat(64)}
+            where work_item_id = ${item.id}
+          `,
+            ),
+          ).rejects.toThrow(/immutable/i);
+          await expect(
+            tx.savepoint(
+              async (savepoint) => savepoint`
+            update work_items set sla_due_at = ${new Date(Date.parse(preview.dueAt) + 60_000).toISOString()}
+            where id = ${item.id}
+          `,
+            ),
+          ).rejects.toThrow(/immutable/i);
+          await expect(
+            repository.attachPolicy({
+              ...preview,
+              actorId: fixture.admin_id,
+            }),
+          ).rejects.toThrow(/stale|already/i);
+          throw new Error(rollbackMessage);
+        }),
+      ).rejects.toThrow(rollbackMessage);
+    } finally {
+      await sql.end();
+    }
+  }, 30_000);
+
   it("creates a work item for a corporate_change_request case using its own FK column", async () => {
     const sql = createSqlClient(databaseUrl!, { max: 1 });
     const rollbackMessage = "rollback corporate change request work item fixture";

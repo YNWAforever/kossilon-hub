@@ -732,6 +732,10 @@ export async function listWorkViewForActor(
   dependencies: {
     repository: Pick<AnnualReturnRepository, "listWorkViewPage"> &
       Partial<Pick<AnnualReturnRepository, "listAllCases">>;
+    inspectSubmission?: (
+      actor: AuthenticatedActor,
+      caseId: string,
+    ) => Promise<import("./submission-readiness-service").CaseSubmissionReadiness>;
   },
 ) {
   const scope = caseFiltersForActor({
@@ -745,7 +749,7 @@ export async function listWorkViewForActor(
     throw new Error("Work-view page limit must be between 1 and 200.");
   }
   const asOf = input.asOf ? toHongKongBusinessDate(input.asOf) : hongKongBusinessDate();
-  return dependencies.repository.listWorkViewPage({
+  const page = await dependencies.repository.listWorkViewPage({
     scope,
     viewerId: actor.userId,
     view: input.view,
@@ -754,6 +758,34 @@ export async function listWorkViewForActor(
     limit,
     asOf,
   });
+  if (input.view !== "readyToFile") return page;
+  const inspectSubmission = dependencies.inspectSubmission;
+  if (!inspectSubmission) throw new Error("Ready-to-file verification is unavailable.");
+  const rows: typeof page.rows = [];
+  let unverifiedCount = 0;
+  // Bound concurrent DB snapshots and stored-byte reads; preserve candidate order.
+  for (let offset = 0; offset < page.rows.length; offset += 4) {
+    const batch = page.rows.slice(offset, offset + 4);
+    const decisions = await Promise.all(
+      batch.map((candidate) => inspectSubmission(actor, candidate.caseId)),
+    );
+    for (let index = 0; index < batch.length; index += 1) {
+      const candidate = batch[index];
+      const decision = decisions[index];
+      if (decision.state === "ready" && decision.readiness.canRecordSubmission) {
+        rows.push({ ...candidate, blocker: "套件及證據已核實，待人手外部交件" });
+      } else if (decision.state === "unknown") {
+        unverifiedCount += 1;
+      }
+    }
+  }
+  return {
+    ...page,
+    definition: { ...page.definition, released: true, unavailableReason: undefined },
+    rows,
+    total: null,
+    unverifiedCount,
+  };
 }
 
 /** Existing SQL aggregate, with the same actor scope and asOf date as a work page. */
@@ -816,9 +848,32 @@ const operationalMetricsInputSchema = z
 export const listAnnualReturnWorkViewPage = createServerFn({ method: "GET" })
   .validator(workViewPageSchema)
   .handler(({ data }) =>
-    withAnnualReturnActorRepository((repository, actor) =>
-      listWorkViewForActor(actor, data, { repository }),
-    ),
+    withAnnualReturnActorRepository(async (repository, actor) => {
+      if (data.view !== "readyToFile") {
+        return listWorkViewForActor(actor, data, { repository });
+      }
+      const [
+        { createDocumentStorageForProviderMode },
+        { currentProviderMode },
+        { getDocumentsBucketBinding },
+        { inspectCaseSubmissionReadinessForActor },
+      ] = await Promise.all([
+        import("@/features/documents/server-fns"),
+        import("@/server/provider-mode"),
+        import("@/server/runtime-env"),
+        import("./submission-readiness-service"),
+      ]);
+      const mode = currentProviderMode();
+      const storage = createDocumentStorageForProviderMode(
+        mode,
+        mode === "live" ? getDocumentsBucketBinding() : undefined,
+      );
+      return listWorkViewForActor(actor, data, {
+        repository,
+        inspectSubmission: (candidateActor, caseId) =>
+          inspectCaseSubmissionReadinessForActor(candidateActor, caseId, { storage }),
+      });
+    }),
   );
 
 export const getAnnualReturnOperationalMetrics = createServerFn({ method: "GET" })
@@ -959,9 +1014,34 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
     }),
   )
   .handler(({ data }) =>
-    withAnnualReturnActorRepository((repository, actor) =>
-      updateAnnualReturnStatusForActor(actor, data, { repository }),
-    ),
+    withAnnualReturnActorRepository(async (repository, actor) => {
+      if (data.nextStatus === "Completed") {
+        const [
+          { inspectCaseReadinessForActor },
+          { createDocumentStorageForProviderMode },
+          { currentProviderMode },
+          { getDocumentsBucketBinding },
+        ] = await Promise.all([
+          import("./readiness-reader"),
+          import("@/features/documents/server-fns"),
+          import("@/server/provider-mode"),
+          import("@/server/runtime-env"),
+        ]);
+        const mode = currentProviderMode();
+        const storage = createDocumentStorageForProviderMode(
+          mode,
+          mode === "live" ? getDocumentsBucketBinding() : undefined,
+        );
+        const current = await inspectCaseReadinessForActor(actor, data.caseId, { storage });
+        // The legacy pre-package Filed path remains subject to the repository gate.
+        if (current.snapshot.revision > 0 && !current.readiness.canComplete) {
+          throw new Error(
+            "Current package, submission or return proof bytes are not ready for completion.",
+          );
+        }
+      }
+      return updateAnnualReturnStatusForActor(actor, data, { repository });
+    }),
   );
 export const recordAnnualReturnReminder = createServerFn({ method: "POST" })
   .validator(

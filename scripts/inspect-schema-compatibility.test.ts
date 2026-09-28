@@ -57,6 +57,7 @@ describe("T01 schema compatibility release gate", () => {
         expect.objectContaining({ artifact: "table:document_analysis_jobs" }),
         expect.objectContaining({ artifact: "table:maintenance_runs" }),
         expect.objectContaining({ artifact: "table:bulk_reminder_reviews" }),
+        expect.objectContaining({ artifact: "table:work_item_sla_attachments" }),
         expect.objectContaining({ artifact: "column:package_handoffs.proof_version_id" }),
         expect.objectContaining({ artifact: "table:filing_return_source_objects" }),
       ]),

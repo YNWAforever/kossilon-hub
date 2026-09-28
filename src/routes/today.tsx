@@ -50,7 +50,7 @@ function TodayRoute() {
       listAnnualReturnWorkViewPage({
         data: { view: active, limit: 50, cursor: page.cursor, asOf: page.asOf },
       }),
-    enabled: dataMode === "production" && active !== "readyToFile",
+    enabled: dataMode === "production",
     retry: false,
   });
 
@@ -72,8 +72,7 @@ function TodayRoute() {
   const definition = viewsQuery.data?.definition ?? current;
   const rows = viewsQuery.data?.rows ?? [];
   const total = viewsQuery.data?.total;
-  const released =
-    active === "readyToFile" ? false : (viewsQuery.data?.definition.released ?? true);
+  const released = viewsQuery.data?.definition.released ?? active !== "readyToFile";
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -106,7 +105,7 @@ function TodayRoute() {
             {view.label}
             {/* A count is only shown for a view that can actually count. An
                 unreleased view showing "0" would be a claim it cannot make. */}
-            {view.key === active && released && total !== undefined ? ` (${total})` : ""}
+            {view.key === active && released && typeof total === "number" ? ` (${total})` : ""}
           </button>
         ))}
       </div>
@@ -118,7 +117,18 @@ function TodayRoute() {
             <p className="mt-1 text-sm text-muted-foreground">{definition.description}</p>
           </div>
 
-          {!released ? (
+          {released && viewsQuery.data?.unverifiedCount ? (
+            <p className="border-b p-4 text-sm text-status-yellow" role="status">
+              本頁有 {viewsQuery.data.unverifiedCount}{" "}
+              個候選套件無法核實，未列作可以交件。請開啟案件逐項覆核。
+            </p>
+          ) : null}
+
+          {active === "readyToFile" && viewsQuery.isPending ? (
+            <p className="p-4 text-sm text-muted-foreground" role="status">
+              正在核實當前套件、付款及儲存檔案…
+            </p>
+          ) : !released ? (
             <p className="p-4 text-sm text-status-yellow" role="status">
               {definition.unavailableReason} 負責同事請開啟相關案件逐項核對。
             </p>
@@ -128,7 +138,10 @@ function TodayRoute() {
                 ? "載入中…"
                 : viewsQuery.error
                   ? "載入失敗；請由負責同事在案件板核對。"
-                  : "現時沒有這一類工作。如預期應有案件，請由負責同事在案件板核對。"}
+                  : active === "readyToFile" &&
+                      (viewsQuery.data?.unverifiedCount || viewsQuery.data?.nextCursor)
+                    ? "本頁沒有已核實可交件案件；仍有候選需核對，請繼續下一頁或逐案檢查。"
+                    : "現時沒有這一類工作。如預期應有案件，請由負責同事在案件板核對。"}
             </p>
           ) : (
             <div className="divide-y">
@@ -173,7 +186,8 @@ function TodayRoute() {
                 </button>
               ) : null}
               <span className="text-sm text-muted-foreground">
-                本頁 {rows.length} 筆 · 總數 {total ?? 0}
+                本頁 {rows.length} 筆 ·{" "}
+                {total === null ? "總數待核實" : `總數 ${total ?? "待載入"}`}
               </span>
             </div>
           ) : null}

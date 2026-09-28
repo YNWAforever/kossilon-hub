@@ -17,6 +17,7 @@ import {
   WorkQueueBulkAssignmentDialog,
   WorkQueueBulkOperationStatus,
 } from "@/features/bulk-operations/work-queue-bulk-controls";
+import { WorkQueueBulkPolicyDialog } from "@/features/bulk-operations/work-queue-bulk-policy-dialog";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ import { useAuth } from "@/features/auth/auth-context-neon";
 import { workQueuePersonLabel, type AssignmentRecommendation } from "@/features/work-items/types";
 import { deriveSlaDisplay, type SlaDisplay, type SlaDisplayState } from "@/features/work-items/sla";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
+import { PolicyAttachmentDialog } from "@/features/work-items/policy-attachment-dialog";
 import { filterWorkQueueDisplay } from "@/features/work-items/queue-display-filters";
 import {
   acknowledgeWorkItemEscalation,
@@ -118,8 +120,10 @@ function WorkQueueRoute() {
   const navigate = Route.useNavigate();
   const { view, owner, workType, sla, priority, status, q: query, page: requestedPage } = search;
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
+  const [policyItem, setPolicyItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkPolicyDialogOpen, setBulkPolicyDialogOpen] = useState(false);
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const filterKey = JSON.stringify([
@@ -144,10 +148,12 @@ function WorkQueueRoute() {
     setSelection((previous) => changeSelectionFilter(previous, filterKey));
     setSelectionError(null);
     setBulkDialogOpen(false);
+    setBulkPolicyDialogOpen(false);
     setTagDialogOpen(false);
     setMatchingSelection(null);
   }, [filterKey]);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
+  const canConfigurePolicy = session?.role === "Admin";
   const filters = { view };
   const queueQuery = useQuery({
     queryKey: ["work-queue", view],
@@ -231,10 +237,12 @@ function WorkQueueRoute() {
   const representativeItem = currentMatching
     ? visibleItems.find((item) => !currentMatching.excludedIds.includes(item.id))
     : items.find((item) => selectedIds.has(item.id));
+  const selectedPolicyItems = items.filter((item) => selectedIds.has(item.id));
 
   const metrics = {
-    dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(asOf))
-      .length,
+    dueToday: items.filter(
+      (item) => item.slaDueAt && hongKongDateKey(item.slaDueAt) === hongKongDateKey(asOf),
+    ).length,
     atRisk: items.filter((item) => displayFor(item).state === "at-risk").length,
     breached: items.filter((item) => displayFor(item).state === "breached").length,
     unassigned: items.filter((item) => !item.ownerId).length,
@@ -440,6 +448,24 @@ function WorkQueueRoute() {
                 setBulkDialogOpen(true);
               }}
             />
+            {canConfigurePolicy && !currentMatching && currentSelection.ids.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentSelection.ids.length > 100) {
+                    setSelectionError("每次最多可為 100 項工作預覽服務時限。");
+                  } else if (selectedPolicyItems.length !== currentSelection.ids.length) {
+                    setSelectionError("所選工作已不在目前工作佇列；請重新整理或清除選取。");
+                  } else {
+                    setSelectionError(null);
+                    setBulkPolicyDialogOpen(true);
+                  }
+                }}
+                className="mt-2 rounded-md border border-border px-3 py-2 text-sm"
+              >
+                批量設定服務時限
+              </button>
+            ) : null}
             {selectionError ? (
               <p role="alert" className="mt-2 text-xs text-destructive">
                 {selectionError}
@@ -563,6 +589,8 @@ function WorkQueueRoute() {
                         canManage={canManage}
                         onAssign={setAssignmentItem}
                         onAcknowledge={setAcknowledgementItem}
+                        canConfigurePolicy={canConfigurePolicy}
+                        onConfigurePolicy={setPolicyItem}
                       />
                     </span>
                   </div>
@@ -621,6 +649,8 @@ function WorkQueueRoute() {
                     canManage={canManage}
                     onAssign={setAssignmentItem}
                     onAcknowledge={setAcknowledgementItem}
+                    canConfigurePolicy={canConfigurePolicy}
+                    onConfigurePolicy={setPolicyItem}
                   />
                 </article>
               ))}
@@ -695,6 +725,18 @@ function WorkQueueRoute() {
           }}
         />
       ) : null}
+      {bulkPolicyDialogOpen && !currentMatching && selectedPolicyItems.length > 0 ? (
+        <WorkQueueBulkPolicyDialog
+          items={selectedPolicyItems}
+          onClose={() => setBulkPolicyDialogOpen(false)}
+          onCommitted={(operationId) => {
+            setBulkPolicyDialogOpen(false);
+            setSelection(newBulkSelection(filterKey));
+            void navigate({ search: { ...search, bulkOperation: operationId }, replace: true });
+            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          }}
+        />
+      ) : null}
       {tagDialogOpen ? (
         <ResourceTagDialog
           selection={
@@ -723,6 +765,16 @@ function WorkQueueRoute() {
           onClose={() => setAssignmentItem(null)}
           onAssigned={() => {
             setAssignmentItem(null);
+            void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
+          }}
+        />
+      ) : null}
+      {policyItem ? (
+        <PolicyAttachmentDialog
+          item={policyItem}
+          onClose={() => setPolicyItem(null)}
+          onAttached={() => {
+            setPolicyItem(null);
             void queryClient.invalidateQueries({ queryKey: ["work-queue"] });
           }}
         />
@@ -946,11 +998,15 @@ function QueueActions({
   canManage,
   onAssign,
   onAcknowledge,
+  canConfigurePolicy,
+  onConfigurePolicy,
 }: {
   item: PersistedWorkItem;
   canManage: boolean;
   onAssign: (item: PersistedWorkItem) => void;
   onAcknowledge: (item: PersistedWorkItem) => void;
+  canConfigurePolicy: boolean;
+  onConfigurePolicy: (item: PersistedWorkItem) => void;
 }) {
   return (
     <div className="flex justify-end gap-2">
@@ -961,6 +1017,17 @@ function QueueActions({
           className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
         >
           <UserRoundPlus className="h-4 w-4" />
+        </button>
+      ) : null}
+      {canConfigurePolicy && !item.slaPolicyVersionId ? (
+        <button
+          type="button"
+          title="設定工作服務時限"
+          aria-label={`設定 ${item.title} 的服務時限`}
+          onClick={() => onConfigurePolicy(item)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
+        >
+          <Clock3 className="h-4 w-4" />
         </button>
       ) : null}
       {canManage && (item.escalationState === "warning" || item.escalationState === "breach") ? (

@@ -214,8 +214,8 @@ async function writeAudit(
     )`;
 }
 
-async function verifyInternalSourceObject(
-  tx: Tx,
+export async function verifyInternalSourceObject(
+  tx: Db,
   id: string,
   storage: DocumentStorage,
 ): Promise<{

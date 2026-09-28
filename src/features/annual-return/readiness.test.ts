@@ -24,6 +24,8 @@ const BASE: CaseReadinessSnapshot = {
   returnReconciliation: {
     id: "return-1",
     status: "matched",
+    outcome: "accepted",
+    decision: "confirm",
     verifiedAt: "2026-09-27T00:00:00.000Z",
   },
   completionBlockers: [],
@@ -106,6 +108,7 @@ describe("evaluateCaseReadiness", () => {
     expect(beforeSubmission.canRecordSubmission).toBe(true);
     expect(beforeSubmission.canComplete).toBe(false);
     const filed = evaluateCaseReadiness({ ...BASE, currentStatus: "Filed" });
+    expect(filed.canApprovePackage).toBe(false);
     expect(filed.canRecordSubmission).toBe(false);
     expect(filed.canComplete).toBe(true);
     const changed = evaluateCaseReadiness({
@@ -124,6 +127,51 @@ describe("evaluateCaseReadiness", () => {
     expect(unresolved.canComplete).toBe(false);
     expect(unresolved.blockers).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: "return-unresolved" })]),
+    );
+  });
+
+  it("t03_review requires an accepted and confirmed return before completion", () => {
+    const rejectedReturn = {
+      ...BASE.returnReconciliation!,
+      outcome: "rejected" as const,
+      decision: "confirm" as const,
+    };
+    const rejected = evaluateCaseReadiness({
+      ...BASE,
+      returnReconciliation: rejectedReturn,
+    });
+    expect(rejected.canComplete).toBe(false);
+    expect(rejected.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "return-unresolved" })]),
+    );
+
+    const unconfirmedReturn = {
+      ...BASE.returnReconciliation!,
+      outcome: "accepted" as const,
+      decision: "mark-unmatched" as const,
+    };
+    const unconfirmed = evaluateCaseReadiness({
+      ...BASE,
+      returnReconciliation: unconfirmedReturn,
+    });
+    expect(unconfirmed.canComplete).toBe(false);
+    expect(unconfirmed.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "return-unresolved" })]),
+    );
+  });
+
+  it("t03_active_handoff never offers a second external submission", () => {
+    const result = evaluateCaseReadiness({
+      ...BASE,
+      submission: null,
+      returnReconciliation: null,
+      activeHandoffId: "handoff-in-progress",
+    });
+    expect(result.canRecordSubmission).toBe(false);
+    expect(result.blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "case-locked", targetId: "handoff-in-progress" }),
+      ]),
     );
   });
 });

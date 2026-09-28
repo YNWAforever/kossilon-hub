@@ -31,6 +31,9 @@ function ReviewReturn({ item, caseId }: { item: ReturnRecord; caseId: string }) 
         queryKey: [...annualReturnQueryKeys.detail(caseId), "return-intakes"],
       });
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.history(caseId) });
+      void queryClient.invalidateQueries({
+        queryKey: [...annualReturnQueryKeys.detail(caseId), "case-readiness"],
+      });
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.workViews() });
     },
   });
@@ -146,6 +149,9 @@ export function ManualReturnPanel({ caseId }: { caseId: string }) {
       setProofVersionId("");
       void queryClient.invalidateQueries({ queryKey: returnKey });
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.history(caseId) });
+      void queryClient.invalidateQueries({
+        queryKey: [...annualReturnQueryKeys.detail(caseId), "case-readiness"],
+      });
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.workViews() });
     },
   });

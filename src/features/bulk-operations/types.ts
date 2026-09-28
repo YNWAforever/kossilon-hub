@@ -130,6 +130,16 @@ const returnItem = z
     ]),
   })
   .strict();
+const slaPolicyItem = z
+  .object({
+    workItemId: uuid,
+    expectedVersion: z.number().int().positive(),
+    startedAt: z.string().datetime(),
+    warningAt: z.string().datetime(),
+    dueAt: z.string().datetime(),
+    previewHash: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
 export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
   z
     .object({
@@ -278,6 +288,18 @@ export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
     .strict(),
   z
     .object({
+      action: z.literal("attachSlaPolicies"),
+      selection: domainSelection,
+      parameters: z
+        .object({
+          policyVersionId: uuid,
+          items: z.array(slaPolicyItem).min(1).max(100),
+        })
+        .strict(),
+    })
+    .strict(),
+  z
+    .object({
       action: z.literal("reconcilePayments"),
       selection: domainSelection,
       parameters: z.object({ items: z.array(paymentItem).min(1).max(1000) }).strict(),
@@ -307,6 +329,7 @@ export const bulkPreviewInputSchema = z.discriminatedUnion("action", [
 ]);
 export type BulkPreviewInput = z.output<typeof bulkPreviewInputSchema>;
 export type ActiveDomainAction =
+  | "attachSlaPolicies"
   | "reconcilePayments"
   | "preparePackages"
   | "recordSubmissions"

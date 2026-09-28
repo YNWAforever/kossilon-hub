@@ -1,5 +1,6 @@
 import type postgres from "postgres";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { createWorkItemRepository } from "@/features/work-items/repository";
 import type { DocumentStorage } from "@/features/documents/types";
 import type { SqlClient } from "@/server/db/client";
 import { applyPaymentItem } from "./payment-handler";
@@ -21,6 +22,26 @@ export async function applyDomainItemForActor(
   );
   if (!item) throw new Error("Domain batch item is missing from the approved preview.");
   switch (input.action) {
+    case "attachSlaPolicies": {
+      if (actor.role !== "Admin" || !actor.userId)
+        throw new Error("Forbidden: current Admin access is required.");
+      const selected = item as Extract<
+        DomainBatchInput,
+        { action: "attachSlaPolicies" }
+      >["parameters"]["items"][number];
+      const repository = createWorkItemRepository({ sql: dependencies.sql });
+      const attached = await repository.attachPolicy({
+        ...selected,
+        policyVersionId: input.parameters.policyVersionId,
+        actorId: actor.userId,
+      });
+      return {
+        state: "succeeded",
+        reasonCode: null,
+        revision: attached.version,
+        auditRef: attached.id,
+      };
+    }
     case "reconcilePayments":
       return applyPaymentItem(actor, item as (typeof input.parameters.items)[number], {
         sql: dependencies.sql,

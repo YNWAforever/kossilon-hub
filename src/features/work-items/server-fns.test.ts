@@ -1,9 +1,17 @@
 import { existsSync, readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
-import type { PersistedWorkItem } from "./repository";
+import type { createWorkItemRepository, PersistedWorkItem } from "./repository";
 import {
+  attachWorkItemPolicyForActor,
+  attachWorkItemPolicyInputSchema,
   assignWorkItemInputSchema,
+  listWorkItemPolicyChoicesForActor,
+  workItemPolicyChoicesInputSchema,
+  previewWorkItemPolicyForActor,
+  previewWorkItemPolicyBackfillForActor,
+  previewWorkItemPolicyBackfillInputSchema,
+  previewWorkItemPolicyInputSchema,
   assertActorCanAssignWorkItem,
   listWorkQueueInputSchema,
   queueFiltersForActor,
@@ -55,6 +63,85 @@ describe("work queue server authorization", () => {
     expect(listWorkQueueInputSchema.safeParse({ view: "team", teamId: teamTwo }).success).toBe(
       false,
     );
+  });
+
+  it("requires a server-authenticated Admin for policy preview and attachment", async () => {
+    const selection = {
+      workItemId: workItem.id,
+      policyVersionId: "40000000-0000-0000-0000-000000000001",
+      expectedVersion: 2,
+    };
+    const preview = {
+      ...selection,
+      startedAt: "2026-09-28T01:00:00.000Z",
+      warningAt: "2026-09-28T02:00:00.000Z",
+      dueAt: "2026-09-28T03:00:00.000Z",
+      previewHash: "a".repeat(64),
+    };
+    const listAttachablePolicies = vi.fn().mockResolvedValue([]);
+    const previewPolicyAttachment = vi.fn().mockResolvedValue(preview);
+    const backfill = {
+      policyVersionId: selection.policyVersionId,
+      items: [{ workItemId: selection.workItemId, expectedVersion: selection.expectedVersion }],
+    };
+    const previewPolicyBackfill = vi.fn().mockResolvedValue([]);
+    const attachPolicy = vi.fn().mockResolvedValue(workItem);
+    const repository = {
+      listAttachablePolicies,
+      previewPolicyAttachment,
+      previewPolicyBackfill,
+      attachPolicy,
+    } as unknown as ReturnType<typeof createWorkItemRepository>;
+    expect(
+      workItemPolicyChoicesInputSchema.safeParse({ ...selection, actorId: userId }).success,
+    ).toBe(false);
+    expect(
+      previewWorkItemPolicyInputSchema.safeParse({ ...selection, actorId: userId }).success,
+    ).toBe(false);
+    expect(attachWorkItemPolicyInputSchema.safeParse({ ...preview, actorId: userId }).success).toBe(
+      false,
+    );
+    expect(
+      previewWorkItemPolicyBackfillInputSchema.safeParse({ ...backfill, actorId: userId }).success,
+    ).toBe(false);
+    expect(
+      previewWorkItemPolicyBackfillInputSchema.safeParse({
+        ...backfill,
+        items: [...backfill.items, ...backfill.items],
+      }).success,
+    ).toBe(false);
+    for (const role of ["Staff", "Manager"] as const) {
+      await expect(
+        listWorkItemPolicyChoicesForActor(repository, actor(role), selection),
+      ).rejects.toThrow(/Admin/);
+      await expect(
+        previewWorkItemPolicyForActor(repository, actor(role), selection),
+      ).rejects.toThrow(/Admin/);
+      await expect(
+        previewWorkItemPolicyBackfillForActor(repository, actor(role), backfill),
+      ).rejects.toThrow(/Admin/);
+      await expect(attachWorkItemPolicyForActor(repository, actor(role), preview)).rejects.toThrow(
+        /Admin/,
+      );
+    }
+    expect(listAttachablePolicies).not.toHaveBeenCalled();
+    expect(previewPolicyAttachment).not.toHaveBeenCalled();
+    expect(previewPolicyBackfill).not.toHaveBeenCalled();
+    expect(attachPolicy).not.toHaveBeenCalled();
+    await expect(
+      listWorkItemPolicyChoicesForActor(repository, actor("Admin"), selection),
+    ).resolves.toEqual([]);
+    await expect(
+      previewWorkItemPolicyForActor(repository, actor("Admin"), selection),
+    ).resolves.toEqual(preview);
+    await expect(attachWorkItemPolicyForActor(repository, actor("Admin"), preview)).resolves.toBe(
+      workItem,
+    );
+    expect(attachPolicy).toHaveBeenCalledWith({ ...preview, actorId: userId });
+    await expect(
+      previewWorkItemPolicyBackfillForActor(repository, actor("Admin"), backfill),
+    ).resolves.toEqual([]);
+    expect(previewPolicyBackfill).toHaveBeenCalledWith({ ...backfill, actorId: userId });
   });
 
   it("scopes staff to their work, managers to their team, and admins to requested filters", () => {

@@ -17,6 +17,7 @@ import {
   buildPackageArtifact,
   packageSha256,
   readVerifiedPackageArtifact,
+  readVerifiedSourceBytes,
   safePackageFilename,
   type PackageSource,
 } from "./package-download";
@@ -77,6 +78,8 @@ type PaymentRow = {
   proof_expected_size_bytes: number | string | null;
   proof_verified_checksum_sha256: string | null;
   proof_verified_byte_size: number | string | null;
+  proof_storage_url: string | null;
+  proof_content_type: string | null;
   observation_status: string | null;
 };
 type PackageRow = {
@@ -210,7 +213,13 @@ type PackageSnapshot = {
   sources: PackageSource[];
 };
 
-async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnapshot> {
+type DocumentSnapshot = {
+  caseRow: CaseRow;
+  manifest: PackageManifest;
+  sources: PackageSource[];
+};
+
+async function loadDocumentSnapshot(tx: Db, caseId: string): Promise<DocumentSnapshot> {
   const [caseRow] = await tx<CaseRow[]>`
     select id,company_id,return_year,current_status
     from annual_return_cases where id = ${caseId}`;
@@ -367,6 +376,26 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
     limit 1`;
   if (finding) throw new Error("Unresolved critical finding blocks package preparation.");
 
+  const templateVersions = [...new Set(rows.map((row) => row.template_version))].sort();
+  const result = buildPackageManifest({
+    caseId,
+    returnYear: caseRow.return_year,
+    requirementTemplateVersion: templateVersions.join("+"),
+    entries: candidates,
+  });
+  if (result.kind === "blocked") {
+    throw new Error(
+      "Package manifest blocked: " + result.blockers.map((blocker) => blocker.kind).join(", "),
+    );
+  }
+  return { caseRow, manifest: result.manifest, sources };
+}
+
+async function loadVerifiedPayment(
+  tx: Db,
+  caseId: string,
+  storage: DocumentStorage,
+): Promise<PaymentRow> {
   const [payment] = await tx<PaymentRow[]>`
     select p.id,p.status,p.invoice_number,p.amount,p.currency,
       a.id allocation_id,a.amount_minor,a.currency allocation_currency,
@@ -378,6 +407,7 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
       i.expected_size_bytes proof_expected_size_bytes,
       v.verified_checksum_sha256 proof_verified_checksum_sha256,
       v.verified_byte_size proof_verified_byte_size,
+      v.storage_url proof_storage_url,v.content_type proof_content_type,
       o.status observation_status
     from payments p
     left join payment_proof_allocations a on a.payment_id = p.id
@@ -396,6 +426,10 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
     payment.proof_verification_status !== "verified" ||
     payment.proof_upload_status !== "available" ||
     payment.proof_scan_verdict_source !== "provider" ||
+    !payment.proof_storage_url ||
+    !payment.proof_content_type ||
+    !payment.proof_verified_checksum_sha256 ||
+    payment.proof_verified_byte_size === null ||
     payment.proof_checksum_sha256 !== payment.proof_verified_checksum_sha256 ||
     Number(payment.proof_expected_size_bytes) !== Number(payment.proof_verified_byte_size) ||
     Number(payment.amount) * 100 !== Number(payment.amount_minor) ||
@@ -404,20 +438,28 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
   ) {
     throw new Error("Package requires a current reconciled payment and verified proof.");
   }
-  const templateVersions = [...new Set(rows.map((row) => row.template_version))].sort();
-  const result = buildPackageManifest({
-    caseId,
-    returnYear: caseRow.return_year,
-    requirementTemplateVersion: templateVersions.join("+"),
-    entries: candidates,
-  });
-  if (result.kind === "blocked") {
-    throw new Error(
-      "Package manifest blocked: " + result.blockers.map((blocker) => blocker.kind).join(", "),
-    );
-  }
+  await readVerifiedSourceBytes(
+    storage,
+    {
+      objectKey: payment.proof_storage_url,
+      checksum: payment.proof_verified_checksum_sha256,
+      sizeBytes: Number(payment.proof_verified_byte_size),
+      contentType: payment.proof_content_type,
+    },
+    "Payment proof",
+  );
+  return payment;
+}
+
+async function loadPackageSnapshot(
+  tx: Db,
+  caseId: string,
+  storage: DocumentStorage,
+): Promise<PackageSnapshot> {
+  const { caseRow, manifest: documentManifest, sources } = await loadDocumentSnapshot(tx, caseId);
+  const payment = await loadVerifiedPayment(tx, caseId, storage);
   const manifest: PackageManifest = {
-    ...result.manifest,
+    ...documentManifest,
     payment: {
       status: payment.status,
       allocationId: payment.allocation_id,
@@ -430,6 +472,44 @@ async function loadPackageSnapshot(tx: Db, caseId: string): Promise<PackageSnaps
   const payload = canonicalManifestPayload(manifest);
   const hash = await packageSha256(new TextEncoder().encode(payload));
   return { caseRow, manifest, payload, hash, sources };
+}
+
+export async function inspectCurrentDocumentManifestForActor(
+  actor: AuthenticatedActor,
+  caseId: string,
+  dependencies: PackageDependencies,
+): Promise<PackageManifest> {
+  entityIdSchema.parse(caseId);
+  const db = dependencies.sql ?? getSqlClient();
+  await requireCaseRead(db, actor, caseId);
+  const snapshot = await loadDocumentSnapshot(db, caseId);
+  // The manifest metadata alone is insufficient: re-read the cited source bytes.
+  await buildPackageArtifact(snapshot.manifest, snapshot.sources, dependencies.storage);
+  return snapshot.manifest;
+}
+
+export async function inspectCurrentPackageSnapshotForActor(
+  actor: AuthenticatedActor,
+  caseId: string,
+  dependencies: PackageDependencies,
+): Promise<{ manifest: PackageManifest; manifestHash: string }> {
+  entityIdSchema.parse(caseId);
+  const db = dependencies.sql ?? getSqlClient();
+  await requireCaseRead(db, actor, caseId);
+  const snapshot = await loadPackageSnapshot(db, caseId, dependencies.storage);
+  await buildPackageArtifact(snapshot.manifest, snapshot.sources, dependencies.storage);
+  return { manifest: snapshot.manifest, manifestHash: snapshot.hash };
+}
+
+export async function inspectVerifiedPaymentForActor(
+  actor: AuthenticatedActor,
+  caseId: string,
+  dependencies: PackageDependencies,
+): Promise<void> {
+  entityIdSchema.parse(caseId);
+  const db = dependencies.sql ?? getSqlClient();
+  await requireCaseRead(db, actor, caseId);
+  await loadVerifiedPayment(db, caseId, dependencies.storage);
 }
 async function latestPackage(
   tx: Db,
@@ -468,7 +548,7 @@ export async function preparePackageForActor(
   }
   const db = dependencies.sql ?? getSqlClient();
   await requireCaseMutation(db, actor, input.caseId, "prepare_package");
-  const initial = await loadPackageSnapshot(db, input.caseId);
+  const initial = await loadPackageSnapshot(db, input.caseId, dependencies.storage);
   requireOpenCase(initial.caseRow);
   const latest = await latestPackage(db, input.caseId);
   if ((latest?.revision ?? 0) !== input.expectedRevision) {
@@ -510,7 +590,7 @@ export async function preparePackageForActor(
   });
   return withTx(db, async (tx) => {
     await requireCaseMutation(tx, actor, input.caseId, "prepare_package");
-    const current = await loadPackageSnapshot(tx, input.caseId);
+    const current = await loadPackageSnapshot(tx, input.caseId, dependencies.storage);
     requireOpenCase(current.caseRow);
     if (current.hash !== initial.hash || current.payload !== initial.payload) {
       throw new Error("Package evidence changed during preparation; retry from current case.");
@@ -590,7 +670,7 @@ export async function approvePackageForActor(
     ) {
       throw new Error("Package approval identity is stale or already decided.");
     }
-    const snapshot = await loadPackageSnapshot(tx, packageRow.case_id);
+    const snapshot = await loadPackageSnapshot(tx, packageRow.case_id, dependencies.storage);
     requireOpenCase(snapshot.caseRow);
     if (snapshot.hash !== latest.manifest_sha256 || snapshot.payload !== latest.manifest_payload) {
       throw new Error("Case evidence or payment changed; prepare a new package revision.");
@@ -620,11 +700,23 @@ export async function approvePackageForActor(
   });
 }
 
-export async function downloadApprovedPackageForActor(
+export type VerifiedPackageSnapshot = {
+  packageId: string;
+  caseId: string;
+  revision: number;
+  manifestHash: string;
+  manifest: PackageManifest;
+  approvedBy: string;
+  body: ArrayBuffer;
+  checksum: string;
+};
+
+/** The same current manifest and stored-byte gate used by approved downloads. */
+export async function inspectApprovedPackageForActor(
   actor: AuthenticatedActor,
   packageId: string,
   dependencies: PackageDependencies,
-): Promise<AuthorizedDownload> {
+): Promise<VerifiedPackageSnapshot> {
   entityIdSchema.parse(packageId);
   userId(actor);
   const db = dependencies.sql ?? getSqlClient();
@@ -632,12 +724,12 @@ export async function downloadApprovedPackageForActor(
     select * from filing_packages where id = ${packageId}`;
   if (!packageRow) throw new Error("Filing package not found.");
   await requireCaseRead(db, actor, packageRow.case_id);
-  if (packageRow.state !== "approved") {
+  if (packageRow.state !== "approved" || !packageRow.approved_by) {
     throw new Error("Only an approved package can be downloaded.");
   }
   const latest = await latestPackage(db, packageRow.case_id);
   if (latest?.id !== packageId) throw new Error("A newer package revision exists.");
-  const snapshot = await loadPackageSnapshot(db, packageRow.case_id);
+  const snapshot = await loadPackageSnapshot(db, packageRow.case_id, dependencies.storage);
   if (
     snapshot.hash !== packageRow.manifest_sha256 ||
     snapshot.payload !== packageRow.manifest_payload
@@ -650,10 +742,27 @@ export async function downloadApprovedPackageForActor(
     sizeBytes: Number(packageRow.artifact_size_bytes),
   });
   return {
+    packageId: packageRow.id,
+    caseId: packageRow.case_id,
+    revision: packageRow.revision,
+    manifestHash: snapshot.hash,
+    manifest: snapshot.manifest,
+    approvedBy: packageRow.approved_by,
     body,
-    fileName:
-      safePackageFilename("NAR1-" + packageRow.case_id + "-v" + packageRow.revision) + ".zip",
-    contentType: "application/zip",
     checksum: packageRow.artifact_sha256,
+  };
+}
+
+export async function downloadApprovedPackageForActor(
+  actor: AuthenticatedActor,
+  packageId: string,
+  dependencies: PackageDependencies,
+): Promise<AuthorizedDownload> {
+  const verified = await inspectApprovedPackageForActor(actor, packageId, dependencies);
+  return {
+    body: verified.body,
+    fileName: safePackageFilename("NAR1-" + verified.caseId + "-v" + verified.revision) + ".zip",
+    contentType: "application/zip",
+    checksum: verified.checksum,
   };
 }

@@ -6,10 +6,20 @@ A capability is never green merely because bindings exist. A healthy scheduled r
 
 `buildSafeOperationsHealth` catches current-schema read failures at the server boundary and returns a generic error. A behind-schema read logs only a fixed reason and the schema state. The tests inject a token/signed-URL/DB-host shaped error and assert that neither response nor logs include it. Missing schema yields unavailable queue and run data, not a count of zero. Demo remains read-only and does not call this production endpoint.
 
+## Scheduler evidence correction (2026-09-29)
+
+The capability reader now uses the dedicated scheduled-run history already fetched for maintenance health. Manual runs filling the general recent-run window no longer hide a real scheduled success. A run from a different deployment, a legacy run without a deployment reference, or a run observed while scheduler ownership is unconfigured cannot certify or degrade the active deployment capability. The capability's last success is taken only from a scheduled success for the active deployment in the available history; when none is available it stays unknown. The overall maintenance panel still reports the database's latest scheduled-run health across deployments.
+
+Regression tests first reproduced the manual-window, foreign-deployment and missing-owner failures, then passed after the correction. Commit: c06ff47. Five affected test files passed 61/61 tests; typecheck and production build passed; lint had zero errors and one existing Fast Refresh warning. This is local evidence only.
+
+## Probe success timestamp correction (2026-09-29)
+
+A fresh provider check cannot make the capability healthy using an old or future last-success timestamp. Success must precede the check and be no more than 15 minutes old to support a healthy state. A prior plausible but older success remains visible for a degraded failed check; an impossible future success is discarded. The negative cases were RED first and then GREEN in commit dbe431c. Five affected test files passed 62/62 tests; typecheck and build passed, lint had zero errors and one existing warning, and formatting passed. This validates the pure rule only; no provider probe was run against a live endpoint.
+
 ## Evidence and remaining dependency
 
 Named T08 scenarios were RED before implementation, then passed locally. A disposable PostgreSQL test verifies that the scheduled run records the deployment reference in the existing `maintenance_runs.passes` JSON and that the repository reads it back. No migration was needed for this evidence field.
 
-Provider reachability is still `unknown` in the deployed read path. The pure status contract accepts a controlled, deployment-scoped probe, but there is no provider-specific network probe, durable probe store, or approved scanner/AI endpoint contract in this slice. Creating provider calls from an operations page would be unsafe and would make each read have external effects. T08 remains in progress until a separate controlled runtime probe service and evidence source are implemented and tested; actual production status remains unverified until deployment and provider authorization gates are met.
+Provider reachability is still `unknown` in the deployed read path. The pure status contract accepts a controlled, deployment-scoped probe, but there is no provider-specific network probe, durable probe store, or approved scanner/AI endpoint contract in this slice. Creating provider calls from an operations page would be unsafe and would make each read have external effects. T08 is runtime-blocked until a separate controlled runtime probe service and evidence source are implemented and tested; actual production status remains unverified until deployment and provider authorization gates are met.
 
 Read-only activation review: confirm the active deployment SHA, scheduler owner, expected migrations, and `maintenance_runs` records before interpreting green status. Do not paste binding values or full provider errors into a support ticket. No production database, provider, recipient, deployment, invitation or role was changed here.

@@ -32,6 +32,7 @@ const documentServerFns = vi.hoisted(() => ({
 
 const packageServerFns = vi.hoisted(() => ({
   getAnnualReturnPackage: vi.fn(),
+  getAnnualReturnSubmissionReadiness: vi.fn(),
   getAnnualReturnSubmission: vi.fn(),
   listAnnualReturnSubmissionProofs: vi.fn(),
   recordAnnualReturnSubmission: vi.fn(),
@@ -129,6 +130,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   serverFns.getAnnualReturnCase.mockResolvedValue(caseItem);
   packageServerFns.getAnnualReturnPackage.mockResolvedValue(null);
+  packageServerFns.getAnnualReturnSubmissionReadiness.mockResolvedValue({
+    state: "blocked",
+    reason: "package-missing",
+  });
   packageServerFns.getAnnualReturnSubmission.mockResolvedValue(null);
   packageServerFns.getAnnualReturnReturnIntakes.mockResolvedValue([]);
   packageServerFns.recordAnnualReturnReturnIntake.mockResolvedValue({
@@ -449,6 +454,42 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 });
 
 describe("T15 production manual submission controls", () => {
+  it("keeps the submission action disabled when approved package bytes cannot be verified", async () => {
+    const packageId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const proofVersionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    packageServerFns.getAnnualReturnPackage.mockResolvedValue({
+      id: packageId,
+      caseId,
+      revision: 1,
+      state: "approved",
+      manifestHash: "a".repeat(64),
+      artifactSha256: "b".repeat(64),
+      artifactSizeBytes: 128,
+    });
+    packageServerFns.getAnnualReturnSubmissionReadiness.mockResolvedValue({
+      state: "unknown",
+      reason: "package-unverifiable",
+    });
+    packageServerFns.listAnnualReturnSubmissionProofs.mockResolvedValue([
+      { versionId: proofVersionId, fileName: "portal-confirmation.pdf", category: "submission" },
+    ]);
+    renderDetail();
+    const proof = await screen.findByLabelText("已覆核外部交件證明");
+    fireEvent.change(screen.getByLabelText("外部交件目的地"), {
+      target: { value: "Companies Registry portal" },
+    });
+    fireEvent.change(screen.getByLabelText("外部參考編號"), {
+      target: { value: "NAR1-2026-001" },
+    });
+    fireEvent.change(screen.getByLabelText("交件時間（香港）"), {
+      target: { value: "2026-09-27T15:00" },
+    });
+    fireEvent.change(proof, { target: { value: proofVersionId } });
+    const recordButton = screen.getByRole("button", { name: "記錄外部交件" });
+    expect((recordButton as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(recordButton);
+    expect(packageServerFns.recordAnnualReturnSubmission).not.toHaveBeenCalled();
+  });
   it("records an approved package only after a reviewed proof and explicit HKT details", async () => {
     const packageId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
     const proofVersionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
@@ -464,6 +505,12 @@ describe("T15 production manual submission controls", () => {
     packageServerFns.listAnnualReturnSubmissionProofs.mockResolvedValue([
       { versionId: proofVersionId, fileName: "portal-confirmation.pdf", category: "submission" },
     ]);
+    packageServerFns.getAnnualReturnSubmissionReadiness.mockResolvedValue({
+      state: "ready",
+      packageId,
+      revision: 1,
+      manifestHash: "a".repeat(64),
+    });
     renderDetail();
     await screen.findByRole("heading", { name: "記錄人手交件" });
     const recordButton = screen.getByRole("button", { name: "記錄外部交件" });

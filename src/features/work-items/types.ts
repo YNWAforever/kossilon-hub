@@ -50,8 +50,8 @@ export type WorkItem = {
   priority: number;
   ownerId: string | null;
   reviewerId: string | null;
-  slaWarningAt: string;
-  slaDueAt: string;
+  slaWarningAt: string | null;
+  slaDueAt: string | null;
   slaBreachedAt: string | null;
 };
 

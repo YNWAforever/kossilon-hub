@@ -275,6 +275,25 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "annual_return_checklist_template_document_uidx",
     expected: "template_document_id",
   },
+  { capability: "staff", kind: "table", name: "work_item_sla_attachments" },
+  {
+    capability: "staff",
+    kind: "column",
+    name: "work_item_sla_attachments.policy_version_id",
+    expected: "uuid",
+  },
+  {
+    capability: "staff",
+    kind: "column",
+    name: "work_item_sla_attachments.actor_id",
+    expected: "uuid",
+  },
+  {
+    capability: "staff",
+    kind: "constraint",
+    name: "work_items_sla_snapshot_check",
+    expected: "sla_policy_version_id is null",
+  },
   { capability: "staff", kind: "table", name: "staff_provisioning_requests" },
   { capability: "staff", kind: "table", name: "staff_access_events" },
   {

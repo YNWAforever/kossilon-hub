@@ -130,6 +130,7 @@ type LockedCaseRow = {
   reviewer_id: string | null;
   filing_reference: string | null;
   confirmation_document_id: string | null;
+  legacy_completion_eligible: boolean;
   assignment_revision: number;
 };
 
@@ -767,6 +768,7 @@ export function createAnnualReturnRepository(
         arc.reviewer_id,
         arc.filing_reference,
         arc.confirmation_document_id,
+        arc.legacy_completion_eligible,
         arc.assignment_revision
       from annual_return_cases arc
       join companies c on c.id = arc.company_id
@@ -1172,11 +1174,6 @@ export function createAnnualReturnRepository(
     if (!Number.isInteger(input.limit) || input.limit < 1 || input.limit > 200) {
       throw new Error("Work-view page limit must be between 1 and 200.");
     }
-    // Package readiness has no complete indexed snapshot yet. Preserve the
-    // existing explicit unavailable state instead of presenting false zeroes.
-    if (input.view === "readyToFile") {
-      return { definition, rows: [], total: 0, nextCursor: null, asOf: input.asOf };
-    }
     const cursor = decodeCaseCursor(input.cursor);
     if (input.cursor && !cursor) throw new Error("Invalid work-view cursor.");
     const teamId = input.scope.teamId ?? null;
@@ -1217,6 +1214,24 @@ export function createAnnualReturnRepository(
                or c.company_name ilike ${query} escape '\\'
                or c.cr_number ilike ${query} escape '\\')
           and (
+            (${view} = 'readyToFile'
+             and arc.current_status not in ('Filed','Completed')
+             and arc.locked_at is null and arc.completed_at is null
+             and exists (
+               select 1 from filing_packages fp
+               where fp.case_id = arc.id and fp.state = 'approved'
+                 and fp.approved_by is not null
+                 and not exists (
+                   select 1 from filing_packages newer
+                   where newer.case_id = arc.id and newer.revision > fp.revision
+                 )
+             )
+             and not exists (
+               select 1 from package_handoffs ph
+               where ph.case_id = arc.id
+                 and ph.status in ('prepared','recorded_submission','transmitted','acknowledged')
+             ))
+            or
             (${view} = 'returnsAndExceptions'
              and exists (
                select 1 from handoff_returns hr
@@ -1258,6 +1273,7 @@ export function createAnnualReturnRepository(
       )
       select counted.total, page.*,
         case
+          when ${view} = 'readyToFile' then '已批准套件，待核實當前文件、付款及儲存檔案'
           when ${view} = 'chaseToday' then (
             select string_agg(i.item_label, '、' order by i.id)
             from annual_return_checklist_items i
@@ -1764,6 +1780,8 @@ export function createAnnualReturnRepository(
     companyId: string,
     filingReference: string | null,
     confirmationDocumentId: string | null,
+    currentStatus: AnnualReturnStatus,
+    legacyCompletionEligible: boolean,
   ): Promise<string[]> {
     const blockers: string[] = [];
     const unverifiedRequiredRows = await tx<{ id: string }[]>`
@@ -1828,10 +1846,8 @@ export function createAnnualReturnRepository(
       blockers.push("Verified payment proof document is required.");
     }
 
-    // Cases on the package/handoff workflow must have the exact approved
-    // revision, a reviewed same-case submission proof, and a human-confirmed
-    // accepted return. Legacy cases without packages keep their earlier
-    // filing-reference and confirmation-document acceptance path.
+    // A pre-migration Filed case may retain its verified legacy confirmation path.
+    // All other cases require the approved package, submission and accepted return.
     const packageRows = await tx<{ id: string }[]>`
       select id from filing_packages where case_id = ${caseId} limit 1
     `;
@@ -1864,16 +1880,24 @@ export function createAnnualReturnRepository(
           and hr.reconciliation_decision = 'confirm'
           and hr.reconciled_at is not null
           and hr.reconciled_by is not null
-        join document_versions rv on rv.id = hr.document_version_id
+        left join document_versions rv on rv.id = hr.document_version_id
           and rv.superseded_by_version_id is null
           and rv.verified_checksum_sha256 = hr.source_sha256
-        join documents rd on rd.id = rv.document_id
+        left join documents rd on rd.id = rv.document_id
           and rd.case_id = fp.case_id
           and rd.company_id = ${companyId}
           and rd.file_type = 'receipt'
           and rd.verification_status = 'verified'
+        left join filing_return_source_objects fso on fso.id::text = hr.source_object_id
+          and fso.source_sha256 = hr.source_sha256
+          and fso.object_version = hr.source_version
+          and fso.scan_state = 'verified'
         where fp.case_id = ${caseId}
           and fp.state = 'approved'
+          and (
+            (hr.source_kind = 'internal' and fso.id is not null)
+            or (hr.source_kind is distinct from 'internal' and rv.id is not null and rd.id is not null)
+          )
           and fp.revision = (
             select max(revision) from filing_packages where case_id = ${caseId}
           )
@@ -1894,7 +1918,7 @@ export function createAnnualReturnRepository(
           "Current approved package, recorded submission proof and reconciled accepted return are required.",
         );
       }
-    } else {
+    } else if (legacyCompletionEligible && currentStatus === "Filed") {
       if (!hasText(filingReference)) {
         blockers.push("Filing reference is required.");
       }
@@ -1917,6 +1941,10 @@ export function createAnnualReturnRepository(
           blockers.push("Verified filing confirmation document is required.");
         }
       }
+    } else {
+      blockers.push(
+        "Current approved package, recorded submission proof and reconciled accepted return are required.",
+      );
     }
     return blockers;
   }
@@ -2183,6 +2211,8 @@ export function createAnnualReturnRepository(
           lockedCase.company_id,
           lockedCase.filing_reference,
           lockedCase.confirmation_document_id,
+          lockedCase.current_status,
+          lockedCase.legacy_completion_eligible,
         );
 
         if (blockers.length > 0) {

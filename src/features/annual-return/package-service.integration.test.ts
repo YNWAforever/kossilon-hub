@@ -7,8 +7,11 @@ import type { DocumentStorage } from "@/features/documents/types";
 import { createDocumentRepository } from "@/features/documents/repository";
 import { createBulkOperationRepository } from "@/features/bulk-operations/repository";
 import { createAnnualReturnRepository } from "./repository";
+import { listWorkViewForActor } from "./server-fns";
 import { reconcilePaymentForActor } from "@/features/payments/reconciliation";
 import { packageSha256 } from "./package-download";
+import { inspectCaseSubmissionReadinessForActor } from "./submission-readiness-service";
+import { inspectCaseReadinessForActor } from "./readiness-reader";
 import { ingestReturnForActor, reconcileReturnForActor } from "./return-service";
 import {
   getManualSubmissionForActor,
@@ -18,6 +21,7 @@ import {
 import {
   approvePackageForActor,
   downloadApprovedPackageForActor,
+  inspectApprovedPackageForActor,
   preparePackageForActor,
 } from "./package-service";
 
@@ -956,6 +960,536 @@ describe.skipIf(!databaseUrl)("T29 local filing journey", () => {
         fixture.actor.userId!,
       );
       expect(completed).toMatchObject({ currentStatus: "Completed" });
+    });
+  });
+  it("t29_internal_reconciled_return_can_complete after human confirmation", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fx = await dbFixture(tx);
+      const deps = { sql: tx, storage: fx.storage };
+      const cases = createAnnualReturnRepository({ sql: tx });
+      const draft = await preparePackageForActor(
+        fx.actor,
+        { caseId: fx.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fx.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const submitted = await recordManualSubmissionForActor(
+        fx.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+          submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-" + crypto.randomUUID(),
+          proofVersionId: await fx.createSubmissionProof(),
+        },
+        deps,
+      );
+      const sourceKey = "t29-" + crypto.randomUUID();
+      const objectKey = "returns/" + sourceKey + "/accepted.pdf";
+      const body = new TextEncoder().encode("%PDF-1.7\ninternal-accepted");
+      const checksum = await packageSha256(body);
+      await fx.storage.put({
+        objectKey,
+        body,
+        checksum,
+        sizeBytes: body.byteLength,
+        contentType: "application/pdf",
+      });
+      await tx`insert into filing_return_source_cursors (source_key) values (${sourceKey})`;
+      const [source] = await tx<{ id: string }[]>`insert into filing_return_source_objects
+        (source_key,object_id,object_version,source_sha256,file_name,content_type,byte_size,object_key,scan_state,provider_reference)
+        values (${sourceKey},${"accepted-" + sourceKey},${"v1"},${checksum},${"accepted.pdf"},${"application/pdf"},${body.byteLength},${objectKey},${"verified"},${"t29-provider"}) returning id`;
+      const received = await ingestReturnForActor(
+        fx.actor,
+        {
+          caseId: fx.caseId,
+          externalReference: submitted.externalReference,
+          manifestHash: draft.manifestHash,
+          outcome: "accepted",
+          source: { kind: "internal", sourceObjectRecordId: source.id },
+        },
+        deps,
+      );
+      await reconcileReturnForActor(
+        fx.actor,
+        {
+          returnId: received.id,
+          submissionId: submitted.id,
+          expectedRevision: 1,
+          decision: "confirm",
+          reason: "",
+        },
+        deps,
+      );
+      const readiness = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(readiness.readiness.canComplete).toBe(true);
+      await fx.storage.delete(objectKey);
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).readiness.canComplete,
+      ).toBe(false);
+      await fx.storage.put({
+        objectKey,
+        body,
+        checksum,
+        sizeBytes: body.byteLength,
+        contentType: "application/pdf",
+      });
+      await tx`update filing_return_source_objects set scan_state='unsafe' where id=${source.id}`;
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).readiness.canComplete,
+      ).toBe(false);
+      await expect(cases.updateStatus(fx.caseId, "Completed", fx.actor.userId!)).rejects.toThrow(
+        /accepted return/i,
+      );
+      await tx`update filing_return_source_objects set scan_state='verified' where id=${source.id}`;
+      await expect(
+        cases.updateStatus(fx.caseId, "Completed", fx.actor.userId!),
+      ).resolves.toMatchObject({ currentStatus: "Completed" });
+    });
+  });
+  it("t29_review blocks a new case with legacy filing fields but no approved package or return", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const proofVersionId = await fixture.createSubmissionProof();
+      const [proof] = await tx<{ document_id: string }[]>`
+        select document_id from document_versions where id = ${proofVersionId}
+      `;
+      await tx`
+        update annual_return_cases
+        set filing_reference = 'LEGACY-T29-REVIEW',
+            confirmation_document_id = ${proof.document_id}
+        where id = ${fixture.caseId}
+      `;
+      const cases = createAnnualReturnRepository({ sql: tx });
+      await expect(
+        cases.updateStatus(fixture.caseId, "Completed", fixture.actor.userId!),
+      ).rejects.toThrow(/approved package.*submission proof.*accepted return/i);
+      expect((await cases.getCase(fixture.caseId))?.currentStatus).toBe("Payment pending");
+    });
+  });
+});
+
+describe.skipIf(!databaseUrl)("T03 server submission readiness", () => {
+  it("t03_authorization checks record-submission permission before missing-package readiness", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      await tx`update users set role='Staff' where id=${fixture.actor.userId}`;
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, {
+          sql: tx,
+          storage: fixture.storage,
+        }),
+      ).rejects.toThrow(/Only admins, team managers, or assigned reviewers/i);
+    });
+  });
+  it("uses a real read-only transaction for the server path", async () => {
+    const [admin] = await sqlForTests()<
+      {
+        auth_user_id: string;
+        user_id: string;
+        team_id: string | null;
+      }[]
+    >`
+      select sp.auth_user_id, sp.user_id, sp.team_id
+      from staff_profiles sp join users u on u.id=sp.user_id and u.active
+      where sp.role='Admin' and sp.active limit 1`;
+    const [caseRow] = await sqlForTests()<{ id: string }[]>`
+      select id from annual_return_cases
+      where current_status not in ('Filed', 'Completed')
+      and not exists (select 1 from filing_packages p where p.case_id=annual_return_cases.id)
+      limit 1`;
+    if (!admin || !caseRow) throw new Error("T03 fixture needs an Admin and an open case.");
+    await expect(
+      inspectCaseSubmissionReadinessForActor(
+        {
+          authUserId: admin.auth_user_id,
+          userId: admin.user_id,
+          role: "Admin",
+          teamId: admin.team_id,
+          active: true,
+        },
+        caseRow.id,
+        { storage: memoryStorage() },
+      ),
+    ).resolves.toMatchObject({ state: "blocked", reason: "package-missing" });
+  });
+
+  it("t03_verified_package exposes the current canonical manifest only while its bytes are verifiable", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const verified = await inspectApprovedPackageForActor(fixture.actor, draft.id, deps);
+      expect(verified).toMatchObject({
+        packageId: draft.id,
+        caseId: fixture.caseId,
+        revision: 1,
+        manifestHash: draft.manifestHash,
+        approvedBy: fixture.actor.userId,
+        manifest: {
+          caseId: fixture.caseId,
+          payment: { status: "Payment received" },
+        },
+      });
+      await tx.unsafe(
+        "update case_requirement_instances set requirement_key='Changed NAR1', updated_at=now() where id=$1",
+        [fixture.requirementId],
+      );
+      await expect(inspectApprovedPackageForActor(fixture.actor, draft.id, deps)).rejects.toThrow(
+        /stale/i,
+      );
+    });
+  });
+
+  it("t03_c2_snapshot confirms current documents before package approval", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const decision = await inspectCaseReadinessForActor(fixture.actor, fixture.caseId, {
+        sql: tx,
+        storage: fixture.storage,
+      });
+      expect(decision.snapshot).toMatchObject({
+        caseId: fixture.caseId,
+        revision: 0,
+        requiredEvidenceState: "confirmed",
+        paymentEvidenceState: "confirmed",
+        approval: null,
+      });
+      expect(decision.readiness).toMatchObject({
+        documentsComplete: true,
+        paymentConfirmed: true,
+        canApprovePackage: true,
+        canRecordSubmission: false,
+      });
+
+      await tx`update payments set status='Payment pending' where case_id=${fixture.caseId}`;
+      const pending = await inspectCaseReadinessForActor(fixture.actor, fixture.caseId, {
+        sql: tx,
+        storage: fixture.storage,
+      });
+      expect(pending.readiness).toMatchObject({
+        documentsComplete: true,
+        paymentConfirmed: false,
+        canApprovePackage: false,
+        canRecordSubmission: false,
+      });
+    });
+  });
+
+  it("t03_c2_snapshot blocks an approved package whose ZIP bytes disappeared", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fx = await dbFixture(tx);
+      const deps = { sql: tx, storage: fx.storage };
+      const draft = await preparePackageForActor(
+        fx.actor,
+        { caseId: fx.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fx.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      const [artifact] = await tx<
+        { artifact_key: string }[]
+      >`select artifact_key from filing_packages where id=${draft.id}`;
+      await fx.storage.delete(artifact.artifact_key);
+      const result = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(result.readiness.canRecordSubmission).toBe(false);
+      expect(result.snapshot.requiredEvidenceState).toBe("unknown");
+    });
+  });
+  it("t03_c2_snapshot tracks submission and accepted return proof", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fx = await dbFixture(tx);
+      const deps = { sql: tx, storage: fx.storage };
+      const draft = await preparePackageForActor(
+        fx.actor,
+        { caseId: fx.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fx.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).readiness
+          .canRecordSubmission,
+      ).toBe(true);
+      const submissionProofId = await fx.createSubmissionProof();
+      const submitted = await recordManualSubmissionForActor(
+        fx.actor,
+        {
+          packageId: draft.id,
+          manifestHash: draft.manifestHash,
+          expectedRevision: 1,
+          submittedAt: asHongKongDateTime(new Date(Date.now() + 2_000)),
+          destinationLabel: "Companies Registry portal",
+          externalReference: "NAR1-" + crypto.randomUUID(),
+          proofVersionId: submissionProofId,
+        },
+        deps,
+      );
+      const filed = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(filed.snapshot.submission?.id).toBe(submitted.id);
+      expect(filed.readiness).toMatchObject({ canRecordSubmission: false, canComplete: false });
+      const returnProofId = await fx.createReturnProof("t03-c2-return");
+      const received = await ingestReturnForActor(
+        fx.actor,
+        {
+          caseId: fx.caseId,
+          externalReference: submitted.externalReference,
+          manifestHash: draft.manifestHash,
+          outcome: "accepted",
+          source: { kind: "manual", proofVersionId: returnProofId },
+        },
+        deps,
+      );
+      const awaitingReview = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(awaitingReview.snapshot.returnReconciliation).toBeNull();
+      expect(awaitingReview.readiness.canComplete).toBe(false);
+      await reconcileReturnForActor(
+        fx.actor,
+        {
+          returnId: received.id,
+          submissionId: submitted.id,
+          expectedRevision: 1,
+          decision: "confirm",
+          reason: "",
+        },
+        deps,
+      );
+      const accepted = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(accepted.snapshot.returnReconciliation).toMatchObject({
+        id: received.id,
+        status: "matched",
+        outcome: "accepted",
+        decision: "confirm",
+      });
+      expect(accepted.readiness.canComplete).toBe(true);
+      const [returnVersion] = await tx<
+        { storage_url: string }[]
+      >`select storage_url from document_versions where id=${returnProofId}`;
+      const storedReturn = await fx.storage.get(returnVersion.storage_url);
+      if (!storedReturn) throw new Error("Return fixture bytes missing.");
+      await fx.storage.delete(returnVersion.storage_url);
+      expect(
+        (await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).snapshot
+          .returnReconciliation,
+      ).toBeNull();
+      await fx.storage.put({
+        objectKey: returnVersion.storage_url,
+        body: storedReturn.body,
+        checksum: storedReturn.checksum,
+        sizeBytes: storedReturn.sizeBytes,
+        contentType: storedReturn.contentType,
+      });
+      const [submissionVersion] = await tx<
+        { storage_url: string }[]
+      >`select storage_url from document_versions where id=${submissionProofId}`;
+      await fx.storage.delete(submissionVersion.storage_url);
+      const lostSubmission = await inspectCaseReadinessForActor(fx.actor, fx.caseId, deps);
+      expect(lostSubmission.snapshot.submission).toBeNull();
+      expect(lostSubmission.readiness.canComplete).toBe(false);
+      await tx`update users set active=false where id=${fx.actor.userId}`;
+      await expect(inspectCaseReadinessForActor(fx.actor, fx.caseId, deps)).rejects.toThrow();
+    });
+  });
+  it("t03_payment_proof_bytes must remain readable before an approved package is ready", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "ready" });
+      const [proof] = await tx<
+        {
+          storage_url: string;
+          verified_checksum_sha256: string;
+          verified_byte_size: number;
+          content_type: string;
+        }[]
+      >`select storage_url,verified_checksum_sha256,verified_byte_size,content_type from document_versions where id=${fixture.proofVersionId}`;
+      await fixture.storage.delete(proof.storage_url);
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
+
+      await fixture.storage.put({
+        objectKey: proof.storage_url,
+        body: new Uint8Array(Number(proof.verified_byte_size)).fill(1).buffer,
+        checksum: proof.verified_checksum_sha256,
+        sizeBytes: Number(proof.verified_byte_size),
+        contentType: proof.content_type,
+      });
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
+    });
+  });
+
+  it("t03_ready_candidates use indexed approved-package state within actor scope", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const [caseRow] = await tx<
+        { company_id: string }[]
+      >`select company_id from annual_return_cases where id=${fixture.caseId}`;
+      const repository = createAnnualReturnRepository({ sql: tx });
+      const input = {
+        scope: { companyIds: [caseRow.company_id] },
+        viewerId: fixture.actor.userId,
+        view: "readyToFile" as const,
+        limit: 50,
+        asOf: "2026-09-28",
+      };
+      try {
+        expect((await repository.listWorkViewPage(input)).rows).toEqual([]);
+        const draft = await preparePackageForActor(
+          fixture.actor,
+          { caseId: fixture.caseId, expectedRevision: 0 },
+          { sql: tx, storage: fixture.storage },
+        );
+        expect((await repository.listWorkViewPage(input)).rows).toEqual([]);
+        await approvePackageForActor(
+          fixture.actor,
+          { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+          { sql: tx, storage: fixture.storage },
+        );
+        const candidates = await repository.listWorkViewPage(input);
+        expect(candidates.definition.released).toBe(false);
+        expect(candidates.rows.map((row) => row.caseId)).toEqual([fixture.caseId]);
+
+        const [company] = await tx<
+          { company_name: string }[]
+        >`select company_name from companies where id=${caseRow.company_id}`;
+        const queueInput = {
+          view: "readyToFile" as const,
+          filters: { q: company.company_name },
+          limit: 50,
+          asOf: "2026-09-28",
+        };
+        const inspectSubmission = (actor: AuthenticatedActor, caseId: string) =>
+          inspectCaseSubmissionReadinessForActor(actor, caseId, {
+            sql: tx,
+            storage: fixture.storage,
+          });
+        const readyPage = await listWorkViewForActor(fixture.actor, queueInput, {
+          repository,
+          inspectSubmission,
+        });
+        expect(readyPage.rows.map((row) => row.caseId)).toEqual([fixture.caseId]);
+        expect(readyPage.total).toBeNull();
+
+        const [artifact] = await tx<
+          { artifact_key: string }[]
+        >`select artifact_key from filing_packages where id=${draft.id}`;
+        await fixture.storage.delete(artifact.artifact_key);
+        const unreadablePage = await listWorkViewForActor(fixture.actor, queueInput, {
+          repository,
+          inspectSubmission,
+        });
+        expect(unreadablePage.rows).toEqual([]);
+        expect(unreadablePage.unverifiedCount).toBe(1);
+        expect(unreadablePage.total).toBeNull();
+      } finally {
+        await repository.close();
+      }
+    });
+  });
+
+  it("t03_snapshot blocks missing, draft, stale and unreadable packages before showing ready", async () => {
+    await inRollbackFixture(async (tx) => {
+      const fixture = await dbFixture(tx);
+      const deps = { sql: tx, storage: fixture.storage };
+      await expect(
+        inspectCaseSubmissionReadinessForActor(
+          { ...fixture.actor, authUserId: crypto.randomUUID() },
+          fixture.caseId,
+          deps,
+        ),
+      ).rejects.toThrow(/Forbidden/i);
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "blocked", reason: "package-missing" });
+
+      const draft = await preparePackageForActor(
+        fixture.actor,
+        { caseId: fixture.caseId, expectedRevision: 0 },
+        deps,
+      );
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "blocked", reason: "package-unapproved" });
+
+      await approvePackageForActor(
+        fixture.actor,
+        { packageId: draft.id, manifestHash: draft.manifestHash, expectedRevision: 1 },
+        deps,
+      );
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({
+        state: "ready",
+        packageId: draft.id,
+        revision: 1,
+        manifestHash: draft.manifestHash,
+        readiness: {
+          documentsComplete: true,
+          paymentConfirmed: true,
+          canRecordSubmission: true,
+          canComplete: false,
+          snapshotRevision: 1,
+        },
+      });
+
+      await tx`update users set role='Staff' where id=${fixture.actor.userId}`;
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).rejects.toThrow(/Only admins, team managers, or assigned reviewers/i);
+      await tx`update users set role='Admin' where id=${fixture.actor.userId}`;
+
+      await tx`update case_requirement_instances
+        set requirement_key='Changed NAR1', updated_at=now()
+        where id=${fixture.requirementId}`;
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
+
+      await tx`update case_requirement_instances
+        set requirement_key='Signed NAR1', updated_at=now()
+        where id=${fixture.requirementId}`;
+      const [artifact] = await tx<{ artifact_key: string }[]>`
+        select artifact_key from filing_packages where id=${draft.id}`;
+      await fixture.storage.delete(artifact.artifact_key);
+      await expect(
+        inspectCaseSubmissionReadinessForActor(fixture.actor, fixture.caseId, deps),
+      ).resolves.toMatchObject({ state: "unknown", reason: "package-unverifiable" });
     });
   });
 });

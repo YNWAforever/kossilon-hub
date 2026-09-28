@@ -41,6 +41,52 @@ export const assignWorkItemInputSchema = z
   })
   .strict();
 
+export const workItemPolicyChoicesInputSchema = z
+  .object({
+    workItemId: z.string().uuid(),
+    expectedVersion: z.number().int().positive(),
+  })
+  .strict();
+
+export const previewWorkItemPolicyInputSchema = z
+  .object({
+    workItemId: z.string().uuid(),
+    policyVersionId: z.string().uuid(),
+    expectedVersion: z.number().int().positive(),
+  })
+  .strict();
+
+export const previewWorkItemPolicyBackfillInputSchema = z
+  .object({
+    policyVersionId: z.string().uuid(),
+    items: z
+      .array(
+        z
+          .object({
+            workItemId: z.string().uuid(),
+            expectedVersion: z.number().int().positive(),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(100),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (new Set(value.items.map((item) => item.workItemId)).size !== value.items.length) {
+      context.addIssue({ code: z.ZodIssueCode.custom, message: "Duplicate work item IDs." });
+    }
+  });
+
+export const attachWorkItemPolicyInputSchema = previewWorkItemPolicyInputSchema
+  .extend({
+    startedAt: z.string().datetime(),
+    warningAt: z.string().datetime(),
+    dueAt: z.string().datetime(),
+    previewHash: z.string().regex(/^[0-9a-f]{64}$/),
+  })
+  .strict();
+
 export const acknowledgeWorkItemInputSchema = z
   .object({
     workItemId: z.string().uuid(),
@@ -171,6 +217,44 @@ export async function assignWorkItemForActor(
   });
 }
 
+export async function listWorkItemPolicyChoicesForActor(
+  repository: ReturnType<typeof createWorkItemRepository>,
+  actor: AuthenticatedActor,
+  data: z.output<typeof workItemPolicyChoicesInputSchema>,
+) {
+  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+  requireStaffUserId(actor);
+  return repository.listAttachablePolicies(data);
+}
+
+export async function previewWorkItemPolicyForActor(
+  repository: ReturnType<typeof createWorkItemRepository>,
+  actor: AuthenticatedActor,
+  data: z.output<typeof previewWorkItemPolicyInputSchema>,
+) {
+  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+  requireStaffUserId(actor);
+  return repository.previewPolicyAttachment(data);
+}
+
+export async function previewWorkItemPolicyBackfillForActor(
+  repository: ReturnType<typeof createWorkItemRepository>,
+  actor: AuthenticatedActor,
+  data: z.output<typeof previewWorkItemPolicyBackfillInputSchema>,
+) {
+  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+  return repository.previewPolicyBackfill({ ...data, actorId: requireStaffUserId(actor) });
+}
+
+export async function attachWorkItemPolicyForActor(
+  repository: ReturnType<typeof createWorkItemRepository>,
+  actor: AuthenticatedActor,
+  data: z.output<typeof attachWorkItemPolicyInputSchema>,
+) {
+  if (actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+  return repository.attachPolicy({ ...data, actorId: requireStaffUserId(actor) });
+}
+
 export async function acknowledgeWorkItemForActor(
   repository: ReturnType<typeof createWorkItemRepository>,
   actor: AuthenticatedActor,
@@ -210,6 +294,38 @@ export const assignWorkItem = createServerFn({ method: "POST" })
   .handler(({ data }) =>
     withDefaultAuthorizedWorkItemRepository((repository, actor) =>
       assignWorkItemForActor(repository, actor, data),
+    ),
+  );
+
+export const listWorkItemPolicyChoices = createServerFn({ method: "GET" })
+  .validator(workItemPolicyChoicesInputSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      listWorkItemPolicyChoicesForActor(repository, actor, data),
+    ),
+  );
+
+export const previewWorkItemPolicyAttachment = createServerFn({ method: "POST" })
+  .validator(previewWorkItemPolicyInputSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      previewWorkItemPolicyForActor(repository, actor, data),
+    ),
+  );
+
+export const previewWorkItemPolicyBackfill = createServerFn({ method: "POST" })
+  .validator(previewWorkItemPolicyBackfillInputSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      previewWorkItemPolicyBackfillForActor(repository, actor, data),
+    ),
+  );
+
+export const attachWorkItemPolicy = createServerFn({ method: "POST" })
+  .validator(attachWorkItemPolicyInputSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      attachWorkItemPolicyForActor(repository, actor, data),
     ),
   );
 
