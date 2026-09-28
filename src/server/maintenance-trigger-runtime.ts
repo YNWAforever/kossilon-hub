@@ -1,6 +1,7 @@
 import { createMaintenanceJobRepository } from "@/features/operations/maintenance-job-repository";
 import { createMaintenanceRunRepository } from "@/features/operations/repository";
 import { deploymentRefFromRuntime } from "@/features/operations/deployment-identity";
+import { getWhatsAppMediaConfig } from "./runtime-env";
 import {
   createMaintenanceTrigger,
   type MaintenanceJobKind,
@@ -16,7 +17,47 @@ export const INITIAL_SCHEDULED_JOBS: readonly MaintenanceJobKind[] = [
   "runBulkOperations",
 ];
 
+export function scheduledJobsForRuntime(
+  env: Record<string, unknown> = process.env,
+): MaintenanceJobKind[] {
+  // The unverified provider mapping must not create a falsely successful cron
+  // pass or start fetching real client attachments.
+  return getWhatsAppMediaConfig(env)
+    ? [...INITIAL_SCHEDULED_JOBS, "drainInboundMediaDownloads"]
+    : [...INITIAL_SCHEDULED_JOBS];
+}
+
 async function runSafeJob(job: MaintenanceJobKind, scheduledAt: string): Promise<unknown> {
+  if (job === "drainInboundMediaDownloads") {
+    const config = getWhatsAppMediaConfig();
+    if (!config) throw new Error("WOZTELL inbound media mapping or scoped token is unverified.");
+    const [
+      { createDocumentStorageForProviderMode },
+      { currentProviderMode },
+      { getDocumentsBucketBinding },
+      { createMediaDownloadJobRepository },
+      { drainInboundMediaDownloads },
+    ] = await Promise.all([
+      import("@/features/documents/server-fns"),
+      import("./provider-mode"),
+      import("./runtime-env"),
+      import("@/features/whatsapp/media-download-jobs"),
+      import("@/features/whatsapp/media-download-worker"),
+    ]);
+    const mode = currentProviderMode();
+    if (mode !== "live") throw new Error("Inbound media download needs live private storage.");
+    const storage = createDocumentStorageForProviderMode(mode, getDocumentsBucketBinding());
+    const jobs = createMediaDownloadJobRepository();
+    try {
+      return await drainInboundMediaDownloads(scheduledAt, {
+        jobs,
+        media: { ...config, storage },
+        limit: 10,
+      });
+    } finally {
+      await jobs.close();
+    }
+  }
   if (job === "evaluateEscalations") {
     const { createWorkItemRepository } = await import("@/features/work-items/repository");
     const repository = createWorkItemRepository();
