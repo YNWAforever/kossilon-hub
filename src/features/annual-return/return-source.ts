@@ -16,7 +16,10 @@ export type ReturnSourcePage = {
   nextCursor: string | null;
 };
 
-/** Read-only. The concrete internal-server protocol is still unknown. */
+/**
+ * Read-only. BLOCKED_INTEGRATION: return-source.
+ * The concrete internal-server protocol, credentials and test folder remain unknown.
+ */
 export type ReturnSource = {
   list(cursor: string | null): Promise<ReturnSourcePage>;
   read(objectId: string): Promise<ReturnObject>;
