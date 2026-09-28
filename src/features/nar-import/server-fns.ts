@@ -177,6 +177,16 @@ export async function getNarImportBatchReviewForActor(
   return { batch, rows: page.items, nextCursor: page.nextCursor, counts };
 }
 
+export async function getNarImportPreviewPageForActor(
+  actor: AuthenticatedActor,
+  input: { previewId: string; offset: number; limit: number },
+  dependencies: NarImportDependencies,
+) {
+  const staff = assertImportAuthority(actor);
+  if (!staff.userId) throw new Error("Forbidden: active staff identity is required.");
+  return dependencies.repository.listPreviewPage({ ...input, actorId: staff.userId });
+}
+
 export async function searchImportCompaniesForActor(
   actor: AuthenticatedActor,
   input: { q: string; cursor: string | null; limit: number },
@@ -253,6 +263,22 @@ export const getNarImportBatchReview = createServerFn({ method: "GET" })
   .handler(({ data }) =>
     withContext((actor, dependencies) =>
       getNarImportBatchReviewForActor(actor, data, dependencies),
+    ),
+  );
+
+export const getNarImportPreviewPage = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({
+        previewId: entityIdSchema,
+        offset: z.number().int().min(0),
+        limit: z.number().int().min(1).max(50),
+      })
+      .strict(),
+  )
+  .handler(({ data }) =>
+    withContext((actor, dependencies) =>
+      getNarImportPreviewPageForActor(actor, data, dependencies),
     ),
   );
 

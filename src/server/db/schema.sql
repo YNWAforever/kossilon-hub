@@ -2537,3 +2537,23 @@ create table document_analysis_run_metadata (
 );
 create index document_analysis_run_metadata_version_idx
   on document_analysis_run_metadata (document_version_id, created_at desc);
+
+-- from 0057_import_preview_scale.sql
+-- T27: direct, versioned lookup of one approved import preview row.
+-- The full immutable rows array remains the approval/hash source of truth.
+-- Existing previews are populated without changing their hash or approvals.
+alter table nar_import_previews
+  add column rows_by_id jsonb not null default '{}'::jsonb,
+  add constraint nar_import_previews_rows_by_id_object check (jsonb_typeof(rows_by_id) = 'object');
+update nar_import_previews p
+set rows_by_id = coalesce((
+  select jsonb_object_agg(item->>'rowId', item)
+  from jsonb_array_elements(p.rows) item
+), '{}'::jsonb);
+
+-- from 0058_import_apply_selection_limit.sql
+-- T27: only importApply may exceed the generic 1000-item bulk selection ceiling.
+alter table bulk_previews drop constraint bulk_previews_selection_count_check;
+alter table bulk_previews add constraint bulk_previews_selection_count_check
+  check (selection_count >= 0 and selection_count <=
+    case when action = 'importApply' then 10000 else 1000 end);

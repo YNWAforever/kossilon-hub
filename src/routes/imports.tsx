@@ -6,11 +6,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
 import { exportBulkOperationCsv, getBulkOperation } from "@/features/bulk-operations/server-fns";
 import type { ImportApproval } from "@/features/nar-import/apply-repository";
+import {
+  ImportPreviewPage,
+  IMPORT_PREVIEW_PAGE_SIZE,
+} from "@/features/nar-import/components/import-preview-page";
 import type { NarRowDisposition } from "@/features/nar-import/mapping";
 import {
   applyNarImport,
   approveNarImport,
   getNarImportBatchReview,
+  getNarImportPreviewPage,
   listNarImportBatches,
   mapNarImportCompany,
   revalidateNarImport,
@@ -73,6 +78,7 @@ function ImportsRoute() {
   const [batchId, setBatchId] = useState<string | undefined>();
   const [reviewCursor, setReviewCursor] = useState<number | undefined>();
   const [reviewHistory, setReviewHistory] = useState<number[]>([]);
+  const [previewPage, setPreviewPage] = useState(0);
   const [companySearch, setCompanySearch] = useState("");
   const [legacyReturnYear, setLegacyReturnYear] = useState("");
   const [companyCursor, setCompanyCursor] = useState<string | null>(null);
@@ -186,6 +192,7 @@ function ImportsRoute() {
       setBatchId(result.batch.id);
       setReviewCursor(undefined);
       setReviewHistory([]);
+      setPreviewPage(0);
       revalidateMutation.reset();
       setApproval(undefined);
       setOperationId(undefined);
@@ -226,12 +233,27 @@ function ImportsRoute() {
     },
     onSuccess: () => {
       setError(undefined);
+      setPreviewPage(0);
       setApproval(undefined);
       setOperationId(undefined);
       void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
     },
     onError: (cause) =>
       setError(cause instanceof Error ? cause.message : "Unable to revalidate the import."),
+  });
+
+  const previewPageQuery = useQuery({
+    queryKey: ["nar-import", "preview-page", revalidateMutation.data?.id, previewPage],
+    queryFn: () =>
+      getNarImportPreviewPage({
+        data: {
+          previewId: revalidateMutation.data!.id,
+          offset: previewPage * IMPORT_PREVIEW_PAGE_SIZE,
+          limit: IMPORT_PREVIEW_PAGE_SIZE,
+        },
+      }),
+    enabled: previewPage > 0 && Boolean(revalidateMutation.data?.id),
+    retry: false,
   });
 
   if (dataMode !== "production") {
@@ -442,7 +464,7 @@ function ImportsRoute() {
           {revalidateMutation.data ? (
             <section className="border-b bg-muted/20 p-4" aria-label="Import preview diff">
               <p className="text-sm font-medium">
-                {`預覽版本 ${revalidateMutation.data.revision} · ${revalidateMutation.data.rows.length} 行`}
+                {`預覽版本 ${revalidateMutation.data.revision} · ${revalidateMutation.data.totalRows} 行`}
               </p>
               <p className="mt-1 break-all text-xs text-muted-foreground">
                 {`語意鍵 ${revalidateMutation.data.semanticKey}`}
@@ -497,17 +519,46 @@ function ImportsRoute() {
                   無法讀取套用進度；請重試。
                 </p>
               ) : null}
-              <div className="mt-3 max-h-80 space-y-3 overflow-auto text-xs">
-                {revalidateMutation.data.rows.map((row) => (
-                  <div key={row.rowId} className="rounded-md border bg-card p-2">
-                    <p className="font-medium">{`第 ${row.rowNumber} 行 · ${row.externalClientId} · ${DISPOSITION_LABELS[row.disposition]}`}</p>
-                    {row.fields.map((field) => (
-                      <p key={field.field} className="mt-1 break-words">
-                        {`${field.field}: ${field.before ?? "空"} → ${field.after ?? "空"} · ${field.policy} · ${field.source}`}
-                      </p>
-                    ))}
-                  </div>
-                ))}
+              {previewPageQuery.isError ? (
+                <p role="alert" className="mt-3 text-sm text-status-yellow">
+                  無法載入這一頁預覽，請重試或重新驗證。
+                </p>
+              ) : previewPage > 0 && previewPageQuery.isPending ? (
+                <p className="mt-3 text-sm text-muted-foreground">載入中…</p>
+              ) : (
+                <ImportPreviewPage
+                  rows={
+                    previewPage === 0
+                      ? revalidateMutation.data.rows
+                      : (previewPageQuery.data?.rows ?? [])
+                  }
+                  page={0}
+                  labels={DISPOSITION_LABELS}
+                />
+              )}
+              <div className="mt-3 flex items-center gap-3 text-sm">
+                <button
+                  type="button"
+                  className="rounded-md border px-3 py-2 disabled:opacity-50"
+                  disabled={previewPage === 0}
+                  onClick={() => setPreviewPage((value) => Math.max(0, value - 1))}
+                >
+                  上一頁
+                </button>
+                <span>
+                  {`第 ${previewPage + 1} 頁 · 總共 ${revalidateMutation.data.totalRows} 行`}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-md border px-3 py-2 disabled:opacity-50"
+                  disabled={
+                    (previewPage + 1) * IMPORT_PREVIEW_PAGE_SIZE >=
+                    revalidateMutation.data.totalRows
+                  }
+                  onClick={() => setPreviewPage((value) => value + 1)}
+                >
+                  下一頁
+                </button>
               </div>
             </section>
           ) : null}
@@ -618,6 +669,7 @@ function ImportsRoute() {
                 setBatchId(batch.id);
                 setReviewCursor(undefined);
                 setReviewHistory([]);
+                setPreviewPage(0);
                 revalidateMutation.reset();
                 setApproval(undefined);
                 setOperationId(undefined);

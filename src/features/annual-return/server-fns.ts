@@ -24,8 +24,8 @@ import {
 } from "./workflow";
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
-import { deriveWorkViews } from "./work-views";
-import { listReturnExceptionsForScopedCases, type ReturnRecord } from "./return-service";
+import type { WorkViewPageInput } from "./work-views";
+import { toHongKongBusinessDate } from "@/lib/hong-kong-time";
 import type { DocumentFindingsView } from "@/features/documents/findings-review";
 import type { DocumentAnalysisRepository } from "@/features/documents/analysis-repository";
 
@@ -53,7 +53,7 @@ const listAnnualReturnCasesSchema = z
     // trimmed so a whitespace-only search is the same as no search.
     q: z.string().trim().min(1).max(120).optional(),
     cursor: z.string().max(512).optional(),
-    limit: z.number().int().min(1).max(500).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
   })
   .default({});
 
@@ -725,19 +725,13 @@ export const listAnnualReturnCaseRequirements = createServerFn({ method: "GET" }
     ),
   );
 
-/**
- * The five daily work views, derived on the server.
- *
- * Server-side because the views need the viewer's own staff id to separate "work
- * on my cases" from "work anywhere", and because they read every case in scope --
- * listAllCases drains pages, so a firm past the old 200-row window does not
- * silently lose the back half of its day.
- */
-export async function getAnnualReturnWorkViewsForActor(
+/** Bounded, actor-scoped daily work. Each page and its total share one SQL snapshot. */
+export async function listWorkViewForActor(
   actor: AuthenticatedActor,
+  input: WorkViewPageInput,
   dependencies: {
-    repository: Pick<AnnualReturnRepository, "listAllCases">;
-    loadReturnExceptions?: (caseIds: readonly string[]) => Promise<ReturnRecord[]>;
+    repository: Pick<AnnualReturnRepository, "listWorkViewPage"> &
+      Partial<Pick<AnnualReturnRepository, "listAllCases">>;
   },
 ) {
   const scope = caseFiltersForActor({
@@ -746,31 +740,94 @@ export async function getAnnualReturnWorkViewsForActor(
     teamId: actor.teamId,
     active: actor.active,
   });
-  const cases = await dependencies.repository.listAllCases(scope);
-  const exceptions = dependencies.loadReturnExceptions
-    ? await dependencies.loadReturnExceptions(cases.map((case_) => case_.id))
-    : null;
-  const counts = new Map<string, number>();
-  for (const entry of exceptions ?? []) {
-    counts.set(entry.caseId, (counts.get(entry.caseId) ?? 0) + 1);
+  const limit = input.limit ?? 50;
+  if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+    throw new Error("Work-view page limit must be between 1 and 200.");
   }
-  return deriveWorkViews(
-    cases,
-    hongKongBusinessDate(),
-    { userId: actor.userId },
-    undefined,
-    exceptions ? { complete: true, openCountByCaseId: counts } : undefined,
-  );
+  const asOf = input.asOf ? toHongKongBusinessDate(input.asOf) : hongKongBusinessDate();
+  return dependencies.repository.listWorkViewPage({
+    scope,
+    viewerId: actor.userId,
+    view: input.view,
+    filters: input.filters,
+    cursor: input.cursor,
+    limit,
+    asOf,
+  });
 }
 
-export const getAnnualReturnWorkViews = createServerFn({ method: "GET" }).handler(() =>
-  withAnnualReturnActorRepository((repository, actor) =>
-    getAnnualReturnWorkViewsForActor(actor, {
-      repository,
-      loadReturnExceptions: (caseIds) => listReturnExceptionsForScopedCases(caseIds),
-    }),
-  ),
-);
+/** Existing SQL aggregate, with the same actor scope and asOf date as a work page. */
+export async function getOperationalMetricsForActor(
+  actor: AuthenticatedActor,
+  input: { scope?: { ownerId?: string }; asOf?: string },
+  dependencies: {
+    repository: Pick<AnnualReturnRepository, "operationalMetrics"> &
+      Partial<Pick<AnnualReturnRepository, "listAllCases">>;
+  },
+) {
+  const actorScope = caseFiltersForActor({
+    id: actor.userId,
+    role: actor.role,
+    teamId: actor.teamId,
+    active: actor.active,
+  });
+  const scope = {
+    ...actorScope,
+    ...(input.scope?.ownerId ? { ownerId: input.scope.ownerId } : {}),
+  };
+  const asOf = input.asOf ? toHongKongBusinessDate(input.asOf) : hongKongBusinessDate();
+  return dependencies.repository.operationalMetrics(scope, asOf, actor.userId);
+}
+
+const workViewPageSchema = z
+  .object({
+    view: z.enum([
+      "chaseToday",
+      "newlyReceived",
+      "awaitingMyReview",
+      "readyToFile",
+      "returnsAndExceptions",
+    ]),
+    filters: z
+      .object({
+        q: z.string().trim().min(1).max(120).optional(),
+        ownerId: entityIdSchema.optional(),
+      })
+      .strict()
+      .optional(),
+    cursor: z.string().max(512).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+    asOf: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  })
+  .strict();
+const operationalMetricsInputSchema = z
+  .object({
+    scope: z.object({ ownerId: entityIdSchema.optional() }).strict().optional(),
+    asOf: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  })
+  .strict();
+
+export const listAnnualReturnWorkViewPage = createServerFn({ method: "GET" })
+  .validator(workViewPageSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listWorkViewForActor(actor, data, { repository }),
+    ),
+  );
+
+export const getAnnualReturnOperationalMetrics = createServerFn({ method: "GET" })
+  .validator(operationalMetricsInputSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      getOperationalMetricsForActor(actor, data, { repository }),
+    ),
+  );
 
 export const listAnnualReturnCasePage = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)

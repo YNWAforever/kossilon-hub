@@ -1,3 +1,4 @@
+import { MAX_IMPORT_ROWS } from "@/features/nar-import/preview";
 import type postgres from "postgres";
 import type { DocumentStorage } from "@/features/documents/types";
 import {
@@ -769,8 +770,12 @@ export function createBulkOperationRepository(
           throw new Error("An approved operation is already applying this import batch.");
         if (!["pending_review", "applying", "failed"].includes(batch.status))
           throw new Error("Approved import is no longer pending application.");
-        if (!Array.isArray(source.rows) || source.rows.length < 1 || source.rows.length > MAX_ITEMS)
-          throw new Error("Approved import must contain 1 to 1000 rows.");
+        if (
+          !Array.isArray(source.rows) ||
+          source.rows.length < 1 ||
+          source.rows.length > MAX_IMPORT_ROWS
+        )
+          throw new Error("Approved import must contain 1 to 10000 rows.");
         const snapshot: Record<string, Snapshot> = {};
         for (const row of source.rows) {
           if (snapshot[row.rowId]) throw new Error("Approved import contains duplicate rows.");
@@ -803,13 +808,15 @@ export function createBulkOperationRepository(
             (preview_id,action,created_by_id,auth_user_id,idempotency_key,logical_key)
           values (${preview.id},'importApply',${current.userId},${current.authUserId},
             ${input.idempotencyKey},${logicalKey}) returning id`;
-        for (const [resourceId, value] of entries) {
-          await tx`insert into bulk_operation_items
+        await tx`
+          insert into bulk_operation_items
             (operation_id,resource_id,revision_before,state,reason_code)
-          values (${operation.id},${resourceId},${value.revision},
-            ${value.state === "eligible" ? "pending" : "conflict"},
-            ${value.state === "conflict" ? "ROW_NOT_APPROVABLE" : null})`;
-        }
+          select ${operation.id}, item.key::uuid,
+            (item.value->>'revision')::integer,
+            case when item.value->>'state' = 'eligible' then 'pending' else 'conflict' end,
+            case when item.value->>'state' = 'eligible' then null else 'ROW_NOT_APPROVABLE' end
+          from jsonb_each(${tx.json(snapshot)}::jsonb) item
+        `;
         await tx`update nar_import_batches set status = 'applying',updated_at = now()
           where id = ${batch.id}`;
         return operation.id;

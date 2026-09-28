@@ -2,6 +2,8 @@ import { isoOf, type NormalizedDate, type NormalizedDayMonth } from "./normalize
 import type { NarImportBatch, NarImportRow } from "./repository";
 import type { NarColumnKey, NarRowDisposition, RowIssue } from "./mapping";
 
+export const MAX_IMPORT_ROWS = 10_000;
+
 export type ParsedImportRow = {
   incorporation: NormalizedDayMonth;
   invoice: { kind: "value" | "nil" | "absent"; raw: string };
@@ -36,6 +38,7 @@ export type ImportPreview = {
   previewHash: string;
   counts: Record<NarRowDisposition, number>;
   rows: ImportPreviewRow[];
+  totalRows: number;
   expiresAt: string;
 };
 export function semanticKeyFor(

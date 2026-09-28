@@ -1,0 +1,48 @@
+[
+  {
+    "cases": 1000,
+    "coldMs": 17,
+    "coldQueries": 1,
+    "warmListP50Ms": 11.3,
+    "warmListP95Ms": 14.8,
+    "warmListQueries": 1,
+    "summaryP50Ms": 5.2,
+    "summaryP95Ms": 15,
+    "summaryQueries": 1,
+    "payloadBytes": 10545,
+    "pageRows": 50,
+    "deepRows": 10,
+    "heapDeltaBytes": 2155544
+  },
+  {
+    "cases": 10000,
+    "coldMs": 30.2,
+    "coldQueries": 1,
+    "warmListP50Ms": 33.5,
+    "warmListP95Ms": 36.7,
+    "warmListQueries": 1,
+    "summaryP50Ms": 35.3,
+    "summaryP95Ms": 48.5,
+    "summaryQueries": 1,
+    "payloadBytes": 10595,
+    "pageRows": 50,
+    "deepRows": 10,
+    "heapDeltaBytes": 1843968
+  },
+  {
+    "cases": 20001,
+    "coldMs": 65.4,
+    "coldQueries": 1,
+    "warmListP50Ms": 78.5,
+    "warmListP95Ms": 89.7,
+    "warmListQueries": 1,
+    "summaryP50Ms": 65.1,
+    "summaryP95Ms": 66.5,
+    "summaryQueries": 1,
+    "payloadBytes": 10641,
+    "pageRows": 50,
+    "deepRows": 10,
+    "heapDeltaBytes": -5356368,
+    "explainRootNode": "Sort"
+  }
+]

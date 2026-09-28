@@ -92,6 +92,23 @@ export type WorkViewResult = {
   rows: WorkViewRow[];
 };
 
+export type WorkViewPageInput = {
+  view: WorkViewKey;
+  filters?: { q?: string; ownerId?: string };
+  cursor?: string;
+  limit?: number;
+  /** Stable Hong Kong business date for rows and count across pages. */
+  asOf?: string;
+};
+
+export type WorkViewPage = {
+  definition: WorkViewDefinition;
+  rows: WorkViewRow[];
+  total: number;
+  nextCursor: string | null;
+  asOf: string;
+};
+
 function isMutable(case_: AnnualReturnCase): boolean {
   return (
     case_.currentStatus !== "Filed" &&

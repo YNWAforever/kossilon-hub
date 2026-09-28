@@ -3,7 +3,7 @@ import { createSqlClient, getSqlClient, type SqlClient } from "@/server/db/clien
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { assertDistinctImportTargets, planImportedRow } from "./apply";
-import type { ImportPreviewRow, ParsedImportRow } from "./preview";
+import { MAX_IMPORT_ROWS, type ImportPreviewRow, type ParsedImportRow } from "./preview";
 
 export type ImportApproval = {
   id: string;
@@ -95,11 +95,6 @@ async function requireCurrentAdmin(sql: QueryClient, actor: AuthenticatedActor):
   )
     throw new ImportApplyError("forbidden", "ACTOR_SCOPE_CHANGED");
 }
-function previewRow(rows: ImportPreviewRow[], id: string): ImportPreviewRow {
-  const row = rows.find((candidate) => candidate.rowId === id);
-  if (!row) throw new ImportApplyError("conflict", "ROW_NOT_IN_APPROVAL");
-  return row;
-}
 function assertSnapshotMatches(row: ImportPreviewRow, current: CaseRecord | undefined): void {
   const snapshot = row.caseSnapshot;
   if (!snapshot && current) throw new ImportApplyError("conflict", "CASE_CREATED_AFTER_PREVIEW");
@@ -158,7 +153,11 @@ export function createNarImportApplyRepository(
           batch.semantic_key !== preview.semantic_key
         )
           throw new ImportApplyError("conflict", "BATCH_CHANGED_AFTER_PREVIEW");
-        if (!Array.isArray(preview.rows) || preview.rows.length < 1 || preview.rows.length > 1000)
+        if (
+          !Array.isArray(preview.rows) ||
+          preview.rows.length < 1 ||
+          preview.rows.length > MAX_IMPORT_ROWS
+        )
           throw new ImportApplyError("conflict", "PREVIEW_SIZE_OUT_OF_RANGE");
         assertDistinctImportTargets(preview.rows, batch.return_year);
         const rowIds = preview.rows.map((row) => row.rowId);
@@ -169,8 +168,10 @@ export function createNarImportApplyRepository(
           order by id for share`;
         if (currentRows.length !== rowIds.length)
           throw new ImportApplyError("conflict", "IMPORT_ROW_MISSING");
+        const previewById = new Map(preview.rows.map((row) => [row.rowId, row]));
         for (const stored of currentRows) {
-          const row = previewRow(preview.rows, stored.id);
+          const row = previewById.get(stored.id);
+          if (!row) throw new ImportApplyError("conflict", "ROW_NOT_IN_APPROVAL");
           if (
             stored.revision !== row.rowRevision ||
             stored.matched_company_id !== row.matchedCompanyId ||
@@ -223,8 +224,12 @@ export function createNarImportApplyRepository(
         select * from nar_import_approvals where id = ${input.approvalId}`;
       if (!approval || approval.approved_by !== actor.userId)
         throw new ImportApplyError("forbidden", "APPROVAL_OWNER_CHANGED");
-      const [preview] = await tx<PreviewRecord[]>`
-        select * from nar_import_previews where id = ${approval.preview_id}`;
+      const [preview] = await tx<
+        (Omit<PreviewRecord, "rows"> & { candidate: ImportPreviewRow | null })[]
+      >`
+        select id,batch_id,batch_revision,semantic_key,preview_hash,created_by,expires_at,
+          rows_by_id -> ${input.rowId} as candidate
+        from nar_import_previews where id = ${approval.preview_id}`;
       const [batch] = await tx<BatchRecord[]>`
         select * from nar_import_batches where id = ${approval.batch_id}`;
       if (
@@ -237,7 +242,8 @@ export function createNarImportApplyRepository(
         batch.return_year === null
       )
         throw new ImportApplyError("conflict", "APPROVED_BATCH_CHANGED");
-      const candidate = previewRow(preview.rows, input.rowId);
+      const candidate = preview.candidate;
+      if (!candidate) throw new ImportApplyError("conflict", "ROW_NOT_IN_APPROVAL");
       if (candidate.rowRevision !== input.expectedRevision)
         throw new ImportApplyError("conflict", "PREVIEW_REVISION_MISMATCH");
       const [stored] = await tx<ImportRowRecord[]>`
