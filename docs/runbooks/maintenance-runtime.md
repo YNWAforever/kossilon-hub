@@ -1,6 +1,8 @@
-# T07 maintenance runtime: local implementation and activation gate
+# T07 maintenance runtime and verified activation
 
-The deployed production alias observed in T00 is Vercel. The repository also contains a Cloudflare Nitro scheduled hook and a Wrangler cron template; neither is evidence that a Worker currently owns production scheduling. No production scheduler or database was changed by this task.
+**Current status — 2026-09-30 HKT:** migration 0066 is applied on the designated Neon target (66 migrations, 12/12 schema capabilities ready). Production deployment dpl_8aTN6kA5qcs3vRWCwUccqZBS6v9o serves b87dfbb with owner=vercel. Three actual scheduled slots at 00:35/00:40/00:45 HKT passed, six jobs each. See the final verification section and [saved evidence](evidence/2026-09-30-scheduler-repair/summary.json). Earlier local-only, activation and containment observations below are historical; authenticated browser/provider/pilot gates remain open.
+
+The deployed production alias observed in T00 is Vercel. The repository also contains a Cloudflare Nitro scheduled hook and a Wrangler cron template; neither is evidence that a Worker currently owns production scheduling. The original local implementation did not change production; subsequent explicitly authorized migrations and activation are recorded below.
 
 ## Runtime contract
 

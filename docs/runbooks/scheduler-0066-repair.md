@@ -1,15 +1,17 @@
 # Scheduler repair after the first live tick
 
+**Current status — 2026-09-30 HKT:** migration 0066 is applied on the designated Neon target (66 migrations, 12/12 schema capabilities ready). Production deployment dpl_8aTN6kA5qcs3vRWCwUccqZBS6v9o serves b87dfbb with owner=vercel. Three actual scheduled slots at 00:35/00:40/00:45 HKT passed, six jobs each. See the final verification section and [saved evidence](evidence/2026-09-30-scheduler-repair/summary.json). Earlier local-only, activation and containment observations below are historical; authenticated browser/provider/pilot gates remain open.
+
 ## Observed failure
 The authorized e7dcb70 deployment reached Ready on 2026-09-29. At 15:50 UTC its actual cron wrote five successful job rows, then PostgreSQL rejected runNarImportStageJobs with SQLSTATE 23514. Migration 0045's job-kind constraint lists six kinds and omits the NAR staging worker later enabled in source. The controller threw before recording the run summary. Four SLA notifications are pending; none was sent by this scheduler.
 
-## Containment
-Production deployment dpl_C2qVk7u8yQYFTjwtsvcidPJ5ZQhi runs the same approved e7dcb70 with MAINTENANCE_SCHEDULER_OWNER unset. A subsequent actual cron returned 503. Keep all five job rows and four pending outbox rows. Never replay the interrupted slot or dispatch those notifications automatically.
+## Historical containment before the approved repair
+The historical paused deployment dpl_C2qVk7u8yQYFTjwtsvcidPJ5ZQhi ran the same approved e7dcb70 with MAINTENANCE_SCHEDULER_OWNER unset. A subsequent actual cron returned 503. Keep all five job rows and four pending outbox rows. Never replay the interrupted slot or dispatch those notifications automatically.
 
-## Proposed forward repair
+## Forward repair procedure (completed under explicit authorization)
 Review db/migrations/0066_nar_import_scheduler_job.sql. It adds only runNarImportStageJobs to the existing explicit allowlist, retains all six existing kinds, and changes no job rows. Lock timeout is five seconds; statement timeout is thirty seconds. The normal migrator applies the SQL and ledger entry in one transaction. New application code also retains partial run evidence on claim/begin/state-read errors and blocks schema readiness when this constraint value is absent.
 
-Before any production application:
+The following preflight and rollout steps were completed for the authorized 0066 application:
 1. Obtain explicit authority for migration 0066 and the tested repair commit. Existing authority covered 0021–0065 and deployment e7dcb70.
 2. Reconfirm the exact target red-morning-00331124 / br-muddy-mountain-aov8bbku / neondb, paused owner and 65-entry canonical ledger. Review the old constraint and the five historical rows; stop for unexpected drift.
 3. Create a fresh no-compute recovery branch or named snapshot. Never use restore_snapshot with implicit finalize.
