@@ -5,6 +5,35 @@ import { EXPECTED_MIGRATIONS } from "../src/features/operations/schema-health";
 const emptyCatalog = { tables: [], columns: {}, indexes: {}, constraints: {} };
 
 describe("T01 schema compatibility release gate", () => {
+  it("blocks maintenance when the job constraint omits live NAR staging despite a current ledger", () => {
+    const catalog = {
+      tables: ["maintenance_runs"],
+      columns: { "maintenance_runs.trigger_source": "text" },
+      indexes: { maintenance_runs_recent_idx: "scheduled_for DESC" },
+      constraints: {
+        maintenance_runs_outcome_agrees: "outcome",
+        maintenance_job_runs_job_kind_check:
+          "CHECK (job_kind IN ('evaluateEscalations','settleNotificationAttempts','redactNotifications','escalateStalledQuarantine','runBulkOperations','drainInboundMediaDownloads'))",
+      },
+    };
+    const inspect = () =>
+      inspectSchemaCompatibility({
+        expected: EXPECTED_MIGRATIONS,
+        ledger: { present: true, applied: [...EXPECTED_MIGRATIONS] },
+        catalog,
+      });
+    expect(inspect().requiredCapabilities.maintenance.ready).toBe(false);
+    expect(inspect().definitionMismatch).toContainEqual(
+      expect.objectContaining({
+        artifact: "constraint:maintenance_job_runs_job_kind_check",
+        expected: "runNarImportStageJobs",
+      }),
+    );
+    catalog.constraints.maintenance_job_runs_job_kind_check =
+      "CHECK (job_kind IN ('evaluateEscalations','settleNotificationAttempts','redactNotifications','escalateStalledQuarantine','runBulkOperations','drainInboundMediaDownloads','runNarImportStageJobs'))";
+    expect(inspect().requiredCapabilities.maintenance.ready).toBe(true);
+  });
+
   it("t01_scenario_1 keeps an unknown historical migration visible and refuses a missing ledger", () => {
     const historical = inspectSchemaCompatibility({
       expected: EXPECTED_MIGRATIONS,

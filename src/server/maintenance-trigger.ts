@@ -77,29 +77,38 @@ export function createMaintenanceTrigger(input: {
       const jobs: MaintenanceTickResult["jobs"] = [];
       for (const job of data.allowedJobs) {
         const now = clock().toISOString();
-        const claim = await input.store.claim({
-          trigger: data.trigger,
-          scheduledAt: data.scheduledAt,
-          job,
-          runId: data.runId,
-          now,
-          leaseExpiresAt: new Date(Date.parse(now) + LEASE_MS).toISOString(),
-        });
-        if (!claim) {
-          jobs.push({
+        let claim: Awaited<ReturnType<MaintenanceJobStore["claim"]>>;
+        try {
+          claim = await input.store.claim({
+            trigger: data.trigger,
+            scheduledAt: data.scheduledAt,
             job,
-            state: "skipped",
-            priorState: await input.store.stateOf(data.scheduledAt, job),
+            runId: data.runId,
+            now,
+            leaseExpiresAt: new Date(Date.parse(now) + LEASE_MS).toISOString(),
           });
-          continue;
-        }
-        const began = await input.store.begin(data.scheduledAt, job, claim.token);
-        if (!began) {
-          jobs.push({
-            job,
-            state: "skipped",
-            priorState: await input.store.stateOf(data.scheduledAt, job),
-          });
+          if (!claim) {
+            jobs.push({
+              job,
+              state: "skipped",
+              priorState: await input.store.stateOf(data.scheduledAt, job),
+            });
+            continue;
+          }
+          const began = await input.store.begin(data.scheduledAt, job, claim.token);
+          if (!began) {
+            jobs.push({
+              job,
+              state: "skipped",
+              priorState: await input.store.stateOf(data.scheduledAt, job),
+            });
+            continue;
+          }
+        } catch {
+          // Claim/begin acknowledgement can be lost after a durable write.
+          // Do not execute or replay this job; retain partial run evidence
+          // without persisting a database error payload.
+          jobs.push({ job, state: "unknown" });
           continue;
         }
         let outcome: JobOutcome;
