@@ -1,0 +1,22 @@
+{
+  "observedAtUtc": "2026-09-29T01:22:00Z",
+  "deploymentId": "dpl_94XHNoRBhQg8fJA8vbvSmMujbgBe",
+  "sourceSha": "0230c90a85f4049b006e98ec81888efdbcc70b2d",
+  "configuredProductionBranch": "main",
+  "operationsHttpStatus": 200,
+  "operationsAuthenticatedHealthVerified": false,
+  "browserBlocker": "Windows sandbox helper_unknown_error: apply deny-read ACLs; CUA kernel failed to start",
+  "cronRegistered": true,
+  "cronSchedule": "*/5 * * * *",
+  "cronPath": "/api/cron/maintenance",
+  "missingProductionVariableNames": [
+    "MAINTENANCE_SCHEDULER_OWNER",
+    "CRON_SECRET"
+  ],
+  "maintenanceRunsOnNamedNeonTarget": 0,
+  "focusedSchedulerTests": {
+    "passed": 16,
+    "skippedDatabaseTests": 3
+  },
+  "activationPerformed": false
+}
