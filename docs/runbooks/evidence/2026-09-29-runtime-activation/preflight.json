@@ -1,0 +1,56 @@
+{
+  "preparedAtUtc": "2026-09-29T15:25:04.060491+00:00",
+  "authorization": "User approved the remaining process after the deployment, DB binding and scheduler gates were presented.",
+  "project": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+  "team": "team_qvzlsFmfCsLkgItSypqHjw3z",
+  "sourceSha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2",
+  "verifiedEquivalentSourceHead": "9b6007f8685c1eeabc856d769031aea62adb44ea",
+  "ci": {
+    "run": 36508177089,
+    "passed": 1965,
+    "skipped": 5
+  },
+  "previousDeployment": "dpl_94XHNoRBhQg8fJA8vbvSmMujbgBe",
+  "database": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb",
+    "endpoint": "ep-patient-block-aoxmgw78",
+    "ledger": 65
+  },
+  "configurationPreview": {
+    "productionOnly": [
+      "DATABASE_URL",
+      "CRON_SECRET",
+      "MAINTENANCE_SCHEDULER_OWNER"
+    ],
+    "owner": "vercel",
+    "secret": "Cryptographically random 32-byte secret generated in memory; sensitive storage only",
+    "database": "Bind the user-designated Neon target; original sensitive value cannot be inspected."
+  },
+  "schedulerPreflight": {
+    "vercelPlan": "pro",
+    "cron": "*/5 * * * *",
+    "cloudflareAccount": "e387dfbeded3deb5b8f0023a78a660b5",
+    "cloudflareScriptsChecked": 13,
+    "kossilonWorkersOrVisibleBindingMatches": 0,
+    "limitation": "Only the available Cloudflare account was inspected; secret binding values are opaque."
+  },
+  "queuesBefore": {
+    "bulkOperations": 0,
+    "narImportStageJobs": 0,
+    "notificationOutbox": 0,
+    "maintenanceRuns": 0
+  },
+  "expectedJobs": [
+    "evaluateEscalations",
+    "settleNotificationAttempts",
+    "redactNotifications",
+    "escalateStalledQuarantine",
+    "runBulkOperations",
+    "runNarImportStageJobs"
+  ],
+  "excludedProviders": "No verified WOZTELL inbound mapping; no notification dispatch or scanner job in this scheduler.",
+  "rollback": "Disable project cron registration first, unset scheduler owner for subsequent builds, revert traffic to dpl_94XHNoRBhQg8fJA8vbvSmMujbgBe. Preserve all job records and current 0065 schema. Original deployment retains its prior immutable environment; do not guess the old opaque DATABASE_URL.",
+  "browserBlocker": "CUA kernel fails: Windows sandbox helper_unknown_error apply deny-read ACLs"
+}

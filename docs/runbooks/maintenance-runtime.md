@@ -8,7 +8,7 @@ The deployed production alias observed in T00 is Vercel. The repository also con
 
 Each allowed job has a unique scheduled slot in `maintenance_job_runs`. A duplicate invocation skips a completed or started job. A claimed lease that expired before start can be recovered; a started job never auto-resumes because its side effect may have completed. Each job records success/failure separately. A partial scheduled run returns HTTP 500 or fails the Worker invocation and is not reported as success. Manual runs carry `trigger_source=manual` and do not contribute to scheduled-health success.
 
-The initial allowlist is `evaluateEscalations`, `settleNotificationAttempts`, `redactNotifications`, and `escalateStalledQuarantine`. SLA escalation selects at most 100 unrecorded due items per tick; outbox settlement/redaction and quarantine reads are capped. No provider dispatch, reminder enqueue, document scan/analysis, upload deletion, or external handoff is enabled by this adapter. Later activation requires the relevant T17/provider and bounded-worker gates.
+The original T07 allowlist was evaluateEscalations, settleNotificationAttempts, redactNotifications, and escalateStalledQuarantine. Current source also runs runBulkOperations (at most two approved operations and 25 items per operation per tick); live provider mode adds runNarImportStageJobs. A verified WhatsApp media configuration additionally enables drainInboundMediaDownloads. SLA escalation selects at most 100 unrecorded due items per tick; outbox settlement/redaction and quarantine reads are capped. No notification provider dispatch, reminder enqueue, document scan/analysis, upload deletion, or external handoff is enabled by this adapter. Bulk actions retain per-item server authorization and reuse the single-item domain services. Inspect the actual queued work and provider configuration before activation; the original four-job description alone is insufficient.
 
 ## Platform and credential gate
 
@@ -61,3 +61,11 @@ commit;
 ```
 
 The forward and reversal SQL were rehearsed on a second disposable PostgreSQL 17 database. The rollback guard rejected a row containing job evidence and left the table intact; after that row was removed, the rollback committed and both the table and 0035 ledger entry were absent. That database was then removed. This reversal remains a review artifact. No production migration, deployment, live send, invitation, or permission change is authorized here.
+
+## Activation preflight — 2026-09-29
+
+The user approved the remaining release process. The exact deployment request and rollback reference are saved in evidence/2026-09-29-runtime-activation. Target source e7dcb70 has the identical tree to PR #99 head 9b6007f, whose CI passed 1,965 tests with five skipped. Fresh focused scheduler tests passed 16 with three database tests skipped.
+
+The available Cloudflare account contains 13 workers, none with a Kossilon name or visible binding match; secret values are opaque and other accounts were not inspected. Vercel is Pro. The named Neon target has 65 migrations and zero bulk operations, NAR staging jobs, outbox entries and maintenance runs. With the current default live provider mode, six jobs are expected; the outdated four-job list above has been corrected.
+
+Automatic approval review rejected the production DATABASE_URL, CRON_SECRET and owner write before execution, requiring explicit permission for transferring the named Neon credential to the named Vercel production project. A precise confirmation is pending. Configuration and deployment have not run. The original sensitive production DB value cannot be read back; the proposed configuration explicitly binds the previously authorized Neon target. Browser verification is separately blocked by the CUA Windows sandbox ACL startup error.
