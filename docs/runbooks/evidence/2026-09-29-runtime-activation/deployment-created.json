@@ -1,0 +1,18 @@
+{
+  "id": "dpl_9BsDLgpEeYxVicCCZqPE4ykbERHk",
+  "url": "kossilon-lufhjvsjf-ynwaforevers-projects.vercel.app",
+  "readyState": "INITIALIZING",
+  "status": "INITIALIZING",
+  "target": "production",
+  "createdAt": 1790696808075,
+  "gitSource": {
+    "type": "github",
+    "repoId": 1289430321,
+    "ref": "codex/kossilon-integration-green",
+    "sha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2"
+  },
+  "errorCode": null,
+  "errorMessage": null,
+  "requestedAtUtc": "2026-09-29T15:46:45.454424+00:00",
+  "sourceSha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2"
+}

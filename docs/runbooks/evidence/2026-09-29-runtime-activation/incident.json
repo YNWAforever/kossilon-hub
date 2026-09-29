@@ -1,0 +1,81 @@
+{
+  "checkedAtUtc": "2026-09-29T16:06:21.385Z",
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb"
+  },
+  "failedDeployment": "dpl_9BsDLgpEeYxVicCCZqPE4ykbERHk",
+  "pausedDeployment": "dpl_C2qVk7u8yQYFTjwtsvcidPJ5ZQhi",
+  "sourceSha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2",
+  "failure": {
+    "sqlState": "23514",
+    "constraint": "maintenance_job_runs_job_kind_check",
+    "rejectedJob": "runNarImportStageJobs",
+    "httpStatus": 500,
+    "scheduledFor": "2026-09-29T15:50:00Z"
+  },
+  "pausedCronObservedHttpStatus": 503,
+  "jobRows": [
+    {
+      "id": "8cc50290-564a-4803-b0db-90271b5a325c",
+      "scheduled_for": "2026-09-29T15:50:00.000Z",
+      "job_kind": "escalateStalledQuarantine",
+      "trigger_source": "scheduled",
+      "state": "succeeded",
+      "started_at": "2026-09-29T15:50:30.138Z",
+      "finished_at": "2026-09-29T15:50:30.821Z"
+    },
+    {
+      "id": "7381f6a5-5272-4742-bf93-b6c27afc3d65",
+      "scheduled_for": "2026-09-29T15:50:00.000Z",
+      "job_kind": "evaluateEscalations",
+      "trigger_source": "scheduled",
+      "state": "succeeded",
+      "started_at": "2026-09-29T15:50:17.203Z",
+      "finished_at": "2026-09-29T15:50:26.256Z"
+    },
+    {
+      "id": "c2ec74ef-9e00-4c36-8243-2393dc937766",
+      "scheduled_for": "2026-09-29T15:50:00.000Z",
+      "job_kind": "redactNotifications",
+      "trigger_source": "scheduled",
+      "state": "succeeded",
+      "started_at": "2026-09-29T15:50:29.023Z",
+      "finished_at": "2026-09-29T15:50:29.692Z"
+    },
+    {
+      "id": "206e0fee-efdf-4680-99a1-0d31057c6664",
+      "scheduled_for": "2026-09-29T15:50:00.000Z",
+      "job_kind": "runBulkOperations",
+      "trigger_source": "scheduled",
+      "state": "succeeded",
+      "started_at": "2026-09-29T15:50:31.268Z",
+      "finished_at": "2026-09-29T15:50:32.011Z"
+    },
+    {
+      "id": "404d642f-2c77-4cbb-a0d2-fa91bfd938ac",
+      "scheduled_for": "2026-09-29T15:50:00.000Z",
+      "job_kind": "settleNotificationAttempts",
+      "trigger_source": "scheduled",
+      "state": "succeeded",
+      "started_at": "2026-09-29T15:50:26.927Z",
+      "finished_at": "2026-09-29T15:50:28.575Z"
+    }
+  ],
+  "runRows": 0,
+  "outboxByStatus": [
+    {
+      "status": "pending",
+      "count": 4
+    }
+  ],
+  "constraints": [
+    {
+      "conname": "maintenance_job_runs_job_kind_check",
+      "definition": "CHECK ((job_kind = ANY (ARRAY['evaluateEscalations'::text, 'settleNotificationAttempts'::text, 'redactNotifications'::text, 'escalateStalledQuarantine'::text, 'runBulkOperations'::text, 'drainInboundMediaDownloads'::text])))"
+    }
+  ],
+  "threeConsecutiveScheduledRuns": false,
+  "production0066Applied": false
+}

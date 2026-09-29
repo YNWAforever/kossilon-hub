@@ -1,0 +1,18 @@
+{
+  "reason": "Pause after Postgres 23514 maintenance_job_runs_job_kind_check rejects runNarImportStageJobs",
+  "ownerConfigured": "",
+  "action": "Rebuild same approved e7dcb70 with owner unset; cron fails closed",
+  "deployment": {
+    "id": "dpl_C2qVk7u8yQYFTjwtsvcidPJ5ZQhi",
+    "url": "kossilon-2rdacriwe-ynwaforevers-projects.vercel.app",
+    "readyState": "INITIALIZING",
+    "target": "production",
+    "gitSource": {
+      "type": "github",
+      "repoId": 1289430321,
+      "ref": "codex/kossilon-integration-green",
+      "sha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2"
+    }
+  },
+  "requestedAtUtc": "2026-09-29T15:52:52.147376+00:00"
+}

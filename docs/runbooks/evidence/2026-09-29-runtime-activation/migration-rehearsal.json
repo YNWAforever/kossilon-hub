@@ -1,0 +1,9 @@
+{
+  "checkedAtUtc": "2026-09-29T16:05:11.867Z",
+  "target": "dedicated localhost PostgreSQL 17",
+  "existingJobRowsPreserved": 5,
+  "newNarJobAccepted": true,
+  "unknownJobRejected": true,
+  "transactionRollbackVerified": true,
+  "migration": "0066_nar_import_scheduler_job.sql"
+}

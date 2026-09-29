@@ -1,6 +1,6 @@
 # Pilot operations runbook
 
-This is a gate for a small internal pilot, read with [release acceptance](release-acceptance-2026-09-27.md), [firm deployment](firm-deployment.md) and [backup and restore](backup-restore.md). The 2026-09-29 live Vercel redeploy serves integration SHA 0230c90. The explicitly authorized Neon target is verified through 0065; deployment DB binding, authenticated journeys and pilot acceptance remain separate gates.
+This is a gate for a small internal pilot, read with [release acceptance](release-acceptance-2026-09-27.md), [firm deployment](firm-deployment.md) and [backup and restore](backup-restore.md). The current live Vercel deployment serves e7dcb70 with the scheduler deliberately paused. The designated Neon binding is observed through the first actual cron writes. Its 65-migration schema rejected the NAR worker; local forward repair 0066 awaits explicit production approval. Authenticated journeys and pilot acceptance remain separate gates.
 
 ## Before any pilot
 
@@ -25,4 +25,6 @@ If a write or release check fails, stop consumers, keep the current records, and
 
 ## Open runtime gates
 
-The deployed integration source and designated Neon schema are recorded in release acceptance. Exact deployment DB binding, authenticated browser role and E2E evidence, provider contracts, three scheduled runs, joint DB/R2 restore, deployed performance and pilot acceptance remain unverified. Production scheduler owner and CRON_SECRET are absent in the inspected metadata, despite an enabled five-minute cron registration. The T27 local 20k-case benchmark is a source baseline, not a deployed SLA result.
+The initial e7dcb70 cron failed at 2026-09-29 15:50 UTC with PostgreSQL 23514 on the missing NAR job-kind allowance. Five jobs succeeded; four SLA notifications remain pending and none was sent. Owner is now unset, and the subsequent scheduled request returned 503 on paused deployment dpl_C2qVk7u8yQYFTjwtsvcidPJ5ZQhi. Do not replay the old slot or automatically dispatch pending notifications.
+
+The local repair and migration rehearsal are in [scheduler-0066-repair](scheduler-0066-repair.md). New migration 0066 and repaired deployment need explicit approval. Three successful scheduled ticks, authenticated browser role/E2E evidence, provider contracts, joint DB/R2 restore, deployed performance and pilot acceptance remain unverified. Browser control currently fails at initialization. The T27 local 20k-case benchmark is a source baseline, not a deployed SLA result.
