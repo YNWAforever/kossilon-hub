@@ -1,10 +1,10 @@
 # Pilot operations runbook
 
-This is a gate for a small internal pilot, read with [release acceptance](release-acceptance-2026-09-27.md), [firm deployment](firm-deployment.md) and [backup and restore](backup-restore.md). The audit observed a Vercel deployment at the old audit SHA; the T29 branch has not been deployed. Local source tests and disposable PostgreSQL through migration 0061 do not prove the target database or runtime is current.
+This is a gate for a small internal pilot, read with [release acceptance](release-acceptance-2026-09-27.md), [firm deployment](firm-deployment.md) and [backup and restore](backup-restore.md). The 2026-09-29 live Vercel redeploy serves integration SHA 0230c90. The explicitly authorized Neon target is verified through 0065; deployment DB binding, authenticated journeys and pilot acceptance remain separate gates.
 
 ## Before any pilot
 
-1. Bind the exact reviewed commit SHA, deployment ID, database identity and migration ledger. Resolve the T03 unknown legacy ledger entry read-only. Obtain separate authorization before any non-local schema write.
+1. Bind the exact reviewed commit SHA, deployment ID, database identity and migration ledger. The named Neon target legacy alias was reconciled and 0021–0065 applied under explicit authorization; retain its recorded evidence. Obtain authorization for any further non-local schema change.
 2. Rehearse the exact forward migration on a populated isolated clone, including existing outbox and package rows. Record row counts, checksums, failed/processing states and a named restore point. The T28 local 0001–0060 to 0061 rehearsal is evidence for that change only.
 3. Run `npm run verify:firm -- --dry-run` and resolve every blocked binding against an approved provider contract. This command checks names only; it neither tests a provider nor sends anything.
 4. On the deployed SHA, run the role matrix and the three end-to-end journeys with permitted test identities and non-sensitive cases. Record the case, audit and document-version IDs. Keep demo read-only.
@@ -25,4 +25,4 @@ If a write or release check fails, stop consumers, keep the current records, and
 
 ## Open runtime gates
 
-The observed T00 deployment is not the T29 branch. Target schema identity, authenticated browser role and E2E evidence, real provider and recipient contracts, three scheduled runs, joint DB/R2 restore, deployed performance and pilot acceptance remain unverified. The T27 local 20k-case benchmark is a source baseline, not a deployed SLA result.
+The deployed integration source and designated Neon schema are recorded in release acceptance. Exact deployment DB binding, authenticated browser role and E2E evidence, provider contracts, three scheduled runs, joint DB/R2 restore, deployed performance and pilot acceptance remain unverified. Production scheduler owner and CRON_SECRET are absent in the inspected metadata, despite an enabled five-minute cron registration. The T27 local 20k-case benchmark is a source baseline, not a deployed SLA result.

@@ -1,0 +1,58 @@
+{
+  "ledgerState": "current",
+  "missing": [],
+  "unknown": [],
+  "definitionMismatch": [],
+  "requiredCapabilities": {
+    "documents": {
+      "ready": true,
+      "issues": []
+    },
+    "payments": {
+      "ready": true,
+      "issues": []
+    },
+    "parties": {
+      "ready": true,
+      "issues": []
+    },
+    "analysis": {
+      "ready": true,
+      "issues": []
+    },
+    "maintenance": {
+      "ready": true,
+      "issues": []
+    },
+    "packages": {
+      "ready": true,
+      "issues": []
+    },
+    "submissions": {
+      "ready": true,
+      "issues": []
+    },
+    "returns": {
+      "ready": true,
+      "issues": []
+    },
+    "media": {
+      "ready": true,
+      "issues": []
+    },
+    "staff": {
+      "ready": true,
+      "issues": []
+    },
+    "templates": {
+      "ready": true,
+      "issues": []
+    },
+    "reminders": {
+      "ready": true,
+      "issues": []
+    }
+  },
+  "canRelease": true,
+  "canMigrateAutomatically": true
+}

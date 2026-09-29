@@ -1,5 +1,19 @@
 # T01 schema reconciliation and release gate — 2026-09-27
 
+## Authorized target migration completed — 2026-09-29
+
+The user explicitly designated Neon project red-morning-00331124, branch br-muddy-mountain-aov8bbku, database neondb, and authorized guarded removal of the duplicate 0006_client_register.sql ledger row followed by 0021–0065. This resolves the mutation target authorization independently of the still-unverified Vercel binding. The exact-host check passed for ep-patient-block-aoxmgw78; the original production/default branch and endpoint association remain in place.
+
+Snapshot snap-sweet-sea-ao66v7mt was retained. Neon rejected another snapshot because of its snapshot limit, so a fresh no-compute recovery branch br-flat-heart-aovfw8hr (authorized-before-0021-0065-20260929) was created explicitly from the original branch at LSN 0/53DF528 and verified ready. No restore/finalize operation was used for this backup.
+
+The first guard correctly rejected timestamp literals truncated to milliseconds and rolled back. Reading applied_at as text revealed the exact values 2026-08-03 20:26:37.261845+00 and 2026-08-04 19:03:12.181889+00. Forward and technical rollback SQL now preserve those exact values without relaxing equality or catalog guards. The corrected forward passed a full ROLLBACK rehearsal (21 rows, alias intact), then committed (20 canonical rows, alias absent).
+
+The unchanged repository migrator from deployed source 0230c90a85f4049b006e98ec81888efdbcc70b2d applied all 45 files, one transaction per file, with exit code 0. Read-only db:inspect returned current, 65 exact canonical IDs, zero missing/unknown/definition mismatches and 12/12 required schema capabilities ready. Its canRelease=true result concerns this database schema only. A console summary initially read the wrong capability property and printed zero; the saved report and subsequent assertion use requiredCapabilities and confirm all 12.
+
+Counts and sorted-ID digests remained identical for companies (3), annual-return cases (3), documents (14), payments (3) and checklist items (15). Backfills produced 14 document versions, 15 requirement instances and one eligible legacy Filed case. There are zero orphan document versions and zero unvalidated public foreign keys. Packages and notification outbox remain empty. These checks do not validate every business-field value or an authenticated application journey.
+
+[Saved evidence](evidence/2026-09-29-neon-migrations/summary.json) includes pre/post ledgers, migration SHA-256 hashes, table counts/ID digests, guarded reconciliation result, migrator output and full schema report. T01 is runtime-verified for the named database; T29 remains runtime-blocked for deployed binding, authenticated provider/scheduler/E2E and pilot acceptance. Earlier dated observations and migration blockers are historical. The alias technical rollback now refuses the advanced ledger; retain the recovery branch/snapshot for an approved restore or forward repair.
+
 ## Read-only observed state
 
 Target inspected: Neon project `red-morning-00331124`, branch `br-muddy-mountain-aov8bbku` (`production`), `neondb`, region `aws-ap-southeast-1`. This is the branch selected by the Neon connection; its binding to Vercel `DATABASE_URL` still requires independent confirmation before a release.

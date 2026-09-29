@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-09-29T01:10:36.610Z",
+  "initialGuard": "rejected truncated millisecond timestamps with rollback",
+  "precisionCorrection": "strict exact microsecond equality",
+  "dryRun": {
+    "ledger_rows": 21,
+    "alias_rows": 1
+  },
+  "applied": {
+    "ledger_rows": 20,
+    "alias_rows": 0
+  }
+}
