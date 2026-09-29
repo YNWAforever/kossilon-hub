@@ -1,0 +1,12 @@
+{
+  "checkedAtUtc": "2026-09-29T16:14:44.260508+00:00",
+  "id": "dpl_C2qVk7u8yQYFTjwtsvcidPJ5ZQhi",
+  "target": "production",
+  "readyState": "READY",
+  "sourceSha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2",
+  "alias": "kossilon-hub.vercel.app",
+  "owner": "",
+  "scheduledRequestObservedHttpStatus": 503,
+  "source": "Vercel deployment metadata and bounded runtime logs",
+  "production0066Applied": false
+}

@@ -1,0 +1,42 @@
+{
+  "checkedAtUtc": "2026-09-29T16:14:44.258632+00:00",
+  "repairSourceCommit": "1bca4a5671b909278d63327ab69dbda03a2dae38",
+  "red": {
+    "failed": 4,
+    "passed": 11,
+    "files": 2,
+    "reproduced": [
+      "PostgreSQL 23514 rejects live NAR job",
+      "schema inspector false readiness",
+      "claim exception loses run evidence",
+      "begin exception loses run evidence"
+    ]
+  },
+  "focused": {
+    "passed": 41,
+    "skipped": 0,
+    "files": 4,
+    "exitCode": 0
+  },
+  "full": {
+    "passed": 1969,
+    "skipped": 5,
+    "filesPassed": 228,
+    "filesSkipped": 1,
+    "exitCode": 0,
+    "durationSeconds": 207.04,
+    "database": "isolated local PostgreSQL 17"
+  },
+  "typecheck": {
+    "exitCode": 0
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "baselineWarnings": 1
+  },
+  "migrationRehearsal": "migration-rehearsal.json",
+  "independentReview": "code-review.json",
+  "production0066Applied": false,
+  "runtimeAcceptance": false
+}

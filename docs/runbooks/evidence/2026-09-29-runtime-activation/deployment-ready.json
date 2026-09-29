@@ -1,0 +1,53 @@
+{
+  "id": "dpl_9BsDLgpEeYxVicCCZqPE4ykbERHk",
+  "url": "kossilon-lufhjvsjf-ynwaforevers-projects.vercel.app",
+  "readyState": "READY",
+  "target": "production",
+  "createdAt": 1790696808075,
+  "buildingAt": 1790696809485,
+  "ready": 1790696827391,
+  "alias": [
+    "kossilon-hub.vercel.app",
+    "kossilon-hub-ynwaforevers-projects.vercel.app",
+    "kossilon-hub-git-codex-kossilon-in-9978b0-ynwaforevers-projects.vercel.app"
+  ],
+  "aliasError": null,
+  "sourceSha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2",
+  "crons": {
+    "enabledAt": 1783194070489,
+    "disabledAt": null,
+    "updatedAt": 1790696827890,
+    "deploymentId": "dpl_9BsDLgpEeYxVicCCZqPE4ykbERHk",
+    "definitions": [
+      {
+        "host": "kossilon-lufhjvsjf-ynwaforevers-projects.vercel.app",
+        "path": "/api/cron/maintenance",
+        "schedule": "*/5 * * * *"
+      }
+    ]
+  },
+  "verifiedAtUtc": "2026-09-29T15:48:00.263211+00:00",
+  "httpSmoke": [
+    {
+      "path": "/login",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 1917,
+      "authenticated": false
+    },
+    {
+      "path": "/operations",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 2326,
+      "authenticated": false
+    },
+    {
+      "path": "/api/cron/maintenance",
+      "status": 401,
+      "contentType": "text/plain;charset=UTF-8",
+      "bytes": 12,
+      "authenticated": false
+    }
+  ]
+}

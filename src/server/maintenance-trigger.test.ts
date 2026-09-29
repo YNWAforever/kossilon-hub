@@ -43,6 +43,51 @@ function memoryStore(): MaintenanceJobStore {
 }
 
 describe("T07 maintenance trigger", () => {
+  it.each(["claim", "begin"] as const)(
+    "records partial evidence when %s throws and does not execute that job",
+    async (method) => {
+      const store = memoryStore();
+      if (method === "claim") {
+        const claim = store.claim.bind(store);
+        store.claim = async (input) => {
+          if (input.job === "runNarImportStageJobs") throw new Error("private DB failure");
+          return claim(input);
+        };
+      } else {
+        const begin = store.begin.bind(store);
+        store.begin = async (at, job, token) => {
+          if (job === "runNarImportStageJobs") throw new Error("private DB failure");
+          return begin(at, job, token);
+        };
+      }
+      const executed: MaintenanceJobKind[] = [];
+      const recorded: unknown[] = [];
+      const result = await createMaintenanceTrigger({
+        store,
+        runJob: async (job) => {
+          executed.push(job);
+        },
+        recordRun: async (run) => {
+          recorded.push(run);
+        },
+      }).runMaintenanceTick({
+        trigger: "scheduled",
+        scheduledAt: slot,
+        runId: "claim-failure-regression",
+        allowedJobs: ["evaluateEscalations", "runNarImportStageJobs", "redactNotifications"],
+      });
+      expect(result.outcome).toBe("partial");
+      expect(result.jobs).toEqual([
+        { job: "evaluateEscalations", state: "succeeded" },
+        { job: "runNarImportStageJobs", state: "unknown" },
+        { job: "redactNotifications", state: "succeeded" },
+      ]);
+      expect(executed).toEqual(["evaluateEscalations", "redactNotifications"]);
+      expect(recorded).toEqual([result]);
+      expect(JSON.stringify(recorded)).not.toContain("private");
+    },
+  );
+
   it("t07_scenario_1 deduplicates a scheduled slot and recovers an unstarted expired lease", async () => {
     const store = memoryStore();
     const runJob = vi.fn(async () => ({ processed: 1 }));
@@ -207,6 +252,43 @@ const databaseUrl = process.env.TEST_DATABASE_URL;
 const sql = databaseUrl ? createSqlClient(databaseUrl, { max: 3 }) : null;
 
 describe.skipIf(!databaseUrl)("T07 lease SQL against disposable Postgres", () => {
+  it("accepts every currently enabled scheduled job kind in the migrated database", async () => {
+    if (!sql) throw new Error("TEST_DATABASE_URL is required");
+    const { scheduledJobsForRuntime } = await import("./maintenance-trigger-runtime");
+    const allowedJobs = [
+      ...scheduledJobsForRuntime({ VITE_PROVIDER_MODE: "live" }),
+      "drainInboundMediaDownloads",
+    ] as MaintenanceJobKind[];
+    const scheduledAt = new Date(
+      Date.now() + 900000 + Math.floor(Math.random() * 100000),
+    ).toISOString();
+    const repository = createMaintenanceJobRepository({ sql });
+    try {
+      for (const job of allowedJobs) {
+        const claim = await repository.claim({
+          trigger: "scheduled",
+          scheduledAt,
+          job,
+          runId: "all-runtime-jobs",
+          now: scheduledAt,
+          leaseExpiresAt: new Date(Date.parse(scheduledAt) + 900000).toISOString(),
+        });
+        expect(claim, job).not.toBeNull();
+        expect(await repository.begin(scheduledAt, job, claim!.token), job).toBe(true);
+        expect(await repository.finish(scheduledAt, job, claim!.token, "succeeded"), job).toBe(
+          true,
+        );
+      }
+      const rows = await sql<{ job_kind: string; state: string }[]>`
+        select job_kind, state from maintenance_job_runs where scheduled_for = ${scheduledAt}
+      `;
+      expect(rows).toHaveLength(7);
+      expect(rows.find((row) => row.job_kind === "runNarImportStageJobs")?.state).toBe("succeeded");
+    } finally {
+      await sql`delete from maintenance_job_runs where scheduled_for = ${scheduledAt}`;
+    }
+  });
+
   afterAll(async () => {
     await sql?.end();
   });

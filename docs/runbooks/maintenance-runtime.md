@@ -8,7 +8,7 @@ The deployed production alias observed in T00 is Vercel. The repository also con
 
 Each allowed job has a unique scheduled slot in `maintenance_job_runs`. A duplicate invocation skips a completed or started job. A claimed lease that expired before start can be recovered; a started job never auto-resumes because its side effect may have completed. Each job records success/failure separately. A partial scheduled run returns HTTP 500 or fails the Worker invocation and is not reported as success. Manual runs carry `trigger_source=manual` and do not contribute to scheduled-health success.
 
-The initial allowlist is `evaluateEscalations`, `settleNotificationAttempts`, `redactNotifications`, and `escalateStalledQuarantine`. SLA escalation selects at most 100 unrecorded due items per tick; outbox settlement/redaction and quarantine reads are capped. No provider dispatch, reminder enqueue, document scan/analysis, upload deletion, or external handoff is enabled by this adapter. Later activation requires the relevant T17/provider and bounded-worker gates.
+The original T07 allowlist was evaluateEscalations, settleNotificationAttempts, redactNotifications, and escalateStalledQuarantine. Current source also runs runBulkOperations (at most two approved operations and 25 items per operation per tick); live provider mode adds runNarImportStageJobs. A verified WhatsApp media configuration additionally enables drainInboundMediaDownloads. SLA escalation selects at most 100 unrecorded due items per tick; outbox settlement/redaction and quarantine reads are capped. No notification provider dispatch, reminder enqueue, document scan/analysis, upload deletion, or external handoff is enabled by this adapter. Bulk actions retain per-item server authorization and reuse the single-item domain services. Inspect the actual queued work and provider configuration before activation; the original four-job description alone is insufficient.
 
 ## Platform and credential gate
 
@@ -61,3 +61,27 @@ commit;
 ```
 
 The forward and reversal SQL were rehearsed on a second disposable PostgreSQL 17 database. The rollback guard rejected a row containing job evidence and left the table intact; after that row was removed, the rollback committed and both the table and 0035 ledger entry were absent. That database was then removed. This reversal remains a review artifact. No production migration, deployment, live send, invitation, or permission change is authorized here.
+
+## Activation preflight — 2026-09-29
+
+The user approved the remaining release process. The exact deployment request and rollback reference are saved in evidence/2026-09-29-runtime-activation. Target source e7dcb70 has the identical tree to PR #99 head 9b6007f, whose CI passed 1,965 tests with five skipped. Fresh focused scheduler tests passed 16 with three database tests skipped.
+
+The available Cloudflare account contains 13 workers, none with a Kossilon name or visible binding match; secret values are opaque and other accounts were not inspected. Vercel is Pro. The named Neon target has 65 migrations and zero bulk operations, NAR staging jobs, outbox entries and maintenance runs. With the current default live provider mode, six jobs are expected; the outdated four-job list above has been corrected.
+
+Automatic approval review rejected the production DATABASE_URL, CRON_SECRET and owner write before execution, requiring explicit permission for transferring the named Neon credential to the named Vercel production project. The user subsequently gave explicit permission. Production-only configuration succeeded, and deployment dpl_9BsDLgpEeYxVicCCZqPE4ykbERHk at e7dcb70 became Ready; actual scheduled-run acceptance is recorded below. The original sensitive production DB value cannot be read back; the applied configuration explicitly binds the previously authorized Neon target. Browser verification is separately blocked by the CUA Windows sandbox ACL startup error.
+
+## Authorized production activation — 2026-09-29
+
+The named Neon DATABASE_URL and a cryptographically generated CRON_SECRET were written as production-only sensitive variables; MAINTENANCE_SCHEDULER_OWNER was set to vercel. Secret values were held in memory and not recorded. Vercel API metadata confirms the scope. The installed CLI rejected array request bodies because its serializer accepts ordinary objects only; documented single-object requests succeeded after the Windows command-shim ampersand issue was separately reproduced and avoided with direct Node argument passing.
+
+The initial activation was deployment dpl_9BsDLgpEeYxVicCCZqPE4ykbERHk, source e7dcb70282eaaf26bb4373b667de98e0d38f83b2, Ready at 2026-09-29T15:47:07Z. Cron registration points at the new deployment every five minutes. Unsigned /api/cron/maintenance returned 401; /login and /operations returned HTTP 200 shells. No authenticated journey is inferred from those shells. Browser initialization still fails before showing a session. See evidence/2026-09-29-runtime-activation for configuration metadata, deployment request/result and the subsequent failure/pause evidence below.
+
+## First scheduled tick failed; scheduler paused — 2026-09-29
+
+At the actual 15:50 UTC scheduled tick, PostgreSQL rejected runNarImportStageJobs with SQLSTATE 23514 because maintenance_job_runs_job_kind_check omitted that existing live worker. Five earlier jobs succeeded and remain recorded in the designated Neon database; the exception prevented maintenance_runs summary insertion. Four SLA notifications are pending, with none sent. These records establish the active application's designated DB binding, but do not satisfy scheduler acceptance.
+
+The owner was then unset and the same approved e7dcb70 redeployed as dpl_C2qVk7u8yQYFTjwtsvcidPJ5ZQhi. The production alias is Ready on that deployment; a subsequent actual cron returned 503. This is an intentional fail-closed pause. Retain all job and outbox evidence and do not replay the interrupted slot.
+
+Local repair 1bca4a5671b909278d63327ab69dbda03a2dae38 adds forward migration 0066, verifies the NAR constraint definition in schema readiness, and records unknown job/partial run outcomes when claim, begin or state reads fail. RED reproduced four failures; GREEN passed 41 focused tests and the full suite passed 1,969 tests with five skipped (228 files passed, one skipped), exit 0. Typecheck passed; lint had zero errors and one existing warning. A populated local migration rehearsal preserved all five original rows, accepted the NAR kind, rejected unknown kinds and verified transaction rollback. Independent review found no blocking findings.
+
+Production remains at 65 migrations and the scheduler remains paused. The repair introduces a new migration and deployment outside the exact 0021–0065/e7dcb70 authorization; obtain explicit approval only after the concrete PR checks pass. See [0066 repair and rollback](scheduler-0066-repair.md) and [saved evidence](evidence/2026-09-29-runtime-activation/incident.json). Three successful scheduled ticks, authenticated browser journeys, provider checks and pilot acceptance remain open.

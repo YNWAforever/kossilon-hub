@@ -1,0 +1,44 @@
+{
+  "updatedAtUtc": "2026-09-29T15:46:10.799238+00:00",
+  "project": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+  "target": "production",
+  "configuredKeys": [
+    {
+      "key": "MAINTENANCE_SCHEDULER_OWNER",
+      "id": "qDYso3WE2zGU2lvq",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1790696769009,
+      "comment": "Explicit user approval: sole Kossilon scheduler"
+    },
+    {
+      "key": "CRON_SECRET",
+      "id": "EeC5X9CWx9q11Er9",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1790696766114,
+      "comment": "Explicit user approval: production maintenance scheduler"
+    },
+    {
+      "key": "DATABASE_URL",
+      "id": "Sx2hIPi5iG9PZuPj",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1790696761280,
+      "comment": "Explicit user approval: Neon red-morning-00331124 / br-muddy-mountain-aov8bbku / neondb"
+    }
+  ],
+  "databaseHost": "ep-patient-block-aoxmgw78.c-2.ap-southeast-1.aws.neon.tech",
+  "databaseName": "neondb",
+  "secretExposed": false,
+  "cliDiagnosis": [
+    "Windows cmd shim splits ampersand; direct Node invocation verified",
+    "CLI JSON serializer excludes array bodies; documented single-object writes succeeded"
+  ]
+}

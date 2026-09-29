@@ -392,6 +392,12 @@ export const REQUIRED_SCHEMA_ARTIFACTS: readonly Requirement[] = [
     name: "staff_provisioning_link_pair",
     expected: "provider_auth_user_id is not null",
   },
+  {
+    capability: "maintenance",
+    kind: "constraint",
+    name: "maintenance_job_runs_job_kind_check",
+    expected: "runNarImportStageJobs",
+  },
   { capability: "maintenance", kind: "table", name: "maintenance_runs" },
   {
     capability: "maintenance",

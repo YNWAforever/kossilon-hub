@@ -1,0 +1,11 @@
+{
+  "name": "kossilon-hub",
+  "project": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+  "target": "production",
+  "gitSource": {
+    "type": "github",
+    "repoId": 1289430321,
+    "ref": "codex/kossilon-integration-green",
+    "sha": "e7dcb70282eaaf26bb4373b667de98e0d38f83b2"
+  }
+}
