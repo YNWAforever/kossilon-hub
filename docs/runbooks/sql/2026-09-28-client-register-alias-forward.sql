@@ -41,11 +41,11 @@ begin
   if not exists (
     select 1 from public.schema_migrations
     where id = '0006_client_register.sql'
-      and applied_at = timestamptz '2026-08-03 20:26:37.261+00'
+      and applied_at = timestamptz '2026-08-03 20:26:37.261845+00'
   ) or not exists (
     select 1 from public.schema_migrations
     where id = '0008_client_register.sql'
-      and applied_at = timestamptz '2026-08-04 19:03:12.181+00'
+      and applied_at = timestamptz '2026-08-04 19:03:12.181889+00'
   ) then
     raise exception 'Historical/canonical ledger timestamp differs; stop';
   end if;

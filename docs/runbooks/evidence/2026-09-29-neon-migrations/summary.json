@@ -1,0 +1,21 @@
+{
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb"
+  },
+  "sourceSha": "0230c90a85f4049b006e98ec81888efdbcc70b2d",
+  "appliedRange": "0021-0065",
+  "appliedCount": 45,
+  "ledgerRows": 65,
+  "missing": 0,
+  "unknown": 0,
+  "definitionMismatch": 0,
+  "readyCapabilities": 12,
+  "orphanDocumentVersions": 0,
+  "unvalidatedForeignKeys": 0,
+  "snapshot": "snap-sweet-sea-ao66v7mt",
+  "recoveryBranch": "br-flat-heart-aovfw8hr",
+  "deploymentBindingVerified": false,
+  "applicationAcceptanceVerified": false
+}

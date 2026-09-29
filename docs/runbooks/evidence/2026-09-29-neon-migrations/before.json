@@ -1,0 +1,183 @@
+{
+  "recordedAt": "2026-09-29T01:08:47.558Z",
+  "project": "red-morning-00331124",
+  "branch": "br-muddy-mountain-aov8bbku",
+  "database": "neondb",
+  "recoveryBranch": "br-flat-heart-aovfw8hr",
+  "snapshot": "snap-sweet-sea-ao66v7mt",
+  "tables": {
+    "companies": {
+      "count": 3,
+      "id_digest": "19544aad06b0ea0b0c1fc8af29f307c4"
+    },
+    "annual_return_cases": {
+      "count": 3,
+      "id_digest": "d5f6fbdc3f5d1c3ead550415f551b7a6"
+    },
+    "documents": {
+      "count": 14,
+      "id_digest": "6b81c151d2e5edc96919e2b54d2245f3"
+    },
+    "payments": {
+      "count": 3,
+      "id_digest": "aaaf018aa91d62b9751fa6d7f33d281c"
+    },
+    "annual_return_checklist_items": {
+      "count": 15,
+      "id_digest": "a82e0b43b5f92135ad8e353ef427f5f1"
+    }
+  },
+  "migrations": {
+    "0001_annual_return_control_center.sql": "abfdf5e3ae51038fe90550288f10a570290736db263fce14842841211fe6fa2e",
+    "0002_harden_annual_return_schema.sql": "5b4be0f06d1c65a51846870e94b8007b27830a5d4ff20c6fbd8f1c80fd900fea",
+    "0003_annual_return_audit_events.sql": "74716ab004e5b26be3185a2757b0f816bef73118f9c143e7b1605c860774ffd5",
+    "0004_retain_annual_return_audit_events.sql": "7c6375fb32ec90d2083d4b275fcc315f1f29132fc7f7b61eca898caeac55ef2a",
+    "0005_whatsapp_integration_foundation.sql": "550f6dbcdacdf49ef6b761b91e804ca8043e85cdb6ba3f479ae0dbc188c4053b",
+    "0006_production_assignment_sla_foundation.sql": "f5247427ddcb7a57ffbc77c6c900030d993f85930a1c2a918b6694e1469138ca",
+    "0007_whatsapp_inbox_ordering_indexes.sql": "35e01dc6abda8dbb94c08c8c54a4e9bb56d7a3a6185fc44702a03647e1fbc666",
+    "0008_client_register.sql": "95af94ec995307cd58bd96df4cdbb21a5713d26954f817b1aedeee135ee88a0a",
+    "0009_reclaim_stranded_outbox_rows.sql": "fe1395126ec40e856225b0fe176daf2aa7ffa461463ee6e3402fa2bd9924fd34",
+    "0010_index_timeline_and_upload_intent_lookups.sql": "ca0c2565399c6891e3dc34e706368d5c54b0842e7ae46f9bfca3d0ae2b62f771",
+    "0011_whatsapp_delivery_receipts.sql": "2c161cd3593e093f147fb21190bdbf5a1b75f4f2226f5c1b738fd2e1a9b36183",
+    "0012_annual_return_reminder_events.sql": "1b5a2d6857363781b5368cb833c7af91876277ca2933f58ac1c959daf8b81c5d",
+    "0013_checklist_templates.sql": "f487ee664d5c4e20946a8e31d55a0d7502b9b8cfd69f66e575d6eb08a64b1e10",
+    "0014_generalize_work_item_case_reference.sql": "0c3a635da7a8e14ae8261dc0dfdf69a4da6112c1b866a6a83a616365750d864c",
+    "0015_officers_and_shareholdings.sql": "e6202e25b89e5b88d7b5f0c9a8c2a4bf22ba7943b2f428d25cb2ce6f3d7542ea",
+    "0016_significant_controllers_and_dr.sql": "92d2be3fd59b0a85ec7606a81b28a873f54483695df089f910ef74f5600c4ab3",
+    "0017_incorporation_intake.sql": "5a40f9ba4ca33c7f88f33cfc1c216969938d18649509d6dd0a208d8b998297f1",
+    "0018_recurring_service_subscriptions.sql": "69f1b0cc6a0c0c710f18b341bd112c4edefd89c3d04caa312998d0ed63a37a0b",
+    "0019_corporate_change_requests.sql": "3b74b1de0bc58c7eaaa1eb089aa214c03ff1aea35e2d779b6f8326fca1bd2b1b",
+    "0020_corporate_change_work_items.sql": "d4e600a00cc5a2f544674364be351466ab68727982e38cc8ea3298471b0be492",
+    "0021_whatsapp_session_window_indexes.sql": "22cab690cb48883d72c59e959d4af5a7dc02742e85c5a0a17d4e0f508505885a",
+    "0022_notification_outbox_delivery.sql": "a1d18d0ea91ff274dce73be35cb4bd4b503f834451ba4adcf5d5668e9a35bc0b",
+    "0023_document_scan_jobs_and_quarantine_retention.sql": "3d74d1f25aaa842548cd8f90dbe6134135ad8f1cdf2274995873dd91dfd9b9fb",
+    "0024_link_uploads_to_checklist_items.sql": "23105326908b594afafa0b0bc0a00e888a6b061e1bdeef8c19b0d307fa81a21b",
+    "0025_nar_import_staging.sql": "ff0c6c72e8465dd7fc997bb0264c1e8fface6c3c507a74071a5609424b1f035c",
+    "0026_case_parties_and_requirement_instances.sql": "9767057c89ec0266d587f9bd2598db6d89af00eb7c41ac60ed2ed084111c0019",
+    "0027_document_versions.sql": "41dd0155edd40c0d0033c0a82f16a40dbc09fc332a1a1a24b974d3f3a50e3f22",
+    "0028_document_analysis_jobs_and_findings.sql": "0a0522892b647e3be2332bae2b719266901de047912474e6ed169efa12cf4e84",
+    "0029_whatsapp_send_mode.sql": "85c3b00b6e791a931c1d51de02b9f28b719bef8c09bc6bb24cbeb0ed9d06a5b3",
+    "0030_company_data_origin.sql": "6292c2c5a6a0e2d18f04a6ac500c0da84fef1b43ca9b3de14c504732e76dae99",
+    "0031_whatsapp_message_media.sql": "22b92e7dd307e3f2a3d089642fd6e69ff2da47e8d05f74f7ccc0c9f8c006a932",
+    "0032_package_handoffs_and_returns.sql": "8554f605b59183454f4b74e78e351c5e991499d631cae95e94aa4d5927480fba",
+    "0033_maintenance_runs.sql": "72c597510ef7fda9a84a02c4bd87a3a4ad6cb5a941362c347d2c477b9f71cd69",
+    "0034_notification_delivery_attempts.sql": "9398efa70b208dd9c49770a32a3591cda793995706fa64a8858d42521abc2ac4",
+    "0035_maintenance_job_runs.sql": "08dd8deaff522f89ac9297bbfa675ebf59e988fb2ffb8cd47f02176f31240a34",
+    "0036_bulk_operations.sql": "7b5cb317e9612d1fb277ba614f931c1ad92f77e7db000af1d2282af75dfc7767",
+    "0037_bulk_scheduler_job.sql": "412c258c263e4cb48566370b3cfc37c61b84ef9d4b5a0150a6dca8639edf67f8",
+    "0038_nar_import_preview.sql": "15c95bdfad1b27cf46007b22945850197df8b85a482b7de5b598d8129367c5db",
+    "0039_nar_import_approval_apply.sql": "29e687e0e6da6aee0f2e09bfe98460af43bb1490d19868df5a88b25d23098e66",
+    "0040_payment_reconciliation.sql": "a3358270168b5b7aaa67a001f57138d9ec6fd8f5d7b6f6808796fa8646912883",
+    "0041_filing_packages.sql": "2436dee43051ef882e91d5da23c6c2e11ca8ae0d5a822ffd48b44a2598eca4af",
+    "0042_manual_package_submission.sql": "bdbcf9f0af13e16459679b2bc3f182a6c3daea75e6f30e74ceb9af9460f51f55",
+    "0043_filing_return_intake.sql": "c41df8ad5e929e9d0f0f822520e56137be6ac80ee338d7a9e83ece3291e60691",
+    "0044_message_preview.sql": "9846e05f060fd0c24daec2b9084f2743bcb47aa55b070fcf3d286411acb43667",
+    "0045_whatsapp_media_download.sql": "7b8d661a649601e98c973d096b8d696e574c70dc3e550ea812f9ec59f3493f69",
+    "0046_staff_lifecycle.sql": "89f36ea6574ad48b2186bb58234cfc819aad5ca796f9e049ccf5d69bf8a5e1b7",
+    "0047_checklist_template_versions.sql": "48de0cf273c269aeecbfb6de043264a01018660ddc54075d8652d693a2e57f05",
+    "0048_case_assignment_revision.sql": "e44c273ca15721cbbb6d28eb752f2de877ecee5bee0630c5a69c2911040675ea",
+    "0049_bulk_case_assign_action.sql": "c616a9b04beb627ffebd1eead229de31aacf98fc500d85995f9a3b683cf86b32",
+    "0050_client_assignment_revision.sql": "d10f14c27e78a446da07a1e922c31789b75bc82470c36ac451407ff4b2f24a12",
+    "0051_bulk_client_assign_action.sql": "67cc46439f617fa70d7749c272a0090eea58942facf844ba9fed690aa7a163b3",
+    "0052_resource_tags.sql": "c8b7b0a2cb6d725cc0dc0554fb652fae69d148671c3343b6afaff83446ed6024",
+    "0053_bulk_tag_action.sql": "c1fda18953938ab11da01823c9f40d924d0d971b9853e6fb4e5bbe4921e3c4aa",
+    "0054_bulk_reminder_drafts.sql": "20b4fb2b528d9e73e4420dcd7edddeca4fc84cb1785545f82c97d5adc090aa8a",
+    "0055_bulk_domain_actions.sql": "e89acc8b2de16295b87a70305a2ae4e4dff545df823b9987034c08fd6b6b2337",
+    "0056_document_analysis_context.sql": "0643246261140e5cf50166ff94cac2ea9f9d2d9459b6e1a81c18db94535568b6",
+    "0057_import_preview_scale.sql": "89c72021f4f2a2065e792f696e8d53dd4f6e2e2cf6d921f70fe26032fdaf1644",
+    "0058_import_apply_selection_limit.sql": "ab5842cd4a643011bf4da99eddf6c831c968a139855af22d644316b19990d71a",
+    "0059_nar_import_stage_jobs.sql": "6f179bf3409da31708325c8767cb2b70292c577e82c73e52f67179d8c672071b",
+    "0060_nar_import_stage_error_detail.sql": "a51664f421d9f114ce110badf077a8a0b14a0b218d61473dffdfb2c1e7ac8843",
+    "0061_subscription_reminder_drafts.sql": "501d1ee3b4b5ea8ab241975e6a4321d0fdc83c47100c79601a50f6b2e772d45d",
+    "0062_legacy_filing_completion_eligibility.sql": "3660e31bd31a62bc7f2cd2fd4c90bbaef336595c07b8b943203b136e2ebb3536",
+    "0063_work_items_unconfigured_sla.sql": "f3e3b6be0ce9af1fec9a8b76914157331b3099b22c5f735d8d7e9abccc442db1",
+    "0064_work_item_sla_policy_attachment.sql": "9e7754f038ab16f61553214af86e2cb031e2cdf2051d0757900d23a3ceee5102",
+    "0065_bulk_sla_policy_attach.sql": "f59646c03a7c1f66d515febb695cae24515e3675adcdf0c3e66cc10fa72a90fd"
+  },
+  "ledger": [
+    {
+      "id": "0001_annual_return_control_center.sql",
+      "applied_at": "2026-07-05 08:19:10.19817+00"
+    },
+    {
+      "id": "0002_harden_annual_return_schema.sql",
+      "applied_at": "2026-07-05 08:32:39.084891+00"
+    },
+    {
+      "id": "0003_annual_return_audit_events.sql",
+      "applied_at": "2026-07-05 12:21:10.761008+00"
+    },
+    {
+      "id": "0004_retain_annual_return_audit_events.sql",
+      "applied_at": "2026-07-05 12:32:08.800811+00"
+    },
+    {
+      "id": "0005_whatsapp_integration_foundation.sql",
+      "applied_at": "2026-07-05 12:51:22.219386+00"
+    },
+    {
+      "id": "0006_client_register.sql",
+      "applied_at": "2026-08-03 20:26:37.261845+00"
+    },
+    {
+      "id": "0006_production_assignment_sla_foundation.sql",
+      "applied_at": "2026-07-26 05:40:40.886222+00"
+    },
+    {
+      "id": "0007_whatsapp_inbox_ordering_indexes.sql",
+      "applied_at": "2026-08-04 19:03:11.490482+00"
+    },
+    {
+      "id": "0008_client_register.sql",
+      "applied_at": "2026-08-04 19:03:12.181889+00"
+    },
+    {
+      "id": "0009_reclaim_stranded_outbox_rows.sql",
+      "applied_at": "2026-08-22 16:30:46.957008+00"
+    },
+    {
+      "id": "0010_index_timeline_and_upload_intent_lookups.sql",
+      "applied_at": "2026-08-22 16:30:47.260313+00"
+    },
+    {
+      "id": "0011_whatsapp_delivery_receipts.sql",
+      "applied_at": "2026-08-22 16:30:47.504824+00"
+    },
+    {
+      "id": "0012_annual_return_reminder_events.sql",
+      "applied_at": "2026-08-22 16:30:47.749863+00"
+    },
+    {
+      "id": "0013_checklist_templates.sql",
+      "applied_at": "2026-08-22 16:30:48.020909+00"
+    },
+    {
+      "id": "0014_generalize_work_item_case_reference.sql",
+      "applied_at": "2026-08-22 16:30:48.275646+00"
+    },
+    {
+      "id": "0015_officers_and_shareholdings.sql",
+      "applied_at": "2026-08-22 16:30:48.524627+00"
+    },
+    {
+      "id": "0016_significant_controllers_and_dr.sql",
+      "applied_at": "2026-08-22 16:30:48.781562+00"
+    },
+    {
+      "id": "0017_incorporation_intake.sql",
+      "applied_at": "2026-08-22 16:30:49.03528+00"
+    },
+    {
+      "id": "0018_recurring_service_subscriptions.sql",
+      "applied_at": "2026-08-24 19:33:07.730653+00"
+    },
+    {
+      "id": "0019_corporate_change_requests.sql",
+      "applied_at": "2026-08-24 19:33:08.077916+00"
+    },
+    {
+      "id": "0020_corporate_change_work_items.sql",
+      "applied_at": "2026-08-24 19:33:08.346186+00"
+    }
+  ]
+}

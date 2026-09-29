@@ -1,0 +1,295 @@
+{
+  "recordedAt": "2026-09-29T01:12:11.599Z",
+  "tables": {
+    "companies": {
+      "count": 3,
+      "id_digest": "19544aad06b0ea0b0c1fc8af29f307c4"
+    },
+    "annual_return_cases": {
+      "count": 3,
+      "id_digest": "d5f6fbdc3f5d1c3ead550415f551b7a6"
+    },
+    "documents": {
+      "count": 14,
+      "id_digest": "6b81c151d2e5edc96919e2b54d2245f3"
+    },
+    "payments": {
+      "count": 3,
+      "id_digest": "aaaf018aa91d62b9751fa6d7f33d281c"
+    },
+    "annual_return_checklist_items": {
+      "count": 15,
+      "id_digest": "a82e0b43b5f92135ad8e353ef427f5f1"
+    }
+  },
+  "ledger": [
+    {
+      "id": "0001_annual_return_control_center.sql",
+      "applied_at": "2026-07-05 08:19:10.19817+00"
+    },
+    {
+      "id": "0002_harden_annual_return_schema.sql",
+      "applied_at": "2026-07-05 08:32:39.084891+00"
+    },
+    {
+      "id": "0003_annual_return_audit_events.sql",
+      "applied_at": "2026-07-05 12:21:10.761008+00"
+    },
+    {
+      "id": "0004_retain_annual_return_audit_events.sql",
+      "applied_at": "2026-07-05 12:32:08.800811+00"
+    },
+    {
+      "id": "0005_whatsapp_integration_foundation.sql",
+      "applied_at": "2026-07-05 12:51:22.219386+00"
+    },
+    {
+      "id": "0006_production_assignment_sla_foundation.sql",
+      "applied_at": "2026-07-26 05:40:40.886222+00"
+    },
+    {
+      "id": "0007_whatsapp_inbox_ordering_indexes.sql",
+      "applied_at": "2026-08-04 19:03:11.490482+00"
+    },
+    {
+      "id": "0008_client_register.sql",
+      "applied_at": "2026-08-04 19:03:12.181889+00"
+    },
+    {
+      "id": "0009_reclaim_stranded_outbox_rows.sql",
+      "applied_at": "2026-08-22 16:30:46.957008+00"
+    },
+    {
+      "id": "0010_index_timeline_and_upload_intent_lookups.sql",
+      "applied_at": "2026-08-22 16:30:47.260313+00"
+    },
+    {
+      "id": "0011_whatsapp_delivery_receipts.sql",
+      "applied_at": "2026-08-22 16:30:47.504824+00"
+    },
+    {
+      "id": "0012_annual_return_reminder_events.sql",
+      "applied_at": "2026-08-22 16:30:47.749863+00"
+    },
+    {
+      "id": "0013_checklist_templates.sql",
+      "applied_at": "2026-08-22 16:30:48.020909+00"
+    },
+    {
+      "id": "0014_generalize_work_item_case_reference.sql",
+      "applied_at": "2026-08-22 16:30:48.275646+00"
+    },
+    {
+      "id": "0015_officers_and_shareholdings.sql",
+      "applied_at": "2026-08-22 16:30:48.524627+00"
+    },
+    {
+      "id": "0016_significant_controllers_and_dr.sql",
+      "applied_at": "2026-08-22 16:30:48.781562+00"
+    },
+    {
+      "id": "0017_incorporation_intake.sql",
+      "applied_at": "2026-08-22 16:30:49.03528+00"
+    },
+    {
+      "id": "0018_recurring_service_subscriptions.sql",
+      "applied_at": "2026-08-24 19:33:07.730653+00"
+    },
+    {
+      "id": "0019_corporate_change_requests.sql",
+      "applied_at": "2026-08-24 19:33:08.077916+00"
+    },
+    {
+      "id": "0020_corporate_change_work_items.sql",
+      "applied_at": "2026-08-24 19:33:08.346186+00"
+    },
+    {
+      "id": "0021_whatsapp_session_window_indexes.sql",
+      "applied_at": "2026-09-29 01:11:15.20128+00"
+    },
+    {
+      "id": "0022_notification_outbox_delivery.sql",
+      "applied_at": "2026-09-29 01:11:15.437255+00"
+    },
+    {
+      "id": "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "applied_at": "2026-09-29 01:11:15.626763+00"
+    },
+    {
+      "id": "0024_link_uploads_to_checklist_items.sql",
+      "applied_at": "2026-09-29 01:11:15.84952+00"
+    },
+    {
+      "id": "0025_nar_import_staging.sql",
+      "applied_at": "2026-09-29 01:11:16.075396+00"
+    },
+    {
+      "id": "0026_case_parties_and_requirement_instances.sql",
+      "applied_at": "2026-09-29 01:11:16.288385+00"
+    },
+    {
+      "id": "0027_document_versions.sql",
+      "applied_at": "2026-09-29 01:11:16.510478+00"
+    },
+    {
+      "id": "0028_document_analysis_jobs_and_findings.sql",
+      "applied_at": "2026-09-29 01:11:16.757291+00"
+    },
+    {
+      "id": "0029_whatsapp_send_mode.sql",
+      "applied_at": "2026-09-29 01:11:16.961817+00"
+    },
+    {
+      "id": "0030_company_data_origin.sql",
+      "applied_at": "2026-09-29 01:11:17.144019+00"
+    },
+    {
+      "id": "0031_whatsapp_message_media.sql",
+      "applied_at": "2026-09-29 01:11:17.347299+00"
+    },
+    {
+      "id": "0032_package_handoffs_and_returns.sql",
+      "applied_at": "2026-09-29 01:11:17.535031+00"
+    },
+    {
+      "id": "0033_maintenance_runs.sql",
+      "applied_at": "2026-09-29 01:11:17.738614+00"
+    },
+    {
+      "id": "0034_notification_delivery_attempts.sql",
+      "applied_at": "2026-09-29 01:11:17.926212+00"
+    },
+    {
+      "id": "0035_maintenance_job_runs.sql",
+      "applied_at": "2026-09-29 01:11:18.116865+00"
+    },
+    {
+      "id": "0036_bulk_operations.sql",
+      "applied_at": "2026-09-29 01:11:18.296748+00"
+    },
+    {
+      "id": "0037_bulk_scheduler_job.sql",
+      "applied_at": "2026-09-29 01:11:18.512025+00"
+    },
+    {
+      "id": "0038_nar_import_preview.sql",
+      "applied_at": "2026-09-29 01:11:18.690194+00"
+    },
+    {
+      "id": "0039_nar_import_approval_apply.sql",
+      "applied_at": "2026-09-29 01:11:18.877814+00"
+    },
+    {
+      "id": "0040_payment_reconciliation.sql",
+      "applied_at": "2026-09-29 01:11:19.082539+00"
+    },
+    {
+      "id": "0041_filing_packages.sql",
+      "applied_at": "2026-09-29 01:11:19.276637+00"
+    },
+    {
+      "id": "0042_manual_package_submission.sql",
+      "applied_at": "2026-09-29 01:11:19.464167+00"
+    },
+    {
+      "id": "0043_filing_return_intake.sql",
+      "applied_at": "2026-09-29 01:11:19.648841+00"
+    },
+    {
+      "id": "0044_message_preview.sql",
+      "applied_at": "2026-09-29 01:11:19.849199+00"
+    },
+    {
+      "id": "0045_whatsapp_media_download.sql",
+      "applied_at": "2026-09-29 01:11:20.047504+00"
+    },
+    {
+      "id": "0046_staff_lifecycle.sql",
+      "applied_at": "2026-09-29 01:11:20.247655+00"
+    },
+    {
+      "id": "0047_checklist_template_versions.sql",
+      "applied_at": "2026-09-29 01:11:20.449513+00"
+    },
+    {
+      "id": "0048_case_assignment_revision.sql",
+      "applied_at": "2026-09-29 01:11:20.655089+00"
+    },
+    {
+      "id": "0049_bulk_case_assign_action.sql",
+      "applied_at": "2026-09-29 01:11:20.838126+00"
+    },
+    {
+      "id": "0050_client_assignment_revision.sql",
+      "applied_at": "2026-09-29 01:11:21.010578+00"
+    },
+    {
+      "id": "0051_bulk_client_assign_action.sql",
+      "applied_at": "2026-09-29 01:11:21.189798+00"
+    },
+    {
+      "id": "0052_resource_tags.sql",
+      "applied_at": "2026-09-29 01:11:21.370172+00"
+    },
+    {
+      "id": "0053_bulk_tag_action.sql",
+      "applied_at": "2026-09-29 01:11:21.579805+00"
+    },
+    {
+      "id": "0054_bulk_reminder_drafts.sql",
+      "applied_at": "2026-09-29 01:11:21.757074+00"
+    },
+    {
+      "id": "0055_bulk_domain_actions.sql",
+      "applied_at": "2026-09-29 01:11:21.948588+00"
+    },
+    {
+      "id": "0056_document_analysis_context.sql",
+      "applied_at": "2026-09-29 01:11:22.124963+00"
+    },
+    {
+      "id": "0057_import_preview_scale.sql",
+      "applied_at": "2026-09-29 01:11:22.309349+00"
+    },
+    {
+      "id": "0058_import_apply_selection_limit.sql",
+      "applied_at": "2026-09-29 01:11:22.481801+00"
+    },
+    {
+      "id": "0059_nar_import_stage_jobs.sql",
+      "applied_at": "2026-09-29 01:11:22.653578+00"
+    },
+    {
+      "id": "0060_nar_import_stage_error_detail.sql",
+      "applied_at": "2026-09-29 01:11:22.838335+00"
+    },
+    {
+      "id": "0061_subscription_reminder_drafts.sql",
+      "applied_at": "2026-09-29 01:11:23.028608+00"
+    },
+    {
+      "id": "0062_legacy_filing_completion_eligibility.sql",
+      "applied_at": "2026-09-29 01:11:23.303536+00"
+    },
+    {
+      "id": "0063_work_items_unconfigured_sla.sql",
+      "applied_at": "2026-09-29 01:11:23.481799+00"
+    },
+    {
+      "id": "0064_work_item_sla_policy_attachment.sql",
+      "applied_at": "2026-09-29 01:11:23.661844+00"
+    },
+    {
+      "id": "0065_bulk_sla_policy_attach.sql",
+      "applied_at": "2026-09-29 01:11:23.842761+00"
+    }
+  ],
+  "preserved": true,
+  "backfills": {
+    "versions": 14,
+    "requirements": 15,
+    "eligible_legacy_cases": 1,
+    "packages": 0,
+    "outbox": 0
+  }
+}
