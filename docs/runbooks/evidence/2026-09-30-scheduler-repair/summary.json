@@ -1,0 +1,54 @@
+{
+  "atUtc": "2026-09-29T16:27:59.137588+00:00",
+  "sourceSha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+  "migrationApplied": "0066_nar_import_scheduler_job.sql",
+  "migrationCount": 66,
+  "ledgerHistoryPreserved": true,
+  "allEightTableFingerprintsUnchanged": true,
+  "jobRowsPreserved": 5,
+  "pendingNotificationsPreserved": 4,
+  "schemaCanRelease": true,
+  "schedulerStillPaused": false,
+  "schemaReadyCapabilities": 12,
+  "activeDeployment": "dpl_8aTN6kA5qcs3vRWCwUccqZBS6v9o",
+  "schedulerOwner": "vercel",
+  "threeScheduledTicksVerified": true,
+  "codeCi": {
+    "run": 36596431121,
+    "passed": 1969,
+    "skipped": 5,
+    "allGatesPassed": true,
+    "testedHead": "c07baaf9a2583b20073f5c0737fac3aca58021fc",
+    "mergedSource": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+  },
+  "verifiedAtUtc": "2026-09-29T16:45:55.196359+00:00",
+  "scheduledRuns": [
+    {
+      "scheduledFor": "2026-09-29T16:35:00+00:00",
+      "outcome": "succeeded",
+      "durationMs": 10809,
+      "jobs": 6,
+      "sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+    },
+    {
+      "scheduledFor": "2026-09-29T16:40:00+00:00",
+      "outcome": "succeeded",
+      "durationMs": 6119,
+      "jobs": 6,
+      "sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+    },
+    {
+      "scheduledFor": "2026-09-29T16:45:00+00:00",
+      "outcome": "succeeded",
+      "durationMs": 6172,
+      "jobs": 6,
+      "sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+    }
+  ],
+  "successfulJobRows": 18,
+  "historicalJobRowsUnchanged": 5,
+  "pendingNotificationRowsUnchanged": 4,
+  "manualTriggerUsed": false,
+  "providerRuntimeAccepted": false,
+  "pilotAccepted": false
+}

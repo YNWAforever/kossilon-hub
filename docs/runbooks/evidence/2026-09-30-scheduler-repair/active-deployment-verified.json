@@ -1,0 +1,30 @@
+{
+  "id": "dpl_8aTN6kA5qcs3vRWCwUccqZBS6v9o",
+  "url": "kossilon-7wwyfpsm5-ynwaforevers-projects.vercel.app",
+  "target": "production",
+  "readyState": "READY",
+  "createdAt": 1790699385617,
+  "buildingAt": 1790699386969,
+  "ready": 1790699404238,
+  "alias": [
+    "kossilon-hub.vercel.app",
+    "kossilon-hub-ynwaforevers-projects.vercel.app",
+    "kossilon-hub-git-codex-kossilon-in-9978b0-ynwaforevers-projects.vercel.app"
+  ],
+  "sourceSha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+  "crons": {
+    "enabledAt": 1783194070489,
+    "disabledAt": null,
+    "updatedAt": 1790699404672,
+    "deploymentId": "dpl_8aTN6kA5qcs3vRWCwUccqZBS6v9o",
+    "definitions": [
+      {
+        "host": "kossilon-7wwyfpsm5-ynwaforevers-projects.vercel.app",
+        "path": "/api/cron/maintenance",
+        "schedule": "*/5 * * * *"
+      }
+    ]
+  },
+  "unsignedCronStatus": 401,
+  "verifiedAtUtc": "2026-09-29T16:30:57.790131+00:00"
+}

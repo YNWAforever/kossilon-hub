@@ -1,0 +1,19 @@
+{
+  "authorized": "User explicitly approved 0066, repaired deployment and three actual scheduled ticks",
+  "sourceSha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+  "project": "red-morning-00331124",
+  "branch": "br-muddy-mountain-aov8bbku",
+  "database": "neondb",
+  "host": "ep-patient-block-aoxmgw78.c-2.ap-southeast-1.aws.neon.tech",
+  "schedulerOwner": "",
+  "recovery": {
+    "branch": "br-late-sun-aojgnr1k",
+    "parent": "br-muddy-mountain-aov8bbku",
+    "lsn": "0/5863840",
+    "parentTimestamp": "2026-09-29T16:24:26Z",
+    "ready": true,
+    "noCompute": true
+  },
+  "migrationSha256": "7dc75d88b4a96200533e2901138c47bbf10e2db1318b15261c5b4f28fdd3a6aa",
+  "initialPreflight": "Read-only fingerprint stopped on incorrect checklist table name before any write; corrected to catalog-confirmed annual_return_checklist_items"
+}

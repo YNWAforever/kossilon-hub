@@ -1,0 +1,27 @@
+{
+  "id": "dpl_KDH3vNuTJLvLhWpH8MrreLkcyqQo",
+  "url": "kossilon-hrrxj80hb-ynwaforevers-projects.vercel.app",
+  "target": "production",
+  "readyState": "READY",
+  "ready": 1790699334540,
+  "alias": [
+    "kossilon-hub.vercel.app",
+    "kossilon-hub-ynwaforevers-projects.vercel.app",
+    "kossilon-hub-git-codex-kossilon-in-9978b0-ynwaforevers-projects.vercel.app"
+  ],
+  "sourceSha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+  "owner": "",
+  "httpSmoke": [
+    {
+      "path": "/login",
+      "unsigned": true,
+      "status": 200
+    },
+    {
+      "path": "/api/cron/maintenance",
+      "unsigned": true,
+      "status": 503
+    }
+  ],
+  "verifiedAtUtc": "2026-09-29T16:29:38.295419+00:00"
+}

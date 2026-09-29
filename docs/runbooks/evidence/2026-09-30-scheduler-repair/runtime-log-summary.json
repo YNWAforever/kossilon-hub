@@ -1,0 +1,12 @@
+{
+  "checkedAtUtc": "2026-09-29T16:47:50.853897+00:00",
+  "deploymentId": "dpl_8aTN6kA5qcs3vRWCwUccqZBS6v9o",
+  "since": "2026-09-29T16:30:04Z",
+  "until": "2026-09-29T16:46:00Z",
+  "httpStatusCounts": {
+    "200": 3,
+    "401": 1
+  },
+  "errorOrFatalEntries": 0,
+  "limitation": "Bounded Vercel log queries for this deployment only; HTTP counts corroborate database evidence and do not substitute for authenticated E2E."
+}

@@ -1,0 +1,355 @@
+{
+  "jobs": [
+    {
+      "id": "c6c8f2fd-f28f-4c63-a5ef-11b46fdc6f4f",
+      "state": "succeeded",
+      "run_id": "cbfdcc8e-c8c8-4e04-9c94-fbe12991f2c4",
+      "job_kind": "escalateStalledQuarantine",
+      "started_at": "2026-09-29T16:35:21.196743+00:00",
+      "finished_at": "2026-09-29T16:35:21.854151+00:00",
+      "scheduled_for": "2026-09-29T16:35:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "29d25138-43b4-4e8c-8ac6-9755f27c3e45",
+      "state": "succeeded",
+      "run_id": "cbfdcc8e-c8c8-4e04-9c94-fbe12991f2c4",
+      "job_kind": "evaluateEscalations",
+      "started_at": "2026-09-29T16:35:16.628066+00:00",
+      "finished_at": "2026-09-29T16:35:17.519051+00:00",
+      "scheduled_for": "2026-09-29T16:35:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "7df6fb94-a331-4a3c-b046-e6c959a4cfc3",
+      "state": "succeeded",
+      "run_id": "cbfdcc8e-c8c8-4e04-9c94-fbe12991f2c4",
+      "job_kind": "redactNotifications",
+      "started_at": "2026-09-29T16:35:20.119355+00:00",
+      "finished_at": "2026-09-29T16:35:20.765696+00:00",
+      "scheduled_for": "2026-09-29T16:35:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "f97a8eff-941d-4bd0-95f2-29eb18f0fdd7",
+      "state": "succeeded",
+      "run_id": "cbfdcc8e-c8c8-4e04-9c94-fbe12991f2c4",
+      "job_kind": "runBulkOperations",
+      "started_at": "2026-09-29T16:35:22.286342+00:00",
+      "finished_at": "2026-09-29T16:35:23.021235+00:00",
+      "scheduled_for": "2026-09-29T16:35:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "248e492d-0270-407c-b947-6c4f089a95da",
+      "state": "succeeded",
+      "run_id": "cbfdcc8e-c8c8-4e04-9c94-fbe12991f2c4",
+      "job_kind": "runNarImportStageJobs",
+      "started_at": "2026-09-29T16:35:23.452471+00:00",
+      "finished_at": "2026-09-29T16:35:24.977719+00:00",
+      "scheduled_for": "2026-09-29T16:35:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "accafacb-4eb4-45f1-8649-87c9733526f1",
+      "state": "succeeded",
+      "run_id": "cbfdcc8e-c8c8-4e04-9c94-fbe12991f2c4",
+      "job_kind": "settleNotificationAttempts",
+      "started_at": "2026-09-29T16:35:18.165078+00:00",
+      "finished_at": "2026-09-29T16:35:19.688092+00:00",
+      "scheduled_for": "2026-09-29T16:35:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "84f3579e-06e5-4c83-bcaa-015909395585",
+      "state": "succeeded",
+      "run_id": "4a9fd2f7-59fa-4376-8f25-bf596f478344",
+      "job_kind": "escalateStalledQuarantine",
+      "started_at": "2026-09-29T16:40:17.650436+00:00",
+      "finished_at": "2026-09-29T16:40:18.071704+00:00",
+      "scheduled_for": "2026-09-29T16:40:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "fb84a5d6-6971-4018-9f97-d094fec7be27",
+      "state": "succeeded",
+      "run_id": "4a9fd2f7-59fa-4376-8f25-bf596f478344",
+      "job_kind": "evaluateEscalations",
+      "started_at": "2026-09-29T16:40:14.480063+00:00",
+      "finished_at": "2026-09-29T16:40:14.90226+00:00",
+      "scheduled_for": "2026-09-29T16:40:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "d5511f40-0e90-4e16-a12d-9d38279ea0e0",
+      "state": "succeeded",
+      "run_id": "4a9fd2f7-59fa-4376-8f25-bf596f478344",
+      "job_kind": "redactNotifications",
+      "started_at": "2026-09-29T16:40:16.796058+00:00",
+      "finished_at": "2026-09-29T16:40:17.21705+00:00",
+      "scheduled_for": "2026-09-29T16:40:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "39471df8-4edc-42f2-baf6-74601848f1f1",
+      "state": "succeeded",
+      "run_id": "4a9fd2f7-59fa-4376-8f25-bf596f478344",
+      "job_kind": "runBulkOperations",
+      "started_at": "2026-09-29T16:40:18.493357+00:00",
+      "finished_at": "2026-09-29T16:40:18.914301+00:00",
+      "scheduled_for": "2026-09-29T16:40:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "a93f5a8a-dd3d-4bcf-80a1-2866215f5167",
+      "state": "succeeded",
+      "run_id": "4a9fd2f7-59fa-4376-8f25-bf596f478344",
+      "job_kind": "runNarImportStageJobs",
+      "started_at": "2026-09-29T16:40:19.335641+00:00",
+      "finished_at": "2026-09-29T16:40:20.177249+00:00",
+      "scheduled_for": "2026-09-29T16:40:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "1e909313-df4b-4211-b0f1-9ac87589f11f",
+      "state": "succeeded",
+      "run_id": "4a9fd2f7-59fa-4376-8f25-bf596f478344",
+      "job_kind": "settleNotificationAttempts",
+      "started_at": "2026-09-29T16:40:15.323664+00:00",
+      "finished_at": "2026-09-29T16:40:16.37466+00:00",
+      "scheduled_for": "2026-09-29T16:40:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "d1e924a4-16b4-4dfe-b2fd-7044007fdf35",
+      "state": "succeeded",
+      "run_id": "1db75d0b-53a9-4f08-9e1d-6bb33bbdc888",
+      "job_kind": "escalateStalledQuarantine",
+      "started_at": "2026-09-29T16:45:17.681328+00:00",
+      "finished_at": "2026-09-29T16:45:18.106866+00:00",
+      "scheduled_for": "2026-09-29T16:45:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "75fe359f-1772-4bb7-ba60-dabc0e15bf27",
+      "state": "succeeded",
+      "run_id": "1db75d0b-53a9-4f08-9e1d-6bb33bbdc888",
+      "job_kind": "evaluateEscalations",
+      "started_at": "2026-09-29T16:45:14.488846+00:00",
+      "finished_at": "2026-09-29T16:45:14.914874+00:00",
+      "scheduled_for": "2026-09-29T16:45:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "1bc6b16f-2570-4d36-83ff-1754a73f1f41",
+      "state": "succeeded",
+      "run_id": "1db75d0b-53a9-4f08-9e1d-6bb33bbdc888",
+      "job_kind": "redactNotifications",
+      "started_at": "2026-09-29T16:45:16.829139+00:00",
+      "finished_at": "2026-09-29T16:45:17.255097+00:00",
+      "scheduled_for": "2026-09-29T16:45:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "843227eb-a818-49c2-b33c-b669e9aca05b",
+      "state": "succeeded",
+      "run_id": "1db75d0b-53a9-4f08-9e1d-6bb33bbdc888",
+      "job_kind": "runBulkOperations",
+      "started_at": "2026-09-29T16:45:18.533037+00:00",
+      "finished_at": "2026-09-29T16:45:18.95843+00:00",
+      "scheduled_for": "2026-09-29T16:45:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "10824a43-ab3a-43d5-8d09-782297533273",
+      "state": "succeeded",
+      "run_id": "1db75d0b-53a9-4f08-9e1d-6bb33bbdc888",
+      "job_kind": "runNarImportStageJobs",
+      "started_at": "2026-09-29T16:45:19.384574+00:00",
+      "finished_at": "2026-09-29T16:45:20.235284+00:00",
+      "scheduled_for": "2026-09-29T16:45:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "d8879252-1d64-4ccb-aee0-71a75b4057d7",
+      "state": "succeeded",
+      "run_id": "1db75d0b-53a9-4f08-9e1d-6bb33bbdc888",
+      "job_kind": "settleNotificationAttempts",
+      "started_at": "2026-09-29T16:45:15.340995+00:00",
+      "finished_at": "2026-09-29T16:45:16.403329+00:00",
+      "scheduled_for": "2026-09-29T16:45:00+00:00",
+      "trigger_source": "scheduled"
+    }
+  ],
+  "runs": [
+    {
+      "id": "3457409b-5b82-4dbd-baca-58632bf2cf06",
+      "passes": {
+        "jobs": [
+          {
+            "job": "evaluateEscalations",
+            "state": "succeeded"
+          },
+          {
+            "job": "settleNotificationAttempts",
+            "state": "succeeded"
+          },
+          {
+            "job": "redactNotifications",
+            "state": "succeeded"
+          },
+          {
+            "job": "escalateStalledQuarantine",
+            "state": "succeeded"
+          },
+          {
+            "job": "runBulkOperations",
+            "state": "succeeded"
+          },
+          {
+            "job": "runNarImportStageJobs",
+            "state": "succeeded"
+          }
+        ],
+        "runId": "cbfdcc8e-c8c8-4e04-9c94-fbe12991f2c4",
+        "deploymentRef": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+      },
+      "outcome": "succeeded",
+      "started_at": "2026-09-29T16:35:14.278+00:00",
+      "duration_ms": 10809,
+      "finished_at": "2026-09-29T16:35:25.087+00:00",
+      "failed_passes": [],
+      "scheduled_for": "2026-09-29T16:35:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "3dd4a996-213e-4f0a-bcce-9e81295274bb",
+      "passes": {
+        "jobs": [
+          {
+            "job": "evaluateEscalations",
+            "state": "succeeded"
+          },
+          {
+            "job": "settleNotificationAttempts",
+            "state": "succeeded"
+          },
+          {
+            "job": "redactNotifications",
+            "state": "succeeded"
+          },
+          {
+            "job": "escalateStalledQuarantine",
+            "state": "succeeded"
+          },
+          {
+            "job": "runBulkOperations",
+            "state": "succeeded"
+          },
+          {
+            "job": "runNarImportStageJobs",
+            "state": "succeeded"
+          }
+        ],
+        "runId": "4a9fd2f7-59fa-4376-8f25-bf596f478344",
+        "deploymentRef": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+      },
+      "outcome": "succeeded",
+      "started_at": "2026-09-29T16:40:14.162+00:00",
+      "duration_ms": 6119,
+      "finished_at": "2026-09-29T16:40:20.281+00:00",
+      "failed_passes": [],
+      "scheduled_for": "2026-09-29T16:40:00+00:00",
+      "trigger_source": "scheduled"
+    },
+    {
+      "id": "c17920e5-b6b1-4411-97ce-9094ee2bcbbf",
+      "passes": {
+        "jobs": [
+          {
+            "job": "evaluateEscalations",
+            "state": "succeeded"
+          },
+          {
+            "job": "settleNotificationAttempts",
+            "state": "succeeded"
+          },
+          {
+            "job": "redactNotifications",
+            "state": "succeeded"
+          },
+          {
+            "job": "escalateStalledQuarantine",
+            "state": "succeeded"
+          },
+          {
+            "job": "runBulkOperations",
+            "state": "succeeded"
+          },
+          {
+            "job": "runNarImportStageJobs",
+            "state": "succeeded"
+          }
+        ],
+        "runId": "1db75d0b-53a9-4f08-9e1d-6bb33bbdc888",
+        "deploymentRef": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+      },
+      "outcome": "succeeded",
+      "started_at": "2026-09-29T16:45:14.167+00:00",
+      "duration_ms": 6172,
+      "finished_at": "2026-09-29T16:45:20.339+00:00",
+      "failed_passes": [],
+      "scheduled_for": "2026-09-29T16:45:00+00:00",
+      "trigger_source": "scheduled"
+    }
+  ],
+  "outbox": {
+    "count": 4,
+    "row_digest": "166214d1489be6f359add2c46385a079"
+  },
+  "database": "neondb",
+  "ledgerCount": 66,
+  "narStageJobs": 0,
+  "bulkOperations": 0,
+  "historicalJobs": {
+    "count": 5,
+    "row_digest": "434ceeae7396ab17c4936f9a24febd88"
+  },
+  "outboxStatuses": [
+    {
+      "count": 4,
+      "status": "pending"
+    }
+  ],
+  "observedAtUtc": "2026-09-29T16:45:55.196359+00:00",
+  "validation": {
+    "acceptedRuns": [
+      {
+        "scheduledFor": "2026-09-29T16:35:00+00:00",
+        "outcome": "succeeded",
+        "durationMs": 10809,
+        "jobs": 6,
+        "sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+      },
+      {
+        "scheduledFor": "2026-09-29T16:40:00+00:00",
+        "outcome": "succeeded",
+        "durationMs": 6119,
+        "jobs": 6,
+        "sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+      },
+      {
+        "scheduledFor": "2026-09-29T16:45:00+00:00",
+        "outcome": "succeeded",
+        "durationMs": 6172,
+        "jobs": 6,
+        "sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88"
+      }
+    ],
+    "consecutiveFiveMinuteSlots": true,
+    "historicalJobsPreserved": true,
+    "outboxPreserved": true,
+    "manualTriggerUsed": false,
+    "threeScheduledTicksVerified": true
+  }
+}

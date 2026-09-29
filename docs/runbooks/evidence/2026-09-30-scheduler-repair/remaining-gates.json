@@ -1,0 +1,8 @@
+{
+  "checkedAtUtc": "2026-09-29T16:38:19.156639+00:00",
+  "browserTool": "cua.getState",
+  "result": "trusted Node process exited unexpectedly; kernel reset",
+  "authenticatedBrowserEvidence": false,
+  "readOnlyInspectionOnly": true,
+  "providerScope": "Three scheduled ticks succeeded with zero bulk operations and zero NAR stage jobs. R2 binding names exist, but no object-storage access/provider contract is inferred. Four pending notifications and their complete row digests remain unchanged; no dispatch job ran."
+}
