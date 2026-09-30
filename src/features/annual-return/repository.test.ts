@@ -1886,6 +1886,66 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     vi.restoreAllMocks();
   });
 
+  it(
+    "enqueues the milestone on the Hong Kong day of an overnight cron instant",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 47 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor();
+
+      // Midnight in Hong Kong: exactly 30 days before the fixture's due date.
+      await repository.evaluateReminders("2026-07-12T16:00:00.000Z");
+
+      const milestones = await sql<{ milestone: string; occurred_on: string }[]>`
+        select milestone, occurred_at::date::text as occurred_on
+        from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(milestones).toEqual([{ milestone: "1_month", occurred_on: "2026-07-13" }]);
+      const outbox = await sql<{ recipient: string }[]>`
+        select recipient from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outbox).toEqual([{ recipient: "+85291234567" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reconciles a terminal reminder on the Hong Kong cron day without requeueing it",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 48 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+      await repository.evaluateReminders();
+      await sql`
+        update notification_outbox
+        set status = 'failed', attempt_count = max_attempts, last_error_code = 'woztell_err_100'
+        where company_id = ${fixture.companyId}
+      `;
+
+      await repository.evaluateReminders("2026-07-12T16:00:00.000Z");
+
+      const failures = await sql<{ reconciled_on: string }[]>`
+        select metadata->>'reconciledAt' as reconciled_on from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_failed'
+      `;
+      expect(failures).toEqual([{ reconciled_on: "2026-07-13" }]);
+      expect((await repository.getCase(fixture.caseId))?.remindersSent).toBe(0);
+      const outbox = await sql<{ status: string }[]>`
+        select status from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outbox).toEqual([{ status: "failed" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   /**
    * The Phase B rule, on the path that actually sends.
    *

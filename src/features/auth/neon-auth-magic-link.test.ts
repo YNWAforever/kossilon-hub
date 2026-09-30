@@ -69,7 +69,7 @@ describe("Neon magic-link confirmation", () => {
     expect(captureResponse.status).toBe(303);
     expect(captureResponse.headers.get("location")).toBe("/auth/magic-link/confirm");
     expect(captureResponse.headers.get("set-cookie")).toContain("HttpOnly");
-    expect(captureResponse.headers.get("set-cookie")).toContain("SameSite=Strict");
+    expect(captureResponse.headers.get("set-cookie")).toContain("SameSite=Lax");
 
     const cookie = cookieValue(captureResponse.headers.get("set-cookie") ?? "");
     const pageResponse = await handler(

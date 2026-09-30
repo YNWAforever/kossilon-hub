@@ -140,7 +140,7 @@ function parseCookies(request: Request): Map<string, string> {
 }
 
 function ticketCookie(ticket: string, maxAge: number): string {
-  return `${TICKET_COOKIE}=${ticket}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
+  return `${TICKET_COOKIE}=${ticket}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
 }
 
 function clearTicketCookie(): string {

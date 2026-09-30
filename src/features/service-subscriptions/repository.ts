@@ -8,7 +8,7 @@ import {
 import { oneYearLater } from "@/lib/date-math";
 import { dueMilestone, type ReminderMilestone } from "@/lib/reminder-cadence";
 import { enqueueNotification } from "@/features/notifications/outbox";
-import { hongKongBusinessDate } from "@/lib/hong-kong-time";
+import { hongKongBusinessDate, toHongKongBusinessDate } from "@/lib/hong-kong-time";
 import { ServiceSubscriptionWriteError, rethrowServiceSubscriptionWriteError } from "./errors";
 import { buildServiceSubscriptionReminderDraft } from "./reminder-draft";
 import type {
@@ -33,7 +33,8 @@ export type ServiceSubscriptionRepository = {
   addSubscription(input: AddSubscriptionInput): Promise<ServiceSubscription>;
   renewSubscription(input: RenewSubscriptionInput): Promise<ServiceSubscription>;
   cancelSubscription(input: CancelSubscriptionInput): Promise<ServiceSubscription>;
-  evaluateReminders(now?: string): Promise<EvaluateRemindersResult>;
+  /** A Hong Kong business date (YYYY-MM-DD); a full ISO instant is normalised to one. */
+  evaluateReminders(businessDateOrInstant?: string): Promise<EvaluateRemindersResult>;
   close(): Promise<void>;
 };
 
@@ -266,8 +267,12 @@ export function createServiceSubscriptionRepository(
   }
 
   async function evaluateReminders(
-    now: string = hongKongBusinessDate(),
+    businessDateOrInstant: string = hongKongBusinessDate(),
   ): Promise<EvaluateRemindersResult> {
+    // See annual-return's evaluateReminders: the parameter is a Hong Kong
+    // business date, and normalising here rather than trusting the caller is
+    // what stops a raw cron instant sweeping the wrong day's renewals.
+    const now = toHongKongBusinessDate(businessDateOrInstant);
     const candidates = await sql<
       { id: string; company_id: string; company_name: string; renewal_date: string }[]
     >`

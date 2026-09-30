@@ -23,6 +23,7 @@ import {
   offsetDateOnly,
   riskForCase,
 } from "./workflow";
+import { toHongKongBusinessDate } from "@/lib/hong-kong-time";
 import { dueMilestone, type ReminderMilestone } from "./reminder-cadence";
 import { parseAnnualReturnReminderKey } from "./reminder-idempotency-key";
 import {
@@ -429,7 +430,8 @@ export type AnnualReturnRepository = {
     scope?: CaseFilters,
   ): Promise<AnnualReturnDashboardMetrics>;
   assertCanMutateCase(caseId: string, actorId: string, action: AnnualReturnAction): Promise<void>;
-  evaluateReminders(now?: string): Promise<{ sent: number; skipped: number }>;
+  /** A Hong Kong business date (YYYY-MM-DD); a full ISO instant is normalised to one. */
+  evaluateReminders(businessDateOrInstant?: string): Promise<{ sent: number; skipped: number }>;
   updateStatus(
     caseId: string,
     nextStatus: AnnualReturnStatus,
@@ -2630,8 +2632,13 @@ export function createAnnualReturnRepository(
   }
 
   async function evaluateReminders(
-    now: string = readToday(),
+    businessDateOrInstant: string = readToday(),
   ): Promise<{ sent: number; skipped: number }> {
+    // Normalised here, not only at the call site. The parameter feeds a `date`
+    // comparison and a day count the client reads, so a caller that hands down
+    // a raw cron instant must not be able to make this sweep run on the UTC day:
+    // 16:00Z onward is already tomorrow in Hong Kong.
+    const now = toHongKongBusinessDate(businessDateOrInstant);
     // Before this tick's enqueues, so a reminder that failed terminally since the
     // last tick stops claiming to have been sent as early as possible. Run here
     // rather than wired separately into maintenance: this is already the pass the
