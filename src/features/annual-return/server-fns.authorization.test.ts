@@ -568,3 +568,95 @@ describe("createAnnualReturnCaseForActor / listCompaniesEligibleForCaseForActor"
     expect(result).toEqual([ownTeamCompany, otherTeamCompany]);
   });
 });
+
+/**
+ * The recipient of a manual reminder was whatever phone number the caller typed:
+ * `z.string().min(3)` and nothing else. The message body carries the client's
+ * company name and their statutory filing due date, so any staff member could
+ * send one client's confidential deadline to an arbitrary number -- a typo is
+ * enough, and it is the client's data that leaves the firm.
+ *
+ * The recipient must therefore be a contact the firm already holds FOR THAT
+ * CASE'S COMPANY. A contactId would be the cleaner shape, but the only caller
+ * (production-case-detail.tsx) collects a free-text number, so the number is
+ * matched against the company's contacts instead of changing the signature and
+ * the UI in the same change.
+ */
+describe("a manual reminder may only reach the case company's own contacts", () => {
+  const staffActor: AuthenticatedActor = {
+    authUserId: "staff-auth",
+    userId: "20000000-0000-4000-8000-000000000009",
+    role: "Staff",
+    teamId: "10000000-0000-4000-8000-000000000001",
+    active: true,
+  };
+  const companyId = "90000000-0000-4000-8000-000000000001";
+
+  function dependenciesFor(contactPhones: string[]) {
+    const listCompanyContactPhones = vi.fn(async () => contactPhones);
+    const recordReminder = vi.fn(async () => ({ id: caseId, remindersSent: 1 }));
+    const queueOutboundTemplateMessage = vi.fn(async () => ({ id: "msg-1", status: "queued" }));
+    return {
+      listCompanyContactPhones,
+      queueOutboundTemplateMessage,
+      dependencies: {
+        annualReturnRepository: {
+          getCase: vi.fn(async () => ({
+            id: caseId,
+            companyId,
+            companyName: "Harbour Holdings Limited",
+            filingDueDate: "2026-10-31",
+            remindersSent: 0,
+            currentStatus: "Upcoming",
+            checklist: [],
+          })),
+          listCompanyContactPhones,
+          recordReminder,
+        } as unknown as AnnualReturnRepository,
+        whatsAppRepository: {
+          queueOutboundTemplateMessage,
+        } as unknown as WhatsAppRepository,
+      },
+    };
+  }
+
+  it("refuses a number that belongs to no contact of that company", async () => {
+    const { dependencies, queueOutboundTemplateMessage } = dependenciesFor(["+85291234567"]);
+
+    await expect(
+      queueAnnualReturnWhatsAppReminderMessageForActor(
+        staffActor,
+        { caseId, recipientName: "Ada Chan", recipientPhone: "+85299999999" },
+        dependencies,
+      ),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  // Same human, same number, typed the way a person types it. Comparing the raw
+  // strings would reject every real reminder, which is a guard nobody keeps.
+  it("accepts the company's own contact however the number is formatted", async () => {
+    const { dependencies, queueOutboundTemplateMessage } = dependenciesFor(["+852 9123 4567"]);
+
+    await queueAnnualReturnWhatsAppReminderMessageForActor(
+      staffActor,
+      { caseId, recipientName: "Ada Chan", recipientPhone: "+85291234567" },
+      dependencies,
+    );
+
+    expect(queueOutboundTemplateMessage).toHaveBeenCalledOnce();
+  });
+
+  it("refuses when the company has no contacts at all", async () => {
+    const { dependencies, queueOutboundTemplateMessage } = dependenciesFor([]);
+
+    await expect(
+      queueAnnualReturnWhatsAppReminderMessageForActor(
+        staffActor,
+        { caseId, recipientName: "Ada Chan", recipientPhone: "+85291234567" },
+        dependencies,
+      ),
+    ).rejects.toThrow(/^Forbidden:/);
+    expect(queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
+});

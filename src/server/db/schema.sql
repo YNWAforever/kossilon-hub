@@ -406,6 +406,14 @@ create table if not exists notification_outbox (
   -- by elimination. Nullable because rows written before 0022 genuinely are
   -- unknown -- a default would hand an auditor a value that looks like evidence.
   delivery text check (delivery is null or delivery in ('provider', 'simulated')),
+  -- Added by 0034. Written immediately before the transport call and cleared by
+  -- every terminal write, so a row still carrying one has an UNKNOWN outcome: the
+  -- provider may already have the message. claimDue refuses such a row rather than
+  -- re-sending it, and failStranded settles it as 'dispatch_outcome_unknown' for a
+  -- human. WOZTELL's BotAPI takes no client-side idempotency key, so this is the
+  -- only thing standing between a stalled dispatch and a second copy of a
+  -- statutory reminder reaching the client.
+  dispatch_started_attempt integer,
   last_error_code text,
   last_error_message text,
   sent_at timestamptz,
@@ -1790,3 +1798,14 @@ create table if not exists maintenance_runs (
 
 create index if not exists maintenance_runs_recent_idx
   on maintenance_runs (scheduled_for desc);
+
+-- from 0034_notification_outbox_dispatch_marker.sql
+
+-- Mirrored so a database built from this file matches one built from the
+-- migrations. Narrower than notification_outbox_stranded_idx, which already
+-- covers (updated_at) where status = 'processing' and therefore serves
+-- failStranded's marker arm too -- this exists because the migration creates it,
+-- and schema.sql is the canonical fresh-database schema, not a summary of it.
+create index if not exists notification_outbox_dispatch_marker_idx
+  on notification_outbox (updated_at)
+  where status = 'processing' and dispatch_started_attempt is not null;

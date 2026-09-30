@@ -40,12 +40,134 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
     enqueue: vi.fn(),
     cancelFixtureOriginNotifications: vi.fn(async () => ({ cancelled: 0 })),
     claimDue: vi.fn(async () => rows),
+    markDispatchStarted: vi.fn(async () => true),
     markSent: vi.fn(async () => true),
     markRetry: vi.fn(async () => true),
     markFailed: vi.fn(async () => true),
     close: vi.fn(async () => undefined),
   };
 }
+
+/**
+ * The double-SEND, as opposed to the double-count the attempt fence already
+ * covers.
+ *
+ * Both the reclaim path (a dispatch stalling past the visibility timeout) and
+ * `sentButUnrecorded` leave a row in 'processing' after transport.dispatch has
+ * ALREADY been called. The fence only makes the loser's markSent fail; the
+ * message went out twice, and WOZTELL's BotAPI takes no client-side idempotency
+ * key to collapse them (Resend's transport does send one, so email was never
+ * exposed).
+ *
+ * The marker is therefore written BEFORE the transport call: a row carrying one
+ * is a row whose outcome is unknown, and the claim refuses it rather than
+ * guessing. The escalation belongs to a human.
+ */
+describe("a dispatch whose outcome is unknown is never re-sent", () => {
+  it("records that a transport call was begun before making it", async () => {
+    const order: string[] = [];
+    const repo = repository([notification()]);
+    repo.markDispatchStarted = vi.fn(async () => {
+      order.push("marked");
+      return true;
+    });
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        order.push("dispatched");
+        return { delivery: "simulated" as const };
+      }),
+    };
+
+    await createNotificationDispatcher(repo, transport).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(order).toEqual(["marked", "dispatched"]);
+    expect(repo.markDispatchStarted).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001", {
+      attemptCount: 1,
+    });
+  });
+
+  /**
+   * WOZTELL answered ok:1 -- the client HAS the message -- and only the message id
+   * was missing. This used to throw a bare Error, land in the generic catch and
+   * call markRetry, which sent the same reminder again on the next tick.
+   */
+  it("fails rather than retries when the provider already accepted the send", async () => {
+    const repo = repository([notification()]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        throw Object.assign(new Error("WOZTELL response is missing a provider message ID."), {
+          code: "woztell_accepted_without_message_id",
+          providerAccepted: true,
+        });
+      }),
+    };
+
+    const summary = await createNotificationDispatcher(repo, transport).dispatchDue(
+      "2026-07-12T00:00:00.000Z",
+    );
+
+    // attemptCount 1 of maxAttempts 3, so the old code would have retried.
+    expect(repo.markRetry).not.toHaveBeenCalled();
+    expect(repo.markFailed).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.objectContaining({ errorCode: "woztell_accepted_without_message_id" }),
+    );
+    expect(summary).toMatchObject({ sent: 0, retried: 0, sentButUnrecorded: 1 });
+  });
+
+  /**
+   * markFailed on its own is NOT terminal for a row with attempts left. It writes
+   * status 'failed' with next_attempt_at = now, and claimDue takes
+   * `status in ('pending','failed') and next_attempt_at <= now` whenever
+   * attempt_count < max_attempts -- so the very next five-minute tick re-claims
+   * this row and sends the client a second copy of the reminder WOZTELL already
+   * accepted. That is the exact duplicate this branch exists to prevent.
+   *
+   * Spending the budget is also what makes the row redactable: redactExpired only
+   * settles a 'failed' row once attempt_count >= max_attempts, so a row left with
+   * attempts remaining would keep the client's phone number past retention,
+   * forever.
+   */
+  it("spends the attempt budget so the accepted send can never be claimed again", async () => {
+    const repo = repository([notification({ attemptCount: 1, maxAttempts: 3 })]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        throw Object.assign(new Error("WOZTELL accepted the send but returned no message ID."), {
+          code: "woztell_accepted_without_message_id",
+          providerAccepted: true,
+        });
+      }),
+    };
+
+    await createNotificationDispatcher(repo, transport).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markFailed).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.objectContaining({ spendAttempts: true }),
+    );
+  });
+
+  /**
+   * The ordinary exhausted-attempts path must not gain the flag: attempt_count is
+   * already at max there, and claiming otherwise would be a statement about the
+   * row this branch has no reason to make.
+   */
+  it("leaves the attempt budget alone on an ordinary permanent failure", async () => {
+    const repo = repository([notification({ attemptCount: 3, maxAttempts: 3 })]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => {
+        throw new Error("transport is down");
+      }),
+    };
+
+    await createNotificationDispatcher(repo, transport).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markFailed).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.not.objectContaining({ spendAttempts: true }),
+    );
+  });
+});
 
 describe("notification dispatcher", () => {
   /**
@@ -732,5 +854,63 @@ describe("fixture-origin suppression", () => {
     );
 
     expect(order).toEqual(["cancel", "claim"]);
+  });
+});
+
+/**
+ * markDispatchStarted documents that "if the write fails the dispatch must not
+ * proceed -- the whole point is that no send happens without a marker to say it
+ * might have". A THROW honoured that. A 0-row update did not: the update is
+ * fenced on `status = 'processing' and attempt_count = ${attemptCount}`, so a row
+ * reclaimed by another run (which re-enters 'processing' with the count moved on)
+ * matched nothing, the call returned normally, and the dispatcher sent the
+ * message anyway -- unmarked, and to a row another run is also dispatching. That
+ * is the double-SEND the marker exists to prevent, arriving through the marker
+ * itself.
+ */
+describe("a dispatch whose marker did not land is not sent", () => {
+  it("skips the transport call when the marker was not applied", async () => {
+    const repo = repository([notification()]);
+    repo.markDispatchStarted = vi.fn(async () => false);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => ({ delivery: "simulated" as const })),
+    };
+
+    const summary = await createNotificationDispatcher(repo, transport).dispatchDue(
+      "2026-07-12T00:00:00.000Z",
+    );
+
+    expect(transport.dispatch).not.toHaveBeenCalled();
+    expect(summary.sent).toBe(0);
+    // The row belongs to whoever reclaimed it, exactly like a lost terminal-write
+    // fence, and is counted the same way rather than as a failure of ours.
+    expect(summary.superseded).toBe(1);
+  });
+
+  it("does not settle a row it never dispatched", async () => {
+    const repo = repository([notification()]);
+    repo.markDispatchStarted = vi.fn(async () => false);
+
+    await createNotificationDispatcher(repo, {
+      dispatch: vi.fn(async () => ({ delivery: "simulated" as const })),
+    }).dispatchDue("2026-07-12T00:00:00.000Z");
+
+    expect(repo.markSent).not.toHaveBeenCalled();
+    expect(repo.markRetry).not.toHaveBeenCalled();
+    expect(repo.markFailed).not.toHaveBeenCalled();
+  });
+
+  it("still dispatches when the marker landed", async () => {
+    const repo = repository([notification()]);
+    const transport: NotificationTransport = {
+      dispatch: vi.fn(async () => ({ delivery: "simulated" as const })),
+    };
+
+    const summary = await createNotificationDispatcher(repo, transport).dispatchDue(
+      "2026-07-12T00:00:00.000Z",
+    );
+
+    expect(transport.dispatch).toHaveBeenCalledTimes(1);
+    expect(summary.sent).toBe(1);
   });
 });

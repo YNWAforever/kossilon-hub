@@ -142,6 +142,20 @@ export type NotificationOutboxRepository = {
   enqueue(input: EnqueueNotificationInput): Promise<NotificationOutboxRecord>;
   claimDue(now: string, limit: number): Promise<NotificationOutboxRecord[]>;
   /**
+   * Records that a transport call is about to be made, BEFORE it is made.
+   *
+   * A row still carrying the marker has an unknown outcome — the provider may
+   * already hold the message — and claimDue refuses it rather than re-sending.
+   * WOZTELL's BotAPI accepts no client-side idempotency key, so nothing
+   * downstream could collapse a duplicate if one were sent.
+   *
+   * Fenced on the claim's attempt_count like every terminal write here. `false`
+   * means another run reclaimed the row and the marker did not land, so the
+   * transport call must NOT be made: sending unmarked is the double-send this
+   * marker exists to prevent.
+   */
+  markDispatchStarted(id: string, input: { attemptCount: number }): Promise<boolean>;
+  /**
    * Fenced on the attempt_count the claim returned; `false` means another run
    * reclaimed the row and finished it first, so this outcome must not be counted.
    */
@@ -160,7 +174,20 @@ export type NotificationOutboxRepository = {
   ): Promise<boolean>;
   markFailed(
     id: string,
-    input: { errorCode: string; errorMessage: string; now: string; attemptCount: number },
+    input: {
+      errorCode: string;
+      errorMessage: string;
+      now: string;
+      attemptCount: number;
+      /**
+       * Settles the row so nothing can ever claim it again, by spending the whole
+       * attempt budget. `status = 'failed'` alone is not terminal while attempts
+       * remain — claimDue takes such a row as soon as next_attempt_at passes, and
+       * markFailed sets it to now. A send the provider already accepted must be
+       * settled this way or the client receives a second copy.
+       */
+      spendAttempts?: boolean;
+    },
   ): Promise<boolean>;
   close(): Promise<void>;
 };

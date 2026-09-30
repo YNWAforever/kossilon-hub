@@ -38,6 +38,7 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
       claimed = true;
       return rows;
     }),
+    markDispatchStarted: vi.fn(async () => true),
     markSent: vi.fn(async () => true),
     markRetry: vi.fn(async () => true),
     markFailed: vi.fn(async () => true),

@@ -1886,6 +1886,66 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     vi.restoreAllMocks();
   });
 
+  it(
+    "enqueues the milestone on the Hong Kong day of an overnight cron instant",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 47 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor();
+
+      // Midnight in Hong Kong: exactly 30 days before the fixture's due date.
+      await repository.evaluateReminders("2026-07-12T16:00:00.000Z");
+
+      const milestones = await sql<{ milestone: string; occurred_on: string }[]>`
+        select milestone, occurred_at::date::text as occurred_on
+        from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(milestones).toEqual([{ milestone: "1_month", occurred_on: "2026-07-13" }]);
+      const outbox = await sql<{ recipient: string }[]>`
+        select recipient from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outbox).toEqual([{ recipient: "+85291234567" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reconciles a terminal reminder on the Hong Kong cron day without requeueing it",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 48 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+      await repository.evaluateReminders();
+      await sql`
+        update notification_outbox
+        set status = 'failed', attempt_count = max_attempts, last_error_code = 'woztell_err_100'
+        where company_id = ${fixture.companyId}
+      `;
+
+      await repository.evaluateReminders("2026-07-12T16:00:00.000Z");
+
+      const failures = await sql<{ reconciled_on: string }[]>`
+        select metadata->>'reconciledAt' as reconciled_on from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_failed'
+      `;
+      expect(failures).toEqual([{ reconciled_on: "2026-07-13" }]);
+      expect((await repository.getCase(fixture.caseId))?.remindersSent).toBe(0);
+      const outbox = await sql<{ status: string }[]>`
+        select status from notification_outbox where company_id = ${fixture.companyId}
+      `;
+      expect(outbox).toEqual([{ status: "failed" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   /**
    * The Phase B rule, on the path that actually sends.
    *
@@ -2051,11 +2111,31 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
       await repository.evaluateReminders();
       const secondResult = await repository.evaluateReminders();
 
-      expect(secondResult).toEqual({ sent: 0, skipped: 0 });
+      // Nothing anywhere in the book is sent a second time. This is the
+      // property the test exists for, and it is still a whole-book assertion:
+      // a duplicate reminder for ANY case would break it.
+      expect(secondResult.sent).toBe(0);
+      // `skipped` is deliberately not asserted as a whole-book total. Skips no
+      // longer consume the milestone, so a case that can never be reminded (the
+      // seeded reference companies have no primary contact / nothing
+      // outstanding) is re-examined and re-reported as skipped on every tick.
+      // That is the fix for a client silently losing their milestone, not a
+      // regression -- but it makes the book-wide total a number this test does
+      // not own. This fixture's own contribution is asserted exactly below.
+      const skipRows = await sql`
+        select id from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_skipped'
+      `;
+      expect(skipRows).toHaveLength(0);
+      const eventRows = await sql<{ milestone: string }[]>`
+        select milestone from annual_return_reminder_events where case_id = ${fixture.caseId}
+      `;
+      expect(eventRows).toEqual([{ milestone: "1_month" }]);
       const outboxRows = await sql`
         select id from notification_outbox where company_id = ${fixture.companyId}
       `;
       expect(outboxRows).toHaveLength(1);
+      expect((await repository.getCase(fixture.caseId))?.remindersSent).toBe(1);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
@@ -2136,6 +2216,103 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
         select id from notification_outbox where company_id = ${fixture.companyId}
       `;
       expect(outboxRows).toHaveLength(0);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * The case asserted the client had been reminded from the moment the
+   * notification was QUEUED. Nothing reconciled a terminal outbox failure, so a
+   * reminder that never left the building left behind reminders_sent + 1, a
+   * 'Client reminder sent' status and an "Automated reminder sent." timeline
+   * event — and a spent milestone, so it never fired again.
+   */
+  it(
+    "retracts the reminder claim when the notification can never be delivered",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 34 });
+      const sql = sqlForTests();
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      const repository = repositoryFor("2026-07-13");
+
+      await repository.evaluateReminders();
+      const claimed = await sql<{ reminders_sent: number; current_status: string }[]>`
+        select reminders_sent, current_status from annual_return_cases where id = ${fixture.caseId}
+      `;
+      expect(claimed[0].reminders_sent).toBe(1);
+
+      // The dispatcher exhausts the attempt budget; the client has nothing.
+      await sql`
+        update notification_outbox
+        set status = 'failed', attempt_count = max_attempts, last_error_code = 'woztell_err_100'
+        where company_id = ${fixture.companyId}
+      `;
+
+      expect(await repository.reconcileFailedReminders("2026-07-13")).toEqual({ retracted: 1 });
+
+      const after = await sql<{ reminders_sent: number; current_status: string }[]>`
+        select reminders_sent, current_status from annual_return_cases where id = ${fixture.caseId}
+      `;
+      expect(after[0].reminders_sent).toBe(claimed[0].reminders_sent - 1);
+      expect(after[0].current_status).toBe("Upcoming");
+
+      const failures = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId} and event_type = 'annual_return_reminder_failed'
+      `;
+      expect(failures).toHaveLength(1);
+
+      // Every five minutes, forever: a second pass must not decrement again.
+      expect(await repository.reconcileFailedReminders("2026-07-13")).toEqual({ retracted: 0 });
+      const settled = await sql<{ reminders_sent: number }[]>`
+        select reminders_sent from annual_return_cases where id = ${fixture.caseId}
+      `;
+      expect(settled[0].reminders_sent).toBe(after[0].reminders_sent);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * The milestone row was inserted BEFORE the skip checks, and those checks
+   * commit. A case skipped for having no primary contact therefore spent its
+   * milestone on a reminder that was never sent: dueMilestone never fired again,
+   * and adding the contact the next day changed nothing.
+   */
+  it(
+    "does not spend the milestone on a case it skipped, so a later sweep still sends",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 33 });
+      const sql = sqlForTests();
+      const repository = repositoryFor("2026-07-13");
+
+      // No contact on file yet.
+      await repository.evaluateReminders();
+      expect(
+        await sql`select id from annual_return_reminder_events where case_id = ${fixture.caseId}`,
+      ).toHaveLength(0);
+
+      // ...and the contact arrives.
+      await sql`
+        insert into company_contacts (company_id, name, role, email, phone, is_primary)
+        values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
+      `;
+      await repository.evaluateReminders();
+
+      expect(
+        await sql`select id from notification_outbox where company_id = ${fixture.companyId}`,
+      ).toHaveLength(1);
+
+      // The skip was recorded once, not on every one of those sweeps.
+      const skips = await sql<{ id: string }[]>`
+        select id from timeline_events
+        where case_id = ${fixture.caseId}
+          and event_type = 'annual_return_reminder_skipped'
+          and metadata->>'reason' = 'no_primary_contact'
+      `;
+      expect(skips).toHaveLength(1);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

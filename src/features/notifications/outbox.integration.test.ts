@@ -265,6 +265,11 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
     async () => {
       const sql = sqlForTests();
       const companyId = await seededCompanyId(sql);
+      const originRows = await sql<{ data_origin: string }[]>`
+        select data_origin from companies where id = ${companyId}
+      `;
+      const wasFixture = originRows[0]?.data_origin === "fixture";
+
       const id = await enqueue(sql, companyId, "stranded-retryable", {
         status: "processing",
         attemptCount: 1,
@@ -273,7 +278,23 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
 
       const repository = createNotificationOutboxRepository({ sql });
       expect((await repository.failStranded(new Date().toISOString())).failed).toBe(0);
-      expect(await claimedIdsWithoutCommitting(sql)).toContain(id);
+
+      // The seeded company this row hangs off is fixture data, and claimDue now
+      // refuses every fixture-origin row outright -- so leaving it as seeded
+      // would make the reclaim assertion below pass or fail for the wrong
+      // reason. Flip it to a client for the duration: the row under test is a
+      // real client's stranded reminder, which is the case the reclaim exists
+      // for. Restored in a `finally` so a failure here cannot leak into the
+      // shared database.
+      try {
+        await sql`update companies set data_origin = 'client' where id = ${companyId}`;
+        expect(await claimedIdsWithoutCommitting(sql, 500)).toContain(id);
+      } finally {
+        await sql`
+          update companies set data_origin = ${wasFixture ? "fixture" : "client"}
+          where id = ${companyId}
+        `;
+      }
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
@@ -552,6 +573,105 @@ describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", 
         `;
         // Skipped, not cancelled: it is already settled and its content is gone.
         expect(after[0]).toMatchObject({ status: "failed", last_error_code: null });
+      } finally {
+        await sql`
+          update companies set data_origin = ${wasFixture ? "fixture" : "client"}
+          where id = ${companyId}
+        `;
+      }
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * The double-SEND guard, against a real database.
+   *
+   * A row stranded in 'processing' with attempts remaining is exactly what the
+   * reclaim branch was built to rescue — but if a transport call was already begun
+   * for it, rescuing it means sending the client a second copy of the same
+   * statutory reminder, and WOZTELL takes no idempotency key that would collapse
+   * them. So it must be refused by the claim AND settled visibly, not merely
+   * refused.
+   */
+  it(
+    "never reclaims a row whose dispatch was begun, and escalates it instead",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const id = await enqueue(sql, companyId, "outcome-unknown", {
+        status: "processing",
+        attemptCount: 1,
+        retentionUntil: "2099-01-01T00:00:00.000Z",
+      });
+      // Long past the visibility timeout, with four of five attempts left: without
+      // the marker this is precisely a reclaim candidate.
+      await sql`
+        update notification_outbox
+        set dispatch_started_attempt = 1, updated_at = now() - interval '2 hours',
+            next_attempt_at = now() - interval '2 hours'
+        where id = ${id}
+      `;
+
+      expect(await claimedIdsWithoutCommitting(sql, 500)).not.toContain(id);
+
+      await createNotificationOutboxRepository({ sql }).failStranded(new Date().toISOString());
+      const after = await sql<
+        { status: string; last_error_code: string | null; attempt_count: number }[]
+      >`
+        select status, last_error_code, attempt_count from notification_outbox where id = ${id}
+      `;
+      expect(after[0]).toMatchObject({
+        status: "failed",
+        last_error_code: "dispatch_outcome_unknown",
+      });
+      // Budget spent, or retention would never redact the recipient off this row.
+      expect(after[0].attempt_count).toBeGreaterThanOrEqual(5);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  /**
+   * The race the cancel pass cannot close, against a real database.
+   *
+   * cancelFixtureOriginNotifications and claimDue are two statements and the
+   * five-minute cron holds no lease, so a reminder enqueued for a fixture-origin
+   * company AFTER the cancel swept past is still sitting 'pending' when the claim
+   * runs. This enqueues in exactly that window -- cancel first, enqueue second,
+   * claim third -- and asserts the claim refuses it anyway.
+   */
+  it(
+    "never claims a fixture-origin row enqueued after the cancel pass ran",
+    async () => {
+      const sql = sqlForTests();
+      const companyId = await seededCompanyId(sql);
+      const repository = createNotificationOutboxRepository({ sql });
+
+      const originRows = await sql<{ data_origin: string }[]>`
+        select data_origin from companies where id = ${companyId}
+      `;
+      const wasFixture = originRows[0]?.data_origin === "fixture";
+
+      try {
+        await sql`update companies set data_origin = 'fixture' where id = ${companyId}`;
+
+        // The cancel pass runs on an empty queue -- there is nothing to sweep yet.
+        await repository.cancelFixtureOriginNotifications(new Date().toISOString());
+
+        // ...and only now does the reminder arrive.
+        const id = await enqueue(sql, companyId, "fixture-after-cancel", {
+          status: "pending",
+          attemptCount: 0,
+          retentionUntil: "2099-01-01T00:00:00.000Z",
+        });
+        await sql`update notification_outbox set next_attempt_at = now() - interval '1 minute' where id = ${id}`;
+
+        expect(await claimedIdsWithoutCommitting(sql, 500)).not.toContain(id);
+
+        // Same row, same instant, client origin: it IS due and MUST be claimed,
+        // so the assertion above is the origin predicate and not an accident of
+        // the row's state.
+        await sql`update companies set data_origin = 'client' where id = ${companyId}`;
+        expect(await claimedIdsWithoutCommitting(sql, 500)).toContain(id);
       } finally {
         await sql`
           update companies set data_origin = ${wasFixture ? "fixture" : "client"}

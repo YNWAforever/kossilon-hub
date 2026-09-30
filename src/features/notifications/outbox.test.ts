@@ -80,6 +80,47 @@ describe("stranded outbox rows become claimable again", () => {
 });
 
 /**
+ * The fixture-origin guard was a SEPARATE statement run just before the claim, and
+ * the five-minute cron holds no lease. Two overlapping ticks, or a reminder
+ * enqueued in the window between the cancel pass and the claim, produced a
+ * fixture-origin row that the cancel had already swept past and the claim happily
+ * took — and a claimed row is one dispatch away from a real client's phone.
+ *
+ * Origin therefore has to be a predicate of the claim itself. The cancel pass
+ * stays: it is what settles those rows so they stop being retried forever.
+ */
+describe("claimDue refuses fixture-origin rows on its own", () => {
+  const source = readFileSync(new URL("./outbox.ts", import.meta.url), "utf8");
+  const claimQuery = source.slice(
+    source.indexOf("async claimDue"),
+    source.indexOf("async cancelFixtureOriginNotifications"),
+  );
+
+  it("filters on company data origin inside the claim", () => {
+    expect(claimQuery).toContain("data_origin <> 'client'");
+    expect(claimQuery).toContain("company_id not in (select id from companies");
+  });
+
+  /**
+   * companies_data_origin_idx is PARTIAL, `where data_origin <> 'client'`, so the
+   * index can only answer "which companies are fixtures". A positive predicate
+   * (`= 'client'`) would have to seq-scan companies on every cron tick.
+   */
+  it("phrases the predicate so the partial index can serve it", () => {
+    expect(claimQuery).not.toContain("data_origin = 'client'");
+  });
+
+  it("refuses any row that already carries a dispatch marker", () => {
+    expect(claimQuery).toContain("dispatch_started_attempt is null");
+  });
+
+  it("keeps the cancel pass that settles those rows", () => {
+    expect(source).toContain("cancelFixtureOriginNotifications");
+    expect(source).toContain("last_error_code = 'fixture-origin'");
+  });
+});
+
+/**
  * retention_until was written on every insert and read back on every row while
  * nothing ever acted on it, so notification_outbox grew without bound — carrying
  * recipient addresses and message bodies indefinitely.
@@ -257,6 +298,98 @@ describe("outbox records how a dispatch was delivered", () => {
     expect(columns).toContain("delivery text check");
     expect(columns).toContain("delivery is null or delivery in ('provider', 'simulated')");
     expect(columns).not.toMatch(/delivery text[^,]*not null/);
+  });
+});
+
+/**
+ * The marker is only half a fix on its own. It has to be WRITTEN before the
+ * transport call, CLEARED by every terminal write (or the row is stuck after a
+ * perfectly ordinary retry), REFUSED by the claim, and ESCALATED by something —
+ * otherwise "never re-send" degrades into "never deliver, silently".
+ */
+describe("the dispatch marker is written, cleared and escalated", () => {
+  const source = readFileSync(new URL("./outbox.ts", import.meta.url), "utf8");
+  const migration = readFileSync(
+    new URL("../../../db/migrations/0034_notification_outbox_dispatch_marker.sql", import.meta.url),
+    "utf8",
+  );
+  const schema = readFileSync(new URL("../../server/db/schema.sql", import.meta.url), "utf8");
+
+  it("writes the marker fenced on the attempt it belongs to", () => {
+    const markStarted = source.slice(
+      source.indexOf("async markDispatchStarted"),
+      source.indexOf("async markSent"),
+    );
+    expect(markStarted).toContain("set dispatch_started_attempt = ${input.attemptCount}");
+    expect(markStarted).toContain("status = 'processing'");
+  });
+
+  /**
+   * The fence above means the update can match zero rows -- another run reclaimed
+   * the row, so its attempt_count has moved on. That returned normally and the
+   * caller sent the message unmarked, which is the one thing this whole mechanism
+   * exists to prevent. Like every other fenced write here, it reports whether it
+   * actually landed.
+   */
+  it("reports whether the marker was actually applied", () => {
+    const markStarted = source.slice(
+      source.indexOf("async markDispatchStarted"),
+      source.indexOf("async markSent"),
+    );
+    expect(markStarted).toContain("returning id");
+    expect(markStarted).toContain("rows.length === 1");
+  });
+
+  it("clears the marker on every terminal write", () => {
+    for (const name of ["markSent", "markRetry", "markFailed"]) {
+      const start = source.indexOf(`async ${name}(id`);
+      const body = source.slice(start, start + 1400);
+      expect(body, `${name} leaves the marker behind`).toContain("dispatch_started_attempt = null");
+    }
+  });
+
+  /**
+   * Without this the row is not re-sent and also never settled: claimDue refuses
+   * it forever and redactExpired skips 'processing'. "Escalate for a human"
+   * requires a terminal state and an error code to search for.
+   */
+  it("escalates a marked stranded row instead of leaving it invisible", () => {
+    const stranded = source.slice(
+      source.indexOf("async failStranded"),
+      source.indexOf("async redactExpired"),
+    );
+    expect(stranded).toContain("dispatch_outcome_unknown");
+    expect(stranded).toContain("dispatch_started_attempt is not null");
+    // Not gated on the attempt budget: the hazard is the unknown outcome, which
+    // exists on the first attempt just as much as on the last.
+    expect(stranded).toContain("attempt_count >= max_attempts");
+  });
+
+  /**
+   * A provider-accepted send that could not be recorded is settled with markFailed
+   * from a row that may have attempts left. Without spending the budget, `failed`
+   * plus `next_attempt_at = now` is a row claimDue takes on the very next tick --
+   * a second copy of a statutory reminder -- and one redactExpired never settles,
+   * so the recipient's phone number outlives retention.
+   */
+  it("can spend the attempt budget on a failure that must never be retried", () => {
+    const start = source.indexOf("async markFailed(id");
+    const markFailed = source.slice(start, start + 1600);
+
+    expect(markFailed).toContain("spendAttempts");
+    expect(markFailed).toContain("max_attempts");
+  });
+
+  it("carries the column in the migration and in the canonical schema", () => {
+    expect(migration.replace(/\s+/g, " ")).toContain(
+      "alter table notification_outbox add column if not exists dispatch_started_attempt integer",
+    );
+    const createBlock = schema.slice(
+      schema.indexOf("create table if not exists notification_outbox ("),
+    );
+    expect(createBlock.slice(0, createBlock.indexOf("\n);"))).toContain(
+      "dispatch_started_attempt integer",
+    );
   });
 });
 

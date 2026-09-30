@@ -25,6 +25,7 @@ import {
 } from "./workflow";
 import { toHongKongBusinessDate } from "@/lib/hong-kong-time";
 import { dueMilestone, type ReminderMilestone } from "./reminder-cadence";
+import { parseAnnualReturnReminderKey } from "./reminder-idempotency-key";
 import {
   assertAnnualReturnActionAllowed,
   assertAnnualReturnCaseCreatable,
@@ -441,6 +442,21 @@ export type AnnualReturnRepository = {
   listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]>;
   listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]>;
   addNote(input: AddAnnualReturnCaseNoteInput): Promise<AnnualReturnCaseNote>;
+  /**
+   * The phone numbers the firm already holds for a company.
+   *
+   * Exists so an outbound message can be checked against the recipients the firm
+   * actually has a relationship with, rather than trusting a number typed into a
+   * form: a manual reminder carries the client's company name and statutory due
+   * date, and a mistyped digit sends that to a stranger.
+   */
+  listCompanyContactPhones(companyId: string): Promise<string[]>;
+  /**
+   * Retracts the "client reminder sent" claim for a reminder whose outbox row can
+   * never be delivered, and records the failure where a person will see it.
+   * Driven by evaluateReminders, which is what the five-minute cron calls.
+   */
+  reconcileFailedReminders(now: string): Promise<{ retracted: number }>;
   recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase>;
   updateChecklistItem(input: UpdateAnnualReturnChecklistItemInput): Promise<AnnualReturnCase>;
   /**
@@ -1916,6 +1932,14 @@ export function createAnnualReturnRepository(
     return hydratedCaseAfterMutation(caseId, "status update");
   }
 
+  async function listCompanyContactPhones(companyId: string): Promise<string[]> {
+    const rows = await sql<{ phone: string }[]>`
+      select phone from company_contacts
+      where company_id = ${companyId} and phone is not null
+    `;
+    return rows.map((row) => row.phone);
+  }
+
   async function recordReminder(input: RecordAnnualReturnReminderInput): Promise<AnnualReturnCase> {
     const current = await getCase(input.caseId);
 
@@ -2434,6 +2458,179 @@ export function createAnnualReturnRepository(
     });
   }
 
+  /**
+   * Retracts "we reminded this client" for a reminder that can never be sent.
+   *
+   * reminders_sent + 1, the 'Client reminder sent' status and the
+   * "Automated reminder sent." timeline event are all written in the ENQUEUE
+   * transaction, because that is the only moment this sweep is still holding the
+   * case. Nothing was dispatched at that point, and if the outbox row later failed
+   * terminally nothing reconciled it: the milestone was already spent, so
+   * dueMilestone never fired again, and the case went on telling staff -- and any
+   * audit of the firm -- that a statutory reminder had gone out when none had.
+   *
+   * The claim is retracted rather than deferred to markSent because the dispatcher
+   * is generic over every producer and knows nothing about annual-return cases;
+   * teaching it would couple the outbox to one feature. The window is one cron
+   * tick's worth of optimism, and it closes with a visible failure rather than
+   * with silence.
+   *
+   * Deliberately NOT re-firing the milestone: the failed outbox row still holds
+   * this reminder's idempotency key, so a re-enqueue would deduplicate against it
+   * and count as sent all over again. A permanent failure is a thing a person has
+   * to look at, which is what the timeline event is for.
+   *
+   * Keyed on idempotency_key rather than on the payload because retention nulls
+   * the payload, and a row redacted before anyone reconciled it would silently
+   * keep the false claim forever.
+   */
+  async function reconcileFailedReminders(now: string): Promise<{ retracted: number }> {
+    const rows = await sql<
+      { idempotency_key: string; outbox_id: string; outcome_unknown: boolean }[]
+    >`
+      select
+        -- The whole key, parsed in TypeScript rather than pulled apart with
+        -- split_part here. Two key shapes carry this prefix and segment 3 is the
+        -- milestone in only one of them; in the other it is the client's phone
+        -- number, which this function used to write into the timeline as
+        -- "milestone" -- mislabelled, and outside the outbox's 90-day redaction.
+        idempotency_key,
+        id as outbox_id,
+        -- 'dispatch_outcome_unknown' is failStranded saying the provider MAY
+        -- already hold the message. Such a row is 'failed' with its attempts
+        -- spent, so it matched this selector exactly and was retracted as a
+        -- definite non-delivery. It gets its own arm below instead.
+        last_error_code = 'dispatch_outcome_unknown' as outcome_unknown
+      from notification_outbox
+      where idempotency_key like 'annual-return-reminder:%'
+        and (
+          status = 'cancelled'
+          or (status = 'failed' and attempt_count >= max_attempts)
+        )
+        -- Already-retracted rows are excluded HERE, not merely skipped inside the
+        -- loop. Nothing about reconciling a row changes it: redactExpired leaves
+        -- idempotency_key alone, so it keeps matching the prefix forever, and
+        -- because it is settled its updated_at never moves again -- which puts it
+        -- permanently at the front of "order by updated_at asc". Past 200 settled
+        -- reminders the window is entirely historical and a reminder that fails
+        -- tomorrow never reaches the loop at all, so the case goes on claiming the
+        -- client was reminded. The per-row dedupe cannot catch that; only this can.
+        --
+        -- BOTH outcomes are excluded here, not just the retraction: a row this
+        -- pass has already recorded as unresolved is as settled as one it has
+        -- retracted, and leaving it in the window would starve out new failures
+        -- exactly the same way.
+        and not exists (
+          select 1 from timeline_events
+          where event_type in (
+              'annual_return_reminder_failed',
+              'annual_return_reminder_outcome_unknown'
+            )
+            and metadata->>'outboxId' = notification_outbox.id::text
+        )
+      order by updated_at asc
+      limit 200
+    `;
+
+    let retracted = 0;
+    for (const row of rows) {
+      // `${row.case_id}::uuid` was the FIRST statement of every transaction here,
+      // on a value taken straight out of a key this function does not own. A
+      // producer using this prefix with a non-uuid second segment therefore threw
+      // before anything else ran -- and because the row is settled it never goes
+      // away, so the reminder sweep would die on it on every five-minute tick,
+      // forever. That is the failure mode the cancelFixtureOriginNotifications
+      // comment above warns about, and the fix is the same: skip the row, say so,
+      // and carry on reconciling the rest.
+      const parsed = parseAnnualReturnReminderKey(row.idempotency_key);
+      if (!parsed) {
+        console.error(
+          `Skipping annual-return reminder reconciliation for outbox row ${row.outbox_id}: malformed idempotency key.`,
+        );
+        continue;
+      }
+      const caseId = parsed.caseId;
+
+      const applied = await withTransaction(sql, async (tx) => {
+        const caseRows = await tx<{ id: string; company_id: string }[]>`
+          select id, company_id from annual_return_cases where id = ${caseId}::uuid for update
+        `;
+        if (!caseRows[0]) return false;
+
+        // The ordinary case: the outbox is certain nothing was delivered.
+        if (!row.outcome_unknown) {
+          // One retraction per outbox row, whatever else shares the case. Without
+          // this the counter would be decremented again on every five-minute tick.
+          const inserted = await tx<{ id: string }[]>`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            )
+            select
+              ${caseRows[0].company_id}, ${caseId}::uuid, 'annual_return_reminder_failed',
+              'system', null,
+              'Automated reminder could not be delivered. The client has NOT been reminded.',
+              -- Built from the parsed key and nothing else, so a manual reminder's
+              -- phone number can no longer arrive here labelled as a milestone.
+              ${tx.json({ milestone: parsed.milestone, outboxId: row.outbox_id, reconciledAt: now })}
+            where not exists (
+              select 1 from timeline_events
+              where case_id = ${caseId}::uuid
+                and event_type = 'annual_return_reminder_failed'
+                and metadata->>'outboxId' = ${row.outbox_id}
+            )
+            returning id
+          `;
+          if (!inserted[0]) return false;
+
+          await tx`
+            update annual_return_cases
+            set reminders_sent = greatest(reminders_sent - 1, 0),
+                -- Only the status this sweep itself set is rolled back. A person may
+                -- have moved the case on since, and undoing their work to correct our
+                -- bookkeeping would be the worse error.
+                current_status = case
+                  when current_status = 'Client reminder sent' then 'Upcoming'
+                  else current_status
+                end,
+                updated_at = now()
+            where id = ${caseId}::uuid
+          `;
+          return true;
+        }
+
+        // 'dispatch_outcome_unknown': deliberately no decrement and no status
+        // rollback. The outbox says the provider may already hold this message, so
+        // asserting either "sent" or "not sent" would be a guess -- and the
+        // retraction arm above guesses the one direction that tells a client's
+        // case file they were never reminded when they may be holding the message.
+        // The counter already reads as sent; the one honest action left is to put
+        // the doubt on the record where a person will see it and decide.
+        const noted = await tx<{ id: string }[]>`
+          insert into timeline_events (
+            company_id, case_id, event_type, actor_type, actor_id, description, metadata
+          )
+          select
+            ${caseRows[0].company_id}, ${caseId}::uuid,
+            'annual_return_reminder_outcome_unknown',
+            'system', null,
+            'A send was begun for this automated reminder and no outcome was recorded. Whether the client received it could not be determined -- please check before reminding again.',
+            ${tx.json({ milestone: parsed.milestone, outboxId: row.outbox_id, reconciledAt: now })}
+          where not exists (
+            select 1 from timeline_events
+            where case_id = ${caseId}::uuid
+              and event_type = 'annual_return_reminder_outcome_unknown'
+              and metadata->>'outboxId' = ${row.outbox_id}
+          )
+          returning id
+        `;
+        return Boolean(noted[0]);
+      });
+      if (applied) retracted += 1;
+    }
+
+    return { retracted };
+  }
+
   async function evaluateReminders(
     businessDateOrInstant: string = readToday(),
   ): Promise<{ sent: number; skipped: number }> {
@@ -2442,6 +2639,13 @@ export function createAnnualReturnRepository(
     // a raw cron instant must not be able to make this sweep run on the UTC day:
     // 16:00Z onward is already tomorrow in Hong Kong.
     const now = toHongKongBusinessDate(businessDateOrInstant);
+    // Before this tick's enqueues, so a reminder that failed terminally since the
+    // last tick stops claiming to have been sent as early as possible. Run here
+    // rather than wired separately into maintenance: this is already the pass the
+    // five-minute cron calls, and a reconciliation nobody scheduled is a
+    // reconciliation that never runs.
+    await reconcileFailedReminders(now);
+
     const candidates = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, now);
     const openCases = candidates.filter(
       (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
@@ -2472,13 +2676,40 @@ export function createAnnualReturnRepository(
         );
         if (!milestone) return null;
 
-        const insertedEvent = await tx<{ id: string }[]>`
-          insert into annual_return_reminder_events (case_id, milestone, occurred_at)
-          values (${case_.id}, ${milestone}, ${now})
-          on conflict (case_id, milestone) do nothing
-          returning id
-        `;
-        if (!insertedEvent[0]) return null;
+        /**
+         * Records a skip WITHOUT consuming the milestone, once per reason.
+         *
+         * The milestone row used to be inserted here, before any of the skip
+         * checks below, and those checks commit -- so a case skipped for having no
+         * primary contact spent its milestone on a reminder that was never sent.
+         * dueMilestone never fired again, and adding the contact the next day
+         * changed nothing: the client simply was not reminded before their
+         * statutory deadline.
+         *
+         * Not consuming it means the sweep re-evaluates this case every five
+         * minutes until the condition clears, so the timeline event is written
+         * only when an identical one is not already there. Otherwise the history
+         * that is supposed to explain the silence would bury it.
+         */
+        const recordSkip = async (reason: string, description: string) => {
+          await tx`
+            insert into timeline_events (
+              company_id, case_id, event_type, actor_type, actor_id, description, metadata
+            )
+            select
+              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
+              'system', null, ${description},
+              ${tx.json({ milestone, reason })}
+            where not exists (
+              select 1 from timeline_events
+              where case_id = ${case_.id}
+                and event_type = 'annual_return_reminder_skipped'
+                and metadata->>'milestone' = ${milestone}
+                and metadata->>'reason' = ${reason}
+            )
+          `;
+          return "skipped" as const;
+        };
 
         // Does this client actually owe us anything?
         //
@@ -2504,16 +2735,10 @@ export function createAnnualReturnRepository(
         // nothing is owed, and staying silent before a statutory deadline is the
         // worse error.
         if (!shouldChaseClient({ checklist: checklistForChase })) {
-          await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: nothing is outstanding from the client.',
-              ${tx.json({ milestone, reason: "nothing_outstanding" })}
-            )
-          `;
-          return "skipped" as const;
+          return recordSkip(
+            "nothing_outstanding",
+            "Automated reminder skipped: nothing is outstanding from the client.",
+          );
         }
 
         const contactRows = await tx<
@@ -2526,16 +2751,10 @@ export function createAnnualReturnRepository(
         const contact = contactRows[0];
 
         if (!contact) {
-          await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: no primary contact on file.',
-              ${tx.json({ milestone, reason: "no_primary_contact" })}
-            )
-          `;
-          return "skipped" as const;
+          return recordSkip(
+            "no_primary_contact",
+            "Automated reminder skipped: no primary contact on file.",
+          );
         }
 
         const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
@@ -2548,17 +2767,22 @@ export function createAnnualReturnRepository(
         // abandon every case still queued behind this one for the rest of the sweep.
         // Skip this case the same way an entirely missing contact is skipped above.
         if (!recipient) {
-          await tx`
-            insert into timeline_events (
-              company_id, case_id, event_type, actor_type, actor_id, description, metadata
-            ) values (
-              ${lockedCase.company_id}, ${case_.id}, 'annual_return_reminder_skipped',
-              'system', null, 'Automated reminder skipped: primary contact has neither phone nor email.',
-              ${tx.json({ milestone, reason: "unreachable_primary_contact" })}
-            )
-          `;
-          return "skipped" as const;
+          return recordSkip(
+            "unreachable_primary_contact",
+            "Automated reminder skipped: primary contact has neither phone nor email.",
+          );
         }
+
+        // Only now, with every reason to stay silent ruled out, is the milestone
+        // spent. `on conflict do nothing` still makes a concurrent sweep a no-op,
+        // so a milestone genuinely acted on is never acted on twice.
+        const insertedEvent = await tx<{ id: string }[]>`
+          insert into annual_return_reminder_events (case_id, milestone, occurred_at)
+          values (${case_.id}, ${milestone}, ${now})
+          on conflict (case_id, milestone) do nothing
+          returning id
+        `;
+        if (!insertedEvent[0]) return null;
 
         const queued = await enqueueNotification(tx, {
           companyId: lockedCase.company_id,
@@ -2819,6 +3043,8 @@ export function createAnnualReturnRepository(
     listAssignmentEventsForCase,
     addNote,
     updateStatus,
+    listCompanyContactPhones,
+    reconcileFailedReminders,
     recordReminder,
     updateChecklistItem,
     linkRequirementEvidence,
