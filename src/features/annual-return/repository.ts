@@ -11,6 +11,7 @@ import {
   type RequirementInstanceDraft,
 } from "./requirement-template";
 import { shouldChaseClient } from "./outstanding";
+import { caseScopeSql, countScopedCases, type ScopedCaseMetrics } from "./case-scope";
 import { attachCaseReadiness } from "./readiness-repository";
 import { ReadinessConflictError, readinessForCase } from "./readiness";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
@@ -19,7 +20,6 @@ import type postgres from "postgres";
 import {
   buildReminderDraft,
   calculateFilingDueDate,
-  daysBetween,
   hongKongBusinessDate,
   isAllowedStatusTransition,
   offsetDateOnly,
@@ -161,6 +161,7 @@ type QueryClient = SqlClient | postgres.TransactionSql;
 type TransactionSqlClient = postgres.TransactionSql;
 
 export type CaseFilters = {
+  activeOnly?: boolean;
   /** Server only allows an active Admin to request diagnostic fixture scope. */
   includeFixtures?: boolean;
   ownerId?: string;
@@ -204,7 +205,7 @@ export type AnnualReturnCasePage = {
   nextCursor: string | null;
 };
 
-export type BoardTotals = {
+export type BoardTotals = ScopedCaseMetrics & {
   total: number;
   overdue: number;
   dueIn7: number;
@@ -264,7 +265,7 @@ export function decodeCaseCursor(
   }
 }
 
-export type AnnualReturnDashboardMetrics = {
+export type AnnualReturnDashboardMetrics = ScopedCaseMetrics & {
   dueIn7: number;
   dueIn30: number;
   overdue: number;
@@ -426,7 +427,7 @@ export type AnnualReturnRepository = {
     filters: CaseFilters,
     options?: { pageSize?: number; maxPages?: number },
   ): Promise<AnnualReturnCase[]>;
-  boardTotals(filters: CaseFilters): Promise<BoardTotals>;
+  boardTotals(filters: CaseFilters, currentUserId?: string): Promise<BoardTotals>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
   listCompaniesEligibleForCase(filters?: {
     includeFixtures?: boolean;
@@ -504,25 +505,8 @@ export { hongKongBusinessDate };
  */
 export const DEFAULT_CASE_LIMIT = 200;
 
-/**
- * The window scanned when a `risk` filter is active.
- *
- * risk / missingDocuments / overdueOnly used to be applied in JS *after* the SQL
- * LIMIT, so past 200 cases a filtered board silently omitted matches: "high risk"
- * showed only the high-risk cases that happened to fall inside the 200 earliest
- * due dates, and the dashboard tiles counted the same truncated set.
- *
- * overdueOnly and missingDocuments are now SQL predicates and filter before the
- * limit. risk is derived from hydrated children, so it still filters afterwards
- * and instead widens the window it filters over.
- */
-export const RISK_FILTER_SCAN_LIMIT = 2000;
-
-/**
- * Dashboard tiles count the whole active book rather than a page of it. Still
- * bounded, because hydrateCases loads checklist and payment children per case.
- */
-export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
+/** Bounded reminder sweep candidate window; metrics aggregate the full SQL scope. */
+const REMINDER_SWEEP_SCAN_LIMIT = 5000;
 
 /**
  * Row cap for each of the two case-history sources (audit events and
@@ -537,7 +521,6 @@ export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
  */
 export const CASE_HISTORY_ROW_LIMIT = 200;
 
-const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
 // Accepted `documents.file_type` values per evidence kind. Previously three bare
 // literals that only the seed script wrote — see ./evidence-file-types.
@@ -567,22 +550,8 @@ function requiredTimestampString(value: string | Date): string {
   return timestamp;
 }
 
-function hasOutstandingRequiredEvidence(item: AnnualReturnChecklistItem): boolean {
-  return (
-    item.required &&
-    (item.status !== "Verified" ||
-      item.receivedAt === null ||
-      item.verifiedAt === null ||
-      item.documentId === null)
-  );
-}
-
 function hasText(value: string | null): boolean {
   return typeof value === "string" && value.trim().length > 0;
-}
-
-function isFiledOrCompleted(case_: AnnualReturnCase): boolean {
-  return FILED_OR_COMPLETED_STATUSES.has(case_.currentStatus);
 }
 
 function isLockedOrCompleted(case_: AnnualReturnCase): boolean {
@@ -601,10 +570,6 @@ function assertSingleMutatedRow(rows: { id: string }[], message: string): void {
   if (rows.length !== 1) {
     throw new Error(message);
   }
-}
-
-function isActiveForOperationalMetrics(case_: AnnualReturnCase): boolean {
-  return !isFiledOrCompleted(case_);
 }
 
 function mapChecklist(row: ChecklistRow): AnnualReturnChecklistItem {
@@ -677,10 +642,6 @@ function hydrateCase(
  */
 function caseMatchesHydratedFilters(case_: AnnualReturnCase, filters: CaseFilters): boolean {
   return !filters.risk || case_.riskLevel === filters.risk;
-}
-
-function countOutstandingRequiredEvidence(case_: AnnualReturnCase): number {
-  return case_.checklist.filter(hasOutstandingRequiredEvidence).length;
 }
 
 function withTransaction<T>(
@@ -859,26 +820,7 @@ export function createAnnualReturnRepository(
   }
 
   async function selectCaseRows(filters: CaseFilters, today: string): Promise<CaseRow[]> {
-    const ownerId = filters.ownerId ?? null;
-    const teamId = filters.teamId ?? null;
-    const reviewerId = filters.reviewerId ?? null;
-    const status = filters.status ?? null;
-    const paymentStatus = filters.paymentStatus ?? null;
-    const visibleToUserId = filters.visibleToUserId ?? null;
-    const companyIds = filters.companyIds ? [...filters.companyIds] : null;
-    const overdueOnly = filters.overdueOnly === true ? today : null;
-    const missingDocuments = typeof filters.missingDocuments === "boolean" ? today : null;
-    const wantsMissingDocuments = filters.missingDocuments === true;
-    // `risk` stays a post-hydration filter — riskForCase derives it from the
-    // checklist, payment and filing state, and duplicating that in SQL is exactly
-    // the kind of drift that made the evidence guards unsatisfiable. It is applied
-    // to a wider window instead, so the LIMIT no longer truncates before filtering.
-    const limit = filters.limit ?? (filters.risk ? RISK_FILTER_SCAN_LIMIT : DEFAULT_CASE_LIMIT);
-    // Escaped so a name containing % or _ matches literally rather than turning
-    // into a wildcard the user did not type.
-    const query = filters.q?.trim()
-      ? `%${filters.q.trim().replace(/[\\%_]/g, (character) => `\\${character}`)}%`
-      : null;
+    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
     const cursor = decodeCaseCursor(filters.cursor);
 
     return sql<CaseRow[]>`
@@ -906,49 +848,7 @@ export function createAnnualReturnRepository(
       join companies c on c.id = arc.company_id
       join users owner on owner.id = arc.owner_id
       left join users reviewer on reviewer.id = arc.reviewer_id
-      where (${ownerId}::uuid is null or arc.owner_id = ${ownerId}::uuid)
-        and (${filters.includeFixtures === true} or c.data_origin <> 'fixture')
-        and (${teamId}::uuid is null or c.assigned_team_id = ${teamId}::uuid)
-        and (${reviewerId}::uuid is null or arc.reviewer_id = ${reviewerId}::uuid)
-        and (${status}::text is null or arc.current_status = ${status})
-        and (
-          ${paymentStatus}::text is null
-          or exists (
-            select 1
-            from payments p
-            where p.case_id = arc.id
-              and p.status = ${paymentStatus}
-          )
-        )
-        and (
-          ${visibleToUserId}::uuid is null
-          or arc.owner_id = ${visibleToUserId}::uuid
-          or arc.reviewer_id = ${visibleToUserId}::uuid
-        )
-        and (${companyIds}::uuid[] is null or arc.company_id = any(${companyIds}::uuid[]))
-        and (${overdueOnly}::date is null or arc.filing_due_date < ${overdueOnly}::date)
-        and (
-          ${missingDocuments}::date is null
-          or ${wantsMissingDocuments} = exists (
-            -- Mirrors hasOutstandingRequiredEvidence exactly; the two are pinned
-            -- together by a test.
-            select 1
-            from annual_return_checklist_items i
-            where i.case_id = arc.id
-              and i.required = true
-              and (
-                i.status <> 'Verified'
-                or i.received_at is null
-                or i.verified_at is null
-                or i.document_id is null
-              )
-          )
-        )
-        and (
-          ${query}::text is null
-          or c.company_name ilike ${query} escape '\\'
-          or c.cr_number ilike ${query} escape '\\'
-        )
+      where ${caseScopeSql(sql, filters, today)}
         and (
           ${cursor === null}
           or (arc.filing_due_date, c.company_name, arc.id)
@@ -1168,88 +1068,20 @@ export function createAnnualReturnRepository(
     return all;
   }
 
-  /**
-   * Board tiles, counted in SQL over the whole authorized scope.
-   *
-   * They were computed in the browser over the same truncated page the board
-   * rendered, so "12 overdue" meant "12 overdue among the 200 earliest-due cases
-   * we happened to load".
-   *
-   * `highRisk` is deliberately absent. riskForCase derives it from checklist,
-   * payment and filing state, and reproducing that in SQL is exactly the drift
-   * the selectCaseRows comment already warns about -- so the caller shows it as
-   * covering the loaded page rather than the scope.
-   */
-  async function boardTotals(filters: CaseFilters): Promise<BoardTotals> {
-    const today = readToday();
-    // Deliberately ignores `q` and `cursor`: these are the totals for the
-    // actor's scope, not for whatever they have typed into the search box, and
-    // the caller labels them that way.
-    const counted = await sql<
-      {
-        total: string;
-        overdue: string;
-        due_in_7: string;
-        due_in_30: string;
-        missing_documents: string;
-        payment_pending: string;
-      }[]
-    >`
-      select
-        count(*) total,
-        count(*) filter (where arc.filing_due_date < ${today}::date) overdue,
-        count(*) filter (
-          where arc.filing_due_date >= ${today}::date
-            and arc.filing_due_date <= ${today}::date + 7
-        ) due_in_7,
-        count(*) filter (
-          where arc.filing_due_date >= ${today}::date
-            and arc.filing_due_date <= ${today}::date + 30
-        ) due_in_30,
-        count(*) filter (
-          where exists (
-            select 1 from annual_return_checklist_items i
-            where i.case_id = arc.id and i.required = true
-              and (
-                i.status <> 'Verified' or i.received_at is null
-                or i.verified_at is null or i.document_id is null
-              )
-          )
-        ) missing_documents,
-        count(*) filter (
-          where exists (
-            select 1 from payments p
-            where p.case_id = arc.id and p.status = 'Payment pending'
-          )
-        ) payment_pending
-      from annual_return_cases arc
-      join companies c on c.id = arc.company_id
-      where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
-        and (${filters.includeFixtures === true} or c.data_origin <> 'fixture')
-        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
-        and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
-        and (${filters.status ?? null}::text is null or arc.current_status = ${filters.status ?? null})
-        and (
-          ${filters.visibleToUserId ?? null}::uuid is null
-          or arc.owner_id = ${filters.visibleToUserId ?? null}::uuid
-          or arc.reviewer_id = ${filters.visibleToUserId ?? null}::uuid
-        )
-        and (
-          ${filters.companyIds ? [...filters.companyIds] : null}::uuid[] is null
-          or arc.company_id = any(${filters.companyIds ? [...filters.companyIds] : null}::uuid[])
-        )
-    `;
-    const row = counted[0];
+  /** SQL totals over the same actor/origin/filter scope as the case list. */
+  async function boardTotals(filters: CaseFilters, currentUserId?: string): Promise<BoardTotals> {
+    const metrics = await countScopedCases(
+      sql,
+      filters,
+      toHongKongBusinessDate(readToday()),
+      currentUserId,
+    );
     return {
-      total: Number(row?.total ?? 0),
-      overdue: Number(row?.overdue ?? 0),
-      dueIn7: Number(row?.due_in_7 ?? 0),
-      dueIn30: Number(row?.due_in_30 ?? 0),
-      missingDocuments: Number(row?.missing_documents ?? 0),
-      paymentPending: Number(row?.payment_pending ?? 0),
+      ...metrics,
+      overdue: metrics.overdueCases,
+      missingDocuments: metrics.casesWithMissingDocuments,
     };
   }
-
   async function getCase(id: string): Promise<AnnualReturnCase | null> {
     const rows = await sql<CaseRow[]>`
       select
@@ -1499,33 +1331,18 @@ export function createAnnualReturnRepository(
     currentUserId: string,
     scope: CaseFilters = {},
   ): Promise<AnnualReturnDashboardMetrics> {
-    // TODO: Move dashboard tiles to SQL aggregates and paginated reads as case volume grows.
-    const cases = await listCasesForToday({ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }, today);
-    const activeCases = cases.filter(isActiveForOperationalMetrics);
-
+    const metrics = await countScopedCases(
+      sql,
+      scope,
+      toHongKongBusinessDate(today),
+      currentUserId,
+    );
     return {
-      dueIn7: activeCases.filter((case_) => {
-        const daysLeft = daysBetween(today, case_.filingDueDate);
-        return daysLeft >= 0 && daysLeft <= 7;
-      }).length,
-      dueIn30: activeCases.filter((case_) => {
-        const daysLeft = daysBetween(today, case_.filingDueDate);
-        return daysLeft >= 0 && daysLeft <= 30;
-      }).length,
-      overdue: activeCases.filter((case_) => daysBetween(today, case_.filingDueDate) < 0).length,
-      highRisk: activeCases.filter((case_) => case_.riskLevel === "red").length,
-      missingDocuments: activeCases.reduce(
-        (count, case_) => count + countOutstandingRequiredEvidence(case_),
-        0,
-      ),
-      paymentPending: activeCases.filter((case_) => case_.payment?.status !== "Payment received")
-        .length,
-      assignedToMe: cases.filter(
-        (case_) => case_.ownerId === currentUserId && case_.currentStatus !== "Completed",
-      ).length,
+      ...metrics,
+      overdue: metrics.overdueCases,
+      missingDocuments: metrics.missingDocumentCount,
     };
   }
-
   async function hydratedCaseAfterMutation(caseId: string, actionLabel: string) {
     const updated = await getCase(caseId);
 
@@ -2703,7 +2520,7 @@ export function createAnnualReturnRepository(
     // reconciliation that never runs.
     await reconcileFailedReminders(now);
 
-    const candidates = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, now);
+    const candidates = await listCasesForToday({ limit: REMINDER_SWEEP_SCAN_LIMIT }, now);
     const openCases = candidates.filter(
       (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
     );

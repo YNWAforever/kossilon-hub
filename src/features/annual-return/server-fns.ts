@@ -42,6 +42,7 @@ const PAYMENT_STATUSES = [
 const annualReturnStatusSchema = z.enum(ANNUAL_RETURN_STATUSES);
 const listAnnualReturnCasesSchema = z
   .object({
+    activeOnly: z.boolean().optional(),
     ownerId: z.string().uuid().optional(),
     teamId: z.string().uuid().optional(),
     reviewerId: z.string().uuid().optional(),
@@ -210,11 +211,14 @@ export async function getAnnualReturnBoardTotalsForActor(
     active: actor.active,
   });
 
-  return dependencies.repository.boardTotals({
-    ...filters,
-    ...scope,
-    ...originFilterForActor(actor, filters.includeFixtures),
-  });
+  return dependencies.repository.boardTotals(
+    {
+      ...filters,
+      ...scope,
+      ...originFilterForActor(actor, filters.includeFixtures),
+    },
+    actor.userId ?? undefined,
+  );
 }
 
 /**

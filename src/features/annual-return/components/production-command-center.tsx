@@ -9,7 +9,6 @@ import { listClientAssignmentOptions } from "@/features/clients/server-fns";
 import { listWorkQueue } from "@/features/work-items/server-fns";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
 import { boardFiltersFromSearch, type AnnualReturnBoardSearch } from "../board-filters";
-import { boardMetrics } from "../board-metrics";
 import { annualReturnQueryKeys } from "../query-keys";
 import {
   getAnnualReturnBoardTotals,
@@ -150,10 +149,6 @@ export function ProductionAnnualReturnCommandCenter({
   );
 
   const totals = totalsQuery.data;
-  // highRisk stays derived from the loaded rows and is labelled as such:
-  // riskForCase computes it from checklist, payment and filing state, and
-  // reproducing that in SQL is exactly the drift the repository warns about.
-  const pageMetrics = boardMetrics(cases, today);
 
   function update(patch: Partial<AnnualReturnBoardSearch>) {
     onSearchChange?.({ ...search, ...patch });
@@ -236,15 +231,25 @@ export function ProductionAnnualReturnCommandCenter({
         </p>
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <Metric label="Due in 7 days" value={totals?.dueIn7 ?? 0} />
-        <Metric label="Due in 30 days" value={totals?.dueIn30 ?? 0} />
-        <Metric label="Overdue" value={totals?.overdue ?? 0} />
-        <Metric label="High risk (loaded)" value={pageMetrics.highRisk} />
-        <Metric label="Missing documents" value={totals?.missingDocuments ?? 0} />
-        <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
-        <Metric label="Cases in scope" value={totals?.total ?? 0} />
+      {totalsQuery.isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          未取得當前範圍統計。請重新載入；已讀取案件仍可查閱。
+        </p>
+      ) : null}
+      <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
+        <Metric label="Due in 7 days" value={totals?.dueIn7 ?? null} />
+        <Metric label="Due in 30 days" value={totals?.dueIn30 ?? null} />
+        <Metric label="逾期未完成（案）" value={totals?.overdueCases ?? null} />
+        <Metric label="High risk (scope)" value={totals?.highRisk ?? null} />
+        <Metric label="待核對文件（份）" value={totals?.missingDocumentCount ?? null} />
+        <Metric label="有待核對文件（案）" value={totals?.casesWithMissingDocuments ?? null} />
+        <Metric label="Payment pending" value={totals?.paymentPending ?? null} />
+        <Metric label="Cases in scope" value={totals?.total ?? null} />
       </div>
+      <p className="text-xs text-muted-foreground">
+        統計覆蓋目前完整授權及篩選範圍；未完成指標排除
+        Filed／Completed。待核對包括已收到但未覆核文件，追件原因以案件 readiness 為準。
+      </p>
       <p className="text-sm text-muted-foreground">
         {includeFixtures
           ? "診斷範圍：包含測試資料；測試與歷史資料不會外發。"
@@ -451,11 +456,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="rounded-md border bg-background px-3 py-3">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-2 text-lg font-semibold">{value}</p>
+      <p className="mt-2 text-lg font-semibold">{value ?? "—"}</p>
     </div>
   );
 }

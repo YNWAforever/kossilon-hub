@@ -83,11 +83,32 @@ function renderBoard(
 }
 
 describe("production annual return command center", () => {
+  it("does not show unavailable whole-scope totals as zero while keeping readable rows", async () => {
+    serverFns.getAnnualReturnBoardTotals.mockRejectedValueOnce(new Error("private db error"));
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ companyName: "Readable scoped case" })],
+      nextCursor: null,
+    });
+    renderBoard();
+    await screen.findByText("Readable scoped case");
+    expect(
+      await screen.findByText("未取得當前範圍統計。請重新載入；已讀取案件仍可查閱。"),
+    ).toBeTruthy();
+    expect(screen.getByText("Cases in scope").parentElement?.textContent).toContain("—");
+    expect(screen.queryByText("private db error")).toBeNull();
+  });
   beforeEach(() => {
     serverFns.listAnnualReturnCasePage.mockReset();
     serverFns.listWorkQueue.mockReset();
     serverFns.listWorkQueue.mockResolvedValue([]);
     serverFns.getAnnualReturnBoardTotals.mockResolvedValue({
+      businessDate: "2026-10-01",
+      activeCases: 1,
+      overdueCases: 0,
+      highRisk: 0,
+      missingDocumentCount: 0,
+      casesWithMissingDocuments: 0,
+      assignedToMe: 1,
       total: 1,
       overdue: 0,
       dueIn7: 0,

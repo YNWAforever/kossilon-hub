@@ -1,16 +1,10 @@
 import "dotenv/config";
-import { readFileSync } from "node:fs";
+
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWhatsAppRepository } from "@/features/whatsapp/repository";
 import * as notificationOutbox from "@/features/notifications/outbox";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
-import {
-  createAnnualReturnRepository,
-  hongKongBusinessDate,
-  DASHBOARD_METRICS_SCAN_LIMIT,
-  DEFAULT_CASE_LIMIT,
-  RISK_FILTER_SCAN_LIMIT,
-} from "./repository";
+import { createAnnualReturnRepository, hongKongBusinessDate } from "./repository";
 import { assertAnnualReturnStatusActionAllowed } from "./server-fns";
 import type { AnnualReturnStatus, ChecklistStatus, PaymentStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
@@ -959,16 +953,13 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
     await expect(
       julyFiveRepository.listCases({ includeFixtures: true, overdueOnly: true }),
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveLength(0);
 
     const overdueCases = await julyTwentyEightRepository.listCases({
       includeFixtures: true,
       overdueOnly: true,
     });
-    expect(overdueCases.map((case_) => case_.companyName)).toEqual([
-      "Victoria Peak Holdings Ltd",
-      "Kowloon Textiles Ltd",
-    ]);
+    expect(overdueCases.map((case_) => case_.companyName)).toEqual(["Kowloon Textiles Ltd"]);
   });
 
   it(
@@ -978,7 +969,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
       await expect(
         repository.dashboardMetrics("2026-07-05", USER_AMY_ID, { includeFixtures: true }),
-      ).resolves.toEqual({
+      ).resolves.toMatchObject({
         dueIn7: 0,
         dueIn30: 1,
         overdue: 0,
@@ -991,7 +982,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       await expect(
         repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID, { includeFixtures: true }),
       ).resolves.toMatchObject({
-        assignedToMe: 1,
+        assignedToMe: 0,
       });
     },
     INTEGRATION_TEST_TIMEOUT_MS,
@@ -2513,74 +2504,6 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
-});
-
-/**
- * risk, missingDocuments and overdueOnly used to be applied in JS *after* the SQL
- * LIMIT, so past DEFAULT_CASE_LIMIT a filtered board silently omitted matches and
- * the dashboard tiles counted the same truncated page. Two of the three are SQL
- * predicates now; the third scans a wider window.
- */
-describe("case filters narrow before the limit", () => {
-  const source = readFileSync(new URL("./repository.ts", import.meta.url), "utf8");
-  const selectCaseRows = source.slice(
-    source.indexOf("async function selectCaseRows"),
-    source.indexOf("async function hydrateCases"),
-  );
-
-  it("filters overdue cases in SQL", () => {
-    expect(selectCaseRows).toContain("arc.filing_due_date <");
-  });
-
-  it("filters missing documents in SQL", () => {
-    expect(selectCaseRows).toContain("annual_return_checklist_items i");
-    expect(selectCaseRows).toContain("i.required = true");
-  });
-
-  it("leaves only the derived risk filter to run after hydration", () => {
-    const hydrated = source.slice(
-      source.indexOf("function caseMatchesHydratedFilters"),
-      source.indexOf("function countOutstandingRequiredEvidence"),
-    );
-
-    expect(hydrated).toContain("filters.risk");
-    expect(hydrated).not.toContain("missingDocuments");
-    expect(hydrated).not.toContain("overdueOnly");
-  });
-
-  it("scans a wider window when the derived risk filter is active", () => {
-    expect(RISK_FILTER_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    expect(selectCaseRows).toContain("RISK_FILTER_SCAN_LIMIT");
-  });
-
-  it("counts dashboard tiles over more than one page of cases, within the actor's scope", () => {
-    expect(DASHBOARD_METRICS_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    // The tiles were firm-wide for every role while the board was scoped, so a
-    // Staff user saw headline numbers for books they cannot open.
-    expect(source).toContain("scope: CaseFilters = {}");
-    expect(source).toContain("{ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }");
-    expect(source).toContain("limit: DASHBOARD_METRICS_SCAN_LIMIT");
-  });
-
-  // The SQL EXISTS clause and hasOutstandingRequiredEvidence must agree, or a
-  // filtered board and the case detail behind it disagree about the same case.
-  it("keeps the SQL predicate identical to hasOutstandingRequiredEvidence", () => {
-    const js = source.slice(
-      source.indexOf("function hasOutstandingRequiredEvidence"),
-      source.indexOf("function hasText"),
-    );
-
-    for (const [jsClause, sqlClause] of [
-      ["item.required", "i.required = true"],
-      ['item.status !== "Verified"', "i.status <> 'Verified'"],
-      ["item.receivedAt === null", "i.received_at is null"],
-      ["item.verifiedAt === null", "i.verified_at is null"],
-      ["item.documentId === null", "i.document_id is null"],
-    ]) {
-      expect(js, `JS side missing ${jsClause}`).toContain(jsClause);
-      expect(selectCaseRows, `SQL side missing ${sqlClause}`).toContain(sqlClause);
-    }
-  });
 });
 
 describe.skipIf(!databaseUrl)("createCase", () => {

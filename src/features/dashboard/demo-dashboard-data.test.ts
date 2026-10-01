@@ -219,7 +219,9 @@ describe("demoDashboardDependencies", () => {
     }
 
     // Not the all-zero fallback — that is the defect this whole plan fixes.
-    const total = Object.values(metrics).reduce((sum, value) => sum + value, 0);
+    const total = Object.values(metrics)
+      .filter((value): value is number => typeof value === "number")
+      .reduce((sum, value) => sum + value, 0);
     expect(total).toBeGreaterThan(0);
   });
 });
