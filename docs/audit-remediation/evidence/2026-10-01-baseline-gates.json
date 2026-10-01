@@ -1,0 +1,92 @@
+{
+  "sourceSha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "environment": "Windows; Node22.23.3; Bun1.3.14; dedicated Postgres17 localhost55441",
+  "commands": [
+    "bun install --frozen-lockfile",
+    "bun scripts/db-migrate.ts",
+    "bun scripts/db-seed-annual-return.ts",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run test",
+    "npm run verify:firm -- --dry-run",
+    "npm run build",
+    "npm run verify:dev-server-imports"
+  ],
+  "tests": {
+    "failed": 0,
+    "files": 175,
+    "passed": 1752,
+    "skipped": 0
+  },
+  "lint": {
+    "warnings": 1,
+    "errors": 0
+  },
+  "builtScheduledHook": true,
+  "productionWrites": 0,
+  "gates": [
+    {
+      "gate": "install",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\install.log",
+      "sha256": "929b7db0d5969402a800cc4575565910803b562d4d1cb5430f19239cee8e4f7e",
+      "tail": "bun install v1.3.14 (0d9b296a)\n\nChecked 725 installs across 860 packages (no changes) [9.96s]"
+    },
+    {
+      "gate": "migrate",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\migrate.log",
+      "sha256": "073b171a43079721ed82524c05f85f08e852857078b3fce2447d58488c3e49d0",
+      "tail": "Applied 0023_document_scan_jobs_and_quarantine_retention.sql\nApplied 0024_link_uploads_to_checklist_items.sql\nApplied 0025_nar_import_staging.sql\nApplied 0026_case_parties_and_requirement_instances.sql\nApplied 0027_document_versions.sql\nApplied 0028_document_analysis_jobs_and_findings.sql\nApplied 0029_whatsapp_send_mode.sql\nApplied 0030_company_data_origin.sql\nApplied 0031_whatsapp_message_media.sql\nApplied 0032_package_handoffs_and_returns.sql\nApplied 0033_maintenance_runs.sql\nApplied 0034_notification_outbox_dispatch_marker.sql"
+    },
+    {
+      "gate": "seed",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\seed.log",
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "tail": "Seeded 3 companies and annual return cases."
+    },
+    {
+      "gate": "lint",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\lint.log",
+      "sha256": "d824a8d4bc3f44d5bfea8c9af37d90be59f08aef67d3c0dff98bfb3020c8dd30",
+      "tail": "\n> lint\n> eslint . --ignore-pattern .worktrees/**\n\n\nC:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\src\\routes\\work-queue.tsx\n  34:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components\n\n✖ 1 problem (0 errors, 1 warning)\n"
+    },
+    {
+      "gate": "typecheck",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "tail": "\n> typecheck\n> tsc --noEmit\n"
+    },
+    {
+      "gate": "test",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\test.log",
+      "sha256": "dcbc2347e177709a6c83c8b993f401ff8ab35c01ec788ee887bbd3014819c039",
+      "tail": "\n RUN  v4.1.9 C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree\n\n[tanstack-router] These exports from \"C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/src/routes/login.tsx\" will not be code-split and will increase your bundle size:\n- LoginPage\nFor the best optimization, these items should either have their export statements removed, or be imported from another location that is not a route file.\n\n Test Files  175 passed (175)\n      Tests  1752 passed (1752)\n   Start at  12:06:43\n   Duration  129.13s (transform 56.56s, setup 0ms, import 176.56s, tests 148.67s, environment 256.59s)\n"
+    },
+    {
+      "gate": "predeploy",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\predeploy.log",
+      "sha256": "b838c05856e4d299694a4b0470e809d2c6fc6175702c9690d019d169d3205cdd",
+      "tail": "PASS neon-auth-capability\nPASS cron\nBLOCKED database\nBLOCKED storage\nBLOCKED malware-scanner\nBLOCKED whatsapp\nBLOCKED email\nBLOCKED backups\nBLOCKED browser-evidence\nBLOCKED live bindings FIRM_ID, NEON_AUTH_URL, NEON_AUTH_COOKIE_SECRET, DATABASE_URL, DOCUMENTS_BUCKET, WOZTELL_API_BASE_URL, WOZTELL_ACCESS_TOKEN, WOZTELL_CHANNEL_ID, WOZTELL_WEBHOOK_SECRET, EMAIL_FROM, RESEND_API_KEY, RESEND_FROM (dry-run does not read or print secret values)\nBLOCKED external provisioning: Neon Auth, R2, WOZTELL, email, malware scanner, backups\nPASS dry-run safety: 36 read operations; 0 network calls and 0 resource writes performed"
+    },
+    {
+      "gate": "build",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\build.log",
+      "sha256": "9a8834cd8177a169d5b5fa2a2709dd494caead256484419fcb2181c5caaffa51",
+      "tail": ".output/server/_libs/pdfjs-dist.mjs                                756.77 kB │ gzip: 169.35 kB\n.output/server/_chunks/router.mjs                                  884.64 kB │ gzip: 169.27 kB\n.output/server/_libs/unpdf.mjs                                   2,093.22 kB │ gzip: 549.02 kB\n\n✓ built in 2.62s\n[nitro] i Using auto generated worker name: tanstack-start-ts-documents-kossilon-hub-audit-t03-readiness-worktree\ni Generated .output/server/wrangler.json\ni Generated .wrangler/deploy/config.json\ni Generated .output/public/_headers\ni Generated .output/nitro.json\n[nitro] √ You can preview this build using npx vite preview\n[nitro] √ You can deploy this build using npx nitro deploy --prebuilt"
+    },
+    {
+      "gate": "dev-imports",
+      "exitCode": 0,
+      "log": ".worktrees\\audit-baseline-20261001\\dev-imports.log",
+      "sha256": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7",
+      "tail": "PASS request /admin\nPASS request /annual-returns\nPASS request /annual-returns/11111111-1111-4111-8111-111111111111\nPASS request /documents\nPASS request /login\nPASS request /payments\nPASS request /portal\nPASS request /settings\nPASS request /whatsapp\nPASS request /whatsapp/automation\nPASS request /work-queue\nPASS no import-protection violation in dev server output"
+    }
+  ]
+}

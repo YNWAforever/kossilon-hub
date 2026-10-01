@@ -1,0 +1,163 @@
+{
+  "capturedAt": "2026-10-01",
+  "operation": "read-only",
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb"
+  },
+  "web": {
+    "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "state": "READY"
+  },
+  "inventory": {
+    "ledger": [
+      "0001_annual_return_control_center.sql",
+      "0002_harden_annual_return_schema.sql",
+      "0003_annual_return_audit_events.sql",
+      "0004_retain_annual_return_audit_events.sql",
+      "0005_whatsapp_integration_foundation.sql",
+      "0006_production_assignment_sla_foundation.sql",
+      "0007_whatsapp_inbox_ordering_indexes.sql",
+      "0008_client_register.sql",
+      "0009_reclaim_stranded_outbox_rows.sql",
+      "0010_index_timeline_and_upload_intent_lookups.sql",
+      "0011_whatsapp_delivery_receipts.sql",
+      "0012_annual_return_reminder_events.sql",
+      "0013_checklist_templates.sql",
+      "0014_generalize_work_item_case_reference.sql",
+      "0015_officers_and_shareholdings.sql",
+      "0016_significant_controllers_and_dr.sql",
+      "0017_incorporation_intake.sql",
+      "0018_recurring_service_subscriptions.sql",
+      "0019_corporate_change_requests.sql",
+      "0020_corporate_change_work_items.sql",
+      "0021_whatsapp_session_window_indexes.sql",
+      "0022_notification_outbox_delivery.sql",
+      "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "0024_link_uploads_to_checklist_items.sql",
+      "0025_nar_import_staging.sql",
+      "0026_case_parties_and_requirement_instances.sql",
+      "0027_document_versions.sql",
+      "0028_document_analysis_jobs_and_findings.sql",
+      "0029_whatsapp_send_mode.sql",
+      "0030_company_data_origin.sql",
+      "0031_whatsapp_message_media.sql",
+      "0032_package_handoffs_and_returns.sql",
+      "0033_maintenance_runs.sql",
+      "0034_notification_delivery_attempts.sql",
+      "0035_maintenance_job_runs.sql",
+      "0036_bulk_operations.sql",
+      "0037_bulk_scheduler_job.sql",
+      "0038_nar_import_preview.sql",
+      "0039_nar_import_approval_apply.sql",
+      "0040_payment_reconciliation.sql",
+      "0041_filing_packages.sql",
+      "0042_manual_package_submission.sql",
+      "0043_filing_return_intake.sql",
+      "0044_message_preview.sql",
+      "0045_whatsapp_media_download.sql",
+      "0046_staff_lifecycle.sql",
+      "0047_checklist_template_versions.sql",
+      "0048_case_assignment_revision.sql",
+      "0049_bulk_case_assign_action.sql",
+      "0050_client_assignment_revision.sql",
+      "0051_bulk_client_assign_action.sql",
+      "0052_resource_tags.sql",
+      "0053_bulk_tag_action.sql",
+      "0054_bulk_reminder_drafts.sql",
+      "0055_bulk_domain_actions.sql",
+      "0056_document_analysis_context.sql",
+      "0057_import_preview_scale.sql",
+      "0058_import_apply_selection_limit.sql",
+      "0059_nar_import_stage_jobs.sql",
+      "0060_nar_import_stage_error_detail.sql",
+      "0061_subscription_reminder_drafts.sql",
+      "0062_legacy_filing_completion_eligibility.sql",
+      "0063_work_items_unconfigured_sla.sql",
+      "0064_work_item_sla_policy_attachment.sql",
+      "0065_bulk_sla_policy_attach.sql",
+      "0066_nar_import_scheduler_job.sql"
+    ],
+    "queues": {
+      "analysis": 14,
+      "notifications": 4
+    },
+    "database": "neondb",
+    "origin_counts": [
+      {
+        "count": 3,
+        "origin": "client"
+      }
+    ],
+    "dispatch_columns": [],
+    "dispatch_indexes": [
+      {
+        "name": "notification_outbox_idempotency_key_key",
+        "definition": "CREATE UNIQUE INDEX notification_outbox_idempotency_key_key ON public.notification_outbox USING btree (idempotency_key)"
+      }
+    ],
+    "maintenance_columns": [
+      "id",
+      "scheduled_for",
+      "started_at",
+      "finished_at",
+      "duration_ms",
+      "outcome",
+      "passes",
+      "failed_passes",
+      "failure_summary",
+      "trigger_source",
+      "created_at"
+    ]
+  },
+  "recentScheduledRuns": [
+    {
+      "id": "8fc1e4c7-a75f-4f8b-96a8-23a65908db7c",
+      "scheduled_for": "2026-09-30T01:55:00.000Z",
+      "started_at": "2026-09-30T01:55:14.448Z",
+      "finished_at": "2026-09-30T01:55:21.103Z",
+      "outcome": "succeeded",
+      "trigger_source": "scheduled",
+      "failure_summary": null
+    },
+    {
+      "id": "636cecfe-ed03-4580-a888-2dfbd806193f",
+      "scheduled_for": "2026-09-30T01:50:00.000Z",
+      "started_at": "2026-09-30T01:50:14.227Z",
+      "finished_at": "2026-09-30T01:50:21.213Z",
+      "outcome": "succeeded",
+      "trigger_source": "scheduled",
+      "failure_summary": null
+    },
+    {
+      "id": "c8c75aa7-50ae-4922-9649-25373046753f",
+      "scheduled_for": "2026-09-30T01:45:00.000Z",
+      "started_at": "2026-09-30T01:45:14.738Z",
+      "finished_at": "2026-09-30T01:45:21.403Z",
+      "outcome": "succeeded",
+      "trigger_source": "scheduled",
+      "failure_summary": null
+    },
+    {
+      "id": "58b5dc6a-a36c-4ff3-82ff-751b657ba0bc",
+      "scheduled_for": "2026-09-30T01:40:00.000Z",
+      "started_at": "2026-09-30T01:40:14.327Z",
+      "finished_at": "2026-09-30T01:40:21.036Z",
+      "outcome": "succeeded",
+      "trigger_source": "scheduled",
+      "failure_summary": null
+    },
+    {
+      "id": "d4aef079-60c1-4722-a606-50e3d3aa734e",
+      "scheduled_for": "2026-09-30T01:35:00.000Z",
+      "started_at": "2026-09-30T01:35:14.583Z",
+      "finished_at": "2026-09-30T01:35:26.106Z",
+      "outcome": "succeeded",
+      "trigger_source": "scheduled",
+      "failure_summary": null
+    }
+  ],
+  "vercelProjectLookup": "unavailable: get_project returned error_code; no binding presence inferred"
+}
