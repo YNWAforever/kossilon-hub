@@ -59,6 +59,7 @@ export const EXPECTED_MIGRATIONS = [
   "0032_package_handoffs_and_returns.sql",
   "0033_maintenance_runs.sql",
   "0034_notification_outbox_dispatch_marker.sql",
+  "0067_repair_outbox_dispatch_marker.sql",
 ] as const;
 
 export type SchemaLedger = {
@@ -73,6 +74,8 @@ export type SchemaLedger = {
   present: boolean;
   /** Migration file names the ledger records, in whatever order it returns. */
   applied: readonly string[];
+  /** Only actual ledger hash columns; absent historical hashes stay unknown. */
+  hashes?: Readonly<Record<string, string | null>>;
 };
 
 export type SchemaHealthState =
@@ -166,15 +169,96 @@ export function schemaHealthOf(input: {
       ...shared,
       state: "ahead",
       summary:
-        `資料庫有 ${ahead.length} 個此版本不認識的遷移，代表它已被較新的部署更新過，而目前執行的是舊版程式。` +
-        "請不要執行遷移，先處理部署順序。",
+        `資料庫有 ${ahead.length} 個此版本不認識的遷移；可能來自不同部署或歷史命名，單靠記錄不能判斷實體結構。` +
+        "請不要執行遷移，先核對部署順序及實體結構。",
     };
   }
 
   return {
     ...shared,
     state: "current",
-    summary: `資料庫結構與此版本一致，${expectedCount} 個遷移全部已套用。`,
+    summary: `${expectedCount} 個預期遷移均有紀錄；實體欄位及索引仍須另行核對。`,
+  };
+}
+
+export type SchemaFact = {
+  key: string;
+  present: boolean | null;
+  expected: string;
+  observed: string | null;
+  migrationId?: string;
+};
+
+export type SchemaAliasEvidence = {
+  expectedId: string;
+  recordedId: string;
+  equivalent: boolean;
+  evidence: string;
+};
+
+/** Read-only comparison. A physical contract is scoped to the supplied facts. */
+export function auditSchemaReadiness(input: {
+  expected: readonly string[];
+  expectedHashes?: Readonly<Record<string, string>>;
+  ledger: SchemaLedger;
+  facts: readonly SchemaFact[];
+  aliases?: readonly SchemaAliasEvidence[];
+}) {
+  const ledger = schemaHealthOf(input);
+  const expected = new Set(input.expected);
+  const recorded = new Set(input.ledger.applied);
+  const reconciledAliases = (input.aliases ?? []).filter(
+    (alias) =>
+      alias.equivalent &&
+      alias.evidence.trim() &&
+      expected.has(alias.expectedId) &&
+      recorded.has(alias.recordedId),
+  );
+  const aliasIds = new Set(reconciledAliases.map((alias) => alias.recordedId));
+  const unknownIds = ledger.ahead.filter((id) => !aliasIds.has(id));
+  const physicalState = input.facts.some((fact) => fact.present === false)
+    ? ("missing-ddl" as const)
+    : input.facts.length === 0 || input.facts.some((fact) => fact.present === null)
+      ? ("unknown" as const)
+      : ("verified" as const);
+  const hashes = input.expected.map((id) => {
+    const expectedHash = input.expectedHashes?.[id] ?? null;
+    const recordedHash = input.ledger.hashes?.[id] ?? null;
+    return {
+      id,
+      expected: expectedHash,
+      recorded: recordedHash,
+      state:
+        !expectedHash || !recordedHash
+          ? ("unknown" as const)
+          : expectedHash === recordedHash
+            ? ("match" as const)
+            : ("mismatch" as const),
+    };
+  });
+  const ledgerDrift =
+    ledger.state !== "current" || hashes.some((hash) => hash.state === "mismatch");
+  return {
+    expectedIds: [...input.expected],
+    recordedIds: [...input.ledger.applied],
+    ledger,
+    hashes,
+    facts: [...input.facts],
+    physicalState,
+    unknownIds,
+    reconciledAliases,
+    classification:
+      physicalState === "unknown"
+        ? ("unknown-physical" as const)
+        : physicalState === "missing-ddl"
+          ? ledgerDrift
+            ? ("ledger-and-ddl" as const)
+            : ("missing-ddl" as const)
+          : ledgerDrift
+            ? ("ledger-only" as const)
+            : ("verified" as const),
+    // Never authorises a production mutation. This is a diagnostic precondition.
+    safeToMigrate: !ledgerDrift && physicalState === "verified",
   };
 }
 
