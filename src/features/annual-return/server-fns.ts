@@ -667,6 +667,7 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
     case_: caseItem,
     actorId,
     recipientName: data.recipientName,
+    actorAuthUserId: actor.authUserId,
     recipientPhone: data.recipientPhone,
     today: hongKongBusinessDate(),
   });

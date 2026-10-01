@@ -13,6 +13,25 @@ import {
   queueWhatsAppTemplateMessageInputSchema,
 } from "./server-fns";
 
+it("reports presence only and never claims runtime verification from bindings", () => {
+  const result = getWhatsAppIntegrationStatusForEnv({
+    WOZTELL_API_BASE_URL: "https://bot.api.woztell.com",
+    WOZTELL_ACCESS_TOKEN: "owned-token",
+    WOZTELL_CHANNEL_ID: "owned-channel",
+    WOZTELL_WEBHOOK_SECRET: "owned-secret",
+  });
+  expect(result).toMatchObject({
+    verificationStatus: "not_verified",
+    bindingPresence: {
+      WOZTELL_API_BASE_URL: true,
+      WOZTELL_ACCESS_TOKEN: true,
+      WOZTELL_CHANNEL_ID: true,
+      WOZTELL_WEBHOOK_SECRET: true,
+    },
+  });
+  expect(JSON.stringify(result)).not.toContain("owned-token");
+});
+
 describe("WhatsApp server function validation", () => {
   it("validates inbound webhook processing payloads", () => {
     const parsed = processWhatsAppInboundWebhookInputSchema.parse({
@@ -161,6 +180,13 @@ describe("WhatsApp server function validation", () => {
 
   it("reports simulated delivery without requiring WOZTELL secrets", () => {
     expect(getWhatsAppIntegrationStatusForEnv({}, "simulated")).toEqual({
+      verificationStatus: "not_verified",
+      bindingPresence: {
+        WOZTELL_API_BASE_URL: false,
+        WOZTELL_ACCESS_TOKEN: false,
+        WOZTELL_CHANNEL_ID: false,
+        WOZTELL_WEBHOOK_SECRET: false,
+      },
       provider: "simulated",
       deliveryMode: "simulated",
       webhookConfigured: false,
@@ -183,6 +209,13 @@ describe("WhatsApp server function validation", () => {
     ).toEqual({
       provider: "woztell",
       deliveryMode: "blocked",
+      verificationStatus: "not_verified",
+      bindingPresence: {
+        WOZTELL_API_BASE_URL: false,
+        WOZTELL_ACCESS_TOKEN: true,
+        WOZTELL_CHANNEL_ID: false,
+        WOZTELL_WEBHOOK_SECRET: true,
+      },
       webhookConfigured: true,
       liveSendConfigured: false,
       missingLiveEnvVars: ["WOZTELL_API_BASE_URL", "WOZTELL_CHANNEL_ID"],
@@ -198,6 +231,13 @@ describe("WhatsApp server function validation", () => {
     ).toEqual({
       provider: "woztell",
       deliveryMode: "live",
+      verificationStatus: "not_verified",
+      bindingPresence: {
+        WOZTELL_API_BASE_URL: true,
+        WOZTELL_ACCESS_TOKEN: true,
+        WOZTELL_CHANNEL_ID: true,
+        WOZTELL_WEBHOOK_SECRET: true,
+      },
       webhookConfigured: true,
       liveSendConfigured: true,
       missingLiveEnvVars: [],
@@ -242,7 +282,7 @@ describe("WhatsApp inbox reads", () => {
     await expect(
       listWhatsAppConversationsForActor(actor(), { limit: 25 }, { repository }),
     ).resolves.toEqual([conversation]);
-    expect(repository.listConversations).toHaveBeenCalledWith({ limit: 25 });
+    expect(repository.listConversations).toHaveBeenCalledWith({ limit: 25, actor: actor() });
   });
 
   it("refuses a client actor", async () => {

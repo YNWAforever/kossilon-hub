@@ -70,6 +70,7 @@ export const EXPECTED_MIGRATIONS = [
   "0075_nar_legacy_year_review.sql",
   "0076_document_scan_review_versions.sql",
   "0077_document_analysis_evidence.sql",
+  "0078_whatsapp_manual_intake.sql",
 ] as const;
 
 export type SchemaLedger = {

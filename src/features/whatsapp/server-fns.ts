@@ -88,6 +88,10 @@ export function getWhatsAppIntegrationStatusForEnv(
         : "blocked";
 
   return {
+    verificationStatus: "not_verified" as const,
+    bindingPresence: Object.fromEntries(
+      WHATSAPP_LIVE_PROVIDER_ENV_KEYS.map((key) => [key, !missingLiveEnvVars.includes(key)]),
+    ),
     provider: providerMode === "simulated" ? ("simulated" as const) : ("woztell" as const),
     deliveryMode,
     webhookConfigured:
@@ -267,7 +271,11 @@ export async function queueWhatsAppTemplateMessageForActor(
     "record_reminder",
   );
 
-  return dependencies.repository.queueOutboundTemplateMessage({ ...input, actorId: staff.userId });
+  return dependencies.repository.queueOutboundTemplateMessage({
+    ...input,
+    actorId: staff.userId,
+    actorAuthUserId: staff.authUserId,
+  });
 }
 
 export type WhatsAppInboxDependencies = {
@@ -275,11 +283,9 @@ export type WhatsAppInboxDependencies = {
 };
 
 /**
- * Staff-only, and scoped no further than that on purpose:
- * `whatsapp_contacts.company_id` is nullable, so an inbound message the matcher
- * could not attach to a company belongs to no company at all. There is no client
- * scope to fall back on, which is exactly why a Client actor is refused outright
- * rather than shown a filtered view.
+ * Derived staff authority scopes every message before contact aggregation.
+ * Unmapped intake is Admin-only; a shared phone cannot grant access to another
+ * company's messages. Client actors never receive the internal inbox.
  */
 export async function listWhatsAppConversationsForActor(
   actor: AuthenticatedActor,
@@ -287,7 +293,7 @@ export async function listWhatsAppConversationsForActor(
   dependencies: WhatsAppInboxDependencies,
 ): Promise<WhatsAppConversation[]> {
   assertStaffAccess(actor);
-  return dependencies.repository.listConversations(input);
+  return dependencies.repository.listConversations({ ...input, actor });
 }
 
 export async function listWhatsAppConversationMessagesForActor(
@@ -296,7 +302,7 @@ export async function listWhatsAppConversationMessagesForActor(
   dependencies: WhatsAppInboxDependencies,
 ): Promise<WhatsAppConversationMessage[]> {
   assertStaffAccess(actor);
-  return dependencies.repository.listConversationMessages(input);
+  return dependencies.repository.listConversationMessages({ ...input, actor });
 }
 
 // Staff is asserted before a connection is acquired, so an unauthorised caller
@@ -352,8 +358,11 @@ export const getWhatsAppIntegrationStatus = createServerFn({ method: "GET" })
       import("@/features/auth/neon-auth-server"),
       import("@/server/provider-mode"),
     ]);
-    await requireStaffActor(getRequest());
-    return getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode());
+    const actor = await requireStaffActor(getRequest());
+    return {
+      ...getWhatsAppIntegrationStatusForEnv(process.env, currentProviderMode()),
+      canManageMapping: actor.role === "Admin",
+    };
   });
 
 // Inbound ingestion is NOT a server function. WOZTELL authenticates with an HMAC

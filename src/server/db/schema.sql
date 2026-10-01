@@ -1647,6 +1647,12 @@ create index if not exists whatsapp_message_media_unattached_idx
   on whatsapp_message_media (created_at)
   where document_id is null;
 
+-- from 0078_whatsapp_manual_intake.sql (historical media stays legacy)
+alter table whatsapp_messages add column if not exists mapping_revision integer not null default 0 check (mapping_revision >= 0);
+alter table whatsapp_message_media add column if not exists provider_media_kind text not null default 'legacy-wa-media' check (provider_media_kind in ('file','legacy-wa-media'));
+alter table whatsapp_message_media add column if not exists intake_intent_id uuid references document_upload_intents(id) on delete restrict;
+create index if not exists whatsapp_unmatched_receipt_idx on whatsapp_webhook_events ((coalesce(payload->'data'->>'messageId',payload->>'messageId')),received_at) where provider='woztell' and signature_valid and processing_status='ignored';
+
 -- from 0032_package_handoffs_and_returns.sql
 create table if not exists package_handoffs (
   id uuid primary key default gen_random_uuid(),
