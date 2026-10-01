@@ -3,7 +3,7 @@
   "findings": ["F10"],
   "date": "2026-10-02",
   "base": "55d9b2acb4a3a487a0f8d55212ac4d29b899cb84",
-  "candidate": "T16 source commit containing this evidence; PR07 whole review follows",
+  "candidate": "47fc115c7cf91824a2d0b96904dfeb45448988c2; final reviewed gates at422b822c6cc064b4208739bd2e5c6ebd168d31f8 in2026-10-02-pr07-gates.json",
   "environment": "LOCAL ONLY Node22.23.3/Bun1.3.14/Postgres17 localhost55441/kossilon_pr02_ci; synthetic corpus/injected actors/stub HTTP/OCR",
   "red": [
     {
