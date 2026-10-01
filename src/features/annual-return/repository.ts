@@ -1472,13 +1472,13 @@ export function createAnnualReturnRepository(
     await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, input.caseId);
       await assertCaseAssignmentVersion(tx, input.caseId, input.expectedVersion);
+      await lockActiveStaffUser(tx, input.actorId);
       const actor = await assertActorCanMutateLockedCase(
         tx,
         input.actorId,
         lockedCase,
         "assign_owner",
       );
-      await lockActiveStaffUser(tx, input.actorId);
       await lockActiveStaffUser(tx, input.ownerId);
       const children = await tx<
         { opposite_id: string | null }[]

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
+import { readSnapshotMembership } from "@/features/bulk-operations/membership";
 import {
   createBulkSelectionSnapshot,
   getBulkSnapshotMembership,
@@ -21,6 +22,7 @@ import type {
   BulkFilters,
   BulkSelection,
   BulkPreview,
+  BulkJobCursor,
 } from "@/features/bulk-operations/types";
 type Props = {
   actorScope: string;
@@ -86,12 +88,11 @@ function SelectionControls({
       page.map((i) => i.id),
     ],
     queryFn: () =>
-      getBulkSnapshotMembership({
-        data: {
-          snapshotId: selection.mode === "filtered_snapshot" ? selection.snapshotId : "",
-          ids: page.map((i) => i.id),
-        },
-      }),
+      readSnapshotMembership(
+        selection.mode === "filtered_snapshot" ? selection.snapshotId : "",
+        page.map((i) => i.id),
+        getBulkSnapshotMembership,
+      ),
     enabled: selection.mode === "filtered_snapshot",
     retry: false,
   });
@@ -315,9 +316,11 @@ function BulkJobProgress({
   onJobChange: (id: string | null) => void;
 }) {
   const client = useQueryClient();
-  const jobs = useQuery({
+  const jobs = useInfiniteQuery({
     queryKey: ["bulk-jobs", actorScope, "saved"],
-    queryFn: () => listBulkJobs({ data: {} }),
+    queryFn: ({ pageParam }) => listBulkJobs({ data: pageParam ? { cursor: pageParam } : {} }),
+    initialPageParam: undefined as BulkJobCursor | undefined,
+    getNextPageParam: (p) => p.nextCursor ?? undefined,
     retry: false,
   });
   const result = useInfiniteQuery({
@@ -383,14 +386,24 @@ function BulkJobProgress({
           onChange={(e) => onJobChange(e.target.value || null)}
         >
           <option value="">選擇工作以恢復進度</option>
-          {jobs.data?.map((j) => (
-            <option key={j.jobId} value={j.jobId}>
-              {new Date(j.createdAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })} ·{" "}
-              {j.total}筆 · {j.state}
-            </option>
-          ))}
+          {jobs.data?.pages
+            .flatMap((p) => p.jobs)
+            .map((j) => (
+              <option key={j.jobId} value={j.jobId}>
+                {new Date(j.createdAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })} ·{" "}
+                {j.total}筆 · {j.state}
+              </option>
+            ))}
         </select>
       </label>
+      {jobs.hasNextPage ? (
+        <button
+          disabled={jobs.isFetchingNextPage}
+          onClick={() => void jobs.fetchNextPage({ cancelRefetch: false })}
+        >
+          載入較早的工作
+        </button>
+      ) : null}
       {jobs.isError ? <p role="alert">未能讀取已保存工作，請重新載入。</p> : null}
       {jobId ? <button onClick={() => void result.refetch()}>刷新工作結果</button> : null}
       {first ? (

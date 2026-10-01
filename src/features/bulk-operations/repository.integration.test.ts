@@ -88,6 +88,137 @@ async function fixture(
   }
 }
 describe.skipIf(!url)("actual PostgreSQL resumable bulk assignments", () => {
+  it("rechecks single-case permission after an observed concurrent profile team move", async () =>
+    fixture(1, async (f) => {
+      const changing = createSqlClient(url!, { max: 1 }),
+        assigning = createSqlClient(url!, { max: 1 });
+      let release!: () => void;
+      const hold = new Promise<void>((r) => {
+        release = r;
+      });
+      let ready!: () => void;
+      const changed = new Promise<void>((r) => {
+        ready = r;
+      });
+      const [a] = await changing`select pg_backend_pid() pid`,
+        [b] = await assigning`select pg_backend_pid() pid`;
+      expect(a.pid).not.toBe(b.pid);
+      const mutation = changing.begin(async (tx) => {
+        await tx`update users set role='Staff',team_id=${other} where id=${f.actor.userId!}`;
+        await tx`update staff_profiles set role='Staff',team_id=${other} where user_id=${f.actor.userId!}`;
+        ready();
+        await hold;
+      });
+      await Promise.race([changed, mutation]);
+      const assignment = createAnnualReturnRepository({ sql: assigning }).assignOwner({
+        caseId: f.caseIds[0],
+        actorId: f.actor.userId!,
+        ownerId: f.assigneeId,
+      });
+      const settled = Promise.allSettled([mutation, assignment]);
+      let waited = false;
+      try {
+        for (let n = 0; n < 100; n++) {
+          const [state] =
+            await sql!`select wait_event_type from pg_stat_activity where pid=${b.pid}`;
+          if (state?.wait_event_type === "Lock") {
+            waited = true;
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 20));
+        }
+      } finally {
+        release();
+      }
+      try {
+        const results = await settled;
+        expect(waited).toBe(true);
+        expect(results[1]).toMatchObject({
+          status: "rejected",
+          reason: expect.objectContaining({
+            message: expect.stringMatching(/Only assigned staff/),
+          }),
+        });
+        const [audit] =
+          await sql!`select count(*)::int n from annual_return_audit_events where case_id=${f.caseIds[0]}`;
+        expect(audit.n).toBe(0);
+      } finally {
+        release();
+        await settled;
+        await Promise.all([changing.end(), assigning.end()]);
+      }
+    }));
+  it("queue snapshot excludes archived statuses while result reads retain completed work", async () =>
+    fixture(1, async (f) => {
+      await sql!.begin(async (tx) => {
+        for (const status of ["open", "in_progress", "blocked", "completed", "cancelled"]) {
+          const w = await ensureWorkItemForEvent(tx, {
+            companyId: f.companyId,
+            caseType: "annual_return",
+            annualReturnCaseId: f.caseIds[0],
+            sourceEventKey: crypto.randomUUID(),
+            sourceEventType: "test",
+            workType: "annual_return_case",
+            title: "Queue scope test",
+            teamId: team,
+          });
+          await tx`update work_items set status=${status},completed_at=case when ${status}='completed' then now() else null end where id=${w.id}`;
+        }
+      });
+      const repo = createBulkOperationsRepository({ sql: sql! });
+      expect(
+        (
+          await repo.createSnapshot(f.actor, {
+            resource: "work_item",
+            filters: { q: "Queue scope test", view: "team", activeOnly: true },
+          })
+        ).count,
+      ).toBe(3);
+      const [closed] =
+        await sql!`select id from work_items where annual_return_case_id=${f.caseIds[0]} and status='completed'`;
+      const p = await repo.preview(f.actor, {
+        resource: "work_item",
+        selection: { mode: "explicit_ids", ids: [closed.id] },
+        assignment: { target: "owner", assigneeId: f.assigneeId },
+      });
+      const j = await repo.execute(f.actor, {
+        previewId: p.previewId,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      expect((await repo.getJob(f.actor, { jobId: j.jobId })).items[0]).toMatchObject({
+        resourceId: closed.id,
+        state: "locked",
+      });
+    }));
+  it("recovers an older actionable job after twenty newer approvals through cursor history", async () =>
+    fixture(1, async (f) => {
+      const repo = createBulkOperationsRepository({ sql: sql! });
+      const p = await repo.preview(f.actor, {
+        resource: "annual_return_case",
+        selection: { mode: "explicit_ids", ids: f.caseIds },
+        assignment: { target: "owner", assigneeId: f.assigneeId },
+      });
+      const oldest = await repo.execute(f.actor, {
+        previewId: p.previewId,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      for (let i = 0; i < 20; i++)
+        await repo.execute(f.actor, {
+          previewId: p.previewId,
+          idempotencyKey: crypto.randomUUID(),
+        });
+      const page = await repo.listJobs(f.actor, {});
+      expect(page.jobs).toHaveLength(20);
+      expect(page.nextCursor).toBeTruthy();
+      const older = await repo.listJobs(f.actor, { cursor: page.nextCursor! });
+      expect(older.jobs.map((j) => j.jobId)).toEqual([oldest.jobId]);
+      await runBulkAssignmentChunk({
+        repository: repo,
+        actor: f.actor,
+        jobId: older.jobs[0].jobId,
+      });
+      expect((await repo.getJob(f.actor, { jobId: oldest.jobId })).counts.succeeded).toBe(1);
+    }));
   it("single and bulk case assignment preserve separation for every active child work item", async () =>
     fixture(1, async (f) => {
       await sql!.begin(async (tx) => {

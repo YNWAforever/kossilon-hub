@@ -45,7 +45,7 @@ const ids = Array.from(
 const page = ids.map((id, i) => ({ id, label: `Scoped case ${i + 1}` }));
 beforeEach(() => {
   Object.values(api).forEach((f) => f.mockReset());
-  api.jobs.mockResolvedValue([]);
+  api.jobs.mockResolvedValue({ jobs: [], nextCursor: null });
   api.assignees.mockResolvedValue([
     { id: assignee, name: "Mei Lam", teamName: "Annual return", role: "Staff", teamId: null },
   ]);
@@ -77,10 +77,31 @@ function setup() {
   return { ...rendered, element };
 }
 describe("explicit scope and durable bulk toolbar", () => {
+  it("loads older saved job pages after refresh", async () => {
+    api.jobs.mockImplementation(async ({ data }) =>
+      data.cursor
+        ? {
+            jobs: [
+              { jobId: ids[0], state: "partial", total: 100, createdAt: "2026-09-01T00:00:00Z" },
+            ],
+            nextCursor: null,
+          }
+        : { jobs: [], nextCursor: { id: snapshotId, createdAt: "2026-10-01T00:00:00.000001Z" } },
+    );
+    setup();
+    fireEvent.click(await screen.findByRole("button", { name: "載入較早的工作" }));
+    await screen.findByRole("option", { name: /100筆.*partial/ });
+    expect(api.jobs).toHaveBeenLastCalledWith({
+      data: { cursor: { id: snapshotId, createdAt: "2026-10-01T00:00:00.000001Z" } },
+    });
+  });
   it("shows business labels and allows safe failures on later result pages to be retried", async () => {
-    api.jobs.mockResolvedValue([
-      { jobId: snapshotId, state: "partial", total: 100, createdAt: "2026-10-01T00:00:00Z" },
-    ]);
+    api.jobs.mockResolvedValue({
+      jobs: [
+        { jobId: snapshotId, state: "partial", total: 100, createdAt: "2026-10-01T00:00:00Z" },
+      ],
+      nextCursor: null,
+    });
     api.get.mockResolvedValue({
       jobId: snapshotId,
       resource: "annual_return_case",
@@ -176,9 +197,12 @@ describe("explicit scope and durable bulk toolbar", () => {
     expect(screen.getByText("已選取0筆")).toBeTruthy();
   });
   it("recovers a persisted job after refresh and never automatically resumes unknown outcomes", async () => {
-    api.jobs.mockResolvedValue([
-      { jobId: snapshotId, state: "partial", total: 100, createdAt: "2026-10-01T00:00:00Z" },
-    ]);
+    api.jobs.mockResolvedValue({
+      jobs: [
+        { jobId: snapshotId, state: "partial", total: 100, createdAt: "2026-10-01T00:00:00Z" },
+      ],
+      nextCursor: null,
+    });
     api.get.mockResolvedValue({
       jobId: snapshotId,
       state: "partial",

@@ -153,6 +153,7 @@ export function WorkQueueRoute() {
   }, [items, owner, priority, query, sla, status, workType]);
   const bulkFilters: BulkFilters = {
     view,
+    activeOnly: true,
     ...(query.trim() ? { q: query.trim() } : {}),
     ...(owner === "unassigned" ? { unassigned: true } : owner !== "all" ? { ownerId: owner } : {}),
     ...(workType !== "all" ? { workType } : {}),

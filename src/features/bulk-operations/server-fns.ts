@@ -3,7 +3,14 @@ import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { BulkOperationsRepository } from "./repository";
 import { assertBulkManager } from "./authorization";
-import { snapshotSchema, previewSchema, executeSchema, jobSchema, resultsSchema } from "./types";
+import {
+  snapshotSchema,
+  previewSchema,
+  executeSchema,
+  jobSchema,
+  resultsSchema,
+  jobHistorySchema,
+} from "./types";
 export async function previewBulkForActor(
   actor: AuthenticatedActor,
   input: unknown,
@@ -62,10 +69,10 @@ export const getBulkJob = createServerFn({ method: "GET" })
     return repository.getJob(actor, data);
   });
 export const listBulkJobs = createServerFn({ method: "GET" })
-  .validator(z.object({}).strict())
-  .handler(async () => {
+  .validator(jobHistorySchema)
+  .handler(async ({ data }) => {
     const { actor, repository } = await context();
-    return repository.listJobs(actor);
+    return repository.listJobs(actor, data);
   });
 export const resumeBulkJob = createServerFn({ method: "POST" })
   .validator(jobSchema)

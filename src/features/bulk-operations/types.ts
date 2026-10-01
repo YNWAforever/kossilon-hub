@@ -51,6 +51,16 @@ export const executeSchema = z
   .object({ previewId: z.string().uuid(), idempotencyKey: z.string().min(16).max(120) })
   .strict();
 export const jobSchema = z.object({ jobId: z.string().uuid() }).strict();
+export const jobHistorySchema = z
+  .object({
+    cursor: z
+      .object({ createdAt: z.string().datetime(), id: z.string().uuid() })
+      .strict()
+      .optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+  })
+  .strict();
+export type BulkJobCursor = NonNullable<z.infer<typeof jobHistorySchema>["cursor"]>;
 export const resultsSchema = jobSchema
   .extend({
     cursor: z.number().int().min(0).optional(),

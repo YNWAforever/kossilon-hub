@@ -17,6 +17,7 @@ import {
   previewSchema,
   executeSchema,
   resultsSchema,
+  jobHistorySchema,
   type Assignment,
   type BulkResource,
   type BulkFilters,
@@ -117,6 +118,7 @@ export function createBulkOperationsRepository({
             "reviewerId",
             "teamId",
             "workType",
+            "activeOnly",
             "workStatus",
             "escalationState",
             "priority",
@@ -147,6 +149,7 @@ export function createBulkOperationsRepository({
    and (${filters.teamId ?? null}::uuid is null or w.team_id=${filters.teamId ?? null}::uuid) and (${filters.ownerId ?? null}::uuid is null or w.owner_id=${filters.ownerId ?? null}::uuid)
    and (${filters.reviewerId ?? null}::uuid is null or w.reviewer_id=${filters.reviewerId ?? null}::uuid) and (${filters.unassigned !== true} or w.owner_id is null)
    and (${filters.view !== "mine"} or w.owner_id=${actor.userId!}) and (${filters.view !== "breached"} or w.escalation_state='breach')
+   and (${filters.activeOnly !== true} or w.status in ('open','in_progress','blocked'))
    and (${filters.workType ?? null}::text is null or w.work_type=${filters.workType ?? null}) and (${filters.workStatus ?? null}::text is null or w.status=${filters.workStatus ?? null})
    and (${filters.escalationState ?? null}::text is null or w.escalation_state=${filters.escalationState ?? null}) and (${filters.priority ?? null}::text is null or (${filters.priority === "high"} and w.priority>=70) or (${filters.priority === "normal"} and w.priority<70))
    and (${q}::text is null or (w.title||' '||w.work_type||' '||c.company_name) ilike ${q} escape '\\') order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
@@ -568,18 +571,28 @@ export function createBulkOperationsRepository({
       return { reconciledCount: rows.length };
     });
   }
-  async function listJobs(actor: AuthenticatedActor) {
+  async function listJobs(
+    actor: AuthenticatedActor,
+    input: Parameters<typeof jobHistorySchema.parse>[0] = {},
+  ) {
     assertBulkManager(actor);
+    const data = jobHistorySchema.parse(input);
     const verified = await currentActor(sql, actor);
+    const limit = data.limit ?? 20;
     const rows = await sql<
       { id: string; state: JobResult["state"]; total: number; created_at: string }[]
-    >`select id,state,total,created_at::text from bulk_operation_jobs where actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} order by created_at desc,id desc limit 20`;
-    return rows.map((r) => ({
+    >`select id,state,total,to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') created_at from bulk_operation_jobs where actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and (${data.cursor?.createdAt ?? null}::timestamptz is null or (created_at,id)<(${data.cursor?.createdAt ?? null}::timestamptz,${data.cursor?.id ?? null}::uuid)) order by created_at desc,id desc limit ${limit + 1}`;
+    const jobs = rows.slice(0, limit).map((r) => ({
       jobId: r.id,
       state: r.state,
       total: r.total,
       createdAt: r.created_at,
     }));
+    const last = rows[limit - 1];
+    return {
+      jobs,
+      nextCursor: rows.length > limit ? { createdAt: last.created_at, id: last.id } : null,
+    };
   }
   return {
     createSnapshot,
