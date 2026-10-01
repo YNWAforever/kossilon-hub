@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import { rankAssignmentCandidates } from "./assignment";
 import { snapshotSla, thresholdFor } from "./sla";
 import { enqueueNotification } from "@/features/notifications/outbox";
@@ -540,6 +541,16 @@ export function createWorkItemRepository(
           throw new Error("Closed work items cannot be assigned.");
         }
         const assignmentTarget = input.assignmentTarget ?? "owner";
+        const currentActor = await lockActiveStaffUser(tx, input.assignedById);
+        if (
+          currentActor.role !== "Admin" &&
+          (currentActor.role !== "Manager" ||
+            !currentActor.team_id ||
+            currentActor.team_id !== item.teamId)
+        ) {
+          throw new Error("Forbidden: current Manager team or Admin required.");
+        }
+        await lockActiveStaffUser(tx, input.selectedUserId);
         const recommendations = await recommendationsFor(tx, item, readNow(), {
           assignmentTarget,
           requiredRole: input.requiredRole,

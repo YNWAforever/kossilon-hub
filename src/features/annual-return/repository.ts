@@ -4,6 +4,7 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import {
   buildRequirementInstances,
   checklistLookupFor,
@@ -1465,17 +1466,8 @@ export function createAnnualReturnRepository(
         lockedCase,
         "assign_owner",
       );
-      const ownerRows = await tx<{ id: string }[]>`
-        select id
-        from users
-        where id = ${input.ownerId}
-          and active = true
-        limit 1
-      `;
-
-      if (ownerRows.length !== 1) {
-        throw new Error("Annual return owner not found or inactive.");
-      }
+      await lockActiveStaffUser(tx, input.actorId);
+      await lockActiveStaffUser(tx, input.ownerId);
 
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases
