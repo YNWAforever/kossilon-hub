@@ -83,6 +83,39 @@ function renderBoard(
 }
 
 describe("production annual return command center", () => {
+  it("does not retain a delayed former actor staff directory in the new owner picker", async () => {
+    let oldResponse!: (rows: { id: string; name: string }[]) => void;
+    serverFns.listAssignableStaff
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            oldResponse = resolve;
+          }),
+      )
+      .mockResolvedValue([]);
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = renderBoard(false, {}, client);
+    await waitFor(() => expect(serverFns.listAssignableStaff).toHaveBeenCalledTimes(1));
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <ProductionAnnualReturnCommandCenter
+          search={{}}
+          actorScope={{
+            authUserId: "staff-auth",
+            userId: "staff",
+            role: "Staff",
+            teamId: "new-team",
+            active: true,
+          }}
+        />
+      </QueryClientProvider>,
+    );
+    oldResponse([{ id: crypto.randomUUID(), name: "Former Admin private employee" }]);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(screen.queryByRole("option", { name: "Former Admin private employee" })).toBeNull();
+    expect(serverFns.listAssignableStaff).toHaveBeenCalledTimes(2);
+  });
   it("does not show unavailable whole-scope totals as zero while keeping readable rows", async () => {
     serverFns.getAnnualReturnBoardTotals.mockRejectedValueOnce(new Error("private db error"));
     serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({

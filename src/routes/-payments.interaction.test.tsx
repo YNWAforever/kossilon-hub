@@ -175,6 +175,56 @@ describe("production payments route", () => {
     expect((screen.getByText("儲存憑證資料") as HTMLButtonElement).disabled).toBe(true);
     expect(serverFns.download).not.toHaveBeenCalled();
   });
+  it("can return unreadable proof without inventing amount/date or first recording a receipt", async () => {
+    serverFns.listAnnualReturnCases.mockResolvedValue([
+      {
+        id: crypto.randomUUID(),
+        companyName: "Unreadable company",
+        currentStatus: "Payment pending",
+        readiness: { sourceVersion: "a".repeat(32) },
+        payment: { id: crypto.randomUUID(), amount: 1800, evidenceEntries: [] },
+      },
+    ]);
+    const case_ = await serverFns.listAnnualReturnCases();
+    const documentId = crypto.randomUUID(),
+      proofVersionId = crypto.randomUUID();
+    serverFns.listDocuments.mockResolvedValue([
+      {
+        id: documentId,
+        caseId: case_[0].id,
+        category: "payment",
+        fileName: "unreadable.pdf",
+        uploadStatus: "available",
+        scanVerdictSource: "provider",
+        reviewStatus: "pending",
+        currentVersionId: proofVersionId,
+      },
+    ]);
+    serverFns.review.mockResolvedValue(case_[0]);
+    renderPayments();
+    await screen.findByText("Unreadable company");
+    expect((screen.getByLabelText("Receipt amount") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("Receipt date") as HTMLInputElement).value).toBe("");
+    fireEvent.change(screen.getByLabelText("Concrete return reason"), {
+      target: { value: "Amount and date are unreadable" },
+    });
+    fireEvent.click(screen.getByText("退回補傳"));
+    await waitFor(() =>
+      expect(serverFns.review).toHaveBeenCalledWith({
+        data: {
+          caseId: case_[0].id,
+          paymentId: case_[0].payment.id,
+          documentId,
+          proofVersionId,
+          expectedVersion: "a".repeat(32),
+          decision: "rejected",
+          reasonCode: "unreadable",
+          reasonText: "Amount and date are unreadable",
+        },
+      }),
+    );
+    expect(serverFns.record).not.toHaveBeenCalled();
+  });
 
   it("does not claim there is nothing to review when the query failed", async () => {
     // On error `data` is undefined so the filtered list is empty, and isLoading is

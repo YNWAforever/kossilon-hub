@@ -114,6 +114,9 @@ function PaymentEvidenceRow({
   const entry = payment?.evidenceEntries?.find(
     (e) => e.documentId === document.id && e.proofVersionId === versionId,
   );
+  const returned = payment?.proofReturns?.find(
+    (e) => e.documentId === document.id && e.proofVersionId === versionId,
+  );
   const safe = canApproveDocument(documentSafetyOf(document)),
     writable =
       !case_.lockedAt &&
@@ -181,7 +184,12 @@ function PaymentEvidenceRow({
         <SafeDocumentPreview document={document} />
       </div>
       <div className="space-y-2">
-        {entry ? (
+        {returned && !entry ? (
+          <p>
+            退回：{returned.reasonCode} — {returned.reasonText}
+            ；未記錄或入賬任何金額，請補傳後重新覆核。
+          </p>
+        ) : entry ? (
           <>
             <p>
               已存憑證金額：{money(entry.amount)} · 收款日期：{entry.receivedOn}
@@ -235,16 +243,18 @@ function PaymentEvidenceRow({
             </button>
           </>
         )}
-        {entry?.status === "pending" ? (
+        {!returned && (!entry || entry.status === "pending") ? (
           <>
-            <button
-              type="button"
-              disabled={disabled}
-              className="rounded bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50"
-              onClick={() => review.mutate("verified")}
-            >
-              批准此筆憑證金額
-            </button>
+            {entry ? (
+              <button
+                type="button"
+                disabled={disabled}
+                className="rounded bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50"
+                onClick={() => review.mutate("verified")}
+              >
+                批准此筆憑證金額
+              </button>
+            ) : null}
             <label className="block">
               退回原因
               <select

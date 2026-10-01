@@ -17,6 +17,8 @@ Record only the amount and actual receipt date observed in the current proof. Ne
 
 Approval credits only the exact current scanned bytes and attributed business review. Partial credit keeps the invoice pending and the balance visible. A repeated current version or active duplicate SHA256 cannot create more credit. Rejection needs a reason code and concrete text; preserve the rejected entry and submit an additive replacement. Superseded evidence supplies no credit. A generic document verification is not a payment amount/date approval.
 
+An unreadable or duplicate proof can be returned before recording any amount/date. The attributed `update_payment` audit decision binds case, payment, document and proof version and is included in the source token and return history. It creates no receipt/credit entry. A previous generic document approval remains immutable when the payment decision is a return; an additive replacement is allowed only for that exact current payment version with a valid server-recorded return. Other verified documents retain the existing replacement guard.
+
 ## Rollback and reconciliation
 
 - Failed migration transactions roll back without altering the ledger. Do not manually insert migration IDs or hashes.

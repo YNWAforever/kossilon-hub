@@ -81,21 +81,21 @@ export function ProductionAnnualReturnCommandCenter({
   // there is no reason to fire them on every board load when most visits never
   // open the dialog at all.
   const eligibleCompaniesQuery = useQuery({
-    queryKey: ["annual-returns", "eligible-companies", { includeFixtures }],
+    queryKey: ["annual-returns", "eligible-companies", { includeFixtures }, actorScope],
     queryFn: () => listCompaniesEligibleForCase({ data: { includeFixtures } }),
     enabled: isCreateOpen,
     retry: false,
   });
 
   const activeTemplatesQuery = useQuery({
-    queryKey: ["checklist-templates", "active-annual-return"],
+    queryKey: ["checklist-templates", "active-annual-return", actorScope],
     queryFn: () => listActiveAnnualReturnTemplates(),
     enabled: isCreateOpen,
     retry: false,
   });
 
   const assignmentOptionsQuery = useQuery({
-    queryKey: ["clients", "assignment-options"],
+    queryKey: ["clients", "assignment-options", actorScope],
     queryFn: () => listClientAssignmentOptions(),
     enabled: isCreateOpen,
     retry: false,
@@ -138,7 +138,7 @@ export function ProductionAnnualReturnCommandCenter({
   // the page meant the one control that could have narrowed the query enough to
   // surface a late case was itself limited to the cases already on screen.
   const ownersQuery = useQuery({
-    queryKey: ["annual-return", "assignable-staff"],
+    queryKey: ["annual-return", "assignable-staff", actorScope],
     queryFn: () => listAssignableStaff(),
     retry: false,
     staleTime: 60_000,
@@ -187,6 +187,7 @@ export function ProductionAnnualReturnCommandCenter({
       />
 
       <CreateCaseDialog
+        key={JSON.stringify(actorScope)}
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         companies={eligibleCompaniesQuery.data ?? []}

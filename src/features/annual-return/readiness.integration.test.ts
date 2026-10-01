@@ -11,7 +11,7 @@ afterAll(async () => {
 const rollback = new Error("readiness fixture rollback");
 
 describe.skipIf(!url)("actual Postgres current readiness gates", () => {
-  it.each(["none", "payment", "evidence"] as const)(
+  it.each(["none", "payment", "evidence", "shared-finding"] as const)(
     "rechecks current source inside preparation transaction: %s",
     async (change) => {
       await expect(
@@ -77,6 +77,21 @@ describe.skipIf(!url)("actual Postgres current readiness gates", () => {
           const preview = await repository.getCase(caseId);
           expect(preview?.readiness?.readyToPrepare).toBe(true);
           expect(preview?.readiness?.readyToTransmit).toBe(false);
+          if (change === "shared-finding") {
+            await tx`update documents set case_id=null where id=${received[0]}`;
+            await tx`update document_upload_intents set case_id=null where document_id=${received[0]}`;
+            const beforeFinding = await repository.getCase(caseId);
+            const [version] = await tx<
+              { id: string }[]
+            >`select id from document_versions where document_id=${received[0]} and superseded_by_version_id is null`;
+            await tx`insert into document_findings(document_version_id,tier,rule_key,rule_version,outcome,severity,detail) values(${version.id},'cross-check','synthetic-shared-critical','1','issue','critical','Shared company evidence conflict')`;
+            const afterFinding = await repository.getCase(caseId);
+            expect(afterFinding?.readiness?.readyForApproval).toBe(false);
+            expect(afterFinding?.readiness?.sourceVersion).not.toBe(
+              beforeFinding?.readiness?.sourceVersion,
+            );
+            throw rollback;
+          }
           if (change === "payment")
             await tx`update payments set status='Payment pending',paid_at=null where case_id=${caseId}`;
           if (change === "evidence")

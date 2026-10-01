@@ -1,6 +1,34 @@
 import type postgres from "postgres";
 import type { SqlClient } from "@/server/db/client";
 type Query = SqlClient | postgres.TransactionSql;
+export type PaymentProofReturn = {
+  id: string;
+  paymentId: string;
+  documentId: string;
+  proofVersionId: string;
+  reasonCode: string;
+  reasonText: string;
+  reviewedBy: string;
+  reviewedAt: string;
+};
+/** A payment return is an attributed business decision; it never invents receipt values. */
+export async function paymentProofWasReturned(
+  sql: Query,
+  documentId: string,
+  proofVersionId: string,
+) {
+  const [row] = await sql<
+    { returned: boolean }[]
+  >`select exists(select 1 from annual_return_audit_events a
+    join payments p on p.id::text=a.metadata->>'paymentId' and p.case_id=a.case_id and p.company_id=a.company_id
+    join documents d on d.id::text=a.metadata->>'documentId' and d.case_id=p.case_id and d.company_id=p.company_id and d.file_type='payment'
+    join document_versions v on v.id::text=a.metadata->>'proofVersionId' and v.document_id=d.id
+    where d.id=${documentId} and v.id=${proofVersionId} and a.actor_id is not null and a.result='succeeded' and a.action='update_payment'
+      and a.metadata->>'command'='review' and a.metadata->>'decision'='rejected'
+      and a.metadata->>'reasonCode' in ('unreadable','amount_mismatch','date_mismatch','duplicate_proof','wrong_account','other')
+      and length(btrim(a.metadata->>'reasonText'))>0) returned`;
+  return row?.returned === true;
+}
 export type PaymentEvidenceEntry = {
   id: string;
   paymentId: string;

@@ -5,7 +5,7 @@ import { createDocumentRepository } from "@/features/documents/repository";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
 import { createAnnualReturnRepository } from "./repository";
 import { ReadinessConflictError } from "./readiness";
-import { verifiedPaymentCredit } from "./payment-evidence-state";
+import { verifiedPaymentCredit, paymentProofWasReturned } from "./payment-evidence-state";
 
 import {
   recordPaymentEvidenceSchema,
@@ -50,6 +50,8 @@ export function createPaymentEvidenceService({ sql = getSqlClient() }: { sql?: Q
         !version.size
       )
         throw new Error("Payment proof needs current same-case bytes and genuine scan evidence.");
+      if (await paymentProofWasReturned(tx, document.id, version.id))
+        throw new ReadinessConflictError();
       if (decision === "record") {
         const data = parsed as z.infer<typeof recordPaymentEvidenceSchema>;
         const existing =
@@ -68,7 +70,8 @@ export function createPaymentEvidenceService({ sql = getSqlClient() }: { sql?: Q
         const [entry] = await tx<
           { id: string; status: string }[]
         >`select id,status from payment_evidence_entries where payment_id=${payment.id} and case_id=${parsed.caseId} and document_id=${document.id} and proof_version_id=${version.id} for update`;
-        if (!entry || entry.status !== "pending") throw new ReadinessConflictError();
+        if ((entry && entry.status !== "pending") || (!entry && data.decision !== "rejected"))
+          throw new ReadinessConflictError();
         if (document.reviewStatus === "pending")
           await documents.reviewDocument({
             documentId: document.id,
@@ -76,9 +79,10 @@ export function createPaymentEvidenceService({ sql = getSqlClient() }: { sql?: Q
             decision: data.decision,
             reason: data.reasonText,
           });
-        else if (document.reviewStatus !== "verified" || data.decision !== "verified")
-          throw new Error("Reviewed proof requires an additive replacement before returning it.");
-        await tx`update payment_evidence_entries set status=${data.decision},reviewed_by=${input.actorId},reviewed_at=now(),reason_code=${data.reasonCode ?? null},reason_text=${data.reasonText ?? null} where id=${entry.id}`;
+        else if (document.reviewStatus !== "verified")
+          throw new Error("Returned proof requires an additive replacement before review.");
+        if (entry)
+          await tx`update payment_evidence_entries set status=${data.decision},reviewed_by=${input.actorId},reviewed_at=now(),reason_code=${data.reasonCode ?? null},reason_text=${data.reasonText ?? null} where id=${entry.id}`;
         const credit = await verifiedPaymentCredit(tx, payment.id);
         await annualReturns.updatePayment({
           caseId: parsed.caseId,

@@ -46,6 +46,34 @@ describe("actionable work assignment identity and business context", () => {
     expect(activeAssignmentOptions(options).map((o) => o.userId)).toEqual(
       options.slice(0, 2).map((o) => o.userId),
     ));
+  it("keeps actionable approval blockers distinct from missing transport capability", () => {
+    const context = caseBusinessContext(
+      {
+        id: "case",
+        filingDueDate: "2026-11-01",
+        currentStatus: "NAR1 prepared",
+        readiness: {
+          sourceVersion: "v",
+          blockers: [
+            {
+              code: "critical",
+              stage: "approval",
+              message: "Resolve finding",
+              action: "/documents",
+            },
+            {
+              code: "transport",
+              stage: "transmit",
+              message: "Destination unavailable",
+              action: "/operations",
+            },
+          ],
+        },
+      } as unknown as AnnualReturnCase,
+      "2026-10-01",
+    );
+    expect(context?.blockers.map((b) => b.code)).toEqual(["critical"]);
+  });
   it("keeps payment business blockers independently of an on-track SLA", () => {
     const context = caseBusinessContext(
       {

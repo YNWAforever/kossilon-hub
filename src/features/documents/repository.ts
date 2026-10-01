@@ -11,6 +11,7 @@ import type postgres from "postgres";
 import type { DocumentAccessSubject } from "./authorization";
 import { enqueueDocumentAnalysisJob } from "./analysis-jobs";
 import { enqueueDocumentScanJob } from "./scan-jobs";
+import { paymentProofWasReturned } from "@/features/annual-return/payment-evidence-state";
 import {
   type DocumentCategory,
   type DocumentAvailability,
@@ -557,7 +558,14 @@ export function createDocumentRepository(
           ) {
             throw new Error("Replacement document scope does not match.");
           }
-          if (replaced[0].verification_status !== "rejected")
+          const [currentVersion] = await tx<
+            { id: string }[]
+          >`select id from document_versions where document_id=${input.replacementDocumentId} and superseded_by_version_id is null`;
+          const paymentReturned =
+            input.category === "payment" &&
+            currentVersion &&
+            (await paymentProofWasReturned(tx, input.replacementDocumentId, currentVersion.id));
+          if (replaced[0].verification_status !== "rejected" && !paymentReturned)
             throw new Error("Only rejected documents may be replaced.");
         }
         // There used to be a guard here refusing any new intent when a *verified*

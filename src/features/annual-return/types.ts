@@ -52,6 +52,7 @@ export type AnnualReturnPayment = {
   receivedAmount?: number;
   balance?: number;
   evidenceEntries?: import("./payment-evidence-state").PaymentEvidenceEntry[];
+  proofReturns?: import("./payment-evidence-state").PaymentProofReturn[];
   id: string;
   caseId: string;
   invoiceNumber: string;

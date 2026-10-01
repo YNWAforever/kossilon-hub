@@ -75,6 +75,16 @@ type Party = {
   active: boolean;
 };
 type Snapshot = {
+  payment_returns: {
+    id: string;
+    payment_id: string;
+    document_id: string;
+    proof_version_id: string;
+    reason_code: string;
+    reason_text: string;
+    reviewed_by: string;
+    reviewed_at: string;
+  }[];
   payment_evidence: {
     id: string;
     payment_id: string;
@@ -143,6 +153,13 @@ export async function attachCaseReadiness(
         'checklist',coalesce((select jsonb_agg(to_jsonb(x) order by x.id) from annual_return_checklist_items x where x.case_id=arc.id),'[]'::jsonb),
         'payments',coalesce((select jsonb_agg(to_jsonb(x)||jsonb_build_object('credited_amount',(select coalesce(sum(e.amount),0)::text from payments p join payment_evidence_entries e on e.payment_id=p.id join documents d on d.id=e.document_id join document_versions v on v.id=e.proof_version_id join document_upload_intents i on i.id=v.intent_id where p.id=x.id and ${creditedPaymentEvidenceSql(sql)})) order by x.id) from payments x where x.case_id=arc.id),'[]'::jsonb),
         'payment_evidence',coalesce((select jsonb_agg(to_jsonb(e) order by e.recorded_at,e.id) from payment_evidence_entries e where e.case_id=arc.id),'[]'::jsonb),
+        'payment_returns',coalesce((select jsonb_agg(jsonb_build_object('id',a.id,'payment_id',p.id,'document_id',d.id,'proof_version_id',v.id,'reason_code',a.metadata->>'reasonCode','reason_text',a.metadata->>'reasonText','reviewed_by',a.actor_id,'reviewed_at',a.created_at) order by a.created_at,a.id)
+          from annual_return_audit_events a join payments p on p.id::text=a.metadata->>'paymentId' and p.case_id=a.case_id and p.company_id=a.company_id
+          join documents d on d.id::text=a.metadata->>'documentId' and d.case_id=p.case_id and d.company_id=p.company_id and d.file_type='payment'
+          join document_versions v on v.id::text=a.metadata->>'proofVersionId' and v.document_id=d.id
+          where a.case_id=arc.id and a.action='update_payment' and a.result='succeeded' and a.actor_id is not null
+            and a.metadata->>'command'='review' and a.metadata->>'decision'='rejected'
+            and a.metadata->>'reasonCode' in ('unreadable','amount_mismatch','date_mismatch','duplicate_proof','wrong_account','other') and length(btrim(a.metadata->>'reasonText'))>0),'[]'::jsonb),
         'documents',coalesce((select jsonb_agg(to_jsonb(d)||jsonb_build_object('version',to_jsonb(v),'intent',to_jsonb(i),
           'source_matches',coalesce(v.storage_url=d.storage_url and i.document_id=d.id and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and v.storage_url=i.object_key and v.declared_checksum_sha256=i.checksum_sha256 and v.verified_byte_size>0,false)) order by d.id)
           from documents d left join document_versions v on v.document_id=d.id and v.superseded_by_version_id is null
@@ -157,7 +174,10 @@ export async function attachCaseReadiness(
         'approvals',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at desc,h.id) from package_handoffs h where h.case_id=arc.id),'[]'::jsonb),
         'findings',coalesce((select jsonb_agg(to_jsonb(f) order by f.id) from document_findings f where
           f.requirement_instance_id in(select id from case_requirement_instances where case_id=arc.id)
-          or f.document_version_id in(select v.id from document_versions v join documents d on d.id=v.document_id where d.company_id=arc.company_id and (d.case_id=arc.id or d.id in(select payment_proof_document_id from payments where case_id=arc.id)))),'[]'::jsonb)
+          or f.document_version_id in(select v.id from document_versions v join documents d on d.id=v.document_id where d.company_id=arc.company_id and (d.case_id=arc.id or (d.case_id is null and (
+            d.id in(select document_id from annual_return_checklist_items where case_id=arc.id)
+            or d.id in(select payment_proof_document_id from payments where case_id=arc.id)
+            or d.id in(select l.document_id from requirement_evidence_links l join case_requirement_instances r on r.id=l.requirement_instance_id where r.case_id=arc.id)))))),'[]'::jsonb)
       ) payload from annual_return_cases arc join companies c on c.id=arc.company_id where arc.id=any(${cases.map((case_) => case_.id)}::uuid[])
     ) select payload,md5(payload::text) source_version from snapshots`;
   const byId = new Map(rows.map((row) => [row.payload.case.id, row]));
@@ -210,6 +230,18 @@ export async function attachCaseReadiness(
                 receivedOn: e.received_on,
                 reference: e.reference,
                 status: e.status,
+                reasonCode: e.reason_code,
+                reasonText: e.reason_text,
+                reviewedBy: e.reviewed_by,
+                reviewedAt: e.reviewed_at,
+              })),
+            proofReturns: payload.payment_returns
+              .filter((e) => e.payment_id === payment.id)
+              .map((e) => ({
+                id: e.id,
+                paymentId: e.payment_id,
+                documentId: e.document_id,
+                proofVersionId: e.proof_version_id,
                 reasonCode: e.reason_code,
                 reasonText: e.reason_text,
                 reviewedBy: e.reviewed_by,

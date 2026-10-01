@@ -140,229 +140,281 @@ describe.skipIf(!url)("attributable current-version payment receipts", () => {
       await Promise.all([firstConnection.end(), secondConnection.end()]);
     }
   });
-  it("records partial amounts, prevents duplicate proof credit, returns with reason and accepts only a current version", async () => {
-    await expect(
-      sql!.begin(async (tx) => {
-        const companyId = crypto.randomUUID(),
-          caseId = crypto.randomUUID(),
-          paymentId = crypto.randomUUID();
-        const actorId = "20000000-0000-0000-0000-000000000001",
-          teamId = "10000000-0000-0000-0000-000000000001";
-        await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id) values(${companyId},'Payment synthetic fixture',${companyId},${companyId},'2020-01-01','2026-09-01','Test','Test','active',${actorId},${teamId})`;
-        await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id) values(${caseId},${companyId},2026,'2026-09-01','2026-10-13','Payment pending','green',${actorId})`;
-        await tx`insert into payments(id,company_id,case_id,invoice_number,amount,due_date) values(${paymentId},${companyId},${caseId},${caseId},1800,'2026-10-13')`;
-        const documents = createDocumentRepository({ sql: tx }),
-          repository = createAnnualReturnRepository({ sql: tx }),
-          service = createPaymentEvidenceService({ sql: tx });
-        const proof = async (checksum: string, replacementDocumentId?: string) => {
-          const intent = await documents.createUploadIntent({
-            companyId,
+  it.each(["unreadable", "already-verified"] as const)(
+    "records partial amounts, prevents duplicate proof credit, returns with reason and accepts only a current version: %s",
+    async (scenario) => {
+      await expect(
+        sql!.begin(async (tx) => {
+          const companyId = crypto.randomUUID(),
+            caseId = crypto.randomUUID(),
+            paymentId = crypto.randomUUID();
+          const actorId = "20000000-0000-0000-0000-000000000001",
+            teamId = "10000000-0000-0000-0000-000000000001";
+          await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id) values(${companyId},'Payment synthetic fixture',${companyId},${companyId},'2020-01-01','2026-09-01','Test','Test','active',${actorId},${teamId})`;
+          await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id) values(${caseId},${companyId},2026,'2026-09-01','2026-10-13','Payment pending','green',${actorId})`;
+          await tx`insert into payments(id,company_id,case_id,invoice_number,amount,due_date) values(${paymentId},${companyId},${caseId},${caseId},1800,'2026-10-13')`;
+          const documents = createDocumentRepository({ sql: tx }),
+            repository = createAnnualReturnRepository({ sql: tx }),
+            service = createPaymentEvidenceService({ sql: tx });
+          const proof = async (checksum: string, replacementDocumentId?: string) => {
+            const intent = await documents.createUploadIntent({
+              companyId,
+              caseId,
+              replacementDocumentId,
+              requestedByAuthUserId: "synthetic-auth",
+              category: "payment",
+              fileName: "proof.pdf",
+              contentType: "application/pdf",
+              expectedSizeBytes: 4,
+              checksum,
+              objectKey: `synthetic/${crypto.randomUUID()}`,
+              expiresAt: new Date(Date.now() + 60000).toISOString(),
+            });
+            const document = await documents.finalizeUploadIntent({
+              intentId: intent.id,
+              uploadedBy: actorId,
+              source: "staff",
+            });
+            // Injected local provider contract, never evidence of a genuine scanner/R2 roundtrip.
+            await documents.recordScanResult(
+              intent.id,
+              {
+                status: "clean",
+                providerReference: "synthetic-local",
+                verifiedChecksum: checksum,
+                verifiedByteSize: 4,
+              },
+              { verdictSource: "provider" },
+            );
+            const [version] = await tx<
+              { id: string }[]
+            >`select id from document_versions where document_id=${document.id} and superseded_by_version_id is null`;
+            return { documentId: document.id, proofVersionId: version.id };
+          };
+          const current = async () => (await repository.getCase(caseId))!.readiness!.sourceVersion!;
+          if (scenario === "unreadable") {
+            const unreadable = await proof("8".repeat(64));
+            const returned = await service.review({
+              caseId,
+              paymentId,
+              ...unreadable,
+              expectedVersion: await current(),
+              decision: "rejected",
+              reasonCode: "unreadable",
+              reasonText: "Amount and receipt date are not readable",
+              actorId,
+            });
+            expect(returned.payment?.evidenceEntries).toHaveLength(0);
+            expect(returned.payment?.proofReturns).toEqual([
+              expect.objectContaining({
+                documentId: unreadable.documentId,
+                reasonText: "Amount and receipt date are not readable",
+              }),
+            ]);
+          }
+          const first = await proof("b".repeat(64));
+          let recorded = await service.record({
             caseId,
-            replacementDocumentId,
-            requestedByAuthUserId: "synthetic-auth",
-            category: "payment",
-            fileName: "proof.pdf",
-            contentType: "application/pdf",
-            expectedSizeBytes: 4,
-            checksum,
-            objectKey: `synthetic/${crypto.randomUUID()}`,
-            expiresAt: new Date(Date.now() + 60000).toISOString(),
-          });
-          const document = await documents.finalizeUploadIntent({
-            intentId: intent.id,
-            uploadedBy: actorId,
-            source: "staff",
-          });
-          // Injected local provider contract, never evidence of a genuine scanner/R2 roundtrip.
-          await documents.recordScanResult(
-            intent.id,
-            {
-              status: "clean",
-              providerReference: "synthetic-local",
-              verifiedChecksum: checksum,
-              verifiedByteSize: 4,
-            },
-            { verdictSource: "provider" },
-          );
-          const [version] = await tx<
-            { id: string }[]
-          >`select id from document_versions where document_id=${document.id} and superseded_by_version_id is null`;
-          return { documentId: document.id, proofVersionId: version.id };
-        };
-        const current = async () => (await repository.getCase(caseId))!.readiness!.sourceVersion!;
-        const first = await proof("b".repeat(64));
-        let recorded = await service.record({
-          caseId,
-          paymentId,
-          ...first,
-          expectedVersion: await current(),
-          amount: "600.00",
-          receivedOn: "2026-09-30",
-          reference: "synthetic transfer A",
-          actorId,
-        });
-        const version = await current();
-        let reviewed = await service.review({
-          caseId,
-          paymentId,
-          ...first,
-          expectedVersion: version,
-          decision: "verified",
-          actorId,
-        });
-        expect(reviewed.payment).toMatchObject({
-          status: "Payment pending",
-          receivedAmount: 600,
-          balance: 1200,
-          paidAt: null,
-        });
-        await expect(
-          repository.updatePayment({
-            caseId,
-            status: "Payment received",
-            paymentProofDocumentId: first.documentId,
+            paymentId,
+            ...first,
+            expectedVersion: await current(),
+            amount: "600.00",
+            receivedOn: "2026-09-30",
+            reference: "synthetic transfer A",
             actorId,
-          }),
-        ).rejects.toThrow(/full invoice/i);
-        await expect(
-          service.review({
+          });
+          const version = await current();
+          let reviewed = await service.review({
             caseId,
             paymentId,
             ...first,
             expectedVersion: version,
             decision: "verified",
             actorId,
-          }),
-        ).rejects.toMatchObject({ statusCode: 409 });
-        expect(recorded.payment?.evidenceEntries).toHaveLength(1);
-        const duplicate = await proof("b".repeat(64));
-        await expect(
-          service.record({
+          });
+          expect(reviewed.payment).toMatchObject({
+            status: "Payment pending",
+            receivedAmount: 600,
+            balance: 1200,
+            paidAt: null,
+          });
+          await expect(
+            repository.updatePayment({
+              caseId,
+              status: "Payment received",
+              paymentProofDocumentId: first.documentId,
+              actorId,
+            }),
+          ).rejects.toThrow(/full invoice/i);
+          await expect(
+            service.review({
+              caseId,
+              paymentId,
+              ...first,
+              expectedVersion: version,
+              decision: "verified",
+              actorId,
+            }),
+          ).rejects.toMatchObject({ statusCode: 409 });
+          expect(recorded.payment?.evidenceEntries).toHaveLength(1);
+          const duplicate = await proof("b".repeat(64));
+          await expect(
+            service.record({
+              caseId,
+              paymentId,
+              ...duplicate,
+              expectedVersion: await current(),
+              amount: "600",
+              receivedOn: "2026-09-30",
+              actorId,
+            }),
+          ).rejects.toThrow(/duplicate/i);
+          const duplicateReturned = await service.review({
             caseId,
             paymentId,
             ...duplicate,
             expectedVersion: await current(),
-            amount: "600",
-            receivedOn: "2026-09-30",
+            decision: "rejected",
+            reasonCode: "duplicate_proof",
+            reasonText: "Same transfer already credited by another proof",
             actorId,
-          }),
-        ).rejects.toThrow(/duplicate/i);
-        const second = await proof("c".repeat(64));
-        recorded = await service.record({
-          caseId,
-          paymentId,
-          ...second,
-          expectedVersion: await current(),
-          amount: "1200",
-          receivedOn: "2026-10-01",
-          actorId,
-        });
-        await expect(
-          service.review({
+          });
+          expect(duplicateReturned.payment?.evidenceEntries).toHaveLength(1);
+          expect(duplicateReturned.payment?.receivedAmount).toBe(600);
+          expect(duplicateReturned.payment?.proofReturns).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                documentId: duplicate.documentId,
+                reasonCode: "duplicate_proof",
+              }),
+            ]),
+          );
+          const second = await proof("c".repeat(64));
+          if (scenario === "already-verified")
+            await documents.reviewDocument({
+              documentId: second.documentId,
+              reviewerId: actorId,
+              decision: "verified",
+            });
+          recorded = await service.record({
+            caseId,
+            paymentId,
+            ...second,
+            expectedVersion: await current(),
+            amount: "1200",
+            receivedOn: "2026-10-01",
+            actorId,
+          });
+          await expect(
+            service.review({
+              caseId,
+              paymentId,
+              ...second,
+              expectedVersion: await current(),
+              decision: "rejected",
+              reasonCode: "unreadable",
+              reasonText: " ",
+              actorId,
+            }),
+          ).rejects.toThrow(/reason/i);
+          reviewed = await service.review({
             caseId,
             paymentId,
             ...second,
             expectedVersion: await current(),
             decision: "rejected",
             reasonCode: "unreadable",
-            reasonText: " ",
+            reasonText: "Cannot read bank transaction identifier",
             actorId,
-          }),
-        ).rejects.toThrow(/reason/i);
-        reviewed = await service.review({
-          caseId,
-          paymentId,
-          ...second,
-          expectedVersion: await current(),
-          decision: "rejected",
-          reasonCode: "unreadable",
-          reasonText: "Cannot read bank transaction identifier",
-          actorId,
-        });
-        expect(reviewed.payment).toMatchObject({
-          receivedAmount: 600,
-          balance: 1200,
-          status: "Payment pending",
-        });
-        const replacement = await proof("d".repeat(64), second.documentId);
-        await service.record({
-          caseId,
-          paymentId,
-          ...replacement,
-          expectedVersion: await current(),
-          amount: "1200",
-          receivedOn: "2026-10-01",
-          actorId,
-        });
-        const preview = await current();
-        const recovery = await documents.getDocumentRecoveryPreview(replacement.documentId);
-        const changed = await documents.createUploadIntent({
-          companyId,
-          caseId,
-          requestedByAuthUserId: "synthetic-auth",
-          category: "payment",
-          fileName: "proof-v2.pdf",
-          contentType: "application/pdf",
-          expectedSizeBytes: 4,
-          checksum: "e".repeat(64),
-          objectKey: `synthetic/${crypto.randomUUID()}`,
-          expiresAt: new Date(Date.now() + 60000).toISOString(),
-          recovery: {
-            documentId: replacement.documentId,
-            expectedToken: recovery!.versionToken,
-            reason: "Synthetic missing-object race fixture",
-          },
-          recoveryApprovedBy: actorId,
-          recoveryObjectState: "missing",
-          recoveryObjectObservedAt: new Date().toISOString(),
-        });
-        await documents.finalizeUploadIntent({
-          intentId: changed.id,
-          uploadedBy: actorId,
-          source: "staff",
-        });
-        await expect(
-          service.review({
+          });
+          expect(reviewed.payment).toMatchObject({
+            receivedAmount: 600,
+            balance: 1200,
+            status: "Payment pending",
+          });
+          expect((await documents.getDocument(second.documentId))?.reviewStatus).toBe(
+            scenario === "already-verified" ? "verified" : "rejected",
+          );
+          const replacement = await proof("d".repeat(64), second.documentId);
+          await service.record({
             caseId,
             paymentId,
             ...replacement,
-            expectedVersion: preview,
+            expectedVersion: await current(),
+            amount: "1200",
+            receivedOn: "2026-10-01",
+            actorId,
+          });
+          const preview = await current();
+          const recovery = await documents.getDocumentRecoveryPreview(replacement.documentId);
+          const changed = await documents.createUploadIntent({
+            companyId,
+            caseId,
+            requestedByAuthUserId: "synthetic-auth",
+            category: "payment",
+            fileName: "proof-v2.pdf",
+            contentType: "application/pdf",
+            expectedSizeBytes: 4,
+            checksum: "e".repeat(64),
+            objectKey: `synthetic/${crypto.randomUUID()}`,
+            expiresAt: new Date(Date.now() + 60000).toISOString(),
+            recovery: {
+              documentId: replacement.documentId,
+              expectedToken: recovery!.versionToken,
+              reason: "Synthetic missing-object race fixture",
+            },
+            recoveryApprovedBy: actorId,
+            recoveryObjectState: "missing",
+            recoveryObjectObservedAt: new Date().toISOString(),
+          });
+          await documents.finalizeUploadIntent({
+            intentId: changed.id,
+            uploadedBy: actorId,
+            source: "staff",
+          });
+          await expect(
+            service.review({
+              caseId,
+              paymentId,
+              ...replacement,
+              expectedVersion: preview,
+              decision: "verified",
+              actorId,
+            }),
+          ).rejects.toMatchObject({ statusCode: 409 });
+          const final = await proof("f".repeat(64));
+          await service.record({
+            caseId,
+            paymentId,
+            ...final,
+            expectedVersion: await current(),
+            amount: "1200",
+            receivedOn: "2026-10-01",
+            actorId,
+          });
+          reviewed = await service.review({
+            caseId,
+            paymentId,
+            ...final,
+            expectedVersion: await current(),
             decision: "verified",
             actorId,
-          }),
-        ).rejects.toMatchObject({ statusCode: 409 });
-        const final = await proof("f".repeat(64));
-        await service.record({
-          caseId,
-          paymentId,
-          ...final,
-          expectedVersion: await current(),
-          amount: "1200",
-          receivedOn: "2026-10-01",
-          actorId,
-        });
-        reviewed = await service.review({
-          caseId,
-          paymentId,
-          ...final,
-          expectedVersion: await current(),
-          decision: "verified",
-          actorId,
-        });
-        expect(reviewed.payment).toMatchObject({
-          status: "Payment received",
-          amount: 1800,
-          receivedAmount: 1800,
-          balance: 0,
-          paymentProofDocumentId: final.documentId,
-        });
-        expect(reviewed.payment?.paidAt?.slice(0, 10)).toBe("2026-10-01");
-        const audits = await tx<
-          { count: number }[]
-        >`select count(*)::int from annual_return_audit_events where case_id=${caseId} and action='update_payment'`;
-        expect(audits[0].count).toBe(10);
-        throw rollback;
-      }),
-    ).rejects.toBe(rollback);
-  });
+          });
+          expect(reviewed.payment).toMatchObject({
+            status: "Payment received",
+            amount: 1800,
+            receivedAmount: 1800,
+            balance: 0,
+            paymentProofDocumentId: final.documentId,
+          });
+          expect(reviewed.payment?.paidAt?.slice(0, 10)).toBe("2026-10-01");
+          const audits = await tx<
+            { count: number }[]
+          >`select count(*)::int from annual_return_audit_events where case_id=${caseId} and action='update_payment'`;
+          expect(audits[0].count).toBe(scenario === "unreadable" ? 14 : 12);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+  );
 });

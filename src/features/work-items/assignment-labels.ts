@@ -39,7 +39,7 @@ export function caseBusinessContext(
 ): CaseBusinessContext | null {
   if (!case_.readiness) return null;
   const closed = ["Filed", "Completed"].includes(case_.currentStatus);
-  const blockers = closed ? [] : case_.readiness.blockers.filter((b) => b.stage === "prepare");
+  const blockers = closed ? [] : case_.readiness.blockers.filter((b) => b.stage !== "transmit");
   if (!closed && case_.filingDueDate < today)
     blockers.unshift({
       code: "statutory_overdue",
