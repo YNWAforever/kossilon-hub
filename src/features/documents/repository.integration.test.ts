@@ -34,6 +34,227 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const INTEGRATION_TEST_TIMEOUT_MS = 30_000;
 
+describe.skipIf(!databaseUrl)("versioned analysis publication", () => {
+  it(
+    "requires a current verified identity and attributes a current finding resolution once",
+    async () => {
+      const rollback = new Error("owned resolution and revoke rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const repo = createDocumentRepository({ sql: tx });
+          const analysis = createDocumentAnalysisRepository({ sql: tx });
+          const data = await fixture(tx as unknown as SqlClient);
+          const intent = await repo.createUploadIntent(intentInput(data));
+          const document = await repo.finalizeUploadIntent({
+            intentId: intent.id,
+            uploadedBy: null,
+            source: "staff",
+          });
+          const [finding] = await tx<
+            { id: string }[]
+          >`insert into document_findings(document_version_id,tier,rule_key,rule_version,outcome,severity,detail) values(${document.currentVersionId!},'cross-check','synthetic-review','1','uncertain','info','Owned synthetic finding') returning id`;
+          const [identity] = await tx<
+            { auth_user_id: string }[]
+          >`select auth_user_id from staff_profiles where user_id=${data.ownerId!}`;
+          const input = {
+            findingId: finding.id,
+            caseId: data.caseId!,
+            resolvedByUserId: data.ownerId!,
+            resolvedByAuthUserId: identity.auth_user_id,
+            expectedDocumentVersionId: document.currentVersionId!,
+            note: "Synthetic local review",
+          };
+          await expect(
+            analysis.resolveFinding({ ...input, resolvedByAuthUserId: "wrong-auth" }),
+          ).rejects.toThrow(/verified staff/);
+          await tx`update staff_profiles set active=false where user_id=${data.ownerId!}`;
+          await expect(analysis.resolveFinding(input)).rejects.toThrow(/verified staff/);
+          await tx`update staff_profiles set active=true where user_id=${data.ownerId!}`;
+          expect(await analysis.resolveFinding(input)).toBe(true);
+          expect(await analysis.resolveFinding(input)).toBe(false);
+          const [audit] = await tx<
+            { count: number }[]
+          >`select count(*)::int count from timeline_events where event_type='document_finding_resolved' and metadata->>'findingId'=${finding.id} and actor_id=${data.ownerId!}`;
+          expect(audit.count).toBe(1);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+  it(
+    "does not resolve a finding for a replaced version or a mismatched inspected version",
+    async () => {
+      const rollback = new Error("owned analysis review rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const repo = createDocumentRepository({ sql: tx });
+          const analysis = createDocumentAnalysisRepository({ sql: tx });
+          const data = await fixture(tx as unknown as SqlClient);
+          const intent = await repo.createUploadIntent(intentInput(data));
+          const document = await repo.finalizeUploadIntent({
+            intentId: intent.id,
+            uploadedBy: null,
+            source: "staff",
+          });
+          const versionId = document.currentVersionId!;
+          const [finding] = await tx<
+            { id: string }[]
+          >`insert into document_findings(document_version_id,tier,rule_key,rule_version,outcome,severity,detail)
+        values(${versionId},'cross-check','synthetic','1','uncertain','info','synthetic owned finding') returning id`;
+          expect(
+            await analysis.resolveFinding({
+              findingId: finding.id,
+              caseId: data.caseId!,
+              resolvedByUserId: data.ownerId!,
+              note: "local contract",
+              expectedDocumentVersionId: crypto.randomUUID(),
+            }),
+          ).toBe(false);
+          const [v2] = await tx<
+            { id: string }[]
+          >`insert into document_versions(document_id,version_number,file_name,storage_url,superseded_by_version_id,superseded_at)
+        values(${document.id},2,'synthetic-V2.pdf',${`${KEY_PREFIX}analysis-v2`},${versionId},now()) returning id`;
+          await tx`update document_versions set superseded_by_version_id=${v2.id},superseded_at=now() where id=${versionId}`;
+          await tx`update document_versions set superseded_by_version_id=null,superseded_at=null where id=${v2.id}`;
+          expect(
+            await analysis.resolveFinding({
+              findingId: finding.id,
+              caseId: data.caseId!,
+              resolvedByUserId: data.ownerId!,
+              note: "local contract",
+              expectedDocumentVersionId: versionId,
+            }),
+          ).toBe(false);
+          expect(
+            (
+              await tx<
+                { resolved_by: string | null }[]
+              >`select resolved_by from document_findings where id=${finding.id}`
+            )[0].resolved_by,
+          ).toBeNull();
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+  it.each(["success", "reclaimed", "context-changed"])(
+    "publishes text/findings/provenance atomically with the current job fence: %s",
+    async (mode) => {
+      const rollback = new Error("owned analysis publication rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const repo = createDocumentRepository({ sql: tx });
+          const analysis = createDocumentAnalysisRepository({ sql: tx });
+          const data = await fixture(tx as unknown as SqlClient);
+          const intent = await repo.createUploadIntent(intentInput(data));
+          const document = await repo.finalizeUploadIntent({
+            intentId: intent.id,
+            uploadedBy: null,
+            source: "staff",
+          });
+          const versionId = document.currentVersionId!;
+          await repo.recordScanResult(
+            intent.id,
+            {
+              status: "clean",
+              providerReference: "synthetic-not-live",
+              verifiedChecksum: CHECKSUM_A,
+              verifiedByteSize: 4,
+              documentVersionId: versionId,
+            },
+            { verdictSource: "provider", expectedVersionId: versionId },
+          );
+          const subject = await analysis.loadForAnalysis(versionId);
+          const [job] = await tx<
+            { id: string }[]
+          >`update document_analysis_jobs set status='processing',attempt_count=1 where document_version_id=${versionId} returning id`;
+          if (mode === "reclaimed")
+            await tx`update document_analysis_jobs set attempt_count=2 where id=${job.id}`;
+          if (mode === "context-changed")
+            await tx`update companies set company_name=company_name||' changed' where id=${data.companyId}`;
+          const evidence = {
+            documentVersionId: versionId,
+            sha256: CHECKSUM_A,
+            method: "text-layer" as const,
+            pageCount: 1,
+            truncated: false,
+            unknownReason: null,
+            pages: [
+              {
+                page: 1,
+                text: "Synthetic owned text",
+                method: "text-layer" as const,
+                confidence: null,
+                spans: [{ page: 1, start: 0, end: 20, quote: "Synthetic owned text" }],
+              },
+            ],
+            provenance: {
+              extractorVersion: "synthetic-local",
+              providerReference: null,
+              model: null,
+              cost: null,
+            },
+          };
+          const input = {
+            documentVersionId: versionId,
+            analysisJobId: job.id,
+            attemptCount: 1,
+            sha256: CHECKSUM_A,
+            contextVersion: subject!.contextVersion,
+            evidence,
+            extraction: {
+              method: "text-layer" as const,
+              text: "Synthetic owned text",
+              pageCount: 1,
+              truncated: false,
+              extractorVersion: "synthetic-local",
+              evidence,
+            },
+            findings: [
+              {
+                ruleKey: "synthetic-bound",
+                ruleVersion: "1",
+                tier: "cross-check" as const,
+                outcome: "uncertain" as const,
+                severity: "info" as const,
+                detail: "Local metadata contract only",
+                citation: {
+                  kind: "version" as const,
+                  documentVersionId: versionId,
+                  pageFrom: 1,
+                  pageTo: 1,
+                },
+              },
+            ],
+            provenance: {
+              schemaVersion: "synthetic-local",
+              model: null,
+              cost: null,
+              advisoryOnly: true,
+            },
+          };
+          expect(await analysis.publishAnalysis(input)).toBe(mode === "success");
+          if (mode === "success") expect(await analysis.publishAnalysis(input)).toBe(false);
+          const [counts] = await tx<
+            { texts: number; findings: number; status: string; provenance: unknown }[]
+          >`select
+        (select count(*)::int from document_version_texts where document_version_id=${versionId}) texts,
+        (select count(*)::int from document_findings where document_version_id=${versionId}) findings,
+        status,provenance from document_analysis_jobs where id=${job.id}`;
+          expect(counts.texts).toBe(mode === "success" ? 1 : 0);
+          expect(counts.findings).toBe(mode === "success" ? 1 : 0);
+          expect(counts.status).toBe(mode === "success" ? "succeeded" : "processing");
+          if (mode === "success") expect(counts.provenance).toEqual(input.provenance);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+});
+
 describe.skipIf(!databaseUrl)("version-bound scan persistence", () => {
   it("retains the V1 review history without approving V2 or trusting a legacy unbound scan", async () => {
     const rollback = new Error("review version fixture rollback");

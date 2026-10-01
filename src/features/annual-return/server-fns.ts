@@ -393,7 +393,12 @@ export async function listAnnualReturnCaseFindingsForActor(
  */
 export async function resolveAnnualReturnCaseFindingForActor(
   actor: AuthenticatedActor,
-  input: { caseId: string; findingId: string; note: string | null },
+  input: {
+    caseId: string;
+    findingId: string;
+    note: string | null;
+    expectedDocumentVersionId: string;
+  },
   dependencies: {
     repository: Pick<AnnualReturnRepository, "getCase">;
     analysis: {
@@ -401,6 +406,8 @@ export async function resolveAnnualReturnCaseFindingForActor(
         findingId: string;
         caseId: string;
         resolvedByUserId: string;
+        resolvedByAuthUserId: string;
+        expectedDocumentVersionId: string;
         note: string | null;
       }): Promise<boolean>;
     };
@@ -420,6 +427,8 @@ export async function resolveAnnualReturnCaseFindingForActor(
     findingId: input.findingId,
     caseId: input.caseId,
     resolvedByUserId,
+    resolvedByAuthUserId: actor.authUserId,
+    expectedDocumentVersionId: input.expectedDocumentVersionId,
     note: input.note,
   });
 
@@ -918,12 +927,15 @@ export const listAnnualReturnCaseFindings = createServerFn({ method: "GET" })
 
 export const resolveAnnualReturnCaseFinding = createServerFn({ method: "POST" })
   .validator(
-    z.object({
-      caseId: z.string().uuid(),
-      findingId: z.string().uuid(),
-      // Bounded: this is a person's note, not a place to paste a document.
-      note: z.string().trim().min(1).max(1000).nullable().default(null),
-    }),
+    z
+      .object({
+        caseId: z.string().uuid(),
+        findingId: z.string().uuid(),
+        expectedDocumentVersionId: z.string().uuid(),
+        // Bounded: this is a person's note, not a place to paste a document.
+        note: z.string().trim().min(1).max(1000).nullable().default(null),
+      })
+      .strict(),
   )
   .handler(({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>

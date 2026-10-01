@@ -1469,6 +1469,7 @@ create index if not exists document_versions_verified_checksum_idx
 -- this makes that structurally impossible rather than a rule to remember.
 create table if not exists document_version_texts (
   document_version_id uuid primary key references document_versions(id) on delete cascade,
+  evidence jsonb check (evidence is null or jsonb_typeof(evidence) = 'object'),
   extracted_text text,
   page_count integer check (page_count is null or page_count >= 0),
   -- 'none' is a real outcome: a scanned image with no text layer and no OCR
@@ -1484,6 +1485,7 @@ create table if not exists document_version_texts (
 -- from 0028_document_analysis_jobs_and_findings.sql
 create table if not exists document_analysis_jobs (
   id uuid primary key default gen_random_uuid(),
+  provenance jsonb check (provenance is null or jsonb_typeof(provenance) = 'object'),
   document_version_id uuid not null references document_versions(id) on delete cascade,
   reason text not null default 'initial' check (reason in ('initial', 'reanalysis', 'retry')),
   idempotency_key text not null unique,
@@ -1520,6 +1522,7 @@ create index if not exists document_analysis_jobs_version_idx
 -- and that must be true of any writer, not only of the worker.
 create table if not exists document_findings (
   id uuid primary key default gen_random_uuid(),
+  evidence jsonb check (evidence is null or jsonb_typeof(evidence) = 'object'),
 
   -- Nullable on purpose, and this is the point of the citation contract: a
   -- finding about an absence has nothing to point at. Fabricating a version or

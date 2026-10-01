@@ -80,6 +80,19 @@ export function longTextPdf(length: number): ArrayBuffer {
   );
 }
 
+export function twoLongPagesPdf(lengthPerPage: number): ArrayBuffer {
+  return buildPdf(
+    document(
+      Array.from(
+        { length: 2 },
+        () => `BT /F1 0.001 Tf 1 720 Td (${"A".repeat(lengthPerPage)}) Tj ET`,
+      ),
+      helvetica,
+      fontResource,
+    ),
+  );
+}
+
 export function threePagePdf(): ArrayBuffer {
   return buildPdf(
     document([line("Page one"), line("Page two"), line("Page three")], helvetica, fontResource),

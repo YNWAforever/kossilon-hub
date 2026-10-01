@@ -299,6 +299,7 @@ describe("annual return case command authorization", () => {
 });
 
 describe("case findings authorization", () => {
+  const inspectedVersionId = "71000000-0000-4000-8000-000000000001";
   const visibleCase = {
     id: caseId,
     companyTeamId: staffActor.teamId,
@@ -364,7 +365,12 @@ describe("case findings authorization", () => {
     await expect(
       resolveAnnualReturnCaseFindingForActor(
         clientActor,
-        { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: null },
+        {
+          caseId,
+          findingId: "50000000-0000-0000-0000-000000000001",
+          note: null,
+          expectedDocumentVersionId: inspectedVersionId,
+        },
         dependencies,
       ),
     ).rejects.toThrow(/staff access is required/i);
@@ -379,7 +385,12 @@ describe("case findings authorization", () => {
 
     await resolveAnnualReturnCaseFindingForActor(
       staffActor,
-      { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: "Checked by hand." },
+      {
+        caseId,
+        findingId: "50000000-0000-0000-0000-000000000001",
+        note: "Checked by hand.",
+        expectedDocumentVersionId: inspectedVersionId,
+      },
       dependencies,
     );
 
@@ -388,6 +399,8 @@ describe("case findings authorization", () => {
       caseId,
       resolvedByUserId: staffId,
       note: "Checked by hand.",
+      resolvedByAuthUserId: staffActor.authUserId,
+      expectedDocumentVersionId: inspectedVersionId,
     });
   });
 
@@ -399,7 +412,12 @@ describe("case findings authorization", () => {
     await expect(
       resolveAnnualReturnCaseFindingForActor(
         staffActor,
-        { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: null },
+        {
+          caseId,
+          findingId: "50000000-0000-0000-0000-000000000001",
+          note: null,
+          expectedDocumentVersionId: inspectedVersionId,
+        },
         dependencies,
       ),
     ).resolves.toEqual({ applied: false });
