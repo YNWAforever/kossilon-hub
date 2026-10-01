@@ -3,6 +3,7 @@ import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { createNotificationOutboxRepository } from "./outbox";
+import { createNotificationDispatcher } from "./dispatcher";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const INTEGRATION_TEST_TIMEOUT_MS = 30_000;
@@ -57,6 +58,97 @@ async function claimedIdsWithoutCommitting(sql: SqlClient, limit = 50): Promise<
 }
 
 describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", () => {
+  it("calls a simulated transport only for client origin when all three have the same due time", async () => {
+    const sql = sqlForTests();
+    const companies = await sql<{ id: string }[]>`select id from companies order by id limit 3`;
+    expect(companies).toHaveLength(3);
+    const sent: string[] = [];
+    let verified = false;
+    try {
+      await sql.begin(async (tx) => {
+        const repository = createNotificationOutboxRepository({ sql: tx });
+        const origins = ["client", "fixture", "historical"] as const;
+        const ids: string[] = [];
+        for (let i = 0; i < origins.length; i++) {
+          await tx`update companies set data_origin=${origins[i]} where id=${companies[i].id}`;
+          const row = await repository.enqueue({
+            companyId: companies[i].id,
+            channel: "email",
+            notificationType: "sla_warning",
+            idempotencyKey: TEST_KEY_PREFIX + "same-due-" + origins[i],
+            recipient: "audit@example.test",
+            payload: { subject: "Test" },
+          });
+          ids.push(row.id);
+          await tx`update notification_outbox set next_attempt_at='2026-01-01'::timestamptz where id=${row.id}`;
+        }
+        const dispatcher = createNotificationDispatcher(repository, {
+          dispatch: async (row) => {
+            sent.push(row.id);
+            return { delivery: "simulated" };
+          },
+        });
+        await dispatcher.dispatchDue(new Date().toISOString(), 500);
+        expect(sent).toEqual([ids[0]]);
+        const rows = await tx<
+          {
+            id: string;
+            status: string;
+            delivery: string | null;
+            provider_message_id: string | null;
+          }[]
+        >`select id,status,delivery,provider_message_id from notification_outbox where id=any(${ids}::uuid[])`;
+        expect(rows.find((row) => row.id === ids[0])).toMatchObject({
+          status: "sent",
+          delivery: "simulated",
+          provider_message_id: null,
+        });
+        expect(
+          rows
+            .filter((row) => row.id !== ids[0])
+            .every((row) => row.status === "cancelled" && row.provider_message_id === null),
+        ).toBe(true);
+        verified = true;
+        throw new Error("rollback");
+      });
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "rollback") throw error;
+    }
+    expect(verified).toBe(true);
+  });
+  it("refuses the dispatch marker when origin changes after a client claim", async () => {
+    const sql = sqlForTests();
+    const companyId = await seededCompanyId(sql);
+    let verified = false;
+    try {
+      await sql.begin(async (tx) => {
+        await tx`update companies set data_origin='client' where id=${companyId}`;
+        const repository = createNotificationOutboxRepository({ sql: tx });
+        const row = await repository.enqueue({
+          companyId,
+          channel: "email",
+          notificationType: "sla_warning",
+          idempotencyKey: TEST_KEY_PREFIX + "origin-after-claim",
+          recipient: "audit@example.test",
+          payload: { subject: "Test" },
+        });
+        await tx`update notification_outbox set next_attempt_at=now()-interval '1 minute' where id=${row.id}`;
+        const claimed = (await repository.claimDue(new Date().toISOString(), 500)).find(
+          (candidate) => candidate.id === row.id,
+        );
+        expect(claimed).toBeDefined();
+        await tx`update companies set data_origin='historical' where id=${companyId}`;
+        expect(
+          await repository.markDispatchStarted(row.id, { attemptCount: claimed!.attemptCount }),
+        ).toBe(false);
+        verified = true;
+        throw new Error("rollback");
+      });
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "rollback") throw error;
+    }
+    expect(verified).toBe(true);
+  });
   afterEach(async () => {
     const sql = sqlForTests();
     await sql`delete from notification_outbox where idempotency_key like ${TEST_KEY_PREFIX + "%"}`;

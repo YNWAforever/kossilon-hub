@@ -23,6 +23,8 @@ export type ChecklistStatus = "Missing" | "Received" | "Verified" | "Rejected";
 export type AnnualReturnCompany = {
   id: string;
   companyName: string;
+  /** Always supplied by DB reads; absent legacy/test values remain unknown. */
+  dataOrigin?: import("@/features/clients/data-origin").CompanyDataOrigin | null;
   crNumber: string;
   brNumber: string;
   incorporationDate: string;
@@ -63,6 +65,7 @@ export type AnnualReturnCase = {
   companyId: string;
   companyTeamId: string;
   companyName: string;
+  dataOrigin?: import("@/features/clients/data-origin").CompanyDataOrigin | null;
   returnYear: number;
   madeUpDate: string;
   filingDueDate: string;

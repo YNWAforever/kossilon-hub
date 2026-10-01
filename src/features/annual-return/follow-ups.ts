@@ -130,6 +130,7 @@ export function deriveProductionFollowUpDrafts(
   const recipients = latestRecipientByCase(state.recipients);
   const mutableCases = cases.filter(
     (caseItem) =>
+      caseItem.dataOrigin === "client" &&
       caseItem.currentStatus !== "Filed" &&
       caseItem.currentStatus !== "Completed" &&
       !caseItem.lockedAt &&

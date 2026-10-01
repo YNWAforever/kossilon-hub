@@ -12,6 +12,7 @@ import type { ActiveChecklistTemplateSummary } from "@/features/checklist-templa
 import type { ClientAssignmentOptions } from "@/features/clients/types";
 import { createAnnualReturnCase } from "../server-fns";
 import type { EligibleCompanyForCase } from "../repository";
+import { dataOriginLabel } from "@/features/clients/data-origin";
 
 type Props = {
   open: boolean;
@@ -189,7 +190,8 @@ export function CreateCaseDialog({
               >
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
-                    {company.companyName} ({company.crNumber})
+                    {company.companyName} ({company.crNumber}) ·{" "}
+                    {dataOriginLabel(company.dataOrigin)}
                   </option>
                 ))}
               </select>

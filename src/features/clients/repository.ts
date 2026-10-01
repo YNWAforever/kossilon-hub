@@ -49,7 +49,7 @@ export type CreateClientRepositoryOptions = CreateSqlClientOptions & {
 
 export type ClientRepository = {
   listAssignmentOptions(): Promise<ClientAssignmentOptions>;
-  listClients(): Promise<ClientSummary[]>;
+  listClients(filters?: { includeFixtures?: boolean }): Promise<ClientSummary[]>;
   getClient(id: string): Promise<ClientDetail | null>;
   getCompanyTeamId(companyId: string): Promise<string | null>;
   createClient(input: CreateClientInput): Promise<ClientDetail>;
@@ -73,6 +73,7 @@ export type ClientRepository = {
 type SummaryRow = {
   id: string;
   company_name: string;
+  data_origin: import("./data-origin").CompanyDataOrigin;
   cr_number: string;
   br_number: string;
   status: CompanyStatus;
@@ -247,6 +248,7 @@ function mapSummary(row: SummaryRow): ClientSummary {
   return {
     id: row.id,
     companyName: row.company_name,
+    dataOrigin: row.data_origin,
     crNumber: row.cr_number,
     brNumber: row.br_number,
     status: row.status,
@@ -314,11 +316,14 @@ export function createClientRepository(
     };
   }
 
-  async function listClients(): Promise<ClientSummary[]> {
+  async function listClients(
+    filters: { includeFixtures?: boolean } = {},
+  ): Promise<ClientSummary[]> {
     const rows = await sql<SummaryRow[]>`
       select
         c.id,
         c.company_name,
+        c.data_origin,
         c.cr_number,
         c.br_number,
         c.status,
@@ -343,6 +348,7 @@ export function createClientRepository(
         order by arc.return_year desc, arc.filing_due_date desc
         limit 1
       ) latest on true
+      where (${filters.includeFixtures === true} or c.data_origin <> 'fixture')
       order by c.company_name asc
     `;
 
@@ -354,6 +360,7 @@ export function createClientRepository(
       select
         c.id,
         c.company_name,
+        c.data_origin,
         c.cr_number,
         c.br_number,
         c.status,

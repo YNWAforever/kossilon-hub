@@ -33,7 +33,7 @@ export const Route = createFileRoute("/annual-returns")({
 
 function AnnualReturnsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
@@ -50,6 +50,7 @@ function AnnualReturnsRoute() {
     <DemoAnnualReturnCommandCenter />
   ) : (
     <ProductionAnnualReturnCommandCenter
+      allowFixtureDiagnostics={actor?.active === true && actor.role === "Admin"}
       search={search}
       onSearchChange={(next) => void navigate({ search: next, replace: true })}
     />

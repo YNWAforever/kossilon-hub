@@ -17,6 +17,7 @@ const caseItem: AnnualReturnCase = {
   companyId,
   companyTeamId: "66666666-6666-4666-8666-666666666666",
   companyName: "Acme Company Limited",
+  dataOrigin: "client",
   returnYear: 2026,
   madeUpDate: "2026-06-30",
   filingDueDate: "2026-08-12",
@@ -89,6 +90,20 @@ function state(overrides: Partial<PersistedFollowUpState> = {}): PersistedFollow
 }
 
 describe("production follow-up draft derivation", () => {
+  it("only prepares client drafts for equal deadlines; never infers origin from seed-style IDs/names", () => {
+    const fixture = { ...caseItem, id: "fixture-case", dataOrigin: "fixture" as const };
+    const historical = { ...caseItem, id: "historical-case", dataOrigin: "historical" as const };
+    const unknown = { ...caseItem, id: "unknown-case", dataOrigin: undefined };
+    const client = { ...caseItem, companyName: "Harbour Trading Ltd" };
+    const drafts = deriveProductionFollowUpDrafts(
+      [fixture, historical, unknown, client],
+      state(),
+      "2026-07-14",
+    );
+    expect(drafts.every((draft) => draft.caseId === caseId)).toBe(true);
+    expect(drafts).toHaveLength(4);
+    expect(client.dataOrigin).toBe("client");
+  });
   it("derives each authoritative linked document and payment draft from persisted state", () => {
     const drafts = deriveProductionFollowUpDrafts([caseItem], state(), "2026-07-14");
 

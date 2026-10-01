@@ -24,6 +24,7 @@ import {
 } from "../types";
 import { daysBetween, hongKongBusinessDate } from "../workflow";
 import { CreateCaseDialog } from "./create-case-dialog";
+import { dataOriginLabel } from "@/features/clients/data-origin";
 
 const BOARD_PAGE_SIZE = 200;
 
@@ -44,15 +45,18 @@ const riskToneClasses: Record<RiskLevel, string> = {
 export function ProductionAnnualReturnCommandCenter({
   search,
   onSearchChange,
+  allowFixtureDiagnostics = false,
 }: {
   search: AnnualReturnBoardSearch;
   onSearchChange?: (next: AnnualReturnBoardSearch) => void;
+  allowFixtureDiagnostics?: boolean;
 }) {
   const today = hongKongBusinessDate();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [includeFixtures, setIncludeFixtures] = useState(false);
 
-  const filters = boardFiltersFromSearch(search, BOARD_PAGE_SIZE);
+  const filters = { ...boardFiltersFromSearch(search, BOARD_PAGE_SIZE), includeFixtures };
   // Pages already loaded beyond the first. Reset whenever the filters change,
   // because a cursor is only meaningful within the query that produced it.
   const [extraPages, setExtraPages] = useState<AnnualReturnCase[][]>([]);
@@ -88,8 +92,8 @@ export function ProductionAnnualReturnCommandCenter({
   // there is no reason to fire them on every board load when most visits never
   // open the dialog at all.
   const eligibleCompaniesQuery = useQuery({
-    queryKey: ["annual-returns", "eligible-companies"],
-    queryFn: () => listCompaniesEligibleForCase(),
+    queryKey: ["annual-returns", "eligible-companies", { includeFixtures }],
+    queryFn: () => listCompaniesEligibleForCase({ data: { includeFixtures } }),
     enabled: isCreateOpen,
     retry: false,
   });
@@ -245,6 +249,21 @@ export function ProductionAnnualReturnCommandCenter({
         <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
         <Metric label="Cases in scope" value={totals?.total ?? 0} />
       </div>
+      <p className="text-sm text-muted-foreground">
+        {includeFixtures
+          ? "診斷範圍：包含測試資料；測試與歷史資料不會外發。"
+          : "正式範圍：排除測試資料；歷史資料只供查閱。"}
+      </p>
+      {allowFixtureDiagnostics ? (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={includeFixtures}
+            onChange={(event) => setIncludeFixtures(event.target.checked)}
+          />
+          包含測試資料（Admin 診斷）
+        </label>
+      ) : null}
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto_auto]">
@@ -374,6 +393,9 @@ function BoardRow({
     <div className={`grid gap-3 px-4 py-3 text-sm lg:grid ${BOARD_GRID_COLUMNS}`}>
       <div className="min-w-0">
         <p className="truncate font-medium">{caseItem.companyName}</p>
+        <span className="text-xs text-muted-foreground">
+          {dataOriginLabel(caseItem.dataOrigin)}
+        </span>
         <p className="truncate text-sm text-muted-foreground">
           {caseItem.returnYear} · made up {caseItem.madeUpDate}
         </p>

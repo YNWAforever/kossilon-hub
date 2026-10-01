@@ -63,6 +63,7 @@ type CaseRow = {
   company_id: string;
   company_team_id: string;
   company_name: string;
+  data_origin: import("@/features/clients/data-origin").CompanyDataOrigin;
   return_year: number;
   made_up_date: string | Date;
   filing_due_date: string | Date;
@@ -133,6 +134,7 @@ type LockedCaseRow = {
 type EligibleCompanyRow = {
   id: string;
   company_name: string;
+  data_origin: import("@/features/clients/data-origin").CompanyDataOrigin;
   cr_number: string;
   annual_return_basis_date: string | Date;
   assigned_owner_id: string;
@@ -157,6 +159,8 @@ type QueryClient = SqlClient | postgres.TransactionSql;
 type TransactionSqlClient = postgres.TransactionSql;
 
 export type CaseFilters = {
+  /** Server only allows an active Admin to request diagnostic fixture scope. */
+  includeFixtures?: boolean;
   ownerId?: string;
   teamId?: string;
   reviewerId?: string;
@@ -320,6 +324,7 @@ export type CreateAnnualReturnRepositoryOptions = CreateSqlClientOptions & {
 export type EligibleCompanyForCase = {
   id: string;
   companyName: string;
+  dataOrigin?: import("@/features/clients/data-origin").CompanyDataOrigin | null;
   crNumber: string;
   annualReturnBasisDate: string;
   assignedOwnerId: string;
@@ -421,7 +426,9 @@ export type AnnualReturnRepository = {
   ): Promise<AnnualReturnCase[]>;
   boardTotals(filters: CaseFilters): Promise<BoardTotals>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
-  listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>;
+  listCompaniesEligibleForCase(filters?: {
+    includeFixtures?: boolean;
+  }): Promise<EligibleCompanyForCase[]>;
   listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
   createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>;
   dashboardMetrics(
@@ -636,6 +643,7 @@ function hydrateCase(
     companyId: row.company_id,
     companyTeamId: row.company_team_id,
     companyName: row.company_name,
+    dataOrigin: row.data_origin,
     returnYear: row.return_year,
     madeUpDate: dateOnly(row.made_up_date),
     filingDueDate: dateOnly(row.filing_due_date),
@@ -779,6 +787,7 @@ export function createAnnualReturnRepository(
         arc.id,
         arc.company_id,
         c.company_name,
+        c.data_origin,
         c.assigned_team_id as company_team_id,
         arc.current_status,
         arc.owner_id,
@@ -875,6 +884,7 @@ export function createAnnualReturnRepository(
         arc.company_id,
         c.assigned_team_id as company_team_id,
         c.company_name,
+        c.data_origin,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
         arc.filing_due_date::text as filing_due_date,
@@ -894,6 +904,7 @@ export function createAnnualReturnRepository(
       join users owner on owner.id = arc.owner_id
       left join users reviewer on reviewer.id = arc.reviewer_id
       where (${ownerId}::uuid is null or arc.owner_id = ${ownerId}::uuid)
+        and (${filters.includeFixtures === true} or c.data_origin <> 'fixture')
         and (${teamId}::uuid is null or c.assigned_team_id = ${teamId}::uuid)
         and (${reviewerId}::uuid is null or arc.reviewer_id = ${reviewerId}::uuid)
         and (${status}::text is null or arc.current_status = ${status})
@@ -1208,6 +1219,7 @@ export function createAnnualReturnRepository(
       from annual_return_cases arc
       join companies c on c.id = arc.company_id
       where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
+        and (${filters.includeFixtures === true} or c.data_origin <> 'fixture')
         and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
         and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
         and (${filters.status ?? null}::text is null or arc.current_status = ${filters.status ?? null})
@@ -1239,6 +1251,7 @@ export function createAnnualReturnRepository(
         arc.company_id,
         c.assigned_team_id as company_team_id,
         c.company_name,
+        c.data_origin,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
         arc.filing_due_date::text as filing_due_date,
@@ -1265,11 +1278,14 @@ export function createAnnualReturnRepository(
     return case_ ?? null;
   }
 
-  async function listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]> {
+  async function listCompaniesEligibleForCase(
+    filters: { includeFixtures?: boolean } = {},
+  ): Promise<EligibleCompanyForCase[]> {
     const rows = await sql<EligibleCompanyRow[]>`
       select
         c.id,
         c.company_name,
+        c.data_origin,
         c.cr_number,
         c.annual_return_basis_date::text as annual_return_basis_date,
         c.assigned_owner_id,
@@ -1278,6 +1294,7 @@ export function createAnnualReturnRepository(
       from companies c
       join teams t on t.id = c.assigned_team_id
       where c.status = 'active'
+        and (${filters.includeFixtures ?? false}::boolean or c.data_origin <> 'fixture')
         and not exists (
           select 1
           from annual_return_cases arc
@@ -1290,6 +1307,7 @@ export function createAnnualReturnRepository(
     return rows.map((row) => ({
       id: row.id,
       companyName: row.company_name,
+      dataOrigin: row.data_origin,
       crNumber: row.cr_number,
       annualReturnBasisDate: dateOnly(row.annual_return_basis_date),
       assignedOwnerId: row.assigned_owner_id,

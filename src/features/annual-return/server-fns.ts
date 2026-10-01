@@ -27,6 +27,7 @@ import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 import { deriveWorkViews } from "./work-views";
 import type { DocumentFindingsView } from "@/features/documents/findings-review";
 import type { DocumentAnalysisRepository } from "@/features/documents/analysis-repository";
+import { originFilterForActor } from "@/features/clients/data-origin";
 
 const RISK_LEVELS = ["green", "yellow", "orange", "red"] as const;
 const CHECKLIST_STATUSES = ["Missing", "Received", "Verified", "Rejected"] as const;
@@ -48,6 +49,7 @@ const listAnnualReturnCasesSchema = z
     missingDocuments: z.boolean().optional(),
     paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
     overdueOnly: z.boolean().optional(),
+    includeFixtures: z.boolean().optional(),
     // Bounded so a caller cannot ask for the whole table in one request, and
     // trimmed so a whitespace-only search is the same as no search.
     q: z.string().trim().min(1).max(120).optional(),
@@ -156,7 +158,11 @@ export async function listAnnualReturnCasesForActor(
     active: actor.active,
   });
 
-  return dependencies.repository.listCases({ ...filters, ...scope });
+  return dependencies.repository.listCases({
+    ...filters,
+    ...scope,
+    ...originFilterForActor(actor, filters.includeFixtures),
+  });
 }
 
 /**
@@ -178,7 +184,11 @@ export async function listAnnualReturnCasePageForActor(
     active: actor.active,
   });
 
-  return dependencies.repository.listCasePage({ ...filters, ...scope });
+  return dependencies.repository.listCasePage({
+    ...filters,
+    ...scope,
+    ...originFilterForActor(actor, filters.includeFixtures),
+  });
 }
 
 /**
@@ -199,7 +209,11 @@ export async function getAnnualReturnBoardTotalsForActor(
     active: actor.active,
   });
 
-  return dependencies.repository.boardTotals({ ...filters, ...scope });
+  return dependencies.repository.boardTotals({
+    ...filters,
+    ...scope,
+    ...originFilterForActor(actor, filters.includeFixtures),
+  });
 }
 
 /**
@@ -225,11 +239,13 @@ function boardActorFrom(actor: AuthenticatedActor) {
 
 export async function listCompaniesEligibleForCaseForActor(
   actor: AuthenticatedActor,
-  _input: Record<string, never>,
+  input: { includeFixtures?: boolean },
   dependencies: { repository: Pick<AnnualReturnRepository, "listCompaniesEligibleForCase"> },
 ): Promise<EligibleCompanyForCase[]> {
   requireStaffUserId(actor);
-  const companies = await dependencies.repository.listCompaniesEligibleForCase();
+  const companies = await dependencies.repository.listCompaniesEligibleForCase(
+    originFilterForActor(actor, input.includeFixtures),
+  );
 
   // Admin unrestricted; Manager/Staff only ever see companies they could
   // actually submit for — matches assertAnnualReturnCaseCreatable's policy
@@ -787,11 +803,13 @@ export const getAnnualReturnBoardTotals = createServerFn({ method: "GET" })
     ),
   );
 
-export const listCompaniesEligibleForCase = createServerFn({ method: "GET" }).handler(() =>
-  withAnnualReturnActorRepository((repository, actor) =>
-    listCompaniesEligibleForCaseForActor(actor, {}, { repository }),
-  ),
-);
+export const listCompaniesEligibleForCase = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ includeFixtures: z.boolean().optional() }).default({}))
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listCompaniesEligibleForCaseForActor(actor, data, { repository }),
+    ),
+  );
 
 export const listAssignableStaff = createServerFn({ method: "GET" }).handler(() =>
   withAnnualReturnActorRepository((repository, actor) =>

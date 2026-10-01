@@ -32,6 +32,7 @@ const caseItem: AnnualReturnCase = {
   companyId,
   companyTeamId: teamId,
   companyName: "Acme Company Limited",
+  dataOrigin: "client",
   returnYear: 2026,
   madeUpDate: "2026-06-30",
   filingDueDate: "2026-08-12",

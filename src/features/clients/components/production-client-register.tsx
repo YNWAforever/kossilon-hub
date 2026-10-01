@@ -8,6 +8,7 @@ import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { listClientAssignmentOptions, listClients } from "../server-fns";
 import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types";
+import { dataOriginLabel } from "../data-origin";
 
 const REGISTER_GRID_COLUMNS =
   "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
@@ -28,16 +29,21 @@ const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
   Overdue: "red",
 };
 
-export function ProductionClientRegister() {
+export function ProductionClientRegister({
+  allowFixtureDiagnostics = false,
+}: {
+  allowFixtureDiagnostics?: boolean;
+}) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [teamFilter, setTeamFilter] = useState("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [includeFixtures, setIncludeFixtures] = useState(false);
 
   const clientsQuery = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => listClients(),
+    queryKey: ["clients", { includeFixtures }],
+    queryFn: () => listClients({ data: { includeFixtures } }),
     retry: false,
   });
 
@@ -83,6 +89,21 @@ export function ProductionClientRegister() {
           </button>
         }
       />
+      <p className="text-sm text-muted-foreground">
+        {includeFixtures
+          ? "診斷範圍：包含測試資料；測試與歷史資料不會外發。"
+          : "正式範圍：排除測試資料；歷史資料只供查閱。"}
+      </p>
+      {allowFixtureDiagnostics ? (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={includeFixtures}
+            onChange={(event) => setIncludeFixtures(event.target.checked)}
+          />
+          包含測試資料（Admin 診斷）
+        </label>
+      ) : null}
 
       {clientsQuery.isError ? (
         <p role="alert" className="text-sm text-destructive">
@@ -184,6 +205,7 @@ function ClientRow({ client }: { client: ClientSummary }) {
     <div className={`grid gap-3 px-4 py-4 lg:items-center ${REGISTER_GRID_COLUMNS}`}>
       <div className="min-w-0">
         <p className="truncate font-medium">{client.companyName}</p>
+        <span className="text-xs text-muted-foreground">{dataOriginLabel(client.dataOrigin)}</span>
         <p className="truncate text-xs text-muted-foreground">
           CR {client.crNumber} · BR {client.brNumber}
         </p>

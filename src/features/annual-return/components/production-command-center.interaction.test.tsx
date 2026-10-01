@@ -17,6 +17,8 @@ const serverFns = vi.hoisted(() => ({
   listAssignableStaff: vi.fn(),
   listCompaniesEligibleForCase: vi.fn(),
   listWorkQueue: vi.fn(),
+  listActiveAnnualReturnTemplates: vi.fn(),
+  listClientAssignmentOptions: vi.fn(),
 }));
 
 vi.mock("../server-fns", () => ({
@@ -26,6 +28,12 @@ vi.mock("../server-fns", () => ({
   listCompaniesEligibleForCase: serverFns.listCompaniesEligibleForCase,
 }));
 vi.mock("@/features/work-items/server-fns", () => ({ listWorkQueue: serverFns.listWorkQueue }));
+vi.mock("@/features/checklist-templates/server-fns", () => ({
+  listActiveAnnualReturnTemplates: serverFns.listActiveAnnualReturnTemplates,
+}));
+vi.mock("@/features/clients/server-fns", () => ({
+  listClientAssignmentOptions: serverFns.listClientAssignmentOptions,
+}));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));
@@ -58,12 +66,15 @@ function makeCase(overrides: Partial<AnnualReturnCase> = {}): AnnualReturnCase {
   };
 }
 
-function renderBoard() {
+function renderBoard(allowFixtureDiagnostics = false) {
   return render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <ProductionAnnualReturnCommandCenter search={{}} />
+      <ProductionAnnualReturnCommandCenter
+        search={{}}
+        allowFixtureDiagnostics={allowFixtureDiagnostics}
+      />
     </QueryClientProvider>,
   );
 }
@@ -83,6 +94,8 @@ describe("production annual return command center", () => {
     });
     serverFns.listAssignableStaff.mockResolvedValue([]);
     serverFns.listCompaniesEligibleForCase.mockResolvedValue([]);
+    serverFns.listActiveAnnualReturnTemplates.mockResolvedValue([]);
+    serverFns.listClientAssignmentOptions.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -196,7 +209,33 @@ describe("production annual return command center", () => {
     renderBoard();
 
     await waitFor(() =>
-      expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({ data: { limit: 200 } }),
+      expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({
+        data: { limit: 200, includeFixtures: false },
+      }),
     );
+  });
+
+  it("labels origins and keeps diagnostic scope opt-in for an Admin", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({
+      cases: [makeCase({ dataOrigin: "historical" })],
+      nextCursor: null,
+    });
+    renderBoard(true);
+    expect(await screen.findByText("歷史資料（不外發）")).toBeTruthy();
+    const toggle = screen.getByRole("checkbox", { name: "包含測試資料（Admin 診斷）" });
+    expect((toggle as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({
+        data: { limit: 200, includeFixtures: true },
+      }),
+    );
+  });
+
+  it("does not offer fixture diagnostics without the Admin capability", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
+    renderBoard();
+    await screen.findByText("No annual return cases match these filters.");
+    expect(screen.queryByRole("checkbox", { name: "包含測試資料（Admin 診斷）" })).toBeNull();
   });
 });

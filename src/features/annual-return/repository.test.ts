@@ -559,6 +559,52 @@ describe("annual return repository configuration", () => {
 });
 
 describe.skipIf(!databaseUrl)("annual return repository", () => {
+  it(
+    "keeps fixture diagnostics distinct from default list/metric scope and preserves origin",
+    async () => {
+      const client = await createMutableAnnualReturnFixture({ sequence: 53 });
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 54 });
+      const historical = await createMutableAnnualReturnFixture({ sequence: 55 });
+      const sql = sqlForTests();
+      await sql`update companies set company_name='Harbour Trading Ltd' where id=${client.companyId}`;
+      await sql`update companies set data_origin='fixture' where id=${fixture.companyId}`;
+      await sql`update companies set data_origin='historical' where id=${historical.companyId}`;
+      const repository = repositoryFor("2026-10-01");
+      const companyIds = [client.companyId, fixture.companyId, historical.companyId];
+      const normal = await repository.listCasePage({ companyIds });
+      expect(normal.cases.map((case_) => case_.dataOrigin).sort()).toEqual([
+        "client",
+        "historical",
+      ]);
+      expect((await repository.getCase(client.caseId))?.dataOrigin).toBe("client");
+      expect(
+        (await repository.listCasePage({ companyIds, includeFixtures: true })).cases,
+      ).toHaveLength(3);
+      expect((await repository.boardTotals({ companyIds })).total).toBe(2);
+      expect((await repository.boardTotals({ companyIds, includeFixtures: true })).total).toBe(3);
+      expect(
+        (await repository.dashboardMetrics("2026-10-01", USER_AMY_ID, { companyIds })).overdue,
+      ).toBe(2);
+      const origins = await sql`select data_origin from companies where id=${client.companyId}`;
+      expect(origins[0].data_origin).toBe("client");
+      await sql`update companies set annual_return_basis_date='2099-07-01' where id=any(${companyIds}::uuid[])`;
+      const eligible = (await repository.listCompaniesEligibleForCase()).filter((company) =>
+        companyIds.includes(company.id),
+      );
+      expect(eligible.map((company) => company.id).sort()).toEqual(
+        [client.companyId, historical.companyId].sort(),
+      );
+      const diagnosticEligible = (
+        await repository.listCompaniesEligibleForCase({ includeFixtures: true })
+      ).filter((company) => companyIds.includes(company.id));
+      expect(diagnosticEligible.map((company) => company.dataOrigin).sort()).toEqual([
+        "client",
+        "fixture",
+        "historical",
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
   beforeEach(async () => {
     await cleanupAnnualReturnTestFixtures();
   });
@@ -778,7 +824,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   it("lists annual return cases with company, owner, reviewer, checklist, payment, and recalculated risk", async () => {
     const repository = repositoryFor("2026-07-05");
 
-    const cases = await repository.listCases({});
+    const cases = await repository.listCases({ includeFixtures: true });
 
     expect(cases.map((case_) => case_.companyName)).toEqual([
       "Victoria Peak Holdings Ltd",
@@ -814,7 +860,10 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
   it("returns one hydrated case by id and null for an unknown case", async () => {
     const repository = repositoryFor("2026-07-05");
-    const [firstCase] = await repository.listCases({ status: "Documents pending" });
+    const [firstCase] = await repository.listCases({
+      includeFixtures: true,
+      status: "Documents pending",
+    });
 
     const case_ = await repository.getCase(firstCase.id);
 
@@ -831,24 +880,40 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   it("filters cases by owner, team, reviewer, status, payment, risk, and missing documents", async () => {
     const repository = repositoryFor("2026-07-05");
 
-    await expect(repository.listCases({ ownerId: USER_MEI_ID })).resolves.toHaveLength(1);
-    await expect(repository.listCases({ teamId: TEAM_ANNUAL_RETURN_ID })).resolves.toHaveLength(2);
-    await expect(repository.listCases({ teamId: TEAM_EVIDENCE_ID })).resolves.toHaveLength(1);
-    await expect(repository.listCases({ reviewerId: USER_KEN_ID })).resolves.toHaveLength(3);
-    await expect(repository.listCases({ status: "Filed" })).resolves.toHaveLength(1);
-    await expect(repository.listCases({ paymentStatus: "Payment pending" })).resolves.toHaveLength(
-      2,
-    );
+    await expect(
+      repository.listCases({ includeFixtures: true, ownerId: USER_MEI_ID }),
+    ).resolves.toHaveLength(1);
+    await expect(
+      repository.listCases({ includeFixtures: true, teamId: TEAM_ANNUAL_RETURN_ID }),
+    ).resolves.toHaveLength(2);
+    await expect(
+      repository.listCases({ includeFixtures: true, teamId: TEAM_EVIDENCE_ID }),
+    ).resolves.toHaveLength(1);
+    await expect(
+      repository.listCases({ includeFixtures: true, reviewerId: USER_KEN_ID }),
+    ).resolves.toHaveLength(3);
+    await expect(
+      repository.listCases({ includeFixtures: true, status: "Filed" }),
+    ).resolves.toHaveLength(1);
+    await expect(
+      repository.listCases({ includeFixtures: true, paymentStatus: "Payment pending" }),
+    ).resolves.toHaveLength(2);
 
-    const riskyCases = await repository.listCases({ risk: "yellow" });
+    const riskyCases = await repository.listCases({ includeFixtures: true, risk: "yellow" });
     expect(riskyCases.map((case_) => case_.companyName)).toEqual(["Kowloon Textiles Ltd"]);
 
-    const casesMissingDocuments = await repository.listCases({ missingDocuments: true });
+    const casesMissingDocuments = await repository.listCases({
+      includeFixtures: true,
+      missingDocuments: true,
+    });
     expect(casesMissingDocuments.map((case_) => case_.companyName)).toEqual([
       "Harbour Trading Ltd",
     ]);
 
-    const casesWithoutMissingDocuments = await repository.listCases({ missingDocuments: false });
+    const casesWithoutMissingDocuments = await repository.listCases({
+      includeFixtures: true,
+      missingDocuments: false,
+    });
     expect(casesWithoutMissingDocuments.map((case_) => case_.companyName)).toEqual([
       "Victoria Peak Holdings Ltd",
       "Kowloon Textiles Ltd",
@@ -860,10 +925,15 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
     // ownerId and reviewerId are separate AND-ed clauses, so owner-OR-reviewer
     // cannot be asked for with them. Ken reviews all three; Mei owns one of them.
-    await expect(repository.listCases({ visibleToUserId: USER_KEN_ID })).resolves.toHaveLength(3);
+    await expect(
+      repository.listCases({ includeFixtures: true, visibleToUserId: USER_KEN_ID }),
+    ).resolves.toHaveLength(3);
 
-    const meiCases = await repository.listCases({ visibleToUserId: USER_MEI_ID });
-    const meiOwned = await repository.listCases({ ownerId: USER_MEI_ID });
+    const meiCases = await repository.listCases({
+      includeFixtures: true,
+      visibleToUserId: USER_MEI_ID,
+    });
+    const meiOwned = await repository.listCases({ includeFixtures: true, ownerId: USER_MEI_ID });
 
     expect(meiCases.length).toBeGreaterThanOrEqual(meiOwned.length);
     for (const case_ of meiCases) {
@@ -874,18 +944,27 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   it("caps how many cases a single read returns", async () => {
     const repository = repositoryFor("2026-07-05");
 
-    await expect(repository.listCases({})).resolves.toHaveLength(3);
-    await expect(repository.listCases({ limit: 2 })).resolves.toHaveLength(2);
-    await expect(repository.listCases({ limit: 1 })).resolves.toHaveLength(1);
+    await expect(repository.listCases({ includeFixtures: true })).resolves.toHaveLength(3);
+    await expect(repository.listCases({ includeFixtures: true, limit: 2 })).resolves.toHaveLength(
+      2,
+    );
+    await expect(repository.listCases({ includeFixtures: true, limit: 1 })).resolves.toHaveLength(
+      1,
+    );
   });
 
   it("uses the repository date source for overdue-only reads", async () => {
     const julyFiveRepository = repositoryFor("2026-07-05");
     const julyTwentyEightRepository = repositoryFor("2026-07-28");
 
-    await expect(julyFiveRepository.listCases({ overdueOnly: true })).resolves.toHaveLength(1);
+    await expect(
+      julyFiveRepository.listCases({ includeFixtures: true, overdueOnly: true }),
+    ).resolves.toHaveLength(1);
 
-    const overdueCases = await julyTwentyEightRepository.listCases({ overdueOnly: true });
+    const overdueCases = await julyTwentyEightRepository.listCases({
+      includeFixtures: true,
+      overdueOnly: true,
+    });
     expect(overdueCases.map((case_) => case_.companyName)).toEqual([
       "Victoria Peak Holdings Ltd",
       "Kowloon Textiles Ltd",
@@ -897,7 +976,9 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     async () => {
       const repository = repositoryFor("2026-07-05");
 
-      await expect(repository.dashboardMetrics("2026-07-05", USER_AMY_ID)).resolves.toEqual({
+      await expect(
+        repository.dashboardMetrics("2026-07-05", USER_AMY_ID, { includeFixtures: true }),
+      ).resolves.toEqual({
         dueIn7: 0,
         dueIn30: 1,
         overdue: 0,
@@ -907,11 +988,11 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         assignedToMe: 1,
       });
 
-      await expect(repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID)).resolves.toMatchObject(
-        {
-          assignedToMe: 1,
-        },
-      );
+      await expect(
+        repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID, { includeFixtures: true }),
+      ).resolves.toMatchObject({
+        assignedToMe: 1,
+      });
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

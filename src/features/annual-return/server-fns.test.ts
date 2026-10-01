@@ -8,6 +8,8 @@ import {
   listAnnualReturnCaseFindingsForActor,
   listAnnualReturnCaseHistoryForActor,
   resolveAnnualReturnCaseFindingForActor,
+  listAnnualReturnCasePageForActor,
+  getAnnualReturnBoardTotalsForActor,
 } from "./server-fns";
 
 const caseId = "91000000-0000-0000-0000-000000000001";
@@ -29,6 +31,41 @@ const staffActor: AuthenticatedActor = {
   teamId: "10000000-0000-0000-0000-000000000001",
   active: true,
 };
+
+describe("origin diagnostics server authorization", () => {
+  it("denies fixture widening before list/metric repository reads for non-Admin", async () => {
+    const listCasePage = vi.fn();
+    const boardTotals = vi.fn();
+    await expect(
+      listAnnualReturnCasePageForActor(
+        staffActor,
+        { includeFixtures: true },
+        { repository: { listCasePage } },
+      ),
+    ).rejects.toThrow("Admin");
+    await expect(
+      getAnnualReturnBoardTotalsForActor(
+        staffActor,
+        { includeFixtures: true },
+        { repository: { boardTotals } },
+      ),
+    ).rejects.toThrow("Admin");
+    expect(listCasePage).not.toHaveBeenCalled();
+    expect(boardTotals).not.toHaveBeenCalled();
+  });
+  it("passes explicit fixture diagnostics for active Admin while default excludes fixtures", async () => {
+    const actor = { ...staffActor, role: "Admin" as const };
+    const listCasePage = vi.fn(async () => ({ cases: [], nextCursor: null }));
+    await listAnnualReturnCasePageForActor(
+      actor,
+      { includeFixtures: true },
+      { repository: { listCasePage } },
+    );
+    expect(listCasePage).toHaveBeenLastCalledWith({ includeFixtures: true });
+    await listAnnualReturnCasePageForActor(actor, {}, { repository: { listCasePage } });
+    expect(listCasePage).toHaveBeenLastCalledWith({ includeFixtures: false });
+  });
+});
 
 describe("annual return case command authorization", () => {
   it("rejects client owner assignment", async () => {

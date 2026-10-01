@@ -357,6 +357,7 @@ export function createNotificationOutboxRepository(
         update notification_outbox
         set dispatch_started_attempt = ${input.attemptCount}, updated_at = now()
         where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
+          and company_id in (select id from companies where data_origin = 'client')
         returning id
       `;
       return rows.length === 1;
