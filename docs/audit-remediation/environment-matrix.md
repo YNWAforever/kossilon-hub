@@ -20,4 +20,11 @@ Presence is recorded only when observed. `unknown` is not `missing`. No secret v
 | Handoff                 | Existing package manifest model                                            | External destination protocol/credentials absent in supplied evidence                                       | Manual intake implementation pending                                                  | Internal-server owner: real transport/receipt contract; export is not submission                                                        |
 | Data origin             | 3 live companies, all client                                               | Explicit data_origin SELECT; no classification inferred from names/UUIDs                                    | Read-only inventory                                                                   | Business data owner: reviewed provenance/per-item repair preview; no automatic reclassification                                         |
 
+## PR03 verification refresh
+
+- Candidate build `4e77e6d5cee72e6117242212bd21ed6ac7817b2d`:184 files/1864 tests pass/0 skipped on Node22.23.3 and dedicated `kossilon_pr02_ci` Postgres17. Typecheck/build/predeploy/dev-imports/compiled cron hook pass; lint0errors/1baseline warning. Evidence: `evidence/2026-10-01-pr03-gates.json`.
+- Production lineage read at2026-10-01T07:10:20Z, exact Neon target above and Web aa5d3cb:14 document rows,14 current versions,0 upload intents; business verification does not establish object bytes or clean scan. No production R2 HEAD/read/write or recovery executed. Evidence: `evidence/2026-10-01-document-lineage-production.json`.
+- Auth contracts use injected sessions plus actual Postgres memberships; fresh magic-link/Google and controlled-role sessions remain blocked with Auth owner. Storage/scanner owner must provide scoped sample access and real roundtrip before runtime acceptance.
+- PR01 #102/PR02 #103 remain drafts, remote verify and Vercel preview successful on2026-10-01; production deployment/schema unchanged.
+
 Prior production operations in this session covered named historical migrations/builds. This assignment prepares new reviewable code and deployment packages; production mutation remains gated by the concrete new scope.

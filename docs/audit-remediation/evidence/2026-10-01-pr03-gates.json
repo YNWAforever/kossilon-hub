@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-01",
+  "build": "4e77e6d5cee72e6117242212bd21ed6ac7817b2d",
+  "base": "fabd24d33a58cb3243b4c44fac2dda3c24d0a654",
+  "tasks": ["T04", "T05", "T06", "T07"],
+  "findings": ["F03", "F04", "F07", "F16"],
+  "environment": "LOCAL ONLY Windows, portable Node22.23.3, Bun1.3.14, Postgres17 localhost55441/kossilon_pr02_ci; injected provider/session contracts",
+  "gates": [
+    {
+      "command": "npm run test",
+      "databaseVariables": ["DATABASE_URL", "TEST_DATABASE_URL"],
+      "result": "184files/1864pass/0skip",
+      "durationSeconds": 212.91,
+      "log": ".worktrees/audit-baseline-20261001/pr03-final-full-tests.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "log": ".worktrees/audit-baseline-20261001/pr03-final-typecheck.log"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS 0errors/1existing work-queue FastRefresh warning",
+      "log": ".worktrees/audit-baseline-20261001/pr03-final-lint.log"
+    },
+    { "command": "npm run build", "result": "PASS" },
+    {
+      "command": "node --experimental-strip-types scripts/verify-firm-deployment.ts --dry-run",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run verify:dev-server-imports",
+      "result": "PASS 12 request routes; no import-protection violation"
+    },
+    {
+      "command": "compiled Cloudflare scheduled hook verification",
+      "result": "PASS local compiled contract; no real scheduled tick"
+    },
+    {
+      "command": "npm run db:migrate (repeat on isolated existing candidate DB)",
+      "result": "PASS",
+      "log": ".worktrees/audit-baseline-20261001/pr03-migration-repeat.log"
+    }
+  ],
+  "regressions": [
+    "Canonical seeded UUID and raw router numeric/boolean/null/empty/array filters cannot expose cached all-documents",
+    "Real Postgres active staff team/owner/reviewer plus caseless/cross-company guards and revoked Client membership",
+    "Current-version LEFT lineage exposes metadata gaps without invented checksum/scan or byte access",
+    "Guarded additive recovery: stale token, duplicate intent, current authorization, unknown result no retry, old associations retained",
+    "Two independent Postgres connections: recovery versus ordinary replacement/scanner use compatible lock order",
+    "Provider HEAD missing versus access-error unknown remains distinct; complete metadata cannot suppress actual missing-object recovery",
+    "201/400/401 cursors terminate; duplicate ID dedup; failed-next retains rows; actor/filter race does not mix cache"
+  ],
+  "review": "Independent reviewer:3Important findings reproduced RED/GREEN; no remaining Critical/Important",
+  "schema": "No PR03 migration; local candidate0067/0068/0069 only; production66 historical ledger unchanged",
+  "runtimeBlockers": [
+    "Auth owner: controlled accounts and fresh provider login/expiry/Google; injected session is not runtime proof",
+    "Storage/security owner: scoped private sample/object roundtrip and actual scanner; no production HEAD/write authorised",
+    "Business/release owner: approve per-record recovery preview/current source and compatible release after new migration gates"
+  ],
+  "productionMutation": false
+}

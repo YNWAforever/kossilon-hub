@@ -19,10 +19,10 @@
 | T03  | F20         | code_verified | 49f6fb6; real PG origin3groups/picker/dispatch guards; Admin scope; data-origin-runbook.md; PR01 gates                                                                       | Production0068/deploy and per-company provenance/recipient review pending; FLOW-09 full journey not_run                      |
 | T02  | F02         | code_verified | b34148c; PR02 full181files/1805tests/0skip; two-connection slot/lease test; candidate attestation RED/GREEN; migration repeat/rollback; scheduler-runbook.md                 | Runtime blocked: Cloudflare topology, three real staging ticks/queue evidence, new0069/deploy approval; no provider dispatch |
 | T23  | F17         | code_verified | 3d3c373; config/health/approval separation, independent unknown queries, Admin diagnostics; capability-runbook.md; PR02 gate JSON                                            | Runtime UI/provider verification blocked pending deployment and controlled connector samples; preserve approval              |
-| T04  | F03         | pending       | Portal/documents strict UUID version regex                                                                                                                                   | Shared canonical Postgres UUID parser and route regression                                                                   |
-| T05  | F16         | pending       | Document list/by-ID policy mismatch                                                                                                                                          | One server scope; real PG role matrix                                                                                        |
-| T06  | F04         | pending       | Vault/read-model mismatch; physical cause unknown                                                                                                                            | Follow T05; metadata reconciliation read-only first                                                                          |
-| T07  | F07         | pending       | Supplied pagination reproducer 8 pass/1 fail                                                                                                                                 | Reproduce locally then terminal cursor/filter epoch fix                                                                      |
+| T04  | F03         | code_verified | 2d7d6a9; canonical seeded UUIDs; invalid numeric/boolean/null/empty/array search denies cached all-files; authorised Portal picker; PR03 gates                               | Fresh provider login and controlled account journey remain blocked; local router/session contracts only                      |
+| T05  | F16         | code_verified | 4e77e6d; shared active staff team-or-assignment scope; real PG role matrix, cross-company denial and Client membership revocation                                            | Fresh-role Auth runtime UAT remains blocked; no new grants/invites                                                           |
+| T06  | F04         | code_verified | 4e77e6d; LEFT current lineage, read-only live14/no-intent evidence; guarded additive recovery; two-connection lock tests and object-unknown contracts                        | R2/scanner roundtrip and approved per-record production recovery blocked; no production HEAD/write                           |
+| T07  | F07         | code_verified | ddfa7f8; 201/400/401 terminal cursors, dedup, failed-next retention and actor/filter race tests; PR03 gates                                                                  | T13 must explicitly scope bulk selection; production multi-role journey remains unverified                                   |
 | T08  | F05         | pending       | Ready view ignores payment                                                                                                                                                   | Follow T05/T06; shared versioned readiness                                                                                   |
 | T09  | F06         | pending       | KPI units and scope differ                                                                                                                                                   | Follow T03/T08; SQL aggregate parity                                                                                         |
 | T10  | F14         | pending       | Owner labels are UUID prefixes                                                                                                                                               | Follow T08; staff names/workload/business blockers                                                                           |
@@ -43,28 +43,28 @@
 
 `still-present` denotes source/aggregate evidence, not a fresh multi-role production reproduction. No finding is marked fixed without a tested change.
 
-| Finding | Classification         | Current evidence                                                                                                                   | Task    |
-| ------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| F01     | still-present          | Live DB: 66 recorded IDs, missing required 0034 marker ID and physical dispatch column/index; `schema-health.ts` only compares IDs | T01     |
-| F02     | still-present          | Last scheduled 2026-09-30 01:55 UTC; current Web aa5; pending notifications=4, analysis=14                                         | T02     |
-| F03     | still-present          | `routes/portal.tsx`, `routes/documents.tsx` regex rejects seeded canonical UUIDs; supplied UUID/portal DOM                         | T04     |
-| F04     | needs-runtime-evidence | `documents/repository.ts` inner joins and supplied empty vault vs populated client detail; lineage not yet established             | T06     |
-| F05     | still-present          | `annual-return/work-views.ts` ready checks documents; supplied Kowloon payment-pending appears ready                               | T08     |
-| F06     | still-present          | `dashboard/dashboard-data.ts`, `routes/index.tsx`, board metrics use different units                                               | T09     |
-| F07     | still-present          | `production-command-center.tsx` terminal null converted to undefined and falls back to first page; supplied failing regression     | T07     |
-| F08     | still-present          | `routes/admin.tsx` production unavailable branch; admin DOM                                                                        | T12     |
-| F09     | still-present          | `nar-import/server-fns.ts` stage-only; imports DOM                                                                                 | T14     |
-| F10     | needs-runtime-evidence | Existing scanner/text/AI adapters; no verified live scanner/OCR/model roundtrip evidence                                           | T15/T16 |
-| F11     | needs-runtime-evidence | Audit missing four WOZTELL bindings; current binding presence not yet read                                                         | T17     |
-| F12     | still-present          | `package-handoffs` prepared-only external adapter; real protocol absent                                                            | T19     |
-| F13     | still-present          | Main has no bulk-operation migration/registry; historical integration DB tables do not prove main functionality                    | T13/T18 |
-| F14     | still-present          | `routes/work-queue.tsx` uses Staff UUID prefix and SLA-only blocker evidence                                                       | T10     |
-| F15     | still-present          | `routes/payments.tsx` source lacks same-screen proof context; production populated review untested                                 | T11     |
-| F16     | still-present          | `documents/server-fns.ts` team list filter differs from owner/reviewer by-ID authorisation; no fresh live role test                | T05     |
-| F17     | still-present          | `operations/capabilities.ts` says no AI binding despite `DOCUMENT_AI_URL/API_KEY`; old tick described never-observed               | T23     |
-| F18     | still-present          | `annual-return/repository.ts` listAllCases/5000 hydration and work read-model bounds; scale/live vitals unmeasured                 | T21     |
-| F19     | needs-runtime-evidence | Supplied nav/settings DOM and unchanged source; mobile/keyboard journey not yet executed                                           | T20     |
-| F20     | still-present          | No displayed data origin/scope; live 3 rows are client, seed resemblance is not classification evidence                            | T03     |
+| Finding | Classification         | Current evidence                                                                                                                                 | Task    |
+| ------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| F01     | still-present          | Live DB: 66 recorded IDs, missing required 0034 marker ID and physical dispatch column/index; `schema-health.ts` only compares IDs               | T01     |
+| F02     | still-present          | Last scheduled 2026-09-30 01:55 UTC; current Web aa5; pending notifications=4, analysis=14                                                       | T02     |
+| F03     | still-present          | `routes/portal.tsx`, `routes/documents.tsx` regex rejects seeded canonical UUIDs; supplied UUID/portal DOM                                       | T04     |
+| F04     | still-present          | Read-only live SELECT: all14 documents have versions but no upload intents, so current-main inner join hides all14; R2 bytes/scan remain unknown | T06     |
+| F05     | still-present          | `annual-return/work-views.ts` ready checks documents; supplied Kowloon payment-pending appears ready                                             | T08     |
+| F06     | still-present          | `dashboard/dashboard-data.ts`, `routes/index.tsx`, board metrics use different units                                                             | T09     |
+| F07     | still-present          | `production-command-center.tsx` terminal null converted to undefined and falls back to first page; supplied failing regression                   | T07     |
+| F08     | still-present          | `routes/admin.tsx` production unavailable branch; admin DOM                                                                                      | T12     |
+| F09     | still-present          | `nar-import/server-fns.ts` stage-only; imports DOM                                                                                               | T14     |
+| F10     | needs-runtime-evidence | Existing scanner/text/AI adapters; no verified live scanner/OCR/model roundtrip evidence                                                         | T15/T16 |
+| F11     | needs-runtime-evidence | Audit missing four WOZTELL bindings; current binding presence not yet read                                                                       | T17     |
+| F12     | still-present          | `package-handoffs` prepared-only external adapter; real protocol absent                                                                          | T19     |
+| F13     | still-present          | Main has no bulk-operation migration/registry; historical integration DB tables do not prove main functionality                                  | T13/T18 |
+| F14     | still-present          | `routes/work-queue.tsx` uses Staff UUID prefix and SLA-only blocker evidence                                                                     | T10     |
+| F15     | still-present          | `routes/payments.tsx` source lacks same-screen proof context; production populated review untested                                               | T11     |
+| F16     | still-present          | `documents/server-fns.ts` team list filter differs from owner/reviewer by-ID authorisation; no fresh live role test                              | T05     |
+| F17     | still-present          | `operations/capabilities.ts` says no AI binding despite `DOCUMENT_AI_URL/API_KEY`; old tick described never-observed                             | T23     |
+| F18     | still-present          | `annual-return/repository.ts` listAllCases/5000 hydration and work read-model bounds; scale/live vitals unmeasured                               | T21     |
+| F19     | needs-runtime-evidence | Supplied nav/settings DOM and unchanged source; mobile/keyboard journey not yet executed                                                         | T20     |
+| F20     | still-present          | No displayed data origin/scope; live 3 rows are client, seed resemblance is not classification evidence                                          | T03     |
 
 ## Evidence and continuation
 
@@ -72,9 +72,10 @@
 - Local original input evidence: `.worktrees/audit-inputs-20261001/evidence-2026-10-01/` (ignored; supplied artefacts retained).
 - Local gate logs: `.worktrees/audit-baseline-20261001/` (ignored; summaries committed separately).
 - PR packages follow the original 11-package plan. Reuse older integration code only after contract review; do not merge its whole history to solve schema drift.
-- Next: PR01 draft T00/T01/T03; early T02/T23 then T04/T05/T07 by dependencies. External access gaps do not block independent local repairs.
+- Draft PR01 #102 and PR02 #103 are open, remote verify/Vercel checks successful as observed 2026-10-01. PR03 T04–T07 follows PR02; next PR04 T08/T09/T10/T11. External access gaps do not block independent local repairs.
 
 T01 verification: independent code review clean after RED/GREEN fixes; OPS-01 production blocked, OPS-05 local-only pass. OPS-04 local-only pass after T03; remaining 47 original UAT are not_run. Candidate0067 is additive and not applied to Neon.
 
 PR02 T02/T23 local code verified at3d3c373:181files/1805tests/0skip, lint0errors/1baselinewarning, typecheck/build/predeploy/dev-imports/compiledhooks PASS. OPS-03 local-only pass; OPS-02 and MSG-01 production/runtime blocked. Totals:3local pass,3blocked,44not_run. Candidate0069 only applied to isolated Postgres; no production SQL/deploy/sends.
-Next: PR03 T04/T05/T06/T07; first T04/T07 independent local repairs, then shared document scope/read reconciliation.
+PR03 T04–T07 code verified at4e77e6d:184files/1864tests/0skip; lint0errors/1existing warning, typecheck/build/predeploy/dev-imports/compiledhooks PASS. Independent review found3 Important issues (raw router input, competing lock order, verified metadata with missing object); all reproduced RED then GREEN, no remaining Important/Critical. No new migration or production mutation. Evidence: `evidence/2026-10-01-pr03-gates.json`, `document-recovery-runbook.md`.
+UAT totals:7 LOCAL ONLY pass,7 blocked,36 not_run. Fresh Auth, actual private R2/scanner and per-record production recovery are blocked separately; contracts do not prove live integration. Next: PR04 shared versioned readiness, whole-scope KPI, named work queue and safe payment review.
