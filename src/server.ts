@@ -2,10 +2,6 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-// Statically imported where the rest of this file defers, and safe to be: cron.ts
-// has only `import type` dependencies, so this pulls no database client into a
-// cold start. It is a pure function over an already-returned result.
-import { maintenanceResultOf } from "./server/cron";
 
 // Duplicated from ./features/whatsapp/webhook rather than imported: every other
 // branch here defers its imports so a cold start does not pull the database
@@ -69,10 +65,20 @@ function isH3SwallowedErrorBody(body: string): boolean {
 type MaintenanceRunner = (input: {
   now: string;
   triggerSource: "scheduled" | "manual";
+  runId: string;
 }) => Promise<unknown>;
 
-const defaultMaintenanceRunner: MaintenanceRunner = async (input) =>
-  (await import("./server/maintenance")).runFirmMaintenance(input);
+const defaultMaintenanceRunner: MaintenanceRunner = async (input) => {
+  const { runRuntimeMaintenanceTick, SAFE_SCHEDULED_JOBS } =
+    await import("./server/maintenance-trigger-runtime");
+  return runRuntimeMaintenanceTick({
+    trigger: input.triggerSource ?? "manual",
+    triggerEvidence: input.triggerSource === "scheduled" ? "native-hook" : "manual",
+    scheduledAt: input.now,
+    runId: input.runId,
+    allowedJobs: [...SAFE_SCHEDULED_JOBS],
+  });
+};
 
 /**
  * `run` is injectable so a test can assert the wiring without executing it. That
@@ -84,26 +90,29 @@ const defaultMaintenanceRunner: MaintenanceRunner = async (input) =>
 export async function runScheduledMaintenanceForWorker(
   scheduledTime: number,
   run: MaintenanceRunner = defaultMaintenanceRunner,
+  owner: unknown = process.env.MAINTENANCE_SCHEDULER_OWNER,
 ): Promise<void> {
+  if (owner !== "cloudflare") {
+    console.log("scheduled maintenance skipped", {
+      owner: owner === "vercel" ? "vercel" : "paused",
+      source: "cloudflare",
+    });
+    return;
+  }
+  const runId = crypto.randomUUID();
   try {
-    // The only caller allowed to say `scheduled`. This is the cron hook itself,
-    // so a row it writes is real evidence that the schedule fired -- which is
-    // the one thing BLOCKED_INTEGRATION: deployment-runtime has never had.
+    // This caller is reached by Nitro's platform scheduled hook. Acceptance
+    // still correlates its durable evidence with the platform invocation logs.
     const result = await run({
       now: new Date(scheduledTime).toISOString(),
       triggerSource: "scheduled",
+      runId,
     });
-    console.log("scheduled maintenance", JSON.stringify(result));
+    console.log("scheduled maintenance", { runId, recorded: result != null });
   } catch (error) {
-    // A run where one pass failed still learned everything the other passes
-    // found, and that ride-along result is logged in the same shape as a clean
-    // run. Isolating the passes would otherwise trade an aborted tick for a
-    // blank one.
-    const partial = maintenanceResultOf(error);
-    if (partial) console.log("scheduled maintenance", JSON.stringify(partial));
-    // Nothing watches a scheduled invocation the way a user watches a request, so
-    // a failure has to announce itself or the next signal is a missed SLA.
-    console.error("scheduled maintenance failed", error);
+    // Per-job evidence remains in the durable registry. Logging a thrown value
+    // here could expose a provider payload or database URL.
+    console.error("scheduled maintenance failed", { runId, phase: "start_or_record" });
     throw error;
   }
 }
@@ -116,6 +125,16 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const pathname = new URL(request.url).pathname;
+      if (pathname === "/api/cron/maintenance") {
+        const [{ createMaintenanceHttpHandler }, { runRuntimeMaintenanceTick }] = await Promise.all(
+          [import("./server/maintenance-http"), import("./server/maintenance-trigger-runtime")],
+        );
+        const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+        return createMaintenanceHttpHandler({
+          env: { ...process.env, ...runtimeEnv },
+          run: runRuntimeMaintenanceTick,
+        })(request);
+      }
       const isAuthProxyRequest = pathname.startsWith("/api/auth/");
       const isMagicLinkWebhook = pathname === "/api/webhooks/neon-auth";
       const isMagicLinkConfirmation = pathname === "/auth/magic-link/confirm";

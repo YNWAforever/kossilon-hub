@@ -61,6 +61,7 @@ export const EXPECTED_MIGRATIONS = [
   "0034_notification_outbox_dispatch_marker.sql",
   "0067_repair_outbox_dispatch_marker.sql",
   "0068_company_historical_data_origin.sql",
+  "0069_restore_maintenance_job_contract.sql",
 ] as const;
 
 export type SchemaLedger = {
@@ -80,6 +81,7 @@ export type SchemaLedger = {
 };
 
 export type SchemaHealthState =
+  | "unavailable"
   /**
    * No `schema_migrations` table. **Not** `behind`, and not `current`.
    *

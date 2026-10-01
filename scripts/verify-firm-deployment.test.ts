@@ -27,7 +27,15 @@ const gateFiles = new Map<string, string>([
     "src/server/cron.ts",
     "export async function runScheduledMaintenance() {} dispatchDue cleanupExpiredUploads",
   ],
-  ["src/server.ts", "runScheduledMaintenanceForWorker runFirmMaintenance(input)"],
+  [
+    "src/server.ts",
+    "runScheduledMaintenanceForWorker runRuntimeMaintenanceTick( MAINTENANCE_SCHEDULER_OWNER /api/cron/maintenance",
+  ],
+  [
+    "src/server/maintenance-trigger-runtime.ts",
+    "export async function runRuntimeMaintenanceTick SAFE_SCHEDULED_JOBS createMaintenanceJobRepository createMaintenanceRunRepository platformTriggerVerified",
+  ],
+  ["src/server/maintenance-http.ts", "authorizeMaintenanceRequest schedulerOwner(input.env)"],
   ["src/server/maintenance.ts", "export async function runFirmMaintenance() {}"],
   [
     "src/server/nitro-scheduled.ts",
@@ -120,6 +128,20 @@ describe("verifyFirmDeployment", () => {
 describe("verifyFirmDeployment catches wiring, not just spelling", () => {
   const passingInput = (overrides: Partial<Parameters<typeof verifyFirmDeployment>[0]> = {}) =>
     verificationInputForWiring(overrides);
+
+  it("fails if the runtime no longer checks the single scheduler owner", async () => {
+    const result = await verifyFirmDeployment(
+      passingInput({
+        readFile: async (file) =>
+          file === "src/server.ts"
+            ? "runScheduledMaintenanceForWorker runRuntimeMaintenanceTick( /api/cron/maintenance"
+            : (gateFiles.get(file) ?? ""),
+      }),
+    );
+    expect(result.checks).toContainEqual({ name: "cron", status: "fail" });
+    const passing = await verifyFirmDeployment(passingInput());
+    expect(passing.checks).toContainEqual({ name: "cron", status: "pass" });
+  });
 
   // The regression this guards: a scheduled export on the server entry looks like
   // a handler but nitro never calls it. Only the registered hook counts.
