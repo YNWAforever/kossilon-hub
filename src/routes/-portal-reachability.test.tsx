@@ -71,7 +71,7 @@ vi.mock("../features/annual-return/server-fns", async (importOriginal) => {
 
 import { routeTree } from "../routeTree.gen";
 
-async function render(pathname: string) {
+async function render(pathname: string, record = productionCase) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createRouter({
     routeTree,
@@ -81,13 +81,38 @@ async function render(pathname: string) {
   });
   await router.load();
   await queryClient.prefetchQuery({
-    queryKey: ["annual-returns", "detail", CASE_ID],
-    queryFn: () => Promise.resolve(productionCase),
+    queryKey: ["annual-returns", "detail", record.id],
+    queryFn: () => Promise.resolve(record),
   });
   return renderToString(createElement(RouterProvider, { router }));
 }
 
 describe("the production portal is reachable", () => {
+  it.each(["123", "true", "null", "", "123&caseId=456"])(
+    "shows a clear invalid-ID state for parsed caseId %s",
+    async (caseId) => {
+      const html = await render(`/portal?caseId=${caseId}`);
+      expect(html).toContain("案件 ID 格式無效");
+      expect(html).not.toContain("Harbour Trading Ltd");
+    },
+  );
+  it.each([1, 2, 3])(
+    "opens seeded canonical case %i rather than treating it as no selection",
+    async (index) => {
+      const id = `40000000-0000-0000-0000-00000000000${index}`;
+      const html = await render(`/portal?caseId=${id}`, {
+        ...productionCase,
+        id,
+        companyName: `Existing company ${index}`,
+      });
+      expect(html).toContain(`Existing company ${index}`);
+      expect(html).not.toContain("Production portal</h1>");
+    },
+  );
+  it("explains invalid IDs without revealing whether a foreign case exists", async () => {
+    const html = await render("/portal?caseId=invalid");
+    expect(html).toContain("案件 ID 格式無效");
+  });
   it("offers a way onward from the bare /portal the sidebar links to", async () => {
     const html = await render("/portal");
 

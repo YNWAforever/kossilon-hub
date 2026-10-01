@@ -1,5 +1,9 @@
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
-import { getAnnualReturnCase } from "../features/annual-return/server-fns";
+import {
+  getAnnualReturnCase,
+  listAnnualReturnCasePage,
+} from "../features/annual-return/server-fns";
+import { parseEntityId } from "@/lib/entity-id";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,12 +48,12 @@ import {
 } from "../lib/client-portal-store";
 
 type PortalSearch = {
-  caseId?: string;
+  caseId?: unknown;
 };
 
 export const Route = createFileRoute("/portal")({
   validateSearch: (search): PortalSearch => ({
-    caseId: typeof search.caseId === "string" ? search.caseId : undefined,
+    caseId: search.caseId,
   }),
   component: PortalRoute,
 });
@@ -60,7 +64,21 @@ function PortalRoute() {
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
   const navigate = useNavigate({ from: "/portal" });
-  const productionCaseId = caseId && isUuid(caseId) ? caseId : undefined;
+  const productionCaseId = parseEntityId(caseId) ?? undefined;
+  const invalidCaseId = caseId !== undefined && !productionCaseId;
+  const pickerQuery = useQuery({
+    queryKey: [
+      ...annualReturnQueryKeys.all,
+      "portal-picker",
+      actor?.authUserId,
+      actor?.teamId,
+      actor?.role,
+    ],
+    queryFn: () => listAnnualReturnCasePage({ data: { limit: 200 } }),
+    enabled:
+      dataMode === "production" && actor?.role !== "Client" && !productionCaseId && !invalidCaseId,
+    retry: false,
+  });
   const productionCaseQuery = useQuery({
     queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "portal"),
     queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
@@ -84,6 +102,25 @@ function PortalRoute() {
   }, [caseId, dataMode, navigate, selectedCase]);
 
   if (dataMode !== "demo") {
+    if (invalidCaseId)
+      return (
+        <main className="flex-1 space-y-3 p-6">
+          <PageHeader eyebrow="Operations" title="Portal" />
+          <p role="alert" className="text-sm text-destructive">
+            案件 ID 格式無效。請重新選擇案件。
+          </p>
+          <Link
+            to="/portal"
+            search={{}}
+            className="inline-flex rounded-md border px-3 py-2 text-sm"
+          >
+            重新選擇案件
+          </Link>
+          <Link to="/today" className="inline-flex rounded-md border px-3 py-2 text-sm">
+            返回今日工作
+          </Link>
+        </main>
+      );
     // A Client sign-in gets its own companies' cases. Every other read in this
     // feature resolves a staff actor, so before this a client landed on the
     // "unavailable" branch below and had no route anywhere.
@@ -101,8 +138,35 @@ function PortalRoute() {
           <p className="text-sm text-muted-foreground">
             Open a case from the annual returns board to see its client portal.
           </p>
+          <label className="block text-sm">
+            選擇案件
+            <select
+              aria-label="選擇案件"
+              className="ml-2 rounded-md border bg-background px-3 py-2"
+              value=""
+              onChange={(event) => {
+                const id = parseEntityId(event.target.value);
+                if (id) void navigate({ search: (previous) => ({ ...previous, caseId: id }) });
+              }}
+            >
+              <option value="">請選擇</option>
+              {(pickerQuery.data?.cases ?? []).map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.companyName} · {item.returnYear}
+                </option>
+              ))}
+            </select>
+          </label>
+          {pickerQuery.isError ? (
+            <p role="alert" className="text-sm text-destructive">
+              無法載入授權案件，請稍後再試。
+            </p>
+          ) : null}
           <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
             Browse annual returns
+          </Link>
+          <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/today">
+            返回今日工作
           </Link>
         </main>
       );
@@ -859,7 +923,10 @@ function ProductionDocumentPanel({
                 <div>
                   <p className="font-medium">{document.fileName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {labelValue(document.uploadStatus)} / {labelValue(document.reviewStatus)}
+                    {document.uploadStatus
+                      ? labelValue(document.uploadStatus)
+                      : "只有文件登記，欠上載來源"}{" "}
+                    / {labelValue(document.reviewStatus)}
                   </p>
                 </div>
                 {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
@@ -881,7 +948,7 @@ function ProductionDocumentPanel({
 }
 
 function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  return parseEntityId(value) !== null;
 }
 
 async function sha256Hex(bytes: Uint8Array): Promise<string> {

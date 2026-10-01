@@ -1,4 +1,5 @@
 import { CaseFindings } from "./case-findings";
+import { parseEntityId } from "@/lib/entity-id";
 import { CaseParties } from "./case-parties";
 import { useEffect, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,7 +51,7 @@ function errorMessage(error: MutationError): string | null {
 }
 
 function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  return parseEntityId(value) !== null;
 }
 
 function caseIsPacketReady(caseItem: AnnualReturnCase): boolean {

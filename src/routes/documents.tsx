@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { parseEntityId } from "@/lib/entity-id";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download, Eye } from "lucide-react";
@@ -30,32 +31,38 @@ import {
 } from "../lib/client-portal-store";
 
 type DocumentsSearch = {
-  caseId?: string;
+  caseId?: unknown;
 };
 
 export const Route = createFileRoute("/documents")({
   validateSearch: (search): DocumentsSearch => ({
-    caseId: typeof search.caseId === "string" ? search.caseId : undefined,
+    caseId: search.caseId,
   }),
   component: DocumentsRoute,
 });
 
 function DocumentsRoute() {
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const queryClient = useQueryClient();
   const { caseId } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [query, setQuery] = useState("");
   const [source, setSource] = useState("all");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
-  const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
+  const caseFilter =
+    caseId === undefined ? "all" : typeof caseId === "string" ? caseId : "__invalid__";
+  const setCaseFilter = (next: string) =>
+    void navigate({ search: { caseId: next === "all" ? undefined : next }, replace: true });
   const [warning, setWarning] = useState<string | undefined>();
-  const productionCaseId = isUuid(caseFilter) ? caseFilter : undefined;
+  const productionCaseId = parseEntityId(caseFilter) ?? undefined;
+  const invalidCaseId = caseId !== undefined && !productionCaseId;
   const productionDocumentsQuery = useQuery({
-    queryKey: ["documents", "archive", productionCaseId ?? "all"],
+    queryKey: ["documents", "archive", productionCaseId ?? "all", { actorScope: actor }],
     queryFn: () => listDocuments({ data: productionCaseId ? { caseId: productionCaseId } : {} }),
+    enabled: dataMode === "production" && !invalidCaseId,
     retry: false,
   });
   // The production section had no filter of its own: the only case <select> on
@@ -64,7 +71,7 @@ function DocumentsRoute() {
   // the URL -- which is why the section's own copy told staff to "filter to one
   // production case" using a control that was not rendered.
   const productionCasesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list({}),
+    queryKey: annualReturnQueryKeys.list({ actorScope: actor }),
     queryFn: () => listAnnualReturnCases({ data: {} }),
     enabled: dataMode === "production",
     retry: false,
@@ -134,10 +141,6 @@ function DocumentsRoute() {
     }
   }
 
-  useEffect(() => {
-    setCaseFilter(caseId ?? "all");
-  }, [caseId]);
-
   const rows = useMemo(() => getDocumentArchiveRows(cases, snapshot), [cases, snapshot]);
   const visibleRows = rows.filter((row) => {
     const queryText =
@@ -155,6 +158,12 @@ function DocumentsRoute() {
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title="Documents" />
 
+      {dataMode === "production" && invalidCaseId ? (
+        <p role="alert" className="text-sm text-destructive">
+          案件 ID 格式無效。請重新選擇案件；未載入全部文件。
+        </p>
+      ) : null}
+
       {warning ? (
         <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
           {warning}
@@ -167,7 +176,7 @@ function DocumentsRoute() {
         casesLoading={productionCasesQuery.isLoading}
         selectedCaseId={productionCaseId}
         onSelectCase={(next) => setCaseFilter(next)}
-        documents={productionDocumentsQuery.data ?? []}
+        documents={invalidCaseId ? [] : (productionDocumentsQuery.data ?? [])}
         error={productionDocumentsQuery.error}
         loading={productionDocumentsQuery.isLoading}
         onDownload={handleDownload}
@@ -617,10 +626,7 @@ function ProductionDocumentsSection({
   );
 }
 function isUuid(value: string | undefined): value is string {
-  return Boolean(
-    value &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
-  );
+  return parseEntityId(value) !== null;
 }
 
 function Field({ label, value }: { label: string; value: string }) {
