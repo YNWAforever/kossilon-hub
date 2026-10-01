@@ -61,6 +61,7 @@ export type AnnualReturnPayment = {
 };
 
 export type AnnualReturnCase = {
+  readiness?: import("./readiness").ReadinessSnapshot;
   id: string;
   companyId: string;
   companyTeamId: string;

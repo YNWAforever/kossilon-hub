@@ -1,6 +1,7 @@
 import { daysBetween } from "@/lib/date-math";
 import { awaitingInternalReview, outstandingSummary } from "./outstanding";
 import type { AnnualReturnCase } from "./types";
+import { readinessForCase } from "./readiness";
 
 /**
  * The five things a staff member does in a day.
@@ -53,8 +54,8 @@ export const WORK_VIEWS: readonly WorkViewDefinition[] = [
   },
   {
     key: "readyToFile",
-    label: "可以交件",
-    description: "所有需要的文件已齊備並覆核完成。",
+    label: "可準備交件",
+    description: "當前文件及付款證據齊備，可準備人手批准套件；尚未外部提交。",
     released: true,
   },
   {
@@ -164,8 +165,8 @@ export function deriveWorkViews(
     // Nothing outstanding and nothing waiting on us. `unknown` is excluded on
     // purpose: a case whose checklist we cannot see is not evidence of
     // readiness, and putting it here would invite filing on an empty list.
-    if (summary.kind === "none" && received.length === 0) {
-      readyToFile.push(baseRow(case_, today, "文件齊備"));
+    if (readinessForCase(case_).readyForApproval) {
+      readyToFile.push(baseRow(case_, today, "文件及付款已核對；待套件批准及外部提交"));
     }
   }
 

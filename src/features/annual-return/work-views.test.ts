@@ -57,6 +57,10 @@ function view(results: ReturnType<typeof deriveWorkViews>, key: WorkViewKey) {
 }
 
 describe("deriveWorkViews", () => {
+  it("does not offer an unpaid Kowloon-style case as ready to file", () => {
+    const unpaid = makeCase({ checklist: [item("Verified")], payment: null });
+    expect(view(deriveWorkViews([unpaid], TODAY, { userId: ME }), "readyToFile").rows).toEqual([]);
+  });
   it("returns all five views in a stable order, released or not", () => {
     const results = deriveWorkViews([], TODAY, { userId: ME });
     expect(results.map((result) => result.definition.key)).toEqual(
@@ -104,7 +108,17 @@ describe("deriveWorkViews", () => {
   });
 
   it("calls a case ready only when nothing is outstanding and nothing waits on us", () => {
-    const ready = makeCase({ checklist: [item("Verified")] });
+    const ready = makeCase({
+      checklist: [item("Verified")],
+      readiness: {
+        sourceVersion: "verified-local-snapshot",
+        readyToPrepare: true,
+        readyForApproval: true,
+        readyToTransmit: false,
+        manifestPayload: null,
+        blockers: [],
+      },
+    });
     const waiting = makeCase({ checklist: [item("Received")] });
     const results = deriveWorkViews([ready, waiting], TODAY, { userId: ME });
     expect(view(results, "readyToFile").rows.map((row) => row.caseId)).toEqual([ready.id]);

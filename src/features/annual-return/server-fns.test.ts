@@ -10,7 +10,9 @@ import {
   resolveAnnualReturnCaseFindingForActor,
   listAnnualReturnCasePageForActor,
   getAnnualReturnBoardTotalsForActor,
+  updateAnnualReturnStatusForActor,
 } from "./server-fns";
+import { ReadinessConflictError } from "./readiness";
 
 const caseId = "91000000-0000-0000-0000-000000000001";
 const ownerId = "20000000-0000-0000-0000-000000000002";
@@ -31,6 +33,52 @@ const staffActor: AuthenticatedActor = {
   teamId: "10000000-0000-0000-0000-000000000001",
   active: true,
 };
+
+describe("readiness version command boundary", () => {
+  it("passes the actual preview token and returns HTTP409 for transaction conflicts", async () => {
+    const expectedVersion = "a".repeat(32);
+    const updateStatus = vi.fn().mockRejectedValue(new ReadinessConflictError());
+    const repository = {
+      getCase: vi.fn(async () => ({
+        id: caseId,
+        companyTeamId: staffActor.teamId,
+        ownerId: staffId,
+        reviewerId: null,
+        currentStatus: "Payment received",
+      })),
+      updateStatus,
+    } as unknown as AnnualReturnRepository;
+    await expect(
+      updateAnnualReturnStatusForActor(
+        staffActor,
+        { caseId, nextStatus: "NAR1 prepared", expectedVersion },
+        { repository },
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(updateStatus).toHaveBeenCalledWith(caseId, "NAR1 prepared", staffId, expectedVersion);
+  });
+  it("denies foreign case before reading a command token or invoking a write", async () => {
+    const updateStatus = vi.fn();
+    const repository = {
+      getCase: vi.fn(async () => ({
+        id: caseId,
+        companyTeamId: crypto.randomUUID(),
+        ownerId: ownerId,
+        reviewerId: null,
+        currentStatus: "Payment received",
+      })),
+      updateStatus,
+    } as unknown as AnnualReturnRepository;
+    await expect(
+      updateAnnualReturnStatusForActor(
+        staffActor,
+        { caseId, nextStatus: "NAR1 prepared", expectedVersion: "a".repeat(32) },
+        { repository },
+      ),
+    ).rejects.toThrow("Forbidden");
+    expect(updateStatus).not.toHaveBeenCalled();
+  });
+});
 
 describe("origin diagnostics server authorization", () => {
   it("denies fixture widening before list/metric repository reads for non-Admin", async () => {

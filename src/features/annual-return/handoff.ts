@@ -13,6 +13,8 @@
  * provider are.
  */
 
+import type { ReadinessSnapshot } from "./readiness";
+
 export type HandoffStatus =
   /** Approved and ready. Every row today, because nothing can transmit. */
   | "prepared"
@@ -61,6 +63,7 @@ export type ReturnState = {
  * moved since the approval.
  */
 export type HandoffRefusal =
+  | { kind: "case-not-ready"; sourceVersion: string | null }
   /** A live handoff exists. A second package is a mistake, not a second filing. */
   | { kind: "already-out"; status: HandoffStatus }
   /** The approval covers a different package than the one being sent. */
@@ -70,6 +73,7 @@ export function refusalForHandoff(input: {
   existing: HandoffState | null;
   approvedManifestSha256: string;
   currentManifestSha256: string;
+  readiness: ReadinessSnapshot | null;
 }): HandoffRefusal | null {
   if (
     input.existing &&
@@ -88,6 +92,9 @@ export function refusalForHandoff(input: {
       currentSha256: input.currentManifestSha256,
     };
   }
+
+  if (!input.readiness?.sourceVersion || !input.readiness.readyToTransmit)
+    return { kind: "case-not-ready", sourceVersion: input.readiness?.sourceVersion ?? null };
 
   return null;
 }

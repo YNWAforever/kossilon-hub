@@ -25,6 +25,7 @@ import {
 import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 import { deriveWorkViews } from "./work-views";
+import { ReadinessConflictError } from "./readiness";
 import type { DocumentFindingsView } from "@/features/documents/findings-review";
 import type { DocumentAnalysisRepository } from "@/features/documents/analysis-repository";
 import { originFilterForActor } from "@/features/clients/data-origin";
@@ -504,13 +505,17 @@ export async function addAnnualReturnCaseNoteForActor(
 
 export async function updateAnnualReturnStatusForActor(
   actor: AuthenticatedActor,
-  input: { caseId: string; nextStatus: AnnualReturnStatus },
+  input: { caseId: string; nextStatus: AnnualReturnStatus; expectedVersion?: string },
   dependencies: AnnualReturnCaseCommandDependencies,
 ) {
   const data = z
     .object({
       caseId: z.string().uuid(),
       nextStatus: annualReturnStatusSchema,
+      expectedVersion: z
+        .string()
+        .regex(/^[0-9a-f]{32}$/)
+        .optional(),
     })
     .parse(input);
   const actorId = requireStaffUserId(actor);
@@ -520,8 +525,23 @@ export async function updateAnnualReturnStatusForActor(
     throw new Error("Annual return case not found.");
   }
 
+  assertAnnualReturnCaseVisible(boardActorFrom(actor), current);
   assertAnnualReturnStatusActionAllowed(current, data.nextStatus);
-  return dependencies.repository.updateStatus(data.caseId, data.nextStatus, actorId);
+  try {
+    return await dependencies.repository.updateStatus(
+      data.caseId,
+      data.nextStatus,
+      actorId,
+      data.expectedVersion,
+    );
+  } catch (error) {
+    if (error instanceof ReadinessConflictError)
+      throw new Response(JSON.stringify({ code: "version_conflict", message: error.message }), {
+        status: 409,
+        headers: { "content-type": "application/json" },
+      });
+    throw error;
+  }
 }
 
 export async function updateAnnualReturnChecklistItemForActor(
@@ -916,6 +936,10 @@ export const updateAnnualReturnStatus = createServerFn({ method: "POST" })
     z.object({
       caseId: z.string().uuid(),
       nextStatus: annualReturnStatusSchema,
+      expectedVersion: z
+        .string()
+        .regex(/^[0-9a-f]{32}$/)
+        .optional(),
     }),
   )
   .handler(({ data }) =>

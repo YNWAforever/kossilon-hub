@@ -1,4 +1,5 @@
 import { CaseFindings } from "./case-findings";
+import { readinessForCase } from "../readiness";
 import { parseEntityId } from "@/lib/entity-id";
 import { CaseParties } from "./case-parties";
 import { useEffect, useState } from "react";
@@ -54,15 +55,6 @@ function isUuid(value: string): boolean {
   return parseEntityId(value) !== null;
 }
 
-function caseIsPacketReady(caseItem: AnnualReturnCase): boolean {
-  return (
-    caseItem.checklist
-      .filter((item) => item.required)
-      .every((item) => item.status === "Verified") &&
-    caseItem.payment?.status === "Payment received"
-  );
-}
-
 function MutationMessage({ error }: { error: MutationError }) {
   const message = errorMessage(error);
   if (!message) return null;
@@ -79,7 +71,13 @@ function PendingIcon({ pending }: { pending: boolean }) {
 
 export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   const queryClient = useQueryClient();
-  const actions = createProductionCaseActions(caseId);
+  const actions = createProductionCaseActions(
+    caseId,
+    undefined,
+    () =>
+      queryClient.getQueryData<AnnualReturnCase>(annualReturnQueryKeys.detail(caseId))?.readiness
+        ?.sourceVersion,
+  );
   const checklistMutationKey = [...annualReturnQueryKeys.detail(caseId), "checklist-mutation"];
   const pendingChecklistItemIds = useMutationState({
     filters: { mutationKey: checklistMutationKey, status: "pending" },
@@ -201,8 +199,11 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     );
   }
 
-  const packetReady = caseIsPacketReady(caseItem);
-  const locked = caseItem.currentStatus === "Completed";
+  const readiness = readinessForCase(caseItem);
+  const packetReady = readiness.readyToPrepare && Boolean(readiness.sourceVersion);
+  const locked = Boolean(
+    caseItem.lockedAt || caseItem.completedAt || caseItem.currentStatus === "Completed",
+  );
 
   return (
     <main className="flex-1 space-y-4 p-4 md:p-6">
@@ -390,8 +391,26 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Filing packet</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Required items must be verified and payment received before packet submission.
+              先核對當前文件版本及付款證據，再準備套件；準備或下載不等於外部提交。
             </p>
+            <ul className="mt-2 space-y-1 text-sm" aria-label="交件阻擋原因">
+              {readiness.blockers.map((blocker, index) => (
+                <li key={`${blocker.code}:${index}`}>
+                  <span className="text-muted-foreground">
+                    {blocker.stage === "prepare"
+                      ? "準備"
+                      : blocker.stage === "approval"
+                        ? "批准"
+                        : "送出"}
+                    ：
+                  </span>
+                  {blocker.message}
+                  <a className="ml-2 underline" href={blocker.action}>
+                    處理
+                  </a>
+                </li>
+              ))}
+            </ul>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
@@ -401,7 +420,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
               >
                 <PendingIcon pending={packetMutation.isPending} />
                 <FileCheck2 aria-hidden className="h-4 w-4" />
-                Submit packet
+                Prepare packet
               </button>
             </div>
             <MutationMessage error={packetMutation.error} />

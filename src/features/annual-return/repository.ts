@@ -11,6 +11,8 @@ import {
   type RequirementInstanceDraft,
 } from "./requirement-template";
 import { shouldChaseClient } from "./outstanding";
+import { attachCaseReadiness } from "./readiness-repository";
+import { ReadinessConflictError, readinessForCase } from "./readiness";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
@@ -443,6 +445,7 @@ export type AnnualReturnRepository = {
     caseId: string,
     nextStatus: AnnualReturnStatus,
     actorId: string,
+    expectedVersion?: string,
   ): Promise<AnnualReturnCase>;
   assignOwner(input: AssignAnnualReturnOwnerInput): Promise<AnnualReturnCase>;
   listNotes(caseId: string): Promise<AnnualReturnCaseNote[]>;
@@ -1008,12 +1011,15 @@ export function createAnnualReturnRepository(
       paymentByCaseId.set(row.case_id, mapPayment(row));
     }
 
-    return rows.map((row) =>
-      hydrateCase(
-        row,
-        checklistByCaseId.get(row.id) ?? [],
-        paymentByCaseId.get(row.id) ?? null,
-        today,
+    return attachCaseReadiness(
+      sql,
+      rows.map((row) =>
+        hydrateCase(
+          row,
+          checklistByCaseId.get(row.id) ?? [],
+          paymentByCaseId.get(row.id) ?? null,
+          today,
+        ),
       ),
     );
   }
@@ -1863,6 +1869,7 @@ export function createAnnualReturnRepository(
     caseId: string,
     nextStatus: AnnualReturnStatus,
     actorId: string,
+    expectedVersion?: string,
   ): Promise<AnnualReturnCase> {
     const current = await getCase(caseId);
 
@@ -1877,6 +1884,38 @@ export function createAnnualReturnRepository(
     await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, caseId);
       const actor = await assertActorCanMutateLockedCase(tx, actorId, lockedCase, action);
+
+      if (["NAR1 prepared", "Signature pending", "Ready to file"].includes(nextStatus)) {
+        // Case first, then document, intent, version: compatible with upload/review
+        // and scanner intent->version locks. Children cannot move after this preview.
+        await tx`select id from annual_return_checklist_items where case_id=${caseId} order by id for update`;
+        await tx`select id from payments where case_id=${caseId} order by id for update`;
+        await tx`select id from case_parties where case_id=${caseId} order by id for update`;
+        await tx`select id from case_requirement_instances where case_id=${caseId} order by id for update`;
+        await tx`select id from documents where company_id=${lockedCase.company_id} and (case_id=${caseId} or case_id is null) order by id for update`;
+        await tx`select id from document_upload_intents where company_id=${lockedCase.company_id} and (case_id=${caseId} or case_id is null) order by id for update`;
+        await tx`select v.id from document_versions v join documents d on d.id=v.document_id where d.company_id=${lockedCase.company_id} and (d.case_id=${caseId} or d.case_id is null) order by v.id for update of v`;
+        await tx`select l.id from requirement_evidence_links l join case_requirement_instances r on r.id=l.requirement_instance_id where r.case_id=${caseId} order by l.id for update of l`;
+        await tx`select id from package_handoffs where case_id=${caseId} order by id for update`;
+        const [observed] = await attachCaseReadiness(tx, [current]);
+        const readiness = readinessForCase(observed);
+        if (!expectedVersion || readiness.sourceVersion !== expectedVersion)
+          throw new ReadinessConflictError();
+        const ready =
+          nextStatus === "NAR1 prepared" ? readiness.readyToPrepare : readiness.readyForApproval;
+        const approved =
+          nextStatus !== "Ready to file" ||
+          !readiness.blockers.some(
+            (b) => b.code === "package_not_approved" || b.code === "package_approval_stale",
+          );
+        if (!ready || !approved)
+          throw new Error(
+            `Cannot prepare/approve annual return case: ${readiness.blockers
+              .filter((b) => b.stage !== "transmit" || b.code !== "destination_unavailable")
+              .map((b) => b.message)
+              .join(" ")}`,
+          );
+      }
 
       if (completing) {
         const blockers = await completionBlockerMessagesForLockedCase(
