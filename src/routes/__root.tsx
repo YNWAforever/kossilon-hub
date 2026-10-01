@@ -8,6 +8,7 @@ import {
   useNavigate,
   useRouter,
   useRouterState,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -62,12 +63,13 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [copied, setCopied] = useState(false);
   const details = errorDetails(error, pathname);
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
@@ -80,7 +82,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">Try refreshing the page.</p>
 
         <p className="mt-4 break-words rounded-md bg-muted px-4 py-3 text-left text-sm text-foreground">
-          {error.message || "No error message was provided."}
+          {message || "No error message was provided."}
         </p>
 
         <details className="mt-3 text-left">
