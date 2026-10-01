@@ -42,6 +42,25 @@ function repository(
 }
 
 describe("buildOperationsHealth", () => {
+  it("keeps a failed metrics query unknown without losing successful independent reads", async () => {
+    const repo = repository([]);
+    repo.queueDepths.mockRejectedValue(new Error("password=private-secret"));
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo, diagnostics: true });
+    expect(view.queues).toBeNull();
+    expect(view.recentRuns).toEqual([]);
+    expect(view.maintenance?.state).toBe("never-observed");
+    expect(view.diagnostics?.failedReads).toContain("queueDepths");
+    expect(JSON.stringify(view)).not.toContain("private-secret");
+  });
+  it("reports schema query failure as unavailable and retains other runtime evidence", async () => {
+    const repo = repository([]);
+    repo.schemaLedger.mockRejectedValue(new Error("private host/token"));
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+    expect(view.schema.state).toBe("unavailable");
+    expect(view.schema.appliedCount).toBeNull();
+    expect(view.diagnostics).toBeNull();
+    expect(JSON.stringify(view)).not.toContain("private host");
+  });
   /**
    * The state this deployment is actually in, carried all the way to the view.
    * A screen assembled from an empty table must not be able to render as
@@ -141,12 +160,15 @@ describe("buildOperationsHealth", () => {
    * it as a migration problem would send whoever is on call after the wrong
    * thing entirely.
    */
-  it("rethrows a read failure the schema does not account for", async () => {
+  it("keeps an unexplained read failure unknown without pretending the schema caused it", async () => {
     const repo = repository([]);
     const boom = new Error("connection terminated unexpectedly");
     repo.queueDepths.mockRejectedValue(boom);
 
-    await expect(buildOperationsHealth({ now: NOW }, { repository: repo })).rejects.toThrow(boom);
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo, diagnostics: true });
+    expect(view.schema.state).toBe("current");
+    expect(view.queues).toBeNull();
+    expect(view.diagnostics?.failedReads).toContain("queueDepths");
   });
 
   it("flags nothing while no scheduled run has been recorded", async () => {
@@ -205,6 +227,9 @@ describe("buildOperationsHealth", () => {
     const repo = repository([]);
     repo.schemaLedger.mockResolvedValue({ present: false, applied: [] });
     repo.queueDepths.mockRejectedValue(new Error('relation "maintenance_runs" does not exist'));
+    repo.listRecentScheduledRuns.mockRejectedValue(
+      new Error('relation "maintenance_runs" does not exist'),
+    );
 
     const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
 
