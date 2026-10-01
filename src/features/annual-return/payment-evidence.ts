@@ -75,6 +75,7 @@ export function createPaymentEvidenceService({ sql = getSqlClient() }: { sql?: Q
         if (document.reviewStatus === "pending")
           await documents.reviewDocument({
             documentId: document.id,
+            expectedVersionId: version.id,
             reviewerId: input.actorId,
             decision: data.decision,
             reason: data.reasonText,

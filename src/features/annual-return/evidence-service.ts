@@ -5,6 +5,7 @@ import {
   type PrivateDocument,
 } from "@/features/documents/repository";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
+import { DocumentVersionConflictError } from "@/features/documents/version-conflict";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import { createAnnualReturnRepository, type AnnualReturnRepository } from "./repository";
 import type { AnnualReturnAction } from "./permissions";
@@ -16,6 +17,7 @@ type EvidenceTransaction = postgres.TransactionSql;
 export type ReviewAnnualReturnEvidenceInput = {
   caseId: string;
   documentId: string;
+  expectedDocumentVersionId: string;
   checklistItemId?: string;
   decision: "verified" | "rejected";
   reason?: string;
@@ -120,6 +122,11 @@ export function createAnnualReturnEvidenceService(
           ]);
 
           const validated = requireDocumentForCase(document, caseItem, input.caseId);
+          if (
+            !input.expectedDocumentVersionId ||
+            validated.document.currentVersionId !== input.expectedDocumentVersionId
+          )
+            throw new DocumentVersionConflictError();
 
           if (validated.document.reviewStatus !== "pending") {
             throw new Error("Document has already been reviewed.");
@@ -192,6 +199,7 @@ export function createAnnualReturnEvidenceService(
 
           const reviewedDocument = await documents.reviewDocument({
             documentId: input.documentId,
+            expectedVersionId: input.expectedDocumentVersionId,
             reviewerId: input.actorId,
             decision: input.decision,
             reason: input.reason,

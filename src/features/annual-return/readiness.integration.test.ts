@@ -60,6 +60,7 @@ describe.skipIf(!url)("actual Postgres current readiness gates", () => {
             );
             await documents.reviewDocument({
               documentId: document.id,
+              expectedVersionId: document.currentVersionId!,
               decision: "verified",
               reviewerId: base.assigned_owner_id,
             });

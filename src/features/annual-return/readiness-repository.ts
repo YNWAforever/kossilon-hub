@@ -39,6 +39,7 @@ type Document = {
   case_id: string | null;
   file_type: string;
   verification_status: ReadinessDocument["reviewStatus"];
+  reviewed_document_version_id: string | null;
   verified_by: string | null;
   verified_at: string | null;
   source_matches: boolean;
@@ -161,7 +162,7 @@ export async function attachCaseReadiness(
             and a.metadata->>'command'='review' and a.metadata->>'decision'='rejected'
             and a.metadata->>'reasonCode' in ('unreadable','amount_mismatch','date_mismatch','duplicate_proof','wrong_account','other') and length(btrim(a.metadata->>'reasonText'))>0),'[]'::jsonb),
         'documents',coalesce((select jsonb_agg(to_jsonb(d)||jsonb_build_object('version',to_jsonb(v),'intent',to_jsonb(i),
-          'source_matches',coalesce(v.storage_url=d.storage_url and i.document_id=d.id and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and v.storage_url=i.object_key and v.declared_checksum_sha256=i.checksum_sha256 and v.verified_byte_size>0,false)) order by d.id)
+          'source_matches',coalesce(v.storage_url=d.storage_url and i.document_id=d.id and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and v.storage_url=i.object_key and v.declared_checksum_sha256=i.checksum_sha256 and i.scan_document_version_id=v.id and v.verified_byte_size>0,false)) order by d.id)
           from documents d left join document_versions v on v.document_id=d.id and v.superseded_by_version_id is null
           left join document_upload_intents i on i.id=v.intent_id
           where d.company_id=arc.company_id and (d.case_id=arc.id or (d.case_id is null and (
@@ -309,7 +310,8 @@ export async function attachCaseReadiness(
       companyId: d.company_id,
       caseId: d.case_id,
       category: d.file_type,
-      reviewStatus: d.verification_status,
+      reviewStatus:
+        d.reviewed_document_version_id === d.version?.id ? d.verification_status : "pending",
       reviewedBy: d.verified_by,
       reviewedAt: d.verified_at,
       versionCreatedAt: d.version?.created_at ?? null,

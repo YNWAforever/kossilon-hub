@@ -105,9 +105,10 @@ function DocumentsRoute() {
       setWarning(error instanceof Error ? error.message : "Unable to review document."),
   });
 
-  async function handlePreview(documentId: string, fileName: string) {
+  async function handlePreview(documentId: string, fileName: string, expectedVersionId?: string) {
     try {
-      const response = await downloadDocument({ data: { documentId } });
+      if (!expectedVersionId) throw new Error("文件版本未核實，請重新載入後再預覽或下載。");
+      const response = await downloadDocument({ data: { documentId, expectedVersionId } });
       if (!response.ok) throw new Error(`Preview failed (${response.status}).`);
       const href = URL.createObjectURL(await response.blob());
       // Opened rather than saved: a reviewer needs to look at the file to decide,
@@ -127,9 +128,10 @@ function DocumentsRoute() {
     }
   }
 
-  async function handleDownload(documentId: string) {
+  async function handleDownload(documentId: string, expectedVersionId?: string) {
     try {
-      const response = await downloadDocument({ data: { documentId } });
+      if (!expectedVersionId) throw new Error("文件版本未核實，請重新載入後再預覽或下載。");
+      const response = await downloadDocument({ data: { documentId, expectedVersionId } });
       if (!response.ok) throw new Error(`Download failed (${response.status}).`);
       const href = URL.createObjectURL(await response.blob());
       const anchor = document.createElement("a");
@@ -266,7 +268,6 @@ function DocumentsRoute() {
                   cases={cases}
                   snapshot={snapshot}
                   onWarning={setWarning}
-                  onReview={(input) => reviewMutation.mutate({ data: input })}
                 />
               ))
             )}
@@ -310,37 +311,18 @@ function DocumentRow({
   cases,
   snapshot,
   onWarning,
-  onReview,
 }: {
   row: ClientPortalArchiveRow;
   cases: ReturnType<typeof useAnnualReturnCases>;
   snapshot: ReturnType<typeof useClientPortalSnapshot>;
-  onReview: (input: {
-    caseId: string;
-    documentId: string;
-    decision: "verified" | "rejected";
-    reason?: string;
-  }) => void;
   onWarning: (warning: string | undefined) => void;
 }) {
   const followUp = getDocumentReviewFollowUpDrafts(cases, snapshot).find(
     (draft) => draft.documentId === row.documentId,
   );
 
-  function handleReview(
-    decision: ClientPortalDocumentReviewDecision,
-    options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
-  ) {
-    if (!row.documentId || !isUuid(row.documentId) || !isUuid(row.caseId)) {
-      onWarning("Demo archive rows are read-only; production records are reviewed above.");
-      return;
-    }
-    onReview({
-      caseId: row.caseId,
-      documentId: row.documentId,
-      decision: decision === "accepted" ? "verified" : "rejected",
-      reason: options.note || options.reasonCode,
-    });
+  function handleReview() {
+    onWarning("Demo archive rows are read-only; production records are reviewed above.");
   }
 
   return (
@@ -487,11 +469,12 @@ function ProductionDocumentsSection({
   documents: DocumentSummary[];
   error: Error | null;
   loading: boolean;
-  onDownload: (documentId: string) => void;
-  onPreview: (documentId: string, fileName: string) => void;
+  onDownload: (documentId: string, expectedVersionId?: string) => void;
+  onPreview: (documentId: string, fileName: string, expectedVersionId?: string) => void;
   onReview: (input: {
     caseId: string;
     documentId: string;
+    expectedDocumentVersionId: string;
     checklistItemId?: string;
     decision: "verified" | "rejected";
     reason?: string;
@@ -710,11 +693,12 @@ function ReviewActions({
   pending: boolean;
   isChecklistEvidence: boolean;
   checklistItemId: string;
-  onDownload: (documentId: string) => void;
-  onPreview: (documentId: string, fileName: string) => void;
+  onDownload: (documentId: string, expectedVersionId?: string) => void;
+  onPreview: (documentId: string, fileName: string, expectedVersionId?: string) => void;
   onReview: (input: {
     caseId: string;
     documentId: string;
+    expectedDocumentVersionId: string;
     checklistItemId?: string;
     decision: "verified" | "rejected";
     reason?: string;
@@ -727,7 +711,11 @@ function ReviewActions({
 
   // "other" with no note records nothing a client could act on.
   const noteRequired = reasonCode === "other";
-  const canSubmitRejection = canReview && !pending && (!noteRequired || note.trim().length > 0);
+  const canSubmitRejection =
+    canReview &&
+    Boolean(record.currentVersionId) &&
+    !pending &&
+    (!noteRequired || note.trim().length > 0);
 
   if (record.availability === "metadata_only" || record.availability === "missing_object") {
     return (
@@ -779,14 +767,16 @@ function ReviewActions({
       <div className="flex flex-wrap justify-start gap-2 md:justify-end">
         <button
           className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-          onClick={() => onPreview(record.id, record.fileName)}
+          onClick={() =>
+            onPreview(record.id, record.fileName, record.currentVersionId ?? undefined)
+          }
           type="button"
         >
           <Eye className="h-4 w-4" /> 開啟原件
         </button>
         <button
           className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-          onClick={() => onDownload(record.id)}
+          onClick={() => onDownload(record.id, record.currentVersionId ?? undefined)}
           type="button"
         >
           <Download className="h-4 w-4" /> Download
@@ -795,11 +785,12 @@ function ReviewActions({
           <>
             <button
               className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
-              disabled={!canReview || pending}
+              disabled={!canReview || !record.currentVersionId || pending}
               onClick={() =>
                 onReview({
                   caseId: record.caseId!,
                   documentId: record.id,
+                  expectedDocumentVersionId: record.currentVersionId!,
                   checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
                   decision: "verified",
                 })
@@ -810,7 +801,7 @@ function ReviewActions({
             </button>
             <button
               className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              disabled={!canReview || pending}
+              disabled={!canReview || !record.currentVersionId || pending}
               onClick={() => setRejecting((current) => !current)}
               type="button"
             >
@@ -857,6 +848,7 @@ function ReviewActions({
               onReview({
                 caseId: record.caseId!,
                 documentId: record.id,
+                expectedDocumentVersionId: record.currentVersionId!,
                 checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
                 decision: "rejected",
                 reason: composeRejectionReason(reasonCode, note),

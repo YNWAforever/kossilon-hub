@@ -34,6 +34,227 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const INTEGRATION_TEST_TIMEOUT_MS = 30_000;
 
+describe.skipIf(!databaseUrl)("version-bound scan persistence", () => {
+  it("retains the V1 review history without approving V2 or trusting a legacy unbound scan", async () => {
+    const rollback = new Error("review version fixture rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const repo = createDocumentRepository({ sql: tx });
+        const data = await fixture(tx as unknown as SqlClient);
+        const intent = await repo.createUploadIntent(intentInput(data));
+        const document = await repo.finalizeUploadIntent({
+          intentId: intent.id,
+          uploadedBy: null,
+          source: "staff",
+        });
+        const v1 = document.currentVersionId!;
+        await repo.recordScanResult(
+          intent.id,
+          {
+            status: "clean",
+            providerReference: "synthetic-not-live",
+            verifiedChecksum: CHECKSUM_A,
+            verifiedByteSize: 4,
+            documentVersionId: v1,
+          },
+          { verdictSource: "provider", expectedVersionId: v1 },
+        );
+        await repo.reviewDocument({
+          documentId: document.id,
+          expectedVersionId: v1,
+          reviewerId: data.ownerId!,
+          decision: "verified",
+        });
+        await tx`update document_upload_intents set scan_document_version_id=null where id=${intent.id}`;
+        expect(
+          (await repo.listDocuments({ caseId: data.caseId! })).find((d) => d.id === document.id)
+            ?.availability,
+        ).toBe("unscanned");
+        const [v2] = await tx<
+          { id: string }[]
+        >`insert into document_versions(document_id,version_number,file_name,storage_url,superseded_by_version_id,superseded_at)
+        values(${document.id},2,'synthetic-V2.pdf',${`${KEY_PREFIX}replacement-v2`},${v1},now()) returning id`;
+        await tx`update document_versions set superseded_by_version_id=${v2.id},superseded_at=now() where id=${v1}`;
+        await tx`update document_versions set superseded_by_version_id=null,superseded_at=null where id=${v2.id}`;
+        const summary = (await repo.listDocuments({ caseId: data.caseId! })).find(
+          (d) => d.id === document.id,
+        )!;
+        expect(summary.currentVersionId).toBe(v2.id);
+        expect(summary.reviewStatus).toBe("pending");
+        expect(summary.reviewedVersionId).toBe(v1);
+        const [stored] = await tx<
+          { verification_status: string }[]
+        >`select verification_status from documents where id=${document.id}`;
+        expect(stored.verification_status).toBe("verified");
+        const [history] = await tx<
+          { metadata: { documentVersionId: string } }[]
+        >`select metadata from timeline_events
+        where event_type='document_reviewed' and metadata->>'documentId'=${document.id}`;
+        expect(history.metadata.documentVersionId).toBe(v1);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  });
+  it("refuses an approval for an older version even when the current scan is clean", async () => {
+    const sql = sqlForTests();
+    const repo = createDocumentRepository({ sql });
+    const data = await fixture(sql);
+    const intent = await repo.createUploadIntent(intentInput(data));
+    const document = await repo.finalizeUploadIntent({
+      intentId: intent.id,
+      uploadedBy: null,
+      source: "staff",
+    });
+    const [version] = await sql<
+      { id: string }[]
+    >`select id from document_versions where document_id=${document.id}`;
+    await repo.recordScanResult(
+      intent.id,
+      {
+        status: "clean",
+        providerReference: "stub-not-live",
+        verifiedChecksum: CHECKSUM_A,
+        verifiedByteSize: 4,
+        documentVersionId: version.id,
+      },
+      { verdictSource: "provider", expectedVersionId: version.id },
+    );
+    await expect(
+      repo.reviewDocument({
+        documentId: document.id,
+        expectedVersionId: crypto.randomUUID(),
+        reviewerId: data.ownerId ?? (await anyUserId(sql)),
+        decision: "verified",
+      }),
+    ).rejects.toThrow(/version/i);
+    expect((await repo.getDocument(document.id))?.reviewStatus).toBe("pending");
+  });
+  it("refuses a provider identity that disagrees with the received intent", async () => {
+    const sql = sqlForTests();
+    const repo = createDocumentRepository({ sql });
+    const data = await fixture(sql);
+    const intent = await repo.createUploadIntent(intentInput(data));
+    const document = await repo.finalizeUploadIntent({
+      intentId: intent.id,
+      uploadedBy: null,
+      source: "staff",
+    });
+    const [version] = await sql<
+      { id: string }[]
+    >`select id from document_versions where document_id=${document.id}`;
+    await expect(
+      repo.recordScanResult(
+        intent.id,
+        {
+          status: "clean",
+          providerReference: "stub-not-live",
+          verifiedChecksum: CHECKSUM_B,
+          verifiedByteSize: 4,
+          documentVersionId: version.id,
+        },
+        { verdictSource: "provider", expectedChecksum: CHECKSUM_A, expectedVersionId: version.id },
+      ),
+    ).rejects.toThrow(/checksum/i);
+    expect((await repo.getUploadIntent(intent.id))?.status).toBe("quarantined");
+    expect(
+      (
+        await sql<
+          { hash: string | null }[]
+        >`select verified_checksum_sha256 hash from document_versions where id=${version.id}`
+      )[0].hash,
+    ).toBeNull();
+  });
+
+  it("refuses a superseded V1 verdict without releasing V2", async () => {
+    const rollback = new Error("owned version race rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const sql = tx;
+        const repo = createDocumentRepository({ sql: tx });
+        const data = await fixture(tx as unknown as SqlClient);
+        const intent = await repo.createUploadIntent(intentInput(data));
+        const document = await repo.finalizeUploadIntent({
+          intentId: intent.id,
+          uploadedBy: null,
+          source: "staff",
+        });
+        const [v1] = await sql<
+          { id: string }[]
+        >`select id from document_versions where document_id=${document.id}`;
+        const [v2] = await sql<
+          { id: string }[]
+        >`insert into document_versions(document_id,version_number,file_name,storage_url,superseded_by_version_id,superseded_at)
+      values(${document.id},2,'replacement.pdf',${`${KEY_PREFIX}replacement`},${v1.id},now()) returning id`;
+        await sql`update document_versions set superseded_by_version_id=${v2.id},superseded_at=now() where id=${v1.id}`;
+        await sql`update document_versions set superseded_by_version_id=null,superseded_at=null where id=${v2.id}`;
+        await expect(
+          repo.recordScanResult(
+            intent.id,
+            {
+              status: "clean",
+              providerReference: "stub-not-live",
+              verifiedChecksum: CHECKSUM_A,
+              verifiedByteSize: 4,
+              documentVersionId: v1.id,
+            },
+            { verdictSource: "provider", expectedChecksum: CHECKSUM_A, expectedVersionId: v1.id },
+          ),
+        ).rejects.toThrow(/version|superseded/i);
+        expect((await repo.getUploadIntent(intent.id))?.status).toBe("quarantined");
+        const [latest] = await sql<
+          { hash: string | null }[]
+        >`select verified_checksum_sha256 hash from document_versions where id=${v2.id}`;
+        expect(latest.hash).toBeNull();
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  });
+
+  it("fences the verdict write itself after a scan job was reclaimed", async () => {
+    const sql = sqlForTests();
+    const repo = createDocumentRepository({ sql });
+    const data = await fixture(sql);
+    const intent = await repo.createUploadIntent(intentInput(data));
+    const document = await repo.finalizeUploadIntent({
+      intentId: intent.id,
+      uploadedBy: null,
+      source: "staff",
+    });
+    const [version] = await sql<
+      { id: string }[]
+    >`select id from document_versions where document_id=${document.id}`;
+    const [job] = await sql<
+      { id: string }[]
+    >`update document_scan_jobs set status='processing',attempt_count=2 where intent_id=${intent.id} returning id`;
+    await expect(
+      repo.recordScanResult(
+        intent.id,
+        {
+          status: "clean",
+          providerReference: "stub-not-live",
+          verifiedChecksum: CHECKSUM_A,
+          verifiedByteSize: 4,
+          documentVersionId: version.id,
+        },
+        {
+          verdictSource: "provider",
+          expectedChecksum: CHECKSUM_A,
+          expectedVersionId: version.id,
+          scanJobClaim: { jobId: job.id, attemptCount: 1 },
+        },
+      ),
+    ).rejects.toThrow(/claim|attempt/i);
+    expect((await repo.getUploadIntent(intent.id))?.status).toBe("quarantined");
+    expect(
+      (
+        await sql<
+          { hash: string | null }[]
+        >`select verified_checksum_sha256 hash from document_versions where id=${version.id}`
+      )[0].hash,
+    ).toBeNull();
+  });
+});
+
 describe.skipIf(!databaseUrl)("metadata document lineage", () => {
   it("retains a verified DB chain while accepting only server-observed missing-object recovery", async () => {
     const rolledBack = new Error("missing object chain rollback");
@@ -843,11 +1064,17 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
       });
       await repository.recordScanResult(
         first.id,
-        { status: "clean", providerReference: "integration-clean" },
+        {
+          status: "clean",
+          providerReference: "integration-clean",
+          verifiedChecksum: CHECKSUM_A,
+          verifiedByteSize: 4,
+        },
         { verdictSource: "provider", expectedChecksum: CHECKSUM_A },
       );
       const verified = await repository.reviewDocument({
         documentId: firstDocument.id,
+        expectedVersionId: firstDocument.currentVersionId!,
         reviewerId: data.ownerId ?? (await anyUserId(sql)),
         decision: "verified",
       });
@@ -1270,7 +1497,7 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
         {
           status: "clean",
           providerReference: "integration-provider-ref",
-          verifiedChecksum: CHECKSUM_B,
+          verifiedChecksum: CHECKSUM_A,
           verifiedByteSize: 4,
         },
         { verdictSource: "provider" },
@@ -1278,10 +1505,9 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
 
       const versions = await sql<VersionRow[]>`
         select * from document_versions where document_id = ${document.id}`;
-      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_B);
+      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_A);
       expect(versions[0].verified_at).not.toBeNull();
-      // The claim is kept beside it rather than overwritten: the two disagreeing
-      // is itself a finding, and it cannot be one if only one value survives.
+      // Retain the original claim. A mismatched identity is refused separately.
       expect(versions[0].declared_checksum_sha256).toBe(CHECKSUM_A);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
@@ -1336,22 +1562,29 @@ describe.skipIf(!databaseUrl)("document repository against Postgres", () => {
 
       await repository.recordScanResult(
         intent.id,
-        { status: "clean", providerReference: "first", verifiedChecksum: CHECKSUM_B },
+        {
+          status: "clean",
+          providerReference: "first",
+          verifiedChecksum: CHECKSUM_A,
+          verifiedByteSize: 4,
+        },
         { verdictSource: "provider" },
       );
       // A re-scan of an already-released file, which is the one path that may
       // land a second verdict. It must not silently move the bytes underneath a
       // decision already recorded against them.
-      await repository.recordScanResult(
-        intent.id,
-        { status: "clean", providerReference: "second", verifiedChecksum: CHECKSUM_C },
-        { verdictSource: "provider", allowStatuses: ["available"] },
-      );
+      await expect(
+        repository.recordScanResult(
+          intent.id,
+          { status: "clean", providerReference: "second", verifiedChecksum: CHECKSUM_C },
+          { verdictSource: "provider", allowStatuses: ["available"] },
+        ),
+      ).rejects.toThrow(/checksum/i);
 
       const versions = await sql<VersionRow[]>`
         select verified_checksum_sha256 from document_versions
         where document_id = ${document.id}`;
-      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_B);
+      expect(versions[0].verified_checksum_sha256).toBe(CHECKSUM_A);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

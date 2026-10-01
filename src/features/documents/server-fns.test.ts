@@ -45,6 +45,7 @@ const adminActor: AuthenticatedActor = {
   active: true,
 };
 const intent: DocumentUploadIntent = {
+  currentVersionId: "71000000-0000-4000-8000-000000000001",
   id: "30000000-0000-0000-0000-000000000001",
   companyId,
   caseId: "40000000-0000-0000-0000-000000000001",
@@ -336,7 +337,48 @@ describe("document server orchestration", () => {
     expect(deps.storage.get).not.toHaveBeenCalled();
   });
 
-  it("releases clean scans and deletes rejected objects before recording rejection", async () => {
+  it("does not return V1 bytes if V2 replaced it during storage read", async () => {
+    const d = dependencies();
+    const clean = {
+      ...document,
+      currentVersionId: "v1",
+      scannedVersionId: "v1",
+      verifiedChecksum: document.checksum,
+      availability: "available" as const,
+      uploadStatus: "available" as const,
+      scanVerdictSource: "provider" as const,
+    };
+    vi.mocked(d.repository.getDocument)
+      .mockResolvedValueOnce(clean)
+      .mockResolvedValue({ ...clean, currentVersionId: "v2" });
+    await expect(downloadDocumentForActor(staffActor, document.id, d, "v1")).rejects.toThrow(
+      /version changed/i,
+    );
+    expect(d.storage.get).toHaveBeenCalledTimes(1);
+  });
+
+  it("hashes actual download bytes instead of accepting forged storage metadata", async () => {
+    const d = dependencies();
+    const clean = {
+      ...document,
+      currentVersionId: "v1",
+      scannedVersionId: "v1",
+      verifiedChecksum: document.checksum,
+      availability: "available" as const,
+      uploadStatus: "available" as const,
+      scanVerdictSource: "provider" as const,
+    };
+    vi.mocked(d.repository.getDocument).mockResolvedValue(clean);
+    vi.mocked(d.storage.get).mockResolvedValue({
+      ...clean,
+      body: new Uint8Array([9, 9, 9, 9]).buffer,
+    });
+    await expect(downloadDocumentForActor(staffActor, document.id, d, "v1")).rejects.toThrow(
+      /checksum/i,
+    );
+  });
+
+  it("records exact-version scan results and retains rejected evidence", async () => {
     const cleanDeps = dependencies();
     vi.mocked(cleanDeps.repository.getUploadIntent).mockResolvedValue({
       ...intent,
@@ -354,7 +396,11 @@ describe("document server orchestration", () => {
     expect(cleanDeps.repository.recordScanResult).toHaveBeenCalledWith(
       intent.id,
       expect.objectContaining({ status: "clean" }),
-      { verdictSource: "provider", expectedChecksum: intent.checksum },
+      {
+        verdictSource: "provider",
+        expectedChecksum: intent.checksum,
+        expectedVersionId: intent.currentVersionId,
+      },
     );
 
     const rejectedDeps = dependencies({
@@ -376,11 +422,15 @@ describe("document server orchestration", () => {
       intent.id,
       rejectedDeps,
     );
-    expect(rejectedDeps.storage.delete).toHaveBeenCalledWith(intent.objectKey);
+    expect(rejectedDeps.storage.delete).not.toHaveBeenCalled();
     expect(rejectedDeps.repository.recordScanResult).toHaveBeenCalledWith(
       intent.id,
       expect.objectContaining({ status: "rejected" }),
-      { verdictSource: "provider", expectedChecksum: intent.checksum },
+      {
+        verdictSource: "provider",
+        expectedChecksum: intent.checksum,
+        expectedVersionId: intent.currentVersionId,
+      },
     );
   });
 });

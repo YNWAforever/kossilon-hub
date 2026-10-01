@@ -49,6 +49,7 @@ export function creditedPaymentEvidenceSql(sql: Query) {
   e.status='verified' and e.reviewed_by is not null and e.reviewed_at is not null
   and e.case_id=p.case_id and d.company_id=p.company_id and d.case_id=p.case_id
   and d.verification_status='verified' and d.verified_by is not null and d.verified_at>=v.created_at
+  and d.reviewed_document_version_id=v.id and i.scan_document_version_id=v.id
   and v.document_id=e.document_id and v.superseded_by_version_id is null
   and v.verified_checksum_sha256=e.proof_sha256 and v.declared_checksum_sha256=e.proof_sha256 and v.verified_byte_size>0
   and i.document_id=d.id and i.company_id=d.company_id and i.case_id=d.case_id

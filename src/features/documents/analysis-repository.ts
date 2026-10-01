@@ -37,6 +37,8 @@ type SubjectRow = {
   verified_byte_size: string | number | null;
   upload_status: DocumentStatus | null;
   scan_verdict_source: ScanVerdictSource | null;
+  scan_document_version_id: string | null;
+  intent_checksum: string | null;
   page_count: number | null;
 };
 
@@ -158,7 +160,7 @@ export function createDocumentAnalysisRepository(
           v.id, v.document_id, v.version_number, v.declared_checksum_sha256,
           v.verified_checksum_sha256, v.superseded_by_version_id, v.storage_url,
           v.content_type, v.file_name, v.declared_byte_size, v.verified_byte_size,
-          i.status upload_status, i.scan_verdict_source,
+          i.status upload_status, i.scan_verdict_source, i.scan_document_version_id,i.checksum_sha256 intent_checksum,
           t.page_count
         from document_versions v
         -- Left joins: a staff- or system-created document has no upload intent,
@@ -200,7 +202,11 @@ export function createDocumentAnalysisRepository(
         // must never fall through to a value documentSafetyOf would call
         // verified.
         uploadStatus: row.upload_status ?? "created",
-        scanVerdictSource: row.scan_verdict_source,
+        scanVerdictSource:
+          row.scan_document_version_id === row.id &&
+          row.intent_checksum === row.verified_checksum_sha256
+            ? row.scan_verdict_source
+            : null,
         fileName: row.file_name,
       };
     },

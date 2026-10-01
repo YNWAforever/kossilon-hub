@@ -50,3 +50,10 @@ T12 candidate2955a27: local0071 only,77 focused tests/0skip with actual Postgres
 - Local0074/0075 only;43 source manifest IDs. Historical production66 IDs and last observed aa5 build are separate, not refreshed at this gate. No new production migration/deployment/provider writes.
 - Original source XLSX is absent from supplied evidence: IMPORT-01 blocked with business data owner. Synthetic35/65 parser and row-transaction contracts pass but are not original workbook/fresh provider acceptance. Auth owner supplies controlled fresh Admin journey; security/storage owner supplies genuine R2/scanner sample.
 - Explicit manual job chunks, compiled hook and local worker success are not three actual scheduled runtime ticks. 100-create local observations15.894s→17.589s prove no speedup/p95; T21 retains throughput acceptance.
+
+## T15 local verification — 2026-10-02
+
+- Node22.23.3/Bun1.3.14 and dedicated Postgres17: full200files/2008pass/0skip,365.30s; typecheck/lint/build/compiled native hook/offline/all12devroutes PASS, lint1existing warning. Two earlier dev startup failures retained; measured diagnostic first route5964ms, others10–22ms, then exact original gate passed. No timeout was relaxed. Evidence: `evidence/2026-10-02-t15-local.json`.
+- Candidate0076 applied/repeated locally;44 source IDs. Four populated table contracts survive applying the same SQL twice, three FKs verified, historical markers remain NULL, owned rehearsal rolled back. Last observed production66-ID history/aa5 remains separate; no production mutation or deployment.
+- Clean stub response and local PDF parsing are code contracts. Security/storage owners still owe approved staging scanner/R2 roundtrip and genuine clean/rejected verdicts. Auth owner owes fresh controlled roles. Safe synthetic rejection is not actual malware detection acceptance.
+- T16 analysis identity/version race and A-E contracts now RED; no OCR/model accuracy claim. OCR/AI owners must supply approved provider protocol/model/cost metadata and controlled human-labelled staging corpus. Internal adapters will retain explicit manual/unknown outcomes when absent.

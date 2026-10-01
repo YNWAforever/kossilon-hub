@@ -12,10 +12,8 @@
  *   before the bytes exist;
  * - the *identity*, the hash of what is actually in storage.
  *
- * Only the provider scanner ever computes the second, and it is
- * BLOCKED_INTEGRATION, so today every version has a claim and no identity. That
- * is reported as `unknown`, not smoothed over -- a package manifest that hashed
- * the client's declared value would certify whatever the uploader typed.
+ * Only the byte-reading provider adapter computes the second. Historical NULL
+ * identities remain unknown; a configured connector does not certify old files.
  */
 
 export type DocumentVersionState = {
@@ -49,13 +47,11 @@ export function contentIdentityOf(version: DocumentVersionState): ContentIdentit
  *
  * Verified identity only. A manifest is the record of exactly what was filed,
  * and a manifest entry whose hash came from the client is not evidence of
- * anything. This currently refuses every version, because the only code that
- * hashes stored bytes is the blocked provider scanner -- which is the same gate
- * Phase A already applies to approval, from the same missing provider, and not
- * a new one.
+ * anything. New manifest construction also refuses superseded versions; existing
+ * stored package snapshots retain their historical identity for reconciliation.
  */
 export function canCiteInManifest(version: DocumentVersionState): boolean {
-  return contentIdentityOf(version).kind === "verified";
+  return isCurrent(version) && contentIdentityOf(version).kind === "verified";
 }
 
 export function isCurrent(version: DocumentVersionState): boolean {

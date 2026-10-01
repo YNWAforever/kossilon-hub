@@ -9,8 +9,10 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import type { DocumentAccessSubject } from "./authorization";
+import { assertStaffDocumentAccess } from "./authorization";
 import { enqueueDocumentAnalysisJob } from "./analysis-jobs";
 import { enqueueDocumentScanJob } from "./scan-jobs";
+import { DocumentVersionConflictError } from "./version-conflict";
 import { paymentProofWasReturned } from "@/features/annual-return/payment-evidence-state";
 import {
   type DocumentCategory,
@@ -41,6 +43,8 @@ export function quarantineRetentionUntil(receivedAt: string | Date): string {
 export { DOCUMENT_CATEGORIES, type DocumentCategory } from "./types";
 
 export type DocumentUploadIntent = {
+  currentVersionId?: string | null;
+  scannedVersionId?: string | null;
   id: string;
   companyId: string;
   caseId: string | null;
@@ -69,6 +73,9 @@ export type DocumentUploadIntent = {
 
 export type PrivateDocument = {
   currentVersionId?: string | null;
+  scannedVersionId?: string | null;
+  reviewedVersionId?: string | null;
+  verifiedChecksum?: string | null;
   id: string;
   companyId: string;
   caseId: string | null;
@@ -179,6 +186,8 @@ export function assertDocumentCompanyAccess(
 type QueryClient = SqlClient | postgres.TransactionSql;
 type Tx = postgres.TransactionSql;
 type IntentRow = {
+  current_version_id?: string | null;
+  scan_document_version_id?: string | null;
   id: string;
   company_id: string;
   case_id: string | null;
@@ -199,6 +208,8 @@ type IntentRow = {
   quarantine_retention_until: string | Date | null;
 };
 type DocumentRow = {
+  scan_document_version_id?: string | null;
+  reviewed_document_version_id?: string | null;
   id: string;
   company_id: string;
   case_id: string | null;
@@ -239,6 +250,8 @@ function mapAccessSubject(row: AccessSubjectRow): DocumentAccessSubject {
 
 function mapIntent(row: IntentRow): DocumentUploadIntent {
   return {
+    currentVersionId: row.current_version_id ?? null,
+    scannedVersionId: row.scan_document_version_id ?? null,
     id: row.id,
     companyId: row.company_id,
     caseId: row.case_id,
@@ -273,6 +286,10 @@ function mapDocument(row: DocumentRow): PrivateDocument {
     throw new Error("Document upload lineage is incomplete.");
   }
   return {
+    currentVersionId: row.current_version_id ?? null,
+    scannedVersionId: row.scan_document_version_id ?? null,
+    reviewedVersionId: row.reviewed_document_version_id ?? null,
+    verifiedChecksum: row.verified_checksum_sha256 ?? null,
     id: row.id,
     companyId: row.company_id,
     caseId: row.case_id,
@@ -284,7 +301,10 @@ function mapDocument(row: DocumentRow): PrivateDocument {
     checksum: row.checksum_sha256,
     uploadStatus: row.upload_status,
     scanVerdictSource: row.scan_verdict_source,
-    reviewStatus: row.verification_status,
+    reviewStatus:
+      row.reviewed_document_version_id === row.current_version_id && row.current_version_id
+        ? row.verification_status
+        : "pending",
     uploadedBy: row.uploaded_by,
     uploadedAt: new Date(row.uploaded_at).toISOString(),
   };
@@ -295,6 +315,7 @@ function availabilityOf(row: DocumentRow): DocumentAvailability {
   if (row.upload_status === "rejected") return "unsafe";
   if (row.upload_status !== "available") return "quarantined";
   return row.scan_verdict_source === "provider" &&
+    row.scan_document_version_id === row.current_version_id &&
     Boolean(row.checksum_sha256) &&
     row.verified_checksum_sha256 === row.checksum_sha256
     ? "available"
@@ -303,6 +324,9 @@ function availabilityOf(row: DocumentRow): DocumentAvailability {
 
 function mapDocumentSummary(row: DocumentRow): DocumentSummary {
   return {
+    scannedVersionId: row.scan_document_version_id ?? null,
+    reviewedVersionId: row.reviewed_document_version_id ?? null,
+    verifiedChecksum: row.verified_checksum_sha256 ?? null,
     id: row.id,
     companyId: row.company_id,
     caseId: row.case_id,
@@ -314,7 +338,10 @@ function mapDocumentSummary(row: DocumentRow): DocumentSummary {
     checksum: row.checksum_sha256,
     uploadStatus: row.upload_status,
     scanVerdictSource: row.scan_verdict_source,
-    reviewStatus: row.verification_status,
+    reviewStatus:
+      row.reviewed_document_version_id === row.current_version_id && row.current_version_id
+        ? row.verification_status
+        : "pending",
     uploadedBy: row.uploaded_by,
     uploadedAt: new Date(row.uploaded_at).toISOString(),
     currentVersionId: row.current_version_id ?? null,
@@ -380,6 +407,8 @@ export type DocumentRepository = {
     options?: {
       verdictSource?: ScanVerdictSource;
       expectedChecksum?: string;
+      expectedVersionId?: string;
+      scanJobClaim?: { jobId: string; attemptCount: number };
       /**
        * Which current statuses may receive this verdict. Defaults to
        * ['quarantined'] -- the normal first scan. A genuine re-scan of a legacy
@@ -393,7 +422,9 @@ export type DocumentRepository = {
   ): Promise<DocumentUploadIntent>;
   reviewDocument(input: {
     documentId: string;
+    expectedVersionId: string;
     reviewerId: string;
+    reviewerAuthUserId?: string;
     decision: "verified" | "rejected";
     reason?: string;
   }): Promise<PrivateDocument>;
@@ -423,8 +454,11 @@ export function createDocumentRepository(
 
   async function getUploadIntent(id: string, lock = false): Promise<DocumentUploadIntent | null> {
     const rows = lock
-      ? await sql<IntentRow[]>`select * from document_upload_intents where id = ${id} for update`
-      : await sql<IntentRow[]>`select * from document_upload_intents where id = ${id}`;
+      ? await sql<IntentRow[]>`select i.*,v.id current_version_id from document_upload_intents i
+          left join document_versions v on v.intent_id=i.id and v.superseded_by_version_id is null
+          where i.id=${id} for update of i`
+      : await sql<IntentRow[]>`select i.*,v.id current_version_id from document_upload_intents i
+          left join document_versions v on v.intent_id=i.id and v.superseded_by_version_id is null where i.id=${id}`;
     return rows[0] ? mapIntent(rows[0]) : null;
   }
 
@@ -440,7 +474,7 @@ export function createDocumentRepository(
   ) {
     return client<DocumentRow[]>`
       select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
-             i.scan_verdict_source, v.id current_version_id, i.id intent_id,
+             i.scan_verdict_source, i.scan_document_version_id, v.id current_version_id, i.id intent_id,
              v.verified_checksum_sha256,
              md5(jsonb_build_object('document',to_jsonb(d),'version',to_jsonb(v),'intent',to_jsonb(i))::text) version_token
       from documents d
@@ -697,6 +731,7 @@ export function createDocumentRepository(
         // error anywhere. Either both land or neither does.
         await enqueueDocumentScanJob(tx, {
           intentId: intent.id,
+          documentVersionId: versions[0].id,
           checksum: intent.checksum,
           reason: "initial",
         });
@@ -733,7 +768,7 @@ export function createDocumentRepository(
           from documents d join document_upload_intents i on i.document_id = d.id
           where d.id = ${documents[0].id}`;
         if (!updated[0] || !rows[0]) throw new Error("Unable to finalize document metadata.");
-        return mapDocument(rows[0]);
+        return mapDocument({ ...rows[0], current_version_id: versions[0].id });
       });
     },
     async getDocument(id) {
@@ -820,6 +855,56 @@ export function createDocumentRepository(
       // would leave a released document whose hash nobody recorded, or a hash
       // attached to a verdict that never landed.
       return withTransaction(sql, async (tx) => {
+        // Match recovery/approval lock order: document -> intent -> version.
+        // The current version and every byte claim are checked under these locks.
+        const [identity] = await tx<
+          { document_id: string | null }[]
+        >`select document_id from document_upload_intents where id=${intentId}`;
+        if (!identity?.document_id) throw new Error("Document version is missing.");
+        await tx`select id from documents where id=${identity.document_id} for update`;
+        const [intent] = await tx<
+          IntentRow[]
+        >`select * from document_upload_intents where id=${intentId} for update`;
+        const [version] = await tx<
+          {
+            id: string;
+            declared_checksum_sha256: string | null;
+            verified_checksum_sha256: string | null;
+          }[]
+        >`
+          select id,declared_checksum_sha256,verified_checksum_sha256 from document_versions
+          where intent_id=${intentId} and document_id=${identity.document_id} and superseded_by_version_id is null for update`;
+        if (!version || (options.expectedVersionId && options.expectedVersionId !== version.id))
+          throw new DocumentVersionConflictError("Document version changed or was superseded.");
+        if (options.scanJobClaim) {
+          const claim = options.scanJobClaim;
+          const [job] = await tx<{ id: string }[]>`select id from document_scan_jobs
+            where id=${claim.jobId} and intent_id=${intentId} and checksum_sha256=${intent.checksum_sha256}
+              and document_version_id=${version.id} and status='processing' and attempt_count=${claim.attemptCount} for update`;
+          if (!job) throw new Error("Scan claim or attempt changed.");
+        }
+        if (
+          result.status === "clean" &&
+          result.verifiedChecksum &&
+          (options.verdictSource !== "provider" ||
+            result.verifiedChecksum !== intent.checksum_sha256 ||
+            result.verifiedChecksum !== version.declared_checksum_sha256 ||
+            (version.verified_checksum_sha256 &&
+              version.verified_checksum_sha256 !== result.verifiedChecksum))
+        )
+          throw new Error("Verified checksum disagrees with the received version.");
+        if (
+          result.status === "clean" &&
+          result.documentVersionId &&
+          result.documentVersionId !== version.id
+        )
+          throw new DocumentVersionConflictError("Scanner result version changed.");
+        const bound =
+          result.status === "clean" &&
+          options.verdictSource === "provider" &&
+          result.verifiedChecksum === intent.checksum_sha256 &&
+          result.verifiedByteSize === Number(intent.expected_size_bytes) &&
+          Number(intent.expected_size_bytes) > 0;
         // A verdict is only about the content it was computed over. If the intent
         // now carries a different checksum, this result is a late answer about
         // superseded bytes: it stays as job history and is never applied as the
@@ -830,6 +915,7 @@ export function createDocumentRepository(
           scan_provider_reference = ${"providerReference" in result ? result.providerReference : null},
           scan_error_code = ${result.status === "failed" || result.status === "rejected" ? ("errorCode" in result ? result.errorCode : result.reason) : null},
           scan_verdict_source = ${options.verdictSource ?? null},
+          scan_document_version_id = ${bound ? version.id : null},
           scanned_at = now(), updated_at = now(),
           -- A terminal verdict ends the retention obligation; a retryable failure
           -- leaves the file quarantined and keeps its window open.
@@ -847,44 +933,101 @@ export function createDocumentRepository(
         // Only from a scanner that read the object. `is null` in the predicate
         // makes this write-once: a later verdict cannot quietly restate what the
         // bytes are underneath a decision already recorded against them.
-        if (result.status === "clean" && result.verifiedChecksum) {
+        if (bound && result.status === "clean") {
           await tx`
           update document_versions
-          set verified_checksum_sha256 = ${result.verifiedChecksum},
+          set verified_checksum_sha256 = ${result.verifiedChecksum!},
             verified_byte_size = ${result.verifiedByteSize ?? null},
             verified_at = now()
-          where intent_id = ${intentId}
+          where id = ${version.id} and intent_id = ${intentId} and superseded_by_version_id is null
             and verified_checksum_sha256 is null`;
         }
 
-        return mapIntent(rows[0]);
+        return mapIntent({ ...rows[0], current_version_id: version.id });
       });
     },
     reviewDocument(input) {
       return withTransaction(sql, async (tx) => {
-        const rows = await tx<DocumentRow[]>`
-          select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
-             i.scan_verdict_source
-          from documents d join document_upload_intents i on i.document_id = d.id
-          where d.id = ${input.documentId} for update of d`;
-        if (!rows[0]) throw new Error("Document not found.");
-        if (rows[0].upload_status !== "available")
-          throw new Error("Only available documents may be reviewed.");
-        if (rows[0].verification_status !== "pending")
+        const [initial] = await documentRows({ id: input.documentId }, tx);
+        if (!initial) throw new Error("Document not found.");
+        if (!input.expectedVersionId || initial.current_version_id !== input.expectedVersionId)
+          throw new DocumentVersionConflictError();
+        const [staff] = await tx<
+          {
+            id: string;
+            role: "Admin" | "Manager" | "Staff";
+            team_id: string | null;
+            auth_user_id: string;
+          }[]
+        >`
+          select u.id,u.role,u.team_id,sp.auth_user_id from users u join staff_profiles sp on sp.user_id=u.id
+          where u.id=${input.reviewerId} and u.active and sp.active and sp.role=u.role
+            and sp.team_id is not distinct from u.team_id and u.role in ('Admin','Manager','Staff')
+            and (${input.reviewerAuthUserId ?? null}::text is null or sp.auth_user_id=${input.reviewerAuthUserId ?? null})
+          for share of u,sp`;
+        if (!staff) throw new Error("Forbidden: current verified staff identity is required.");
+        if (initial.case_id)
+          await tx`select a.id from annual_return_cases a join companies c on c.id=a.company_id
+          where a.id=${initial.case_id} and c.id=${initial.company_id} for share of a,c`;
+        else await tx`select id from companies where id=${initial.company_id} for share`;
+        const row = await lockRecoverySource(tx, input.documentId);
+        if (
+          !row ||
+          row.current_version_id !== input.expectedVersionId ||
+          row.company_id !== initial.company_id ||
+          row.case_id !== initial.case_id
+        )
+          throw new DocumentVersionConflictError();
+        if (availabilityOf(row) !== "available")
+          throw new Error("Only current genuinely scanned documents may be reviewed.");
+        const [scope] = await tx<
+          AccessSubjectRow[]
+        >`select c.id company_id,c.assigned_team_id,d.case_id,a.owner_id,a.reviewer_id
+          from documents d join companies c on c.id=d.company_id
+          left join annual_return_cases a on a.id=d.case_id and a.company_id=d.company_id
+          where d.id=${input.documentId}`;
+        assertStaffDocumentAccess(
+          {
+            userId: staff.id,
+            authUserId: staff.auth_user_id,
+            role: staff.role,
+            teamId: staff.team_id,
+            active: true,
+          },
+          mapAccessSubject(scope),
+        );
+        if (
+          row.reviewed_document_version_id === row.current_version_id &&
+          row.verification_status !== "pending"
+        )
           throw new Error("Reviewed documents are immutable.");
-        await tx`update documents set verification_status = ${input.decision}, verified_by = ${input.reviewerId}, verified_at = now() where id = ${input.documentId}`;
-        if (rows[0].case_id) {
+        await tx`update documents set verification_status = ${input.decision}, verified_by = ${input.reviewerId}, verified_at = now(),reviewed_document_version_id=${row.current_version_id} where id = ${input.documentId}`;
+        if (row.case_id) {
           await tx`
             insert into timeline_events (
               company_id, case_id, event_type, actor_type, actor_id, description, metadata
             ) values (
-              ${rows[0].company_id}, ${rows[0].case_id}, 'document_reviewed', 'user', ${input.reviewerId},
+              ${row.company_id}, ${row.case_id}, 'document_reviewed', 'user', ${input.reviewerId},
               ${`Document ${input.decision}.`},
-              ${tx.json({ documentId: input.documentId, decision: input.decision, reason: input.reason ?? null })}
+              ${tx.json({
+                documentId: input.documentId,
+                documentVersionId: row.current_version_id,
+                checksum: row.verified_checksum_sha256,
+                decision: input.decision,
+                reason: input.reason ?? null,
+                previousReview: {
+                  status: row.verification_status,
+                  versionId: row.reviewed_document_version_id ?? null,
+                },
+              })}
             )
           `;
         }
-        return { ...mapDocument(rows[0]), reviewStatus: input.decision };
+        return {
+          ...mapDocument(row),
+          reviewStatus: input.decision,
+          reviewedVersionId: row.current_version_id,
+        };
       });
     },
     async expireUploads(now) {

@@ -293,6 +293,7 @@ describe.skipIf(!url)("attributable current-version payment receipts", () => {
           if (scenario === "already-verified")
             await documents.reviewDocument({
               documentId: second.documentId,
+              expectedVersionId: second.proofVersionId,
               reviewerId: actorId,
               decision: "verified",
             });
