@@ -196,7 +196,15 @@ export function createLiveDocumentScanner(
           return { status: "failed", retryable: false, errorCode: "malformed-response" };
         }
 
-        // Parse only after a positive provider verdict. A clean malware response
+        if (parsed.verdict === "infected") {
+          return {
+            status: "rejected",
+            reason: parsed.signature ?? "provider-reported-infected",
+            providerReference: parsed.reference,
+          };
+        }
+
+        // Parse only after a provider-clean verdict. A clean malware response
         // does not make encrypted/corrupt PDF content inspectable. Image-only PDFs
         // remain valid scan evidence, with no invented text or OCR approval.
         if (input.contentType === "application/pdf") {
@@ -207,14 +215,6 @@ export function createLiveDocumentScanner(
           controller.signal.throwIfAborted();
           if (readable.method === "unreadable")
             return { status: "failed", retryable: false, errorCode: "pdf-unreadable" };
-        }
-
-        if (parsed.verdict === "infected") {
-          return {
-            status: "rejected",
-            reason: parsed.signature ?? "provider-reported-infected",
-            providerReference: parsed.reference,
-          };
         }
 
         // The identity of the document, carried out of the one place that has it.

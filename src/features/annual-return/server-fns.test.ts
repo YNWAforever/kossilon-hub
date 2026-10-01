@@ -331,6 +331,12 @@ describe("case findings authorization", () => {
 
   // Findings quote a document's own text, so reaching them at all is a decision
   // about who may read the case.
+  it("passes the server-derived actor to the per-document findings scope", async () => {
+    const dependencies = dependenciesFor();
+    await listAnnualReturnCaseFindingsForActor(staffActor, { caseId }, dependencies);
+    expect(dependencies.analysis.listFindingsForCase).toHaveBeenCalledWith(caseId, staffActor);
+  });
+
   it("does not read findings for a case the actor cannot see", async () => {
     const dependencies = dependenciesFor({
       getCase: vi.fn(async () => ({

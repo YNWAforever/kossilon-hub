@@ -8,7 +8,8 @@ import {
 import type { AnalysisPublicationInput, AnalysisSubject } from "./analysis-worker";
 import type { AnalysisFieldExpectation } from "./analysis-checks";
 import { isBoundEvidence, spanMatchesEvidence } from "./evidence-contract";
-import { assertStaffDocumentAccess } from "./authorization";
+import { assertStaffDocumentAccess, isDocumentVisibleToStaffActor } from "./authorization";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import { createDocumentRepository } from "./repository";
 import { groundProviderFindings } from "./ai-provider";
 import type { AnalysisProvenance, Finding, PersistedFinding } from "./findings";
@@ -136,7 +137,7 @@ export type DocumentAnalysisRepository = {
   upsertText(documentVersionId: string, extraction: StoredExtraction): Promise<void>;
   listFindingsForVersion(documentVersionId: string): Promise<Finding[]>;
   /** Every current version on a case, with its findings and its run state. */
-  listFindingsForCase(caseId: string): Promise<DocumentFindingsView[]>;
+  listFindingsForCase(caseId: string, actor: AuthenticatedActor): Promise<DocumentFindingsView[]>;
   /**
    * A person deals with a finding.
    *
@@ -469,8 +470,8 @@ export function createDocumentAnalysisRepository(
       return rows.map(mapFinding);
     },
 
-    async listFindingsForCase(caseId) {
-      const versions = await sql<
+    async listFindingsForCase(caseId, actor) {
+      const candidates = await sql<
         {
           document_id: string;
           document_version_id: string;
@@ -482,10 +483,17 @@ export function createDocumentAnalysisRepository(
           upload_status: DocumentStatus | null;
           scan_verdict_source: ScanVerdictSource | null;
           safe_source: boolean;
+          company_id: string;
+          company_team_id: string | null;
+          case_id: string | null;
+          case_owner_id: string | null;
+          case_reviewer_id: string | null;
         }[]
       >`
         select
           d.id document_id, v.id document_version_id, v.file_name,
+          d.company_id,c.assigned_team_id company_team_id,d.case_id,
+          a.owner_id case_owner_id,a.reviewer_id case_reviewer_id,
           j.status job_status, j.last_error_code job_error_code,j.provenance,t.evidence,
           i.status upload_status,i.scan_verdict_source,
           coalesce(i.scan_document_version_id=v.id and i.document_id=d.id and i.company_id=d.company_id
@@ -493,6 +501,8 @@ export function createDocumentAnalysisRepository(
             and i.content_type=v.content_type and i.expected_size_bytes=v.verified_byte_size
             and i.checksum_sha256=v.verified_checksum_sha256 and v.declared_checksum_sha256=v.verified_checksum_sha256,false) safe_source
         from documents d
+        join companies c on c.id=d.company_id
+        left join annual_return_cases a on a.id=d.case_id and a.company_id=d.company_id
         -- The current version only. A superseded one is not what a reviewer is
         -- deciding about, and showing its findings beside the live ones would
         -- invite approving bytes the client has already replaced.
@@ -515,6 +525,17 @@ export function createDocumentAnalysisRepository(
           where l.document_id=d.id and r.case_id=${caseId}))
         order by d.uploaded_at desc
       `;
+      // A case assignment grants access to that case's documents. It cannot
+      // turn a company-level shared document into a case-owned document.
+      const versions = candidates.filter((row) =>
+        isDocumentVisibleToStaffActor(actor, {
+          companyId: row.company_id,
+          companyTeamId: row.company_team_id,
+          caseId: row.case_id,
+          caseOwnerId: row.case_owner_id,
+          caseReviewerId: row.case_reviewer_id,
+        }),
+      );
       if (versions.length === 0) return [];
 
       const versionIds = versions.map((row) => row.document_version_id);
@@ -571,7 +592,7 @@ export function createDocumentAnalysisRepository(
         if (
           !source ||
           source.id !== input.expectedDocumentVersionId ||
-          source.case_id !== input.caseId
+          (source.case_id !== null && source.case_id !== input.caseId)
         )
           return false;
         const [staff] = await tx<
@@ -583,14 +604,25 @@ export function createDocumentAnalysisRepository(
           }[]
         >`select u.id,u.role,u.team_id,sp.auth_user_id from users u join staff_profiles sp on sp.user_id=u.id where u.id=${input.resolvedByUserId} and u.active and sp.active and sp.role=u.role and sp.team_id is not distinct from u.team_id and u.role in ('Admin','Manager','Staff') and (${input.resolvedByAuthUserId ?? null}::text is null or sp.auth_user_id=${input.resolvedByAuthUserId ?? null}) for share of u,sp`;
         if (!staff) throw new Error("Forbidden: current verified staff identity is required.");
-        await tx`select a.id from annual_return_cases a join companies c on c.id=a.company_id where a.id=${input.caseId} and c.id=${source.company_id} for share of a,c`;
+        const cases =
+          await tx`select a.id from annual_return_cases a join companies c on c.id=a.company_id where a.id=${input.caseId} and c.id=${source.company_id} for share of a,c`;
+        if (cases.length !== 1) return false;
         await tx`select id from documents where id=${source.document_id} for update`;
         await tx`select id from document_versions where id=${source.id} for update`;
         const scope = await createDocumentRepository({ sql: tx }).getDocumentAccessSubject(
           source.document_id,
         );
-        if (!scope || scope.caseId !== input.caseId || scope.companyId !== source.company_id)
+        if (
+          !scope ||
+          (scope.caseId !== null && scope.caseId !== input.caseId) ||
+          scope.companyId !== source.company_id
+        )
           return false;
+        if (scope.caseId === null) {
+          const links =
+            await tx`select l.id from requirement_evidence_links l join case_requirement_instances r on r.id=l.requirement_instance_id where l.document_id=${source.document_id} and r.case_id=${input.caseId} for share of l,r`;
+          if (links.length === 0) return false;
+        }
         assertStaffDocumentAccess(
           {
             userId: staff.id,
@@ -610,7 +642,11 @@ export function createDocumentAnalysisRepository(
         where f.id = ${input.findingId}
           and f.resolved_by is null
           and v.id = f.document_version_id
-          and d.case_id = ${input.caseId}
+          and (d.case_id = ${input.caseId} or (d.case_id is null and exists (
+            select 1 from requirement_evidence_links l
+            join case_requirement_instances r on r.id=l.requirement_instance_id
+            join annual_return_cases a on a.id=r.case_id and a.company_id=d.company_id
+            where l.document_id=d.id and r.case_id=${input.caseId})))
           and v.id=${input.expectedDocumentVersionId} and v.superseded_by_version_id is null
         returning f.id
       `;

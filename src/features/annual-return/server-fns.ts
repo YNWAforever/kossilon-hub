@@ -371,14 +371,19 @@ export async function listAnnualReturnCaseFindingsForActor(
   input: { caseId: string },
   dependencies: {
     repository: Pick<AnnualReturnRepository, "getCase">;
-    analysis: { listFindingsForCase(caseId: string): Promise<DocumentFindingsView[]> };
+    analysis: {
+      listFindingsForCase(
+        caseId: string,
+        actor: AuthenticatedActor,
+      ): Promise<DocumentFindingsView[]>;
+    };
   },
 ) {
   const case_ = await dependencies.repository.getCase(input.caseId);
   if (!case_) throw new Error("Annual return case not found.");
   assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
 
-  return dependencies.analysis.listFindingsForCase(input.caseId);
+  return dependencies.analysis.listFindingsForCase(input.caseId, actor);
 }
 
 /**

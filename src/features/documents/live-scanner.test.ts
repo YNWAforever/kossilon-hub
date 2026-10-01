@@ -131,6 +131,35 @@ describe("createLiveDocumentScanner", () => {
     });
   });
 
+  it("preserves a positive malware verdict for an unreadable encrypted PDF", async () => {
+    const body = encryptedPdf();
+    const checksum = createHash("sha256").update(new Uint8Array(body)).digest("hex");
+    const scanner = createLiveDocumentScanner({
+      config,
+      storage: storage({
+        get: vi.fn(async () => ({
+          objectKey: input.objectKey,
+          checksum,
+          contentType: input.contentType,
+          sizeBytes: body.byteLength,
+          body,
+        })),
+      }),
+      fetchImpl: vi.fn(async () =>
+        jsonResponse({
+          verdict: "infected",
+          reference: "owned-malware-ref",
+          signature: "owned-signature",
+        }),
+      ),
+    });
+    await expect(scanner.scan({ ...input, checksum })).resolves.toEqual({
+      status: "rejected",
+      reason: "owned-signature",
+      providerReference: "owned-malware-ref",
+    });
+  });
+
   it.each(["storage", "response-body", "fetch-ignores-abort"])(
     "bounds the complete %s stage",
     async (stage) => {

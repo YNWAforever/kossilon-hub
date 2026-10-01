@@ -36,6 +36,126 @@ const INTEGRATION_TEST_TIMEOUT_MS = 30_000;
 
 describe.skipIf(!databaseUrl)("versioned analysis publication", () => {
   it(
+    "filters shared evidence by document scope even for a cross-team case owner",
+    async () => {
+      const rollback = new Error("owned shared findings scope rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const data = await fixture(tx as unknown as SqlClient);
+          const repo = createDocumentRepository({ sql: tx });
+          const analysis = createDocumentAnalysisRepository({ sql: tx });
+          const [otherTeam] = await tx<
+            { id: string }[]
+          >`insert into teams(name) values('owned shared findings team') returning id`;
+          await tx`update companies set assigned_team_id=${otherTeam.id} where id=${data.companyId}`;
+          const directIntent = await repo.createUploadIntent(intentInput(data));
+          const direct = await repo.finalizeUploadIntent({
+            intentId: directIntent.id,
+            uploadedBy: null,
+            source: "staff",
+          });
+          const sharedIntent = await repo.createUploadIntent(
+            intentInput(data, { caseId: undefined }),
+          );
+          const shared = await repo.finalizeUploadIntent({
+            intentId: sharedIntent.id,
+            uploadedBy: null,
+            source: "staff",
+          });
+          const [requirement] = await tx<
+            { id: string }[]
+          >`insert into case_requirement_instances(case_id,checklist_item_id,requirement_key,template_version) select case_id,id,${`owned-shared-${crypto.randomUUID()}`},'synthetic-local' from annual_return_checklist_items where case_id=${data.caseId!} limit 1 returning id`;
+          expect(requirement).toBeDefined();
+          await tx`insert into requirement_evidence_links(requirement_instance_id,document_id) values(${requirement.id},${shared.id})`;
+          const actor: AuthenticatedActor = {
+            authUserId: "owned-scope",
+            userId: data.ownerId!,
+            teamId: data.teamId,
+            role: "Staff",
+            active: true,
+          };
+          const visible = await analysis.listFindingsForCase(data.caseId!, actor);
+          expect(visible.some((view) => view.documentId === direct.id)).toBe(true);
+          expect(visible.some((view) => view.documentId === shared.id)).toBe(false);
+          const [identity] = await tx<
+            { auth_user_id: string }[]
+          >`select auth_user_id from staff_profiles where user_id=${data.ownerId!}`;
+          const [finding] = await tx<
+            { id: string }[]
+          >`insert into document_findings(document_version_id,tier,rule_key,rule_version,outcome,severity,detail) values(${shared.currentVersionId!},'cross-check','owned-scope-denial','1','uncertain','info','Owned shared scope') returning id`;
+          await expect(
+            analysis.resolveFinding({
+              findingId: finding.id,
+              caseId: data.caseId!,
+              resolvedByUserId: data.ownerId!,
+              resolvedByAuthUserId: identity.auth_user_id,
+              expectedDocumentVersionId: shared.currentVersionId!,
+              note: null,
+            }),
+          ).rejects.toThrow(/outside your scope/);
+          expect(
+            (await analysis.listFindingsForCase(data.caseId!, { ...actor, role: "Admin" })).some(
+              (view) => view.documentId === shared.id,
+            ),
+          ).toBe(true);
+          expect(
+            await analysis.listFindingsForCase(data.caseId!, { ...actor, active: false }),
+          ).toEqual([]);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it.each(["linked", "unlinked"])(
+    "resolves only a currently linked shared finding: %s",
+    async (mode) => {
+      const rollback = new Error("owned shared finding resolution rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const data = await fixture(tx as unknown as SqlClient);
+          const repo = createDocumentRepository({ sql: tx });
+          const analysis = createDocumentAnalysisRepository({ sql: tx });
+          const intent = await repo.createUploadIntent(intentInput(data, { caseId: undefined }));
+          const shared = await repo.finalizeUploadIntent({
+            intentId: intent.id,
+            uploadedBy: null,
+            source: "staff",
+          });
+          const [requirement] = await tx<
+            { id: string }[]
+          >`insert into case_requirement_instances(case_id,checklist_item_id,requirement_key,template_version) select case_id,id,${`owned-shared-${crypto.randomUUID()}`},'synthetic-local' from annual_return_checklist_items where case_id=${data.caseId!} limit 1 returning id`;
+          if (mode === "linked")
+            await tx`insert into requirement_evidence_links(requirement_instance_id,document_id) values(${requirement.id},${shared.id})`;
+          const [admin] = await tx<
+            { id: string; auth_user_id: string }[]
+          >`select u.id,sp.auth_user_id from users u join staff_profiles sp on sp.user_id=u.id where u.role='Admin' and u.active and sp.active limit 1`;
+          const [finding] = await tx<
+            { id: string }[]
+          >`insert into document_findings(document_version_id,tier,rule_key,rule_version,outcome,severity,detail) values(${shared.currentVersionId!},'cross-check','owned-shared','1','uncertain','info','Owned shared evidence') returning id`;
+          const input = {
+            findingId: finding.id,
+            caseId: data.caseId!,
+            resolvedByUserId: admin.id,
+            resolvedByAuthUserId: admin.auth_user_id,
+            expectedDocumentVersionId: shared.currentVersionId!,
+            note: "Owned local review",
+          };
+          expect(await analysis.resolveFinding(input)).toBe(mode === "linked");
+          expect(await analysis.resolveFinding(input)).toBe(false);
+          const [audit] = await tx<
+            { count: number }[]
+          >`select count(*)::int count from timeline_events where event_type='document_finding_resolved' and metadata->>'findingId'=${finding.id}`;
+          expect(audit.count).toBe(mode === "linked" ? 1 : 0);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
+  it(
     "requires a current verified identity and attributes a current finding resolution once",
     async () => {
       const rollback = new Error("owned resolution and revoke rollback");
