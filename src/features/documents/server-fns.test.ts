@@ -322,6 +322,19 @@ describe("document server orchestration", () => {
     );
     expect(deps.storage.get).not.toHaveBeenCalled();
   });
+  it("does not read storage when a preview requested V1 and V2 is current", async () => {
+    const deps = dependencies();
+    vi.mocked(deps.repository.getDocument).mockResolvedValue({
+      ...document,
+      currentVersionId: "v2",
+      uploadStatus: "available",
+      scanVerdictSource: "provider",
+    });
+    await expect(downloadDocumentForActor(staffActor, document.id, deps, "v1")).rejects.toThrow(
+      /version changed/i,
+    );
+    expect(deps.storage.get).not.toHaveBeenCalled();
+  });
 
   it("releases clean scans and deletes rejected objects before recording rejection", async () => {
     const cleanDeps = dependencies();

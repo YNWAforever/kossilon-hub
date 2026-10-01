@@ -26,6 +26,11 @@ import { ANNUAL_RETURN_STATUSES, type AnnualReturnCase, type AnnualReturnStatus 
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
 import { deriveWorkViews } from "./work-views";
 import { ReadinessConflictError } from "./readiness";
+import {
+  recordPaymentEvidenceSchema,
+  paymentReviewSchema,
+  type PaymentReviewInput,
+} from "./payment-review-input";
 import type { DocumentFindingsView } from "@/features/documents/findings-review";
 import type { DocumentAnalysisRepository } from "@/features/documents/analysis-repository";
 import { originFilterForActor } from "@/features/clients/data-origin";
@@ -1012,6 +1017,64 @@ export const updateAnnualReturnPayment = createServerFn({ method: "POST" })
     withAnnualReturnActorRepository((repository, actor) =>
       updateAnnualReturnPaymentForActor(actor, data, { repository }),
     ),
+  );
+export async function reviewAnnualReturnPaymentEvidenceForActor(
+  actor: AuthenticatedActor,
+  input: PaymentReviewInput,
+  service: Pick<
+    ReturnType<typeof import("./payment-evidence").createPaymentEvidenceService>,
+    "review"
+  >,
+) {
+  const actorId = requireStaffUserId(actor);
+  return withPaymentVersionConflict(() =>
+    service.review({ ...paymentReviewSchema.parse(input), actorId }),
+  );
+}
+export async function recordAnnualReturnPaymentEvidenceForActor(
+  actor: AuthenticatedActor,
+  input: z.infer<typeof recordPaymentEvidenceSchema>,
+  service: Pick<
+    ReturnType<typeof import("./payment-evidence").createPaymentEvidenceService>,
+    "record"
+  >,
+) {
+  const actorId = requireStaffUserId(actor);
+  return withPaymentVersionConflict(() =>
+    service.record({ ...recordPaymentEvidenceSchema.parse(input), actorId }),
+  );
+}
+async function withPaymentVersionConflict<T>(command: () => Promise<T>): Promise<T> {
+  try {
+    return await command();
+  } catch (error) {
+    if (error instanceof ReadinessConflictError)
+      throw new Response(JSON.stringify({ code: "version_conflict", message: error.message }), {
+        status: 409,
+        headers: { "content-type": "application/json" },
+      });
+    throw error;
+  }
+}
+export const recordAnnualReturnPaymentEvidence = createServerFn({ method: "POST" })
+  .validator(recordPaymentEvidenceSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository(async (repository, actor) => {
+      const current = await getAnnualReturnCaseForActor(actor, { id: data.caseId }, { repository });
+      if (!current) throw new Error("Annual return case not found.");
+      const { createPaymentEvidenceService } = await import("./payment-evidence");
+      return recordAnnualReturnPaymentEvidenceForActor(actor, data, createPaymentEvidenceService());
+    }),
+  );
+export const reviewAnnualReturnPaymentEvidence = createServerFn({ method: "POST" })
+  .validator(paymentReviewSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository(async (repository, actor) => {
+      const current = await getAnnualReturnCaseForActor(actor, { id: data.caseId }, { repository });
+      if (!current) throw new Error("Annual return case not found.");
+      const { createPaymentEvidenceService } = await import("./payment-evidence");
+      return reviewAnnualReturnPaymentEvidenceForActor(actor, data, createPaymentEvidenceService());
+    }),
   );
 export const updateAnnualReturnFilingProof = createServerFn({ method: "POST" })
   .validator(updateFilingProofSchema)

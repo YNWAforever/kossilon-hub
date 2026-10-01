@@ -49,6 +49,9 @@ export type AnnualReturnChecklistItem = {
 };
 
 export type AnnualReturnPayment = {
+  receivedAmount?: number;
+  balance?: number;
+  evidenceEntries?: import("./payment-evidence-state").PaymentEvidenceEntry[];
   id: string;
   caseId: string;
   invoiceNumber: string;

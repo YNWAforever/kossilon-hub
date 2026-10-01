@@ -72,6 +72,7 @@ describe.skipIf(!url)("actual Postgres current readiness gates", () => {
           >`insert into case_requirement_instances(case_id,checklist_item_id,requirement_key,template_version) values(${caseId},${itemId},'cdd','annual-return-2026-09') returning id`;
           await tx`insert into requirement_evidence_links(requirement_instance_id,document_id,linked_by) values(${requirement.id},${received[0]},${base.assigned_owner_id})`;
           await tx`insert into payments(company_id,case_id,invoice_number,amount,currency,status,due_date,paid_at,payment_proof_document_id) values(${companyId},${caseId},${caseId},1800,'HKD','Payment received','2026-02-01',now(),${received[1]})`;
+          await tx`insert into payment_evidence_entries(payment_id,case_id,document_id,proof_version_id,proof_sha256,amount,received_on,status,recorded_by,reviewed_by,reviewed_at) select p.id,p.case_id,v.document_id,v.id,v.verified_checksum_sha256,1800,'2026-02-01','verified',${base.assigned_owner_id},${base.assigned_owner_id},now() from payments p join document_versions v on v.document_id=p.payment_proof_document_id and v.superseded_by_version_id is null where p.case_id=${caseId}`;
           const repository = createAnnualReturnRepository({ sql: tx });
           const preview = await repository.getCase(caseId);
           expect(preview?.readiness?.readyToPrepare).toBe(true);

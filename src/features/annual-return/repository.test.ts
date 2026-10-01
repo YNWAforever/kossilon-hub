@@ -89,6 +89,27 @@ function testUuid(prefix: string, sequence: number): string {
   return `${prefix}-0000-0000-0000-${String(sequence).padStart(12, "0")}`;
 }
 
+/** Isolated fixture metadata for receipt gates, never a live scanner/receipt claim. */
+async function seedReviewedPaymentEvidence(fixture: MutableAnnualReturnFixture) {
+  const sql = sqlForTests();
+  const hash = Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fixture.paymentId)),
+    ),
+    (b) => b.toString(16).padStart(2, "0"),
+  ).join("");
+  await sql.begin(async (tx) => {
+    const [intent] = await tx<
+      { id: string }[]
+    >`insert into document_upload_intents(company_id,case_id,document_id,requested_by_auth_user_id,category,file_name,content_type,expected_size_bytes,checksum_sha256,object_key,status,scan_verdict_source,expires_at) select d.company_id,d.case_id,d.id,'synthetic-local','payment',d.file_name,'application/pdf',4,${hash},d.storage_url,'available','provider','2099-01-01' from documents d where d.id=${fixture.paymentProofDocumentId} returning id`;
+    const [version] = await tx<
+      { id: string }[]
+    >`insert into document_versions(document_id,version_number,declared_checksum_sha256,declared_byte_size,verified_checksum_sha256,verified_byte_size,verified_at,content_type,file_name,storage_url,intent_id,created_at) select id,1,${hash},4,${hash},4,'2026-07-05T09:00:00Z','application/pdf',file_name,storage_url,${intent.id},'2026-07-05T09:00:00Z' from documents where id=${fixture.paymentProofDocumentId} returning id`;
+    await tx`update documents set verified_at='2026-07-05T10:00:00Z' where id=${fixture.paymentProofDocumentId}`;
+    await tx`insert into payment_evidence_entries(payment_id,case_id,document_id,proof_version_id,proof_sha256,amount,received_on,status,recorded_by,reviewed_by,reviewed_at) values(${fixture.paymentId},${fixture.caseId},${fixture.paymentProofDocumentId},${version.id},${hash},3800,'2026-07-05','verified',${USER_AMY_ID},${USER_KEN_ID},'2026-07-05T10:00:00Z')`;
+  });
+}
+
 function sqlForTests(): SqlClient {
   if (!databaseUrl) {
     throw new Error("TEST_DATABASE_URL is required for annual return integration tests.");
@@ -169,6 +190,7 @@ async function cleanupAnnualReturnTestFixtures() {
       where id = any(${paymentIds}::uuid[])
         or case_id = any(${caseIds}::uuid[])
     `;
+    await tx`delete from payment_evidence_entries where case_id=any(${caseIds}::uuid[]) or payment_id=any(${paymentIds}::uuid[])`;
     await tx`
       delete from whatsapp_webhook_events
       where normalized_message_id in (
@@ -230,6 +252,9 @@ async function cleanupAnnualReturnTestFixtures() {
       where id = any(${checklistItemIds}::uuid[])
         or case_id = any(${caseIds}::uuid[])
     `;
+    await tx`delete from document_versions where document_id in (select id from documents where id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[]))`;
+    await tx`delete from document_scan_jobs where intent_id in (select id from document_upload_intents where document_id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[]))`;
+    await tx`delete from document_upload_intents where document_id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[])`;
     await tx`
       delete from documents
       where id = any(${documentIds}::uuid[])
@@ -1208,6 +1233,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       expect(checklistItem?.receivedAt).toEqual(expect.any(String));
       expect(checklistItem?.verifiedAt).toEqual(expect.any(String));
 
+      await seedReviewedPaymentEvidence(fixture);
       const afterPayment = await repository.updatePayment({
         caseId: fixture.caseId,
         status: "Payment received",
@@ -1319,6 +1345,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         sequence: 20,
         currentStatus: "Payment pending",
       });
+      await seedReviewedPaymentEvidence(fixture);
       const repository = repositoryFor("2026-07-05");
 
       await repository.updatePayment({

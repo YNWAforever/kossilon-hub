@@ -368,10 +368,13 @@ export async function downloadDocumentForActor(
   actor: AuthenticatedActor,
   documentId: string,
   dependencies: DocumentOperationDependencies,
+  expectedVersionId?: string,
 ) {
   const document = await dependencies.repository.getDocument(documentId);
   if (!document) throw new Error("Document not found.");
   await authorizeDocumentById(actor, documentId, dependencies);
+  if (expectedVersionId && document.currentVersionId !== expectedVersionId)
+    throw new Error("Document version changed; reload the current proof.");
   // Scan safety, not business review status. A pending-review document that a
   // real scanner passed is exactly what a reviewer must be able to open; a
   // document whose only "clean" came from the deterministic test scanner is not
@@ -485,13 +488,18 @@ export const scanQuarantinedDocument = createServerFn({ method: "POST" })
   );
 
 export const downloadDocument = createServerFn({ method: "GET" })
-  .validator(documentIdSchema)
+  .validator(
+    z
+      .object({ documentId: z.string().uuid(), expectedVersionId: z.string().uuid().optional() })
+      .strict(),
+  )
   .handler(({ data }) =>
     withDefaultDocumentContext(async (actor, dependencies) => {
       const { document, body } = await downloadDocumentForActor(
         actor,
         data.documentId,
         dependencies,
+        data.expectedVersionId,
       );
       return new Response(body, {
         headers: {

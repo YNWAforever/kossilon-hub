@@ -67,6 +67,7 @@ export type DocumentUploadIntent = {
 };
 
 export type PrivateDocument = {
+  currentVersionId?: string | null;
   id: string;
   companyId: string;
   caseId: string | null;
@@ -740,7 +741,11 @@ export function createDocumentRepository(
         !row.upload_status
       )
         return null;
-      return { ...mapDocument(row), availability: availabilityOf(row) };
+      return {
+        ...mapDocument(row),
+        currentVersionId: row.current_version_id,
+        availability: availabilityOf(row),
+      };
     },
     async getDocumentRecoveryPreview(id) {
       const [row] = await documentRows({ id });

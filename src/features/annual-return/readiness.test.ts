@@ -21,7 +21,13 @@ function input(): ReadinessInput {
         verifiedAt: "2026-09-02",
       },
     ],
-    payment: { status: "Payment received", paidAt: "2026-09-02", paymentProofDocumentId: "proof" },
+    payment: {
+      status: "Payment received",
+      amount: 1800,
+      receivedAmount: 1800,
+      paidAt: "2026-09-02",
+      paymentProofDocumentId: "proof",
+    },
   } as AnnualReturnCase;
   const doc: ReadinessDocument = {
     id: "doc",

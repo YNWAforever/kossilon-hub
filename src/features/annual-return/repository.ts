@@ -14,6 +14,7 @@ import { shouldChaseClient } from "./outstanding";
 import { caseScopeSql, countScopedCases, type ScopedCaseMetrics } from "./case-scope";
 import { attachCaseReadiness } from "./readiness-repository";
 import { ReadinessConflictError, readinessForCase } from "./readiness";
+import { verifiedPaymentCredit } from "./payment-evidence-state";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
@@ -2122,12 +2123,27 @@ export function createAnnualReturnRepository(
       }
 
       const currentPaymentRows = await tx<
-        { status: PaymentStatus; payment_proof_document_id: string | null }[]
+        {
+          id: string;
+          amount: number;
+          status: PaymentStatus;
+          payment_proof_document_id: string | null;
+        }[]
       >`
-        select status, payment_proof_document_id from payments
+        select id,amount,status, payment_proof_document_id from payments
         where case_id = ${input.caseId} for update
       `;
       if (!currentPaymentRows[0]) throw new Error("Annual return payment not found.");
+      const credit = await verifiedPaymentCredit(tx, currentPaymentRows[0].id);
+      if (
+        isPaymentReceived &&
+        (credit.receivedAmount < Number(currentPaymentRows[0].amount) ||
+          !credit.lastReceivedOn ||
+          !credit.proofDocumentIds.includes(paymentProofDocumentId!))
+      )
+        throw new Error(
+          "Payment received requires reviewed actual amounts, dates and current proof covering the full invoice.",
+        );
       const eventChanged =
         currentPaymentRows[0].status !== input.status ||
         currentPaymentRows[0].payment_proof_document_id !== paymentProofDocumentId;
@@ -2138,7 +2154,7 @@ export function createAnnualReturnRepository(
         update payments
         set status = ${input.status},
             payment_proof_document_id = ${paymentProofDocumentId},
-            paid_at = case when ${isPaymentReceived} then coalesce(paid_at, now()) else null end,
+            paid_at = case when ${isPaymentReceived} then ${credit.lastReceivedOn}::date::timestamptz else null end,
             updated_at = now()
         where case_id = ${input.caseId}
         returning id, invoice_number, updated_at

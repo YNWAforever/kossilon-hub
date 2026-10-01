@@ -206,11 +206,13 @@ export function createAnnualReturnEvidenceService(
               acceptedProofId !== undefined &&
               acceptedProofId !== input.documentId;
 
-            if (!preservesAcceptedProof) {
+            // File verification establishes evidence quality. Actual amounts and
+            // receipt dates are recorded/reviewed by the payment evidence service.
+            if (input.decision === "rejected" && !preservesAcceptedProof) {
               updatedCase = await annualReturns.updatePayment({
                 caseId: input.caseId,
-                status: input.decision === "verified" ? "Payment received" : "Payment pending",
-                paymentProofDocumentId: input.decision === "verified" ? input.documentId : null,
+                status: "Payment pending",
+                paymentProofDocumentId: null,
                 actorId: input.actorId,
               });
             }

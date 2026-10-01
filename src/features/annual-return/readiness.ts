@@ -139,7 +139,14 @@ export function computeReadiness(input: ReadinessInput): ReadinessSnapshot {
     if (!input.requirements.some((requirement) => requirement.instance.checklistItemId === item.id))
       add("requirements_unknown", "prepare", `${item.itemLabel} 未有適用需求實例。`);
   }
-  if (case_.payment?.status !== "Payment received" || !case_.payment.paidAt)
+  if (
+    case_.payment?.status !== "Payment received" ||
+    !case_.payment.paidAt ||
+    !Number.isFinite(case_.payment.receivedAmount) ||
+    !Number.isFinite(case_.payment.amount) ||
+    case_.payment.amount <= 0 ||
+    (case_.payment.receivedAmount ?? 0) < case_.payment.amount
+  )
     add(
       "payment_not_received",
       "prepare",
@@ -277,6 +284,18 @@ export function computeReadiness(input: ReadinessInput): ReadinessSnapshot {
                 id: case_.payment.id,
                 status: case_.payment.status,
                 amount: case_.payment.amount,
+                receivedAmount: case_.payment.receivedAmount,
+                receipts:
+                  case_.payment.evidenceEntries
+                    ?.filter((e) => e.status === "verified")
+                    .map((e) => ({
+                      id: e.id,
+                      proofVersionId: e.proofVersionId,
+                      amount: e.amount,
+                      receivedOn: e.receivedOn,
+                      reviewedBy: e.reviewedBy,
+                      reviewedAt: e.reviewedAt,
+                    })) ?? [],
                 paidAt: case_.payment.paidAt,
                 proofDocumentId: case_.payment.paymentProofDocumentId,
                 proofVersionId: proof?.version?.id ?? null,

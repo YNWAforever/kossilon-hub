@@ -11,6 +11,8 @@ import {
   listAnnualReturnCasePageForActor,
   getAnnualReturnBoardTotalsForActor,
   updateAnnualReturnStatusForActor,
+  recordAnnualReturnPaymentEvidenceForActor,
+  reviewAnnualReturnPaymentEvidenceForActor,
 } from "./server-fns";
 import { ReadinessConflictError } from "./readiness";
 
@@ -33,6 +35,57 @@ const staffActor: AuthenticatedActor = {
   teamId: "10000000-0000-0000-0000-000000000001",
   active: true,
 };
+
+describe("payment receipt command boundary", () => {
+  const input = {
+    caseId,
+    paymentId: crypto.randomUUID(),
+    documentId: crypto.randomUUID(),
+    proofVersionId: crypto.randomUUID(),
+    expectedVersion: "a".repeat(32),
+  };
+  it("returns HTTP409 for stale record and review previews", async () => {
+    const service = {
+      record: vi.fn().mockRejectedValue(new ReadinessConflictError()),
+      review: vi.fn().mockRejectedValue(new ReadinessConflictError()),
+    };
+    await expect(
+      recordAnnualReturnPaymentEvidenceForActor(
+        staffActor,
+        { ...input, amount: "600", receivedOn: "2026-10-01" },
+        service,
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+    await expect(
+      reviewAnnualReturnPaymentEvidenceForActor(
+        staffActor,
+        { ...input, decision: "verified" },
+        service,
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+  });
+  it("denies Client and inactive actors before invoking receipt writes", async () => {
+    const service = { record: vi.fn(), review: vi.fn() };
+    for (const actor of [clientActor, { ...staffActor, active: false }]) {
+      await expect(
+        recordAnnualReturnPaymentEvidenceForActor(
+          actor,
+          { ...input, amount: "600", receivedOn: "2026-10-01" },
+          service,
+        ),
+      ).rejects.toThrow();
+      await expect(
+        reviewAnnualReturnPaymentEvidenceForActor(
+          actor,
+          { ...input, decision: "verified" },
+          service,
+        ),
+      ).rejects.toThrow();
+    }
+    expect(service.record).not.toHaveBeenCalled();
+    expect(service.review).not.toHaveBeenCalled();
+  });
+});
 
 describe("readiness version command boundary", () => {
   it("passes the actual preview token and returns HTTP409 for transaction conflicts", async () => {

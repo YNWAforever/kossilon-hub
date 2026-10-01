@@ -1,4 +1,5 @@
 import type postgres from "postgres";
+import { creditedPaymentEvidenceSql, type PaymentEvidenceEntry } from "./payment-evidence-state";
 import { createHash } from "node:crypto";
 import type { SqlClient } from "@/server/db/client";
 import type { DocumentStatus, ScanVerdictSource } from "@/features/documents/types";
@@ -21,6 +22,7 @@ type Checklist = {
   document_id: string | null;
 };
 type Payment = {
+  credited_amount: string;
   id: string;
   case_id: string;
   invoice_number: string;
@@ -73,6 +75,20 @@ type Party = {
   active: boolean;
 };
 type Snapshot = {
+  payment_evidence: {
+    id: string;
+    payment_id: string;
+    document_id: string;
+    proof_version_id: string;
+    amount: string;
+    received_on: string;
+    reference: string | null;
+    status: PaymentEvidenceEntry["status"];
+    reason_code: string | null;
+    reason_text: string | null;
+    reviewed_by: string | null;
+    reviewed_at: string | null;
+  }[];
   case: {
     id: string;
     company_id: string;
@@ -125,7 +141,8 @@ export async function attachCaseReadiness(
       select jsonb_build_object(
         'case',to_jsonb(arc),'company',to_jsonb(c),
         'checklist',coalesce((select jsonb_agg(to_jsonb(x) order by x.id) from annual_return_checklist_items x where x.case_id=arc.id),'[]'::jsonb),
-        'payments',coalesce((select jsonb_agg(to_jsonb(x) order by x.id) from payments x where x.case_id=arc.id),'[]'::jsonb),
+        'payments',coalesce((select jsonb_agg(to_jsonb(x)||jsonb_build_object('credited_amount',(select coalesce(sum(e.amount),0)::text from payments p join payment_evidence_entries e on e.payment_id=p.id join documents d on d.id=e.document_id join document_versions v on v.id=e.proof_version_id join document_upload_intents i on i.id=v.intent_id where p.id=x.id and ${creditedPaymentEvidenceSql(sql)})) order by x.id) from payments x where x.case_id=arc.id),'[]'::jsonb),
+        'payment_evidence',coalesce((select jsonb_agg(to_jsonb(e) order by e.recorded_at,e.id) from payment_evidence_entries e where e.case_id=arc.id),'[]'::jsonb),
         'documents',coalesce((select jsonb_agg(to_jsonb(d)||jsonb_build_object('version',to_jsonb(v),'intent',to_jsonb(i),
           'source_matches',coalesce(v.storage_url=d.storage_url and i.document_id=d.id and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and v.storage_url=i.object_key and v.declared_checksum_sha256=i.checksum_sha256 and v.verified_byte_size>0,false)) order by d.id)
           from documents d left join document_versions v on v.document_id=d.id and v.superseded_by_version_id is null
@@ -180,6 +197,24 @@ export async function attachCaseReadiness(
             caseId: payment.case_id,
             invoiceNumber: payment.invoice_number,
             amount: Number(payment.amount),
+            receivedAmount: Number(payment.credited_amount),
+            balance: Math.max(0, Number(payment.amount) - Number(payment.credited_amount)),
+            evidenceEntries: payload.payment_evidence
+              .filter((e) => e.payment_id === payment.id)
+              .map((e) => ({
+                id: e.id,
+                paymentId: e.payment_id,
+                documentId: e.document_id,
+                proofVersionId: e.proof_version_id,
+                amount: Number(e.amount),
+                receivedOn: e.received_on,
+                reference: e.reference,
+                status: e.status,
+                reasonCode: e.reason_code,
+                reasonText: e.reason_text,
+                reviewedBy: e.reviewed_by,
+                reviewedAt: e.reviewed_at,
+              })),
             currency: payment.currency,
             status: payment.status,
             dueDate: payment.due_date,
