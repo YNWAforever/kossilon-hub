@@ -12,6 +12,7 @@ import {
   downloadDocumentForActor,
   finalizeDocumentUploadForActor,
   listDocumentsForActor,
+  previewDocumentRecoveryForActor,
   scanQuarantinedDocumentForActor,
 } from "./server-fns";
 
@@ -105,6 +106,18 @@ function dependencies(
       getUploadIntent: vi.fn(async () => intent),
       finalizeUploadIntent: vi.fn(async () => document),
       getDocument: vi.fn(async () => document),
+      getDocumentRecoveryPreview: vi.fn(async () => ({
+        documentId: document.id,
+        companyId,
+        caseId: intent.caseId,
+        category: "identity",
+        fileName: document.fileName,
+        currentVersionId: "version",
+        versionToken: "a".repeat(32),
+        availability: "metadata_only",
+        action: "additive_reupload",
+        objectKey: document.objectKey,
+      })),
       listDocuments: vi.fn(async () => [document]),
       recordScanResult: vi.fn(async (_id, result) => ({
         ...intent,
@@ -151,6 +164,93 @@ function dependencies(
 }
 
 describe("document server orchestration", () => {
+  it("allows a verified-chain recovery only after server-side missing-object inspection and keeps unknown closed", async () => {
+    const d = dependencies();
+    vi.mocked(d.repository.getDocumentRecoveryPreview).mockResolvedValue({
+      ...(await d.repository.getDocumentRecoveryPreview(document.id)),
+      availability: "available",
+    } as NonNullable<Awaited<ReturnType<DocumentRepository["getDocumentRecoveryPreview"]>>>);
+    d.storage.inspect = vi.fn(async () => ({ state: "missing" as const }));
+    const preview = await previewDocumentRecoveryForActor(staffActor, document.id, d);
+    expect(preview).toMatchObject({
+      availability: "missing_object",
+      objectAvailability: "missing",
+    });
+    expect(preview).not.toHaveProperty("objectKey");
+    const input = {
+      companyId,
+      caseId: intent.caseId!,
+      category: "identity" as const,
+      fileName: "replacement.pdf",
+      contentType: "application/pdf",
+      sizeBytes: 4,
+      checksum: intent.checksum,
+      recovery: {
+        documentId: document.id,
+        expectedToken: "a".repeat(32),
+        reason: "Confirmed missing object",
+      },
+    };
+    await createDocumentUploadIntentForActor(staffActor, input, d);
+    expect(d.repository.createUploadIntent).toHaveBeenCalledWith(
+      expect.objectContaining({ recoveryObjectState: "missing" }),
+    );
+    vi.mocked(d.repository.createUploadIntent).mockClear();
+    d.storage.inspect = vi.fn(async () => ({ state: "unknown" as const }));
+    expect(await previewDocumentRecoveryForActor(staffActor, document.id, d)).toMatchObject({
+      availability: "available",
+      objectAvailability: "unknown",
+    });
+    await expect(createDocumentUploadIntentForActor(staffActor, input, d)).rejects.toThrow(
+      /availability.*unknown/i,
+    );
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+    expect(d.storage.put).not.toHaveBeenCalled();
+    expect(d.storage.get).not.toHaveBeenCalled();
+  });
+  it("authorizes recovery preview and creation as active staff, refusing Client before any write", async () => {
+    const d = dependencies();
+    const recovery = {
+      documentId: document.id,
+      expectedToken: "a".repeat(32),
+      reason: "Confirmed metadata gap",
+    };
+    await expect(previewDocumentRecoveryForActor(actor, document.id, d)).rejects.toThrow(/staff/i);
+    await expect(
+      createDocumentUploadIntentForActor(
+        actor,
+        {
+          companyId,
+          category: "identity",
+          fileName: "passport.pdf",
+          contentType: "application/pdf",
+          sizeBytes: 4,
+          checksum: intent.checksum,
+          recovery,
+        },
+        d,
+      ),
+    ).rejects.toThrow(/staff/i);
+    expect(d.repository.createUploadIntent).not.toHaveBeenCalled();
+    expect(d.storage.put).not.toHaveBeenCalled();
+    await createDocumentUploadIntentForActor(
+      staffActor,
+      {
+        companyId,
+        caseId: intent.caseId!,
+        category: "identity",
+        fileName: "passport.pdf",
+        contentType: "application/pdf",
+        sizeBytes: 4,
+        checksum: intent.checksum,
+        recovery,
+      },
+      d,
+    );
+    expect(d.repository.createUploadIntent).toHaveBeenCalledWith(
+      expect.objectContaining({ recovery, recoveryApprovedBy: staffActor.userId }),
+    );
+  });
   it("uses the singleton local bucket without touching live bindings in local mode", async () => {
     const liveBucket = {
       put: vi.fn(),
@@ -278,11 +378,17 @@ describe("documentFiltersForActor", () => {
   });
 
   it("scopes a manager to their team", () => {
-    expect(documentFiltersForActor(managerActor)).toEqual({ teamId: managerActor.teamId });
+    expect(documentFiltersForActor(managerActor)).toEqual({
+      teamId: managerActor.teamId,
+      assignedUserId: managerActor.userId,
+    });
   });
 
   it("scopes staff to their team", () => {
-    expect(documentFiltersForActor(staffActor)).toEqual({ teamId: staffActor.teamId });
+    expect(documentFiltersForActor(staffActor)).toEqual({
+      teamId: staffActor.teamId,
+      assignedUserId: staffActor.userId,
+    });
   });
 
   it("refuses an inactive actor", () => {
@@ -308,7 +414,10 @@ describe("listDocumentsForActor", () => {
 
     await listDocumentsForActor(staffActor, {}, deps);
 
-    expect(deps.repository.listDocuments).toHaveBeenCalledWith({ teamId: staffActor.teamId });
+    expect(deps.repository.listDocuments).toHaveBeenCalledWith({
+      teamId: staffActor.teamId,
+      assignedUserId: staffActor.userId,
+    });
   });
 
   it("does not let a client-supplied filter widen a staff actor's scope", async () => {
@@ -323,6 +432,7 @@ describe("listDocumentsForActor", () => {
     expect(deps.repository.listDocuments).toHaveBeenCalledWith({
       companyId: "10000000-0000-0000-0000-000000000099",
       teamId: staffActor.teamId,
+      assignedUserId: staffActor.userId,
     });
   });
 
@@ -347,6 +457,14 @@ describe("listDocumentsForActor", () => {
       expect.objectContaining({ companyId }),
     );
     expect(deps.repository.listDocuments).toHaveBeenCalledWith({ companyId });
+  });
+  it("rejects an inactive Client before any list/authorization side effects", async () => {
+    const deps = dependencies();
+    await expect(
+      listDocumentsForActor({ ...actor, active: false }, { companyId }, deps),
+    ).rejects.toThrow(/inactive/);
+    expect(deps.repository.listDocuments).not.toHaveBeenCalled();
+    expect(deps.authorizeDocument).not.toHaveBeenCalled();
   });
 });
 

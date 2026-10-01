@@ -7,6 +7,14 @@ export type DocumentStatus =
   | "expired"
   | "failed";
 
+export type DocumentAvailability =
+  | "available"
+  | "metadata_only"
+  | "missing_object"
+  | "quarantined"
+  | "unscanned"
+  | "unsafe";
+
 export const DOCUMENT_CATEGORIES = [
   "identity",
   "registry",
@@ -43,6 +51,11 @@ export type DocumentStorage = {
   get(objectKey: string): Promise<StoredObjectBody | null>;
   delete(objectKey: string): Promise<void>;
   head(objectKey: string): Promise<StoredObjectMetadata | null>;
+  inspect?(
+    objectKey: string,
+  ): Promise<
+    { state: "missing" | "unknown" } | { state: "present"; metadata: StoredObjectMetadata | null }
+  >;
 };
 
 export type DocumentScanResult =

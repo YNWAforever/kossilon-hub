@@ -13,6 +13,7 @@ import { enqueueDocumentAnalysisJob } from "./analysis-jobs";
 import { enqueueDocumentScanJob } from "./scan-jobs";
 import {
   type DocumentCategory,
+  type DocumentAvailability,
   type DocumentScanResult,
   type DocumentStatus,
   type ScanVerdictSource,
@@ -86,6 +87,22 @@ export type PrivateDocument = {
   reviewStatus: "pending" | "verified" | "rejected";
   uploadedBy: string | null;
   uploadedAt: string;
+  availability?: DocumentAvailability;
+};
+
+/** A register entry is visible even when it cannot safely supply bytes. */
+export type DocumentSummary = Omit<
+  PrivateDocument,
+  "contentType" | "sizeBytes" | "checksum" | "uploadStatus"
+> & {
+  contentType: string | null;
+  sizeBytes: number | null;
+  checksum: string | null;
+  uploadStatus: DocumentStatus | null;
+  currentVersionId?: string | null;
+  intentId?: string | null;
+  /** Listing metadata does not check storage or prove that an object exists. */
+  objectAvailability?: "not_checked";
 };
 
 export type DocumentUploadRequest = {
@@ -94,6 +111,21 @@ export type DocumentUploadRequest = {
   contentType: string;
   sizeBytes: number;
   checksum: string;
+};
+
+export type DocumentRecoveryRequest = { documentId: string; expectedToken: string; reason: string };
+export type DocumentRecoveryPreview = {
+  documentId: string;
+  companyId: string;
+  caseId: string | null;
+  category: DocumentCategory;
+  fileName: string;
+  currentVersionId: string | null;
+  versionToken: string;
+  availability: DocumentAvailability;
+  action: "additive_reupload";
+  /** Internal storage observation input; removed by the server RPC. */
+  objectKey: string;
 };
 
 const MIME_BY_EXTENSION: Record<string, readonly string[]> = {
@@ -174,11 +206,15 @@ type DocumentRow = {
   verification_status: "pending" | "verified" | "rejected";
   uploaded_by: string | null;
   uploaded_at: string | Date;
-  content_type: string;
-  expected_size_bytes: string | number;
-  checksum_sha256: string;
-  upload_status: DocumentStatus;
+  content_type: string | null;
+  expected_size_bytes: string | number | null;
+  checksum_sha256: string | null;
+  upload_status: DocumentStatus | null;
   scan_verdict_source: ScanVerdictSource | null;
+  current_version_id?: string | null;
+  intent_id?: string | null;
+  verified_checksum_sha256?: string | null;
+  version_token?: string;
 };
 
 type AccessSubjectRow = {
@@ -226,6 +262,14 @@ function mapIntent(row: IntentRow): DocumentUploadIntent {
 }
 
 function mapDocument(row: DocumentRow): PrivateDocument {
+  if (
+    !row.content_type ||
+    row.expected_size_bytes === null ||
+    !row.checksum_sha256 ||
+    !row.upload_status
+  ) {
+    throw new Error("Document upload lineage is incomplete.");
+  }
   return {
     id: row.id,
     companyId: row.company_id,
@@ -244,6 +288,40 @@ function mapDocument(row: DocumentRow): PrivateDocument {
   };
 }
 
+function availabilityOf(row: DocumentRow): DocumentAvailability {
+  if (!row.current_version_id || !row.intent_id) return "metadata_only";
+  if (row.upload_status === "rejected") return "unsafe";
+  if (row.upload_status !== "available") return "quarantined";
+  return row.scan_verdict_source === "provider" &&
+    Boolean(row.checksum_sha256) &&
+    row.verified_checksum_sha256 === row.checksum_sha256
+    ? "available"
+    : "unscanned";
+}
+
+function mapDocumentSummary(row: DocumentRow): DocumentSummary {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    caseId: row.case_id,
+    category: row.file_type,
+    fileName: row.file_name,
+    objectKey: row.storage_url,
+    contentType: row.content_type,
+    sizeBytes: row.expected_size_bytes === null ? null : Number(row.expected_size_bytes),
+    checksum: row.checksum_sha256,
+    uploadStatus: row.upload_status,
+    scanVerdictSource: row.scan_verdict_source,
+    reviewStatus: row.verification_status,
+    uploadedBy: row.uploaded_by,
+    uploadedAt: new Date(row.uploaded_at).toISOString(),
+    currentVersionId: row.current_version_id ?? null,
+    intentId: row.intent_id ?? null,
+    availability: availabilityOf(row),
+    objectAvailability: "not_checked",
+  };
+}
+
 function withTransaction<T>(client: QueryClient, fn: (tx: Tx) => Promise<T>): Promise<T> {
   return "begin" in client ? (client.begin(fn) as Promise<T>) : fn(client);
 }
@@ -254,6 +332,11 @@ export type DocumentRepository = {
     caseId?: string;
     checklistItemId?: string;
     replacementDocumentId?: string;
+    recovery?: DocumentRecoveryRequest;
+    recoveryApprovedBy?: string;
+    /** Server observer only; never accepted by the RPC input validator. */
+    recoveryObjectState?: "missing";
+    recoveryObjectObservedAt?: string;
     requestedByAuthUserId: string;
     category: DocumentCategory;
     fileName: string;
@@ -270,11 +353,13 @@ export type DocumentRepository = {
     source: "staff" | "client";
   }): Promise<PrivateDocument>;
   getDocument(id: string): Promise<PrivateDocument | null>;
+  getDocumentRecoveryPreview(id: string): Promise<DocumentRecoveryPreview | null>;
   listDocuments(filters?: {
     companyId?: string;
     caseId?: string;
     teamId?: string;
-  }): Promise<PrivateDocument[]>;
+    assignedUserId?: string;
+  }): Promise<DocumentSummary[]>;
   /**
    * The authoritative scope of one document/intent/company, for
    * `assertStaffDocumentAccess`. Loaded here rather than accepted from the
@@ -342,19 +427,51 @@ export function createDocumentRepository(
   }
 
   async function documentRows(
-    filters: { id?: string; companyId?: string; caseId?: string; teamId?: string } = {},
+    filters: {
+      id?: string;
+      companyId?: string;
+      caseId?: string;
+      teamId?: string;
+      assignedUserId?: string;
+    } = {},
+    client: QueryClient = sql,
   ) {
-    return sql<DocumentRow[]>`
+    return client<DocumentRow[]>`
       select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
-             i.scan_verdict_source
+             i.scan_verdict_source, v.id current_version_id, i.id intent_id,
+             v.verified_checksum_sha256,
+             md5(jsonb_build_object('document',to_jsonb(d),'version',to_jsonb(v),'intent',to_jsonb(i))::text) version_token
       from documents d
-      join document_upload_intents i on i.document_id = d.id
+      left join lateral (
+        select * from document_versions where document_id=d.id and superseded_by_version_id is null
+        order by version_number desc limit 1
+      ) v on true
+      left join document_upload_intents i on i.id=v.intent_id and i.document_id=d.id
+        and i.company_id=d.company_id and i.case_id is not distinct from d.case_id
+        and i.object_key=v.storage_url and v.storage_url=d.storage_url
       join companies c on c.id = d.company_id
       where (${filters.id ?? null}::uuid is null or d.id = ${filters.id ?? null})
         and (${filters.companyId ?? null}::uuid is null or d.company_id = ${filters.companyId ?? null})
         and (${filters.caseId ?? null}::uuid is null or d.case_id = ${filters.caseId ?? null})
-        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null})
+        and (
+          (${filters.teamId ?? null}::uuid is null and ${filters.assignedUserId ?? null}::uuid is null)
+          or c.assigned_team_id = ${filters.teamId ?? null}::uuid
+          or exists(select 1 from annual_return_cases a where a.id=d.case_id and a.company_id=d.company_id
+            and (a.owner_id=${filters.assignedUserId ?? null}::uuid or a.reviewer_id=${filters.assignedUserId ?? null}::uuid))
+        )
       order by d.uploaded_at desc, d.id`;
+  }
+
+  async function lockRecoverySource(tx: Tx, id: string) {
+    await tx`select id from documents where id=${id} for update`;
+    const versions = await tx<
+      { id: string; intent_id: string | null }[]
+    >`select intent_id from document_versions
+      where document_id=${id} and superseded_by_version_id is null`;
+    if (versions[0]?.intent_id)
+      await tx`select id from document_upload_intents where id=${versions[0].intent_id} for update`;
+    await tx`select id from document_versions where document_id=${id} and superseded_by_version_id is null for update`;
+    return (await documentRows({ id }, tx))[0];
   }
 
   return {
@@ -367,11 +484,53 @@ export function createDocumentRepository(
         checksum: input.checksum,
       });
       return withTransaction(sql, async (tx) => {
+        // Shared lock order with ordinary replacement and case evidence writes.
         if (input.caseId) {
           const cases = await tx<{ company_id: string }[]>`
             select company_id from annual_return_cases where id = ${input.caseId} for update`;
           if (!cases[0] || cases[0].company_id !== input.companyId)
             throw new Error("Case does not belong to the company.");
+        }
+        if (input.recovery) {
+          if (
+            !input.recoveryApprovedBy ||
+            !input.recovery.reason.trim() ||
+            input.replacementDocumentId
+          ) {
+            throw new Error("Recovery requires staff approval and a reason.");
+          }
+          const original = await lockRecoverySource(tx, input.recovery.documentId);
+          if (
+            !original ||
+            original.company_id !== input.companyId ||
+            original.case_id !== (input.caseId ?? null) ||
+            original.file_type !== input.category
+          ) {
+            throw new Error("Recovery document scope does not match.");
+          }
+          if (original.version_token !== input.recovery.expectedToken)
+            throw new Error("Recovery source changed; preview again.");
+          if (availabilityOf(original) === "available" && input.recoveryObjectState !== "missing")
+            throw new Error("Document has a complete verified chain; recovery is not required.");
+          const prior = await tx<
+            IntentRow[]
+          >`select i.* from timeline_events e join document_upload_intents i on i.id::text=e.metadata->>'intentId'
+            where e.event_type='document_recovery_requested' and e.metadata->>'sourceDocumentId'=${input.recovery.documentId}
+              and i.status not in ('expired','rejected','failed') and (i.status<>'created' or i.expires_at>now())
+            order by e.created_at desc limit 1`;
+          if (prior[0]) {
+            if (
+              prior[0].requested_by_auth_user_id === input.requestedByAuthUserId &&
+              prior[0].checksum_sha256 === input.checksum &&
+              Number(prior[0].expected_size_bytes) === input.expectedSizeBytes &&
+              prior[0].file_name === input.fileName &&
+              prior[0].content_type === input.contentType
+            )
+              return mapIntent(prior[0]);
+            throw new Error(
+              "A recovery is already pending or received; review that attempt first.",
+            );
+          }
         }
         if (input.checklistItemId) {
           // Checked against the case, not merely for existence. A client-supplied
@@ -427,12 +586,33 @@ export function createDocumentRepository(
             ${input.requestedByAuthUserId},
             ${input.category}, ${input.fileName}, ${input.contentType}, ${input.expectedSizeBytes},
             ${input.checksum}, ${input.objectKey}, ${input.expiresAt}) returning *`;
+        if (input.recovery)
+          await tx`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata)
+          values(${input.companyId},${input.caseId ?? null},'document_recovery_requested','user',${input.recoveryApprovedBy!},'Versioned additive document recovery approved.',
+            ${tx.json({
+              sourceDocumentId: input.recovery.documentId,
+              expectedToken: input.recovery.expectedToken,
+              reason: input.recovery.reason,
+              intentId: rows[0].id,
+              objectState: input.recoveryObjectState ?? "not_checked",
+              objectObservedAt: input.recoveryObjectObservedAt ?? null,
+            })})`;
         return mapIntent(rows[0]);
       });
     },
     getUploadIntent,
     finalizeUploadIntent(input) {
       return withTransaction(sql, async (tx) => {
+        const [candidate] = await tx<
+          IntentRow[]
+        >`select * from document_upload_intents where id=${input.intentId}`;
+        if (candidate?.case_id) {
+          const [caseRow] = await tx<
+            { company_id: string }[]
+          >`select company_id from annual_return_cases where id=${candidate.case_id} for update`;
+          if (!caseRow || caseRow.company_id !== candidate.company_id)
+            throw new Error("Case does not belong to the company.");
+        }
         const intents = await tx<
           IntentRow[]
         >`select * from document_upload_intents where id = ${input.intentId} for update`;
@@ -440,12 +620,25 @@ export function createDocumentRepository(
         if (!intent) throw new Error("Upload intent not found.");
         if (intent.status !== "created") throw new Error("Upload intent cannot be finalized.");
         if (Date.parse(intent.expiresAt) <= Date.now()) throw new Error("Upload intent expired.");
+        const [recovery] = await tx<
+          { metadata: { sourceDocumentId: string; expectedToken: string } }[]
+        >`select metadata from timeline_events
+          where event_type='document_recovery_requested' and metadata->>'intentId'=${intent.id} limit 1`;
+        if (recovery) {
+          const original = await lockRecoverySource(tx, recovery.metadata.sourceDocumentId);
+          if (!original || original.version_token !== recovery.metadata.expectedToken)
+            throw new Error("Recovery source changed; preview again.");
+        }
         const documents = await tx<{ id: string }[]>`
           insert into documents (
             company_id, case_id, file_type, file_name, storage_url, upload_source,
             verification_status, uploaded_by
           ) values (${intent.companyId}, ${intent.caseId}, ${intent.category}, ${intent.fileName},
             ${intent.objectKey}, ${input.source}, 'pending', ${input.uploadedBy}) returning id`;
+        if (recovery)
+          await tx`insert into timeline_events(company_id,case_id,event_type,actor_type,actor_id,description,metadata)
+          values(${intent.companyId},${intent.caseId},'document_recovery_received','user',${input.uploadedBy},'Recovery file received; scanning and review still required.',
+            ${tx.json({ ...recovery.metadata, intentId: intent.id, documentId: documents[0].id })})`;
 
         // Version 1 of these bytes, in the same transaction as the document, so
         // that no document can ever exist without a version and the rest of the
@@ -536,14 +729,41 @@ export function createDocumentRepository(
     },
     async getDocument(id) {
       const rows = await documentRows({ id });
-      return rows[0] ? mapDocument(rows[0]) : null;
+      const row = rows[0];
+      if (
+        !row ||
+        !row.current_version_id ||
+        !row.intent_id ||
+        !row.content_type ||
+        row.expected_size_bytes === null ||
+        !row.checksum_sha256 ||
+        !row.upload_status
+      )
+        return null;
+      return { ...mapDocument(row), availability: availabilityOf(row) };
+    },
+    async getDocumentRecoveryPreview(id) {
+      const [row] = await documentRows({ id });
+      if (!row) return null;
+      return {
+        documentId: row.id,
+        companyId: row.company_id,
+        caseId: row.case_id,
+        category: row.file_type,
+        fileName: row.file_name,
+        currentVersionId: row.current_version_id ?? null,
+        versionToken: row.version_token!,
+        availability: availabilityOf(row),
+        action: "additive_reupload",
+        objectKey: row.storage_url,
+      };
     },
     async getDocumentAccessSubject(documentId) {
       const rows = await sql<AccessSubjectRow[]>`
         select d.company_id, c.assigned_team_id, d.case_id, a.owner_id, a.reviewer_id
         from documents d
         join companies c on c.id = d.company_id
-        left join annual_return_cases a on a.id = d.case_id
+        left join annual_return_cases a on a.id = d.case_id and a.company_id=d.company_id
         where d.id = ${documentId}`;
       return rows[0] ? mapAccessSubject(rows[0]) : null;
     },
@@ -552,7 +772,7 @@ export function createDocumentRepository(
         select i.company_id, c.assigned_team_id, i.case_id, a.owner_id, a.reviewer_id
         from document_upload_intents i
         join companies c on c.id = i.company_id
-        left join annual_return_cases a on a.id = i.case_id
+        left join annual_return_cases a on a.id = i.case_id and a.company_id=i.company_id
         where i.id = ${intentId}`;
       return rows[0] ? mapAccessSubject(rows[0]) : null;
     },
@@ -570,7 +790,7 @@ export function createDocumentRepository(
       return rows[0] ? mapAccessSubject(rows[0]) : null;
     },
     async listDocuments(filters = {}) {
-      return (await documentRows(filters)).map(mapDocument);
+      return (await documentRows(filters)).map(mapDocumentSummary);
     },
     recordScanResult(intentId, result, options = {}) {
       const status =

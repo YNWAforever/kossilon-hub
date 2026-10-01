@@ -96,9 +96,9 @@ describe("assertDocumentServable", () => {
     expect(() => assertDocumentServable(actor(), "pending")).toThrow(/pending a malware scan/i);
   });
 
-  it("explains that an unknown verdict came from the test scanner and a re-scan is queued", () => {
+  it("requires verified lineage and a genuine scan without inventing a queued re-scan", () => {
     expect(() => assertDocumentServable(actor(), "unknown")).toThrow(
-      /unverified.*deterministic test scanner.*re-scan is queued/i,
+      /unverified.*upload lineage.*genuine scan/i,
     );
   });
 });

@@ -78,9 +78,11 @@ async function render(options: {
   caseData?: unknown;
   withCaseId: boolean;
   dataMode?: "demo" | "production";
+  caseId?: string;
 }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const path = options.withCaseId ? `/documents?caseId=${CASE_ID}` : "/documents";
+  const selectedId = options.caseId ?? CASE_ID;
+  const path = options.withCaseId ? `/documents?caseId=${selectedId}` : "/documents";
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
@@ -88,16 +90,19 @@ async function render(options: {
     defaultPreloadStaleTime: 0,
   });
   await router.load();
+  const actorScope = router.state.matches.at(-1)?.context.actor;
   await queryClient.prefetchQuery({
-    queryKey: ["documents", "archive", options.withCaseId ? CASE_ID : "all"],
+    queryKey: ["documents", "archive", options.withCaseId ? selectedId : "all", { actorScope }],
     queryFn: () => Promise.resolve(options.documents),
   });
+  if (options.withCaseId)
+    queryClient.setQueryData(["documents", "archive", "all", { actorScope }], options.documents);
   if (options.withCaseId) {
     await queryClient.prefetchQuery({
       // Was ["annual-return", ...] — singular. The factory produces
       // ["annual-returns", ...], so this prefetch never matched and the
       // case-backed branch these tests claim to cover was never rendered.
-      queryKey: annualReturnQueryKeys.detail(CASE_ID),
+      queryKey: annualReturnQueryKeys.detail(selectedId),
       queryFn: () => Promise.resolve(options.caseData),
     });
   }
@@ -105,6 +110,50 @@ async function render(options: {
 }
 
 describe("/documents against data the types say is impossible", () => {
+  it.each(["123", "true", "null", "", "123&caseId=456"])(
+    "rejects present invalid parsed caseId %s without reading cached all scope",
+    async (caseId) => {
+      const html = await render({ documents: [baseDocument], withCaseId: true, caseId });
+      expect(html).toContain("案件 ID 格式無效");
+      expect(html).not.toContain("director-passport.pdf");
+    },
+  );
+  it("shows a metadata-only register without preview, download or approval controls", async () => {
+    const html = await render({
+      documents: [
+        {
+          ...baseDocument,
+          availability: "metadata_only",
+          uploadStatus: null,
+          contentType: null,
+          sizeBytes: null,
+          checksum: null,
+          reviewStatus: "verified",
+        },
+      ],
+      withCaseId: false,
+    });
+    expect(html).toContain("director-passport.pdf");
+    expect(html).toContain("文件登記未有完整上載來源");
+    expect(html).not.toContain("開啟原件");
+    expect(html).not.toContain("Download</button>");
+  });
+  it("accepts a seeded UUID filter and retains safe document actions", async () => {
+    const caseId = "40000000-0000-0000-0000-000000000002";
+    const html = await render({
+      documents: [{ ...baseDocument, caseId }],
+      withCaseId: true,
+      caseId,
+      caseData: { id: caseId, companyName: "Existing company", checklist: [] },
+    });
+    expect(html.includes("director-passport.pdf")).toBe(true);
+    expect(html.includes("案件 ID 格式無效")).toBe(false);
+  });
+  it("does not expose a cached all-document list for an invalid filter", async () => {
+    const html = await render({ documents: [baseDocument], withCaseId: true, caseId: "invalid" });
+    expect(html.includes("案件 ID 格式無效")).toBe(true);
+    expect(html.includes("director-passport.pdf")).toBe(false);
+  });
   it("a production case with no checklist array", async () => {
     const html = await render({
       documents: [baseDocument],

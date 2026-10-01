@@ -17,7 +17,8 @@ import {
   type DocumentRejectionReasonCode,
 } from "../features/documents/rejection-reasons";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
-import type { PrivateDocument } from "../features/documents/repository";
+import type { DocumentSummary } from "../features/documents/repository";
+import { DocumentRecoveryPanel } from "../features/documents/document-recovery-panel";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
@@ -483,7 +484,7 @@ function ProductionDocumentsSection({
   casesLoading: boolean;
   selectedCaseId?: string;
   onSelectCase: (caseId: string) => void;
-  documents: PrivateDocument[];
+  documents: DocumentSummary[];
   error: Error | null;
   loading: boolean;
   onDownload: (documentId: string) => void;
@@ -576,6 +577,11 @@ function ProductionDocumentsSection({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {labelValue(document.category)}
                 </p>
+                {document.objectAvailability === "not_checked" ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    儲存物件尚未核對；可用受控預覽核對缺口。
+                  </p>
+                ) : null}
               </div>
               <SafetyBadge safety={documentSafetyOf(document)} status={document.uploadStatus} />
               <div>
@@ -658,7 +664,7 @@ function formatTimestamp(value: string): string {
  * scanner. Those are different facts and a reviewer has to be able to tell them
  * apart before deciding anything.
  */
-function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: string }) {
+function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: string | null }) {
   const presentation: Record<DocumentSafety, { label: string; className: string }> = {
     verified: { label: "已掃描安全", className: "bg-status-green-soft text-status-green" },
     pending: { label: "等待掃描", className: "bg-status-yellow-soft text-status-yellow" },
@@ -671,7 +677,9 @@ function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: strin
       <span className={`inline-block rounded-md px-2 py-1 text-xs font-medium ${className}`}>
         {label}
       </span>
-      <span className="mt-1 block text-xs text-muted-foreground">{labelValue(status)}</span>
+      <span className="mt-1 block text-xs text-muted-foreground">
+        {status ? labelValue(status) : "只有文件登記，欠上載來源"}
+      </span>
     </span>
   );
 }
@@ -696,7 +704,7 @@ function ReviewActions({
   onPreview,
   onReview,
 }: {
-  document: PrivateDocument;
+  document: DocumentSummary;
   safety: DocumentSafety;
   canReview: boolean;
   pending: boolean;
@@ -715,15 +723,33 @@ function ReviewActions({
   const [rejecting, setRejecting] = useState(false);
   const [reasonCode, setReasonCode] = useState<DocumentRejectionReasonCode>("missing-page");
   const [note, setNote] = useState("");
+  const queryClient = useQueryClient();
 
   // "other" with no note records nothing a client could act on.
   const noteRequired = reasonCode === "other";
   const canSubmitRejection = canReview && !pending && (!noteRequired || note.trim().length > 0);
 
+  if (record.availability === "metadata_only" || record.availability === "missing_object") {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-status-orange md:text-right">
+          {record.availability === "metadata_only"
+            ? "文件登記未有完整上載來源；物件尚未核對。"
+            : "已核對但找不到儲存物件。"}
+          不能預覽或批准，請先核對來源或受控補傳。
+        </p>
+        <DocumentRecoveryPanel
+          documentId={record.id}
+          onRecovered={() => void queryClient.invalidateQueries({ queryKey: ["documents"] })}
+        />
+      </div>
+    );
+  }
+
   if (safety === "unsafe") {
     return (
       <p className="text-sm text-status-red md:text-right">
-        掃描發現惡意內容，檔案已刪除。請要求客戶重新提供。
+        掃描拒絕，不能開啟。請要求客戶重新提供。
       </p>
     );
   }
@@ -736,9 +762,15 @@ function ReviewActions({
 
   if (safety === "unknown") {
     return (
-      <p className="text-sm text-status-orange md:text-right">
-        此檔案只有測試掃描器的結果，不能視為已核實。已排隊重新掃描。
-      </p>
+      <div className="space-y-2">
+        <p className="text-sm text-status-orange md:text-right">
+          此檔案的來源或實際掃描尚未核實，不能批准。請核對來源並取得真實掃描結果。
+        </p>
+        <DocumentRecoveryPanel
+          documentId={record.id}
+          onRecovered={() => void queryClient.invalidateQueries({ queryKey: ["documents"] })}
+        />
+      </div>
     );
   }
 
@@ -838,6 +870,10 @@ function ReviewActions({
           </button>
         </div>
       ) : null}
+      <DocumentRecoveryPanel
+        documentId={record.id}
+        onRecovered={() => void queryClient.invalidateQueries({ queryKey: ["documents"] })}
+      />
     </div>
   );
 }

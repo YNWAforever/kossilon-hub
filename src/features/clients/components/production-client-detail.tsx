@@ -561,6 +561,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
       <section className="rounded-lg border bg-card p-4">
         <h2 className="mb-3 text-sm font-semibold">Documents</h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          文件登記及業務覆核狀態；不代表儲存物件已核對或掃描安全。請在文件庫核對來源。
+        </p>
         <div className="divide-y">
           {client.documents.map((document) => (
             <div

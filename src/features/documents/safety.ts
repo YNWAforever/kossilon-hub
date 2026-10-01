@@ -1,5 +1,5 @@
 import type { AuthenticatedActor } from "@/features/auth/types";
-import type { DocumentStatus, ScanVerdictSource } from "./types";
+import type { DocumentAvailability, DocumentStatus, ScanVerdictSource } from "./types";
 
 /**
  * File safety, as a dimension of its own.
@@ -26,10 +26,18 @@ export type DocumentSafety =
   | "unknown";
 
 export function documentSafetyOf(input: {
-  uploadStatus: DocumentStatus;
+  uploadStatus: DocumentStatus | null;
   scanVerdictSource: ScanVerdictSource | null;
+  availability?: DocumentAvailability;
 }): DocumentSafety {
   if (input.uploadStatus === "rejected") return "unsafe";
+  if (
+    input.availability === "metadata_only" ||
+    input.availability === "missing_object" ||
+    input.availability === "unscanned" ||
+    input.uploadStatus === null
+  )
+    return "unknown";
   if (input.uploadStatus !== "available") return "pending";
   return input.scanVerdictSource === "provider" ? "verified" : "unknown";
 }
@@ -56,7 +64,7 @@ export function assertDocumentServable(actor: AuthenticatedActor, safety: Docume
   }
   if (safety === "unknown") {
     throw new Error(
-      "Document safety is unverified: its only scan came from the deterministic test scanner. A genuine re-scan is queued.",
+      "Document safety is unverified. Verify its upload lineage and obtain a genuine scan before approval.",
     );
   }
   throw new Error("Document is quarantined pending a malware scan.");
