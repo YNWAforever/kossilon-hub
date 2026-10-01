@@ -54,6 +54,7 @@ describe("single scheduler owner HTTP boundary", () => {
       trigger: "scheduled",
       scheduledAt: "2026-10-01T05:00:00.000Z",
     });
+    expect(run.mock.calls[0][0].allowedJobs).toContain("runBulkAssignments");
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
   it("records a valid manual GET as manual even if query parameters claim scheduled", async () => {

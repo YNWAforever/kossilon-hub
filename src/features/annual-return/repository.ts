@@ -5,6 +5,8 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { lockActiveStaffUser } from "@/features/auth/staff-state";
+import { assertCaseAssignmentVersion } from "./assignment-version";
+import { assertCaseAssignmentTarget } from "./assignment-target";
 import {
   buildRequirementInstances,
   checklistLookupFor,
@@ -283,6 +285,10 @@ export type AssignAnnualReturnOwnerInput = {
   caseId: string;
   ownerId: string;
   actorId: string;
+  expectedVersion?: string;
+};
+export type AssignAnnualReturnReviewerInput = Omit<AssignAnnualReturnOwnerInput, "ownerId"> & {
+  reviewerId: string;
 };
 
 export type AddAnnualReturnCaseNoteInput = {
@@ -453,6 +459,7 @@ export type AnnualReturnRepository = {
     expectedVersion?: string,
   ): Promise<AnnualReturnCase>;
   assignOwner(input: AssignAnnualReturnOwnerInput): Promise<AnnualReturnCase>;
+  assignReviewer(input: AssignAnnualReturnReviewerInput): Promise<AnnualReturnCase>;
   listNotes(caseId: string): Promise<AnnualReturnCaseNote[]>;
   listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]>;
   listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]>;
@@ -1176,8 +1183,9 @@ export function createAnnualReturnRepository(
     >`
       select u.id, u.name, u.role, u.team_id, t.name as team_name
       from users u
+      join staff_profiles sp on sp.user_id=u.id and sp.active and sp.role=u.role and sp.team_id is not distinct from u.team_id
       left join teams t on t.id = u.team_id
-      where u.active = true
+      where u.active = true and u.role in ('Admin','Manager','Staff')
         and (${scope.teamId ?? null}::uuid is null or u.team_id = ${scope.teamId ?? null})
       order by u.name asc
     `;
@@ -1453,13 +1461,17 @@ export function createAnnualReturnRepository(
     return blockers;
   }
 
-  async function assignOwner(input: AssignAnnualReturnOwnerInput): Promise<AnnualReturnCase> {
+  async function assignCaseUser(
+    input: AssignAnnualReturnOwnerInput,
+    target: "owner" | "reviewer",
+  ): Promise<AnnualReturnCase> {
     const current = await getCase(input.caseId);
     if (!current) throw new Error("Annual return case not found.");
     assertCaseIsWritable(current);
 
     await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, input.caseId);
+      await assertCaseAssignmentVersion(tx, input.caseId, input.expectedVersion);
       const actor = await assertActorCanMutateLockedCase(
         tx,
         input.actorId,
@@ -1468,10 +1480,20 @@ export function createAnnualReturnRepository(
       );
       await lockActiveStaffUser(tx, input.actorId);
       await lockActiveStaffUser(tx, input.ownerId);
+      const children = await tx<
+        { opposite_id: string | null }[]
+      >`select ${target === "owner" ? tx`reviewer_id` : tx`owner_id`} opposite_id from work_items where annual_return_case_id=${input.caseId} and status in ('open','in_progress','blocked')`;
+      assertCaseAssignmentTarget(
+        target,
+        input.ownerId,
+        target === "owner" ? lockedCase.reviewer_id : lockedCase.owner_id,
+        actor.role,
+        children.map((c) => c.opposite_id),
+      );
 
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases
-        set owner_id = ${input.ownerId},
+        set ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} = ${input.ownerId},
             updated_at = now()
         where id = ${input.caseId}
           and locked_at is null
@@ -1483,16 +1505,16 @@ export function createAnnualReturnRepository(
 
       await tx`
         with candidates as (
-          select id, owner_id, version
+          select id, ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} previous_assignee_id, version
           from work_items
           where annual_return_case_id = ${input.caseId}
             and status in ('open', 'in_progress', 'blocked')
-            and owner_id is distinct from ${input.ownerId}
+            and ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} is distinct from ${input.ownerId}
           for update
         ),
         updated as (
           update work_items wi
-          set owner_id = ${input.ownerId},
+          set ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} = ${input.ownerId},
               version = wi.version + 1,
               updated_at = now()
           from candidates candidate
@@ -1510,10 +1532,10 @@ export function createAnnualReturnRepository(
         )
         select
           candidate.id,
-          candidate.owner_id,
+          candidate.previous_assignee_id,
           ${input.ownerId},
           ${input.actorId},
-          '{}'::jsonb,
+          ${tx.json({ assignmentTarget: target })},
           'manual',
           candidate.version
         from candidates candidate
@@ -1533,13 +1555,15 @@ export function createAnnualReturnRepository(
         values (
           ${lockedCase.company_id},
           ${input.caseId},
-          'annual_return_owner_assigned',
+          ${`annual_return_${target}_assigned`},
           'user',
           ${input.actorId},
-          'Annual return owner assigned.',
+          ${`Annual return ${target} assigned.`},
           ${tx.json({
-            previousOwnerId: lockedCase.owner_id,
-            ownerId: input.ownerId,
+            ...(target === "owner"
+              ? { previousOwnerId: lockedCase.owner_id, ownerId: input.ownerId }
+              : { previousReviewerId: lockedCase.reviewer_id, reviewerId: input.ownerId }),
+            assignmentTarget: target,
           })}
         )
       `;
@@ -1549,15 +1573,23 @@ export function createAnnualReturnRepository(
         companyId: lockedCase.company_id,
         actor,
         action: "assign_owner",
-        summary: "Annual return owner assigned.",
+        summary: `Annual return ${target} assigned.`,
         metadata: {
-          previousOwnerId: lockedCase.owner_id,
-          ownerId: input.ownerId,
+          ...(target === "owner"
+            ? { previousOwnerId: lockedCase.owner_id, ownerId: input.ownerId }
+            : { previousReviewerId: lockedCase.reviewer_id, reviewerId: input.ownerId }),
+          assignmentTarget: target,
         },
       });
     });
 
-    return hydratedCaseAfterMutation(input.caseId, "owner assignment");
+    return hydratedCaseAfterMutation(input.caseId, `${target} assignment`);
+  }
+  function assignOwner(input: AssignAnnualReturnOwnerInput) {
+    return assignCaseUser(input, "owner");
+  }
+  function assignReviewer(input: AssignAnnualReturnReviewerInput) {
+    return assignCaseUser({ ...input, ownerId: input.reviewerId }, "reviewer");
   }
 
   async function listNotes(caseId: string): Promise<AnnualReturnCaseNote[]> {
@@ -2922,6 +2954,7 @@ export function createAnnualReturnRepository(
     assertCanMutateCase,
     evaluateReminders,
     assignOwner,
+    assignReviewer,
     listNotes,
     listAuditEventsForCase,
     listAssignmentEventsForCase,

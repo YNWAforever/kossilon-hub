@@ -4,6 +4,7 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
 import { listWorkQueue } from "@/features/work-items/server-fns";
@@ -26,7 +27,7 @@ import { daysBetween, hongKongBusinessDate } from "../workflow";
 import { CreateCaseDialog } from "./create-case-dialog";
 import { dataOriginLabel } from "@/features/clients/data-origin";
 
-const BOARD_PAGE_SIZE = 200;
+const BOARD_PAGE_SIZE = 50;
 
 // One template, defined once, with real floors on both flexible tracks. A track
 // of minmax(0, …) collapses to zero and lets its text draw over the neighbouring
@@ -59,6 +60,7 @@ export function ProductionAnnualReturnCommandCenter({
   const [includeFixtures, setIncludeFixtures] = useState(false);
 
   const filters = { ...boardFiltersFromSearch(search, BOARD_PAGE_SIZE), includeFixtures };
+  const { limit: pageLimit, ...bulkFilters } = filters;
   // Query owns each filter/actor scope's pages. A late response can update its
   // own cache but cannot append to the currently selected scope.
   const casesQuery = useInfiniteQuery({
@@ -186,6 +188,21 @@ export function ProductionAnnualReturnCommandCenter({
         }
       />
 
+      {actorScope?.active &&
+      (actorScope.role === "Admin" || actorScope.role === "Manager") &&
+      !includeFixtures ? (
+        <BulkSelectionToolbar
+          actorScope={JSON.stringify(actorScope)}
+          resource="annual_return_case"
+          filters={bulkFilters}
+          page={visibleCases.map((c) => ({
+            id: c.id,
+            label: `${c.companyName} · ${c.returnYear}`,
+          }))}
+          pageSize={pageLimit}
+          total={totalsQuery.isError ? null : (totals?.total ?? null)}
+        />
+      ) : null}
       <CreateCaseDialog
         key={JSON.stringify(actorScope)}
         open={isCreateOpen}

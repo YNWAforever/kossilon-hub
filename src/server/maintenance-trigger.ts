@@ -3,7 +3,8 @@ export type MaintenanceJobKind =
   | "evaluateEscalations"
   | "settleNotificationAttempts"
   | "redactNotifications"
-  | "escalateStalledQuarantine";
+  | "escalateStalledQuarantine"
+  | "runBulkAssignments";
 export type TriggerKind = "scheduled" | "manual";
 export type JobOutcome = "succeeded" | "failed";
 export type JobState = JobOutcome | "skipped" | "unknown";
@@ -126,6 +127,7 @@ export function createMaintenanceTrigger(input: {
             settleNotificationAttempts: ["failed"],
             redactNotifications: ["redacted"],
             escalateStalledQuarantine: ["stalled"],
+            runBulkAssignments: ["jobs", "processed"],
           };
           if (result && typeof result === "object")
             safeResult = Object.fromEntries(

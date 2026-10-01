@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
+import type { BulkFilters } from "@/features/bulk-operations/types";
 import {
   Dialog,
   DialogContent,
@@ -84,7 +86,7 @@ export function WorkQueueRoute() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const search = Route.useSearch();
-  const actor = Route.useRouteContext().actor;
+  const { actor, dataMode } = Route.useRouteContext();
   const actorScope = JSON.stringify(
     actor ? [actor.authUserId, actor.userId, actor.role, actor.teamId, actor.active] : null,
   );
@@ -131,9 +133,7 @@ export function WorkQueueRoute() {
     return items.filter((item) => {
       const matchesQuery =
         !needle ||
-        `${item.title} ${item.workType} ${item.annualReturnCaseId ?? ""} ${item.companyId}`
-          .toLowerCase()
-          .includes(needle);
+        `${item.title} ${item.workType} ${item.companyName ?? ""}`.toLowerCase().includes(needle);
       const matchesOwner =
         owner === "all" || (owner === "unassigned" ? !item.ownerId : item.ownerId === owner);
       const matchesWorkType = workType === "all" || item.workType === workType;
@@ -151,6 +151,19 @@ export function WorkQueueRoute() {
       );
     });
   }, [items, owner, priority, query, sla, status, workType]);
+  const bulkFilters: BulkFilters = {
+    view,
+    ...(query.trim() ? { q: query.trim() } : {}),
+    ...(owner === "unassigned" ? { unassigned: true } : owner !== "all" ? { ownerId: owner } : {}),
+    ...(workType !== "all" ? { workType } : {}),
+    ...(sla !== "all" ? { escalationState: sla } : {}),
+    ...(priority !== "all" ? { priority } : {}),
+    ...(status !== "all" ? { workStatus: status } : {}),
+  };
+  const presentationScope = JSON.stringify([actorScope, bulkFilters]);
+  const [loadedScope, setLoadedScope] = useState({ scope: presentationScope, limit: 50 });
+  const visibleLimit = loadedScope.scope === presentationScope ? loadedScope.limit : 50;
+  const pageItems = visibleItems.slice(0, visibleLimit);
 
   const setFilter = (key: "owner" | "workType" | "sla" | "priority" | "status", value: string) =>
     void navigate({ search: { ...search, [key]: value }, replace: true });
@@ -273,6 +286,20 @@ export function WorkQueueRoute() {
         </div>
 
         {queueQuery.isLoading ? <QueueMessage>Loading work queue...</QueueMessage> : null}
+        {dataMode === "production" &&
+        actor?.active &&
+        (actor.role === "Admin" || actor.role === "Manager") ? (
+          <BulkSelectionToolbar
+            actorScope={actorScope}
+            resource="work_item"
+            filters={bulkFilters}
+            page={pageItems.map((i) => ({
+              id: i.id,
+              label: `${i.companyName ?? "Company unavailable"} · ${i.title}`,
+            }))}
+            total={queueQuery.isError || !queueQuery.data ? null : visibleItems.length}
+          />
+        ) : null}
         {queueQuery.isError ? (
           <QueueMessage>Work queue could not be loaded. Refresh to try again.</QueueMessage>
         ) : null}
@@ -305,7 +332,7 @@ export function WorkQueueRoute() {
                 </div>
               </div>
               <div role="rowgroup" className="divide-y divide-border">
-                {visibleItems.map((item) => (
+                {pageItems.map((item) => (
                   <div
                     key={item.id}
                     role="row"
@@ -371,7 +398,7 @@ export function WorkQueueRoute() {
               </div>
             </div>
             <div className="divide-y divide-border lg:hidden">
-              {visibleItems.map((item) => (
+              {pageItems.map((item) => (
                 <article key={item.id} className="grid gap-3 px-3 py-4">
                   <div>
                     <p className="text-xs text-muted-foreground">
@@ -421,6 +448,14 @@ export function WorkQueueRoute() {
           </section>
         ) : null}
       </main>
+      {visibleItems.length > pageItems.length ? (
+        <button
+          className="m-4 rounded border px-3 py-2"
+          onClick={() => setLoadedScope({ scope: presentationScope, limit: visibleLimit + 50 })}
+        >
+          載入更多工作（每次50筆）
+        </button>
+      ) : null}
       {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
         <AssignmentDialog
           key={actorScope}

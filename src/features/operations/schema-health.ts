@@ -64,6 +64,8 @@ export const EXPECTED_MIGRATIONS = [
   "0069_restore_maintenance_job_contract.sql",
   "0070_payment_evidence_entries.sql",
   "0071_staff_admin_contract.sql",
+  "0072_durable_bulk_assignment.sql",
+  "0073_bulk_maintenance_job_kind.sql",
 ] as const;
 
 export type SchemaLedger = {

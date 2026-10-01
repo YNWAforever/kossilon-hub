@@ -42,6 +42,11 @@ describe.skipIf(!url)("actual PostgreSQL staff administration", () => {
         await tx`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id) values(${companyId},'Synthetic assignment race',${companyId},${companyId},'2020-01-01','2026-01-01','Test','Test','active',${actor.userId!},${teamId})`;
         await tx`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,risk_level,owner_id) values(${caseId},${companyId},2026,'2026-01-01','2026-02-12','Upcoming','green',${actor.userId!})`;
         await tx`update staff_profiles set active=false where user_id=${staff.userId!}`;
+        expect(
+          (await createAnnualReturnRepository({ sql: tx }).listAssignableStaff({ teamId })).some(
+            (u) => u.id === staff.userId,
+          ),
+        ).toBe(false);
         await expect(
           createAnnualReturnRepository({ sql: tx }).assignOwner({
             caseId,
