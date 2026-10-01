@@ -1,0 +1,77 @@
+{
+  "migration": {
+    "populated": "rows/leases equal after two applications; wrong index/missing identity/created_at defaults rejected; rollback",
+    "file": "0069_restore_maintenance_job_contract.sql",
+    "production": "not applied",
+    "sha256": "54c8fb08e54524b89502c44db02de202ecaca159549ba1d38ee4a34ac2b361ec",
+    "fresh": "actual SQL applied/receipted on new local DB; repeat passed"
+  },
+  "gates": [
+    {
+      "exit": 0,
+      "logSha256": "d824a8d4bc3f44d5bfea8c9af37d90be59f08aef67d3c0dff98bfb3020c8dd30",
+      "command": "npm run lint"
+    },
+    {
+      "exit": 0,
+      "logSha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command": "npm run typecheck"
+    },
+    {
+      "exit": 0,
+      "logSha256": "bef7ea22691e5d03ca39d77f91e53c3c6f5033703c3b577ca8ed4170b20cf622",
+      "command": "npm run test"
+    },
+    {
+      "exit": 0,
+      "logSha256": "1f32e9edcf05ce9da2a284234aa374ced3c06ac82583e25d6bd173859dfdf725",
+      "command": "npm run build"
+    },
+    {
+      "exit": 0,
+      "logSha256": "6bdec509047b0340b77e8480ebf43926acfb9be8b12489b3d7241f868ba0ca05",
+      "command": "npm run verify:firm -- --dry-run"
+    },
+    {
+      "exit": 0,
+      "logSha256": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7",
+      "command": "npm run verify:dev-server-imports"
+    },
+    {
+      "exit": 0,
+      "logSha256": "cf312b4a1ba173195a2a1abfa4b5944f102bd61169420d248cbc244a200dd6b6",
+      "command": "bun scripts/db-migrate.ts; bun scripts/db-seed-annual-return.ts"
+    },
+    {
+      "exit": 0,
+      "logSha256": "1dbc6438cb7572d4cf5c77aa37b35d5b54bdbda0ebb6831a0571ad6284af4560",
+      "command": "bun scripts/db-migrate.ts (repeat)"
+    }
+  ],
+  "compiled": {
+    "cloudflareScheduledHook": true,
+    "cronHttpSsrChunk": true
+  },
+  "build": "3d3c373bb3881667e7aebeed6cc6bcf0b81d8c48",
+  "providerWrites": 0,
+  "actualScheduledAcceptance": "BLOCKED: no new genuine platform ticks",
+  "review": "independent PR02 review; both Important findings RED/GREEN; diagnostic unknown counts corrected; no remaining Important/Critical",
+  "environment": "local Postgres17 kossilon_pr02_ci localhost55441; Windows Node22.23.3/Bun1.3.14",
+  "lint": "0 errors;1 baseline fast-refresh warning work-queue.tsx:34",
+  "tests": {
+    "files": 181,
+    "skipped": 0,
+    "failed": 0,
+    "passed": 1805
+  },
+  "redGreen": [
+    "manual GET scheduled misclassification",
+    "HTTP candidate falsely refreshes verified health",
+    "identity default absent",
+    "created_at default absent",
+    "unknown lease/count evidence",
+    "Worker error payload in logs",
+    "incomplete/negative job counts"
+  ],
+  "scope": "safe-maintenance-only four jobs; no outbox dispatch/scanner/AI/bulk"
+}
