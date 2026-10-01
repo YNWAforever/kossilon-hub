@@ -1,0 +1,53 @@
+{
+  "build": "49f6fb6ec0fb6e43aee6acf4d69c0c9585ebc7e9",
+  "environment": "local isolated Postgres17 localhost55441/kossilon_audit; Windows Node22.23.3/Bun1.3.14",
+  "tests": {
+    "files": 179,
+    "passed": 1774,
+    "failed": 0,
+    "skipped": 0
+  },
+  "gates": [
+    {
+      "command": "npm run lint",
+      "exit": 0,
+      "logSha256": "d824a8d4bc3f44d5bfea8c9af37d90be59f08aef67d3c0dff98bfb3020c8dd30"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit": 0,
+      "logSha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "command": "npm run test",
+      "exit": 0,
+      "logSha256": "acdded0d3e06bd42535935940b765b1c0f32e39fc71d898cecc81d4b51947e50"
+    },
+    {
+      "command": "npm run build",
+      "exit": 0,
+      "logSha256": "6374a15bcaedbb9ec40fd62b15b2fd5285aaf9d78193ff374153c25212b27fb3"
+    }
+  ],
+  "otherGates": [
+    "npm run verify:firm -- --dry-run: PASS command; providers explicitly BLOCKED;0writes/0network",
+    "npm run verify:dev-server-imports: PASS",
+    "compiled cloudflare:scheduled hook: PASS"
+  ],
+  "originMigration": {
+    "file": "0068_company_historical_data_origin.sql",
+    "sha256": "3bada03551f73882074930732205b70986e30ff450445b30152f80f22c34a8eb",
+    "repeat": "PASS 3companies/3fixture/0outbox unchanged",
+    "unexpectedConstraint": "rejected; connection rollback preserved original constraint",
+    "production": "not applied"
+  },
+  "redGreen": [
+    "missing inventory function",
+    "origin3groups client-only simulated transport",
+    "claim-origin change blocks marker",
+    "fixture picker default leak reproduced and fixed",
+    "version metadata missing reproduced and fixed"
+  ],
+  "review": "no remaining Important/Critical after picker correction",
+  "providerWrites": 0
+}
