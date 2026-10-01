@@ -71,6 +71,7 @@ export type NarPreviewItem = {
     before: string | number | null;
     after: string | number | null;
   }[];
+  sourceInvoiceDifference: { source: string; existing: string | null } | null;
   requiredInputs: string[];
   conflicts: string[];
   command: "create" | "update" | "unchanged" | "already_applied";

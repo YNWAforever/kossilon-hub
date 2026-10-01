@@ -14,6 +14,12 @@ import {
   previewNarCompensation,
 } from "./server-fns";
 type Props = { batchId: string; rows: NarImportRow[]; actorKey: string; onApplied?: () => void };
+function snapshotFilingDate(value: unknown): string | null {
+  if (typeof value !== "object" || value === null || !("case" in value)) return null;
+  const case_ = value.case;
+  if (typeof case_ !== "object" || case_ === null || !("filing_due_date" in case_)) return null;
+  return typeof case_.filing_due_date === "string" ? case_.filing_due_date.slice(0, 10) : null;
+}
 export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
   const client = useQueryClient(),
     key = ["nar-apply", actorKey, batchId];
@@ -325,6 +331,13 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                   ：{d.before ?? "未有記錄"} → {d.after ?? "待確認"}
                 </p>
               ))}
+              {r.sourceInvoiceDifference ? (
+                <p>
+                  來源 Invoice {r.sourceInvoiceDifference.source} 與現有{" "}
+                  {r.sourceInvoiceDifference.existing ?? "未有記錄"}{" "}
+                  不同；需另行覆核，付款資料保留。
+                </p>
+              ) : null}
               <p>
                 {r.requiredInputs.join("、")} {r.conflicts.join("、")}
               </p>
@@ -407,14 +420,25 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
           <button type="button" disabled={busy} onClick={refresh}>
             重新載入工作狀態
           </button>
+          {compensation.isError ? <p role="alert">未能載入補償資料，請重新載入。</p> : null}
           {compensation.data ? (
             <div>
               <p>只供覆核，不會刪除案件或證據。</p>
               {compensation.data.map((r) => (
-                <p key={r.rowId}>
-                  {r.currentMatches ? "版本相符，需再覆核補償" : "版本已變，不可沿用舊補償"} ·{" "}
-                  {r.action}
-                </p>
+                <div key={r.rowId}>
+                  <p>
+                    {r.companyName} · 第{r.rowNumber}行
+                  </p>
+                  <p>{r.currentMatches ? "版本相符，需再覆核補償" : "版本已變，不可沿用舊補償"}</p>
+                  <p>原申報限期：{snapshotFilingDate(r.proposedBefore) ?? "未有原案件"}</p>
+                  <p>現申報限期：{snapshotFilingDate(r.current) ?? "待確認"}</p>
+                  <details>
+                    <summary>完整 before／current 資料</summary>
+                    <pre className="overflow-auto text-xs">
+                      {JSON.stringify({ before: r.proposedBefore, current: r.current }, null, 2)}
+                    </pre>
+                  </details>
+                </div>
               ))}
             </div>
           ) : null}

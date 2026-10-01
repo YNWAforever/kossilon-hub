@@ -678,6 +678,91 @@ describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
         )[0].due,
       ).toBe("2025-02-15");
     }));
+  // A new 100-transaction stress scenario; the existing suite's 30s default remains unchanged.
+  // Its measured duration is recorded separately, and does not establish a production latency SLO.
+  it(
+    "finalizes exactly 100 applied rows without a 101st processing call",
+    async () =>
+      fixture(100, async (f) => {
+        const repo = createNarApplyRepository({ sql: sql! }),
+          p = await repo.preview(f.actor, {
+            batchId: f.batchId,
+            rowIds: f.rowIds,
+            inputs: f.inputs,
+          }),
+          j = await repo.execute(f.actor, {
+            previewId: p.previewId,
+            idempotencyKey: crypto.randomUUID(),
+          });
+        expect(
+          await runNarApplyChunk({ repository: repo, actor: f.actor, jobId: j.jobId, limit: 100 }),
+        ).toEqual({ processed: 100 });
+        expect(await repo.getJob(f.actor, j.jobId)).toMatchObject({
+          state: "completed",
+          counts: { applied: 100, pending: 0 },
+        });
+      }),
+    120_000,
+  );
+  it("finalizes a mixed-result last chunk as partial without processing another row", async () =>
+    fixture(3, async (f) => {
+      const inputs = {
+        ...f.inputs,
+        [f.rowIds[0]]: { ...f.inputs[f.rowIds[0]], feeAmount: undefined },
+      };
+      const repo = createNarApplyRepository({ sql: sql! }),
+        p = await repo.preview(f.actor, { batchId: f.batchId, rowIds: f.rowIds, inputs }),
+        j = await repo.execute(f.actor, {
+          previewId: p.previewId,
+          idempotencyKey: crypto.randomUUID(),
+        });
+      expect(
+        await runNarApplyChunk({ repository: repo, actor: f.actor, jobId: j.jobId, limit: 2 }),
+      ).toEqual({ processed: 2 });
+      expect(await repo.getJob(f.actor, j.jobId)).toMatchObject({
+        state: "partial",
+        counts: { applied: 2, failed: 1, pending: 0 },
+      });
+    }));
+  it("a revised source invoice with no typed override is visible and conflicts while keeping payment facts", async () =>
+    fixture(1, async (f) => {
+      const repo = createNarApplyRepository({ sql: sql! }),
+        p = await repo.preview(f.actor, { batchId: f.batchId, rowIds: f.rowIds, inputs: f.inputs }),
+        j = await repo.execute(f.actor, {
+          previewId: p.previewId,
+          idempotencyKey: crypto.randomUUID(),
+        });
+      await runNarApplyChunk({ repository: repo, actor: f.actor, jobId: j.jobId });
+      const staging = createNarImportRepository({ sql: sql! }),
+        changed = await staging.stageBatch({
+          ...f.stage,
+          sourceSha256: crypto.randomUUID().replaceAll("-", "").repeat(2),
+          read: {
+            ...f.stage.read,
+            rows: f.stage.read.rows.map((r) => ({
+              ...r,
+              invoice: { kind: "value" as const, raw: "REVISED-INV-B" },
+            })),
+          },
+        });
+      const [row] = await staging.listRows(changed.batch.id),
+        reviewed = await repo.preview(f.actor, {
+          batchId: changed.batch.id,
+          rowIds: [row.id],
+          inputs: { [row.id]: { acknowledgeDueDifference: true, acknowledgeSourceIssues: true } },
+        });
+      expect(reviewed.rows[0].conflicts).toContain(
+        "source_invoice_change_requires_separate_review",
+      );
+      expect(reviewed.rows[0].sourceInvoiceDifference).toEqual({
+        source: "REVISED-INV-B",
+        existing: "DUPLICATE-INVOICE",
+      });
+      expect(
+        (await sql!`select invoice_number from payments where company_id=${f.companies[0]}`)[0]
+          .invoice_number,
+      ).toBe("DUPLICATE-INVOICE");
+    }));
   it("legacy unknown year needs attributed current-version Admin confirmation, not filename inference", async () =>
     fixture(1, async (f) => {
       await sql!`update nar_import_batches set return_year=null where id=${f.batchId}`;

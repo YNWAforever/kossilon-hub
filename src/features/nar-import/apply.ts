@@ -111,33 +111,50 @@ async function context(
           CaseValue[]
         >`select a.*,a.filing_due_date::text filing_due_date,a.made_up_date::text made_up_date from annual_return_cases a where company_id=${company.id} and return_year=${batch.return_year} ${lock ? tx`for update` : tx``}`
       : [];
-  const checklist = case_
-    ? await tx`select to_jsonb(i) value from annual_return_checklist_items i where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
-    : [];
-  const payments = case_
-    ? await tx`select to_jsonb(p) value from payments p where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
-    : [];
-  const work = case_
-    ? await tx`select to_jsonb(w) value from work_items w where annual_return_case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
-    : [];
-  const parties = case_
-    ? await tx`select to_jsonb(p) value from case_parties p where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
-    : [];
-  const requirements = case_
-    ? await tx`select to_jsonb(q) value from case_requirement_instances q where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
-    : [];
-  const handoffs = case_
-    ? await tx`select to_jsonb(h) value from package_handoffs h where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
-    : [];
-  const [progress] = case_
-    ? await tx`select (exists(select 1 from documents where case_id=${case_.id}) or exists(select 1 from annual_return_checklist_items where case_id=${case_.id} and status<>'Missing') or exists(select 1 from payments where case_id=${case_.id} and (paid_at is not null or payment_proof_document_id is not null or status='Payment received')) or exists(select 1 from work_items where annual_return_case_id=${case_.id} and (version>1 or status<>'open'))) touched`
-    : [];
-  const [template] = input.templateId
-    ? await tx`select to_jsonb(t) value from checklist_templates t where id=${input.templateId} ${lock ? tx`for share` : tx``}`
-    : [];
-  const [owner] = input.ownerId
-    ? await tx`select jsonb_build_object('user',to_jsonb(u),'profile',to_jsonb(sp)) value from users u join staff_profiles sp on sp.user_id=u.id where u.id=${input.ownerId} ${lock ? tx`for share of u,sp` : tx``}`
-    : [];
+  // Parent case/company locks are already held. Independent child/target reads
+  // share this transaction; pipelining removes avoidable per-query network waits.
+  const [
+    checklist,
+    payments,
+    work,
+    parties,
+    requirements,
+    handoffs,
+    progressRows,
+    templateRows,
+    ownerRows,
+  ] = await Promise.all([
+    case_
+      ? tx`select to_jsonb(i) value from annual_return_checklist_items i where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
+      : Promise.resolve([]),
+    case_
+      ? tx`select to_jsonb(p) value from payments p where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
+      : Promise.resolve([]),
+    case_
+      ? tx`select to_jsonb(w) value from work_items w where annual_return_case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
+      : Promise.resolve([]),
+    case_
+      ? tx`select to_jsonb(p) value from case_parties p where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
+      : Promise.resolve([]),
+    case_
+      ? tx`select to_jsonb(q) value from case_requirement_instances q where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
+      : Promise.resolve([]),
+    case_
+      ? tx`select to_jsonb(h) value from package_handoffs h where case_id=${case_.id} order by id ${lock ? tx`for update` : tx``}`
+      : Promise.resolve([]),
+    case_
+      ? tx`select (exists(select 1 from documents where case_id=${case_.id}) or exists(select 1 from annual_return_checklist_items where case_id=${case_.id} and status<>'Missing') or exists(select 1 from payments where case_id=${case_.id} and (paid_at is not null or payment_proof_document_id is not null or status='Payment received')) or exists(select 1 from work_items where annual_return_case_id=${case_.id} and (version>1 or status<>'open'))) touched`
+      : Promise.resolve([]),
+    input.templateId
+      ? tx`select to_jsonb(t) value from checklist_templates t where id=${input.templateId} ${lock ? tx`for share` : tx``}`
+      : Promise.resolve([]),
+    input.ownerId
+      ? tx`select jsonb_build_object('user',to_jsonb(u),'profile',to_jsonb(sp)) value from users u join staff_profiles sp on sp.user_id=u.id where u.id=${input.ownerId} ${lock ? tx`for share of u,sp` : tx``}`
+      : Promise.resolve([]),
+  ]);
+  const [progress] = progressRows,
+    [template] = templateRows,
+    [owner] = ownerRows;
   // JSON serialization normalizes driver Date objects identically for saved and current versions.
   return JSON.parse(
     JSON.stringify({
@@ -193,6 +210,11 @@ async function itemFor(
       (input.invoiceNumber !== undefined && input.invoiceNumber !== existingInvoice))
   )
     conflicts.push("existing_invoice_or_fee_change_requires_separate_review");
+  const sourceInvoiceDifference =
+    c.case && c.row.parsed.invoice.kind === "value" && c.row.parsed.invoice.raw !== existingInvoice
+      ? { source: c.row.parsed.invoice.raw, existing: existingInvoice }
+      : null;
+  if (sourceInvoiceDifference) conflicts.push("source_invoice_change_requires_separate_review");
   if (c.case && !payment) requiredInputs.push("existingPaymentRecord");
   if (c.case && input.ownerId !== undefined && input.ownerId !== c.case.owner_id)
     conflicts.push("assignment_requires_separate_command");
@@ -295,6 +317,7 @@ async function itemFor(
     original: c.case,
     candidate,
     diff,
+    sourceInvoiceDifference,
     requiredInputs: [...new Set(requiredInputs)],
     conflicts: [...new Set(conflicts)],
     command,
@@ -315,7 +338,7 @@ export async function applyNarRow(
     throw new Error("Import required values are absent.");
   if (item.command === "already_applied") return c.row.applied_case_id!;
   if (item.command === "create") {
-    const case_ = await createAnnualReturnRepository({ sql: tx }).createCase({
+    const case_ = await createAnnualReturnRepository({ sql: tx }).createCaseRecord({
       companyId: target.companyId,
       templateId: item.input.templateId!,
       ownerId: item.input.ownerId!,
@@ -359,6 +382,13 @@ type Job = {
   payload_hash: string;
   preview_id: string;
 };
+async function updateJobState(
+  tx: Tx,
+  jobId: string,
+  pendingState: "queued" | "running" = "running",
+) {
+  await tx`update nar_apply_jobs set state=case when exists(select 1 from nar_apply_job_items where job_id=${jobId} and state='pending') then ${pendingState} when exists(select 1 from nar_apply_job_items where job_id=${jobId} and state in ('conflict','failed')) then 'partial' else 'completed' end,updated_at=now() where id=${jobId} and state<>'cancelled'`;
+}
 export function createNarApplyRepository({
   sql = getSqlClient(),
   applyRow = applyNarRow,
@@ -458,6 +488,7 @@ export function createNarApplyRepository({
               : null;
           await tx`insert into nar_apply_job_items(job_id,row_id,ordinal,snapshot,state,reason) values(${j.id},${item.rowId},${ordinal},${tx.json(item as never)},${reason ? (item.conflicts.length ? "conflict" : "failed") : "pending"},${reason})`;
         }
+        await updateJobState(tx, j.id, "queued");
         return { jobId: j.id };
       });
     },
@@ -471,7 +502,7 @@ export function createNarApplyRepository({
             { row_id: string; snapshot: NarPreviewItem }[]
           >`select row_id,snapshot from nar_apply_job_items where job_id=${jobId} and state='pending' order by ordinal limit 1 for update skip locked`;
           if (!r) {
-            await tx`update nar_apply_jobs set state=case when exists(select 1 from nar_apply_job_items where job_id=${jobId} and state in ('conflict','failed')) then 'partial' else 'completed' end,updated_at=now() where id=${jobId}`;
+            await updateJobState(tx, jobId);
             return false;
           }
           attemptedRowId = r.row_id;
@@ -479,6 +510,7 @@ export function createNarApplyRepository({
             c = await context(tx, job.batch_id, r.row_id, item.input, true);
           if ((await hash(c)) !== item.revision) {
             await tx`update nar_apply_job_items set state='conflict',reason='Source, mapping or domain version changed; create a new preview.',attempts=attempts+1,finished_at=now() where job_id=${jobId} and row_id=${r.row_id}`;
+            await updateJobState(tx, jobId);
             return true;
           }
           // Current time/year activation is rechecked even when the old preview's source token matches.
@@ -490,6 +522,7 @@ export function createNarApplyRepository({
           );
           if (current.conflicts.length || current.requiredInputs.length) {
             await tx`update nar_apply_job_items set state='conflict',reason='Current row requirements changed.',attempts=attempts+1,finished_at=now() where job_id=${jobId} and row_id=${r.row_id}`;
+            await updateJobState(tx, jobId);
             return true;
           }
           const before = c.case ? await domainSnapshot(tx, c.case.id) : null;
@@ -498,7 +531,7 @@ export function createNarApplyRepository({
           const normalized = await domainSnapshot(tx, caseId);
           await tx`insert into nar_apply_journal(job_id,batch_id,row_id,case_id,actor_user_id,before_value,after_value,after_revision,command) values(${jobId},${job.batch_id},${r.row_id},${caseId},${actor.userId!},${before ? tx.json(before as never) : null},${tx.json(normalized as never)},${await hash(normalized)},${item.command})`;
           await tx`update nar_apply_job_items set state='applied',case_id=${caseId},attempts=attempts+1,finished_at=now() where job_id=${jobId} and row_id=${r.row_id}`;
-          await tx`update nar_apply_jobs set state='running',updated_at=now() where id=${jobId}`;
+          await updateJobState(tx, jobId);
           // Never label a selected subset as the whole batch completed.
           await tx`update nar_import_batches set status=case when not exists(select 1 from nar_import_rows where batch_id=${job.batch_id} and applied_at is null) then 'applied' else 'pending_review' end,applied_at=case when not exists(select 1 from nar_import_rows where batch_id=${job.batch_id} and applied_at is null) then now() else null end,updated_at=now() where id=${job.batch_id}`;
           return true;
@@ -518,6 +551,7 @@ export function createNarApplyRepository({
             await tx`update nar_apply_job_items set state='failed',reason=${reason},attempts=attempts+1,finished_at=now() where job_id=${jobId} and row_id=${attemptedRowId!} and state='pending' returning row_id`;
           if (changed.length)
             await tx`update nar_import_rows set apply_error=${reason},updated_at=now() where id=${attemptedRowId!} and applied_at is null`;
+          await updateJobState(tx, jobId);
           return true;
         });
       }
@@ -591,16 +625,21 @@ export function createNarApplyRepository({
             case_id: string;
             before_value: JsonValue | null;
             after_revision: string;
-            current: JsonValue;
+            company_name: string;
+            row_number: number;
           }[]
-        >`select j.row_id,j.case_id,j.before_value,j.after_revision from nar_apply_journal j join annual_return_cases a on a.id=j.case_id where job_id=${jobId} order by j.created_at,j.id`;
+        >`select j.row_id,j.case_id,j.before_value,j.after_revision,r.company_name,r.row_number from nar_apply_journal j join annual_return_cases a on a.id=j.case_id join nar_import_rows r on r.id=j.row_id where job_id=${jobId} order by j.created_at,j.id`;
         const projected = [];
         for (const r of rows) {
+          const current = await domainSnapshot(tx, r.case_id);
           projected.push({
             rowId: r.row_id,
             caseId: r.case_id,
+            companyName: r.company_name,
+            rowNumber: r.row_number,
             proposedBefore: r.before_value,
-            currentMatches: (await hash(await domainSnapshot(tx, r.case_id))) === r.after_revision,
+            current,
+            currentMatches: (await hash(current)) === r.after_revision,
             action: r.before_value
               ? "review_deadline_compensation"
               : "retain_case_and_review_archival",

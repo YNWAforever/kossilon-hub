@@ -454,6 +454,7 @@ export type AnnualReturnRepository = {
   }): Promise<EligibleCompanyForCase[]>;
   listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
   createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>;
+  createCaseRecord(input: CreateAnnualReturnCaseInput): Promise<{ id: string }>;
   dashboardMetrics(
     today: string,
     currentUserId: string,
@@ -1208,7 +1209,7 @@ export function createAnnualReturnRepository(
     }));
   }
 
-  async function createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase> {
+  async function createCaseRecord(input: CreateAnnualReturnCaseInput): Promise<{ id: string }> {
     const caseId = await withTransaction(sql, async (tx) => {
       const actorRow = await lockActiveStaffUser(tx, input.actorId);
       if (actorRow.role === "Client") throw new Error("Forbidden: staff actor required.");
@@ -1342,7 +1343,11 @@ export function createAnnualReturnRepository(
       return newCaseId;
     });
 
-    return hydratedCaseAfterMutation(caseId, "case creation");
+    return { id: caseId };
+  }
+  async function createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase> {
+    const { id } = await createCaseRecord(input);
+    return hydratedCaseAfterMutation(id, "case creation");
   }
 
   /**
@@ -2963,6 +2968,7 @@ export function createAnnualReturnRepository(
     listCompaniesEligibleForCase,
     listAssignableStaff,
     createCase,
+    createCaseRecord,
     dashboardMetrics,
     assertCanMutateCase,
     evaluateReminders,

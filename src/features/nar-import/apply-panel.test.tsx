@@ -127,4 +127,40 @@ describe("reviewed selected NAR apply UI", () => {
     fireEvent.click(screen.getByRole("button", { name: "繼續處理最多100行" }));
     await waitFor(() => expect(mocks.resume).toHaveBeenCalledTimes(1));
   });
+  it("compensation renders row identity, prior and current facts and retained snapshot", async () => {
+    setup([{ id: batchId, state: "completed", createdAt: "2026-10-01" }]);
+    mocks.compensate.mockResolvedValue([
+      {
+        rowId,
+        caseId: batchId,
+        companyName: "Synthetic company",
+        rowNumber: 3,
+        proposedBefore: { case: { filing_due_date: "2025-02-15" }, payments: [{ amount: 1200 }] },
+        current: { case: { filing_due_date: "2025-02-16" } },
+        currentMatches: false,
+        action: "review_deadline_compensation",
+        writes: 0,
+      },
+    ]);
+    fireEvent.click(await screen.findByRole("button", { name: "開啟套用工作" }));
+    await screen.findByText("未選取34行");
+    fireEvent.click(screen.getByRole("button", { name: "預覽補償" }));
+    await screen.findByText(/原申報限期：2025-02-15/);
+    expect(screen.getByText(/現申報限期：2025-02-16/)).toBeTruthy();
+    expect(screen.getAllByText(/Synthetic company · 第3行/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("完整 before／current 資料")).toBeTruthy();
+    expect(screen.getByText(/"amount": 1200/)).toBeTruthy();
+    expect(mocks.resume).not.toHaveBeenCalled();
+  });
+  it("compensation query failure is visible and does not retry or reverse work", async () => {
+    setup([{ id: batchId, state: "completed", createdAt: "2026-10-01" }]);
+    mocks.compensate.mockRejectedValue(new Error("Synthetic private infrastructure detail"));
+    fireEvent.click(await screen.findByRole("button", { name: "開啟套用工作" }));
+    await screen.findByText("未選取34行");
+    fireEvent.click(screen.getByRole("button", { name: "預覽補償" }));
+    await screen.findByText("未能載入補償資料，請重新載入。");
+    expect(screen.queryByText(/Synthetic private infrastructure detail/)).toBeNull();
+    expect(mocks.compensate).toHaveBeenCalledTimes(1);
+    expect(mocks.resume).not.toHaveBeenCalled();
+  });
 });
