@@ -50,6 +50,7 @@ function AnnualReturnsRoute() {
     <DemoAnnualReturnCommandCenter />
   ) : (
     <ProductionAnnualReturnCommandCenter
+      actorScope={actor}
       allowFixtureDiagnostics={actor?.active === true && actor.role === "Admin"}
       search={search}
       onSearchChange={(next) => void navigate({ search: next, replace: true })}

@@ -6,6 +6,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AnnualReturnCase } from "../types";
+import type { AnnualReturnBoardSearch } from "../board-filters";
 import { ProductionAnnualReturnCommandCenter } from "./production-command-center";
 
 const serverFns = vi.hoisted(() => ({
@@ -66,13 +67,15 @@ function makeCase(overrides: Partial<AnnualReturnCase> = {}): AnnualReturnCase {
   };
 }
 
-function renderBoard(allowFixtureDiagnostics = false) {
+function renderBoard(
+  allowFixtureDiagnostics = false,
+  search: AnnualReturnBoardSearch = {},
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
+    <QueryClientProvider client={client}>
       <ProductionAnnualReturnCommandCenter
-        search={{}}
+        search={search}
         allowFixtureDiagnostics={allowFixtureDiagnostics}
       />
     </QueryClientProvider>,
@@ -202,6 +205,141 @@ describe("production annual return command center", () => {
 
     expect(await screen.findByText("Beta Limited")).toBeTruthy();
     expect(screen.getByText("Alpha Limited")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "載入更多" })).toBeNull());
+    expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([201, 400, 401])("terminates %i records at the actual final cursor", async (total) => {
+    serverFns.listAnnualReturnCasePage.mockImplementation(
+      ({ data }: { data: { cursor?: string } }) => {
+        const offset = data.cursor ? Number(data.cursor) : 0;
+        const end = Math.min(offset + 200, total);
+        return Promise.resolve({
+          cases: Array.from({ length: end - offset }, (_, i) =>
+            makeCase({ id: `row-${offset + i}`, companyName: `Boundary ${offset + i}` }),
+          ),
+          nextCursor: end < total ? String(end) : null,
+        });
+      },
+    );
+    renderBoard();
+    await screen.findByText("Boundary 0");
+    for (let offset = 200; offset < total; offset += 200) {
+      fireEvent.click(await screen.findByRole("button", { name: "載入更多" }));
+      await screen.findByText(`Boundary ${offset}`);
+    }
+    await waitFor(() => expect(screen.queryByRole("button", { name: "載入更多" })).toBeNull());
+    expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledTimes(Math.ceil(total / 200));
+    expect(screen.getAllByText(`Boundary ${total - 1}`).length).toBe(1);
+  });
+  it("retries only a failed next page and retains prior rows without exposing server errors", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ companyName: "First row" })],
+      nextCursor: "next",
+    });
+    renderBoard();
+    await screen.findByText("First row");
+    serverFns.listAnnualReturnCasePage.mockRejectedValueOnce(new Error("private database URL"));
+    fireEvent.click(await screen.findByRole("button", { name: "載入更多" }));
+    await screen.findByText("未能載入下一頁，請重試。");
+    expect(screen.queryByText("private database URL")).toBeNull();
+    expect(screen.getByText("First row")).toBeTruthy();
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ id: "second", companyName: "Second row" })],
+      nextCursor: null,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "重試下一頁" }));
+    await screen.findByText("Second row");
+    expect(serverFns.listAnnualReturnCasePage.mock.calls[2][0].data.cursor).toBe("next");
+  });
+  it("deduplicates an overlapping record across pages using its latest value", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ id: "overlap", companyName: "Before overlap" })],
+      nextCursor: "next",
+    });
+    renderBoard();
+    await screen.findByText("Before overlap");
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [
+        makeCase({ id: "overlap", companyName: "After overlap" }),
+        makeCase({ id: "extra", companyName: "Extra row" }),
+      ],
+      nextCursor: null,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "載入更多" }));
+    await screen.findByText("Extra row");
+    expect(screen.getAllByText("After overlap")).toHaveLength(1);
+    expect(screen.queryByText("Before overlap")).toBeNull();
+  });
+  it("does not reuse previous actor pages on an actor scope change", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ companyName: "Actor one private row" })],
+      nextCursor: "next",
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = renderBoard(false, {}, client);
+    await screen.findByText("Actor one private row");
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ id: "new-actor-row", companyName: "Actor two row" })],
+      nextCursor: null,
+    });
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <ProductionAnnualReturnCommandCenter
+          search={{}}
+          actorScope={{
+            authUserId: "actor-two",
+            userId: "staff-two",
+            teamId: "team-two",
+            role: "Staff",
+            active: true,
+          }}
+        />
+      </QueryClientProvider>,
+    );
+    await screen.findByText("Actor two row");
+    expect(screen.queryByText("Actor one private row")).toBeNull();
+    expect(screen.queryByRole("button", { name: "載入更多" })).toBeNull();
+  });
+  it("does not append an old slow page after changing filters", async () => {
+    let finishOld!: (page: { cases: AnnualReturnCase[]; nextCursor: null }) => void;
+    serverFns.listAnnualReturnCasePage.mockImplementation(
+      ({ data }: { data: { cursor?: string; q?: string } }) => {
+        if (data.q === "new")
+          return Promise.resolve({
+            cases: [makeCase({ id: "new", companyName: "New scope" })],
+            nextCursor: null,
+          });
+        if (data.cursor)
+          return new Promise((resolve) => {
+            finishOld = resolve;
+          });
+        return Promise.resolve({
+          cases: [makeCase({ companyName: "Old scope" })],
+          nextCursor: "old-cursor",
+        });
+      },
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = renderBoard(false, {}, client);
+    await screen.findByText("Old scope");
+    const more = await screen.findByRole("button", { name: "載入更多" });
+    fireEvent.click(more);
+    fireEvent.click(more);
+    await waitFor(() => expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledTimes(2));
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <ProductionAnnualReturnCommandCenter search={{ q: "new" }} />
+      </QueryClientProvider>,
+    );
+    await screen.findByText("New scope");
+    finishOld({
+      cases: [makeCase({ id: "old-extra", companyName: "Old late page" })],
+      nextCursor: null,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByText("Old scope")).toBeNull();
+    expect(screen.queryByText("Old late page")).toBeNull();
   });
 
   it("requests the capped page size", async () => {
