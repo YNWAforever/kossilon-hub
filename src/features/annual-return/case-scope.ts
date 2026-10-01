@@ -35,6 +35,7 @@ export function caseScopeSql(sql: Query, filters: CaseFilters, today: string) {
   const companyIds = filters.companyIds ? [...filters.companyIds] : null;
   return sql`
     (${filters.ownerId ?? null}::uuid is null or arc.owner_id=${filters.ownerId ?? null}::uuid)
+    and (${filters.caseIds ? [...filters.caseIds] : null}::uuid[] is null or arc.id=any(${filters.caseIds ? [...filters.caseIds] : null}::uuid[]))
     and (${filters.includeFixtures === true} or c.data_origin<>'fixture')
     and (${filters.activeOnly !== true} or ${activeCaseSql(sql)})
     and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id=${filters.teamId ?? null}::uuid)

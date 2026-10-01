@@ -102,7 +102,7 @@ export function ProductionAnnualReturnCommandCenter({
   });
 
   const workItemsQuery = useQuery({
-    queryKey: ["work-queue", "annual-return-board"],
+    queryKey: ["work-queue", "annual-return-board", actorScope],
     queryFn: () => listWorkQueue({ data: { view: "team" } }),
     retry: false,
   });

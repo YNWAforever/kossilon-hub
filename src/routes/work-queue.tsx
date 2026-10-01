@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import type { AssignmentRecommendation } from "@/features/work-items/types";
+import {
+  assignmentLabels,
+  activeAssignmentOptions,
+  type AssignmentOption,
+} from "@/features/work-items/assignment-labels";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
 import {
   acknowledgeWorkItemEscalation,
@@ -75,10 +80,14 @@ export const Route = createFileRoute("/work-queue")({
   component: WorkQueueRoute,
 });
 
-function WorkQueueRoute() {
+export function WorkQueueRoute() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const search = Route.useSearch();
+  const actor = Route.useRouteContext().actor;
+  const actorScope = JSON.stringify(
+    actor ? [actor.authUserId, actor.userId, actor.role, actor.teamId, actor.active] : null,
+  );
   const navigate = Route.useNavigate();
   const { view, owner, workType, sla, priority, status } = search;
   const [query, setQuery] = useState("");
@@ -90,12 +99,27 @@ function WorkQueueRoute() {
     escalationState: view === "breached" ? ("breach" as const) : undefined,
   };
   const queueQuery = useQuery({
-    queryKey: ["work-queue", view],
+    queryKey: ["work-queue", view, actorScope],
     queryFn: () => listWorkQueue({ data: filters }),
   });
   const items = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
   const owners = useMemo(
-    () => Array.from(new Set(items.flatMap((item) => (item.ownerId ? [item.ownerId] : [])))).sort(),
+    () =>
+      assignmentLabels(
+        items.flatMap((item) =>
+          item.ownerId
+            ? [
+                {
+                  userId: item.ownerId,
+                  displayName: item.ownerName ?? "",
+                  teamName: item.ownerTeamName ?? null,
+                  active: true,
+                  workload: 0,
+                },
+              ]
+            : [],
+        ),
+      ),
     [items],
   );
   const workTypes = useMemo(
@@ -198,9 +222,9 @@ function WorkQueueRoute() {
           >
             <option value="all">All owners</option>
             <option value="unassigned">Unassigned</option>
-            {owners.map((ownerId) => (
+            {[...owners].map(([ownerId, label]) => (
               <option key={ownerId} value={ownerId}>
-                Staff {ownerId.slice(0, 8)}
+                {label}
               </option>
             ))}
           </FilterSelect>
@@ -268,8 +292,8 @@ function WorkQueueRoute() {
                     "Company / work item",
                     "Owner",
                     "SLA",
-                    "Blocker",
-                    "Due",
+                    "業務 blocker",
+                    "SLA 到期 / 法定日",
                     "Priority",
                     "Status",
                     "Actions",
@@ -320,8 +344,14 @@ function WorkQueueRoute() {
                     <span role="cell">
                       <SlaPill state={item.escalationState} />
                     </span>
-                    <span role="cell">{item.status === "blocked" ? "Blocked" : "None"}</span>
-                    <span role="cell">{formatDateTime(item.slaDueAt)}</span>
+                    <span role="cell">
+                      <BusinessBlockers item={item} />
+                    </span>
+                    <span role="cell">
+                      SLA: {formatDateTime(item.slaDueAt)}
+                      <br />
+                      法定日: {item.businessContext?.filingDueDate ?? "待確認"}
+                    </span>
                     <span role="cell" className="tabular-nums">
                       {item.priority}
                     </span>
@@ -345,7 +375,7 @@ function WorkQueueRoute() {
                 <article key={item.id} className="grid gap-3 px-3 py-4">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      Company {item.companyId.slice(0, 8)}
+                      {item.companyName ?? "Company no longer on file"}
                     </p>
                     {caseDetailLinkFor(item) ? (
                       <Link
@@ -366,15 +396,18 @@ function WorkQueueRoute() {
                     </p>
                   </div>
                   <QueueField label="Owner">
-                    {item.ownerId ? item.ownerId.slice(0, 8) : "Unassigned"}
+                    {item.ownerName ?? (item.ownerId ? "姓名待補" : "Unassigned")}
                   </QueueField>
                   <QueueField label="SLA">
                     <SlaPill state={item.escalationState} />
                   </QueueField>
-                  <QueueField label="Blocker">
-                    {item.status === "blocked" ? "Blocked" : "None"}
+                  <QueueField label="業務 blocker">
+                    <BusinessBlockers item={item} />
                   </QueueField>
-                  <QueueField label="Due">{formatDateTime(item.slaDueAt)}</QueueField>
+                  <QueueField label="SLA 到期">{formatDateTime(item.slaDueAt)}</QueueField>
+                  <QueueField label="法定申報日">
+                    {item.businessContext?.filingDueDate ?? "待確認"}
+                  </QueueField>
                   <QueueField label="Priority">{item.priority}</QueueField>
                   <QueueActions
                     item={item}
@@ -388,9 +421,11 @@ function WorkQueueRoute() {
           </section>
         ) : null}
       </main>
-      {assignmentItem ? (
+      {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
         <AssignmentDialog
+          key={actorScope}
           item={assignmentItem}
+          actorScope={actorScope}
           onClose={() => setAssignmentItem(null)}
           onAssigned={() => {
             setAssignmentItem(null);
@@ -414,18 +449,22 @@ function WorkQueueRoute() {
 
 function AssignmentDialog({
   item,
+  actorScope,
   onClose,
   onAssigned,
 }: {
   item: PersistedWorkItem;
+  actorScope: string;
   onClose: () => void;
   onAssigned: () => void;
 }) {
   const [selected, setSelected] = useState("");
   const [reason, setReason] = useState("");
+  const [target, setTarget] = useState<"owner" | "reviewer">("owner");
   const recommendations = useQuery({
-    queryKey: ["work-item-recommendations", item.id],
-    queryFn: () => recommendWorkItemAssignees({ data: { workItemId: item.id } }),
+    queryKey: ["work-item-recommendations", item.id, actorScope, target, item.version],
+    queryFn: () =>
+      recommendWorkItemAssignees({ data: { workItemId: item.id, assignmentTarget: target } }),
   });
   const assign = useMutation({
     mutationFn: () =>
@@ -434,13 +473,14 @@ function AssignmentDialog({
           workItemId: item.id,
           assigneeId: selected,
           expectedVersion: item.version,
-          assignmentTarget: "owner",
+          assignmentTarget: target,
           overrideReason: reason.trim() || undefined,
         },
       }),
     onSuccess: onAssigned,
   });
-  const options = recommendations.data ?? [];
+  const options = activeAssignmentOptions(recommendations.data ?? []);
+  const labels = assignmentLabels(options);
   const selectedRecommendation = options.find((option) => option.userId === selected);
   const requiresReason = Boolean(
     selectedRecommendation &&
@@ -458,6 +498,19 @@ function AssignmentDialog({
           </DialogHeader>
         </div>
         <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
+          <select
+            aria-label="Assignment responsibility"
+            value={target}
+            onChange={(event) => {
+              setTarget(event.target.value as "owner" | "reviewer");
+              setSelected("");
+              setReason("");
+            }}
+          >
+            <option value="owner">Owner</option>
+            <option value="reviewer">Reviewer</option>
+          </select>
+          {recommendations.isError ? <p role="alert">可指派名單未能載入，請重新載入。</p> : null}
           {recommendations.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading recommendations...</p>
           ) : null}
@@ -465,6 +518,7 @@ function AssignmentDialog({
             <RecommendationOption
               key={option.userId}
               option={option}
+              label={labels.get(option.userId)!}
               selected={selected === option.userId}
               onSelect={() => setSelected(option.userId)}
             />
@@ -558,10 +612,12 @@ function AcknowledgementDialog({
 
 function RecommendationOption({
   option,
+  label,
   selected,
   onSelect,
 }: {
-  option: AssignmentRecommendation;
+  option: AssignmentRecommendation & AssignmentOption;
+  label: string;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -577,13 +633,42 @@ function RecommendationOption({
     >
       <span className="font-semibold tabular-nums">#{option.rank}</span>
       <span>
-        <span className="block text-sm font-medium">Staff {option.userId.slice(0, 8)}</span>
+        <span className="block text-sm font-medium">{label}</span>
         <span className="mt-1 block text-xs text-muted-foreground">
           Skill {option.factors.skillProficiency}/5 · Load {option.factors.capacityUtilization}%
         </span>
       </span>
       <span className="text-sm font-semibold tabular-nums">{option.score}</span>
     </button>
+  );
+}
+
+function BusinessBlockers({ item }: { item: PersistedWorkItem }) {
+  const context = item.businessContext;
+  return (
+    <div>
+      <p className="text-xs">
+        SLA blocker: {item.status === "blocked" ? "工作狀態受阻" : "未記錄"}
+      </p>
+      {!context ? (
+        <p>業務狀態待確認</p>
+      ) : context.blockers.length === 0 ? (
+        <p>沒有業務 blocker</p>
+      ) : (
+        <details>
+          <summary>業務 blocker（{context.blockers.length}）</summary>
+          <ul>
+            {context.blockers.map((blocker, index) => (
+              <li key={`${blocker.code}:${index}`}>
+                <a className="underline" href={blocker.action}>
+                  {blocker.message}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
   );
 }
 

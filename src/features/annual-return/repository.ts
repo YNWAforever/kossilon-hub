@@ -161,6 +161,8 @@ type QueryClient = SqlClient | postgres.TransactionSql;
 type TransactionSqlClient = postgres.TransactionSql;
 
 export type CaseFilters = {
+  /** Internal server scope only; never accepted from client authority. */
+  caseIds?: readonly string[];
   activeOnly?: boolean;
   /** Server only allows an active Admin to request diagnostic fixture scope. */
   includeFixtures?: boolean;
