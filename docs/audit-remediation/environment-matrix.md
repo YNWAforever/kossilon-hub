@@ -28,3 +28,9 @@ Presence is recorded only when observed. `unknown` is not `missing`. No secret v
 - PR01 #102/PR02 #103 remain drafts, remote verify and Vercel preview successful on2026-10-01; production deployment/schema unchanged.
 
 Prior production operations in this session covered named historical migrations/builds. This assignment prepares new reviewable code and deployment packages; production mutation remains gated by the concrete new scope.
+
+## PR04 verification refresh
+
+- Candidate /1906tests pass/0skipped on the dedicated local Postgres17 and Node22.23.3; five review fixes RED/GREEN; actual two-backend-PID payment locking, source409 and scoped UI races. No production/provider acceptance implied.
+- Candidate0070 adds attributable payment entries only. Local migration and repeat pass, canonical schema/EXPECTED_MIGRATIONS synced; no historical payment/document/ledger backfill. Production still aa5/66 historical ledger; new0067–0070 deployment sequence and observed historical drift require reviewed release gates.
+- PAY UAT needs fresh Auth role, scoped private R2 sample and genuine scanner verdict. Provider owners/next actions remain those in the matrix above; synthetic scanner records and an existing session are not runtime evidence.
