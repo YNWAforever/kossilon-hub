@@ -2,6 +2,9 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { jobHistorySchema } from "@/features/bulk-operations/types";
+import { narPreviewSchema, narExecuteSchema, narYearConfirmationSchema } from "./apply-contracts";
+import type { NarApplyRepository } from "./apply";
 import { readNarSheet, type NarSheetReadResult } from "./mapping";
 import type { NarImportRepository } from "./repository";
 import { readXlsxWorkbook, XlsxFormatError } from "./xlsx/workbook";
@@ -32,6 +35,8 @@ const loadDefaultContext = createServerOnlyFn(async () => {
     import("@/features/auth/neon-auth-server"),
     import("./repository"),
   ]);
+  const { currentProviderMode } = await import("@/server/provider-mode");
+  if (currentProviderMode() !== "live") throw new Error("Demo imports are read-only.");
   const actor = await requireActor(getRequest());
   return { actor, dependencies: { repository: createNarImportRepository() } };
 });
@@ -127,7 +132,8 @@ export async function stageNarImportForActor(
     sourceSizeBytes: bytes.byteLength,
     parserVersion: workbook.parserVersion,
     returnYear: input.returnYear,
-    createdBy: staff.userId,
+    createdBy: staff.userId!,
+    authUserId: staff.authUserId,
     read,
   });
 
@@ -159,14 +165,22 @@ export async function getNarImportBatchReviewForActor(
 
 export async function mapNarImportCompanyForActor(
   actor: AuthenticatedActor,
-  input: { externalClientId: string; companyId: string },
+  input: {
+    externalClientId: string;
+    companyId: string;
+    expectedCompanyId?: string | null;
+    confirmed?: true;
+  },
   dependencies: NarImportDependencies,
 ) {
   const staff = assertImportAuthority(actor);
+  if (input.confirmed !== true) throw new Error("Company mapping requires explicit confirmation.");
   await dependencies.repository.mapExternalReference({
     externalClientId: input.externalClientId,
     companyId: input.companyId,
-    mappedBy: staff.userId,
+    mappedBy: staff.userId!,
+    authUserId: staff.authUserId,
+    expectedCompanyId: input.expectedCompanyId ?? null,
   });
   return { mapped: true as const };
 }
@@ -189,12 +203,14 @@ export const stageNarImportBatch = createServerFn({ method: "POST" })
     withContext((actor, dependencies) => stageNarImportForActor(actor, data, dependencies)),
   );
 
-export const listNarImportBatches = createServerFn({ method: "GET" }).handler(() =>
-  withContext(async (actor, dependencies) => {
-    assertImportAuthority(actor);
-    return dependencies.repository.listBatches();
-  }),
-);
+export const listNarImportBatches = createServerFn({ method: "GET" })
+  .validator(z.object({}).strict())
+  .handler(() =>
+    withContext(async (actor, dependencies) => {
+      assertImportAuthority(actor);
+      return dependencies.repository.listBatches();
+    }),
+  );
 
 export const getNarImportBatchReview = createServerFn({ method: "GET" })
   .validator(z.object({ batchId: z.string().uuid() }).strict())
@@ -210,9 +226,98 @@ export const mapNarImportCompany = createServerFn({ method: "POST" })
       .object({
         externalClientId: z.string().trim().min(1).max(120),
         companyId: z.string().uuid(),
+        expectedCompanyId: z.string().uuid().nullable().optional(),
+        confirmed: z.literal(true),
       })
       .strict(),
   )
   .handler(({ data }) =>
     withContext((actor, dependencies) => mapNarImportCompanyForActor(actor, data, dependencies)),
   );
+
+export async function previewNarApplyForActor(
+  actor: AuthenticatedActor,
+  input: unknown,
+  repository: Pick<NarApplyRepository, "preview">,
+) {
+  assertImportAuthority(actor);
+  return repository.preview(actor, narPreviewSchema.parse(input));
+}
+export async function executeNarApplyForActor(
+  actor: AuthenticatedActor,
+  input: unknown,
+  repository: Pick<NarApplyRepository, "execute">,
+) {
+  assertImportAuthority(actor);
+  return repository.execute(actor, narExecuteSchema.parse(input));
+}
+const applyContext = createServerOnlyFn(async () => {
+  const [{ getRequest }, { requireActor }, { currentProviderMode }, { createNarApplyRepository }] =
+    await Promise.all([
+      import("@tanstack/react-start/server"),
+      import("@/features/auth/neon-auth-server"),
+      import("@/server/provider-mode"),
+      import("./apply"),
+    ]);
+  if (currentProviderMode() !== "live") throw new Error("Demo imports are read-only.");
+  const actor = assertImportAuthority(await requireActor(getRequest()));
+  return { actor, repository: createNarApplyRepository() };
+});
+const jobSchema = z.object({ jobId: z.string().uuid() }).strict();
+export const previewNarApply = createServerFn({ method: "POST" })
+  .validator(narPreviewSchema)
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    return previewNarApplyForActor(c.actor, data, c.repository);
+  });
+export const executeNarApply = createServerFn({ method: "POST" })
+  .validator(narExecuteSchema)
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    return executeNarApplyForActor(c.actor, data, c.repository);
+  });
+export const getNarApplyJob = createServerFn({ method: "GET" })
+  .validator(jobSchema)
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    return c.repository.getJob(c.actor, data.jobId);
+  });
+export const listNarApplyJobs = createServerFn({ method: "GET" })
+  .validator(jobHistorySchema.extend({ batchId: z.string().uuid() }).strict())
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    const { batchId, ...history } = data;
+    return c.repository.listJobs(c.actor, batchId, history);
+  });
+export const getNarApplyOptions = createServerFn({ method: "GET" })
+  .validator(z.object({}).strict())
+  .handler(async () => {
+    const c = await applyContext();
+    return c.repository.listOptions(c.actor);
+  });
+export const resumeNarApplyJob = createServerFn({ method: "POST" })
+  .validator(jobSchema)
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    const { runNarApplyChunk } = await import("./apply");
+    return runNarApplyChunk({ repository: c.repository, actor: c.actor, jobId: data.jobId });
+  });
+export const cancelNarApplyJob = createServerFn({ method: "POST" })
+  .validator(jobSchema)
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    return c.repository.cancel(c.actor, data.jobId);
+  });
+export const previewNarCompensation = createServerFn({ method: "GET" })
+  .validator(jobSchema)
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    return c.repository.compensationPreview(c.actor, data.jobId);
+  });
+
+export const confirmNarBatchYear = createServerFn({ method: "POST" })
+  .validator(narYearConfirmationSchema)
+  .handler(async ({ data }) => {
+    const c = await applyContext();
+    return c.repository.confirmYear(c.actor, data);
+  });

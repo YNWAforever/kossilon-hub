@@ -149,7 +149,7 @@ export async function attachCaseReadiness(
   const rows = await sql<{ payload: Snapshot; source_version: string }[]>`
     with snapshots as (
       select jsonb_build_object(
-        'case',to_jsonb(arc),'company',to_jsonb(c),
+        'case',to_jsonb(arc),'company',to_jsonb(c)||jsonb_build_object('data_origin',case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end),
         'checklist',coalesce((select jsonb_agg(to_jsonb(x) order by x.id) from annual_return_checklist_items x where x.case_id=arc.id),'[]'::jsonb),
         'payments',coalesce((select jsonb_agg(to_jsonb(x)||jsonb_build_object('credited_amount',(select coalesce(sum(e.amount),0)::text from payments p join payment_evidence_entries e on e.payment_id=p.id join documents d on d.id=e.document_id join document_versions v on v.id=e.proof_version_id join document_upload_intents i on i.id=v.intent_id where p.id=x.id and ${creditedPaymentEvidenceSql(sql)})) order by x.id) from payments x where x.case_id=arc.id),'[]'::jsonb),
         'payment_evidence',coalesce((select jsonb_agg(to_jsonb(e) order by e.recorded_at,e.id) from payment_evidence_entries e where e.case_id=arc.id),'[]'::jsonb),

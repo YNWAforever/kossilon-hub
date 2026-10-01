@@ -126,6 +126,7 @@ type ActorRow = {
 };
 
 type LockedCaseRow = {
+  data_origin: import("@/features/clients/data-origin").CompanyDataOrigin;
   id: string;
   company_id: string;
   company_name: string;
@@ -368,6 +369,15 @@ export type CreateAnnualReturnCaseInput = {
   invoiceNumber: string;
   feeAmount: number;
   actorId: string;
+  /** Trusted server import command; public case-creation schema never accepts this. */
+  importSource?: {
+    returnYear: number;
+    madeUpDate: string;
+    filingDueDate: string;
+    dataOrigin: "client" | "historical";
+    batchId: string;
+    rowId: string;
+  };
 };
 
 export type CasePartyRecord = {
@@ -762,7 +772,7 @@ export function createAnnualReturnRepository(
         arc.id,
         arc.company_id,
         c.company_name,
-        c.data_origin,
+        case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end as data_origin,
         c.assigned_team_id as company_team_id,
         arc.current_status,
         arc.owner_id,
@@ -840,7 +850,7 @@ export function createAnnualReturnRepository(
         arc.company_id,
         c.assigned_team_id as company_team_id,
         c.company_name,
-        c.data_origin,
+        case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end as data_origin,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
         arc.filing_due_date::text as filing_due_date,
@@ -1100,7 +1110,7 @@ export function createAnnualReturnRepository(
         arc.company_id,
         c.assigned_team_id as company_team_id,
         c.company_name,
-        c.data_origin,
+        case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end as data_origin,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
         arc.filing_due_date::text as filing_due_date,
@@ -1200,22 +1210,22 @@ export function createAnnualReturnRepository(
 
   async function createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase> {
     const caseId = await withTransaction(sql, async (tx) => {
-      const actorRows = await tx<ActorRow[]>`
-        select id, role, team_id, active
-        from users
-        where id = ${input.actorId}
-        limit 1
-      `;
-      const [actorRow] = actorRows;
-      if (!actorRow) throw new Error("Annual return actor not found.");
-
+      const actorRow = await lockActiveStaffUser(tx, input.actorId);
+      if (actorRow.role === "Client") throw new Error("Forbidden: staff actor required.");
       const actor: AnnualReturnActionActor = {
         id: actorRow.id,
         role: actorRow.role,
         teamId: actorRow.team_id,
-        active: actorRow.active,
+        active: true,
       };
-
+      if (input.importSource && actor.role !== "Admin")
+        throw new Error("Forbidden: imports require Admin.");
+      if (
+        !Number.isSafeInteger(input.feeAmount) ||
+        input.feeAmount <= 0 ||
+        !input.invoiceNumber.trim()
+      )
+        throw new Error("Actual positive fee and invoice reference are required.");
       const companyRows = await tx<CompanyForCaseRow[]>`
         select
           id, status, annual_return_basis_date::text as annual_return_basis_date, assigned_team_id
@@ -1230,8 +1240,17 @@ export function createAnnualReturnRepository(
 
       assertAnnualReturnCaseCreatable(actor, { teamId: company.assigned_team_id });
 
-      const basisDate = dateOnly(company.annual_return_basis_date);
-      const returnYear = Number(basisDate.slice(0, 4));
+      const basisDate =
+        input.importSource?.madeUpDate ?? dateOnly(company.annual_return_basis_date);
+      const returnYear = input.importSource?.returnYear ?? Number(basisDate.slice(0, 4));
+      if (
+        input.importSource &&
+        (Number(basisDate.slice(0, 4)) !== returnYear ||
+          !Number.isInteger(returnYear) ||
+          returnYear < 1900 ||
+          returnYear > 2100)
+      )
+        throw new Error("Import made-up date must match the confirmed return year.");
 
       const existingRows = await tx<{ id: string }[]>`
         select id from annual_return_cases
@@ -1246,32 +1265,21 @@ export function createAnnualReturnRepository(
         select id, active, documents
         from checklist_templates
         where id = ${input.templateId}
-        limit 1
+        limit 1 for share
       `;
       const template = templateRows[0];
       if (!template || !template.active) {
         throw new Error("Checklist template not found or inactive.");
       }
 
-      const ownerRows = await tx<{ id: string }[]>`
-        select id
-        from users
-        where id = ${input.ownerId}
-          and active = true
-        limit 1
-      `;
-      if (ownerRows.length !== 1) {
-        throw new Error("Annual return owner not found or inactive.");
-      }
-
-      const filingDueDate = calculateFilingDueDate(basisDate);
-
+      await lockActiveStaffUser(tx, input.ownerId);
+      const filingDueDate = input.importSource?.filingDueDate ?? calculateFilingDueDate(basisDate);
       const caseRows = await tx<{ id: string }[]>`
         insert into annual_return_cases (
-          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id
+          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id,import_origin
         )
         values (
-          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId}
+          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId},${input.importSource?.dataOrigin ?? null}
         )
         returning id
       `;
@@ -1324,7 +1332,11 @@ export function createAnnualReturnRepository(
         actor,
         action: "create_case",
         summary: "Annual return case created.",
-        metadata: { templateId: input.templateId, returnYear },
+        metadata: {
+          templateId: input.templateId,
+          returnYear,
+          ...(input.importSource ? { importSource: input.importSource } : {}),
+        },
       });
 
       return newCaseId;
@@ -2580,7 +2592,8 @@ export function createAnnualReturnRepository(
         // member marks Filed while an earlier case in this same sweep is still processing
         // would otherwise pass the fresh re-fetch and receive a live client-facing
         // reminder about a case that no longer needs one.
-        if (lockedCase.current_status === "Filed") return null;
+        if (lockedCase.current_status === "Filed" || lockedCase.data_origin === "historical")
+          return null;
 
         const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
           select milestone from annual_return_reminder_events where case_id = ${case_.id}
