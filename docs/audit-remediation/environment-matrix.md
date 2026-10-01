@@ -43,3 +43,10 @@ T12 candidate2955a27: local0071 only,77 focused tests/0skip with actual Postgres
 - 0071 verified staff access, 0072 durable bulk assignment and 0073 SQL-only bulk maintenance job kind are applied/repeated locally only. Source expected manifest is 41 IDs; production retains 66 historical integration IDs and observed drift. No ledger rewriting, production migration, deployment or owner activation.
 - Bulk uses the current original actor per item, immutable scope/version, per-item domain transaction/audit and explicit resume/reconciliation. Local worker/compiled hook is not three genuine native ticks. Full queue SQL pagination remains T21.
 - Fresh Auth/Google/invite and actual controlled role transfer acceptance remain blocked with Auth owner. Local synthetic identities and successful mock UI contracts do not establish tenant enrollment or provider health.
+
+## PR06 verification refresh — 2026-10-02
+
+- Candidate `5b3e536793bce27aafe02fe5ee4f485cc7d85f3e`:200files/1979pass/0skip on portableNode22.23.3, Bun1.3.14 and dedicated actual Postgres17. All final CI gates PASS; lint1existing warning. Logs and review rulings: `evidence/2026-10-01-pr06-gates.json`.
+- Local0074/0075 only;43 source manifest IDs. Historical production66 IDs and last observed aa5 build are separate, not refreshed at this gate. No new production migration/deployment/provider writes.
+- Original source XLSX is absent from supplied evidence: IMPORT-01 blocked with business data owner. Synthetic35/65 parser and row-transaction contracts pass but are not original workbook/fresh provider acceptance. Auth owner supplies controlled fresh Admin journey; security/storage owner supplies genuine R2/scanner sample.
+- Explicit manual job chunks, compiled hook and local worker success are not three actual scheduled runtime ticks. 100-create local observations15.894s→17.589s prove no speedup/p95; T21 retains throughput acceptance.
