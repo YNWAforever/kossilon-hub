@@ -31,6 +31,15 @@ Prior production operations in this session covered named historical migrations/
 
 ## PR04 verification refresh
 
-- Candidate /1906tests pass/0skipped on the dedicated local Postgres17 and Node22.23.3; five review fixes RED/GREEN; actual two-backend-PID payment locking, source409 and scoped UI races. No production/provider acceptance implied.
+- Candidate b6bdc75:190files/1906tests pass/0skipped on the dedicated local Postgres17 and Node22.23.3; five review fixes RED/GREEN; actual two-backend-PID payment locking, source409 and scoped UI races. No production/provider acceptance implied.
 - Candidate0070 adds attributable payment entries only. Local migration and repeat pass, canonical schema/EXPECTED_MIGRATIONS synced; no historical payment/document/ledger backfill. Production still aa5/66 historical ledger; new0067–0070 deployment sequence and observed historical drift require reviewed release gates.
 - PAY UAT needs fresh Auth role, scoped private R2 sample and genuine scanner verdict. Provider owners/next actions remain those in the matrix above; synthetic scanner records and an existing session are not runtime evidence.
+
+T12 candidate2955a27: local0071 only,77 focused tests/0skip with actual Postgres; staff identity/session fixtures are not fresh Auth acceptance. PR04#105 remote CI/Vercel preview pass. No production mutation/deployment/invitation.
+
+## PR05 verification refresh
+
+- Candidate `cb45d20aa985b3128990df7d8a1fd06330a40bf3`:197files/1947pass/0skip on Node22.23.3 and dedicated Postgres17 `kossilon_pr02_ci`; all CI gates PASS, one existing lint warning. Four Important fresh-review findings reproduced and fixed in one pass. Evidence: `evidence/2026-10-01-pr05-gates.json`.
+- 0071 verified staff access, 0072 durable bulk assignment and 0073 SQL-only bulk maintenance job kind are applied/repeated locally only. Source expected manifest is 41 IDs; production retains 66 historical integration IDs and observed drift. No ledger rewriting, production migration, deployment or owner activation.
+- Bulk uses the current original actor per item, immutable scope/version, per-item domain transaction/audit and explicit resume/reconciliation. Local worker/compiled hook is not three genuine native ticks. Full queue SQL pagination remains T21.
+- Fresh Auth/Google/invite and actual controlled role transfer acceptance remain blocked with Auth owner. Local synthetic identities and successful mock UI contracts do not establish tenant enrollment or provider health.
