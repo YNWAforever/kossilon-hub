@@ -1,0 +1,100 @@
+{
+  "id": "kossilon-historical-release-20261002",
+  "historicalSource": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+  "historicalAppliedHashes": "unknown",
+  "inputs": [
+    {
+      "file": "0067_repair_outbox_dispatch_marker.sql",
+      "sha256": "660dbe9226514a66cdfedda2a2ed14300c960aee3e384908c28db73ccdf47014",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0068_company_historical_data_origin.sql",
+      "sha256": "3bada03551f73882074930732205b70986e30ff450445b30152f80f22c34a8eb",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0069_restore_maintenance_job_contract.sql",
+      "sha256": "54c8fb08e54524b89502c44db02de202ecaca159549ba1d38ee4a34ac2b361ec",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0070_payment_evidence_entries.sql",
+      "sha256": "77be3213c6eef6529f0f0712afb219158dc1b3b2d42a1d94df13b705714ad4e1",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0071_staff_admin_contract.sql",
+      "sha256": "41caa6f1b2cab4ab5ce603af67d24c31755154e6d99b9a3aeb68be91c8e7bbd9",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0072_durable_bulk_assignment.sql",
+      "sha256": "96828ee76f44b7917736c7f1e322f7765424873aa8b1f7121c5459a95ffe7b7f",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0073_bulk_maintenance_job_kind.sql",
+      "sha256": "0115de0f7773498fc44b105e2614600fe92df84267cd26c998e96b15ff1c6be4",
+      "executedVerbatim": false
+    },
+    {
+      "file": "0074_reviewed_nar_apply.sql",
+      "sha256": "076adf128c7a55b12572fd5415e698c78190fa744a0e1ae2790a652967094e9e",
+      "executedVerbatim": false
+    },
+    {
+      "file": "0075_nar_legacy_year_review.sql",
+      "sha256": "1770530e8dc0ab536ada101e64fe201afeb3fdb9d3a94390c12b4d3b770c8078",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0076_document_scan_review_versions.sql",
+      "sha256": "ee11fedf4f2cc9d2faf4cd845a2e821b9829110fa253d210c2a46a799d902887",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0077_document_analysis_evidence.sql",
+      "sha256": "e893065da028d8266e384c365fc8d5bd7eb5da7001872118dec9b5a72a08da75",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0078_whatsapp_manual_intake.sql",
+      "sha256": "5ed629d5ac915e62f126fdc97929da9bcdd87814d451e6dd1117013fc280db69",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0079_bulk_daily_maintenance.sql",
+      "sha256": "b3666b32fd4a92e49acd9c43959bfa751d1135f9b59b338eb6f5456d9a4732f7",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0080_manual_handoff_provenance.sql",
+      "sha256": "f7f955a5b186aa4ed16fa95c136402e15c3f265fd6c81a90a0c42c0f9e53866d",
+      "executedVerbatim": false
+    },
+    {
+      "file": "0081_handoff_attempt_idempotency.sql",
+      "sha256": "dc4cc45e37c05f69e59f19ddd33b37c18960b525726d995ddfe0b864db3a8e45",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0082_case_template_snapshots.sql",
+      "sha256": "29f13a7f58668c93f25141c90d17206332144a282833597ab43ec654b01dd231",
+      "executedVerbatim": false
+    }
+  ],
+  "adaptedInputs": [
+    "0073_bulk_maintenance_job_kind.sql",
+    "0074_reviewed_nar_apply.sql",
+    "0080_manual_handoff_provenance.sql",
+    "0082_case_template_snapshots.sql"
+  ],
+  "bridgeSha256": "e39fcb75ab7a9e1d977e0e32880be71ec8521a7b95b3be2a574220a7a7b4f3de",
+  "payloadSha256": "e685b365b785afada3745c60e4c9eb5b7de0153c5780be0b18e0122902d7b480",
+  "catalogSha256": "6d4451c7957295936132f3ba5bd156b51975a4f6fcf8d0cbffd9f28ceefc3100",
+  "compilerSha256": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52",
+  "normalization": "UTF-8 with LF; input hashes are provenance, never historical applied receipts",
+  "releaseDecision": "NO_GO: provider clone/restore, lineage policy, owners and runtime acceptance pending",
+  "packageSha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+}

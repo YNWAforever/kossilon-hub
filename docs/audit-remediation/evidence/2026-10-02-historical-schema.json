@@ -1,0 +1,469 @@
+{
+  "scope": "T01/T22 local historical release compatibility; not production readiness",
+  "source_baseline": "73d999dfa524f273d0c062458cbf780f65630e6c",
+  "historical_source": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb",
+    "observed_at": "2026-10-02T12:57:40.026354+00:00",
+    "server_version": "18.6 (4e955f5)",
+    "access": "read-only catalog and aggregate counts; provider writes 0"
+  },
+  "provider": {
+    "ledger_rows": 66,
+    "recorded_hashes": "all unknown",
+    "tables": 89,
+    "columns": 1043,
+    "indexes": 274,
+    "constraints": 1352,
+    "counts": {
+      "companies": 3,
+      "documents": 14,
+      "document_versions": 14,
+      "notification_outbox": 4
+    },
+    "outbox_status": [
+      {
+        "count": 4,
+        "status": "pending"
+      }
+    ],
+    "dispatch_started_attempt_present": false,
+    "catalog_sha256": "f57c4b5f960d4c9ed34a75d9c20b48b67471d0439b43303e434151ee3864abe7"
+  },
+  "historical_sources": [
+    {
+      "file": "0001_annual_return_control_center.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "abfdf5e3ae51038fe90550288f10a570290736db263fce14842841211fe6fa2e"
+    },
+    {
+      "file": "0002_harden_annual_return_schema.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "5b4be0f06d1c65a51846870e94b8007b27830a5d4ff20c6fbd8f1c80fd900fea"
+    },
+    {
+      "file": "0003_annual_return_audit_events.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "74716ab004e5b26be3185a2757b0f816bef73118f9c143e7b1605c860774ffd5"
+    },
+    {
+      "file": "0004_retain_annual_return_audit_events.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "7c6375fb32ec90d2083d4b275fcc315f1f29132fc7f7b61eca898caeac55ef2a"
+    },
+    {
+      "file": "0005_whatsapp_integration_foundation.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "550f6dbcdacdf49ef6b761b91e804ca8043e85cdb6ba3f479ae0dbc188c4053b"
+    },
+    {
+      "file": "0006_production_assignment_sla_foundation.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "f5247427ddcb7a57ffbc77c6c900030d993f85930a1c2a918b6694e1469138ca"
+    },
+    {
+      "file": "0007_whatsapp_inbox_ordering_indexes.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "35e01dc6abda8dbb94c08c8c54a4e9bb56d7a3a6185fc44702a03647e1fbc666"
+    },
+    {
+      "file": "0008_client_register.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "95af94ec995307cd58bd96df4cdbb21a5713d26954f817b1aedeee135ee88a0a"
+    },
+    {
+      "file": "0009_reclaim_stranded_outbox_rows.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "fe1395126ec40e856225b0fe176daf2aa7ffa461463ee6e3402fa2bd9924fd34"
+    },
+    {
+      "file": "0010_index_timeline_and_upload_intent_lookups.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "ca0c2565399c6891e3dc34e706368d5c54b0842e7ae46f9bfca3d0ae2b62f771"
+    },
+    {
+      "file": "0011_whatsapp_delivery_receipts.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "2c161cd3593e093f147fb21190bdbf5a1b75f4f2226f5c1b738fd2e1a9b36183"
+    },
+    {
+      "file": "0012_annual_return_reminder_events.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "1b5a2d6857363781b5368cb833c7af91876277ca2933f58ac1c959daf8b81c5d"
+    },
+    {
+      "file": "0013_checklist_templates.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "f487ee664d5c4e20946a8e31d55a0d7502b9b8cfd69f66e575d6eb08a64b1e10"
+    },
+    {
+      "file": "0014_generalize_work_item_case_reference.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "0c3a635da7a8e14ae8261dc0dfdf69a4da6112c1b866a6a83a616365750d864c"
+    },
+    {
+      "file": "0015_officers_and_shareholdings.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "e6202e25b89e5b88d7b5f0c9a8c2a4bf22ba7943b2f428d25cb2ce6f3d7542ea"
+    },
+    {
+      "file": "0016_significant_controllers_and_dr.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "92d2be3fd59b0a85ec7606a81b28a873f54483695df089f910ef74f5600c4ab3"
+    },
+    {
+      "file": "0017_incorporation_intake.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "5a40f9ba4ca33c7f88f33cfc1c216969938d18649509d6dd0a208d8b998297f1"
+    },
+    {
+      "file": "0018_recurring_service_subscriptions.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "69f1b0cc6a0c0c710f18b341bd112c4edefd89c3d04caa312998d0ed63a37a0b"
+    },
+    {
+      "file": "0019_corporate_change_requests.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "3b74b1de0bc58c7eaaa1eb089aa214c03ff1aea35e2d779b6f8326fca1bd2b1b"
+    },
+    {
+      "file": "0020_corporate_change_work_items.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "d4e600a00cc5a2f544674364be351466ab68727982e38cc8ea3298471b0be492"
+    },
+    {
+      "file": "0021_whatsapp_session_window_indexes.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "22cab690cb48883d72c59e959d4af5a7dc02742e85c5a0a17d4e0f508505885a"
+    },
+    {
+      "file": "0022_notification_outbox_delivery.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "a1d18d0ea91ff274dce73be35cb4bd4b503f834451ba4adcf5d5668e9a35bc0b"
+    },
+    {
+      "file": "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "3d74d1f25aaa842548cd8f90dbe6134135ad8f1cdf2274995873dd91dfd9b9fb"
+    },
+    {
+      "file": "0024_link_uploads_to_checklist_items.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "23105326908b594afafa0b0bc0a00e888a6b061e1bdeef8c19b0d307fa81a21b"
+    },
+    {
+      "file": "0025_nar_import_staging.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "ff0c6c72e8465dd7fc997bb0264c1e8fface6c3c507a74071a5609424b1f035c"
+    },
+    {
+      "file": "0026_case_parties_and_requirement_instances.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "9767057c89ec0266d587f9bd2598db6d89af00eb7c41ac60ed2ed084111c0019"
+    },
+    {
+      "file": "0027_document_versions.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "41dd0155edd40c0d0033c0a82f16a40dbc09fc332a1a1a24b974d3f3a50e3f22"
+    },
+    {
+      "file": "0028_document_analysis_jobs_and_findings.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "0a0522892b647e3be2332bae2b719266901de047912474e6ed169efa12cf4e84"
+    },
+    {
+      "file": "0029_whatsapp_send_mode.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "85c3b00b6e791a931c1d51de02b9f28b719bef8c09bc6bb24cbeb0ed9d06a5b3"
+    },
+    {
+      "file": "0030_company_data_origin.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "6292c2c5a6a0e2d18f04a6ac500c0da84fef1b43ca9b3de14c504732e76dae99"
+    },
+    {
+      "file": "0031_whatsapp_message_media.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "22b92e7dd307e3f2a3d089642fd6e69ff2da47e8d05f74f7ccc0c9f8c006a932"
+    },
+    {
+      "file": "0032_package_handoffs_and_returns.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "8554f605b59183454f4b74e78e351c5e991499d631cae95e94aa4d5927480fba"
+    },
+    {
+      "file": "0033_maintenance_runs.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "72c597510ef7fda9a84a02c4bd87a3a4ad6cb5a941362c347d2c477b9f71cd69"
+    },
+    {
+      "file": "0034_notification_delivery_attempts.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "9398efa70b208dd9c49770a32a3591cda793995706fa64a8858d42521abc2ac4"
+    },
+    {
+      "file": "0035_maintenance_job_runs.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "08dd8deaff522f89ac9297bbfa675ebf59e988fb2ffb8cd47f02176f31240a34"
+    },
+    {
+      "file": "0036_bulk_operations.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "7b5cb317e9612d1fb277ba614f931c1ad92f77e7db000af1d2282af75dfc7767"
+    },
+    {
+      "file": "0037_bulk_scheduler_job.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "412c258c263e4cb48566370b3cfc37c61b84ef9d4b5a0150a6dca8639edf67f8"
+    },
+    {
+      "file": "0038_nar_import_preview.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "15c95bdfad1b27cf46007b22945850197df8b85a482b7de5b598d8129367c5db"
+    },
+    {
+      "file": "0039_nar_import_approval_apply.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "29e687e0e6da6aee0f2e09bfe98460af43bb1490d19868df5a88b25d23098e66"
+    },
+    {
+      "file": "0040_payment_reconciliation.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "a3358270168b5b7aaa67a001f57138d9ec6fd8f5d7b6f6808796fa8646912883"
+    },
+    {
+      "file": "0041_filing_packages.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "2436dee43051ef882e91d5da23c6c2e11ca8ae0d5a822ffd48b44a2598eca4af"
+    },
+    {
+      "file": "0042_manual_package_submission.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "bdbcf9f0af13e16459679b2bc3f182a6c3daea75e6f30e74ceb9af9460f51f55"
+    },
+    {
+      "file": "0043_filing_return_intake.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "c41df8ad5e929e9d0f0f822520e56137be6ac80ee338d7a9e83ece3291e60691"
+    },
+    {
+      "file": "0044_message_preview.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "9846e05f060fd0c24daec2b9084f2743bcb47aa55b070fcf3d286411acb43667"
+    },
+    {
+      "file": "0045_whatsapp_media_download.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "7b8d661a649601e98c973d096b8d696e574c70dc3e550ea812f9ec59f3493f69"
+    },
+    {
+      "file": "0046_staff_lifecycle.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "89f36ea6574ad48b2186bb58234cfc819aad5ca796f9e049ccf5d69bf8a5e1b7"
+    },
+    {
+      "file": "0047_checklist_template_versions.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "48de0cf273c269aeecbfb6de043264a01018660ddc54075d8652d693a2e57f05"
+    },
+    {
+      "file": "0048_case_assignment_revision.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "e44c273ca15721cbbb6d28eb752f2de877ecee5bee0630c5a69c2911040675ea"
+    },
+    {
+      "file": "0049_bulk_case_assign_action.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "c616a9b04beb627ffebd1eead229de31aacf98fc500d85995f9a3b683cf86b32"
+    },
+    {
+      "file": "0050_client_assignment_revision.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "d10f14c27e78a446da07a1e922c31789b75bc82470c36ac451407ff4b2f24a12"
+    },
+    {
+      "file": "0051_bulk_client_assign_action.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "67cc46439f617fa70d7749c272a0090eea58942facf844ba9fed690aa7a163b3"
+    },
+    {
+      "file": "0052_resource_tags.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "c8b7b0a2cb6d725cc0dc0554fb652fae69d148671c3343b6afaff83446ed6024"
+    },
+    {
+      "file": "0053_bulk_tag_action.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "c1fda18953938ab11da01823c9f40d924d0d971b9853e6fb4e5bbe4921e3c4aa"
+    },
+    {
+      "file": "0054_bulk_reminder_drafts.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "20b4fb2b528d9e73e4420dcd7edddeca4fc84cb1785545f82c97d5adc090aa8a"
+    },
+    {
+      "file": "0055_bulk_domain_actions.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "e89acc8b2de16295b87a70305a2ae4e4dff545df823b9987034c08fd6b6b2337"
+    },
+    {
+      "file": "0056_document_analysis_context.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "0643246261140e5cf50166ff94cac2ea9f9d2d9459b6e1a81c18db94535568b6"
+    },
+    {
+      "file": "0057_import_preview_scale.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "89c72021f4f2a2065e792f696e8d53dd4f6e2e2cf6d921f70fe26032fdaf1644"
+    },
+    {
+      "file": "0058_import_apply_selection_limit.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "ab5842cd4a643011bf4da99eddf6c831c968a139855af22d644316b19990d71a"
+    },
+    {
+      "file": "0059_nar_import_stage_jobs.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "6f179bf3409da31708325c8767cb2b70292c577e82c73e52f67179d8c672071b"
+    },
+    {
+      "file": "0060_nar_import_stage_error_detail.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "a51664f421d9f114ce110badf077a8a0b14a0b218d61473dffdfb2c1e7ac8843"
+    },
+    {
+      "file": "0061_subscription_reminder_drafts.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "501d1ee3b4b5ea8ab241975e6a4321d0fdc83c47100c79601a50f6b2e772d45d"
+    },
+    {
+      "file": "0062_legacy_filing_completion_eligibility.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "3660e31bd31a62bc7f2cd2fd4c90bbaef336595c07b8b943203b136e2ebb3536"
+    },
+    {
+      "file": "0063_work_items_unconfigured_sla.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "f3e3b6be0ce9af1fec9a8b76914157331b3099b22c5f735d8d7e9abccc442db1"
+    },
+    {
+      "file": "0064_work_item_sla_policy_attachment.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "9e7754f038ab16f61553214af86e2cb031e2cdf2051d0757900d23a3ceee5102"
+    },
+    {
+      "file": "0065_bulk_sla_policy_attach.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "f59646c03a7c1f66d515febb695cae24515e3675adcdf0c3e66cc10fa72a90fd"
+    },
+    {
+      "file": "0066_nar_import_scheduler_job.sql",
+      "source_sha": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+      "source_hash": "7dc75d88b4a96200533e2901138c47bbf10e2db1318b15261c5b4f28fdd3a6aa"
+    }
+  ],
+  "local": {
+    "server_version": "18.6 (Debian 18.6-1.pgdg13+2)",
+    "host": "127.0.0.1",
+    "port": 55448,
+    "database": "kossilon_release_b87_20261002_279ac3b7",
+    "synthetic_rows_only": true,
+    "tables": 82,
+    "columns": 995,
+    "indexes": 260,
+    "constraints": 1296,
+    "attributable_column_diffs": 0,
+    "attributable_index_diffs": 0,
+    "attributable_constraint_diffs": 0,
+    "original_sql_executed": 66,
+    "ledger_rows_after_rollback": 66,
+    "failures": [
+      {
+        "file": "db/migrations/0073_bulk_maintenance_job_kind.sql",
+        "code": "P0001",
+        "message": "Unrecognized maintenance job-kind contract; preserve data and review"
+      },
+      {
+        "file": "db/migrations/0074_reviewed_nar_apply.sql",
+        "code": "42701",
+        "message": "column \"return_year\" of relation \"nar_import_batches\" already exists"
+      },
+      {
+        "file": "db/migrations/0082_case_template_snapshots.sql",
+        "code": "42701",
+        "message": "column \"revision\" of relation \"checklist_templates\" already exists"
+      }
+    ],
+    "existing_return_year_preserved": 2026,
+    "command": "node .superpowers/sdd/2026-10-02-historical-schema-release/reproduce-history-pg18.mjs; node .superpowers/sdd/2026-10-02-historical-schema-release/finish-reproduction.mjs"
+  },
+  "cross_version": {
+    "postgres17_constraint_diffs": 699,
+    "all_production_only_not_null_constraints": true,
+    "postgres18_constraint_diffs": 0,
+    "column_nullable_definitions_match": true
+  },
+  "unattributed_tables": [
+    "hk_funding_schema_migrations",
+    "personal_workspaces",
+    "sync_changes",
+    "sync_conflicts",
+    "sync_entities",
+    "sync_field_revisions",
+    "sync_operation_receipts"
+  ],
+  "unattributed_foreign_keys": [
+    {
+      "name": "sync_changes_workspace_id_fkey",
+      "type": "f",
+      "table": "sync_changes",
+      "validated": true,
+      "definition": "FOREIGN KEY (workspace_id) REFERENCES personal_workspaces(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sync_conflicts_workspace_id_fkey",
+      "type": "f",
+      "table": "sync_conflicts",
+      "validated": true,
+      "definition": "FOREIGN KEY (workspace_id) REFERENCES personal_workspaces(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sync_entities_workspace_id_fkey",
+      "type": "f",
+      "table": "sync_entities",
+      "validated": true,
+      "definition": "FOREIGN KEY (workspace_id) REFERENCES personal_workspaces(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sync_field_revisions_workspace_id_entity_type_entity_id_fkey",
+      "type": "f",
+      "table": "sync_field_revisions",
+      "validated": true,
+      "definition": "FOREIGN KEY (workspace_id, entity_type, entity_id) REFERENCES sync_entities(workspace_id, entity_type, entity_id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sync_operation_receipts_change_id_fkey",
+      "type": "f",
+      "table": "sync_operation_receipts",
+      "validated": true,
+      "definition": "FOREIGN KEY (change_id) REFERENCES sync_changes(change_id)"
+    },
+    {
+      "name": "sync_operation_receipts_workspace_id_fkey",
+      "type": "f",
+      "table": "sync_operation_receipts",
+      "validated": true,
+      "definition": "FOREIGN KEY (workspace_id) REFERENCES personal_workspaces(id) ON DELETE CASCADE"
+    }
+  ],
+  "observed_attributable_foreign_keys_to_unattributed": [],
+  "limitations": [
+    "Source hashes prove git provenance, not historical applied bytes.",
+    "82 attributable tables match catalog; 7 additional tables have unverified ownership and non-FK dependencies.",
+    "Local replay is not a provider clone, backup restore, genuine data-volume test or runtime UAT.",
+    "0073 correctly fails closed on historical seven-kind CHECK; 0074 and 0082 duplicate existing columns.",
+    "No production SQL, scheduler, env, release, message, invite or permission change."
+  ]
+}
