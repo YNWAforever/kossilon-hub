@@ -1,0 +1,244 @@
+{
+  "base": "baaa1a2b1e6fd17985e81e16d4c0761a7098de0b",
+  "productionHistoricalIdsLastObserved": 66,
+  "providerWrites": 0,
+  "environment": "Windows Node24.18.0/Postgres17.10/Bun1.4.2/localhost55441",
+  "sourceMigrationIds": 50,
+  "fullWindows": {
+    "passed": 2204,
+    "seconds": 679.8,
+    "failures": [
+      "share-transfer completion timeout30000ms",
+      "NAR100 finalization timeout120000ms",
+      "loaded pre-correction deferred query RED",
+      "loaded pre-correction callback-array RED"
+    ],
+    "exitCode": 1,
+    "authority": "diagnostic; began before deferred-query correction, not final-head acceptance",
+    "afterNarTimeout": {
+      "syntheticNarCompanies": 0,
+      "syntheticNarUsers": 0,
+      "syntheticNarBatches": 0
+    },
+    "failed": 4,
+    "skipped": 0,
+    "files": 233
+  },
+  "originalUat": {
+    "blocked": 31,
+    "sha256": "45D2B0239826EDF41CAD480EC8B7888C426991CD28680F9EBC71DB9E9AF801E7",
+    "localOnlyPass": 19,
+    "notRun": 0
+  },
+  "scope": "LOCAL ONLY test lifetime; production sources unchanged",
+  "child": {
+    "remaining": {
+      "users": 0,
+      "batches": 0,
+      "companies": 0,
+      "templates": 0
+    },
+    "expectedExitCode": 1,
+    "timeoutMs": 1000
+  },
+  "extendedRed": {
+    "seconds": 0.855,
+    "nameFiltered": 5,
+    "failed": 2
+  },
+  "logs": [
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\timeout-red.log",
+      "sha256": "F75E7AF9A762A36D59DC5C4C90FE31976DDF5ED95EFF67029907696406323B98"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\timeout-red-result.json",
+      "sha256": "7AA055A2D104036A72C3308C4472B63713A51EA428E6D162CBFCAAAB1A1FEB48"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\regression-red2.log",
+      "sha256": "A217E94BF769A83E69EAB66DF79D40BC598E8F6334A853134EDEA2B9237CBFC6"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\regression-red2-result.json",
+      "sha256": "6CFE4A8533125BB3D23DFE674D0A437625EAD37F472BEE40A95607FBFFD41CA7"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\regression-green.log",
+      "sha256": "41964AF468D2146AF03820B93BE8FF31C89D3F2EA2A92986A9B68EDBD31EA67E"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\deferred-red.log",
+      "sha256": "8C5734E89CD33EE421C039182C03FD9966499A214E5B21A910E87D6562EED010"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\deferred-red2.log",
+      "sha256": "1B971A9BAB7682D37CD7CA61EC4FDC4813C82406A6C0B396418128BEE4A9E12A"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\regression-final-green.log",
+      "sha256": "A36D13E331281E8EF0F9CF574953FC192EA02FE96DE315B89724DA62E00B5A1F"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\regression-final-green-result.json",
+      "sha256": "EA399D375B9B2E803E9229C36154C2AA19ACD55DD21AEDAABE95E74583ADDFA4"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\green-fixture.json",
+      "sha256": "9BD05846B0C4E43B89A91B582D160EC71C5DBE196CA7D85EDAC6CCB43CBF485A"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\green-migrate.log",
+      "sha256": "2495BFBDCBDCB5EA96749CD0E7E638E3D2A54F040B1DFCFC72DAFB1B79BD7A25"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\green-seed.log",
+      "sha256": "43B066AD1C7185E0C74EF5905999D1124CE4862268D86C7DB59D6E4FC9453F30"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\lint.log",
+      "sha256": "AD104499727BECD5029F1CA750B7042CA808ACD13B640F440FB7A8D91A938ECB"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\typecheck-final.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\full-node24.log",
+      "sha256": "1A8FB31DE7677C525695BFE507CDFC55703D1A40297DEFB7D49AC0A7AE4B9F9E"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\full-node24-result.json",
+      "sha256": "A726516F1C39CEA13B8326C8A4E12FBEDAB184E062E2BCC19BC67EE2AE52A085"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\full-nar-cleanup.json",
+      "sha256": "C3C88EC0D6A575FD3652FC2C3701C7FC3B0801F5A4F58A51838C537076F247B4"
+    },
+    {
+      "sha256": "F9744C50B29837AC88892DC5FAB4AC2ACC88975AFFDD0717E5FE6E77FEA918AC",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-fixture.json"
+    },
+    {
+      "sha256": "2495BFBDCBDCB5EA96749CD0E7E638E3D2A54F040B1DFCFC72DAFB1B79BD7A25",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-migrate.log"
+    },
+    {
+      "sha256": "43B066AD1C7185E0C74EF5905999D1124CE4862268D86C7DB59D6E4FC9453F30",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-seed.log"
+    },
+    {
+      "sha256": "FEC60C90830D8F020E6C19CD0F03BDE990BE1ED594E2E2A5F06FACF56C2DED1E",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-nar-regressions.log"
+    },
+    {
+      "sha256": "52D4BA1C95536F935DF19F8061D228D1C2C7D290B3FB2FE828D6F3447AF86912",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-nar-regressions-result.json"
+    },
+    {
+      "sha256": "06590C97B7163EC5506994F8A9888D4125F47F9935D29F8AB24D81724ADCBF9E",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-red.log"
+    },
+    {
+      "sha256": "985988848C10EE55234D69D3BCEBB9B025B050CB63AFD909ABF6662785924024",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-worker-child-red.log"
+    },
+    {
+      "sha256": "6D9AFDD8820183650AAE833493A1FE9510DBFF5DA570AFAEF1C499F93FEA01F7",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-red2.log"
+    },
+    {
+      "sha256": "B9EDECCF9F8F193867F8EAD2C5DEC4A177A305001FF93252D27D4E90C1230405",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-red3.log"
+    },
+    {
+      "sha256": "C34BC644B4DFC96082E294CCB49AC40BDF34A3C659C956FFEF43981ED30B2234",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-red3-result.json"
+    },
+    {
+      "sha256": "1530E8FFA607A9D6CB31918413CCAC9746FF1939EC55843D99A915620A9EABD8",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-green.log"
+    },
+    {
+      "sha256": "EA61D7736F0B7ECB9B35158F03DE77013DB6B100CF1D36C957E78E6C8817C5B6",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-green-result.json"
+    },
+    {
+      "sha256": "3737D8266825EA78888126CD1F664584A0E92347126898A6DA66F7C639DFA4E2",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-concurrency-green.log"
+    },
+    {
+      "sha256": "EA61D7736F0B7ECB9B35158F03DE77013DB6B100CF1D36C957E78E6C8817C5B6",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-concurrency-result.json"
+    },
+    {
+      "sha256": "E7DBC5ADD96D14C5795853FFD2CA0C28E7AE37438B5DE238453D8A1FDC37DD7E",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-typecheck.log"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-typecheck-final.log"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-lint.log"
+    },
+    {
+      "sha256": "25DA42DCAC74BA4CD0E6FD76F3962B37099FD45F81C2E78E64BDF605C3C1DB7A",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\review-fixture.json"
+    }
+  ],
+  "productionRelease": "NO_GO",
+  "red": {
+    "files": 2,
+    "seconds": 11.43,
+    "exitCode": 1,
+    "failed": 5,
+    "passed": 1
+  },
+  "green": {
+    "seconds": 13.02,
+    "exitCode": 0,
+    "failed": 0,
+    "files": 2,
+    "skipped": 0,
+    "passed": 8
+  },
+  "finalNarContracts": {
+    "environment": "actual Windows Node24.18.0/Postgres17 new uniquely owned DB",
+    "exitCode": 0,
+    "passed": 30,
+    "files": 3,
+    "skipped": 0,
+    "seconds": 170.64,
+    "failed": 0,
+    "head": "447928ae83d26c6edc218e48a444a00c45adcacd"
+  },
+  "taskGate": {
+    "shell": "verified current PowerShell; legacy shell gate failure retained",
+    "passed": 8,
+    "failed": 0,
+    "failedShellLogSha256": "148A1248D93F3D22798AB5F42C37E350C70D3A33294595B24C1E3261A2114F78",
+    "seconds": 9.57,
+    "skipped": 0,
+    "logSha256": "41FB465850EFF792398A8178A8AD8608C8EFBDB7E3410FB30FB84B9D3D950482",
+    "head": "447928ae83d26c6edc218e48a444a00c45adcacd",
+    "actualFullCi": "37048419675"
+  },
+  "soleReview": {
+    "greenPassed": 9,
+    "minor": 0,
+    "base": "baaa1a2b1e6fd17985e81e16d4c0761a7098de0b",
+    "important": 2,
+    "correctedRedFailed": 2,
+    "head": "9e8b6a02035a2ce846cc77a53846707511c361c2",
+    "critical": 0,
+    "fullFinalFixCi": "required before merge",
+    "concurrencyNameFiltered": 20,
+    "correctedRedSeconds": 14.87,
+    "freshContext": true,
+    "concurrencyPassed": 2,
+    "greenSeconds": 9.77,
+    "fixPasses": 1
+  }
+}
