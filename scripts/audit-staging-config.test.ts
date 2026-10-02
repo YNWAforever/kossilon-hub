@@ -32,6 +32,12 @@ it("allows only an explicit isolated origin and five approved fresh test account
   });
   expect(JSON.stringify(target)).not.toContain("SECRET");
   expect(() =>
+    auditStagingTarget({ ...env, AUDIT_CLIENT_B_EMAIL: env.AUDIT_CLIENT_A_EMAIL.toUpperCase() }),
+  ).toThrow(/distinct/);
+  expect(() =>
+    auditStagingTarget({ ...env, AUDIT_MANAGER_EMAIL: ` ${env.AUDIT_STAFF_EMAIL} ` }),
+  ).toThrow(/distinct/);
+  expect(() =>
     auditStagingTarget({
       ...env,
       AUDIT_STAGING_ORIGIN: "https://controlled-staging.example.test/path",

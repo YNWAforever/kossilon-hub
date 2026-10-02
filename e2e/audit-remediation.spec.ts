@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { assertAuditPersona } from "./audit-persona";
 
 // Genuine fresh password sessions only when the strict staging config is supplied.
 // Magic-link/Google and the50 complete business UAT require separate real evidence.
@@ -17,11 +18,7 @@ for (const account of ["ADMIN", "MANAGER", "STAFF", "CLIENT_A", "CLIENT_B"] as c
         "Fresh controlled sign-in failed; Auth owner must inspect secure runtime evidence.",
       );
     }
-    const client = account.startsWith("CLIENT");
-    await expect(page).toHaveURL(client ? /\/portal(?:\?|$)/ : /\/today(?:\?|$)/);
-    await expect(
-      page.getByRole("heading", { name: client ? "Your annual returns" : "今日工作", exact: true }),
-    ).toBeVisible();
+    await assertAuditPersona(page, account);
     await expect(page.locator("vite-error-overlay")).toHaveCount(0);
   });
 }

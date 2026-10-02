@@ -9,7 +9,12 @@ if (
   throw new Error("Local UX runner permits only dedicated localhost5180.");
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: ["local-ux.spec.ts", "performance.spec.ts", "audit-release-demo.spec.ts"],
+  testMatch: [
+    "local-ux.spec.ts",
+    "performance.spec.ts",
+    "audit-release-demo.spec.ts",
+    "audit-persona-local.spec.ts",
+  ],
   fullyParallel: false,
   workers: 1,
   retries: 0,
