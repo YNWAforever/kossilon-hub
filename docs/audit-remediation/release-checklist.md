@@ -4,7 +4,7 @@
 
 **正式發布 NO-GO。** 最新 fetch 的 main 仍為 `aa5d3cbddd895bca953b6eef7266ae1cc0b46215`。PR01–10 #102–108/#110–112 為 stacked drafts，B01 #109 為獨立 main-based security draft；沒有合併或發布。本頁的本地測試與 release package 不構成正式操作授權。
 
-T00–T21及早期 T23 已有 source／測試證據。PR11／T22 匯總原50項，不刪或改原驗收。`verify:audit-release` 只讀 CSV、original JSON、SQL hashes，輸出 `localLedgerContract=PASS` 與獨立的 `productionReleaseGate=NO_GO`；exit0只表示台賬契約有效。
+T00–T23 已有本地 source／測試證據，PR11為本分支的最後一包。T22匯總原50項：19 LOCAL ONLY pass／31blocked／0not_run，不刪或改原驗收。`verify:audit-release` 只讀 CSV、original JSON、SQL hashes，輸出 `localLedgerContract=PASS` 與獨立的 `productionReleaseGate=NO_GO`；exit0只表示台賬契約有效。
 
 ## 必須按順序核對的發布 gate
 
@@ -19,6 +19,7 @@ T00–T21及早期 T23 已有 source／測試證據。PR11／T22 匯總原50項�
 
 ## 已完成的本地 gate
 
+- PR11 final source `102b983ac0b36e7fac07a65c4223d647bb244ac4`：Node22.23.3／Bun1.3.14／PG17，228files2179PASS0fail0skip345.53s；ChromeDEMO10PASS26.4s，含真正PDF parser/worker及錯persona拒絕；完整CI各gate PASS，lint0errors1existingwarning。Sole fresh review兩項Important各有RED/GREEN，一次修正，沒有rereview。完整 commands／exit／log hashes：`evidence/2026-10-02-pr11-gates.json`；source50SQL hashes：`evidence/2026-10-02-release-manifest.json`。
 - PR10 sourcee09820c：Node22.23.3／Bun1.3.14／PG17，225files2171PASS0skip；build/typecheck/lint0errors1existingwarning/offline38reads0network0writes/dev12/compiledhookPASS；ChromeDEMO6PASS。本地0082 immutable snapshot／legacyNULL／rollback已演練。
 - T21 owned synthetic10000cases／50000documents／164requests0errors，25users p95 Today525ms、Documents662ms；原 baseline／hardware／payload／query plans／cold-state限制在 performance.md。Staging budget／真角色／platform未驗收。
 - T22已執行 existing support regressions：10files120PASS0skip79.27s，actualPG17。涵蓋 incorporation不跳步／單次公司建立／concurrent completion，corporate-change批准版本／取消／audit，subscription renewal/cancel及SCR，received-but-unreviewed追件契約。這些是local contracts，不是完整fresh-role流程。

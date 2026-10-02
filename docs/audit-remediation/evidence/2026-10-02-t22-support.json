@@ -85,5 +85,6 @@
       "path": ".worktrees/audit-baseline-20261001/b02-bun-audit-after.json",
       "sha256": "50e1938b01ae8c86c9adac4faab7d4e98008992dcc7a28b97f6e0b496245624b"
     }
-  ]
+  ],
+  "source_note": "Existing support/backend contracts ran against committed1c638d4. The6 release harness tests were then uncommitted T22 files, committed inbc4503f; final exact committed source102b983/full2179 evidence is in2026-10-02-pr11-gates.json."
 }
