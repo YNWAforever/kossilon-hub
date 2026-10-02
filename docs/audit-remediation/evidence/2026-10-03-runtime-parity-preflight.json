@@ -1,0 +1,179 @@
+{
+  "sourceBase": "da792232879d3ac626c02ea464da3bd3adb459c8",
+  "testedCode": "Application and existing tests unchanged; CI-only patch",
+  "environment": "LOCAL ONLY Windows/localhost55441 kossilon_pr02_ci",
+  "node": "24.18.0",
+  "npm": "11.16.0",
+  "bun": "1.4.2",
+  "postgres": "17.10",
+  "runtimeGuard": {
+    "expected22Exit": 1,
+    "expected24Exit": 0
+  },
+  "aggregateGate": [
+    {
+      "result": "failure",
+      "exit": 1
+    },
+    {
+      "result": "cancelled",
+      "exit": 1
+    },
+    {
+      "result": "skipped",
+      "exit": 1
+    },
+    {
+      "result": "success",
+      "exit": 0
+    }
+  ],
+  "initialFull": {
+    "command": "npm run test",
+    "exit": 1,
+    "passed": 2199,
+    "failed": 1,
+    "skipped": 0,
+    "files": 231,
+    "seconds": 414.18,
+    "failure": "Today totals/navigation remained loading at assertion; cause not reproduced in standalone22/24",
+    "status": "retained unresolved intermittent observation, not claimed fixed"
+  },
+  "focused": {
+    "command": "node node_modules/vitest/vitest.mjs run src/routes/-today.interaction.test.tsx --project unit",
+    "node24": {
+      "pass": 4,
+      "exit": 0,
+      "seconds": 20.23
+    },
+    "node22": {
+      "pass": 4,
+      "exit": 0,
+      "seconds": 4.16
+    }
+  },
+  "commands": [
+    {
+      "gate": "lint",
+      "exit": 0,
+      "startedAt": "2026-10-02T16:39:32.3026944Z",
+      "seconds": 36.59,
+      "command": "npm run lint",
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-runtime-parity-20261003\\node24-lint.log",
+      "sha256": "CC4D0F3C8127E6C66AA500A04D3B66E88042570457BAD4DC75752C6908FA2153"
+    },
+    {
+      "gate": "typecheck",
+      "exit": 0,
+      "startedAt": "2026-10-02T16:40:08.9623193Z",
+      "seconds": 25.66,
+      "command": "npm run typecheck",
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-runtime-parity-20261003\\node24-typecheck.log",
+      "sha256": "E5046545A3A9FCC0CF6950C9402C78A2B227F07A6A658D2A0C1FBC5F4A194DA0"
+    },
+    {
+      "gate": "build",
+      "exit": 0,
+      "startedAt": "2026-10-02T16:40:34.6289901Z",
+      "seconds": 23.63,
+      "command": "npm run build",
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-runtime-parity-20261003\\node24-build.log",
+      "sha256": "408C32E6B203D8D231426E20F54F74BE9391B3CB5949294F86DDCE649C019523"
+    },
+    {
+      "gate": "offline",
+      "exit": 0,
+      "startedAt": "2026-10-02T16:40:58.2709857Z",
+      "seconds": 0.49,
+      "command": "npm run verify:firm -- --dry-run",
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-runtime-parity-20261003\\node24-offline.log",
+      "sha256": "6BDEC509047B0340B77E8480EBF43926ACFB9BE8B12489B3D7241F868BA0CA05"
+    },
+    {
+      "gate": "audit-ledger",
+      "exit": 0,
+      "startedAt": "2026-10-02T16:40:58.770582Z",
+      "seconds": 0.46,
+      "command": "npm run verify:audit-release",
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-runtime-parity-20261003\\node24-audit-ledger.log",
+      "sha256": "14722B6203CFD4B5A19555F9596F4F1611A61E3D3E973C3E06DB1C2DDCF072E1"
+    },
+    {
+      "gate": "dev-imports",
+      "exit": 0,
+      "startedAt": "2026-10-02T16:40:59.2347732Z",
+      "seconds": 18.26,
+      "command": "npm run verify:dev-server-imports",
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-runtime-parity-20261003\\node24-dev-imports.log",
+      "sha256": "F2E929282CFF1793BE1D305FB7B2AC24794C442F3C11B24D6D83EE382642E00B"
+    },
+    {
+      "gate": "chrome-demo",
+      "exit": 0,
+      "startedAt": "2026-10-02T16:41:17.5085499Z",
+      "seconds": 45.82,
+      "command": "npm run test:e2e:local",
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-runtime-parity-20261003\\node24-chrome-demo.log",
+      "sha256": "8D4DFBB94036BD7645D9A9322F99FDF358DFD1E25200024D080F29E1897102EB"
+    }
+  ],
+  "chromeDemo": {
+    "passed": 12,
+    "seconds": 43.6,
+    "runtimeUat": false
+  },
+  "compiledCronHook": "PASS",
+  "rawLogs": [
+    {
+      "file": "node24-audit-ledger.log",
+      "sha256": "14722B6203CFD4B5A19555F9596F4F1611A61E3D3E973C3E06DB1C2DDCF072E1"
+    },
+    {
+      "file": "node24-build.log",
+      "sha256": "408C32E6B203D8D231426E20F54F74BE9391B3CB5949294F86DDCE649C019523"
+    },
+    {
+      "file": "node24-chrome-demo.log",
+      "sha256": "8D4DFBB94036BD7645D9A9322F99FDF358DFD1E25200024D080F29E1897102EB"
+    },
+    {
+      "file": "node24-dev-imports.log",
+      "sha256": "F2E929282CFF1793BE1D305FB7B2AC24794C442F3C11B24D6D83EE382642E00B"
+    },
+    {
+      "file": "node24-lint.log",
+      "sha256": "CC4D0F3C8127E6C66AA500A04D3B66E88042570457BAD4DC75752C6908FA2153"
+    },
+    {
+      "file": "node24-offline.log",
+      "sha256": "6BDEC509047B0340B77E8480EBF43926ACFB9BE8B12489B3D7241F868BA0CA05"
+    },
+    {
+      "file": "node24-test.log",
+      "sha256": "7A77F18E3302ED11631E8DF0EBCE62F904BF1E6775B9F449ECD82A7DD9996E00"
+    },
+    {
+      "file": "node24-typecheck.log",
+      "sha256": "E5046545A3A9FCC0CF6950C9402C78A2B227F07A6A658D2A0C1FBC5F4A194DA0"
+    },
+    {
+      "file": "runtime-guard-green.log",
+      "sha256": "B447734BEA5971CC4BEED4007192E4CF2E07A9F04FDAFF5D9DF3BB307E61987E"
+    },
+    {
+      "file": "runtime-guard-red.log",
+      "sha256": "08C637A38A580DCD78EE47F3F1DC943BFA4EB5948A986C9AA8B67561DB732B0D"
+    },
+    {
+      "file": "today-node22-control.log",
+      "sha256": "7D62E95C3EFDF48CE7621AF79A96BFE7F8E25E2E858D93F011B6F5076AD9F564"
+    },
+    {
+      "file": "today-node24-reproduction.log",
+      "sha256": "0A5D35FEE352C4008DEDCA29AF43F4D5EDB53508BDE033FF4D344DC86DB80E7A"
+    }
+  ],
+  "providerWrites": 0,
+  "formalRelease": "NO_GO",
+  "fullRepeat": "Awaiting actual completion; maxWorkers4 local only, unchanged timeouts; both default Linux CI legs mandatory"
+}
