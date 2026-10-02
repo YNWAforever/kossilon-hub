@@ -12,12 +12,16 @@ import { assertCaseAssignmentTarget } from "@/features/annual-return/assignment-
 import { applyAssignment } from "./assignment-adapter";
 import { originFilterForActor } from "@/features/clients/data-origin";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
+import { MAINTENANCE_ACTIONS, lockMaintenanceResource } from "./actions";
+import { isDocumentVisibleToStaffActor } from "@/features/documents/authorization";
 import {
   snapshotSchema,
   previewSchema,
   executeSchema,
   resultsSchema,
   jobHistorySchema,
+  previewActionSchema,
+  maintenanceActionSchema,
   type Assignment,
   type BulkResource,
   type BulkFilters,
@@ -26,6 +30,8 @@ import {
   type JobResult,
   type JobLease,
   type ItemState,
+  type MaintenanceActionKind,
+  type MaintenanceOutput,
 } from "./types";
 type Query = SqlClient | postgres.TransactionSql;
 type ResourceRow = {
@@ -44,6 +50,7 @@ type JobRow = {
   auth_user_id: string;
   resource: BulkResource;
   assignment: Assignment;
+  action_key: "assignment" | MaintenanceActionKind;
   state: JobResult["state"];
   total: number;
   lease_token: string | null;
@@ -58,6 +65,7 @@ type ItemRow = {
   reason: string | null;
   retryable: boolean;
   attempts: number;
+  result?: { output?: MaintenanceOutput };
 };
 async function hash(value: unknown) {
   const bytes = new Uint8Array(
@@ -97,6 +105,38 @@ export function createBulkOperationsRepository({
     ids?: readonly string[],
     lock = false,
   ): Promise<ResourceRow[]> {
+    if (resource === "client_company" || resource === "document") {
+      const allowed = new Set(
+        resource === "client_company"
+          ? ["q", "teamId", "ownerId", "clientStatus", "includeFixtures"]
+          : ["q", "caseId", "includeFixtures"],
+      );
+      if (Object.keys(filters).some((key) => !allowed.has(key)))
+        throw new Error("Unsupported filters for this resource.");
+      const q = filters.q ? `%${filters.q.replace(/[\\%_]/g, (v) => `\\${v}`)}%` : null;
+      if (resource === "client_company")
+        return db<
+          ResourceRow[]
+        >`select c.id,c.company_name label,c.assigned_owner_id owner_id,null::uuid reviewer_id,md5(to_jsonb(c)::text) version,(c.data_origin<>'client') locked from companies c where (${actor.role === "Admin"} or c.assigned_team_id=${actor.teamId}::uuid) and (${filters.includeFixtures === true && actor.role === "Admin"} or c.data_origin<>'fixture') and (${ids ? [...ids] : null}::uuid[] is null or c.id=any(${ids ? [...ids] : null}::uuid[])) and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id=${filters.teamId ?? null}::uuid) and (${filters.ownerId ?? null}::uuid is null or c.assigned_owner_id=${filters.ownerId ?? null}::uuid) and (${filters.clientStatus ?? null}::text is null or c.status=${filters.clientStatus ?? null}) and (${q}::text is null or (c.company_name||' '||c.cr_number||' '||c.br_number) ilike ${q} escape '\\') order by c.id limit 20001`;
+      const rows = await db<
+        (ResourceRow & {
+          company_id: string;
+          company_team_id: string | null;
+          case_id: string | null;
+          case_owner_id: string | null;
+          case_reviewer_id: string | null;
+        })[]
+      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where (${actor.role === "Admin"} or c.assigned_team_id=${actor.teamId}::uuid or arc.owner_id=${actor.userId!} or arc.reviewer_id=${actor.userId!}) and (${filters.includeFixtures === true && actor.role === "Admin"} or c.data_origin<>'fixture') and (${ids ? [...ids] : null}::uuid[] is null or d.id=any(${ids ? [...ids] : null}::uuid[])) and (${filters.caseId ?? null}::uuid is null or d.case_id=${filters.caseId ?? null}::uuid) and (${q}::text is null or d.file_name ilike ${q} escape '\\') order by d.id limit 20001`;
+      return rows.filter((r) =>
+        isDocumentVisibleToStaffActor(actor, {
+          companyId: r.company_id,
+          companyTeamId: r.company_team_id,
+          caseId: r.case_id,
+          caseOwnerId: r.case_owner_id,
+          caseReviewerId: r.case_reviewer_id,
+        }),
+      );
+    }
     const allowedFields =
       resource === "annual_return_case"
         ? new Set([
@@ -294,6 +334,88 @@ export function createBulkOperationsRepository({
       payloadHash,
     };
   }
+  async function previewAction(
+    actor: AuthenticatedActor,
+    input: Parameters<typeof previewActionSchema.parse>[0],
+  ): Promise<BulkPreview> {
+    const data = previewActionSchema.parse(input);
+    const verified = await currentActor(sql, actor);
+    const definition = MAINTENANCE_ACTIONS[data.action.kind];
+    definition.permission(verified);
+    if (definition.resource !== data.resource) throw new Error("Action does not match resource.");
+    let items: SnapshotItem[];
+    if (data.selection.mode === "filtered_snapshot") {
+      const [saved] = await sql<
+        { resource: BulkResource; items: SnapshotItem[] }[]
+      >`select resource,items from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
+      if (!saved || saved.resource !== data.resource)
+        throw new Error("Forbidden: own matching unexpired snapshot required.");
+      const excluded = new Set(data.selection.excludedIds),
+        original = new Set(saved.items.map((i) => i.id));
+      if ([...excluded].some((id) => !original.has(id)))
+        throw new Error("Excluded IDs are outside this snapshot.");
+      items = saved.items.filter((i) => !excluded.has(i.id));
+    } else items = unique(data.selection.ids).map((id) => ({ id, version: "", reason: null }));
+    const current = new Map(
+      (
+        await resources(
+          sql,
+          verified,
+          data.resource,
+          {},
+          items.map((i) => i.id),
+        )
+      ).map((r) => [r.id, r]),
+    );
+    const details: { id: string; output: MaintenanceOutput }[] = [];
+    for (const item of items) {
+      const row = current.get(item.id);
+      if (!row) {
+        item.reason = "forbidden";
+        continue;
+      }
+      if (data.selection.mode === "filtered_snapshot" && row.version !== item.version) {
+        item.reason = "conflict";
+        continue;
+      }
+      try {
+        const p = await definition.preview({
+          db: sql,
+          actor: verified,
+          id: item.id,
+          action: data.action,
+        });
+        item.version = p.version;
+        item.reason = null;
+        if (details.length < 100) details.push({ id: item.id, output: p.output });
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        if (/^Forbidden:|ineligible|inactive/.test(error.message)) item.reason = "forbidden";
+        else if (/^Locked:|Closed|completed/.test(error.message)) item.reason = "locked";
+        else if (/version changed|stale/i.test(error.message)) item.reason = "conflict";
+        else if (/reason is required|Owner and reviewer/.test(error.message))
+          item.reason = "failed";
+        else throw error;
+      }
+    }
+    const payloadHash = await hash({ resource: data.resource, action: data.action, items });
+    const [p] = await sql<
+      { id: string }[]
+    >`insert into bulk_operation_previews(actor_user_id,auth_user_id,resource,assignment,action_key,items,payload_hash) values(${verified.userId!},${verified.authUserId},${data.resource},${sql.json(data.action)},${data.action.kind},${sql.json(items)},${payloadHash}) returning id`;
+    return {
+      previewId: p.id,
+      count: items.length,
+      eligibleCount: items.filter((i) => !i.reason).length,
+      reasons: {
+        forbidden: items.filter((i) => i.reason === "forbidden").length,
+        locked: items.filter((i) => i.reason === "locked").length,
+        conflict: items.filter((i) => i.reason === "conflict").length,
+        failed: items.filter((i) => i.reason === "failed").length,
+      },
+      payloadHash,
+      details,
+    };
+  }
   async function execute(
     actor: AuthenticatedActor,
     input: Parameters<typeof executeSchema.parse>[0],
@@ -310,8 +432,9 @@ export function createBulkOperationsRepository({
           items: SnapshotItem[];
           payload_hash: string;
           valid: boolean;
+          action_key: "assignment" | MaintenanceActionKind;
         }[]
-      >`select id,resource,assignment,items,payload_hash,expires_at>now() valid from bulk_operation_previews where id=${data.previewId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId}`;
+      >`select id,resource,assignment,items,payload_hash,action_key,expires_at>now() valid from bulk_operation_previews where id=${data.previewId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId}`;
       if (!p) throw new Error("Forbidden: own preview required.");
       const [existing] = await tx<
         { id: string; payload_hash: string; state: JobResult["state"] }[]
@@ -324,7 +447,7 @@ export function createBulkOperationsRepository({
       if (!p.valid) throw new Error("Preview expired. Create a new preview.");
       const [j] = await tx<
         { id: string; state: JobResult["state"] }[]
-      >`insert into bulk_operation_jobs(preview_id,actor_user_id,auth_user_id,idempotency_key,payload_hash,resource,assignment,total) values(${p.id},${verified.userId!},${verified.authUserId},${data.idempotencyKey},${p.payload_hash},${p.resource},${tx.json(p.assignment)},${p.items.length}) on conflict(actor_user_id,idempotency_key) do nothing returning id,state`;
+      >`insert into bulk_operation_jobs(preview_id,actor_user_id,auth_user_id,idempotency_key,payload_hash,resource,assignment,total,action_key) values(${p.id},${verified.userId!},${verified.authUserId},${data.idempotencyKey},${p.payload_hash},${p.resource},${tx.json(p.assignment)},${p.items.length},${p.action_key}) on conflict(actor_user_id,idempotency_key) do nothing returning id,state`;
       if (!j) {
         const [r] = await tx<
           { id: string; payload_hash: string; state: JobResult["state"] }[]
@@ -357,7 +480,7 @@ export function createBulkOperationsRepository({
       cursor = data.cursor ?? 0;
     const rows = await sql<
       ItemRow[]
-    >`select ordinal,resource_id,expected_version,state,reason,retryable,attempts from bulk_operation_job_items where job_id=${j.id} and ordinal>=${cursor} order by ordinal limit ${limit + 1}`;
+    >`select ordinal,resource_id,expected_version,state,reason,retryable,attempts,result from bulk_operation_job_items where job_id=${j.id} and ordinal>=${cursor} order by ordinal limit ${limit + 1}`;
     const allowed = new Map(
       (
         await resources(
@@ -390,6 +513,7 @@ export function createBulkOperationsRepository({
         reason: allowed.has(r.resource_id) ? r.reason : "access_denied",
         retryable: allowed.has(r.resource_id) && r.retryable,
         attempts: r.attempts,
+        output: allowed.has(r.resource_id) ? (r.result?.output ?? null) : null,
       })),
       nextCursor: rows.length > limit ? rows[limit].ordinal : null,
     };
@@ -420,7 +544,7 @@ export function createBulkOperationsRepository({
     reason: string | null,
     retryable = false,
   ) {
-    await tx`update bulk_operation_job_items set state=${state},reason=${reason},retryable=${retryable},attempts=attempts+1,started_at=coalesce(started_at,now()),finished_at=now(),result=jsonb_build_object('state',${state}::text,'reason',${reason}::text,'history',coalesce(result->'history','[]'::jsonb)||jsonb_build_array(jsonb_build_object('attempt',attempts+1,'state',${state}::text,'reason',${reason}::text,'at',clock_timestamp(),'lease',${lease.token}::text,'actor',(select actor_user_id from bulk_operation_jobs where id=${lease.jobId})))) where job_id=${lease.jobId} and ordinal=${item.ordinal} and state='pending'`;
+    await tx`update bulk_operation_job_items set state=${state},reason=${reason},retryable=${retryable},attempts=attempts+1,started_at=coalesce(started_at,now()),finished_at=now(),result=coalesce(result,'{}'::jsonb)||jsonb_build_object('state',${state}::text,'reason',${reason}::text,'history',coalesce(result->'history','[]'::jsonb)||jsonb_build_array(jsonb_build_object('attempt',attempts+1,'state',${state}::text,'reason',${reason}::text,'at',clock_timestamp(),'lease',${lease.token}::text,'actor',(select actor_user_id from bulk_operation_jobs where id=${lease.jobId})))) where job_id=${lease.jobId} and ordinal=${item.ordinal} and state='pending'`;
     await tx`update bulk_operation_jobs set lease_until=now()+interval '30 seconds',updated_at=now() where id=${lease.jobId} and lease_token=${lease.token}`;
   }
   async function lockedLease(tx: postgres.TransactionSql, lease: JobLease) {
@@ -443,6 +567,8 @@ export function createBulkOperationsRepository({
         if (!item) return false;
         selected = item;
         let actor: AuthenticatedActor;
+        if (j.action_key !== "assignment")
+          await lockMaintenanceResource(tx, j.resource, item.resource_id);
         try {
           actor = await currentActor(
             tx,
@@ -464,6 +590,19 @@ export function createBulkOperationsRepository({
         const [current] = await resources(tx, actor, j.resource, {}, [item.resource_id], true);
         if (!current) {
           await settleItem(tx, lease, item, "forbidden", "current_scope_denied");
+          return true;
+        }
+        if (j.action_key !== "assignment") {
+          const action = maintenanceActionSchema.parse(j.assignment);
+          const definition = MAINTENANCE_ACTIONS[action.kind];
+          if (definition.resource !== j.resource || action.kind !== j.action_key)
+            throw new Error("Invalid persisted maintenance action.");
+          definition.permission(actor);
+          const context = { db: tx, actor, id: item.resource_id, action };
+          const prepared = await definition.validateCurrent(context, item.expected_version);
+          const output = await definition.apply(context, prepared);
+          await tx`update bulk_operation_job_items set result=jsonb_set(coalesce(result,'{}'::jsonb),'{output}',${tx.json(output)}::jsonb) where job_id=${j.id} and ordinal=${item.ordinal}`;
+          await settleItem(tx, lease, item, "succeeded", null);
           return true;
         }
         if (current.locked) {
@@ -562,13 +701,14 @@ export function createBulkOperationsRepository({
         ItemRow[]
       >`select * from bulk_operation_job_items where job_id=${jobId} and state='unknown' order by ordinal for update`;
       for (const i of rows) {
+        if (j.action_key !== "assignment") continue; // SQL transport uncertainty requires an owner to inspect saved output/domain audit; never auto-requeue an action.
         const [r] = await resources(tx, verified, j.resource, {}, [i.resource_id]);
         const state = r?.version === i.expected_version ? "pending" : "conflict";
         await tx`update bulk_operation_job_items set state=${state},reason='sql_outcome_reconciled',finished_at=case when ${state}='pending' then null else now() end,result=jsonb_set(coalesce(result,'{}'::jsonb),'{history}',coalesce(result->'history','[]'::jsonb)||jsonb_build_array(jsonb_build_object('action','reconcile_unknown','state',${state}::text,'actor',${verified.userId!}::text,'at',clock_timestamp()))) where job_id=${jobId} and ordinal=${i.ordinal}`;
       }
-      if (rows.length)
+      if (rows.length && j.action_key === "assignment")
         await tx`update bulk_operation_jobs set state=case when exists(select 1 from bulk_operation_job_items where job_id=${jobId} and state='pending') then 'queued' else 'partial' end,lease_token=null,lease_until=null,updated_at=now() where id=${jobId}`;
-      return { reconciledCount: rows.length };
+      return { reconciledCount: j.action_key === "assignment" ? rows.length : 0 };
     });
   }
   async function listJobs(
@@ -597,6 +737,7 @@ export function createBulkOperationsRepository({
   return {
     createSnapshot,
     preview,
+    previewAction,
     execute,
     getJob,
     claim,

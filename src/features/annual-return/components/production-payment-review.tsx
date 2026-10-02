@@ -14,11 +14,18 @@ import {
 import { annualReturnQueryKeys } from "../query-keys";
 import { PAYMENT_RETURN_REASONS, type PaymentReviewInput } from "../payment-review-input";
 import type { AnnualReturnCase } from "../types";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 const money = (value: number | undefined) =>
   value === undefined
     ? "待補"
     : `HK$${value.toLocaleString("en-HK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-export function ProductionPaymentReview({ actorScope }: { actorScope: string }) {
+export function ProductionPaymentReview({
+  actorScope,
+  canBulk = false,
+}: {
+  actorScope: string;
+  canBulk?: boolean;
+}) {
   const client = useQueryClient();
   const casesQuery = useInfiniteQuery({
     queryKey: [...annualReturnQueryKeys.list({ paymentEvidence: true }), actorScope],
@@ -50,6 +57,17 @@ export function ProductionPaymentReview({ actorScope }: { actorScope: string }) 
       <p>
         先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
       </p>
+      {canBulk ? (
+        <BulkSelectionToolbar
+          actorScope={actorScope}
+          resource="annual_return_case"
+          filters={{}}
+          page={cases.map((c) => ({ id: c.id, label: c.companyName }))}
+          total={casesQuery.hasNextPage ? null : casesQuery.isSuccess ? cases.length : null}
+          pageSize={200}
+          maintenanceActions={["payment_list_export"]}
+        />
+      ) : null}
       {casesQuery.isError || documentsQuery.isError ? (
         <p role="alert">Production payment evidence is unavailable.</p>
       ) : null}

@@ -9,6 +9,8 @@ import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { listClientAssignmentOptions, listClients } from "../server-fns";
 import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types";
 import { dataOriginLabel } from "../data-origin";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
+import type { AuthenticatedActor } from "@/features/auth/types";
 
 const REGISTER_GRID_COLUMNS =
   "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
@@ -31,8 +33,10 @@ const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
 
 export function ProductionClientRegister({
   allowFixtureDiagnostics = false,
+  actor = null,
 }: {
   allowFixtureDiagnostics?: boolean;
+  actor?: AuthenticatedActor | null;
 }) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
@@ -42,7 +46,7 @@ export function ProductionClientRegister({
   const [includeFixtures, setIncludeFixtures] = useState(false);
 
   const clientsQuery = useQuery({
-    queryKey: ["clients", { includeFixtures }],
+    queryKey: ["clients", { includeFixtures, actorScope: actor }],
     queryFn: () => listClients({ data: { includeFixtures } }),
     retry: false,
   });
@@ -94,6 +98,22 @@ export function ProductionClientRegister({
           ? "診斷範圍：包含測試資料；測試與歷史資料不會外發。"
           : "正式範圍：排除測試資料；歷史資料只供查閱。"}
       </p>
+      {actor?.active && (actor.role === "Admin" || actor.role === "Manager") ? (
+        <BulkSelectionToolbar
+          actorScope={JSON.stringify(actor)}
+          resource="client_company"
+          filters={{
+            ...(query.trim() ? { q: query.trim() } : {}),
+            ...(statusFilter !== "all" ? { clientStatus: statusFilter } : {}),
+            ...(teamFilter !== "all" ? { teamId: teamFilter } : {}),
+            includeFixtures,
+          }}
+          page={visibleClients.map((c) => ({ id: c.id, label: c.companyName }))}
+          total={clientsQuery.isSuccess ? visibleClients.length : null}
+          pageSize={visibleClients.length}
+          maintenanceActions={["client_maintenance"]}
+        />
+      ) : null}
       {allowFixtureDiagnostics ? (
         <label className="flex items-center gap-2 text-sm">
           <input

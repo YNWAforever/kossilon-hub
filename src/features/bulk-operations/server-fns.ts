@@ -10,6 +10,7 @@ import {
   jobSchema,
   resultsSchema,
   jobHistorySchema,
+  previewActionSchema,
 } from "./types";
 export async function previewBulkForActor(
   actor: AuthenticatedActor,
@@ -55,6 +56,12 @@ export const previewBulkAssignment = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
     return previewBulkForActor(actor, data, repository);
+  });
+export const previewBulkMaintenance = createServerFn({ method: "POST" })
+  .validator(previewActionSchema)
+  .handler(async ({ data }) => {
+    const { actor, repository } = await context();
+    return repository.previewAction(actor, data);
   });
 export const executeBulkAssignment = createServerFn({ method: "POST" })
   .validator(executeSchema)
@@ -118,13 +125,19 @@ export const exportBulkResults = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
     let cursor: number | undefined;
-    const lines = ["item,state,reason,attempts"];
+    const lines = ["item,state,reason,attempts,output_json"];
     let exported = 0;
     do {
       const page = await repository.getJob(actor, { jobId: data.jobId, cursor, limit: 100 });
       for (const i of page.items) {
         if (!i.resourceId) continue;
-        const values = [i.resourceId, i.state, i.reason ?? "", String(i.attempts)];
+        const values = [
+          i.resourceId,
+          i.state,
+          i.reason ?? "",
+          String(i.attempts),
+          i.output ? JSON.stringify(i.output) : "",
+        ];
         lines.push(values.map((v) => '"' + v.replaceAll('"', '""') + '"').join(","));
         exported++;
       }

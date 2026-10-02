@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { ANNUAL_RETURN_STATUSES } from "@/features/annual-return/types";
-export const resourceSchema = z.enum(["annual_return_case", "work_item"]);
+export const resourceSchema = z.enum([
+  "annual_return_case",
+  "work_item",
+  "client_company",
+  "document",
+]);
 export const selectionSchema = z.discriminatedUnion("mode", [
   z.object({ mode: z.literal("explicit_ids"), ids: z.array(z.string().uuid()).max(5000) }).strict(),
   z
@@ -32,6 +37,8 @@ export const scopeFiltersSchema = z
     priority: z.enum(["high", "normal"]).optional(),
     view: z.enum(["mine", "team", "breached"]).optional(),
     unassigned: z.boolean().optional(),
+    clientStatus: z.enum(["active", "inactive"]).optional(),
+    caseId: z.string().uuid().optional(),
   })
   .strict();
 export const snapshotSchema = z
@@ -45,8 +52,42 @@ export const assignmentSchema = z
   })
   .strict();
 export const previewSchema = z
-  .object({ resource: resourceSchema, selection: selectionSchema, assignment: assignmentSchema })
+  .object({
+    resource: z.enum(["annual_return_case", "work_item"]),
+    selection: selectionSchema,
+    assignment: assignmentSchema,
+  })
   .strict();
+export const maintenanceActionSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("client_maintenance"),
+      ownerId: z.string().uuid(),
+      teamId: z.string().uuid(),
+    })
+    .strict(),
+  z.object({ kind: z.literal("document_assignment"), ...assignmentSchema.shape }).strict(),
+  z
+    .object({
+      kind: z.literal("document_return_draft"),
+      reasons: z
+        .record(z.string().uuid(), z.string().trim().min(1).max(500))
+        .refine(
+          (reasons) => Object.keys(reasons).length <= 5000,
+          "At most 5000 individual reasons.",
+        ),
+    })
+    .strict(),
+  z.object({ kind: z.literal("document_list_export") }).strict(),
+  z.object({ kind: z.literal("follow_up_draft") }).strict(),
+  z.object({ kind: z.literal("payment_list_export") }).strict(),
+]);
+export const previewActionSchema = z
+  .object({ resource: resourceSchema, selection: selectionSchema, action: maintenanceActionSchema })
+  .strict();
+export type MaintenanceAction = z.infer<typeof maintenanceActionSchema>;
+export type MaintenanceActionKind = MaintenanceAction["kind"];
+export type MaintenanceOutput = Record<string, string | number | boolean | null>;
 export const executeSchema = z
   .object({ previewId: z.string().uuid(), idempotencyKey: z.string().min(16).max(120) })
   .strict();
@@ -92,6 +133,7 @@ export type BulkPreview = {
   eligibleCount: number;
   reasons: { forbidden: number; locked: number; conflict: number; failed: number };
   payloadHash: string;
+  details?: { id: string; output: MaintenanceOutput }[];
 };
 export type JobItemResult = {
   ordinal: number;
@@ -101,6 +143,7 @@ export type JobItemResult = {
   reason: string | null;
   retryable: boolean;
   attempts: number;
+  output?: MaintenanceOutput | null;
 };
 export type JobResult = {
   jobId: string;

@@ -7,6 +7,7 @@ import {
   createBulkSelectionSnapshot,
   getBulkSnapshotMembership,
   previewBulkAssignment,
+  previewBulkMaintenance,
   executeBulkAssignment,
   listBulkJobs,
   getBulkJob,
@@ -23,6 +24,8 @@ import type {
   BulkSelection,
   BulkPreview,
   BulkJobCursor,
+  MaintenanceActionKind,
+  MaintenanceAction,
 } from "@/features/bulk-operations/types";
 type Props = {
   actorScope: string;
@@ -31,6 +34,15 @@ type Props = {
   page: readonly { id: string; label: string }[];
   total: number | null;
   pageSize?: number;
+  maintenanceActions?: MaintenanceActionKind[];
+};
+const maintenanceLabels: Record<MaintenanceActionKind, string> = {
+  client_maintenance: "客戶 owner／team 維護（改資料）",
+  document_assignment: "分派文件所屬案件（同步案及工作）",
+  document_return_draft: "文件退回草稿（待單筆覆核）",
+  document_list_export: "安全文件清單（只有 metadata）",
+  follow_up_draft: "追件草稿（不派送）",
+  payment_list_export: "付款核對清單（不入賬）",
 };
 /** Changing actor replaces the entire session; changing filters replaces selection only. */
 export function BulkSelectionToolbar(props: Props) {
@@ -56,6 +68,7 @@ function SelectionControls({
   page,
   total,
   pageSize = 50,
+  maintenanceActions,
   onCreated,
 }: Props & { onCreated: (jobId: string) => void }) {
   const [selection, setSelection] = useState<BulkSelection>({ mode: "explicit_ids", ids: [] }),
@@ -63,6 +76,15 @@ function SelectionControls({
     [assigneeId, setAssigneeId] = useState(""),
     [target, setTarget] = useState<"owner" | "reviewer">("owner"),
     [overrideReason, setOverrideReason] = useState("");
+  const [actionKind, setActionKind] = useState<MaintenanceActionKind | "assignment">(
+      maintenanceActions?.[0] ?? "assignment",
+    ),
+    [teamId, setTeamId] = useState(""),
+    [returnReasons, setReturnReasons] = useState<Record<string, string>>({});
+  const needsAssignee =
+    actionKind === "assignment" ||
+    actionKind === "client_maintenance" ||
+    actionKind === "document_assignment";
   const [preview, setPreview] = useState<BulkPreview | null>(null),
     [request, setRequest] = useState<{ previewId: string; idempotencyKey: string } | null>(null);
   const client = useQueryClient();
@@ -70,6 +92,7 @@ function SelectionControls({
     queryKey: ["bulk-assignees", actorScope],
     queryFn: () => listBulkAssignees({ data: {} }),
     retry: false,
+    enabled: needsAssignee,
   });
   const labels = assignmentLabels(
     (assignees.data ?? []).map((s) => ({
@@ -108,8 +131,26 @@ function SelectionControls({
     },
   });
   const dryRun = useMutation({
-    mutationFn: () =>
-      previewBulkAssignment({
+    mutationFn: () => {
+      if (actionKind !== "assignment") {
+        const action: MaintenanceAction =
+          actionKind === "client_maintenance"
+            ? { kind: actionKind, ownerId: assigneeId, teamId }
+            : actionKind === "document_assignment"
+              ? {
+                  kind: actionKind,
+                  target,
+                  assigneeId,
+                  ...(overrideReason.trim() ? { overrideReason: overrideReason.trim() } : {}),
+                }
+              : actionKind === "document_return_draft"
+                ? { kind: actionKind, reasons: returnReasons }
+                : { kind: actionKind };
+        return previewBulkMaintenance({ data: { resource, selection, action } });
+      }
+      if (resource !== "annual_return_case" && resource !== "work_item")
+        throw new Error("Unsupported assignment resource");
+      return previewBulkAssignment({
         data: {
           resource,
           selection,
@@ -119,7 +160,8 @@ function SelectionControls({
             ...(overrideReason.trim() ? { overrideReason: overrideReason.trim() } : {}),
           },
         },
-      }),
+      });
+    },
     retry: false,
     onSuccess: (p) => {
       setPreview(p);
@@ -167,7 +209,33 @@ function SelectionControls({
   const busy = snapshot.isPending || dryRun.isPending || execute.isPending;
   return (
     <div className="space-y-3">
-      <h2 className="font-semibold">批量分派</h2>
+      <h2 className="font-semibold">{maintenanceActions ? "批量日常維護" : "批量分派"}</h2>
+      {maintenanceActions ? (
+        <>
+          <label>
+            操作
+            <select
+              aria-label="Bulk action"
+              value={actionKind}
+              disabled={busy}
+              onChange={(e) => {
+                setActionKind(e.target.value as MaintenanceActionKind);
+                setPreview(null);
+                setRequest(null);
+                dryRun.reset();
+                execute.reset();
+              }}
+            >
+              {maintenanceActions.map((kind) => (
+                <option key={kind} value={kind}>
+                  {maintenanceLabels[kind]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>草稿須另作單筆批准；清單不包含文件 bytes，不代表已付款、已派送或已交件。</p>
+        </>
+      ) : null}
       <p>
         每頁{pageSize}；已載入{page.length}；全部{total ?? "未知"}
       </p>
@@ -216,42 +284,101 @@ function SelectionControls({
           ))}
         </div>
       </details>
-      <label>
-        責任
-        <select
-          aria-label="Bulk responsibility"
-          disabled={busy}
-          value={target}
-          onChange={(e) => {
-            setTarget(e.target.value as typeof target);
-            setPreview(null);
-            setRequest(null);
-          }}
-        >
-          <option value="owner">Owner</option>
-          <option value="reviewer">Reviewer</option>
-        </select>
-      </label>
-      <label>
-        員工
-        <select
-          aria-label="Bulk assignee"
-          disabled={busy || assignees.isError}
-          value={assigneeId}
-          onChange={(e) => {
-            setAssigneeId(e.target.value);
-            setPreview(null);
-            setRequest(null);
-          }}
-        >
-          <option value="">選擇有效員工</option>
-          {assignees.data?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {labels.get(s.id)}
-            </option>
-          ))}
-        </select>
-      </label>
+      {needsAssignee ? (
+        <>
+          <label>
+            責任
+            <select
+              aria-label="Bulk responsibility"
+              disabled={busy}
+              value={target}
+              onChange={(e) => {
+                setTarget(e.target.value as typeof target);
+                setPreview(null);
+                setRequest(null);
+              }}
+            >
+              <option value="owner">Owner</option>
+              <option value="reviewer">Reviewer</option>
+            </select>
+          </label>
+          {actionKind === "client_maintenance" ? (
+            <label>
+              目標 team
+              <select
+                aria-label="Bulk company team"
+                value={teamId}
+                disabled={busy}
+                onChange={(e) => {
+                  setTeamId(e.target.value);
+                  setPreview(null);
+                  setRequest(null);
+                }}
+              >
+                <option value="">選擇目標 team</option>
+                {[
+                  ...new Map(
+                    (assignees.data ?? [])
+                      .filter((s) => s.teamId)
+                      .map((s) => [s.teamId!, s.teamName]),
+                  ).entries(),
+                ].map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name ?? id}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <label>
+            員工
+            <select
+              aria-label="Bulk assignee"
+              disabled={busy || assignees.isError}
+              value={assigneeId}
+              onChange={(e) => {
+                setAssigneeId(e.target.value);
+                setPreview(null);
+                setRequest(null);
+              }}
+            >
+              <option value="">選擇有效員工</option>
+              {assignees.data?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {labels.get(s.id)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      ) : null}
+      {actionKind === "document_return_draft" ? (
+        <fieldset>
+          <legend>逐筆確認退回原因；未填原因的紀錄不會建立草稿。</legend>
+          {page
+            .filter((p) =>
+              selection.mode === "explicit_ids"
+                ? selection.ids.includes(p.id)
+                : known.has(p.id) && !selection.excludedIds.includes(p.id),
+            )
+            .map((p) => (
+              <label className="block" key={p.id}>
+                {p.label}
+                <input
+                  aria-label={`Return reason ${p.label}`}
+                  maxLength={500}
+                  disabled={busy}
+                  value={returnReasons[p.id] ?? ""}
+                  onChange={(e) => {
+                    setReturnReasons((current) => ({ ...current, [p.id]: e.target.value }));
+                    setPreview(null);
+                    setRequest(null);
+                  }}
+                />
+              </label>
+            ))}
+        </fieldset>
+      ) : null}
       {resource === "work_item" ? (
         <label>
           非首選或超額原因
@@ -271,13 +398,13 @@ function SelectionControls({
         disabled={
           busy ||
           count === 0 ||
-          !assigneeId ||
-          assignees.isError ||
+          (needsAssignee && (!assigneeId || assignees.isError)) ||
+          (actionKind === "client_maintenance" && !teamId) ||
           (selection.mode === "filtered_snapshot" && membership.isError)
         }
         onClick={() => dryRun.mutate()}
       >
-        預覽批量分派
+        {maintenanceActions ? "預覽批量維護" : "預覽批量分派"}
       </button>
       {preview ? (
         <div role="status">
@@ -287,15 +414,32 @@ function SelectionControls({
             {preview.reasons.failed}
           </p>
           <p>批准固定範圍後，伺服器仍會逐筆重新核對權限與版本。</p>
+          {preview.details?.map((item) => (
+            <div key={item.id} className="rounded border p-2">
+              <p>{page.find((p) => p.id === item.id)?.label ?? item.id}</p>
+              <p>
+                {String(
+                  item.output.messagePreview ??
+                    item.output.reason ??
+                    item.output.fileName ??
+                    item.output.invoiceNumber ??
+                    item.output.kind,
+                )}
+              </p>
+            </div>
+          ))}
           <button
             disabled={busy || preview.eligibleCount === 0 || !request}
             onClick={() => execute.mutate()}
           >
-            批准並建立分派工作
+            {maintenanceActions ? "批准並建立維護工作" : "批准並建立分派工作"}
           </button>
         </div>
       ) : null}
-      {snapshot.isError || dryRun.isError || assignees.isError || membership.isError ? (
+      {snapshot.isError ||
+      dryRun.isError ||
+      (needsAssignee && assignees.isError) ||
+      membership.isError ? (
         <p role="alert">未能取得當前範圍、員工或預覽；請重新核對，暫不套用。</p>
       ) : null}
       {execute.isError ? (
@@ -342,6 +486,8 @@ function BulkJobProgress({
     void client.invalidateQueries({ queryKey: ["annual-return"] });
     void client.invalidateQueries({ queryKey: ["work-queue"] });
     void client.invalidateQueries({ queryKey: ["staff-admin"] });
+    void client.invalidateQueries({ queryKey: ["clients"] });
+    void client.invalidateQueries({ queryKey: ["documents"] });
   }
   const resume = useMutation({
     mutationFn: () => resumeBulkJob({ data: { jobId: jobId! } }),
@@ -458,6 +604,20 @@ function BulkJobProgress({
                 "無權查閱此項 · "
               )}
               {i.state} · {i.reason ?? "已保存"} · 嘗試{i.attempts}
+              {i.output ? (
+                <span>
+                  {" "}
+                  · {String(i.output.kind)} ·{" "}
+                  {String(
+                    i.output.messagePreview ??
+                      i.output.reason ??
+                      i.output.fileName ??
+                      i.output.invoiceNumber ??
+                      "已保存結果",
+                  )}{" "}
+                  {i.output.approvalRequired ? "（草稿，須單筆覆核）" : ""}
+                </span>
+              ) : null}
             </p>
           ))}
           {result.hasNextPage ? (

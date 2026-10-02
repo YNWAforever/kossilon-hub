@@ -6,6 +6,7 @@ const api = vi.hoisted(() => ({
   snapshot: vi.fn(),
   membership: vi.fn(),
   preview: vi.fn(),
+  maintenance: vi.fn(),
   execute: vi.fn(),
   jobs: vi.fn(),
   get: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock("@/features/bulk-operations/server-fns", () => ({
   createBulkSelectionSnapshot: api.snapshot,
   getBulkSnapshotMembership: api.membership,
   previewBulkAssignment: api.preview,
+  previewBulkMaintenance: api.maintenance,
   executeBulkAssignment: api.execute,
   listBulkJobs: api.jobs,
   getBulkJob: api.get,
@@ -77,6 +79,57 @@ function setup() {
   return { ...rendered, element };
 }
 describe("explicit scope and durable bulk toolbar", () => {
+  it("previews a draft-only maintenance action without an assignee and invalidates approval on action changes", async () => {
+    api.maintenance.mockResolvedValue({
+      previewId: snapshotId,
+      count: 1,
+      eligibleCount: 1,
+      reasons: { forbidden: 0, locked: 0, failed: 0, conflict: 0 },
+      payloadHash: "draft-hash",
+      details: [
+        {
+          id: ids[0],
+          output: {
+            kind: "follow_up_draft",
+            messagePreview: "Synthetic draft, no dispatch",
+            status: "draft",
+          },
+        },
+      ],
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    render(
+      <QueryClientProvider client={client}>
+        <BulkSelectionToolbar
+          actorScope="manager"
+          resource="annual_return_case"
+          filters={{}}
+          page={page.slice(0, 1)}
+          total={1}
+          maintenanceActions={["follow_up_draft", "payment_list_export"]}
+        />
+      </QueryClientProvider>,
+    );
+    fireEvent.click(screen.getByText("選取已載入紀錄"));
+    fireEvent.click(screen.getByText("預覽批量維護"));
+    await waitFor(() =>
+      expect(api.maintenance).toHaveBeenCalledWith({
+        data: {
+          resource: "annual_return_case",
+          selection: { mode: "explicit_ids", ids: [ids[0]] },
+          action: { kind: "follow_up_draft" },
+        },
+      }),
+    );
+    expect(await screen.findByText("Synthetic draft, no dispatch")).toBeTruthy();
+    expect(screen.getByText("批准並建立維護工作")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Bulk action"), {
+      target: { value: "payment_list_export" },
+    });
+    expect(screen.queryByText("批准並建立維護工作")).toBeNull();
+    expect(api.execute).not.toHaveBeenCalled();
+    expect(api.preview).not.toHaveBeenCalled();
+  });
   it("loads older saved job pages after refresh", async () => {
     api.jobs.mockImplementation(async ({ data }) =>
       data.cursor

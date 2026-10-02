@@ -17,6 +17,7 @@ import {
   type DocumentRejectionReasonCode,
 } from "../features/documents/rejection-reasons";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { DocumentSummary } from "../features/documents/repository";
 import { DocumentRecoveryPanel } from "../features/documents/document-recovery-panel";
 
@@ -160,6 +161,24 @@ function DocumentsRoute() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title="Documents" />
+      {dataMode === "production" &&
+      !invalidCaseId &&
+      actor?.active &&
+      (actor.role === "Admin" || actor.role === "Manager") ? (
+        <BulkSelectionToolbar
+          actorScope={JSON.stringify(actor)}
+          resource="document"
+          filters={productionCaseId ? { caseId: productionCaseId } : {}}
+          page={(productionDocumentsQuery.data ?? []).map((d) => ({ id: d.id, label: d.fileName }))}
+          total={productionDocumentsQuery.isSuccess ? productionDocumentsQuery.data.length : null}
+          pageSize={productionDocumentsQuery.data?.length ?? 0}
+          maintenanceActions={[
+            "document_assignment",
+            "document_return_draft",
+            "document_list_export",
+          ]}
+        />
+      ) : null}
 
       {dataMode === "production" && invalidCaseId ? (
         <p role="alert" className="text-sm text-destructive">

@@ -40,6 +40,7 @@ export function ProductionPaymentsRoute() {
   const actor = Route.useRouteContext().actor;
   return (
     <ProductionPaymentReview
+      canBulk={actor?.active === true && (actor.role === "Admin" || actor.role === "Manager")}
       actorScope={JSON.stringify(
         actor ? [actor.authUserId, actor.userId, actor.role, actor.teamId, actor.active] : null,
       )}
