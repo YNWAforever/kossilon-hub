@@ -68,3 +68,15 @@ T12 candidate2955a27: local0071 only,77 focused tests/0skip with actual Postgres
 ## PR07 final gate — 2026-10-02
 
 Source422b822:203files/2052pass/0skip194.75s actual isolated Postgres17; all CI gates PASS, 12 dev routes and compiled native hook. One review fix pass RED/GREEN, no new migration. Source45 vs last production66 historical IDs remains unreconciled for release; no production SQL/deploy. Original50 retains16 LOCAL ONLY pass/20blocked/14not_run; fresh Auth and genuine providers remain blocked. Evidence: evidence/2026-10-02-pr07-gates.json. T17 official protocol research is read-only, not a connected provider result.
+
+## B01 security and preview — 2026-10-02
+
+- Independent main-based draft#109 source7bbc172/docs6296601; official patched Start1.168.60/server-core1.169.39 with Router1.170.41/plugin1.168.42. Separate local Postgres17 kossilon_b01_ci on localhost55441, unchanged main migrations/reference seed on a new empty DB. Local177files1761pass0skip129.92s/all original CI gates; fresh package review no Critical/Important, one deferred JSON-success coverage Minor.
+- Actual remote Linux CI run36950872980 PASS:177files1761pass107.29s, original PostgreSQL service and frozen Bun CI. Vercel dpl_6EYTkYCbD7w6pAUV9RVH8GZqkcKb target preview, Ready; no security bypass. Evidence: evidence/2026-10-02-b01-remote.json. Preview readiness is not fresh-role/provider/business acceptance.
+- PR08 additive patch1c0ee51/20ca6b6 uses its own frozen dependency installation; the previous node_modules junction alone was unlinked, shared target untouched. Local audit0078/source46 remains distinct from last observed production66 historical IDs. Production DB/owner/deployment unchanged; new release approval and actual provider acceptance remain gated.
+
+## PR08 final local and binding evidence — 2026-10-02
+
+- Sourcebd2179d:209files2103pass0skip396.89s, actual Postgres17 localhost55441/kossilon_pr02_ci, portableNode22.23.3/Bun1.3.14; own patched dependencies. Typecheck/lint0errors1existingwarning/build/compiledcron/offline/dev12 PASS. Minimal populated0078 repeated/CHECK/rollback rehearsal;46 source IDs, no production application/history rewrite.
+- Actual production Vercel env-list metadata on prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC/team_qvzlsFmfCsLkgItSypqHjw3z shows none of WOZTELL_API_BASE_URL, WOZTELL_ACCESS_TOKEN, WOZTELL_CHANNEL_ID, WOZTELL_WEBHOOK_SECRET or WOZTELL_MEDIA_ALLOWED_HOSTS. R2/Auth/DB/cron bindings are present. No secret values read, no env writes/deployment/provider requests. Messaging owner provides approved tenant/channel/token/webhook protocol and scoped test recipient; Security owner exact approved public CDN hosts/DNS policy; Storage/scanner/Auth owners controlled genuine sample/fresh-role roundtrip.
+- Original50 UAT18LOCALONLYpass/22blocked/10not_run. No genuine message, R2 scan, human business approval or three actual scheduler ticks claimed. Preview readiness of separate B01 is platform evidence only; production still requires reviewed release and external acceptance.

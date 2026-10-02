@@ -95,6 +95,20 @@ owner; do not broaden the host policy.
 
 ## Unknown outcome reconciliation
 
+2026-10-02 metadata-only `vercel env ls production` on the named project/team
+confirms all four WOZTELL bindings and `WOZTELL_MEDIA_ALLOWED_HOSTS` are absent.
+R2/Auth/DB bindings are present; no secret values or genuine provider roundtrip
+were read/tested. Messaging owner supplies approved tenant/channel/protocol and
+scoped credentials; Security owner approves exact CDN hosts/DNS trust; Storage/
+scanner/Auth owners supply controlled staging samples and fresh-role acceptance.
+
+Signed status ingestion enters the repository's atomic source-validation operation
+before updating any message. Conflicting same-event payloads retain the original
+source plus a separate failed audit and leave both messages' status/timestamps
+unchanged. The HTTP acknowledgement only confirms that raw evidence was retained;
+it does not certify delivery. Duplicate and early-binding receipts reuse the same
+monotonic domain service, without an additional pre-validation status write.
+
 Pause the affected item. Record outbox/message IDs, attempt/dispatch marker and
 tenant/channel/request time; obtain provider evidence by the approved operator
 interface. Never paste access tokens in tickets or logs. Confirm whether one

@@ -1,0 +1,46 @@
+{
+  "task": "B01",
+  "observedDate": "2026-10-02",
+  "build": "629660129201323d4f130758771b11bb35aa92af",
+  "pullRequest": "https://github.com/YNWAforever/kossilon-hub/pull/109",
+  "draft": true,
+  "merged": false,
+  "ci": {
+    "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/36950872980",
+    "result": "177files1761pass",
+    "run": 36950872980,
+    "status": "SUCCESS",
+    "seconds": 107.29,
+    "environment": "GitHub Linux original CI/Postgres17 service/frozen Bun"
+  },
+  "deployment": {
+    "url": "https://kossilon-6ooj2owup-ynwaforevers-projects.vercel.app",
+    "state": "Ready",
+    "productionDeploymentPerformed": false,
+    "id": "dpl_6EYTkYCbD7w6pAUV9RVH8GZqkcKb",
+    "target": "preview"
+  },
+  "commands": [
+    "gh pr view109 --json number,state,isDraft,headRefOid,mergeable,statusCheckRollup,url",
+    "gh run view36950872980 --log",
+    "vercel inspect dpl_6EYTkYCbD7w6pAUV9RVH8GZqkcKb --scope ynwaforevers-projects"
+  ],
+  "runtimeAcceptance": "Fresh Auth and genuine provider/business journeys remain unverified; Ready is platform build/deployment evidence only.",
+  "logs": [
+    {
+      "file": "remote-ci.log",
+      "worktree": "security-tanstack-xss-worktree",
+      "sha256": "a079026e78ea727eb2a63ad5df7002036d4901381503ea2ef3144e8ac5fa2007"
+    },
+    {
+      "file": "remote-pr109-first.json",
+      "worktree": "security-tanstack-xss-worktree",
+      "sha256": "f7d6a7b4232de0c0bbbb070f5b5cd09075df5b7880209ce283507a9909166379"
+    },
+    {
+      "file": "remote-preview.log",
+      "worktree": "security-tanstack-xss-worktree",
+      "sha256": "3f769af01cc7887c98bc2032401e84cba2bca55ccf3781211f48dfc66c4f7ea8"
+    }
+  ]
+}
