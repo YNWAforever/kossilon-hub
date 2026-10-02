@@ -70,4 +70,43 @@ describe("business calendar arithmetic", () => {
       /minutes/i,
     );
   });
+
+  it.each([
+    ["2026-03-08T06:30:00.000Z", 120, "2026-03-08T08:30:00.000Z"],
+    ["2026-11-01T04:30:00.000Z", 180, "2026-11-01T07:30:00.000Z"],
+  ] as const)(
+    "counts actual working minutes across a DST change from %s",
+    (start, minutes, expected) => {
+      const calendar: BusinessCalendar = {
+        ...hkCalendar,
+        timezone: "America/New_York",
+        weeklySchedule: {
+          ...hkCalendar.weeklySchedule,
+          sunday: [{ start: "00:00", end: "05:00" }],
+        },
+      };
+      expect(addBusinessMinutes(start, minutes, calendar)).toBe(expected);
+    },
+  );
+
+  it("resolves a non-hour timezone offset without losing partial seconds", () => {
+    expect(
+      addBusinessMinutes("2026-07-10T03:15:30.500Z", 60, {
+        ...hkCalendar,
+        timezone: "Asia/Kathmandu",
+      }),
+    ).toBe("2026-07-10T04:15:30.500Z");
+  });
+
+  it("validates an invalid timezone even when adding zero minutes", () => {
+    expect(() =>
+      addBusinessMinutes("2026-07-10T08:00:00.000Z", 0, {
+        ...hkCalendar,
+        timezone: "Invalid/Synthetic",
+      }),
+    ).toThrow(RangeError);
+    expect(addBusinessMinutes("2026-07-10T08:00:30.500Z", 0, hkCalendar)).toBe(
+      "2026-07-10T08:00:30.500Z",
+    );
+  });
 });

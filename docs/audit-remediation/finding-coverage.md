@@ -1,6 +1,6 @@
 # F01–F20：候選source、證據及仍未驗收範圍
 
-基準 finding recheck 仍保存於 status.md；本表只記本次候選修復。每個Task的完整 source／review SHA及gate JSON見同一task ledger，不把baseline観察轉成新PASS。所有PR仍是draft，正式deployment/schema未變更。
+基準 finding recheck 仍保存於 status.md；本表保留每項修復的原始 source SHA。已交付修復已正常合併至 main `a0b753e`；各Task的 source／review／CI／merge 證據見台賬及相關PR。正式deployment/schema未變更，本地通過不轉成runtime PASS；新B08跟進仍須獨立完成review及最終CI。
 
 | Finding | Task／source                        | 已驗證的修復                                                                                                                   | 真實runtime尚缺                                                  |
 | ------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
