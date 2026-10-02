@@ -1,0 +1,245 @@
+{
+  "task": "B08/T21/T22 local SLA CPU follow-up",
+  "findings": [
+    "F09",
+    "F18"
+  ],
+  "baseSHA": "a0b753e4c4bce4c410dcb58cfc381039c82f0c65",
+  "calendarSourceSha256": "71C89A15C29F2A25D50AF1411D7C053E1DB7805B2E2DE8DFABE60C369D068829",
+  "red": {
+    "failure": "ordinary30000ms100weekendSLA timeout",
+    "skipped": 0,
+    "files": 3,
+    "failed": 1,
+    "passed": 16,
+    "seconds": 31.43
+  },
+  "green": {
+    "skipped": 0,
+    "seconds": 5.84,
+    "passed": 17,
+    "files": 3,
+    "failed": 0
+  },
+  "benchmark": {
+    "sampling": "one fixed paired synthetic workload; not p95/cold/product SLO",
+    "before": {
+      "observedAt": "2026-10-02T19:54:30.774Z",
+      "build": "a0b753e4c4bce4c410dcb58cfc381039c82f0c65",
+      "calendarSourceSha256": "4b182ff3ff0a14642416cb15fecba8a9f4851c481957a8698dc4548f802dde32",
+      "inputSha256": "9928e1575171f051ed9df37ea8c7af6229f3785f2c9632c15a23d024fb64bcc4",
+      "outputSha256": "81f08b457009b2d5e1056bd8cf3b6f16043be5a3cb50d1ef73cf416d6f581eb5",
+      "node": "v24.18.0",
+      "platform": "win32",
+      "cpu": "12th Gen Intel(R) Core(TM) i5-12500",
+      "logicalCpus": 12,
+      "physicalMemoryBytes": 34033348608,
+      "iterations": 100,
+      "milliseconds": 52932.944,
+      "exactTimestamps": "pass",
+      "scope": "One fixed synthetic workload on this host; no product/runtime SLO acceptance."
+    },
+    "command": "C:/Program Files/nodejs/node.exe node_modules/tsx/dist/cli.mjs scripts/benchmark-sla-calendar.ts",
+    "after": {
+      "observedAt": "2026-10-02T19:57:03.652Z",
+      "build": "a0b753e4c4bce4c410dcb58cfc381039c82f0c65",
+      "calendarSourceSha256": "71c89a15c29f2a25d50af1411d7c053e1db7805b2e2de8dfabe60c369d068829",
+      "inputSha256": "9928e1575171f051ed9df37ea8c7af6229f3785f2c9632c15a23d024fb64bcc4",
+      "outputSha256": "81f08b457009b2d5e1056bd8cf3b6f16043be5a3cb50d1ef73cf416d6f581eb5",
+      "node": "v24.18.0",
+      "platform": "win32",
+      "cpu": "12th Gen Intel(R) Core(TM) i5-12500",
+      "logicalCpus": 12,
+      "physicalMemoryBytes": 34033348608,
+      "iterations": 100,
+      "milliseconds": 4435.5614,
+      "exactTimestamps": "pass",
+      "scope": "One fixed synthetic workload on this host; no product/runtime SLO acceptance."
+    },
+    "identicalInputOutput": true
+  },
+  "nar100": {
+    "beforeTestSeconds": 75.21,
+    "sameDatabase": true,
+    "afterTestSeconds": 20.53,
+    "passedEach": 1,
+    "dispatchGapHolidayAfterMs": 6589.218,
+    "ownCleanupBefore": {
+      "syntheticCompanies": 0,
+      "syntheticUsers": 0,
+      "syntheticBatches": 0,
+      "syntheticTemplates": 0
+    },
+    "freshFixtureUuidsAndNowStart": true,
+    "dispatchGapHolidayBeforeMs": 64076.3016,
+    "ownCleanupAfter": {
+      "syntheticCompanies": 0,
+      "syntheticUsers": 0,
+      "syntheticBatches": 0,
+      "syntheticTemplates": 0
+    },
+    "beforeDispatches": 4358,
+    "method": "temporary parameter-free debug dispatch gaps; same-connection elapsed, not SQL duration; NAR source byte-restored",
+    "nameFilteredEach": 21,
+    "afterDispatches": 4358
+  },
+  "focused": {
+    "command": "node node_modules/vitest/vitest.mjs run src/features/nar-import/apply.integration.test.ts src/features/work-items/repository.test.ts src/features/work-items/business-calendar.test.ts src/features/work-items/sla.test.ts src/features/work-items/sla-performance.test.ts",
+    "skipped": 0,
+    "files": 5,
+    "failed": 0,
+    "passed": 44,
+    "seconds": 27.87
+  },
+  "static": {
+    "lintExit": 0,
+    "lintWarnings": 1,
+    "typecheckExit": 0,
+    "lintErrors": 0
+  },
+  "fullWindows": {
+    "command": "C:/Program Files/nodejs/node.exe node_modules/vitest/vitest.mjs run --reporter=default --reporter=json --outputFile=<owned-artifact>",
+    "environment": "Windows Node24.18.0, Bun1.4.2 migrations, dedicated localhost Postgres17",
+    "fixture": {
+      "createdAt": "2026-10-02T20:04:32.8601379Z",
+      "port": 55441,
+      "host": "127.0.0.1",
+      "sourceCalendarSha256": "71C89A15C29F2A25D50AF1411D7C053E1DB7805B2E2DE8DFABE60C369D068829",
+      "database": "kossilon_b08_full_6d1ceeb2756f44a99c21b42002350f47",
+      "container": "kossilon-audit-20261001"
+    },
+    "files": 235,
+    "passed": 2214,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 201.53,
+    "exit": 0,
+    "fileFilter": "none",
+    "testFilter": "none",
+    "timeoutChange": "none",
+    "actualCleanup": {
+      "companies": 3,
+      "cases": 3,
+      "syntheticNarCompanies": 0,
+      "syntheticNarUsers": 0,
+      "syntheticNarBatches": 0
+    }
+  },
+  "fullLinux": "pending exact-head Node22/24 CI",
+  "originalUat": {
+    "sha256": "45D2B0239826EDF41CAD480EC8B7888C426991CD28680F9EBC71DB9E9AF801E7",
+    "blocked": 31,
+    "notRun": 0,
+    "localOnlyPass": 19,
+    "total": 50
+  },
+  "schema": {
+    "sourceIds": 50,
+    "lastObservedProductionHistoricalIds": 66,
+    "newProductionMigrations": 0
+  },
+  "providerWrites": 0,
+  "formalRelease": "NO_GO",
+  "rawHashes": [
+    {
+      "sha256": "4106958F361F14BA18467876B3DDEFC1FA4A9897F306BCBF738FEC0E25E124F1",
+      "file": "profile-baseline.log"
+    },
+    {
+      "sha256": "89F350F781DDBA84D092B374136B3A6B12214C39FFBF930AB9B88F0715F95A08",
+      "file": "profile-baseline-result.json"
+    },
+    {
+      "sha256": "17B6D52AA1F52190534CC9574C6CDEFEB681390BA212AB7ADB31D27804440001",
+      "file": "profile-after.log"
+    },
+    {
+      "sha256": "B4E22EC3D20F585E0864CCE9BBAA35C4CD2FA7ECF26876AF0FF4F3EAE777B6CA",
+      "file": "profile-after-result.json"
+    },
+    {
+      "sha256": "8147EC0B1948306D07A3E552A6DDEE46405595D255195692D80A06247007F82A",
+      "file": "profile-baseline-cleanup.json"
+    },
+    {
+      "sha256": "8147EC0B1948306D07A3E552A6DDEE46405595D255195692D80A06247007F82A",
+      "file": "profile-after-cleanup.json"
+    },
+    {
+      "sha256": "A9741B6FE67A6E57A8B7B432D2418CBB0F6292032D6A5B692638B493A5AFD2CE",
+      "file": "calendar-red.log"
+    },
+    {
+      "sha256": "06C1B471D596B76F9D18F8A8FF88F00369A5A14C6B5CB13C899F64193E822E83",
+      "file": "calendar-red-result.json"
+    },
+    {
+      "sha256": "6BEDF7E457B6423FB211285D37827AC5798780DEE96497809FDDE0A094A2D2D9",
+      "file": "calendar-green.log"
+    },
+    {
+      "sha256": "5E6420A795EE6493DE2A8EC853C5C7DB32FA69132BAA9867BC19B32E6B9218D3",
+      "file": "calendar-green-result.json"
+    },
+    {
+      "sha256": "B9F021966F314FA1C90CC414FDB3991540817B92238DF50E99D7B399DB92B3AC",
+      "file": "sla-before.json"
+    },
+    {
+      "sha256": "BE05AEE2337B13EDAD57496646F78859815B2DAD60EFDBBA66CC94B58328EFC7",
+      "file": "sla-after.json"
+    },
+    {
+      "sha256": "382A94B56A85754BB2343C093A09D9742A862FF141BEB3ACAC4C675797EF0042",
+      "file": "focused.log"
+    },
+    {
+      "sha256": "FA2D9CFF958A74EB04F182782452D11F9490E897FF11AF08D5411BB3DE3454CE",
+      "file": "focused-result.json"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "file": "typecheck.log"
+    },
+    {
+      "sha256": "AD104499727BECD5029F1CA750B7042CA808ACD13B640F440FB7A8D91A938ECB",
+      "file": "lint.log"
+    },
+    {
+      "sha256": "53B0318A669BB910557A7F412231A176B80026B3B81675FC297BFC9C1B69B1B9",
+      "file": "static-gates.json"
+    },
+    {
+      "sha256": "20E75FF56D1846572A2DAEACE11B9D8EA51B7E754B5195E75CCC3AC4ACEB7594",
+      "file": "dispatch-summary.json"
+    },
+    {
+      "sha256": "9EA13958FFDE54E814FD92C128CF7C61AA7856A178580C1B0FEB9E328EA73C4F",
+      "file": "dispatch-after-summary.json"
+    },
+    {
+      "file": "full-node24.log",
+      "sha256": "07752BDAAF8F10D436EE58D50AA0C1CAF7769F23EEB4DB0F17C2CFE195C53360"
+    },
+    {
+      "file": "full-node24-result.json",
+      "sha256": "786C9BEC27DC6D33E8AF632B17285C9D222F281EC83EF95E0DCBA1D72B2C9943"
+    },
+    {
+      "file": "full-node24-command.json",
+      "sha256": "F5F3422CE421A837BE873BD094E2AE764D275DB7B7515A66199DC0E7DE9A7D05"
+    },
+    {
+      "file": "full-migrate.log",
+      "sha256": "2495BFBDCBDCB5EA96749CD0E7E638E3D2A54F040B1DFCFC72DAFB1B79BD7A25"
+    },
+    {
+      "file": "full-seed.log",
+      "sha256": "43B066AD1C7185E0C74EF5905999D1124CE4862268D86C7DB59D6E4FC9453F30"
+    },
+    {
+      "file": "full-cleanup.json",
+      "sha256": "B6FDB117D67B7817F48EAA43AE8C350FF7433D92A48AB79A6770E9D2BCCF25BD"
+    }
+  ]
+}

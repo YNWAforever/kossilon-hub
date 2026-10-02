@@ -31,17 +31,8 @@ function validateIntervals(intervals: readonly BusinessInterval[]): void {
   }
 }
 
-function localMinuteAt(instant: Date, timezone: string): LocalMinute {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(instant);
+function localMinuteAt(instant: Date, formatter: Intl.DateTimeFormat): LocalMinute {
+  const parts = formatter.formatToParts(instant);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   const weekday = values.weekday?.toLowerCase() as Weekday;
 
@@ -66,8 +57,12 @@ function intervalsFor(local: LocalMinute, calendar: BusinessCalendar): readonly 
   return calendar.weeklySchedule[local.weekday] ?? [];
 }
 
-function isBusinessMinute(instant: Date, calendar: BusinessCalendar): boolean {
-  const local = localMinuteAt(instant, calendar.timezone);
+function isBusinessMinute(
+  instant: Date,
+  calendar: BusinessCalendar,
+  formatter: Intl.DateTimeFormat,
+): boolean {
+  const local = localMinuteAt(instant, formatter);
   const intervals = intervalsFor(local, calendar);
   validateIntervals(intervals);
 
@@ -89,8 +84,20 @@ export function addBusinessMinutes(
     throw new Error("Business minutes must be a non-negative integer.");
   }
 
+  // Formatter construction is expensive. Reuse it for this invocation while
+  // formatting each actual instant, preserving DST and caller-calendar changes.
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: calendar.timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
   // Validate the timezone even when no time needs to be added.
-  localMinuteAt(started, calendar.timezone);
+  localMinuteAt(started, formatter);
   if (minutes === 0) return started.toISOString();
 
   let remainingMs = minutes * MINUTE_MS;
@@ -101,7 +108,7 @@ export function addBusinessMinutes(
     const elapsedWithinMinute = cursor.getUTCSeconds() * 1_000 + cursor.getUTCMilliseconds();
     const untilNextMinute = MINUTE_MS - elapsedWithinMinute;
 
-    if (isBusinessMinute(cursor, calendar)) {
+    if (isBusinessMinute(cursor, calendar, formatter)) {
       const consumed = Math.min(untilNextMinute, remainingMs);
       remainingMs -= consumed;
       cursor = new Date(cursor.getTime() + consumed);
