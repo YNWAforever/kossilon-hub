@@ -4,7 +4,26 @@
   "providerWrites": 0,
   "environment": "Windows Node24.18.0/Postgres17.10/Bun1.4.2/localhost55441",
   "sourceMigrationIds": 50,
-  "fullWindows": "diagnostic in progress; started before deferred-query correction; share-transfer/NAR100 timeouts observed",
+  "fullWindows": {
+    "passed": 2204,
+    "seconds": 679.8,
+    "failures": [
+      "share-transfer completion timeout30000ms",
+      "NAR100 finalization timeout120000ms",
+      "loaded pre-correction deferred query RED",
+      "loaded pre-correction callback-array RED"
+    ],
+    "exitCode": 1,
+    "authority": "diagnostic; began before deferred-query correction, not final-head acceptance",
+    "afterNarTimeout": {
+      "syntheticNarCompanies": 0,
+      "syntheticNarUsers": 0,
+      "syntheticNarBatches": 0
+    },
+    "failed": 4,
+    "skipped": 0,
+    "files": 233
+  },
   "originalUat": {
     "blocked": 31,
     "sha256": "45D2B0239826EDF41CAD480EC8B7888C426991CD28680F9EBC71DB9E9AF801E7",
@@ -83,6 +102,38 @@
     {
       "path": ".worktrees\\audit-windows-reliability-20261003\\typecheck-final.log",
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\full-node24.log",
+      "sha256": "1A8FB31DE7677C525695BFE507CDFC55703D1A40297DEFB7D49AC0A7AE4B9F9E"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\full-node24-result.json",
+      "sha256": "A726516F1C39CEA13B8326C8A4E12FBEDAB184E062E2BCC19BC67EE2AE52A085"
+    },
+    {
+      "path": ".worktrees\\audit-windows-reliability-20261003\\full-nar-cleanup.json",
+      "sha256": "C3C88EC0D6A575FD3652FC2C3701C7FC3B0801F5A4F58A51838C537076F247B4"
+    },
+    {
+      "sha256": "F9744C50B29837AC88892DC5FAB4AC2ACC88975AFFDD0717E5FE6E77FEA918AC",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-fixture.json"
+    },
+    {
+      "sha256": "2495BFBDCBDCB5EA96749CD0E7E638E3D2A54F040B1DFCFC72DAFB1B79BD7A25",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-migrate.log"
+    },
+    {
+      "sha256": "43B066AD1C7185E0C74EF5905999D1124CE4862268D86C7DB59D6E4FC9453F30",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-seed.log"
+    },
+    {
+      "sha256": "FEC60C90830D8F020E6C19CD0F03BDE990BE1ED594E2E2A5F06FACF56C2DED1E",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-nar-regressions.log"
+    },
+    {
+      "sha256": "52D4BA1C95536F935DF19F8061D228D1C2C7D290B3FB2FE828D6F3447AF86912",
+      "path": ".worktrees\\audit-windows-reliability-20261003\\final-nar-regressions-result.json"
     }
   ],
   "productionRelease": "NO_GO",
@@ -100,5 +151,26 @@
     "files": 2,
     "skipped": 0,
     "passed": 8
+  },
+  "finalNarContracts": {
+    "environment": "actual Windows Node24.18.0/Postgres17 new uniquely owned DB",
+    "exitCode": 0,
+    "passed": 30,
+    "files": 3,
+    "skipped": 0,
+    "seconds": 170.64,
+    "failed": 0,
+    "head": "447928ae83d26c6edc218e48a444a00c45adcacd"
+  },
+  "taskGate": {
+    "shell": "verified current PowerShell; legacy shell gate failure retained",
+    "passed": 8,
+    "failed": 0,
+    "failedShellLogSha256": "148A1248D93F3D22798AB5F42C37E350C70D3A33294595B24C1E3261A2114F78",
+    "seconds": 9.57,
+    "skipped": 0,
+    "logSha256": "41FB465850EFF792398A8178A8AD8608C8EFBDB7E3410FB30FB84B9D3D950482",
+    "head": "447928ae83d26c6edc218e48a444a00c45adcacd",
+    "actualFullCi": "37048419675"
   }
 }

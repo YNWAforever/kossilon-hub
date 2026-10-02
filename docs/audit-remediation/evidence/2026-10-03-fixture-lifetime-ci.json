@@ -1,0 +1,491 @@
+{
+  "head": "447928ae83d26c6edc218e48a444a00c45adcacd",
+  "run": 37048419675,
+  "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37048419675",
+  "conclusion": "success",
+  "environment": "Actual Linux GitHub Actions, separate Postgres17 services, Bun1.4.2; no provider credentials",
+  "legs": [
+    {
+      "name": "Node22",
+      "node": "v22.23.3",
+      "files": 233,
+      "passed": 2208,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 261.92,
+      "chromeDemoPassed": 12,
+      "chromeDemoSeconds": 34.8,
+      "job": 110975481854,
+      "steps": [
+        {
+          "completedAt": "2026-10-02T18:35:08Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-02T18:35:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:28Z",
+          "conclusion": "success",
+          "name": "Initialize containers",
+          "number": 2,
+          "startedAt": "2026-10-02T18:35:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:29Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 3,
+          "startedAt": "2026-10-02T18:35:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:30Z",
+          "conclusion": "success",
+          "name": "Run oven-sh/setup-bun@v2",
+          "number": 4,
+          "startedAt": "2026-10-02T18:35:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:30Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-node@v4",
+          "number": 5,
+          "startedAt": "2026-10-02T18:35:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:30Z",
+          "conclusion": "success",
+          "name": "Verify selected runtimes",
+          "number": 6,
+          "startedAt": "2026-10-02T18:35:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:33Z",
+          "conclusion": "success",
+          "name": "Install dependencies",
+          "number": 7,
+          "startedAt": "2026-10-02T18:35:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:34Z",
+          "conclusion": "success",
+          "name": "Audit both tracked dependency locks",
+          "number": 8,
+          "startedAt": "2026-10-02T18:35:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:52Z",
+          "conclusion": "success",
+          "name": "Verify portable npm lock installation",
+          "number": 9,
+          "startedAt": "2026-10-02T18:35:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:52Z",
+          "conclusion": "success",
+          "name": "Apply migrations",
+          "number": 10,
+          "startedAt": "2026-10-02T18:35:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:53Z",
+          "conclusion": "success",
+          "name": "Seed reference data",
+          "number": 11,
+          "startedAt": "2026-10-02T18:35:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:36:11Z",
+          "conclusion": "success",
+          "name": "Lint",
+          "number": 12,
+          "startedAt": "2026-10-02T18:35:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:36:29Z",
+          "conclusion": "success",
+          "name": "Typecheck",
+          "number": 13,
+          "startedAt": "2026-10-02T18:36:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:40:53Z",
+          "conclusion": "success",
+          "name": "Test",
+          "number": 14,
+          "startedAt": "2026-10-02T18:36:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:40:54Z",
+          "conclusion": "success",
+          "name": "Pre-deploy gate",
+          "number": 15,
+          "startedAt": "2026-10-02T18:40:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:40:54Z",
+          "conclusion": "success",
+          "name": "Original audit acceptance ledger (local contracts only)",
+          "number": 16,
+          "startedAt": "2026-10-02T18:40:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:41:16Z",
+          "conclusion": "success",
+          "name": "Install isolated local browser",
+          "number": 17,
+          "startedAt": "2026-10-02T18:40:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:41:51Z",
+          "conclusion": "success",
+          "name": "Local demo browser and real parser regressions (not runtime UAT)",
+          "number": 18,
+          "startedAt": "2026-10-02T18:41:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:00Z",
+          "conclusion": "success",
+          "name": "Build",
+          "number": 19,
+          "startedAt": "2026-10-02T18:41:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Dev server import boundaries",
+          "number": 20,
+          "startedAt": "2026-10-02T18:42:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Cron trigger has a handler in the built Worker",
+          "number": 21,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-node@v4",
+          "number": 39,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "number": 40,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 41,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:07Z",
+          "conclusion": "success",
+          "name": "Stop containers",
+          "number": 42,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:07Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 43,
+          "startedAt": "2026-10-02T18:42:07Z",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "name": "Node24",
+      "node": "v24.21.0",
+      "files": 233,
+      "passed": 2208,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 272.37,
+      "chromeDemoPassed": 12,
+      "chromeDemoSeconds": 33.0,
+      "job": 110975481996,
+      "steps": [
+        {
+          "completedAt": "2026-10-02T18:35:07Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-02T18:35:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:26Z",
+          "conclusion": "success",
+          "name": "Initialize containers",
+          "number": 2,
+          "startedAt": "2026-10-02T18:35:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:27Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 3,
+          "startedAt": "2026-10-02T18:35:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:28Z",
+          "conclusion": "success",
+          "name": "Run oven-sh/setup-bun@v2",
+          "number": 4,
+          "startedAt": "2026-10-02T18:35:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:29Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-node@v4",
+          "number": 5,
+          "startedAt": "2026-10-02T18:35:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:29Z",
+          "conclusion": "success",
+          "name": "Verify selected runtimes",
+          "number": 6,
+          "startedAt": "2026-10-02T18:35:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:31Z",
+          "conclusion": "success",
+          "name": "Install dependencies",
+          "number": 7,
+          "startedAt": "2026-10-02T18:35:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:33Z",
+          "conclusion": "success",
+          "name": "Audit both tracked dependency locks",
+          "number": 8,
+          "startedAt": "2026-10-02T18:35:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:51Z",
+          "conclusion": "success",
+          "name": "Verify portable npm lock installation",
+          "number": 9,
+          "startedAt": "2026-10-02T18:35:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:52Z",
+          "conclusion": "success",
+          "name": "Apply migrations",
+          "number": 10,
+          "startedAt": "2026-10-02T18:35:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:35:52Z",
+          "conclusion": "success",
+          "name": "Seed reference data",
+          "number": 11,
+          "startedAt": "2026-10-02T18:35:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:36:07Z",
+          "conclusion": "success",
+          "name": "Lint",
+          "number": 12,
+          "startedAt": "2026-10-02T18:35:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:36:24Z",
+          "conclusion": "success",
+          "name": "Typecheck",
+          "number": 13,
+          "startedAt": "2026-10-02T18:36:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:40:58Z",
+          "conclusion": "success",
+          "name": "Test",
+          "number": 14,
+          "startedAt": "2026-10-02T18:36:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:40:58Z",
+          "conclusion": "success",
+          "name": "Pre-deploy gate",
+          "number": 15,
+          "startedAt": "2026-10-02T18:40:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:40:59Z",
+          "conclusion": "success",
+          "name": "Original audit acceptance ledger (local contracts only)",
+          "number": 16,
+          "startedAt": "2026-10-02T18:40:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:41:18Z",
+          "conclusion": "success",
+          "name": "Install isolated local browser",
+          "number": 17,
+          "startedAt": "2026-10-02T18:40:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:41:52Z",
+          "conclusion": "success",
+          "name": "Local demo browser and real parser regressions (not runtime UAT)",
+          "number": 18,
+          "startedAt": "2026-10-02T18:41:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:01Z",
+          "conclusion": "success",
+          "name": "Build",
+          "number": 19,
+          "startedAt": "2026-10-02T18:41:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Dev server import boundaries",
+          "number": 20,
+          "startedAt": "2026-10-02T18:42:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Cron trigger has a handler in the built Worker",
+          "number": 21,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-node@v4",
+          "number": 39,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "number": 40,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 41,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:07Z",
+          "conclusion": "success",
+          "name": "Stop containers",
+          "number": 42,
+          "startedAt": "2026-10-02T18:42:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-02T18:42:07Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 43,
+          "startedAt": "2026-10-02T18:42:07Z",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "aggregate": {
+    "completedAt": "2026-10-02T18:42:14Z",
+    "conclusion": "success",
+    "databaseId": 110978098604,
+    "name": "verify",
+    "startedAt": "2026-10-02T18:42:11Z",
+    "status": "completed",
+    "steps": [
+      {
+        "completedAt": "2026-10-02T18:42:12Z",
+        "conclusion": "success",
+        "name": "Set up job",
+        "number": 1,
+        "startedAt": "2026-10-02T18:42:12Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-02T18:42:12Z",
+        "conclusion": "success",
+        "name": "Require both Node runtime legs",
+        "number": 2,
+        "startedAt": "2026-10-02T18:42:12Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-02T18:42:12Z",
+        "conclusion": "success",
+        "name": "Complete job",
+        "number": 3,
+        "startedAt": "2026-10-02T18:42:12Z",
+        "status": "completed"
+      }
+    ],
+    "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37048419675/job/110978098604"
+  },
+  "logSha256": "F2B0AD3E838E291671586E966588A88D9D3D1F01F142885996C1109F2EF2201C",
+  "formalRelease": "NO_GO",
+  "providerWrites": 0
+}

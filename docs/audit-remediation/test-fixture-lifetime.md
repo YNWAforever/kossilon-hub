@@ -44,3 +44,11 @@ DB/data/DDL owners still need attribution, actual application-role/credential co
 and genuine recovery rehearsal; Auth/provider/business owners still need the isolated origin,
 existing controlled accounts and genuine R2/scanner/OCR-AI/WOZTELL/handoff/31UAT evidence.
 See `runtime-parity-and-db-owners.md`, `historical-release-runbook.md` and `release-checklist.md`.
+
+### B07 verified source checkpoint
+
+Exactsource447928ae83d26c6edc218e48a444a00c45adcacd, CI37048419675: mandatory LinuxNode22.23.3/Node24.21.0 legs plus stableverify allSUCCESS. Each233files2208PASS0fail0skip/realPG17/Bun1.4.2/ChromeDEMO12/all original gates/both audits0. Suites261.92s/272.37s; Chrome34.8s/33.0s. Raw-log SHA256 and every step:evidence/2026-10-03-fixture-lifetime-ci.json. Exactpreview dpl_7ywsNwnSnribtLWxHXH8Jq7fHCYS READY/targetnull/source447928a/Node24.x.
+
+Finalsource localNode24.18/PG17 new uniqueDB: original22NAR contracts plus8 regressions all30PASS0fail0skip170.64s, including100-item finalization within unchanged120s budget. Fresh officialtaskgate actual8PASS9.57s and fullCI status/steps/counts checked; originalUATCSV SHA unchanged. Previous mixed-revision Windows full233files2204PASS4FAIL/679.80s retained: two loaded pre-correction contracts plus share-transfer30s/NAR100120s timeouts. Actual post-timeout SELECT: syntheticNARcompany/user/batch0. FocusedGREEN does not claim a finalWindows full-suite pass or resolve latency/Today diagnostics. Indefinite/in-flight SQL/hook-budget failures remain diagnostic failures. No production acceptance claimed.
+
+B07/T22 local-passing/code_verified; no new F01–F20 runtime acceptance. Final documentation-head CI/sole whole-range review/normal source merge/mainCI/live-alias observations are recorded in PR118 after they occur. Original50 still19LOCALONLYpass31blocked0not_run; source50 versus production last-observed66historic IDs; productionNO_GO/mainGitdeployhold/providerWrites0. Owner/staging/Auth/R2/scanner/OCR-AI/WOZTELL/handoff/native-tick gates unchanged.
