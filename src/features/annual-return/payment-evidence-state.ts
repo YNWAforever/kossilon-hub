@@ -12,6 +12,21 @@ export type PaymentProofReturn = {
   reviewedAt: string;
 };
 /** A payment return is an attributed business decision; it never invents receipt values. */
+export function paymentProofReturnQuery(
+  sql: Query,
+  documentId: string | postgres.Fragment,
+  proofVersionId: string | postgres.Fragment,
+) {
+  return sql`select rp.id payment_id,ra.metadata->>'reasonText' reason_text
+    from annual_return_audit_events ra
+    join payments rp on rp.id::text=ra.metadata->>'paymentId' and rp.case_id=ra.case_id and rp.company_id=ra.company_id
+    join documents rd on rd.id::text=ra.metadata->>'documentId' and rd.case_id=rp.case_id and rd.company_id=rp.company_id and rd.file_type='payment'
+    join document_versions rv on rv.id::text=ra.metadata->>'proofVersionId' and rv.document_id=rd.id
+    where rd.id=${documentId} and rv.id=${proofVersionId} and ra.actor_id is not null and ra.result='succeeded' and ra.action='update_payment'
+      and ra.metadata->>'command'='review' and ra.metadata->>'decision'='rejected'
+      and ra.metadata->>'reasonCode' in ('unreadable','amount_mismatch','date_mismatch','duplicate_proof','wrong_account','other')
+      and length(btrim(ra.metadata->>'reasonText'))>0 order by ra.created_at desc,ra.id desc limit 1`;
+}
 export async function paymentProofWasReturned(
   sql: Query,
   documentId: string,
@@ -19,14 +34,7 @@ export async function paymentProofWasReturned(
 ) {
   const [row] = await sql<
     { returned: boolean }[]
-  >`select exists(select 1 from annual_return_audit_events a
-    join payments p on p.id::text=a.metadata->>'paymentId' and p.case_id=a.case_id and p.company_id=a.company_id
-    join documents d on d.id::text=a.metadata->>'documentId' and d.case_id=p.case_id and d.company_id=p.company_id and d.file_type='payment'
-    join document_versions v on v.id::text=a.metadata->>'proofVersionId' and v.document_id=d.id
-    where d.id=${documentId} and v.id=${proofVersionId} and a.actor_id is not null and a.result='succeeded' and a.action='update_payment'
-      and a.metadata->>'command'='review' and a.metadata->>'decision'='rejected'
-      and a.metadata->>'reasonCode' in ('unreadable','amount_mismatch','date_mismatch','duplicate_proof','wrong_account','other')
-      and length(btrim(a.metadata->>'reasonText'))>0) returned`;
+  >`select exists(${paymentProofReturnQuery(sql, documentId, proofVersionId)}) returned`;
   return row?.returned === true;
 }
 export type PaymentEvidenceEntry = {
@@ -49,6 +57,7 @@ export function creditedPaymentEvidenceSql(sql: Query) {
   e.status='verified' and e.reviewed_by is not null and e.reviewed_at is not null
   and e.case_id=p.case_id and d.company_id=p.company_id and d.case_id=p.case_id
   and d.verification_status='verified' and d.verified_by is not null and d.verified_at>=v.created_at
+  and d.reviewed_document_version_id=v.id and i.scan_document_version_id=v.id
   and v.document_id=e.document_id and v.superseded_by_version_id is null
   and v.verified_checksum_sha256=e.proof_sha256 and v.declared_checksum_sha256=e.proof_sha256 and v.verified_byte_size>0
   and i.document_id=d.id and i.company_id=d.company_id and i.case_id=d.case_id

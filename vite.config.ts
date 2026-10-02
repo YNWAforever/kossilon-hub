@@ -115,7 +115,12 @@ export default async function config(env: ConfigEnv) {
           extends: true,
           test: {
             name: "unit",
-            exclude: [...defaultExclude, WORKTREE_EXCLUDE, ...DB_INTEGRATION_TEST_FILES],
+            exclude: [
+              ...defaultExclude,
+              WORKTREE_EXCLUDE,
+              "**/e2e/**",
+              ...DB_INTEGRATION_TEST_FILES,
+            ],
           },
         },
         {

@@ -31,7 +31,22 @@ const documentServerFns = vi.hoisted(() => ({
 }));
 
 vi.mock("../server-fns", () => serverFns);
-vi.mock("@/features/documents/server-fns", () => documentServerFns);
+vi.mock("../handoff-server-fns", () => ({
+  getCaseHandoffs: vi.fn().mockResolvedValue({
+    preview: { readyForApproval: false, sourceVersion: null, manifestSha256: null, blockers: [] },
+    handoffs: [],
+    returns: [],
+    connectorConfigured: false,
+  }),
+  runHandoffCommand: vi.fn(),
+}));
+vi.mock("@/features/documents/server-fns", () => ({
+  ...documentServerFns,
+  listDocumentPage: async (input: unknown) => ({
+    documents: await documentServerFns.listDocuments(input),
+    nextCursor: null,
+  }),
+}));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));

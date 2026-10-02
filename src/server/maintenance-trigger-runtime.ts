@@ -10,9 +10,19 @@ export const SAFE_SCHEDULED_JOBS: readonly MaintenanceJobKind[] = [
   "settleNotificationAttempts",
   "redactNotifications",
   "escalateStalledQuarantine",
+  "runBulkAssignments",
 ];
 
 async function runSafeJob(job: MaintenanceJobKind, now: string): Promise<Record<string, number>> {
+  if (job === "runBulkAssignments") {
+    const [{ createBulkOperationsRepository }, { runScheduledBulkAssignments }] = await Promise.all(
+      [
+        import("@/features/bulk-operations/repository"),
+        import("@/features/bulk-operations/worker"),
+      ],
+    );
+    return runScheduledBulkAssignments({ repository: createBulkOperationsRepository() });
+  }
   if (job === "evaluateEscalations") {
     const { createWorkItemRepository } = await import("@/features/work-items/repository");
     const repository = createWorkItemRepository();

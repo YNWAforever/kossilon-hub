@@ -39,6 +39,7 @@ type Document = {
   case_id: string | null;
   file_type: string;
   verification_status: ReadinessDocument["reviewStatus"];
+  reviewed_document_version_id: string | null;
   verified_by: string | null;
   verified_at: string | null;
   source_matches: boolean;
@@ -122,7 +123,14 @@ type Snapshot = {
   requirements: Requirement[];
   parties: Party[];
   officer_ids: string[];
-  approvals: { status: string; manifest_payload: string; manifest_sha256: string }[];
+  approvals: {
+    id: string;
+    status: string;
+    manifest_payload: string;
+    manifest_sha256: string;
+    delivery_fact?: string | null;
+  }[];
+  returns?: { handoff_id: string; outcome: string; reconciled_at: string | null }[];
   findings: {
     id: string;
     document_version_id: string | null;
@@ -149,7 +157,7 @@ export async function attachCaseReadiness(
   const rows = await sql<{ payload: Snapshot; source_version: string }[]>`
     with snapshots as (
       select jsonb_build_object(
-        'case',to_jsonb(arc),'company',to_jsonb(c),
+        'case',to_jsonb(arc),'company',to_jsonb(c)||jsonb_build_object('data_origin',case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end),
         'checklist',coalesce((select jsonb_agg(to_jsonb(x) order by x.id) from annual_return_checklist_items x where x.case_id=arc.id),'[]'::jsonb),
         'payments',coalesce((select jsonb_agg(to_jsonb(x)||jsonb_build_object('credited_amount',(select coalesce(sum(e.amount),0)::text from payments p join payment_evidence_entries e on e.payment_id=p.id join documents d on d.id=e.document_id join document_versions v on v.id=e.proof_version_id join document_upload_intents i on i.id=v.intent_id where p.id=x.id and ${creditedPaymentEvidenceSql(sql)})) order by x.id) from payments x where x.case_id=arc.id),'[]'::jsonb),
         'payment_evidence',coalesce((select jsonb_agg(to_jsonb(e) order by e.recorded_at,e.id) from payment_evidence_entries e where e.case_id=arc.id),'[]'::jsonb),
@@ -161,7 +169,7 @@ export async function attachCaseReadiness(
             and a.metadata->>'command'='review' and a.metadata->>'decision'='rejected'
             and a.metadata->>'reasonCode' in ('unreadable','amount_mismatch','date_mismatch','duplicate_proof','wrong_account','other') and length(btrim(a.metadata->>'reasonText'))>0),'[]'::jsonb),
         'documents',coalesce((select jsonb_agg(to_jsonb(d)||jsonb_build_object('version',to_jsonb(v),'intent',to_jsonb(i),
-          'source_matches',coalesce(v.storage_url=d.storage_url and i.document_id=d.id and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and v.storage_url=i.object_key and v.declared_checksum_sha256=i.checksum_sha256 and v.verified_byte_size>0,false)) order by d.id)
+          'source_matches',coalesce(v.storage_url=d.storage_url and i.document_id=d.id and i.company_id=d.company_id and i.case_id is not distinct from d.case_id and v.storage_url=i.object_key and v.declared_checksum_sha256=i.checksum_sha256 and i.scan_document_version_id=v.id and v.verified_byte_size>0,false)) order by d.id)
           from documents d left join document_versions v on v.document_id=d.id and v.superseded_by_version_id is null
           left join document_upload_intents i on i.id=v.intent_id
           where d.company_id=arc.company_id and (d.case_id=arc.id or (d.case_id is null and (
@@ -172,6 +180,7 @@ export async function attachCaseReadiness(
         'parties',coalesce((select jsonb_agg(to_jsonb(p) order by p.id) from case_parties p where p.case_id=arc.id),'[]'::jsonb),
         'officer_ids',coalesce((select jsonb_agg(o.id order by o.id) from officers o where o.company_id=arc.company_id and o.cessation_date is null),'[]'::jsonb),
         'approvals',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at desc,h.id) from package_handoffs h where h.case_id=arc.id),'[]'::jsonb),
+        'returns',coalesce((select jsonb_agg(jsonb_build_object('handoff_id',r.handoff_id,'outcome',r.outcome,'reconciled_at',r.reconciled_at) order by r.id) from handoff_returns r join package_handoffs h on h.id=r.handoff_id where h.case_id=arc.id),'[]'::jsonb),
         'findings',coalesce((select jsonb_agg(to_jsonb(f) order by f.id) from document_findings f where
           f.requirement_instance_id in(select id from case_requirement_instances where case_id=arc.id)
           or f.document_version_id in(select v.id from document_versions v join documents d on d.id=v.document_id where d.company_id=arc.company_id and (d.case_id=arc.id or (d.case_id is null and (
@@ -309,7 +318,8 @@ export async function attachCaseReadiness(
       companyId: d.company_id,
       caseId: d.case_id,
       category: d.file_type,
-      reviewStatus: d.verification_status,
+      reviewStatus:
+        d.reviewed_document_version_id === d.version?.id ? d.verification_status : "pending",
       reviewedBy: d.verified_by,
       reviewedAt: d.verified_at,
       versionCreatedAt: d.version?.created_at ?? null,
@@ -350,7 +360,31 @@ export async function attachCaseReadiness(
             : { kind: "none" }) as FindingCitation,
       },
     }));
-    const approval = payload.approvals.find((h) => h.status === "prepared");
+    case_.handoffExceptions = {
+      unreconciled: (payload.returns ?? []).filter((r) => !r.reconciled_at).length,
+      rejected: (payload.returns ?? []).filter((r) => r.outcome !== "accepted").length,
+      unknown: payload.approvals.filter(
+        (h) => h.delivery_fact === "unknown" || h.delivery_fact == null,
+      ).length,
+      awaitingManual: payload.approvals.filter(
+        (h) => h.status === "prepared" && ["prepared", "exported"].includes(h.delivery_fact ?? ""),
+      ).length,
+    };
+    const approval = payload.approvals.find((h) => {
+      if (
+        !["prepared", "exported", "manual_recorded", "provider_accepted"].includes(
+          h.delivery_fact ?? "",
+        )
+      )
+        return false;
+      if (["prepared", "transmitted", "acknowledged"].includes(h.status)) return true;
+      const returns = (payload.returns ?? []).filter((r) => r.handoff_id === h.id);
+      return (
+        h.status === "returned" &&
+        returns.length > 0 &&
+        returns.every((r) => r.outcome === "accepted" && r.reconciled_at)
+      );
+    });
     const approvedPayload =
       approval &&
       createHash("sha256").update(approval.manifest_payload).digest("hex") ===

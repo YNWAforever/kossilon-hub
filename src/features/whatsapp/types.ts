@@ -25,12 +25,13 @@ export type WhatsAppMessageStatus =
  * A file the client attached, by reference.
  *
  * `providerMediaId` is WOZTELL's own handle and the only thing a download could
- * ever be issued against. There is no documented download endpoint --
- * BLOCKED_INTEGRATION: whatsapp-media-download -- so this identifies the file
- * without being able to fetch it.
+ * ever be issued against. Universal fileId supports the current file API;
+ * legacy waMediaId is retained and cannot be converted by guessing an endpoint.
  */
 export type InboundAttachment = {
   providerMediaId: string;
+  /** Only the documented universal fileId can use apiViewer.file. */
+  providerMediaKind?: "file" | "legacy-wa-media";
   /** WOZTELL's vocabulary, as sent. Documented payloads use uppercase. */
   mediaType: string;
   /** Order within the message, so "the third one" stays the third one. */

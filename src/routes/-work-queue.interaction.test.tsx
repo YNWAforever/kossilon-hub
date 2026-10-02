@@ -9,6 +9,11 @@ const mocks = vi.hoisted(() => ({
   ack: vi.fn(),
   navigate: vi.fn(),
 }));
+vi.mock("@/components/bulk-selection-toolbar", () => ({
+  BulkSelectionToolbar: ({ resource }: { resource: string }) => (
+    <section aria-label="Bulk assignment">{resource}</section>
+  ),
+}));
 vi.mock("@/features/work-items/server-fns", () => ({
   listWorkQueue: mocks.list,
   recommendWorkItemAssignees: mocks.recommend,
@@ -32,6 +37,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
     }),
     useNavigate: () => mocks.navigate,
     useRouteContext: () => ({
+      dataMode: "production",
       actor: { userId: "admin", authUserId: "auth", role: "Admin", teamId: null, active: true },
     }),
   }),
@@ -111,6 +117,11 @@ describe("work queue assignment and blockers", () => {
       </QueryClientProvider>,
     );
     await screen.findByText("Amy Chan · Team A");
+    expect(screen.getByText("work_item")).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText("Search case or work type"), {
+      target: { value: "Scoped company" },
+    });
+    expect(screen.getAllByText("Review case").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Payment missing").length).toBeGreaterThan(0);
     expect(screen.queryByText("None")).toBeNull();
     expect(screen.queryByText("Staff 20000000")).toBeNull();

@@ -67,7 +67,11 @@ export function LoginPage() {
 
     const searchRedirect = new URLSearchParams(window.location.search).get("redirect");
     const safeSearchRedirect = getSafeRedirectPath(searchRedirect);
-    const redirectPath = safeSearchRedirect === "/" ? consumeRedirectPath() : safeSearchRedirect;
+    const fallback = session.role === "Client" ? "/portal" : "/today";
+    const redirectPath =
+      searchRedirect && safeSearchRedirect === searchRedirect
+        ? safeSearchRedirect
+        : consumeRedirectPath(undefined, fallback);
     void navigate({ href: redirectPath, replace: true });
   }, [isHydrated, navigate, session]);
 

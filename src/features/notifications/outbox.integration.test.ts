@@ -58,6 +58,48 @@ async function claimedIdsWithoutCommitting(sql: SqlClient, limit = 50): Promise<
 }
 
 describe.skipIf(!databaseUrl)("notification outbox retention against Postgres", () => {
+  it("settles an unknown WOZTELL outcome and never sends it on a second tick", async () => {
+    const rollback = new Error("owned unknown send rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const [company] = await tx<{ id: string }[]>`select id from companies order by id limit 1`;
+        await tx`update companies set data_origin='client' where id=${company.id}`;
+        // Claims are database-wide; isolate the owned row within the rollback.
+        await tx`update notification_outbox set next_attempt_at=now()+interval '1 day' where status in ('pending','processing')`;
+        const repository = createNotificationOutboxRepository({ sql: tx });
+        const row = await repository.enqueue({
+          companyId: company.id,
+          channel: "whatsapp",
+          notificationType: "annual_return_reminder",
+          idempotencyKey: TEST_KEY_PREFIX + crypto.randomUUID(),
+          recipient: "+85290000001",
+          payload: { caseId: crypto.randomUUID() },
+        });
+        let sends = 0;
+        const dispatcher = createNotificationDispatcher(repository, {
+          dispatch: async () => {
+            sends++;
+            throw Object.assign(new Error("Owned acknowledgement lost"), {
+              code: "dispatch_outcome_unknown",
+              dispatchOutcomeUnknown: true,
+            });
+          },
+        });
+        await dispatcher.dispatchDue(new Date().toISOString(), 500);
+        const [settled] = await tx<
+          { status: string; last_error_code: string; attempt_count: number; max_attempts: number }[]
+        >`select status,last_error_code,attempt_count,max_attempts from notification_outbox where id=${row.id}`;
+        expect(settled).toMatchObject({
+          status: "failed",
+          last_error_code: "dispatch_outcome_unknown",
+        });
+        expect(settled.attempt_count).toBeGreaterThanOrEqual(settled.max_attempts);
+        await dispatcher.dispatchDue(new Date(Date.now() + 60_000).toISOString(), 500);
+        expect(sends).toBe(1);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  });
   it("calls a simulated transport only for client origin when all three have the same due time", async () => {
     const sql = sqlForTests();
     const companies = await sql<{ id: string }[]>`select id from companies order by id limit 3`;

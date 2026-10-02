@@ -8,6 +8,7 @@ const NOW = "2026-09-10T12:00:00.000Z";
 const CHECKSUM = "a".repeat(64);
 
 const intent: DocumentUploadIntent = {
+  currentVersionId: "71000000-0000-4000-8000-000000000001",
   id: "30000000-0000-4000-8000-000000000001",
   companyId: "10000000-0000-4000-8000-000000000001",
   caseId: "40000000-0000-4000-8000-000000000001",
@@ -29,6 +30,7 @@ const intent: DocumentUploadIntent = {
 };
 
 const job: DocumentScanJob = {
+  documentVersionId: intent.currentVersionId,
   id: "60000000-0000-4000-8000-000000000001",
   intentId: intent.id,
   checksum: CHECKSUM,
@@ -72,13 +74,73 @@ function deps(overrides: Partial<ScanWorkerDependencies> = {}, claimed: Document
     },
     scanner: {
       verdictSource: "provider",
-      scan: vi.fn(async () => ({ status: "clean", providerReference: "vendor-1" })),
+      scan: vi.fn(async () => ({
+        status: "clean",
+        providerReference: "vendor-1",
+        verifiedChecksum: CHECKSUM,
+        verifiedByteSize: 4,
+        documentVersionId: intent.currentVersionId,
+      })),
     },
     ...overrides,
   } as unknown as ScanWorkerDependencies;
 }
 
 describe("drainDocumentScanJobs", () => {
+  it.each([
+    "missing-intent",
+    "legacy-version",
+    "missing-object",
+    "provider-retry",
+    "provider-failed",
+    "scanner-threw",
+  ])("reports a superseded claim instead of a persisted outcome after %s", async (scenario) => {
+    const d = deps(
+      {},
+      scenario === "legacy-version" ? [{ ...job, documentVersionId: null }] : [job],
+    );
+    vi.mocked(d.jobs.markRetry).mockResolvedValue(false);
+    vi.mocked(d.jobs.markFailed).mockResolvedValue(false);
+    if (scenario === "missing-intent")
+      vi.mocked(d.documents.getUploadIntent).mockResolvedValue(null);
+    if (scenario === "missing-object") vi.mocked(d.storage.head).mockResolvedValue(null);
+    if (scenario === "provider-retry" || scenario === "provider-failed")
+      vi.mocked(d.scanner.scan).mockResolvedValue({
+        status: "failed",
+        retryable: scenario === "provider-retry",
+        errorCode: "http-429",
+      });
+    if (scenario === "scanner-threw")
+      vi.mocked(d.scanner.scan).mockRejectedValue(new Error("safe-stub"));
+    expect(await drainDocumentScanJobs({ now: NOW }, d)).toMatchObject({
+      superseded: 1,
+      failed: 0,
+      retried: 0,
+      clean: 0,
+    });
+    expect(d.documents.recordScanResult).not.toHaveBeenCalled();
+  });
+  it("refuses an incomplete provider clean result without recording a verdict", async () => {
+    const d = deps();
+    vi.mocked(d.scanner.scan).mockResolvedValue({
+      status: "clean",
+      providerReference: "unbound-stub",
+    });
+    const result = await drainDocumentScanJobs({ now: NOW }, d);
+    expect(result).toMatchObject({ failed: 1, clean: 0 });
+    expect(d.documents.recordScanResult).not.toHaveBeenCalled();
+    expect(d.jobs.markFailed).toHaveBeenCalledWith(
+      job.id,
+      expect.objectContaining({ errorCode: "provider-result-unbound" }),
+    );
+  });
+
+  it("refuses a legacy unbound job without a provider call", async () => {
+    const d = deps({}, [{ ...job, documentVersionId: null }]);
+    const result = await drainDocumentScanJobs({ now: NOW }, d);
+    expect(result).toMatchObject({ failed: 1, clean: 0 });
+    expect(d.scanner.scan).not.toHaveBeenCalled();
+  });
   it("records a clean verdict with its provenance and the content version scanned", async () => {
     const dependencies = deps();
     const summary = await drainDocumentScanJobs({ now: NOW }, dependencies);
@@ -92,7 +154,7 @@ describe("drainDocumentScanJobs", () => {
     expect(dependencies.storage.delete).not.toHaveBeenCalled();
   });
 
-  it("deletes bytes only on a positive malware finding from the provider", async () => {
+  it("retains rejected evidence in quarantine without automatic deletion", async () => {
     const dependencies = deps({
       scanner: {
         verdictSource: "provider",
@@ -106,7 +168,23 @@ describe("drainDocumentScanJobs", () => {
 
     const summary = await drainDocumentScanJobs({ now: NOW }, dependencies);
     expect(summary.rejected).toBe(1);
-    expect(dependencies.storage.delete).toHaveBeenCalledWith(intent.objectKey);
+    expect(dependencies.storage.delete).not.toHaveBeenCalled();
+  });
+
+  it("does not delete bytes when a rejected verdict loses its version or attempt authority", async () => {
+    const dependencies = deps();
+    vi.mocked(dependencies.scanner.scan).mockResolvedValue({
+      status: "rejected",
+      reason: "safe-stub",
+      providerReference: "stub-not-live",
+    });
+    vi.mocked(dependencies.documents.recordScanResult).mockRejectedValue(
+      new Error("Scan claim changed"),
+    );
+    const summary = await drainDocumentScanJobs({ now: NOW }, dependencies);
+    expect(summary.clean).toBe(0);
+    expect(summary.rejected).toBe(0);
+    expect(dependencies.storage.delete).not.toHaveBeenCalled();
   });
 
   // The Phase A acceptance gate: a received file survives a scanner outage,

@@ -272,10 +272,23 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
             (await repository.recommendAssignees(warningId)).some((r) => r.userId === inactive),
           ).toBe(false);
           await tx`update users set active=true where id=${inactive}`;
+          const [assignmentActor] = await tx<
+            { id: string }[]
+          >`select u.id from users u join staff_profiles sp on sp.user_id=u.id where u.role='Admin' and sp.role='Admin' and u.active and sp.active and u.team_id is not distinct from sp.team_id order by u.id limit 1`;
+          expect(assignmentActor).toBeDefined();
+          await expect(
+            repository.assign({
+              workItemId: warningId,
+              selectedUserId: recommendations[0].userId,
+              assignedById: recommendations[0].userId,
+              expectedVersion: 1,
+              overrideReason: "Synthetic fixture",
+            }),
+          ).rejects.toThrow(/Forbidden/);
           const assigned = await repository.assign({
             workItemId: warningId,
             selectedUserId: recommendations[0].userId,
-            assignedById: recommendations[0].userId,
+            assignedById: assignmentActor.id,
             expectedVersion: 1,
             overrideReason: "Integration fixture capacity exception",
           });
@@ -315,7 +328,7 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
             repository.assign({
               workItemId: warningId,
               selectedUserId: recommendations[0].userId,
-              assignedById: recommendations[0].userId,
+              assignedById: assignmentActor.id,
               expectedVersion: 1,
             }),
           ).rejects.toThrow("stale");

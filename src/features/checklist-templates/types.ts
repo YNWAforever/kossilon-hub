@@ -41,6 +41,25 @@ export type ChecklistTemplate = {
   reminders: ReminderRule[];
   riskRules: RiskRule[];
   updatedAt: string;
+  /** Absent for old read-only fixtures. Production always has an observed revision. */
+  revision?: number;
+};
+
+export type TemplateMigrationPreview = {
+  revision: number;
+  total: number;
+  unknownLegacyCases: number;
+  cases: {
+    caseId: string;
+    companyName: string;
+    returnYear: number;
+    fromRevision: number;
+    toRevision: number;
+    added: string[];
+    removed: string[];
+    closed: boolean;
+  }[];
+  nextCursor: string | null;
 };
 
 export type ChecklistTemplatePatch = Partial<

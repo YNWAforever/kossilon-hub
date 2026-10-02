@@ -15,12 +15,13 @@ const serverFns = vi.hoisted(() => ({
 }));
 
 vi.mock("../server-fns", () => serverFns);
+vi.mock("./message-intake", () => ({ MessageIntake: () => null }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));
 
 const contactId = "11111111-1111-4111-8111-111111111111";
-const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations have been received yet.";
+const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations are recorded in your current scope.";
 
 function makeConversation(overrides: Partial<WhatsAppConversation> = {}): WhatsAppConversation {
   return {
@@ -64,6 +65,17 @@ function renderInbox() {
 }
 
 describe("production WhatsApp inbox", () => {
+  it("does not claim inbound is disabled when only outbound bindings are missing", async () => {
+    serverFns.listWhatsAppConversations.mockResolvedValue([]);
+    serverFns.getWhatsAppIntegrationStatus.mockResolvedValue({
+      ...notConnected,
+      webhookConfigured: true,
+      missingLiveEnvVars: ["WOZTELL_ACCESS_TOKEN", "WOZTELL_CHANNEL_ID"],
+    });
+    renderInbox();
+    await screen.findByText(/WOZTELL_ACCESS_TOKEN/);
+    expect(screen.queryByText(/Inbound messages are not being recorded/)).toBeNull();
+  });
   beforeEach(() => {
     serverFns.listWhatsAppConversations.mockReset();
     serverFns.listWhatsAppConversationMessages.mockReset();
@@ -115,7 +127,7 @@ describe("production WhatsApp inbox", () => {
     serverFns.getWhatsAppIntegrationStatus.mockResolvedValue(notConnected);
     renderInbox();
 
-    expect(await screen.findByText(/WhatsApp is not connected/i)).toBeTruthy();
+    expect(await screen.findByText(/WhatsApp setup is incomplete/i)).toBeTruthy();
     expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
   });
 
@@ -205,7 +217,7 @@ describe("production WhatsApp inbox", () => {
     serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
     await act(() => client.refetchQueries({ queryKey: ["whatsapp-conversations"] }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Show the newest conversation" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Show the newest conversation" }));
 
     expect(await screen.findByRole("heading", { name: "Ada Wong" })).toBeTruthy();
   });

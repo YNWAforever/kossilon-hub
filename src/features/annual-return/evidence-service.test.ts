@@ -56,6 +56,7 @@ const baseCase: AnnualReturnCase = {
 };
 
 const baseDocument: PrivateDocument = {
+  currentVersionId: "71000000-0000-4000-8000-000000000001",
   id: documentId,
   companyId,
   caseId,
@@ -71,6 +72,24 @@ const baseDocument: PrivateDocument = {
   uploadedBy: null,
   uploadedAt: "2026-07-12T00:00:00.000Z",
 };
+
+it("refuses a client-observed V1 review after the domain loaded V2", async () => {
+  const h = createHarness({
+    ...baseDocument,
+    currentVersionId: "72000000-0000-4000-8000-000000000002",
+  });
+  await expect(
+    h.service.reviewEvidence({
+      caseId,
+      documentId,
+      decision: "verified",
+      actorId,
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
+    }),
+  ).rejects.toThrow(/version changed/i);
+  expect(h.documents.reviewDocument).not.toHaveBeenCalled();
+  expect(h.annualReturns.updatePayment).not.toHaveBeenCalled();
+});
 
 function createHarness(
   document: PrivateDocument = baseDocument,
@@ -135,13 +154,20 @@ function createHarness(
 describe("annual return evidence service", () => {
   it("does not infer a full payment amount or receipt date from a verified file", async () => {
     const harness = createHarness();
-    await harness.service.reviewEvidence({ caseId, documentId, decision: "verified", actorId });
+    await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
+      caseId,
+      documentId,
+      decision: "verified",
+      actorId,
+    });
     expect(harness.annualReturns.updatePayment).not.toHaveBeenCalled();
   });
   it("verifies payment proof without inventing the received amount or date", async () => {
     const harness = createHarness();
 
     const result = await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       decision: "verified",
@@ -163,6 +189,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness();
 
     await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       decision: "rejected",
@@ -172,6 +199,7 @@ describe("annual return evidence service", () => {
 
     expect(harness.documents.reviewDocument).toHaveBeenCalledWith({
       documentId,
+      expectedVersionId: baseDocument.currentVersionId,
       reviewerId: actorId,
       decision: "rejected",
       reason: "Amount mismatch",
@@ -193,6 +221,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness(checklistDocument);
 
     await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       checklistItemId,
@@ -217,6 +246,7 @@ describe("annual return evidence service", () => {
 
     await expect(
       harness.service.reviewEvidence({
+        expectedDocumentVersionId: baseDocument.currentVersionId!,
         caseId,
         documentId,
         decision: "verified",
@@ -235,6 +265,7 @@ describe("annual return evidence service", () => {
     });
     await expect(
       quarantined.service.reviewEvidence({
+        expectedDocumentVersionId: baseDocument.currentVersionId!,
         caseId,
         documentId,
         decision: "verified",
@@ -248,6 +279,7 @@ describe("annual return evidence service", () => {
     });
     await expect(
       duplicate.service.reviewEvidence({
+        expectedDocumentVersionId: baseDocument.currentVersionId!,
         caseId,
         documentId,
         decision: "verified",
@@ -272,6 +304,7 @@ describe("annual return evidence service", () => {
 
       await expect(
         unverified.service.reviewEvidence({
+          expectedDocumentVersionId: baseDocument.currentVersionId!,
           caseId,
           documentId,
           decision: "verified",
@@ -292,6 +325,7 @@ describe("annual return evidence service", () => {
 
     await expect(
       unverified.service.reviewEvidence({
+        expectedDocumentVersionId: baseDocument.currentVersionId!,
         caseId,
         documentId,
         decision: "rejected",
@@ -311,6 +345,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness({ ...baseDocument, category: "identity" });
 
     await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       checklistItemId,
@@ -332,6 +367,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness({ ...baseDocument, category: "identity" });
 
     await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       checklistItemId,
@@ -350,6 +386,7 @@ describe("annual return evidence service", () => {
 
     await expect(
       harness.service.reviewEvidence({
+        expectedDocumentVersionId: baseDocument.currentVersionId!,
         caseId,
         documentId,
         decision: "verified",
@@ -367,6 +404,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness(receipt);
 
     const result = await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       decision: "verified",
@@ -392,6 +430,7 @@ describe("annual return evidence service", () => {
 
     await expect(
       harness.service.reviewEvidence({
+        expectedDocumentVersionId: baseDocument.currentVersionId!,
         caseId,
         documentId,
         decision: "verified",
@@ -411,6 +450,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness();
 
     await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       decision: "verified",
@@ -431,6 +471,7 @@ describe("annual return evidence service", () => {
       .mockRejectedValueOnce(new Error("Document has already been reviewed."));
 
     const input = {
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       decision: "verified" as const,
@@ -461,6 +502,7 @@ describe("annual return evidence service", () => {
       .mockResolvedValueOnce(caseWithAcceptedProof);
 
     const result = await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       decision: "rejected",
@@ -496,6 +538,7 @@ describe("annual return evidence service", () => {
       .mockResolvedValueOnce(caseWithAcceptedProof);
 
     const result = await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       checklistItemId,
@@ -520,6 +563,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness(baseDocument, caseWithAcceptedProof);
 
     const result = await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       decision: "rejected",
@@ -552,6 +596,7 @@ describe("annual return evidence service", () => {
     const harness = createHarness(checklistDocument, caseWithAcceptedProof);
 
     const result = await harness.service.reviewEvidence({
+      expectedDocumentVersionId: baseDocument.currentVersionId!,
       caseId,
       documentId,
       checklistItemId,

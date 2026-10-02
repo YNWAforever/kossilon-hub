@@ -5,6 +5,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import { rankAssignmentCandidates } from "./assignment";
 import { snapshotSla, thresholdFor } from "./sla";
 import { enqueueNotification } from "@/features/notifications/outbox";
@@ -529,6 +530,12 @@ export function createWorkItemRepository(
     },
     assign(input) {
       return withTransaction(sql, async (tx) => {
+        const unlocked = await getWorkItem(tx, input.workItemId);
+        if (unlocked?.annualReturnCaseId) {
+          const [parent] =
+            await tx`select id from annual_return_cases where id=${unlocked.annualReturnCaseId} and locked_at is null and completed_at is null and current_status<>'Completed' for update`;
+          if (!parent) throw new Error("Closed annual-return case cannot be assigned.");
+        }
         const item = await getWorkItem(tx, input.workItemId, true);
         if (!item) throw new Error("Work item not found.");
         if (item.version !== input.expectedVersion)
@@ -540,6 +547,16 @@ export function createWorkItemRepository(
           throw new Error("Closed work items cannot be assigned.");
         }
         const assignmentTarget = input.assignmentTarget ?? "owner";
+        const currentActor = await lockActiveStaffUser(tx, input.assignedById);
+        if (
+          currentActor.role !== "Admin" &&
+          (currentActor.role !== "Manager" ||
+            !currentActor.team_id ||
+            currentActor.team_id !== item.teamId)
+        ) {
+          throw new Error("Forbidden: current Manager team or Admin required.");
+        }
+        await lockActiveStaffUser(tx, input.selectedUserId);
         const recommendations = await recommendationsFor(tx, item, readNow(), {
           assignmentTarget,
           requiredRole: input.requiredRole,
@@ -573,6 +590,7 @@ export function createWorkItemRepository(
             ${tx.json({
               selected: decision.recommendation.factors,
               recommendations,
+              assignmentTarget,
             })}, ${decision.decision},
             ${decision.overrideReason}, ${input.expectedVersion})`;
         await tx`

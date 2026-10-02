@@ -73,11 +73,15 @@ export type DocumentScanResult =
        */
       verifiedChecksum?: string;
       verifiedByteSize?: number;
+      /** Exact version supplied to the provider adapter; absent fixture verdicts remain unknown. */
+      documentVersionId?: string;
     }
   | { status: "rejected"; reason: string; providerReference: string }
   | { status: "failed"; retryable: boolean; errorCode: string };
 
 export type DocumentScanInput = {
+  /** Legacy/local callers may omit it; the live adapter refuses an unbound scan. */
+  documentVersionId?: string;
   objectKey: string;
   checksum: string;
   contentType: string;

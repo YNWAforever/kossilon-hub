@@ -105,7 +105,9 @@ async function seedReviewedPaymentEvidence(fixture: MutableAnnualReturnFixture) 
     const [version] = await tx<
       { id: string }[]
     >`insert into document_versions(document_id,version_number,declared_checksum_sha256,declared_byte_size,verified_checksum_sha256,verified_byte_size,verified_at,content_type,file_name,storage_url,intent_id,created_at) select id,1,${hash},4,${hash},4,'2026-07-05T09:00:00Z','application/pdf',file_name,storage_url,${intent.id},'2026-07-05T09:00:00Z' from documents where id=${fixture.paymentProofDocumentId} returning id`;
-    await tx`update documents set verified_at='2026-07-05T10:00:00Z' where id=${fixture.paymentProofDocumentId}`;
+    // Injected local contract facts only; this is not provider/byte-reading UAT.
+    await tx`update document_upload_intents set scan_document_version_id=${version.id} where id=${intent.id}`;
+    await tx`update documents set verified_at='2026-07-05T10:00:00Z',reviewed_document_version_id=${version.id} where id=${fixture.paymentProofDocumentId}`;
     await tx`insert into payment_evidence_entries(payment_id,case_id,document_id,proof_version_id,proof_sha256,amount,received_on,status,recorded_by,reviewed_by,reviewed_at) values(${fixture.paymentId},${fixture.caseId},${fixture.paymentProofDocumentId},${version.id},${hash},3800,'2026-07-05','verified',${USER_AMY_ID},${USER_KEN_ID},'2026-07-05T10:00:00Z')`;
   });
 }

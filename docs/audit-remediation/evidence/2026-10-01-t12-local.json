@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-01",
+  "build": "2955a27d7d145e4072b79bd5fc6ed43ce8997fd9",
+  "tasks": [
+    "T12"
+  ],
+  "findings": [
+    "F08"
+  ],
+  "environment": "LOCAL ONLY Node22.23.3 / Postgres17 localhost55441 kossilon_pr02_ci; injected session/UI contracts",
+  "gates": [
+    {
+      "command": "vitest run admin server/UI + neon-auth-server + admin guard",
+      "result": "4 files / 12 pass / 0 skip",
+      "log": ".worktrees/audit-baseline-20261001/t12-unit-green.log"
+    },
+    {
+      "command": "vitest run admin/repository.integration + annual-return/repository + work-items/repository",
+      "result": "3 files / 65 pass / 0 skip",
+      "durationSeconds": 23.32,
+      "log": ".worktrees/audit-baseline-20261001/t12-db-green.log"
+    },
+    {
+      "command": "tsc --noEmit",
+      "result": "PASS",
+      "log": ".worktrees/audit-baseline-20261001/t12-typecheck-final.log"
+    },
+    {
+      "command": "eslint changed TS/TSX",
+      "result": "PASS 0 errors / 0 warnings",
+      "log": ".worktrees/audit-baseline-20261001/t12-lint.log"
+    },
+    {
+      "command": "bun scripts/db-migrate.ts, local target only",
+      "result": "0071 applied and repeat PASS",
+      "log": ".worktrees/audit-baseline-20261001/t12-migrate-repeat.log"
+    }
+  ],
+  "redEvidence": [
+    "t12-red.log: missing implementation",
+    "t12-core-check.log: same inactive session returned an actor",
+    "t12-assignment-red.log: inactive profile still assigned",
+    "t12-demo-red.log: demo active/role controls enabled"
+  ],
+  "concurrency": "Independent actual PostgreSQL PIDs and observed pg_stat_activity Lock wait in last-Admin and disable/assignment tests; no unauthorized write/audit",
+  "production": "Unchanged aa5 Web and historical66 ledger; 0071 local only; no invites/sends",
+  "remaining": "PR05 whole review/full CI after T13; fresh tenant Auth/Google/invitation blocked",
+  "pr04Remote": {
+    "pr": 105,
+    "state": "OPEN/DRAFT/MERGEABLE",
+    "ciVerify": "SUCCESS 2026-10-01T10:46:34Z",
+    "vercelPreview": "SUCCESS"
+  }
+}

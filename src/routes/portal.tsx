@@ -6,7 +6,7 @@ import {
 import { parseEntityId } from "@/lib/entity-id";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -22,7 +22,7 @@ import {
   createDocumentUploadIntent,
   downloadDocument,
   finalizeDocumentUpload,
-  listDocuments,
+  listDocumentPage,
 } from "../features/documents/server-fns";
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from "../features/documents/types";
 
@@ -60,6 +60,7 @@ export const Route = createFileRoute("/portal")({
 
 function PortalRoute() {
   const { dataMode, actor } = Route.useRouteContext();
+  const [caseSearch, setCaseSearch] = useState("");
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
@@ -73,14 +74,18 @@ function PortalRoute() {
       actor?.authUserId,
       actor?.teamId,
       actor?.role,
+      caseSearch,
     ],
-    queryFn: () => listAnnualReturnCasePage({ data: { limit: 200 } }),
+    queryFn: () => listAnnualReturnCasePage({ data: { limit: 200, q: caseSearch } }),
     enabled:
       dataMode === "production" && actor?.role !== "Client" && !productionCaseId && !invalidCaseId,
     retry: false,
   });
   const productionCaseQuery = useQuery({
-    queryKey: annualReturnQueryKeys.detail(productionCaseId ?? "portal"),
+    queryKey: [
+      ...annualReturnQueryKeys.detail(productionCaseId ?? "portal"),
+      JSON.stringify(actor),
+    ],
     queryFn: () => getAnnualReturnCase({ data: { id: productionCaseId! } }),
     // getAnnualReturnCase resolves a staff actor, so firing it for a Client is a
     // guaranteed Forbidden. The client branch below has its own scoped read.
@@ -138,6 +143,17 @@ function PortalRoute() {
           <p className="text-sm text-muted-foreground">
             Open a case from the annual returns board to see its client portal.
           </p>
+          <label className="block text-sm">
+            搜尋全範圍案件
+            <input
+              className="min-h-11 ml-2 rounded border px-3"
+              value={caseSearch}
+              onChange={(event) => setCaseSearch(event.target.value)}
+            />
+            <span className="block text-xs text-muted-foreground">
+              最多顯示200項；搜尋在授權範圍執行。
+            </span>
+          </label>
           <label className="block text-sm">
             選擇案件
             <select
@@ -606,13 +622,15 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
  * uploads the documents feature already authorises for Client actors.
  */
 function ClientPortalView({ caseId }: { caseId?: string }) {
+  const { actor } = Route.useRouteContext();
+  const actorScope = JSON.stringify(actor);
   const casesQuery = useQuery({
-    queryKey: ["client-portal", "cases"],
+    queryKey: ["client-portal", "cases", actorScope],
     queryFn: () => listClientPortalCases({ data: {} }),
     retry: false,
   });
   const caseQuery = useQuery({
-    queryKey: ["client-portal", "case", caseId ?? "none"],
+    queryKey: ["client-portal", "case", caseId ?? "none", actorScope],
     queryFn: () => getClientPortalCase({ data: { caseId: caseId! } }),
     enabled: Boolean(caseId),
     retry: false,
@@ -622,7 +640,7 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
     if (caseQuery.isPending) {
       return <div className="p-6 text-sm text-muted-foreground">Loading your annual return...</div>;
     }
-    if (caseQuery.data) {
+    if (caseQuery.data && !caseQuery.isError) {
       return <ClientPortalCaseView caseItem={caseQuery.data} />;
     }
     return (
@@ -642,7 +660,7 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
     return <div className="p-6 text-sm text-muted-foreground">Loading your filings...</div>;
   }
 
-  const cases = casesQuery.data ?? [];
+  const cases = casesQuery.isError ? [] : (casesQuery.data ?? []);
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -651,6 +669,11 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
         title="Your annual returns"
         subtitle="Filings we are preparing for your company"
       />
+      {casesQuery.isError ? (
+        <p role="alert">
+          未能讀取你的案件。<button onClick={() => void casesQuery.refetch()}>重試</button>
+        </p>
+      ) : null}
       {cases.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           There are no annual returns on file for your company yet. Your company secretary will be
@@ -720,6 +743,33 @@ function ProductionDocumentPanel({
   caseId: string;
   onWarning: (warning: string | undefined) => void;
 }) {
+  const { actor } = Route.useRouteContext();
+  const actorScope = JSON.stringify(actor);
+  return (
+    <ScopedDocumentPanel
+      key={actorScope + caseId}
+      companyId={companyId}
+      caseId={caseId}
+      requirements={requirements}
+      onWarning={onWarning}
+      actorScope={actorScope}
+    />
+  );
+}
+
+function ScopedDocumentPanel({
+  companyId,
+  caseId,
+  requirements,
+  onWarning,
+  actorScope,
+}: {
+  companyId: string;
+  caseId: string;
+  requirements: readonly { id: string; itemLabel: string }[];
+  onWarning: (warning: string | undefined) => void;
+  actorScope: string;
+}) {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<DocumentCategory>("other");
   // Which requirement this upload answers. Optional: an upload that names none
@@ -734,12 +784,19 @@ function ProductionDocumentPanel({
   const [outcomes, setOutcomes] = useState<Record<string, UploadOutcome>>({});
   const [uploading, setUploading] = useState(false);
   const productionReady = isUuid(companyId) && isUuid(caseId);
-  const documentsQuery = useQuery({
-    queryKey: annualReturnQueryKeys.documents(caseId),
-    queryFn: () => listDocuments({ data: { companyId, caseId } }),
+  const documentsQuery = useInfiniteQuery({
+    queryKey: [...annualReturnQueryKeys.documents(caseId), companyId, actorScope],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listDocumentPage({ data: { companyId, caseId, limit: 100, cursor: pageParam } }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: productionReady,
     retry: false,
   });
+  const documentRows =
+    documentsQuery.isError && !documentsQuery.isFetchNextPageError
+      ? []
+      : (documentsQuery.data?.pages.flatMap((page) => page.documents) ?? []);
   async function uploadOne(candidate: File): Promise<void> {
     const key = fileKey(candidate);
     setOutcomes((current) => ({ ...current, [key]: { state: "uploading" } }));
@@ -910,12 +967,10 @@ function ProductionDocumentPanel({
             {documentsQuery.error ? (
               <p className="py-3 text-sm text-status-yellow">Production documents unavailable.</p>
             ) : null}
-            {!documentsQuery.isLoading &&
-            !documentsQuery.error &&
-            (documentsQuery.data?.length ?? 0) === 0 ? (
+            {!documentsQuery.isLoading && !documentsQuery.error && documentRows.length === 0 ? (
               <p className="py-3 text-sm text-muted-foreground">No production documents yet.</p>
             ) : null}
-            {documentsQuery.data?.map((document) => (
+            {documentRows.map((document) => (
               <div
                 key={document.id}
                 className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
@@ -940,6 +995,16 @@ function ProductionDocumentPanel({
                 ) : null}
               </div>
             ))}
+            {documentsQuery.hasNextPage ? (
+              <button
+                type="button"
+                className="min-h-11 rounded border px-3"
+                disabled={documentsQuery.isFetchingNextPage}
+                onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
+              >
+                載入更多文件
+              </button>
+            ) : null}
           </div>
         </>
       )}
