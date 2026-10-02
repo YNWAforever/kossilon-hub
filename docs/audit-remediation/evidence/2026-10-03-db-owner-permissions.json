@@ -1,0 +1,320 @@
+{
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb"
+  },
+  "sql": "WITH extra AS (SELECT c.oid,c.relname,c.relowner,c.relacl,c.relrowsecurity,c.relforcerowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname=ANY(ARRAY['hk_funding_schema_migrations','personal_workspaces','sync_changes','sync_conflicts','sync_entities','sync_field_revisions','sync_operation_receipts']::text[])) SELECT clock_timestamp() AS observed_at,current_user AS connection_role,jsonb_build_object('tables',(SELECT jsonb_agg(jsonb_build_object('name',e.relname,'technical_owner',pg_get_userbyid(e.relowner),'rls',e.relrowsecurity,'force_rls',e.relforcerowsecurity,'raw_acl',e.relacl::text,'catalog_acl_grants',(SELECT jsonb_agg(x) FROM (SELECT CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END AS grantee,array_agg(a.privilege_type ORDER BY a.privilege_type) AS privileges,bool_or(a.is_grantable) AS has_explicit_grant_option FROM aclexplode(coalesce(e.relacl,acldefault('r',e.relowner))) a GROUP BY a.grantee) x)) ORDER BY e.relname) FROM extra e),'column_acls',(SELECT coalesce(jsonb_agg(jsonb_build_object('table',e.relname,'column',a.attname,'acl',a.attacl::text)),'[]'::jsonb) FROM extra e JOIN pg_attribute a ON a.attrelid=e.oid WHERE a.attnum>0 AND NOT a.attisdropped AND a.attacl IS NOT NULL),'owner_default_acls',(SELECT coalesce(jsonb_agg(jsonb_build_object('role',pg_get_userbyid(d.defaclrole),'namespace',d.defaclnamespace::regnamespace::text,'object_type',d.defaclobjtype,'acl',d.defaclacl::text)),'[]'::jsonb) FROM pg_default_acl d WHERE d.defaclrole IN (SELECT relowner FROM extra)),'policies',(SELECT jsonb_agg(jsonb_build_object('table',p.tablename,'name',p.policyname,'permissive',p.permissive,'roles',p.roles,'command',p.cmd,'using',p.qual,'with_check',p.with_check) ORDER BY p.tablename,p.policyname) FROM pg_policies p WHERE p.schemaname='public' AND p.tablename IN (SELECT relname FROM extra)),'normal_dependencies',(SELECT coalesce(jsonb_agg(x),'[]'::jsonb) FROM (SELECT DISTINCT e.relname AS referenced_table,pg_describe_object(d.classid,d.objid,d.objsubid) AS dependent_object FROM pg_depend d JOIN extra e ON e.oid=d.refobjid WHERE d.refclassid='pg_class'::regclass AND d.deptype='n' ORDER BY e.relname,dependent_object) x),'connector_public_schema_create',has_schema_privilege(current_user,'public','CREATE')) AS facts",
+  "providerWrites": 0,
+  "observations": [
+    {
+      "observed_at": "2026-10-02T16:30:43.728Z",
+      "connection_role": "neondb_owner",
+      "facts": {
+        "tables": [
+          {
+            "rls": false,
+            "name": "hk_funding_schema_migrations",
+            "raw_acl": null,
+            "force_rls": false,
+            "technical_owner": "neondb_owner",
+            "catalog_acl_grants": [
+              {
+                "grantee": "neondb_owner",
+                "privileges": [
+                  "DELETE",
+                  "INSERT",
+                  "MAINTAIN",
+                  "REFERENCES",
+                  "SELECT",
+                  "TRIGGER",
+                  "TRUNCATE",
+                  "UPDATE"
+                ],
+                "has_explicit_grant_option": false
+              }
+            ]
+          },
+          {
+            "rls": true,
+            "name": "personal_workspaces",
+            "raw_acl": null,
+            "force_rls": true,
+            "technical_owner": "neondb_owner",
+            "catalog_acl_grants": [
+              {
+                "grantee": "neondb_owner",
+                "privileges": [
+                  "DELETE",
+                  "INSERT",
+                  "MAINTAIN",
+                  "REFERENCES",
+                  "SELECT",
+                  "TRIGGER",
+                  "TRUNCATE",
+                  "UPDATE"
+                ],
+                "has_explicit_grant_option": false
+              }
+            ]
+          },
+          {
+            "rls": true,
+            "name": "sync_changes",
+            "raw_acl": null,
+            "force_rls": true,
+            "technical_owner": "neondb_owner",
+            "catalog_acl_grants": [
+              {
+                "grantee": "neondb_owner",
+                "privileges": [
+                  "DELETE",
+                  "INSERT",
+                  "MAINTAIN",
+                  "REFERENCES",
+                  "SELECT",
+                  "TRIGGER",
+                  "TRUNCATE",
+                  "UPDATE"
+                ],
+                "has_explicit_grant_option": false
+              }
+            ]
+          },
+          {
+            "rls": true,
+            "name": "sync_conflicts",
+            "raw_acl": null,
+            "force_rls": true,
+            "technical_owner": "neondb_owner",
+            "catalog_acl_grants": [
+              {
+                "grantee": "neondb_owner",
+                "privileges": [
+                  "DELETE",
+                  "INSERT",
+                  "MAINTAIN",
+                  "REFERENCES",
+                  "SELECT",
+                  "TRIGGER",
+                  "TRUNCATE",
+                  "UPDATE"
+                ],
+                "has_explicit_grant_option": false
+              }
+            ]
+          },
+          {
+            "rls": true,
+            "name": "sync_entities",
+            "raw_acl": null,
+            "force_rls": true,
+            "technical_owner": "neondb_owner",
+            "catalog_acl_grants": [
+              {
+                "grantee": "neondb_owner",
+                "privileges": [
+                  "DELETE",
+                  "INSERT",
+                  "MAINTAIN",
+                  "REFERENCES",
+                  "SELECT",
+                  "TRIGGER",
+                  "TRUNCATE",
+                  "UPDATE"
+                ],
+                "has_explicit_grant_option": false
+              }
+            ]
+          },
+          {
+            "rls": true,
+            "name": "sync_field_revisions",
+            "raw_acl": null,
+            "force_rls": true,
+            "technical_owner": "neondb_owner",
+            "catalog_acl_grants": [
+              {
+                "grantee": "neondb_owner",
+                "privileges": [
+                  "DELETE",
+                  "INSERT",
+                  "MAINTAIN",
+                  "REFERENCES",
+                  "SELECT",
+                  "TRIGGER",
+                  "TRUNCATE",
+                  "UPDATE"
+                ],
+                "has_explicit_grant_option": false
+              }
+            ]
+          },
+          {
+            "rls": true,
+            "name": "sync_operation_receipts",
+            "raw_acl": null,
+            "force_rls": true,
+            "technical_owner": "neondb_owner",
+            "catalog_acl_grants": [
+              {
+                "grantee": "neondb_owner",
+                "privileges": [
+                  "DELETE",
+                  "INSERT",
+                  "MAINTAIN",
+                  "REFERENCES",
+                  "SELECT",
+                  "TRIGGER",
+                  "TRUNCATE",
+                  "UPDATE"
+                ],
+                "has_explicit_grant_option": false
+              }
+            ]
+          }
+        ],
+        "policies": [
+          {
+            "name": "personal_workspaces_owner",
+            "roles": ["public"],
+            "table": "personal_workspaces",
+            "using": "(auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text))",
+            "command": "ALL",
+            "permissive": "PERMISSIVE",
+            "with_check": "(auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text))"
+          },
+          {
+            "name": "sync_changes_owner",
+            "roles": ["public"],
+            "table": "sync_changes",
+            "using": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_changes.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))",
+            "command": "ALL",
+            "permissive": "PERMISSIVE",
+            "with_check": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_changes.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))"
+          },
+          {
+            "name": "sync_conflicts_owner",
+            "roles": ["public"],
+            "table": "sync_conflicts",
+            "using": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_conflicts.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))",
+            "command": "ALL",
+            "permissive": "PERMISSIVE",
+            "with_check": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_conflicts.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))"
+          },
+          {
+            "name": "sync_entities_owner",
+            "roles": ["public"],
+            "table": "sync_entities",
+            "using": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_entities.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))",
+            "command": "ALL",
+            "permissive": "PERMISSIVE",
+            "with_check": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_entities.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))"
+          },
+          {
+            "name": "sync_field_revisions_owner",
+            "roles": ["public"],
+            "table": "sync_field_revisions",
+            "using": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_field_revisions.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))",
+            "command": "ALL",
+            "permissive": "PERMISSIVE",
+            "with_check": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_field_revisions.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))"
+          },
+          {
+            "name": "sync_operation_receipts_owner",
+            "roles": ["public"],
+            "table": "sync_operation_receipts",
+            "using": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_operation_receipts.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))",
+            "command": "ALL",
+            "permissive": "PERMISSIVE",
+            "with_check": "(EXISTS ( SELECT 1\n   FROM personal_workspaces workspace\n  WHERE ((workspace.id = sync_operation_receipts.workspace_id) AND (workspace.auth_user_id = NULLIF(current_setting('app.auth_user_id'::text, true), ''::text)))))"
+          }
+        ],
+        "column_acls": [],
+        "owner_default_acls": [],
+        "normal_dependencies": [
+          {
+            "dependent_object": "constraint sync_changes_workspace_id_fkey on table sync_changes",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "constraint sync_conflicts_workspace_id_fkey on table sync_conflicts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "constraint sync_entities_workspace_id_fkey on table sync_entities",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "constraint sync_operation_receipts_workspace_id_fkey on table sync_operation_receipts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "policy personal_workspaces_owner on table personal_workspaces",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "dependent_object": "constraint sync_operation_receipts_change_id_fkey on table sync_operation_receipts",
+            "referenced_table": "sync_changes"
+          },
+          {
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "sync_changes"
+          },
+          {
+            "dependent_object": "constraint sync_conflicts_status_check on table sync_conflicts",
+            "referenced_table": "sync_conflicts"
+          },
+          {
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "sync_conflicts"
+          },
+          {
+            "dependent_object": "constraint sync_field_revisions_workspace_id_entity_type_entity_id_fkey on table sync_field_revisions",
+            "referenced_table": "sync_entities"
+          },
+          {
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "sync_entities"
+          },
+          {
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "sync_field_revisions"
+          },
+          {
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "sync_operation_receipts"
+          }
+        ],
+        "connector_public_schema_create": true
+      }
+    }
+  ],
+  "limits": [
+    "Default ACL expansion is catalog permission metadata, not proof of exclusive access or no inherited/owner privileges.",
+    "Column ACLs and owner default-ACL rows observed empty; external credential sharing and app connection identity remain unknown.",
+    "The six policies and 18 distinct reference/dependent pairs are observed pg_catalog dependencies, not an exhaustive inventory of dynamic SQL or external consumers.",
+    "Connector role neondb_owner has CREATE on public and owner privileges; this does not establish a sole DDL operator/freeze.",
+    "Business/service attribution and approved lineage policy remain blocked."
+  ]
+}

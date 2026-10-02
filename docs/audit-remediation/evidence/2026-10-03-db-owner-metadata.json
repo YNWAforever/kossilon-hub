@@ -1,0 +1,297 @@
+{
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb"
+  },
+  "providerWrites": 0,
+  "observations": [
+    {
+      "observed_at": "2026-10-02T16:20:29.583Z",
+      "connection_role": "neondb_owner",
+      "metadata": {
+        "extra_tables": [
+          {
+            "acl": null,
+            "name": "hk_funding_schema_migrations",
+            "technical_owner": "neondb_owner"
+          },
+          {
+            "acl": null,
+            "name": "personal_workspaces",
+            "technical_owner": "neondb_owner"
+          },
+          {
+            "acl": null,
+            "name": "sync_changes",
+            "technical_owner": "neondb_owner"
+          },
+          {
+            "acl": null,
+            "name": "sync_conflicts",
+            "technical_owner": "neondb_owner"
+          },
+          {
+            "acl": null,
+            "name": "sync_entities",
+            "technical_owner": "neondb_owner"
+          },
+          {
+            "acl": null,
+            "name": "sync_field_revisions",
+            "technical_owner": "neondb_owner"
+          },
+          {
+            "acl": null,
+            "name": "sync_operation_receipts",
+            "technical_owner": "neondb_owner"
+          }
+        ],
+        "public_schema": {
+          "acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}",
+          "owner": "pg_database_owner"
+        },
+        "current_role_flags": {
+          "inherit": true,
+          "create_db": true,
+          "superuser": false,
+          "bypass_rls": true,
+          "create_role": true
+        },
+        "public_function_owners": [
+          {
+            "owner": "cloud_admin",
+            "function_count": 37,
+            "security_definer_count": 0
+          },
+          {
+            "owner": "neondb_owner",
+            "function_count": 9,
+            "security_definer_count": 0
+          }
+        ],
+        "public_relation_owners": [
+          {
+            "owner": "neondb_owner",
+            "relation_count": 89
+          }
+        ],
+        "normal_dependency_objects": [
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_changes_workspace_id_fkey on table sync_changes",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_conflicts_workspace_id_fkey on table sync_conflicts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_entities_workspace_id_fkey on table sync_entities",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_operation_receipts_workspace_id_fkey on table sync_operation_receipts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy personal_workspaces_owner on table personal_workspaces",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy personal_workspaces_owner on table personal_workspaces",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "personal_workspaces"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_operation_receipts_change_id_fkey on table sync_operation_receipts",
+            "referenced_table": "sync_changes"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "sync_changes"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_changes_owner on table sync_changes",
+            "referenced_table": "sync_changes"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_conflicts_status_check on table sync_conflicts",
+            "referenced_table": "sync_conflicts"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "sync_conflicts"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_conflicts_owner on table sync_conflicts",
+            "referenced_table": "sync_conflicts"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_field_revisions_workspace_id_entity_type_entity_id_fkey on table sync_field_revisions",
+            "referenced_table": "sync_entities"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_field_revisions_workspace_id_entity_type_entity_id_fkey on table sync_field_revisions",
+            "referenced_table": "sync_entities"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "constraint sync_field_revisions_workspace_id_entity_type_entity_id_fkey on table sync_field_revisions",
+            "referenced_table": "sync_entities"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "sync_entities"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_entities_owner on table sync_entities",
+            "referenced_table": "sync_entities"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "sync_field_revisions"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_field_revisions_owner on table sync_field_revisions",
+            "referenced_table": "sync_field_revisions"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "sync_operation_receipts"
+          },
+          {
+            "deptype": "n",
+            "dependent_object": "policy sync_operation_receipts_owner on table sync_operation_receipts",
+            "referenced_table": "sync_operation_receipts"
+          }
+        ],
+        "owner_role_membership_edges": []
+      }
+    }
+  ],
+  "limits": [
+    "Technical PostgreSQL ownership is not business/service attribution.",
+    "A null relacl means default ACL; it is not proof that no privileges exist.",
+    "pg_depend records catalog dependencies; dynamic SQL, external applications and consumers are not exhaustively captured.",
+    "The connector connection role is observed; the application DATABASE_URL role is not inferred.",
+    "No observation proves a sole DDL owner, permission freeze or use of the migration advisory lock."
+  ]
+}
