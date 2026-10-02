@@ -55,6 +55,8 @@ async function mount() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+  // Await TanStack's explicit route preload before rendering its lazy wrapper.
+  await Page.preload?.();
   await act(async () => {
     render(
       <QueryClientProvider client={client}>
@@ -64,8 +66,30 @@ async function mount() {
       </QueryClientProvider>,
     );
   });
+  return client;
 }
 describe("actual settings save feedback", () => {
+  it("binds the draft to its observed revision across another admin's refetch", async () => {
+    fns.updateChecklistTemplate.mockRejectedValue(new Error("409: Template revision changed"));
+    const client = await mount();
+    const name = await screen.findByDisplayValue("Controlled template");
+    await act(async () => {
+      client.setQueryData(
+        ["checklist-templates"],
+        [{ ...template, name: "Other admin", revision: 2 }],
+      );
+    });
+    await screen.findByText("Other admin");
+    fireEvent.blur(name);
+    expect(fns.updateChecklistTemplate).not.toHaveBeenCalled();
+    fireEvent.change(name, { target: { value: "My draft" } });
+    fireEvent.blur(name);
+    await screen.findByRole("alert");
+    expect(fns.updateChecklistTemplate).toHaveBeenCalledWith({
+      data: { id: template.id, patch: { name: "My draft" }, expectedRevision: 1 },
+    });
+    expect(screen.getByDisplayValue("My draft")).toBeTruthy();
+  });
   it("shows pending/saved and sends the current template revision", async () => {
     let resolve!: (value: unknown) => void;
     fns.updateChecklistTemplate.mockImplementation(

@@ -59,6 +59,7 @@ export function ProductionAnnualReturnCommandCenter({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [includeFixtures, setIncludeFixtures] = useState(false);
   const [companySearch, setCompanySearch] = useState("");
+  const [ownerSearch, setOwnerSearch] = useState("");
 
   const filters = { ...boardFiltersFromSearch(search, BOARD_PAGE_SIZE), includeFixtures };
   const { limit: pageLimit, ...bulkFilters } = filters;
@@ -147,8 +148,8 @@ export function ProductionAnnualReturnCommandCenter({
   // the page meant the one control that could have narrowed the query enough to
   // surface a late case was itself limited to the cases already on screen.
   const ownersQuery = useQuery({
-    queryKey: ["annual-return", "assignable-staff", actorScope],
-    queryFn: () => listAssignableStaff(),
+    queryKey: ["annual-return", "assignable-staff", actorScope, ownerSearch],
+    queryFn: () => listAssignableStaff({ data: { q: ownerSearch, limit: 200 } }),
     retry: false,
     staleTime: 60_000,
   });
@@ -302,6 +303,16 @@ export function ProductionAnnualReturnCommandCenter({
             value={search.q ?? ""}
             onChange={(event) => update({ q: event.target.value })}
           />
+          <label>
+            搜尋負責同事
+            <input
+              aria-label="搜尋負責同事"
+              className="min-h-11 rounded border px-3"
+              value={ownerSearch}
+              onChange={(event) => setOwnerSearch(event.target.value)}
+            />
+            <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權同事。</span>
+          </label>
           <select
             aria-label="Filter by owner"
             className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -309,6 +320,9 @@ export function ProductionAnnualReturnCommandCenter({
             onChange={(event) => update({ ownerId: event.target.value || undefined })}
           >
             <option value="">All owners</option>
+            {search.ownerId && !owners.some((o) => o.id === search.ownerId) ? (
+              <option value={search.ownerId}>已選負責人（搜尋其他同事不會改變篩選）</option>
+            ) : null}
             {owners.map((owner) => (
               <option key={owner.id} value={owner.id}>
                 {owner.name}

@@ -8,6 +8,7 @@ import {
 } from "@/features/annual-return/server-fns";
 import { WORK_VIEWS, type WorkViewKey } from "@/features/annual-return/work-views";
 import { dailyViewSearch, dailyReturnPath } from "@/features/annual-return/daily-view-state";
+import { useRetainedPage } from "@/lib/use-retained-page";
 
 /**
  * 今日工作 — what to do now, rather than what exists.
@@ -57,6 +58,10 @@ function TodayRoute() {
     enabled: dataMode === "production",
     retry: false,
   });
+  const page = useRetainedPage(
+    JSON.stringify([actor, active, search.q, search.sort]),
+    viewsQuery.data,
+  );
 
   if (dataMode !== "production") {
     return (
@@ -72,10 +77,10 @@ function TodayRoute() {
     );
   }
 
-  const current = viewsQuery.data
-    ? { definition: WORK_VIEWS.find((v) => v.key === active)!, rows: viewsQuery.data.rows }
+  const current = page
+    ? { definition: WORK_VIEWS.find((v) => v.key === active)!, rows: page.rows }
     : undefined;
-  const rows = viewsQuery.data?.rows ?? [];
+  const rows = page?.rows ?? [];
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -231,12 +236,11 @@ function TodayRoute() {
             回第一頁工作
           </button>
         ) : null}
-        {viewsQuery.data?.nextCursor ? (
+        {page?.nextCursor ? (
           <button
+            disabled={viewsQuery.isFetching || viewsQuery.isError}
             className="min-h-11 rounded border px-3"
-            onClick={() =>
-              void navigate({ search: { ...search, cursor: viewsQuery.data!.nextCursor! } })
-            }
+            onClick={() => void navigate({ search: { ...search, cursor: page.nextCursor! } })}
           >
             下一頁工作
           </button>

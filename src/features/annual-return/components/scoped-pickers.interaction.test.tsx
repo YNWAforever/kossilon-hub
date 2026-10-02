@@ -31,6 +31,36 @@ it("searches all authorised staff before the bounded page", async () => {
   expect(await screen.findByText("Member5001 · Staff")).toBeTruthy();
   expect(mocks.staff).toHaveBeenLastCalledWith({ data: { q: "5001", limit: 200 } });
 });
+it("clears the submitted staff selection when the operator changes its search", async () => {
+  mocks.staff.mockResolvedValue([{ id: "memberA", name: "Member A", role: "Staff" }]);
+  const changed = vi.fn();
+  wrap(
+    <StaffPicker id="owner" label="Owner" value="memberA" onChange={changed} actorScope="actorA" />,
+  );
+  await screen.findByText("Member A · Staff");
+  fireEvent.change(screen.getByLabelText("搜尋Owner"), { target: { value: "B" } });
+  expect(changed).toHaveBeenCalledWith("");
+});
+it("clears the submitted document and version when its search changes", async () => {
+  mocks.documents.mockResolvedValue({ documents: [], nextCursor: null });
+  const changed = vi.fn(),
+    selected = vi.fn();
+  wrap(
+    <DocumentPicker
+      id="proof"
+      label="Proof"
+      caseId="case"
+      categories={["payment"]}
+      value="docA"
+      onChange={changed}
+      onSelectDocument={selected}
+      actorScope="actorA"
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("搜尋Proof文件"), { target: { value: "B" } });
+  expect(changed).toHaveBeenCalledWith("");
+  expect(selected).toHaveBeenCalledWith(undefined);
+});
 it("does not claim no evidence while more authorised pages exist and searches the full scope", async () => {
   mocks.documents.mockImplementation(async ({ data }) => ({
     documents: [],

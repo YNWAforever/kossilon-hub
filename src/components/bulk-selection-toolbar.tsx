@@ -88,9 +88,10 @@ function SelectionControls({
   const [preview, setPreview] = useState<BulkPreview | null>(null),
     [request, setRequest] = useState<{ previewId: string; idempotencyKey: string } | null>(null);
   const client = useQueryClient();
+  const [assigneeSearch, setAssigneeSearch] = useState("");
   const assignees = useQuery({
-    queryKey: ["bulk-assignees", actorScope],
-    queryFn: () => listBulkAssignees({ data: {} }),
+    queryKey: ["bulk-assignees", actorScope, assigneeSearch],
+    queryFn: () => listBulkAssignees({ data: { q: assigneeSearch, limit: 200 } }),
     retry: false,
     enabled: needsAssignee,
   });
@@ -286,6 +287,23 @@ function SelectionControls({
       </details>
       {needsAssignee ? (
         <>
+          <label>
+            搜尋批量員工
+            <input
+              aria-label="搜尋批量員工"
+              className="min-h-11 rounded border px-3"
+              value={assigneeSearch}
+              disabled={busy}
+              onChange={(event) => {
+                setAssigneeSearch(event.target.value);
+                setAssigneeId("");
+                setTeamId("");
+                setPreview(null);
+                setRequest(null);
+              }}
+            />
+            <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權員工。</span>
+          </label>
           <label>
             責任
             <select

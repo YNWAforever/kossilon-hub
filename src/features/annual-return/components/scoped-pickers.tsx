@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { listDocumentPage } from "@/features/documents/server-fns";
 import type { DocumentSummary } from "@/features/documents/repository";
@@ -36,6 +36,14 @@ export function StaffPicker({
   actorScope?: string;
 }) {
   const [query, setQuery] = useState("");
+  const previousActor = useRef(actorScope);
+  useEffect(() => {
+    if (previousActor.current !== actorScope) {
+      previousActor.current = actorScope;
+      setQuery("");
+      onChange("");
+    }
+  }, [actorScope, onChange]);
   const staffQuery = useQuery({
     queryKey: [...STAFF_QUERY_KEY, actorScope, query],
     queryFn: () => listAssignableStaff({ data: { q: query, limit: 200 } }),
@@ -56,7 +64,10 @@ export function StaffPicker({
         <input
           className="min-h-11 w-full rounded border px-3"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            onChange("");
+          }}
         />
       </label>
       <p className="text-xs text-muted-foreground">最多顯示200項；搜尋涵蓋全部獲授權同事。</p>
@@ -67,7 +78,7 @@ export function StaffPicker({
         id={id}
         className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
         disabled={disabled || staffQuery.isLoading || Boolean(staffQuery.error)}
-        value={valueIsKnown ? value : ""}
+        value={value}
         onChange={(event) => onChange(event.target.value)}
       >
         <option value="">
@@ -130,6 +141,16 @@ export function DocumentPicker({
   onSelectDocument,
 }: DocumentPickerProps) {
   const [query, setQuery] = useState("");
+  const scope = JSON.stringify([actorScope, caseId, categories]);
+  const previousScope = useRef(scope);
+  useEffect(() => {
+    if (previousScope.current !== scope) {
+      previousScope.current = scope;
+      setQuery("");
+      onChange("");
+      onSelectDocument?.(undefined);
+    }
+  }, [scope, onChange, onSelectDocument]);
   const category = categories.length === 1 ? categories[0] : undefined;
   const documentsQuery = useInfiniteQuery({
     queryKey: ["documents", "picker", caseId, actorScope, query, categories],
@@ -159,7 +180,11 @@ export function DocumentPicker({
         <input
           className="min-h-11 w-full rounded border px-3"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            onChange("");
+            onSelectDocument?.(undefined);
+          }}
         />
       </label>
       <label className="text-sm font-medium" htmlFor={id}>
@@ -169,7 +194,7 @@ export function DocumentPicker({
         id={id}
         className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
         disabled={disabled || documentsQuery.isLoading || Boolean(documentsQuery.error)}
-        value={valueIsKnown ? value : ""}
+        value={value}
         onChange={(event) => {
           onChange(event.target.value);
           onSelectDocument?.(candidates.find((document) => document.id === event.target.value));

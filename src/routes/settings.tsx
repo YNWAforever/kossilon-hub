@@ -62,7 +62,7 @@ type Tab = "documents" | "reminders" | "risks";
 // The shape of `useMutation`'s result that the template-editing subcomponents need. Kept narrow
 // (rather than the full `UseMutationResult`) so it's easy to pass down through props.
 type UpdateTemplateMutation = {
-  mutate: (input: { id: string; patch: ChecklistTemplatePatch }) => void;
+  mutate: (input: { id: string; patch: ChecklistTemplatePatch; expectedRevision?: number }) => void;
 };
 
 // Stable fallback so `templates` keeps the same array identity across renders while the
@@ -156,6 +156,7 @@ function SettingsPage() {
     onSuccess: async () => {
       setWarning(undefined);
       await invalidateTemplates();
+      setEditorReload((value) => value + 1);
       finishSave();
     },
     onError: (error, input) => {
@@ -200,8 +201,8 @@ function SettingsPage() {
   const guardedUpdateMutation: UpdateTemplateMutation = {
     mutate: guardMutation(
       mutationInFlightRef,
-      (input: { id: string; patch: ChecklistTemplatePatch }) => {
-        const revision = templates.find((t) => t.id === input.id)?.revision;
+      (input: { id: string; patch: ChecklistTemplatePatch; expectedRevision?: number }) => {
+        const revision = input.expectedRevision;
         if (!revision) {
           clearMutationInFlight();
           setWarning("模板版本未能確認，請重新載入。");
@@ -547,12 +548,12 @@ export function WhatsAppIntegrationStatus({ status }: { status: WhatsAppIntegrat
 // ---------- editor ----------
 
 function TemplateEditor({
-  t,
+  t: fetchedTemplate,
   tab,
   setTab,
   dataMode,
   isSaving,
-  updateMutation,
+  updateMutation: suppliedMutation,
   onDuplicate,
   onDelete,
 }: {
@@ -565,8 +566,14 @@ function TemplateEditor({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  // Draft values, arrays and revision share one baseline. Background refetches
+  // cannot rebase a draft; only a successful own write or explicit reload can.
+  const [t] = useState(fetchedTemplate);
   const [name, setName] = useState(t.name);
   const [description, setDescription] = useState(t.description);
+  const updateMutation: UpdateTemplateMutation = {
+    mutate: (input) => suppliedMutation.mutate({ ...input, expectedRevision: t.revision }),
+  };
 
   return (
     <div className="space-y-5">

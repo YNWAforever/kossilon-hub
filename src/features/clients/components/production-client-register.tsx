@@ -11,6 +11,7 @@ import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types
 import { dataOriginLabel } from "../data-origin";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { useRetainedPage } from "@/lib/use-retained-page";
 
 const REGISTER_GRID_COLUMNS =
   "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
@@ -61,12 +62,13 @@ export function ProductionClientRegister({
   });
 
   const optionsQuery = useQuery({
-    queryKey: ["clients", "assignment-options"],
+    queryKey: ["clients", "assignment-options", actor],
     queryFn: () => listClientAssignmentOptions(),
     retry: false,
   });
 
-  const visibleClients = clientsQuery.data?.clients ?? [];
+  const page = useRetainedPage(JSON.stringify([actor, filters]), clientsQuery.data);
+  const visibleClients = page?.clients ?? [];
 
   function handleCreated() {
     void queryClient.invalidateQueries({ queryKey: ["clients"] });
@@ -104,7 +106,7 @@ export function ProductionClientRegister({
             includeFixtures,
           }}
           page={visibleClients.map((c) => ({ id: c.id, label: c.companyName }))}
-          total={clientsQuery.data?.total ?? null}
+          total={page?.total ?? null}
           pageSize={100}
           maintenanceActions={["client_maintenance"]}
         />
@@ -123,6 +125,9 @@ export function ProductionClientRegister({
       {clientsQuery.isError ? (
         <p role="alert" className="text-sm text-destructive">
           Client data is unavailable. Try again shortly.
+          <button className="min-h-11 px-3" onClick={() => void clientsQuery.refetch()}>
+            重試客戶頁面
+          </button>
         </p>
       ) : null}
 
@@ -211,12 +216,11 @@ export function ProductionClientRegister({
             回第一頁客戶
           </button>
         ) : null}
-        {clientsQuery.data?.nextCursor ? (
+        {page?.nextCursor ? (
           <button
+            disabled={clientsQuery.isFetching || clientsQuery.isError}
             className="min-h-11 rounded border px-3"
-            onClick={() =>
-              setPagination({ key: filterKey, cursor: clientsQuery.data!.nextCursor! })
-            }
+            onClick={() => setPagination({ key: filterKey, cursor: page.nextCursor! })}
           >
             下一頁客戶
           </button>
