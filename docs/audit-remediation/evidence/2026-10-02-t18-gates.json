@@ -1,0 +1,74 @@
+{
+  "verifiedDate": "2026-10-02",
+  "production": "unchanged; no dispatch/receipt/invite/grant/secret/deploy",
+  "build": "3226db68d1c0083b17fe7024f568fd2ca1b608e5",
+  "gates": [
+    "Bulk5files39pass0skip39.63s",
+    "Views/conventions5files29pass26.61s",
+    "Actual routes3files24pass11.89s",
+    "tsc --noEmit PASS",
+    "npm run lint 0errors1existingwarning"
+  ],
+  "findings": ["F13", "F11"],
+  "schema": "0079 local/source47 IDs; no production migration",
+  "uat": {
+    "notRun": 9,
+    "localOnlyPass": 19,
+    "blocked": 22,
+    "original": 50
+  },
+  "base": "99a0e1cd80dc96ae3b1c3db3c1c0ecbf40954991",
+  "review": "Whole PR09 review/full CI pending T19",
+  "logs": [
+    {
+      "sha256": "0dd657c1473cd75f2fb08d252bbfe87c2a811da41a8f190812680d62c68af266",
+      "file": "t18-actions-red.log"
+    },
+    {
+      "sha256": "69a764cbb07969d4dc566300000653252981f00e559ffb9744e3ed97483ba1fb",
+      "file": "t18-toolbar-red.log"
+    },
+    {
+      "sha256": "20fa13483299f4dad35bc87ae653233bdba48ca0bf0834b5dbde992888a96c8b",
+      "file": "t18-client-team-red.log"
+    },
+    {
+      "sha256": "2b1c8979db341ad36a1e7fc96bee768a53f9b9cdd166c262824f4ef447a56be6",
+      "file": "t18-expanded-contracts.log"
+    },
+    {
+      "sha256": "ca1ba83fc9b6d7d56d3ba2c4b38f9e474fb420c4ed275b17d12714c98bfe905e",
+      "file": "t18-actions-metadata-green.log"
+    },
+    {
+      "sha256": "485f0e4cf1217b817a883276f283dbac83c3fe2c3c8d1bd0d213c883d255f012",
+      "file": "t18-task-final-green.log"
+    },
+    {
+      "sha256": "208622aa7ab735f11d83f66ccce4406f1ee133c4f440fc69b846ef083c52e921",
+      "file": "t18-views-contracts.log"
+    },
+    {
+      "sha256": "98cd8054dc72afc9280ffbcf8d1560eb7d49b2d0ea5eaa0c496d340a4e03e39e",
+      "file": "t18-actual-route-contracts.log"
+    },
+    {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "t18-typecheck-gate.log"
+    },
+    {
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+      "file": "t18-lint-gate.log"
+    },
+    {
+      "sha256": "4f73edd9aefb93b5e4831b3be6b86ea960943f3aa10db98a4df32d8c13b9b119",
+      "file": "t18-migrate-local.log"
+    },
+    {
+      "sha256": "9e691ee94c70f93672f81f60429873eb0f00bee4766ffbf3c42883860cdcdc03",
+      "file": "t18-fixture-cleanup.log"
+    }
+  ],
+  "tasks": ["T18"],
+  "environment": "LOCAL ONLY Windows Node22.23.3/Bun1.3.14/actual PG17 localhost55441/kossilon_pr02_ci"
+}
