@@ -1,0 +1,137 @@
+{
+  "observed_at": "2026-10-02T15:51:58.082Z",
+  "build": "67dbac5643b9a30fdcc9638acbf35122e7544190",
+  "env": "GitHub Linux / Node22 / Bun1.4.2 / actual Postgres17 / isolated Chromium demo",
+  "command": "gh run view 37028848074 --log; unchanged .github/workflows/ci.yml commands",
+  "workflow_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37028848074",
+  "result": "success",
+  "tests": {
+    "files": 231,
+    "passed": 2200,
+    "failed": 0,
+    "skipped": 0,
+    "local_demo_browser": 12,
+    "original_uat": {
+      "local_only_pass": 19,
+      "blocked": 31,
+      "not_run": 0
+    }
+  },
+  "raw_log_sha256": "b3ed2cab57861213d44ddfa15f2fde8e16738cd559d6a46e4f372504469b5822",
+  "steps": [
+    {
+      "name": "Set up job",
+      "conclusion": "success"
+    },
+    {
+      "name": "Initialize containers",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run oven-sh/setup-bun@v2",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/setup-node@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install dependencies",
+      "conclusion": "success"
+    },
+    {
+      "name": "Audit both tracked dependency locks",
+      "conclusion": "success"
+    },
+    {
+      "name": "Verify portable npm lock installation",
+      "conclusion": "success"
+    },
+    {
+      "name": "Apply migrations",
+      "conclusion": "success"
+    },
+    {
+      "name": "Seed reference data",
+      "conclusion": "success"
+    },
+    {
+      "name": "Lint",
+      "conclusion": "success"
+    },
+    {
+      "name": "Typecheck",
+      "conclusion": "success"
+    },
+    {
+      "name": "Test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Pre-deploy gate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Original audit acceptance ledger (local contracts only)",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install isolated local browser",
+      "conclusion": "success"
+    },
+    {
+      "name": "Local demo browser and real parser regressions (not runtime UAT)",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build",
+      "conclusion": "success"
+    },
+    {
+      "name": "Dev server import boundaries",
+      "conclusion": "success"
+    },
+    {
+      "name": "Cron trigger has a handler in the built Worker",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/setup-node@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run oven-sh/setup-bun@v2",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Stop containers",
+      "conclusion": "success"
+    },
+    {
+      "name": "Complete job",
+      "conclusion": "success"
+    }
+  ],
+  "scope": "SOURCE/LOCAL contracts only; provider writes0; production NO_GO",
+  "local_pg18_package_evidence": "2026-10-02-historical-release-rehearsal.json",
+  "preview": {
+    "id": "dpl_4NR5KWkYZRWxmTqr5nkgMHsuTW9S",
+    "state": "READY",
+    "sha": "67dbac5643b9a30fdcc9638acbf35122e7544190"
+  },
+  "prior_failure": {
+    "build": "362e127b596f9c59c5b5040aa5a7e03332f4be83",
+    "run": 37025726591,
+    "passed": 2195,
+    "failed": 1,
+    "cause": "mandatory serialized DB test registry omission; fixed, no gate weakened"
+  }
+}
