@@ -41,6 +41,7 @@ import { formatDate } from "@/lib/format-date";
 import { KnowledgeBaseSection } from "@/components/knowledge-base-section";
 import { cn } from "@/lib/utils";
 import { settingsSectionsForMode } from "./-settings-sections";
+import { TemplateImpactPreview } from "@/features/checklist-templates/components/template-impact-preview";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -75,6 +76,18 @@ function describeMutationError(error: unknown, fallback: string): string {
 function SettingsPage() {
   const { dataMode } = Route.useRouteContext();
   const { isCurrentUserAdmin } = useAuth();
+  const [saved, setSaved] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
+  const [editorReload, setEditorReload] = useState(0);
+  const [failed, setFailed] = useState<
+    | {
+        kind: "update";
+        input: { id: string; patch: ChecklistTemplatePatch; expectedRevision: number };
+      }
+    | { kind: "create"; input: ServiceType }
+    | { kind: "duplicate" | "delete"; input: string }
+    | null
+  >(null);
   const sections = settingsSectionsForMode(dataMode);
   const integrationQuery = useQuery({
     queryKey: ["whatsapp-integration-status"],
@@ -86,7 +99,7 @@ function SettingsPage() {
   const productionTemplatesQuery = useQuery({
     queryKey: ["checklist-templates"],
     queryFn: () => listChecklistTemplates(),
-    enabled: dataMode === "production",
+    enabled: dataMode === "production" && isCurrentUserAdmin,
   });
   const templates =
     dataMode === "demo" ? demoTemplates : (productionTemplatesQuery.data ?? EMPTY_TEMPLATES);
@@ -111,46 +124,73 @@ function SettingsPage() {
   function clearMutationInFlight() {
     mutationInFlightRef.current = false;
   }
+  function beginSave() {
+    setSaved(false);
+    setWarning(undefined);
+  }
+  function finishSave() {
+    setSaved(true);
+    setFailed(null);
+  }
 
   const createMutation = useMutation({
+    onMutate: beginSave,
     mutationFn: (serviceType: ServiceType) => createChecklistTemplate({ data: { serviceType } }),
     onSuccess: async (created) => {
       setWarning(undefined);
       await invalidateTemplates();
       setSelectedId(created.id);
       setTab("documents");
+      finishSave();
     },
-    onError: (error) => setWarning(describeMutationError(error, "Unable to create the template.")),
+    onError: (error, input) => {
+      setWarning(describeMutationError(error, "Unable to create the template."));
+      setFailed({ kind: "create", input });
+    },
     onSettled: clearMutationInFlight,
   });
   const updateMutation = useMutation({
-    mutationFn: (input: { id: string; patch: ChecklistTemplatePatch }) =>
+    onMutate: beginSave,
+    mutationFn: (input: { id: string; patch: ChecklistTemplatePatch; expectedRevision: number }) =>
       updateChecklistTemplate({ data: input }),
     onSuccess: async () => {
       setWarning(undefined);
       await invalidateTemplates();
+      finishSave();
     },
-    onError: (error) => setWarning(describeMutationError(error, "Unable to save the change.")),
+    onError: (error, input) => {
+      setWarning(describeMutationError(error, "Unable to save the change."));
+      setFailed({ kind: "update", input });
+    },
     onSettled: clearMutationInFlight,
   });
   const duplicateMutation = useMutation({
+    onMutate: beginSave,
     mutationFn: (id: string) => duplicateChecklistTemplate({ data: { id } }),
     onSuccess: async (duplicated) => {
       setWarning(undefined);
       await invalidateTemplates();
       setSelectedId(duplicated.id);
+      finishSave();
     },
-    onError: (error) =>
-      setWarning(describeMutationError(error, "Unable to duplicate the template.")),
+    onError: (error, input) => {
+      setWarning(describeMutationError(error, "Unable to duplicate the template."));
+      setFailed({ kind: "duplicate", input });
+    },
     onSettled: clearMutationInFlight,
   });
   const deleteMutation = useMutation({
+    onMutate: beginSave,
     mutationFn: (id: string) => deleteChecklistTemplate({ data: { id } }),
     onSuccess: async () => {
       setWarning(undefined);
       await invalidateTemplates();
+      finishSave();
     },
-    onError: (error) => setWarning(describeMutationError(error, "Unable to delete the template.")),
+    onError: (error, input) => {
+      setWarning(describeMutationError(error, "Unable to delete the template."));
+      setFailed({ kind: "delete", input });
+    },
     onSettled: clearMutationInFlight,
   });
 
@@ -160,7 +200,15 @@ function SettingsPage() {
   const guardedUpdateMutation: UpdateTemplateMutation = {
     mutate: guardMutation(
       mutationInFlightRef,
-      (input: { id: string; patch: ChecklistTemplatePatch }) => updateMutation.mutate(input),
+      (input: { id: string; patch: ChecklistTemplatePatch }) => {
+        const revision = templates.find((t) => t.id === input.id)?.revision;
+        if (!revision) {
+          clearMutationInFlight();
+          setWarning("模板版本未能確認，請重新載入。");
+          return;
+        }
+        updateMutation.mutate({ ...input, expectedRevision: revision });
+      },
     ),
   };
   const guardedCreateTemplate = guardMutation(mutationInFlightRef, (serviceType: ServiceType) =>
@@ -174,6 +222,7 @@ function SettingsPage() {
   // `invalidateTemplates` above). Threaded down alongside `dataMode` so every mutating control
   // and editable field disables itself while a write is outstanding.
   const isSaving =
+    isReloading ||
     createMutation.isPending ||
     updateMutation.isPending ||
     duplicateMutation.isPending ||
@@ -183,6 +232,33 @@ function SettingsPage() {
   const [tab, setTab] = useState<Tab>("documents");
   const [query, setQuery] = useState("");
   const [warning, setWarning] = useState<string | undefined>();
+  const retrySave = guardMutation(mutationInFlightRef, () => {
+    if (!failed) {
+      clearMutationInFlight();
+      return;
+    }
+    if (failed.kind === "update") updateMutation.mutate(failed.input);
+    else if (failed.kind === "create") createMutation.mutate(failed.input);
+    else if (failed.kind === "duplicate") duplicateMutation.mutate(failed.input);
+    else deleteMutation.mutate(failed.input);
+  });
+  const reloadTemplates = guardMutation(mutationInFlightRef, async () => {
+    setIsReloading(true);
+    try {
+      const result = await productionTemplatesQuery.refetch();
+      if (result.isError) {
+        setWarning(describeMutationError(result.error, "Unable to reload the template."));
+        return;
+      }
+      setEditorReload((value) => value + 1);
+      setFailed(null);
+      setWarning(undefined);
+      setSaved(false);
+    } finally {
+      setIsReloading(false);
+      clearMutationInFlight();
+    }
+  });
 
   const selected = templates.find((t) => t.id === selectedId) ?? templates[0];
   const filtered = useMemo(
@@ -209,7 +285,7 @@ function SettingsPage() {
   }
 
   return (
-    <main className="flex-1 space-y-6 p-6">
+    <main className="settings-page flex-1 space-y-6 p-4 md:p-6">
       <PageHeader
         eyebrow="Administration"
         title="Settings"
@@ -220,9 +296,52 @@ function SettingsPage() {
         }
       />
       {warning ? (
-        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <div
+          role="alert"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
           {warning}
+          {failed ? (
+            <>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={retrySave}
+                className="ml-3 rounded-md border px-3 py-2"
+              >
+                重試儲存
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={reloadTemplates}
+                className="ml-3 rounded-md border px-3 py-2"
+              >
+                重新載入（放棄未儲存輸入）
+              </button>
+            </>
+          ) : null}
         </div>
+      ) : null}
+      {dataMode === "production" ? (
+        <>
+          <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+            {isSaving
+              ? "儲存中…"
+              : warning
+                ? "儲存未完成"
+                : saved
+                  ? "已儲存"
+                  : "編輯後自動儲存；現有案件不會自動更新。"}
+          </p>
+          {productionTemplatesQuery.isPending ? <p>正在載入模板…</p> : null}
+          {productionTemplatesQuery.isError ? (
+            <div role="alert">
+              無法載入最新模板，這不代表沒有模板。
+              <button onClick={() => void productionTemplatesQuery.refetch()}>重新載入模板</button>
+            </div>
+          ) : null}
+        </>
       ) : null}
       {sections.checklistTemplates ? (
         <section className="rounded-xl border border-border bg-card">
@@ -267,12 +386,15 @@ function SettingsPage() {
               <ul className="max-h-[520px] overflow-y-auto pb-2">
                 {filtered.map((t) => {
                   const active = selected?.id === t.id;
-                  const usage = cases.filter(
-                    () =>
-                      t.serviceType.startsWith("Annual Return") &&
-                      // simplistic: assume all AR cases use the AR template
-                      t.serviceType === "Annual Return — Private Ltd",
-                  ).length;
+                  const usage =
+                    dataMode === "demo"
+                      ? cases.filter(
+                          () =>
+                            t.serviceType.startsWith("Annual Return") &&
+                            // simplistic: assume all AR cases use the AR template
+                            t.serviceType === "Annual Return — Private Ltd",
+                        ).length
+                      : 0;
                   return (
                     <li key={t.id}>
                       <button
@@ -306,23 +428,29 @@ function SettingsPage() {
             {/* Right: editor */}
             <div className="p-5">
               {selected ? (
-                <TemplateEditor
-                  key={selected.id}
-                  t={selected}
-                  tab={tab}
-                  setTab={setTab}
-                  dataMode={dataMode}
-                  isSaving={isSaving}
-                  updateMutation={guardedUpdateMutation}
-                  onDuplicate={() => guardedDuplicateTemplate(selected.id)}
-                  onDelete={() => {
-                    if (mutationInFlightRef.current) return;
-                    mutationInFlightRef.current = true;
-                    deleteMutation.mutate(selected.id);
-                    const next = templates.find((t) => t.id !== selected.id);
-                    if (next) setSelectedId(next.id);
-                  }}
-                />
+                <>
+                  {dataMode === "production" ? (
+                    <TemplateImpactPreview
+                      key={selected.id + ":" + selected.revision}
+                      template={selected}
+                    />
+                  ) : null}
+                  <TemplateEditor
+                    key={selected.id + ":" + editorReload}
+                    t={selected}
+                    tab={tab}
+                    setTab={setTab}
+                    dataMode={dataMode}
+                    isSaving={isSaving}
+                    updateMutation={guardedUpdateMutation}
+                    onDuplicate={() => guardedDuplicateTemplate(selected.id)}
+                    onDelete={() => {
+                      if (mutationInFlightRef.current) return;
+                      mutationInFlightRef.current = true;
+                      deleteMutation.mutate(selected.id);
+                    }}
+                  />
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   No templates yet. Create one to get started.
@@ -365,11 +493,11 @@ function SettingsPage() {
             </h2>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Connect your WOZTELL account to enable two-way WhatsApp messaging and automation.
+            通訊設定由伺服器環境管理。此頁不儲存憑證；已配置不代表實際收發已驗證。
           </p>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <LabeledInput label="API endpoint" defaultValue="https://api.woztell.com/v3" />
-            <LabeledInput label="Channel ID" placeholder="wa-channel-id" />
+            <LabeledInput label="API endpoint" readOnly placeholder="伺服器管理；不在此頁顯示" />
+            <LabeledInput label="Channel ID" readOnly placeholder="伺服器管理；不在此頁顯示" />
           </div>
           <div className="mt-4 flex items-center justify-between">
             {integrationQuery.isPending ? (
@@ -446,6 +574,7 @@ function TemplateEditor({
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex-1 space-y-3">
           <input
+            aria-label="模板名稱"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => {
@@ -455,6 +584,7 @@ function TemplateEditor({
             className="w-full border-b border-transparent bg-transparent font-display text-xl font-semibold text-foreground outline-none focus:border-border disabled:cursor-not-allowed disabled:opacity-70"
           />
           <textarea
+            aria-label="模板說明"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             onBlur={() => {
@@ -616,7 +746,7 @@ export function DocumentsTab({
 
   return (
     <div className="rounded-lg border border-border">
-      <div className="grid grid-cols-[1fr_120px_110px_80px] items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_120px_110px_80px]">
         <span>Document</span>
         <span>Expected</span>
         <span>Required</span>
@@ -669,7 +799,7 @@ function DocumentRow({
   const [daysBeforeDue, setDaysBeforeDue] = useState(doc.daysBeforeDue);
 
   return (
-    <li className="grid grid-cols-[1fr_120px_110px_80px] items-center gap-2 px-3 py-2 text-sm">
+    <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_120px_110px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
@@ -758,7 +888,7 @@ function RemindersTab({
 
   return (
     <div className="rounded-lg border border-border">
-      <div className="grid grid-cols-[1fr_140px_130px_80px] items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_140px_130px_80px]">
         <span>Reminder</span>
         <span>Days before due</span>
         <span>Channel</span>
@@ -814,7 +944,7 @@ function ReminderRow({
   const [daysBeforeDue, setDaysBeforeDue] = useState(reminder.daysBeforeDue);
 
   return (
-    <li className="grid grid-cols-[1fr_140px_130px_80px] items-center gap-2 px-3 py-2 text-sm">
+    <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_140px_130px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
@@ -909,7 +1039,7 @@ function RisksTab({
 
   return (
     <div className="rounded-lg border border-border">
-      <div className="grid grid-cols-[1fr_1.4fr_110px_90px_80px] items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_110px_90px_80px]">
         <span>Rule</span>
         <span>Trigger</span>
         <span>Severity</span>
@@ -969,7 +1099,7 @@ function RiskRow({
   const [trigger, setTrigger] = useState(risk.trigger);
 
   return (
-    <li className="grid grid-cols-[1fr_1.4fr_110px_90px_80px] items-center gap-2 px-3 py-2 text-sm">
+    <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_110px_90px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}

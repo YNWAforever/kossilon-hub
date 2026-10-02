@@ -74,6 +74,7 @@ export const EXPECTED_MIGRATIONS = [
   "0079_bulk_daily_maintenance.sql",
   "0080_manual_handoff_provenance.sql",
   "0081_handoff_attempt_idempotency.sql",
+  "0082_case_template_snapshots.sql",
 ] as const;
 
 export type SchemaLedger = {

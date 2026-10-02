@@ -87,14 +87,15 @@ export function rememberRedirectPath(path: string, storage = browserStorage()): 
   }
 }
 
-export function consumeRedirectPath(storage = browserStorage()): string {
-  if (!storage) return "/";
+export function consumeRedirectPath(storage = browserStorage(), fallback = "/"): string {
+  if (!storage) return fallback;
 
   try {
-    const path = getSafeRedirectPath(storage.getItem(AUTH_REDIRECT_STORAGE_KEY));
+    const raw = storage.getItem(AUTH_REDIRECT_STORAGE_KEY);
+    const path = raw && getSafeRedirectPath(raw) === raw ? raw : fallback;
     storage.removeItem(AUTH_REDIRECT_STORAGE_KEY);
     return path;
   } catch {
-    return "/";
+    return fallback;
   }
 }

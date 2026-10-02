@@ -160,6 +160,8 @@ type TemplateForCaseRow = {
   id: string;
   active: boolean;
   documents: DocumentItem[];
+  revision: number;
+  snapshot: postgres.JSONValue;
 };
 
 type QueryClient = SqlClient | postgres.TransactionSql;
@@ -1263,7 +1265,7 @@ export function createAnnualReturnRepository(
       }
 
       const templateRows = await tx<TemplateForCaseRow[]>`
-        select id, active, documents
+        select id, active, documents, revision, to_jsonb(checklist_templates) snapshot
         from checklist_templates
         where id = ${input.templateId}
         limit 1 for share
@@ -1277,10 +1279,12 @@ export function createAnnualReturnRepository(
       const filingDueDate = input.importSource?.filingDueDate ?? calculateFilingDueDate(basisDate);
       const caseRows = await tx<{ id: string }[]>`
         insert into annual_return_cases (
-          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id,import_origin
+          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id,import_origin,
+          checklist_template_source_id,checklist_template_revision,checklist_template_snapshot
         )
         values (
-          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId},${input.importSource?.dataOrigin ?? null}
+          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId},${input.importSource?.dataOrigin ?? null},
+          ${template.id},${template.revision},${tx.json(template.snapshot)}
         )
         returning id
       `;
@@ -1323,7 +1327,7 @@ export function createAnnualReturnRepository(
         values (
           ${input.companyId}, ${newCaseId}, 'annual_return_case_created', 'user', ${input.actorId},
           'Annual return case created.',
-          ${tx.json({ templateId: input.templateId, returnYear })}
+          ${tx.json({ templateId: input.templateId, templateRevision: template.revision, returnYear })}
         )
       `;
 
@@ -1335,6 +1339,7 @@ export function createAnnualReturnRepository(
         summary: "Annual return case created.",
         metadata: {
           templateId: input.templateId,
+          templateRevision: template.revision,
           returnYear,
           ...(input.importSource ? { importSource: input.importSource } : {}),
         },
