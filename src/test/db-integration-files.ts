@@ -13,6 +13,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "scripts/audit-schema-readiness.test.ts",
   "src/features/annual-return/repository.test.ts",
   "src/features/annual-return/readiness.integration.test.ts",
+  "src/features/annual-return/handoff.integration.test.ts",
   "src/features/annual-return/metrics.integration.test.ts",
   "src/features/annual-return/payment-review.integration.test.ts",
   "src/features/checklist-templates/repository.test.ts",

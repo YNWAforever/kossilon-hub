@@ -61,21 +61,9 @@ export const WORK_VIEWS: readonly WorkViewDefinition[] = [
   {
     key: "returnsAndExceptions",
     label: "回件與異常",
-    // Phase E built the model behind this -- package_handoffs, handoff_returns,
-    // the reconciliation rule and the destination adapter -- but the destination
-    // itself is the firm's internal server, and its protocol, address and rights
-    // are not known to this repository.
-    //
-    // So the view stays unreleased, and the reason names the specific thing that
-    // is missing rather than a phase number. An empty list here would read as
-    // "no exceptions", which is a claim nothing in this build can make: no
-    // package has been transmitted, so no return can have arrived, so the
-    // absence of exceptions is the absence of the whole process.
-    description: "外部交件後的回件核對。",
-    released: false,
-    unavailableReason:
-      "回件核對需要外部交件連接器（BLOCKED_INTEGRATION: external-handoff-destination）。" +
-      "尚未有任何套件成功交出，因此不會有回件。現時請沿用人手記錄；這裡的空白不代表沒有異常。",
+    description:
+      "人工登記回件、未知結果及待人工提交的批准套件。外部連接器未配置；空白只代表範圍內沒有內部待處理紀錄，不代表外部沒有異常。",
+    released: true,
   },
 ];
 
@@ -178,9 +166,20 @@ export function deriveWorkViews(
     newlyReceived: newlyReceived.sort(byUrgency),
     awaitingMyReview: awaitingMyReview.sort(byUrgency),
     readyToFile: readyToFile.sort(byUrgency),
-    // Deliberately empty, and the definition says why rather than letting an
-    // empty list be read as "no exceptions".
-    returnsAndExceptions: [],
+    returnsAndExceptions: cases
+      .filter((c) => {
+        const h = c.handoffExceptions;
+        return h && Object.values(h).some((n) => n > 0);
+      })
+      .map((c) => {
+        const h = c.handoffExceptions!;
+        return baseRow(
+          c,
+          today,
+          `${h.unreconciled} 筆待核對回件 · ${h.rejected} 筆拒收／部分／未匹配 · ${h.unknown} 筆未知 · ${h.awaitingManual} 筆待人工提交`,
+        );
+      })
+      .sort(byUrgency),
   };
 
   return WORK_VIEWS.map((definition) => ({ definition, rows: rowsByKey[definition.key] }));

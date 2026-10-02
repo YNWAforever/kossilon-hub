@@ -1,4 +1,5 @@
 import { CaseFindings } from "./case-findings";
+import { CaseHandoff } from "./case-handoff";
 import { readinessForCase } from "../readiness";
 import { parseEntityId } from "@/lib/entity-id";
 import { CaseParties } from "./case-parties";
@@ -342,6 +343,8 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           <CaseParties caseId={caseId} locked={locked} />
 
           <CaseFindings caseId={caseId} locked={locked} />
+
+          <CaseHandoff caseId={caseId} locked={locked} />
 
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Payment</h2>

@@ -123,7 +123,13 @@ type Snapshot = {
   requirements: Requirement[];
   parties: Party[];
   officer_ids: string[];
-  approvals: { status: string; manifest_payload: string; manifest_sha256: string }[];
+  approvals: {
+    status: string;
+    manifest_payload: string;
+    manifest_sha256: string;
+    delivery_fact?: string | null;
+  }[];
+  returns?: { outcome: string; reconciled_at: string | null }[];
   findings: {
     id: string;
     document_version_id: string | null;
@@ -173,6 +179,7 @@ export async function attachCaseReadiness(
         'parties',coalesce((select jsonb_agg(to_jsonb(p) order by p.id) from case_parties p where p.case_id=arc.id),'[]'::jsonb),
         'officer_ids',coalesce((select jsonb_agg(o.id order by o.id) from officers o where o.company_id=arc.company_id and o.cessation_date is null),'[]'::jsonb),
         'approvals',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at desc,h.id) from package_handoffs h where h.case_id=arc.id),'[]'::jsonb),
+        'returns',coalesce((select jsonb_agg(jsonb_build_object('outcome',r.outcome,'reconciled_at',r.reconciled_at) order by r.id) from handoff_returns r join package_handoffs h on h.id=r.handoff_id where h.case_id=arc.id),'[]'::jsonb),
         'findings',coalesce((select jsonb_agg(to_jsonb(f) order by f.id) from document_findings f where
           f.requirement_instance_id in(select id from case_requirement_instances where case_id=arc.id)
           or f.document_version_id in(select v.id from document_versions v join documents d on d.id=v.document_id where d.company_id=arc.company_id and (d.case_id=arc.id or (d.case_id is null and (
@@ -352,6 +359,16 @@ export async function attachCaseReadiness(
             : { kind: "none" }) as FindingCitation,
       },
     }));
+    case_.handoffExceptions = {
+      unreconciled: (payload.returns ?? []).filter((r) => !r.reconciled_at).length,
+      rejected: (payload.returns ?? []).filter((r) => r.outcome !== "accepted").length,
+      unknown: payload.approvals.filter(
+        (h) => h.delivery_fact === "unknown" || h.delivery_fact == null,
+      ).length,
+      awaitingManual: payload.approvals.filter(
+        (h) => h.status === "prepared" && ["prepared", "exported"].includes(h.delivery_fact ?? ""),
+      ).length,
+    };
     const approval = payload.approvals.find((h) => h.status === "prepared");
     const approvedPayload =
       approval &&

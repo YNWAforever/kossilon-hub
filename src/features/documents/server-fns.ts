@@ -92,21 +92,18 @@ export type DocumentOperationDependencies = {
   authorizeDocument(actor: AuthenticatedActor, subject: DocumentAccessSubject): Promise<void>;
 };
 
-const loadDefaultDocumentContext = createServerOnlyFn(async () => {
+export const createDocumentContextForRequest = createServerOnlyFn(async (request: Request) => {
   const [
-    { getRequest },
     { requireActor, requireClientCompanyAccess },
     { createDocumentRepository },
     { getDocumentsBucketBinding, getDocumentScannerConfig },
     { currentProviderMode },
   ] = await Promise.all([
-    import("@tanstack/react-start/server"),
     import("@/features/auth/neon-auth-server"),
     import("./repository"),
     import("@/server/runtime-env"),
     import("@/server/provider-mode"),
   ]);
-  const request = getRequest();
   const actor = await requireActor(request);
   const repository = createDocumentRepository();
   const providerMode = currentProviderMode();
@@ -146,6 +143,11 @@ const loadDefaultDocumentContext = createServerOnlyFn(async () => {
       },
     } satisfies DocumentOperationDependencies,
   };
+});
+
+export const loadDefaultDocumentContext = createServerOnlyFn(async () => {
+  const { getRequest } = await import("@tanstack/react-start/server");
+  return createDocumentContextForRequest(getRequest());
 });
 
 /**
