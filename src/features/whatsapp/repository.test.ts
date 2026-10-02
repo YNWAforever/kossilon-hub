@@ -3,6 +3,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { sortConversationMessagesOldestFirst } from "./conversations";
 import { normalizeWoztellInboundMessage } from "./woztell";
+import { processWhatsAppInboundWebhookWithRepository } from "./server-fns";
 import {
   createWhatsAppRepository,
   planContactIdentityMerge,
@@ -414,6 +415,138 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       }),
     ).rejects.toBe(rollback);
   });
+  it.each(["same message", "another message"])(
+    "rejects conflicting signed receipts through the webhook service: %s",
+    async (target) => {
+      const rollback = new Error("owned service receipt collision rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const repository = createWhatsAppRepository({ sql: tx });
+          const first = await repository.queueOutboundTemplateMessage({
+            actorId: TEST_USER_ID,
+            caseId: TEST_CASE_ID,
+            toPhone: "+85269990107",
+            templateName: "phase2_test_signed_collision_a",
+            category: "general",
+            body: "Owned collision A",
+          });
+          const second = await repository.queueOutboundTemplateMessage({
+            actorId: TEST_USER_ID,
+            caseId: TEST_CASE_ID,
+            toPhone: "+85269990108",
+            templateName: "phase2_test_signed_collision_b",
+            category: "general",
+            body: "Owned collision B",
+          });
+          const providerA = `owned-a-${crypto.randomUUID()}`;
+          const providerB = `owned-b-${crypto.randomUUID()}`;
+          await repository.attachProviderMessageId({
+            messageId: first.id,
+            providerMessageId: providerA,
+            sentAs: "text",
+          });
+          await repository.attachProviderMessageId({
+            messageId: second.id,
+            providerMessageId: providerB,
+            sentAs: "text",
+          });
+          const eventId = crypto.randomUUID();
+          const original = {
+            type: "SENT",
+            data: { messageId: providerA },
+            timestamp: "1790850000",
+          };
+          const process = (payload: Record<string, unknown>) =>
+            processWhatsAppInboundWebhookWithRepository(repository, {
+              signatureValid: true,
+              providerEventId: eventId,
+              payload,
+            });
+          const accepted = await process(original);
+          expect(accepted).toMatchObject({ processingStatus: "processed", messageId: first.id });
+          const before =
+            await tx`select id,status,sent_at::text,delivered_at::text,read_at::text from whatsapp_messages where id in (${first.id},${second.id}) order by id`;
+          expect(await process(original)).toMatchObject({
+            eventId: accepted.eventId,
+            messageId: first.id,
+          });
+          const collision = await process({
+            type: "DELIVERED",
+            data: { messageId: target === "same message" ? providerA : providerB },
+            timestamp: "1790850300",
+          });
+          const after =
+            await tx`select id,status,sent_at::text,delivered_at::text,read_at::text from whatsapp_messages where id in (${first.id},${second.id}) order by id`;
+          expect([...after]).toEqual([...before]);
+          expect(collision).toMatchObject({
+            processingStatus: "failed",
+            messageId: null,
+            errorMessage: expect.stringMatching(/collision/),
+          });
+          const [source] =
+            await tx`select payload,normalized_message_id,processing_status from whatsapp_webhook_events where id=${accepted.eventId}`;
+          expect(source).toMatchObject({
+            payload: original,
+            normalized_message_id: first.id,
+            processing_status: "processed",
+          });
+          const [count] =
+            await tx`select count(*)::int count from whatsapp_webhook_events where provider_event_id=${eventId}`;
+          expect(count.count).toBe(1);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+  );
+
+  it("binds an early valid duplicate receipt ingested through the webhook service once", async () => {
+    const rollback = new Error("owned service early receipt rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const repository = createWhatsAppRepository({ sql: tx });
+        const message = await repository.queueOutboundTemplateMessage({
+          actorId: TEST_USER_ID,
+          caseId: TEST_CASE_ID,
+          toPhone: "+85269990109",
+          templateName: "phase2_test_service_early_receipt",
+          category: "general",
+          body: "Owned service early receipt",
+        });
+        const providerId = `owned-service-early-${crypto.randomUUID()}`;
+        const input = {
+          signatureValid: true,
+          providerEventId: crypto.randomUUID(),
+          payload: { type: "DELIVERED", data: { messageId: providerId }, timestamp: "1790850000" },
+        };
+        const first = await processWhatsAppInboundWebhookWithRepository(repository, input);
+        expect(first).toMatchObject({ processingStatus: "ignored", messageId: null });
+        expect(await processWhatsAppInboundWebhookWithRepository(repository, input)).toMatchObject({
+          eventId: first.eventId,
+          processingStatus: "ignored",
+          messageId: null,
+        });
+        await repository.attachProviderMessageId({
+          messageId: message.id,
+          providerMessageId: providerId,
+          sentAs: "text",
+        });
+        const [stored] =
+          await tx`select status,delivered_at::text from whatsapp_messages where id=${message.id}`;
+        expect(stored).toMatchObject({ status: "delivered", delivered_at: expect.any(String) });
+        const replay = await processWhatsAppInboundWebhookWithRepository(repository, input);
+        expect(replay).toMatchObject({
+          eventId: first.eventId,
+          processingStatus: "processed",
+          messageId: message.id,
+        });
+        const [unchanged] =
+          await tx`select status,delivered_at::text from whatsapp_messages where id=${message.id}`;
+        expect(unchanged).toEqual(stored);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  });
+
   it("retains an early signed receipt contract and reconciles it after provider ID attachment", async () => {
     const rollback = new Error("owned early receipt rollback");
     await expect(

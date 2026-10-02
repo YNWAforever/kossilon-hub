@@ -22,7 +22,7 @@ type Env = Record<string, string | undefined>;
 type ProcessWhatsAppInboundWebhookInput = z.infer<typeof processWhatsAppInboundWebhookInputSchema>;
 export type ProcessWhatsAppInboundWebhookRepository = Pick<
   WhatsAppRepository,
-  "recordInboundMessage" | "recordWebhookEvent" | "recordMessageStatusEvent"
+  "recordInboundMessage" | "recordWebhookEvent"
 >;
 type QueueWhatsAppTemplateMessageInput = z.infer<typeof queueWhatsAppTemplateMessageInputSchema> & {
   actorId: string;
@@ -183,20 +183,21 @@ export async function processWhatsAppInboundWebhookWithRepository(
     }
 
     if (event.kind === "status") {
-      const applied = await repository.recordMessageStatusEvent(event.status);
+      // The repository validates the signed event source and applies/reconciles
+      // its receipt in one transaction. Never change delivery before admission.
       const row = await repository.recordWebhookEvent({
         providerEventId: data.providerEventId,
         signatureValid: true,
         payload: data.payload,
-        normalizedMessageId: applied.messageId,
-        processingStatus: applied.matched ? "processed" : "ignored",
-        errorMessage: applied.matched ? null : "No outbound message matched this status update.",
+        normalizedMessageId: null,
+        processingStatus: "ignored",
+        errorMessage: "No outbound message matched this status update.",
       });
 
       return {
         ...buildFailedWhatsAppInboundWebhookResponse(row),
         ok: true,
-        messageId: applied.messageId,
+        messageId: row.normalizedMessageId,
       };
     }
 

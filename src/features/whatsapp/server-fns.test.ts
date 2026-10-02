@@ -134,7 +134,6 @@ describe("WhatsApp server function validation", () => {
       {
         recordInboundMessage,
         recordWebhookEvent,
-        recordMessageStatusEvent: vi.fn(),
       },
       {
         providerEventId: "phase2-test-invalid-signature",
