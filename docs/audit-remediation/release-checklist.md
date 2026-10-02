@@ -2,13 +2,13 @@
 
 ## 現況
 
-**正式發布 NO-GO。** 十三個 development PR 已逐個通過新 head CI／真PG17／preview並以 merge commit 整合；最後 PR #102 待更新文件後的完整 gate 才合併 main。此 checkpoint main／live仍為 aa5d3cb，源碼 main 自動 Git 部署暫停設定會隨候選保留。正式 DB／env／發布／真收件人操作未獲本次 source merge 授權。最終合併及 main CI／live觀察回執記於 PR #102。
+**正式發布 NO-GO。** PR #102–#116 已按新 head gate以普通 merge 整合；main checkpoint為 `da79223`，main CI37031330748真PG17／2200PASS0skip／ChromeDEMO12及原有gates全部成功。Live仍為 `aa5d3cb`，main自動Git部署保持暫停。本次source merge不授權正式DB／env／發布／真收件人操作。PR116保存最終merge／main CI／live回執；B06新增Node22/24完整CI及DB owner只讀證據，結果獨立記於PR117。
 
 T00–T23 已有本地 source／測試證據，PR11為本分支的最後一包。T22匯總原50項：19 LOCAL ONLY pass／31blocked／0not_run，不刪或改原驗收。`verify:audit-release` 只讀 CSV、original JSON、SQL hashes，輸出 `localLedgerContract=PASS` 與獨立的 `productionReleaseGate=NO_GO`；exit0只表示台賬契約有效。
 
 ## 必須按順序核對的發布 gate
 
-1. **Source review**：原十一個 PR 包及 B01–B04 已逐包覆核；十三個 development PR 整合後各自新 head 的完整 CI／真PG17／preview均通過。最後 PR #102 的更新 head 仍需獨立全綠，合併後再查 main CI及 live target。保留已發布歷史，無 force-push/rebase/squash；CI／preview綠色不等於 production完成。
+1. **Source review**：原十一個PR包及B01–B05已覆核並整合；最新main `da79223`完整CI全綠，live仍為舊部署。B06須兩個Node runtime完整流程、穩定verify aggregate及fresh whole-branch review獨立通過。保留已發布歷史，無force-push/rebase/squash；CI／preview綠色不等於production完成。
 2. **Schema／backup**：source50 IDs＝0001–0034＋0067–0082；last-observed production66歷史 IDs，且0034 ID與實體 marker DDL不一致。先在指定 branch 執行只讀 `release-preflight.sql`／`audit-schema-readiness.ts`，核對歷史0035–0066原始 SQL、hash、physical DDL及功能 lineage。**不得直接執行 `db:migrate` 或把整份 manifest 當待套用清單。** 詳見 schema-reconciliation.md。
 3. **Recovery rehearsal**：provider 非 finalize recovery point／隔離 populated clone，確認端點沒有被移動。比較 row counts、FK、版本／ledger／outboxunknown，實際 restore 演練。沒有目標 recovery point／restore evidence 就保持 blocked；本地演練不替代 production restore。
 4. **Concrete SQL approval**：只對已核對的 expand SQL及真正缺少的物理結構準備 transaction／advisory lock／lock timeout／前後 catalog counts；保留原 ledger與未知歷史。SQL真的執行且檢查通過才記其 receipt，不能偽造舊 ID。新正式 migration需要明確批准。
