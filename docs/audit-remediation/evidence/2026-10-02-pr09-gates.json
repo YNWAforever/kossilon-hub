@@ -5,7 +5,7 @@
   "base": "99a0e1cd80dc96ae3b1c3db3c1c0ecbf40954991",
   "tasks": ["T18", "T19"],
   "findings": ["F11", "F12", "F13"],
-  "environment": "LOCAL ONLY Windows Node22.23.3/Bun1.3.14/actual Postgres17 localhost55441/kossilon_pr02_ci",
+  "environment": "LOCAL ONLY Windows Node24.18.0/Bun1.3.14/actual Postgres17 localhost55441/kossilon_pr02_ci",
   "gates": [
     {
       "command": "npm run test with both explicit isolated DB variables and DATABASE_SSL=disable",
@@ -147,5 +147,15 @@
       "sha256": "9cf56555f78d8776a194eaca76205213f882182b07fc32e15cc00bd38e9d0e60",
       "file": "pr09-final-dev-imports.log"
     }
-  ]
+  ],
+  "runtimeCorrection": "Portable path used by this gate was absent; executable resolution confirms localNode24.18.0. Counts/results unchanged. Genuine remote CI independently verifies Node22.23.3.",
+  "remoteEvidence": {
+    "run": 36962718285,
+    "head": "8210b26c6390dbfa0225eef9a6e63a2ebdf447a5",
+    "runtime": "Linux Node22.23.3/Bun/actual Postgres17 CI service",
+    "tests": "215files2134pass0fail0skip",
+    "ci": "SUCCESS",
+    "preview": "SUCCESS; production unchanged",
+    "logSha256": "a2a4fe77d535632e1775c406a62b0ce9d576b4029c769a0d46e48cab6f475d37"
+  }
 }
