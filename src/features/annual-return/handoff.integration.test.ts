@@ -85,6 +85,205 @@ async function seedFixture(tx: import("postgres").TransactionSql) {
   return { actor, companyId, caseId, received };
 }
 describe.skipIf(!url)("actual Postgres approved manual handoff facts", () => {
+  async function fixture(
+    run: (
+      tx: import("postgres").TransactionSql,
+      f: Awaited<ReturnType<typeof seedFixture>>,
+    ) => Promise<void>,
+  ) {
+    await expect(
+      sql!.begin(async (tx) => {
+        const f = await seedFixture(tx);
+        await run(tx, f);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  }
+  async function submitted(
+    tx: import("postgres").TransactionSql,
+    f: Awaited<ReturnType<typeof seedFixture>>,
+  ) {
+    const repo = createHandoffRepository({ sql: tx });
+    let p = await repo.preview(f.actor, f.caseId);
+    const h = await repo.approve(f.actor, {
+      caseId: f.caseId,
+      expectedVersion: p.sourceVersion!,
+      manifestSha256: p.manifestSha256!,
+    });
+    p = await repo.preview(f.actor, f.caseId);
+    await repo.recordExport(f.actor, { handoffId: h.id, expectedVersion: p.sourceVersion! });
+    p = await repo.preview(f.actor, f.caseId);
+    await repo.recordManualSubmission(f.actor, {
+      handoffId: h.id,
+      expectedVersion: p.sourceVersion!,
+      occurredAt: new Date().toISOString(),
+      reference: "Synthetic submitted",
+      note: "Synthetic local attestation only",
+      evidenceDocumentId: null,
+      evidenceVersionId: null,
+    });
+    return { repo, h };
+  }
+  it("withdrawn and returned attempts retain history while a new active approval replays only itself", async () =>
+    fixture(async (tx, f) => {
+      const repo = createHandoffRepository({ sql: tx });
+      let p = await repo.preview(f.actor, f.caseId);
+      const a = await repo.approve(f.actor, {
+        caseId: f.caseId,
+        expectedVersion: p.sourceVersion!,
+        manifestSha256: p.manifestSha256!,
+      });
+      p = await repo.preview(f.actor, f.caseId);
+      await repo.withdraw(f.actor, {
+        handoffId: a.id,
+        expectedVersion: p.sourceVersion!,
+        note: "Human re-review required",
+      });
+      p = await repo.preview(f.actor, f.caseId);
+      const command = {
+        caseId: f.caseId,
+        expectedVersion: p.sourceVersion!,
+        manifestSha256: p.manifestSha256!,
+      };
+      const b = await repo.approve(f.actor, command);
+      expect(b.id).not.toBe(a.id);
+      expect(b.status).toBe("prepared");
+      expect((await repo.approve(f.actor, command)).id).toBe(b.id);
+      p = await repo.preview(f.actor, f.caseId);
+      await repo.recordExport(f.actor, { handoffId: b.id, expectedVersion: p.sourceVersion! });
+      p = await repo.preview(f.actor, f.caseId);
+      await repo.recordManualSubmission(f.actor, {
+        handoffId: b.id,
+        expectedVersion: p.sourceVersion!,
+        occurredAt: new Date().toISOString(),
+        reference: "Synthetic second attempt",
+        note: "No genuine provider receipt claimed",
+        evidenceDocumentId: null,
+        evidenceVersionId: null,
+      });
+      await repo.recordReturn(f.actor, {
+        handoffId: b.id,
+        idempotencyKey: crypto.randomUUID(),
+        returnedManifestSha256: b.manifestSha256,
+        outcome: "rejected",
+        reference: "Synthetic return",
+        detail: "Human must re-review",
+        documentId: null,
+        documentVersionId: null,
+      });
+      p = await repo.preview(f.actor, f.caseId);
+      const c = await repo.approve(f.actor, {
+        caseId: f.caseId,
+        expectedVersion: p.sourceVersion!,
+        manifestSha256: p.manifestSha256!,
+      });
+      expect(c.id).not.toBe(b.id);
+      const rows =
+        await tx`select id,status,manifest_sha256,manual_reference from package_handoffs where case_id=${f.caseId} order by created_at,id`;
+      expect(rows).toHaveLength(3);
+      expect(rows.find((x) => x.id === a.id)?.status).toBe("cancelled");
+      expect(rows.find((x) => x.id === b.id)?.manual_reference).toBe("Synthetic second attempt");
+      expect(rows.every((x) => x.manifest_sha256 === a.manifestSha256)).toBe(true);
+    }));
+  it("submitted immutable approval remains recognised by current filing readiness without provider acceptance", async () =>
+    fixture(async (tx, f) => {
+      const repository = createAnnualReturnRepository({ sql: tx });
+      for (const status of ["NAR1 prepared", "Signature pending"] as const) {
+        const before = (await repository.getCase(f.caseId))!;
+        await repository.updateStatus(
+          f.caseId,
+          status,
+          f.actor.userId!,
+          before.readiness!.sourceVersion!,
+        );
+      }
+      const { h } = await submitted(tx, f);
+      const current = (await repository.getCase(f.caseId))!;
+      expect(current.readiness!.blockers.some((x) => x.code === "package_not_approved")).toBe(
+        false,
+      );
+      expect(current.readiness!.readyToTransmit).toBe(false);
+      await repository.updateStatus(
+        f.caseId,
+        "Ready to file",
+        f.actor.userId!,
+        current.readiness!.sourceVersion!,
+      );
+      const [row] =
+        await tx`select delivery_fact,destination_reference from package_handoffs where id=${h.id}`;
+      expect(row.delivery_fact).toBe("manual_recorded");
+      expect(row.destination_reference).toBeNull();
+    }));
+  it("legacy NULL outcome cannot be released or replayed as a new approval", async () =>
+    fixture(async (tx, f) => {
+      const repo = createHandoffRepository({ sql: tx });
+      let p = await repo.preview(f.actor, f.caseId);
+      const h = await repo.approve(f.actor, {
+        caseId: f.caseId,
+        expectedVersion: p.sourceVersion!,
+        manifestSha256: p.manifestSha256!,
+      });
+      await tx`update package_handoffs set delivery_fact=null where id=${h.id}`;
+      p = await repo.preview(f.actor, f.caseId);
+      await expect(
+        repo.recordExport(f.actor, { handoffId: h.id, expectedVersion: p.sourceVersion! }),
+      ).rejects.toMatchObject({ statusCode: 409 });
+      await expect(
+        repo.approve(f.actor, {
+          caseId: f.caseId,
+          expectedVersion: p.sourceVersion!,
+          manifestSha256: p.manifestSha256!,
+        }),
+      ).rejects.toMatchObject({ statusCode: 409 });
+      const [row] =
+        await tx`select delivery_fact,exported_at,manual_recorded_at from package_handoffs where id=${h.id}`;
+      expect(row.delivery_fact).toBeNull();
+      expect(row.exported_at).toBeNull();
+      expect(row.manual_recorded_at).toBeNull();
+    }));
+  it("cross-team case owner cannot attach a shared company document outside document scope; zero return writes", async () =>
+    fixture(async (tx, f) => {
+      const { repo, h } = await submitted(tx, f),
+        docs = createDocumentRepository({ sql: tx });
+      const intent = await docs.createUploadIntent({
+        companyId: f.companyId,
+        category: "receipt",
+        requestedByAuthUserId: f.actor.authUserId,
+        fileName: "Synthetic restricted shared.pdf",
+        contentType: "application/pdf",
+        expectedSizeBytes: 4,
+        checksum: "d".repeat(64),
+        objectKey: "synthetic-restricted-shared/" + crypto.randomUUID(),
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+      });
+      const doc = await docs.finalizeUploadIntent({
+        intentId: intent.id,
+        uploadedBy: f.actor.userId,
+        source: "staff",
+      });
+      const [other] =
+        await tx`select id from teams where id<>${f.actor.teamId!} order by id limit 1`;
+      expect(other).toBeTruthy();
+      await tx`update users set role='Staff' where id=${f.actor.userId!}`;
+      await tx`update staff_profiles set role='Staff' where user_id=${f.actor.userId!}`;
+      await tx`update companies set assigned_team_id=${other.id} where id=${f.companyId}`;
+      const staff = { ...f.actor, role: "Staff" as const };
+      await expect(
+        repo.recordReturn(staff, {
+          handoffId: h.id,
+          idempotencyKey: crypto.randomUUID(),
+          returnedManifestSha256: h.manifestSha256,
+          outcome: "rejected",
+          reference: "Synthetic shared-scope denial",
+          detail: "Must not bypass document scope",
+          documentId: doc.id,
+          documentVersionId: doc.currentVersionId!,
+        }),
+      ).rejects.toThrow(/outside your scope/);
+      const [count] =
+        await tx`select count(*)::int n from handoff_returns where handoff_id=${h.id}`;
+      expect(count.n).toBe(0);
+    }));
   it("two concurrent transactions produce one immutable handoff with current authority", async () => {
     // Dedicated local-only synthetic fixture, removed by exact IDs in finally.
     const f = await sql!.begin(seedFixture);
@@ -101,6 +300,8 @@ describe.skipIf(!url)("actual Postgres approved manual handoff facts", () => {
         repo.approve(f.actor, command),
       ]);
       expect(a.id).toBe(b.id);
+      expect(typeof a.createdAt).toBe("string");
+      expect(Number.isFinite(Date.parse(a.createdAt))).toBe(true);
       const [count] =
         await sql!`select count(*)::int n from package_handoffs where case_id=${f.caseId}`;
       expect(count.n).toBe(1);

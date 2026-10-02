@@ -32,14 +32,12 @@ const documentServerFns = vi.hoisted(() => ({
 
 vi.mock("../server-fns", () => serverFns);
 vi.mock("../handoff-server-fns", () => ({
-  getCaseHandoffs: vi
-    .fn()
-    .mockResolvedValue({
-      preview: { readyForApproval: false, sourceVersion: null, manifestSha256: null, blockers: [] },
-      handoffs: [],
-      returns: [],
-      connectorConfigured: false,
-    }),
+  getCaseHandoffs: vi.fn().mockResolvedValue({
+    preview: { readyForApproval: false, sourceVersion: null, manifestSha256: null, blockers: [] },
+    handoffs: [],
+    returns: [],
+    connectorConfigured: false,
+  }),
   runHandoffCommand: vi.fn(),
 }));
 vi.mock("@/features/documents/server-fns", () => documentServerFns);

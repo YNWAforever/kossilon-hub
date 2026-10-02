@@ -2028,3 +2028,14 @@ alter table handoff_returns
   add column payload_sha256 text check(payload_sha256 ~ '^[0-9a-f]{64}$'),
   add column reconciliation_note text;
 create unique index handoff_returns_idempotency_uidx on handoff_returns(handoff_id,idempotency_key) where idempotency_key is not null;
+
+-- Idempotency belongs to the active attempt, not every immutable historical approval.
+-- Unknown results (including legacy NULL) remain outstanding and cannot be retried.
+drop index package_handoffs_manifest_uidx;
+create unique index package_handoffs_manifest_uidx on package_handoffs(case_id,manifest_sha256)
+  where status in ('prepared','transmitted','acknowledged') or delivery_fact='unknown'
+    or (delivery_fact is null and status not in ('cancelled','returned'));
+drop index package_handoffs_live_uidx;
+create unique index package_handoffs_live_uidx on package_handoffs(case_id)
+  where status in ('prepared','transmitted','acknowledged') or delivery_fact='unknown'
+    or (delivery_fact is null and status not in ('cancelled','returned'));

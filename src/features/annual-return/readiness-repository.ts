@@ -124,12 +124,13 @@ type Snapshot = {
   parties: Party[];
   officer_ids: string[];
   approvals: {
+    id: string;
     status: string;
     manifest_payload: string;
     manifest_sha256: string;
     delivery_fact?: string | null;
   }[];
-  returns?: { outcome: string; reconciled_at: string | null }[];
+  returns?: { handoff_id: string; outcome: string; reconciled_at: string | null }[];
   findings: {
     id: string;
     document_version_id: string | null;
@@ -179,7 +180,7 @@ export async function attachCaseReadiness(
         'parties',coalesce((select jsonb_agg(to_jsonb(p) order by p.id) from case_parties p where p.case_id=arc.id),'[]'::jsonb),
         'officer_ids',coalesce((select jsonb_agg(o.id order by o.id) from officers o where o.company_id=arc.company_id and o.cessation_date is null),'[]'::jsonb),
         'approvals',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at desc,h.id) from package_handoffs h where h.case_id=arc.id),'[]'::jsonb),
-        'returns',coalesce((select jsonb_agg(jsonb_build_object('outcome',r.outcome,'reconciled_at',r.reconciled_at) order by r.id) from handoff_returns r join package_handoffs h on h.id=r.handoff_id where h.case_id=arc.id),'[]'::jsonb),
+        'returns',coalesce((select jsonb_agg(jsonb_build_object('handoff_id',r.handoff_id,'outcome',r.outcome,'reconciled_at',r.reconciled_at) order by r.id) from handoff_returns r join package_handoffs h on h.id=r.handoff_id where h.case_id=arc.id),'[]'::jsonb),
         'findings',coalesce((select jsonb_agg(to_jsonb(f) order by f.id) from document_findings f where
           f.requirement_instance_id in(select id from case_requirement_instances where case_id=arc.id)
           or f.document_version_id in(select v.id from document_versions v join documents d on d.id=v.document_id where d.company_id=arc.company_id and (d.case_id=arc.id or (d.case_id is null and (
@@ -369,7 +370,21 @@ export async function attachCaseReadiness(
         (h) => h.status === "prepared" && ["prepared", "exported"].includes(h.delivery_fact ?? ""),
       ).length,
     };
-    const approval = payload.approvals.find((h) => h.status === "prepared");
+    const approval = payload.approvals.find((h) => {
+      if (
+        !["prepared", "exported", "manual_recorded", "provider_accepted"].includes(
+          h.delivery_fact ?? "",
+        )
+      )
+        return false;
+      if (["prepared", "transmitted", "acknowledged"].includes(h.status)) return true;
+      const returns = (payload.returns ?? []).filter((r) => r.handoff_id === h.id);
+      return (
+        h.status === "returned" &&
+        returns.length > 0 &&
+        returns.every((r) => r.outcome === "accepted" && r.reconciled_at)
+      );
+    });
     const approvedPayload =
       approval &&
       createHash("sha256").update(approval.manifest_payload).digest("hex") ===

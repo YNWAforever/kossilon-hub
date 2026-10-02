@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { createDocumentRepository } from "@/features/documents/repository";
+import { assertStaffDocumentAccess } from "@/features/documents/authorization";
 import { assertDocumentServable, documentSafetyOf } from "@/features/documents/safety";
 import { createAnnualReturnRepository } from "./repository";
 import { assertAnnualReturnActionAllowed, assertAnnualReturnCaseVisible } from "./permissions";
@@ -18,11 +19,11 @@ type HandoffRow = {
   status: HandoffStatus;
   delivery_fact: HandoffDeliveryFact | null;
   approved_by: string;
-  created_at: string;
-  exported_at: string | null;
-  manual_recorded_at: string | null;
+  created_at: string | Date;
+  exported_at: string | Date | null;
+  manual_recorded_at: string | Date | null;
   manual_recorded_by: string | null;
-  manual_occurred_at: string | null;
+  manual_occurred_at: string | Date | null;
   manual_reference: string | null;
   manual_note: string | null;
   manual_evidence_document_id: string | null;
@@ -39,9 +40,9 @@ type ReturnRow = {
   detail: string | null;
   document_id: string | null;
   document_version_id: string | null;
-  reconciled_at: string | null;
+  reconciled_at: string | Date | null;
   reconciliation_note: string | null;
-  received_at: string;
+  received_at: string | Date;
   payload_sha256: string | null;
 };
 export type ApproveHandoffInput = {
@@ -68,6 +69,8 @@ export type ManualReturnInput = {
   documentVersionId: string | null;
 };
 const sha = (payload: string) => createHash("sha256").update(payload).digest("hex");
+const iso = (value: string | Date) => new Date(value).toISOString();
+const optionalIso = (value: string | Date | null) => (value === null ? null : iso(value));
 function conflict(message: string): never {
   throw Object.assign(new Error(message), { statusCode: 409 });
 }
@@ -85,11 +88,11 @@ function mapHandoff(row: HandoffRow) {
     deliveryFact: row.delivery_fact,
     providerAccepted: row.delivery_fact === "provider_accepted",
     approvedBy: row.approved_by,
-    createdAt: row.created_at,
-    exportedAt: row.exported_at,
-    manualRecordedAt: row.manual_recorded_at,
+    createdAt: iso(row.created_at),
+    exportedAt: optionalIso(row.exported_at),
+    manualRecordedAt: optionalIso(row.manual_recorded_at),
     manualRecordedBy: row.manual_recorded_by,
-    manualOccurredAt: row.manual_occurred_at,
+    manualOccurredAt: optionalIso(row.manual_occurred_at),
     manualReference: row.manual_reference,
     manualNote: row.manual_note,
     evidenceDocumentId: row.manual_evidence_document_id,
@@ -108,9 +111,9 @@ function mapReturn(row: ReturnRow) {
     detail: row.detail,
     documentId: row.document_id,
     documentVersionId: row.document_version_id,
-    reconciledAt: row.reconciled_at,
+    reconciledAt: optionalIso(row.reconciled_at),
     reconciliationNote: row.reconciliation_note,
-    receivedAt: row.received_at,
+    receivedAt: iso(row.received_at),
   };
 }
 
@@ -220,8 +223,12 @@ export function createHandoffRepository(options: { sql?: Query } = {}) {
         conflict("Package evidence changed or is not ready for approval.");
       const [same] = await tx<
         HandoffRow[]
-      >`select * from package_handoffs where case_id=${input.caseId} and manifest_sha256=${input.manifestSha256}`;
+      >`select * from package_handoffs where case_id=${input.caseId} and manifest_sha256=${input.manifestSha256}
+        and (status in ('prepared','transmitted','acknowledged') or delivery_fact='unknown'
+          or (delivery_fact is null and status not in ('cancelled','returned')))`;
       if (same) {
+        if (same.delivery_fact == null || same.delivery_fact === "unknown")
+          conflict("Package needs human reconciliation before release.");
         if (sha(same.manifest_payload) !== same.manifest_sha256)
           conflict("Stored approval hash mismatch.");
         return mapHandoff(same);
@@ -229,7 +236,7 @@ export function createHandoffRepository(options: { sql?: Query } = {}) {
       if (p.sourceVersion !== input.expectedVersion)
         conflict("Approval version changed; refresh preview.");
       const [live] =
-        await tx`select id from package_handoffs where case_id=${input.caseId} and (status in ('prepared','transmitted','acknowledged') or delivery_fact='unknown')`;
+        await tx`select id from package_handoffs where case_id=${input.caseId} and (status in ('prepared','transmitted','acknowledged') or delivery_fact='unknown' or (delivery_fact is null and status not in ('cancelled','returned')))`;
       if (live) conflict("An existing package is outstanding. Reconcile or withdraw it first.");
       const [row] = await tx<
         HandoffRow[]
@@ -253,7 +260,12 @@ export function createHandoffRepository(options: { sql?: Query } = {}) {
       sha(row.manifest_payload) !== row.manifest_sha256
     )
       conflict("Approved package is stale. Re-review current evidence and approve again.");
-    if (row.delivery_fact === "unknown" || row.status === "cancelled" || row.status === "failed")
+    if (
+      row.delivery_fact == null ||
+      row.delivery_fact === "unknown" ||
+      row.status === "cancelled" ||
+      row.status === "failed"
+    )
       conflict("Package needs human reconciliation before release.");
   }
   async function approvedExport(actor: AuthenticatedActor, input: ExportHandoffInput) {
@@ -304,6 +316,9 @@ export function createHandoffRepository(options: { sql?: Query } = {}) {
       doc.currentVersionId !== versionId
     )
       conflict("Attachment scope or current version changed.");
+    const subject = await repo.getDocumentAccessSubject(documentId);
+    if (!subject) throw new Error("Forbidden: attachment scope is unavailable.");
+    assertStaffDocumentAccess(actor, subject);
     if (safe) {
       assertDocumentServable(actor, documentSafetyOf(doc));
       if (doc.reviewStatus !== "verified" || doc.reviewedVersionId !== versionId)
@@ -323,7 +338,7 @@ export function createHandoffRepository(options: { sql?: Query } = {}) {
       if (
         !Number.isFinite(occurred) ||
         occurred > Date.now() + 60000 ||
-        occurred < Date.parse(row.created_at)
+        occurred < Date.parse(iso(row.created_at))
       )
         throw new Error("Manual submission time must follow approval and cannot be in the future.");
       await attachment(
@@ -338,7 +353,7 @@ export function createHandoffRepository(options: { sql?: Query } = {}) {
         if (
           row.manual_reference !== reference ||
           row.manual_note !== note ||
-          Date.parse(row.manual_occurred_at!) !== occurred ||
+          Date.parse(iso(row.manual_occurred_at!)) !== occurred ||
           row.manual_evidence_document_id !== input.evidenceDocumentId ||
           row.manual_evidence_version_id !== input.evidenceVersionId
         )

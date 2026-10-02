@@ -208,6 +208,7 @@ export function CaseHandoff({ caseId, locked }: { caseId: string; locked: boolea
                       <input
                         required
                         type="datetime-local"
+                        step="1"
                         className={control}
                         value={occurredAt}
                         onChange={(e) => setOccurredAt(e.target.value)}
