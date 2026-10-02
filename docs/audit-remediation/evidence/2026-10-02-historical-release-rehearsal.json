@@ -1,0 +1,461 @@
+{
+  "scope": "owned local Postgres18.6 synthetic historical-schema rehearsal; NO_GO for production",
+  "observed_at": "2026-10-02T15:06:53.336Z",
+  "source_baseline": "73d999dfa524f273d0c062458cbf780f65630e6c",
+  "historical_source": "b87dfbba374add601d6a5fdbf772dd539c73cd88",
+  "database": "kossilon_release_fixture_24cb487faca64498a19a6e14dec10d4e",
+  "port": 55448,
+  "version": "18.6 (Debian 18.6-1.pgdg13+2)",
+  "package_sha256": "ac5be697fdf7f7a161efa58d1ad4330bdc6ee8d5777dd6389fbbad857fa78200",
+  "catalog_sha256": "58280602231120582ababb01ca1bc52fed211ef17ae8b047b6a87b7a56472013",
+  "catalog_refusal": {
+    "code": "P0001",
+    "message": "Historical physical catalog changed; stop and review before DDL"
+  },
+  "payload_sha256": "b84f9b5a9dc489ced544a39040af9d62678464ae4496d396a5420aba0e010c01",
+  "inputs": [
+    {
+      "file": "0067_repair_outbox_dispatch_marker.sql",
+      "sha256": "660dbe9226514a66cdfedda2a2ed14300c960aee3e384908c28db73ccdf47014",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0068_company_historical_data_origin.sql",
+      "sha256": "3bada03551f73882074930732205b70986e30ff450445b30152f80f22c34a8eb",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0069_restore_maintenance_job_contract.sql",
+      "sha256": "54c8fb08e54524b89502c44db02de202ecaca159549ba1d38ee4a34ac2b361ec",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0070_payment_evidence_entries.sql",
+      "sha256": "77be3213c6eef6529f0f0712afb219158dc1b3b2d42a1d94df13b705714ad4e1",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0071_staff_admin_contract.sql",
+      "sha256": "41caa6f1b2cab4ab5ce603af67d24c31755154e6d99b9a3aeb68be91c8e7bbd9",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0072_durable_bulk_assignment.sql",
+      "sha256": "96828ee76f44b7917736c7f1e322f7765424873aa8b1f7121c5459a95ffe7b7f",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0073_bulk_maintenance_job_kind.sql",
+      "sha256": "0115de0f7773498fc44b105e2614600fe92df84267cd26c998e96b15ff1c6be4",
+      "executedVerbatim": false
+    },
+    {
+      "file": "0074_reviewed_nar_apply.sql",
+      "sha256": "076adf128c7a55b12572fd5415e698c78190fa744a0e1ae2790a652967094e9e",
+      "executedVerbatim": false
+    },
+    {
+      "file": "0075_nar_legacy_year_review.sql",
+      "sha256": "1770530e8dc0ab536ada101e64fe201afeb3fdb9d3a94390c12b4d3b770c8078",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0076_document_scan_review_versions.sql",
+      "sha256": "ee11fedf4f2cc9d2faf4cd845a2e821b9829110fa253d210c2a46a799d902887",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0077_document_analysis_evidence.sql",
+      "sha256": "e893065da028d8266e384c365fc8d5bd7eb5da7001872118dec9b5a72a08da75",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0078_whatsapp_manual_intake.sql",
+      "sha256": "5ed629d5ac915e62f126fdc97929da9bcdd87814d451e6dd1117013fc280db69",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0079_bulk_daily_maintenance.sql",
+      "sha256": "b3666b32fd4a92e49acd9c43959bfa751d1135f9b59b338eb6f5456d9a4732f7",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0080_manual_handoff_provenance.sql",
+      "sha256": "f7f955a5b186aa4ed16fa95c136402e15c3f265fd6c81a90a0c42c0f9e53866d",
+      "executedVerbatim": false
+    },
+    {
+      "file": "0081_handoff_attempt_idempotency.sql",
+      "sha256": "dc4cc45e37c05f69e59f19ddd33b37c18960b525726d995ddfe0b864db3a8e45",
+      "executedVerbatim": true
+    },
+    {
+      "file": "0082_case_template_snapshots.sql",
+      "sha256": "29f13a7f58668c93f25141c90d17206332144a282833597ab43ec654b01dd231",
+      "executedVerbatim": false
+    }
+  ],
+  "adapted_inputs": [
+    "0073_bulk_maintenance_job_kind.sql",
+    "0074_reviewed_nar_apply.sql",
+    "0080_manual_handoff_provenance.sql",
+    "0082_case_template_snapshots.sql"
+  ],
+  "all_82_original_tables_rows_preserved": true,
+  "before": {
+    "annual_return_audit_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "annual_return_case_tags": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "annual_return_cases": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "annual_return_checklist_items": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "annual_return_reminder_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "assignment_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "bulk_operation_attempts": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "bulk_operation_items": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "bulk_operations": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "bulk_previews": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "bulk_reminder_reviews": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "business_calendar_holidays": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "business_calendars": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "case_notes": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "case_parties": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "case_requirement_instances": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "checklist_template_versions": {
+      "rows": 4,
+      "sha256": "67124faee8349375c7cbe97d089dedc706d2e773eb086d2cdd7b800f7f3b281a"
+    },
+    "checklist_templates": {
+      "rows": 6,
+      "sha256": "bf03a523353b7933a0bdcc1c1b43633ab4e577b23cc36f1a467e46e7bca54eca"
+    },
+    "client_company_memberships": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "companies": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "company_contacts": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "company_external_references": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "company_tags": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "corporate_change_checklist_items": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "corporate_change_requests": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "document_analysis_jobs": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "document_analysis_run_metadata": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "document_findings": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "document_scan_jobs": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "document_upload_intents": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "document_version_texts": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "document_versions": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "documents": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "escalation_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "filing_packages": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "filing_return_source_cursors": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "filing_return_source_objects": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "handoff_returns": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "incorporation_cases": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "incorporation_checklist_items": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "maintenance_job_runs": {
+      "rows": 1,
+      "sha256": "d530ce49ba8f3eef72a72275b38e36080019eeca0a2240ceb157eaeb2a743ced"
+    },
+    "maintenance_runs": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "nar_import_apply_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "nar_import_approvals": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "nar_import_batches": {
+      "rows": 1,
+      "sha256": "ec475078656b8ac6e0f87d911cfa4b78610421219ba207ae2b54421fd75524fe"
+    },
+    "nar_import_payment_observations": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "nar_import_previews": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "nar_import_rows": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "nar_import_stage_jobs": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "notification_delivery_attempts": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "notification_outbox": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "officers": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "package_handoffs": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "payment_proof_allocations": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "payment_reconciliation_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "payments": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "reminder_logs": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "requirement_evidence_links": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "resource_tag_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "schema_migrations": {
+      "rows": 66,
+      "sha256": "249f9050b8513af40e5bec6234d426b475f2e6b352b56dfc3e129316d8436915"
+    },
+    "scr_inspection_requests": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "service_subscription_reminder_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "service_subscriptions": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "shareholdings": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "significant_controllers": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "sla_policies": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "staff_access_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "staff_profiles": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "staff_provisioning_requests": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "staff_skills": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "teams": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "timeline_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "users": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "whatsapp_contacts": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "whatsapp_message_media": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "whatsapp_message_previews": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "whatsapp_messages": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "whatsapp_templates": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "whatsapp_webhook_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "work_item_sla_attachments": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "work_item_tags": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "work_items": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "after": {
+    "tables": 94,
+    "ledger": 66
+  },
+  "forced_failure": {
+    "code": "P0001",
+    "message": "synthetic failure before receipt",
+    "rollback_original_rows_ledger": true,
+    "no_new_tables_or_receipt": true
+  },
+  "repeat": {
+    "code": "P0001",
+    "message": "Historical release already recorded; do not replay or override an existing receipt table",
+    "no_replay_or_extra_receipt": true
+  },
+  "historical_ledger_rows": 66,
+  "historical_hashes": "unknown; not populated",
+  "receipt_rows": 1,
+  "provider_writes": 0,
+  "command": "node --experimental-strip-types scripts/rehearse-historical-schema-release.mjs",
+  "limitations": [
+    "Not a provider clone, production restore, true workload or runtime UAT.",
+    "Historical migration ledger intentionally unchanged; strict source history diagnostics still report divergence.",
+    "Seven unattributed production tables and non-FK dependencies require owner review.",
+    "Scheduler/offline approval/package/source identity/controlled runtime verification required before any hosted operation."
+  ]
+}

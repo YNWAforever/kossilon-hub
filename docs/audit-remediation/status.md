@@ -1,6 +1,6 @@
 # Kossilon audit remediation — 2026-10-01
 
-Source checkpoint before final PR #102: thirteen development PRs merged; updated-head CI and main integration are the next gates. Final merge/main-CI/live receipts are recorded in PR #102. Production release remains **NO_GO**. See the sequential integration receipt at the end of this ledger. Earlier entries are dated historical snapshots.
+Current source checkpoint: all fourteen PRs #102–#115 are merged at main `73d999dfa524f273d0c062458cbf780f65630e6c`; exact main CI37006479098 passed 230files/2183tests/0skip/ChromeDEMO12 and all existing gates. Production remains **NO_GO**. B05/T01/T22 historical release compatibility is locally prepared below. Earlier entries are dated historical snapshots.
 
 ## Baseline and authority
 
@@ -164,3 +164,9 @@ Thirteen development PRs are MERGED at `e5c76b50fefa12925570a7f62dd4480f17025d2d
 Source main automatic Git deployments are held in vercel.json. Read-only production metadata at `2026-10-02T11:56:02.3962021Z` remains READY aa5d3cb / `dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT`; no hosted settings/env/alias/DB/provider writes. Source50 versus last-observed production66 historical SQL IDs remains unreconciled,0 new migrations; original50 still19 LOCAL ONLY pass /31blocked /0not_run. Formal release stays **NO_GO**.
 
 Full per-PR CI/merge table, PR108 preview recovery, B01 conflict resolution, source-hold boundaries, owners and costs: [merge-integration.md](merge-integration.md). Verified raw-log hashes and parents: [integration evidence](evidence/2026-10-02-source-integration.json). Sole B04 review0Critical/0Important/0Minor with all declined behaviors/rulings: [source-merge-review.md](source-merge-review.md). Earlier entries retain their historical results and blockers.
+
+## B05 / T01, T22 historical compatibility — 2026-10-02
+
+Read-only Neon18.6 inventory confirms66unknown-hash ledger IDs and89tables. Exact b87 source66 SQL replays to82tables; all995columns/260indexes/1296constraints match, plus original functions/triggers fingerprint. Seven extra tables retain unknown ownership/dependencies. Reproduced0073 CHECK P0001,0074/0082 duplicate-column42701, and0080 handoff duplicates. Concrete offline SQL adapts these four inputs, preserves old work/year/revision/evidence/RESTRICT FK, guards exact catalog/ledger, records one honest separate receipt, and refuses replay. Complete local PG18.6 rehearsal preserves all82original-table row hashes and66ledger rows; forced failure rolls back; unexpected catalog is refused beforeDDL; final94localtables/1receipt. Published migrations and strict db-migrate refusal unchanged. No provider writes. Full current-branch CI/review receipts follow; not inferred from baseline green. Original50unchanged19LOCALONLYpass31blocked0not_run.
+
+Package, rollback, missing owners and lineage/runtime limits: [historical-release-runbook.md](historical-release-runbook.md). The independent receipt does not clear source schema-history drift. No new production SQL/deployment/scheduler/message/invite/grant authority is inferred.
