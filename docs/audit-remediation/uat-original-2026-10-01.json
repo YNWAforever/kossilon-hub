@@ -1,0 +1,357 @@
+{
+  "source_file": "Kossilon_Codex_Remediation_UAT_Traceability_2026-10-01.csv",
+  "source_sha256": "f317e1672ca728c0fe448d6f7d644c9455035d2be18b7773ec759a2b7ff72883",
+  "columns": ["UAT_ID", "測試情境", "Findings", "Tasks", "原始預期結果"],
+  "rows": [
+    {
+      "UAT_ID": "AUTH-01",
+      "測試情境": "現有 Admin session",
+      "Findings": "F08",
+      "Tasks": "T12,T22",
+      "原始預期結果": "身份明確、可進入授權頁"
+    },
+    {
+      "UAT_ID": "AUTH-02",
+      "測試情境": "Magic link 返回原頁",
+      "Findings": "F03",
+      "Tasks": "T04,T22",
+      "原始預期結果": "登入一次成功；過期連結有重試；不回圈"
+    },
+    {
+      "UAT_ID": "AUTH-03",
+      "測試情境": "Google 登入與未授權帳戶",
+      "Findings": "F08",
+      "Tasks": "T12,T22",
+      "原始預期結果": "已邀請正確角色；未邀請不能進員工資料"
+    },
+    {
+      "UAT_ID": "AUTH-04",
+      "測試情境": "跨隊指派文件",
+      "Findings": "F16",
+      "Tasks": "T05,T22",
+      "原始預期結果": "指定 reviewer 可見可讀；無關 staff 全部拒絕"
+    },
+    {
+      "UAT_ID": "AUTH-05",
+      "測試情境": "離職停用",
+      "Findings": "F08",
+      "Tasks": "T12,T13,T22",
+      "原始預期結果": "後端拒絕 inactive；任務可追溯轉交"
+    },
+    {
+      "UAT_ID": "AUTH-06",
+      "測試情境": "Client 隔離",
+      "Findings": "F16",
+      "Tasks": "T05,T22",
+      "原始預期結果": "只可讀自己公司；越權讀寫皆拒絕"
+    },
+    {
+      "UAT_ID": "OPS-01",
+      "測試情境": "Schema 一致",
+      "Findings": "F01",
+      "Tasks": "T01,T22",
+      "原始預期結果": "全部 expected 完整；額外 ID 可解釋；不 reset 正式庫"
+    },
+    {
+      "UAT_ID": "OPS-02",
+      "測試情境": "排程 freshness",
+      "Findings": "F02",
+      "Tasks": "T02,T22",
+      "原始預期結果": "間距符合5分鐘；10分鐘內更新；隊列下降"
+    },
+    {
+      "UAT_ID": "OPS-03",
+      "測試情境": "排程部分失敗",
+      "Findings": "F02,F17",
+      "Tasks": "T02,T23,T22",
+      "原始預期結果": "部分失敗明示；其他 pass 結果保留；告警可追"
+    },
+    {
+      "UAT_ID": "OPS-04",
+      "測試情境": "Fixture 外發抑制",
+      "Findings": "F20",
+      "Tasks": "T03,T22",
+      "原始預期結果": "fixture/historical 無外發；client 正確處理"
+    },
+    {
+      "UAT_ID": "OPS-05",
+      "測試情境": "備份恢复與 populated migration",
+      "Findings": "F01",
+      "Tasks": "T01,T22",
+      "原始預期結果": "可恢复、零錯誤關聯、idempotency及ledger正確"
+    },
+    {
+      "UAT_ID": "FLOW-01",
+      "測試情境": "現有案件 Portal",
+      "Findings": "F03",
+      "Tasks": "T04,T22",
+      "原始預期結果": "直接顯示該案件上載及狀態"
+    },
+    {
+      "UAT_ID": "FLOW-02",
+      "測試情境": "文件篩選 ID 一致",
+      "Findings": "F03",
+      "Tasks": "T04,T22",
+      "原始預期結果": "每次只顯示所選案件；無效ID明確錯誤"
+    },
+    {
+      "UAT_ID": "FLOW-03",
+      "測試情境": "文件庫與客戶列表對賬",
+      "Findings": "F04",
+      "Tasks": "T06,T22",
+      "原始預期結果": "每份文件有可讀證據或明確缺口"
+    },
+    {
+      "UAT_ID": "FLOW-04",
+      "測試情境": "交件 readiness",
+      "Findings": "F05",
+      "Tasks": "T08,T22",
+      "原始預期結果": "不應可提交；顯示欠款原因及下一步"
+    },
+    {
+      "UAT_ID": "FLOW-05",
+      "測試情境": "跨頁指標一致",
+      "Findings": "F06",
+      "Tasks": "T09,T22",
+      "原始預期結果": "同scope同單位同結果；Filed排除未完成逾期"
+    },
+    {
+      "UAT_ID": "FLOW-06",
+      "測試情境": "最後一頁",
+      "Findings": "F07",
+      "Tasks": "T07,T22",
+      "原始預期結果": "末頁按鈕消失；無重複列"
+    },
+    {
+      "UAT_ID": "FLOW-07",
+      "測試情境": "搜尋与 filter 競態",
+      "Findings": "F07,F18",
+      "Tasks": "T07,T21,T22",
+      "原始預期結果": "不混舊資料；選取清空或明确保留规则"
+    },
+    {
+      "UAT_ID": "FLOW-08",
+      "測試情境": "工作隊列識別",
+      "Findings": "F14",
+      "Tasks": "T10,T22",
+      "原始預期結果": "姓名/團隊可辨認；實際下一步明確"
+    },
+    {
+      "UAT_ID": "FLOW-09",
+      "測試情境": "新客戶至新案件",
+      "Findings": "F08,F20",
+      "Tasks": "T03,T12,T22",
+      "原始預期結果": "唯一CR/BR；owner/team正確；案件持久化"
+    },
+    {
+      "UAT_ID": "FLOW-10",
+      "測試情境": "公司成立完整狀態",
+      "Findings": "F13",
+      "Tasks": "T22",
+      "原始預期結果": "禁止跳步；公司只建立一次；狀態与work item一致"
+    },
+    {
+      "UAT_ID": "FLOW-11",
+      "測試情境": "公司變更與撤銷",
+      "Findings": "F13",
+      "Tasks": "T22",
+      "原始預期結果": "變更只按批准版本套用；取消有原因及audit"
+    },
+    {
+      "UAT_ID": "FLOW-12",
+      "測試情境": "經常服務與SCR",
+      "Findings": "F13",
+      "Tasks": "T22",
+      "原始預期結果": "期限及歷史可追；不可無聲重覆/越權"
+    },
+    {
+      "UAT_ID": "IMPORT-01",
+      "測試情境": "月表 staging",
+      "Findings": "F09",
+      "Tasks": "T14,T22",
+      "原始預期結果": "只有35資料行；不自動建案或發訊息"
+    },
+    {
+      "UAT_ID": "IMPORT-02",
+      "測試情境": "月表特殊值",
+      "Findings": "F09",
+      "Tasks": "T14,T22",
+      "原始預期結果": "invoice不當dedupe key；特殊值原文及來源保留"
+    },
+    {
+      "UAT_ID": "IMPORT-03",
+      "測試情境": "年份與 supplied due date",
+      "Findings": "F09",
+      "Tasks": "T14,T22",
+      "原始預期結果": "先提示衝突；不能默默覆寫原deadline"
+    },
+    {
+      "UAT_ID": "IMPORT-04",
+      "測試情境": "套用與重播",
+      "Findings": "F09",
+      "Tasks": "T14,T22",
+      "原始預期結果": "無重覆案件；衝突逐行；歷史不派送"
+    },
+    {
+      "UAT_ID": "DOC-01",
+      "測試情境": "正常安全上載",
+      "Findings": "F03,F10",
+      "Tasks": "T04,T15,T16,T22",
+      "原始預期結果": "checksum/version綁定；未掃描不可放行"
+    },
+    {
+      "UAT_ID": "DOC-02",
+      "測試情境": "惡意/空檔/損毀/加密",
+      "Findings": "F10",
+      "Tasks": "T15,T16,T22",
+      "原始預期結果": "quarantine或明確issue；不可預覽危險bytes"
+    },
+    {
+      "UAT_ID": "DOC-03",
+      "測試情境": "已收但未審",
+      "Findings": "F05,F11",
+      "Tasks": "T08,T17,T22",
+      "原始預期結果": "移到內部覆核；不再追客同一已收件"
+    },
+    {
+      "UAT_ID": "DOC-04",
+      "測試情境": "版本競爭與舊批准",
+      "Findings": "F10",
+      "Tasks": "T08,T15,T16,T22",
+      "原始預期結果": "V1決定不批准V2；要重新審核"
+    },
+    {
+      "UAT_ID": "PAY-01",
+      "測試情境": "付款證據審核",
+      "Findings": "F15",
+      "Tasks": "T11,T22",
+      "原始預期結果": "同屏預覽、具體金額/日期、完整audit"
+    },
+    {
+      "UAT_ID": "PAY-02",
+      "測試情境": "部分款/重覆款/退回",
+      "Findings": "F15",
+      "Tasks": "T11,T22",
+      "原始預期結果": "不誤設全額paid；原因可見；補傳linked"
+    },
+    {
+      "UAT_ID": "MSG-01",
+      "測試情境": "配置健康",
+      "Findings": "F11",
+      "Tasks": "T17,T18,T22",
+      "原始預期結果": "已配置/未配置及修復步驟一致"
+    },
+    {
+      "UAT_ID": "MSG-02",
+      "測試情境": "共用電話與多案件",
+      "Findings": "F11",
+      "Tasks": "T17,T18,T22",
+      "原始預期結果": "ambiguous不自動誤配；選案有audit"
+    },
+    {
+      "UAT_ID": "MSG-03",
+      "測試情境": "附件闭環",
+      "Findings": "F11",
+      "Tasks": "T17,T18,T22",
+      "原始預期結果": "附件成document version；安全檢查一致"
+    },
+    {
+      "UAT_ID": "MSG-04",
+      "測試情境": "正常派送與receipt",
+      "Findings": "F11",
+      "Tasks": "T17,T18,T22",
+      "原始預期結果": "狀態區分queued/sent/delivered；有provider ID"
+    },
+    {
+      "UAT_ID": "MSG-05",
+      "測試情境": "未知派送與重播",
+      "Findings": "F01,F02,F11",
+      "Tasks": "T01,T02,T17,T22",
+      "原始預期結果": "unknown不重發；duplicate不重覆建消息"
+    },
+    {
+      "UAT_ID": "BULK-01",
+      "測試情境": "部分成功批量分派",
+      "Findings": "F13",
+      "Tasks": "T13,T18,T22",
+      "原始預期結果": "逐筆結果；成功不重做；越權零寫入"
+    },
+    {
+      "UAT_ID": "BULK-02",
+      "測試情境": "全篩選與跨頁選取",
+      "Findings": "F13",
+      "Tasks": "T13,T18,T22",
+      "原始預期結果": "總數與範圍明確；不意外包含舊選取"
+    },
+    {
+      "UAT_ID": "BULK-03",
+      "測試情境": "批量追件草稿",
+      "Findings": "F11,F13",
+      "Tasks": "T13,T17,T18,T22",
+      "原始預期結果": "只追真正缺件；未配置/fixture不送"
+    },
+    {
+      "UAT_ID": "HANDOFF-01",
+      "測試情境": "正常與重試交件",
+      "Findings": "F12",
+      "Tasks": "T19,T22",
+      "原始預期結果": "一個handoff、一個外部reference；hash一致"
+    },
+    {
+      "UAT_ID": "HANDOFF-02",
+      "測試情境": "外部已收但timeout",
+      "Findings": "F12",
+      "Tasks": "T19,T22",
+      "原始預期結果": "未知先查；退件關聯原manifest及新版"
+    },
+    {
+      "UAT_ID": "AI-01",
+      "測試情境": "真實完整文件",
+      "Findings": "F10",
+      "Tasks": "T15,T16,T22",
+      "原始預期結果": "引用對應文件頁；無虛構缺件；不自動批准"
+    },
+    {
+      "UAT_ID": "AI-02",
+      "測試情境": "缺件與多人適用性",
+      "Findings": "F10",
+      "Tasks": "T15,T16,T22",
+      "原始預期結果": "缺件精準到人/文件；未明適用性unknown"
+    },
+    {
+      "UAT_ID": "AI-03",
+      "測試情境": "錯年度姓名及文件內容指令",
+      "Findings": "F10",
+      "Tasks": "T15,T16,T22",
+      "原始預期結果": "讀內容发现差異；忽略文件中的指令；人審"
+    },
+    {
+      "UAT_ID": "AI-04",
+      "測試情境": "模糊無文字層文件",
+      "Findings": "F10",
+      "Tasks": "T15,T16,T22",
+      "原始預期結果": "unknown或低信心；不猜姓名/日期"
+    },
+    {
+      "UAT_ID": "AI-05",
+      "測試情境": "provider故障與版本更新",
+      "Findings": "F10",
+      "Tasks": "T15,T16,T22",
+      "原始預期結果": "明示錯誤；可恢復；舊finding不批准新版"
+    },
+    {
+      "UAT_ID": "PERF-01",
+      "測試情境": "資料量與權限規模",
+      "Findings": "F18",
+      "Tasks": "T21,T22",
+      "原始預期結果": "不截斷；CPU/memory及SQL有基線；無跨scope"
+    },
+    {
+      "UAT_ID": "UX-01",
+      "測試情境": "手機與鍵盤日常任務",
+      "Findings": "F19",
+      "Tasks": "T20,T22",
+      "原始預期結果": "44px觸控、焦點可見、dialog鍵盤、filters保存"
+    }
+  ]
+}
