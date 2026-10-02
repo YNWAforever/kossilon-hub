@@ -8,6 +8,7 @@ import {
   staleBlockedIntegrations,
   runtimeCheckedIds,
   releaseBlockingIntegrations,
+  capabilityStatuses,
   type BlockedIntegrationId,
   type BlockedIntegration,
 } from "./capabilities";
@@ -23,6 +24,73 @@ import {
  */
 
 const SRC = fileURLToPath(new URL("../..", import.meta.url));
+
+describe("capability configuration and runtime evidence", () => {
+  it("reports an implemented AI adapter without pretending credentials prove health", () => {
+    const statuses = capabilityStatuses({
+      configuration: { "ai-provider": true },
+      maintenance: null,
+      textLayerObserved: false,
+    });
+    const ai = statuses.find((x) => x.id === "ai-provider")!;
+    expect(ai.implemented).toBe(true);
+    expect(ai.configured).toBe(true);
+    expect(ai.health).toBe("unknown");
+    expect(ai.approvalRequired).toBe(true);
+    expect(ai.lastVerifiedAt).toBeNull();
+  });
+  it("keeps a missing credential separate from a failed verified probe", () => {
+    const absent = capabilityStatuses({
+      configuration: { "ai-provider": false },
+      maintenance: null,
+      textLayerObserved: false,
+    }).find((x) => x.id === "ai-provider")!;
+    const failed = capabilityStatuses({
+      configuration: { "ai-provider": true },
+      maintenance: null,
+      textLayerObserved: false,
+      probes: { "ai-provider": { health: "failed", lastVerifiedAt: "2026-10-01T00:00:00Z" } },
+    }).find((x) => x.id === "ai-provider")!;
+    expect(absent.configured).toBe(false);
+    expect(absent.health).toBe("unknown");
+    expect(failed.configured).toBe(true);
+    expect(failed.health).toBe("failed");
+  });
+  it("uses historical scheduler timestamps and stale cause without clearing approval", () => {
+    const maintenance = {
+      state: "stale" as const,
+      lastRunAt: "2026-09-30T01:55:00Z",
+      lastSuccessAt: "2026-09-30T01:55:00Z",
+      lagSeconds: 80000,
+      toleranceSeconds: 600,
+      failedPasses: [],
+      summary: "上次排程已超過10分鐘",
+    };
+    const scheduler = capabilityStatuses({
+      configuration: { "deployment-runtime": true },
+      maintenance,
+      textLayerObserved: false,
+    }).find((x) => x.id === "deployment-runtime")!;
+    expect(scheduler.health).toBe("degraded");
+    expect(scheduler.lastVerifiedAt).toBe(maintenance.lastSuccessAt);
+    expect(scheduler.summary).not.toContain("從未");
+    expect(scheduler.approvalRequired).toBe(true);
+  });
+  it("does not let a healthy probe waive a human approval", () => {
+    const scanner = capabilityStatuses({
+      configuration: { "malware-scanner-provider": true },
+      maintenance: null,
+      textLayerObserved: false,
+      probes: {
+        "malware-scanner-provider": { health: "healthy", lastVerifiedAt: "2026-10-01T00:00:00Z" },
+      },
+    }).find((x) => x.id === "malware-scanner-provider")!;
+    expect(scanner.health).toBe("healthy");
+    expect(scanner.approvalRequired).toBe(true);
+    expect(scanner.owner.length).toBeGreaterThan(0);
+    expect(scanner.nextAction.length).toBeGreaterThan(0);
+  });
+});
 
 // Excluded so the inventory cannot satisfy its own test, and so the marker
 // strings written in this file do not become phantom ids.

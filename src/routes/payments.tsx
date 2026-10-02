@@ -1,10 +1,6 @@
+import { ProductionPaymentReview } from "@/features/annual-return/components/production-payment-review";
 import { type ReactNode, useState } from "react";
-import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
-import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
-import { listAnnualReturnCases } from "../features/annual-return/server-fns";
-import { listDocuments } from "../features/documents/server-fns";
 import { PageHeader } from "@/components/page-header";
 
 import {
@@ -41,143 +37,14 @@ function PaymentsRoute() {
 // Exported for -payments.interaction.test.tsx. The dataMode branch lives in the
 // parent PaymentsRoute, so this component never touches Route itself.
 export function ProductionPaymentsRoute() {
-  const queryClient = useQueryClient();
-  const casesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list({ paymentEvidence: true }),
-    queryFn: () => listAnnualReturnCases({ data: {} }),
-    retry: false,
-  });
-  const documentsQuery = useQuery({
-    queryKey: annualReturnQueryKeys.payment("all"),
-    queryFn: () => listDocuments({ data: {} }),
-    retry: false,
-  });
-  const evidenceMutationKey = [...annualReturnQueryKeys.all, "evidence-review"];
-  const pendingEvidenceIds = useMutationState({
-    filters: { mutationKey: evidenceMutationKey, status: "pending" },
-    select: (mutation) =>
-      (mutation.state.variables as { data?: { documentId?: string } } | undefined)?.data
-        ?.documentId,
-  });
-  const reviewMutation = useMutation({
-    mutationKey: evidenceMutationKey,
-    mutationFn: reviewAnnualReturnEvidenceAction,
-    onSuccess: ({ caseItem }) => {
-      queryClient.setQueryData(annualReturnQueryKeys.detail(caseItem.id), caseItem);
-      // .all is ["annual-returns"], so this covers documents, payment and every
-      // list key by prefix -- including the command center board, which this
-      // previously left stale after a review.
-      void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
-    },
-  });
-
-  const cases = casesQuery.data ?? [];
-  const paymentDocuments = (documentsQuery.data ?? []).filter(
-    (document) => document.category === "payment" && document.caseId,
-  );
-
+  const actor = Route.useRouteContext().actor;
   return (
-    <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title="Payments" />
-
-      {casesQuery.error || documentsQuery.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          Production payment evidence is unavailable.
-        </p>
-      ) : null}
-      {casesQuery.isLoading || documentsQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading payment evidence...</p>
-      ) : null}
-
-      <section className="border-y">
-        <div className="hidden grid-cols-[minmax(0,1fr)_150px_140px_minmax(240px,1fr)] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
-          <span>Company</span>
-          <span>Payment</span>
-          <span>Evidence</span>
-          <span>Actions</span>
-        </div>
-        <div className="divide-y">
-          {paymentDocuments.map((document) => {
-            const caseItem = cases.find((candidate) => candidate.id === document.caseId);
-            const pending = pendingEvidenceIds.includes(document.id);
-            return (
-              <div
-                key={document.id}
-                className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[minmax(0,1fr)_150px_140px_minmax(240px,1fr)] md:items-center"
-              >
-                <div>
-                  <p className="font-medium">{caseItem?.companyName ?? document.fileName}</p>
-                  <p className="text-xs text-muted-foreground">{document.fileName}</p>
-                </div>
-                <span>{caseItem?.payment?.status ?? "Payment pending"}</span>
-                <span>
-                  {document.uploadStatus} / {document.reviewStatus}
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {document.uploadStatus === "available" && document.reviewStatus === "pending" ? (
-                    <>
-                      <button
-                        className="rounded-md bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50"
-                        disabled={pending}
-                        onClick={() =>
-                          reviewMutation.mutate({
-                            data: {
-                              caseId: document.caseId!,
-                              documentId: document.id,
-                              decision: "verified",
-                            },
-                          })
-                        }
-                        type="button"
-                      >
-                        {pending ? "Reviewing..." : "Verify payment"}
-                      </button>
-                      <button
-                        className="rounded-md border px-3 py-2 disabled:opacity-50"
-                        disabled={pending}
-                        onClick={() =>
-                          reviewMutation.mutate({
-                            data: {
-                              caseId: document.caseId!,
-                              documentId: document.id,
-                              decision: "rejected",
-                              reason: "Payment evidence rejected during staff review",
-                            },
-                          })
-                        }
-                        type="button"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-muted-foreground">No review action</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          {/* Gated on isError too. Without that, a failed query leaves data
-              undefined so the list is empty while isLoading is already false,
-              and the screen says both "unavailable" and "nothing to review". */}
-          {!casesQuery.isLoading &&
-          !documentsQuery.isLoading &&
-          !casesQuery.isError &&
-          !documentsQuery.isError &&
-          paymentDocuments.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground">
-              No production payment evidence is awaiting review.
-            </p>
-          ) : null}
-        </div>
-      </section>
-
-      {reviewMutation.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {reviewMutation.error.message}
-        </p>
-      ) : null}
-    </main>
+    <ProductionPaymentReview
+      canBulk={actor?.active === true && (actor.role === "Admin" || actor.role === "Manager")}
+      actorScope={JSON.stringify(
+        actor ? [actor.authUserId, actor.userId, actor.role, actor.teamId, actor.active] : null,
+      )}
+    />
   );
 }
 

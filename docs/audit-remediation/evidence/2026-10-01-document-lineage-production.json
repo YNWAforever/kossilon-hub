@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-01T07:10:20Z",
+  "build": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "environment": "production read-only Neon red-morning-00331124/br-muddy-mountain-aov8bbku/neondb",
+  "command": "SELECT companies.id,data_origin and aggregate documents, without document_upload_intents, without document_versions, business verification_status; no object reads",
+  "rows": [
+    {
+      "companyId": "30000000-0000-0000-0000-000000000001",
+      "origin": "client",
+      "documents": 2,
+      "withoutIntent": 2,
+      "withoutVersion": 0,
+      "businessVerified": 1
+    },
+    {
+      "companyId": "30000000-0000-0000-0000-000000000002",
+      "origin": "client",
+      "documents": 5,
+      "withoutIntent": 5,
+      "withoutVersion": 0,
+      "businessVerified": 5
+    },
+    {
+      "companyId": "30000000-0000-0000-0000-000000000003",
+      "origin": "client",
+      "documents": 7,
+      "withoutIntent": 7,
+      "withoutVersion": 0,
+      "businessVerified": 7
+    }
+  ],
+  "finding": "All 14 register rows lack upload intents; the deployed inner join excludes them. Versions and business approvals do not prove storage or scan lineage.",
+  "objectAvailability": "not_checked",
+  "scannerVerification": "not_performed",
+  "mutationsPerformed": false,
+  "limitations": "No inference about company names, physical object absence, provenance or clean scans. Controlled recovery is prepared locally only."
+}

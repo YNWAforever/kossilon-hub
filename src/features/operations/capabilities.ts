@@ -24,7 +24,7 @@
  * The second direction is the one that matters in a year's time.
  */
 
-import type { MaintenanceHealthState } from "./health";
+import type { MaintenanceHealthState, MaintenanceHealth } from "./health";
 
 export type BlockedIntegrationId =
   | "malware-scanner-provider"
@@ -83,7 +83,8 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     effect:
       "沒有任何文件可以通過安全檢查，全部停留在隔離狀態。因此沒有任何套件可以被批准交件。" +
       "舊檔案的重掃隊列會一直累積，不會自動清空。",
-    pilotFallback: "由職員在受管制的工作站自行掃描後，以人手記錄結論；系統不會代為判斷。",
+    pilotFallback:
+      "職員可人工核對；文件保持隔離，不能用人手記錄代替綁定目前版本的真正掃描 verdict。",
     clearedBy: "一個已批核的掃描供應商、它的 binding 名稱，以及它的資料處理條款。",
     blocksRelease: true,
     evidence: {
@@ -95,9 +96,7 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     id: "document-text-extraction",
     capability: "讀取文件內文（頁數、日期、年度、內容比對）",
     effect:
-      "伺服器端的 PDF 文字層擷取已寫好，但尚未在部署環境中執行過；它只處理已通過真正惡意軟件掃描的文件，" +
-      "因此在掃描供應商到位前實際上不會擷取任何內容。掃描檔與相片沒有文字層，仍然讀不到。" +
-      "目前沒有任何規則讀取文件文字，包括兩條日期規則。",
+      "PDF 文字層擷取及內容規則已實作，只處理通過真正掃描的目前版本。部署執行證據另列；掃描檔與相片仍需已批准的 OCR 或人手核對。",
     pilotFallback: "文件內容仍由職員親自閱讀核對，一如現時做法。",
     clearedBy:
       "部署環境寫入的第一筆 extraction_method 為 text-layer 的 document_version_texts 記錄。" +
@@ -109,8 +108,7 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     id: "ai-provider",
     capability: "由模型協助審閱文件",
     effect:
-      "第三層分析從不執行。倉庫內沒有任何 AI SDK、金鑰 binding 或供應商設定，" +
-      "介面上也沒有任何位置顯示模型的結論。",
+      "HTTP AI advisory adapter 及引用建議已實作。是否配置、是否通過 runtime 驗證及供應商批准分開顯示；模型不能批准文件或套件。",
     pilotFallback: "全部審閱由人完成。這正是現時的實際做法，不是降級。",
     clearedBy: "一個已批核的供應商、它的 binding 名稱，以及它的資料處理條款。",
     blocksRelease: false,
@@ -151,8 +149,7 @@ export const BLOCKED_INTEGRATIONS: readonly BlockedIntegration[] = [
     id: "deployment-runtime",
     capability: "五分鐘排程確實在部署環境執行",
     effect:
-      "從未有人觀察過一次排程執行。在 maintenance_runs 之前，唯一的記錄是 console.log，" +
-      "而排程若從未註冊，每一個畫面看起來仍然完全正常。",
+      "歷史排程記錄、目前 freshness 及執行範圍另列。僅有 adapter 或一次人手執行不能證明真正排程持續運行。",
     pilotFallback:
       "上線後先看營運畫面的「最後一次執行」；在它出現第一筆記錄之前，排程一律當作沒有運行。",
     clearedBy: "部署環境上一次排程被觸發的實際證據——現在就是 maintenance_runs 的第一筆排程資料。",
@@ -213,4 +210,172 @@ export function staleBlockedIntegrations(
     .filter((item) => item.evidence.observable === "runtime")
     .filter((item) => RUNTIME_EVIDENCE[item.id]?.(input) === true)
     .map((item) => item.id);
+}
+
+export type CapabilityId =
+  | BlockedIntegrationId
+  | "database"
+  | "auth-provider"
+  | "document-storage"
+  | "whatsapp-transport"
+  | "document-ocr";
+export type CapabilityHealth = "healthy" | "degraded" | "failed" | "unknown";
+export type CapabilityStatus = {
+  id: CapabilityId;
+  capability: string;
+  implemented: boolean;
+  configured: boolean | null;
+  health: CapabilityHealth;
+  lastVerifiedAt: string | null;
+  approvalRequired: boolean;
+  owner: string;
+  nextAction: string;
+  summary: string;
+};
+export type CapabilityProbe = { health: CapabilityHealth; lastVerifiedAt: string };
+
+/** Local config and recorded evidence only. Rendering never calls a provider. */
+export function capabilityStatuses(input: {
+  configuration?: Partial<Record<CapabilityId, boolean>>;
+  probes?: Partial<Record<CapabilityId, CapabilityProbe>>;
+  maintenance: MaintenanceHealth | null;
+  textLayerObserved: boolean | null;
+  schemaReady?: boolean | null;
+}): CapabilityStatus[] {
+  const metadata: {
+    id: CapabilityId;
+    capability: string;
+    implemented: boolean;
+    owner: string;
+    nextAction: string;
+    approval: boolean;
+  }[] = [
+    {
+      id: "database",
+      capability: "資料庫結構",
+      implemented: true,
+      owner: "DB／Release owner",
+      nextAction: "核對 ledger、檔案 hash 和實體 DDL；只按批准的部署包處理差異。",
+      approval: true,
+    },
+    {
+      id: "auth-provider",
+      capability: "Neon Auth 新登入及角色",
+      implemented: true,
+      owner: "Auth owner",
+      nextAction: "以受控帳戶完成 fresh magic-link／Google 及角色隔離測試。",
+      approval: true,
+    },
+    {
+      id: "document-storage",
+      capability: "R2 私人文件儲存",
+      implemented: true,
+      owner: "Storage owner",
+      nextAction: "驗證授權 sample 的私人 object roundtrip 與版本授權。",
+      approval: true,
+    },
+    {
+      id: "malware-scanner-provider",
+      capability: "文件惡意軟件掃描",
+      implemented: true,
+      owner: "Security／Scanner owner",
+      nextAction: "確認已批准供應商、binding、條款及綁定目前版本的實際 sample verdict。",
+      approval: true,
+    },
+    {
+      id: "document-text-extraction",
+      capability: "PDF 文字層及內容規則",
+      implemented: true,
+      owner: "Document pipeline owner",
+      nextAction: "核對通過掃描的版本擷取記錄及引用；程式測試不代替部署執行。",
+      approval: false,
+    },
+    {
+      id: "document-ocr",
+      capability: "掃描檔／相片 OCR",
+      implemented: false,
+      owner: "OCR provider owner",
+      nextAction: "提供已批准 OCR 協議及 golden samples；未確認時人手核對。",
+      approval: true,
+    },
+    {
+      id: "ai-provider",
+      capability: "AI 可引用審閱建議",
+      implemented: true,
+      owner: "AI provider owner",
+      nextAction: "確認供應商批准、endpoint／key presence、實際 grounded sample；AI 不作批准。",
+      approval: true,
+    },
+    {
+      id: "whatsapp-transport",
+      capability: "WOZTELL 訊息及 webhook",
+      implemented: true,
+      owner: "Messaging owner",
+      nextAction: "核對四項 binding、受控收件人及 acceptance／delivery 證據；unknown 不盲目重試。",
+      approval: true,
+    },
+    {
+      id: "whatsapp-media-download",
+      capability: "WhatsApp 附件入件",
+      implemented: false,
+      owner: "Messaging／Storage owner",
+      nextAction: "提供正式 media download 協議及 scoped token；檔案須 quarantine／scan。",
+      approval: true,
+    },
+    {
+      id: "external-handoff-destination",
+      capability: "內部 server 交件／回件",
+      implemented: false,
+      owner: "Internal-server owner",
+      nextAction: "提供真實 transport／receipt 協議；保留人手上載及提交證明，匯出不算交件。",
+      approval: true,
+    },
+    {
+      id: "deployment-runtime",
+      capability: "五分鐘排程",
+      implemented: true,
+      owner: "Operations／Release owner",
+      nextAction: "核對單一 owner 及執行範圍；用 platform logs／DB correlation 驗證3次真正排程。",
+      approval: true,
+    },
+  ];
+  return metadata.map((item) => {
+    const probe = input.probes?.[item.id];
+    let health: CapabilityHealth = probe?.health ?? "unknown",
+      lastVerifiedAt = probe?.lastVerifiedAt ?? null;
+    let summary = probe
+      ? "狀態來自已記錄驗證；批准 gate 保留。"
+      : "尚無可用 runtime 驗證，配置存在亦不代表健康。";
+    if (item.id === "deployment-runtime" && input.maintenance) {
+      health =
+        input.maintenance.state === "healthy"
+          ? "healthy"
+          : input.maintenance.state === "failing"
+            ? "failed"
+            : input.maintenance.state === "never-observed"
+              ? "unknown"
+              : "degraded";
+      lastVerifiedAt = input.maintenance.lastSuccessAt;
+      summary = input.maintenance.summary + " 維護排程成功不代表掃描、分析或訊息外發已獲批准。";
+    }
+    if (item.id === "database" && input.schemaReady !== undefined) {
+      health = input.schemaReady === null ? "unknown" : input.schemaReady ? "healthy" : "degraded";
+      summary =
+        "已核對 ledger 及 outbox dispatch marker 的 column／index；其他實體 DDL、hash 及歷史 ID 仍需部署 review。";
+    }
+    if (item.id === "document-text-extraction" && input.textLayerObserved)
+      summary = "已見文字層記錄；實際 runtime、版本及 sample 驗證仍需核對。";
+    return {
+      id: item.id,
+      capability: item.capability,
+      implemented: item.implemented,
+      configured: input.configuration?.[item.id] ?? null,
+      health,
+      lastVerifiedAt,
+      approvalRequired: item.approval,
+      owner: item.owner,
+      nextAction: item.nextAction,
+      summary,
+    };
+  });
 }

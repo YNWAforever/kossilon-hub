@@ -31,7 +31,22 @@ const documentServerFns = vi.hoisted(() => ({
 }));
 
 vi.mock("../server-fns", () => serverFns);
-vi.mock("@/features/documents/server-fns", () => documentServerFns);
+vi.mock("../handoff-server-fns", () => ({
+  getCaseHandoffs: vi.fn().mockResolvedValue({
+    preview: { readyForApproval: false, sourceVersion: null, manifestSha256: null, blockers: [] },
+    handoffs: [],
+    returns: [],
+    connectorConfigured: false,
+  }),
+  runHandoffCommand: vi.fn(),
+}));
+vi.mock("@/features/documents/server-fns", () => ({
+  ...documentServerFns,
+  listDocumentPage: async (input: unknown) => ({
+    documents: await documentServerFns.listDocuments(input),
+    nextCursor: null,
+  }),
+}));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));
@@ -45,6 +60,14 @@ const paymentProofId = "66666666-6666-4666-8666-666666666666";
 const receiptId = "77777777-7777-4777-8777-777777777777";
 
 const caseItem: AnnualReturnCase = {
+  readiness: {
+    sourceVersion: "a".repeat(32),
+    readyToPrepare: true,
+    readyForApproval: true,
+    readyToTransmit: false,
+    manifestPayload: null,
+    blockers: [],
+  },
   id: caseId,
   companyId: "88888888-8888-4888-8888-888888888888",
   companyTeamId: "99999999-9999-4999-8999-999999999999",
@@ -167,6 +190,16 @@ beforeEach(() => {
 });
 
 describe("ProductionAnnualReturnCaseDetail", () => {
+  it("disables preparation for unknown current evidence and shows an actionable blocker", async () => {
+    serverFns.getAnnualReturnCase.mockResolvedValue({ ...caseItem, readiness: undefined });
+    renderDetail();
+    await screen.findByRole("heading", { name: "Acme Company Limited" });
+    expect(
+      (screen.getByRole("button", { name: "Prepare packet" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.getByLabelText("交件阻擋原因").textContent).toContain("未取得當前付款");
+    expect(serverFns.updateAnnualReturnStatus).not.toHaveBeenCalled();
+  });
   it("clicks every production command with case-scoped payloads and refreshes cache", async () => {
     const { queryClient, invalidateSpy } = renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
@@ -203,7 +236,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Send reminder" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Submit packet" }));
+    fireEvent.click(screen.getByRole("button", { name: "Prepare packet" }));
 
     fireEvent.change(screen.getByLabelText("Filing reference"), {
       target: { value: "NAR1-2026-001" },
@@ -220,7 +253,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
         data: { caseId, ownerId: nextOwnerId },
       });
       expect(serverFns.updateAnnualReturnStatus).toHaveBeenNthCalledWith(1, {
-        data: { caseId, nextStatus: "Ready to file" },
+        data: { caseId, nextStatus: "Ready to file", expectedVersion: "a".repeat(32) },
       });
       expect(serverFns.updateAnnualReturnChecklistItem).toHaveBeenCalledWith({
         data: {
@@ -248,7 +281,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
         },
       });
       expect(serverFns.updateAnnualReturnStatus).toHaveBeenNthCalledWith(2, {
-        data: { caseId, nextStatus: "NAR1 prepared" },
+        data: { caseId, nextStatus: "NAR1 prepared", expectedVersion: "a".repeat(32) },
       });
       expect(serverFns.updateAnnualReturnFilingProof).toHaveBeenCalledWith({
         data: {

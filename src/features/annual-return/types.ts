@@ -49,6 +49,10 @@ export type AnnualReturnChecklistItem = {
 };
 
 export type AnnualReturnPayment = {
+  receivedAmount?: number;
+  balance?: number;
+  evidenceEntries?: import("./payment-evidence-state").PaymentEvidenceEntry[];
+  proofReturns?: import("./payment-evidence-state").PaymentProofReturn[];
   id: string;
   caseId: string;
   invoiceNumber: string;
@@ -61,6 +65,13 @@ export type AnnualReturnPayment = {
 };
 
 export type AnnualReturnCase = {
+  readiness?: import("./readiness").ReadinessSnapshot;
+  handoffExceptions?: {
+    unreconciled: number;
+    rejected: number;
+    unknown: number;
+    awaitingManual: number;
+  };
   id: string;
   companyId: string;
   companyTeamId: string;

@@ -1,0 +1,48 @@
+{
+  "task": "T15",
+  "findings": ["F10"],
+  "date": "2026-10-02",
+  "base": "16162fb2471ad0066de0a4367a7a54857be415c9",
+  "candidate": "55d9b2acb4a3a487a0f8d55212ac4d29b899cb84; final reviewed gates at422b822c6cc064b4208739bd2e5c6ebd168d31f8 in2026-10-02-pr07-gates.json",
+  "environment": "LOCAL ONLY Node22.23.3/Bun1.3.14/Postgres17 localhost55441/kossilon_pr02_ci; injected sessions and stub scanner transport",
+  "production": "Last observed 2026-10-01 aa5/66 historical migration IDs; not refreshed or mutated for this gate",
+  "red": [
+    {"log":"t15-scanner-red.log","fail":12,"pass":34,"detail":"version/byte/readability/deadline/Admin-unknown/download/rejected-object retention regressions"},
+    {"log":"t15-version-write-red.log","fail":3,"detail":"wrong hash, V1 replaced by V2, reclaimed scan attempt"},
+    {"log":"t15-review-download-red.log","fail":4,"detail":"stale review/download and changed bytes; one new fixture assertion subsequently corrected"},
+    {"log":"t15-unbound-provider-red.log","fail":1,"detail":"provider clean without version/hash/size accepted by worker"},
+    {"log":"t15-current-manifest-red.log","detail":"superseded hashed version citable"},
+    {"log":"t15-v1-review-mapping-red.log","detail":"controlled old summary implementation returned V1 approval for V2; restored in finally"},
+    {"log":"t15-client-review-version-red.log","fail":2,"detail":"RPC missing client version; service auto-selected V2 for a V1 review"},
+    {"log":"t15-version-409-red.log","fail":1,"pass":4,"detail":"version conflict was not an HTTP 409"},
+    {"log":"t15-lost-claim-red.log","fail":6,"pass":14,"detail":"lost fenced writes counted as persisted failures/retries"}
+  ],
+  "green": [
+    {"log":"t15-scanner-green.log","pass":46},
+    {"log":"t15-affected2.log","files":9,"pass":136,"skip":0},
+    {"log":"t15-current-version-green.log","files":4,"pass":92,"skip":0},
+    {"log":"t15-ui-version-green.log","files":4,"pass":57,"skip":0},
+    {"log":"t15-version-409-green.log","files":3,"pass":55,"skip":0},
+    {"log":"t15-lost-claim-green.log","files":2,"pass":40,"skip":0},
+    {"log":"t15-payment-fixture-green.log","files":1,"pass":55,"skip":0,"duration_seconds":94.65}
+  ],
+  "initial_full_suite": {"log":"t15-full-test.log","files_pass":198,"files_fail":2,"pass":1999,"fail":3,"skip":0,"duration_seconds":265.07,"resolution":"Original manifest reason retained; two synthetic payment fixtures now explicitly bind the scan and review UUID. No production gate relaxed."},
+  "final_full_suite": {"command":"npm run test","log":"t15-full-test-final.log","exit":0,"files":200,"pass":2008,"fail":0,"skip":0,"duration_seconds":365.30},
+  "gates": {"typecheck":{"log":"t15-typecheck-final.log","exit":0},"lint":{"log":"t15-lint-final.log","exit":0,"errors":0,"existing_warnings":1},"offline":{"log":"t15-predeploy.log","exit":0,"reads":38,"network":0,"writes":0},"build":{"log":"t15-build.log","exit":0,"compiled_cloudflare_scheduled_hook":true},"dev_routes":{"log":"t15-dev-delivery.log","exit":0,"pass":12,"import_protection_violations":0,"retained_failures":["t15-dev.log","t15-dev-final.log"],"diagnostic":{"log":"t15-dev-diagnostic.log","exit":0,"root_ms":5964,"other_route_ms_range":[10,22],"original_timeouts_unchanged":true}}},
+  "migration": {"id":"0076_document_scan_review_versions.sql","source_manifest_ids":44,"local_apply":"t15-migrate.log","local_repeat":{"log":"t15-migrate-repeat.log","exit":0},"populated_repeat":{"log":"t15-migration-proof.log","exit":0,"repetitions":2,"tables_preserved":4,"foreign_keys":3,"historical_markers":"all NULL","cleanup":"transaction rollback"},"production_apply":false},
+  "rulings": [
+    "Live clean requires actual byte identity and exact current version; historical NULL and deterministic scan remain unknown, with no backfill.",
+    "The worker retains rejected evidence in isolation. Destruction belongs to a separately approved retention process; a late verdict cannot delete current evidence.",
+    "All ordinary roles including Admin must pass the same current clean download gate; recovery metadata remains visible under existing authorization.",
+    "The existing HTTP scanner request and response protocol is retained; version identity is bound and validated inside the adapter, not invented as a vendor API.",
+    "Synthetic test receipt metadata explicitly includes the new UUID markers; it does not demonstrate a genuine scanner, storage, receipt or Auth roundtrip.",
+    "A nullable additive migration preserves historical review records but their decisions do not silently certify the current version. Explicit re-review/rescan is required."
+  ],
+  "blockers": [
+    {"dependency":"scanner/R2","owner":"Security and storage owners","next":"Approved staging scanner endpoint/key, isolated R2 and controlled clean/rejected/invalid/encrypted/version-race sample roundtrip with correlated genuine verdicts"},
+    {"dependency":"fresh Auth","owner":"Auth owner","next":"Controlled fresh Admin/Manager/Staff/Client sessions and current-role access acceptance"},
+    {"dependency":"production migration/release","owner":"DB and release owners","next":"Review reconciled migration set, backup/restore and compatible release package; obtain new scope approval before formal changes"}
+  ],
+  "logs_root": ".worktrees/audit-baseline-20261001",
+  "limits": "No live provider calls, production SQL/deploy, owner activation, invites, permission grants or client messages; DOC provider UAT remains blocked. Full PR07 fresh review and final gates follow T16."
+}

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { StatusPill } from "@/components/status-pill";
+import { ProductionStaffAdmin } from "@/features/admin/production-staff-admin";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import { isAdmin, type AuthRole, type DemoUser } from "@/features/auth/session";
@@ -68,16 +69,7 @@ const auditRows = [
   },
 ];
 
-/**
- * Every other screen branches on dataMode; this one never did. It rendered
- * `demoUsers` and a hardcoded `auditRows` unconditionally, so a production deploy
- * showed three invented staff members as the firm's roster alongside a fabricated
- * audit trail — and any access decision made from it was made against fiction.
- *
- * There is no production user-management data layer to branch to, so production
- * says so instead of inventing one. Fixtures now come from useAuth(), which
- * returns [] outside demo mode, rather than from a direct module import.
- */
+/** Production reads verified staff profiles; demo fixtures stay in the demo console. */
 function AdminPage() {
   const { dataMode } = Route.useRouteContext();
   return dataMode === "demo" ? <DemoAdminConsole /> : <ProductionAdminConsole />;
@@ -85,6 +77,7 @@ function AdminPage() {
 
 function ProductionAdminConsole() {
   const { session, isCurrentUserAdmin } = useAuth();
+  const { actor } = Route.useRouteContext();
 
   if (!isCurrentUserAdmin) {
     return (
@@ -117,37 +110,9 @@ function ProductionAdminConsole() {
   }
 
   return (
-    <main className="flex-1 space-y-6 p-6">
-      <PageHeader
-        eyebrow="Administration"
-        title="Admin"
-        subtitle="User and system administration"
-      />
-      <section className="rounded-xl border border-border bg-card p-6">
-        <div className="flex max-w-2xl items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
-            <ShieldCheck className="h-5 w-5 text-status-orange" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="font-display text-lg font-semibold text-foreground">
-              Not available in this deployment
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Staff accounts, roles and team membership are managed in Neon Auth and in the
-              firm&rsquo;s <code className="font-mono text-xs">staff_profiles</code> table, not from
-              this console. The prototype user list this screen used to show was fixture data and
-              never reflected the firm&rsquo;s real users.
-            </p>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Signed in as {session?.name ?? "an authenticated user"} ({session?.role ?? "User"}).
-            </p>
-            <Link className="mt-4 inline-flex rounded-md border px-3 py-2 text-sm" to="/">
-              Back to dashboard
-            </Link>
-          </div>
-        </div>
-      </section>
-    </main>
+    <ProductionStaffAdmin
+      actorScope={JSON.stringify({ actor, sessionId: session?.id, role: session?.role })}
+    />
   );
 }
 
@@ -206,6 +171,9 @@ function DemoAdminConsole() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Administration" title="Admin" subtitle="Users, roles, system settings" />
+      <p className="text-sm text-muted-foreground">
+        Demo 帳戶資料只供查閱，角色及有效狀態不可修改。
+      </p>
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <AdminMetric icon={Users} label="Demo users" value={localUsers.length} />
         <AdminMetric icon={CheckCircle2} label="Active users" value={activeUsers} />
@@ -329,6 +297,7 @@ function UsersPanel({
               <td className="px-4 py-3">
                 <select
                   value={user.role}
+                  disabled
                   onChange={(event) => onRoleChange(user.id, event.target.value as AuthRole)}
                   aria-label={`Role for ${user.name}`}
                   className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
@@ -360,6 +329,7 @@ function UsersPanel({
                   </button>
                   <button
                     type="button"
+                    disabled
                     onClick={() => onToggleActive(user.id)}
                     aria-label={`${user.active ? "Deactivate" : "Activate"} ${user.name}`}
                     className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent"

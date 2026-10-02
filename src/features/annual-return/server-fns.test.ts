@@ -10,7 +10,11 @@ import {
   resolveAnnualReturnCaseFindingForActor,
   listAnnualReturnCasePageForActor,
   getAnnualReturnBoardTotalsForActor,
+  updateAnnualReturnStatusForActor,
+  recordAnnualReturnPaymentEvidenceForActor,
+  reviewAnnualReturnPaymentEvidenceForActor,
 } from "./server-fns";
+import { ReadinessConflictError } from "./readiness";
 
 const caseId = "91000000-0000-0000-0000-000000000001";
 const ownerId = "20000000-0000-0000-0000-000000000002";
@@ -31,6 +35,103 @@ const staffActor: AuthenticatedActor = {
   teamId: "10000000-0000-0000-0000-000000000001",
   active: true,
 };
+
+describe("payment receipt command boundary", () => {
+  const input = {
+    caseId,
+    paymentId: crypto.randomUUID(),
+    documentId: crypto.randomUUID(),
+    proofVersionId: crypto.randomUUID(),
+    expectedVersion: "a".repeat(32),
+  };
+  it("returns HTTP409 for stale record and review previews", async () => {
+    const service = {
+      record: vi.fn().mockRejectedValue(new ReadinessConflictError()),
+      review: vi.fn().mockRejectedValue(new ReadinessConflictError()),
+    };
+    await expect(
+      recordAnnualReturnPaymentEvidenceForActor(
+        staffActor,
+        { ...input, amount: "600", receivedOn: "2026-10-01" },
+        service,
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+    await expect(
+      reviewAnnualReturnPaymentEvidenceForActor(
+        staffActor,
+        { ...input, decision: "verified" },
+        service,
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+  });
+  it("denies Client and inactive actors before invoking receipt writes", async () => {
+    const service = { record: vi.fn(), review: vi.fn() };
+    for (const actor of [clientActor, { ...staffActor, active: false }]) {
+      await expect(
+        recordAnnualReturnPaymentEvidenceForActor(
+          actor,
+          { ...input, amount: "600", receivedOn: "2026-10-01" },
+          service,
+        ),
+      ).rejects.toThrow();
+      await expect(
+        reviewAnnualReturnPaymentEvidenceForActor(
+          actor,
+          { ...input, decision: "verified" },
+          service,
+        ),
+      ).rejects.toThrow();
+    }
+    expect(service.record).not.toHaveBeenCalled();
+    expect(service.review).not.toHaveBeenCalled();
+  });
+});
+
+describe("readiness version command boundary", () => {
+  it("passes the actual preview token and returns HTTP409 for transaction conflicts", async () => {
+    const expectedVersion = "a".repeat(32);
+    const updateStatus = vi.fn().mockRejectedValue(new ReadinessConflictError());
+    const repository = {
+      getCase: vi.fn(async () => ({
+        id: caseId,
+        companyTeamId: staffActor.teamId,
+        ownerId: staffId,
+        reviewerId: null,
+        currentStatus: "Payment received",
+      })),
+      updateStatus,
+    } as unknown as AnnualReturnRepository;
+    await expect(
+      updateAnnualReturnStatusForActor(
+        staffActor,
+        { caseId, nextStatus: "NAR1 prepared", expectedVersion },
+        { repository },
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(updateStatus).toHaveBeenCalledWith(caseId, "NAR1 prepared", staffId, expectedVersion);
+  });
+  it("denies foreign case before reading a command token or invoking a write", async () => {
+    const updateStatus = vi.fn();
+    const repository = {
+      getCase: vi.fn(async () => ({
+        id: caseId,
+        companyTeamId: crypto.randomUUID(),
+        ownerId: ownerId,
+        reviewerId: null,
+        currentStatus: "Payment received",
+      })),
+      updateStatus,
+    } as unknown as AnnualReturnRepository;
+    await expect(
+      updateAnnualReturnStatusForActor(
+        staffActor,
+        { caseId, nextStatus: "NAR1 prepared", expectedVersion: "a".repeat(32) },
+        { repository },
+      ),
+    ).rejects.toThrow("Forbidden");
+    expect(updateStatus).not.toHaveBeenCalled();
+  });
+});
 
 describe("origin diagnostics server authorization", () => {
   it("denies fixture widening before list/metric repository reads for non-Admin", async () => {
@@ -198,6 +299,7 @@ describe("annual return case command authorization", () => {
 });
 
 describe("case findings authorization", () => {
+  const inspectedVersionId = "71000000-0000-4000-8000-000000000001";
   const visibleCase = {
     id: caseId,
     companyTeamId: staffActor.teamId,
@@ -229,6 +331,12 @@ describe("case findings authorization", () => {
 
   // Findings quote a document's own text, so reaching them at all is a decision
   // about who may read the case.
+  it("passes the server-derived actor to the per-document findings scope", async () => {
+    const dependencies = dependenciesFor();
+    await listAnnualReturnCaseFindingsForActor(staffActor, { caseId }, dependencies);
+    expect(dependencies.analysis.listFindingsForCase).toHaveBeenCalledWith(caseId, staffActor);
+  });
+
   it("does not read findings for a case the actor cannot see", async () => {
     const dependencies = dependenciesFor({
       getCase: vi.fn(async () => ({
@@ -263,7 +371,12 @@ describe("case findings authorization", () => {
     await expect(
       resolveAnnualReturnCaseFindingForActor(
         clientActor,
-        { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: null },
+        {
+          caseId,
+          findingId: "50000000-0000-0000-0000-000000000001",
+          note: null,
+          expectedDocumentVersionId: inspectedVersionId,
+        },
         dependencies,
       ),
     ).rejects.toThrow(/staff access is required/i);
@@ -278,7 +391,12 @@ describe("case findings authorization", () => {
 
     await resolveAnnualReturnCaseFindingForActor(
       staffActor,
-      { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: "Checked by hand." },
+      {
+        caseId,
+        findingId: "50000000-0000-0000-0000-000000000001",
+        note: "Checked by hand.",
+        expectedDocumentVersionId: inspectedVersionId,
+      },
       dependencies,
     );
 
@@ -287,6 +405,8 @@ describe("case findings authorization", () => {
       caseId,
       resolvedByUserId: staffId,
       note: "Checked by hand.",
+      resolvedByAuthUserId: staffActor.authUserId,
+      expectedDocumentVersionId: inspectedVersionId,
     });
   });
 
@@ -298,7 +418,12 @@ describe("case findings authorization", () => {
     await expect(
       resolveAnnualReturnCaseFindingForActor(
         staffActor,
-        { caseId, findingId: "50000000-0000-0000-0000-000000000001", note: null },
+        {
+          caseId,
+          findingId: "50000000-0000-0000-0000-000000000001",
+          note: null,
+          expectedDocumentVersionId: inspectedVersionId,
+        },
         dependencies,
       ),
     ).resolves.toEqual({ applied: false });

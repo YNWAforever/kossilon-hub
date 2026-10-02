@@ -15,7 +15,12 @@ import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
 import type { AnnualReturnStatus } from "@/features/annual-return/types";
 import { useAuth } from "@/features/auth/auth-context-neon";
-import { loadDashboardData, type DashboardData } from "@/features/dashboard/dashboard-data";
+import {
+  loadDashboardData,
+  dashboardActorScopeKey,
+  dashboardDataForActor,
+  type DashboardData,
+} from "@/features/dashboard/dashboard-data";
 import { demoDashboardDependencies } from "@/features/dashboard/demo-dashboard-data";
 import type { DashboardCase } from "@/features/dashboard/types";
 import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
@@ -23,8 +28,12 @@ import type { StatusTone } from "@/lib/status";
 import { formatDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) =>
-    loadDashboardData(context.dataMode === "demo" ? demoDashboardDependencies : undefined),
+  loader: async ({ context }) => ({
+    ...(await loadDashboardData(
+      context.dataMode === "demo" ? demoDashboardDependencies : undefined,
+    )),
+    actorScopeKey: dashboardActorScopeKey(context.actor),
+  }),
   head: () => ({
     meta: [
       { title: "Dashboard — Kossilon CoSec OS" },
@@ -46,12 +55,12 @@ function DashboardPage() {
     annualReturnDataAvailable,
     annualReturnDataError,
     annualReturnDataErrorKind,
-  } = Route.useLoaderData() as DashboardData;
+  } = dashboardDataForActor(Route.useLoaderData() as DashboardData, Route.useRouteContext().actor);
   const m = {
     dueIn7: realMetrics.dueIn7,
     dueIn30: realMetrics.dueIn30,
-    overdue: realMetrics.overdue,
-    missingDocs: realMetrics.missingDocuments,
+    overdue: realMetrics.overdueCases,
+    missingDocs: realMetrics.missingDocumentCount,
     paymentPending: realMetrics.paymentPending,
     myCases: realMetrics.assignedToMe,
   };
@@ -123,9 +132,9 @@ function DashboardPage() {
           unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
-          label="Missing documents"
+          label="待核對文件（份）"
           value={m.missingDocs}
-          hint="Across all cases"
+          hint="目前授權範圍；包括已收但未覆核"
           icon={FileWarning}
           tone="yellow"
           unavailable={!annualReturnDataAvailable}

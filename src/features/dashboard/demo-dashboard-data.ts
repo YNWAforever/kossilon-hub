@@ -7,6 +7,7 @@ import type {
   AnnualReturnStatus as DemoStatus,
 } from "@/lib/annual-return-store";
 import { getAnnualReturnCases, getRiskLevel } from "@/lib/annual-return-store";
+import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 
 // Fabricating figures here is what demo mode is for. The rule this codebase
 // enforces is no fabrication in production, which is why the same translation
@@ -104,6 +105,12 @@ export function demoDashboardMetrics(
     demoCase.documents.filter((document) => document.required && !document.received).length;
 
   return {
+    businessDate: hongKongBusinessDate(today),
+    total: demoCases.length,
+    activeCases: open.length,
+    overdueCases: open.filter((demoCase) => daysUntil(demoCase.dueDate, today) < 0).length,
+    missingDocumentCount: open.reduce((total, demoCase) => total + missingRequired(demoCase), 0),
+    casesWithMissingDocuments: open.filter((demoCase) => missingRequired(demoCase) > 0).length,
     dueIn7: open.filter((demoCase) => {
       const days = daysUntil(demoCase.dueDate, today);
       return days >= 0 && days <= 7;
@@ -133,6 +140,6 @@ export function demoDashboardMetrics(
 // zero-arg function keeps this a drop-in replacement.
 export const demoDashboardDependencies = {
   getAnnualReturnDashboardMetrics: async () => demoDashboardMetrics(getAnnualReturnCases()),
-  listAnnualReturnCases: async (_input: { data: Record<string, never> }) =>
+  listAnnualReturnCases: async (_input: { data: { activeOnly?: boolean; limit?: number } }) =>
     getAnnualReturnCases().map((demoCase) => toDashboardCase(demoCase)),
 };

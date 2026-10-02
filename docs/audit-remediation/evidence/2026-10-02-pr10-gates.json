@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-02",
+  "source_commit": "e09820c38f57ea147271bb4a7f1663d9b6ef2de3",
+  "base": "b94a54d419e86ad336179f56e539bdac2b988980",
+  "tasks": ["T20", "T21"],
+  "findings": ["F18", "F19"],
+  "environment": "LOCAL ONLY Windows Node22.23.3/Bun1.3.14/Postgres17 localhost55441/kossilon_pr02_ci/installed Chrome DEMO",
+  "production_mutated": false,
+  "full_suite": {
+    "skipped": 0,
+    "files": 225,
+    "passed": 2171,
+    "failed": 0,
+    "seconds": 359.91
+  },
+  "focused_review": {
+    "skipped": 0,
+    "files": 10,
+    "passed": 62,
+    "failed": 0,
+    "seconds": 14.38
+  },
+  "scope_fixture": {
+    "skipped": 0,
+    "seconds": 6.62,
+    "passed": 43,
+    "failed": 0
+  },
+  "browser": {
+    "seconds": 25.8,
+    "passed": 6,
+    "failed": 0,
+    "genuine_auth": "blocked"
+  },
+  "review": {
+    "accepted_fixed": 5,
+    "rereview": false,
+    "fix_commit": "4a97955d298d63aefdf02cb79b58f413817f2770",
+    "important": 5,
+    "critical": 0,
+    "rounds": 1,
+    "minor": 0
+  },
+  "schema": {
+    "source_ids": 50,
+    "candidate_0082": "local only",
+    "production_last_observed_historic_ids": 66
+  },
+  "uat": {
+    "original": 50,
+    "blocked": 26,
+    "local_only_pass": 19,
+    "not_run": 5
+  },
+  "other_gates": [
+    "frozen Bun install PASS",
+    "local migrations/seed PASS",
+    "verify:firm dry-run PASS38reads0network0writes; live provisioning BLOCKED",
+    "build PASS",
+    "dev imports12PASS",
+    "compiled cloudflare:scheduled hook PASS",
+    "typecheck PASS on e09820c",
+    "lint PASS0errors1existingwarning on e09820c"
+  ],
+  "logs": [
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-install.log",
+      "sha256": "8fcca088ca089721b883599f03ed5be1a6c196d28021c9a7a6c742491bf4f62d"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-migrations.log",
+      "sha256": "a89fc18d505e76ab098be77f315fb2b9483c8d10aba2dc4bf1778e83ea64c6ef"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-seed.log",
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-review-red.log",
+      "sha256": "a0d66cabd7a9785a3a8560606a4191a7da7325666c466f95048d14253af37733"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-settings-concurrency-red.log",
+      "sha256": "b53d85dbaee42af00c02a16e538048f153591960d28e5c68474d9405b2d83aff"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-review-green-final.log",
+      "sha256": "96810310dd23e8d9931db140e24cacbb4acd47ce3ec0698f5cfdc9423326d27f"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-test-final.log",
+      "sha256": "e7e2e8863efa411c1b92e3040ac94ea671b9431b5590f02eb2578db6d232e1cd"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-scope-fixture-green.log",
+      "sha256": "233b13d4d5d9d415ea690c649924b8230e96d1d36d22fc5b0cd204c7a60d166c"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-test-green.log",
+      "sha256": "19f5714fcfd78a6145fc9683a37e538c839c86f33ca44bf212a54ff232bb6d34"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-offline-green.log",
+      "sha256": "6bdec509047b0340b77e8480ebf43926acfb9be8b12489b3d7241f868ba0ca05"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-build-green.log",
+      "sha256": "ed9801f5ae359aab76a4f8026135b03da047d9703217ff34ee9f0d48dfbb0bfd"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-dev-green.log",
+      "sha256": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-browser-green.log",
+      "sha256": "35a996406dc442514f27381db68d8b4496ce41603210fde5d5a8bf5ef27164ab"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-typecheck-green.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/pr10-lint-green.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    }
+  ]
+}

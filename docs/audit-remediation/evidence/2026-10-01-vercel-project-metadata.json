@@ -1,0 +1,111 @@
+{
+  "id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+  "name": "kossilon-hub",
+  "accountId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+  "nodeVersion": "24.x",
+  "framework": "tanstack-start",
+  "crons": {
+    "enabledAt": 1783194070489,
+    "disabledAt": null,
+    "updatedAt": 1790733359316,
+    "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "definitions": []
+  },
+  "envPresence": [
+    {
+      "key": "DATABASE_URL",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "DATABASE_URL",
+      "target": [
+        "preview"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "DATABASE_URL",
+      "target": [
+        "development"
+      ],
+      "type": "encrypted"
+    },
+    {
+      "key": "NEON_AUTH_URL",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "NEON_AUTH_COOKIE_SECRET",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_ACCOUNT_ID",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_ACCESS_KEY_ID",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_SECRET_ACCESS_KEY",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_BUCKET_NAME",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "CRON_SECRET",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive"
+    },
+    {
+      "key": "MAINTENANCE_SCHEDULER_OWNER",
+      "target": [
+        "production"
+      ],
+      "type": "plain"
+    }
+  ],
+  "deploymentTargetKeys": [
+    "production",
+    "preview"
+  ]
+}

@@ -10,9 +10,25 @@ import {
   getFirmRuntimeEnv,
   getResendConfig,
   getRuntimeReadiness,
+  getOperationsConfiguration,
 } from "./runtime-env";
 
 describe("firm runtime", () => {
+  it("reports independent binding presence without returning secrets or claiming a probe", () => {
+    const configuration = getOperationsConfiguration({
+      DOCUMENT_AI_URL: "https://approved.example/analysis",
+      DOCUMENT_AI_API_KEY: "private-test-key",
+      R2_ACCOUNT_ID: "test-account",
+      R2_ACCESS_KEY_ID: "test-key",
+      R2_SECRET_ACCESS_KEY: "private-storage-secret",
+      R2_BUCKET_NAME: "private-bucket",
+    });
+    expect(configuration["ai-provider"]).toBe(true);
+    expect(configuration["document-storage"]).toBe(true);
+    expect(configuration["whatsapp-transport"]).toBe(false);
+    expect(JSON.stringify(configuration)).not.toContain("private");
+    expect(JSON.stringify(configuration)).not.toContain("approved.example");
+  });
   const fakeR2Bucket = {
     delete: async () => undefined,
     get: async () => null,

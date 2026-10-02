@@ -3,11 +3,13 @@ import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { AnnualReturnEvidenceService } from "./evidence-service";
+import { withDocumentVersionConflict } from "@/features/documents/version-conflict";
 
 const reviewEvidenceSchema = z
   .object({
     caseId: z.string().uuid(),
     documentId: z.string().uuid(),
+    expectedDocumentVersionId: z.string().uuid(),
     checklistItemId: z.string().uuid().optional(),
     decision: z.enum(["verified", "rejected"]),
     reason: z.string().trim().min(1).max(500).optional(),
@@ -43,10 +45,12 @@ export async function reviewAnnualReturnEvidenceForActor(
 ) {
   const actorId = requireStaffUserId(actor);
   const data = reviewEvidenceSchema.parse(input);
-  return dependencies.service.reviewEvidence({
-    ...data,
-    actorId,
-  });
+  return withDocumentVersionConflict(() =>
+    dependencies.service.reviewEvidence({
+      ...data,
+      actorId,
+    }),
+  );
 }
 
 export async function acceptAnnualReturnFilingReceiptForActor(

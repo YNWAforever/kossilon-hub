@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
 import { listWorkQueue } from "@/features/work-items/server-fns";
 import type { PersistedWorkItem } from "@/features/work-items/repository";
 import { boardFiltersFromSearch, type AnnualReturnBoardSearch } from "../board-filters";
-import { boardMetrics } from "../board-metrics";
 import { annualReturnQueryKeys } from "../query-keys";
 import {
   getAnnualReturnBoardTotals,
@@ -26,7 +27,7 @@ import { daysBetween, hongKongBusinessDate } from "../workflow";
 import { CreateCaseDialog } from "./create-case-dialog";
 import { dataOriginLabel } from "@/features/clients/data-origin";
 
-const BOARD_PAGE_SIZE = 200;
+const BOARD_PAGE_SIZE = 50;
 
 // One template, defined once, with real floors on both flexible tracks. A track
 // of minmax(0, …) collapses to zero and lets its text draw over the neighbouring
@@ -46,83 +47,87 @@ export function ProductionAnnualReturnCommandCenter({
   search,
   onSearchChange,
   allowFixtureDiagnostics = false,
+  actorScope = null,
 }: {
   search: AnnualReturnBoardSearch;
   onSearchChange?: (next: AnnualReturnBoardSearch) => void;
   allowFixtureDiagnostics?: boolean;
+  actorScope?: AuthenticatedActor | null;
 }) {
   const today = hongKongBusinessDate();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [includeFixtures, setIncludeFixtures] = useState(false);
+  const [companySearch, setCompanySearch] = useState("");
+  const [ownerSearch, setOwnerSearch] = useState("");
 
   const filters = { ...boardFiltersFromSearch(search, BOARD_PAGE_SIZE), includeFixtures };
-  // Pages already loaded beyond the first. Reset whenever the filters change,
-  // because a cursor is only meaningful within the query that produced it.
-  const [extraPages, setExtraPages] = useState<AnnualReturnCase[][]>([]);
-  const [cursor, setCursor] = useState<string | undefined>();
-  const filtersKey = JSON.stringify(filters);
-  useEffect(() => {
-    setExtraPages([]);
-    setCursor(undefined);
-  }, [filtersKey]);
-
-  const casesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list(filters),
-    queryFn: () => listAnnualReturnCasePage({ data: filters }),
+  const { limit: pageLimit, ...bulkFilters } = filters;
+  // Query owns each filter/actor scope's pages. A late response can update its
+  // own cache but cannot append to the currently selected scope.
+  const casesQuery = useInfiniteQuery({
+    queryKey: annualReturnQueryKeys.list({ ...filters, actorScope }),
+    queryFn: ({ pageParam }) =>
+      listAnnualReturnCasePage({ data: pageParam ? { ...filters, cursor: pageParam } : filters }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
 
   // Counted in SQL across the actor's whole scope, not over the page on screen.
   const totalsQuery = useQuery({
-    queryKey: [...annualReturnQueryKeys.list(filters), "totals"],
+    queryKey: [...annualReturnQueryKeys.list({ ...filters, actorScope }), "totals"],
     queryFn: () => getAnnualReturnBoardTotals({ data: filters }),
     retry: false,
-  });
-
-  const nextPageMutation = useMutation({
-    mutationFn: (from: string) => listAnnualReturnCasePage({ data: { ...filters, cursor: from } }),
-    onSuccess: (page) => {
-      setExtraPages((current) => [...current, page.cases]);
-      setCursor(page.nextCursor ?? undefined);
-    },
   });
 
   // Only fetched once the dialog is actually open — these are cheap reads, but
   // there is no reason to fire them on every board load when most visits never
   // open the dialog at all.
   const eligibleCompaniesQuery = useQuery({
-    queryKey: ["annual-returns", "eligible-companies", { includeFixtures }],
-    queryFn: () => listCompaniesEligibleForCase({ data: { includeFixtures } }),
+    queryKey: [
+      "annual-returns",
+      "eligible-companies",
+      { includeFixtures, q: companySearch },
+      actorScope,
+    ],
+    queryFn: () =>
+      listCompaniesEligibleForCase({ data: { includeFixtures, q: companySearch, limit: 200 } }),
     enabled: isCreateOpen,
     retry: false,
   });
 
   const activeTemplatesQuery = useQuery({
-    queryKey: ["checklist-templates", "active-annual-return"],
+    queryKey: ["checklist-templates", "active-annual-return", actorScope],
     queryFn: () => listActiveAnnualReturnTemplates(),
     enabled: isCreateOpen,
     retry: false,
   });
 
   const assignmentOptionsQuery = useQuery({
-    queryKey: ["clients", "assignment-options"],
+    queryKey: ["clients", "assignment-options", actorScope],
     queryFn: () => listClientAssignmentOptions(),
     enabled: isCreateOpen,
     retry: false,
   });
 
   const workItemsQuery = useQuery({
-    queryKey: ["work-queue", "annual-return-board"],
+    queryKey: ["work-queue", "annual-return-board", actorScope],
     queryFn: () => listWorkQueue({ data: { view: "team" } }),
     retry: false,
   });
 
   const cases = useMemo(
-    () => [...(casesQuery.data?.cases ?? []), ...extraPages.flat()],
-    [casesQuery.data, extraPages],
+    () => [
+      ...new Map(
+        (casesQuery.data?.pages.flatMap((page) => page.cases) ?? []).map(
+          (item) => [item.id, item] as const,
+        ),
+      ).values(),
+    ],
+    [casesQuery.data],
   );
-  const nextCursor = cursor ?? casesQuery.data?.nextCursor ?? undefined;
+  const nextCursor = casesQuery.hasNextPage;
 
   const workItemsByCase = useMemo(() => {
     const map = new Map<string, PersistedWorkItem>();
@@ -143,8 +148,8 @@ export function ProductionAnnualReturnCommandCenter({
   // the page meant the one control that could have narrowed the query enough to
   // surface a late case was itself limited to the cases already on screen.
   const ownersQuery = useQuery({
-    queryKey: ["annual-return", "assignable-staff"],
-    queryFn: () => listAssignableStaff(),
+    queryKey: ["annual-return", "assignable-staff", actorScope, ownerSearch],
+    queryFn: () => listAssignableStaff({ data: { q: ownerSearch, limit: 200 } }),
     retry: false,
     staleTime: 60_000,
   });
@@ -154,10 +159,6 @@ export function ProductionAnnualReturnCommandCenter({
   );
 
   const totals = totalsQuery.data;
-  // highRisk stays derived from the loaded rows and is labelled as such:
-  // riskForCase computes it from checklist, payment and filing state, and
-  // reproducing that in SQL is exactly the drift the repository warns about.
-  const pageMetrics = boardMetrics(cases, today);
 
   function update(patch: Partial<AnnualReturnBoardSearch>) {
     onSearchChange?.({ ...search, ...patch });
@@ -195,10 +196,28 @@ export function ProductionAnnualReturnCommandCenter({
         }
       />
 
+      {actorScope?.active &&
+      (actorScope.role === "Admin" || actorScope.role === "Manager") &&
+      !includeFixtures ? (
+        <BulkSelectionToolbar
+          actorScope={JSON.stringify(actorScope)}
+          resource="annual_return_case"
+          filters={bulkFilters}
+          page={visibleCases.map((c) => ({
+            id: c.id,
+            label: `${c.companyName} · ${c.returnYear}`,
+          }))}
+          pageSize={pageLimit}
+          total={totalsQuery.isError ? null : (totals?.total ?? null)}
+        />
+      ) : null}
       <CreateCaseDialog
+        key={JSON.stringify(actorScope)}
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         companies={eligibleCompaniesQuery.data ?? []}
+        companySearch={companySearch}
+        onCompanySearch={setCompanySearch}
         templates={activeTemplatesQuery.data ?? []}
         owners={assignmentOptionsQuery.data?.owners ?? []}
         isLoading={
@@ -219,7 +238,7 @@ export function ProductionAnnualReturnCommandCenter({
       {/* A fixed string, never query.error.message: the client rehydrates and
           rethrows the verbatim server error, which is a postgres ECONNREFUSED
           with host and port, or the DATABASE_URL message. */}
-      {casesQuery.isError ? (
+      {casesQuery.isError && !casesQuery.data ? (
         <p role="alert" className="text-sm text-destructive">
           Annual return data is unavailable. Try again shortly.
         </p>
@@ -240,15 +259,25 @@ export function ProductionAnnualReturnCommandCenter({
         </p>
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <Metric label="Due in 7 days" value={totals?.dueIn7 ?? 0} />
-        <Metric label="Due in 30 days" value={totals?.dueIn30 ?? 0} />
-        <Metric label="Overdue" value={totals?.overdue ?? 0} />
-        <Metric label="High risk (loaded)" value={pageMetrics.highRisk} />
-        <Metric label="Missing documents" value={totals?.missingDocuments ?? 0} />
-        <Metric label="Payment pending" value={totals?.paymentPending ?? 0} />
-        <Metric label="Cases in scope" value={totals?.total ?? 0} />
+      {totalsQuery.isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          未取得當前範圍統計。請重新載入；已讀取案件仍可查閱。
+        </p>
+      ) : null}
+      <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
+        <Metric label="Due in 7 days" value={totals?.dueIn7 ?? null} />
+        <Metric label="Due in 30 days" value={totals?.dueIn30 ?? null} />
+        <Metric label="逾期未完成（案）" value={totals?.overdueCases ?? null} />
+        <Metric label="High risk (scope)" value={totals?.highRisk ?? null} />
+        <Metric label="待核對文件（份）" value={totals?.missingDocumentCount ?? null} />
+        <Metric label="有待核對文件（案）" value={totals?.casesWithMissingDocuments ?? null} />
+        <Metric label="Payment pending" value={totals?.paymentPending ?? null} />
+        <Metric label="Cases in scope" value={totals?.total ?? null} />
       </div>
+      <p className="text-xs text-muted-foreground">
+        統計覆蓋目前完整授權及篩選範圍；未完成指標排除
+        Filed／Completed。待核對包括已收到但未覆核文件，追件原因以案件 readiness 為準。
+      </p>
       <p className="text-sm text-muted-foreground">
         {includeFixtures
           ? "診斷範圍：包含測試資料；測試與歷史資料不會外發。"
@@ -274,6 +303,16 @@ export function ProductionAnnualReturnCommandCenter({
             value={search.q ?? ""}
             onChange={(event) => update({ q: event.target.value })}
           />
+          <label>
+            搜尋負責同事
+            <input
+              aria-label="搜尋負責同事"
+              className="min-h-11 rounded border px-3"
+              value={ownerSearch}
+              onChange={(event) => setOwnerSearch(event.target.value)}
+            />
+            <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權同事。</span>
+          </label>
           <select
             aria-label="Filter by owner"
             className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -281,6 +320,9 @@ export function ProductionAnnualReturnCommandCenter({
             onChange={(event) => update({ ownerId: event.target.value || undefined })}
           >
             <option value="">All owners</option>
+            {search.ownerId && !owners.some((o) => o.id === search.ownerId) ? (
+              <option value={search.ownerId}>已選負責人（搜尋其他同事不會改變篩選）</option>
+            ) : null}
             {owners.map((owner) => (
               <option key={owner.id} value={owner.id}>
                 {owner.name}
@@ -354,13 +396,22 @@ export function ProductionAnnualReturnCommandCenter({
             half and so renders "unavailable" and "nothing to review" together. */}
         {nextCursor ? (
           <div className="border-t p-4">
+            {casesQuery.isFetchNextPageError ? (
+              <p role="alert" className="mb-2 text-sm text-destructive">
+                未能載入下一頁，請重試。
+              </p>
+            ) : null}
             <button
               className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              disabled={nextPageMutation.isPending}
-              onClick={() => nextPageMutation.mutate(nextCursor)}
+              disabled={casesQuery.isFetchingNextPage}
+              onClick={() => void casesQuery.fetchNextPage({ cancelRefetch: false })}
               type="button"
             >
-              {nextPageMutation.isPending ? "載入中…" : "載入更多"}
+              {casesQuery.isFetchingNextPage
+                ? "載入中…"
+                : casesQuery.isFetchNextPageError
+                  ? "重試下一頁"
+                  : "載入更多"}
             </button>
           </div>
         ) : null}
@@ -446,11 +497,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="rounded-md border bg-background px-3 py-3">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-2 text-lg font-semibold">{value}</p>
+      <p className="mt-2 text-lg font-semibold">{value ?? "—"}</p>
     </div>
   );
 }
