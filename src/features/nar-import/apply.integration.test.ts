@@ -1,7 +1,9 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { afterAll, describe, expect, it } from "vitest";
+import { getCurrentTest } from "@vitest/runner";
+import { afterAll, describe, expect, it, onTestFinished } from "vitest";
 import { createSqlClient } from "@/server/db/client";
+import { guardSqlTestLifetime } from "@/test/sql-test-lifetime";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { createNarImportRepository, type StageBatchInput } from "./repository";
 import {
@@ -12,12 +14,59 @@ import {
 } from "./apply";
 import { createNotificationOutboxRepository } from "@/features/notifications/outbox";
 const url = process.env.TEST_DATABASE_URL;
-const sql = url ? createSqlClient(url, { max: 4 }) : null;
+const rawSql = url ? createSqlClient(url, { max: 4 }) : null;
+let activeSignal: AbortSignal | undefined;
+const sql = rawSql ? guardSqlTestLifetime(rawSql, () => activeSignal) : null;
 afterAll(async () => {
-  await sql?.end();
+  await rawSql?.end();
 });
+
+// Executed by fixture-timeout.integration.test.ts in a real failed child process.
+// It must remain failed; the parent verifies cleanup, not an application PASS.
+if (process.env.AUDIT_NAR_TIMEOUT_PROBE === "1" && url) {
+  it(
+    "controlled fixture timeout B07",
+    async () =>
+      fixture(1, async (f) => {
+        const input = f.inputs[f.rowIds[0]];
+        console.info(
+          "B07_TIMEOUT_FIXTURE",
+          JSON.stringify({
+            companyId: f.companies[0],
+            batchId: f.batchId,
+            actorId: f.actor.userId,
+            ownerId: input.ownerId,
+            templateId: input.templateId,
+          }),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await sql!.unsafe("select 1");
+      }),
+    1000,
+  );
+}
 const team = "10000000-0000-0000-0000-000000000001";
-async function fixture(
+async function fixture(n: number, run: Parameters<typeof fixtureCore>[1]) {
+  const context = getCurrentTest()?.context;
+  if (!context) throw new Error("The NAR fixture requires a running Vitest test.");
+  if (activeSignal) throw new Error("The shared NAR fixture must run sequentially.");
+  // Capture now: runner context can disappear while a timed-out body unwinds.
+  activeSignal = context.signal;
+  const pending = fixtureCore(n, run).finally(() => {
+    activeSignal = undefined;
+  });
+  onTestFinished(async () => {
+    try {
+      // Timeout rejects Vitest's race without cancelling/awaiting the original body.
+      await pending;
+    } catch (error) {
+      // Keep the runner's timeout failure; surface independent teardown failures.
+      if (!context.signal.aborted || error !== context.signal.reason) throw error;
+    }
+  });
+  return pending;
+}
+async function fixtureCore(
   n: number,
   run: (f: {
     actor: AuthenticatedActor;
@@ -124,7 +173,8 @@ async function fixture(
     );
     await run({ actor, companies, batchId, rowIds: rows.map((r) => r.id), inputs, stage });
   } finally {
-    await sql!.begin(async (tx) => {
+    // Teardown deliberately bypasses the expired test-body guard.
+    await rawSql!.begin(async (tx) => {
       const cases =
         await tx`select id from annual_return_cases where company_id=any(${companies}::uuid[])`;
       const ids = cases.map((r) => r.id);
