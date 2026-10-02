@@ -30,6 +30,8 @@ describe.skipIf(!url)("schema readiness and additive repair against populated Po
       await sql.begin(async (tx) => {
         await tx.unsafe(`create schema ${schema}; set local search_path to ${schema}, pg_catalog`);
         await tx.unsafe(`create table companies (id uuid primary key, data_origin text not null);
+          create table annual_return_cases (id uuid primary key, company_id uuid, import_origin text);
+          create table work_items (id uuid primary key, annual_return_case_id uuid);
           create table notification_outbox (like public.notification_outbox including all);
           alter table notification_outbox add foreign key (company_id) references companies(id);
           alter table notification_outbox drop column dispatch_started_attempt cascade;

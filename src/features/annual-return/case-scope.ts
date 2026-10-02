@@ -46,7 +46,9 @@ export function caseScopeSql(sql: Query, filters: CaseFilters, today: string) {
     and (${filters.paymentStatus ?? null}::text is null or exists(select 1 from payments p where p.case_id=arc.id and p.status=${filters.paymentStatus ?? null}))
     and (${filters.overdueOnly !== true} or (${activeCaseSql(sql)} and arc.filing_due_date<${today}::date))
     and (${typeof filters.missingDocuments !== "boolean"} or ${filters.missingDocuments === true}=exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ${outstandingChecklistSql(sql)}))
-    and (${query}::text is null or c.company_name ilike ${query} escape '\\' or c.cr_number ilike ${query} escape '\\')
+    and (${query}::text is null or c.company_name ilike ${query} escape '\\' or c.cr_number ilike ${query} escape '\\'
+      or arc.return_year::text ilike ${query} escape '\\'
+      or exists(select 1 from users search_owner where search_owner.id=arc.owner_id and search_owner.name ilike ${query} escape '\\'))
     and (${filters.risk ?? null}::text is null or ${caseRiskSql(sql, today)}=${filters.risk ?? null})`;
 }
 

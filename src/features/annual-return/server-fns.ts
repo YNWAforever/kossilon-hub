@@ -249,13 +249,17 @@ function boardActorFrom(actor: AuthenticatedActor) {
 
 export async function listCompaniesEligibleForCaseForActor(
   actor: AuthenticatedActor,
-  input: { includeFixtures?: boolean },
+  input: { includeFixtures?: boolean; q?: string; limit?: number },
   dependencies: { repository: Pick<AnnualReturnRepository, "listCompaniesEligibleForCase"> },
 ): Promise<EligibleCompanyForCase[]> {
   requireStaffUserId(actor);
-  const companies = await dependencies.repository.listCompaniesEligibleForCase(
-    originFilterForActor(actor, input.includeFixtures),
-  );
+  if (actor.role !== "Admin" && !actor.teamId)
+    throw new Error("Forbidden: staff actor has no assigned team.");
+  const companies = await dependencies.repository.listCompaniesEligibleForCase({
+    ...input,
+    ...originFilterForActor(actor, input.includeFixtures),
+    ...(actor.role !== "Admin" ? { teamId: actor.teamId! } : {}),
+  });
 
   // Admin unrestricted; Manager/Staff only ever see companies they could
   // actually submit for — matches assertAnnualReturnCaseCreatable's policy
@@ -371,14 +375,19 @@ export async function listAnnualReturnCaseFindingsForActor(
   input: { caseId: string },
   dependencies: {
     repository: Pick<AnnualReturnRepository, "getCase">;
-    analysis: { listFindingsForCase(caseId: string): Promise<DocumentFindingsView[]> };
+    analysis: {
+      listFindingsForCase(
+        caseId: string,
+        actor: AuthenticatedActor,
+      ): Promise<DocumentFindingsView[]>;
+    };
   },
 ) {
   const case_ = await dependencies.repository.getCase(input.caseId);
   if (!case_) throw new Error("Annual return case not found.");
   assertAnnualReturnCaseVisible(boardActorFrom(actor), case_);
 
-  return dependencies.analysis.listFindingsForCase(input.caseId);
+  return dependencies.analysis.listFindingsForCase(input.caseId, actor);
 }
 
 /**
@@ -393,7 +402,12 @@ export async function listAnnualReturnCaseFindingsForActor(
  */
 export async function resolveAnnualReturnCaseFindingForActor(
   actor: AuthenticatedActor,
-  input: { caseId: string; findingId: string; note: string | null },
+  input: {
+    caseId: string;
+    findingId: string;
+    note: string | null;
+    expectedDocumentVersionId: string;
+  },
   dependencies: {
     repository: Pick<AnnualReturnRepository, "getCase">;
     analysis: {
@@ -401,6 +415,8 @@ export async function resolveAnnualReturnCaseFindingForActor(
         findingId: string;
         caseId: string;
         resolvedByUserId: string;
+        resolvedByAuthUserId: string;
+        expectedDocumentVersionId: string;
         note: string | null;
       }): Promise<boolean>;
     };
@@ -420,6 +436,8 @@ export async function resolveAnnualReturnCaseFindingForActor(
     findingId: input.findingId,
     caseId: input.caseId,
     resolvedByUserId,
+    resolvedByAuthUserId: actor.authUserId,
+    expectedDocumentVersionId: input.expectedDocumentVersionId,
     note: input.note,
   });
 
@@ -479,13 +497,13 @@ export async function listAnnualReturnCaseHistoryForActor(
  */
 export async function listAssignableStaffForActor(
   actor: AuthenticatedActor,
-  _input: Record<string, never>,
+  input: { q?: string; limit?: number },
   dependencies: { repository: Pick<AnnualReturnRepository, "listAssignableStaff"> },
 ): Promise<AssignableStaffMember[]> {
   requireStaffUserId(actor);
-  if (actor.role === "Admin") return dependencies.repository.listAssignableStaff({});
+  if (actor.role === "Admin") return dependencies.repository.listAssignableStaff(input);
   if (!actor.teamId) throw new Error("Forbidden: staff actor has no assigned team.");
-  return dependencies.repository.listAssignableStaff({ teamId: actor.teamId });
+  return dependencies.repository.listAssignableStaff({ ...input, teamId: actor.teamId });
 }
 
 export async function assignAnnualReturnCaseOwnerForActor(
@@ -653,6 +671,7 @@ export async function queueAnnualReturnWhatsAppReminderMessageForActor(
     case_: caseItem,
     actorId,
     recipientName: data.recipientName,
+    actorAuthUserId: actor.authUserId,
     recipientPhone: data.recipientPhone,
     today: hongKongBusinessDate(),
   });
@@ -816,6 +835,55 @@ export const getAnnualReturnWorkViews = createServerFn({ method: "GET" }).handle
   ),
 );
 
+const workPageSchema = z.object({
+  view: z.enum([
+    "chaseToday",
+    "newlyReceived",
+    "awaitingMyReview",
+    "readyToFile",
+    "returnsAndExceptions",
+  ]),
+  q: z.string().max(200).optional(),
+  cursor: z.string().max(2048).optional(),
+  sort: z.enum(["deadline", "company"]).optional(),
+  limit: z.number().int().min(1).max(200).optional(),
+});
+export async function getAnnualReturnWorkPageForActor(
+  actor: AuthenticatedActor,
+  input: z.infer<typeof workPageSchema>,
+  dependencies: { repository: Pick<AnnualReturnRepository, "listWorkView"> },
+) {
+  const data = workPageSchema.parse(input);
+  requireStaffUserId(actor);
+  const scope = caseFiltersForActor(boardActorFrom(actor));
+  return dependencies.repository.listWorkView({
+    view: data.view,
+    scope: { q: data.q, ...scope },
+    viewerUserId: actor.userId,
+    sort: data.sort,
+    cursor: data.cursor,
+    limit: data.limit,
+  });
+}
+export const getAnnualReturnWorkPage = createServerFn({ method: "GET" })
+  .validator(workPageSchema)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      getAnnualReturnWorkPageForActor(actor, data, { repository }),
+    ),
+  );
+export const getAnnualReturnWorkMetrics = createServerFn({ method: "GET" })
+  .validator(z.object({ q: z.string().max(200).optional() }).default({}))
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) => {
+      requireStaffUserId(actor);
+      return repository.workViewMetrics({
+        scope: { q: data.q, ...caseFiltersForActor(boardActorFrom(actor)) },
+        viewerUserId: actor.userId,
+      });
+    }),
+  );
+
 export const listAnnualReturnCasePage = createServerFn({ method: "GET" })
   .validator(listAnnualReturnCasesSchema)
   .handler(({ data }) =>
@@ -833,18 +901,37 @@ export const getAnnualReturnBoardTotals = createServerFn({ method: "GET" })
   );
 
 export const listCompaniesEligibleForCase = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ includeFixtures: z.boolean().optional() }).default({}))
+  .validator(
+    z
+      .object({
+        includeFixtures: z.boolean().optional(),
+        q: z.string().max(200).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+      })
+      .strict()
+      .default({}),
+  )
   .handler(({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>
       listCompaniesEligibleForCaseForActor(actor, data, { repository }),
     ),
   );
 
-export const listAssignableStaff = createServerFn({ method: "GET" }).handler(() =>
-  withAnnualReturnActorRepository((repository, actor) =>
-    listAssignableStaffForActor(actor, {}, { repository }),
-  ),
-);
+export const listAssignableStaff = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({
+        q: z.string().max(200).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+      })
+      .strict()
+      .default({}),
+  )
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository((repository, actor) =>
+      listAssignableStaffForActor(actor, data, { repository }),
+    ),
+  );
 
 export const createAnnualReturnCase = createServerFn({ method: "POST" })
   .validator(createAnnualReturnCaseSchema)
@@ -918,12 +1005,15 @@ export const listAnnualReturnCaseFindings = createServerFn({ method: "GET" })
 
 export const resolveAnnualReturnCaseFinding = createServerFn({ method: "POST" })
   .validator(
-    z.object({
-      caseId: z.string().uuid(),
-      findingId: z.string().uuid(),
-      // Bounded: this is a person's note, not a place to paste a document.
-      note: z.string().trim().min(1).max(1000).nullable().default(null),
-    }),
+    z
+      .object({
+        caseId: z.string().uuid(),
+        findingId: z.string().uuid(),
+        expectedDocumentVersionId: z.string().uuid(),
+        // Bounded: this is a person's note, not a place to paste a document.
+        note: z.string().trim().min(1).max(1000).nullable().default(null),
+      })
+      .strict(),
   )
   .handler(({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>

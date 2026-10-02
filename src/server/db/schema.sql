@@ -1469,6 +1469,7 @@ create index if not exists document_versions_verified_checksum_idx
 -- this makes that structurally impossible rather than a rule to remember.
 create table if not exists document_version_texts (
   document_version_id uuid primary key references document_versions(id) on delete cascade,
+  evidence jsonb check (evidence is null or jsonb_typeof(evidence) = 'object'),
   extracted_text text,
   page_count integer check (page_count is null or page_count >= 0),
   -- 'none' is a real outcome: a scanned image with no text layer and no OCR
@@ -1484,6 +1485,7 @@ create table if not exists document_version_texts (
 -- from 0028_document_analysis_jobs_and_findings.sql
 create table if not exists document_analysis_jobs (
   id uuid primary key default gen_random_uuid(),
+  provenance jsonb check (provenance is null or jsonb_typeof(provenance) = 'object'),
   document_version_id uuid not null references document_versions(id) on delete cascade,
   reason text not null default 'initial' check (reason in ('initial', 'reanalysis', 'retry')),
   idempotency_key text not null unique,
@@ -1520,6 +1522,7 @@ create index if not exists document_analysis_jobs_version_idx
 -- and that must be true of any writer, not only of the worker.
 create table if not exists document_findings (
   id uuid primary key default gen_random_uuid(),
+  evidence jsonb check (evidence is null or jsonb_typeof(evidence) = 'object'),
 
   -- Nullable on purpose, and this is the point of the citation contract: a
   -- finding about an absence has nothing to point at. Fabricating a version or
@@ -1643,6 +1646,12 @@ create index if not exists whatsapp_message_media_message_idx
 create index if not exists whatsapp_message_media_unattached_idx
   on whatsapp_message_media (created_at)
   where document_id is null;
+
+-- from 0078_whatsapp_manual_intake.sql (historical media stays legacy)
+alter table whatsapp_messages add column if not exists mapping_revision integer not null default 0 check (mapping_revision >= 0);
+alter table whatsapp_message_media add column if not exists provider_media_kind text not null default 'legacy-wa-media' check (provider_media_kind in ('file','legacy-wa-media'));
+alter table whatsapp_message_media add column if not exists intake_intent_id uuid references document_upload_intents(id) on delete restrict;
+create index if not exists whatsapp_unmatched_receipt_idx on whatsapp_webhook_events ((coalesce(payload->'data'->>'messageId',payload->>'messageId')),received_at) where provider='woztell' and signature_valid and processing_status='ignored';
 
 -- from 0032_package_handoffs_and_returns.sql
 create table if not exists package_handoffs (
@@ -1879,19 +1888,19 @@ create index if not exists staff_access_events_target_idx on staff_access_events
 -- Separate from notification outbox; no external side effects or historical rewrites.
 create table bulk_selection_snapshots (
  id uuid primary key default gen_random_uuid(), actor_user_id uuid not null references users(id),
- auth_user_id text not null, resource text not null check(resource in ('annual_return_case','work_item')),
+ auth_user_id text not null, resource text not null check(resource in ('annual_return_case','work_item','client_company','document')),
  filters jsonb not null, items jsonb not null check(jsonb_typeof(items)='array'), snapshot_hash text not null,
  created_at timestamptz not null default now(), expires_at timestamptz not null default(now()+interval '30 minutes')
 );
 create table bulk_operation_previews (
  id uuid primary key default gen_random_uuid(), actor_user_id uuid not null references users(id),auth_user_id text not null,
- resource text not null check(resource in ('annual_return_case','work_item')), assignment jsonb not null,items jsonb not null check(jsonb_typeof(items)='array'),
+ resource text not null check(resource in ('annual_return_case','work_item','client_company','document')), assignment jsonb not null,items jsonb not null check(jsonb_typeof(items)='array'),
  payload_hash text not null,created_at timestamptz not null default now(),expires_at timestamptz not null default(now()+interval '30 minutes')
 );
 create table bulk_operation_jobs (
  id uuid primary key default gen_random_uuid(),preview_id uuid not null references bulk_operation_previews(id),
  actor_user_id uuid not null references users(id),auth_user_id text not null,idempotency_key text not null,payload_hash text not null,
- resource text not null check(resource in ('annual_return_case','work_item')),assignment jsonb not null,total integer not null check(total>=0),
+ resource text not null check(resource in ('annual_return_case','work_item','client_company','document')),assignment jsonb not null,total integer not null check(total>=0),
  state text not null default 'queued' check(state in ('queued','running','completed','partial','cancelled')),
  lease_token uuid,lease_until timestamptz,cancel_requested boolean not null default false,
  created_at timestamptz not null default now(),updated_at timestamptz not null default now(),
@@ -1911,3 +1920,144 @@ create index bulk_operation_items_pending_idx on bulk_operation_job_items(job_id
 create function reject_bulk_snapshot_update() returns trigger language plpgsql as $$begin raise exception 'Bulk snapshots and previews are immutable'; end$$;
 create trigger bulk_selection_snapshots_immutable before update on bulk_selection_snapshots for each row execute function reject_bulk_snapshot_update();
 create trigger bulk_operation_previews_immutable before update on bulk_operation_previews for each row execute function reject_bulk_snapshot_update();
+
+-- Reviewed NAR apply is additive; legacy chosen years remain unknown, never inferred.
+alter table nar_import_batches add column return_year integer check(return_year between 1900 and 2100);
+alter table annual_return_cases add column import_origin text check(import_origin in ('client','historical'));
+create index annual_return_cases_historical_import_idx on annual_return_cases(id) where import_origin='historical';
+create table nar_mapping_events (
+ id uuid primary key default gen_random_uuid(),source_system text not null,external_client_id text not null,
+ before_company_id uuid references companies(id),after_company_id uuid not null references companies(id),
+ actor_user_id uuid not null references users(id),created_at timestamptz not null default now()
+);
+create table nar_apply_previews (
+ id uuid primary key default gen_random_uuid(),batch_id uuid not null references nar_import_batches(id),
+ actor_user_id uuid not null references users(id),auth_user_id text not null,items jsonb not null check(jsonb_typeof(items)='array'),
+ payload_hash text not null,created_at timestamptz not null default now(),expires_at timestamptz not null default(now()+interval '30 minutes')
+);
+create trigger nar_apply_previews_immutable before update on nar_apply_previews for each row execute function reject_bulk_snapshot_update();
+create table nar_apply_jobs (
+ id uuid primary key default gen_random_uuid(),preview_id uuid not null references nar_apply_previews(id),batch_id uuid not null references nar_import_batches(id),
+ actor_user_id uuid not null references users(id),auth_user_id text not null,idempotency_key text not null,payload_hash text not null,
+ state text not null default 'queued' check(state in ('queued','running','completed','partial','cancelled')),
+ created_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(actor_user_id,idempotency_key)
+);
+create table nar_apply_job_items (
+ job_id uuid not null references nar_apply_jobs(id),row_id uuid not null references nar_import_rows(id),ordinal integer not null,
+ snapshot jsonb not null,state text not null default 'pending' check(state in ('pending','applied','conflict','failed','cancelled')),
+ reason text,attempts integer not null default 0,case_id uuid references annual_return_cases(id),finished_at timestamptz,
+ primary key(job_id,row_id),unique(job_id,ordinal)
+);
+create table nar_apply_journal (
+ id uuid primary key default gen_random_uuid(),job_id uuid not null references nar_apply_jobs(id),batch_id uuid not null references nar_import_batches(id),
+ row_id uuid not null references nar_import_rows(id),case_id uuid not null references annual_return_cases(id),
+ actor_user_id uuid not null references users(id),before_value jsonb,after_value jsonb not null,after_revision text not null,
+ command text not null check(command in ('create','update','unchanged','already_applied')),created_at timestamptz not null default now(),unique(job_id,row_id)
+);
+create index nar_apply_jobs_owner_idx on nar_apply_jobs(actor_user_id,created_at desc,id);
+create index nar_apply_items_pending_idx on nar_apply_job_items(job_id,ordinal) where state='pending';
+
+-- Explicit legacy-year review; no filename inference or backfill.
+create table nar_batch_review_events (
+ id uuid primary key default gen_random_uuid(),batch_id uuid not null references nar_import_batches(id),
+ actor_user_id uuid not null references users(id),before_year integer,after_year integer not null check(after_year between 1900 and 2100),
+ expected_version text not null,reason text not null check(length(btrim(reason))>=10),created_at timestamptz not null default now()
+);
+create index nar_batch_review_events_batch_idx on nar_batch_review_events(batch_id,created_at,id);
+
+-- Add exact scan/job/review identities without certifying historical verdicts.
+-- NULL remains unknown. No scan, review, migration history or receipt backfill.
+alter table document_upload_intents
+  add column if not exists scan_document_version_id uuid
+    references document_versions(id) on delete set null;
+alter table document_scan_jobs
+  add column if not exists document_version_id uuid
+    references document_versions(id) on delete set null;
+alter table documents
+  add column if not exists reviewed_document_version_id uuid
+    references document_versions(id) on delete set null;
+create index if not exists document_scan_jobs_version_idx
+  on document_scan_jobs(document_version_id) where document_version_id is not null;
+
+-- 0079: preserve existing assignment payloads and add daily maintenance action identity.
+alter table bulk_operation_previews add column action_key text not null default 'assignment' check(action_key in ('assignment','client_maintenance','document_assignment','document_return_draft','document_list_export','follow_up_draft','payment_list_export'));
+alter table bulk_operation_jobs add column action_key text not null default 'assignment' check(action_key in ('assignment','client_maintenance','document_assignment','document_return_draft','document_list_export','follow_up_draft','payment_list_export'));
+
+-- Forward-only facts. Legacy NULL is unknown; never invent a receipt or scan.
+alter table package_handoffs
+  add column delivery_fact text check(delivery_fact in ('prepared','exported','manual_recorded','provider_accepted','unknown')),
+  add column exported_at timestamptz,
+  add column exported_by uuid references users(id),
+  add column manual_recorded_at timestamptz,
+  add column manual_recorded_by uuid references users(id),
+  add column manual_occurred_at timestamptz,
+  add column manual_reference text,
+  add column manual_note text,
+  add column manual_evidence_document_id uuid references documents(id),
+  add column manual_evidence_version_id uuid references document_versions(id),
+  add constraint handoff_export_actor_agrees check((exported_at is null)=(exported_by is null)),
+  add constraint handoff_manual_actor_agrees check((manual_recorded_at is null)=(manual_recorded_by is null)),
+  add constraint handoff_manual_evidence_agrees check((manual_evidence_document_id is null)=(manual_evidence_version_id is null)),
+  add constraint handoff_manual_fact_agrees check(delivery_fact is distinct from 'manual_recorded' or (
+    manual_recorded_by is not null and manual_occurred_at is not null
+    and length(btrim(manual_reference))>0 and length(btrim(manual_note))>0
+    and destination_reference is null));
+
+-- Duplicate history is a deployment blocker: unique creation refuses it,
+-- rather than deleting or rewriting any existing approval.
+create unique index package_handoffs_manifest_uidx on package_handoffs(case_id,manifest_sha256);
+create or replace function preserve_handoff_manifest() returns trigger language plpgsql as $$
+begin
+  if row(new.case_id,new.manifest_sha256,new.manifest_payload,new.approved_by)
+    is distinct from row(old.case_id,old.manifest_sha256,old.manifest_payload,old.approved_by) then
+    raise exception 'Approved handoff manifest is immutable';
+  end if;
+  return new;
+end $$;
+create trigger package_handoffs_manifest_immutable before update on package_handoffs
+  for each row execute function preserve_handoff_manifest();
+
+alter table handoff_returns
+  add column source text check(source in ('manual','provider')),
+  add column recorded_by uuid references users(id),
+  add column external_reference text,
+  add column returned_manifest_sha256 text check(returned_manifest_sha256 ~ '^[0-9a-f]{64}$'),
+  add column reported_outcome text check(reported_outcome in ('accepted','rejected','partial','unmatched')),
+  add column document_version_id uuid references document_versions(id),
+  add column idempotency_key uuid,
+  add column payload_sha256 text check(payload_sha256 ~ '^[0-9a-f]{64}$'),
+  add column reconciliation_note text;
+create unique index handoff_returns_idempotency_uidx on handoff_returns(handoff_id,idempotency_key) where idempotency_key is not null;
+
+-- Idempotency belongs to the active attempt, not every immutable historical approval.
+-- Unknown results (including legacy NULL) remain outstanding and cannot be retried.
+drop index package_handoffs_manifest_uidx;
+create unique index package_handoffs_manifest_uidx on package_handoffs(case_id,manifest_sha256)
+  where status in ('prepared','transmitted','acknowledged') or delivery_fact='unknown'
+    or (delivery_fact is null and status not in ('cancelled','returned'));
+drop index package_handoffs_live_uidx;
+create unique index package_handoffs_live_uidx on package_handoffs(case_id)
+  where status in ('prepared','transmitted','acknowledged') or delivery_fact='unknown'
+    or (delivery_fact is null and status not in ('cancelled','returned'));
+
+-- Revision 1 identifies the currently observed template, not invented old history.
+alter table checklist_templates add column revision integer not null default 1 check(revision>0);
+alter table annual_return_cases
+  add column checklist_template_source_id uuid,
+  add column checklist_template_revision integer check(checklist_template_revision>0),
+  add column checklist_template_snapshot jsonb,
+  add constraint case_template_snapshot_agrees check(
+    (checklist_template_source_id is null and checklist_template_revision is null and checklist_template_snapshot is null)
+    or (checklist_template_source_id is not null and checklist_template_revision is not null and checklist_template_snapshot is not null));
+create index annual_return_case_template_source_idx on annual_return_cases(checklist_template_source_id,id)
+  where checklist_template_source_id is not null;
+create function preserve_case_template_snapshot() returns trigger language plpgsql as $$
+begin
+  if row(new.checklist_template_source_id,new.checklist_template_revision,new.checklist_template_snapshot)
+    is distinct from row(old.checklist_template_source_id,old.checklist_template_revision,old.checklist_template_snapshot) then
+    raise exception 'Case creation template snapshot is immutable';
+  end if;
+  return new;
+end $$;
+create trigger annual_return_case_template_immutable before update on annual_return_cases
+  for each row execute function preserve_case_template_snapshot();

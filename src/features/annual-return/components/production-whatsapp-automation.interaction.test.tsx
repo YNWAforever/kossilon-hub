@@ -21,6 +21,7 @@ vi.mock("@/features/whatsapp/server-fns", () => whatsAppServerFns);
 const caseId = "11111111-1111-4111-8111-111111111111";
 const drafts: ProductionFollowUpDraft[] = [
   {
+    version: "owned-annual-preview",
     id: caseId,
     entityId: caseId,
     source: "annual-return",
@@ -35,6 +36,7 @@ const drafts: ProductionFollowUpDraft[] = [
     status: "draft",
   },
   {
+    version: "owned-document-preview",
     id: "33333333-3333-4333-8333-333333333333",
     entityId: "33333333-3333-4333-8333-333333333333",
     source: "document-review",
@@ -49,6 +51,7 @@ const drafts: ProductionFollowUpDraft[] = [
     status: "draft",
   },
   {
+    version: "owned-payment-preview",
     id: "44444444-4444-4444-8444-444444444444",
     entityId: "44444444-4444-4444-8444-444444444444",
     source: "payment-proof-review",
@@ -98,16 +101,28 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ProductionWhatsAppAutomation", () => {
+  it("shows the full recipient and message before approval queues anything", async () => {
+    serverFns.listProductionFollowUpDrafts.mockResolvedValue([drafts[0]]);
+    renderAutomation();
+    fireEvent.click(await screen.findByRole("button", { name: "Preview and approve" }));
+    const preview = await screen.findByRole("dialog");
+    expect(preview.textContent).toContain("+85291234567");
+    expect(preview.textContent).toContain(drafts[0].messagePreview);
+    expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Approve and queue" }));
+    await waitFor(() => expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1));
+  });
   it("renders the explicit demo notice and invokes durable actions for all three sources", async () => {
     const invalidateSpy = renderAutomation();
     expect(await screen.findByText("Demo simulation")).toBeTruthy();
     expect(screen.getByText("No external WhatsApp or email message is sent.")).toBeTruthy();
 
-    const buttons = await screen.findAllByRole("button", { name: "Send now" });
+    const buttons = await screen.findAllByRole("button", { name: "Preview and approve" });
     expect(buttons).toHaveLength(3);
 
     for (const button of buttons) {
       fireEvent.click(button);
+      fireEvent.click(await screen.findByRole("button", { name: "Approve and queue" }));
       await waitFor(() =>
         expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(buttons.indexOf(button) + 1),
       );
@@ -115,7 +130,12 @@ describe("ProductionWhatsAppAutomation", () => {
 
     expect(serverFns.sendProductionFollowUp.mock.calls.map(([call]) => call)).toEqual(
       drafts.map((draft) => ({
-        data: { source: draft.source, caseId: draft.caseId, entityId: draft.entityId },
+        data: {
+          source: draft.source,
+          caseId: draft.caseId,
+          entityId: draft.entityId,
+          expectedVersion: draft.version,
+        },
       })),
     );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(6));
@@ -131,11 +151,12 @@ describe("ProductionWhatsAppAutomation", () => {
 
   it("renders persisted rows and invokes the durable action for all three sources", async () => {
     const invalidateSpy = renderAutomation();
-    const buttons = await screen.findAllByRole("button", { name: "Send now" });
+    const buttons = await screen.findAllByRole("button", { name: "Preview and approve" });
     expect(buttons).toHaveLength(3);
 
     for (const button of buttons) {
       fireEvent.click(button);
+      fireEvent.click(await screen.findByRole("button", { name: "Approve and queue" }));
       await waitFor(() =>
         expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(buttons.indexOf(button) + 1),
       );
@@ -143,7 +164,12 @@ describe("ProductionWhatsAppAutomation", () => {
 
     expect(serverFns.sendProductionFollowUp.mock.calls.map(([call]) => call)).toEqual(
       drafts.map((draft) => ({
-        data: { source: draft.source, caseId: draft.caseId, entityId: draft.entityId },
+        data: {
+          source: draft.source,
+          caseId: draft.caseId,
+          entityId: draft.entityId,
+          expectedVersion: draft.version,
+        },
       })),
     );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(6));
@@ -166,8 +192,9 @@ describe("ProductionWhatsAppAutomation", () => {
         }),
     );
     renderAutomation();
-    const buttons = await screen.findAllByRole("button", { name: "Send now" });
+    const buttons = await screen.findAllByRole("button", { name: "Preview and approve" });
     fireEvent.click(buttons[1]);
+    fireEvent.click(await screen.findByRole("button", { name: "Approve and queue" }));
 
     await waitFor(() => expect((buttons[1] as HTMLButtonElement).disabled).toBe(true));
     expect((buttons[0] as HTMLButtonElement).disabled).toBe(false);

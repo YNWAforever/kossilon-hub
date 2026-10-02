@@ -1,8 +1,7 @@
 name: CI
 
-# The repo has lint, typecheck, ~650 tests and an offline pre-deploy gate, and
-# until now nothing ran any of them automatically. Every check below already
-# passes locally and needs no secrets or network access.
+# Local contracts use isolated Postgres/browser fixtures and no provider secrets.
+# Dependency install/audits contact the public registry; offline gates do not.
 on:
   pull_request:
   push:
@@ -48,7 +47,9 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # Scoped security overrides require the v3 lock format. Keep the
+          # installer consistent with package.json and local verification.
+          bun-version: 1.4.2
 
       - uses: actions/setup-node@v4
         with:
@@ -56,6 +57,20 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Audit both tracked dependency locks
+        run: |
+          bun audit --audit-level=low
+          npm audit --audit-level=low
+
+      - name: Verify portable npm lock installation
+        run: |
+          audit_npm_dir="$(mktemp -d)"
+          cp package.json package-lock.json "$audit_npm_dir/"
+          (
+            cd "$audit_npm_dir"
+            npm ci --ignore-scripts
+          )
 
       - name: Apply migrations
         run: bun scripts/db-migrate.ts
@@ -77,6 +92,15 @@ jobs:
 
       - name: Pre-deploy gate
         run: npm run verify:firm -- --dry-run
+
+      - name: Original audit acceptance ledger (local contracts only)
+        run: npm run verify:audit-release
+
+      - name: Install isolated local browser
+        run: bunx playwright install --with-deps chromium
+
+      - name: Local demo browser and real parser regressions (not runtime UAT)
+        run: npm run test:e2e:local
 
       # The scheduled handler only reaches the Worker through a nitro plugin, and
       # nothing but a real build proves the hook actually lands in the output.

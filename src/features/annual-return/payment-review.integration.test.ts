@@ -3,6 +3,7 @@ import { createSqlClient } from "@/server/db/client";
 import { createDocumentRepository } from "@/features/documents/repository";
 import { createAnnualReturnRepository } from "./repository";
 import { createPaymentEvidenceService } from "./payment-evidence";
+import { createProductionFollowUpRepository } from "./follow-up-repository";
 const url = process.env.TEST_DATABASE_URL;
 const sql = url ? createSqlClient(url, { max: 3 }) : null;
 afterAll(async () => {
@@ -211,6 +212,18 @@ describe.skipIf(!url)("attributable current-version payment receipts", () => {
                 reasonText: "Amount and receipt date are not readable",
               }),
             ]);
+            const followUp = await createProductionFollowUpRepository({
+              sql: tx,
+            }).listPersistedState([caseId]);
+            expect(followUp.evidence).toContainEqual(
+              expect.objectContaining({
+                source: "payment-proof-review",
+                documentId: unreadable.documentId,
+                documentVersionId: unreadable.proofVersionId,
+                reviewStatus: "rejected",
+                rejectionReason: "Amount and receipt date are not readable",
+              }),
+            );
           }
           const first = await proof("b".repeat(64));
           let recorded = await service.record({
@@ -293,6 +306,7 @@ describe.skipIf(!url)("attributable current-version payment receipts", () => {
           if (scenario === "already-verified")
             await documents.reviewDocument({
               documentId: second.documentId,
+              expectedVersionId: second.proofVersionId,
               reviewerId: actorId,
               decision: "verified",
             });

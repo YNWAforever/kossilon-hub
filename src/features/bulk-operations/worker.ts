@@ -1,6 +1,6 @@
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { BulkOperationsRepository } from "./repository";
-/** Pure SQL assignments only. A crash after commit leaves durable item success intact. */
+/** Existing SQL-only job engine: assignments, metadata exports and drafts. Never dispatches providers. */
 export async function runBulkAssignmentChunk({
   repository,
   actor,

@@ -3,10 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
-import { listCompaniesEligibleForCase } from "@/features/annual-return/server-fns";
+import { NarApplyPanel } from "@/features/nar-import/apply-panel";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import type { DataMode } from "@/features/runtime/data-mode";
 import type { NarRowDisposition } from "@/features/nar-import/mapping";
 import {
   getNarImportBatchReview,
+  getNarApplyOptions,
+  confirmNarBatchYear,
   listNarImportBatches,
   mapNarImportCompany,
   stageNarImportBatch,
@@ -59,32 +63,59 @@ function bytesToBase64(bytes: Uint8Array): string {
 }
 
 function ImportsRoute() {
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
+  const actorKey = JSON.stringify([
+    actor?.authUserId,
+    actor?.userId,
+    actor?.role,
+    actor?.teamId,
+    actor?.active,
+  ]);
+  return <ImportsWorkspace key={actorKey} dataMode={dataMode} actor={actor} actorKey={actorKey} />;
+}
+function ImportsWorkspace({
+  dataMode,
+  actor,
+  actorKey,
+}: {
+  dataMode: DataMode;
+  actor: AuthenticatedActor | null;
+  actorKey: string;
+}) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | undefined>();
   const [returnYear, setReturnYear] = useState(new Date().getUTCFullYear());
   const [sheetName, setSheetName] = useState("");
   const [batchId, setBatchId] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
+  const [legacyYear, setLegacyYear] = useState("");
+  const [legacyReason, setLegacyReason] = useState("");
+  const [legacyYearAck, setLegacyYearAck] = useState(false);
+  const [pendingMapping, setPendingMapping] = useState<{
+    externalClientId: string;
+    companyId: string;
+    expectedCompanyId: string | null;
+  }>();
+  const allowed = dataMode === "production" && actor?.role === "Admin" && actor.active === true;
 
   const batchesQuery = useQuery({
-    queryKey: ["nar-import", "batches"],
-    queryFn: () => listNarImportBatches(),
-    enabled: dataMode === "production",
+    queryKey: ["nar-import", actorKey, "batches"],
+    queryFn: () => listNarImportBatches({ data: {} }),
+    enabled: allowed,
     retry: false,
   });
 
   const reviewQuery = useQuery({
-    queryKey: ["nar-import", "batch", batchId],
+    queryKey: ["nar-import", actorKey, "batch", batchId],
     queryFn: () => getNarImportBatchReview({ data: { batchId: batchId! } }),
-    enabled: Boolean(batchId),
+    enabled: allowed && Boolean(batchId),
     retry: false,
   });
 
   const companiesQuery = useQuery({
-    queryKey: ["nar-import", "companies"],
-    queryFn: () => listCompaniesEligibleForCase(),
-    enabled: dataMode === "production",
+    queryKey: ["nar-import", actorKey, "companies"],
+    queryFn: () => getNarApplyOptions({ data: {} }),
+    enabled: allowed,
     retry: false,
   });
 
@@ -104,24 +135,46 @@ function ImportsRoute() {
     onSuccess: (result) => {
       setError(undefined);
       setBatchId(result.batch.id);
-      void queryClient.invalidateQueries({ queryKey: ["nar-import", "batches"] });
+      void queryClient.invalidateQueries({ queryKey: ["nar-import", actorKey, "batches"] });
     },
     // The parser's refusals are the useful part of its output; surfaced verbatim
     // rather than replaced with a generic failure.
-    onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Unable to read the workbook."),
+    onError: () => setError("未能讀取工作表。請核對檔案格式及伺服器狀態；不會自動重試。"),
   });
 
   const mapMutation = useMutation({
-    mutationFn: (input: { externalClientId: string; companyId: string }) =>
-      mapNarImportCompany({ data: input }),
+    mutationFn: (input: {
+      externalClientId: string;
+      companyId: string;
+      expectedCompanyId: string | null;
+    }) => mapNarImportCompany({ data: { ...input, confirmed: true } }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["nar-import", "batch", batchId] });
+      setPendingMapping(undefined);
+      void queryClient.invalidateQueries({ queryKey: ["nar-import", actorKey, "batch", batchId] });
     },
-    onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Unable to map that company."),
+    onError: () => setError("未能確認公司映射。請重新載入目前映射再覆核。"),
   });
 
+  const confirmYearMutation = useMutation({
+    retry: false,
+    mutationFn: () =>
+      confirmNarBatchYear({
+        data: {
+          batchId: batchId!,
+          expectedVersion: reviewQuery.data!.batch.revision!,
+          returnYear: Number(legacyYear),
+          reason: legacyReason,
+          acknowledgeSheetDifference: legacyYearAck,
+        },
+      }),
+    onSuccess: () => {
+      setLegacyYear("");
+      setLegacyReason("");
+      setError(undefined);
+      void queryClient.invalidateQueries({ queryKey: ["nar-import", actorKey] });
+    },
+    onError: () => setError("未能確認舊批次年度。請重新載入版本及覆核理由；不會自動重試。"),
+  });
   if (dataMode !== "production") {
     return (
       <main className="flex-1 space-y-4 p-6">
@@ -133,6 +186,13 @@ function ImportsRoute() {
     );
   }
 
+  if (!allowed)
+    return (
+      <main className="flex-1 p-6">
+        <PageHeader eyebrow="Operations" title="月表匯入" />
+        <p>只有已核實的現任 Admin 可以覆核跨公司月表。</p>
+      </main>
+    );
   const review = reviewQuery.data;
 
   return (
@@ -212,6 +272,52 @@ function ImportsRoute() {
         ))}
       </section>
 
+      {review?.batch.returnYear === null ? (
+        <section className="space-y-2 rounded-lg border p-4">
+          <h2>既有批次年度待確認</h2>
+          <p>舊版本沒有保存選定年度。檔名不是年度批准證據；確認後不可更改。</p>
+          <label>
+            已覆核年度
+            <input
+              aria-label="既有批次已覆核年度"
+              type="number"
+              min="1900"
+              max="2100"
+              value={legacyYear}
+              onChange={(e) => setLegacyYear(e.target.value)}
+            />
+          </label>
+          <label>
+            來源及確認理由
+            <textarea
+              minLength={10}
+              maxLength={1000}
+              value={legacyReason}
+              onChange={(e) => setLegacyReason(e.target.value)}
+            />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={legacyYearAck}
+              onChange={(e) => setLegacyYearAck(e.target.checked)}
+            />
+            已覆核與工作表名稱的年度差異
+          </label>
+          <button
+            type="button"
+            disabled={
+              confirmYearMutation.isPending ||
+              !review.batch.revision ||
+              !legacyYear ||
+              legacyReason.trim().length < 10
+            }
+            onClick={() => confirmYearMutation.mutate()}
+          >
+            確認既有批次年度
+          </button>
+        </section>
+      ) : null}
       {review ? (
         <section className="rounded-lg border bg-card">
           <div className="flex flex-wrap items-baseline justify-between gap-3 border-b p-4">
@@ -269,7 +375,7 @@ function ImportsRoute() {
                   </ul>
                 ) : null}
 
-                {row.disposition === "needsCompanyMapping" ? (
+                {!row.appliedAt ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <label className="sr-only" htmlFor={`map-${row.id}`}>
                       對應公司
@@ -281,22 +387,32 @@ function ImportsRoute() {
                       defaultValue=""
                       onChange={(event) => {
                         if (!event.target.value) return;
-                        mapMutation.mutate({
+                        setPendingMapping({
                           externalClientId: row.externalClientId,
                           companyId: event.target.value,
+                          expectedCompanyId: row.currentMappingCompanyId ?? row.matchedCompanyId,
                         });
                       }}
                     >
                       <option value="">選擇對應的公司…</option>
-                      {(companiesQuery.data ?? []).map((company) => (
+                      {(companiesQuery.data?.companies ?? []).map((company) => (
                         <option key={company.id} value={company.id}>
                           {company.companyName} · {company.crNumber}
                         </option>
                       ))}
                     </select>
                     <span className="text-xs text-muted-foreground">
-                      對應後重新上載同一份檔案即可更新這一行。
+                      預覽會重新核對最新映射；更改既有映射必須再確認。
                     </span>
+                    {pendingMapping?.externalClientId === row.externalClientId ? (
+                      <button
+                        type="button"
+                        disabled={mapMutation.isPending}
+                        onClick={() => mapMutation.mutate(pendingMapping)}
+                      >
+                        確認公司映射
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -305,6 +421,20 @@ function ImportsRoute() {
         </section>
       ) : null}
 
+      {review ? (
+        <NarApplyPanel
+          key={actorKey + review.batch.id}
+          batchId={review.batch.id}
+          rows={review.rows}
+          actorKey={actorKey}
+          onApplied={() =>
+            void queryClient.invalidateQueries({ queryKey: ["nar-import", actorKey] })
+          }
+        />
+      ) : null}
+      {batchesQuery.isError || reviewQuery.isError || companiesQuery.isError ? (
+        <p role="alert">未能載入完整匯入資料。請重新載入；目前狀態不可視為沒有記錄。</p>
+      ) : null}
       <section className="rounded-lg border bg-card p-4">
         <h2 className="text-base font-semibold">之前的匯入</h2>
         <div className="mt-3 divide-y">

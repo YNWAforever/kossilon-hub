@@ -22,6 +22,7 @@ function ClientsRoute() {
   ) : (
     <ProductionClientRegister
       allowFixtureDiagnostics={actor?.active === true && actor.role === "Admin"}
+      actor={actor}
     />
   );
 }

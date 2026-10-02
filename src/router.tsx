@@ -13,6 +13,7 @@ export const getRouter = () => {
     // pre-resolution value.
     context: { queryClient, dataMode, actor: null },
     scrollRestoration: true,
+    getScrollRestorationKey: (location) => location.pathname + location.searchStr,
     defaultPreloadStaleTime: 0,
   });
 

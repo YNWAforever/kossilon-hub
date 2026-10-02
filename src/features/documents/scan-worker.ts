@@ -12,9 +12,8 @@ import type { DocumentStatus, DocumentStorage, IdentifiedDocumentScanner } from 
  * cannot widen what a scan run can see.
  *
  * Every outcome here is deliberately conservative about the one direction that
- * matters: nothing in this file can turn an infrastructure failure into a clean
- * verdict, and nothing deletes received bytes except a provider's positive
- * malware finding.
+ * matters: nothing in this file turns infrastructure failure into clean safety.
+ * Rejected evidence stays isolated; the worker never deletes received bytes.
  */
 
 export type ScanWorkerDependencies = {
@@ -73,13 +72,27 @@ async function runOneJob(
     // The intent is gone but the job survives (the FK is `on delete restrict`,
     // so this should be unreachable). Terminal rather than retried: repeating it
     // cannot make the row reappear.
-    await dependencies.jobs.markFailed(job.id, {
+    const applied = await dependencies.jobs.markFailed(job.id, {
       errorCode: "intent-missing",
       errorMessage: "Upload intent no longer exists.",
       now,
       attemptCount: job.attemptCount,
     });
-    summary.failed += 1;
+    if (applied) summary.failed += 1;
+    else summary.superseded += 1;
+    return;
+  }
+
+  if (!job.documentVersionId) {
+    const applied = await dependencies.jobs.markFailed(job.id, {
+      errorCode: "document-version-missing",
+      errorMessage:
+        "Legacy job has no current version; request an explicit rescan after lineage review.",
+      now,
+      attemptCount: job.attemptCount,
+    });
+    if (applied) summary.failed += 1;
+    else summary.superseded += 1;
     return;
   }
 
@@ -87,7 +100,7 @@ async function runOneJob(
   // carries different bytes, a replacement upload has superseded it and its own
   // job is queued; answering with this one would apply a verdict to content it
   // never saw.
-  if (intent.checksum !== job.checksum) {
+  if (intent.checksum !== job.checksum || intent.currentVersionId !== job.documentVersionId) {
     await dependencies.jobs.markSucceeded(job.id, { now, attemptCount: job.attemptCount });
     summary.superseded += 1;
     return;
@@ -119,19 +132,21 @@ async function runOneJob(
     // Retryable: storage may be briefly unreadable, and this is emphatically not
     // evidence the file is safe. Repeated failures exhaust max_attempts and
     // surface for a human rather than resolving themselves into a clean state.
-    await dependencies.jobs.markRetry(job.id, {
+    const applied = await dependencies.jobs.markRetry(job.id, {
       errorCode: stored ? "stored-metadata-mismatch" : "stored-object-missing",
       errorMessage: "Stored object does not match the upload intent.",
       now,
       attemptCount: job.attemptCount,
     });
-    summary.retried += 1;
+    if (applied) summary.retried += 1;
+    else summary.superseded += 1;
     return;
   }
 
   let result;
   try {
     result = await dependencies.scanner.scan({
+      documentVersionId: job.documentVersionId,
       objectKey: intent.objectKey,
       checksum: intent.checksum,
       contentType: intent.contentType,
@@ -139,57 +154,81 @@ async function runOneJob(
     });
   } catch (error) {
     // A scanner that throws is an outage, never a pass.
-    await dependencies.jobs.markRetry(job.id, {
+    const applied = await dependencies.jobs.markRetry(job.id, {
       errorCode: "scanner-threw",
       errorMessage: error instanceof Error ? error.name : "unknown",
       now,
       attemptCount: job.attemptCount,
     });
-    summary.retried += 1;
+    if (applied) summary.retried += 1;
+    else summary.superseded += 1;
     return;
   }
 
   if (result.status === "failed") {
     if (result.retryable) {
-      await dependencies.jobs.markRetry(job.id, {
+      const applied = await dependencies.jobs.markRetry(job.id, {
         errorCode: result.errorCode,
         errorMessage: result.errorCode,
         now,
         attemptCount: job.attemptCount,
       });
-      summary.retried += 1;
+      if (applied) summary.retried += 1;
+      else summary.superseded += 1;
     } else {
-      await dependencies.jobs.markFailed(job.id, {
+      const applied = await dependencies.jobs.markFailed(job.id, {
         errorCode: result.errorCode,
         errorMessage: result.errorCode,
         now,
         attemptCount: job.attemptCount,
       });
-      summary.failed += 1;
+      if (applied) summary.failed += 1;
+      else summary.superseded += 1;
     }
     return;
   }
 
-  // The only deletion in this file, and only on a provider's positive finding.
-  if (result.status === "rejected") await dependencies.storage.delete(intent.objectKey);
+  if (
+    result.status === "clean" &&
+    dependencies.scanner.verdictSource === "provider" &&
+    (result.documentVersionId !== job.documentVersionId ||
+      result.verifiedChecksum !== job.checksum ||
+      result.verifiedByteSize !== intent.expectedSizeBytes)
+  ) {
+    const applied = await dependencies.jobs.markFailed(job.id, {
+      errorCode: "provider-result-unbound",
+      errorMessage: "Provider verdict does not identify the claimed version bytes.",
+      now,
+      attemptCount: job.attemptCount,
+    });
+    if (applied) summary.failed += 1;
+    else summary.superseded += 1;
+    return;
+  }
+
+  // Preserve quarantined evidence, including a positive malware finding. A late
+  // result must not delete an object before version/claim authority is checked.
 
   try {
     await dependencies.documents.recordScanResult(intent.id, result, {
       verdictSource: dependencies.scanner.verdictSource,
       expectedChecksum: job.checksum,
+      expectedVersionId: job.documentVersionId,
+      scanJobClaim: { jobId: job.id, attemptCount: job.attemptCount },
       allowStatuses,
     });
   } catch (error) {
     // The verdict did not land -- most likely the intent moved underneath us
     // between the read above and this write. Retry rather than record success,
     // so the file does not end up with a job marked done and no verdict.
-    await dependencies.jobs.markRetry(job.id, {
+    const applied = await dependencies.jobs.markRetry(job.id, {
       errorCode: "verdict-not-applied",
-      errorMessage: error instanceof Error ? error.message : "unknown",
+      errorMessage: error instanceof Error ? error.name : "unknown",
       now,
       attemptCount: job.attemptCount,
     });
-    summary.retried += 1;
+    if (applied) summary.retried += 1;
+    else summary.superseded += 1;
     return;
   }
 

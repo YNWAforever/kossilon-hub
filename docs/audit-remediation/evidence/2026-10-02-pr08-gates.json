@@ -1,0 +1,118 @@
+{
+  "assignmentDate": "2026-10-01",
+  "verifiedDate": "2026-10-02",
+  "build": "bd2179dfa82a51fa7fa470f8200f2edb2213ee80",
+  "base": "fa829d2d2625c63b77aa9b3fcaa2da0ce20dafb1",
+  "tasks": ["T17", "B01 additive patch"],
+  "findings": ["F11"],
+  "environment": "LOCAL ONLY Windows/Node22.23.3/Bun1.3.14/actual Postgres17 localhost55441/kossilon_pr02_ci; own patched frozen dependencies",
+  "gates": [
+    {
+      "result": "209files2103pass0fail0skip",
+      "seconds": 396.89,
+      "command": "npm run test with DATABASE_URL and TEST_DATABASE_URL dedicated local PG, DATABASE_SSL=disable"
+    },
+    {
+      "result": "3files73pass0skip",
+      "seconds": 4.15,
+      "command": "npm run test -- src/features/whatsapp/repository.test.ts src/features/whatsapp/server-fns.test.ts src/features/whatsapp/webhook.test.ts"
+    },
+    {
+      "result": "PASS",
+      "command": "npm run typecheck"
+    },
+    {
+      "result": "PASS 0errors1existingwarning",
+      "command": "npm run lint"
+    },
+    {
+      "result": "PASS offline only/provider gates blocked",
+      "command": "npm run verify:firm -- --dry-run"
+    },
+    {
+      "result": "PASS",
+      "command": "npm run build; compiled literal cloudflare:scheduled hook"
+    },
+    {
+      "result": "PASS unchanged12routes",
+      "command": "npm run verify:dev-server-imports"
+    },
+    {
+      "result": "PASS; previous junction alone unlinked/shared target retained",
+      "command": "bun install --frozen-lockfile in own node_modules"
+    }
+  ],
+  "review": "One fresh whole PR08 review, Important source collision bypass RED2→GREEN. No remaining Critical/Important; no rereview. B01 independently reviewed, deferred Minor ordinary JSON-success positive transport test.",
+  "schema": "0078 local-only mapping_revision/provider_media_kind/intake_intent_id and unmatched signed receipt index;46sourceIDs vs last observed production66 historical IDs; populated minimal repeat2/CHECK23514x2/rollback preserved original references",
+  "uat": {
+    "notRun": 10,
+    "originalCases": 50,
+    "providerUat": "MSG01/03/04 blocked; MSG02/05 local contracts only",
+    "blocked": 22,
+    "localOnlyPass": 18
+  },
+  "production": "No migration/env write/deployment/live send/invitation/grant. Metadata-only env list confirms4WOZTELL bindings/media-host policy absent; R2/Auth/DB presence is not verification.",
+  "performance": "396.89s suite duration is verification timing, not runtime p95 or improvement; T21 still pending",
+  "blockers": [
+    "Messaging approved scoped bindings/channel/protocol/recipient/template",
+    "Security exact public CDN hosts/DNS trust",
+    "Storage/scanner genuine staging bytes/verdict",
+    "Auth fresh roles",
+    "Operations real native ticks",
+    "Release reviewed schema lineage/order/backup/rollback/new exact authority"
+  ],
+  "logs": [
+    {
+      "sha256": "0b72ecc4e0f5e2457fa57d095d4fff3dc11306bc7cbbd75e96bc576b3d590808",
+      "file": "pr08-full-initial.log"
+    },
+    {
+      "sha256": "472a9613210183af15486a4c7dc3b1d2122f63e7dcba6792f8efae32242652d7",
+      "file": "pr08-full-rerun.log"
+    },
+    {
+      "sha256": "3f21a94871c7bc4fedcc519403ef8732d7da972ce1bee347cae0cbe16c70f69a",
+      "file": "pr08-review-service-red.log"
+    },
+    {
+      "sha256": "64598b70f1758cb025bef95abed16302e3acbce20afe17f8aaee936fecb32075",
+      "file": "pr08-review-service-green.log"
+    },
+    {
+      "sha256": "801f8888182b52ff48addbbe7a005eff3656dcfb55fe94485285aa6479857b54",
+      "file": "t17-migration-rehearsal.log"
+    },
+    {
+      "sha256": "e0eef37a0a2022120567506381addf572c08ed876375d4f9da7656938da57049",
+      "file": "pr08-patched-install.log"
+    },
+    {
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+      "file": "pr08-final-lint.log"
+    },
+    {
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "file": "pr08-final-typecheck.log"
+    },
+    {
+      "sha256": "1fe7f3a8114a30f32cf0b1585e93ec4e32404846942180d943dd1f9b9c9d0ecb",
+      "file": "pr08-final-test.log"
+    },
+    {
+      "sha256": "6bdec509047b0340b77e8480ebf43926acfb9be8b12489b3d7241f868ba0ca05",
+      "file": "pr08-final-predeploy.log"
+    },
+    {
+      "sha256": "b144b15d19a466f65714a393862829183b97d9ce355c9ee8fb0b302df60e28c6",
+      "file": "pr08-final-build.log"
+    },
+    {
+      "sha256": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7",
+      "file": "pr08-final-dev-imports.log"
+    },
+    {
+      "sha256": "8b4c50f3ee8e0ed4c1f877f4aa9ce49d7dcd2b703a748d2bc65d8bb69282adce",
+      "file": "t17-production-binding-metadata.log"
+    }
+  ]
+}

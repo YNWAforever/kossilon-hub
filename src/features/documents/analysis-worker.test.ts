@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import type { DocumentAnalysisJob, DocumentAnalysisJobRepository } from "./analysis-jobs";
 import {
   drainDocumentAnalysisJobs,
@@ -10,13 +11,13 @@ import type { ExtractionResult, StoredExtraction } from "./text-extraction";
 
 const NOW = "2026-09-10T02:00:00.000Z";
 const VERSION_ID = "11111111-1111-4111-8111-111111111111";
-const HASH = "a".repeat(64);
 
 function bytesOf(text: string): ArrayBuffer {
   return Uint8Array.from(text, (character) => character.charCodeAt(0)).buffer;
 }
 
 const PDF = bytesOf("%PDF-1.7\nbody\ntrailer\n<< /Size 1 >>\nstartxref\n1\n%%EOF\n");
+const HASH = createHash("sha256").update(new Uint8Array(PDF)).digest("hex");
 
 function job(overrides: Partial<DocumentAnalysisJob> = {}): DocumentAnalysisJob {
   return {
@@ -101,7 +102,13 @@ function harness(options: HarnessOptions = {}) {
   const storedTexts: { documentVersionId: string; extraction: StoredExtraction }[] = [];
   const extract = vi.fn(async (): Promise<ExtractionResult> => {
     if (options.extractorThrows) throw new Error("pdf.js exploded");
-    return options.extraction ?? { method: "none", pageCount: null };
+    // Model contracts use an explicit single-page extracted-text fixture.
+    return (
+      options.extraction ??
+      (options.analyzer
+        ? { method: "text-layer", text: "Synthetic readable page.", pageCount: 1, truncated: false }
+        : { method: "none", pageCount: null })
+    );
   });
 
   const dependencies: AnalysisWorkerDependencies = {
@@ -135,6 +142,67 @@ function harness(options: HarnessOptions = {}) {
 }
 
 describe("drainDocumentAnalysisJobs", () => {
+  it("does not publish when the version changes during the advisory provider call", async () => {
+    const test = harness({
+      analyzer: {
+        analyze: vi.fn(async () => ({
+          status: "uncertain" as const,
+          providerReference: "synthetic",
+          detail: "No confirmed conclusion",
+        })),
+      },
+    });
+    vi.mocked(test.dependencies.versions.loadForAnalysis)
+      .mockResolvedValueOnce(subject())
+      .mockResolvedValueOnce(subject())
+      .mockResolvedValue(
+        subject({ version: { ...subject().version, supersededByVersionId: "V2" } }),
+      );
+    expect(await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies)).toMatchObject({
+      superseded: 1,
+      analysed: 0,
+    });
+    expect(test.storedTexts).toEqual([]);
+    expect(test.written).toEqual([]);
+  });
+  it("does not extract changed stored bytes even when metadata still claims the scanned hash", async () => {
+    const test = harness({ body: bytesOf("%PDF-1.7\nchanged unscanned bytes\n%%EOF\n") });
+    expect(await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies)).toMatchObject({
+      failed: 1,
+      analysed: 0,
+    });
+    expect(test.extract).not.toHaveBeenCalled();
+    expect(test.written).toEqual([]);
+    expect(test.jobs.markFailed).toHaveBeenCalledWith(
+      "job-1",
+      expect.objectContaining({ errorCode: "stored-content-changed" }),
+    );
+  });
+  it("does not read or publish a superseded version", async () => {
+    const test = harness({
+      subject: subject({ version: { ...subject().version, supersededByVersionId: "new-version" } }),
+    });
+    expect(await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies)).toMatchObject({
+      superseded: 1,
+      analysed: 0,
+    });
+    expect(test.storageGet).not.toHaveBeenCalled();
+    expect(test.written).toEqual([]);
+  });
+  it("rechecks current version before publishing an extraction that raced with replacement", async () => {
+    const test = harness();
+    vi.mocked(test.dependencies.versions.loadForAnalysis)
+      .mockResolvedValueOnce(subject())
+      .mockResolvedValue(
+        subject({ version: { ...subject().version, supersededByVersionId: "new-version" } }),
+      );
+    expect(await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies)).toMatchObject({
+      superseded: 1,
+      analysed: 0,
+    });
+    expect(test.storedTexts).toEqual([]);
+    expect(test.written).toEqual([]);
+  });
   it("runs the deterministic tiers and records their findings", async () => {
     const test = harness();
     const summary = await drainDocumentAnalysisJobs({ now: NOW }, test.dependencies);
@@ -303,8 +371,8 @@ describe("the provider tier", () => {
               citation: {
                 kind: "version" as const,
                 documentVersionId: VERSION_ID,
-                pageFrom: null,
-                pageTo: null,
+                pageFrom: 1,
+                pageTo: 1,
               },
             },
           ],
@@ -422,6 +490,13 @@ describe("text extraction in the analysis pass", () => {
           pageCount: 2,
           truncated: false,
           extractorVersion: "1",
+          evidence: expect.objectContaining({
+            documentVersionId: VERSION_ID,
+            sha256: HASH,
+            method: "manual",
+            unknownReason: "page-evidence-missing",
+            pages: [],
+          }),
         },
       },
     ]);

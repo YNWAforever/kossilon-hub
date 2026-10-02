@@ -84,6 +84,15 @@ function rowFor(result: ReturnType<typeof readNarSheet>, clientId: string): NarS
 }
 
 describe("readNarSheet", () => {
+  it("reads35 synthetic source rows within a65-row formatted dimension without inventing30 records", () => {
+    const extra: Record<number, Record<string, CellSpec>> = {};
+    for (let i = 1; i < 35; i++)
+      extra[i + 3] = { B: `Synthetic-${i}`, C: `Company ${i}`, E: "INV-1", G: 45913 };
+    for (let n = 38; n <= 65; n++) extra[n] = {};
+    const result = readNarSheet(baseSheet(extra), false);
+    expect(result.rows).toHaveLength(35);
+    expect(result.rows.every((r) => r.rowNumber <= 37)).toBe(true);
+  });
   it("finds the header row and maps every column, despite embedded newlines", () => {
     const result = readNarSheet(baseSheet(), false);
     expect(result.headerRowNumber).toBe(2);

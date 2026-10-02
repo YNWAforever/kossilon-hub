@@ -66,6 +66,12 @@ export type AnnualReturnPayment = {
 
 export type AnnualReturnCase = {
   readiness?: import("./readiness").ReadinessSnapshot;
+  handoffExceptions?: {
+    unreconciled: number;
+    rejected: number;
+    unknown: number;
+    awaitingManual: number;
+  };
   id: string;
   companyId: string;
   companyTeamId: string;

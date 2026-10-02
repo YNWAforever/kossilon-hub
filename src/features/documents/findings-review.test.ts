@@ -88,6 +88,19 @@ describe("analysisStateFrom", () => {
  * every document, so the wrong version of this screen is uniformly wrong.
  */
 describe("an empty finding list", () => {
+  it("keeps an explicitly unbound historical run out of the clean-result state", () => {
+    const historical = viewFor({
+      documentId: "doc-1",
+      documentVersionId: VERSION_ID,
+      fileName: "old.pdf",
+      state: "analysed",
+      findings: [],
+      provenance: null,
+      evidence: null,
+    });
+    expect(isSilenceMeaningful(historical.state)).toBe(false);
+    expect(describeSilence(historical.state)).toContain("這不代表文件沒有問題");
+  });
   it("is reassurance only after a run actually finished", () => {
     expect(isSilenceMeaningful("analysed")).toBe(true);
     for (const state of ["pending", "deferred", "failed", "never-queued"] as const) {

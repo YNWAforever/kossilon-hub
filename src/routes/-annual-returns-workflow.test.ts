@@ -113,10 +113,10 @@ describe("annual return workflow route regressions", () => {
     expect(mobileNavigationTrigger).toBeDefined();
 
     for (const [path, label] of [
-      ["/portal", "Portal"],
-      ["/payments", "Payments"],
-      ["/whatsapp/automation", "WhatsApp Automation"],
-      ["/annual-returns", "Annual Returns"],
+      ["/portal", "客戶入口"],
+      ["/payments", "付款"],
+      ["/whatsapp/automation", "WhatsApp 追件"],
+      ["/annual-returns", "周年申報"],
     ]) {
       expect(desktopNavigation).toContain(`href="${path}"`);
       expect(desktopNavigation).toContain(`>${label}</span>`);
@@ -131,10 +131,10 @@ describe("annual return workflow route regressions", () => {
     // destinations and nothing shaped like "what do I do today". Every previous
     // destination is still reachable, which the loop above checks.
     expect(desktopNavigation).toContain(">今日工作<");
-    expect(desktopNavigation).toContain(">客戶與案件<");
-    expect(desktopNavigation).toContain(">文件審閱<");
-    expect(desktopNavigation).toContain(">訊息<");
-    expect(desktopNavigation).toContain(">Administration<");
+    expect(desktopNavigation).toContain(">案件與客戶<");
+    expect(desktopNavigation).toContain(">文件與付款<");
+    expect(desktopNavigation).toContain(">通訊<");
+    expect(desktopNavigation).toContain(">管理<");
   });
 
   it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
