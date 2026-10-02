@@ -2,13 +2,13 @@
 
 ## 現況
 
-**正式發布 NO-GO。** 最新 fetch 的 main 仍為 `aa5d3cbddd895bca953b6eef7266ae1cc0b46215`。PR01–10 #102–108/#110–112 為 stacked drafts，B01 #109 為獨立 main-based security draft；沒有合併或發布。本頁的本地測試與 release package 不構成正式操作授權。
+**正式發布 NO-GO。** 十三個 development PR 已逐個通過新 head CI／真PG17／preview並以 merge commit 整合；最後 PR #102 待更新文件後的完整 gate 才合併 main。此 checkpoint main／live仍為 aa5d3cb，源碼 main 自動 Git 部署暫停設定會隨候選保留。正式 DB／env／發布／真收件人操作未獲本次 source merge 授權。最終合併及 main CI／live觀察回執記於 PR #102。
 
 T00–T23 已有本地 source／測試證據，PR11為本分支的最後一包。T22匯總原50項：19 LOCAL ONLY pass／31blocked／0not_run，不刪或改原驗收。`verify:audit-release` 只讀 CSV、original JSON、SQL hashes，輸出 `localLedgerContract=PASS` 與獨立的 `productionReleaseGate=NO_GO`；exit0只表示台賬契約有效。
 
 ## 必須按順序核對的發布 gate
 
-1. **Source review**：B01及11個 PR 包按 base→head 逐一審閱。每次 integration 後跑原CI／真PG，不 force-push/rebase 已發布歷史。PR10 五項 Important 已修；PR11 覆核及完整 CI 結果見其 gate JSON。CI／preview綠色不等於 production完成。
+1. **Source review**：原十一個 PR 包及 B01–B04 已逐包覆核；十三個 development PR 整合後各自新 head 的完整 CI／真PG17／preview均通過。最後 PR #102 的更新 head 仍需獨立全綠，合併後再查 main CI及 live target。保留已發布歷史，無 force-push/rebase/squash；CI／preview綠色不等於 production完成。
 2. **Schema／backup**：source50 IDs＝0001–0034＋0067–0082；last-observed production66歷史 IDs，且0034 ID與實體 marker DDL不一致。先在指定 branch 執行只讀 `release-preflight.sql`／`audit-schema-readiness.ts`，核對歷史0035–0066原始 SQL、hash、physical DDL及功能 lineage。**不得直接執行 `db:migrate` 或把整份 manifest 當待套用清單。** 詳見 schema-reconciliation.md。
 3. **Recovery rehearsal**：provider 非 finalize recovery point／隔離 populated clone，確認端點沒有被移動。比較 row counts、FK、版本／ledger／outboxunknown，實際 restore 演練。沒有目標 recovery point／restore evidence 就保持 blocked；本地演練不替代 production restore。
 4. **Concrete SQL approval**：只對已核對的 expand SQL及真正缺少的物理結構準備 transaction／advisory lock／lock timeout／前後 catalog counts；保留原 ledger與未知歷史。SQL真的執行且檢查通過才記其 receipt，不能偽造舊 ID。新正式 migration需要明確批准。
@@ -73,3 +73,11 @@ npm run build
 ## B03 dependency gate refresh
 
 26ef92d3f7346e929271ff99a876c3ca19f48167: full230files2183PASS0skip414.52s/ChromeDEMO12PASS30.0s; both audits0; one Important self-link fixedRED2→GREEN4 and true-cwd npm10 installPASS. No newSQL or production mutation. See dependency-security-b03.md/b03-review.md/evidence/2026-10-02-b03-gates.json. Runtime/schema/provider/UAT gates above remainNO_GO.
+
+## Sequential source integration checkpoint — 2026-10-02
+
+Thirteen development PRs are MERGED at `e5c76b50fefa12925570a7f62dd4480f17025d2d`, each with fresh exact-head full CI230files2183PASS0skip / realPG17 / ChromeDEMO12PASS and actual previewSUCCESS. All fourteen original published heads remain ancestors, with normal merge commits. Final PR #102 still requires its updated-head gates, then main CI and a live-target check; final receipts will be recorded in that PR.
+
+Source main automatic Git deployments are held in vercel.json. Read-only production metadata at `2026-10-02T11:56:02.3962021Z` remains READY aa5d3cb / `dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT`; no hosted settings/env/alias/DB/provider writes. Source50 versus last-observed production66 historical SQL IDs remains unreconciled,0 new migrations; original50 still19 LOCAL ONLY pass /31blocked /0not_run. Formal release stays **NO_GO**.
+
+Full per-PR CI/merge table, PR108 preview recovery, B01 conflict resolution, source-hold boundaries, owners and costs: [merge-integration.md](merge-integration.md). Verified raw-log hashes and parents: [integration evidence](evidence/2026-10-02-source-integration.json). Sole B04 review0Critical/0Important/0Minor with all declined behaviors/rulings: [source-merge-review.md](source-merge-review.md). Earlier entries retain their historical results and blockers.

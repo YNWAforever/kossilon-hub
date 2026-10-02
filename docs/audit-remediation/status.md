@@ -1,5 +1,7 @@
 # Kossilon audit remediation — 2026-10-01
 
+Source checkpoint before final PR #102: thirteen development PRs merged; updated-head CI and main integration are the next gates. Final merge/main-CI/live receipts are recorded in PR #102. Production release remains **NO_GO**. See the sequential integration receipt at the end of this ledger. Earlier entries are dated historical snapshots.
+
 ## Baseline and authority
 
 - Audit/main/Web SHA: `aa5d3cbddd895bca953b6eef7266ae1cc0b46215`; fetched latest main, no source delta. PR #68 is merged; retain its no-chase/current-state/unknown-dispatch guards.
@@ -154,3 +156,11 @@ Original50 still19LOCALONLYpass31blocked0not_run; F01–F20/T00–T23 local deli
 ## Authorised source integration — 2026-10-02
 
 User now authorises merging each green reviewed PR. PR114 merged into the development release-uat base at fcb3193 after exact-head CI36994563832/previewSUCCESS (230files2183PASS0skip/browser12PASS). Each next PR must pass fresh CI/preview on its new head. Vercel productionBranch=main still serves aa5d3cb/dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT; source-only main deployment hold is prepared in vercel.json because schema/runtime release remainsNO_GO. See merge-integration.md. No production operation authority inferred from source merge; original50 unchanged.
+
+## Sequential source integration checkpoint — 2026-10-02
+
+Thirteen development PRs are MERGED at `e5c76b50fefa12925570a7f62dd4480f17025d2d`, each with fresh exact-head full CI230files2183PASS0skip / realPG17 / ChromeDEMO12PASS and actual previewSUCCESS. All fourteen original published heads remain ancestors, with normal merge commits. Final PR #102 still requires its updated-head gates, then main CI and a live-target check; final receipts will be recorded in that PR.
+
+Source main automatic Git deployments are held in vercel.json. Read-only production metadata at `2026-10-02T11:56:02.3962021Z` remains READY aa5d3cb / `dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT`; no hosted settings/env/alias/DB/provider writes. Source50 versus last-observed production66 historical SQL IDs remains unreconciled,0 new migrations; original50 still19 LOCAL ONLY pass /31blocked /0not_run. Formal release stays **NO_GO**.
+
+Full per-PR CI/merge table, PR108 preview recovery, B01 conflict resolution, source-hold boundaries, owners and costs: [merge-integration.md](merge-integration.md). Verified raw-log hashes and parents: [integration evidence](evidence/2026-10-02-source-integration.json). Sole B04 review0Critical/0Important/0Minor with all declined behaviors/rulings: [source-merge-review.md](source-merge-review.md). Earlier entries retain their historical results and blockers.
