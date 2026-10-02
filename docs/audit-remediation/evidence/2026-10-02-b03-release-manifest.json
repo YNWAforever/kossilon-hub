@@ -1,0 +1,273 @@
+{
+  "source_commit": "26ef92d3f7346e929271ff99a876c3ca19f48167",
+  "environment": "read-only packaging; production unchanged",
+  "localLedgerContract": "PASS",
+  "productionReleaseGate": "NO_GO",
+  "authority": "This read-only report grants no migration, deployment, send or invitation authority.",
+  "uat": {
+    "original": 50,
+    "counts": {
+      "pass": 19,
+      "fail": 0,
+      "blocked": 31,
+      "not_run": 0
+    },
+    "localOnlyPasses": 19,
+    "runtimeReleaseReady": false
+  },
+  "sourceMigrationCount": 50,
+  "productionLastObservedHistoricalCount": 66,
+  "historyReconciliation": "BLOCKED: physical DDL and historical IDs differ; do not replay this manifest or fabricate ledger IDs.",
+  "manifest": [
+    {
+      "file": "0001_annual_return_control_center.sql",
+      "sha256": "abfdf5e3ae51038fe90550288f10a570290736db263fce14842841211fe6fa2e",
+      "candidate": false
+    },
+    {
+      "file": "0002_harden_annual_return_schema.sql",
+      "sha256": "5b4be0f06d1c65a51846870e94b8007b27830a5d4ff20c6fbd8f1c80fd900fea",
+      "candidate": false
+    },
+    {
+      "file": "0003_annual_return_audit_events.sql",
+      "sha256": "74716ab004e5b26be3185a2757b0f816bef73118f9c143e7b1605c860774ffd5",
+      "candidate": false
+    },
+    {
+      "file": "0004_retain_annual_return_audit_events.sql",
+      "sha256": "7c6375fb32ec90d2083d4b275fcc315f1f29132fc7f7b61eca898caeac55ef2a",
+      "candidate": false
+    },
+    {
+      "file": "0005_whatsapp_integration_foundation.sql",
+      "sha256": "550f6dbcdacdf49ef6b761b91e804ca8043e85cdb6ba3f479ae0dbc188c4053b",
+      "candidate": false
+    },
+    {
+      "file": "0006_production_assignment_sla_foundation.sql",
+      "sha256": "f5247427ddcb7a57ffbc77c6c900030d993f85930a1c2a918b6694e1469138ca",
+      "candidate": false
+    },
+    {
+      "file": "0007_whatsapp_inbox_ordering_indexes.sql",
+      "sha256": "35e01dc6abda8dbb94c08c8c54a4e9bb56d7a3a6185fc44702a03647e1fbc666",
+      "candidate": false
+    },
+    {
+      "file": "0008_client_register.sql",
+      "sha256": "95af94ec995307cd58bd96df4cdbb21a5713d26954f817b1aedeee135ee88a0a",
+      "candidate": false
+    },
+    {
+      "file": "0009_reclaim_stranded_outbox_rows.sql",
+      "sha256": "fe1395126ec40e856225b0fe176daf2aa7ffa461463ee6e3402fa2bd9924fd34",
+      "candidate": false
+    },
+    {
+      "file": "0010_index_timeline_and_upload_intent_lookups.sql",
+      "sha256": "ca0c2565399c6891e3dc34e706368d5c54b0842e7ae46f9bfca3d0ae2b62f771",
+      "candidate": false
+    },
+    {
+      "file": "0011_whatsapp_delivery_receipts.sql",
+      "sha256": "2c161cd3593e093f147fb21190bdbf5a1b75f4f2226f5c1b738fd2e1a9b36183",
+      "candidate": false
+    },
+    {
+      "file": "0012_annual_return_reminder_events.sql",
+      "sha256": "1b5a2d6857363781b5368cb833c7af91876277ca2933f58ac1c959daf8b81c5d",
+      "candidate": false
+    },
+    {
+      "file": "0013_checklist_templates.sql",
+      "sha256": "f487ee664d5c4e20946a8e31d55a0d7502b9b8cfd69f66e575d6eb08a64b1e10",
+      "candidate": false
+    },
+    {
+      "file": "0014_generalize_work_item_case_reference.sql",
+      "sha256": "0c3a635da7a8e14ae8261dc0dfdf69a4da6112c1b866a6a83a616365750d864c",
+      "candidate": false
+    },
+    {
+      "file": "0015_officers_and_shareholdings.sql",
+      "sha256": "e6202e25b89e5b88d7b5f0c9a8c2a4bf22ba7943b2f428d25cb2ce6f3d7542ea",
+      "candidate": false
+    },
+    {
+      "file": "0016_significant_controllers_and_dr.sql",
+      "sha256": "92d2be3fd59b0a85ec7606a81b28a873f54483695df089f910ef74f5600c4ab3",
+      "candidate": false
+    },
+    {
+      "file": "0017_incorporation_intake.sql",
+      "sha256": "5a40f9ba4ca33c7f88f33cfc1c216969938d18649509d6dd0a208d8b998297f1",
+      "candidate": false
+    },
+    {
+      "file": "0018_recurring_service_subscriptions.sql",
+      "sha256": "69f1b0cc6a0c0c710f18b341bd112c4edefd89c3d04caa312998d0ed63a37a0b",
+      "candidate": false
+    },
+    {
+      "file": "0019_corporate_change_requests.sql",
+      "sha256": "3b74b1de0bc58c7eaaa1eb089aa214c03ff1aea35e2d779b6f8326fca1bd2b1b",
+      "candidate": false
+    },
+    {
+      "file": "0020_corporate_change_work_items.sql",
+      "sha256": "d4e600a00cc5a2f544674364be351466ab68727982e38cc8ea3298471b0be492",
+      "candidate": false
+    },
+    {
+      "file": "0021_whatsapp_session_window_indexes.sql",
+      "sha256": "22cab690cb48883d72c59e959d4af5a7dc02742e85c5a0a17d4e0f508505885a",
+      "candidate": false
+    },
+    {
+      "file": "0022_notification_outbox_delivery.sql",
+      "sha256": "a1d18d0ea91ff274dce73be35cb4bd4b503f834451ba4adcf5d5668e9a35bc0b",
+      "candidate": false
+    },
+    {
+      "file": "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "sha256": "3d74d1f25aaa842548cd8f90dbe6134135ad8f1cdf2274995873dd91dfd9b9fb",
+      "candidate": false
+    },
+    {
+      "file": "0024_link_uploads_to_checklist_items.sql",
+      "sha256": "23105326908b594afafa0b0bc0a00e888a6b061e1bdeef8c19b0d307fa81a21b",
+      "candidate": false
+    },
+    {
+      "file": "0025_nar_import_staging.sql",
+      "sha256": "ff0c6c72e8465dd7fc997bb0264c1e8fface6c3c507a74071a5609424b1f035c",
+      "candidate": false
+    },
+    {
+      "file": "0026_case_parties_and_requirement_instances.sql",
+      "sha256": "9767057c89ec0266d587f9bd2598db6d89af00eb7c41ac60ed2ed084111c0019",
+      "candidate": false
+    },
+    {
+      "file": "0027_document_versions.sql",
+      "sha256": "41dd0155edd40c0d0033c0a82f16a40dbc09fc332a1a1a24b974d3f3a50e3f22",
+      "candidate": false
+    },
+    {
+      "file": "0028_document_analysis_jobs_and_findings.sql",
+      "sha256": "0a0522892b647e3be2332bae2b719266901de047912474e6ed169efa12cf4e84",
+      "candidate": false
+    },
+    {
+      "file": "0029_whatsapp_send_mode.sql",
+      "sha256": "85c3b00b6e791a931c1d51de02b9f28b719bef8c09bc6bb24cbeb0ed9d06a5b3",
+      "candidate": false
+    },
+    {
+      "file": "0030_company_data_origin.sql",
+      "sha256": "6292c2c5a6a0e2d18f04a6ac500c0da84fef1b43ca9b3de14c504732e76dae99",
+      "candidate": false
+    },
+    {
+      "file": "0031_whatsapp_message_media.sql",
+      "sha256": "22b92e7dd307e3f2a3d089642fd6e69ff2da47e8d05f74f7ccc0c9f8c006a932",
+      "candidate": false
+    },
+    {
+      "file": "0032_package_handoffs_and_returns.sql",
+      "sha256": "8554f605b59183454f4b74e78e351c5e991499d631cae95e94aa4d5927480fba",
+      "candidate": false
+    },
+    {
+      "file": "0033_maintenance_runs.sql",
+      "sha256": "72c597510ef7fda9a84a02c4bd87a3a4ad6cb5a941362c347d2c477b9f71cd69",
+      "candidate": false
+    },
+    {
+      "file": "0034_notification_outbox_dispatch_marker.sql",
+      "sha256": "996ab823833183bc6b964b9b45d6b1726e1149eb5b74c5379362e3afc94e993a",
+      "candidate": false
+    },
+    {
+      "file": "0067_repair_outbox_dispatch_marker.sql",
+      "sha256": "660dbe9226514a66cdfedda2a2ed14300c960aee3e384908c28db73ccdf47014",
+      "candidate": true
+    },
+    {
+      "file": "0068_company_historical_data_origin.sql",
+      "sha256": "3bada03551f73882074930732205b70986e30ff450445b30152f80f22c34a8eb",
+      "candidate": true
+    },
+    {
+      "file": "0069_restore_maintenance_job_contract.sql",
+      "sha256": "54c8fb08e54524b89502c44db02de202ecaca159549ba1d38ee4a34ac2b361ec",
+      "candidate": true
+    },
+    {
+      "file": "0070_payment_evidence_entries.sql",
+      "sha256": "77be3213c6eef6529f0f0712afb219158dc1b3b2d42a1d94df13b705714ad4e1",
+      "candidate": true
+    },
+    {
+      "file": "0071_staff_admin_contract.sql",
+      "sha256": "41caa6f1b2cab4ab5ce603af67d24c31755154e6d99b9a3aeb68be91c8e7bbd9",
+      "candidate": true
+    },
+    {
+      "file": "0072_durable_bulk_assignment.sql",
+      "sha256": "96828ee76f44b7917736c7f1e322f7765424873aa8b1f7121c5459a95ffe7b7f",
+      "candidate": true
+    },
+    {
+      "file": "0073_bulk_maintenance_job_kind.sql",
+      "sha256": "0115de0f7773498fc44b105e2614600fe92df84267cd26c998e96b15ff1c6be4",
+      "candidate": true
+    },
+    {
+      "file": "0074_reviewed_nar_apply.sql",
+      "sha256": "076adf128c7a55b12572fd5415e698c78190fa744a0e1ae2790a652967094e9e",
+      "candidate": true
+    },
+    {
+      "file": "0075_nar_legacy_year_review.sql",
+      "sha256": "1770530e8dc0ab536ada101e64fe201afeb3fdb9d3a94390c12b4d3b770c8078",
+      "candidate": true
+    },
+    {
+      "file": "0076_document_scan_review_versions.sql",
+      "sha256": "ee11fedf4f2cc9d2faf4cd845a2e821b9829110fa253d210c2a46a799d902887",
+      "candidate": true
+    },
+    {
+      "file": "0077_document_analysis_evidence.sql",
+      "sha256": "e893065da028d8266e384c365fc8d5bd7eb5da7001872118dec9b5a72a08da75",
+      "candidate": true
+    },
+    {
+      "file": "0078_whatsapp_manual_intake.sql",
+      "sha256": "5ed629d5ac915e62f126fdc97929da9bcdd87814d451e6dd1117013fc280db69",
+      "candidate": true
+    },
+    {
+      "file": "0079_bulk_daily_maintenance.sql",
+      "sha256": "b3666b32fd4a92e49acd9c43959bfa751d1135f9b59b338eb6f5456d9a4732f7",
+      "candidate": true
+    },
+    {
+      "file": "0080_manual_handoff_provenance.sql",
+      "sha256": "f7f955a5b186aa4ed16fa95c136402e15c3f265fd6c81a90a0c42c0f9e53866d",
+      "candidate": true
+    },
+    {
+      "file": "0081_handoff_attempt_idempotency.sql",
+      "sha256": "dc4cc45e37c05f69e59f19ddd33b37c18960b525726d995ddfe0b864db3a8e45",
+      "candidate": true
+    },
+    {
+      "file": "0082_case_template_snapshots.sql",
+      "sha256": "29f13a7f58668c93f25141c90d17206332144a282833597ab43ec654b01dd231",
+      "candidate": true
+    }
+  ]
+}

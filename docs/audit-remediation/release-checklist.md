@@ -24,7 +24,7 @@ T00–T23 已有本地 source／測試證據，PR11為本分支的最後一包�
 - T21 owned synthetic10000cases／50000documents／164requests0errors，25users p95 Today525ms、Documents662ms；原 baseline／hardware／payload／query plans／cold-state限制在 performance.md。Staging budget／真角色／platform未驗收。
 - T22已執行 existing support regressions：10files120PASS0skip79.27s，actualPG17。涵蓋 incorporation不跳步／單次公司建立／concurrent completion，corporate-change批准版本／取消／audit，subscription renewal/cancel及SCR，received-but-unreviewed追件契約。這些是local contracts，不是完整fresh-role流程。
 - `test:e2e:audit -- --list` 實際 exit1：缺 `AUDIT_STAGING_ORIGIN`，沒有開啟staging browser／建立帳戶／發送登入信件。Runner只支援已有核准帳戶的fresh password landing，沒有把它命名為整個業務journey驗收。
-- B02 PDF.js官方修補／兩個lock／real browser parser：見 security-triage.md；其餘dependency advisories未被CI自動清除。
+- B02 PDF.js官方修補／兩個lock／real browser parser：見 security-triage.md；B03已按實際path相容patch，兩份audit0；完整gate證據在2026-10-02-b03-gates.json，仍不代表正式發布。
 
 ## 核心journey的真實驗收證據
 
@@ -49,7 +49,7 @@ T00–T23 已有本地 source／測試證據，PR11為本分支的最後一包�
 | Handoff             | 真destination contract／rights／receipt／timeout回件未提供                                 | Filing／internal-server owner：核准目的地、真reference／return protocol；manual與auto分開驗收             |
 | Scheduler           | CFtopology未知、staging單trigger／三次native ticks未驗證                                   | Operations：確認實際trigger/owner/schema/origin/recipient，保存平台delivery logs；manual不算              |
 | UAT／性能           | 真角色核心與支援journeys及staging budget尚缺                                               | 業務／Release：完成CSV31blocked及staging p95/cold-cache/完整工作日觀察                                    |
-| Dependency security | 仍有Bun/npm告警，見實際path triage                                                         | Security／Developer：逐path重現與最小兼容patch；不要用CI綠燈豁免                                          |
+| Dependency security | B03兩份當日audit0，source26ef92d；實際path／原始證據保留                                   | Security／Release：按固定Bun1.4.2／兩份lock重跑audit與platform gates；真corpus／provider另驗收            |
 
 ## 待正式批准時可執行的現有命令
 
@@ -69,3 +69,7 @@ npm run build
 ```
 
 不得在未釐清雙runtime／schema／sole-trigger前把兩個部署命令一起執行。正式回復見 rollback-runbook.md；所有單feature操作與provider contracts沿用現有runbooks。
+
+## B03 dependency gate refresh
+
+26ef92d3f7346e929271ff99a876c3ca19f48167: full230files2183PASS0skip414.52s/ChromeDEMO12PASS30.0s; both audits0; one Important self-link fixedRED2→GREEN4 and true-cwd npm10 installPASS. No newSQL or production mutation. See dependency-security-b03.md/b03-review.md/evidence/2026-10-02-b03-gates.json. Runtime/schema/provider/UAT gates above remainNO_GO.

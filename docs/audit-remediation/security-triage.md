@@ -1,4 +1,14 @@
-# 額外 B02：PDF.js 修補與剩餘 dependency gate
+# 額外 B02／B03：dependency 安全修補
+
+## 最新 B03 — 2026-10-02
+
+B03已修補以下當時餘下告警，兩份實際audit均0；`944f703`及review修正
+`7cdc8a0`／CI portability gate `26ef92d`。Bun固定1.4.2，保留所有框架pins及
+24小時guard。真正獨立cwd npm10 clean install721packages／0advisories；
+earlier prefix install因self-link已被拒絕作證據，RED2→GREEN4及一次review修正。
+詳見 `dependency-security-b03.md`／`b03-review.md`／B03原始audit及metadata。
+完整修正source CI及platform preview另記actual結果；正式發布仍因31blocked UAT／
+schema／provider gates為NO_GO，未部署。
 
 ## 已確認與修補
 
@@ -14,9 +24,9 @@ Actual Chrome real parser＋PDF worker synthetic text regression使用既有revi
 
 repo同時追蹤Bun與npm lock；CI使用Bun。舊npm lock未同步時仍報PDF vulnerability，不能把那個snapshot稱為patch失敗或改成假PASS。同步後npm audit：9packages（6high／2moderate／1low），沒有pdfjs-dist；authoritative Bun audit：13packages，亦沒有pdfjs-dist，但因transitive resolution不同有額外告警。兩份實際報告保留；**沒有聲稱零漏洞或用green CI豁免告警**。
 
-## 尚未修補的實際path／owner
+## B02當時的待修補path／owner（B03已修補上述版本）
 
-以下parent來自當時本地Bun lock；severity取各package最高。不是以名稱猜測是否可達。正式release仍需要逐advisory／entrypoint確認及最小兼容patch。
+以下parent來自當時本地Bun lock；severity取各package最高。不是以名稱猜測是否可達。B03已完成相容patch；正式release仍需要真corpus／provider及完整platform驗證。
 
 | Package                  | Severity | 實際parent／入口                                    | Owner／下一步                                                                                         |
 | ------------------------ | -------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
