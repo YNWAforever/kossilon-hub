@@ -1,4 +1,12 @@
-import { blocksRelease, type Finding, type PersistedFinding } from "./findings";
+import {
+  blocksRelease,
+  type AnalysisProvenance,
+  type Finding,
+  type PersistedFinding,
+} from "./findings";
+import { isBoundEvidence } from "./evidence-contract";
+import type { ExtractedEvidence } from "./text-extraction";
+import type { DocumentSummary } from "./repository";
 
 /**
  * What a reviewer is shown about a document, and what they must not be shown.
@@ -17,6 +25,7 @@ import { blocksRelease, type Finding, type PersistedFinding } from "./findings";
  */
 
 export type AnalysisRunState =
+  | "legacy-unverified"
   /** A run finished. An empty list here really does mean nothing was found. */
   | "analysed"
   /** Queued and not yet run. */
@@ -35,6 +44,12 @@ export type DocumentFindingsView = {
   state: AnalysisRunState;
   /** Ordered worst first. Empty is only meaningful when state is "analysed". */
   findings: PersistedFinding[];
+  provenance?: AnalysisProvenance | null;
+  evidence?: ExtractedEvidence | null;
+  document?: Pick<
+    DocumentSummary,
+    "id" | "currentVersionId" | "uploadStatus" | "scanVerdictSource" | "availability"
+  >;
 };
 
 export type ReviewSummary = {
@@ -82,6 +97,8 @@ export function isSilenceMeaningful(state: AnalysisRunState): boolean {
 
 /** What to tell a reviewer when there are no findings to show. */
 export function describeSilence(state: AnalysisRunState): string {
+  if (state === "legacy-unverified")
+    return "這份歷史分析欠缺當前版本引用，請重新檢查；這不代表文件沒有問題。";
   switch (state) {
     case "analysed":
       return "已完成自動檢查，未發現問題。";
@@ -127,13 +144,27 @@ export function viewFor(input: {
   fileName: string;
   state: AnalysisRunState;
   findings: readonly PersistedFinding[];
+  provenance?: AnalysisProvenance | null;
+  evidence?: ExtractedEvidence | null;
+  document?: DocumentFindingsView["document"];
 }): DocumentFindingsView {
   return {
     documentId: input.documentId,
     documentVersionId: input.documentVersionId,
     fileName: input.fileName,
-    state: input.state,
+    state:
+      input.state === "analysed" &&
+      input.provenance !== undefined &&
+      (!input.provenance ||
+        !isBoundEvidence(input.evidence) ||
+        input.evidence.documentVersionId !== input.documentVersionId)
+        ? "legacy-unverified"
+        : input.state,
     findings: orderPersisted(input.findings),
+    ...(input.provenance !== undefined
+      ? { provenance: input.provenance, evidence: input.evidence ?? null }
+      : {}),
+    ...(input.document ? { document: input.document } : {}),
   };
 }
 

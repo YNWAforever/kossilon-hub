@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { AnnualReturnEvidenceService } from "./evidence-service";
+import { DocumentVersionConflictError } from "@/features/documents/version-conflict";
 import {
   acceptAnnualReturnFilingReceiptForActor,
   reviewAnnualReturnEvidenceForActor,
@@ -34,6 +35,36 @@ function createService() {
 }
 
 describe("annual return evidence server-function authorization", () => {
+  it("returns HTTP 409 with a reload instruction for a replaced reviewed version", async () => {
+    const service = createService();
+    vi.mocked(service.reviewEvidence).mockRejectedValueOnce(new DocumentVersionConflictError());
+    const result = await reviewAnnualReturnEvidenceForActor(
+      staffActor,
+      {
+        caseId,
+        documentId,
+        expectedDocumentVersionId: "71000000-0000-4000-8000-000000000001",
+        decision: "verified",
+      },
+      { service },
+    ).catch((error) => error);
+    expect(result).toBeInstanceOf(Response);
+    expect(result.status).toBe(409);
+    expect(await result.json()).toMatchObject({
+      code: "version_conflict",
+      message: expect.stringMatching(/reload/i),
+    });
+  });
+  it("refuses an omitted client-observed version before invoking the domain service", async () => {
+    const service = createService();
+    const input = { caseId, documentId, decision: "verified" as const } as Parameters<
+      typeof reviewAnnualReturnEvidenceForActor
+    >[1];
+    await expect(
+      reviewAnnualReturnEvidenceForActor(staffActor, input, { service }),
+    ).rejects.toThrow();
+    expect(service.reviewEvidence).not.toHaveBeenCalled();
+  });
   it("rejects client evidence review before calling the service", async () => {
     const service = createService();
 
@@ -43,6 +74,7 @@ describe("annual return evidence server-function authorization", () => {
         {
           caseId,
           documentId,
+          expectedDocumentVersionId: "71000000-0000-4000-8000-000000000001",
           decision: "verified",
         },
         { service },
@@ -60,6 +92,7 @@ describe("annual return evidence server-function authorization", () => {
       {
         caseId,
         documentId,
+        expectedDocumentVersionId: "71000000-0000-4000-8000-000000000001",
         decision: "rejected",
         reason: "  Amount mismatch.  ",
       },
@@ -69,6 +102,7 @@ describe("annual return evidence server-function authorization", () => {
     expect(service.reviewEvidence).toHaveBeenCalledWith({
       caseId,
       documentId,
+      expectedDocumentVersionId: "71000000-0000-4000-8000-000000000001",
       decision: "rejected",
       reason: "Amount mismatch.",
       actorId: staffId,

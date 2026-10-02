@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Paperclip } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
+import { MessageIntake } from "./message-intake";
 import {
   CONVERSATION_MESSAGE_PAGE_SIZE,
   CONVERSATION_PAGE_SIZE,
@@ -19,16 +20,15 @@ import {
   listWhatsAppConversations,
 } from "../server-fns";
 
-const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations have been received yet.";
+const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations are recorded in your current scope.";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to load the WhatsApp inbox.";
 }
 
 /**
- * What the screen knows about the provider. An empty conversation list means a
- * different thing under each one, and only `live` licenses the claim that no
- * client has messaged the firm.
+ * These states describe configuration, never verified tenant health. An empty
+ * database page only describes the actor's recorded conversations.
  */
 type InboxConnection = "checking" | "unknown" | "blocked" | "simulated" | "live";
 
@@ -111,6 +111,10 @@ export function ProductionWhatsAppInbox() {
             for a page title above it, so PageHeader sits inside the rail. */}
         <div className="border-b p-4">
           <PageHeader eyebrow="Messaging" title="WhatsApp Inbox" />
+          <p className="mt-2 text-xs text-muted-foreground">
+            Configuration shows binding presence only. Connection health and live receipt
+            verification remain unverified.
+          </p>
         </div>
 
         {conversationsQuery.isError ? (
@@ -131,10 +135,11 @@ export function ProductionWhatsAppInbox() {
             className="border-b bg-status-yellow-soft p-4 text-sm text-status-yellow"
             role="status"
           >
-            <p className="font-medium">WhatsApp is not connected</p>
+            <p className="font-medium">WhatsApp setup is incomplete</p>
             <p className="mt-1">
-              Inbound messages are not being recorded until these bindings are configured:{" "}
-              {integrationQuery.data?.missingLiveEnvVars.join(", ")}.
+              Missing server bindings: {integrationQuery.data?.missingLiveEnvVars.join(", ")}.
+              Existing recorded conversations remain visible; signed inbound and actual delivery
+              need separate verification.
             </p>
           </div>
         ) : null}
@@ -274,7 +279,7 @@ export function ProductionWhatsAppInbox() {
                           客戶傳送了 {attachment.mediaType.toLowerCase()} 檔案
                           {attachment.hasDocument
                             ? "（已存檔）"
-                            : "（尚未能下載，需要客戶另行提交）"}
+                            : "（待 mapping、受限下載及隔離收件）"}
                         </p>
                       ))}
                     </div>
@@ -284,6 +289,12 @@ export function ProductionWhatsAppInbox() {
                       zero-variable template is sent instead -- no company name,
                       no due date. Showing the draft alone let a staff member
                       believe the client had been told something they had not. */}
+                  {message.direction === "inbound" ? (
+                    <MessageIntake
+                      messageId={message.id}
+                      canManageMapping={integrationQuery.data?.canManageMapping === true}
+                    />
+                  ) : null}
                   {message.sentAs === "template" ? (
                     <p className="mt-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow">
                       客戶收到的是範本訊息

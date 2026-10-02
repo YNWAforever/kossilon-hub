@@ -9,6 +9,7 @@ import type { WhatsAppRepository } from "@/features/whatsapp/repository";
 import { getAnnualReturnActionPermission } from "./permissions";
 import type { AnnualReturnRepository } from "./repository";
 import { hongKongBusinessDate } from "./workflow";
+import { ReadinessConflictError } from "./readiness";
 import {
   deriveProductionFollowUpDrafts,
   PRODUCTION_FOLLOW_UP_SOURCES,
@@ -22,6 +23,7 @@ import type { ProductionFollowUpRepository } from "./follow-up-repository";
 const followUpIdentityFields = {
   caseId: z.string().uuid(),
   entityId: z.string().uuid(),
+  expectedVersion: z.string().min(1).max(32_768),
 };
 
 export const annualReturnFollowUpSchema = z
@@ -97,7 +99,7 @@ function queueDetails(source: ProductionFollowUpSource) {
 
 async function sendFollowUpForActor(
   actor: AuthenticatedActor,
-  identity: ProductionFollowUpIdentity,
+  identity: ProductionFollowUpIdentity & { expectedVersion: string },
   dependencies: ProductionFollowUpDependencies,
 ) {
   const staff = staffIdentity(actor);
@@ -118,6 +120,12 @@ async function sendFollowUpForActor(
   if (!draft) {
     throw new Error(`No current ${identity.source} follow-up exists for this case.`);
   }
+  if (!currentCase.readiness?.sourceVersion || identity.expectedVersion !== draft.version)
+    throw new ReadinessConflictError();
+  if (draft.status === "unknown" || draft.status === "failed")
+    throw new Error(
+      "Follow-up requires provider reconciliation; do not retry an unknown or failed send from this draft.",
+    );
   if (draft.status === "blocked" || !draft.recipientName || !draft.phone) {
     throw new Error("Follow-up is blocked because no persisted recipient is available.");
   }
@@ -134,6 +142,7 @@ async function sendFollowUpForActor(
 
   const message = await dependencies.whatsAppRepository.queueOutboundTemplateMessage({
     actorId: staff.id,
+    actorAuthUserId: actor.authUserId,
     caseId: identity.caseId,
     toPhone: draft.phone,
     contactName: draft.recipientName,
@@ -149,6 +158,8 @@ async function sendFollowUpForActor(
     idempotencyKey: stableFollowUpIdempotencyKey(identity),
     followUpId: identity.entityId,
     metadata: {
+      approvedByAuthUserId: actor.authUserId,
+      approvalVersion: draft.version,
       source: identity.source,
       entityId: identity.entityId,
       documentId: identity.source === "annual-return" ? null : identity.entityId,
@@ -195,7 +206,7 @@ export async function dispatchSimulatedFollowUpIfNeeded(
   });
 }
 
-type SourceIdentityInput = { caseId: string; entityId: string };
+type SourceIdentityInput = { caseId: string; entityId: string; expectedVersion: string };
 
 export function sendAnnualReturnFollowUpForActor(
   actor: AuthenticatedActor,
@@ -226,7 +237,7 @@ export function sendPaymentProofFollowUpForActor(
 
 export function sendProductionFollowUpForActor(
   actor: AuthenticatedActor,
-  input: ProductionFollowUpIdentity,
+  input: ProductionFollowUpIdentity & { expectedVersion: string },
   dependencies: ProductionFollowUpDependencies,
 ) {
   const data = productionFollowUpSchema.parse(input);
@@ -237,6 +248,23 @@ export function sendProductionFollowUpForActor(
     return sendDocumentReviewFollowUpForActor(actor, data, dependencies);
   }
   return sendPaymentProofFollowUpForActor(actor, data, dependencies);
+}
+
+export async function withFollowUpVersionConflict<T>(command: () => Promise<T>): Promise<T> {
+  try {
+    return await command();
+  } catch (error) {
+    if (error instanceof ReadinessConflictError)
+      throw new Response(
+        JSON.stringify({
+          code: "version_conflict",
+          message:
+            "Follow-up changed. Reload the full recipient and message preview before approval.",
+        }),
+        { status: 409, headers: { "content-type": "application/json" } },
+      );
+    throw error;
+  }
 }
 
 const loadProductionFollowUpDependencies = createServerOnlyFn(async () => {
@@ -265,32 +293,34 @@ const loadProductionFollowUpDependencies = createServerOnlyFn(async () => {
   };
 });
 
-export const listProductionFollowUpDrafts = createServerFn({ method: "GET" }).handler(async () => {
-  const {
-    getRequest,
-    getCurrentAnnualReturnActor,
-    createAnnualReturnRepository,
-    createProductionFollowUpRepository,
-    createWhatsAppRepository,
-  } = await loadProductionFollowUpDependencies();
-  const actor = await getCurrentAnnualReturnActor(getRequest());
-  const annualReturnRepository = createAnnualReturnRepository();
-  const followUpRepository = createProductionFollowUpRepository();
-  const whatsAppRepository = createWhatsAppRepository();
-  try {
-    return await listProductionFollowUpDraftsForActor(actor, {
-      annualReturnRepository,
-      followUpRepository,
-      whatsAppRepository,
-    });
-  } finally {
-    await Promise.all([
-      annualReturnRepository.close(),
-      followUpRepository.close(),
-      whatsAppRepository.close(),
-    ]);
-  }
-});
+export const listProductionFollowUpDrafts = createServerFn({ method: "GET" })
+  .validator(z.undefined().or(z.object({}).strict()))
+  .handler(async () => {
+    const {
+      getRequest,
+      getCurrentAnnualReturnActor,
+      createAnnualReturnRepository,
+      createProductionFollowUpRepository,
+      createWhatsAppRepository,
+    } = await loadProductionFollowUpDependencies();
+    const actor = await getCurrentAnnualReturnActor(getRequest());
+    const annualReturnRepository = createAnnualReturnRepository();
+    const followUpRepository = createProductionFollowUpRepository();
+    const whatsAppRepository = createWhatsAppRepository();
+    try {
+      return await listProductionFollowUpDraftsForActor(actor, {
+        annualReturnRepository,
+        followUpRepository,
+        whatsAppRepository,
+      });
+    } finally {
+      await Promise.all([
+        annualReturnRepository.close(),
+        followUpRepository.close(),
+        whatsAppRepository.close(),
+      ]);
+    }
+  });
 
 export const sendProductionFollowUp = createServerFn({ method: "POST" })
   .validator(productionFollowUpSchema)
@@ -305,24 +335,26 @@ export const sendProductionFollowUp = createServerFn({ method: "POST" })
     } = await loadProductionFollowUpDependencies();
     const actor = await getCurrentAnnualReturnActor(getRequest());
     const sql = getSqlClient();
-    const result = await sql.begin(async (tx) => {
-      const annualReturnRepository = createAnnualReturnRepository({ sql: tx });
-      const followUpRepository = createProductionFollowUpRepository({ sql: tx });
-      const whatsAppRepository = createWhatsAppRepository({ sql: tx });
-      try {
-        return await sendProductionFollowUpForActor(actor, data, {
-          annualReturnRepository,
-          followUpRepository,
-          whatsAppRepository,
-        });
-      } finally {
-        await Promise.all([
-          annualReturnRepository.close(),
-          followUpRepository.close(),
-          whatsAppRepository.close(),
-        ]);
-      }
-    });
+    const result = await withFollowUpVersionConflict(() =>
+      sql.begin(async (tx) => {
+        const annualReturnRepository = createAnnualReturnRepository({ sql: tx });
+        const followUpRepository = createProductionFollowUpRepository({ sql: tx });
+        const whatsAppRepository = createWhatsAppRepository({ sql: tx });
+        try {
+          return await sendProductionFollowUpForActor(actor, data, {
+            annualReturnRepository,
+            followUpRepository,
+            whatsAppRepository,
+          });
+        } finally {
+          await Promise.all([
+            annualReturnRepository.close(),
+            followUpRepository.close(),
+            whatsAppRepository.close(),
+          ]);
+        }
+      }),
+    );
     const [{ currentProviderMode }, { dispatchDueNotificationsOnServer }] = await Promise.all([
       import("@/server/provider-mode"),
       import("@/features/notifications/runtime-dispatch"),

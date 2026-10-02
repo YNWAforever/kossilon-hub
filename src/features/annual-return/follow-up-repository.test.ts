@@ -20,7 +20,11 @@ describe("production follow-up repository", () => {
       /join annual_return_checklist_items checklist\s+on checklist\.document_id = d\.id/i,
     );
     expect(evidenceQuery).toMatch(
-      /join payments payment\s+on payment\.payment_proof_document_id = d\.id/i,
+      /join payments payment\s+on payment\.case_id = d\.case_id and payment\.company_id=d\.company_id/i,
     );
+    expect(evidenceQuery).toContain(
+      "payment.payment_proof_document_id=d.id or proof_return.payment_id=payment.id",
+    );
+    expect(queries.some((query) => query.includes("annual_return_audit_events ra"))).toBe(true);
   });
 });

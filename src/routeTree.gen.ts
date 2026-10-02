@@ -9,96 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WorkQueueRouteImport } from './routes/work-queue'
-import { Route as WhatsappRouteImport } from './routes/whatsapp'
-import { Route as TodayRouteImport } from './routes/today'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as PortalRouteImport } from './routes/portal'
-import { Route as PaymentsRouteImport } from './routes/payments'
-import { Route as OperationsRouteImport } from './routes/operations'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as IncorporationRouteImport } from './routes/incorporation'
-import { Route as ImportsRouteImport } from './routes/imports'
-import { Route as DocumentsRouteImport } from './routes/documents'
-import { Route as CorporateChangesRouteImport } from './routes/corporate-changes'
-import { Route as ClientsRouteImport } from './routes/clients'
-import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automation'
-import { Route as IncorporationIdRouteImport } from './routes/incorporation.$id'
-import { Route as CorporateChangesIdRouteImport } from './routes/corporate-changes.$id'
-import { Route as ClientsIdRouteImport } from './routes/clients.$id'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
+import { Route as ClientsRouteImport } from './routes/clients'
+import { Route as CorporateChangesRouteImport } from './routes/corporate-changes'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as ImportsRouteImport } from './routes/imports'
+import { Route as IncorporationRouteImport } from './routes/incorporation'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OperationsRouteImport } from './routes/operations'
+import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as PortalRouteImport } from './routes/portal'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TodayRouteImport } from './routes/today'
+import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as WorkQueueRouteImport } from './routes/work-queue'
 import { Route as AnnualReturnsIdRouteImport } from './routes/annual-returns.$id'
+import { Route as ClientsIdRouteImport } from './routes/clients.$id'
+import { Route as CorporateChangesIdRouteImport } from './routes/corporate-changes.$id'
+import { Route as IncorporationIdRouteImport } from './routes/incorporation.$id'
+import { Route as WhatsappAutomationRouteImport } from './routes/whatsapp.automation'
 
-const WorkQueueRoute = WorkQueueRouteImport.update({
-  id: '/work-queue',
-  path: '/work-queue',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WhatsappRoute = WhatsappRouteImport.update({
-  id: '/whatsapp',
-  path: '/whatsapp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TodayRoute = TodayRouteImport.update({
-  id: '/today',
-  path: '/today',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PortalRoute = PortalRouteImport.update({
-  id: '/portal',
-  path: '/portal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaymentsRoute = PaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OperationsRoute = OperationsRouteImport.update({
-  id: '/operations',
-  path: '/operations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IncorporationRoute = IncorporationRouteImport.update({
-  id: '/incorporation',
-  path: '/incorporation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImportsRoute = ImportsRouteImport.update({
-  id: '/imports',
-  path: '/imports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocumentsRoute = DocumentsRouteImport.update({
-  id: '/documents',
-  path: '/documents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CorporateChangesRoute = CorporateChangesRouteImport.update({
-  id: '/corporate-changes',
-  path: '/corporate-changes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClientsRoute = ClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnnualReturnsRoute = AnnualReturnsRouteImport.update({
-  id: '/annual-returns',
-  path: '/annual-returns',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -106,35 +41,100 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AnnualReturnsRoute = AnnualReturnsRouteImport.update({
+  id: '/annual-returns',
+  path: '/annual-returns',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WhatsappAutomationRoute = WhatsappAutomationRouteImport.update({
-  id: '/automation',
-  path: '/automation',
-  getParentRoute: () => WhatsappRoute,
+const ClientsRoute = ClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const IncorporationIdRoute = IncorporationIdRouteImport.update({
+const CorporateChangesRoute = CorporateChangesRouteImport.update({
+  id: '/corporate-changes',
+  path: '/corporate-changes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportsRoute = ImportsRouteImport.update({
+  id: '/imports',
+  path: '/imports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IncorporationRoute = IncorporationRouteImport.update({
+  id: '/incorporation',
+  path: '/incorporation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsRoute = OperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WhatsappRoute = WhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkQueueRoute = WorkQueueRouteImport.update({
+  id: '/work-queue',
+  path: '/work-queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnualReturnsIdRoute = AnnualReturnsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => IncorporationRoute,
-} as any)
-const CorporateChangesIdRoute = CorporateChangesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => CorporateChangesRoute,
+  getParentRoute: () => AnnualReturnsRoute,
 } as any)
 const ClientsIdRoute = ClientsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ClientsRoute,
 } as any)
-const AnnualReturnsIdRoute = AnnualReturnsIdRouteImport.update({
+const CorporateChangesIdRoute = CorporateChangesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AnnualReturnsRoute,
+  getParentRoute: () => CorporateChangesRoute,
+} as any)
+const IncorporationIdRoute = IncorporationIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => IncorporationRoute,
+} as any)
+const WhatsappAutomationRoute = WhatsappAutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
+  getParentRoute: () => WhatsappRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -300,102 +300,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/work-queue': {
-      id: '/work-queue'
-      path: '/work-queue'
-      fullPath: '/work-queue'
-      preLoaderRoute: typeof WorkQueueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/whatsapp': {
-      id: '/whatsapp'
-      path: '/whatsapp'
-      fullPath: '/whatsapp'
-      preLoaderRoute: typeof WhatsappRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/today': {
-      id: '/today'
-      path: '/today'
-      fullPath: '/today'
-      preLoaderRoute: typeof TodayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/portal': {
-      id: '/portal'
-      path: '/portal'
-      fullPath: '/portal'
-      preLoaderRoute: typeof PortalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/payments': {
-      id: '/payments'
-      path: '/payments'
-      fullPath: '/payments'
-      preLoaderRoute: typeof PaymentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operations': {
-      id: '/operations'
-      path: '/operations'
-      fullPath: '/operations'
-      preLoaderRoute: typeof OperationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/incorporation': {
-      id: '/incorporation'
-      path: '/incorporation'
-      fullPath: '/incorporation'
-      preLoaderRoute: typeof IncorporationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/imports': {
-      id: '/imports'
-      path: '/imports'
-      fullPath: '/imports'
-      preLoaderRoute: typeof ImportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/documents': {
-      id: '/documents'
-      path: '/documents'
-      fullPath: '/documents'
-      preLoaderRoute: typeof DocumentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/corporate-changes': {
-      id: '/corporate-changes'
-      path: '/corporate-changes'
-      fullPath: '/corporate-changes'
-      preLoaderRoute: typeof CorporateChangesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/clients': {
-      id: '/clients'
-      path: '/clients'
-      fullPath: '/clients'
-      preLoaderRoute: typeof ClientsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/annual-returns': {
-      id: '/annual-returns'
-      path: '/annual-returns'
-      fullPath: '/annual-returns'
-      preLoaderRoute: typeof AnnualReturnsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -405,33 +314,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/annual-returns': {
+      id: '/annual-returns'
+      path: '/annual-returns'
+      fullPath: '/annual-returns'
+      preLoaderRoute: typeof AnnualReturnsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/whatsapp/automation': {
-      id: '/whatsapp/automation'
-      path: '/automation'
-      fullPath: '/whatsapp/automation'
-      preLoaderRoute: typeof WhatsappAutomationRouteImport
-      parentRoute: typeof WhatsappRoute
+    '/clients': {
+      id: '/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof ClientsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/incorporation/$id': {
-      id: '/incorporation/$id'
-      path: '/$id'
-      fullPath: '/incorporation/$id'
-      preLoaderRoute: typeof IncorporationIdRouteImport
-      parentRoute: typeof IncorporationRoute
+    '/corporate-changes': {
+      id: '/corporate-changes'
+      path: '/corporate-changes'
+      fullPath: '/corporate-changes'
+      preLoaderRoute: typeof CorporateChangesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/corporate-changes/$id': {
-      id: '/corporate-changes/$id'
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/imports': {
+      id: '/imports'
+      path: '/imports'
+      fullPath: '/imports'
+      preLoaderRoute: typeof ImportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/incorporation': {
+      id: '/incorporation'
+      path: '/incorporation'
+      fullPath: '/incorporation'
+      preLoaderRoute: typeof IncorporationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations': {
+      id: '/operations'
+      path: '/operations'
+      fullPath: '/operations'
+      preLoaderRoute: typeof OperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/whatsapp': {
+      id: '/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/work-queue': {
+      id: '/work-queue'
+      path: '/work-queue'
+      fullPath: '/work-queue'
+      preLoaderRoute: typeof WorkQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/annual-returns/$id': {
+      id: '/annual-returns/$id'
       path: '/$id'
-      fullPath: '/corporate-changes/$id'
-      preLoaderRoute: typeof CorporateChangesIdRouteImport
-      parentRoute: typeof CorporateChangesRoute
+      fullPath: '/annual-returns/$id'
+      preLoaderRoute: typeof AnnualReturnsIdRouteImport
+      parentRoute: typeof AnnualReturnsRoute
     }
     '/clients/$id': {
       id: '/clients/$id'
@@ -440,12 +426,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsIdRouteImport
       parentRoute: typeof ClientsRoute
     }
-    '/annual-returns/$id': {
-      id: '/annual-returns/$id'
+    '/corporate-changes/$id': {
+      id: '/corporate-changes/$id'
       path: '/$id'
-      fullPath: '/annual-returns/$id'
-      preLoaderRoute: typeof AnnualReturnsIdRouteImport
-      parentRoute: typeof AnnualReturnsRoute
+      fullPath: '/corporate-changes/$id'
+      preLoaderRoute: typeof CorporateChangesIdRouteImport
+      parentRoute: typeof CorporateChangesRoute
+    }
+    '/incorporation/$id': {
+      id: '/incorporation/$id'
+      path: '/$id'
+      fullPath: '/incorporation/$id'
+      preLoaderRoute: typeof IncorporationIdRouteImport
+      parentRoute: typeof IncorporationRoute
+    }
+    '/whatsapp/automation': {
+      id: '/whatsapp/automation'
+      path: '/automation'
+      fullPath: '/whatsapp/automation'
+      preLoaderRoute: typeof WhatsappAutomationRouteImport
+      parentRoute: typeof WhatsappRoute
     }
   }
 }

@@ -11,6 +11,7 @@ import type {
 export type BuildAnnualReturnWhatsAppReminderRequestInput = {
   case_: AnnualReturnCase;
   actorId: string;
+  actorAuthUserId?: string;
   recipientName: string;
   recipientPhone: string;
   today: string;
@@ -63,6 +64,7 @@ export function annualReturnReminderIdempotencyKey(input: {
 export function buildAnnualReturnWhatsAppReminderRequest({
   case_,
   actorId,
+  actorAuthUserId,
   recipientName,
   recipientPhone,
   today,
@@ -90,6 +92,7 @@ export function buildAnnualReturnWhatsAppReminderRequest({
     },
     whatsAppMessage: {
       actorId,
+      ...(actorAuthUserId ? { actorAuthUserId } : {}),
       caseId: case_.id,
       toPhone: recipientPhone,
       contactName: recipientName,

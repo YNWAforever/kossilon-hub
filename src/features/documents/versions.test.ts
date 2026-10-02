@@ -52,6 +52,11 @@ describe("contentIdentityOf", () => {
 });
 
 describe("canCiteInManifest", () => {
+  it("refuses a superseded version even when its historical bytes were verified", () => {
+    expect(
+      canCiteInManifest(version({ verifiedChecksum: HASH_A, supersededByVersionId: "v2" })),
+    ).toBe(false);
+  });
   it("accepts a version whose stored bytes were hashed", () => {
     expect(canCiteInManifest(version({ verifiedChecksum: HASH_B }))).toBe(true);
   });

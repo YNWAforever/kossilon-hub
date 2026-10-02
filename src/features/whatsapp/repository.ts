@@ -6,6 +6,13 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { enqueueNotification } from "@/features/notifications/outbox";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { documentScopeForStaffActor } from "@/features/documents/authorization";
+import {
+  assertAnnualReturnActionAllowed,
+  type AnnualReturnActorRole,
+} from "@/features/annual-return/permissions";
+import { classifyWoztellWebhookEvent } from "./woztell";
 // Both caps are bounded because a WhatsApp history has no natural end: an
 // unbounded thread query would grow as the provider keeps delivering.
 import {
@@ -71,6 +78,7 @@ export type WhatsAppWebhookEventRecord = {
 
 export type QueueOutboundTemplateMessageInput = {
   actorId: string;
+  actorAuthUserId?: string;
   caseId: string;
   toPhone: string;
   toWhatsAppId?: string | null;
@@ -132,10 +140,12 @@ const WHATSAPP_STATUS_RANK: Readonly<Record<string, number>> = {
 };
 
 export type ListConversationsInput = {
+  actor: AuthenticatedActor;
   limit?: number;
 };
 
 export type ListConversationMessagesInput = {
+  actor: AuthenticatedActor;
   contactId: string;
   limit?: number;
 };
@@ -169,7 +179,7 @@ export type WhatsAppRepository = {
     sentAs?: "text" | "template";
     sentTemplateName?: string | null;
   }): Promise<boolean>;
-  listConversations(input?: ListConversationsInput): Promise<WhatsAppConversation[]>;
+  listConversations(input: ListConversationsInput): Promise<WhatsAppConversation[]>;
   listConversationMessages(
     input: ListConversationMessagesInput,
   ): Promise<WhatsAppConversationMessage[]>;
@@ -210,12 +220,6 @@ type ContactRecord = {
 type InboundMatch = {
   companyId: string | null;
   caseId: string | null;
-};
-
-type OutboundContextRow = {
-  company_id: string | null;
-  case_id: string | null;
-  case_company_id: string | null;
 };
 
 type ActiveCaseRow = {
@@ -665,32 +669,21 @@ export function createWhatsAppRepository(
     let companyId: string | null = null;
     let caseId: string | null = null;
 
-    const outboundRows = await client<OutboundContextRow[]>`
-      select
-        wm.company_id,
-        case
-          when arc.id is not null
-            and arc.current_status not in ('Filed', 'Completed')
-          then wm.case_id
-          else null
-        end as case_id,
-        arc.company_id as case_company_id
+    const companies = await client<{ company_id: string }[]>`
+      select distinct c.id company_id
       from whatsapp_messages wm
       left join annual_return_cases arc on arc.id = wm.case_id
+      join companies c on c.id=coalesce(wm.company_id,arc.company_id)
       where wm.contact_id = ${contact.id}
         and wm.direction = 'outbound'
-        and (wm.company_id is not null or wm.case_id is not null)
-      order by wm.created_at desc
-      limit 1
+        and c.data_origin='client'
+      union
+      select id from companies where id=${contact.companyId}::uuid and data_origin='client'
     `;
-    const [outbound] = outboundRows;
-    const outboundCompanyId = outbound ? (outbound.company_id ?? outbound.case_company_id) : null;
-
-    companyId = outboundCompanyId ?? contact.companyId;
-
-    if (outbound?.case_id) {
-      caseId = outbound.case_id;
-    }
+    // Recency cannot identify which company a shared phone's sender means.
+    // Leave this individual inbound message in Admin intake for a human decision.
+    if (companies.length !== 1) return { companyId: null, caseId: null };
+    companyId = companies[0].company_id;
 
     if (!caseId && companyId) {
       const activeCaseRows = await client<ActiveCaseRow[]>`
@@ -699,11 +692,11 @@ export function createWhatsAppRepository(
         where company_id = ${companyId}
           and current_status not in ('Filed', 'Completed')
         order by filing_due_date asc, created_at desc
-        limit 1
+        limit 2
       `;
       const [activeCase] = activeCaseRows;
 
-      if (activeCase) {
+      if (activeCaseRows.length === 1 && activeCase) {
         caseId = activeCase.id;
         companyId = activeCase.company_id;
       }
@@ -822,18 +815,17 @@ export function createWhatsAppRepository(
       // the reference. The unique constraint makes a redelivered webhook a no-op
       // rather than showing the client sending the same file twice.
       //
-      // Recording the reference is all this can do: fetching the bytes needs a
-      // WOZTELL media-download endpoint and none appears in the webhook
-      // documentation the fixtures are copied from.
-      // BLOCKED_INTEGRATION: whatsapp-media-download.
+      // Only the source reference is recorded here. Explicit staff intake uses
+      // universal fileId and the quarantine/version lifecycle; legacy waMediaId
+      // remains blocked pending provider evidence.
       if (inserted && input.attachments.length > 0) {
         for (const attachment of input.attachments) {
           await tx`
             insert into whatsapp_message_media (
-              message_id, provider_media_id, media_type, position
+              message_id, provider_media_id, media_type, position, provider_media_kind
             ) values (
               ${inserted.id}, ${attachment.providerMediaId}, ${attachment.mediaType},
-              ${attachment.position}
+              ${attachment.position}, ${attachment.providerMediaKind ?? "legacy-wa-media"}
             )
             on conflict do nothing
           `;
@@ -957,6 +949,41 @@ export function createWhatsAppRepository(
       if (!caseRow) {
         throw new Error("Annual return case not found for WhatsApp template message.");
       }
+      await tx`select id from companies where id=${caseRow.company_id} for update`;
+      const [scope] = await tx<
+        {
+          company_id: string;
+          company_name: string;
+          assigned_team_id: string;
+          owner_id: string;
+          reviewer_id: string | null;
+          current_status: string;
+          locked_at: string | null;
+        }[]
+      >`select a.company_id,c.company_name,c.assigned_team_id,a.owner_id,a.reviewer_id,a.current_status,a.locked_at from annual_return_cases a join companies c on c.id=a.company_id where a.id=${input.caseId} for update of a`;
+      if (
+        !scope ||
+        scope.company_id !== caseRow.company_id ||
+        scope.locked_at ||
+        ["Filed", "Completed"].includes(scope.current_status)
+      )
+        throw new Error("Case is locked, closed or changed; refresh before queueing.");
+      const [staff] = await tx<
+        { role: AnnualReturnActorRole; team_id: string | null }[]
+      >`select u.role,u.team_id from users u join staff_profiles sp on sp.user_id=u.id where u.id=${input.actorId} and u.active and sp.active and u.role in ('Admin','Manager','Staff') and sp.role=u.role and sp.team_id is not distinct from u.team_id and (${input.actorAuthUserId ?? null}::text is null or sp.auth_user_id=${input.actorAuthUserId ?? null}) for share of u,sp`;
+      if (!staff)
+        throw new Error("Forbidden: current verified staff identity is required to queue.");
+      assertAnnualReturnActionAllowed(
+        { id: input.actorId, role: staff.role, teamId: staff.team_id, active: true },
+        {
+          id: input.caseId,
+          companyName: scope.company_name,
+          companyTeamId: scope.assigned_team_id,
+          ownerId: scope.owner_id,
+          reviewerId: scope.reviewer_id,
+        },
+        "record_reminder",
+      );
 
       if (input.idempotencyKey) {
         await tx`
@@ -1105,8 +1132,20 @@ export function createWhatsAppRepository(
   async function recordWebhookEvent(
     input: RecordWebhookEventInput,
   ): Promise<WhatsAppWebhookEventRecord> {
-    const processedAt = input.processingStatus === "received" ? null : new Date().toISOString();
-    const rows = await sql<WebhookEventRow[]>`
+    let statusEvent: NormalizedWoztellStatusEvent | undefined;
+    if (input.signatureValid) {
+      try {
+        const classified = classifyWoztellWebhookEvent(input.payload);
+        if (classified.kind === "status") statusEvent = classified.status;
+      } catch {
+        /* Preserve malformed source as a failed audit event. */
+      }
+    }
+    return withTransaction(sql, async (tx) => {
+      if (statusEvent)
+        await tx`select pg_advisory_xact_lock(hashtext('woztell:receipt'),hashtext(${statusEvent.providerMessageId}))`;
+      const processedAt = input.processingStatus === "received" ? null : new Date().toISOString();
+      const rows = await tx<WebhookEventRow[]>`
       insert into whatsapp_webhook_events (
         provider,
         provider_event_id,
@@ -1121,7 +1160,7 @@ export function createWhatsAppRepository(
         'woztell',
         ${input.providerEventId},
         ${input.signatureValid},
-        ${sql.json(toJsonValue(input.payload))},
+        ${tx.json(toJsonValue(input.payload))},
         ${input.normalizedMessageId},
         ${input.processingStatus},
         ${input.errorMessage},
@@ -1135,6 +1174,8 @@ export function createWhatsAppRepository(
                     processing_status = excluded.processing_status,
                     error_message = excluded.error_message,
                     processed_at = excluded.processed_at
+      where excluded.signature_valid
+        and (not whatsapp_webhook_events.signature_valid or whatsapp_webhook_events.payload=excluded.payload)
       returning
         id,
         provider,
@@ -1148,17 +1189,36 @@ export function createWhatsAppRepository(
         processed_at::text as processed_at
     `;
 
-    return mapWebhookEvent(rows[0]);
+      if (!rows[0]) {
+        // An invalid or conflicting duplicate cannot replace an authenticated
+        // source. Retain its actual raw payload as a separate failed audit row.
+        const [collision] = await tx<
+          WebhookEventRow[]
+        >`insert into whatsapp_webhook_events(provider,provider_event_id,signature_valid,payload,normalized_message_id,processing_status,error_message,processed_at) values('woztell',null,${input.signatureValid},${tx.json(toJsonValue(input.payload))},null,'failed','Provider event ID collision; original signed source retained.',now()) returning *,received_at::text received_at,processed_at::text processed_at`;
+        return mapWebhookEvent(collision);
+      }
+      if (statusEvent) {
+        const applied = await recordMessageStatusEvent(statusEvent, tx);
+        if (applied.matched) {
+          const [updated] = await tx<
+            WebhookEventRow[]
+          >`update whatsapp_webhook_events set normalized_message_id=${applied.messageId},processing_status='processed',error_message=null,processed_at=now() where id=${rows[0].id} and signature_valid returning *,received_at::text received_at,processed_at::text processed_at`;
+          return mapWebhookEvent(updated);
+        }
+      }
+      return mapWebhookEvent(rows[0]);
+    });
   }
 
   async function recordMessageStatusEvent(
     input: NormalizedWoztellStatusEvent,
+    client: QueryClient = sql,
   ): Promise<WhatsAppStatusUpdateResult> {
     const rank = WHATSAPP_STATUS_RANK[input.status] ?? 0;
     // The timestamp column is set with coalesce so the *first* receipt of a kind
     // wins; the status column only moves forward. WOZTELL gives no ordering
     // guarantee, and a redelivered DELIVERED after a READ must be a no-op.
-    const rows = await sql<{ id: string; status: WhatsAppMessageStatus }[]>`
+    const rows = await client<{ id: string; status: WhatsAppMessageStatus }[]>`
       update whatsapp_messages
       set
         status = case
@@ -1204,14 +1264,10 @@ export function createWhatsAppRepository(
    * sent. Without this the row's provider_message_id stays null forever and no
    * DELIVERED or READ receipt can ever match it.
    *
-   * KNOWN RACE: this commits on the dispatch path while status webhooks arrive
-   * independently. A SENT receipt that lands before this commits finds
-   * provider_message_id still null, does not match, and — correctly, per the ack
-   * discipline — is acknowledged anyway, so that receipt is lost. It is largely
-   * self-healing because the `coalesce(sent_at, now())` below backfills the
-   * timestamp, but WOZTELL's own SENT time and the audit row are gone. DELIVERED
-   * and READ arrive later and are unaffected. Widen this only with evidence: the
-   * fix is a short retry on an unmatched SENT, not a lock.
+   * Shares the provider-ID advisory lock with status audit ingestion. A signed
+   * receipt arriving first stays in the ledger and is replayed here; one arriving
+   * after linkage is reconciled while its ledger row is written. No send retry,
+   * receipt fabrication or change to outbox fencing is involved.
    */
   async function attachProviderMessageId(input: {
     messageId: string;
@@ -1219,7 +1275,9 @@ export function createWhatsAppRepository(
     sentAs?: "text" | "template";
     sentTemplateName?: string | null;
   }): Promise<boolean> {
-    const rows = await sql<{ id: string }[]>`
+    return withTransaction(sql, async (tx) => {
+      await tx`select pg_advisory_xact_lock(hashtext('woztell:receipt'),hashtext(${input.providerMessageId}))`;
+      const rows = await tx<{ id: string }[]>`
       update whatsapp_messages
       set provider_message_id = ${input.providerMessageId},
           status = case when status = 'queued' then 'sent' else status end,
@@ -1235,15 +1293,30 @@ export function createWhatsAppRepository(
       returning id
     `;
 
-    return rows.length > 0;
+      const [linked] = await tx<
+        { id: string }[]
+      >`select id from whatsapp_messages where id=${input.messageId} and provider='woztell' and direction='outbound' and provider_message_id=${input.providerMessageId}`;
+      if (linked) {
+        // At most three classes are replayed; every signed raw event stays in the
+        // audit ledger, and duplicates never move a status backwards.
+        const receipts = await tx<
+          WebhookEventRow[]
+        >`select distinct on (upper(payload->>'type')) * from whatsapp_webhook_events where provider='woztell' and signature_valid and processing_status='ignored' and upper(payload->>'type') in ('SENT','DELIVERED','READ') and coalesce(payload->'data'->>'messageId',payload->>'messageId')=${input.providerMessageId} order by upper(payload->>'type'),received_at,id`;
+        for (const receipt of receipts) {
+          const event = classifyWoztellWebhookEvent(receipt.payload);
+          if (event.kind === "status") await recordMessageStatusEvent(event.status, tx);
+        }
+        await tx`update whatsapp_webhook_events set normalized_message_id=${linked.id},processing_status='processed',error_message=null,processed_at=now() where provider='woztell' and signature_valid and processing_status='ignored' and upper(payload->>'type') in ('SENT','DELIVERED','READ') and coalesce(payload->'data'->>'messageId',payload->>'messageId')=${input.providerMessageId}`;
+      }
+      return rows.length > 0;
+    });
   }
 
   // `coalesce(sent_at, received_at, created_at)` here has to stay in step with
   // conversationMessageOccurredAt() in ./conversations — the same rule decides
   // which rows a limit keeps and how the thread reads once it reaches the browser.
-  async function listConversations(
-    input: ListConversationsInput = {},
-  ): Promise<WhatsAppConversation[]> {
+  async function listConversations(input: ListConversationsInput): Promise<WhatsAppConversation[]> {
+    documentScopeForStaffActor(input.actor, "access");
     const limit = input.limit ?? CONVERSATION_PAGE_SIZE;
     const rows = await sql<ConversationRow[]>`
       -- One pass over whatsapp_messages. Two distinct-on CTEs read the same rows
@@ -1280,7 +1353,11 @@ export function createWhatsAppRepository(
               m.id desc
           ) as case_company_id
         from whatsapp_messages m
+        left join companies scoped_company on scoped_company.id=m.company_id
+        left join annual_return_cases scoped_case on scoped_case.id=m.case_id and scoped_case.company_id=m.company_id
         where m.contact_id is not null
+          and (${input.actor.role === "Admin"} or scoped_company.assigned_team_id=${input.actor.teamId}::uuid
+            or (m.case_id is not null and (scoped_case.owner_id=${input.actor.userId}::uuid or scoped_case.reviewer_id=${input.actor.userId}::uuid)))
       ),
       latest as (
         select
@@ -1319,6 +1396,7 @@ export function createWhatsAppRepository(
   async function listConversationMessages(
     input: ListConversationMessagesInput,
   ): Promise<WhatsAppConversationMessage[]> {
+    documentScopeForStaffActor(input.actor, "access");
     const limit = input.limit ?? CONVERSATION_MESSAGE_PAGE_SIZE;
     // Newest first so the limit keeps the most recent slice of a long thread;
     // sortConversationMessagesOldestFirst() restores reading order for display.
@@ -1353,6 +1431,10 @@ export function createWhatsAppRepository(
         sent_at::text as sent_at
       from whatsapp_messages
       where contact_id = ${input.contactId}::uuid
+        and (${input.actor.role === "Admin"} or exists (
+          select 1 from companies c left join annual_return_cases a on a.id=whatsapp_messages.case_id and a.company_id=c.id
+          where c.id=whatsapp_messages.company_id and (c.assigned_team_id=${input.actor.teamId}::uuid
+            or (whatsapp_messages.case_id is not null and (a.owner_id=${input.actor.userId}::uuid or a.reviewer_id=${input.actor.userId}::uuid)))))
       order by coalesce(sent_at, received_at, created_at) desc, id desc
       limit ${limit}
     `;

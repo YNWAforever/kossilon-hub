@@ -45,16 +45,11 @@ export function documentSafetyOf(input: {
 /**
  * Whether these bytes may be served to this actor.
  *
- * `unknown` is readable by an Admin and by nobody else. That is a corrected,
- * narrower policy rather than a grandfathered permission: the fake verdict grants
- * nothing, the bytes and every historical staff decision are preserved, and an
- * operator retains the access they need to handle an incident or export the file
- * for a real scan. Everyone else waits for a genuine verdict.
+ * Ordinary preview/download requires a genuine current scan for every role.
+ * Unknown files remain visible as metadata for recovery and retain their bytes.
  */
 export function canServeDocumentBytes(actor: AuthenticatedActor, safety: DocumentSafety): boolean {
-  if (safety === "verified") return true;
-  if (safety === "unknown") return actor.role === "Admin";
-  return false;
+  return actor.active && safety === "verified";
 }
 
 export function assertDocumentServable(actor: AuthenticatedActor, safety: DocumentSafety): void {
@@ -73,9 +68,7 @@ export function assertDocumentServable(actor: AuthenticatedActor, safety: Docume
 /**
  * Whether a business approval may be recorded against this file.
  *
- * Stricter than serving: an Admin may open an unknown-safety file to deal with
- * it, but nobody may newly approve one, because an approval is what later
- * releases the document to a client and into a filing package.
+ * Business review requires the same verified safety as ordinary serving.
  */
 export function canApproveDocument(safety: DocumentSafety): boolean {
   return safety === "verified";

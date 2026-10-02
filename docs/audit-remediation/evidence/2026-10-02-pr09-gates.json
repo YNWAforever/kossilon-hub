@@ -1,0 +1,161 @@
+{
+  "assignmentDate": "2026-10-01",
+  "verifiedDate": "2026-10-02",
+  "build": "44ad90b034e000931b6113324e192895381dee9c",
+  "base": "99a0e1cd80dc96ae3b1c3db3c1c0ecbf40954991",
+  "tasks": ["T18", "T19"],
+  "findings": ["F11", "F12", "F13"],
+  "environment": "LOCAL ONLY Windows Node24.18.0/Bun1.3.14/actual Postgres17 localhost55441/kossilon_pr02_ci",
+  "gates": [
+    {
+      "command": "npm run test with both explicit isolated DB variables and DATABASE_SSL=disable",
+      "result": "215files2134pass0fail0skip",
+      "seconds": 262.89
+    },
+    {
+      "command": "npm run test -- handoff.integration.test.ts case-handoff.interaction.test.tsx",
+      "result": "2files8pass0skip",
+      "seconds": 7.46
+    },
+    {
+      "result": "PASS",
+      "command": "npm run typecheck"
+    },
+    {
+      "result": "PASS 0errors1existingwarning; initial formatting failure retained",
+      "command": "npm run lint"
+    },
+    {
+      "result": "PASS offline38reads0network0writes; genuine external gates BLOCKED",
+      "command": "npm run verify:firm -- --dry-run"
+    },
+    {
+      "result": "PASS",
+      "command": "npm run build; compiled cloudflare:scheduled hook"
+    },
+    {
+      "result": "PASS unchanged12routes",
+      "command": "npm run verify:dev-server-imports"
+    }
+  ],
+  "review": {
+    "deferredMinor": [
+      "UUID.bin original filename/MIME mapping; destination protocol absent",
+      "bulk unknown owner workflow explanation"
+    ],
+    "fixes": [
+      "active attempts retain immutable history",
+      "attachment existing document scope",
+      "submitted current approval readiness",
+      "NULL and unknown release refusal",
+      "seconds input precision",
+      "actual PG Date DTO ISO normalization"
+    ],
+    "declined": "Genuine providers/Auth/platform download/productionDDL/backup restore/native ticks/business receipt/real UAT/T20 mobile/T21 performance remain owner gates",
+    "importantFixed": 6,
+    "method": "One fresh package review; one RED/GREEN fix pass, no rereview",
+    "critical": 0
+  },
+  "schema": "0079/0080/0081 local-only;49source IDs vs last observed production66 historical IDs. Synthetic populated rehearsal preserves NULL/history, unknown outstanding, immutable manifests, active-attempt uniqueness and rollback; no production backup restore.",
+  "uat": {
+    "notRun": 7,
+    "HANDOFF02": "blocked genuine timeout/reconcile/version intake; local contracts pass",
+    "localOnlyPass": 19,
+    "originalCases": 50,
+    "blocked": 24,
+    "HANDOFF01": "blocked actual external receipt; local contracts pass"
+  },
+  "production": "Unchanged; no migration, env write, deployment, actual send, invite, role grant or destination call",
+  "performance": "Suite seconds are verification timing, not runtime p95 or product improvement",
+  "blockers": [
+    "Filing integration owner: verified destination protocol/receipt/idempotency/controlled staging recipient",
+    "Storage/scanner owner: genuine current UUID/SHA controlled R2 verdict",
+    "Auth owner: fresh controlled roles/revocation",
+    "Release owner: reviewed schema lineage/order/backup/rollback/exact new authority/platform stream",
+    "Operations owner: three genuine native scheduler ticks"
+  ],
+  "logs": [
+    {
+      "sha256": "76978df86edccf5fc07968fcc61d92337e5b026177b47192664124a48d46547c",
+      "file": "t19-destination-red.log"
+    },
+    {
+      "sha256": "45b2a48c20fdc33eb90968de3a7f0012ddb10809a2025e7d2c5b7f98751cec7b",
+      "file": "t19-destination-green.log"
+    },
+    {
+      "sha256": "ac42bf1b656ed9c32e84792a5d6e24f393bc13baec1dd5715076d656abd0fcc7",
+      "file": "t19-task-final-green.log"
+    },
+    {
+      "sha256": "b6d882640d45f4e5a308cf4bc41decf50088d1dba01507a5457f476ef54dae49",
+      "file": "pr09-full-test-first.log"
+    },
+    {
+      "sha256": "8313bd60466bfbaa0c5b9862223eabf4adbd52ab4c1b5b21982947a322f89db1",
+      "file": "pr09-full-test-local-pg.log"
+    },
+    {
+      "sha256": "0334b93a596cf969e7622a101fd1c6b172c93639a661d093928cc557dee1ae1d",
+      "file": "pr09-review-red.log"
+    },
+    {
+      "sha256": "29dcdc40d7fd306de37f5072aa03d478ffa2bd40c6db56cc4fcd800da2b4a0b0",
+      "file": "pr09-date-red.log"
+    },
+    {
+      "sha256": "c612e360dbe88f3c759f446ac91f216d4da0ca48579633e5c99b56aaf7d73a48",
+      "file": "pr09-review-green.log"
+    },
+    {
+      "sha256": "fb02624a5f914fef525379f7541c1c2b8e12f2ab4ab570a3565d10886aff3c7a",
+      "file": "pr09-review-final-green.log"
+    },
+    {
+      "sha256": "a0d9fa2cd27c75ffc24e5be294e6e5350ab6be7d4e65549ed1ef111637a86dde",
+      "file": "pr09-review-migrate.log"
+    },
+    {
+      "sha256": "0d74af5dbea0adb664ff3bced180479cbf25736f20448fa90dee93a6960b60ec",
+      "file": "pr09-review-migration-rehearsal.log"
+    },
+    {
+      "sha256": "9701c7735e30891212f91b8b032fa90fbd790a82894ad55c11e35c36ad91f0e5",
+      "file": "pr09-final-full-test.log"
+    },
+    {
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "file": "pr09-final-typecheck.log"
+    },
+    {
+      "sha256": "e2d420510bb7037bfc6948a18631675a4ebe500c9a69a114125a8f6cc5f434c6",
+      "file": "pr09-final-lint.log"
+    },
+    {
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+      "file": "pr09-final-lint-rerun.log"
+    },
+    {
+      "sha256": "6bdec509047b0340b77e8480ebf43926acfb9be8b12489b3d7241f868ba0ca05",
+      "file": "pr09-final-offline.log"
+    },
+    {
+      "sha256": "8b09f35ca22d0a3f19f0347c1aa7d96d950b484300b6e0dfa4263840db6ed02c",
+      "file": "pr09-final-build.log"
+    },
+    {
+      "sha256": "9cf56555f78d8776a194eaca76205213f882182b07fc32e15cc00bd38e9d0e60",
+      "file": "pr09-final-dev-imports.log"
+    }
+  ],
+  "runtimeCorrection": "Portable path used by this gate was absent; executable resolution confirms localNode24.18.0. Counts/results unchanged. Genuine remote CI independently verifies Node22.23.3.",
+  "remoteEvidence": {
+    "run": 36962718285,
+    "head": "8210b26c6390dbfa0225eef9a6e63a2ebdf447a5",
+    "runtime": "Linux Node22.23.3/Bun/actual Postgres17 CI service",
+    "tests": "215files2134pass0fail0skip",
+    "ci": "SUCCESS",
+    "preview": "SUCCESS; production unchanged",
+    "logSha256": "a2a4fe77d535632e1775c406a62b0ce9d576b4029c769a0d46e48cab6f475d37"
+  }
+}

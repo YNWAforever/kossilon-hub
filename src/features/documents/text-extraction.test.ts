@@ -9,6 +9,7 @@ import {
   imageOnlyPdf,
   longFirstPagePdf,
   longTextPdf,
+  twoLongPagesPdf,
   manyPagePdf,
   pngBytes,
   threePagePdf,
@@ -19,6 +20,7 @@ import {
   MAX_EXTRACTED_PAGES,
   cleanExtractedText,
   extractPdfText,
+  extractVersionedEvidence,
 } from "./text-extraction";
 
 /**
@@ -49,6 +51,29 @@ afterEach(() => {
 });
 
 describe("extractPdfText", () => {
+  it("checks the bound SHA before reading any PDF page", async () => {
+    await expect(
+      extractVersionedEvidence({
+        documentVersionId: "11111111-1111-4111-8111-111111111111",
+        sha256: "a".repeat(64),
+        body: englishPdf(),
+        contentType: "application/pdf",
+      }),
+    ).rejects.toThrow(/checksum/);
+    expect(pagesRead).toEqual([]);
+  });
+  it("bounds the sum of page evidence, not each page separately", async () => {
+    const result = await extractPdfText({
+      body: twoLongPagesPdf(120_000),
+      contentType: "application/pdf",
+      includePages: true,
+    });
+    expect(result.method).toBe("text-layer");
+    if (result.method !== "text-layer") throw new Error("expected synthetic text");
+    expect(result.pages!.reduce((sum, page) => sum + page.text.length, 0)).toBeLessThanOrEqual(
+      MAX_EXTRACTED_CHARS,
+    );
+  });
   it("reads the text layer and page count of a digital PDF", async () => {
     const result = await extractPdfText({ body: englishPdf(), contentType: "application/pdf" });
 

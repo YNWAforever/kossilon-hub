@@ -1,14 +1,29 @@
-import { AI_RULE_VERSION, type AiAnalysisResult, type DocumentAiAnalyzer } from "./ai-provider";
+import {
+  AI_RULE_VERSION,
+  groundProviderFindings,
+  type AiAnalysisResult,
+  type DocumentAiAnalyzer,
+} from "./ai-provider";
 import {
   BYTES_SAMPLE_WINDOW,
   crossCheckFindings,
+  contentEvidenceFindings,
+  type AnalysisFieldExpectation,
   readabilityFindings,
   type EvidencePageClaim,
 } from "./analysis-checks";
 import type { DocumentAnalysisJobRepository } from "./analysis-jobs";
-import { makeFinding, type Finding } from "./findings";
+import { makeFinding, type Finding, type AnalysisProvenance } from "./findings";
 import { documentSafetyOf, type DocumentSafety } from "./safety";
-import { EXTRACTOR_VERSION, type ExtractionResult, type StoredExtraction } from "./text-extraction";
+import {
+  EXTRACTOR_VERSION,
+  evidenceFromExtraction,
+  type ExtractionResult,
+  type StoredExtraction,
+  type ExtractedEvidence,
+} from "./text-extraction";
+import type { DocumentOcrProvider } from "./ocr-provider";
+import { isBoundEvidence } from "./evidence-contract";
 import type { DocumentStatus, DocumentStorage, ScanVerdictSource } from "./types";
 import type { DocumentVersionState } from "./versions";
 
@@ -35,6 +50,8 @@ export type AnalysisSubject = {
   uploadStatus: DocumentStatus;
   scanVerdictSource: ScanVerdictSource | null;
   fileName: string;
+  expectations?: readonly AnalysisFieldExpectation[];
+  contextVersion?: string;
 };
 
 export type AnalysisWorkerDependencies = {
@@ -70,6 +87,21 @@ export type AnalysisWorkerDependencies = {
     extract(input: { body: ArrayBuffer; contentType: string | null }): Promise<ExtractionResult>;
   };
   texts: { upsertText(documentVersionId: string, extraction: StoredExtraction): Promise<void> };
+  ocr?: DocumentOcrProvider | null;
+  /** Runtime always supplies the transactionally fenced publication command. */
+  publish?(input: AnalysisPublicationInput): Promise<boolean>;
+};
+
+export type AnalysisPublicationInput = {
+  documentVersionId: string;
+  analysisJobId: string;
+  attemptCount: number;
+  sha256: string;
+  contextVersion?: string;
+  extraction: StoredExtraction | null;
+  evidence: ExtractedEvidence;
+  findings: readonly Finding[];
+  provenance: AnalysisProvenance;
 };
 
 export type AnalysisDrainSummary = {
@@ -154,6 +186,19 @@ export async function drainDocumentAnalysisJobs(
       continue;
     }
 
+    if (
+      subject.version.id !== job.documentVersionId ||
+      subject.version.supersededByVersionId !== null
+    ) {
+      await dependencies.jobs.markFailed(job.id, {
+        ...fence,
+        errorCode: "superseded-version",
+        errorMessage: "Version was replaced; no analysis is published.",
+      });
+      summary.superseded += 1;
+      continue;
+    }
+
     const safety: DocumentSafety = documentSafetyOf({
       uploadStatus: subject.uploadStatus,
       scanVerdictSource: subject.scanVerdictSource,
@@ -162,7 +207,11 @@ export async function drainDocumentAnalysisJobs(
     // The Phase A gate, inherited rather than restated. Analysis reads the bytes,
     // so it must not touch anything a real scanner has not passed -- and
     // `unknown` is not a pass, however long ago the fixture scanner said clean.
-    if (safety !== "verified") {
+    if (
+      safety !== "verified" ||
+      !subject.version.verifiedChecksum ||
+      subject.version.verifiedChecksum !== subject.version.declaredChecksum
+    ) {
       // Deferred, not retried, and the difference is load-bearing. Nothing is
       // wrong here -- the scan simply has not happened, and under
       // BLOCKED_INTEGRATION: malware-scanner-provider it may never. markRetry
@@ -206,6 +255,31 @@ export async function drainDocumentAnalysisJobs(
       continue;
     }
 
+    const digest = await crypto.subtle.digest("SHA-256", stored.body.slice(0));
+    const actualHash = Array.from(new Uint8Array(digest), (b) =>
+      b.toString(16).padStart(2, "0"),
+    ).join("");
+    if (
+      stored.body.byteLength === 0 ||
+      stored.body.byteLength > 10 * 1024 * 1024 ||
+      actualHash !== subject.version.verifiedChecksum ||
+      stored.checksum !== actualHash ||
+      stored.sizeBytes !== stored.body.byteLength ||
+      stored.body.byteLength !== subject.verifiedByteSize ||
+      stored.body.byteLength !== subject.declaredByteSize ||
+      stored.contentType !== subject.declaredContentType ||
+      stored.objectKey !== subject.objectKey
+    ) {
+      const applied = await dependencies.jobs.markFailed(job.id, {
+        ...fence,
+        errorCode: "stored-content-changed",
+        errorMessage: "Stored bytes no longer match the scanned version identity.",
+      });
+      if (applied) summary.failed += 1;
+      else summary.superseded += 1;
+      continue;
+    }
+
     // Wrapped for the same reason the model tier is: a throw would unwind this
     // loop and strand every job claimed after this one.
     let extraction: ExtractionResult;
@@ -218,25 +292,54 @@ export async function drainDocumentAnalysisJobs(
       extraction = { method: "unreadable", errorClass: "extractor-threw" };
     }
 
+    if (
+      !sameAnalysisSource(
+        subject,
+        await dependencies.versions.loadForAnalysis(job.documentVersionId),
+      )
+    ) {
+      await dependencies.jobs.markFailed(job.id, {
+        ...fence,
+        errorCode: "superseded-version",
+        errorMessage: "Analysis source changed during extraction.",
+      });
+      summary.superseded += 1;
+      continue;
+    }
+    let evidence: ExtractedEvidence;
+    try {
+      evidence = await evidenceFromExtraction(
+        {
+          documentVersionId: subject.version.id,
+          sha256: actualHash,
+          body: stored.body,
+          contentType: stored.contentType,
+          ocr: dependencies.ocr,
+        },
+        extraction,
+      );
+      if (!isBoundEvidence(evidence)) throw new Error("Invalid extraction evidence");
+    } catch {
+      const applied = await dependencies.jobs.markFailed(job.id, {
+        ...fence,
+        errorCode: "invalid-extracted-evidence",
+        errorMessage: "Extraction did not return bound page evidence.",
+      });
+      if (applied) summary.failed += 1;
+      else summary.superseded += 1;
+      continue;
+    }
+
     // What this run counted beats what was loaded: the loaded value is from an
     // earlier run, or null because there was none.
     let knownPageCount = subject.knownPageCount;
+    let storedExtraction: StoredExtraction | null = null;
     if (extraction.method !== "unreadable") {
-      try {
-        await dependencies.texts.upsertText(subject.version.id, {
-          ...extraction,
-          extractorVersion: EXTRACTOR_VERSION,
-        });
-      } catch {
-        const applied = await dependencies.jobs.markRetry(job.id, {
-          ...fence,
-          errorCode: "texts-not-written",
-          errorMessage: "The extracted text for this run could not be recorded.",
-        });
-        if (applied) summary.retried += 1;
-        else summary.superseded += 1;
-        continue;
-      }
+      storedExtraction = {
+        ...extraction,
+        extractorVersion: EXTRACTOR_VERSION,
+        evidence,
+      };
       knownPageCount = extraction.pageCount;
     }
 
@@ -255,11 +358,15 @@ export async function drainDocumentAnalysisJobs(
         verifiedByteSize: subject.verifiedByteSize,
         pageClaims: subject.pageClaims,
       }),
+      ...contentEvidenceFindings(evidence, subject.expectations ?? []),
       ...(extraction.method === "unreadable"
         ? [extractionNote(subject.version.id, extraction.errorClass)]
         : []),
     ];
 
+    let providerStatus = "not-run";
+    let providerReference: string | null = null;
+    let providerError: string | null = null;
     if (!dependencies.analyzer) {
       summary.providerSkipped += 1;
       // Recorded on the version, not only in the drain summary. Both
@@ -274,6 +381,14 @@ export async function drainDocumentAnalysisJobs(
         providerNote(
           subject.version.id,
           "No model is configured, so the third analysis tier did not run. This is not a clean result from it.",
+        ),
+      );
+    } else if (!evidence.pages.some((page) => page.text.trim()) || evidence.unknownReason) {
+      summary.providerSkipped += 1;
+      findings.push(
+        providerNote(
+          subject.version.id,
+          `No grounded readable page evidence is available (${evidence.unknownReason ?? "no-readable-text"}); manual review is required.`,
         ),
       );
     } else {
@@ -295,13 +410,25 @@ export async function drainDocumentAnalysisJobs(
           contentType: subject.declaredContentType ?? "application/octet-stream",
           fileName: subject.fileName,
           body: stored.body,
+          evidence,
         });
       } catch {
         analysis = { status: "failed", retryable: false, errorCode: "analyzer-threw" };
       }
+      providerStatus = analysis.status;
+      providerReference = analysis.status !== "failed" ? analysis.providerReference : null;
+      providerError = analysis.status === "failed" ? analysis.errorCode : null;
 
       if (analysis.status === "analysed") {
-        findings.push(...analysis.findings);
+        const grounded = groundProviderFindings(evidence, analysis.findings);
+        if (grounded) findings.push(...grounded);
+        else
+          findings.push(
+            providerNote(
+              subject.version.id,
+              "The provider returned an invalid or unbound citation; manual review is required.",
+            ),
+          );
       } else if (analysis.status === "uncertain") {
         // Recorded rather than dropped. A tier that ran and could not tell is
         // information; silence would be indistinguishable from a tier that never
@@ -318,6 +445,77 @@ export async function drainDocumentAnalysisJobs(
             `The model could not be consulted (${analysis.errorCode}).`,
           ),
         );
+      }
+    }
+
+    if (
+      !sameAnalysisSource(
+        subject,
+        await dependencies.versions.loadForAnalysis(job.documentVersionId),
+      )
+    ) {
+      await dependencies.jobs.markFailed(job.id, {
+        ...fence,
+        errorCode: "superseded-version",
+        errorMessage: "Analysis source changed before publication.",
+      });
+      summary.superseded += 1;
+      continue;
+    }
+
+    if (dependencies.publish) {
+      try {
+        const applied = await dependencies.publish({
+          documentVersionId: subject.version.id,
+          analysisJobId: job.id,
+          attemptCount: job.attemptCount,
+          sha256: actualHash,
+          contextVersion: subject.contextVersion,
+          extraction: storedExtraction,
+          evidence,
+          findings,
+          provenance: {
+            schemaVersion: "versioned-evidence-2",
+            ruleVersion: "labelled-fields-1",
+            promptVersion: "binary-http-v1/no-local-prompt",
+            model: null,
+            cost: null,
+            providerConfigured: Boolean(dependencies.analyzer),
+            providerStatus,
+            providerReference,
+            providerError,
+            providerMetadataStatus: "model-prompt-cost-not-in-approved-protocol",
+            extraction: evidence.provenance,
+            advisoryOnly: true,
+          },
+        });
+        if (applied) summary.analysed += 1;
+        else summary.superseded += 1;
+      } catch {
+        const applied = await dependencies.jobs.markRetry(job.id, {
+          ...fence,
+          errorCode: "analysis-not-published",
+          errorMessage: "Analysis could not be committed atomically.",
+        });
+        if (applied) summary.retried += 1;
+        else summary.superseded += 1;
+      }
+      continue;
+    }
+
+    // Compatibility for injected unit ports; the production factory supplies publish.
+    if (storedExtraction) {
+      try {
+        await dependencies.texts.upsertText(subject.version.id, storedExtraction);
+      } catch {
+        const applied = await dependencies.jobs.markRetry(job.id, {
+          ...fence,
+          errorCode: "texts-not-written",
+          errorMessage: "The extracted text for this run could not be recorded.",
+        });
+        if (applied) summary.retried += 1;
+        else summary.superseded += 1;
+        continue;
       }
     }
 
@@ -344,4 +542,21 @@ export async function drainDocumentAnalysisJobs(
   }
 
   return summary;
+}
+
+function sameAnalysisSource(before: AnalysisSubject, after: AnalysisSubject | null): boolean {
+  return Boolean(
+    after &&
+    after.version.id === before.version.id &&
+    after.version.supersededByVersionId === null &&
+    after.version.verifiedChecksum === before.version.verifiedChecksum &&
+    after.version.declaredChecksum === before.version.declaredChecksum &&
+    after.objectKey === before.objectKey &&
+    after.contextVersion === before.contextVersion &&
+    after.verifiedByteSize === before.verifiedByteSize &&
+    after.declaredByteSize === before.declaredByteSize &&
+    after.declaredContentType === before.declaredContentType &&
+    after.uploadStatus === "available" &&
+    after.scanVerdictSource === "provider",
+  );
 }

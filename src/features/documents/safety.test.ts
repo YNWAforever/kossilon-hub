@@ -71,8 +71,8 @@ describe("canServeDocumentBytes", () => {
 
   // A corrected, narrower policy rather than a grandfathered permission: an
   // operator keeps the access they need to handle an incident.
-  it("lets an admin open an unknown-safety file", () => {
-    expect(canServeDocumentBytes(actor({ role: "Admin" }), "unknown")).toBe(true);
+  it("refuses unknown bytes in ordinary preview/download even to an Admin", () => {
+    expect(canServeDocumentBytes(actor({ role: "Admin" }), "unknown")).toBe(false);
   });
 
   it("refuses malware to everyone, admin included", () => {
