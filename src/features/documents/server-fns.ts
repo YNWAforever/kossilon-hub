@@ -4,14 +4,24 @@ import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { DocumentScannerConfig, R2BucketLike } from "@/server/runtime-env";
-import { assertStaffDocumentAccess, type DocumentAccessSubject } from "./authorization";
+import {
+  assertStaffDocumentAccess,
+  documentScopeForStaffActor,
+  type StaffDocumentScope,
+  type DocumentAccessSubject,
+} from "./authorization";
 import { createLiveDocumentScanner } from "./live-scanner";
 import { getLocalMemoryR2Bucket } from "./local-r2";
-import type { DocumentRepository } from "./repository";
+import type {
+  DocumentRepository,
+  DocumentRecoveryRequest,
+  DocumentListFilters,
+} from "./repository";
 import { assertDocumentServable, canApproveDocument, documentSafetyOf } from "./safety";
 import { createDeterministicDocumentScanner } from "./scanner";
 import { DOCUMENT_CATEGORIES, type DocumentStorage, type IdentifiedDocumentScanner } from "./types";
 import { createDocumentStorage, createOpaqueDocumentKey } from "./storage";
+import { DocumentVersionConflictError, withDocumentVersionConflict } from "./version-conflict";
 
 export function createDocumentStorageForProviderMode(
   providerMode: ProviderMode,
@@ -86,21 +96,18 @@ export type DocumentOperationDependencies = {
   authorizeDocument(actor: AuthenticatedActor, subject: DocumentAccessSubject): Promise<void>;
 };
 
-const loadDefaultDocumentContext = createServerOnlyFn(async () => {
+export const createDocumentContextForRequest = createServerOnlyFn(async (request: Request) => {
   const [
-    { getRequest },
     { requireActor, requireClientCompanyAccess },
     { createDocumentRepository },
     { getDocumentsBucketBinding, getDocumentScannerConfig },
     { currentProviderMode },
   ] = await Promise.all([
-    import("@tanstack/react-start/server"),
     import("@/features/auth/neon-auth-server"),
     import("./repository"),
     import("@/server/runtime-env"),
     import("@/server/provider-mode"),
   ]);
-  const request = getRequest();
   const actor = await requireActor(request);
   const repository = createDocumentRepository();
   const providerMode = currentProviderMode();
@@ -119,6 +126,16 @@ const loadDefaultDocumentContext = createServerOnlyFn(async () => {
           storage,
         }),
       authorizeDocument: async (candidate: AuthenticatedActor, subject: DocumentAccessSubject) => {
+        // Re-read database authority even during a long storage/scan request.
+        const current = await requireActor(request);
+        if (
+          !current.active ||
+          current.authUserId !== candidate.authUserId ||
+          current.userId !== candidate.userId ||
+          current.role !== candidate.role ||
+          current.teamId !== candidate.teamId
+        )
+          throw new Error("Forbidden: document actor authority changed; reload your session.");
         if (candidate.role === "Client") {
           // Membership is a database fact, so it stays with the request-scoped
           // resolver. A client's reach is their company list and nothing else --
@@ -126,10 +143,15 @@ const loadDefaultDocumentContext = createServerOnlyFn(async () => {
           await requireClientCompanyAccess(request, subject.companyId);
           return;
         }
-        assertStaffDocumentAccess(candidate, subject);
+        assertStaffDocumentAccess(current, subject);
       },
     } satisfies DocumentOperationDependencies,
   };
+});
+
+export const loadDefaultDocumentContext = createServerOnlyFn(async () => {
+  const { getRequest } = await import("@tanstack/react-start/server");
+  return createDocumentContextForRequest(getRequest());
 });
 
 /**
@@ -145,6 +167,7 @@ async function authorizeDocumentById(
   documentId: string,
   dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeDocument">,
 ): Promise<void> {
+  if (!actor.active) throw new Error("Forbidden: inactive users cannot access documents.");
   const subject = await dependencies.repository.getDocumentAccessSubject(documentId);
   if (!subject) throw new Error("Document not found.");
   await dependencies.authorizeDocument(actor, subject);
@@ -155,6 +178,7 @@ async function authorizeIntentById(
   intentId: string,
   dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeDocument">,
 ): Promise<void> {
+  if (!actor.active) throw new Error("Forbidden: inactive users cannot access documents.");
   const subject = await dependencies.repository.getIntentAccessSubject(intentId);
   if (!subject) throw new Error("Upload intent not found.");
   await dependencies.authorizeDocument(actor, subject);
@@ -165,6 +189,7 @@ async function authorizeCompanyScope(
   input: { companyId: string; caseId?: string | null },
   dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeDocument">,
 ): Promise<void> {
+  if (!actor.active) throw new Error("Forbidden: inactive users cannot access documents.");
   const subject = await dependencies.repository.getCompanyAccessSubject(
     input.companyId,
     input.caseId ?? null,
@@ -178,7 +203,7 @@ async function withDefaultDocumentContext<T>(
 ): Promise<T> {
   const { actor, dependencies } = await loadDefaultDocumentContext();
   try {
-    return await handler(actor, dependencies);
+    return await withDocumentVersionConflict(() => handler(actor, dependencies));
   } finally {
     await dependencies.repository.close();
   }
@@ -203,6 +228,7 @@ export async function createDocumentUploadIntentForActor(
     caseId?: string;
     checklistItemId?: string;
     replacementDocumentId?: string;
+    recovery?: DocumentRecoveryRequest;
     category: (typeof DOCUMENT_CATEGORIES)[number];
     fileName: string;
     contentType: string;
@@ -211,7 +237,28 @@ export async function createDocumentUploadIntentForActor(
   },
   dependencies: DocumentOperationDependencies,
 ) {
+  if (input.recovery) assertStaffAccess(actor);
   await authorizeCompanyScope(actor, input, dependencies);
+  let recoveryObjectState: "missing" | undefined;
+  let recoveryObjectObservedAt: string | undefined;
+  if (input.recovery) {
+    await authorizeDocumentById(actor, input.recovery.documentId, dependencies);
+    const source = await dependencies.repository.getDocumentRecoveryPreview(
+      input.recovery.documentId,
+    );
+    if (!source) throw new Error("Document not found.");
+    if (source.availability === "available") {
+      const observation = await inspectRecoveryObject(source.objectKey, dependencies.storage);
+      if (observation.state === "unknown" || observation.state === "not_checked")
+        throw new Error(
+          "Object availability is unknown; obtain storage owner evidence before recovery.",
+        );
+      if (observation.state !== "missing")
+        throw new Error("Object is present; review its evidence before recovery.");
+      recoveryObjectState = "missing";
+      recoveryObjectObservedAt = new Date().toISOString();
+    }
+  }
   return dependencies.repository.createUploadIntent({
     companyId: input.companyId,
     caseId: input.caseId,
@@ -220,6 +267,10 @@ export async function createDocumentUploadIntentForActor(
     // one's requirement.
     checklistItemId: input.checklistItemId,
     replacementDocumentId: input.replacementDocumentId,
+    recovery: input.recovery,
+    recoveryApprovedBy: input.recovery ? actor.userId! : undefined,
+    recoveryObjectState,
+    recoveryObjectObservedAt,
     requestedByAuthUserId: actor.authUserId,
     category: input.category,
     fileName: input.fileName,
@@ -229,6 +280,34 @@ export async function createDocumentUploadIntentForActor(
     objectKey: createOpaqueDocumentKey(input),
     expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
   });
+}
+
+async function inspectRecoveryObject(objectKey: string, storage: DocumentStorage) {
+  if (!storage.inspect) return { state: "not_checked" as const };
+  try {
+    return await storage.inspect(objectKey);
+  } catch {
+    return { state: "unknown" as const };
+  }
+}
+
+export async function previewDocumentRecoveryForActor(
+  actor: AuthenticatedActor,
+  documentId: string,
+  dependencies: DocumentOperationDependencies,
+) {
+  assertStaffAccess(actor);
+  await authorizeDocumentById(actor, documentId, dependencies);
+  const preview = await dependencies.repository.getDocumentRecoveryPreview(documentId);
+  if (!preview) throw new Error("Document not found.");
+  const { objectKey, ...publicPreview } = preview;
+  const observation = await inspectRecoveryObject(objectKey, dependencies.storage);
+  return {
+    ...publicPreview,
+    availability:
+      observation.state === "missing" ? ("missing_object" as const) : publicPreview.availability,
+    objectAvailability: observation.state,
+  };
 }
 
 export async function finalizeDocumentUploadForActor(
@@ -274,6 +353,7 @@ export async function scanQuarantinedDocumentForActor(
   const intent = await dependencies.repository.getUploadIntent(intentId);
   if (!intent) throw new Error("Upload intent not found.");
   if (intent.status !== "quarantined") throw new Error("Document is not quarantined.");
+  if (!intent.currentVersionId) throw new Error("Document version is missing; review its lineage.");
   const stored = await dependencies.storage.head(intent.objectKey);
   if (
     !stored ||
@@ -287,18 +367,19 @@ export async function scanQuarantinedDocumentForActor(
   // this one.
   const scanner = dependencies.createScanner();
   const result = await scanner.scan({
+    documentVersionId: intent.currentVersionId,
     objectKey: intent.objectKey,
     checksum: intent.checksum,
     contentType: intent.contentType,
     fileName: intent.fileName,
   });
-  if (result.status === "rejected") await dependencies.storage.delete(intent.objectKey);
   // The verdict records which scanner produced it, and is applied only while the
   // intent still carries the checksum that was scanned -- a late answer about
   // superseded bytes is history, never a current status.
   return dependencies.repository.recordScanResult(intent.id, result, {
     verdictSource: scanner.verdictSource,
     expectedChecksum: intent.checksum,
+    expectedVersionId: intent.currentVersionId,
   });
 }
 
@@ -306,39 +387,60 @@ export async function downloadDocumentForActor(
   actor: AuthenticatedActor,
   documentId: string,
   dependencies: DocumentOperationDependencies,
+  expectedVersionId?: string,
 ) {
   const document = await dependencies.repository.getDocument(documentId);
   if (!document) throw new Error("Document not found.");
   await authorizeDocumentById(actor, documentId, dependencies);
+  if (expectedVersionId && document.currentVersionId !== expectedVersionId)
+    throw new DocumentVersionConflictError("Document version changed; reload the current proof.");
   // Scan safety, not business review status. A pending-review document that a
   // real scanner passed is exactly what a reviewer must be able to open; a
   // document whose only "clean" came from the deterministic test scanner is not
   // safe to serve however long ago it was approved.
   assertDocumentServable(actor, documentSafetyOf(document));
+  if (
+    !document.currentVersionId ||
+    document.scannedVersionId !== document.currentVersionId ||
+    document.verifiedChecksum !== document.checksum
+  )
+    throw new Error("Document scan is not bound to the current version checksum.");
   const stored = await dependencies.storage.get(document.objectKey);
   if (!stored) throw new Error("Authorized document object was not found.");
-  if (stored.checksum !== document.checksum || stored.sizeBytes !== document.sizeBytes) {
+  if (
+    stored.checksum !== document.checksum ||
+    stored.sizeBytes !== document.sizeBytes ||
+    stored.body.byteLength !== document.sizeBytes ||
+    stored.contentType !== document.contentType
+  ) {
     throw new Error("Stored object metadata does not match document metadata.");
   }
+  const hash = await crypto.subtle.digest("SHA-256", stored.body);
+  const checksum = Array.from(new Uint8Array(hash), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  if (checksum !== document.verifiedChecksum) throw new Error("Stored document checksum changed.");
+  // Re-authorize and re-read after asynchronous storage work. A replaced version
+  // or revoked membership never returns the old content to the caller.
+  await authorizeDocumentById(actor, documentId, dependencies);
+  const current = await dependencies.repository.getDocument(documentId);
+  if (
+    !current ||
+    current.currentVersionId !== document.currentVersionId ||
+    current.scannedVersionId !== document.currentVersionId ||
+    current.checksum !== checksum ||
+    current.verifiedChecksum !== checksum ||
+    current.objectKey !== document.objectKey
+  )
+    throw new DocumentVersionConflictError("Document version changed; reload the current proof.");
+  assertDocumentServable(actor, documentSafetyOf(current));
   return { document, body: stored.body };
 }
 
-export type DocumentScope = { teamId?: string };
+export type DocumentScope = StaffDocumentScope;
 
 export function documentFiltersForActor(actor: AuthenticatedActor): DocumentScope {
-  if (!actor.active) {
-    throw new Error("Forbidden: inactive users cannot list documents.");
-  }
-  if (actor.role === "Client") {
-    throw new Error("Forbidden: staff access is required.");
-  }
-  if (actor.role === "Admin") {
-    return {};
-  }
-  if (!actor.teamId) {
-    throw new Error("Forbidden: staff actor has no assigned team.");
-  }
-  return { teamId: actor.teamId };
+  return documentScopeForStaffActor(actor);
 }
 
 export async function listDocumentsForActor(
@@ -346,6 +448,7 @@ export async function listDocumentsForActor(
   filters: { companyId?: string; caseId?: string },
   dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeDocument">,
 ) {
+  if (!actor.active) throw new Error("Forbidden: inactive users cannot list documents.");
   if (actor.role === "Client") {
     if (!filters.companyId) throw new Error("Client document lists require a company ID.");
     await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
@@ -354,6 +457,22 @@ export async function listDocumentsForActor(
 
   const scope = documentFiltersForActor(actor);
   return dependencies.repository.listDocuments({ ...filters, ...scope });
+}
+export async function listDocumentPageForActor(
+  actor: AuthenticatedActor,
+  filters: Omit<DocumentListFilters, "id" | "teamId" | "assignedUserId">,
+  dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeDocument">,
+) {
+  if (!actor.active) throw new Error("Forbidden: inactive users cannot list documents.");
+  if (actor.role === "Client") {
+    if (!filters.companyId) throw new Error("Client document lists require a company ID.");
+    await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
+    return dependencies.repository.listDocumentPage(filters);
+  }
+  return dependencies.repository.listDocumentPage({
+    ...filters,
+    ...documentFiltersForActor(actor),
+  });
 }
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -376,6 +495,14 @@ const createIntentSchema = z
     caseId: z.string().uuid().optional(),
     checklistItemId: z.string().uuid().optional(),
     replacementDocumentId: z.string().uuid().optional(),
+    recovery: z
+      .object({
+        documentId: z.string().uuid(),
+        expectedToken: z.string().regex(/^[0-9a-f]{32}$/),
+        reason: z.string().trim().min(1).max(500),
+      })
+      .strict()
+      .optional(),
     category: z.enum(DOCUMENT_CATEGORIES),
     fileName: z.string().trim().min(1).max(255),
     contentType: z.string().trim().min(1).max(120),
@@ -385,6 +512,14 @@ const createIntentSchema = z
   .strict();
 const intentIdSchema = z.object({ intentId: z.string().uuid() }).strict();
 const documentIdSchema = z.object({ documentId: z.string().uuid() }).strict();
+
+export const previewDocumentRecovery = createServerFn({ method: "GET" })
+  .validator(documentIdSchema)
+  .handler(({ data }) =>
+    withDefaultDocumentContext((actor, dependencies) =>
+      previewDocumentRecoveryForActor(actor, data.documentId, dependencies),
+    ),
+  );
 
 export const createDocumentUploadIntent = createServerFn({ method: "POST" })
   .validator(createIntentSchema)
@@ -418,13 +553,18 @@ export const scanQuarantinedDocument = createServerFn({ method: "POST" })
   );
 
 export const downloadDocument = createServerFn({ method: "GET" })
-  .validator(documentIdSchema)
+  .validator(
+    z
+      .object({ documentId: z.string().uuid(), expectedVersionId: z.string().uuid().optional() })
+      .strict(),
+  )
   .handler(({ data }) =>
     withDefaultDocumentContext(async (actor, dependencies) => {
       const { document, body } = await downloadDocumentForActor(
         actor,
         data.documentId,
         dependencies,
+        data.expectedVersionId,
       );
       return new Response(body, {
         headers: {
@@ -447,11 +587,29 @@ export const listDocuments = createServerFn({ method: "GET" })
       listDocumentsForActor(actor, data, dependencies),
     ),
   );
+const documentListPageSchema = z
+  .object({
+    companyId: z.string().uuid().optional(),
+    caseId: z.string().uuid().optional(),
+    q: z.string().max(200).optional(),
+    category: z.enum(DOCUMENT_CATEGORIES).optional(),
+    cursor: z.string().max(2048).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+  })
+  .strict();
+export const listDocumentPage = createServerFn({ method: "GET" })
+  .validator(documentListPageSchema)
+  .handler(({ data }) =>
+    withDefaultDocumentContext((actor, dependencies) =>
+      listDocumentPageForActor(actor, data, dependencies),
+    ),
+  );
 
 export const reviewDocument = createServerFn({ method: "POST" })
   .validator(
     documentIdSchema
       .extend({
+        expectedVersionId: z.string().uuid(),
         decision: z.enum(["verified", "rejected"]),
         reason: z.string().trim().max(500).optional(),
       })
@@ -476,7 +634,9 @@ export const reviewDocument = createServerFn({ method: "POST" })
       }
       return dependencies.repository.reviewDocument({
         documentId: data.documentId,
+        expectedVersionId: data.expectedVersionId,
         reviewerId: staff.userId!,
+        reviewerAuthUserId: staff.authUserId,
         decision: data.decision,
         reason: data.reason,
       });

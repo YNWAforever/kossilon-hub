@@ -6,10 +6,19 @@ import {
   summarizeExceptions,
   type HandoffState,
   type ReturnState,
+  handoffFactLabel,
 } from "./handoff";
 
 const MANIFEST_A = "a".repeat(64);
 const MANIFEST_B = "b".repeat(64);
+const allowedReadiness = {
+  sourceVersion: "a".repeat(32),
+  readyToPrepare: true,
+  readyForApproval: true,
+  readyToTransmit: true,
+  manifestPayload: null,
+  blockers: [],
+};
 
 function handoff(overrides: Partial<HandoffState> = {}): HandoffState {
   return {
@@ -33,12 +42,35 @@ function returned(overrides: Partial<ReturnState> = {}): ReturnState {
 }
 
 describe("refusalForHandoff", () => {
+  it("unknown external outcome remains blocked even if the legacy enum says failed", () => {
+    expect(
+      refusalForHandoff({
+        existing: handoff({ status: "failed", deliveryFact: "unknown" }),
+        approvedManifestSha256: MANIFEST_A,
+        currentManifestSha256: MANIFEST_A,
+        readiness: allowedReadiness,
+      }),
+    ).toMatchObject({ kind: "already-out" });
+  });
+  it("refuses a matching package when actual case readiness is missing or blocked", () => {
+    for (const readiness of [null, { ...allowedReadiness, readyToTransmit: false }]) {
+      expect(
+        refusalForHandoff({
+          existing: null,
+          approvedManifestSha256: MANIFEST_A,
+          currentManifestSha256: MANIFEST_A,
+          readiness,
+        }),
+      ).toMatchObject({ kind: "case-not-ready" });
+    }
+  });
   it("allows a first handoff whose manifest still matches the approval", () => {
     expect(
       refusalForHandoff({
         existing: null,
         approvedManifestSha256: MANIFEST_A,
         currentManifestSha256: MANIFEST_A,
+        readiness: allowedReadiness,
       }),
     ).toBeNull();
   });
@@ -52,6 +84,7 @@ describe("refusalForHandoff", () => {
           existing: handoff({ status }),
           approvedManifestSha256: MANIFEST_A,
           currentManifestSha256: MANIFEST_A,
+          readiness: allowedReadiness,
         }),
       ).toMatchObject({ kind: "already-out", status });
     }
@@ -64,6 +97,7 @@ describe("refusalForHandoff", () => {
           existing: handoff({ status, transmittedAt: null }),
           approvedManifestSha256: MANIFEST_A,
           currentManifestSha256: MANIFEST_A,
+          readiness: allowedReadiness,
         }),
       ).toBeNull();
     }
@@ -80,8 +114,17 @@ describe("refusalForHandoff", () => {
         existing: null,
         approvedManifestSha256: MANIFEST_A,
         currentManifestSha256: MANIFEST_B,
+        readiness: allowedReadiness,
       }),
     ).toMatchObject({ kind: "manifest-changed" });
+  });
+});
+describe("handoff fact disclosure", () => {
+  it("manual record/export never claims provider or regulatory acceptance", () => {
+    expect(handoffFactLabel("manual_recorded")).toContain("人工");
+    expect(handoffFactLabel("manual_recorded")).not.toContain("已受理");
+    expect(handoffFactLabel("exported")).toContain("未提交");
+    expect(handoffFactLabel("provider_accepted")).toContain("不代表監管");
   });
 });
 

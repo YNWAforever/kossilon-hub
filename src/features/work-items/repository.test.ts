@@ -257,14 +257,58 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
 
           const recommendations = await repository.recommendAssignees(warningId);
           expect(recommendations.length).toBeGreaterThan(0);
+          const [named] = await tx<
+            { name: string; team_name: string }[]
+          >`select u.name,t.name team_name from users u join teams t on t.id=u.team_id where u.id=${recommendations[0].userId}`;
+          expect(recommendations[0]).toMatchObject({
+            displayName: named.name,
+            teamName: named.team_name,
+            active: true,
+          });
+          expect(recommendations[0].workload).toBeGreaterThanOrEqual(0);
+          const inactive = recommendations[0].userId;
+          await tx`update users set active=false where id=${inactive}`;
+          expect(
+            (await repository.recommendAssignees(warningId)).some((r) => r.userId === inactive),
+          ).toBe(false);
+          await tx`update users set active=true where id=${inactive}`;
+          const [assignmentActor] = await tx<
+            { id: string }[]
+          >`select u.id from users u join staff_profiles sp on sp.user_id=u.id where u.role='Admin' and sp.role='Admin' and u.active and sp.active and u.team_id is not distinct from sp.team_id order by u.id limit 1`;
+          expect(assignmentActor).toBeDefined();
+          await expect(
+            repository.assign({
+              workItemId: warningId,
+              selectedUserId: recommendations[0].userId,
+              assignedById: recommendations[0].userId,
+              expectedVersion: 1,
+              overrideReason: "Synthetic fixture",
+            }),
+          ).rejects.toThrow(/Forbidden/);
           const assigned = await repository.assign({
             workItemId: warningId,
             selectedUserId: recommendations[0].userId,
-            assignedById: recommendations[0].userId,
+            assignedById: assignmentActor.id,
             expectedVersion: 1,
             overrideReason: "Integration fixture capacity exception",
           });
           expect(assigned.version).toBe(2);
+          const refreshed = (
+            await repository.listQueue(
+              { teamId: fixture.team_id },
+              { teamId: fixture.team_id, includeFixtures: true },
+            )
+          ).find((i) => i.id === warningId);
+          expect(refreshed).toMatchObject({
+            ownerId: recommendations[0].userId,
+            ownerName: named.name,
+            version: 2,
+          });
+          expect(refreshed?.businessContext?.sourceVersion).toBeTruthy();
+          const hidden = (
+            await repository.listQueue({ teamId: fixture.team_id }, { companyIds: [] })
+          ).find((i) => i.id === warningId);
+          expect(hidden?.businessContext).toBeNull();
           const assignmentEvents = await tx<
             {
               recommendation_factors: {
@@ -284,7 +328,7 @@ describe.skipIf(!databaseUrl)("work-item repository integration", () => {
             repository.assign({
               workItemId: warningId,
               selectedUserId: recommendations[0].userId,
-              assignedById: recommendations[0].userId,
+              assignedById: assignmentActor.id,
               expectedVersion: 1,
             }),
           ).rejects.toThrow("stale");

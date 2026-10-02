@@ -1,10 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DashboardCase } from "@/features/dashboard/types";
 import { demoDashboardDependencies } from "./demo-dashboard-data";
 import { resetAnnualReturnCasesForTest } from "@/lib/annual-return-store";
-import { loadDashboardData } from "./dashboard-data";
+import { loadDashboardData, dashboardActorScopeKey, dashboardDataForActor } from "./dashboard-data";
 
 const metrics = {
+  businessDate: "2026-10-01",
+  total: 9,
+  activeCases: 8,
+  overdueCases: 1,
+  missingDocumentCount: 3,
+  casesWithMissingDocuments: 2,
   dueIn7: 2,
   dueIn30: 5,
   overdue: 1,
@@ -31,12 +38,14 @@ function annualReturnCase(partial: Partial<DashboardCase>): DashboardCase {
 
 describe("dashboard data loader", () => {
   it("returns live annual-return metrics and open upcoming cases", async () => {
+    const listAnnualReturnCases = vi.fn(async () => [
+      annualReturnCase({ id: "open-1" }),
+      annualReturnCase({ id: "complete-1", currentStatus: "Completed" }),
+      annualReturnCase({ id: "filed-1", currentStatus: "Filed" }),
+    ]);
     const data = await loadDashboardData({
       getAnnualReturnDashboardMetrics: async () => metrics,
-      listAnnualReturnCases: async () => [
-        annualReturnCase({ id: "open-1" }),
-        annualReturnCase({ id: "complete-1", currentStatus: "Completed" }),
-      ],
+      listAnnualReturnCases,
     });
 
     expect(data).toMatchObject({
@@ -45,6 +54,7 @@ describe("dashboard data loader", () => {
       annualReturnDataError: null,
     });
     expect(data.upcomingAnnualReturns.map((case_) => case_.id)).toEqual(["open-1"]);
+    expect(listAnnualReturnCases).toHaveBeenCalledWith({ data: { activeOnly: true, limit: 8 } });
   });
 
   it("carries the real cause through instead of a fixed string", async () => {
@@ -109,6 +119,12 @@ describe("dashboard data loader", () => {
 
     expect(data.upcomingAnnualReturns).toEqual([]);
     expect(data.metrics).toEqual({
+      businessDate: "",
+      total: 0,
+      activeCases: 0,
+      overdueCases: 0,
+      missingDocumentCount: 0,
+      casesWithMissingDocuments: 0,
       dueIn7: 0,
       dueIn30: 0,
       overdue: 0,
@@ -117,5 +133,36 @@ describe("dashboard data loader", () => {
       paymentPending: 0,
       assignedToMe: 0,
     });
+  });
+
+  it("hides privileged cached figures when the actor role, team, identity or active flag changes", async () => {
+    const actor: AuthenticatedActor = {
+      authUserId: "auth-admin",
+      userId: "admin",
+      role: "Admin",
+      teamId: "team-a",
+      active: true,
+    };
+    const data = {
+      ...(await loadDashboardData({
+        getAnnualReturnDashboardMetrics: async () => metrics,
+        listAnnualReturnCases: async () => [annualReturnCase({})],
+      })),
+      actorScopeKey: dashboardActorScopeKey(actor),
+    };
+    expect(dashboardDataForActor(data, actor)).toBe(data);
+    for (const next of [
+      null,
+      { ...actor, role: "Staff" as const },
+      { ...actor, teamId: "team-b" },
+      { ...actor, userId: "other" },
+      { ...actor, authUserId: "other-session" },
+      { ...actor, active: false },
+    ]) {
+      const filtered = dashboardDataForActor(data, next);
+      expect(filtered.annualReturnDataAvailable).toBe(false);
+      expect(filtered.upcomingAnnualReturns).toEqual([]);
+      expect(filtered.metrics.total).toBe(0);
+    }
   });
 });

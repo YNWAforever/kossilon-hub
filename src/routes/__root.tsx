@@ -8,6 +8,7 @@ import {
   useNavigate,
   useRouter,
   useRouterState,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -28,6 +29,7 @@ import {
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { ensureActorQueryScope } from "@/features/auth/query-scope";
 
 /**
  * `actor` is resolved in beforeLoad and handed to every route. The call was
@@ -62,12 +64,13 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [copied, setCopied] = useState(false);
   const details = errorDetails(error, pathname);
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
@@ -80,7 +83,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">Try refreshing the page.</p>
 
         <p className="mt-4 break-words rounded-md bg-muted px-4 py-3 text-left text-sm text-foreground">
-          {error.message || "No error message was provided."}
+          {message || "No error message was provided."}
         </p>
 
         <details className="mt-3 text-left">
@@ -119,7 +122,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context, location }) => {
-    if (isPublicRoute(location.pathname)) return { actor: null };
+    if (isPublicRoute(location.pathname)) {
+      await ensureActorQueryScope(context.queryClient, null);
+      return { actor: null };
+    }
 
     const { dataMode } = context;
     if (dataMode !== "demo") {
@@ -127,6 +133,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       try {
         actor = await getAuthenticatedActor();
       } catch (error) {
+        await ensureActorQueryScope(context.queryClient, null);
         // A Forbidden account is not "not signed in" — sending it through the
         // same redirect=... path would bounce it back here after every future
         // sign-in, identically and silently, since the sign-in step itself keeps
@@ -143,6 +150,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         });
       }
 
+      await ensureActorQueryScope(context.queryClient, actor);
       // Every screen except these resolves a staff actor, so a Client signing in
       // and landing on the dashboard hit Forbidden on every query it makes. They
       // get the portal instead — which is the only thing built for them.

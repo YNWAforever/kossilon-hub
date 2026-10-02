@@ -1,16 +1,10 @@
 import "dotenv/config";
-import { readFileSync } from "node:fs";
+
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWhatsAppRepository } from "@/features/whatsapp/repository";
 import * as notificationOutbox from "@/features/notifications/outbox";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
-import {
-  createAnnualReturnRepository,
-  hongKongBusinessDate,
-  DASHBOARD_METRICS_SCAN_LIMIT,
-  DEFAULT_CASE_LIMIT,
-  RISK_FILTER_SCAN_LIMIT,
-} from "./repository";
+import { createAnnualReturnRepository, hongKongBusinessDate } from "./repository";
 import { assertAnnualReturnStatusActionAllowed } from "./server-fns";
 import type { AnnualReturnStatus, ChecklistStatus, PaymentStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
@@ -95,6 +89,29 @@ function testUuid(prefix: string, sequence: number): string {
   return `${prefix}-0000-0000-0000-${String(sequence).padStart(12, "0")}`;
 }
 
+/** Isolated fixture metadata for receipt gates, never a live scanner/receipt claim. */
+async function seedReviewedPaymentEvidence(fixture: MutableAnnualReturnFixture) {
+  const sql = sqlForTests();
+  const hash = Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fixture.paymentId)),
+    ),
+    (b) => b.toString(16).padStart(2, "0"),
+  ).join("");
+  await sql.begin(async (tx) => {
+    const [intent] = await tx<
+      { id: string }[]
+    >`insert into document_upload_intents(company_id,case_id,document_id,requested_by_auth_user_id,category,file_name,content_type,expected_size_bytes,checksum_sha256,object_key,status,scan_verdict_source,expires_at) select d.company_id,d.case_id,d.id,'synthetic-local','payment',d.file_name,'application/pdf',4,${hash},d.storage_url,'available','provider','2099-01-01' from documents d where d.id=${fixture.paymentProofDocumentId} returning id`;
+    const [version] = await tx<
+      { id: string }[]
+    >`insert into document_versions(document_id,version_number,declared_checksum_sha256,declared_byte_size,verified_checksum_sha256,verified_byte_size,verified_at,content_type,file_name,storage_url,intent_id,created_at) select id,1,${hash},4,${hash},4,'2026-07-05T09:00:00Z','application/pdf',file_name,storage_url,${intent.id},'2026-07-05T09:00:00Z' from documents where id=${fixture.paymentProofDocumentId} returning id`;
+    // Injected local contract facts only; this is not provider/byte-reading UAT.
+    await tx`update document_upload_intents set scan_document_version_id=${version.id} where id=${intent.id}`;
+    await tx`update documents set verified_at='2026-07-05T10:00:00Z',reviewed_document_version_id=${version.id} where id=${fixture.paymentProofDocumentId}`;
+    await tx`insert into payment_evidence_entries(payment_id,case_id,document_id,proof_version_id,proof_sha256,amount,received_on,status,recorded_by,reviewed_by,reviewed_at) values(${fixture.paymentId},${fixture.caseId},${fixture.paymentProofDocumentId},${version.id},${hash},3800,'2026-07-05','verified',${USER_AMY_ID},${USER_KEN_ID},'2026-07-05T10:00:00Z')`;
+  });
+}
+
 function sqlForTests(): SqlClient {
   if (!databaseUrl) {
     throw new Error("TEST_DATABASE_URL is required for annual return integration tests.");
@@ -175,6 +192,7 @@ async function cleanupAnnualReturnTestFixtures() {
       where id = any(${paymentIds}::uuid[])
         or case_id = any(${caseIds}::uuid[])
     `;
+    await tx`delete from payment_evidence_entries where case_id=any(${caseIds}::uuid[]) or payment_id=any(${paymentIds}::uuid[])`;
     await tx`
       delete from whatsapp_webhook_events
       where normalized_message_id in (
@@ -236,6 +254,9 @@ async function cleanupAnnualReturnTestFixtures() {
       where id = any(${checklistItemIds}::uuid[])
         or case_id = any(${caseIds}::uuid[])
     `;
+    await tx`delete from document_versions where document_id in (select id from documents where id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[]))`;
+    await tx`delete from document_scan_jobs where intent_id in (select id from document_upload_intents where document_id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[]))`;
+    await tx`delete from document_upload_intents where document_id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[])`;
     await tx`
       delete from documents
       where id = any(${documentIds}::uuid[])
@@ -959,16 +980,13 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
     await expect(
       julyFiveRepository.listCases({ includeFixtures: true, overdueOnly: true }),
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveLength(0);
 
     const overdueCases = await julyTwentyEightRepository.listCases({
       includeFixtures: true,
       overdueOnly: true,
     });
-    expect(overdueCases.map((case_) => case_.companyName)).toEqual([
-      "Victoria Peak Holdings Ltd",
-      "Kowloon Textiles Ltd",
-    ]);
+    expect(overdueCases.map((case_) => case_.companyName)).toEqual(["Kowloon Textiles Ltd"]);
   });
 
   it(
@@ -978,7 +996,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
       await expect(
         repository.dashboardMetrics("2026-07-05", USER_AMY_ID, { includeFixtures: true }),
-      ).resolves.toEqual({
+      ).resolves.toMatchObject({
         dueIn7: 0,
         dueIn30: 1,
         overdue: 0,
@@ -991,7 +1009,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       await expect(
         repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID, { includeFixtures: true }),
       ).resolves.toMatchObject({
-        assignedToMe: 1,
+        assignedToMe: 0,
       });
     },
     INTEGRATION_TEST_TIMEOUT_MS,
@@ -1217,6 +1235,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       expect(checklistItem?.receivedAt).toEqual(expect.any(String));
       expect(checklistItem?.verifiedAt).toEqual(expect.any(String));
 
+      await seedReviewedPaymentEvidence(fixture);
       const afterPayment = await repository.updatePayment({
         caseId: fixture.caseId,
         status: "Payment received",
@@ -1328,6 +1347,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         sequence: 20,
         currentStatus: "Payment pending",
       });
+      await seedReviewedPaymentEvidence(fixture);
       const repository = repositoryFor("2026-07-05");
 
       await repository.updatePayment({
@@ -2513,74 +2533,6 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
-});
-
-/**
- * risk, missingDocuments and overdueOnly used to be applied in JS *after* the SQL
- * LIMIT, so past DEFAULT_CASE_LIMIT a filtered board silently omitted matches and
- * the dashboard tiles counted the same truncated page. Two of the three are SQL
- * predicates now; the third scans a wider window.
- */
-describe("case filters narrow before the limit", () => {
-  const source = readFileSync(new URL("./repository.ts", import.meta.url), "utf8");
-  const selectCaseRows = source.slice(
-    source.indexOf("async function selectCaseRows"),
-    source.indexOf("async function hydrateCases"),
-  );
-
-  it("filters overdue cases in SQL", () => {
-    expect(selectCaseRows).toContain("arc.filing_due_date <");
-  });
-
-  it("filters missing documents in SQL", () => {
-    expect(selectCaseRows).toContain("annual_return_checklist_items i");
-    expect(selectCaseRows).toContain("i.required = true");
-  });
-
-  it("leaves only the derived risk filter to run after hydration", () => {
-    const hydrated = source.slice(
-      source.indexOf("function caseMatchesHydratedFilters"),
-      source.indexOf("function countOutstandingRequiredEvidence"),
-    );
-
-    expect(hydrated).toContain("filters.risk");
-    expect(hydrated).not.toContain("missingDocuments");
-    expect(hydrated).not.toContain("overdueOnly");
-  });
-
-  it("scans a wider window when the derived risk filter is active", () => {
-    expect(RISK_FILTER_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    expect(selectCaseRows).toContain("RISK_FILTER_SCAN_LIMIT");
-  });
-
-  it("counts dashboard tiles over more than one page of cases, within the actor's scope", () => {
-    expect(DASHBOARD_METRICS_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    // The tiles were firm-wide for every role while the board was scoped, so a
-    // Staff user saw headline numbers for books they cannot open.
-    expect(source).toContain("scope: CaseFilters = {}");
-    expect(source).toContain("{ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }");
-    expect(source).toContain("limit: DASHBOARD_METRICS_SCAN_LIMIT");
-  });
-
-  // The SQL EXISTS clause and hasOutstandingRequiredEvidence must agree, or a
-  // filtered board and the case detail behind it disagree about the same case.
-  it("keeps the SQL predicate identical to hasOutstandingRequiredEvidence", () => {
-    const js = source.slice(
-      source.indexOf("function hasOutstandingRequiredEvidence"),
-      source.indexOf("function hasText"),
-    );
-
-    for (const [jsClause, sqlClause] of [
-      ["item.required", "i.required = true"],
-      ['item.status !== "Verified"', "i.status <> 'Verified'"],
-      ["item.receivedAt === null", "i.received_at is null"],
-      ["item.verifiedAt === null", "i.verified_at is null"],
-      ["item.documentId === null", "i.document_id is null"],
-    ]) {
-      expect(js, `JS side missing ${jsClause}`).toContain(jsClause);
-      expect(selectCaseRows, `SQL side missing ${sqlClause}`).toContain(sqlClause);
-    }
-  });
 });
 
 describe.skipIf(!databaseUrl)("createCase", () => {

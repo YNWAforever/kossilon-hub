@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-01",
+  "build": "b6bdc752bd783be2695c11425c1a740bc0ec228c",
+  "base": "f9edcdd1f2049badaa6de757b90a16e41166848a",
+  "tasks": ["T08", "T09", "T10", "T11"],
+  "findings": ["F05", "F06", "F14", "F15"],
+  "environment": "LOCAL ONLY Windows, portable Node22.23.3, Bun1.3.14, Postgres17 localhost55441/kossilon_pr02_ci; injected provider/session contracts",
+  "gates": [
+    {
+      "command": "npm run test",
+      "result": "190files/1906pass/0skip",
+      "durationSeconds": 146.29,
+      "log": ".worktrees/audit-baseline-20261001/pr04-final-full-tests.log",
+      "databaseVariables": ["DATABASE_URL", "TEST_DATABASE_URL"]
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "log": ".worktrees/audit-baseline-20261001/pr04-review-typecheck.log"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS 0errors/1existing work-queue FastRefresh warning",
+      "log": ".worktrees/audit-baseline-20261001/pr04-final-lint.log"
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS",
+      "log": ".worktrees/audit-baseline-20261001/pr04-final-build.log"
+    },
+    {
+      "command": "npm run verify:firm -- --dry-run",
+      "result": "PASS offline safety:38 reads/0network/0writes; actual providers explicitly BLOCKED",
+      "log": ".worktrees/audit-baseline-20261001/pr04-final-predeploy.log"
+    },
+    {
+      "command": "npm run verify:dev-server-imports",
+      "result": "PASS all12 routes/no import-protection violation",
+      "log": ".worktrees/audit-baseline-20261001/pr04-final-dev-imports.log",
+      "previousAttempt": "First2 routes timed out during overlapping build/full-suite work; unchanged gate passed after completion. No timeout increased."
+    },
+    {
+      "command": "CI compiled cloudflare:scheduled hook check",
+      "result": "PASS local compiled contract; not a real scheduled tick"
+    },
+    {
+      "command": "bun scripts/db-migrate.ts (repeat on isolated populated candidate DB)",
+      "result": "PASS skips0070 and commits runner transaction; no production SQL",
+      "log": ".worktrees/audit-baseline-20261001/t11-migration-repeat.log"
+    },
+    {
+      "command": "review affected integration/UI tests",
+      "result": "8files/104pass/0skip",
+      "log": ".worktrees/audit-baseline-20261001/pr04-review-green.log"
+    }
+  ],
+  "review": {
+    "range": "f9edcdd..e0efc54",
+    "method": "Fresh independent read-only reviewer; five Important findings, no Critical/Minor; one RED/GREEN fix pass, final full suite green. No re-review dispatched.",
+    "fixed": [
+      "Shared company-level checklist/requirement evidence includes current critical findings in readiness and source token",
+      "Unreadable/duplicate proof can be returned without inventing amount/date or creating receipt credit",
+      "Payment rejection preserves an earlier generic document decision and allows exact-version audited additive replacement",
+      "Work queue exposes actionable preparation and approval blockers; transport configuration remains separately gated",
+      "Employee/company/template/assignment picker caches bind to actor; delayed previous-actor staff response does not leak into current picker"
+    ],
+    "additionalRegression": "Existing migration manifest equality failed RED for omitted0070; synchronized source manifest,13/13GREEN. Initial fixture cleanup failures corrected by actual FK order and exact-owned IDs."
+  },
+  "regressions": [
+    "Stage-specific prepare/approval/transmit with unknowns fail-closed; missing payment and invalid current bytes block; no invented external submission",
+    "Real PG preparation source change returns409 with no status write",
+    "Full-scope actor/origin/search filters, independent two-page counts, HK-midnight and SQL/JS risk parity;5001 case count not clipped",
+    "Real employee/team labels and unique suffix disambiguation; active directory and assignment authorization/version persistence",
+    "Actual600+1200 partial receipts, duplicate SHA/version no credit, specific return reason and linked additive replacement",
+    "Current V1/V2 preview conflict; two independent PG backend PIDs with observed lock contention, only one successful credit/review audit",
+    "Private preview uses authorized exact-version download; unknown/unsafe proof never previewed/approved; storage not touched for stale requested version"
+  ],
+  "schema": {
+    "candidate": "0070_payment_evidence_entries.sql; canonical schema and EXPECTED_MIGRATIONS synchronized",
+    "change": "Additive receipt table/indexes; no historical invoice amount/status/date/document/version/ledger rewrite or fabricated backfill",
+    "local": "Candidate0067/0068/0069/0070 only, isolated Postgres",
+    "production": "Historical66 ledger and Web aa5d3cb unchanged; unexplained history/0034 physical drift and reviewed0067-0070 release sequence remain gates"
+  },
+  "uat": {
+    "originalCases": 50,
+    "pass": 10,
+    "blocked": 9,
+    "not_run": 31,
+    "qualification": "All passes LOCAL ONLY. PAY01/02 local contracts pass; actual fresh-role private R2/scanner journeys remain blocked."
+  },
+  "performanceEvidence": "2026-10-01-metrics-performance.json: single local count sample4686.04ms->1676.55ms; no runtime percentile claim, T21 pending",
+  "runtimeBlockers": [
+    "Auth owner: controlled accounts and fresh provider login/session; existing or injected session is not runtime acceptance",
+    "Storage/security owner: scoped private payment sample, actual R2 and genuine scanner roundtrip",
+    "Release/DB owner: reviewed historical lineage, restore rehearsal and explicit new migration/deployment approval",
+    "T19 human approval/manual submission/destination receipt; T21 runtime performance; T22 remaining original UAT"
+  ],
+  "productionMutation": false
+}

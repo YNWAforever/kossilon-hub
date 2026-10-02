@@ -3,6 +3,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { sortConversationMessagesOldestFirst } from "./conversations";
 import { normalizeWoztellInboundMessage } from "./woztell";
+import { processWhatsAppInboundWebhookWithRepository } from "./server-fns";
 import {
   createWhatsAppRepository,
   planContactIdentityMerge,
@@ -13,6 +14,13 @@ const databaseUrl = process.env.TEST_DATABASE_URL;
 
 const TEST_TEAM_ID = "95000000-0000-0000-0000-000000000001";
 const TEST_USER_ID = "95100000-0000-0000-0000-000000000001";
+const INBOX_ADMIN = {
+  authUserId: "owned-admin-reader",
+  userId: TEST_USER_ID,
+  teamId: TEST_TEAM_ID,
+  role: "Admin" as const,
+  active: true,
+};
 const TEST_COMPANY_ID = "95200000-0000-0000-0000-000000000001";
 const TEST_CASE_ID = "95300000-0000-0000-0000-000000000001";
 /** A second client, so one phone number can be messaged by two of them. */
@@ -195,6 +203,9 @@ async function cleanupWhatsAppFixtures() {
       where id in (${TEST_COMPANY_ID}, ${SHARED_COMPANY_ID})
     `;
     await tx`
+      delete from staff_profiles where user_id=${TEST_USER_ID}
+    `;
+    await tx`
       delete from users
       where id = ${TEST_USER_ID}
     `;
@@ -224,6 +235,7 @@ async function createAnnualReturnCaseFixture() {
         true
       )
     `;
+    await tx`insert into staff_profiles(user_id,auth_user_id,role,team_id,active) values(${TEST_USER_ID},'owned-whatsapp-auth','Staff',${TEST_TEAM_ID},true)`;
     await tx`
       update teams
       set manager_id = ${TEST_USER_ID}
@@ -374,6 +386,322 @@ describe("WhatsApp contact identity reconciliation", () => {
 });
 
 describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
+  it("rechecks current verified queue identity before creating outbound rows", async () => {
+    const rollback = new Error("owned queue authority rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const repository = createWhatsAppRepository({ sql: tx });
+        const input = {
+          actorId: TEST_USER_ID,
+          actorAuthUserId: "owned-whatsapp-auth",
+          caseId: TEST_CASE_ID,
+          toPhone: "+85269990101",
+          templateName: "phase2_test_queue_auth",
+          category: "general" as const,
+          body: "Owned local queue identity test",
+        };
+        await expect(
+          repository.queueOutboundTemplateMessage({ ...input, actorAuthUserId: "foreign-auth" }),
+        ).rejects.toThrow(/verified staff/);
+        await tx`update staff_profiles set active=false where user_id=${TEST_USER_ID}`;
+        await expect(repository.queueOutboundTemplateMessage(input)).rejects.toThrow(
+          /verified staff/,
+        );
+        const [count] = await tx<
+          { count: number }[]
+        >`select count(*)::int count from whatsapp_messages where case_id=${TEST_CASE_ID} and direction='outbound'`;
+        expect(count.count).toBe(0);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  });
+  it.each(["same message", "another message"])(
+    "rejects conflicting signed receipts through the webhook service: %s",
+    async (target) => {
+      const rollback = new Error("owned service receipt collision rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const repository = createWhatsAppRepository({ sql: tx });
+          const first = await repository.queueOutboundTemplateMessage({
+            actorId: TEST_USER_ID,
+            caseId: TEST_CASE_ID,
+            toPhone: "+85269990107",
+            templateName: "phase2_test_signed_collision_a",
+            category: "general",
+            body: "Owned collision A",
+          });
+          const second = await repository.queueOutboundTemplateMessage({
+            actorId: TEST_USER_ID,
+            caseId: TEST_CASE_ID,
+            toPhone: "+85269990108",
+            templateName: "phase2_test_signed_collision_b",
+            category: "general",
+            body: "Owned collision B",
+          });
+          const providerA = `owned-a-${crypto.randomUUID()}`;
+          const providerB = `owned-b-${crypto.randomUUID()}`;
+          await repository.attachProviderMessageId({
+            messageId: first.id,
+            providerMessageId: providerA,
+            sentAs: "text",
+          });
+          await repository.attachProviderMessageId({
+            messageId: second.id,
+            providerMessageId: providerB,
+            sentAs: "text",
+          });
+          const eventId = crypto.randomUUID();
+          const original = {
+            type: "SENT",
+            data: { messageId: providerA },
+            timestamp: "1790850000",
+          };
+          const process = (payload: Record<string, unknown>) =>
+            processWhatsAppInboundWebhookWithRepository(repository, {
+              signatureValid: true,
+              providerEventId: eventId,
+              payload,
+            });
+          const accepted = await process(original);
+          expect(accepted).toMatchObject({ processingStatus: "processed", messageId: first.id });
+          const before =
+            await tx`select id,status,sent_at::text,delivered_at::text,read_at::text from whatsapp_messages where id in (${first.id},${second.id}) order by id`;
+          expect(await process(original)).toMatchObject({
+            eventId: accepted.eventId,
+            messageId: first.id,
+          });
+          const collision = await process({
+            type: "DELIVERED",
+            data: { messageId: target === "same message" ? providerA : providerB },
+            timestamp: "1790850300",
+          });
+          const after =
+            await tx`select id,status,sent_at::text,delivered_at::text,read_at::text from whatsapp_messages where id in (${first.id},${second.id}) order by id`;
+          expect([...after]).toEqual([...before]);
+          expect(collision).toMatchObject({
+            processingStatus: "failed",
+            messageId: null,
+            errorMessage: expect.stringMatching(/collision/),
+          });
+          const [source] =
+            await tx`select payload,normalized_message_id,processing_status from whatsapp_webhook_events where id=${accepted.eventId}`;
+          expect(source).toMatchObject({
+            payload: original,
+            normalized_message_id: first.id,
+            processing_status: "processed",
+          });
+          const [count] =
+            await tx`select count(*)::int count from whatsapp_webhook_events where provider_event_id=${eventId}`;
+          expect(count.count).toBe(1);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+  );
+
+  it("binds an early valid duplicate receipt ingested through the webhook service once", async () => {
+    const rollback = new Error("owned service early receipt rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const repository = createWhatsAppRepository({ sql: tx });
+        const message = await repository.queueOutboundTemplateMessage({
+          actorId: TEST_USER_ID,
+          caseId: TEST_CASE_ID,
+          toPhone: "+85269990109",
+          templateName: "phase2_test_service_early_receipt",
+          category: "general",
+          body: "Owned service early receipt",
+        });
+        const providerId = `owned-service-early-${crypto.randomUUID()}`;
+        const input = {
+          signatureValid: true,
+          providerEventId: crypto.randomUUID(),
+          payload: { type: "DELIVERED", data: { messageId: providerId }, timestamp: "1790850000" },
+        };
+        const first = await processWhatsAppInboundWebhookWithRepository(repository, input);
+        expect(first).toMatchObject({ processingStatus: "ignored", messageId: null });
+        expect(await processWhatsAppInboundWebhookWithRepository(repository, input)).toMatchObject({
+          eventId: first.eventId,
+          processingStatus: "ignored",
+          messageId: null,
+        });
+        await repository.attachProviderMessageId({
+          messageId: message.id,
+          providerMessageId: providerId,
+          sentAs: "text",
+        });
+        const [stored] =
+          await tx`select status,delivered_at::text from whatsapp_messages where id=${message.id}`;
+        expect(stored).toMatchObject({ status: "delivered", delivered_at: expect.any(String) });
+        const replay = await processWhatsAppInboundWebhookWithRepository(repository, input);
+        expect(replay).toMatchObject({
+          eventId: first.eventId,
+          processingStatus: "processed",
+          messageId: message.id,
+        });
+        const [unchanged] =
+          await tx`select status,delivered_at::text from whatsapp_messages where id=${message.id}`;
+        expect(unchanged).toEqual(stored);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  });
+
+  it("retains an early signed receipt contract and reconciles it after provider ID attachment", async () => {
+    const rollback = new Error("owned early receipt rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const repository = createWhatsAppRepository({ sql: tx });
+        const message = await repository.queueOutboundTemplateMessage({
+          actorId: TEST_USER_ID,
+          caseId: TEST_CASE_ID,
+          toPhone: "+85269990102",
+          templateName: "phase2_test_early_receipt",
+          category: "general",
+          body: "Owned local receipt race",
+        });
+        const providerId = `owned-early-${crypto.randomUUID()}`;
+        await repository.recordWebhookEvent({
+          providerEventId: crypto.randomUUID(),
+          signatureValid: false,
+          payload: { type: "READ", messageId: providerId, timestamp: "1790850000" },
+          processingStatus: "ignored",
+          normalizedMessageId: null,
+          errorMessage: "Signature invalid",
+        });
+        const receiptEventId = crypto.randomUUID();
+        const event = await repository.recordWebhookEvent({
+          providerEventId: receiptEventId,
+          signatureValid: true,
+          payload: { type: "DELIVERED", messageId: providerId, timestamp: "1790850000" },
+          processingStatus: "ignored",
+          normalizedMessageId: null,
+          errorMessage: "No outbound message matched this status update.",
+        });
+        await repository.recordWebhookEvent({
+          providerEventId: receiptEventId,
+          signatureValid: false,
+          payload: { type: "READ", messageId: providerId },
+          processingStatus: "ignored",
+          normalizedMessageId: null,
+          errorMessage: "Signature invalid",
+        });
+        const [protectedSource] = await tx<
+          { signature_valid: boolean; type: string }[]
+        >`select signature_valid,payload->>'type' type from whatsapp_webhook_events where id=${event.id}`;
+        expect(protectedSource).toEqual({ signature_valid: true, type: "DELIVERED" });
+        await repository.recordWebhookEvent({
+          providerEventId: receiptEventId,
+          signatureValid: true,
+          payload: { type: "READ", messageId: providerId, timestamp: "1790850300" },
+          processingStatus: "ignored",
+          normalizedMessageId: null,
+          errorMessage: null,
+        });
+        await repository.attachProviderMessageId({
+          messageId: message.id,
+          providerMessageId: providerId,
+          sentAs: "text",
+        });
+        const [stored] = await tx<
+          { status: string; delivered_at: string | null }[]
+        >`select status,delivered_at::text from whatsapp_messages where id=${message.id}`;
+        expect(stored).toMatchObject({ status: "delivered", delivered_at: expect.any(String) });
+        const [audit] = await tx<
+          { processing_status: string; normalized_message_id: string }[]
+        >`select processing_status,normalized_message_id from whatsapp_webhook_events where id=${event.id}`;
+        expect(audit).toMatchObject({
+          processing_status: "processed",
+          normalized_message_id: message.id,
+        });
+        // A receipt recorded after linkage is also reconciled in the event transaction.
+        await repository.recordWebhookEvent({
+          providerEventId: crypto.randomUUID(),
+          signatureValid: true,
+          payload: { type: "READ", data: { messageId: providerId }, timestamp: "1790850300" },
+          processingStatus: "ignored",
+          normalizedMessageId: null,
+          errorMessage: "No outbound message matched this status update.",
+        });
+        const [read] = await tx<
+          { status: string }[]
+        >`select status from whatsapp_messages where id=${message.id}`;
+        expect(read.status).toBe("read");
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  });
+  it(
+    "scopes each message before choosing a shared contact's latest conversation",
+    async () => {
+      const rollback = new Error("owned inbox visibility rollback");
+      await expect(
+        sqlForTests().begin(async (tx) => {
+          const repository = createWhatsAppRepository({ sql: tx });
+          const sharedPhone = "+85269990051";
+          const first = await repository.queueOutboundTemplateMessage({
+            actorId: TEST_USER_ID,
+            caseId: TEST_CASE_ID,
+            toPhone: sharedPhone,
+            templateName: "phase2_test_scope",
+            category: "general",
+            body: "Phase 2 test allowed text",
+          });
+          const second = await repository.queueOutboundTemplateMessage({
+            actorId: TEST_USER_ID,
+            caseId: SHARED_CASE_ID,
+            toPhone: sharedPhone,
+            templateName: "phase2_test_scope",
+            category: "general",
+            body: "Phase 2 test private other team",
+          });
+          const [otherTeam] = await tx<
+            { id: string }[]
+          >`insert into teams(name) values('owned inbox other team') returning id`;
+          const [otherUser] = await tx<
+            { id: string }[]
+          >`select id from users where id<>${TEST_USER_ID} limit 1`;
+          await tx`update companies set assigned_team_id=${otherTeam.id} where id=${SHARED_COMPANY_ID}`;
+          await tx`update annual_return_cases set owner_id=${otherUser.id},reviewer_id=null where id=${SHARED_CASE_ID}`;
+          const unknown = await repository.recordInboundMessage(
+            normalizeWoztellInboundMessage({
+              from: "85269990052",
+              messageId: "phase2-test-unmapped-scope",
+              timestamp: "1790850000",
+              type: "TEXT",
+              data: { text: "Phase 2 test unassigned intake" },
+            }),
+          );
+          const actor = {
+            authUserId: "owned-reader",
+            userId: TEST_USER_ID,
+            teamId: TEST_TEAM_ID,
+            role: "Staff" as const,
+            active: true,
+          };
+          const conversations = await repository.listConversations({ actor });
+          expect(
+            conversations.find((row) => row.contactId === first.contactId)?.lastMessageBody,
+          ).toBe(first.body);
+          expect(conversations.some((row) => row.contactId === unknown.contactId)).toBe(false);
+          const messages = await repository.listConversationMessages({
+            contactId: first.contactId!,
+            actor,
+          });
+          expect(messages.map((row) => row.id)).toContain(first.id);
+          expect(messages.map((row) => row.id)).not.toContain(second.id);
+          expect(
+            (await repository.listConversations({ actor: { ...actor, role: "Admin" } })).some(
+              (row) => row.contactId === unknown.contactId,
+            ),
+          ).toBe(true);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
+
   beforeEach(async () => {
     await cleanupWhatsAppFixtures();
     await createAnnualReturnCaseFixture();
@@ -947,7 +1275,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         }),
       );
 
-      const conversations = await repository.listConversations();
+      const conversations = await repository.listConversations({ actor: INBOX_ADMIN });
 
       // A ahead of B because A's newest is 11:00, and A's preview is that newest
       // message rather than its first — the `distinct on` has to pick the latest.
@@ -988,6 +1316,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       }
 
       const limited = await repository.listConversationMessages({
+        actor: INBOX_ADMIN,
         contactId: oldest.contactId!,
         limit: 2,
       });
@@ -1017,7 +1346,7 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
         body: "Reminder body",
       });
 
-      const [conversation] = await repository.listConversations();
+      const [conversation] = await repository.listConversations({ actor: INBOX_ADMIN });
 
       // Exercises the companies join and the coalesce that prefers the message's
       // own company over the contact's.
@@ -1253,6 +1582,17 @@ describe.skipIf(!databaseUrl)("WhatsApp repository", () => {
       // Null, not the second company. A number two clients use belongs to
       // neither, and naming one would file the other's reply against it.
       expect(afterSecond[0]?.company_id).toBeNull();
+      const incoming = normalizeWoztellInboundMessage({
+        from: "phase2-shared-number",
+        timestamp: "1790850000",
+        type: "TEXT",
+        data: { text: "Phase 2 test ambiguous reply" },
+        channel: "test-channel",
+        messageId: "phase2-test-ambiguous-001",
+      });
+      const inbound = await repository.recordInboundMessage(incoming);
+      expect(inbound).toMatchObject({ companyId: null, caseId: null, timelineEventCreated: false });
+      expect((await repository.recordInboundMessage(incoming)).id).toBe(inbound.id);
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );

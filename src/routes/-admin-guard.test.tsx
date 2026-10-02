@@ -28,7 +28,18 @@ vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
         signedInAt: "2026-07-11T00:00:00.000Z",
       },
       isHydrated: true,
-      demoUsers: [],
+      demoUsers: [
+        {
+          id: "demo-readonly",
+          name: "Readonly Demo",
+          email: "demo@example.test",
+          role: "Staff",
+          team: "Demo",
+          initials: "RD",
+          active: true,
+          lastLoginAt: null,
+        },
+      ],
       isCurrentUserAdmin: mockIsAdmin.value,
       login: vi.fn(),
       loginWithMagicLink: vi.fn(),
@@ -46,11 +57,11 @@ afterEach(() => {
   mockIsAdmin.value = true;
 });
 
-async function renderAdmin() {
+async function renderAdmin(dataMode: "production" | "demo" = "production") {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: ["/admin"] }),
-    context: { queryClient: new QueryClient(), dataMode: "production" as const, actor: null },
+    context: { queryClient: new QueryClient(), dataMode, actor: null },
     defaultPreloadStaleTime: 0,
   });
 
@@ -60,12 +71,18 @@ async function renderAdmin() {
 }
 
 describe("/admin production console, gated by role", () => {
+  it("keeps demo staff roles and active flags read-only", async () => {
+    const html = await renderAdmin("demo");
+    expect(html).toMatch(/<select[^>]*disabled=""[^>]*aria-label="Role for Readonly Demo"/);
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Deactivate Readonly Demo"/);
+  });
   it("shows the console to an admin", async () => {
     mockIsAdmin.value = true;
 
     const html = await renderAdmin();
 
-    expect(html).toContain("Not available in this deployment");
+    expect(html).toContain("員工與團隊管理");
+    expect(html).toContain("邀請未啟用");
     expect(html).not.toContain("Admin access required");
   });
 

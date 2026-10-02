@@ -111,14 +111,17 @@ export async function requireActor(
   }
 
   const staffRows = await sql<StaffProfileRow[]>`
-    select user_id, role, team_id, active
-    from staff_profiles
-    where auth_user_id = ${session.user.id}
+    select sp.user_id, sp.role, sp.team_id,
+      (sp.active and u.active and sp.role=u.role and sp.team_id is not distinct from u.team_id) active
+    from staff_profiles sp join users u on u.id=sp.user_id
+    where sp.auth_user_id = ${session.user.id}
     limit 1
   `;
   const staff = staffRows[0];
 
   if (staff) {
+    if (!staff.active)
+      throw new Error("Forbidden: staff account is inactive or access state is inconsistent.");
     return {
       authUserId: session.user.id,
       userId: staff.user_id,

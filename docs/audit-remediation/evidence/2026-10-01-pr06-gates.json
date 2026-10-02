@@ -1,0 +1,142 @@
+{
+  "assignmentDate": "2026-10-01",
+  "verifiedDate": "2026-10-02",
+  "build": "5b3e536793bce27aafe02fe5ee4f485cc7d85f3e",
+  "base": "4eefc4038fe5e25ce6c0a04bf82ddf5cc7750974",
+  "tasks": ["T14"],
+  "findings": ["F09"],
+  "environment": "LOCAL ONLY Windows / portable Node22.23.3 / Bun1.3.14 / actual Postgres17 localhost55441 kossilon_pr02_ci; synthetic owned fixtures and injected Auth/UI contracts",
+  "gates": [
+    {
+      "command": "npm run test; both DB URLs point to owned local Postgres; DATABASE_SSL=disable",
+      "result": "200 files / 1979 pass / 0 skip / exit0",
+      "log": ".worktrees/audit-baseline-20261001/pr06-full-test-final.log",
+      "durationSeconds": 259.57
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/nar-import/apply.integration.test.ts scripts/audit-schema-readiness.test.ts; actual local Postgres",
+      "result": "2 files / 25 pass / 0 skip",
+      "log": ".worktrees/audit-baseline-20261001/pr06-review-db-final.log",
+      "durationSeconds": 133.48
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/nar-import/apply-panel.test.tsx src/features/nar-import/apply-server.test.ts",
+      "result": "2 files / 9 pass / 0 skip",
+      "log": ".worktrees/audit-baseline-20261001/pr06-review-ui-final.log",
+      "durationSeconds": 43.66
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS exit0",
+      "log": ".worktrees/audit-baseline-20261001/pr06-typecheck-delivery.log"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS exit0; 0 errors / 1 existing work-queue Fast Refresh warning",
+      "log": ".worktrees/audit-baseline-20261001/pr06-lint-delivery.log"
+    },
+    {
+      "command": "npm run build; check literal cloudflare:scheduled hook in .output/server/index.mjs",
+      "result": "PASS exit0; compiled hook present, not genuine runtime ticks",
+      "log": ".worktrees/audit-baseline-20261001/pr06-build-delivery.log"
+    },
+    {
+      "command": "npm run verify:dev-server-imports",
+      "result": "12 routes PASS; no import-protection violation; exit0",
+      "log": ".worktrees/audit-baseline-20261001/pr06-dev-delivery.log"
+    },
+    {
+      "command": "npm run verify:firm -- --dry-run",
+      "result": "38 offline reads / 0 network / 0 writes; actual providers explicitly BLOCKED",
+      "log": ".worktrees/audit-baseline-20261001/pr06-predeploy-delivery.log"
+    },
+    {
+      "command": "bun scripts/db-migrate.ts; owned local target only",
+      "result": "0074/0075 applied; repeat PASS; source expected manifest43 IDs",
+      "log": ".worktrees/audit-baseline-20261001/t14-migrate-repeat.log"
+    }
+  ],
+  "freshReview": {
+    "critical": 0,
+    "importantFixed": 3,
+    "fixPasses": 1,
+    "rereview": false,
+    "fixes": [
+      "Final row transaction updates terminal state at100 items and mixed applied/blocked partial counts",
+      "Source invoice change conflicts even when typed override is omitted",
+      "Identified compensation before/current facts visible, failure surfaced without retry"
+    ]
+  },
+  "actualPostgres": [
+    "35 synthetic data rows / 65-format parser contract; 2 selected / 33 retained pending",
+    "Same source bytes replay without duplicate; explicit year and mapping attribution",
+    "Independent worker PIDs; cross-batch company/year uniqueness; stale version409",
+    "Owned child process commits one item then SIGKILL; new worker resumes remaining exactly once",
+    "Actual domain SQL23514 rolls back row and audit atomically; partial outcomes retained",
+    "100 distinct-company case creations terminate without a101st call",
+    "Complete before/after journal and read-only compensation check after later references",
+    "Historical case on client-origin company excluded at outbox claim, cancellation and dispatch; no provider sends"
+  ],
+  "redLogs": [
+    "t14-historical-claim-red.log",
+    "t14-partial-catalogue-red.log",
+    "t14-mapping-history-red.log",
+    "t14-existing-fee-red.log",
+    "t14-journal-red.log",
+    "t14-legacy-year-true-red.log",
+    "t14-diff-progress-red.log",
+    "t14-process-kill-red.log",
+    "t14-ui-rpc-red.log",
+    "pr06-review-red.log"
+  ],
+  "unsuccessfulRuns": [
+    {
+      "log": ".worktrees/audit-baseline-20261001/pr06-full-test.log",
+      "result": "200 files;1973 pass/1 fail/0 skip",
+      "resolution": "Isolated schema fixture lacked annual-case/work-item relations needed by historical outbox guard; minimal fixture added, original DDL/unknown/rollback assertions retained"
+    },
+    {
+      "log": ".worktrees/audit-baseline-20261001/pr06-review-green-final2.log",
+      "result": "1 failed /28 passed; one unhandled fork startup timeout;285.84s",
+      "resolution": "Recorded failure; final focused and whole suites subsequently pass; no claim host cause was fixed"
+    },
+    {
+      "result": "New100-create test exceeded original30s repeatedly; one isolated Node22 run passed25.93s",
+      "resolution": "Only new stress test uses120s; existing CI defaults/original tests unchanged; exact-owned local timeout fixtures cleaned under guards"
+    },
+    {
+      "log": ".worktrees/audit-baseline-20261001/pr06-dev.log",
+      "result": "11 routes pass / root15s timeout",
+      "resolution": "Final unchanged dev gate12/12 PASS after full suite/build finished"
+    }
+  ],
+  "performance": {
+    "beforeMilliseconds": 15893.897,
+    "afterMilliseconds": 17589.22,
+    "logBefore": ".worktrees/audit-baseline-20261001/pr06-100-profile-before.log",
+    "logAfter": ".worktrees/audit-baseline-20261001/pr06-100-profile-after.log",
+    "interpretation": "Same Bun/local100-create observations are noisy; no proven improvement, p95 or runtime SLO acceptance; T21 required"
+  },
+  "rulings": [
+    "PR06 Final: minor (deferred): workbook refusal UI hides safe parser/known-year detail behind generic failure; known server refusals remain, safety is unchanged. Defer structured safe refusal presentation to T20/T22; cost: operators need better actionable refusal guidance.",
+    "PR06 Ruling: remove unused post-create readiness hydration from NAR through shared createCaseRecord; original createCase delegates to the same verified transactional domain command then hydrates its public response. No duplicated case/fee/checklist/payment/work/audit write path or relaxed authority. Cost: new internal repository method to maintain; existing wrapper behavior verified by full suite.",
+    "PR06 Ruling: a new stress test performs 100 real row transactions and receives an explicit120s budget; existing CI30s defaults and original tests are unchanged. Multiple earlier30s timeouts and worker-startup failure remain recorded; functional mixed2-item RED proves terminal-state defect, actual100-create isolatedNode run25.93s passed once. This is correctness coverage, not a latency/SLO pass; T21 must assess runtime chunk budget and p95 with controlled data. Cost: longer CI and outstanding throughput acceptance.",
+    "PR06 Ruling: pipelined independent reads stay on one transaction after actor/company/case locks; case-level writers preserve serialization. Same Bun/local100-create observations15.894s then17.589s are noisy and do not prove improvement. Cost: no measured speedup claim, latency remains a T21 risk.",
+    "PR06 Ruling: T01 isolated schema rehearsal adds only minimal annual-case/work-item relations required by the new historical outbox guard; retains exact42703 missing-marker assertion, physicalDDL checks, original FK/data/unknown-send/rollback assertions. Initial full200files1973pass1fail0skip is retained; not a passing gate.",
+    "PR06 Ruling: cleanup after actual stress-test timeout used only explicit batch/actor/job UUIDs with synthetic auth/parser/source/owner/template/no-later-evidence checks against localhost55441. Alias experiment scope guard refused broad cleanup, then verified its exact generated-owner/company/time set before deletion. No reset, shared fixture reseed, non-local changes or other process kills.",
+    "PR06 Declined-to-judge rulings: original XLSX -> business data owner/original controlled workbook acceptance; fresh Auth/Google/Admin -> Auth owner/controlled fresh accounts; R2/scanner/OCR/AI/WOZTELL -> T15-T18 and respective providers; actual native ticks/automaticNAR -> T18/Operations, explicit SQL-only/manualactivation stands; productionDDL/historicalreconciliation/restore/deploy -> release+DB owner/new concrete approval; runtimep95/cataloguelimits/queuepagination -> T21; mobile/accessibility/navigation -> T20/T22; actualcompensation execution/archival -> later fresh reviewed authorized domain correction; incompletecompanyidentity -> explicit refusal with no fakeCR/BR; historicaloperationalvisibility -> existing policy permits visibility but suppressesoutbound, no silentorigin inference; auditcategory/separateNARadapter -> metadata/journals maintain attribution; unknowncommit -> savedstate/reconcile/manualresume no blindretry; cross-teamownercatalogue -> existing verified assignment policy preserved. Cost: each deferred runtime/release journey remains unaccepted and cannot be declared production/pilot complete. Full CI was pending at reviewer assessment; owner verifies actual results separately."
+  ],
+  "deferredMinors": [
+    "Stage refusal UI masks safe parser/known-year details with generic error; retain server refusal and defer structured safe operator guidance to T20/T22"
+  ],
+  "localMigrations": ["0074_reviewed_nar_apply.sql", "0075_nar_legacy_year_review.sql"],
+  "production": "No production SQL/deployment/owner activation/invitations/sends performed for this candidate. Last observed Web aa5d3cb and historical66-ID ledger were not refreshed for this gate; source43 IDs are a different manifest, not renumbered history.",
+  "runtimeBlockers": [
+    "Business data owner: original controlled XLSX absent from supplied evidence; synthetic35/65 is not original workbook acceptance",
+    "Auth owner: controlled fresh Admin/Google/session journey",
+    "Release/DB owner: review0067–0075, historical drift, restore and rollback; approve new scope before production changes",
+    "Operations owner: verified platform identity and three genuine scheduled ticks; NAR explicit manual chunks are not automatic runtime evidence",
+    "Storage/security providers: genuine R2/scanner sample; T15/T16 and broader actionsT18/queue performanceT21 remain"
+  ],
+  "runbooks": ["docs/audit-remediation/nar-import-runbook.md"]
+}
