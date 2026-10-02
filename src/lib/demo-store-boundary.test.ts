@@ -137,7 +137,6 @@ const DEMO_USER_FIXTURE_READERS = [
 const ROUTES_WITHOUT_A_MODE_BRANCH: Record<string, string> = {
   "routes/login.tsx": "unauthenticated entry point; renders no firm data in either mode",
   "routes/admin.tsx": "branches inside AdminPage via Route.useRouteContext",
-  "routes/work-queue.tsx": "production-only; calls server functions in both modes by design",
   "routes/__root.tsx": "the layout; reads dataMode in beforeLoad rather than in a component",
 };
 

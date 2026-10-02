@@ -2,13 +2,14 @@ import { z } from "zod";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { DocumentAiConfig } from "@/server/runtime-env";
 import { makeFinding, type Finding } from "./findings";
+import type { ExtractedEvidence } from "./text-extraction";
+import { isBoundEvidence } from "./evidence-contract";
 
 /**
  * Tier 3: a model reads the document.
  *
- * BLOCKED_INTEGRATION: ai-provider. No provider has been chosen, no binding
- * exists, and `getDocumentAiConfig` returns null everywhere, so nothing here
- * runs. It is written and contract-tested against a stub anyway, because a
+ * Genuine provider acceptance remains gated on approved runtime credentials and
+ * the existing binary connector protocol. Local tests use a stub because a
  * capability that is switched off is a different thing from one that was never
  * built -- and because the shape of the contract is the part that has to be
  * right before any vendor is picked.
@@ -67,6 +68,7 @@ const observationSchema = z
   // out of analyze() entirely, past the promise below to return
   // `malformed-response`, and on into the caller. The first of those needs no
   // hostile intent at all; a benign model citing "page 3" was enough.
+  .strict()
   .superRefine((observation, ctx) => {
     if (!observation.detail.trim()) {
       ctx.addIssue({
@@ -94,16 +96,19 @@ const observationSchema = z
     }
   });
 
-const responseSchema = z.object({
-  reference: z.string().min(1).max(200),
-  observations: z.array(observationSchema).max(MAX_OBSERVATIONS),
-});
+const responseSchema = z
+  .object({
+    reference: z.string().min(1).max(200),
+    observations: z.array(observationSchema).max(MAX_OBSERVATIONS),
+  })
+  .strict();
 
 export type AiAnalysisInput = {
   documentVersionId: string;
   contentType: string;
   fileName: string;
   body: ArrayBuffer;
+  evidence: ExtractedEvidence;
 };
 
 export type AiAnalysisResult =
@@ -119,6 +124,130 @@ export type DocumentAiAnalyzer = {
   analyze(input: AiAnalysisInput): Promise<AiAnalysisResult>;
 };
 
+/** Full cited page text is the source span; no vendor quote/model API is invented. */
+export function groundProviderFindings(
+  evidence: ExtractedEvidence,
+  candidates: readonly Finding[],
+): Finding[] | null {
+  if (
+    !isBoundEvidence(evidence) ||
+    evidence.unknownReason ||
+    !evidence.pages.length ||
+    !Array.isArray(candidates) ||
+    candidates.length > MAX_OBSERVATIONS
+  )
+    return null;
+  const grounded: Finding[] = [];
+  for (const candidate of candidates) {
+    if (
+      !candidate ||
+      typeof candidate.ruleKey !== "string" ||
+      typeof candidate.ruleVersion !== "string" ||
+      !candidate.ruleVersion.trim() ||
+      !candidate.citation
+    )
+      return null;
+    const citation = candidate.citation;
+    if (
+      citation.kind !== "version" ||
+      !observationSchema.safeParse({
+        ruleKey: candidate.ruleKey.replace(/^provider:/, ""),
+        outcome: candidate.outcome,
+        severity: candidate.severity,
+        detail: candidate.detail,
+        pageFrom: citation.pageFrom,
+        pageTo: citation.pageTo,
+      }).success
+    )
+      return null;
+    if (
+      candidate.tier !== "provider" ||
+      candidate.severity === "critical" ||
+      !candidate.ruleKey.startsWith("provider:") ||
+      citation.kind !== "version" ||
+      citation.documentVersionId !== evidence.documentVersionId ||
+      citation.pageFrom === null ||
+      !Number.isInteger(citation.pageFrom) ||
+      citation.pageFrom < 1
+    )
+      return null;
+    const last = citation.pageTo ?? citation.pageFrom;
+    if (!Number.isInteger(last) || last < citation.pageFrom || last > 200) return null;
+    const pages = evidence.pages.filter(
+      (page) => page.page >= citation.pageFrom! && page.page <= last,
+    );
+    if (
+      pages.length !== last - citation.pageFrom + 1 ||
+      pages.some(
+        (page) =>
+          !page.text.trim() ||
+          (page.method === "ocr" && (page.confidence === null || page.confidence < 0.8)),
+      ) ||
+      (candidate.evidence && candidate.evidence.sha256 !== evidence.sha256)
+    )
+      return null;
+    grounded.push(
+      makeFinding({
+        ...candidate,
+        evidence: {
+          sha256: evidence.sha256,
+          field: candidate.ruleKey,
+          partyId: null,
+          year: null,
+          observed: null,
+          expected: null,
+          unknownReason: null,
+          requirementInstanceId: null,
+          spans: pages.map((page) => ({
+            page: page.page,
+            start: 0,
+            end: page.text.length,
+            quote: page.text,
+          })),
+        },
+      }),
+    );
+  }
+  return grounded;
+}
+
+const MAX_AI_RESPONSE_BYTES = 64 * 1024;
+async function readBoundedAiResponse(response: Response, signal: AbortSignal): Promise<unknown> {
+  if (Number(response.headers.get("content-length")) > MAX_AI_RESPONSE_BYTES || !response.body)
+    throw new Error("invalid-response");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const abort = () => {
+    void reader.cancel().catch(() => undefined);
+  };
+  signal.addEventListener("abort", abort, { once: true });
+  try {
+    while (true) {
+      signal.throwIfAborted();
+      const next = await reader.read();
+      signal.throwIfAborted();
+      if (next.done) break;
+      size += next.value.byteLength;
+      if (size > MAX_AI_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw new Error("response-too-large");
+      }
+      chunks.push(next.value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } finally {
+    signal.removeEventListener("abort", abort);
+    reader.releaseLock();
+  }
+}
+
 export function createLiveDocumentAiAnalyzer(options: {
   config: DocumentAiConfig;
   fetchImpl?: typeof fetch;
@@ -126,95 +255,119 @@ export function createLiveDocumentAiAnalyzer(options: {
 }): DocumentAiAnalyzer {
   const fetchImpl = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? ANALYSIS_TIMEOUT_MS;
-
   return {
     async analyze(input): Promise<AiAnalysisResult> {
+      if (!Number.isFinite(timeoutMs) || timeoutMs < 1 || timeoutMs > 60_000)
+        return { status: "failed", retryable: false, errorCode: "invalid-timeout" };
+      if (input.body.byteLength === 0 || input.body.byteLength > 10 * 1024 * 1024)
+        return { status: "failed", retryable: false, errorCode: "document-size-invalid" };
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      let response: Response;
+      let timer: ReturnType<typeof setTimeout>;
+      const deadline = new Promise<AiAnalysisResult>((resolve) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          resolve({ status: "failed", retryable: true, errorCode: "timeout" });
+        }, timeoutMs);
+      });
+      const perform = async (): Promise<AiAnalysisResult> => {
+        const evidence = input.evidence;
+        if (
+          !isBoundEvidence(evidence) ||
+          evidence.documentVersionId !== input.documentVersionId ||
+          !/^[a-f0-9]{64}$/.test(evidence.sha256)
+        )
+          return { status: "failed", retryable: false, errorCode: "evidence-identity-mismatch" };
+        if (evidence.unknownReason || !evidence.pages.some((page) => page.text.trim()))
+          return { status: "failed", retryable: false, errorCode: "evidence-not-readable" };
+        const digest = await crypto.subtle.digest("SHA-256", input.body.slice(0));
+        const actual = Array.from(new Uint8Array(digest), (b) =>
+          b.toString(16).padStart(2, "0"),
+        ).join("");
+        controller.signal.throwIfAborted();
+        if (actual !== evidence.sha256)
+          return { status: "failed", retryable: false, errorCode: "evidence-identity-mismatch" };
+        let response: Response;
+        try {
+          // Existing binary HTTP connector and headers are preserved.
+          response = await fetchImpl(options.config.endpoint, {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${options.config.apiKey}`,
+              "content-type": "application/octet-stream",
+              "x-document-content-type": input.contentType,
+              "x-document-file-name": encodeURIComponent(input.fileName),
+            },
+            body: input.body,
+            signal: controller.signal,
+          });
+        } catch {
+          return {
+            status: "failed",
+            retryable: true,
+            errorCode: controller.signal.aborted ? "timeout" : "transport",
+          };
+        }
+        controller.signal.throwIfAborted();
+        if (!response.ok)
+          return {
+            status: "failed",
+            retryable: response.status >= 500 || response.status === 429,
+            errorCode: `http-${response.status}`,
+          };
+        let parsed: z.infer<typeof responseSchema>;
+        try {
+          parsed = responseSchema.parse(await readBoundedAiResponse(response, controller.signal));
+        } catch {
+          return {
+            status: "failed",
+            retryable: controller.signal.aborted,
+            errorCode: controller.signal.aborted ? "timeout" : "malformed-response",
+          };
+        }
+        if (!parsed.observations.length)
+          return {
+            status: "uncertain",
+            providerReference: parsed.reference,
+            detail: "The model returned no observations about this document.",
+          };
+        try {
+          const findings = groundProviderFindings(
+            evidence,
+            parsed.observations.map((observation) =>
+              makeFinding({
+                ruleKey: `provider:${observation.ruleKey}`,
+                ruleVersion: AI_RULE_VERSION,
+                tier: "provider",
+                outcome: observation.outcome,
+                severity: observation.severity,
+                detail: observation.detail,
+                citation: {
+                  kind: "version",
+                  documentVersionId: input.documentVersionId,
+                  pageFrom: observation.pageFrom ?? null,
+                  pageTo: observation.pageTo ?? null,
+                },
+              }),
+            ),
+          );
+          if (!findings)
+            return { status: "failed", retryable: false, errorCode: "invalid-citation" };
+          return { status: "analysed", providerReference: parsed.reference, findings };
+        } catch {
+          return { status: "failed", retryable: false, errorCode: "malformed-response" };
+        }
+      };
       try {
-        response = await fetchImpl(options.config.endpoint, {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${options.config.apiKey}`,
-            "content-type": "application/octet-stream",
-            "x-document-content-type": input.contentType,
-            // Encoded: a file name can carry non-ASCII, and a raw header value
-            // would either throw or be silently mangled.
-            "x-document-file-name": encodeURIComponent(input.fileName),
-          },
-          body: input.body,
-          signal: controller.signal,
-        });
-      } catch (error) {
-        // Reported by class, not by message: a vendor error string can carry
-        // content we have no business persisting.
+        return await Promise.race([perform(), deadline]);
+      } catch {
         return {
           status: "failed",
           retryable: true,
-          errorCode:
-            error instanceof Error && error.name === "AbortError" ? "timeout" : "transport",
+          errorCode: controller.signal.aborted ? "timeout" : "transport",
         };
       } finally {
-        clearTimeout(timer);
+        clearTimeout(timer!);
       }
-
-      if (!response.ok) {
-        // 4xx is a configuration or contract problem a retry cannot fix; 5xx and
-        // 429 are worth retrying.
-        const retryable = response.status >= 500 || response.status === 429;
-        return { status: "failed", retryable, errorCode: `http-${response.status}` };
-      }
-
-      let parsed: z.infer<typeof responseSchema>;
-      try {
-        parsed = responseSchema.parse(await response.json());
-      } catch {
-        // Includes a response that asked for `critical`. Rejecting the whole run
-        // is deliberate: a provider that does not honour the contract should not
-        // have the rest of its answer silently accepted.
-        return { status: "failed", retryable: false, errorCode: "malformed-response" };
-      }
-
-      if (parsed.observations.length === 0) {
-        return {
-          status: "uncertain",
-          providerReference: parsed.reference,
-          detail: "The model returned no observations about this document.",
-        };
-      }
-
-      let findings: Finding[];
-      try {
-        findings = parsed.observations.map((observation) =>
-          makeFinding({
-            // Namespaced so a provider observation can never be mistaken for a
-            // deterministic check in a list, a filter or a log.
-            ruleKey: `provider:${observation.ruleKey}`,
-            ruleVersion: AI_RULE_VERSION,
-            tier: "provider",
-            outcome: observation.outcome,
-            severity: observation.severity,
-            detail: observation.detail,
-            citation: {
-              kind: "version",
-              documentVersionId: input.documentVersionId,
-              pageFrom: observation.pageFrom ?? null,
-              pageTo: observation.pageTo ?? null,
-            },
-          }),
-        );
-      } catch {
-        // Belt and braces. superRefine above should have caught anything
-        // makeFinding would refuse, but the two are separate statements of the
-        // same rules and a future edit could let them drift. If they ever do,
-        // this adapter still keeps the promise it makes: a provider that does
-        // not honour the contract gets `malformed-response`, and never a throw
-        // into a caller that has no reason to expect one.
-        return { status: "failed", retryable: false, errorCode: "malformed-response" };
-      }
-
-      return { status: "analysed", providerReference: parsed.reference, findings };
     },
   };
 }

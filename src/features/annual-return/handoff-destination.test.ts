@@ -49,7 +49,7 @@ describe("createHandoffDestinationForProviderMode", () => {
   it("has no fixture destination to fall back to outside live", () => {
     expect(createHandoffDestinationForProviderMode("local", { config })).toBeNull();
     expect(createHandoffDestinationForProviderMode("simulated", { config })).toBeNull();
-    expect(createHandoffDestinationForProviderMode("live", { config })).not.toBeNull();
+    expect(createHandoffDestinationForProviderMode("live", { config })).toBeNull();
   });
 });
 
@@ -91,16 +91,16 @@ describe("createLiveHandoffDestination", () => {
     });
   });
 
-  it("retries a transient failure and refuses to retry a contract failure", async () => {
-    for (const [status, retryable] of [
-      [503, true],
-      [429, true],
-      [400, false],
+  it("never retries a lost acknowledgement or terminal contract refusal", async () => {
+    for (const [status, result] of [
+      [503, "unknown"],
+      [429, "unknown"],
+      [400, "failed"],
     ] as const) {
       const { destination } = destinationReturning({}, status);
       await expect(destination.submit(submission)).resolves.toMatchObject({
-        status: "failed",
-        retryable,
+        status: result,
+        retryable: false,
       });
     }
   });
@@ -108,7 +108,7 @@ describe("createLiveHandoffDestination", () => {
   it("rejects a response that does not carry a reference", async () => {
     const { destination } = destinationReturning({ accepted: true });
     await expect(destination.submit(submission)).resolves.toMatchObject({
-      status: "failed",
+      status: "unknown",
       errorCode: "malformed-response",
     });
   });
@@ -122,7 +122,22 @@ describe("createLiveHandoffDestination", () => {
     const destination = createLiveHandoffDestination({ config, fetchImpl });
 
     const result = await destination.submit(submission);
-    expect(result).toEqual({ status: "failed", retryable: true, errorCode: "transport" });
+    expect(result).toEqual({ status: "unknown", retryable: false, errorCode: "transport" });
     expect(JSON.stringify(result)).not.toContain("secret");
+  });
+  it("an accepted request whose response body never arrives times out as unknown once", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(new ReadableStream({ start() {} }), {
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    const destination = createLiveHandoffDestination({ config, fetchImpl, timeoutMs: 10 });
+    await expect(destination.submit(submission)).resolves.toMatchObject({
+      status: "unknown",
+      retryable: false,
+      errorCode: "timeout",
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

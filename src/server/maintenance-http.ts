@@ -41,6 +41,7 @@ export function createMaintenanceHttpHandler(input: {
         "settleNotificationAttempts",
         "redactNotifications",
         "escalateStalledQuarantine",
+        "runBulkAssignments",
       ],
     };
     // The endpoint is an authenticated schedule candidate. Platform logs are

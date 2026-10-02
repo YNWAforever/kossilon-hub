@@ -1,4 +1,5 @@
 import type postgres from "postgres";
+import { requireCurrentNarAdmin } from "./authorization";
 import {
   createSqlClient,
   getSqlClient,
@@ -51,12 +52,14 @@ export type NarImportBatchStatus =
   | "failed";
 
 export type NarImportBatch = {
+  revision?: string;
   id: string;
   sourceFileName: string;
   sourceSha256: string;
   sourceSizeBytes: number;
   sheetName: string;
   parserVersion: string;
+  returnYear: number | null;
   periodYear: number | null;
   periodMonth: number | null;
   status: NarImportBatchStatus;
@@ -75,6 +78,7 @@ export type NarImportRow = {
   parsed: JsonValue;
   issues: RowIssue[];
   disposition: NarRowDisposition;
+  currentMappingCompanyId?: string | null;
   matchedCompanyId: string | null;
   matchedCaseId: string | null;
   appliedAt: string | null;
@@ -96,12 +100,14 @@ const COLUMN_TO_DISPOSITION: Record<string, NarRowDisposition> = Object.fromEntr
 ) as Record<string, NarRowDisposition>;
 
 type BatchRow = {
+  revision?: string;
   id: string;
   source_file_name: string;
   source_sha256: string;
   source_size_bytes: string | number;
   sheet_name: string;
   parser_version: string;
+  return_year: number | null;
   period_year: number | null;
   period_month: number | null;
   status: NarImportBatchStatus;
@@ -120,6 +126,7 @@ type ImportRowRow = {
   parsed: JsonValue;
   issues: JsonValue;
   disposition: string;
+  current_mapping_company_id?: string | null;
   matched_company_id: string | null;
   matched_case_id: string | null;
   applied_at: string | Date | null;
@@ -130,11 +137,13 @@ type ImportRowRow = {
 function mapBatch(row: BatchRow): NarImportBatch {
   return {
     id: row.id,
+    revision: row.revision,
     sourceFileName: row.source_file_name,
     sourceSha256: row.source_sha256,
     sourceSizeBytes: Number(row.source_size_bytes),
     sheetName: row.sheet_name,
     parserVersion: row.parser_version,
+    returnYear: row.return_year,
     periodYear: row.period_year,
     periodMonth: row.period_month,
     status: row.status,
@@ -155,6 +164,7 @@ function mapRow(row: ImportRowRow): NarImportRow {
     parsed: row.parsed,
     issues: Array.isArray(row.issues) ? (row.issues as RowIssue[]) : [],
     disposition: COLUMN_TO_DISPOSITION[row.disposition] ?? "invalid",
+    currentMappingCompanyId: row.current_mapping_company_id ?? null,
     matchedCompanyId: row.matched_company_id,
     matchedCaseId: row.matched_case_id,
     appliedAt: row.applied_at === null ? null : new Date(row.applied_at).toISOString(),
@@ -191,7 +201,8 @@ export type StageBatchInput = {
   returnYear: number;
   periodYear?: number | null;
   periodMonth?: number | null;
-  createdBy?: string | null;
+  createdBy: string;
+  authUserId: string;
   read: NarSheetReadResult;
 };
 
@@ -210,7 +221,9 @@ export type NarImportRepository = {
     sourceSystem?: string;
     externalClientId: string;
     companyId: string;
-    mappedBy?: string | null;
+    mappedBy: string;
+    authUserId: string;
+    expectedCompanyId?: string | null;
   }): Promise<void>;
   close(): Promise<void>;
 };
@@ -235,6 +248,12 @@ export function createNarImportRepository(
   return {
     async stageBatch(input) {
       return withTransaction(sql, async (tx) => {
+        await requireCurrentNarAdmin(
+          tx,
+          { userId: input.createdBy, authUserId: input.authUserId },
+          true,
+        );
+        await tx`select pg_advisory_xact_lock(hashtextextended(${input.sourceSha256 + ":" + input.read.sheetName},0))`;
         // The same bytes and sheet are the same batch. A staff member who
         // re-uploads the file they already uploaded gets the review they left,
         // not a duplicate of it.
@@ -242,15 +261,21 @@ export function createNarImportRepository(
           select * from nar_import_batches
           where source_sha256 = ${input.sourceSha256} and sheet_name = ${input.read.sheetName}
           limit 1`;
-        if (existing[0]) return { batch: mapBatch(existing[0]), reused: true };
+        if (existing[0]) {
+          if (existing[0].return_year !== input.returnYear)
+            throw new Error(
+              "Import return year differs or is unknown; explicit legacy review is required.",
+            );
+          return { batch: mapBatch(existing[0]), reused: true };
+        }
 
         const batches = await tx<BatchRow[]>`
           insert into nar_import_batches (
             source_system, source_file_name, source_sha256, source_size_bytes, sheet_name,
-            parser_version, period_year, period_month, row_count, created_by
+            parser_version, return_year, period_year, period_month, row_count, created_by
           ) values (
             ${NAR_SOURCE_SYSTEM}, ${input.sourceFileName}, ${input.sourceSha256},
-            ${input.sourceSizeBytes}, ${input.read.sheetName}, ${input.parserVersion},
+            ${input.sourceSizeBytes}, ${input.read.sheetName}, ${input.parserVersion}, ${input.returnYear},
             ${input.periodYear ?? null}, ${input.periodMonth ?? null},
             ${input.read.rows.length}, ${input.createdBy ?? null}
           ) returning *`;
@@ -341,7 +366,9 @@ export function createNarImportRepository(
     },
 
     async getBatch(id) {
-      const rows = await sql<BatchRow[]>`select * from nar_import_batches where id = ${id}`;
+      const rows = await sql<
+        BatchRow[]
+      >`select b.*,md5(to_jsonb(b)::text) revision from nar_import_batches b where b.id = ${id}`;
       return rows[0] ? mapBatch(rows[0]) : null;
     },
 
@@ -353,7 +380,7 @@ export function createNarImportRepository(
 
     async listRows(batchId) {
       const rows = await sql<ImportRowRow[]>`
-        select * from nar_import_rows where batch_id = ${batchId} order by row_number asc`;
+        select r.*,x.company_id as current_mapping_company_id from nar_import_rows r join nar_import_batches b on b.id=r.batch_id left join company_external_references x on x.source_system=b.source_system and x.external_client_id=r.external_client_id where r.batch_id = ${batchId} order by r.row_number asc`;
       return rows.map(mapRow);
     },
 
@@ -377,20 +404,26 @@ export function createNarImportRepository(
     },
 
     async mapExternalReference(input) {
-      // Upserted rather than inserted: a staff member correcting an earlier
-      // mistake is the normal case, and the unique constraint on
-      // (source_system, external_client_id) is what makes it a correction rather
-      // than a second, contradictory binding.
-      await sql`
-        insert into company_external_references (
-          source_system, external_client_id, company_id, mapped_by
-        ) values (
-          ${input.sourceSystem ?? NAR_SOURCE_SYSTEM}, ${input.externalClientId},
-          ${input.companyId}, ${input.mappedBy ?? null}
-        )
-        on conflict (source_system, external_client_id)
-        do update set company_id = excluded.company_id, mapped_by = excluded.mapped_by,
-          updated_at = now()`;
+      await withTransaction(sql, async (tx) => {
+        await requireCurrentNarAdmin(
+          tx,
+          { userId: input.mappedBy, authUserId: input.authUserId },
+          true,
+        );
+        const system = input.sourceSystem ?? NAR_SOURCE_SYSTEM;
+        await tx`select pg_advisory_xact_lock(hashtextextended(${system + ":" + input.externalClientId},0))`;
+        const [company] =
+          await tx`select id from companies where id=${input.companyId} and status='active' for share`;
+        if (!company) throw new Error("Company not found or inactive.");
+        const [old] = await tx<
+          { company_id: string; mapped_by: string | null }[]
+        >`select company_id,mapped_by from company_external_references where source_system=${system} and external_client_id=${input.externalClientId} for update`;
+        if (old?.company_id === input.companyId && old.mapped_by) return;
+        if ((old?.company_id ?? null) !== (input.expectedCompanyId ?? null))
+          throw new Error("Conflict: company mapping changed; review the current mapping.");
+        await tx`insert into company_external_references(source_system,external_client_id,company_id,mapped_by) values(${system},${input.externalClientId},${input.companyId},${input.mappedBy}) on conflict(source_system,external_client_id) do update set company_id=excluded.company_id,mapped_by=excluded.mapped_by,updated_at=now()`;
+        await tx`insert into nar_mapping_events(source_system,external_client_id,before_company_id,after_company_id,actor_user_id) values(${system},${input.externalClientId},${old?.company_id ?? null},${input.companyId},${input.mappedBy})`;
+      });
     },
 
     async close() {

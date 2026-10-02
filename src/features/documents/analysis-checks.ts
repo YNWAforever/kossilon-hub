@@ -1,5 +1,143 @@
 import { makeFinding, type Finding, type FindingCitation } from "./findings";
 import type { DocumentVersionState } from "./versions";
+import type { ExtractedEvidence, EvidenceSpan } from "./text-extraction";
+
+export type AnalysisFieldExpectation = {
+  field: "party_name" | "return_year" | "document_date";
+  expected: string | null;
+  partyId: string | null;
+  requirementInstanceId: string | null;
+  applicability: "required" | "not_applicable" | "waived" | "unknown";
+  authorised?: boolean;
+  referenceDate?: string | null;
+  maxAgeDays?: number | null;
+};
+
+/** Labelled text only; filenames and arbitrary mentions never establish a field. */
+export function contentEvidenceFindings(
+  evidence: ExtractedEvidence,
+  expectations: readonly AnalysisFieldExpectation[],
+): Finding[] {
+  return expectations.flatMap((expectation) => {
+    if (
+      (expectation.applicability === "not_applicable" || expectation.applicability === "waived") &&
+      expectation.authorised
+    )
+      return [];
+    let unknown = evidence.unknownReason;
+    if (expectation.applicability !== "required") unknown = "applicability-unconfirmed";
+    else if (expectation.expected === null && expectation.field !== "document_date")
+      unknown = "expected-value-unconfirmed";
+    if (!evidence.pages.some((page) => page.text.trim())) unknown ??= "no-readable-text";
+    const label =
+      expectation.field === "party_name"
+        ? "(?:Name|Company name|姓名|公司名稱)"
+        : expectation.field === "return_year"
+          ? "(?:Return year|申報年度|年度)"
+          : "(?:Date|日期)";
+    const expression = new RegExp(`(?:^|[;\\n])\\s*${label}\\s*[:：]\\s*([^;\\n]+)`, "giu");
+    const matches: { observed: string; span: EvidenceSpan; lowConfidence: boolean }[] = [];
+    for (const page of evidence.pages)
+      for (const match of page.text.matchAll(expression)) {
+        const observed = match[1].trim();
+        const start = match.index! + match[0].lastIndexOf(match[1]) + match[1].indexOf(observed);
+        matches.push({
+          observed,
+          span: { page: page.page, start, end: start + observed.length, quote: observed },
+          lowConfidence:
+            page.method === "ocr" && (page.confidence === null || page.confidence < 0.8),
+        });
+      }
+    if (matches.length !== 1)
+      unknown ??= matches.length ? "ambiguous-labelled-field" : "labelled-field-not-found";
+    if (matches.some((match) => match.lowConfidence)) unknown ??= "low-confidence-text";
+    const observed = unknown ? null : (matches[0]?.observed ?? null);
+    let agrees =
+      observed !== null &&
+      observed.normalize("NFKC").toLocaleLowerCase() ===
+        expectation.expected?.normalize("NFKC").toLocaleLowerCase();
+    if (
+      expectation.field === "return_year" &&
+      observed !== null &&
+      !/^(?:19|20|21)\d{2}$/.test(observed)
+    )
+      unknown = "year-not-readable";
+    if (expectation.field === "document_date" && observed !== null) {
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(observed) ? Date.parse(observed + "T00:00:00Z") : NaN;
+      const reference = expectation.referenceDate
+        ? Date.parse(expectation.referenceDate + "T00:00:00Z")
+        : NaN;
+      if (!Number.isFinite(date) || new Date(date).toISOString().slice(0, 10) !== observed)
+        unknown = "date-not-readable";
+      else if (
+        !Number.isFinite(reference) ||
+        new Date(reference).toISOString().slice(0, 10) !== expectation.referenceDate ||
+        !Number.isInteger(expectation.maxAgeDays) ||
+        expectation.maxAgeDays! < 0
+      )
+        unknown = "date-rule-unconfirmed";
+      else agrees = date <= reference && date >= reference - expectation.maxAgeDays! * 86_400_000;
+    }
+    const spans = unknown ? [] : matches.map((match) => match.span);
+    const fieldLabel = {
+      party_name: "姓名／公司名稱",
+      return_year: "申報年度",
+      document_date: "文件日期",
+    }[expectation.field];
+    const reasonLabel =
+      unknown === "applicability-unconfirmed"
+        ? "適用對象尚未確認"
+        : unknown === "expected-value-unconfirmed"
+          ? "預期資料尚未確認"
+          : unknown === "ambiguous-labelled-field"
+            ? "有多個欄位，未能確定所指對象"
+            : unknown === "labelled-field-not-found"
+              ? "未找到可核對的標示欄位"
+              : unknown === "low-confidence-text"
+                ? "文字辨識信心不足"
+                : unknown === "date-rule-unconfirmed"
+                  ? "日期規則尚未批准"
+                  : unknown === "date-not-readable" || unknown === "year-not-readable"
+                    ? "日期／年度未能讀取"
+                    : "缺乏可核對的完整文字";
+    return [
+      makeFinding({
+        ruleKey: `content:${expectation.field}:${expectation.requirementInstanceId ?? "case"}`,
+        ruleVersion: "labelled-fields-1",
+        tier: "cross-check",
+        outcome: unknown ? "uncertain" : agrees ? "pass" : "issue",
+        severity: unknown ? "info" : agrees ? "info" : "warning",
+        detail: unknown
+          ? `需要人工覆核${fieldLabel}：${reasonLabel}。`
+          : agrees
+            ? `${fieldLabel}與已確認資料一致。`
+            : `${fieldLabel}：文件為「${observed}」，預期「${expectation.expected ?? expectation.referenceDate}」。需要人工核對。`,
+        citation: {
+          kind: "version",
+          documentVersionId: evidence.documentVersionId,
+          pageFrom: spans[0]?.page ?? null,
+          pageTo: spans.at(-1)?.page ?? null,
+        },
+        evidence: {
+          sha256: evidence.sha256,
+          field: expectation.field,
+          partyId: expectation.partyId,
+          year:
+            expectation.field === "return_year" &&
+            expectation.expected &&
+            /^(?:19|20|21)\d{2}$/.test(expectation.expected)
+              ? Number(expectation.expected)
+              : null,
+          expected: expectation.expected,
+          observed: unknown ? null : observed,
+          unknownReason: unknown,
+          requirementInstanceId: expectation.requirementInstanceId,
+          spans,
+        },
+      }),
+    ];
+  });
+}
 
 /**
  * The two deterministic tiers, and only what they can honestly compute.

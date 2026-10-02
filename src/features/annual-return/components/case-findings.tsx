@@ -7,6 +7,7 @@ import {
   summarize,
 } from "@/features/documents/findings-review";
 import type { Finding } from "@/features/documents/findings";
+import { SafeDocumentPreview } from "@/features/documents/safe-preview";
 import {
   listAnnualReturnCaseFindings,
   resolveAnnualReturnCaseFinding,
@@ -57,9 +58,14 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
   });
 
   const resolveMutation = useMutation({
-    mutationFn: (input: { findingId: string }) =>
+    mutationFn: (input: { findingId: string; expectedDocumentVersionId: string }) =>
       resolveAnnualReturnCaseFinding({
-        data: { caseId, findingId: input.findingId, note: null },
+        data: {
+          caseId,
+          findingId: input.findingId,
+          note: null,
+          expectedDocumentVersionId: input.expectedDocumentVersionId,
+        },
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
@@ -97,6 +103,11 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
           無法載入自動檢查結果。這不代表文件沒有問題，請直接查閱文件。
         </p>
       ) : null}
+      {resolveMutation.error ? (
+        <p role="alert" className="mt-2 text-sm">
+          未能標記結果，請重新載入當前文件版本後再核對。
+        </p>
+      ) : null}
 
       {findingsQuery.isPending ? (
         <p className="mt-3 text-sm text-muted-foreground">載入中…</p>
@@ -110,6 +121,29 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
                 <FileSearch aria-hidden className="h-4 w-4 text-muted-foreground" />
                 <p className="truncate text-sm font-medium">{view.fileName}</p>
               </div>
+              {view.document ? (
+                <div className="mt-2">
+                  <SafeDocumentPreview
+                    document={view.document}
+                    label="查看引用文件的當前版本"
+                    title="引用文件預覽"
+                  />
+                </div>
+              ) : null}
+              <p className="mt-2 text-xs text-muted-foreground">
+                AI 建議須由人手核對引用；標記已處理只記錄覆核，文件及交件批准仍須完成各自程序。
+              </p>
+              {view.provenance ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  模型：
+                  {typeof view.provenance.model === "string"
+                    ? view.provenance.model
+                    : "供應商未提供"}
+                  ；成本：
+                  {typeof view.provenance.cost === "number" ? view.provenance.cost : "供應商未提供"}
+                  。{view.evidence?.method === "manual" ? "文字未能讀取，需要人工查閱。" : null}
+                </p>
+              ) : null}
 
               {view.findings.length === 0 ? (
                 // The whole point. A document nothing has analysed says so, in
@@ -158,13 +192,26 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
                               back as an instruction: this string can come from a
                               model that read a document an uploader wrote. */}
                           <p className="mt-1 text-sm text-foreground">{entry.finding.detail}</p>
+                          {entry.finding.evidence?.spans.map((span, index) => (
+                            <blockquote
+                              key={`${span.page}-${span.start}-${index}`}
+                              className="mt-2 whitespace-pre-wrap border-l-2 pl-2 text-xs text-muted-foreground"
+                            >
+                              第 {span.page} 頁：「{span.quote}」
+                            </blockquote>
+                          ))}
                         </div>
 
                         {entry.resolvedByUserId ? null : (
                           <button
                             className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
                             disabled={locked || resolveMutation.isPending}
-                            onClick={() => resolveMutation.mutate({ findingId: entry.id })}
+                            onClick={() =>
+                              resolveMutation.mutate({
+                                findingId: entry.id,
+                                expectedDocumentVersionId: view.documentVersionId,
+                              })
+                            }
                             type="button"
                           >
                             {entry.finding.outcome === "uncertain" ? (

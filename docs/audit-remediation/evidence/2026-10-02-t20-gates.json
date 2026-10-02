@@ -1,0 +1,46 @@
+{
+  "task": "T20",
+  "findings": [
+    "F19"
+  ],
+  "source_commit": "38adba61b0c7e044113266cc4faaf56aa4e9017e",
+  "date": "2026-10-02",
+  "environment": {
+    "postgres": "17 dedicated local55441/kossilon_pr02_ci",
+    "production_mutated": false,
+    "browser": "installed Chrome local read-only demo",
+    "node": "22.23.3"
+  },
+  "focused": {
+    "files": 10,
+    "seconds": 10.27,
+    "failed": 0,
+    "passed": 78,
+    "skipped": 0
+  },
+  "browser": {
+    "passed": 4,
+    "failed": 0,
+    "genuine_acceptance": "blocked",
+    "seconds": 16.6,
+    "red": "Mobile settings scrollWidth475 > viewport390",
+    "mobile": "390x844",
+    "desktop": "1280x900"
+  },
+  "typecheck": "PASS",
+  "lint": "PASS0errors1existingwarning",
+  "migration": {
+    "populated_rehearsal": "PASS legacyNULL/current/immutable/constraint/ordinaryupdate/rollback",
+    "local_only": true,
+    "id": "0082",
+    "source_ids": 50
+  },
+  "logs": {
+    "t20-node22-lint.log": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+    "t20-browser-node22-green.log": "bd476d963ffafaeb6e69fe68fc578529ec30f7a385935af7fb9d6b6627fa35e6",
+    "t20-0082-rehearsal.log": "edfa53c223014a63ec12065bef90b949e9c11753693d52b26769d248ba4c63dd",
+    "t20-node22-task-green.log": "e18e68b6e854457f4f791e8596628ae3646df49cba3f789630d1df5dc902d986",
+    "t20-revision-recovery-red.log": "147c1273f69af079ffacc3b146e525b68f4c4b8af589b0948f3adea1daca6f20",
+    "t20-node22-typecheck.log": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+  }
+}

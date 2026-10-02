@@ -1,4 +1,7 @@
 import { CaseFindings } from "./case-findings";
+import { CaseHandoff } from "./case-handoff";
+import { caseReturnPath, dailyViewSearch } from "../daily-view-state";
+import { readinessForCase } from "../readiness";
 import { parseEntityId } from "@/lib/entity-id";
 import { CaseParties } from "./case-parties";
 import { useEffect, useState } from "react";
@@ -54,15 +57,6 @@ function isUuid(value: string): boolean {
   return parseEntityId(value) !== null;
 }
 
-function caseIsPacketReady(caseItem: AnnualReturnCase): boolean {
-  return (
-    caseItem.checklist
-      .filter((item) => item.required)
-      .every((item) => item.status === "Verified") &&
-    caseItem.payment?.status === "Payment received"
-  );
-}
-
 function MutationMessage({ error }: { error: MutationError }) {
   const message = errorMessage(error);
   if (!message) return null;
@@ -77,9 +71,23 @@ function PendingIcon({ pending }: { pending: boolean }) {
   return pending ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : null;
 }
 
-export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
+export function ProductionAnnualReturnCaseDetail({
+  caseId,
+  returnTo = "/annual-returns",
+  actorScope = "session",
+}: {
+  caseId: string;
+  returnTo?: string;
+  actorScope?: string;
+}) {
   const queryClient = useQueryClient();
-  const actions = createProductionCaseActions(caseId);
+  const actions = createProductionCaseActions(
+    caseId,
+    undefined,
+    () =>
+      queryClient.getQueryData<AnnualReturnCase>(annualReturnQueryKeys.detail(caseId))?.readiness
+        ?.sourceVersion,
+  );
   const checklistMutationKey = [...annualReturnQueryKeys.detail(caseId), "checklist-mutation"];
   const pendingChecklistItemIds = useMutationState({
     filters: { mutationKey: checklistMutationKey, status: "pending" },
@@ -201,8 +209,11 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
     );
   }
 
-  const packetReady = caseIsPacketReady(caseItem);
-  const locked = caseItem.currentStatus === "Completed";
+  const readiness = readinessForCase(caseItem);
+  const packetReady = readiness.readyToPrepare && Boolean(readiness.sourceVersion);
+  const locked = Boolean(
+    caseItem.lockedAt || caseItem.completedAt || caseItem.currentStatus === "Completed",
+  );
 
   return (
     <main className="flex-1 space-y-4 p-4 md:p-6">
@@ -212,7 +223,28 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           title={caseItem.companyName}
           subtitle={`Return year ${caseItem.returnYear} / Due ${caseItem.filingDueDate}`}
           actions={
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {caseReturnPath(returnTo).startsWith("/today") ? (
+                <Link
+                  to="/today"
+                  search={dailyViewSearch(
+                    Object.fromEntries(
+                      new URL(caseReturnPath(returnTo), "https://kossilon.invalid").searchParams,
+                    ),
+                  )}
+                  className="inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm"
+                >
+                  返回工作列表
+                </Link>
+              ) : (
+                <Link
+                  to="/annual-returns"
+                  className="inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm"
+                >
+                  返回工作列表
+                </Link>
+              )}
+
               {/* The demo case detail has always had this. Without it in
                   production there was no link anywhere carrying a caseId, so
                   /portal was unreachable except by hand-editing the URL. */}
@@ -239,6 +271,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
                 <StaffPicker
+                  actorScope={actorScope}
                   id="owner-id"
                   label="負責同事"
                   value={ownerId}
@@ -342,6 +375,8 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
           <CaseFindings caseId={caseId} locked={locked} />
 
+          <CaseHandoff caseId={caseId} locked={locked} actorScope={actorScope} />
+
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Payment</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto]">
@@ -356,6 +391,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 ))}
               </select>
               <DocumentPicker
+                actorScope={actorScope}
                 id="payment-proof-document"
                 label="付款證明文件"
                 caseId={caseItem.id}
@@ -390,8 +426,26 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Filing packet</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Required items must be verified and payment received before packet submission.
+              先核對當前文件版本及付款證據，再準備套件；準備或下載不等於外部提交。
             </p>
+            <ul className="mt-2 space-y-1 text-sm" aria-label="交件阻擋原因">
+              {readiness.blockers.map((blocker, index) => (
+                <li key={`${blocker.code}:${index}`}>
+                  <span className="text-muted-foreground">
+                    {blocker.stage === "prepare"
+                      ? "準備"
+                      : blocker.stage === "approval"
+                        ? "批准"
+                        : "送出"}
+                    ：
+                  </span>
+                  {blocker.message}
+                  <a className="ml-2 underline" href={blocker.action}>
+                    處理
+                  </a>
+                </li>
+              ))}
+            </ul>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
@@ -401,7 +455,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
               >
                 <PendingIcon pending={packetMutation.isPending} />
                 <FileCheck2 aria-hidden className="h-4 w-4" />
-                Submit packet
+                Prepare packet
               </button>
             </div>
             <MutationMessage error={packetMutation.error} />
@@ -418,6 +472,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 onChange={(event) => setFilingReference(event.target.value)}
               />
               <DocumentPicker
+                actorScope={actorScope}
                 id="confirmation-document"
                 label="已核實回執文件"
                 caseId={caseItem.id}

@@ -250,6 +250,25 @@ export function createNotificationDispatcher(
             attemptCount: notification.attemptCount,
           };
 
+          // A request whose acknowledgement was lost may already have reached
+          // the client. The durable dispatch fence is not permission to retry it.
+          if (
+            error instanceof Error &&
+            "dispatchOutcomeUnknown" in error &&
+            error.dispatchOutcomeUnknown === true
+          ) {
+            if (
+              await repository.markFailed(notification.id, {
+                ...input,
+                errorCode: "dispatch_outcome_unknown",
+                spendAttempts: true,
+              })
+            )
+              summary.sentButUnrecorded += 1;
+            else summary.superseded += 1;
+            continue;
+          }
+
           // The provider took the message and the failure is downstream of that
           // — WOZTELL answering ok:1 with no message id is the case this exists
           // for. Retrying delivers a second copy of a statutory reminder, so this

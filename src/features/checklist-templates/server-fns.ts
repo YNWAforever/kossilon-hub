@@ -35,11 +35,14 @@ export async function createChecklistTemplateForActor(
 
 export async function updateChecklistTemplateForActor(
   actor: AuthenticatedActor,
-  input: { id: string; patch: ChecklistTemplatePatch },
+  input: { id: string; patch: ChecklistTemplatePatch; expectedRevision?: number },
   dependencies: ChecklistTemplateDependencies,
 ) {
   assertAdminAccess(actor);
-  const updated = await dependencies.repository.updateTemplate(input.id, input.patch);
+  const updated =
+    input.expectedRevision === undefined
+      ? await dependencies.repository.updateTemplate(input.id, input.patch)
+      : await dependencies.repository.updateTemplate(input.id, input.patch, input.expectedRevision);
   if (!updated) throw new Error("Checklist template not found.");
   return updated;
 }
@@ -191,10 +194,42 @@ export const createChecklistTemplate = createServerFn({ method: "POST" })
   );
 
 export const updateChecklistTemplate = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string().uuid(), patch: patchSchema }).strict())
+  .validator(
+    z
+      .object({
+        id: z.string().uuid(),
+        patch: patchSchema,
+        expectedRevision: z.number().int().min(1),
+      })
+      .strict(),
+  )
   .handler(({ data }) =>
     withDefaultChecklistTemplateContext((actor, dependencies) =>
-      updateChecklistTemplateForActor(actor, { id: data.id, patch: data.patch }, dependencies),
+      updateChecklistTemplateForActor(actor, data, dependencies),
+    ),
+  );
+
+export async function previewChecklistTemplateMigrationForActor(
+  actor: AuthenticatedActor,
+  input: { id: string; cursor?: string; limit?: number },
+  dependencies: ChecklistTemplateDependencies,
+) {
+  assertAdminAccess(actor);
+  return dependencies.repository.previewCaseMigration(input.id, input.cursor, input.limit);
+}
+export const previewChecklistTemplateMigration = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({
+        id: z.string().uuid(),
+        cursor: z.string().uuid().optional(),
+        limit: z.number().int().min(1).max(100).optional(),
+      })
+      .strict(),
+  )
+  .handler(({ data }) =>
+    withDefaultChecklistTemplateContext((actor, dependencies) =>
+      previewChecklistTemplateMigrationForActor(actor, data, dependencies),
     ),
   );
 

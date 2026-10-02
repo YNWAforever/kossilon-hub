@@ -153,7 +153,8 @@ function blockersFor(candidate: ManifestCandidateEntry): ManifestBlocker[] {
     });
   }
 
-  if (!canCiteInManifest(candidate.version)) {
+  // Supersession already explains the refusal. It does not erase a verified hash.
+  if (isCurrent(candidate.version) && !canCiteInManifest(candidate.version)) {
     blockers.push({
       kind: "evidence-unverifiable",
       requirement,

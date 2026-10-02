@@ -8,6 +8,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AnnualReturnCase } from "../types";
 import type { AnnualReturnBoardSearch } from "../board-filters";
 import { ProductionAnnualReturnCommandCenter } from "./production-command-center";
+vi.mock("@/components/bulk-selection-toolbar", () => ({
+  BulkSelectionToolbar: ({
+    resource,
+    page,
+    total,
+  }: {
+    resource: string;
+    page: unknown[];
+    total: number;
+  }) => (
+    <section aria-label="Bulk assignment">
+      {resource} · {page.length} loaded · {total} total
+    </section>
+  ),
+}));
 
 const serverFns = vi.hoisted(() => ({
   // The board reads a page and a totals aggregate now: `q` is a SQL predicate
@@ -83,11 +98,101 @@ function renderBoard(
 }
 
 describe("production annual return command center", () => {
+  it("searches authorised owners beyond the first200 directory entries", async () => {
+    serverFns.listAssignableStaff.mockImplementation(async ({ data } = { data: {} }) =>
+      data.q === "201" ? [{ id: caseId, name: "Member201" }] : [],
+    );
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
+    renderBoard();
+    fireEvent.change(screen.getByLabelText("搜尋負責同事"), { target: { value: "201" } });
+    await screen.findByText("Member201");
+    expect(serverFns.listAssignableStaff).toHaveBeenLastCalledWith({
+      data: { q: "201", limit: 200 },
+    });
+  });
+  it("connects current staff scope to page50 and SQL totals in the bulk toolbar", async () => {
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [makeCase()], nextCursor: null });
+    serverFns.getAnnualReturnBoardTotals.mockResolvedValue({ total: 1240 });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ProductionAnnualReturnCommandCenter
+          search={{}}
+          actorScope={{
+            authUserId: "verified-admin",
+            userId: caseId,
+            role: "Admin",
+            teamId: null,
+            active: true,
+          }}
+        />
+      </QueryClientProvider>,
+    );
+    await screen.findByText("annual_return_case · 1 loaded · 1240 total");
+    expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({
+      data: { limit: 50, includeFixtures: false },
+    });
+  });
+  it("does not retain a delayed former actor staff directory in the new owner picker", async () => {
+    let oldResponse!: (rows: { id: string; name: string }[]) => void;
+    serverFns.listAssignableStaff
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            oldResponse = resolve;
+          }),
+      )
+      .mockResolvedValue([]);
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = renderBoard(false, {}, client);
+    await waitFor(() => expect(serverFns.listAssignableStaff).toHaveBeenCalledTimes(1));
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <ProductionAnnualReturnCommandCenter
+          search={{}}
+          actorScope={{
+            authUserId: "staff-auth",
+            userId: "staff",
+            role: "Staff",
+            teamId: "new-team",
+            active: true,
+          }}
+        />
+      </QueryClientProvider>,
+    );
+    oldResponse([{ id: crypto.randomUUID(), name: "Former Admin private employee" }]);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(screen.queryByRole("option", { name: "Former Admin private employee" })).toBeNull();
+    expect(serverFns.listAssignableStaff).toHaveBeenCalledTimes(2);
+  });
+  it("does not show unavailable whole-scope totals as zero while keeping readable rows", async () => {
+    serverFns.getAnnualReturnBoardTotals.mockRejectedValueOnce(new Error("private db error"));
+    serverFns.listAnnualReturnCasePage.mockResolvedValueOnce({
+      cases: [makeCase({ companyName: "Readable scoped case" })],
+      nextCursor: null,
+    });
+    renderBoard();
+    await screen.findByText("Readable scoped case");
+    expect(
+      await screen.findByText("未取得當前範圍統計。請重新載入；已讀取案件仍可查閱。"),
+    ).toBeTruthy();
+    expect(screen.getByText("Cases in scope").parentElement?.textContent).toContain("—");
+    expect(screen.queryByText("private db error")).toBeNull();
+  });
   beforeEach(() => {
     serverFns.listAnnualReturnCasePage.mockReset();
     serverFns.listWorkQueue.mockReset();
+    serverFns.listAssignableStaff.mockReset();
     serverFns.listWorkQueue.mockResolvedValue([]);
     serverFns.getAnnualReturnBoardTotals.mockResolvedValue({
+      businessDate: "2026-10-01",
+      activeCases: 1,
+      overdueCases: 0,
+      highRisk: 0,
+      missingDocumentCount: 0,
+      casesWithMissingDocuments: 0,
+      assignedToMe: 1,
       total: 1,
       overdue: 0,
       dueIn7: 0,
@@ -348,7 +453,7 @@ describe("production annual return command center", () => {
 
     await waitFor(() =>
       expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({
-        data: { limit: 200, includeFixtures: false },
+        data: { limit: 50, includeFixtures: false },
       }),
     );
   });
@@ -365,7 +470,7 @@ describe("production annual return command center", () => {
     fireEvent.click(toggle);
     await waitFor(() =>
       expect(serverFns.listAnnualReturnCasePage).toHaveBeenCalledWith({
-        data: { limit: 200, includeFixtures: true },
+        data: { limit: 50, includeFixtures: true },
       }),
     );
   });

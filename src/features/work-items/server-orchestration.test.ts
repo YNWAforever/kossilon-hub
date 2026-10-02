@@ -27,6 +27,17 @@ const workItem = {
 } as PersistedWorkItem;
 
 describe("work queue server orchestration", () => {
+  it("refuses recommendation directory queries for inactive or teamless managers before any employee lookup", async () => {
+    const recommendAssignees = vi.fn();
+    const repository = { recommendAssignees } as unknown as WorkItemRepository;
+    await expect(
+      recommendWorkItemAssigneesForActor(repository, { ...manager, teamId: null }, workItem.id),
+    ).rejects.toThrow(/team/i);
+    await expect(
+      recommendWorkItemAssigneesForActor(repository, { ...manager, active: false }, workItem.id),
+    ).rejects.toThrow(/inactive/i);
+    expect(recommendAssignees).not.toHaveBeenCalled();
+  });
   it("derives the actor before repository access and always closes the repository", async () => {
     const close = vi.fn(async () => undefined);
     const repository = { close } as unknown as WorkItemRepository;

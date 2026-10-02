@@ -1,0 +1,158 @@
+{
+  "task": "T16",
+  "findings": ["F10"],
+  "date": "2026-10-02",
+  "base": "55d9b2acb4a3a487a0f8d55212ac4d29b899cb84",
+  "candidate": "47fc115c7cf91824a2d0b96904dfeb45448988c2; final reviewed gates at422b822c6cc064b4208739bd2e5c6ebd168d31f8 in2026-10-02-pr07-gates.json",
+  "environment": "LOCAL ONLY Node22.23.3/Bun1.3.14/Postgres17 localhost55441/kossilon_pr02_ci; synthetic corpus/injected actors/stub HTTP/OCR",
+  "red": [
+    {
+      "log": "t16-analysis-identity-red.log",
+      "fail": 3,
+      "detail": "changed bytes despite claimed metadata; superseded version; replacement during extraction"
+    },
+    {
+      "log": "t16-golden-red.log",
+      "fail": 7,
+      "detail": "missing versioned extraction feature"
+    },
+    {
+      "log": "t16-ai-grounding-red.log",
+      "fail": 6,
+      "detail": "unbound/missing pages, wrong hash, no text, ignored abort fetch/body"
+    },
+    {
+      "log": "t16-atomic-pg-red.log",
+      "fail": 4,
+      "detail": "old resolver ignores expected UUID; atomic publication absent"
+    },
+    {
+      "log": "t16-boundaries-red.log",
+      "fail": 4,
+      "detail": "OCR malformed failure and deadline; SHA checked after parse; one new PDF fixture argument corrected"
+    },
+    {
+      "log": "t16-page-budget-red.log",
+      "fail": 1,
+      "detail": "corrected two-page fixture produced 240000 stored evidence chars, limit200000"
+    },
+    {
+      "log": "t16-provenance-boundary-red.log",
+      "fail": 5,
+      "detail": "historical unbound run shown clean; malformed injected finding throws; unbound spans, deadline and raw size"
+    },
+    {
+      "log": "t16-ai-body-cap-red.log",
+      "fail": 1,
+      "detail": "valid matching SHA for >10MB body still sent to stub; no genuine provider"
+    },
+    {
+      "log": "t16-date-policy-red.log",
+      "fail": 3,
+      "detail": "negative/NaN/infinite age policies produced issue/pass instead of unknown"
+    },
+    {
+      "log": "t16-resolution-rpc-red.log",
+      "fail": 1,
+      "detail": "observed version/auth not passed to repository"
+    }
+  ],
+  "green": [
+    {
+      "log": "t16-focused-final.log",
+      "files": 8,
+      "pass": 159,
+      "fail": 0,
+      "skip": 0,
+      "seconds": 25.3
+    },
+    {
+      "log": "t16-ui-final.log",
+      "files": 1,
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "log": "t16-payment-preview-green.log",
+      "files": 1,
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "log": "t16-full-test-final.log",
+      "files": 203,
+      "pass": 2047,
+      "fail": 0,
+      "skip": 0,
+      "seconds": 203.18
+    }
+  ],
+  "retainedFailures": [
+    {
+      "log": "t16-full-test.log",
+      "files": 202,
+      "pass": 2043,
+      "fail": 1,
+      "skip": 0,
+      "seconds": 344.63,
+      "detail": "shared preview title regressed payment interaction; restored existing default title and original five tests PASS"
+    },
+    {
+      "log": "t16-worker-provider-initial.log",
+      "fail": 6,
+      "pass": 39,
+      "detail": "legacy synthetic valid provider fixtures omitted required citations, explicit readable text, or new evidence shape; corrected without accepting unsafe data"
+    },
+    {
+      "log": "t16-typecheck-second.log",
+      "detail": "non-serializable unknown provenance; replaced with typed serializable AnalysisProvenance"
+    },
+    {
+      "log": "t16-typecheck-final.log",
+      "detail": "nullable age-policy narrowing; type-only assertion after finite/integer guard"
+    },
+    {
+      "log": "t16-lint.log",
+      "detail": "25 formatter errors; corrected only modified files"
+    }
+  ],
+  "gates": {
+    "typecheck": "PASS t16-typecheck-complete.log",
+    "lint": "PASS 0errors/1existing work-queue warning t16-lint-final.log",
+    "build": "PASS t16-build.log; literal native cloudflare:scheduled hook verified",
+    "dev": "PASS exact unchanged 12-route gate and no import violation t16-dev.log",
+    "predeploy": "PASS t16-predeploy.log:38 reads/0network/0resourcewrites; genuine providers BLOCKED",
+    "migration": "0077 applied/repeated only dedicated localhost;45sourceIDs; t16-migrate-local.log/t16-migrate-repeat.log",
+    "rehearsal": "t16-migration-proof.log: two repetitions,3populatedrows/3checks,historyNULL,array23514,owned transaction rollback; not full backup restore"
+  },
+  "rulings": [
+    "Existing findings/table/requirement authority preserved; linked confirmed party and NAR1 expected facts loaded server-side. Missing age policy stays unknown; no invented statutory limit.",
+    "Runtime factory always supplies atomic publisher and per-page extractor. Legacy injected unit ports retained; never used by live factory.",
+    "Provider protocol stays binary HTTP; strict citation binds actual page text but does not establish semantic correctness. No AI approval/resolve/release.",
+    "OCR is an internal port with strict identity/confidence/timeouts. Runtime remains ocr:null until actual vendor protocol is approved; synthetic E is not genuine blur/rotation detection.",
+    "Existing AI response has no model/prompt/cost metadata. Persist NULL and explicit unknown protocol status, not invented vendor API/price/version.",
+    "Publication locks current source/context plus exact job attempt and writes artifacts/completion atomically. Preserves human-resolved historical findings; old finding cannot resolve V2.",
+    "No before/after performance claim from full-suite elapsed time; T21 controlled benchmark and staging p95 remain outstanding.",
+    "Missing fresh Auth, genuine R2/scanner/OCR/AI/golden corpus remain external owner gates. No production DB/deployment/messages/invites executed."
+  ],
+  "uat": "Original50 retained:16LOCALONLYpass/20blocked/14not_run after AI01-05 local contracts; genuine AI cases remain blocked",
+  "production": "Last observed aa5/66historicalIDs on2026-10-01; not refreshed or mutated for these gates",
+  "next": "One fresh PR07 whole review T15+T16; then T17 official WOZTELL/media and safe inbound work",
+  "logSha256": {
+    "t16-focused-final.log": "c63c0ecba0e9186b43734b55b03e377e85e01f71d19986434fb99402e4554435",
+    "t16-ui-final.log": "507b08f47a97193657b9072530bdf51ff593e2a6ffcc7471ca237b47183a036f",
+    "t16-payment-preview-green.log": "a0cc0ede9ea95c1b79ff396cd535a5fd42d153a140435ff7e63e7a5982c3e78b",
+    "t16-full-test.log": "b3d886d335f6ff87a02991dbc46d19e80341696aafd0b07d9f748dc837f21692",
+    "t16-full-test-final.log": "4eab7857edc4c4eb47963f422e252db386a75ee3a73d4b206ee7111c350fa927",
+    "t16-typecheck-complete.log": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+    "t16-lint-final.log": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+    "t16-build.log": "a4d11dbd785dff077f115aad845fc417d37cf4f4fd0772527c0808cce7349cd4",
+    "t16-dev.log": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7",
+    "t16-predeploy.log": "6bdec509047b0340b77e8480ebf43926acfb9be8b12489b3d7241f868ba0ca05",
+    "t16-migrate-local.log": "91b76493034b5185aae84bb82135ede99d902a696e0a3b4afe29a77189253727",
+    "t16-migrate-repeat.log": "4c6011b7e2b52d02803dd8486382eb8cfd4a7912a5e40061698ac3323a32fec9",
+    "t16-migration-proof.log": "a0bd285bb0a329e7bddf33e27bc87c7bb4902cc9bf3d98fa29cd960f949c5562"
+  }
+}

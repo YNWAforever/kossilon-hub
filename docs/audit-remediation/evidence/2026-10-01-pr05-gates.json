@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-01",
+  "build": "cb45d20aa985b3128990df7d8a1fd06330a40bf3",
+  "base": "b7bdb4a172683adcea41ac4556a5c04dc6247afc",
+  "tasks": [
+    "T12",
+    "T13"
+  ],
+  "findings": [
+    "F08",
+    "F13"
+  ],
+  "environment": "LOCAL ONLY Node22.23.3 / Bun1.3.14 / Postgres17 localhost55441 kossilon_pr02_ci; injected session/UI contracts",
+  "gates": [
+    {
+      "command": "npm run test; DATABASE_URL and TEST_DATABASE_URL point to owned local PG; DATABASE_SSL=disable",
+      "result": "197 files / 1947 pass / 0 skip",
+      "durationSeconds": 235.32,
+      "log": ".worktrees/audit-baseline-20261001/pr05-full-test-final.log"
+    },
+    {
+      "command": "vitest run affected PR05 review regression files",
+      "result": "8 files / 101 pass / 0 skip",
+      "durationSeconds": 91.45,
+      "log": ".worktrees/audit-baseline-20261001/pr05-review-green.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "log": ".worktrees/audit-baseline-20261001/pr05-typecheck-final.log"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS 0 errors / 1 existing work-queue Fast Refresh warning",
+      "log": ".worktrees/audit-baseline-20261001/pr05-lint-final.log"
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS; compiled cloudflare:scheduled hook present; not runtime ticks",
+      "log": ".worktrees/audit-baseline-20261001/pr05-build-final.log"
+    },
+    {
+      "command": "npm run verify:dev-server-imports",
+      "result": "12 routes PASS; no server-only import violation",
+      "log": ".worktrees/audit-baseline-20261001/pr05-dev-final.log"
+    },
+    {
+      "command": "npm run verify:firm -- --dry-run",
+      "result": "38 offline reads / 0 network / 0 writes; actual providers explicitly BLOCKED",
+      "log": ".worktrees/audit-baseline-20261001/pr05-predeploy.log"
+    },
+    {
+      "command": "bun scripts/db-migrate.ts; local target only",
+      "result": "0071/0072/0073 applied; repeat PASS; source expected manifest 41 IDs",
+      "log": ".worktrees/audit-baseline-20261001/t13-migrate-repeat.log"
+    }
+  ],
+  "initialFullSuite": {
+    "result": "196 files; 1941 pass / 1 fail; stale demo-store boundary exemption",
+    "log": ".worktrees/audit-baseline-20261001/pr05-full-test.log",
+    "resolution": "Removed obsolete production-mode exemption; kept demo safety rule; final full suite passes"
+  },
+  "freshReview": {
+    "critical": 0,
+    "importantFixed": 4,
+    "fixPasses": 1,
+    "rereview": false,
+    "fixes": [
+      "Actual role/team revocation race: two independent PG PIDs and observed Lock wait; lock actor before case authority",
+      "Queue filtered snapshot active-only semantics, with retained closed result visibility",
+      "Twenty-one-job cursor history and older-job resume; six-digit UTC timestamp precision",
+      "Filtered membership chunks at strict 5000 RPC limit, retaining authorized selections past 5000"
+    ],
+    "redLogs": [
+      "pr05-review-red.log",
+      "pr05-active-scope-red.log",
+      "pr05-scope-membership-red.log",
+      "pr05-history-ui-red.log"
+    ],
+    "timingObservation": "Reviewer concurrent UI run 41 pass / 1 timing failure; isolated unchanged toolbar 5/5 pass. No timeout relaxation."
+  },
+  "bulkActualPostgres": [
+    "100 items:90 success/5 locked/5 forbidden; zero unauthorized domain audit",
+    "1240 immutable filtered members with explicit exclusions",
+    "Crash/commit resume, one claimant fencing, stale source conflicts, cancellation and actual SQL serialization rollback retry",
+    "Per-item actor/company/resource locks and original authorization; single-case/work-item domain service reused"
+  ],
+  "localMigrations": [
+    "0071_staff_admin_contract.sql",
+    "0072_durable_bulk_assignment.sql",
+    "0073_bulk_maintenance_job_kind.sql"
+  ],
+  "production": "No writes/deployment/invitations/sends; Web aa5d3cb and historical 66-ID migration ledger unchanged",
+  "runtimeBlockers": [
+    "Auth owner: controlled fresh tenant role/Google/invite journey",
+    "Release/DB owner: approve reviewed 0067-0073 with restore/rollback and deployment",
+    "Operations owner: actual platform identity/bindings and three genuine scheduled ticks; compiled hook/manual pass is not acceptance",
+    "T18 broader bulk actions and T21 full queue SQL pagination remain subsequent tasks"
+  ],
+  "runbooks": [
+    "staff-admin-runbook.md",
+    "bulk-assignment-runbook.md"
+  ]
+}

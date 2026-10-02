@@ -1,0 +1,115 @@
+{
+  "task": "B01",
+  "verifiedDate": "2026-10-02",
+  "build": "7bbc172bfc8210e089995033fb26e9beb20e762a",
+  "base": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "environment": "LOCAL ONLY Windows portable Node22.23.3 / Bun1.3.14 / actual Postgres17 localhost55441/kossilon_b01_ci",
+  "advisory": "https://github.com/TanStack/router/security/advisories/GHSA-qx66-fv34-fjm8",
+  "installed": {
+    "reactStart": "1.168.60",
+    "reactRouter": "1.170.41",
+    "startServerCore": "1.169.39",
+    "routerPlugin": "1.168.42"
+  },
+  "reproduction": "Genuine corrected RED4: vulnerable version floors2 and GET/POST internal-state transport2; valid RPC2 pass. Earlier manifest/context fixture setup failures separately retained. Unknown-error UI RED2/validError1. No production probe.",
+  "gates": [
+    {
+      "result": "177files1761pass0fail0skip",
+      "seconds": 129.92,
+      "command": "npm run test with both local Postgres URLs and DATABASE_SSL=disable"
+    },
+    {
+      "command": "npm run test -- src/server/tanstack-transport-security.test.ts src/routes/-root-error-contract.test.tsx",
+      "result": "2files9pass0skip"
+    },
+    {
+      "command": "bun install --frozen-lockfile",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS 0errors1existingwarning"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run verify:firm -- --dry-run",
+      "result": "PASS offline only"
+    },
+    {
+      "command": "npm run build; literal compiled cloudflare:scheduled hook check",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run verify:dev-server-imports",
+      "result": "PASS unchanged12routes/no import protection violations"
+    }
+  ],
+  "schema": "No schema changes; unchanged main migrations and reference seed only on a new local database. No production SQL.",
+  "deployment": "Not merged/deployed. Prior PR07 Vercel preview rejected vulnerable package after successful build. Patched preview remains to be verified after draft PR.",
+  "review": "Fresh independent whole-package read-only review at7bbc172: no Critical/Important. Deferred Minor: no added positive ordinary JSON RPC serialization case; real server-produced Response and error serialization covered. Local/remote/runtime gates remain distinct; review did not rerun owner tests or execute deployed Worker.",
+  "logs": [
+    {
+      "path": ".worktrees/b01/transport-red.log",
+      "sha256": "6b612e41ffdfa5c52b84a03f4f2aece440faef7f5523b7d15a563c5fece866a8"
+    },
+    {
+      "path": ".worktrees/b01/transport-corrected-red.log",
+      "sha256": "d99689b56358aaa5b5640d7b2b809fd5858d4672d3ddfc6bef6663e872e976de"
+    },
+    {
+      "path": ".worktrees/b01/transport-context-red.log",
+      "sha256": "7920e758d37c5585bf086422e21b2bb9b31aaae1c56d5cb32982b9e1fcf43a26"
+    },
+    {
+      "path": ".worktrees/b01/transport-green.log",
+      "sha256": "3cdc202b0691771abf5c00a7defc8eb8083cf4c819a87d9091f1301a7ec59a52"
+    },
+    {
+      "path": ".worktrees/b01/unknown-error-red.log",
+      "sha256": "145bb966f701e0af99517b9dcc413cb9a043c151c27993741bd9086a366d06be"
+    },
+    {
+      "path": ".worktrees/b01/focused-green.log",
+      "sha256": "2cc0f57ea4661e5a965a0a41cedf333ce42ad45577d0bf637f6277333b7c0a43"
+    },
+    {
+      "path": ".worktrees/b01/migrate.log",
+      "sha256": "073b171a43079721ed82524c05f85f08e852857078b3fce2447d58488c3e49d0"
+    },
+    {
+      "path": ".worktrees/b01/seed.log",
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30"
+    },
+    {
+      "path": ".worktrees/b01/aligned-frozen.log",
+      "sha256": "48ae28a41eff688a9b6011a57b4c27fb4cc5b464f0cd375e395af7ddefbf2ae8"
+    },
+    {
+      "path": ".worktrees/b01/final-lint.log",
+      "sha256": "029f3708163f0cd079f1fd8f2b3fa5c51fbb4d221685d84538031a131d3ae345"
+    },
+    {
+      "path": ".worktrees/b01/final-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/b01/final-test.log",
+      "sha256": "0e8d9ff25909d4ed2def404a68d6a58cddd3fdf7bfa0b1265165e5fe97e9d6d0"
+    },
+    {
+      "path": ".worktrees/b01/final-predeploy.log",
+      "sha256": "b838c05856e4d299694a4b0470e809d2c6fc6175702c9690d019d169d3205cdd"
+    },
+    {
+      "path": ".worktrees/b01/final-build.log",
+      "sha256": "ca9db079dae0335c7113e19dabf3a29f3221907bccc5f3944f676d9fbbb1d1e8"
+    },
+    {
+      "path": ".worktrees/b01/final-dev-imports.log",
+      "sha256": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7"
+    }
+  ]
+}

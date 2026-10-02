@@ -1,5 +1,6 @@
 type PDFDocumentProxy = Awaited<ReturnType<typeof import("unpdf").getDocumentProxy>>;
 import { sniffContentType } from "./analysis-checks";
+import { runDocumentOcr, type DocumentOcrProvider } from "./ocr-provider";
 
 /**
  * Server-side text extraction for PDFs, inside the Worker.
@@ -15,6 +16,30 @@ import { sniffContentType } from "./analysis-checks";
 
 export const EXTRACTOR_VERSION = "1";
 
+export type EvidenceSpan = { page: number; start: number; end: number; quote: string };
+export type ExtractedEvidencePage = {
+  page: number;
+  text: string;
+  spans: EvidenceSpan[];
+  confidence: number | null;
+  method: "text-layer" | "ocr" | "none";
+};
+export type ExtractedEvidence = {
+  documentVersionId: string;
+  sha256: string;
+  pages: ExtractedEvidencePage[];
+  method: "text-layer" | "ocr" | "manual";
+  pageCount: number | null;
+  truncated: boolean;
+  unknownReason: string | null;
+  provenance: {
+    extractorVersion: string;
+    providerReference: string | null;
+    model: string | null;
+    cost: number | null;
+  };
+};
+
 /**
  * A ceiling on what one version stores. Generous for any real filing document;
  * the point is that one pathological upload cannot put megabytes in a row.
@@ -29,7 +54,13 @@ export const MAX_EXTRACTED_CHARS = 200_000;
 export const MAX_EXTRACTED_PAGES = 200;
 
 export type ExtractionResult =
-  | { method: "text-layer"; text: string; pageCount: number; truncated: boolean }
+  | {
+      method: "text-layer";
+      text: string;
+      pageCount: number;
+      truncated: boolean;
+      pages?: ExtractedEvidencePage[];
+    }
   /**
    * Opened, no text on any page (a scan), or not a PDF at all (`pageCount`
    * null). A real outcome, distinct from "not extracted yet", which is no row.
@@ -44,6 +75,7 @@ export type ExtractionResult =
 /** What `document_version_texts` records. An unreadable result is not stored. */
 export type StoredExtraction = Exclude<ExtractionResult, { method: "unreadable" }> & {
   extractorVersion: string;
+  evidence?: ExtractedEvidence;
 };
 
 /**
@@ -97,6 +129,7 @@ export async function extractPdfText(input: {
   body: ArrayBuffer;
   /** Accepted so the call site reads honestly; deliberately not consulted. */
   contentType: string | null;
+  includePages?: boolean;
 }): Promise<ExtractionResult> {
   // Sniffed, not declared: the declaration is whatever the uploader said.
   const head = new Uint8Array(input.body, 0, Math.min(16, input.body.byteLength));
@@ -129,11 +162,21 @@ export async function extractPdfText(input: {
 
       // Pages left unread are truncation too, even when what was read fits.
       const truncated = clean.length > MAX_EXTRACTED_CHARS || texts.length < totalPages;
+      let pageBudget = MAX_EXTRACTED_CHARS;
       return {
         method: "text-layer",
         text: truncated ? clean.slice(0, MAX_EXTRACTED_CHARS) : clean,
         pageCount: totalPages,
         truncated,
+        ...(input.includePages
+          ? {
+              pages: texts.map((text, index) => {
+                const bounded = cleanExtractedText(mergePageTexts([text])).slice(0, pageBudget);
+                pageBudget -= bounded.length;
+                return evidencePage(index + 1, bounded, "text-layer", null);
+              }),
+            }
+          : {}),
       };
     } finally {
       // pdf.js 6 removed PDFDocumentProxy.destroy(); the loading task owns teardown.
@@ -142,4 +185,107 @@ export async function extractPdfText(input: {
   } catch (error) {
     return { method: "unreadable", errorClass: errorClassOf(error) };
   }
+}
+
+function evidencePage(
+  page: number,
+  text: string,
+  method: ExtractedEvidencePage["method"],
+  confidence: number | null,
+): ExtractedEvidencePage {
+  return {
+    page,
+    text,
+    spans: text ? [{ page, start: 0, end: text.length, quote: text }] : [],
+    method,
+    confidence,
+  };
+}
+
+export async function evidenceFromExtraction(
+  input: {
+    documentVersionId: string;
+    sha256: string;
+    body: ArrayBuffer;
+    contentType: string | null;
+    ocr?: DocumentOcrProvider | null;
+  },
+  extraction: ExtractionResult,
+): Promise<ExtractedEvidence> {
+  const digest = await crypto.subtle.digest("SHA-256", input.body.slice(0));
+  const actual = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join(
+    "",
+  );
+  if (!/^[a-f0-9]{64}$/.test(input.sha256) || input.sha256 !== actual)
+    throw new Error("Extracted evidence checksum identity changed.");
+  const base = {
+    documentVersionId: input.documentVersionId,
+    sha256: actual,
+    pageCount: extraction.method === "unreadable" ? null : extraction.pageCount,
+    truncated: extraction.method === "text-layer" && extraction.truncated,
+    provenance: {
+      extractorVersion: "versioned-pages-2",
+      providerReference: null,
+      model: null,
+      cost: null,
+    },
+  };
+  if (extraction.method === "text-layer") {
+    const pages =
+      extraction.pages ??
+      (extraction.pageCount === 1 ? [evidencePage(1, extraction.text, "text-layer", null)] : []);
+    return {
+      ...base,
+      pages,
+      method: pages.length ? "text-layer" : "manual",
+      unknownReason: !pages.length
+        ? "page-evidence-missing"
+        : extraction.truncated
+          ? "extraction-truncated"
+          : null,
+    };
+  }
+  if (extraction.method === "unreadable")
+    return {
+      ...base,
+      pages: [],
+      method: "manual",
+      unknownReason: `unreadable:${extraction.errorClass}`,
+    };
+  const ocr = await runDocumentOcr(input.ocr, input);
+  if (ocr.status !== "extracted")
+    return { ...base, pages: [], method: "manual", unknownReason: ocr.errorCode };
+  if (
+    base.pageCount !== null &&
+    (ocr.pages.length !== base.pageCount || ocr.pages.some((page) => page.page > base.pageCount!))
+  )
+    return { ...base, pages: [], method: "manual", unknownReason: "ocr-pages-incomplete" };
+  return {
+    ...base,
+    pages: [...ocr.pages]
+      .sort((a, b) => a.page - b.page)
+      .map((page) =>
+        evidencePage(page.page, cleanExtractedText(page.text), "ocr", page.confidence),
+      ),
+    pageCount: base.pageCount ?? ocr.pages.length,
+    method: "ocr",
+    unknownReason: null,
+    provenance: {
+      extractorVersion: "versioned-pages-2",
+      providerReference: ocr.providerReference,
+      model: ocr.model,
+      cost: ocr.cost,
+    },
+  };
+}
+
+export async function extractVersionedEvidence(
+  input: Parameters<typeof evidenceFromExtraction>[0],
+): Promise<ExtractedEvidence> {
+  const digest = await crypto.subtle.digest("SHA-256", input.body.slice(0));
+  const actual = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join(
+    "",
+  );
+  if (actual !== input.sha256) throw new Error("Extracted evidence checksum identity changed.");
+  return evidenceFromExtraction(input, await extractPdfText({ ...input, includePages: true }));
 }

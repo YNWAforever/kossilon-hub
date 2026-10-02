@@ -38,6 +38,21 @@ export type FindingTier =
   /** A model read something. Advisory only. */
   | "provider";
 
+export type AnalysisProvenance = {
+  schemaVersion: string;
+  model: string | null;
+  cost: number | null;
+  advisoryOnly: boolean;
+  ruleVersion?: string;
+  promptVersion?: string;
+  providerConfigured?: boolean;
+  providerStatus?: string;
+  providerReference?: string | null;
+  providerError?: string | null;
+  providerMetadataStatus?: string;
+  extraction?: import("./text-extraction").ExtractedEvidence["provenance"];
+};
+
 export type FindingCitation =
   /** Specific bytes, optionally a page range within them. */
   | { kind: "version"; documentVersionId: string; pageFrom: number | null; pageTo: number | null }
@@ -56,6 +71,17 @@ export type Finding = {
   /** Plain text for a human. Never interpreted, never executed. */
   detail: string;
   citation: FindingCitation;
+  evidence?: {
+    sha256: string;
+    field: string;
+    partyId: string | null;
+    year: number | null;
+    observed: string | null;
+    expected: string | null;
+    unknownReason: string | null;
+    requirementInstanceId: string | null;
+    spans: import("./text-extraction").EvidenceSpan[];
+  };
 };
 
 /**
@@ -107,6 +133,7 @@ export function makeFinding(input: {
   severity: FindingSeverity;
   detail: string;
   citation: FindingCitation;
+  evidence?: Finding["evidence"];
 }): Finding {
   if (!input.ruleKey.trim()) throw new Error("A finding must name the rule that produced it.");
   if (!input.ruleVersion.trim()) throw new Error("A finding must carry its rule version.");
@@ -139,6 +166,7 @@ export function makeFinding(input: {
     severity: allowedSeverity(input.tier, input.outcome, input.severity),
     detail: input.detail,
     citation,
+    ...(input.evidence ? { evidence: input.evidence } : {}),
   };
 }
 

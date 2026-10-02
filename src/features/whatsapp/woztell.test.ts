@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   classifyWoztellWebhookEvent,
   normalizeWoztellInboundMessage,
   sendWoztellMessage,
   inboundAttachments,
+  boundedProviderBytes,
 } from "./woztell";
 import {
   WOZTELL_API_OUTBOUND,
@@ -17,7 +18,68 @@ import {
   WOZTELL_STATUS_READ,
 } from "./woztell-fixtures";
 
+it("cancels a stalled acknowledgement stream when its deadline aborts", async () => {
+  const cancel = vi.fn();
+  const controller = new AbortController();
+  const body = new ReadableStream<Uint8Array>({ cancel });
+  const reading = boundedProviderBytes(new Response(body), controller.signal, 1024);
+  const outcome = reading.catch((error: unknown) => error);
+  controller.abort(new Error("Owned deadline"));
+  await vi.waitFor(() => expect(cancel).toHaveBeenCalledTimes(1), { timeout: 100 });
+  expect(await outcome).toBeInstanceOf(Error);
+});
+
 describe("WOZTELL timestamp handling", () => {
+  it("preserves the documented universal fileId without confusing a legacy waMediaId", () => {
+    const message = normalizeWoztellInboundMessage({
+      ...WOZTELL_INBOUND_TEXT,
+      type: "IMAGE",
+      data: { fileId: "owned-universal-file" },
+    });
+    expect(message.attachments).toEqual([
+      {
+        providerMediaId: "owned-universal-file",
+        providerMediaKind: "file",
+        mediaType: "IMAGE",
+        position: 0,
+      },
+    ]);
+  });
+  it("marks a lost send connection as unknown rather than a safely retryable rejection", async () => {
+    const config = {
+      provider: "woztell" as const,
+      apiBaseUrl: "https://bot.api.woztell.com",
+      accessToken: "owned-test",
+      channelId: "owned-channel",
+      webhookSecret: "owned-signature",
+    };
+    await expect(
+      sendWoztellMessage(
+        config,
+        { toPhone: "+85269990001", mode: { kind: "text", body: "Owned stub" } },
+        async () => {
+          throw new Error("Connection lost after server read");
+        },
+      ),
+    ).rejects.toMatchObject({ dispatchOutcomeUnknown: true, code: "dispatch_outcome_unknown" });
+  });
+
+  it("keeps a malformed send acknowledgement unknown", async () => {
+    const config = {
+      provider: "woztell" as const,
+      apiBaseUrl: "https://bot.api.woztell.com",
+      accessToken: "owned-test",
+      channelId: "owned-channel",
+      webhookSecret: "owned-signature",
+    };
+    await expect(
+      sendWoztellMessage(
+        config,
+        { toPhone: "+85269990001", mode: { kind: "text", body: "Owned stub" } },
+        async () => new Response("not JSON", { status: 200 }),
+      ),
+    ).rejects.toMatchObject({ dispatchOutcomeUnknown: true });
+  });
   // WOZTELL sends epoch seconds as a *string*. `new Date("1599536864")` is
   // Invalid Date, which silently fell back to "now" and stamped every inbound
   // message with its processing time instead of when the client sent it.
