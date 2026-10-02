@@ -4,6 +4,9 @@ import {
   type CreateSqlClientOptions,
   type SqlClient,
 } from "@/server/db/client";
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
+import { assertCaseAssignmentVersion } from "./assignment-version";
+import { assertCaseAssignmentTarget } from "./assignment-target";
 import {
   buildRequirementInstances,
   checklistLookupFor,
@@ -11,13 +14,23 @@ import {
   type RequirementInstanceDraft,
 } from "./requirement-template";
 import { shouldChaseClient } from "./outstanding";
+import { caseScopeSql, countScopedCases, type ScopedCaseMetrics } from "./case-scope";
+import { attachCaseReadiness } from "./readiness-repository";
+import {
+  listWorkView as queryWorkView,
+  workViewMetrics as queryWorkViewMetrics,
+  type WorkViewQuery,
+  type WorkViewPage,
+  type WorkViewCounts,
+} from "./work-view-repository";
+import { ReadinessConflictError, readinessForCase } from "./readiness";
+import { verifiedPaymentCredit } from "./payment-evidence-state";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
 import { enqueueNotification } from "@/features/notifications/outbox";
 import type postgres from "postgres";
 import {
   buildReminderDraft,
   calculateFilingDueDate,
-  daysBetween,
   hongKongBusinessDate,
   isAllowedStatusTransition,
   offsetDateOnly,
@@ -63,6 +76,7 @@ type CaseRow = {
   company_id: string;
   company_team_id: string;
   company_name: string;
+  data_origin: import("@/features/clients/data-origin").CompanyDataOrigin;
   return_year: number;
   made_up_date: string | Date;
   filing_due_date: string | Date;
@@ -119,6 +133,7 @@ type ActorRow = {
 };
 
 type LockedCaseRow = {
+  data_origin: import("@/features/clients/data-origin").CompanyDataOrigin;
   id: string;
   company_id: string;
   company_name: string;
@@ -133,6 +148,7 @@ type LockedCaseRow = {
 type EligibleCompanyRow = {
   id: string;
   company_name: string;
+  data_origin: import("@/features/clients/data-origin").CompanyDataOrigin;
   cr_number: string;
   annual_return_basis_date: string | Date;
   assigned_owner_id: string;
@@ -151,12 +167,19 @@ type TemplateForCaseRow = {
   id: string;
   active: boolean;
   documents: DocumentItem[];
+  revision: number;
+  snapshot: postgres.JSONValue;
 };
 
 type QueryClient = SqlClient | postgres.TransactionSql;
 type TransactionSqlClient = postgres.TransactionSql;
 
 export type CaseFilters = {
+  /** Internal server scope only; never accepted from client authority. */
+  caseIds?: readonly string[];
+  activeOnly?: boolean;
+  /** Server only allows an active Admin to request diagnostic fixture scope. */
+  includeFixtures?: boolean;
   ownerId?: string;
   teamId?: string;
   reviewerId?: string;
@@ -198,7 +221,7 @@ export type AnnualReturnCasePage = {
   nextCursor: string | null;
 };
 
-export type BoardTotals = {
+export type BoardTotals = ScopedCaseMetrics & {
   total: number;
   overdue: number;
   dueIn7: number;
@@ -258,7 +281,7 @@ export function decodeCaseCursor(
   }
 }
 
-export type AnnualReturnDashboardMetrics = {
+export type AnnualReturnDashboardMetrics = ScopedCaseMetrics & {
   dueIn7: number;
   dueIn30: number;
   overdue: number;
@@ -272,6 +295,10 @@ export type AssignAnnualReturnOwnerInput = {
   caseId: string;
   ownerId: string;
   actorId: string;
+  expectedVersion?: string;
+};
+export type AssignAnnualReturnReviewerInput = Omit<AssignAnnualReturnOwnerInput, "ownerId"> & {
+  reviewerId: string;
 };
 
 export type AddAnnualReturnCaseNoteInput = {
@@ -320,6 +347,7 @@ export type CreateAnnualReturnRepositoryOptions = CreateSqlClientOptions & {
 export type EligibleCompanyForCase = {
   id: string;
   companyName: string;
+  dataOrigin?: import("@/features/clients/data-origin").CompanyDataOrigin | null;
   crNumber: string;
   annualReturnBasisDate: string;
   assignedOwnerId: string;
@@ -350,6 +378,15 @@ export type CreateAnnualReturnCaseInput = {
   invoiceNumber: string;
   feeAmount: number;
   actorId: string;
+  /** Trusted server import command; public case-creation schema never accepts this. */
+  importSource?: {
+    returnYear: number;
+    madeUpDate: string;
+    filingDueDate: string;
+    dataOrigin: "client" | "historical";
+    batchId: string;
+    rowId: string;
+  };
 };
 
 export type CasePartyRecord = {
@@ -364,6 +401,11 @@ export type CasePartyRecord = {
 };
 
 export type AnnualReturnRepository = {
+  listWorkView(input: WorkViewQuery): Promise<WorkViewPage>;
+  workViewMetrics(input: {
+    scope: CaseFilters;
+    viewerUserId: string | null;
+  }): Promise<WorkViewCounts>;
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]>;
   /**
@@ -419,11 +461,21 @@ export type AnnualReturnRepository = {
     filters: CaseFilters,
     options?: { pageSize?: number; maxPages?: number },
   ): Promise<AnnualReturnCase[]>;
-  boardTotals(filters: CaseFilters): Promise<BoardTotals>;
+  boardTotals(filters: CaseFilters, currentUserId?: string): Promise<BoardTotals>;
   getCase(id: string): Promise<AnnualReturnCase | null>;
-  listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]>;
-  listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
+  listCompaniesEligibleForCase(filters?: {
+    includeFixtures?: boolean;
+    q?: string;
+    teamId?: string;
+    limit?: number;
+  }): Promise<EligibleCompanyForCase[]>;
+  listAssignableStaff(scope: {
+    teamId?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<AssignableStaffMember[]>;
   createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>;
+  createCaseRecord(input: CreateAnnualReturnCaseInput): Promise<{ id: string }>;
   dashboardMetrics(
     today: string,
     currentUserId: string,
@@ -436,8 +488,10 @@ export type AnnualReturnRepository = {
     caseId: string,
     nextStatus: AnnualReturnStatus,
     actorId: string,
+    expectedVersion?: string,
   ): Promise<AnnualReturnCase>;
   assignOwner(input: AssignAnnualReturnOwnerInput): Promise<AnnualReturnCase>;
+  assignReviewer(input: AssignAnnualReturnReviewerInput): Promise<AnnualReturnCase>;
   listNotes(caseId: string): Promise<AnnualReturnCaseNote[]>;
   listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]>;
   listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]>;
@@ -494,25 +548,8 @@ export { hongKongBusinessDate };
  */
 export const DEFAULT_CASE_LIMIT = 200;
 
-/**
- * The window scanned when a `risk` filter is active.
- *
- * risk / missingDocuments / overdueOnly used to be applied in JS *after* the SQL
- * LIMIT, so past 200 cases a filtered board silently omitted matches: "high risk"
- * showed only the high-risk cases that happened to fall inside the 200 earliest
- * due dates, and the dashboard tiles counted the same truncated set.
- *
- * overdueOnly and missingDocuments are now SQL predicates and filter before the
- * limit. risk is derived from hydrated children, so it still filters afterwards
- * and instead widens the window it filters over.
- */
-export const RISK_FILTER_SCAN_LIMIT = 2000;
-
-/**
- * Dashboard tiles count the whole active book rather than a page of it. Still
- * bounded, because hydrateCases loads checklist and payment children per case.
- */
-export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
+/** Bounded reminder sweep candidate window; metrics aggregate the full SQL scope. */
+const REMINDER_SWEEP_SCAN_LIMIT = 5000;
 
 /**
  * Row cap for each of the two case-history sources (audit events and
@@ -527,7 +564,6 @@ export const DASHBOARD_METRICS_SCAN_LIMIT = 5000;
  */
 export const CASE_HISTORY_ROW_LIMIT = 200;
 
-const FILED_OR_COMPLETED_STATUSES = new Set<AnnualReturnStatus>(["Filed", "Completed"]);
 const COMPLETED_CASE_LOCKED_MESSAGE = "Completed annual return cases are locked.";
 // Accepted `documents.file_type` values per evidence kind. Previously three bare
 // literals that only the seed script wrote — see ./evidence-file-types.
@@ -557,22 +593,8 @@ function requiredTimestampString(value: string | Date): string {
   return timestamp;
 }
 
-function hasOutstandingRequiredEvidence(item: AnnualReturnChecklistItem): boolean {
-  return (
-    item.required &&
-    (item.status !== "Verified" ||
-      item.receivedAt === null ||
-      item.verifiedAt === null ||
-      item.documentId === null)
-  );
-}
-
 function hasText(value: string | null): boolean {
   return typeof value === "string" && value.trim().length > 0;
-}
-
-function isFiledOrCompleted(case_: AnnualReturnCase): boolean {
-  return FILED_OR_COMPLETED_STATUSES.has(case_.currentStatus);
 }
 
 function isLockedOrCompleted(case_: AnnualReturnCase): boolean {
@@ -591,10 +613,6 @@ function assertSingleMutatedRow(rows: { id: string }[], message: string): void {
   if (rows.length !== 1) {
     throw new Error(message);
   }
-}
-
-function isActiveForOperationalMetrics(case_: AnnualReturnCase): boolean {
-  return !isFiledOrCompleted(case_);
 }
 
 function mapChecklist(row: ChecklistRow): AnnualReturnChecklistItem {
@@ -636,6 +654,7 @@ function hydrateCase(
     companyId: row.company_id,
     companyTeamId: row.company_team_id,
     companyName: row.company_name,
+    dataOrigin: row.data_origin,
     returnYear: row.return_year,
     madeUpDate: dateOnly(row.made_up_date),
     filingDueDate: dateOnly(row.filing_due_date),
@@ -666,10 +685,6 @@ function hydrateCase(
  */
 function caseMatchesHydratedFilters(case_: AnnualReturnCase, filters: CaseFilters): boolean {
   return !filters.risk || case_.riskLevel === filters.risk;
-}
-
-function countOutstandingRequiredEvidence(case_: AnnualReturnCase): number {
-  return case_.checklist.filter(hasOutstandingRequiredEvidence).length;
 }
 
 function withTransaction<T>(
@@ -779,6 +794,7 @@ export function createAnnualReturnRepository(
         arc.id,
         arc.company_id,
         c.company_name,
+        case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end as data_origin,
         c.assigned_team_id as company_team_id,
         arc.current_status,
         arc.owner_id,
@@ -847,26 +863,7 @@ export function createAnnualReturnRepository(
   }
 
   async function selectCaseRows(filters: CaseFilters, today: string): Promise<CaseRow[]> {
-    const ownerId = filters.ownerId ?? null;
-    const teamId = filters.teamId ?? null;
-    const reviewerId = filters.reviewerId ?? null;
-    const status = filters.status ?? null;
-    const paymentStatus = filters.paymentStatus ?? null;
-    const visibleToUserId = filters.visibleToUserId ?? null;
-    const companyIds = filters.companyIds ? [...filters.companyIds] : null;
-    const overdueOnly = filters.overdueOnly === true ? today : null;
-    const missingDocuments = typeof filters.missingDocuments === "boolean" ? today : null;
-    const wantsMissingDocuments = filters.missingDocuments === true;
-    // `risk` stays a post-hydration filter — riskForCase derives it from the
-    // checklist, payment and filing state, and duplicating that in SQL is exactly
-    // the kind of drift that made the evidence guards unsatisfiable. It is applied
-    // to a wider window instead, so the LIMIT no longer truncates before filtering.
-    const limit = filters.limit ?? (filters.risk ? RISK_FILTER_SCAN_LIMIT : DEFAULT_CASE_LIMIT);
-    // Escaped so a name containing % or _ matches literally rather than turning
-    // into a wildcard the user did not type.
-    const query = filters.q?.trim()
-      ? `%${filters.q.trim().replace(/[\\%_]/g, (character) => `\\${character}`)}%`
-      : null;
+    const limit = filters.limit ?? DEFAULT_CASE_LIMIT;
     const cursor = decodeCaseCursor(filters.cursor);
 
     return sql<CaseRow[]>`
@@ -875,6 +872,7 @@ export function createAnnualReturnRepository(
         arc.company_id,
         c.assigned_team_id as company_team_id,
         c.company_name,
+        case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end as data_origin,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
         arc.filing_due_date::text as filing_due_date,
@@ -893,48 +891,7 @@ export function createAnnualReturnRepository(
       join companies c on c.id = arc.company_id
       join users owner on owner.id = arc.owner_id
       left join users reviewer on reviewer.id = arc.reviewer_id
-      where (${ownerId}::uuid is null or arc.owner_id = ${ownerId}::uuid)
-        and (${teamId}::uuid is null or c.assigned_team_id = ${teamId}::uuid)
-        and (${reviewerId}::uuid is null or arc.reviewer_id = ${reviewerId}::uuid)
-        and (${status}::text is null or arc.current_status = ${status})
-        and (
-          ${paymentStatus}::text is null
-          or exists (
-            select 1
-            from payments p
-            where p.case_id = arc.id
-              and p.status = ${paymentStatus}
-          )
-        )
-        and (
-          ${visibleToUserId}::uuid is null
-          or arc.owner_id = ${visibleToUserId}::uuid
-          or arc.reviewer_id = ${visibleToUserId}::uuid
-        )
-        and (${companyIds}::uuid[] is null or arc.company_id = any(${companyIds}::uuid[]))
-        and (${overdueOnly}::date is null or arc.filing_due_date < ${overdueOnly}::date)
-        and (
-          ${missingDocuments}::date is null
-          or ${wantsMissingDocuments} = exists (
-            -- Mirrors hasOutstandingRequiredEvidence exactly; the two are pinned
-            -- together by a test.
-            select 1
-            from annual_return_checklist_items i
-            where i.case_id = arc.id
-              and i.required = true
-              and (
-                i.status <> 'Verified'
-                or i.received_at is null
-                or i.verified_at is null
-                or i.document_id is null
-              )
-          )
-        )
-        and (
-          ${query}::text is null
-          or c.company_name ilike ${query} escape '\\'
-          or c.cr_number ilike ${query} escape '\\'
-        )
+      where ${caseScopeSql(sql, filters, today)}
         and (
           ${cursor === null}
           or (arc.filing_due_date, c.company_name, arc.id)
@@ -997,12 +954,15 @@ export function createAnnualReturnRepository(
       paymentByCaseId.set(row.case_id, mapPayment(row));
     }
 
-    return rows.map((row) =>
-      hydrateCase(
-        row,
-        checklistByCaseId.get(row.id) ?? [],
-        paymentByCaseId.get(row.id) ?? null,
-        today,
+    return attachCaseReadiness(
+      sql,
+      rows.map((row) =>
+        hydrateCase(
+          row,
+          checklistByCaseId.get(row.id) ?? [],
+          paymentByCaseId.get(row.id) ?? null,
+          today,
+        ),
       ),
     );
   }
@@ -1138,7 +1098,8 @@ export function createAnnualReturnRepository(
   ): Promise<AnnualReturnCase[]> {
     const pageSize = options.pageSize ?? DEFAULT_CASE_LIMIT;
     // A ceiling so a bug here cannot become an unbounded scan; at the default
-    // page size this is 20,000 cases, far beyond any real firm's book.
+    // page size this is 20,000 cases. Exceeding the budget explicitly fails;
+    // operational lists use SQL-scoped cursor pages instead.
     const maxPages = options.maxPages ?? 100;
     const all: AnnualReturnCase[] = [];
     let cursor: string | undefined;
@@ -1148,90 +1109,25 @@ export function createAnnualReturnRepository(
       if (!result.nextCursor) return all;
       cursor = result.nextCursor;
     }
-    return all;
+    throw new Error(
+      "Case scan exceeded its explicit page budget; narrow the scope or resume with a cursor.",
+    );
   }
 
-  /**
-   * Board tiles, counted in SQL over the whole authorized scope.
-   *
-   * They were computed in the browser over the same truncated page the board
-   * rendered, so "12 overdue" meant "12 overdue among the 200 earliest-due cases
-   * we happened to load".
-   *
-   * `highRisk` is deliberately absent. riskForCase derives it from checklist,
-   * payment and filing state, and reproducing that in SQL is exactly the drift
-   * the selectCaseRows comment already warns about -- so the caller shows it as
-   * covering the loaded page rather than the scope.
-   */
-  async function boardTotals(filters: CaseFilters): Promise<BoardTotals> {
-    const today = readToday();
-    // Deliberately ignores `q` and `cursor`: these are the totals for the
-    // actor's scope, not for whatever they have typed into the search box, and
-    // the caller labels them that way.
-    const counted = await sql<
-      {
-        total: string;
-        overdue: string;
-        due_in_7: string;
-        due_in_30: string;
-        missing_documents: string;
-        payment_pending: string;
-      }[]
-    >`
-      select
-        count(*) total,
-        count(*) filter (where arc.filing_due_date < ${today}::date) overdue,
-        count(*) filter (
-          where arc.filing_due_date >= ${today}::date
-            and arc.filing_due_date <= ${today}::date + 7
-        ) due_in_7,
-        count(*) filter (
-          where arc.filing_due_date >= ${today}::date
-            and arc.filing_due_date <= ${today}::date + 30
-        ) due_in_30,
-        count(*) filter (
-          where exists (
-            select 1 from annual_return_checklist_items i
-            where i.case_id = arc.id and i.required = true
-              and (
-                i.status <> 'Verified' or i.received_at is null
-                or i.verified_at is null or i.document_id is null
-              )
-          )
-        ) missing_documents,
-        count(*) filter (
-          where exists (
-            select 1 from payments p
-            where p.case_id = arc.id and p.status = 'Payment pending'
-          )
-        ) payment_pending
-      from annual_return_cases arc
-      join companies c on c.id = arc.company_id
-      where (${filters.ownerId ?? null}::uuid is null or arc.owner_id = ${filters.ownerId ?? null}::uuid)
-        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null}::uuid)
-        and (${filters.reviewerId ?? null}::uuid is null or arc.reviewer_id = ${filters.reviewerId ?? null}::uuid)
-        and (${filters.status ?? null}::text is null or arc.current_status = ${filters.status ?? null})
-        and (
-          ${filters.visibleToUserId ?? null}::uuid is null
-          or arc.owner_id = ${filters.visibleToUserId ?? null}::uuid
-          or arc.reviewer_id = ${filters.visibleToUserId ?? null}::uuid
-        )
-        and (
-          ${filters.companyIds ? [...filters.companyIds] : null}::uuid[] is null
-          or arc.company_id = any(${filters.companyIds ? [...filters.companyIds] : null}::uuid[])
-        )
-    `;
-    const row = counted[0];
+  /** SQL totals over the same actor/origin/filter scope as the case list. */
+  async function boardTotals(filters: CaseFilters, currentUserId?: string): Promise<BoardTotals> {
+    const metrics = await countScopedCases(
+      sql,
+      filters,
+      toHongKongBusinessDate(readToday()),
+      currentUserId,
+    );
     return {
-      total: Number(row?.total ?? 0),
-      overdue: Number(row?.overdue ?? 0),
-      dueIn7: Number(row?.due_in_7 ?? 0),
-      dueIn30: Number(row?.due_in_30 ?? 0),
-      missingDocuments: Number(row?.missing_documents ?? 0),
-      paymentPending: Number(row?.payment_pending ?? 0),
+      ...metrics,
+      overdue: metrics.overdueCases,
+      missingDocuments: metrics.casesWithMissingDocuments,
     };
   }
-
   async function getCase(id: string): Promise<AnnualReturnCase | null> {
     const rows = await sql<CaseRow[]>`
       select
@@ -1239,6 +1135,7 @@ export function createAnnualReturnRepository(
         arc.company_id,
         c.assigned_team_id as company_team_id,
         c.company_name,
+        case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end as data_origin,
         arc.return_year,
         arc.made_up_date::text as made_up_date,
         arc.filing_due_date::text as filing_due_date,
@@ -1265,11 +1162,17 @@ export function createAnnualReturnRepository(
     return case_ ?? null;
   }
 
-  async function listCompaniesEligibleForCase(): Promise<EligibleCompanyForCase[]> {
+  async function listCompaniesEligibleForCase(
+    filters: { includeFixtures?: boolean; q?: string; teamId?: string; limit?: number } = {},
+  ): Promise<EligibleCompanyForCase[]> {
+    const q = filters.q?.trim()
+      ? `%${filters.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%`
+      : null;
     const rows = await sql<EligibleCompanyRow[]>`
       select
         c.id,
         c.company_name,
+        c.data_origin,
         c.cr_number,
         c.annual_return_basis_date::text as annual_return_basis_date,
         c.assigned_owner_id,
@@ -1278,18 +1181,22 @@ export function createAnnualReturnRepository(
       from companies c
       join teams t on t.id = c.assigned_team_id
       where c.status = 'active'
+        and (${filters.includeFixtures ?? false}::boolean or c.data_origin <> 'fixture')
+        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id=${filters.teamId ?? null}::uuid)
+        and (${q}::text is null or c.company_name ilike ${q} escape '\\' or c.cr_number ilike ${q} escape '\\')
         and not exists (
           select 1
           from annual_return_cases arc
           where arc.company_id = c.id
             and arc.return_year = extract(year from c.annual_return_basis_date)::int
         )
-      order by c.company_name asc
+      order by c.company_name asc,c.id limit ${Math.min(200, Math.max(1, filters.limit ?? 200))}
     `;
 
     return rows.map((row) => ({
       id: row.id,
       companyName: row.company_name,
+      dataOrigin: row.data_origin,
       crNumber: row.cr_number,
       annualReturnBasisDate: dateOnly(row.annual_return_basis_date),
       assignedOwnerId: row.assigned_owner_id,
@@ -1304,7 +1211,12 @@ export function createAnnualReturnRepository(
    * narrow by team for anyone who is not an Admin, so the list narrows the same
    * way. An inactive user is never offered.
    */
-  async function listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]> {
+  async function listAssignableStaff(scope: {
+    teamId?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<AssignableStaffMember[]> {
+    const q = scope.q?.trim() ? `%${scope.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%` : null;
     const rows = await sql<
       {
         id: string;
@@ -1316,10 +1228,12 @@ export function createAnnualReturnRepository(
     >`
       select u.id, u.name, u.role, u.team_id, t.name as team_name
       from users u
+      join staff_profiles sp on sp.user_id=u.id and sp.active and sp.role=u.role and sp.team_id is not distinct from u.team_id
       left join teams t on t.id = u.team_id
-      where u.active = true
+      where u.active = true and u.role in ('Admin','Manager','Staff')
         and (${scope.teamId ?? null}::uuid is null or u.team_id = ${scope.teamId ?? null})
-      order by u.name asc
+        and (${q}::text is null or u.name ilike ${q} escape '\\')
+      order by u.name asc,u.id limit ${Math.min(200, Math.max(1, scope.limit ?? 200))}
     `;
     return rows.map((row) => ({
       id: row.id,
@@ -1330,24 +1244,24 @@ export function createAnnualReturnRepository(
     }));
   }
 
-  async function createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase> {
+  async function createCaseRecord(input: CreateAnnualReturnCaseInput): Promise<{ id: string }> {
     const caseId = await withTransaction(sql, async (tx) => {
-      const actorRows = await tx<ActorRow[]>`
-        select id, role, team_id, active
-        from users
-        where id = ${input.actorId}
-        limit 1
-      `;
-      const [actorRow] = actorRows;
-      if (!actorRow) throw new Error("Annual return actor not found.");
-
+      const actorRow = await lockActiveStaffUser(tx, input.actorId);
+      if (actorRow.role === "Client") throw new Error("Forbidden: staff actor required.");
       const actor: AnnualReturnActionActor = {
         id: actorRow.id,
         role: actorRow.role,
         teamId: actorRow.team_id,
-        active: actorRow.active,
+        active: true,
       };
-
+      if (input.importSource && actor.role !== "Admin")
+        throw new Error("Forbidden: imports require Admin.");
+      if (
+        !Number.isSafeInteger(input.feeAmount) ||
+        input.feeAmount <= 0 ||
+        !input.invoiceNumber.trim()
+      )
+        throw new Error("Actual positive fee and invoice reference are required.");
       const companyRows = await tx<CompanyForCaseRow[]>`
         select
           id, status, annual_return_basis_date::text as annual_return_basis_date, assigned_team_id
@@ -1362,8 +1276,17 @@ export function createAnnualReturnRepository(
 
       assertAnnualReturnCaseCreatable(actor, { teamId: company.assigned_team_id });
 
-      const basisDate = dateOnly(company.annual_return_basis_date);
-      const returnYear = Number(basisDate.slice(0, 4));
+      const basisDate =
+        input.importSource?.madeUpDate ?? dateOnly(company.annual_return_basis_date);
+      const returnYear = input.importSource?.returnYear ?? Number(basisDate.slice(0, 4));
+      if (
+        input.importSource &&
+        (Number(basisDate.slice(0, 4)) !== returnYear ||
+          !Number.isInteger(returnYear) ||
+          returnYear < 1900 ||
+          returnYear > 2100)
+      )
+        throw new Error("Import made-up date must match the confirmed return year.");
 
       const existingRows = await tx<{ id: string }[]>`
         select id from annual_return_cases
@@ -1375,35 +1298,26 @@ export function createAnnualReturnRepository(
       }
 
       const templateRows = await tx<TemplateForCaseRow[]>`
-        select id, active, documents
+        select id, active, documents, revision, to_jsonb(checklist_templates) snapshot
         from checklist_templates
         where id = ${input.templateId}
-        limit 1
+        limit 1 for share
       `;
       const template = templateRows[0];
       if (!template || !template.active) {
         throw new Error("Checklist template not found or inactive.");
       }
 
-      const ownerRows = await tx<{ id: string }[]>`
-        select id
-        from users
-        where id = ${input.ownerId}
-          and active = true
-        limit 1
-      `;
-      if (ownerRows.length !== 1) {
-        throw new Error("Annual return owner not found or inactive.");
-      }
-
-      const filingDueDate = calculateFilingDueDate(basisDate);
-
+      await lockActiveStaffUser(tx, input.ownerId);
+      const filingDueDate = input.importSource?.filingDueDate ?? calculateFilingDueDate(basisDate);
       const caseRows = await tx<{ id: string }[]>`
         insert into annual_return_cases (
-          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id
+          company_id, return_year, made_up_date, filing_due_date, current_status, owner_id,import_origin,
+          checklist_template_source_id,checklist_template_revision,checklist_template_snapshot
         )
         values (
-          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId}
+          ${input.companyId}, ${returnYear}, ${basisDate}, ${filingDueDate}, 'Upcoming', ${input.ownerId},${input.importSource?.dataOrigin ?? null},
+          ${template.id},${template.revision},${tx.json(template.snapshot)}
         )
         returning id
       `;
@@ -1446,7 +1360,7 @@ export function createAnnualReturnRepository(
         values (
           ${input.companyId}, ${newCaseId}, 'annual_return_case_created', 'user', ${input.actorId},
           'Annual return case created.',
-          ${tx.json({ templateId: input.templateId, returnYear })}
+          ${tx.json({ templateId: input.templateId, templateRevision: template.revision, returnYear })}
         )
       `;
 
@@ -1456,13 +1370,22 @@ export function createAnnualReturnRepository(
         actor,
         action: "create_case",
         summary: "Annual return case created.",
-        metadata: { templateId: input.templateId, returnYear },
+        metadata: {
+          templateId: input.templateId,
+          templateRevision: template.revision,
+          returnYear,
+          ...(input.importSource ? { importSource: input.importSource } : {}),
+        },
       });
 
       return newCaseId;
     });
 
-    return hydratedCaseAfterMutation(caseId, "case creation");
+    return { id: caseId };
+  }
+  async function createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase> {
+    const { id } = await createCaseRecord(input);
+    return hydratedCaseAfterMutation(id, "case creation");
   }
 
   /**
@@ -1475,33 +1398,18 @@ export function createAnnualReturnRepository(
     currentUserId: string,
     scope: CaseFilters = {},
   ): Promise<AnnualReturnDashboardMetrics> {
-    // TODO: Move dashboard tiles to SQL aggregates and paginated reads as case volume grows.
-    const cases = await listCasesForToday({ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }, today);
-    const activeCases = cases.filter(isActiveForOperationalMetrics);
-
+    const metrics = await countScopedCases(
+      sql,
+      scope,
+      toHongKongBusinessDate(today),
+      currentUserId,
+    );
     return {
-      dueIn7: activeCases.filter((case_) => {
-        const daysLeft = daysBetween(today, case_.filingDueDate);
-        return daysLeft >= 0 && daysLeft <= 7;
-      }).length,
-      dueIn30: activeCases.filter((case_) => {
-        const daysLeft = daysBetween(today, case_.filingDueDate);
-        return daysLeft >= 0 && daysLeft <= 30;
-      }).length,
-      overdue: activeCases.filter((case_) => daysBetween(today, case_.filingDueDate) < 0).length,
-      highRisk: activeCases.filter((case_) => case_.riskLevel === "red").length,
-      missingDocuments: activeCases.reduce(
-        (count, case_) => count + countOutstandingRequiredEvidence(case_),
-        0,
-      ),
-      paymentPending: activeCases.filter((case_) => case_.payment?.status !== "Payment received")
-        .length,
-      assignedToMe: cases.filter(
-        (case_) => case_.ownerId === currentUserId && case_.currentStatus !== "Completed",
-      ).length,
+      ...metrics,
+      overdue: metrics.overdueCases,
+      missingDocuments: metrics.missingDocumentCount,
     };
   }
-
   async function hydratedCaseAfterMutation(caseId: string, actionLabel: string) {
     const updated = await getCase(caseId);
 
@@ -1608,34 +1516,39 @@ export function createAnnualReturnRepository(
     return blockers;
   }
 
-  async function assignOwner(input: AssignAnnualReturnOwnerInput): Promise<AnnualReturnCase> {
+  async function assignCaseUser(
+    input: AssignAnnualReturnOwnerInput,
+    target: "owner" | "reviewer",
+  ): Promise<AnnualReturnCase> {
     const current = await getCase(input.caseId);
     if (!current) throw new Error("Annual return case not found.");
     assertCaseIsWritable(current);
 
     await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, input.caseId);
+      await assertCaseAssignmentVersion(tx, input.caseId, input.expectedVersion);
+      await lockActiveStaffUser(tx, input.actorId);
       const actor = await assertActorCanMutateLockedCase(
         tx,
         input.actorId,
         lockedCase,
         "assign_owner",
       );
-      const ownerRows = await tx<{ id: string }[]>`
-        select id
-        from users
-        where id = ${input.ownerId}
-          and active = true
-        limit 1
-      `;
-
-      if (ownerRows.length !== 1) {
-        throw new Error("Annual return owner not found or inactive.");
-      }
+      await lockActiveStaffUser(tx, input.ownerId);
+      const children = await tx<
+        { opposite_id: string | null }[]
+      >`select ${target === "owner" ? tx`reviewer_id` : tx`owner_id`} opposite_id from work_items where annual_return_case_id=${input.caseId} and status in ('open','in_progress','blocked')`;
+      assertCaseAssignmentTarget(
+        target,
+        input.ownerId,
+        target === "owner" ? lockedCase.reviewer_id : lockedCase.owner_id,
+        actor.role,
+        children.map((c) => c.opposite_id),
+      );
 
       const updatedRows = await tx<{ id: string }[]>`
         update annual_return_cases
-        set owner_id = ${input.ownerId},
+        set ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} = ${input.ownerId},
             updated_at = now()
         where id = ${input.caseId}
           and locked_at is null
@@ -1647,16 +1560,16 @@ export function createAnnualReturnRepository(
 
       await tx`
         with candidates as (
-          select id, owner_id, version
+          select id, ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} previous_assignee_id, version
           from work_items
           where annual_return_case_id = ${input.caseId}
             and status in ('open', 'in_progress', 'blocked')
-            and owner_id is distinct from ${input.ownerId}
+            and ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} is distinct from ${input.ownerId}
           for update
         ),
         updated as (
           update work_items wi
-          set owner_id = ${input.ownerId},
+          set ${target === "owner" ? tx`owner_id` : tx`reviewer_id`} = ${input.ownerId},
               version = wi.version + 1,
               updated_at = now()
           from candidates candidate
@@ -1674,10 +1587,10 @@ export function createAnnualReturnRepository(
         )
         select
           candidate.id,
-          candidate.owner_id,
+          candidate.previous_assignee_id,
           ${input.ownerId},
           ${input.actorId},
-          '{}'::jsonb,
+          ${tx.json({ assignmentTarget: target })},
           'manual',
           candidate.version
         from candidates candidate
@@ -1697,13 +1610,15 @@ export function createAnnualReturnRepository(
         values (
           ${lockedCase.company_id},
           ${input.caseId},
-          'annual_return_owner_assigned',
+          ${`annual_return_${target}_assigned`},
           'user',
           ${input.actorId},
-          'Annual return owner assigned.',
+          ${`Annual return ${target} assigned.`},
           ${tx.json({
-            previousOwnerId: lockedCase.owner_id,
-            ownerId: input.ownerId,
+            ...(target === "owner"
+              ? { previousOwnerId: lockedCase.owner_id, ownerId: input.ownerId }
+              : { previousReviewerId: lockedCase.reviewer_id, reviewerId: input.ownerId }),
+            assignmentTarget: target,
           })}
         )
       `;
@@ -1713,15 +1628,23 @@ export function createAnnualReturnRepository(
         companyId: lockedCase.company_id,
         actor,
         action: "assign_owner",
-        summary: "Annual return owner assigned.",
+        summary: `Annual return ${target} assigned.`,
         metadata: {
-          previousOwnerId: lockedCase.owner_id,
-          ownerId: input.ownerId,
+          ...(target === "owner"
+            ? { previousOwnerId: lockedCase.owner_id, ownerId: input.ownerId }
+            : { previousReviewerId: lockedCase.reviewer_id, reviewerId: input.ownerId }),
+          assignmentTarget: target,
         },
       });
     });
 
-    return hydratedCaseAfterMutation(input.caseId, "owner assignment");
+    return hydratedCaseAfterMutation(input.caseId, `${target} assignment`);
+  }
+  function assignOwner(input: AssignAnnualReturnOwnerInput) {
+    return assignCaseUser(input, "owner");
+  }
+  function assignReviewer(input: AssignAnnualReturnReviewerInput) {
+    return assignCaseUser({ ...input, ownerId: input.reviewerId }, "reviewer");
   }
 
   async function listNotes(caseId: string): Promise<AnnualReturnCaseNote[]> {
@@ -1845,6 +1768,7 @@ export function createAnnualReturnRepository(
     caseId: string,
     nextStatus: AnnualReturnStatus,
     actorId: string,
+    expectedVersion?: string,
   ): Promise<AnnualReturnCase> {
     const current = await getCase(caseId);
 
@@ -1859,6 +1783,38 @@ export function createAnnualReturnRepository(
     await withTransaction(sql, async (tx) => {
       const lockedCase = await lockWritableCase(tx, caseId);
       const actor = await assertActorCanMutateLockedCase(tx, actorId, lockedCase, action);
+
+      if (["NAR1 prepared", "Signature pending", "Ready to file"].includes(nextStatus)) {
+        // Case first, then document, intent, version: compatible with upload/review
+        // and scanner intent->version locks. Children cannot move after this preview.
+        await tx`select id from annual_return_checklist_items where case_id=${caseId} order by id for update`;
+        await tx`select id from payments where case_id=${caseId} order by id for update`;
+        await tx`select id from case_parties where case_id=${caseId} order by id for update`;
+        await tx`select id from case_requirement_instances where case_id=${caseId} order by id for update`;
+        await tx`select id from documents where company_id=${lockedCase.company_id} and (case_id=${caseId} or case_id is null) order by id for update`;
+        await tx`select id from document_upload_intents where company_id=${lockedCase.company_id} and (case_id=${caseId} or case_id is null) order by id for update`;
+        await tx`select v.id from document_versions v join documents d on d.id=v.document_id where d.company_id=${lockedCase.company_id} and (d.case_id=${caseId} or d.case_id is null) order by v.id for update of v`;
+        await tx`select l.id from requirement_evidence_links l join case_requirement_instances r on r.id=l.requirement_instance_id where r.case_id=${caseId} order by l.id for update of l`;
+        await tx`select id from package_handoffs where case_id=${caseId} order by id for update`;
+        const [observed] = await attachCaseReadiness(tx, [current]);
+        const readiness = readinessForCase(observed);
+        if (!expectedVersion || readiness.sourceVersion !== expectedVersion)
+          throw new ReadinessConflictError();
+        const ready =
+          nextStatus === "NAR1 prepared" ? readiness.readyToPrepare : readiness.readyForApproval;
+        const approved =
+          nextStatus !== "Ready to file" ||
+          !readiness.blockers.some(
+            (b) => b.code === "package_not_approved" || b.code === "package_approval_stale",
+          );
+        if (!ready || !approved)
+          throw new Error(
+            `Cannot prepare/approve annual return case: ${readiness.blockers
+              .filter((b) => b.stage !== "transmit" || b.code !== "destination_unavailable")
+              .map((b) => b.message)
+              .join(" ")}`,
+          );
+      }
 
       if (completing) {
         const blockers = await completionBlockerMessagesForLockedCase(
@@ -2246,12 +2202,27 @@ export function createAnnualReturnRepository(
       }
 
       const currentPaymentRows = await tx<
-        { status: PaymentStatus; payment_proof_document_id: string | null }[]
+        {
+          id: string;
+          amount: number;
+          status: PaymentStatus;
+          payment_proof_document_id: string | null;
+        }[]
       >`
-        select status, payment_proof_document_id from payments
+        select id,amount,status, payment_proof_document_id from payments
         where case_id = ${input.caseId} for update
       `;
       if (!currentPaymentRows[0]) throw new Error("Annual return payment not found.");
+      const credit = await verifiedPaymentCredit(tx, currentPaymentRows[0].id);
+      if (
+        isPaymentReceived &&
+        (credit.receivedAmount < Number(currentPaymentRows[0].amount) ||
+          !credit.lastReceivedOn ||
+          !credit.proofDocumentIds.includes(paymentProofDocumentId!))
+      )
+        throw new Error(
+          "Payment received requires reviewed actual amounts, dates and current proof covering the full invoice.",
+        );
       const eventChanged =
         currentPaymentRows[0].status !== input.status ||
         currentPaymentRows[0].payment_proof_document_id !== paymentProofDocumentId;
@@ -2262,7 +2233,7 @@ export function createAnnualReturnRepository(
         update payments
         set status = ${input.status},
             payment_proof_document_id = ${paymentProofDocumentId},
-            paid_at = case when ${isPaymentReceived} then coalesce(paid_at, now()) else null end,
+            paid_at = case when ${isPaymentReceived} then ${credit.lastReceivedOn}::date::timestamptz else null end,
             updated_at = now()
         where case_id = ${input.caseId}
         returning id, invoice_number, updated_at
@@ -2646,7 +2617,7 @@ export function createAnnualReturnRepository(
     // reconciliation that never runs.
     await reconcileFailedReminders(now);
 
-    const candidates = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, now);
+    const candidates = await listCasesForToday({ limit: REMINDER_SWEEP_SCAN_LIMIT }, now);
     const openCases = candidates.filter(
       (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
     );
@@ -2664,7 +2635,8 @@ export function createAnnualReturnRepository(
         // member marks Filed while an earlier case in this same sweep is still processing
         // would otherwise pass the fresh re-fetch and receive a live client-facing
         // reminder about a case that no longer needs one.
-        if (lockedCase.current_status === "Filed") return null;
+        if (lockedCase.current_status === "Filed" || lockedCase.data_origin === "historical")
+          return null;
 
         const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
           select milestone from annual_return_reminder_events where case_id = ${case_.id}
@@ -3022,6 +2994,8 @@ export function createAnnualReturnRepository(
 
   return {
     listCases,
+    listWorkView: (input) => queryWorkView(sql, input, readToday()),
+    workViewMetrics: (input) => queryWorkViewMetrics(sql, input, readToday()),
     listCaseRequirements,
     syncRequirementInstances,
     syncCasePartiesFromOfficers,
@@ -3034,10 +3008,12 @@ export function createAnnualReturnRepository(
     listCompaniesEligibleForCase,
     listAssignableStaff,
     createCase,
+    createCaseRecord,
     dashboardMetrics,
     assertCanMutateCase,
     evaluateReminders,
     assignOwner,
+    assignReviewer,
     listNotes,
     listAuditEventsForCase,
     listAssignmentEventsForCase,

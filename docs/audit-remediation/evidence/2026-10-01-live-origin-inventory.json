@@ -1,0 +1,45 @@
+{
+  "observedAt": "2026-10-01 05:00:45 UTC",
+  "build": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "environment": "production read-only",
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb"
+  },
+  "inventory": {
+    "companies": [
+      {
+        "id": "30000000-0000-0000-0000-000000000001",
+        "version": "2026-08-22T18:52:44.690192+00:00",
+        "case_count": 1,
+        "data_origin": "client"
+      },
+      {
+        "id": "30000000-0000-0000-0000-000000000002",
+        "version": "2026-08-22T18:52:44.690192+00:00",
+        "case_count": 1,
+        "data_origin": "client"
+      },
+      {
+        "id": "30000000-0000-0000-0000-000000000003",
+        "version": "2026-08-22T18:52:44.690192+00:00",
+        "case_count": 1,
+        "data_origin": "client"
+      }
+    ],
+    "notification_inventory": [
+      {
+        "count": 4,
+        "status": "pending",
+        "data_origin": "client",
+        "known_unknown": 0,
+        "with_provider_id": 0,
+        "with_idempotency_key": 4
+      }
+    ]
+  },
+  "reclassificationPerformed": false,
+  "recipientVerification": "not performed; no recipient content exported",
+  "nextAction": "Business owner supplies per-company provenance and approved recipient mapping; release owner keeps dispatch activation gated."
+}

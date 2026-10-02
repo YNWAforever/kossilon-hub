@@ -6,6 +6,8 @@ import type { AnnualReturnCase } from "./types";
 import type { ProductionFollowUpRepository } from "./follow-up-repository";
 import {
   dispatchSimulatedFollowUpIfNeeded,
+  productionFollowUpSchema,
+  sendProductionFollowUpForActor,
   listProductionFollowUpDraftsForActor,
   sendAnnualReturnFollowUpForActor,
   sendDocumentReviewFollowUpForActor,
@@ -32,6 +34,7 @@ const caseItem: AnnualReturnCase = {
   companyId,
   companyTeamId: teamId,
   companyName: "Acme Company Limited",
+  dataOrigin: "client",
   returnYear: 2026,
   madeUpDate: "2026-06-30",
   filingDueDate: "2026-08-12",
@@ -47,6 +50,14 @@ const caseItem: AnnualReturnCase = {
   lockedAt: null,
   completedAt: null,
   checklist: [],
+  readiness: {
+    sourceVersion: "c".repeat(32),
+    readyToPrepare: false,
+    readyForApproval: false,
+    readyToTransmit: false,
+    blockers: [],
+    manifestPayload: null,
+  },
   payment: null,
 };
 
@@ -166,6 +177,44 @@ describe("simulated follow-up dispatch gate", () => {
 });
 
 describe("production follow-up server orchestration", () => {
+  async function approvedInput(
+    source: "annual-return" | "document-review" | "payment-proof-review",
+    entityId: string,
+    deps: ReturnType<typeof dependencies>,
+  ) {
+    const preview = (await listProductionFollowUpDraftsForActor(actor, deps)).find(
+      (draft) => draft.source === source && draft.entityId === entityId,
+    )!;
+    return { caseId, entityId, expectedVersion: preview.version };
+  }
+  it("requires an observed version in the approval command", () => {
+    expect(() =>
+      productionFollowUpSchema.parse({ source: "annual-return", caseId, entityId: caseId }),
+    ).toThrow();
+  });
+
+  it("refuses approval after the persisted recipient changes", async () => {
+    const deps = dependencies();
+    const preview = (await listProductionFollowUpDraftsForActor(actor, deps)).find(
+      (draft) => draft.source === "annual-return",
+    )!;
+    const state = await deps.followUpRepository.listPersistedState([caseId]);
+    vi.mocked(deps.followUpRepository.listPersistedState).mockResolvedValue({
+      ...state,
+      recipients: state.recipients.map((recipient) => ({
+        ...recipient,
+        recipientPhone: "+85290009999",
+      })),
+    });
+    await expect(
+      sendProductionFollowUpForActor(
+        actor,
+        { source: "annual-return", caseId, entityId: caseId, expectedVersion: preview.version },
+        deps,
+      ),
+    ).rejects.toMatchObject({ statusCode: 409 });
+    expect(deps.whatsAppRepository.queueOutboundTemplateMessage).not.toHaveBeenCalled();
+  });
   it("lists only staff-authorized production drafts", async () => {
     const deps = dependencies();
     const drafts = await listProductionFollowUpDraftsForActor(actor, deps);
@@ -197,7 +246,9 @@ describe("production follow-up server orchestration", () => {
     async (source, entityId, send, templateName) => {
       const deps = dependencies();
 
-      await expect(send(actor, { caseId, entityId }, deps)).resolves.toMatchObject({
+      await expect(
+        send(actor, await approvedInput(source, entityId, deps), deps),
+      ).resolves.toMatchObject({
         source,
         replayed: false,
         messageId: message.id,
@@ -233,7 +284,11 @@ describe("production follow-up server orchestration", () => {
     });
 
     await expect(
-      sendDocumentReviewFollowUpForActor(actor, { caseId, entityId: documentId }, deps),
+      sendDocumentReviewFollowUpForActor(
+        actor,
+        await approvedInput("document-review", documentId, deps),
+        deps,
+      ),
     ).resolves.toMatchObject({ replayed: true, messageId: message.id });
     expect(deps.annualReturnRepository.recordReminder).not.toHaveBeenCalled();
   });
@@ -244,7 +299,11 @@ describe("production follow-up server orchestration", () => {
     await expect(
       sendDocumentReviewFollowUpForActor(
         actor,
-        { caseId, entityId: "88888888-8888-4888-8888-888888888888" },
+        {
+          caseId,
+          entityId: "88888888-8888-4888-8888-888888888888",
+          expectedVersion: "owned-stale-preview",
+        },
         deps,
       ),
     ).rejects.toThrow(/current document-review follow-up/i);
@@ -259,7 +318,11 @@ describe("production follow-up server orchestration", () => {
       .mockResolvedValueOnce({ ...caseItem, currentStatus: "Filed" });
 
     await expect(
-      sendAnnualReturnFollowUpForActor(actor, { caseId, entityId: caseId }, deps),
+      sendAnnualReturnFollowUpForActor(
+        actor,
+        await approvedInput("annual-return", caseId, deps),
+        deps,
+      ),
     ).rejects.toThrow(/current annual-return follow-up/i);
     expect(deps.annualReturnRepository.getCase).toHaveBeenCalledTimes(2);
     expect(deps.whatsAppRepository.queueOutboundTemplateMessage).not.toHaveBeenCalled();

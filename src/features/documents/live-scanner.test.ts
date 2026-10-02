@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { createLiveDocumentScanner } from "./live-scanner";
 import type { DocumentStorage } from "./types";
+import { createHash } from "node:crypto";
+import { englishPdf, encryptedPdf, truncatedPdf, imageOnlyPdf } from "@/test/synthetic-pdf";
 
-const CONTENT = new Uint8Array([1, 2, 3, 4]);
-// sha256 of the four bytes above, so the adapter's own re-derivation matches.
-const CHECKSUM = "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a";
+const CONTENT = new Uint8Array(englishPdf());
+const CHECKSUM = createHash("sha256").update(CONTENT).digest("hex");
+const VERSION = "70000000-0000-4000-8000-000000000001";
 const config = { endpoint: "https://scanner.example/scan", apiKey: "test-key" };
 
 function storage(overrides: Partial<DocumentStorage> = {}): DocumentStorage {
@@ -24,6 +26,7 @@ function storage(overrides: Partial<DocumentStorage> = {}): DocumentStorage {
 }
 
 const input = {
+  documentVersionId: VERSION,
   objectKey: "documents/opaque",
   checksum: CHECKSUM,
   contentType: "application/pdf",
@@ -58,12 +61,159 @@ describe("createLiveDocumentScanner", () => {
       // learn what its bytes actually are rather than what the client claimed.
       verifiedChecksum: CHECKSUM,
       verifiedByteSize: CONTENT.byteLength,
+      documentVersionId: VERSION,
     });
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(config.endpoint);
     expect(init.method).toBe("POST");
     expect(new Uint8Array(init.body as ArrayBuffer)).toEqual(CONTENT);
+  });
+
+  it("refuses a scan without an exact document version", async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({ verdict: "clean", reference: "ref" }));
+    const scanner = createLiveDocumentScanner({ config, storage: storage(), fetchImpl });
+    await expect(scanner.scan({ ...input, documentVersionId: undefined })).resolves.toEqual({
+      status: "failed",
+      retryable: false,
+      errorCode: "document-version-missing",
+    });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["zero bytes", new ArrayBuffer(0), "stored-object-empty"],
+    ["truncated PDF", truncatedPdf(), "pdf-incomplete"],
+    ["encrypted PDF", encryptedPdf(), "pdf-unreadable"],
+  ])("quarantines %s even when the stub provider reports clean", async (_name, body, code) => {
+    const bytes = body as ArrayBuffer;
+    const checksum = createHash("sha256").update(new Uint8Array(bytes)).digest("hex");
+    const scanner = createLiveDocumentScanner({
+      config,
+      storage: storage({
+        get: vi.fn(async () => ({
+          objectKey: input.objectKey,
+          checksum,
+          contentType: input.contentType,
+          sizeBytes: bytes.byteLength,
+          body: bytes,
+        })),
+      }),
+      fetchImpl: vi.fn(async () => jsonResponse({ verdict: "clean", reference: "stub-not-live" })),
+    });
+    await expect(scanner.scan({ ...input, checksum })).resolves.toEqual({
+      status: "failed",
+      retryable: false,
+      errorCode: code,
+    });
+  });
+
+  it("allows a structurally readable image-only PDF after the provider verdict without inventing text", async () => {
+    const body = imageOnlyPdf();
+    const checksum = createHash("sha256").update(new Uint8Array(body)).digest("hex");
+    const scanner = createLiveDocumentScanner({
+      config,
+      storage: storage({
+        get: vi.fn(async () => ({
+          objectKey: input.objectKey,
+          checksum,
+          contentType: input.contentType,
+          sizeBytes: body.byteLength,
+          body,
+        })),
+      }),
+      fetchImpl: vi.fn(async () => jsonResponse({ verdict: "clean", reference: "stub-not-live" })),
+    });
+    await expect(scanner.scan({ ...input, checksum })).resolves.toMatchObject({
+      status: "clean",
+      verifiedChecksum: checksum,
+      documentVersionId: VERSION,
+    });
+  });
+
+  it("preserves a positive malware verdict for an unreadable encrypted PDF", async () => {
+    const body = encryptedPdf();
+    const checksum = createHash("sha256").update(new Uint8Array(body)).digest("hex");
+    const scanner = createLiveDocumentScanner({
+      config,
+      storage: storage({
+        get: vi.fn(async () => ({
+          objectKey: input.objectKey,
+          checksum,
+          contentType: input.contentType,
+          sizeBytes: body.byteLength,
+          body,
+        })),
+      }),
+      fetchImpl: vi.fn(async () =>
+        jsonResponse({
+          verdict: "infected",
+          reference: "owned-malware-ref",
+          signature: "owned-signature",
+        }),
+      ),
+    });
+    await expect(scanner.scan({ ...input, checksum })).resolves.toEqual({
+      status: "rejected",
+      reason: "owned-signature",
+      providerReference: "owned-malware-ref",
+    });
+  });
+
+  it.each(["storage", "response-body", "fetch-ignores-abort"])(
+    "bounds the complete %s stage",
+    async (stage) => {
+      vi.useFakeTimers();
+      try {
+        const scanner = createLiveDocumentScanner({
+          config,
+          timeoutMs: 10,
+          storage: storage(
+            stage === "storage" ? { get: vi.fn(() => new Promise<never>(() => {})) } : {},
+          ),
+          fetchImpl: vi.fn(() =>
+            stage === "fetch-ignores-abort"
+              ? new Promise<Response>(() => {})
+              : Promise.resolve(new Response(new ReadableStream({ start() {} }), { status: 200 })),
+          ),
+        });
+        const result = Promise.race([
+          scanner.scan(input),
+          new Promise((resolve) => setTimeout(() => resolve({ status: "hung" }), 50)),
+        ]);
+        await vi.advanceTimersByTimeAsync(51);
+        await expect(result).resolves.toEqual({
+          status: "failed",
+          retryable: true,
+          errorCode: "timeout",
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+
+  it("caps provider response bytes and treats429 as bounded retry", async () => {
+    const oversized = createLiveDocumentScanner({
+      config,
+      storage: storage(),
+      fetchImpl: vi.fn(async () => new Response(" ".repeat(16_385))),
+    });
+    await expect(oversized.scan(input)).resolves.toEqual({
+      status: "failed",
+      retryable: false,
+      errorCode: "malformed-response",
+    });
+    const limited = createLiveDocumentScanner({
+      config,
+      storage: storage(),
+      fetchImpl: vi.fn(async () => new Response("", { status: 429 })),
+    });
+    await expect(limited.scan(input)).resolves.toEqual({
+      status: "failed",
+      retryable: true,
+      errorCode: "http-429",
+    });
   });
 
   it("reports malware as rejected, carrying the provider's signature as the reason", async () => {

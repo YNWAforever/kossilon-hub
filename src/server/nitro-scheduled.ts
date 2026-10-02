@@ -19,7 +19,13 @@ import { runScheduledMaintenanceForWorker } from "../server";
  * until the hook callback returns; the hook signature is synchronous.
  */
 export default definePlugin((nitroApp) => {
-  nitroApp.hooks.hook("cloudflare:scheduled", ({ controller, context }) => {
-    context.waitUntil(runScheduledMaintenanceForWorker(controller.scheduledTime));
+  nitroApp.hooks.hook("cloudflare:scheduled", ({ controller, context, env }) => {
+    context.waitUntil(
+      runScheduledMaintenanceForWorker(
+        controller.scheduledTime,
+        undefined,
+        (env as Record<string, unknown>).MAINTENANCE_SCHEDULER_OWNER,
+      ),
+    );
   });
 });

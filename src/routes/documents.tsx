@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { parseEntityId } from "@/lib/entity-id";
+import {
+  useMutation,
+  useMutationState,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { labelValue } from "@/lib/format-label";
-import { downloadDocument, listDocuments } from "../features/documents/server-fns";
+import { downloadDocument, listDocumentPage } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import { CHECKLIST_EVIDENCE_FILE_TYPES } from "../features/annual-return/evidence-file-types";
@@ -16,7 +23,9 @@ import {
   type DocumentRejectionReasonCode,
 } from "../features/documents/rejection-reasons";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
-import type { PrivateDocument } from "../features/documents/repository";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
+import type { DocumentSummary } from "../features/documents/repository";
+import { DocumentRecoveryPanel } from "../features/documents/document-recovery-panel";
 
 import { useAnnualReturnCases } from "../lib/annual-return-store";
 import {
@@ -30,42 +39,60 @@ import {
 } from "../lib/client-portal-store";
 
 type DocumentsSearch = {
-  caseId?: string;
+  caseId?: unknown;
 };
 
 export const Route = createFileRoute("/documents")({
   validateSearch: (search): DocumentsSearch => ({
-    caseId: typeof search.caseId === "string" ? search.caseId : undefined,
+    caseId: search.caseId,
   }),
   component: DocumentsRoute,
 });
 
 function DocumentsRoute() {
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const queryClient = useQueryClient();
   const { caseId } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [query, setQuery] = useState("");
+  const [caseQueryText, setCaseQueryText] = useState("");
   const [source, setSource] = useState("all");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
-  const [caseFilter, setCaseFilter] = useState(caseId ?? "all");
+  const caseFilter =
+    caseId === undefined ? "all" : typeof caseId === "string" ? caseId : "__invalid__";
+  const setCaseFilter = (next: string) =>
+    void navigate({ search: { caseId: next === "all" ? undefined : next }, replace: true });
   const [warning, setWarning] = useState<string | undefined>();
-  const productionCaseId = isUuid(caseFilter) ? caseFilter : undefined;
-  const productionDocumentsQuery = useQuery({
-    queryKey: ["documents", "archive", productionCaseId ?? "all"],
-    queryFn: () => listDocuments({ data: productionCaseId ? { caseId: productionCaseId } : {} }),
+  const productionCaseId = parseEntityId(caseFilter) ?? undefined;
+  const invalidCaseId = caseId !== undefined && !productionCaseId;
+  const productionDocumentsQuery = useInfiniteQuery({
+    queryKey: ["documents", "archive", productionCaseId ?? "all", { actorScope: actor }],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listDocumentPage({
+        data: {
+          ...(productionCaseId ? { caseId: productionCaseId } : {}),
+          limit: 100,
+          cursor: pageParam,
+        },
+      }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    enabled: dataMode === "production" && !invalidCaseId,
     retry: false,
   });
+  const productionDocuments =
+    productionDocumentsQuery.data?.pages.flatMap((p) => p.documents ?? []) ?? [];
   // The production section had no filter of its own: the only case <select> on
   // this screen lived inside the demo branch and listed demo cases, so in
   // production the case filter was reachable only by typing ?caseId=<uuid> into
   // the URL -- which is why the section's own copy told staff to "filter to one
   // production case" using a control that was not rendered.
   const productionCasesQuery = useQuery({
-    queryKey: annualReturnQueryKeys.list({}),
-    queryFn: () => listAnnualReturnCases({ data: {} }),
+    queryKey: annualReturnQueryKeys.list({ actorScope: actor, q: caseQueryText }),
+    queryFn: () => listAnnualReturnCases({ data: { q: caseQueryText, limit: 200 } }),
     enabled: dataMode === "production",
     retry: false,
     staleTime: 60_000,
@@ -97,9 +124,10 @@ function DocumentsRoute() {
       setWarning(error instanceof Error ? error.message : "Unable to review document."),
   });
 
-  async function handlePreview(documentId: string, fileName: string) {
+  async function handlePreview(documentId: string, fileName: string, expectedVersionId?: string) {
     try {
-      const response = await downloadDocument({ data: { documentId } });
+      if (!expectedVersionId) throw new Error("文件版本未核實，請重新載入後再預覽或下載。");
+      const response = await downloadDocument({ data: { documentId, expectedVersionId } });
       if (!response.ok) throw new Error(`Preview failed (${response.status}).`);
       const href = URL.createObjectURL(await response.blob());
       // Opened rather than saved: a reviewer needs to look at the file to decide,
@@ -119,9 +147,10 @@ function DocumentsRoute() {
     }
   }
 
-  async function handleDownload(documentId: string) {
+  async function handleDownload(documentId: string, expectedVersionId?: string) {
     try {
-      const response = await downloadDocument({ data: { documentId } });
+      if (!expectedVersionId) throw new Error("文件版本未核實，請重新載入後再預覽或下載。");
+      const response = await downloadDocument({ data: { documentId, expectedVersionId } });
       if (!response.ok) throw new Error(`Download failed (${response.status}).`);
       const href = URL.createObjectURL(await response.blob());
       const anchor = document.createElement("a");
@@ -133,10 +162,6 @@ function DocumentsRoute() {
       setWarning(error instanceof Error ? error.message : "Unable to download document.");
     }
   }
-
-  useEffect(() => {
-    setCaseFilter(caseId ?? "all");
-  }, [caseId]);
 
   const rows = useMemo(() => getDocumentArchiveRows(cases, snapshot), [cases, snapshot]);
   const visibleRows = rows.filter((row) => {
@@ -154,6 +179,36 @@ function DocumentsRoute() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title="Documents" />
+      {dataMode === "production" &&
+      !invalidCaseId &&
+      actor?.active &&
+      (actor.role === "Admin" || actor.role === "Manager") ? (
+        <BulkSelectionToolbar
+          actorScope={JSON.stringify(actor)}
+          resource="document"
+          filters={productionCaseId ? { caseId: productionCaseId } : {}}
+          page={productionDocuments.map((d) => ({ id: d.id, label: d.fileName }))}
+          total={
+            productionDocumentsQuery.hasNextPage
+              ? null
+              : productionDocumentsQuery.isSuccess
+                ? productionDocuments.length
+                : null
+          }
+          pageSize={100}
+          maintenanceActions={[
+            "document_assignment",
+            "document_return_draft",
+            "document_list_export",
+          ]}
+        />
+      ) : null}
+
+      {dataMode === "production" && invalidCaseId ? (
+        <p role="alert" className="text-sm text-destructive">
+          案件 ID 格式無效。請重新選擇案件；未載入全部文件。
+        </p>
+      ) : null}
 
       {warning ? (
         <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
@@ -161,13 +216,26 @@ function DocumentsRoute() {
         </div>
       ) : null}
 
+      {dataMode === "production" ? (
+        <label className="block text-sm">
+          搜尋全範圍案件
+          <input
+            className="min-h-11 ml-2 rounded border px-3"
+            value={caseQueryText}
+            onChange={(event) => setCaseQueryText(event.target.value)}
+          />
+          <span className="block text-xs text-muted-foreground">
+            最多顯示200項；搜尋在授權範圍執行。
+          </span>
+        </label>
+      ) : null}
       <ProductionDocumentsSection
         caseItem={productionCaseQuery.data ?? undefined}
         cases={productionCasesQuery.data ?? []}
         casesLoading={productionCasesQuery.isLoading}
         selectedCaseId={productionCaseId}
         onSelectCase={(next) => setCaseFilter(next)}
-        documents={productionDocumentsQuery.data ?? []}
+        documents={invalidCaseId ? [] : productionDocuments}
         error={productionDocumentsQuery.error}
         loading={productionDocumentsQuery.isLoading}
         onDownload={handleDownload}
@@ -175,6 +243,18 @@ function DocumentsRoute() {
         onReview={(input) => reviewMutation.mutate({ data: input })}
         pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
       />
+      {dataMode === "production" && productionDocumentsQuery.hasNextPage ? (
+        <button
+          className="min-h-11 rounded border px-3"
+          disabled={productionDocumentsQuery.isFetchingNextPage}
+          onClick={() => void productionDocumentsQuery.fetchNextPage({ cancelRefetch: false })}
+        >
+          載入更多文件
+        </button>
+      ) : null}
+      {productionDocumentsQuery.isFetchNextPageError ? (
+        <p role="alert">下一頁文件未能載入；保留已讀資料，請重試。</p>
+      ) : null}
 
       {/* The archive below is fixture-backed: getDocumentArchiveRows reads the
           demo stores. Rendering it in production showed staff invented records
@@ -256,7 +336,6 @@ function DocumentsRoute() {
                   cases={cases}
                   snapshot={snapshot}
                   onWarning={setWarning}
-                  onReview={(input) => reviewMutation.mutate({ data: input })}
                 />
               ))
             )}
@@ -300,37 +379,18 @@ function DocumentRow({
   cases,
   snapshot,
   onWarning,
-  onReview,
 }: {
   row: ClientPortalArchiveRow;
   cases: ReturnType<typeof useAnnualReturnCases>;
   snapshot: ReturnType<typeof useClientPortalSnapshot>;
-  onReview: (input: {
-    caseId: string;
-    documentId: string;
-    decision: "verified" | "rejected";
-    reason?: string;
-  }) => void;
   onWarning: (warning: string | undefined) => void;
 }) {
   const followUp = getDocumentReviewFollowUpDrafts(cases, snapshot).find(
     (draft) => draft.documentId === row.documentId,
   );
 
-  function handleReview(
-    decision: ClientPortalDocumentReviewDecision,
-    options: { reasonCode?: ClientPortalReviewReasonCode; note?: string } = {},
-  ) {
-    if (!row.documentId || !isUuid(row.documentId) || !isUuid(row.caseId)) {
-      onWarning("Demo archive rows are read-only; production records are reviewed above.");
-      return;
-    }
-    onReview({
-      caseId: row.caseId,
-      documentId: row.documentId,
-      decision: decision === "accepted" ? "verified" : "rejected",
-      reason: options.note || options.reasonCode,
-    });
+  function handleReview() {
+    onWarning("Demo archive rows are read-only; production records are reviewed above.");
   }
 
   return (
@@ -474,14 +534,15 @@ function ProductionDocumentsSection({
   casesLoading: boolean;
   selectedCaseId?: string;
   onSelectCase: (caseId: string) => void;
-  documents: PrivateDocument[];
+  documents: DocumentSummary[];
   error: Error | null;
   loading: boolean;
-  onDownload: (documentId: string) => void;
-  onPreview: (documentId: string, fileName: string) => void;
+  onDownload: (documentId: string, expectedVersionId?: string) => void;
+  onPreview: (documentId: string, fileName: string, expectedVersionId?: string) => void;
   onReview: (input: {
     caseId: string;
     documentId: string;
+    expectedDocumentVersionId: string;
     checklistItemId?: string;
     decision: "verified" | "rejected";
     reason?: string;
@@ -567,6 +628,11 @@ function ProductionDocumentsSection({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {labelValue(document.category)}
                 </p>
+                {document.objectAvailability === "not_checked" ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    儲存物件尚未核對；可用受控預覽核對缺口。
+                  </p>
+                ) : null}
               </div>
               <SafetyBadge safety={documentSafetyOf(document)} status={document.uploadStatus} />
               <div>
@@ -617,10 +683,7 @@ function ProductionDocumentsSection({
   );
 }
 function isUuid(value: string | undefined): value is string {
-  return Boolean(
-    value &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
-  );
+  return parseEntityId(value) !== null;
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -652,7 +715,7 @@ function formatTimestamp(value: string): string {
  * scanner. Those are different facts and a reviewer has to be able to tell them
  * apart before deciding anything.
  */
-function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: string }) {
+function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: string | null }) {
   const presentation: Record<DocumentSafety, { label: string; className: string }> = {
     verified: { label: "已掃描安全", className: "bg-status-green-soft text-status-green" },
     pending: { label: "等待掃描", className: "bg-status-yellow-soft text-status-yellow" },
@@ -665,7 +728,9 @@ function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: strin
       <span className={`inline-block rounded-md px-2 py-1 text-xs font-medium ${className}`}>
         {label}
       </span>
-      <span className="mt-1 block text-xs text-muted-foreground">{labelValue(status)}</span>
+      <span className="mt-1 block text-xs text-muted-foreground">
+        {status ? labelValue(status) : "只有文件登記，欠上載來源"}
+      </span>
     </span>
   );
 }
@@ -690,17 +755,18 @@ function ReviewActions({
   onPreview,
   onReview,
 }: {
-  document: PrivateDocument;
+  document: DocumentSummary;
   safety: DocumentSafety;
   canReview: boolean;
   pending: boolean;
   isChecklistEvidence: boolean;
   checklistItemId: string;
-  onDownload: (documentId: string) => void;
-  onPreview: (documentId: string, fileName: string) => void;
+  onDownload: (documentId: string, expectedVersionId?: string) => void;
+  onPreview: (documentId: string, fileName: string, expectedVersionId?: string) => void;
   onReview: (input: {
     caseId: string;
     documentId: string;
+    expectedDocumentVersionId: string;
     checklistItemId?: string;
     decision: "verified" | "rejected";
     reason?: string;
@@ -709,15 +775,37 @@ function ReviewActions({
   const [rejecting, setRejecting] = useState(false);
   const [reasonCode, setReasonCode] = useState<DocumentRejectionReasonCode>("missing-page");
   const [note, setNote] = useState("");
+  const queryClient = useQueryClient();
 
   // "other" with no note records nothing a client could act on.
   const noteRequired = reasonCode === "other";
-  const canSubmitRejection = canReview && !pending && (!noteRequired || note.trim().length > 0);
+  const canSubmitRejection =
+    canReview &&
+    Boolean(record.currentVersionId) &&
+    !pending &&
+    (!noteRequired || note.trim().length > 0);
+
+  if (record.availability === "metadata_only" || record.availability === "missing_object") {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-status-orange md:text-right">
+          {record.availability === "metadata_only"
+            ? "文件登記未有完整上載來源；物件尚未核對。"
+            : "已核對但找不到儲存物件。"}
+          不能預覽或批准，請先核對來源或受控補傳。
+        </p>
+        <DocumentRecoveryPanel
+          documentId={record.id}
+          onRecovered={() => void queryClient.invalidateQueries({ queryKey: ["documents"] })}
+        />
+      </div>
+    );
+  }
 
   if (safety === "unsafe") {
     return (
       <p className="text-sm text-status-red md:text-right">
-        掃描發現惡意內容，檔案已刪除。請要求客戶重新提供。
+        掃描拒絕，不能開啟。請要求客戶重新提供。
       </p>
     );
   }
@@ -730,9 +818,15 @@ function ReviewActions({
 
   if (safety === "unknown") {
     return (
-      <p className="text-sm text-status-orange md:text-right">
-        此檔案只有測試掃描器的結果，不能視為已核實。已排隊重新掃描。
-      </p>
+      <div className="space-y-2">
+        <p className="text-sm text-status-orange md:text-right">
+          此檔案的來源或實際掃描尚未核實，不能批准。請核對來源並取得真實掃描結果。
+        </p>
+        <DocumentRecoveryPanel
+          documentId={record.id}
+          onRecovered={() => void queryClient.invalidateQueries({ queryKey: ["documents"] })}
+        />
+      </div>
     );
   }
 
@@ -741,14 +835,16 @@ function ReviewActions({
       <div className="flex flex-wrap justify-start gap-2 md:justify-end">
         <button
           className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-          onClick={() => onPreview(record.id, record.fileName)}
+          onClick={() =>
+            onPreview(record.id, record.fileName, record.currentVersionId ?? undefined)
+          }
           type="button"
         >
           <Eye className="h-4 w-4" /> 開啟原件
         </button>
         <button
           className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-          onClick={() => onDownload(record.id)}
+          onClick={() => onDownload(record.id, record.currentVersionId ?? undefined)}
           type="button"
         >
           <Download className="h-4 w-4" /> Download
@@ -757,11 +853,12 @@ function ReviewActions({
           <>
             <button
               className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
-              disabled={!canReview || pending}
+              disabled={!canReview || !record.currentVersionId || pending}
               onClick={() =>
                 onReview({
                   caseId: record.caseId!,
                   documentId: record.id,
+                  expectedDocumentVersionId: record.currentVersionId!,
                   checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
                   decision: "verified",
                 })
@@ -772,7 +869,7 @@ function ReviewActions({
             </button>
             <button
               className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              disabled={!canReview || pending}
+              disabled={!canReview || !record.currentVersionId || pending}
               onClick={() => setRejecting((current) => !current)}
               type="button"
             >
@@ -819,6 +916,7 @@ function ReviewActions({
               onReview({
                 caseId: record.caseId!,
                 documentId: record.id,
+                expectedDocumentVersionId: record.currentVersionId!,
                 checklistItemId: isChecklistEvidence ? checklistItemId : undefined,
                 decision: "rejected",
                 reason: composeRejectionReason(reasonCode, note),
@@ -832,6 +930,10 @@ function ReviewActions({
           </button>
         </div>
       ) : null}
+      <DocumentRecoveryPanel
+        documentId={record.id}
+        onRecovered={() => void queryClient.invalidateQueries({ queryKey: ["documents"] })}
+      />
     </div>
   );
 }

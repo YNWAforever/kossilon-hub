@@ -114,7 +114,26 @@ const LOCAL_GATE_CONTRACTS = {
     // plugin only runs if vite.config.ts lists it.
     {
       file: "src/server.ts",
-      snippets: ["runScheduledMaintenanceForWorker", "runFirmMaintenance(input)"],
+      snippets: [
+        "runScheduledMaintenanceForWorker",
+        "runRuntimeMaintenanceTick(",
+        "MAINTENANCE_SCHEDULER_OWNER",
+        "/api/cron/maintenance",
+      ],
+    },
+    {
+      file: "src/server/maintenance-trigger-runtime.ts",
+      snippets: [
+        "export async function runRuntimeMaintenanceTick",
+        "SAFE_SCHEDULED_JOBS",
+        "createMaintenanceJobRepository",
+        "createMaintenanceRunRepository",
+        "platformTriggerVerified",
+      ],
+    },
+    {
+      file: "src/server/maintenance-http.ts",
+      snippets: ["authorizeMaintenanceRequest", "schedulerOwner(input.env)"],
     },
     {
       file: "src/server/nitro-scheduled.ts",

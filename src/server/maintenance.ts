@@ -504,8 +504,10 @@ export async function runFirmMaintenance(
         analyzer,
         // Not provider-gated: extraction is local work in every mode, and the
         // scan gate inside the pass decides which bytes ever reach it.
-        extractor: { extract: extractPdfText },
+        extractor: { extract: (input) => extractPdfText({ ...input, includePages: true }) },
         texts: analysis,
+        ocr: null, // Provider/protocol approval remains blocked; no invented connector.
+        publish: analysis.publishAnalysis,
         close: async () => {
           await Promise.all([jobs.close(), analysis.close()]);
         },

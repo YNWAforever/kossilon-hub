@@ -8,7 +8,7 @@ export const Route = createFileRoute("/clients")({
 
 function ClientsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
 
   // /clients/$id is a child route and renders only through this outlet, so a
   // branch placed before it would silently stop the detail screen from
@@ -20,6 +20,9 @@ function ClientsRoute() {
   return dataMode === "demo" ? (
     <DemoClientNotice variant="register" />
   ) : (
-    <ProductionClientRegister />
+    <ProductionClientRegister
+      allowFixtureDiagnostics={actor?.active === true && actor.role === "Admin"}
+      actor={actor}
+    />
   );
 }

@@ -56,10 +56,10 @@ describe("final review architecture restorations", () => {
     expect(mobileNavSource).toContain("<NavList");
 
     for (const [path, label] of [
-      ["/portal", "Portal"],
-      ["/payments", "Payments"],
-      ["/whatsapp/automation", "WhatsApp Automation"],
-      ["/annual-returns", "Annual Returns"],
+      ["/portal", "客戶入口"],
+      ["/payments", "付款"],
+      ["/whatsapp/automation", "WhatsApp 追件"],
+      ["/annual-returns", "周年申報"],
     ]) {
       expect(navigationSource).toContain(`to: "${path}", label: "${label}"`);
     }

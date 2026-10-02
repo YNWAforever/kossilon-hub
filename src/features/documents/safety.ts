@@ -1,5 +1,5 @@
 import type { AuthenticatedActor } from "@/features/auth/types";
-import type { DocumentStatus, ScanVerdictSource } from "./types";
+import type { DocumentAvailability, DocumentStatus, ScanVerdictSource } from "./types";
 
 /**
  * File safety, as a dimension of its own.
@@ -26,10 +26,18 @@ export type DocumentSafety =
   | "unknown";
 
 export function documentSafetyOf(input: {
-  uploadStatus: DocumentStatus;
+  uploadStatus: DocumentStatus | null;
   scanVerdictSource: ScanVerdictSource | null;
+  availability?: DocumentAvailability;
 }): DocumentSafety {
   if (input.uploadStatus === "rejected") return "unsafe";
+  if (
+    input.availability === "metadata_only" ||
+    input.availability === "missing_object" ||
+    input.availability === "unscanned" ||
+    input.uploadStatus === null
+  )
+    return "unknown";
   if (input.uploadStatus !== "available") return "pending";
   return input.scanVerdictSource === "provider" ? "verified" : "unknown";
 }
@@ -37,16 +45,11 @@ export function documentSafetyOf(input: {
 /**
  * Whether these bytes may be served to this actor.
  *
- * `unknown` is readable by an Admin and by nobody else. That is a corrected,
- * narrower policy rather than a grandfathered permission: the fake verdict grants
- * nothing, the bytes and every historical staff decision are preserved, and an
- * operator retains the access they need to handle an incident or export the file
- * for a real scan. Everyone else waits for a genuine verdict.
+ * Ordinary preview/download requires a genuine current scan for every role.
+ * Unknown files remain visible as metadata for recovery and retain their bytes.
  */
 export function canServeDocumentBytes(actor: AuthenticatedActor, safety: DocumentSafety): boolean {
-  if (safety === "verified") return true;
-  if (safety === "unknown") return actor.role === "Admin";
-  return false;
+  return actor.active && safety === "verified";
 }
 
 export function assertDocumentServable(actor: AuthenticatedActor, safety: DocumentSafety): void {
@@ -56,7 +59,7 @@ export function assertDocumentServable(actor: AuthenticatedActor, safety: Docume
   }
   if (safety === "unknown") {
     throw new Error(
-      "Document safety is unverified: its only scan came from the deterministic test scanner. A genuine re-scan is queued.",
+      "Document safety is unverified. Verify its upload lineage and obtain a genuine scan before approval.",
     );
   }
   throw new Error("Document is quarantined pending a malware scan.");
@@ -65,9 +68,7 @@ export function assertDocumentServable(actor: AuthenticatedActor, safety: Docume
 /**
  * Whether a business approval may be recorded against this file.
  *
- * Stricter than serving: an Admin may open an unknown-safety file to deal with
- * it, but nobody may newly approve one, because an approval is what later
- * releases the document to a client and into a filing package.
+ * Business review requires the same verified safety as ordinary serving.
  */
 export function canApproveDocument(safety: DocumentSafety): boolean {
   return safety === "verified";

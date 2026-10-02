@@ -266,6 +266,7 @@ export function createNotificationOutboxRepository(
             -- companies on every cron tick. companies.id is the primary key, so
             -- the subquery yields no nulls and NOT IN cannot collapse to unknown.
             and company_id not in (select id from companies where data_origin <> 'client')
+            and not exists(select 1 from annual_return_cases h where h.company_id=notification_outbox.company_id and h.import_origin='historical' and (h.id::text=notification_outbox.payload->>'caseId' or exists(select 1 from work_items hw where hw.id=notification_outbox.work_item_id and hw.annual_return_case_id=h.id)))
             -- A marker means a transport call was BEGUN for this row and no
             -- outcome was ever recorded, so the provider may already have the
             -- message. Re-claiming it is how the same statutory reminder reached a
@@ -336,7 +337,7 @@ export function createNotificationOutboxRepository(
           -- its content is gone, and its attempts are spent.
           and redacted_at is null
           and next_attempt_at <= ${now}
-          and company_id in (select id from companies where data_origin <> 'client')
+          and (company_id in (select id from companies where data_origin <> 'client') or not (not exists(select 1 from annual_return_cases h where h.company_id=notification_outbox.company_id and h.import_origin='historical' and (h.id::text=notification_outbox.payload->>'caseId' or exists(select 1 from work_items hw where hw.id=notification_outbox.work_item_id and hw.annual_return_case_id=h.id)))))
         returning id
       `;
       return { cancelled: rows.length };
@@ -357,6 +358,8 @@ export function createNotificationOutboxRepository(
         update notification_outbox
         set dispatch_started_attempt = ${input.attemptCount}, updated_at = now()
         where id = ${id} and status = 'processing' and attempt_count = ${input.attemptCount}
+          and company_id in (select id from companies where data_origin = 'client')
+          and not exists(select 1 from annual_return_cases h where h.company_id=notification_outbox.company_id and h.import_origin='historical' and (h.id::text=notification_outbox.payload->>'caseId' or exists(select 1 from work_items hw where hw.id=notification_outbox.work_item_id and hw.annual_return_case_id=h.id)))
         returning id
       `;
       return rows.length === 1;

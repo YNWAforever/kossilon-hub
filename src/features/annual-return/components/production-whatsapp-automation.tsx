@@ -1,9 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { annualReturnQueryKeys } from "../query-keys";
 import type { ProductionFollowUpDraft } from "../follow-ups";
 import { listProductionFollowUpDrafts, sendProductionFollowUp } from "../follow-up-server-fns";
 import { getWhatsAppIntegrationStatus } from "@/features/whatsapp/server-fns";
 import { PageHeader } from "@/components/page-header";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to queue follow-up.";
@@ -15,10 +25,14 @@ function typeLabel(source: ProductionFollowUpDraft["source"]): string {
   return "Annual return";
 }
 
-export function ProductionWhatsAppAutomation() {
+export function ProductionWhatsAppAutomation({
+  actorScope = "",
+  canBulk = false,
+}: { actorScope?: string; canBulk?: boolean } = {}) {
+  const [preview, setPreview] = useState<ProductionFollowUpDraft | null>(null);
   const queryClient = useQueryClient();
   const draftsQuery = useQuery({
-    queryKey: annualReturnQueryKeys.automationNotifications,
+    queryKey: [...annualReturnQueryKeys.automationNotifications, actorScope],
     queryFn: () => listProductionFollowUpDrafts(),
   });
   const integrationQuery = useQuery({
@@ -28,17 +42,26 @@ export function ProductionWhatsAppAutomation() {
   const sendMutation = useMutation({
     mutationFn: (draft: ProductionFollowUpDraft) =>
       sendProductionFollowUp({
-        data: { source: draft.source, caseId: draft.caseId, entityId: draft.entityId },
+        data: {
+          source: draft.source,
+          caseId: draft.caseId,
+          entityId: draft.entityId,
+          expectedVersion: draft.version,
+        },
       }),
-    onSuccess: (_result, draft) =>
-      Promise.all([
+    onSuccess: (_result, draft) => {
+      setPreview((current) =>
+        current?.source === draft.source && current.entityId === draft.entityId ? null : current,
+      );
+      return Promise.all([
         queryClient.invalidateQueries({
           queryKey: annualReturnQueryKeys.automationNotifications,
         }),
         queryClient.invalidateQueries({
           queryKey: annualReturnQueryKeys.notifications(draft.caseId),
         }),
-      ]),
+      ]);
+    },
   });
 
   const drafts = draftsQuery.data ?? [];
@@ -47,6 +70,25 @@ export function ProductionWhatsAppAutomation() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Messaging" title="WhatsApp Automation" />
+      <p className="text-sm text-muted-foreground">
+        Provider configuration does not prove connection health. Approval queues the inspected
+        draft; only a receipt confirms delivery.
+      </p>
+      {canBulk ? (
+        <BulkSelectionToolbar
+          actorScope={actorScope}
+          resource="annual_return_case"
+          filters={{}}
+          page={[
+            ...new Map(
+              drafts.map((d) => [d.caseId, { id: d.caseId, label: d.companyName }]),
+            ).values(),
+          ]}
+          total={draftsQuery.isSuccess ? new Set(drafts.map((d) => d.caseId)).size : null}
+          pageSize={drafts.length}
+          maintenanceActions={["follow_up_draft"]}
+        />
+      ) : null}
 
       {integrationQuery.data?.deliveryMode === "simulated" ? (
         <div
@@ -58,7 +100,7 @@ export function ProductionWhatsAppAutomation() {
         </div>
       ) : null}
 
-      {error ? (
+      {error && !preview ? (
         <div
           className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
           role="alert"
@@ -93,12 +135,61 @@ export function ProductionWhatsAppAutomation() {
                   sendMutation.variables?.source === draft.source &&
                   sendMutation.variables.entityId === draft.entityId
                 }
-                onSend={() => sendMutation.mutate(draft)}
+                onSend={() => setPreview(draft)}
               />
             ))
           )}
         </div>
       </section>
+      <Dialog
+        open={preview !== null}
+        onOpenChange={(open) => {
+          if (!open && !sendMutation.isPending) setPreview(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve follow-up</DialogTitle>
+            <DialogDescription>
+              Confirm this recipient and the full draft. Queueing does not confirm delivery; outside
+              the session window the approved template may be used.
+            </DialogDescription>
+          </DialogHeader>
+          {preview ? (
+            <div className="space-y-3 text-sm">
+              <p>{preview.companyName}</p>
+              <p>
+                {preview.recipientName} / {preview.phone}
+              </p>
+              <p className="whitespace-pre-wrap break-words">{preview.messagePreview}</p>
+              <p className="text-muted-foreground">{preview.reasonLabel}</p>
+            </div>
+          ) : null}
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {errorMessage(error)}
+            </p>
+          ) : null}
+          <DialogFooter>
+            <button
+              type="button"
+              disabled={sendMutation.isPending}
+              onClick={() => setPreview(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!preview || sendMutation.isPending}
+              onClick={() => {
+                if (preview) sendMutation.mutate(preview);
+              }}
+            >
+              Approve and queue
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
@@ -127,7 +218,9 @@ function ProductionAutomationRow({
           : "Recipient unavailable"}
       </p>
       <p>{typeLabel(draft.source)}</p>
-      <p className="capitalize">{draft.status}</p>
+      <p>
+        {draft.status === "provider_accepted" ? "Provider accepted; receipt pending" : draft.status}
+      </p>
       <div className="min-w-0">
         <p className="truncate">{draft.messagePreview}</p>
         <p className="truncate text-xs text-muted-foreground">{draft.reasonLabel}</p>
@@ -140,12 +233,20 @@ function ProductionAutomationRow({
           type="button"
         >
           {active
-            ? "Sending"
-            : draft.status === "sent"
-              ? "Sent"
+            ? "Queueing"
+            : draft.status === "provider_accepted"
+              ? "Receipt pending"
               : draft.status === "blocked"
                 ? "Blocked"
-                : "Send now"}
+                : draft.status === "unknown"
+                  ? "Reconcile with provider"
+                  : draft.status === "failed"
+                    ? "Review failure"
+                    : draft.status === "delivered"
+                      ? "Delivered"
+                      : draft.status === "queued"
+                        ? "Queued"
+                        : "Preview and approve"}
         </button>
       </div>
     </div>

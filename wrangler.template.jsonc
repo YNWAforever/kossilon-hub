@@ -3,6 +3,7 @@
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-07-11",
   "vars": {
+    "MAINTENANCE_SCHEDULER_OWNER": "paused",
     "FIRM_ID": "${FIRM_ID}",
     "NEON_AUTH_URL": "${NEON_AUTH_URL}",
     "WOZTELL_API_BASE_URL": "${WOZTELL_API_BASE_URL}",

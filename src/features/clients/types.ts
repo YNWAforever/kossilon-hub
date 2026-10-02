@@ -74,6 +74,7 @@ export type ClientPaymentStatus = PaymentStatus;
 export type ClientSummary = {
   id: string;
   companyName: string;
+  dataOrigin?: import("./data-origin").CompanyDataOrigin | null;
   crNumber: string;
   brNumber: string;
   status: CompanyStatus;

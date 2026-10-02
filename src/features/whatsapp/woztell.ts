@@ -30,55 +30,144 @@ export async function sendWoztellMessage(
   config: WhatsAppProviderConfig,
   input: WoztellOutboundMessage,
   fetchImpl: typeof fetch = fetch,
+  options: { timeoutMs?: number } = {},
 ): Promise<{ providerMessageId: string }> {
-  // BotAPI is POST {base}/sendResponses. The previous version appended /messages,
-  // which no value of WOZTELL_API_BASE_URL could correct.
-  const response = await fetchImpl(`${config.apiBaseUrl.replace(/\/+$/, "")}/sendResponses`, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${config.accessToken}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      channelId: config.channelId,
-      recipientId: input.toPhone.replace(/\D/g, ""),
-      response: [woztellResponseElement(input.mode)],
-    }),
-  });
-  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-
-  // BotAPI reports application errors as `{ok: 0}` and does so on a 2xx as well as
-  // on a 5xx, so the HTTP status alone cannot be trusted. Branching only on
-  // `!response.ok` read a rejected send as a success until the missing-id throw
-  // fired with a misleading message and no err_code.
-  if (payload.ok !== 1) {
-    const errCode = typeof payload.err_code === "number" ? payload.err_code : null;
-    const message =
-      typeof payload.err === "string"
-        ? payload.err
-        : `WOZTELL rejected the send with HTTP ${response.status}.`;
-
-    throw Object.assign(new Error(message), {
-      code: errCode === null ? `woztell_${response.status}` : `woztell_err_${errCode}`,
-      errCode,
-      unreachableRecipient: errCode === WOZTELL_UNREACHABLE_RECIPIENT_ERR_CODE,
+  const timeoutMs = options.timeoutMs ?? 15_000;
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60_000)
+    throw new Error("Invalid WOZTELL send deadline.");
+  const controller = new AbortController();
+  const unknown = () =>
+    Object.assign(
+      new Error(
+        "WOZTELL send outcome is unknown; reconcile with the provider before any new send.",
+      ),
+      { code: "dispatch_outcome_unknown", dispatchOutcomeUnknown: true },
+    );
+  let outcomeKnown = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const perform = async () => {
+    // BotAPI is POST {base}/sendResponses. The previous version appended /messages,
+    // which no value of WOZTELL_API_BASE_URL could correct.
+    const response = await fetchImpl(`${config.apiBaseUrl.replace(/\/+$/, "")}/sendResponses`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${config.accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        channelId: config.channelId,
+        recipientId: input.toPhone.replace(/\D/g, ""),
+        response: [woztellResponseElement(input.mode)],
+      }),
+      signal: controller.signal,
+      redirect: "error",
     });
-  }
+    controller.signal.throwIfAborted();
+    const payload = JSON.parse(
+      new TextDecoder().decode(await boundedProviderBytes(response, controller.signal, 16 * 1024)),
+    ) as Record<string, unknown>;
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      Array.isArray(payload) ||
+      (payload.ok !== 0 && payload.ok !== 1)
+    )
+      throw unknown();
 
-  const providerMessageId = providerMessageIdFromSendResult(payload);
-  if (!providerMessageId) {
-    // ok:1 means WOZTELL ACCEPTED the send — the client has the message. Only the
-    // id is missing. This used to be a bare Error, indistinguishable to the
-    // dispatcher from a failed send, so it retried and delivered a second copy of
-    // the same statutory reminder. BotAPI /sendResponses takes no client-side
-    // idempotency key that could collapse the pair, so the distinction has to
-    // travel on the error itself.
-    throw Object.assign(new Error("WOZTELL accepted the send but returned no message ID."), {
-      code: "woztell_accepted_without_message_id",
-      providerAccepted: true,
-    });
+    // BotAPI reports application errors as `{ok: 0}` and does so on a 2xx as well as
+    // on a 5xx, so the HTTP status alone cannot be trusted. Branching only on
+    // `!response.ok` read a rejected send as a success until the missing-id throw
+    // fired with a misleading message and no err_code.
+    if (payload.ok !== 1) {
+      outcomeKnown = true;
+      const errCode = typeof payload.err_code === "number" ? payload.err_code : null;
+      const message =
+        typeof payload.err === "string"
+          ? payload.err
+          : `WOZTELL rejected the send with HTTP ${response.status}.`;
+
+      throw Object.assign(new Error(message), {
+        code: errCode === null ? `woztell_${response.status}` : `woztell_err_${errCode}`,
+        errCode,
+        unreachableRecipient: errCode === WOZTELL_UNREACHABLE_RECIPIENT_ERR_CODE,
+      });
+    }
+
+    const providerMessageId = providerMessageIdFromSendResult(payload);
+    if (!providerMessageId) {
+      // ok:1 means WOZTELL accepted the send; delivery still requires a receipt. The
+      // id is missing. This used to be a bare Error, indistinguishable to the
+      // dispatcher from a failed send, so it retried and delivered a second copy of
+      // the same statutory reminder. BotAPI /sendResponses takes no client-side
+      // idempotency key that could collapse the pair, so the distinction has to
+      // travel on the error itself.
+      throw Object.assign(new Error("WOZTELL accepted the send but returned no message ID."), {
+        code: "woztell_accepted_without_message_id",
+        providerAccepted: true,
+      });
+    }
+    return { providerMessageId };
+  };
+  try {
+    return await Promise.race([
+      perform().catch((error) => {
+        if (
+          outcomeKnown ||
+          (error instanceof Error && "providerAccepted" in error && error.providerAccepted === true)
+        )
+          throw error;
+        throw unknown();
+      }),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(unknown());
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
   }
-  return { providerMessageId };
+}
+
+/** Bounds provider acknowledgement bytes, including streams without Content-Length. */
+export async function boundedProviderBytes(
+  response: Response,
+  signal: AbortSignal,
+  maxBytes: number,
+): Promise<Uint8Array> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("Provider response has no body.");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const cancel = () => {
+    void reader.cancel(signal.reason).catch(() => undefined);
+  };
+  signal.addEventListener("abort", cancel, { once: true });
+  try {
+    while (true) {
+      signal.throwIfAborted();
+      const chunk = await reader.read();
+      signal.throwIfAborted();
+      if (chunk.done) break;
+      size += chunk.value.byteLength;
+      if (size > maxBytes) throw new Error("Provider response exceeds its byte limit.");
+      chunks.push(chunk.value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return bytes;
+  } catch (error) {
+    void reader.cancel().catch(() => undefined);
+    throw error;
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    reader.releaseLock();
+  }
 }
 
 /**
@@ -400,6 +489,10 @@ function inboundBody(payload: JsonRecord, messageType: string): string {
  * provider id we invented would be a handle that downloads nothing.
  */
 export function inboundAttachments(payload: JsonRecord): InboundAttachment[] {
+  const fileId = firstString(payload, [["data", "fileId"]]);
+  const type = firstString(payload, [["type"]]);
+  if (fileId && type)
+    return [{ providerMediaId: fileId, providerMediaKind: "file", mediaType: type, position: 0 }];
   const attachments = valueAtPath(payload, ["data", "attachments"]);
   if (!Array.isArray(attachments)) return [];
 

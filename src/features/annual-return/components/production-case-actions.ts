@@ -32,11 +32,16 @@ const defaultProductionCaseCommands: ProductionCaseCommandAdapters = {
 export function createProductionCaseActions(
   caseId: string,
   commands: ProductionCaseCommandAdapters = defaultProductionCaseCommands,
+  readVersion?: () => string | null | undefined,
 ) {
+  const version = () => {
+    const expectedVersion = readVersion?.();
+    return expectedVersion ? { expectedVersion } : {};
+  };
   return {
     assignOwner: (ownerId: string) => commands.assignOwner({ data: { caseId, ownerId } }),
     updateStatus: (nextStatus: AnnualReturnStatus) =>
-      commands.updateStatus({ data: { caseId, nextStatus } }),
+      commands.updateStatus({ data: { caseId, nextStatus, ...version() } }),
     updateChecklist: (input: {
       itemId: string;
       status: ChecklistStatus;
@@ -47,7 +52,8 @@ export function createProductionCaseActions(
     addNote: (body: string) => commands.addNote({ data: { caseId, body } }),
     sendReminder: (input: { recipientName: string; recipientPhone: string }) =>
       commands.sendReminder({ data: { caseId, ...input } }),
-    submitPacket: () => commands.updateStatus({ data: { caseId, nextStatus: "NAR1 prepared" } }),
+    submitPacket: () =>
+      commands.updateStatus({ data: { caseId, nextStatus: "NAR1 prepared", ...version() } }),
     acceptReceipt: (input: { filingReference: string; confirmationDocumentId: string }) =>
       commands.updateFilingProof({ data: { caseId, ...input } }),
   };

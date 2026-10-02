@@ -3,6 +3,19 @@ import type { R2BucketLike } from "@/server/runtime-env";
 import { createDocumentStorage, createOpaqueDocumentKey } from "./storage";
 
 describe("document storage", () => {
+  it("distinguishes a missing object, present malformed metadata and unavailable provider", async () => {
+    const head = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ size: 4 })
+      .mockRejectedValueOnce(new Error("secret provider error"));
+    const bucket = { put: vi.fn(), get: vi.fn(), head, delete: vi.fn() } as unknown as R2BucketLike;
+    const storage = createDocumentStorage(bucket);
+    expect(await storage.inspect!("key")).toEqual({ state: "missing" });
+    expect(await storage.inspect!("key")).toEqual({ state: "present", metadata: null });
+    expect(await storage.inspect!("key")).toEqual({ state: "unknown" });
+    expect(bucket.get).not.toHaveBeenCalled();
+  });
   it("creates opaque keys without company, category, or filename data", () => {
     const key = createOpaqueDocumentKey({
       companyId: "company-secret",

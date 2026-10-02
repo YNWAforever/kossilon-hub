@@ -1,0 +1,117 @@
+{
+  "assignmentDate": "2026-10-01",
+  "verifiedDate": "2026-10-02",
+  "build": "422b822c6cc064b4208739bd2e5c6ebd168d31f8",
+  "base": "16162fb2471ad0066de0a4367a7a54857be415c9",
+  "tasks": [
+    "T15",
+    "T16"
+  ],
+  "findings": [
+    "F10"
+  ],
+  "environment": "LOCAL ONLY Windows / portable Node22.23.3 / Bun1.3.14 / actual Postgres17 localhost55441 kossilon_pr02_ci; synthetic owned rollback fixtures and injected Auth/provider contracts",
+  "gates": [
+    {
+      "command": "npm run test; both database URLs point to dedicated local Postgres; DATABASE_SSL=disable",
+      "result": "203 files / 2052 pass / 0 fail / 0 skip / exit0",
+      "log": "pr07-full-final.log",
+      "durationSeconds": 194.75
+    },
+    {
+      "command": "npm run test -- src/features/documents/repository.integration.test.ts src/features/documents/live-scanner.test.ts src/features/annual-return/server-fns.test.ts",
+      "result": "3 files / 79 pass / 0 skip / exit0",
+      "log": "pr07-review-green.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS exit0",
+      "log": "pr07-typecheck-final.log"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS exit0 / 0 errors / 1 existing work-queue Fast Refresh warning",
+      "log": "pr07-lint-final.log"
+    },
+    {
+      "command": "npm run build; literal compiled cloudflare:scheduled hook check",
+      "result": "PASS exit0 / hook TRUE",
+      "log": "pr07-build-final.log"
+    },
+    {
+      "command": "npm run verify:firm -- --dry-run",
+      "result": "PASS exit0 / 38 reads / 0 network / 0 writes / genuine provider gates BLOCKED",
+      "log": "pr07-predeploy-final.log"
+    },
+    {
+      "command": "npm run verify:dev-server-imports",
+      "result": "PASS original gate / 12 routes / no import-protection violations",
+      "log": "pr07-dev-final.log"
+    }
+  ],
+  "review": {
+    "green": "Shared document reads and resolution use existing document scope; requirement relationship locked, company/current-version/current-staff retained; genuine infected provider reference/signature preserved before PDF parsing.",
+    "declinedToJudge": "Scanner/R2 genuine verdict and storage, OCR real blurred/rotated corpus, AI accuracy and model/cost metadata, fresh Auth, production migration/deployment: respective Security/Storage/OCR/AI/Business/Auth/DB/Release owners remain blocked.",
+    "important": 3,
+    "rereview": "none",
+    "fixPasses": 1,
+    "minor": 0,
+    "critical": 0,
+    "red": "Initial4 failures contained two new missing-requirement fixture errors. Corrected owned PG fixture: genuine2 failures (disclosure and linked refusal), plus actor threading1 and infected encrypted PDF1. One unlinked denial already passed."
+  },
+  "schema": {
+    "sourceManifestIds": 45,
+    "localApplyAndRepeat": "PASS; populated minimal rehearsals and owned rollback documented in T15/T16 evidence",
+    "candidateMigrations": [
+      "0076",
+      "0077"
+    ],
+    "production": "Last observed2026-10-01 aa5 and 66 historical IDs; no candidate production SQL/deploy/provider send"
+  },
+  "uat": {
+    "performance": "T21 same-data benchmark remains pending; test duration is not product latency",
+    "blocked": 20,
+    "original": 50,
+    "localOnlyPass": 16,
+    "accuracy": "No genuine OCR/AI precision/recall or controlled live recipient acceptance",
+    "notRun": 14
+  },
+  "logHashes": [
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-review-red.log",
+      "sha256": "f19335f121d07bf73139364fc49f00d0b9d51b366c880a5a725807eba2e25756"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-review-pg-red.log",
+      "sha256": "d1add36d2903b030bfc3ca07c985e8e45648119a35b79b25173a8696d3231167"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-review-green.log",
+      "sha256": "c157ebb03e18c48a6f52a2253ebeb2c3bcd97df08bf81cc178ca0c754acd77ed"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-full-final.log",
+      "sha256": "f89d889fcba6b9a0780bc5ddd69db58763305fe47ff6edd077819fa6c749358e"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-typecheck-final.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-lint-final.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-build-final.log",
+      "sha256": "2259d398eef7f1c24c2a09519c81efefa9c86e05739876a0833d134b9b1e8afa"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-predeploy-final.log",
+      "sha256": "6bdec509047b0340b77e8480ebf43926acfb9be8b12489b3d7241f868ba0ca05"
+    },
+    {
+      "path": ".worktrees\\audit-baseline-20261001\\pr07-dev-final.log",
+      "sha256": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7"
+    }
+  ]
+}

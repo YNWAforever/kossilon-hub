@@ -6,6 +6,7 @@ import {
 } from "@/server/db/client";
 import type { MaintenanceRunOutcome, MaintenanceRunRecord } from "./health";
 import type { SchemaLedger } from "./schema-health";
+import { readSchemaCatalog } from "./schema-catalog";
 
 /**
  * Reads and writes the record of the scheduled tick.
@@ -17,6 +18,10 @@ import type { SchemaLedger } from "./schema-health";
  */
 
 type RunRow = {
+  platform_trigger_verified: string | null;
+  execution_scope: string | null;
+  correlation_id: string | null;
+  job_counts: MaintenanceRunRecord["jobCounts"];
   id: string;
   scheduled_for: string | Date;
   started_at: string | Date;
@@ -98,6 +103,12 @@ export type QueueDepths = {
 };
 
 export type MaintenanceRunRepository = {
+  schemaCatalog(): ReturnType<typeof readSchemaCatalog>;
+  maintenanceLeaseHealth(): Promise<{
+    startedUnknown: number;
+    claimedExpired: number;
+    lastStartedAt: string | null;
+  }>;
   recordRun(draft: MaintenanceRunDraft): Promise<{ id: string }>;
   /** Most recent first, every trigger source. What the run table on screen shows. */
   listRecentRuns(limit?: number): Promise<MaintenanceRunRecord[]>;
@@ -160,9 +171,25 @@ function count(value: string | number): number {
   return Number(value);
 }
 
+function jobCounts(value: unknown): MaintenanceRunRecord["jobCounts"] {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  const keys = ["claimed", "completed", "failed", "unknown", "skipped"] as const;
+  if (!keys.every((key) => Number.isSafeInteger(row[key]) && Number(row[key]) >= 0)) return null;
+  return Object.fromEntries(keys.map((key) => [key, row[key]])) as NonNullable<
+    MaintenanceRunRecord["jobCounts"]
+  >;
+}
+
 function mapRun(row: RunRow): MaintenanceRunRecord {
   return {
     id: row.id,
+    ...(row.execution_scope ? { executionScope: row.execution_scope } : {}),
+    ...(row.execution_scope === "safe-maintenance-only"
+      ? { platformTriggerVerified: row.platform_trigger_verified === "true" }
+      : {}),
+    ...(row.correlation_id ? { correlationId: row.correlation_id } : {}),
+    ...(row.job_counts ? { jobCounts: jobCounts(row.job_counts) } : {}),
     scheduledFor: iso(row.scheduled_for),
     startedAt: iso(row.started_at),
     finishedAt: iso(row.finished_at),
@@ -216,6 +243,8 @@ export function createMaintenanceRunRepository(
   const runColumns = sql`
     id, scheduled_for, started_at, finished_at, duration_ms,
     outcome, failed_passes, trigger_source,
+    passes->>'executionScope' execution_scope,passes->>'runId' correlation_id,passes->'counts' job_counts,
+    passes->>'platformTriggerVerified' platform_trigger_verified,
     (passes -> 'dispatch' ->> 'sent')::int dispatch_sent,
     (passes -> 'dispatch' ->> 'suppressedFixtureOrigin')::int dispatch_suppressed
   `;
@@ -334,6 +363,8 @@ export function createMaintenanceRunRepository(
         select ${runColumns}
         from maintenance_runs
         where trigger_source = 'scheduled'
+          and (passes->>'executionScope' is distinct from 'safe-maintenance-only'
+            or passes->>'platformTriggerVerified' = 'true')
         order by scheduled_for desc
         limit ${limit}
       `;
@@ -345,6 +376,8 @@ export function createMaintenanceRunRepository(
         select max(finished_at) finished_at
         from maintenance_runs
         where trigger_source = 'scheduled' and outcome = 'succeeded'
+          and (passes->>'executionScope' is distinct from 'safe-maintenance-only'
+            or passes->>'platformTriggerVerified' = 'true')
       `;
       return isoOrNull(rows[0]?.finished_at ?? null);
     },
@@ -391,6 +424,21 @@ export function createMaintenanceRunRepository(
       return { present: true, applied: rows.map((row) => row.id) };
     },
 
+    schemaCatalog: () => readSchemaCatalog(sql),
+    async maintenanceLeaseHealth() {
+      const [row] = await sql<
+        { started_unknown: number; claimed_expired: number; last_started_at: string | null }[]
+      >`
+        select count(*) filter(where state='unknown' or (state='started' and lease_expires_at<=now()))::int started_unknown,
+          count(*) filter(where state='claimed' and lease_expires_at<=now())::int claimed_expired,
+          max(started_at)::text last_started_at from maintenance_job_runs
+      `;
+      return {
+        startedUnknown: row.started_unknown,
+        claimedExpired: row.claimed_expired,
+        lastStartedAt: row.last_started_at,
+      };
+    },
     async textLayerObserved() {
       const [row] = await sql<{ observed: boolean }[]>`
         select exists(

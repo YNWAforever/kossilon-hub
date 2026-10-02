@@ -17,6 +17,7 @@ const caseItem: AnnualReturnCase = {
   companyId,
   companyTeamId: "66666666-6666-4666-8666-666666666666",
   companyName: "Acme Company Limited",
+  dataOrigin: "client",
   returnYear: 2026,
   madeUpDate: "2026-06-30",
   filingDueDate: "2026-08-12",
@@ -89,6 +90,56 @@ function state(overrides: Partial<PersistedFollowUpState> = {}): PersistedFollow
 }
 
 describe("production follow-up draft derivation", () => {
+  it.each([
+    [
+      {
+        status: "sent",
+        delivery: "provider",
+        providerMessageId: "owned-id",
+        messageStatus: "sent",
+      },
+      "provider_accepted",
+    ],
+    [
+      {
+        status: "sent",
+        delivery: "provider",
+        providerMessageId: "owned-id",
+        messageStatus: "delivered",
+      },
+      "delivered",
+    ],
+    [{ status: "sent", delivery: "simulated", providerMessageId: null }, "unknown"],
+    [{ status: "failed", lastErrorCode: "dispatch_outcome_unknown" }, "unknown"],
+    [{ status: "processing", dispatchStarted: true }, "unknown"],
+    [{ status: "failed", lastErrorCode: "woztell_err_100" }, "failed"],
+  ])("reports provider and receipt evidence separately: %j", (delivery, expected) => {
+    const idempotencyKey = stableFollowUpIdempotencyKey({
+      source: "annual-return",
+      caseId,
+      entityId: caseId,
+    });
+    const drafts = deriveProductionFollowUpDrafts(
+      [caseItem],
+      state({ deliveries: [{ idempotencyKey, ...delivery } as never] }),
+      "2026-07-14",
+    );
+    expect(drafts.find((draft) => draft.source === "annual-return")?.status).toBe(expected);
+  });
+  it("only prepares client drafts for equal deadlines; never infers origin from seed-style IDs/names", () => {
+    const fixture = { ...caseItem, id: "fixture-case", dataOrigin: "fixture" as const };
+    const historical = { ...caseItem, id: "historical-case", dataOrigin: "historical" as const };
+    const unknown = { ...caseItem, id: "unknown-case", dataOrigin: undefined };
+    const client = { ...caseItem, companyName: "Harbour Trading Ltd" };
+    const drafts = deriveProductionFollowUpDrafts(
+      [fixture, historical, unknown, client],
+      state(),
+      "2026-07-14",
+    );
+    expect(drafts.every((draft) => draft.caseId === caseId)).toBe(true);
+    expect(drafts).toHaveLength(4);
+    expect(client.dataOrigin).toBe("client");
+  });
   it("derives each authoritative linked document and payment draft from persisted state", () => {
     const drafts = deriveProductionFollowUpDrafts([caseItem], state(), "2026-07-14");
 
@@ -153,7 +204,13 @@ describe("production follow-up draft derivation", () => {
       state({
         deliveries: [
           { idempotencyKey: stableFollowUpIdempotencyKey(annualIdentity), status: "pending" },
-          { idempotencyKey: stableFollowUpIdempotencyKey(documentIdentity), status: "sent" },
+          {
+            idempotencyKey: stableFollowUpIdempotencyKey(documentIdentity),
+            status: "sent",
+            delivery: "provider",
+            providerMessageId: "owned-provider",
+            messageStatus: "sent",
+          },
           { idempotencyKey: stableFollowUpIdempotencyKey(paymentIdentity), status: "failed" },
         ],
       }),
@@ -163,8 +220,8 @@ describe("production follow-up draft derivation", () => {
     expect(drafts.map(({ source, status }) => ({ source, status }))).toEqual([
       { source: "annual-return", status: "queued" },
       { source: "document-review", status: "draft" },
-      { source: "document-review", status: "sent" },
-      { source: "payment-proof-review", status: "blocked" },
+      { source: "document-review", status: "provider_accepted" },
+      { source: "payment-proof-review", status: "failed" },
     ]);
   });
 });

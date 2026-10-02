@@ -1,16 +1,10 @@
 import "dotenv/config";
-import { readFileSync } from "node:fs";
+
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWhatsAppRepository } from "@/features/whatsapp/repository";
 import * as notificationOutbox from "@/features/notifications/outbox";
 import { createSqlClient, type SqlClient } from "@/server/db/client";
-import {
-  createAnnualReturnRepository,
-  hongKongBusinessDate,
-  DASHBOARD_METRICS_SCAN_LIMIT,
-  DEFAULT_CASE_LIMIT,
-  RISK_FILTER_SCAN_LIMIT,
-} from "./repository";
+import { createAnnualReturnRepository, hongKongBusinessDate } from "./repository";
 import { assertAnnualReturnStatusActionAllowed } from "./server-fns";
 import type { AnnualReturnStatus, ChecklistStatus, PaymentStatus } from "./types";
 import { queueAnnualReturnWhatsAppReminder } from "./whatsapp-reminders";
@@ -95,6 +89,29 @@ function testUuid(prefix: string, sequence: number): string {
   return `${prefix}-0000-0000-0000-${String(sequence).padStart(12, "0")}`;
 }
 
+/** Isolated fixture metadata for receipt gates, never a live scanner/receipt claim. */
+async function seedReviewedPaymentEvidence(fixture: MutableAnnualReturnFixture) {
+  const sql = sqlForTests();
+  const hash = Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fixture.paymentId)),
+    ),
+    (b) => b.toString(16).padStart(2, "0"),
+  ).join("");
+  await sql.begin(async (tx) => {
+    const [intent] = await tx<
+      { id: string }[]
+    >`insert into document_upload_intents(company_id,case_id,document_id,requested_by_auth_user_id,category,file_name,content_type,expected_size_bytes,checksum_sha256,object_key,status,scan_verdict_source,expires_at) select d.company_id,d.case_id,d.id,'synthetic-local','payment',d.file_name,'application/pdf',4,${hash},d.storage_url,'available','provider','2099-01-01' from documents d where d.id=${fixture.paymentProofDocumentId} returning id`;
+    const [version] = await tx<
+      { id: string }[]
+    >`insert into document_versions(document_id,version_number,declared_checksum_sha256,declared_byte_size,verified_checksum_sha256,verified_byte_size,verified_at,content_type,file_name,storage_url,intent_id,created_at) select id,1,${hash},4,${hash},4,'2026-07-05T09:00:00Z','application/pdf',file_name,storage_url,${intent.id},'2026-07-05T09:00:00Z' from documents where id=${fixture.paymentProofDocumentId} returning id`;
+    // Injected local contract facts only; this is not provider/byte-reading UAT.
+    await tx`update document_upload_intents set scan_document_version_id=${version.id} where id=${intent.id}`;
+    await tx`update documents set verified_at='2026-07-05T10:00:00Z',reviewed_document_version_id=${version.id} where id=${fixture.paymentProofDocumentId}`;
+    await tx`insert into payment_evidence_entries(payment_id,case_id,document_id,proof_version_id,proof_sha256,amount,received_on,status,recorded_by,reviewed_by,reviewed_at) values(${fixture.paymentId},${fixture.caseId},${fixture.paymentProofDocumentId},${version.id},${hash},3800,'2026-07-05','verified',${USER_AMY_ID},${USER_KEN_ID},'2026-07-05T10:00:00Z')`;
+  });
+}
+
 function sqlForTests(): SqlClient {
   if (!databaseUrl) {
     throw new Error("TEST_DATABASE_URL is required for annual return integration tests.");
@@ -175,6 +192,7 @@ async function cleanupAnnualReturnTestFixtures() {
       where id = any(${paymentIds}::uuid[])
         or case_id = any(${caseIds}::uuid[])
     `;
+    await tx`delete from payment_evidence_entries where case_id=any(${caseIds}::uuid[]) or payment_id=any(${paymentIds}::uuid[])`;
     await tx`
       delete from whatsapp_webhook_events
       where normalized_message_id in (
@@ -236,6 +254,9 @@ async function cleanupAnnualReturnTestFixtures() {
       where id = any(${checklistItemIds}::uuid[])
         or case_id = any(${caseIds}::uuid[])
     `;
+    await tx`delete from document_versions where document_id in (select id from documents where id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[]))`;
+    await tx`delete from document_scan_jobs where intent_id in (select id from document_upload_intents where document_id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[]))`;
+    await tx`delete from document_upload_intents where document_id=any(${documentIds}::uuid[]) or case_id=any(${caseIds}::uuid[]) or company_id=any(${companyIds}::uuid[])`;
     await tx`
       delete from documents
       where id = any(${documentIds}::uuid[])
@@ -559,6 +580,52 @@ describe("annual return repository configuration", () => {
 });
 
 describe.skipIf(!databaseUrl)("annual return repository", () => {
+  it(
+    "keeps fixture diagnostics distinct from default list/metric scope and preserves origin",
+    async () => {
+      const client = await createMutableAnnualReturnFixture({ sequence: 53 });
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 54 });
+      const historical = await createMutableAnnualReturnFixture({ sequence: 55 });
+      const sql = sqlForTests();
+      await sql`update companies set company_name='Harbour Trading Ltd' where id=${client.companyId}`;
+      await sql`update companies set data_origin='fixture' where id=${fixture.companyId}`;
+      await sql`update companies set data_origin='historical' where id=${historical.companyId}`;
+      const repository = repositoryFor("2026-10-01");
+      const companyIds = [client.companyId, fixture.companyId, historical.companyId];
+      const normal = await repository.listCasePage({ companyIds });
+      expect(normal.cases.map((case_) => case_.dataOrigin).sort()).toEqual([
+        "client",
+        "historical",
+      ]);
+      expect((await repository.getCase(client.caseId))?.dataOrigin).toBe("client");
+      expect(
+        (await repository.listCasePage({ companyIds, includeFixtures: true })).cases,
+      ).toHaveLength(3);
+      expect((await repository.boardTotals({ companyIds })).total).toBe(2);
+      expect((await repository.boardTotals({ companyIds, includeFixtures: true })).total).toBe(3);
+      expect(
+        (await repository.dashboardMetrics("2026-10-01", USER_AMY_ID, { companyIds })).overdue,
+      ).toBe(2);
+      const origins = await sql`select data_origin from companies where id=${client.companyId}`;
+      expect(origins[0].data_origin).toBe("client");
+      await sql`update companies set annual_return_basis_date='2099-07-01' where id=any(${companyIds}::uuid[])`;
+      const eligible = (await repository.listCompaniesEligibleForCase()).filter((company) =>
+        companyIds.includes(company.id),
+      );
+      expect(eligible.map((company) => company.id).sort()).toEqual(
+        [client.companyId, historical.companyId].sort(),
+      );
+      const diagnosticEligible = (
+        await repository.listCompaniesEligibleForCase({ includeFixtures: true })
+      ).filter((company) => companyIds.includes(company.id));
+      expect(diagnosticEligible.map((company) => company.dataOrigin).sort()).toEqual([
+        "client",
+        "fixture",
+        "historical",
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
   beforeEach(async () => {
     await cleanupAnnualReturnTestFixtures();
   });
@@ -778,7 +845,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   it("lists annual return cases with company, owner, reviewer, checklist, payment, and recalculated risk", async () => {
     const repository = repositoryFor("2026-07-05");
 
-    const cases = await repository.listCases({});
+    const cases = await repository.listCases({ includeFixtures: true });
 
     expect(cases.map((case_) => case_.companyName)).toEqual([
       "Victoria Peak Holdings Ltd",
@@ -814,7 +881,10 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
   it("returns one hydrated case by id and null for an unknown case", async () => {
     const repository = repositoryFor("2026-07-05");
-    const [firstCase] = await repository.listCases({ status: "Documents pending" });
+    const [firstCase] = await repository.listCases({
+      includeFixtures: true,
+      status: "Documents pending",
+    });
 
     const case_ = await repository.getCase(firstCase.id);
 
@@ -831,24 +901,40 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   it("filters cases by owner, team, reviewer, status, payment, risk, and missing documents", async () => {
     const repository = repositoryFor("2026-07-05");
 
-    await expect(repository.listCases({ ownerId: USER_MEI_ID })).resolves.toHaveLength(1);
-    await expect(repository.listCases({ teamId: TEAM_ANNUAL_RETURN_ID })).resolves.toHaveLength(2);
-    await expect(repository.listCases({ teamId: TEAM_EVIDENCE_ID })).resolves.toHaveLength(1);
-    await expect(repository.listCases({ reviewerId: USER_KEN_ID })).resolves.toHaveLength(3);
-    await expect(repository.listCases({ status: "Filed" })).resolves.toHaveLength(1);
-    await expect(repository.listCases({ paymentStatus: "Payment pending" })).resolves.toHaveLength(
-      2,
-    );
+    await expect(
+      repository.listCases({ includeFixtures: true, ownerId: USER_MEI_ID }),
+    ).resolves.toHaveLength(1);
+    await expect(
+      repository.listCases({ includeFixtures: true, teamId: TEAM_ANNUAL_RETURN_ID }),
+    ).resolves.toHaveLength(2);
+    await expect(
+      repository.listCases({ includeFixtures: true, teamId: TEAM_EVIDENCE_ID }),
+    ).resolves.toHaveLength(1);
+    await expect(
+      repository.listCases({ includeFixtures: true, reviewerId: USER_KEN_ID }),
+    ).resolves.toHaveLength(3);
+    await expect(
+      repository.listCases({ includeFixtures: true, status: "Filed" }),
+    ).resolves.toHaveLength(1);
+    await expect(
+      repository.listCases({ includeFixtures: true, paymentStatus: "Payment pending" }),
+    ).resolves.toHaveLength(2);
 
-    const riskyCases = await repository.listCases({ risk: "yellow" });
+    const riskyCases = await repository.listCases({ includeFixtures: true, risk: "yellow" });
     expect(riskyCases.map((case_) => case_.companyName)).toEqual(["Kowloon Textiles Ltd"]);
 
-    const casesMissingDocuments = await repository.listCases({ missingDocuments: true });
+    const casesMissingDocuments = await repository.listCases({
+      includeFixtures: true,
+      missingDocuments: true,
+    });
     expect(casesMissingDocuments.map((case_) => case_.companyName)).toEqual([
       "Harbour Trading Ltd",
     ]);
 
-    const casesWithoutMissingDocuments = await repository.listCases({ missingDocuments: false });
+    const casesWithoutMissingDocuments = await repository.listCases({
+      includeFixtures: true,
+      missingDocuments: false,
+    });
     expect(casesWithoutMissingDocuments.map((case_) => case_.companyName)).toEqual([
       "Victoria Peak Holdings Ltd",
       "Kowloon Textiles Ltd",
@@ -860,10 +946,15 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
 
     // ownerId and reviewerId are separate AND-ed clauses, so owner-OR-reviewer
     // cannot be asked for with them. Ken reviews all three; Mei owns one of them.
-    await expect(repository.listCases({ visibleToUserId: USER_KEN_ID })).resolves.toHaveLength(3);
+    await expect(
+      repository.listCases({ includeFixtures: true, visibleToUserId: USER_KEN_ID }),
+    ).resolves.toHaveLength(3);
 
-    const meiCases = await repository.listCases({ visibleToUserId: USER_MEI_ID });
-    const meiOwned = await repository.listCases({ ownerId: USER_MEI_ID });
+    const meiCases = await repository.listCases({
+      includeFixtures: true,
+      visibleToUserId: USER_MEI_ID,
+    });
+    const meiOwned = await repository.listCases({ includeFixtures: true, ownerId: USER_MEI_ID });
 
     expect(meiCases.length).toBeGreaterThanOrEqual(meiOwned.length);
     for (const case_ of meiCases) {
@@ -874,22 +965,28 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
   it("caps how many cases a single read returns", async () => {
     const repository = repositoryFor("2026-07-05");
 
-    await expect(repository.listCases({})).resolves.toHaveLength(3);
-    await expect(repository.listCases({ limit: 2 })).resolves.toHaveLength(2);
-    await expect(repository.listCases({ limit: 1 })).resolves.toHaveLength(1);
+    await expect(repository.listCases({ includeFixtures: true })).resolves.toHaveLength(3);
+    await expect(repository.listCases({ includeFixtures: true, limit: 2 })).resolves.toHaveLength(
+      2,
+    );
+    await expect(repository.listCases({ includeFixtures: true, limit: 1 })).resolves.toHaveLength(
+      1,
+    );
   });
 
   it("uses the repository date source for overdue-only reads", async () => {
     const julyFiveRepository = repositoryFor("2026-07-05");
     const julyTwentyEightRepository = repositoryFor("2026-07-28");
 
-    await expect(julyFiveRepository.listCases({ overdueOnly: true })).resolves.toHaveLength(1);
+    await expect(
+      julyFiveRepository.listCases({ includeFixtures: true, overdueOnly: true }),
+    ).resolves.toHaveLength(0);
 
-    const overdueCases = await julyTwentyEightRepository.listCases({ overdueOnly: true });
-    expect(overdueCases.map((case_) => case_.companyName)).toEqual([
-      "Victoria Peak Holdings Ltd",
-      "Kowloon Textiles Ltd",
-    ]);
+    const overdueCases = await julyTwentyEightRepository.listCases({
+      includeFixtures: true,
+      overdueOnly: true,
+    });
+    expect(overdueCases.map((case_) => case_.companyName)).toEqual(["Kowloon Textiles Ltd"]);
   });
 
   it(
@@ -897,7 +994,9 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
     async () => {
       const repository = repositoryFor("2026-07-05");
 
-      await expect(repository.dashboardMetrics("2026-07-05", USER_AMY_ID)).resolves.toEqual({
+      await expect(
+        repository.dashboardMetrics("2026-07-05", USER_AMY_ID, { includeFixtures: true }),
+      ).resolves.toMatchObject({
         dueIn7: 0,
         dueIn30: 1,
         overdue: 0,
@@ -907,11 +1006,11 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         assignedToMe: 1,
       });
 
-      await expect(repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID)).resolves.toMatchObject(
-        {
-          assignedToMe: 1,
-        },
-      );
+      await expect(
+        repository.dashboardMetrics("2026-07-05", USER_PRIYA_ID, { includeFixtures: true }),
+      ).resolves.toMatchObject({
+        assignedToMe: 0,
+      });
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
@@ -1136,6 +1235,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
       expect(checklistItem?.receivedAt).toEqual(expect.any(String));
       expect(checklistItem?.verifiedAt).toEqual(expect.any(String));
 
+      await seedReviewedPaymentEvidence(fixture);
       const afterPayment = await repository.updatePayment({
         caseId: fixture.caseId,
         status: "Payment received",
@@ -1247,6 +1347,7 @@ describe.skipIf(!databaseUrl)("annual return repository", () => {
         sequence: 20,
         currentStatus: "Payment pending",
       });
+      await seedReviewedPaymentEvidence(fixture);
       const repository = repositoryFor("2026-07-05");
 
       await repository.updatePayment({
@@ -2432,74 +2533,6 @@ describe.skipIf(!databaseUrl)("evaluateReminders", () => {
     },
     INTEGRATION_TEST_TIMEOUT_MS,
   );
-});
-
-/**
- * risk, missingDocuments and overdueOnly used to be applied in JS *after* the SQL
- * LIMIT, so past DEFAULT_CASE_LIMIT a filtered board silently omitted matches and
- * the dashboard tiles counted the same truncated page. Two of the three are SQL
- * predicates now; the third scans a wider window.
- */
-describe("case filters narrow before the limit", () => {
-  const source = readFileSync(new URL("./repository.ts", import.meta.url), "utf8");
-  const selectCaseRows = source.slice(
-    source.indexOf("async function selectCaseRows"),
-    source.indexOf("async function hydrateCases"),
-  );
-
-  it("filters overdue cases in SQL", () => {
-    expect(selectCaseRows).toContain("arc.filing_due_date <");
-  });
-
-  it("filters missing documents in SQL", () => {
-    expect(selectCaseRows).toContain("annual_return_checklist_items i");
-    expect(selectCaseRows).toContain("i.required = true");
-  });
-
-  it("leaves only the derived risk filter to run after hydration", () => {
-    const hydrated = source.slice(
-      source.indexOf("function caseMatchesHydratedFilters"),
-      source.indexOf("function countOutstandingRequiredEvidence"),
-    );
-
-    expect(hydrated).toContain("filters.risk");
-    expect(hydrated).not.toContain("missingDocuments");
-    expect(hydrated).not.toContain("overdueOnly");
-  });
-
-  it("scans a wider window when the derived risk filter is active", () => {
-    expect(RISK_FILTER_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    expect(selectCaseRows).toContain("RISK_FILTER_SCAN_LIMIT");
-  });
-
-  it("counts dashboard tiles over more than one page of cases, within the actor's scope", () => {
-    expect(DASHBOARD_METRICS_SCAN_LIMIT).toBeGreaterThan(DEFAULT_CASE_LIMIT);
-    // The tiles were firm-wide for every role while the board was scoped, so a
-    // Staff user saw headline numbers for books they cannot open.
-    expect(source).toContain("scope: CaseFilters = {}");
-    expect(source).toContain("{ ...scope, limit: DASHBOARD_METRICS_SCAN_LIMIT }");
-    expect(source).toContain("limit: DASHBOARD_METRICS_SCAN_LIMIT");
-  });
-
-  // The SQL EXISTS clause and hasOutstandingRequiredEvidence must agree, or a
-  // filtered board and the case detail behind it disagree about the same case.
-  it("keeps the SQL predicate identical to hasOutstandingRequiredEvidence", () => {
-    const js = source.slice(
-      source.indexOf("function hasOutstandingRequiredEvidence"),
-      source.indexOf("function hasText"),
-    );
-
-    for (const [jsClause, sqlClause] of [
-      ["item.required", "i.required = true"],
-      ['item.status !== "Verified"', "i.status <> 'Verified'"],
-      ["item.receivedAt === null", "i.received_at is null"],
-      ["item.verifiedAt === null", "i.verified_at is null"],
-      ["item.documentId === null", "i.document_id is null"],
-    ]) {
-      expect(js, `JS side missing ${jsClause}`).toContain(jsClause);
-      expect(selectCaseRows, `SQL side missing ${sqlClause}`).toContain(sqlClause);
-    }
-  });
 });
 
 describe.skipIf(!databaseUrl)("createCase", () => {

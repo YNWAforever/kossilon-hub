@@ -1,4 +1,11 @@
 @import "tailwindcss" source(none);
+
+.settings-page :is(button, select, input:not([type="checkbox"])) {
+  min-height: 44px;
+}
+.settings-page label:has(input[type="checkbox"]) {
+  min-height: 44px;
+}
 @source "../src";
 @import "tw-animate-css";
 @import "@fontsource/sora/400.css";

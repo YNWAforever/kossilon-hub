@@ -1,8 +1,11 @@
 import "dotenv/config";
+import { readFileSync } from "node:fs";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { createSqlClient, type SqlClient } from "@/server/db/client";
 import { createMaintenanceRunRepository } from "./repository";
+import { createMaintenanceJobRepository } from "./maintenance-job-repository";
+import { createMaintenanceTrigger } from "@/server/maintenance-trigger";
 import { EXPECTED_MIGRATIONS } from "./schema-health";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
@@ -57,6 +60,177 @@ afterAll(async () => {
   await testSql?.end();
 });
 
+describe.skipIf(!databaseUrl)("populated maintenance registry repair", () => {
+  const migration = readFileSync(
+    new URL("../../../db/migrations/0069_restore_maintenance_job_contract.sql", import.meta.url),
+    "utf8",
+  );
+  it("preserves existing leases and rows across two applications", async () => {
+    const rolledBack = new Error("isolated rehearsal rollback");
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const schema = `maintenance_rehearsal_${crypto.randomUUID().replaceAll("-", "")}`;
+        await tx.unsafe(`create schema ${schema}; set local search_path to ${schema},public`);
+        // Create this schema's table, rather than resolving the public table.
+        await tx.unsafe(
+          "create table maintenance_job_runs (like public.maintenance_job_runs including all)",
+        );
+        await tx`insert into maintenance_job_runs(scheduled_for,job_kind,trigger_source,run_id,state,claimed_at,lease_expires_at)
+        values(now(),'evaluateEscalations','scheduled','preserved','claimed',now(),now()+interval '15 minutes')`;
+        const before = await tx`select * from maintenance_job_runs`;
+        await tx.unsafe(migration);
+        await tx.unsafe(migration);
+        expect(await tx`select * from maintenance_job_runs`).toEqual(before);
+        throw rolledBack;
+      }),
+    ).rejects.toBe(rolledBack);
+  });
+  it("refuses an existing table without the lease token default instead of failing later at claim", async () => {
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const schema = `maintenance_rehearsal_${crypto.randomUUID().replaceAll("-", "")}`;
+        await tx.unsafe(`create schema ${schema}; set local search_path to ${schema},public`);
+        await tx.unsafe(
+          "create table maintenance_job_runs (like public.maintenance_job_runs including all)",
+        );
+        await tx.unsafe("alter table maintenance_job_runs alter column lease_token drop default");
+        await tx.unsafe(migration);
+        throw new Error("Missing guard: rollback isolated rehearsal");
+      }),
+    ).rejects.toThrow(/Missing maintenance job identity default/);
+  });
+  it("refuses a same-named index with the wrong slot key", async () => {
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const schema = `maintenance_rehearsal_${crypto.randomUUID().replaceAll("-", "")}`;
+        await tx.unsafe(`create schema ${schema}; set local search_path to ${schema},public`);
+        await tx.unsafe(
+          "create table maintenance_job_runs (like public.maintenance_job_runs including all)",
+        );
+        await tx.unsafe(
+          "drop index maintenance_job_scheduled_once_idx; create unique index maintenance_job_scheduled_once_idx on maintenance_job_runs(scheduled_for) where trigger_source='scheduled'",
+        );
+        await tx.unsafe(migration);
+        throw new Error("Missing guard: rollback isolated rehearsal");
+      }),
+    ).rejects.toThrow(/Incompatible scheduled slot uniqueness/);
+  });
+});
+
+describe.skipIf(!databaseUrl)("maintenance created_at compatibility", () => {
+  const migration = readFileSync(
+    new URL("../../../db/migrations/0069_restore_maintenance_job_contract.sql", import.meta.url),
+    "utf8",
+  );
+  it("refuses an existing table without the required created_at default", async () => {
+    await expect(
+      sqlForTests().begin(async (tx) => {
+        const schema = `maintenance_rehearsal_${crypto.randomUUID().replaceAll("-", "")}`;
+        await tx.unsafe(`create schema ${schema}; set local search_path to ${schema},public`);
+        await tx.unsafe(
+          "create table maintenance_job_runs (like public.maintenance_job_runs including all)",
+        );
+        await tx.unsafe("alter table maintenance_job_runs alter column created_at drop default");
+        await tx.unsafe(migration);
+        throw new Error("Missing guard: rollback isolated rehearsal");
+      }),
+    ).rejects.toThrow(/Missing maintenance job created_at default/);
+  });
+});
+
+describe.skipIf(!databaseUrl)("durable scheduled leases against Postgres", () => {
+  afterEach(async () => {
+    const sql = sqlForTests();
+    const [table] = await sql`select to_regclass('maintenance_job_runs') is not null present`;
+    if (table.present)
+      await sql`delete from maintenance_job_runs where run_id like ${`${TEST_MARKER}%`}`;
+  });
+  it("runs a concurrent scheduled slot only once", async () => {
+    let ran = 0;
+    // Two independent connections exercise Postgres conflict arbitration.
+    const stores = [
+      createMaintenanceJobRepository({ databaseUrl }),
+      createMaintenanceJobRepository({ databaseUrl }),
+    ];
+    const triggers = stores.map((store) =>
+      createMaintenanceTrigger({
+        store,
+        runJob: async () => {
+          ran++;
+        },
+      }),
+    );
+    const input = {
+      trigger: "scheduled" as const,
+      scheduledAt: new Date().toISOString(),
+      runId: `${TEST_MARKER}concurrent`,
+      allowedJobs: ["evaluateEscalations" as const],
+    };
+    try {
+      await Promise.all([
+        triggers[0].runMaintenanceTick(input),
+        triggers[1].runMaintenanceTick({ ...input, runId: `${TEST_MARKER}second` }),
+      ]);
+      expect(ran).toBe(1);
+    } finally {
+      await Promise.all(stores.map((store) => store.close()));
+    }
+  });
+  it("counts explicit unknown immediately and expired started leases without treating active leases as unknown", async () => {
+    const sql = sqlForTests();
+    const repository = createMaintenanceRunRepository(databaseUrl);
+    try {
+      const before = await repository.maintenanceLeaseHealth();
+      await sql`insert into maintenance_job_runs(scheduled_for,job_kind,trigger_source,run_id,state,claimed_at,lease_expires_at,started_at)
+        values(now(),'evaluateEscalations','manual',${`${TEST_MARKER}known-unknown`},'unknown',now(),now()+interval '15 minutes',now()),
+        (now(),'evaluateEscalations','manual',${`${TEST_MARKER}active`},'started',now(),now()+interval '15 minutes',now()),
+        (now(),'evaluateEscalations','manual',${`${TEST_MARKER}lost`},'started',now()-interval '20 minutes',now()-interval '5 minutes',now()-interval '20 minutes')`;
+      const after = await repository.maintenanceLeaseHealth();
+      expect(after.startedUnknown).toBe(before.startedUnknown + 2);
+      expect(after.lastStartedAt).not.toBeNull();
+    } finally {
+      await repository.close();
+    }
+  });
+  it("recovers only an unstarted expired lease and retains a started unknown outcome", async () => {
+    const sql = sqlForTests();
+    const store = createMaintenanceJobRepository({ sql });
+    const now = new Date(),
+      scheduledAt = now.toISOString(),
+      next = new Date(now.getTime() + 60_000).toISOString();
+    const claim = await store.claim({
+      trigger: "scheduled",
+      scheduledAt,
+      job: "evaluateEscalations",
+      runId: `${TEST_MARKER}expired`,
+      now: new Date(now.getTime() - 120_000).toISOString(),
+      leaseExpiresAt: new Date(now.getTime() - 60_000).toISOString(),
+    });
+    expect(claim).not.toBeNull();
+    const renewed = await store.claim({
+      trigger: "scheduled",
+      scheduledAt,
+      job: "evaluateEscalations",
+      runId: `${TEST_MARKER}renewed`,
+      now: scheduledAt,
+      leaseExpiresAt: next,
+    });
+    expect(renewed?.token).not.toBe(claim?.token);
+    expect(await store.begin(scheduledAt, "evaluateEscalations", renewed!.token)).toBe(true);
+    await sql`update maintenance_job_runs set lease_expires_at=now()-interval '1 minute' where lease_token=${renewed!.token}`;
+    const again = await store.claim({
+      trigger: "scheduled",
+      scheduledAt,
+      job: "evaluateEscalations",
+      runId: `${TEST_MARKER}forbidden-retry`,
+      now: next,
+      leaseExpiresAt: next,
+    });
+    expect(again).toBeNull();
+    expect(await store.stateOf(scheduledAt, "evaluateEscalations")).toBe("started");
+  });
+});
+
 describe.skipIf(!databaseUrl)("maintenance run repository", () => {
   afterEach(async () => {
     // Only rows this suite created. maintenance_runs is a durable operational
@@ -67,6 +241,57 @@ describe.skipIf(!databaseUrl)("maintenance run repository", () => {
     await sqlForTests()`
       delete from notification_outbox where idempotency_key like ${`${TEST_MARKER}%`}
     `;
+  });
+  it("does not let an HTTP schedule candidate refresh verified scheduled health", async () => {
+    const repository = createMaintenanceRunRepository(databaseUrl);
+    try {
+      const before = await repository.lastScheduledSuccessAt();
+      const { id } = await repository.recordRun(
+        draft({
+          scheduledFor: "2099-01-01T00:00:00Z",
+          finishedAt: "2099-01-01T00:00:01Z",
+          passes: {
+            executionScope: "safe-maintenance-only",
+            platformTriggerVerified: false,
+            triggerEvidence: "http-candidate",
+          },
+        }),
+      );
+      expect((await repository.listRecentRuns(50)).some((run) => run.id === id)).toBe(true);
+      expect((await repository.listRecentScheduledRuns(50)).some((run) => run.id === id)).toBe(
+        false,
+      );
+      expect(await repository.lastScheduledSuccessAt()).toBe(before);
+    } finally {
+      await repository.close();
+    }
+  });
+  it("reads scope and correlation but rejects incomplete or invalid count evidence", async () => {
+    const repository = createMaintenanceRunRepository(databaseUrl);
+    try {
+      const valid = { claimed: 4, completed: 3, failed: 1, unknown: 0, skipped: 0 };
+      const ids: string[] = [];
+      for (const counts of [valid, { claimed: 4 }, { ...valid, unknown: -1 }]) {
+        const row = await repository.recordRun(
+          draft({
+            passes: { executionScope: "safe-maintenance-only", runId: "correlation-test", counts },
+          }),
+        );
+        ids.push(row.id);
+      }
+      const runs = await repository.listRecentRuns(50);
+      expect(runs.find((r) => r.id === ids[0])).toMatchObject({
+        executionScope: "safe-maintenance-only",
+        correlationId: "correlation-test",
+        jobCounts: valid,
+      });
+      expect(runs.find((r) => r.id === ids[1])?.jobCounts).toBeNull();
+      expect(runs.find((r) => r.id === ids[2])?.jobCounts).toBeNull();
+      const catalog = await repository.schemaCatalog();
+      expect(catalog.ledger.present).toBe(true);
+    } finally {
+      await repository.close();
+    }
   });
 
   it(
