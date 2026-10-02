@@ -243,7 +243,7 @@ export function describeFreshness(freshness: EvidenceFreshness): string {
  * requirement's evidence under another's name, which is worse than having no
  * instance at all.
  */
-const REQUIREMENT_MARKERS: readonly { key: string; markers: readonly string[] }[] = [
+export const REQUIREMENT_MARKERS: readonly { key: string; markers: readonly string[] }[] = [
   { key: "nar1", markers: ["nar1", "nar 1", "周年申報表", "annual return form"] },
   { key: "agm", markers: ["agm", "股東周年大會", "周年大會", "annual general meeting"] },
   { key: "cdd", markers: ["cdd", "盡職審查", "due diligence", "know your client", "kyc"] },

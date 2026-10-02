@@ -3,16 +3,17 @@ import { LogOut } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-context-neon";
-import { isNavItemActive, navGroups } from "./navigation";
+import { isNavItemActive, navGroupsForRole } from "./navigation";
 
 /**
  * Grouped destination list shared by the desktop sidebar and the mobile drawer.
  * `onNavigate` lets the drawer close itself after a selection.
  */
 export function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const { session } = useAuth();
   return (
     <div className="space-y-5">
-      {navGroups.map((group) => (
+      {navGroupsForRole(session?.role).map((group) => (
         <div key={group.heading}>
           <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {group.heading}

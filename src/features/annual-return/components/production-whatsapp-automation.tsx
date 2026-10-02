@@ -13,6 +13,7 @@ import type { ProductionFollowUpDraft } from "../follow-ups";
 import { listProductionFollowUpDrafts, sendProductionFollowUp } from "../follow-up-server-fns";
 import { getWhatsAppIntegrationStatus } from "@/features/whatsapp/server-fns";
 import { PageHeader } from "@/components/page-header";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to queue follow-up.";
@@ -24,11 +25,14 @@ function typeLabel(source: ProductionFollowUpDraft["source"]): string {
   return "Annual return";
 }
 
-export function ProductionWhatsAppAutomation() {
+export function ProductionWhatsAppAutomation({
+  actorScope = "",
+  canBulk = false,
+}: { actorScope?: string; canBulk?: boolean } = {}) {
   const [preview, setPreview] = useState<ProductionFollowUpDraft | null>(null);
   const queryClient = useQueryClient();
   const draftsQuery = useQuery({
-    queryKey: annualReturnQueryKeys.automationNotifications,
+    queryKey: [...annualReturnQueryKeys.automationNotifications, actorScope],
     queryFn: () => listProductionFollowUpDrafts(),
   });
   const integrationQuery = useQuery({
@@ -70,6 +74,21 @@ export function ProductionWhatsAppAutomation() {
         Provider configuration does not prove connection health. Approval queues the inspected
         draft; only a receipt confirms delivery.
       </p>
+      {canBulk ? (
+        <BulkSelectionToolbar
+          actorScope={actorScope}
+          resource="annual_return_case"
+          filters={{}}
+          page={[
+            ...new Map(
+              drafts.map((d) => [d.caseId, { id: d.caseId, label: d.companyName }]),
+            ).values(),
+          ]}
+          total={draftsQuery.isSuccess ? new Set(drafts.map((d) => d.caseId)).size : null}
+          pageSize={drafts.length}
+          maintenanceActions={["follow_up_draft"]}
+        />
+      ) : null}
 
       {integrationQuery.data?.deliveryMode === "simulated" ? (
         <div

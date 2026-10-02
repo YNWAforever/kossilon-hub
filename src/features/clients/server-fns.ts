@@ -4,6 +4,7 @@ import type { AuthDependencies } from "@/features/auth/neon-auth-server";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { assertClientCompanyCreatable, assertClientCompanyWritable } from "./authorization";
 import type { ClientRepository } from "./repository";
+import type { ClientListFilters } from "./repository";
 import { originFilterForActor } from "./data-origin";
 
 const loadDefaultClientContext = createServerOnlyFn(async () => {
@@ -249,6 +250,36 @@ export const listClients = createServerFn({ method: "GET" })
     const actor = await requireStaffActor(getRequest());
     const filters = originFilterForActor(actor, data.includeFixtures);
     return withClientRepository((repository) => repository.listClients(filters));
+  });
+const clientPageSchema = z
+  .object({
+    includeFixtures: z.boolean().optional(),
+    q: z.string().max(200).optional(),
+    status: z.enum(["active", "inactive"]).optional(),
+    teamId: z.string().uuid().optional(),
+    cursor: z.string().max(2048).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+  })
+  .strict()
+  .default({});
+export async function listClientPageForActor(
+  actor: AuthenticatedActor,
+  filters: ClientListFilters,
+  repository: Pick<ClientRepository, "listClientPage">,
+) {
+  if (!actor.active || !actor.userId || actor.role === "Client")
+    throw new Error("Forbidden: active staff directory access required.");
+  return repository.listClientPage({
+    ...clientPageSchema.parse(filters),
+    ...originFilterForActor(actor, filters.includeFixtures),
+  });
+}
+export const listClientPage = createServerFn({ method: "GET" })
+  .validator(clientPageSchema)
+  .handler(async ({ data }) => {
+    const { getRequest, requireStaffActor } = await loadDefaultClientContext();
+    const actor = await requireStaffActor(getRequest());
+    return withClientRepository((repository) => listClientPageForActor(actor, data, repository));
   });
 
 export const listClientAssignmentOptions = createServerFn({ method: "GET" }).handler(async () => {

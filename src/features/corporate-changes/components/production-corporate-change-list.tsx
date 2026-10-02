@@ -5,11 +5,12 @@ import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-dialog";
 import { listCorporateChangeRequests } from "@/features/corporate-changes/server-fns";
-import { listClients } from "@/features/clients/server-fns";
+import { listClientPage } from "@/features/clients/server-fns";
 
 export function ProductionCorporateChangeList() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [companySearch, setCompanySearch] = useState("");
 
   const requestsQuery = useQuery({
     queryKey: ["corporate-change-requests"],
@@ -20,8 +21,8 @@ export function ProductionCorporateChangeList() {
   // `listClientAssignmentOptions` only returns owner/team pairs, not companies, so the
   // company picker is fed from `listClients` (the same list the client register renders).
   const clientsQuery = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => listClients(),
+    queryKey: ["clients", "corporate-picker", companySearch],
+    queryFn: () => listClientPage({ data: { q: companySearch, limit: 200 } }),
     retry: false,
   });
 
@@ -46,7 +47,7 @@ export function ProductionCorporateChangeList() {
   }
 
   const requests = requestsQuery.data ?? [];
-  const companies = (clientsQuery.data ?? []).map((client) => ({
+  const companies = (clientsQuery.data?.clients ?? []).map((client) => ({
     id: client.id,
     companyName: client.companyName,
   }));
@@ -68,6 +69,17 @@ export function ProductionCorporateChangeList() {
         }
       />
 
+      <label className="block text-sm">
+        搜尋可選公司
+        <input
+          className="min-h-11 ml-2 rounded border px-3"
+          value={companySearch}
+          onChange={(event) => setCompanySearch(event.target.value)}
+        />
+        <span className="block text-xs text-muted-foreground">
+          最多顯示200項；搜尋涵蓋授權公司。
+        </span>
+      </label>
       {clientsQuery.isError ? (
         <p role="status" className="text-sm text-status-yellow">
           Company options are unavailable. Starting a new request is disabled until this loads.

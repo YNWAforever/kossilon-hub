@@ -98,6 +98,18 @@ function renderBoard(
 }
 
 describe("production annual return command center", () => {
+  it("searches authorised owners beyond the first200 directory entries", async () => {
+    serverFns.listAssignableStaff.mockImplementation(async ({ data } = { data: {} }) =>
+      data.q === "201" ? [{ id: caseId, name: "Member201" }] : [],
+    );
+    serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [], nextCursor: null });
+    renderBoard();
+    fireEvent.change(screen.getByLabelText("搜尋負責同事"), { target: { value: "201" } });
+    await screen.findByText("Member201");
+    expect(serverFns.listAssignableStaff).toHaveBeenLastCalledWith({
+      data: { q: "201", limit: 200 },
+    });
+  });
   it("connects current staff scope to page50 and SQL totals in the bulk toolbar", async () => {
     serverFns.listAnnualReturnCasePage.mockResolvedValue({ cases: [makeCase()], nextCursor: null });
     serverFns.getAnnualReturnBoardTotals.mockResolvedValue({ total: 1240 });

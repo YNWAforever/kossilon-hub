@@ -1,0 +1,531 @@
+{
+  "date": "2026-10-02",
+  "bug": "B03",
+  "source_commit": "26ef92d3f7346e929271ff99a876c3ca19f48167",
+  "base": "8b834f48b11d4dbdbc81959ec5b01804ab7320d7",
+  "environment": "LOCAL ONLY Node22.23.3/Bun1.4.2/Postgres17 localhost55441/kossilon_pr02_ci/installed Chrome DEMO",
+  "node": "v22.23.3",
+  "bun": "1.4.2",
+  "npm": "10.9.9",
+  "production_mutated": false,
+  "full_suite": {
+    "files": 230,
+    "passed": 2183,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 414.52,
+    "command_wall_seconds": 436
+  },
+  "browser": {
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 30,
+    "kind": "actual installed Chrome/local read-only DEMO/real DOCX and PDF+worker; NOT runtime UAT"
+  },
+  "security": {
+    "bun_before": 13,
+    "bun_after": 0,
+    "npm_before": 9,
+    "npm_after": 0,
+    "registry_snapshot_only": true
+  },
+  "review": {
+    "rounds": 1,
+    "critical": 0,
+    "important": 1,
+    "minor": 0,
+    "accepted_fixed": 1,
+    "fix_commits": [
+      "7cdc8a0",
+      "26ef92d"
+    ],
+    "red": "tracked-lock 2FAIL",
+    "green": "2files4PASS",
+    "rereview": false
+  },
+  "npm_portability": {
+    "true_cwd": true,
+    "installed": 721,
+    "known_advisories": 0,
+    "prefix_proof_rejected": true
+  },
+  "initial": {
+    "source": "944f703",
+    "files": 229,
+    "passed": 2181,
+    "skipped": 0,
+    "seconds": 388.48,
+    "browser_passed": 12,
+    "browser_seconds": 31.3,
+    "dev": "FAIL root request timeout; 11other routesPASS; unchanged final gate rerun, no timeout relaxed"
+  },
+  "schema": {
+    "source_ids": 50,
+    "production_last_observed_historic_ids": 66,
+    "new_migrations": 0,
+    "release_reconciliation": "BLOCKED"
+  },
+  "uat": {
+    "original": 50,
+    "counts": {
+      "pass": 19,
+      "fail": 0,
+      "blocked": 31,
+      "not_run": 0
+    },
+    "localOnlyPasses": 19,
+    "runtimeReleaseReady": false,
+    "evidence_level": "19 LOCAL ONLY pass /31blocked"
+  },
+  "productionReleaseGate": "NO_GO",
+  "gates": [
+    {
+      "gate": "install",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe install --frozen-lockfile",
+      "exit_code": 0,
+      "seconds": 3.668,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-install.log"
+    },
+    {
+      "gate": "bun-audit",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe audit --audit-level=low",
+      "exit_code": 0,
+      "seconds": 0.532,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-bun-audit.log"
+    },
+    {
+      "gate": "npm-audit",
+      "command": "npm.cmd audit --audit-level=low",
+      "exit_code": 0,
+      "seconds": 2.041,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-npm-audit.log"
+    },
+    {
+      "gate": "npm-ci",
+      "command": "powershell.exe -NoProfile -File .worktrees/b03-npm-ci-check.ps1",
+      "exit_code": 0,
+      "seconds": 145.705,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-npm-ci.log"
+    },
+    {
+      "gate": "migrations",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe scripts/db-migrate.ts",
+      "exit_code": 0,
+      "seconds": 0.547,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-migrations.log"
+    },
+    {
+      "gate": "seed",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe scripts/db-seed-annual-return.ts",
+      "exit_code": 0,
+      "seconds": 0.389,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-seed.log"
+    },
+    {
+      "gate": "lint",
+      "command": "npm.cmd run lint",
+      "exit_code": 0,
+      "seconds": 57.351,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-lint.log"
+    },
+    {
+      "gate": "typecheck",
+      "command": "npm.cmd run typecheck",
+      "exit_code": 0,
+      "seconds": 52.529,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-typecheck.log"
+    },
+    {
+      "gate": "test",
+      "command": "npm.cmd run test",
+      "exit_code": 0,
+      "seconds": 436,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-test.log"
+    },
+    {
+      "gate": "offline",
+      "command": "npm.cmd run verify:firm -- --dry-run",
+      "exit_code": 0,
+      "seconds": 0.978,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-offline.log"
+    },
+    {
+      "gate": "ledger",
+      "command": "npm.cmd run verify:audit-release",
+      "exit_code": 0,
+      "seconds": 0.749,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-ledger.log"
+    },
+    {
+      "gate": "browser",
+      "command": "npm.cmd run test:e2e:local",
+      "exit_code": 0,
+      "seconds": 32.767,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-browser.log"
+    },
+    {
+      "gate": "build",
+      "command": "npm.cmd run build",
+      "exit_code": 0,
+      "seconds": 34.689,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-build.log"
+    },
+    {
+      "gate": "dev",
+      "command": "npm.cmd run verify:dev-server-imports",
+      "exit_code": 0,
+      "seconds": 17.561,
+      "log": ".worktrees\\audit-baseline-20261001\\b03-verified-dev.log"
+    }
+  ],
+  "compiled_scheduled_hook": "PASS local build only",
+  "lint": "0errors1existingwarning",
+  "logs": [
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-browser-after.log",
+      "bytes": 1146,
+      "sha256": "c5d4bfb2cefbddca335f5655bebf42edc694918018e4e43548bef84e26747661"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-browser-before.log",
+      "bytes": 1147,
+      "sha256": "4878185ffbdcba58803df010e26387f1c99c40b473eb3c66ea58cf408c75bb63"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-bun-audit-after.json",
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-bun-audit-before.json",
+      "bytes": 16706,
+      "sha256": "50e1938b01ae8c86c9adac4faab7d4e98008992dcc7a28b97f6e0b496245624b"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-bun-release.json",
+      "bytes": 18847,
+      "sha256": "9a7e3d20331fdfa19e537587150013d9f0d4f26c60c709d768ebb2c71e647751"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-browser.log",
+      "bytes": 5160,
+      "sha256": "9cf68ddb620f13353241f9dedf3ed45dfa30e93190ee8c2a02d719b68b0c5f9a"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-build.log",
+      "bytes": 123930,
+      "sha256": "dd9d2ed40c6361e7a774d5357d794988a8075330c712b6160885133515fcd826"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-bun-audit.log",
+      "bytes": 186,
+      "sha256": "44d94aac7af2a5cac9b182504e350259aa677c2f5aedb478bc74b15ddafc8021"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-dev.log",
+      "bytes": 1082,
+      "sha256": "eb396753a852083b3673f62667b031dd99d083870f5746d7074d989cf77061a5"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-install.log",
+      "bytes": 202,
+      "sha256": "17a59550e1acd9e21708a9d175d5e97ba8fe6030a7a3fe21862dbfa85e8cc096"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-ledger.log",
+      "bytes": 19476,
+      "sha256": "e884ec2d20856246fb340061112741019f18a07096dff44d3d22902107401a7c"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-lint.log",
+      "bytes": 750,
+      "sha256": "8cf7b16d1a4676a22d57bfa84d20196b33f1ea88fdb97f634a4f913d75cf7265"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-migrations.log",
+      "bytes": 4748,
+      "sha256": "84d52911fc290c081ca8ade7944d6b19fa366a9008f39099578930f8f7677da9"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-npm-audit.log",
+      "bytes": 52,
+      "sha256": "6bf1428f41151b18d1fe822a2d1402d6477b743301d6e154ed2920c59819024a"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-offline.log",
+      "bytes": 2520,
+      "sha256": "12ee2c7cd1e98534710a89a4cf38994301ba04224821274d2de60b839c3498b8"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-progress.json",
+      "bytes": 4901,
+      "sha256": "c58b17698e39fd37e384fba0e997d166a0b364647467cdd4c708add7eac4b8c5"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-seed.log",
+      "bytes": 92,
+      "sha256": "dcfea6165a861831c12ae39833eb80f628bc32b48921be5e44047660b4e6771c"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-test.log",
+      "bytes": 4190,
+      "sha256": "8874c9f31e2d41ae2da96c054ee92492cce795936ee7e5bb9a0243c86df51abd"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-final-typecheck.log",
+      "bytes": 68,
+      "sha256": "6ee13f15916108faa58011f64353837b9ba6cd2d3599c631d3952129f2c61465"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-frozen.log",
+      "bytes": 100,
+      "sha256": "31a087af3f1ac930cbe6ae9f1dd13688aede1ef269eb0c14d78bdc3c6726e948"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-install.log",
+      "bytes": 185,
+      "sha256": "89f74f28e74bd44fa415385451c84a8f04390fc8e4068b20f7d891ede020b112"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-lint.log",
+      "bytes": 376,
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm-audit-after.json",
+      "bytes": 367,
+      "sha256": "29306125f31b48232ef610af43244820002c73fb016392d152c8b61adaab2b1f"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm-audit-before.json",
+      "bytes": 31599,
+      "sha256": "232a2a204bd92d7d0e2e07136ffc89aafa9149c821fe053b109b1e38058cd83c"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm-lock-sync.log",
+      "bytes": 200,
+      "sha256": "177fd4a0650e773d218975ba02c1586ddecf5b13ed13474258efe6b7f01ef405"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm-probe-dedupe.log",
+      "bytes": 200,
+      "sha256": "535093e100b0c08317a45fc0fb49d9ffb01138848d262f77ef49ca1b83cef97d"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm-probe.log",
+      "bytes": 200,
+      "sha256": "78b035ec05d335ece86fae38e31eba77b683adba80fea812ebd3333517824a91"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm-tool.json",
+      "bytes": 280,
+      "sha256": "715e31398d945abb83aedf551d6f358c31bbb34f12fa2492520430c2be861dda"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm10-ci-final.log",
+      "bytes": 1875,
+      "sha256": "ba78ce35d6f4744f35e1bd8793fa26e171c6be112499daf7d9031057897305d5"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm10-ci-second.log",
+      "bytes": 1245,
+      "sha256": "d25465bb5adacb9f50eca34a37d66a372dd2dc2a876fc6edaad9e2decfbb895e"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm10-ci.log",
+      "bytes": 1662,
+      "sha256": "9a6db9c9bab5a29380a9e425ab1fd8645ca65b1e2f1cf96f42d3c69a9be24e74"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm10-normalize.log",
+      "bytes": 139,
+      "sha256": "8263f5ea1a616da639bd81fb88c6d99339911763411783cc326a246a68338af2"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm12-ci.log",
+      "bytes": 4717,
+      "sha256": "021e598f807db62024083ce103946164663c1615afa72542bad81d26b013dc57"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm12-probe.log",
+      "bytes": 140,
+      "sha256": "42a9d85edd49cd34b0dbc2d069221aa48e7c2da60514f76347c7eca8def1656a"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-npm12-root.log",
+      "bytes": 139,
+      "sha256": "09e0358e55e89602cdcf38bd86a35abea1c300a4776259f4e9ec2a99d800342f"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-official-metadata.json",
+      "bytes": 7949,
+      "sha256": "9fbfc41364a87dc63f3ff44273fa06a70fa9278ad250068b8cfa5000b99aafcb"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-parser-green.log",
+      "bytes": 944,
+      "sha256": "3094ea02877b45881a7b4e08b725959214307015dcf2c3d73f9a857bd1bce3df"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-parser-red.log",
+      "bytes": 1959,
+      "sha256": "8995b84d53dc78d086325242c64f06f271c6ac99cf26a2965e756895a318402c"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-probe-audit.json",
+      "bytes": 4447,
+      "sha256": "c364dba9b91819b62e0e977b1488bd56990d10009d435eb3d2b767241e4de431"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-probe142-audit.json",
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-resolution-inventory.json",
+      "bytes": 2165,
+      "sha256": "aac13c8ccff4b96980767abb938c99dbfe635c332fd9f933cb09166476f1797d"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-resolution-probe.log",
+      "bytes": 154,
+      "sha256": "13c7624b6af37cf6bc06d8ec92b77fd2f4057c7bf9e414c808d164df5d34831f"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-resolution-probe142.log",
+      "bytes": 156,
+      "sha256": "a2fe16f2ff0c688a8ee815fb25bea1c23c7a7ce2724509013c4a4d7e3f00b8bb"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-review-lock-green.log",
+      "bytes": 945,
+      "sha256": "6a048faddf6260681ef752bfbc0db8a57f60171cb7fdf4b6fef4f1ab97279dc6"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-review-lock-red.log",
+      "bytes": 6903,
+      "sha256": "28bb9c50d4b65bb440368214dcab6a03f3dcc55b269ac62971cc01af4ff9bf83"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-review-npm10-cwd-ci.log",
+      "bytes": 152,
+      "sha256": "3ba084d91301f3a7bb879a5fd1139d07f838b8fc98fe75da4fc053dc1e32ebc5"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-review-npm10-cwd-normalize.log",
+      "bytes": 139,
+      "sha256": "dd7475064e5fd8b87da8d22797a5743c8c1be0ee3325c31bea2192faee69f3ad"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-review-npm12-cwd.log",
+      "bytes": 140,
+      "sha256": "ff215cda20afb5239b4a4a017d98a887c30d02231ddb2866bb7816652f54f4bd"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-typecheck.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-update-dry-run.log",
+      "bytes": 48614,
+      "sha256": "707466bd3c43615db2bb4d4b015bd4bbf08602ec36318ddba7ff62b0ba09a747"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-browser.log",
+      "bytes": 5166,
+      "sha256": "684efa52e605454c2de05b6ce96ef20fb14f3b4cb46229a520f4b74ac3e66f9f"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-build.log",
+      "bytes": 123810,
+      "sha256": "ea1405faab14c3eeda220eb2fdbebffb4648c1feb3dd208d308b9d476b4b3e89"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-bun-audit.log",
+      "bytes": 186,
+      "sha256": "77badb06e08f3379ed31a2f5415f96e5aac5f780dc6ee686f0ddd806fc15bd6a"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-dev.log",
+      "bytes": 998,
+      "sha256": "bf5a0ecb2ca1dd630c289bef63e81d8009e16a34ef5c3ca76f72cc3beb9ea8d5"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-hook.log",
+      "bytes": 37,
+      "sha256": "c85852a9f4487799bf88945ec8f3708da357131b6618f1fc7ab5580e54466568"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-install.log",
+      "bytes": 196,
+      "sha256": "cfd16f6f65022b1339d882b9453a45310c128d744e5c38e79fb975b7a08b9d61"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-ledger.log",
+      "bytes": 19476,
+      "sha256": "e884ec2d20856246fb340061112741019f18a07096dff44d3d22902107401a7c"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-lint.log",
+      "bytes": 750,
+      "sha256": "8cf7b16d1a4676a22d57bfa84d20196b33f1ea88fdb97f634a4f913d75cf7265"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-migrations.log",
+      "bytes": 4748,
+      "sha256": "84d52911fc290c081ca8ade7944d6b19fa366a9008f39099578930f8f7677da9"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-npm-audit.log",
+      "bytes": 52,
+      "sha256": "6bf1428f41151b18d1fe822a2d1402d6477b743301d6e154ed2920c59819024a"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-npm-ci.log",
+      "bytes": 4630,
+      "sha256": "f30d24197e380469f772fab32ba5fa546be4d424704f7fb6e025b0b7ff493289"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-offline.log",
+      "bytes": 2520,
+      "sha256": "12ee2c7cd1e98534710a89a4cf38994301ba04224821274d2de60b839c3498b8"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-progress.json",
+      "bytes": 5302,
+      "sha256": "5094ce2b726066ca1008a8ee52ad331f91f9fb446f22dac4d4f678df1fa80802"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-seed.log",
+      "bytes": 92,
+      "sha256": "dcfea6165a861831c12ae39833eb80f628bc32b48921be5e44047660b4e6771c"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-test.log",
+      "bytes": 4198,
+      "sha256": "aa27ba35a8d42b30310acb70ecf46579f21b34a9e0b18a9fff50576f46f1169d"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-verified-typecheck.log",
+      "bytes": 68,
+      "sha256": "6ee13f15916108faa58011f64353837b9ba6cd2d3599c631d3952129f2c61465"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-vite.log",
+      "bytes": 45797,
+      "sha256": "438ffb01c1a83c2bc67aab43f268be345989cd0f08cb8c54b4cdb71c2fc560aa"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-xml-after.json",
+      "bytes": 1350,
+      "sha256": "b9135d4a5fcf8034a94c7cc6c9d299b2235037e50f0b5f654f76fc6d52627596"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b03-xml-before.json",
+      "bytes": 1290,
+      "sha256": "53020ea32b0a2434996b7ee618c7b4dc405f229e1c7506023025a5c0b97a459f"
+    }
+  ]
+}
