@@ -18,7 +18,7 @@ export async function prepareDocumentMaintenance(
   const subject = await repo.getDocumentAccessSubject(id);
   if (!subject) throw new Error("Forbidden: document unavailable.");
   assertStaffDocumentAccess(actor, subject);
-  const document = (await repo.listDocuments({ companyId: subject.companyId })).find(
+  const document = (await repo.listDocuments({ id, companyId: subject.companyId })).find(
     (d) => d.id === id,
   );
   if (!document) throw new Error("Forbidden: document unavailable.");

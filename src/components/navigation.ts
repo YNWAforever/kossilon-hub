@@ -16,6 +16,7 @@ import {
   type LucideIcon,
   Upload,
 } from "lucide-react";
+import type { AuthRole } from "@/features/auth/types";
 
 // Single source of truth for primary navigation. The sidebar (desktop) and the
 // drawer (mobile) both render this, so the two can no longer drift apart in
@@ -34,6 +35,7 @@ export type NavItem = {
   exact?: boolean;
   /** Rendered indented under the preceding item to show it is a sub-destination. */
   nested?: boolean;
+  roles?: readonly AuthRole[];
 };
 
 export type NavGroup = {
@@ -54,47 +56,62 @@ export const navGroups: NavGroup[] = [
     heading: "今日工作",
     items: [
       { to: "/today", label: "今日工作", icon: CalendarClock, exact: true },
-      { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { to: "/work-queue", label: "Work Queue", icon: ListChecks },
+      { to: "/", label: "總覽", icon: LayoutDashboard, exact: true },
+      { to: "/work-queue", label: "工作隊列", icon: ListChecks },
     ],
   },
   {
-    heading: "客戶與案件",
+    heading: "案件與客戶",
     items: [
-      { to: "/annual-returns", label: "Annual Returns", icon: CalendarClock },
-      { to: "/clients", label: "Clients", icon: Building2 },
-      { to: "/incorporation", label: "Incorporation", icon: Rocket },
-      { to: "/corporate-changes", label: "Corporate changes", icon: Repeat2 },
-      { to: "/imports", label: "月表匯入", icon: Upload },
-      { to: "/payments", label: "Payments", icon: CreditCard },
+      { to: "/annual-returns", label: "周年申報", icon: CalendarClock },
+      { to: "/clients", label: "客戶", icon: Building2 },
+      { to: "/incorporation", label: "公司註冊", icon: Rocket },
+      { to: "/corporate-changes", label: "公司變更", icon: Repeat2 },
+      { to: "/imports", label: "月表匯入", icon: Upload, roles: ["Admin", "Manager"] },
     ],
   },
   {
-    heading: "文件審閱",
+    heading: "文件與付款",
     items: [
-      { to: "/documents", label: "Documents", icon: FileText },
-      { to: "/portal", label: "Portal", icon: ExternalLink },
+      { to: "/documents", label: "文件", icon: FileText },
+      { to: "/payments", label: "付款", icon: CreditCard },
+      { to: "/portal", label: "客戶入口", icon: ExternalLink },
     ],
   },
   {
-    heading: "訊息",
+    heading: "通訊",
     items: [
-      { to: "/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle, exact: true },
-      { to: "/whatsapp/automation", label: "WhatsApp Automation", icon: Zap, nested: true },
+      { to: "/whatsapp", label: "WhatsApp 收件箱", icon: MessageCircle, exact: true },
+      { to: "/whatsapp/automation", label: "WhatsApp 追件", icon: Zap, nested: true },
     ],
   },
   {
-    heading: "Administration",
+    heading: "管理",
     items: [
-      { to: "/admin", label: "Admin", icon: ShieldCheck },
+      { to: "/admin", label: "用戶管理", icon: ShieldCheck, roles: ["Admin"] },
       // Staff-visible rather than admin-only: the question it answers is "can I
       // trust what the other screens are telling me", and the person who needs
       // that is whoever is about to rely on the chase list.
       { to: "/operations", label: "系統運作", icon: Activity },
-      { to: "/settings", label: "Settings", icon: Settings },
+      { to: "/settings", label: "設定", icon: Settings, roles: ["Admin"] },
     ],
   },
 ];
+
+/** Presentation only; existing server policies remain authoritative. */
+export function navGroupsForRole(role: AuthRole | undefined): NavGroup[] {
+  if (!role) return [];
+  return navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        role === "Client"
+          ? ["/documents", "/portal"].includes(item.to)
+          : !item.roles || item.roles.includes(role),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+}
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
   if (item.exact) return pathname === item.to;

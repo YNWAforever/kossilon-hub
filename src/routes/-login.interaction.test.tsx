@@ -70,6 +70,54 @@ beforeEach(() => {
 });
 
 describe("LoginPage", () => {
+  it.each(["Admin", "Manager", "Staff", "Client"] as const)(
+    "uses daily role landing for %s without an explicit return",
+    async (role) => {
+      const originalHref = window.location.href;
+      history.replaceState(null, "", "/login");
+      window.sessionStorage.clear();
+      mockSession = {
+        id: "controlled-local",
+        name: "Local",
+        email: "local@example.test",
+        role,
+        initials: "L",
+        team: "x",
+        signedInAt: "2026-10-02T00:00:00Z",
+      };
+      try {
+        render(<LoginPage />);
+        await waitFor(() =>
+          expect(navigate).toHaveBeenCalledWith({
+            href: role === "Client" ? "/portal" : "/today",
+            replace: true,
+          }),
+        );
+      } finally {
+        history.replaceState(null, "", originalHref);
+      }
+    },
+  );
+  it("preserves an explicit dashboard return rather than treating slash as absence", async () => {
+    const originalHref = window.location.href;
+    history.replaceState(null, "", "/login?redirect=%2F");
+    window.sessionStorage.clear();
+    mockSession = {
+      id: "controlled-local",
+      name: "Local",
+      email: "local@example.test",
+      role: "Staff",
+      initials: "L",
+      team: "x",
+      signedInAt: "2026-10-02T00:00:00Z",
+    };
+    try {
+      render(<LoginPage />);
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/", replace: true }));
+    } finally {
+      history.replaceState(null, "", originalHref);
+    }
+  });
   it("shows magic link and Google by default (a real Neon Auth backend)", () => {
     render(<LoginPage />);
 

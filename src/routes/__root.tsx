@@ -29,6 +29,7 @@ import {
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { ensureActorQueryScope } from "@/features/auth/query-scope";
 
 /**
  * `actor` is resolved in beforeLoad and handed to every route. The call was
@@ -121,7 +122,10 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context, location }) => {
-    if (isPublicRoute(location.pathname)) return { actor: null };
+    if (isPublicRoute(location.pathname)) {
+      await ensureActorQueryScope(context.queryClient, null);
+      return { actor: null };
+    }
 
     const { dataMode } = context;
     if (dataMode !== "demo") {
@@ -129,6 +133,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       try {
         actor = await getAuthenticatedActor();
       } catch (error) {
+        await ensureActorQueryScope(context.queryClient, null);
         // A Forbidden account is not "not signed in" — sending it through the
         // same redirect=... path would bounce it back here after every future
         // sign-in, identically and silently, since the sign-in step itself keeps
@@ -145,6 +150,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         });
       }
 
+      await ensureActorQueryScope(context.queryClient, actor);
       // Every screen except these resolves a staff actor, so a Client signing in
       // and landing on the dashboard hit Forbidden on every query it makes. They
       // get the portal instead — which is the only thing built for them.

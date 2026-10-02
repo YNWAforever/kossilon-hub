@@ -44,6 +44,7 @@ vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => {
 });
 vi.mock("../features/documents/server-fns", () => ({
   listDocuments: () => Promise.resolve([]),
+  listDocumentPage: () => Promise.resolve({ documents: [], nextCursor: null }),
   downloadDocument: () => Promise.resolve(new Response()),
 }));
 vi.mock("../features/annual-return/server-fns", async (importOriginal) => {
@@ -91,12 +92,16 @@ async function render(options: {
   });
   await router.load();
   const actorScope = router.state.matches.at(-1)?.context.actor;
-  await queryClient.prefetchQuery({
+  await queryClient.prefetchInfiniteQuery({
     queryKey: ["documents", "archive", options.withCaseId ? selectedId : "all", { actorScope }],
-    queryFn: () => Promise.resolve(options.documents),
+    initialPageParam: undefined,
+    queryFn: () => Promise.resolve({ documents: options.documents, nextCursor: null }),
   });
   if (options.withCaseId)
-    queryClient.setQueryData(["documents", "archive", "all", { actorScope }], options.documents);
+    queryClient.setQueryData(["documents", "archive", "all", { actorScope }], {
+      pages: [{ documents: options.documents, nextCursor: null }],
+      pageParams: [undefined],
+    });
   if (options.withCaseId) {
     await queryClient.prefetchQuery({
       // Was ["annual-return", ...] — singular. The factory produces

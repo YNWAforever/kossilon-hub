@@ -14,6 +14,19 @@ const serverFns = vi.hoisted(() => ({
 
 vi.mock("../server-fns", () => ({
   listClients: serverFns.listClients,
+  listClientPage: async ({ data }: { data: { q?: string; status?: string; teamId?: string } }) => {
+    const clients: ClientSummary[] = await serverFns.listClients({ data });
+    const selected = clients.filter(
+      (c) =>
+        (!data.q ||
+          `${c.companyName} ${c.crNumber} ${c.brNumber}`
+            .toLowerCase()
+            .includes(data.q.toLowerCase())) &&
+        (!data.status || c.status === data.status) &&
+        (!data.teamId || c.teamId === data.teamId),
+    );
+    return { clients: selected, total: selected.length, nextCursor: null };
+  },
   listClientAssignmentOptions: serverFns.listClientAssignmentOptions,
 }));
 vi.mock("@tanstack/react-router", () => ({
@@ -109,7 +122,10 @@ describe("production client register", () => {
     fireEvent.change(search, { target: { value: "Beta" } });
 
     await waitFor(() => expect(screen.queryByText("Acme Company Limited")).toBeNull());
-    expect(screen.getByText("Beta Holdings")).toBeTruthy();
+    expect(await screen.findByText("Beta Holdings")).toBeTruthy();
+    expect(serverFns.listClients).toHaveBeenLastCalledWith({
+      data: expect.objectContaining({ q: "Beta", limit: 100 }),
+    });
   });
 
   it("disables New client until assignment options resolve", async () => {

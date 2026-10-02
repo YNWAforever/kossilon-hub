@@ -107,10 +107,17 @@ export const reconcileUnknownBulkItems = createServerFn({ method: "POST" })
     return repository.reconcileUnknown(actor, data.jobId);
   });
 export const listBulkAssignees = createServerFn({ method: "GET" })
-  .validator(z.object({}).strict())
-  .handler(async () => {
+  .validator(
+    z
+      .object({
+        q: z.string().max(200).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+      })
+      .strict(),
+  )
+  .handler(async ({ data }) => {
     const { actor, repository } = await context();
-    return repository.listAssignees(actor);
+    return repository.listAssignees(actor, data);
   });
 export const getBulkSnapshotMembership = createServerFn({ method: "GET" })
   .validator(

@@ -774,12 +774,12 @@ export function createBulkOperationsRepository({
       const allowed = await resources(sql, verified, s.resource, {}, input.ids);
       return { ids: allowed.filter((i) => original.has(i.id)).map((i) => i.id) };
     },
-    async listAssignees(actor: AuthenticatedActor) {
+    async listAssignees(actor: AuthenticatedActor, input: { q?: string; limit?: number } = {}) {
       assertBulkManager(actor);
       const verified = await currentActor(sql, actor);
       const { createAnnualReturnRepository } = await import("@/features/annual-return/repository");
       return createAnnualReturnRepository({ sql }).listAssignableStaff(
-        verified.role === "Admin" ? {} : { teamId: verified.teamId! },
+        verified.role === "Admin" ? input : { ...input, teamId: verified.teamId! },
       );
     },
   };

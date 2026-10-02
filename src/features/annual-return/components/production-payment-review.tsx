@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
-import { listDocuments } from "@/features/documents/server-fns";
+import { listDocumentPage } from "@/features/documents/server-fns";
 import { SafeDocumentPreview } from "@/features/documents/safe-preview";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentSummary } from "@/features/documents/repository";
@@ -37,13 +37,18 @@ export function ProductionPaymentReview({
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
-  const documentsQuery = useQuery({
+  const documentsQuery = useInfiniteQuery({
     queryKey: [...annualReturnQueryKeys.payment("all"), actorScope],
-    queryFn: () => listDocuments({ data: {} }),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listDocumentPage({ data: { category: "payment", limit: 100, cursor: pageParam } }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
   const cases = casesQuery.data?.pages.flatMap((page) => page.cases) ?? [],
-    documents = (documentsQuery.data ?? []).filter((d) => d.category === "payment" && d.caseId);
+    documents = (documentsQuery.data?.pages.flatMap((p) => p.documents) ?? []).filter(
+      (d) => d.caseId,
+    );
   const updated = (case_: AnnualReturnCase) => {
     client.setQueryData(annualReturnQueryKeys.detail(case_.id), case_);
     void client.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
@@ -104,6 +109,18 @@ export function ProductionPaymentReview({
         >
           載入更多案件
         </button>
+      ) : null}
+      {documentsQuery.hasNextPage ? (
+        <button
+          className="min-h-11 rounded border px-3"
+          disabled={documentsQuery.isFetchingNextPage}
+          onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
+        >
+          載入更多付款憑證
+        </button>
+      ) : null}
+      {documentsQuery.isFetchNextPageError ? (
+        <p role="alert">下一頁付款憑證未能載入，請重試。</p>
       ) : null}
       {casesQuery.isFetchNextPageError ? (
         <p role="alert">下一頁未能載入，已讀取案件仍可查閱，請重試。</p>

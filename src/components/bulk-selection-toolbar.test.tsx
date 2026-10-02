@@ -79,6 +79,15 @@ function setup() {
   return { ...rendered, element };
 }
 describe("explicit scope and durable bulk toolbar", () => {
+  it("searches beyond the bounded staff page before bulk preview", async () => {
+    api.assignees.mockImplementation(async ({ data }) =>
+      data.q === "201" ? [{ id: assignee, name: "Member201", role: "Staff", teamId: null }] : [],
+    );
+    setup();
+    fireEvent.change(screen.getByLabelText("搜尋批量員工"), { target: { value: "201" } });
+    await screen.findByText(/Member201/);
+    expect(api.assignees).toHaveBeenLastCalledWith({ data: { q: "201", limit: 200 } });
+  });
   it("previews a draft-only maintenance action without an assignee and invalidates approval on action changes", async () => {
     api.maintenance.mockResolvedValue({
       previewId: snapshotId,

@@ -42,6 +42,14 @@ describe.skipIf(!databaseUrl)("versioned analysis publication", () => {
       await expect(
         sqlForTests().begin(async (tx) => {
           const data = await fixture(tx as unknown as SqlClient);
+          // Resolution refreshes the authoritative profile. A seeded case owner
+          // can be an Admin, so an injected Staff DTO does not make that owner a
+          // Staff actor. Create the actual role this denial test requires.
+          const scopedStaffId = crypto.randomUUID();
+          await tx`insert into users(id,name,email,role,team_id,active) values(${scopedStaffId},'Owned scoped Staff',${scopedStaffId + "@example.test"},'Staff',${data.teamId},true)`;
+          await tx`insert into staff_profiles(user_id,auth_user_id,role,team_id,active) values(${scopedStaffId},${"owned-scope-" + scopedStaffId},'Staff',${data.teamId},true)`;
+          await tx`update annual_return_cases set owner_id=${scopedStaffId} where id=${data.caseId!}`;
+          data.ownerId = scopedStaffId;
           const repo = createDocumentRepository({ sql: tx });
           const analysis = createDocumentAnalysisRepository({ sql: tx });
           const [otherTeam] = await tx<

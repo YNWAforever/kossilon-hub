@@ -10,7 +10,8 @@ describe("production route authorization contract", () => {
   it("keeps document routes on private server functions", () => {
     const documents = readFileSync(new URL("./documents.tsx", import.meta.url), "utf8");
     const portal = readFileSync(new URL("./portal.tsx", import.meta.url), "utf8");
-    expect(documents).toContain("listDocuments");
+    expect(documents).toContain("listDocumentPage");
+    expect(portal).toContain("listDocumentPage");
     expect(documents).toContain("downloadDocument");
     expect(portal).toContain("createDocumentUploadIntent");
     expect(portal).toContain("finalizeDocumentUpload");
