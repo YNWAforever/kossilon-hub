@@ -8,7 +8,25 @@ const state = vi.hoisted(() => ({
   navigate: vi.fn(),
   search: { view: "chaseToday", q: "", sort: "deadline" },
 }));
-vi.mock("@/features/annual-return/server-fns", () => ({ getAnnualReturnWorkViews: state.query }));
+vi.mock("@/features/annual-return/server-fns", () => ({
+  getAnnualReturnWorkViews: state.query,
+  getAnnualReturnWorkPage: async ({ data }: { data: { view: string } }) => {
+    const results = await state.query();
+    return {
+      rows:
+        results.find((v: { definition: { key: string } }) => v.definition.key === data.view)
+          ?.rows ?? [],
+      nextCursor: results.length > 5 ? "controlled-cursor" : null,
+    };
+  },
+  getAnnualReturnWorkMetrics: async () => ({
+    chaseToday: 10000,
+    newlyReceived: 0,
+    awaitingMyReview: 0,
+    readyToFile: 0,
+    returnsAndExceptions: 0,
+  }),
+}));
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   createFileRoute: () => (options: unknown) => ({
@@ -59,6 +77,18 @@ async function mount() {
   });
 }
 describe("Today truthful journey state", () => {
+  it("uses server totals and offers explicit next-page navigation", async () => {
+    state.query.mockResolvedValue([
+      ...WORK_VIEWS.map((definition) => ({ definition, rows: [] })),
+      { sentinel: true },
+    ]);
+    await mount();
+    await screen.findByRole("button", { name: "今日要追 (10000)" });
+    fireEvent.click(screen.getByRole("button", { name: "下一頁工作" }));
+    expect(state.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ search: expect.objectContaining({ cursor: "controlled-cursor" }) }),
+    );
+  });
   it("shows loading before data exists", async () => {
     state.query.mockImplementation(() => new Promise(() => {}));
     await mount();

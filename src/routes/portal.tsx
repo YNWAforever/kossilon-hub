@@ -6,7 +6,7 @@ import {
 import { parseEntityId } from "@/lib/entity-id";
 import type { AnnualReturnCase as ProductionAnnualReturnCase } from "../features/annual-return/types";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -22,7 +22,7 @@ import {
   createDocumentUploadIntent,
   downloadDocument,
   finalizeDocumentUpload,
-  listDocuments,
+  listDocumentPage,
 } from "../features/documents/server-fns";
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from "../features/documents/types";
 
@@ -60,6 +60,7 @@ export const Route = createFileRoute("/portal")({
 
 function PortalRoute() {
   const { dataMode, actor } = Route.useRouteContext();
+  const [caseSearch, setCaseSearch] = useState("");
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const { caseId } = Route.useSearch();
@@ -73,8 +74,9 @@ function PortalRoute() {
       actor?.authUserId,
       actor?.teamId,
       actor?.role,
+      caseSearch,
     ],
-    queryFn: () => listAnnualReturnCasePage({ data: { limit: 200 } }),
+    queryFn: () => listAnnualReturnCasePage({ data: { limit: 200, q: caseSearch } }),
     enabled:
       dataMode === "production" && actor?.role !== "Client" && !productionCaseId && !invalidCaseId,
     retry: false,
@@ -138,6 +140,17 @@ function PortalRoute() {
           <p className="text-sm text-muted-foreground">
             Open a case from the annual returns board to see its client portal.
           </p>
+          <label className="block text-sm">
+            搜尋全範圍案件
+            <input
+              className="min-h-11 ml-2 rounded border px-3"
+              value={caseSearch}
+              onChange={(event) => setCaseSearch(event.target.value)}
+            />
+            <span className="block text-xs text-muted-foreground">
+              最多顯示200項；搜尋在授權範圍執行。
+            </span>
+          </label>
           <label className="block text-sm">
             選擇案件
             <select
@@ -734,12 +747,16 @@ function ProductionDocumentPanel({
   const [outcomes, setOutcomes] = useState<Record<string, UploadOutcome>>({});
   const [uploading, setUploading] = useState(false);
   const productionReady = isUuid(companyId) && isUuid(caseId);
-  const documentsQuery = useQuery({
+  const documentsQuery = useInfiniteQuery({
     queryKey: annualReturnQueryKeys.documents(caseId),
-    queryFn: () => listDocuments({ data: { companyId, caseId } }),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listDocumentPage({ data: { companyId, caseId, limit: 100, cursor: pageParam } }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: productionReady,
     retry: false,
   });
+  const documentRows = documentsQuery.data?.pages.flatMap((page) => page.documents) ?? [];
   async function uploadOne(candidate: File): Promise<void> {
     const key = fileKey(candidate);
     setOutcomes((current) => ({ ...current, [key]: { state: "uploading" } }));
@@ -910,12 +927,10 @@ function ProductionDocumentPanel({
             {documentsQuery.error ? (
               <p className="py-3 text-sm text-status-yellow">Production documents unavailable.</p>
             ) : null}
-            {!documentsQuery.isLoading &&
-            !documentsQuery.error &&
-            (documentsQuery.data?.length ?? 0) === 0 ? (
+            {!documentsQuery.isLoading && !documentsQuery.error && documentRows.length === 0 ? (
               <p className="py-3 text-sm text-muted-foreground">No production documents yet.</p>
             ) : null}
-            {documentsQuery.data?.map((document) => (
+            {documentRows.map((document) => (
               <div
                 key={document.id}
                 className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
@@ -940,6 +955,16 @@ function ProductionDocumentPanel({
                 ) : null}
               </div>
             ))}
+            {documentsQuery.hasNextPage ? (
+              <button
+                type="button"
+                className="min-h-11 rounded border px-3"
+                disabled={documentsQuery.isFetchingNextPage}
+                onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
+              >
+                載入更多文件
+              </button>
+            ) : null}
           </div>
         </>
       )}

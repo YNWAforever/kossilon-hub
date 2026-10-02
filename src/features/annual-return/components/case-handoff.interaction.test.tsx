@@ -14,7 +14,12 @@ vi.mock("../handoff-server-fns", () => ({
   runHandoffCommand: mocks.command,
   exportApprovedHandoff: mocks.export,
 }));
-vi.mock("@/features/documents/server-fns", () => ({ listDocuments: mocks.documents }));
+vi.mock("@/features/documents/server-fns", () => ({
+  listDocumentPage: async (input: unknown) => ({
+    documents: await mocks.documents(input),
+    nextCursor: null,
+  }),
+}));
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();

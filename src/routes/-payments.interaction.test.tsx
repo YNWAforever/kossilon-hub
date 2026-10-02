@@ -25,6 +25,10 @@ vi.mock("../features/annual-return/server-fns", () => ({
 
 vi.mock("../features/documents/server-fns", () => ({
   listDocuments: serverFns.listDocuments,
+  listDocumentPage: async (input: unknown) => ({
+    documents: await serverFns.listDocuments(input),
+    nextCursor: null,
+  }),
   downloadDocument: serverFns.download,
 }));
 

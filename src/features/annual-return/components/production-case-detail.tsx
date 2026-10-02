@@ -74,9 +74,11 @@ function PendingIcon({ pending }: { pending: boolean }) {
 export function ProductionAnnualReturnCaseDetail({
   caseId,
   returnTo = "/annual-returns",
+  actorScope = "session",
 }: {
   caseId: string;
   returnTo?: string;
+  actorScope?: string;
 }) {
   const queryClient = useQueryClient();
   const actions = createProductionCaseActions(
@@ -269,6 +271,7 @@ export function ProductionAnnualReturnCaseDetail({
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
                 <StaffPicker
+                  actorScope={actorScope}
                   id="owner-id"
                   label="負責同事"
                   value={ownerId}
@@ -372,7 +375,7 @@ export function ProductionAnnualReturnCaseDetail({
 
           <CaseFindings caseId={caseId} locked={locked} />
 
-          <CaseHandoff caseId={caseId} locked={locked} />
+          <CaseHandoff caseId={caseId} locked={locked} actorScope={actorScope} />
 
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Payment</h2>
@@ -388,6 +391,7 @@ export function ProductionAnnualReturnCaseDetail({
                 ))}
               </select>
               <DocumentPicker
+                actorScope={actorScope}
                 id="payment-proof-document"
                 label="付款證明文件"
                 caseId={caseItem.id}
@@ -468,6 +472,7 @@ export function ProductionAnnualReturnCaseDetail({
                 onChange={(event) => setFilingReference(event.target.value)}
               />
               <DocumentPicker
+                actorScope={actorScope}
                 id="confirmation-document"
                 label="已核實回執文件"
                 caseId={caseItem.id}

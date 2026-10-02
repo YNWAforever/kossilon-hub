@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate, type SearchSchemaInput } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
-import { getAnnualReturnWorkViews } from "@/features/annual-return/server-fns";
+import {
+  getAnnualReturnWorkPage,
+  getAnnualReturnWorkMetrics,
+} from "@/features/annual-return/server-fns";
 import { WORK_VIEWS, type WorkViewKey } from "@/features/annual-return/work-views";
 import { dailyViewSearch, dailyReturnPath } from "@/features/annual-return/daily-view-state";
 
@@ -19,8 +22,9 @@ import { dailyViewSearch, dailyReturnPath } from "@/features/annual-return/daily
  */
 
 export const Route = createFileRoute("/today")({
-  validateSearch: (input: SearchSchemaInput & { view?: unknown; q?: unknown; sort?: unknown }) =>
-    dailyViewSearch(input),
+  validateSearch: (
+    input: SearchSchemaInput & { view?: unknown; q?: unknown; sort?: unknown; cursor?: unknown },
+  ) => dailyViewSearch(input),
   component: TodayRoute,
 });
 
@@ -30,7 +34,7 @@ function TodayRoute() {
   const active = search.view;
   const navigate = useNavigate({ from: "/today" });
   const setActive = (view: WorkViewKey) =>
-    void navigate({ search: { ...search, view }, replace: true });
+    void navigate({ search: { ...search, view, cursor: undefined }, replace: true });
 
   const viewsQuery = useQuery({
     queryKey: [
@@ -41,8 +45,15 @@ function TodayRoute() {
       actor?.role,
       actor?.teamId,
       actor?.active,
+      search,
     ],
-    queryFn: () => getAnnualReturnWorkViews(),
+    queryFn: () => getAnnualReturnWorkPage({ data: { ...search, limit: 50 } }),
+    enabled: dataMode === "production",
+    retry: false,
+  });
+  const metricsQuery = useQuery({
+    queryKey: ["annual-return", "work-metrics", actor, search.q],
+    queryFn: () => getAnnualReturnWorkMetrics({ data: { q: search.q } }),
     enabled: dataMode === "production",
     retry: false,
   });
@@ -61,20 +72,10 @@ function TodayRoute() {
     );
   }
 
-  const views = viewsQuery.data ?? [];
-  const current = views.find((view) => view.definition.key === active);
-  const rows = (current?.rows ?? [])
-    .filter((row) =>
-      `${row.companyName} ${row.ownerName} ${row.returnYear}`
-        .toLocaleLowerCase()
-        .includes(search.q.toLocaleLowerCase()),
-    )
-    .slice()
-    .sort((a, b) =>
-      search.sort === "company"
-        ? a.companyName.localeCompare(b.companyName) || a.caseId.localeCompare(b.caseId)
-        : a.filingDueDate.localeCompare(b.filingDueDate) || a.caseId.localeCompare(b.caseId),
-    );
+  const current = viewsQuery.data
+    ? { definition: WORK_VIEWS.find((v) => v.key === active)!, rows: viewsQuery.data.rows }
+    : undefined;
+  const rows = viewsQuery.data?.rows ?? [];
 
   return (
     <main className="flex-1 space-y-6 p-6">
@@ -87,7 +88,10 @@ function TodayRoute() {
             className="min-h-11 rounded-md border px-3"
             value={search.q}
             onChange={(event) =>
-              void navigate({ search: { ...search, q: event.target.value }, replace: true })
+              void navigate({
+                search: { ...search, q: event.target.value, cursor: undefined },
+                replace: true,
+              })
             }
           />
         </label>
@@ -98,7 +102,11 @@ function TodayRoute() {
             value={search.sort}
             onChange={(event) =>
               void navigate({
-                search: { ...search, sort: event.target.value as "deadline" | "company" },
+                search: {
+                  ...search,
+                  sort: event.target.value as "deadline" | "company",
+                  cursor: undefined,
+                },
                 replace: true,
               })
             }
@@ -143,12 +151,20 @@ function TodayRoute() {
             {definition.label}
             {/* A count is only shown for a view that can actually count. An
                 unreleased view showing "0" would be a claim it cannot make. */}
-            {definition.released && viewsQuery.data
-              ? ` (${views.find((x) => x.definition.key === definition.key)?.rows.length ?? 0})`
+            {definition.released && metricsQuery.data
+              ? ` (${metricsQuery.data[definition.key]})`
               : ""}
           </button>
         ))}
       </nav>
+      {metricsQuery.isError ? (
+        <p role="alert">
+          工作總數未能載入；已顯示列表不是全範圍總數。
+          <button className="min-h-11 px-3" onClick={() => void metricsQuery.refetch()}>
+            重試總數
+          </button>
+        </p>
+      ) : null}
 
       {current ? (
         <section className="rounded-lg border bg-card">
@@ -206,6 +222,26 @@ function TodayRoute() {
           )}
         </section>
       ) : null}
+      <div className="flex flex-wrap gap-3">
+        {search.cursor ? (
+          <button
+            className="min-h-11 rounded border px-3"
+            onClick={() => void navigate({ search: { ...search, cursor: undefined } })}
+          >
+            回第一頁工作
+          </button>
+        ) : null}
+        {viewsQuery.data?.nextCursor ? (
+          <button
+            className="min-h-11 rounded border px-3"
+            onClick={() =>
+              void navigate({ search: { ...search, cursor: viewsQuery.data!.nextCursor! } })
+            }
+          >
+            下一頁工作
+          </button>
+        ) : null}
+      </div>
     </main>
   );
 }

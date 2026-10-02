@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
-import { listClientAssignmentOptions, listClients } from "../server-fns";
+import { listClientAssignmentOptions, listClientPage } from "../server-fns";
 import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types";
 import { dataOriginLabel } from "../data-origin";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
@@ -44,10 +44,19 @@ export function ProductionClientRegister({
   const [teamFilter, setTeamFilter] = useState("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [includeFixtures, setIncludeFixtures] = useState(false);
+  const [pagination, setPagination] = useState<{ key: string; cursor?: string }>({ key: "" });
+  const filters = {
+    includeFixtures,
+    q: query,
+    ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+    ...(teamFilter !== "all" ? { teamId: teamFilter } : {}),
+  };
+  const filterKey = JSON.stringify(filters),
+    cursor = pagination.key === filterKey ? pagination.cursor : undefined;
 
   const clientsQuery = useQuery({
-    queryKey: ["clients", { includeFixtures, actorScope: actor }],
-    queryFn: () => listClients({ data: { includeFixtures } }),
+    queryKey: ["clients", { ...filters, cursor, actorScope: actor }],
+    queryFn: () => listClientPage({ data: { ...filters, cursor, limit: 100 } }),
     retry: false,
   });
 
@@ -57,21 +66,7 @@ export function ProductionClientRegister({
     retry: false,
   });
 
-  const clients = useMemo(() => clientsQuery.data ?? [], [clientsQuery.data]);
-
-  const visibleClients = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return clients.filter((client) => {
-      const matchesQuery =
-        needle.length === 0 ||
-        client.companyName.toLowerCase().includes(needle) ||
-        client.crNumber.toLowerCase().includes(needle) ||
-        client.brNumber.toLowerCase().includes(needle);
-      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
-      const matchesTeam = teamFilter === "all" || client.teamId === teamFilter;
-      return matchesQuery && matchesStatus && matchesTeam;
-    });
-  }, [clients, query, statusFilter, teamFilter]);
+  const visibleClients = clientsQuery.data?.clients ?? [];
 
   function handleCreated() {
     void queryClient.invalidateQueries({ queryKey: ["clients"] });
@@ -109,8 +104,8 @@ export function ProductionClientRegister({
             includeFixtures,
           }}
           page={visibleClients.map((c) => ({ id: c.id, label: c.companyName }))}
-          total={clientsQuery.isSuccess ? visibleClients.length : null}
-          pageSize={visibleClients.length}
+          total={clientsQuery.data?.total ?? null}
+          pageSize={100}
           maintenanceActions={["client_maintenance"]}
         />
       ) : null}
@@ -207,6 +202,26 @@ export function ProductionClientRegister({
           </p>
         ) : null}
       </section>
+      <div className="flex gap-3">
+        {cursor ? (
+          <button
+            className="min-h-11 rounded border px-3"
+            onClick={() => setPagination({ key: filterKey })}
+          >
+            回第一頁客戶
+          </button>
+        ) : null}
+        {clientsQuery.data?.nextCursor ? (
+          <button
+            className="min-h-11 rounded border px-3"
+            onClick={() =>
+              setPagination({ key: filterKey, cursor: clientsQuery.data!.nextCursor! })
+            }
+          >
+            下一頁客戶
+          </button>
+        ) : null}
+      </div>
 
       {optionsQuery.data ? (
         <ClientFormDialog

@@ -40,7 +40,13 @@ vi.mock("../handoff-server-fns", () => ({
   }),
   runHandoffCommand: vi.fn(),
 }));
-vi.mock("@/features/documents/server-fns", () => documentServerFns);
+vi.mock("@/features/documents/server-fns", () => ({
+  ...documentServerFns,
+  listDocumentPage: async (input: unknown) => ({
+    documents: await documentServerFns.listDocuments(input),
+    nextCursor: null,
+  }),
+}));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));

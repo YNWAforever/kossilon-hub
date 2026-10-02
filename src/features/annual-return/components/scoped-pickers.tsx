@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { listDocuments } from "@/features/documents/server-fns";
+import { useState } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { listDocumentPage } from "@/features/documents/server-fns";
+import type { DocumentSummary } from "@/features/documents/repository";
 import { documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentCategory } from "@/features/documents/types";
 import { listAssignableStaff } from "../server-fns";
@@ -24,16 +26,19 @@ export function StaffPicker({
   value,
   onChange,
   disabled,
+  actorScope = "session",
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  actorScope?: string;
 }) {
+  const [query, setQuery] = useState("");
   const staffQuery = useQuery({
-    queryKey: STAFF_QUERY_KEY,
-    queryFn: () => listAssignableStaff(),
+    queryKey: [...STAFF_QUERY_KEY, actorScope, query],
+    queryFn: () => listAssignableStaff({ data: { q: query, limit: 200 } }),
     retry: false,
     staleTime: 60_000,
   });
@@ -46,6 +51,15 @@ export function StaffPicker({
 
   return (
     <div>
+      <label className="text-sm">
+        搜尋{label}
+        <input
+          className="min-h-11 w-full rounded border px-3"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </label>
+      <p className="text-xs text-muted-foreground">最多顯示200項；搜尋涵蓋全部獲授權同事。</p>
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
       </label>
@@ -65,7 +79,7 @@ export function StaffPicker({
         </option>
         {!valueIsKnown && value ? (
           <option value={value} disabled>
-            目前負責人不在你的範圍內
+            目前負責人不在此頁搜尋結果
           </option>
         ) : null}
         {options.map((member) => (
@@ -75,6 +89,11 @@ export function StaffPicker({
           </option>
         ))}
       </select>
+      {staffQuery.error ? (
+        <button type="button" className="min-h-11" onClick={() => void staffQuery.refetch()}>
+          重試同事搜尋
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -94,6 +113,8 @@ export type DocumentPickerProps = {
    * -- a filing receipt, payment proof -- rather than a working reference.
    */
   requireVerified?: boolean;
+  actorScope?: string;
+  onSelectDocument?: (document: DocumentSummary | undefined) => void;
 };
 
 export function DocumentPicker({
@@ -105,14 +126,21 @@ export function DocumentPicker({
   onChange,
   disabled,
   requireVerified = true,
+  actorScope = "session",
+  onSelectDocument,
 }: DocumentPickerProps) {
-  const documentsQuery = useQuery({
-    queryKey: ["documents", "picker", caseId],
-    queryFn: () => listDocuments({ data: { caseId } }),
+  const [query, setQuery] = useState("");
+  const category = categories.length === 1 ? categories[0] : undefined;
+  const documentsQuery = useInfiniteQuery({
+    queryKey: ["documents", "picker", caseId, actorScope, query, categories],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listDocumentPage({ data: { caseId, q: query, category, limit: 100, cursor: pageParam } }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
 
-  const all = documentsQuery.data ?? [];
+  const all = documentsQuery.data?.pages.flatMap((page) => page.documents) ?? [];
   const candidates = all.filter((document) => {
     if (!categories.includes(document.category)) return false;
     if (!requireVerified) return true;
@@ -126,6 +154,14 @@ export function DocumentPicker({
 
   return (
     <div className="min-w-0">
+      <label className="text-sm">
+        搜尋{label}文件
+        <input
+          className="min-h-11 w-full rounded border px-3"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </label>
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
       </label>
@@ -134,16 +170,19 @@ export function DocumentPicker({
         className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
         disabled={disabled || documentsQuery.isLoading || Boolean(documentsQuery.error)}
         value={valueIsKnown ? value : ""}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          onChange(event.target.value);
+          onSelectDocument?.(candidates.find((document) => document.id === event.target.value));
+        }}
       >
         <option value="">
           {documentsQuery.isLoading
             ? "載入文件…"
             : documentsQuery.error
               ? "無法載入文件"
-              : candidates.length === 0
+              : candidates.length === 0 && !documentsQuery.hasNextPage
                 ? "此案件沒有合適的已核實文件"
-                : "選擇文件"}
+                : "選擇文件或載入更多"}
         </option>
         {!valueIsKnown && value ? (
           <option value={value} disabled>
@@ -156,8 +195,37 @@ export function DocumentPicker({
           </option>
         ))}
       </select>
+      {documentsQuery.hasNextPage ? (
+        <button
+          type="button"
+          className="min-h-11 rounded border px-3"
+          disabled={documentsQuery.isFetchingNextPage}
+          onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
+        >
+          載入更多{label}文件
+        </button>
+      ) : null}
+      {documentsQuery.error ? (
+        <div role="alert">
+          文件搜尋未完成。
+          <button
+            type="button"
+            className="min-h-11"
+            onClick={() =>
+              void (documentsQuery.isFetchNextPageError
+                ? documentsQuery.fetchNextPage({ cancelRefetch: false })
+                : documentsQuery.refetch())
+            }
+          >
+            重試文件搜尋
+          </button>
+        </div>
+      ) : null}
       {/* Naming why the list is short is more useful than an empty dropdown. */}
-      {!documentsQuery.isLoading && !documentsQuery.error && candidates.length === 0 ? (
+      {!documentsQuery.isLoading &&
+      !documentsQuery.error &&
+      !documentsQuery.hasNextPage &&
+      candidates.length === 0 ? (
         <p className="mt-1 text-xs text-muted-foreground">
           需要先上載並完成掃描及覆核，文件才會在此出現。
         </p>

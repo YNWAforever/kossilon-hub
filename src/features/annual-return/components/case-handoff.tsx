@@ -2,14 +2,21 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCaseHandoffs, runHandoffCommand } from "../handoff-server-fns";
 import { handoffFactLabel } from "../handoff";
-import { listDocuments } from "@/features/documents/server-fns";
 import { DocumentPicker } from "./scoped-pickers";
 import { DOCUMENT_CATEGORIES } from "@/features/documents/types";
 import { annualReturnQueryKeys } from "../query-keys";
 const categories = DOCUMENT_CATEGORIES;
 const control = "mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm";
 const button = "rounded-md border px-3 py-2 text-sm disabled:opacity-50";
-export function CaseHandoff({ caseId, locked }: { caseId: string; locked: boolean }) {
+export function CaseHandoff({
+  caseId,
+  locked,
+  actorScope = "session",
+}: {
+  caseId: string;
+  locked: boolean;
+  actorScope?: string;
+}) {
   const client = useQueryClient(),
     key = ["annual-return", "handoff", caseId];
   const workflow = useQuery({
@@ -17,11 +24,7 @@ export function CaseHandoff({ caseId, locked }: { caseId: string; locked: boolea
     queryFn: () => getCaseHandoffs({ data: { caseId } }),
     retry: false,
   });
-  const documents = useQuery({
-    queryKey: ["documents", "picker", caseId],
-    queryFn: () => listDocuments({ data: { caseId } }),
-    retry: false,
-  });
+  const [selectedVersions, setSelectedVersions] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState(false),
     [selected, setSelected] = useState(""),
     [reference, setReference] = useState(""),
@@ -83,8 +86,7 @@ export function CaseHandoff({ caseId, locked }: { caseId: string; locked: boolea
   });
   const disabled = locked || command.isPending || archive.isPending;
   const current = h?.manifestSha256 === p?.manifestSha256 && p?.readyForApproval;
-  const evidence = (id: string) =>
-    documents.data?.find((d) => d.id === id)?.currentVersionId ?? null;
+  const evidence = (id: string) => selectedVersions[id] ?? null;
   return (
     <section className="space-y-4 border-b pb-4">
       <h2 className="text-base font-semibold">套件批准、交件及回件</h2>
@@ -235,6 +237,14 @@ export function CaseHandoff({ caseId, locked }: { caseId: string; locked: boolea
                       />
                     </label>
                     <DocumentPicker
+                      actorScope={actorScope}
+                      onSelectDocument={(document) => {
+                        if (document?.currentVersionId)
+                          setSelectedVersions((current) => ({
+                            ...current,
+                            [document.id]: document.currentVersionId!,
+                          }));
+                      }}
                       id={`handoff-proof-${caseId}`}
                       label="提交證明（可選，先完成掃描及覆核）"
                       caseId={caseId}
@@ -362,6 +372,14 @@ export function CaseHandoff({ caseId, locked }: { caseId: string; locked: boolea
                     />
                   </label>
                   <DocumentPicker
+                    actorScope={actorScope}
+                    onSelectDocument={(document) => {
+                      if (document?.currentVersionId)
+                        setSelectedVersions((current) => ({
+                          ...current,
+                          [document.id]: document.currentVersionId!,
+                        }));
+                    }}
                     id={`handoff-return-${caseId}`}
                     label="回件附件（可含待掃描文件）"
                     caseId={caseId}

@@ -5,19 +5,23 @@ import { caseReturnPath } from "@/features/annual-return/daily-view-state";
 
 export const Route = createFileRoute("/annual-returns/$id")({
   validateSearch: (input: SearchSchemaInput & { returnTo?: unknown }) => ({
-    returnTo: caseReturnPath(input.returnTo),
+    ...(input.returnTo !== undefined ? { returnTo: caseReturnPath(input.returnTo) } : {}),
   }),
   component: AnnualReturnDetailRoute,
 });
 
 function AnnualReturnDetailRoute() {
   const { id } = Route.useParams();
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
   const { returnTo } = Route.useSearch();
 
   return dataMode === "demo" ? (
     <DemoAnnualReturnCaseDetail caseId={id} />
   ) : (
-    <ProductionAnnualReturnCaseDetail caseId={id} returnTo={returnTo} />
+    <ProductionAnnualReturnCaseDetail
+      caseId={id}
+      returnTo={returnTo}
+      actorScope={JSON.stringify(actor)}
+    />
   );
 }

@@ -58,6 +58,7 @@ export function ProductionAnnualReturnCommandCenter({
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [includeFixtures, setIncludeFixtures] = useState(false);
+  const [companySearch, setCompanySearch] = useState("");
 
   const filters = { ...boardFiltersFromSearch(search, BOARD_PAGE_SIZE), includeFixtures };
   const { limit: pageLimit, ...bulkFilters } = filters;
@@ -83,8 +84,14 @@ export function ProductionAnnualReturnCommandCenter({
   // there is no reason to fire them on every board load when most visits never
   // open the dialog at all.
   const eligibleCompaniesQuery = useQuery({
-    queryKey: ["annual-returns", "eligible-companies", { includeFixtures }, actorScope],
-    queryFn: () => listCompaniesEligibleForCase({ data: { includeFixtures } }),
+    queryKey: [
+      "annual-returns",
+      "eligible-companies",
+      { includeFixtures, q: companySearch },
+      actorScope,
+    ],
+    queryFn: () =>
+      listCompaniesEligibleForCase({ data: { includeFixtures, q: companySearch, limit: 200 } }),
     enabled: isCreateOpen,
     retry: false,
   });
@@ -208,6 +215,8 @@ export function ProductionAnnualReturnCommandCenter({
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         companies={eligibleCompaniesQuery.data ?? []}
+        companySearch={companySearch}
+        onCompanySearch={setCompanySearch}
         templates={activeTemplatesQuery.data ?? []}
         owners={assignmentOptionsQuery.data?.owners ?? []}
         isLoading={

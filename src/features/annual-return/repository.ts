@@ -16,6 +16,13 @@ import {
 import { shouldChaseClient } from "./outstanding";
 import { caseScopeSql, countScopedCases, type ScopedCaseMetrics } from "./case-scope";
 import { attachCaseReadiness } from "./readiness-repository";
+import {
+  listWorkView as queryWorkView,
+  workViewMetrics as queryWorkViewMetrics,
+  type WorkViewQuery,
+  type WorkViewPage,
+  type WorkViewCounts,
+} from "./work-view-repository";
 import { ReadinessConflictError, readinessForCase } from "./readiness";
 import { verifiedPaymentCredit } from "./payment-evidence-state";
 import { ensureWorkItemForEvent } from "@/features/work-items/repository";
@@ -394,6 +401,11 @@ export type CasePartyRecord = {
 };
 
 export type AnnualReturnRepository = {
+  listWorkView(input: WorkViewQuery): Promise<WorkViewPage>;
+  workViewMetrics(input: {
+    scope: CaseFilters;
+    viewerUserId: string | null;
+  }): Promise<WorkViewCounts>;
   listCases(filters: CaseFilters): Promise<AnnualReturnCase[]>;
   listCaseRequirements(caseId: string): Promise<RequirementInstanceState[]>;
   /**
@@ -453,8 +465,15 @@ export type AnnualReturnRepository = {
   getCase(id: string): Promise<AnnualReturnCase | null>;
   listCompaniesEligibleForCase(filters?: {
     includeFixtures?: boolean;
+    q?: string;
+    teamId?: string;
+    limit?: number;
   }): Promise<EligibleCompanyForCase[]>;
-  listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]>;
+  listAssignableStaff(scope: {
+    teamId?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<AssignableStaffMember[]>;
   createCase(input: CreateAnnualReturnCaseInput): Promise<AnnualReturnCase>;
   createCaseRecord(input: CreateAnnualReturnCaseInput): Promise<{ id: string }>;
   dashboardMetrics(
@@ -1079,7 +1098,8 @@ export function createAnnualReturnRepository(
   ): Promise<AnnualReturnCase[]> {
     const pageSize = options.pageSize ?? DEFAULT_CASE_LIMIT;
     // A ceiling so a bug here cannot become an unbounded scan; at the default
-    // page size this is 20,000 cases, far beyond any real firm's book.
+    // page size this is 20,000 cases. Exceeding the budget explicitly fails;
+    // operational lists use SQL-scoped cursor pages instead.
     const maxPages = options.maxPages ?? 100;
     const all: AnnualReturnCase[] = [];
     let cursor: string | undefined;
@@ -1089,7 +1109,9 @@ export function createAnnualReturnRepository(
       if (!result.nextCursor) return all;
       cursor = result.nextCursor;
     }
-    return all;
+    throw new Error(
+      "Case scan exceeded its explicit page budget; narrow the scope or resume with a cursor.",
+    );
   }
 
   /** SQL totals over the same actor/origin/filter scope as the case list. */
@@ -1141,8 +1163,11 @@ export function createAnnualReturnRepository(
   }
 
   async function listCompaniesEligibleForCase(
-    filters: { includeFixtures?: boolean } = {},
+    filters: { includeFixtures?: boolean; q?: string; teamId?: string; limit?: number } = {},
   ): Promise<EligibleCompanyForCase[]> {
+    const q = filters.q?.trim()
+      ? `%${filters.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%`
+      : null;
     const rows = await sql<EligibleCompanyRow[]>`
       select
         c.id,
@@ -1157,13 +1182,15 @@ export function createAnnualReturnRepository(
       join teams t on t.id = c.assigned_team_id
       where c.status = 'active'
         and (${filters.includeFixtures ?? false}::boolean or c.data_origin <> 'fixture')
+        and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id=${filters.teamId ?? null}::uuid)
+        and (${q}::text is null or c.company_name ilike ${q} escape '\\' or c.cr_number ilike ${q} escape '\\')
         and not exists (
           select 1
           from annual_return_cases arc
           where arc.company_id = c.id
             and arc.return_year = extract(year from c.annual_return_basis_date)::int
         )
-      order by c.company_name asc
+      order by c.company_name asc,c.id limit ${Math.min(200, Math.max(1, filters.limit ?? 200))}
     `;
 
     return rows.map((row) => ({
@@ -1184,7 +1211,12 @@ export function createAnnualReturnRepository(
    * narrow by team for anyone who is not an Admin, so the list narrows the same
    * way. An inactive user is never offered.
    */
-  async function listAssignableStaff(scope: { teamId?: string }): Promise<AssignableStaffMember[]> {
+  async function listAssignableStaff(scope: {
+    teamId?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<AssignableStaffMember[]> {
+    const q = scope.q?.trim() ? `%${scope.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%` : null;
     const rows = await sql<
       {
         id: string;
@@ -1200,7 +1232,8 @@ export function createAnnualReturnRepository(
       left join teams t on t.id = u.team_id
       where u.active = true and u.role in ('Admin','Manager','Staff')
         and (${scope.teamId ?? null}::uuid is null or u.team_id = ${scope.teamId ?? null})
-      order by u.name asc
+        and (${q}::text is null or u.name ilike ${q} escape '\\')
+      order by u.name asc,u.id limit ${Math.min(200, Math.max(1, scope.limit ?? 200))}
     `;
     return rows.map((row) => ({
       id: row.id,
@@ -2961,6 +2994,8 @@ export function createAnnualReturnRepository(
 
   return {
     listCases,
+    listWorkView: (input) => queryWorkView(sql, input, readToday()),
+    workViewMetrics: (input) => queryWorkViewMetrics(sql, input, readToday()),
     listCaseRequirements,
     syncRequirementInstances,
     syncCasePartiesFromOfficers,
