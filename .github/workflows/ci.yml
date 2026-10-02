@@ -78,6 +78,15 @@ jobs:
       - name: Pre-deploy gate
         run: npm run verify:firm -- --dry-run
 
+      - name: Original audit acceptance ledger (local contracts only)
+        run: npm run verify:audit-release
+
+      - name: Install isolated local browser
+        run: bunx playwright install --with-deps chromium
+
+      - name: Local demo browser and real parser regressions (not runtime UAT)
+        run: npm run test:e2e:local
+
       # The scheduled handler only reaches the Worker through a nitro plugin, and
       # nothing but a real build proves the hook actually lands in the output.
       - name: Build

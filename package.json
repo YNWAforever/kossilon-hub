@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest --exclude .worktrees/**",
     "test:e2e:local": "playwright test --config playwright.local.config.ts",
+    "test:e2e:audit": "playwright test --config playwright.audit.config.ts",
+    "verify:audit-release": "node --experimental-strip-types scripts/verify-audit-release.ts",
     "validate:runtime": "node --experimental-strip-types scripts/validate-firm-runtime.ts",
     "validate:neon-auth-demo": "node --experimental-strip-types scripts/validate-neon-auth-demo.ts",
     "db:migrate": "bun scripts/db-migrate.ts",

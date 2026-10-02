@@ -1,0 +1,28 @@
+# F01–F20：候選source、證據及仍未驗收範圍
+
+基準 finding recheck 仍保存於 status.md；本表只記本次候選修復。每個Task的完整 source／review SHA及gate JSON見同一task ledger，不把baseline観察轉成新PASS。所有PR仍是draft，正式deployment/schema未變更。
+
+| Finding | Task／source                        | 已驗證的修復                                                                                                                   | 真實runtime尚缺                                                  |
+| ------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| F01     | T01／1fd8ebf                        | ledger/hash/physical DDL分開；guarded0067及populated local restore/rollback                                                    | 66historicIDs reconciliation／approved SQL／provider restore     |
+| F02     | T02／b34148c                        | shared slot/lease/fencing、pass outcomes、sole owner gate、unknown不重派                                                       | staging唯一native trigger三次真tick／積壓受控處理                |
+| F03     | T04／2d7d6a9                        | canonical seededUUID、invalid/array fail-closed、Portal可選案件                                                                | fresh Auth及實際案件／上載journey                                |
+| F04     | T06／4e77e6d                        | LEFT current lineage、metadata≠bytes、guarded additive recovery及locks                                                         | genuine R2 object roundtrip／逐筆批准repair                      |
+| F05     | T08／faacd4a、b6bdc75               | current exact-version readiness、shared critical blockers、stale409；T21SQL/domain parity                                      | genuine scanned evidence及批准交件journey                        |
+| F06     | T09／d099d4d、b6bdc75               | shared scoped KPI/HK dates、full-scope counts、party/case units                                                                | fresh cross-role browser totals／staging量度                     |
+| F07     | T07／ddfa7f8；PR10／4a97955         | terminal201/400/401、dedup、actor/filterrace、same-scope failed-next retained                                                  | actual fresh-role paginationjourney                              |
+| F08     | T12／2955a27、cb45d20               | exact immutableAuthID、active states、version、two Admin invariant、disable/transferlocks                                      | genuine Auth／Google／核准controlled accounts；沒有invite/grant  |
+| F09     | T14／124d389、5b3e536               | reviewed mapping、current preview apply、rowjournal、version/idempotency、kill/resume                                          | 原XLSX及fresh-role小批驗收／正式apply授權                        |
+| F10     | T15／55d9b2a；T16／47fc115、422b822 | actual version/SHA/scan/review fences、unpdf、grounded page/span引用、AI只建議                                                 | 真scanner/R2/OCR/AI／golden accuracy；模擬不作receipt            |
+| F11     | T17／2d76518、bd2179d；T18／3226db6 | unambiguouscontact/case、attachmentscope、currentapprovedpreview、unknown/replay／draft-onlybulk                               | WOZTELL真配置／scopedrecipient／delivery receipt／CDN policy     |
+| F12     | T19／73c2605、44ad90b               | immutablecurrentmanifest、safe real-byte ZIP／same-origin stream、manual submission attestation、quarantine returns／reconcile | destination真protocol／receipt／timeout恢復及platform streaming  |
+| F13     | T13／5364aa7、cb45d20；T18／3226db6 | shared single domain services、dryrun/per-item auth/version/audit、partialresults、leases/resume/cancel                        | fresh-role完整批量journey／native recovery；首批正式改資料需批准 |
+| F14     | T10／c070282、b6bdc75               | real name/team/workload、authorityassignment、business blocker與SLA分開                                                        | fresh-role queue及controlledhandoff                              |
+| F15     | T11／e0efc54、b6bdc75               | current receiptversion、partial/duplicate/reasonedreturn、two-connectionatomiccredit/audit                                     | genuinepaymentproof bytes／scan／Finance既有角色映射驗收         |
+| F16     | T05／4e77e6d；PR10／4a97955         | shared list/by-ID authority、activeprofile／Clientmembership、scope-before-limit；actorcache隔離                               | fresh ClientA/B及role/permissionrevocationjourney                |
+| F17     | 早期T23／3d3c373                    | Admin factualcapabilities／config≠health≠approval、unknown獨立query                                                            | deployedUI／genuineprovider samples／Operationsnativeevidence    |
+| F18     | T21／3b4e4ba；PR10／4a97955         | boundedpagedmetadata／tupleµs、globalstaff/companysearch、JITlocalrestore、10k/50kfulltraversal；164requests0errors            | approvedstagingbudget／coldcaches／真actor/platform/http量度     |
+| F19     | T20／38adba6；PR10／4a97955         | HKrole-nav44px／390layout/focus、returnstate、observededitorrevision／409、immutable0082snapshot                               | genuinecoremobile/keyboardjourney／production0082                |
+| F20     | T03／49f6fb6                        | explicitorigin／fixture excluded、historicalreadonly、outboundorigin guards                                                    | businessprovenance／逐筆正式classification review                |
+
+T22補充：existing support10files120PASS0skip79.27s（真PG），original50immutable ledger與guarded staging契約6PASS；既有read-only demo runner重用，新增真正PDFworker解析測試。完整PR11CI／sole fresh review結果在 `evidence/2026-10-02-pr11-gates.json`。B01 independent security draft #109及B02 directPDFpatch另列，不刪原findings／UAT；剩餘dependency gate見security-triage.md。

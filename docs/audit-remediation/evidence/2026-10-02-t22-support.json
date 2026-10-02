@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-02",
+  "source_commit": "1c638d4dd0557964023bf0928f2540641b698394",
+  "environment": "LOCAL ONLY actualNode22.23.3/Bun1.3.14/Postgres17 localhost55441/kossilon_pr02_ci",
+  "support": {
+    "failed": 0,
+    "passed": 120,
+    "seconds": 79.27,
+    "files": 10,
+    "skipped": 0
+  },
+  "release_contract": {
+    "failed": 0,
+    "passed": 6,
+    "seconds": 0.849,
+    "files": 2,
+    "skipped": 0
+  },
+  "staging": {
+    "exit": 1,
+    "accounts_created": 0,
+    "browser_opened": false,
+    "command": "npm run test:e2e:audit -- --list",
+    "missing": "AUDIT_STAGING_ORIGIN"
+  },
+  "b02": {
+    "actual_browser_parser_passed": 2,
+    "npm_advisories_packages": 9,
+    "bun_advisories_packages": 13,
+    "pdf_advisory_absent_both": true,
+    "pdfjs": "6.2.108",
+    "frozen_install": "PASS",
+    "seconds": 18.8
+  },
+  "uat": {
+    "not_run": 0,
+    "local_only_pass": 19,
+    "blocked": 31,
+    "immutable_verified": true,
+    "original": 50
+  },
+  "production_mutated": false,
+  "logs": [
+    {
+      "path": ".worktrees/audit-baseline-20261001/t22-release-contract-red.log",
+      "sha256": "65fbc0adfd6df1c1172bfa47112b45af82adddf0f607a81290ba3cd3c17e53bc"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/t22-release-contract-green.log",
+      "sha256": "c84231f24d6398c84e9196d845e1e59e48913273bb326d5879b2ac554f7ea277"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/t22-support-green.log",
+      "sha256": "d37540af2b3f38569a0e337cd3951b6a0e1c73a8e435434cf8ca094c407c730e"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/t22-staging-preflight-blocked.log",
+      "sha256": "b3062aad8ebf972caa3c62dd83b7f94df334ff1417f7aa5dce520cdbad2ff601"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b02-install.log",
+      "sha256": "766b69fc7f713f02eebcfab0c5796912013c34bb1e92f6665984201512cdc833"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b02-frozen-install.log",
+      "sha256": "8a1ab1d6990bac5d54e767b288fd751cd9d649f720d6296997242592415b5b86"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b02-parser-browser.log",
+      "sha256": "55c59702de59f908a49f9599ba6b0e8aab268b283b17cf35a41ba617360da8dd"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b02-parser-diagnosis.log",
+      "sha256": "510b9ff49818c7e2d521815f8c93e3b5719ae0a3b7bade9dcaa777094c16a414"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b02-parser-browser-green.log",
+      "sha256": "cc7497833d28d500d9b499e7bd481cdf93ec9fbb02b067bdb5e4cf75778ab78d"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b02-npm-audit-synced.json",
+      "sha256": "1bf09d1622ae1999af113f41e0300d17d3e0bc33f21d2d4843a0ceae4712ff26"
+    },
+    {
+      "path": ".worktrees/audit-baseline-20261001/b02-bun-audit-after.json",
+      "sha256": "50e1938b01ae8c86c9adac4faab7d4e98008992dcc7a28b97f6e0b496245624b"
+    }
+  ]
+}
