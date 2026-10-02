@@ -6,6 +6,7 @@
  * with reality — db-integration-files.convention.test.ts enforces it.
  */
 export const DB_INTEGRATION_TEST_FILES = [
+  "src/test/child-test-lifetime.integration.test.ts",
   "src/test/sql-test-lifetime.integration.test.ts",
   "src/features/nar-import/fixture-timeout.integration.test.ts",
   "src/server/db/operational-read.integration.test.ts",

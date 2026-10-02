@@ -29,23 +29,40 @@ if (process.env.AUDIT_NAR_TIMEOUT_PROBE === "1" && url) {
     async () =>
       fixture(1, async (f) => {
         const input = f.inputs[f.rowIds[0]];
+        const ownerId = input.ownerId;
+        if (!ownerId) throw new Error("The timeout probe requires its fixture owner.");
+        const lateWorkerCompanyId = crypto.randomUUID();
+        const worker = openFixtureWorker();
         console.info(
           "B07_TIMEOUT_FIXTURE",
           JSON.stringify({
             companyId: f.companies[0],
             batchId: f.batchId,
             actorId: f.actor.userId,
-            ownerId: input.ownerId,
+            ownerId,
             templateId: input.templateId,
+            lateWorkerCompanyId,
           }),
         );
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        await sql!.unsafe("select 1");
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          await worker.sql`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,status,assigned_owner_id,assigned_team_id,data_origin) values(${lateWorkerCompanyId},'Synthetic NAR late worker',${lateWorkerCompanyId},${lateWorkerCompanyId},'2020-01-01','2026-01-01','Test','Test','active',${ownerId},${team},'fixture')`;
+          await sql!.unsafe("select 1");
+        } finally {
+          await worker.close();
+        }
       }),
     1000,
   );
 }
 const team = "10000000-0000-0000-0000-000000000001";
+function openFixtureWorker() {
+  const signal = activeSignal;
+  if (!signal) throw new Error("Independent NAR workers require an active fixture.");
+  signal.throwIfAborted();
+  const raw = createSqlClient(url!, { max: 1 });
+  return { sql: guardSqlTestLifetime(raw, () => signal), close: () => raw.end() };
+}
 async function fixture(n: number, run: Parameters<typeof fixtureCore>[1]) {
   const context = getCurrentTest()?.context;
   if (!context) throw new Error("The NAR fixture requires a running Vitest test.");
@@ -305,11 +322,11 @@ describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
     }));
   it("concurrent independent workers on the same job apply each row exactly once", async () =>
     fixture(3, async (f) => {
-      const a = createSqlClient(url!, { max: 1 }),
-        b = createSqlClient(url!, { max: 1 });
+      const a = openFixtureWorker(),
+        b = openFixtureWorker();
       try {
-        expect((await a`select pg_backend_pid() pid`)[0].pid).not.toBe(
-          (await b`select pg_backend_pid() pid`)[0].pid,
+        expect((await a.sql`select pg_backend_pid() pid`)[0].pid).not.toBe(
+          (await b.sql`select pg_backend_pid() pid`)[0].pid,
         );
         const repo = createNarApplyRepository({ sql: sql! });
         const p = await repo.preview(f.actor, {
@@ -322,7 +339,7 @@ describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
           idempotencyKey: crypto.randomUUID(),
         });
         await Promise.all(
-          [a, b].map((client) =>
+          [a.sql, b.sql].map((client) =>
             runNarApplyChunk({
               repository: createNarApplyRepository({ sql: client }),
               actor: f.actor,
@@ -337,8 +354,8 @@ describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
           )[0].n,
         ).toBe(3);
       } finally {
-        await a.end();
-        await b.end();
+        await a.close();
+        await b.close();
       }
     }));
   it("changed mapping or case after preview is conflict, with no domain write", async () =>
@@ -452,21 +469,21 @@ describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
           repo.execute(f.actor, { previewId: p.previewId, idempotencyKey: crypto.randomUUID() }),
         ),
       );
-      const a = createSqlClient(url!, { max: 1 }),
-        b = createSqlClient(url!, { max: 1 });
+      const a = openFixtureWorker(),
+        b = openFixtureWorker();
       try {
         await Promise.all(
           jobs.map((j, i) =>
             runNarApplyChunk({
-              repository: createNarApplyRepository({ sql: i === 0 ? a : b }),
+              repository: createNarApplyRepository({ sql: i === 0 ? a.sql : b.sql }),
               actor: f.actor,
               jobId: j.jobId,
             }),
           ),
         );
       } finally {
-        await a.end();
-        await b.end();
+        await a.close();
+        await b.close();
       }
       const results = await Promise.all(jobs.map((j) => repo.getJob(f.actor, j.jobId)));
       expect(results.reduce((n, r) => n + r.counts.applied, 0)).toBe(1);
