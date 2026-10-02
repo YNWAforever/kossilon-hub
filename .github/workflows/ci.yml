@@ -63,6 +63,15 @@ jobs:
           bun audit --audit-level=low
           npm audit --audit-level=low
 
+      - name: Verify portable npm lock installation
+        run: |
+          audit_npm_dir="$(mktemp -d)"
+          cp package.json package-lock.json "$audit_npm_dir/"
+          (
+            cd "$audit_npm_dir"
+            npm ci --ignore-scripts
+          )
+
       - name: Apply migrations
         run: bun scripts/db-migrate.ts
 
