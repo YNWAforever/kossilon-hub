@@ -60,6 +60,22 @@ try {
   )
     await sql`insert into maintenance_job_runs(scheduled_for,job_kind,trigger_source,run_id,state,claimed_at,lease_expires_at,started_at) values(now(),'runBulkOperations','manual',${`synthetic-local-${randomUUID()}`},'unknown',now(),now(),now())`;
   await sql`insert into checklist_templates(name,service_type,revision) values('Synthetic release preservation','Annual Return — Private Ltd',7) on conflict(name) do nothing`;
+  const owner = randomUUID(),
+    team = randomUUID(),
+    company = randomUUID(),
+    completedCase = randomUUID(),
+    unknownCase = randomUUID();
+  await sql`insert into users(id,name,email,role) values(${owner},'Synthetic release owner','release-owner@example.test','Admin')`;
+  await sql`insert into teams(id,name) values(${team},'Synthetic release team')`;
+  await sql`insert into companies(id,company_name,cr_number,br_number,incorporation_date,annual_return_basis_date,registered_office,company_secretary,assigned_owner_id,assigned_team_id,data_origin) values(${company},'Synthetic release preservation','SYNTHETIC-CR','SYNTHETIC-BR','2020-01-01','2020-01-01','Synthetic only','Synthetic only',${owner},${team},'fixture')`;
+  for (const [id, year] of [
+    [completedCase, 2026],
+    [unknownCase, 2027],
+  ])
+    await sql`insert into annual_return_cases(id,company_id,return_year,made_up_date,filing_due_date,current_status,owner_id) values(${id},${company},${year},'2026-01-01','2026-02-12','Upcoming',${owner})`;
+  for (const status of ["returned", "cancelled"])
+    await sql`insert into package_handoffs(case_id,manifest_sha256,manifest_payload,approved_by,released_by,status,transmitted_at) values(${completedCase},${"a".repeat(64)},'{}',${owner},${owner},${status},${status === "returned" ? new Date() : null})`;
+  await sql`insert into package_handoffs(case_id,manifest_sha256,manifest_payload,approved_by,released_by,status) values(${unknownCase},${"b".repeat(64)},'{}',${owner},${owner},'failed')`;
   const columns =
     await sql`select table_name,column_name from information_schema.columns where table_schema='public' order by table_name,ordinal_position`;
   const tables = [...new Set(columns.map((c) => c.table_name))];
@@ -131,6 +147,26 @@ try {
   assert.equal((await sql`select to_regclass('schema_release_receipts') present`)[0].present, null);
   await sql.unsafe(release.sql);
   assert.deepEqual(await snapshot(), before);
+  const handoffProofRollback = new Error("synthetic handoff proof rollback");
+  try {
+    await sql.begin(async (tx) => {
+      await tx`insert into package_handoffs(case_id,manifest_sha256,manifest_payload,approved_by,released_by,status) values(${completedCase},${"a".repeat(64)},'{}',${owner},${owner},'prepared')`;
+      let refused;
+      try {
+        await tx.savepoint(
+          (nested) =>
+            nested`insert into package_handoffs(case_id,manifest_sha256,manifest_payload,approved_by,released_by,status) values(${unknownCase},${"b".repeat(64)},'{}',${owner},${owner},'prepared')`,
+        );
+      } catch (error) {
+        refused = error.code;
+      }
+      assert.equal(refused, "23505", "Legacy unknown attempt must remain outstanding");
+      throw handoffProofRollback;
+    });
+  } catch (error) {
+    if (error !== handoffProofRollback) throw error;
+  }
+  assert.deepEqual(await snapshot(), before);
   const [receipt] = await sql`select id,payload_sha256,manifest from schema_release_receipts`;
   assert.equal(receipt.payload_sha256, release.manifest.payloadSha256);
   assert.equal(receipt.id, release.manifest.id);
@@ -164,6 +200,12 @@ try {
     inputs: release.manifest.inputs,
     adapted_inputs: release.manifest.adaptedInputs,
     all_82_original_tables_rows_preserved: true,
+    handoff_history: {
+      completed_same_manifest_preserved: 2,
+      legacy_unknown_attempt_preserved: 1,
+      new_attempt_after_completed_allowed: true,
+      new_attempt_while_unknown_refused: "23505",
+    },
     before,
     after: afterCounts,
     forced_failure: {

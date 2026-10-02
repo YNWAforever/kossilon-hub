@@ -91,10 +91,10 @@
     "0082_case_template_snapshots.sql"
   ],
   "bridgeSha256": "e39fcb75ab7a9e1d977e0e32880be71ec8521a7b95b3be2a574220a7a7b4f3de",
-  "payloadSha256": "b84f9b5a9dc489ced544a39040af9d62678464ae4496d396a5420aba0e010c01",
-  "catalogSha256": "58280602231120582ababb01ca1bc52fed211ef17ae8b047b6a87b7a56472013",
-  "compilerSha256": "50eacaa6530e65c1e1061a0f83591826972ed5433dc64fefb840428df97fcab4",
+  "payloadSha256": "e685b365b785afada3745c60e4c9eb5b7de0153c5780be0b18e0122902d7b480",
+  "catalogSha256": "6d4451c7957295936132f3ba5bd156b51975a4f6fcf8d0cbffd9f28ceefc3100",
+  "compilerSha256": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52",
   "normalization": "UTF-8 with LF; input hashes are provenance, never historical applied receipts",
   "releaseDecision": "NO_GO: provider clone/restore, lineage policy, owners and runtime acceptance pending",
-  "packageSha256": "ac5be697fdf7f7a161efa58d1ad4330bdc6ee8d5777dd6389fbbad857fa78200"
+  "packageSha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
 }

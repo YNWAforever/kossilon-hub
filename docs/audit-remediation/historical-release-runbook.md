@@ -48,7 +48,8 @@ hashes, full package hash and DDL payload hash are recorded in the
 [manifest](releases/2026-10-02-historical-release-manifest.json).
 
 The [compiled SQL](releases/2026-10-02-historical-release.sql) takes the existing
-migration advisory lock and bounded table locks, requires the exact 66 IDs and
+migration advisory lock and bounded locks on all 82 attributable tables **before**
+reading the catalog. These locks remain until commit/rollback. It requires the exact 66 IDs and
 Postgres18 physical fingerprint, rejects existing temporary objects, applies all
 reviewed DDL in one transaction, verifies the original complete ledger unchanged,
 then inserts one independent `schema_release_receipts` row for the executed package.
@@ -56,6 +57,21 @@ The receipt hashes the actual DDL payload; manifest input hashes are provenance,
 including explicit adaptations. Review the complete artifact SHA256 externally.
 No original migration ID is invented. Repeat or a pre-existing receipt table fails
 closed; after any SQL error, issue ROLLBACK on that session before further reads.
+
+The fingerprint includes index valid/ready/live flags and trigger enabled modes,
+as well as their definitions. All coordinated function/schema DDL must acquire the
+same transaction advisory lock `hashtext('kossilon:schema-migrations')` (as the normal
+migrator already does). A two-connection contract proves table DDL and cooperating
+function DDL cannot pass the fence. PostgreSQL relation locks do not prevent a
+privileged operator changing a function while ignoring that advisory lock: the
+release owner must prove a sole DDL owner/freeze and permissions before hosted execution.
+Those permission/owner facts remain unverified and production NO_GO; no grant or
+revoke is performed by this package.
+
+Adapted 0080 uses a temporary non-unique manifest index; verbatim 0081 replaces it
+with final active-attempt uniqueness in the same transaction. Valid completed/cancelled
+duplicate approvals remain unchanged, while a legacy NULL/unknown outstanding attempt
+still blocks a new attempt. It never creates transient full uniqueness over all history.
 
 **Source history health intentionally remains divergent after this package.**
 There is no automatic receipt-to-migration alias. The strict migrator still refuses
@@ -86,6 +102,15 @@ is rejected before DDL. Local fixtures include old unknown maintenance work, exp
 2026/NULL year and revision7; these are synthetic preservation cases, not live data.
 The complete package ends at 94 local tables / 66 unchanged migration rows / 1 actual
 release receipt. It does not certify scan, receipt, payment or external submission.
+
+Independent review found three Important issues, now reproduced and fixed in one
+RED/GREEN pass: enforcement flags, pre-catalog DDL locks, and completed handoff history.
+Seventeen new real Postgres contracts pass, including genuinely failed concurrent
+unique-index creation and two-connection races. The complete historical rehearsal now
+contains two returned/cancelled attempts sharing a manifest and one legacy unknown
+attempt; original rows remain identical, a new attempt after completion is allowed,
+and a new attempt over unknown is refused23505. The new test file is in the repository's
+serialized DB integration registry; the initial362e127 CI failure exposed that omission.
 
 The compiler is offline: `node --experimental-strip-types
 scripts/prepare-historical-schema-release.ts` writes SQL to stdout only. The tracked

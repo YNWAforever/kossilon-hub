@@ -64,12 +64,18 @@ export function prepareHistoricalSchemaRelease() {
       }
       if (file === "0080_manual_handoff_provenance.sql") {
         for (const existing of [
+          "create unique index package_handoffs_manifest_uidx on package_handoffs(case_id,manifest_sha256);",
           "  add column external_reference text,",
           "  add column document_version_id uuid references document_versions(id),",
         ]) {
           if (body.split(existing).length !== 2)
             throw new Error("Handoff adapted input changed; review required");
-          body = body.replace(existing, "-- Existing handoff column/FK validated and preserved.");
+          body = body.replace(
+            existing,
+            existing.startsWith("create unique index")
+              ? "create index package_handoffs_manifest_uidx on package_handoffs(case_id,manifest_sha256); -- 0081 installs final active-attempt uniqueness."
+              : "-- Existing handoff column/FK validated and preserved.",
+          );
         }
       }
       return [`-- Source input: ${file}\n${body}`];
@@ -93,7 +99,13 @@ export function prepareHistoricalSchemaRelease() {
       "NO_GO: provider clone/restore, lineage policy, owners and runtime acceptance pending",
   };
   const expectedIds = historical.historical_sources.map((input) => input.file);
-  const sql = `-- OFFLINE REVIEW PACKAGE. No authority to execute against a hosted database.\n-- Never feed this divergent history into db:migrate. Existing66 receipts remain unchanged.\nBEGIN;\nSET LOCAL lock_timeout='5s';\nSET LOCAL statement_timeout='2min';\nSET LOCAL search_path=public;\nSELECT pg_advisory_xact_lock(hashtext('kossilon:schema-migrations'));\nLOCK TABLE schema_migrations IN SHARE ROW EXCLUSIVE MODE;\nDO $historical_release$\nDECLARE before_ledger jsonb;\nBEGIN\n IF EXISTS(SELECT 1 FROM pg_class WHERE relnamespace=pg_my_temp_schema()) THEN\n  RAISE EXCEPTION 'Existing temporary objects; use a fresh isolated execution session';\n END IF;\n IF to_regclass('schema_release_receipts') IS NOT NULL THEN\n  RAISE EXCEPTION 'Historical release already recorded; do not replay or override an existing receipt table';\n END IF;\n SELECT jsonb_agg(to_jsonb(m) ORDER BY id) INTO before_ledger FROM schema_migrations m;\n IF (SELECT jsonb_agg(id ORDER BY id) FROM schema_migrations) IS DISTINCT FROM ${literal(JSON.stringify(expectedIds))}::jsonb THEN\n  RAISE EXCEPTION 'Historical ledger changed; stop and review before DDL';\n END IF;\n IF (${catalog.sql}) IS DISTINCT FROM ${literal(catalog.catalog_sha256)} THEN\n  RAISE EXCEPTION 'Historical physical catalog changed; stop and review before DDL';\n END IF;\n ${payload}\n IF (SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM schema_migrations m) IS DISTINCT FROM before_ledger THEN\n  RAISE EXCEPTION 'Historical ledger changed during release; roll back';\n END IF;\n CREATE TABLE schema_release_receipts (id text PRIMARY KEY,payload_sha256 text NOT NULL CHECK(length(payload_sha256)=64),manifest jsonb NOT NULL,executed_at timestamptz NOT NULL DEFAULT now());\n INSERT INTO schema_release_receipts(id,payload_sha256,manifest) VALUES(${literal(manifest.id)},${literal(manifest.payloadSha256)},${literal(JSON.stringify(manifest))}::jsonb);\nEND $historical_release$;\nCOMMIT;\n`;
+  if (catalog.tables.length !== 82 || catalog.tables.some((name) => !/^[a-z_]+$/.test(name)))
+    throw new Error("Reviewed lock inventory changed");
+  const tableLocks = [...catalog.tables]
+    .sort()
+    .map((name) => `public."${name}"`)
+    .join(",");
+  const sql = `-- OFFLINE REVIEW PACKAGE. No authority to execute against a hosted database.\n-- Never feed this divergent history into db:migrate. Existing66 receipts remain unchanged.\nBEGIN;\nSET LOCAL lock_timeout='5s';\nSET LOCAL statement_timeout='2min';\nSET LOCAL search_path=public;\nSELECT pg_advisory_xact_lock(hashtext('kossilon:schema-migrations'));\nLOCK TABLE ${tableLocks} IN SHARE ROW EXCLUSIVE MODE;\nDO $historical_release$\nDECLARE before_ledger jsonb;\nBEGIN\n IF EXISTS(SELECT 1 FROM pg_class WHERE relnamespace=pg_my_temp_schema()) THEN\n  RAISE EXCEPTION 'Existing temporary objects; use a fresh isolated execution session';\n END IF;\n IF to_regclass('schema_release_receipts') IS NOT NULL THEN\n  RAISE EXCEPTION 'Historical release already recorded; do not replay or override an existing receipt table';\n END IF;\n SELECT jsonb_agg(to_jsonb(m) ORDER BY id) INTO before_ledger FROM schema_migrations m;\n IF (SELECT jsonb_agg(id ORDER BY id) FROM schema_migrations) IS DISTINCT FROM ${literal(JSON.stringify(expectedIds))}::jsonb THEN\n  RAISE EXCEPTION 'Historical ledger changed; stop and review before DDL';\n END IF;\n IF (${catalog.sql}) IS DISTINCT FROM ${literal(catalog.catalog_sha256)} THEN\n  RAISE EXCEPTION 'Historical physical catalog changed; stop and review before DDL';\n END IF;\n ${payload}\n IF (SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM schema_migrations m) IS DISTINCT FROM before_ledger THEN\n  RAISE EXCEPTION 'Historical ledger changed during release; roll back';\n END IF;\n CREATE TABLE schema_release_receipts (id text PRIMARY KEY,payload_sha256 text NOT NULL CHECK(length(payload_sha256)=64),manifest jsonb NOT NULL,executed_at timestamptz NOT NULL DEFAULT now());\n INSERT INTO schema_release_receipts(id,payload_sha256,manifest) VALUES(${literal(manifest.id)},${literal(manifest.payloadSha256)},${literal(JSON.stringify(manifest))}::jsonb);\nEND $historical_release$;\nCOMMIT;\n`;
   return { sql, manifest };
 }
 
