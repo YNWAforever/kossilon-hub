@@ -45,12 +45,19 @@ describe("scheduled maintenance wiring", () => {
 
   it("routes the hook to the real maintenance entrypoint", () => {
     expect(serverEntry).toContain("runScheduledMaintenanceForWorker");
-    expect(serverEntry).toContain('import("./server/maintenance")');
-    expect(serverEntry).toContain("runFirmMaintenance(");
+    expect(serverEntry).toContain('import("./server/maintenance-trigger-runtime")');
+    expect(serverEntry).toContain("runRuntimeMaintenanceTick(");
   });
 });
 
 describe("runScheduledMaintenanceForWorker", () => {
+  it("does not run if Vercel owns the slot or the owner is missing", async () => {
+    const { runScheduledMaintenanceForWorker } = await import("../server.ts");
+    const run = vi.fn(async () => ({}));
+    await runScheduledMaintenanceForWorker(Date.now(), run, "vercel");
+    await runScheduledMaintenanceForWorker(Date.now(), run, "paused");
+    expect(run).not.toHaveBeenCalled();
+  });
   // Injected, never executed for real. runFirmMaintenance dispatches
   // notifications, deletes R2 objects and rewrites outbox rows against whatever
   // DATABASE_URL is in scope; an earlier version of this test called it and
@@ -59,7 +66,11 @@ describe("runScheduledMaintenanceForWorker", () => {
     const { runScheduledMaintenanceForWorker } = await import("../server.ts");
     const run = vi.fn(async () => ({ ok: true }));
 
-    await runScheduledMaintenanceForWorker(Date.parse("2026-08-05T02:35:00.000Z"), run);
+    await runScheduledMaintenanceForWorker(
+      Date.parse("2026-08-05T02:35:00.000Z"),
+      run,
+      "cloudflare",
+    );
 
     expect(run).toHaveBeenCalledWith({
       now: "2026-08-05T02:35:00.000Z",
@@ -68,7 +79,32 @@ describe("runScheduledMaintenanceForWorker", () => {
       // manual invocation cannot silence a dead cron -- and a row written from
       // here is the first real evidence the deployed runtime fires at all.
       triggerSource: "scheduled",
+      runId: expect.any(String),
     });
+  });
+
+  it("logs only a correlation id when a scheduler error includes private provider data", async () => {
+    const { runScheduledMaintenanceForWorker } = await import("../server.ts");
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const privateError = new Error("postgres://private-token@private-host/customer");
+    try {
+      await expect(
+        runScheduledMaintenanceForWorker(
+          Date.now(),
+          async () => {
+            throw privateError;
+          },
+          "cloudflare",
+        ),
+      ).rejects.toBe(privateError);
+      expect(log).toHaveBeenCalledWith("scheduled maintenance failed", {
+        runId: expect.any(String),
+        phase: "start_or_record",
+      });
+      expect(JSON.stringify(log.mock.calls)).not.toContain("private-token");
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it("rethrows so a failed run is visible to the platform", async () => {
@@ -77,7 +113,7 @@ describe("runScheduledMaintenanceForWorker", () => {
       throw new Error("escalation pass failed");
     });
 
-    await expect(runScheduledMaintenanceForWorker(Date.now(), run)).rejects.toThrow(
+    await expect(runScheduledMaintenanceForWorker(Date.now(), run, "cloudflare")).rejects.toThrow(
       "escalation pass failed",
     );
   });
@@ -85,8 +121,8 @@ describe("runScheduledMaintenanceForWorker", () => {
   it("defaults to the real maintenance entrypoint", async () => {
     const source = readFileSync(new URL("../server.ts", import.meta.url), "utf8");
 
-    expect(source).toContain('import("./server/maintenance")');
-    expect(source).toContain("runFirmMaintenance(input)");
+    expect(source).toContain('import("./server/maintenance-trigger-runtime")');
+    expect(source).toContain("runRuntimeMaintenanceTick(");
   });
 
   /**

@@ -1,0 +1,701 @@
+{
+  "baselineSha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "task": "T01",
+  "environment": "localhost55441/Postgres17 isolated clone; Node22.23.3",
+  "fixture": "seeded-reference baseline + 2 explicit synthetic outbox records; controlled marker DDL absence",
+  "productionWrites": 0,
+  "commands": [
+    "pg_dump -Fc / pg_restore into dedicated local DB",
+    "bun scripts/db-migrate.ts (expected rejection before repair)",
+    "node --experimental-strip-types scripts/audit-schema-readiness.ts",
+    "psql --single-transaction --file=0067_repair_outbox_dispatch_marker.sql (repeat)",
+    "npm test -- scripts/audit-schema-readiness.test.ts src/features/operations/schema-readiness.test.ts src/features/operations/schema-health.test.ts src/features/notifications/outbox.integration.test.ts src/features/notifications/dispatcher.test.ts src/test/db-integration-files.convention.test.ts"
+  ],
+  "before": {
+    "companies": 3,
+    "cases": 3,
+    "documents": 14,
+    "payments": 3,
+    "outbox": 2,
+    "ledger": 34,
+    "outbox_fk": 2
+  },
+  "after": {
+    "companies": 3,
+    "cases": 3,
+    "documents": 14,
+    "payments": 3,
+    "outbox": 2,
+    "ledger": 34,
+    "outbox_fk": 2
+  },
+  "backupSha256": "76d0cd723e7532b292a9ecebb40341ad0488093bea328cd9bb1d2e659f6d12f1",
+  "candidateSha256": "660dbe9226514a66cdfedda2a2ed14300c960aee3e384908c28db73ccdf47014",
+  "result": {
+    "missingColumnReproduced": "42703",
+    "repairRepeat": "pass",
+    "pending": "untouched",
+    "production": "not applied",
+    "recordedMissingDdlMigratorExit": 1,
+    "unknownReclaim": "blocked and outcome_unknown",
+    "rowAndFkRetention": "pass",
+    "indexMismatch": "fail closed",
+    "historicalLedger": "unchanged"
+  },
+  "readOnlyBefore": {
+    "scope": "migration IDs/hashes and outbox dispatch-marker column/index; not a proof of all application DDL",
+    "expectedIds": [
+      "0001_annual_return_control_center.sql",
+      "0002_harden_annual_return_schema.sql",
+      "0003_annual_return_audit_events.sql",
+      "0004_retain_annual_return_audit_events.sql",
+      "0005_whatsapp_integration_foundation.sql",
+      "0006_production_assignment_sla_foundation.sql",
+      "0007_whatsapp_inbox_ordering_indexes.sql",
+      "0008_client_register.sql",
+      "0009_reclaim_stranded_outbox_rows.sql",
+      "0010_index_timeline_and_upload_intent_lookups.sql",
+      "0011_whatsapp_delivery_receipts.sql",
+      "0012_annual_return_reminder_events.sql",
+      "0013_checklist_templates.sql",
+      "0014_generalize_work_item_case_reference.sql",
+      "0015_officers_and_shareholdings.sql",
+      "0016_significant_controllers_and_dr.sql",
+      "0017_incorporation_intake.sql",
+      "0018_recurring_service_subscriptions.sql",
+      "0019_corporate_change_requests.sql",
+      "0020_corporate_change_work_items.sql",
+      "0021_whatsapp_session_window_indexes.sql",
+      "0022_notification_outbox_delivery.sql",
+      "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "0024_link_uploads_to_checklist_items.sql",
+      "0025_nar_import_staging.sql",
+      "0026_case_parties_and_requirement_instances.sql",
+      "0027_document_versions.sql",
+      "0028_document_analysis_jobs_and_findings.sql",
+      "0029_whatsapp_send_mode.sql",
+      "0030_company_data_origin.sql",
+      "0031_whatsapp_message_media.sql",
+      "0032_package_handoffs_and_returns.sql",
+      "0033_maintenance_runs.sql",
+      "0034_notification_outbox_dispatch_marker.sql",
+      "0067_repair_outbox_dispatch_marker.sql"
+    ],
+    "recordedIds": [
+      "0001_annual_return_control_center.sql",
+      "0002_harden_annual_return_schema.sql",
+      "0003_annual_return_audit_events.sql",
+      "0004_retain_annual_return_audit_events.sql",
+      "0005_whatsapp_integration_foundation.sql",
+      "0006_production_assignment_sla_foundation.sql",
+      "0007_whatsapp_inbox_ordering_indexes.sql",
+      "0008_client_register.sql",
+      "0009_reclaim_stranded_outbox_rows.sql",
+      "0010_index_timeline_and_upload_intent_lookups.sql",
+      "0011_whatsapp_delivery_receipts.sql",
+      "0012_annual_return_reminder_events.sql",
+      "0013_checklist_templates.sql",
+      "0014_generalize_work_item_case_reference.sql",
+      "0015_officers_and_shareholdings.sql",
+      "0016_significant_controllers_and_dr.sql",
+      "0017_incorporation_intake.sql",
+      "0018_recurring_service_subscriptions.sql",
+      "0019_corporate_change_requests.sql",
+      "0020_corporate_change_work_items.sql",
+      "0021_whatsapp_session_window_indexes.sql",
+      "0022_notification_outbox_delivery.sql",
+      "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "0024_link_uploads_to_checklist_items.sql",
+      "0025_nar_import_staging.sql",
+      "0026_case_parties_and_requirement_instances.sql",
+      "0027_document_versions.sql",
+      "0028_document_analysis_jobs_and_findings.sql",
+      "0029_whatsapp_send_mode.sql",
+      "0030_company_data_origin.sql",
+      "0031_whatsapp_message_media.sql",
+      "0032_package_handoffs_and_returns.sql",
+      "0033_maintenance_runs.sql",
+      "0034_notification_outbox_dispatch_marker.sql"
+    ],
+    "ledger": {
+      "missing": ["0067_repair_outbox_dispatch_marker.sql"],
+      "ahead": [],
+      "appliedCount": 34,
+      "expectedCount": 35,
+      "state": "behind",
+      "summary": "資料庫落後 1 個遷移（最早未套用的是 0067_repair_outbox_dispatch_marker.sql）。依賴這些資料表的畫面會直接出錯，而不是顯示空白。"
+    },
+    "hashes": [
+      {
+        "id": "0001_annual_return_control_center.sql",
+        "expected": "abfdf5e3ae51038fe90550288f10a570290736db263fce14842841211fe6fa2e",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0002_harden_annual_return_schema.sql",
+        "expected": "5b4be0f06d1c65a51846870e94b8007b27830a5d4ff20c6fbd8f1c80fd900fea",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0003_annual_return_audit_events.sql",
+        "expected": "74716ab004e5b26be3185a2757b0f816bef73118f9c143e7b1605c860774ffd5",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0004_retain_annual_return_audit_events.sql",
+        "expected": "7c6375fb32ec90d2083d4b275fcc315f1f29132fc7f7b61eca898caeac55ef2a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0005_whatsapp_integration_foundation.sql",
+        "expected": "550f6dbcdacdf49ef6b761b91e804ca8043e85cdb6ba3f479ae0dbc188c4053b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0006_production_assignment_sla_foundation.sql",
+        "expected": "f5247427ddcb7a57ffbc77c6c900030d993f85930a1c2a918b6694e1469138ca",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0007_whatsapp_inbox_ordering_indexes.sql",
+        "expected": "35e01dc6abda8dbb94c08c8c54a4e9bb56d7a3a6185fc44702a03647e1fbc666",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0008_client_register.sql",
+        "expected": "95af94ec995307cd58bd96df4cdbb21a5713d26954f817b1aedeee135ee88a0a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0009_reclaim_stranded_outbox_rows.sql",
+        "expected": "fe1395126ec40e856225b0fe176daf2aa7ffa461463ee6e3402fa2bd9924fd34",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0010_index_timeline_and_upload_intent_lookups.sql",
+        "expected": "ca0c2565399c6891e3dc34e706368d5c54b0842e7ae46f9bfca3d0ae2b62f771",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0011_whatsapp_delivery_receipts.sql",
+        "expected": "2c161cd3593e093f147fb21190bdbf5a1b75f4f2226f5c1b738fd2e1a9b36183",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0012_annual_return_reminder_events.sql",
+        "expected": "1b5a2d6857363781b5368cb833c7af91876277ca2933f58ac1c959daf8b81c5d",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0013_checklist_templates.sql",
+        "expected": "f487ee664d5c4e20946a8e31d55a0d7502b9b8cfd69f66e575d6eb08a64b1e10",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0014_generalize_work_item_case_reference.sql",
+        "expected": "0c3a635da7a8e14ae8261dc0dfdf69a4da6112c1b866a6a83a616365750d864c",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0015_officers_and_shareholdings.sql",
+        "expected": "e6202e25b89e5b88d7b5f0c9a8c2a4bf22ba7943b2f428d25cb2ce6f3d7542ea",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0016_significant_controllers_and_dr.sql",
+        "expected": "92d2be3fd59b0a85ec7606a81b28a873f54483695df089f910ef74f5600c4ab3",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0017_incorporation_intake.sql",
+        "expected": "5a40f9ba4ca33c7f88f33cfc1c216969938d18649509d6dd0a208d8b998297f1",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0018_recurring_service_subscriptions.sql",
+        "expected": "69f1b0cc6a0c0c710f18b341bd112c4edefd89c3d04caa312998d0ed63a37a0b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0019_corporate_change_requests.sql",
+        "expected": "3b74b1de0bc58c7eaaa1eb089aa214c03ff1aea35e2d779b6f8326fca1bd2b1b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0020_corporate_change_work_items.sql",
+        "expected": "d4e600a00cc5a2f544674364be351466ab68727982e38cc8ea3298471b0be492",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0021_whatsapp_session_window_indexes.sql",
+        "expected": "22cab690cb48883d72c59e959d4af5a7dc02742e85c5a0a17d4e0f508505885a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0022_notification_outbox_delivery.sql",
+        "expected": "a1d18d0ea91ff274dce73be35cb4bd4b503f834451ba4adcf5d5668e9a35bc0b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0023_document_scan_jobs_and_quarantine_retention.sql",
+        "expected": "3d74d1f25aaa842548cd8f90dbe6134135ad8f1cdf2274995873dd91dfd9b9fb",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0024_link_uploads_to_checklist_items.sql",
+        "expected": "23105326908b594afafa0b0bc0a00e888a6b061e1bdeef8c19b0d307fa81a21b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0025_nar_import_staging.sql",
+        "expected": "ff0c6c72e8465dd7fc997bb0264c1e8fface6c3c507a74071a5609424b1f035c",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0026_case_parties_and_requirement_instances.sql",
+        "expected": "9767057c89ec0266d587f9bd2598db6d89af00eb7c41ac60ed2ed084111c0019",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0027_document_versions.sql",
+        "expected": "41dd0155edd40c0d0033c0a82f16a40dbc09fc332a1a1a24b974d3f3a50e3f22",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0028_document_analysis_jobs_and_findings.sql",
+        "expected": "0a0522892b647e3be2332bae2b719266901de047912474e6ed169efa12cf4e84",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0029_whatsapp_send_mode.sql",
+        "expected": "85c3b00b6e791a931c1d51de02b9f28b719bef8c09bc6bb24cbeb0ed9d06a5b3",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0030_company_data_origin.sql",
+        "expected": "6292c2c5a6a0e2d18f04a6ac500c0da84fef1b43ca9b3de14c504732e76dae99",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0031_whatsapp_message_media.sql",
+        "expected": "22b92e7dd307e3f2a3d089642fd6e69ff2da47e8d05f74f7ccc0c9f8c006a932",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0032_package_handoffs_and_returns.sql",
+        "expected": "8554f605b59183454f4b74e78e351c5e991499d631cae95e94aa4d5927480fba",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0033_maintenance_runs.sql",
+        "expected": "72c597510ef7fda9a84a02c4bd87a3a4ad6cb5a941362c347d2c477b9f71cd69",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0034_notification_outbox_dispatch_marker.sql",
+        "expected": "996ab823833183bc6b964b9b45d6b1726e1149eb5b74c5379362e3afc94e993a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0067_repair_outbox_dispatch_marker.sql",
+        "expected": "c2e12f8a72e2fdc630afaa3fa27eb6ee081a65a0cee7f1acad3bbd2e46a91e8a",
+        "recorded": null,
+        "state": "unknown"
+      }
+    ],
+    "facts": [
+      {
+        "key": "notification_outbox.dispatch_started_attempt",
+        "migrationId": "0034_notification_outbox_dispatch_marker.sql",
+        "present": false,
+        "expected": "nullable integer without default",
+        "observed": null
+      },
+      {
+        "key": "notification_outbox_dispatch_marker_idx",
+        "migrationId": "0034_notification_outbox_dispatch_marker.sql",
+        "present": false,
+        "expected": "valid index on updated_at where status=processing and dispatch_started_attempt is not null",
+        "observed": null
+      }
+    ],
+    "physicalState": "missing-ddl",
+    "unknownIds": [],
+    "reconciledAliases": [],
+    "classification": "ledger-and-ddl",
+    "safeToMigrate": false
+  },
+  "readOnlyAfter": {
+    "scope": "migration IDs/hashes and outbox dispatch-marker column/index; not a proof of all application DDL",
+    "expectedIds": [
+      "0001_annual_return_control_center.sql",
+      "0002_harden_annual_return_schema.sql",
+      "0003_annual_return_audit_events.sql",
+      "0004_retain_annual_return_audit_events.sql",
+      "0005_whatsapp_integration_foundation.sql",
+      "0006_production_assignment_sla_foundation.sql",
+      "0007_whatsapp_inbox_ordering_indexes.sql",
+      "0008_client_register.sql",
+      "0009_reclaim_stranded_outbox_rows.sql",
+      "0010_index_timeline_and_upload_intent_lookups.sql",
+      "0011_whatsapp_delivery_receipts.sql",
+      "0012_annual_return_reminder_events.sql",
+      "0013_checklist_templates.sql",
+      "0014_generalize_work_item_case_reference.sql",
+      "0015_officers_and_shareholdings.sql",
+      "0016_significant_controllers_and_dr.sql",
+      "0017_incorporation_intake.sql",
+      "0018_recurring_service_subscriptions.sql",
+      "0019_corporate_change_requests.sql",
+      "0020_corporate_change_work_items.sql",
+      "0021_whatsapp_session_window_indexes.sql",
+      "0022_notification_outbox_delivery.sql",
+      "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "0024_link_uploads_to_checklist_items.sql",
+      "0025_nar_import_staging.sql",
+      "0026_case_parties_and_requirement_instances.sql",
+      "0027_document_versions.sql",
+      "0028_document_analysis_jobs_and_findings.sql",
+      "0029_whatsapp_send_mode.sql",
+      "0030_company_data_origin.sql",
+      "0031_whatsapp_message_media.sql",
+      "0032_package_handoffs_and_returns.sql",
+      "0033_maintenance_runs.sql",
+      "0034_notification_outbox_dispatch_marker.sql",
+      "0067_repair_outbox_dispatch_marker.sql"
+    ],
+    "recordedIds": [
+      "0001_annual_return_control_center.sql",
+      "0002_harden_annual_return_schema.sql",
+      "0003_annual_return_audit_events.sql",
+      "0004_retain_annual_return_audit_events.sql",
+      "0005_whatsapp_integration_foundation.sql",
+      "0006_production_assignment_sla_foundation.sql",
+      "0007_whatsapp_inbox_ordering_indexes.sql",
+      "0008_client_register.sql",
+      "0009_reclaim_stranded_outbox_rows.sql",
+      "0010_index_timeline_and_upload_intent_lookups.sql",
+      "0011_whatsapp_delivery_receipts.sql",
+      "0012_annual_return_reminder_events.sql",
+      "0013_checklist_templates.sql",
+      "0014_generalize_work_item_case_reference.sql",
+      "0015_officers_and_shareholdings.sql",
+      "0016_significant_controllers_and_dr.sql",
+      "0017_incorporation_intake.sql",
+      "0018_recurring_service_subscriptions.sql",
+      "0019_corporate_change_requests.sql",
+      "0020_corporate_change_work_items.sql",
+      "0021_whatsapp_session_window_indexes.sql",
+      "0022_notification_outbox_delivery.sql",
+      "0023_document_scan_jobs_and_quarantine_retention.sql",
+      "0024_link_uploads_to_checklist_items.sql",
+      "0025_nar_import_staging.sql",
+      "0026_case_parties_and_requirement_instances.sql",
+      "0027_document_versions.sql",
+      "0028_document_analysis_jobs_and_findings.sql",
+      "0029_whatsapp_send_mode.sql",
+      "0030_company_data_origin.sql",
+      "0031_whatsapp_message_media.sql",
+      "0032_package_handoffs_and_returns.sql",
+      "0033_maintenance_runs.sql",
+      "0034_notification_outbox_dispatch_marker.sql"
+    ],
+    "ledger": {
+      "missing": ["0067_repair_outbox_dispatch_marker.sql"],
+      "ahead": [],
+      "appliedCount": 34,
+      "expectedCount": 35,
+      "state": "behind",
+      "summary": "資料庫落後 1 個遷移（最早未套用的是 0067_repair_outbox_dispatch_marker.sql）。依賴這些資料表的畫面會直接出錯，而不是顯示空白。"
+    },
+    "hashes": [
+      {
+        "id": "0001_annual_return_control_center.sql",
+        "expected": "abfdf5e3ae51038fe90550288f10a570290736db263fce14842841211fe6fa2e",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0002_harden_annual_return_schema.sql",
+        "expected": "5b4be0f06d1c65a51846870e94b8007b27830a5d4ff20c6fbd8f1c80fd900fea",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0003_annual_return_audit_events.sql",
+        "expected": "74716ab004e5b26be3185a2757b0f816bef73118f9c143e7b1605c860774ffd5",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0004_retain_annual_return_audit_events.sql",
+        "expected": "7c6375fb32ec90d2083d4b275fcc315f1f29132fc7f7b61eca898caeac55ef2a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0005_whatsapp_integration_foundation.sql",
+        "expected": "550f6dbcdacdf49ef6b761b91e804ca8043e85cdb6ba3f479ae0dbc188c4053b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0006_production_assignment_sla_foundation.sql",
+        "expected": "f5247427ddcb7a57ffbc77c6c900030d993f85930a1c2a918b6694e1469138ca",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0007_whatsapp_inbox_ordering_indexes.sql",
+        "expected": "35e01dc6abda8dbb94c08c8c54a4e9bb56d7a3a6185fc44702a03647e1fbc666",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0008_client_register.sql",
+        "expected": "95af94ec995307cd58bd96df4cdbb21a5713d26954f817b1aedeee135ee88a0a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0009_reclaim_stranded_outbox_rows.sql",
+        "expected": "fe1395126ec40e856225b0fe176daf2aa7ffa461463ee6e3402fa2bd9924fd34",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0010_index_timeline_and_upload_intent_lookups.sql",
+        "expected": "ca0c2565399c6891e3dc34e706368d5c54b0842e7ae46f9bfca3d0ae2b62f771",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0011_whatsapp_delivery_receipts.sql",
+        "expected": "2c161cd3593e093f147fb21190bdbf5a1b75f4f2226f5c1b738fd2e1a9b36183",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0012_annual_return_reminder_events.sql",
+        "expected": "1b5a2d6857363781b5368cb833c7af91876277ca2933f58ac1c959daf8b81c5d",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0013_checklist_templates.sql",
+        "expected": "f487ee664d5c4e20946a8e31d55a0d7502b9b8cfd69f66e575d6eb08a64b1e10",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0014_generalize_work_item_case_reference.sql",
+        "expected": "0c3a635da7a8e14ae8261dc0dfdf69a4da6112c1b866a6a83a616365750d864c",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0015_officers_and_shareholdings.sql",
+        "expected": "e6202e25b89e5b88d7b5f0c9a8c2a4bf22ba7943b2f428d25cb2ce6f3d7542ea",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0016_significant_controllers_and_dr.sql",
+        "expected": "92d2be3fd59b0a85ec7606a81b28a873f54483695df089f910ef74f5600c4ab3",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0017_incorporation_intake.sql",
+        "expected": "5a40f9ba4ca33c7f88f33cfc1c216969938d18649509d6dd0a208d8b998297f1",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0018_recurring_service_subscriptions.sql",
+        "expected": "69f1b0cc6a0c0c710f18b341bd112c4edefd89c3d04caa312998d0ed63a37a0b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0019_corporate_change_requests.sql",
+        "expected": "3b74b1de0bc58c7eaaa1eb089aa214c03ff1aea35e2d779b6f8326fca1bd2b1b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0020_corporate_change_work_items.sql",
+        "expected": "d4e600a00cc5a2f544674364be351466ab68727982e38cc8ea3298471b0be492",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0021_whatsapp_session_window_indexes.sql",
+        "expected": "22cab690cb48883d72c59e959d4af5a7dc02742e85c5a0a17d4e0f508505885a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0022_notification_outbox_delivery.sql",
+        "expected": "a1d18d0ea91ff274dce73be35cb4bd4b503f834451ba4adcf5d5668e9a35bc0b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0023_document_scan_jobs_and_quarantine_retention.sql",
+        "expected": "3d74d1f25aaa842548cd8f90dbe6134135ad8f1cdf2274995873dd91dfd9b9fb",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0024_link_uploads_to_checklist_items.sql",
+        "expected": "23105326908b594afafa0b0bc0a00e888a6b061e1bdeef8c19b0d307fa81a21b",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0025_nar_import_staging.sql",
+        "expected": "ff0c6c72e8465dd7fc997bb0264c1e8fface6c3c507a74071a5609424b1f035c",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0026_case_parties_and_requirement_instances.sql",
+        "expected": "9767057c89ec0266d587f9bd2598db6d89af00eb7c41ac60ed2ed084111c0019",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0027_document_versions.sql",
+        "expected": "41dd0155edd40c0d0033c0a82f16a40dbc09fc332a1a1a24b974d3f3a50e3f22",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0028_document_analysis_jobs_and_findings.sql",
+        "expected": "0a0522892b647e3be2332bae2b719266901de047912474e6ed169efa12cf4e84",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0029_whatsapp_send_mode.sql",
+        "expected": "85c3b00b6e791a931c1d51de02b9f28b719bef8c09bc6bb24cbeb0ed9d06a5b3",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0030_company_data_origin.sql",
+        "expected": "6292c2c5a6a0e2d18f04a6ac500c0da84fef1b43ca9b3de14c504732e76dae99",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0031_whatsapp_message_media.sql",
+        "expected": "22b92e7dd307e3f2a3d089642fd6e69ff2da47e8d05f74f7ccc0c9f8c006a932",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0032_package_handoffs_and_returns.sql",
+        "expected": "8554f605b59183454f4b74e78e351c5e991499d631cae95e94aa4d5927480fba",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0033_maintenance_runs.sql",
+        "expected": "72c597510ef7fda9a84a02c4bd87a3a4ad6cb5a941362c347d2c477b9f71cd69",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0034_notification_outbox_dispatch_marker.sql",
+        "expected": "996ab823833183bc6b964b9b45d6b1726e1149eb5b74c5379362e3afc94e993a",
+        "recorded": null,
+        "state": "unknown"
+      },
+      {
+        "id": "0067_repair_outbox_dispatch_marker.sql",
+        "expected": "c2e12f8a72e2fdc630afaa3fa27eb6ee081a65a0cee7f1acad3bbd2e46a91e8a",
+        "recorded": null,
+        "state": "unknown"
+      }
+    ],
+    "facts": [
+      {
+        "key": "notification_outbox.dispatch_started_attempt",
+        "migrationId": "0034_notification_outbox_dispatch_marker.sql",
+        "present": true,
+        "expected": "nullable integer without default",
+        "observed": "integer; nullable=true; default=none"
+      },
+      {
+        "key": "notification_outbox_dispatch_marker_idx",
+        "migrationId": "0034_notification_outbox_dispatch_marker.sql",
+        "present": true,
+        "expected": "valid index on updated_at where status=processing and dispatch_started_attempt is not null",
+        "observed": "CREATE INDEX notification_outbox_dispatch_marker_idx ON public.notification_outbox USING btree (updated_at) WHERE ((status = 'processing'::text) AND (dispatch_started_attempt IS NOT NULL))"
+      }
+    ],
+    "physicalState": "verified",
+    "unknownIds": [],
+    "reconciledAliases": [],
+    "classification": "ledger-only",
+    "safeToMigrate": false
+  },
+  "verification": {
+    "source": "a9fad80 + reviewed T01 changes",
+    "fullSuite": {
+      "passed": 1762,
+      "scope": "before final literal-preservation boundary fix",
+      "skipped": 0,
+      "files": 177,
+      "failed": 0
+    },
+    "finalAffectedSuite": {
+      "passed": 76,
+      "scope": "after final literal-preservation fix",
+      "skipped": 0,
+      "files": 6,
+      "failed": 0
+    },
+    "lint": "pass; 0 errors, 1 existing warning",
+    "typecheck": "pass",
+    "build": "pass before final predicate-only boundary fix",
+    "review": "independent reviewer: no remaining actionable T01 findings",
+    "logDirectory": ".worktrees/audit-baseline-20261001"
+  }
+}

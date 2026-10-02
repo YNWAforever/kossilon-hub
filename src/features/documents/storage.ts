@@ -68,5 +68,15 @@ export function createDocumentStorage(bucket: R2BucketLike): DocumentStorage {
       const object = await bucket.head(objectKey);
       return object ? metadataFor(objectKey, object) : null;
     },
+    async inspect(objectKey) {
+      try {
+        const object = await bucket.head(objectKey);
+        return object
+          ? { state: "present", metadata: metadataFor(objectKey, object) }
+          : { state: "missing" };
+      } catch {
+        return { state: "unknown" };
+      }
+    },
   };
 }

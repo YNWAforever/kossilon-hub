@@ -40,6 +40,7 @@ const STATE_TONE: Record<MaintenanceHealthState, string> = {
 };
 
 const SCHEMA_LABEL: Record<SchemaHealthState, string> = {
+  unavailable: "無法讀取",
   "no-ledger": "無法判斷",
   behind: "落後於程式",
   ahead: "領先於程式",
@@ -52,6 +53,7 @@ const SCHEMA_LABEL: Record<SchemaHealthState, string> = {
 // `ahead` is red rather than amber -- it means the running code is older than
 // the database, which running the migrator cannot fix.
 const SCHEMA_TONE: Record<SchemaHealthState, string> = {
+  unavailable: "bg-status-yellow-soft text-status-yellow",
   "no-ledger": "bg-status-yellow-soft text-status-yellow",
   behind: "bg-status-red-soft text-status-red",
   ahead: "bg-status-red-soft text-status-red",
@@ -133,7 +135,9 @@ function OperationsRoute() {
                 {/* 「沒有記錄表」與「0 個」是兩件事，所以這裡用文字而不是數字。 */}
                 <dd className="tabular-nums">
                   {view.schema.appliedCount === null
-                    ? "沒有記錄表"
+                    ? view.schema.state === "no-ledger"
+                      ? "沒有記錄表"
+                      : "無法讀取"
                     : `${view.schema.appliedCount} 個`}
                 </dd>
               </div>
@@ -148,9 +152,8 @@ function OperationsRoute() {
 
           {view.maintenance === null ? (
             <p className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
-              以下的排程狀態、工作隊列與執行紀錄都讀取不到。原因請看上方的資料庫結構：
-              在結構與此版本不一致時，這些查詢需要的資料表未必存在。
-              這裡沒有顯示「0」，因為讀不到的隊列和空的隊列並不是同一件事。
+              排程狀態暫時無法判斷。其他成功讀取的隊列或執行紀錄仍會顯示；
+              缺少的資料保持未知，請按診斷參考跟進。
             </p>
           ) : null}
 
@@ -165,6 +168,13 @@ function OperationsRoute() {
                 </span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{view.maintenance.summary}</p>
+              <p className="mt-2 text-sm">
+                執行範圍：
+                {view.executionScope === "safe-maintenance-only"
+                  ? "四項維護；未啟用通知派送、掃描、分析"
+                  : "歷史範圍待核對"}
+                。真正排程仍須平台證據；人手執行不計。
+              </p>
               <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
                 <div>
                   <dt className="text-muted-foreground">最後一次執行</dt>
@@ -177,8 +187,10 @@ function OperationsRoute() {
                   {/* "從未成功" and "從未執行" are different facts and are shown as
                     different words. */}
                   <dd className="tabular-nums">
-                    {view.maintenance.lastSuccessAt?.slice(0, 16).replace("T", " ") ??
-                      (view.maintenance.lastRunAt ? "從未成功" : "從未")}
+                    {!view.lastSuccessLookupKnown
+                      ? "無法判斷"
+                      : (view.maintenance.lastSuccessAt?.slice(0, 16).replace("T", " ") ??
+                        (view.maintenance.lastRunAt ? "從未成功" : "從未"))}
                   </dd>
                 </div>
                 <div>
@@ -191,6 +203,30 @@ function OperationsRoute() {
             </section>
           ) : null}
 
+          {view.queues === null ? (
+            <p role="status" className="text-sm text-status-yellow">
+              工作隊列無法讀取，數量未知；不能當作0。
+            </p>
+          ) : null}
+          {view.maintenance === null ? (
+            <p role="status" className="text-sm text-status-yellow">
+              排程證據無法讀取，健康狀態未知。
+            </p>
+          ) : null}
+          {view.schedulerLeases ? (
+            <p className="text-sm">
+              已開始而結果待核對：{view.schedulerLeases.startedUnknown}；未開始的過期 lease：
+              {view.schedulerLeases.claimedExpired}。未知結果不自動重跑。
+            </p>
+          ) : (
+            <p className="text-sm text-status-yellow">排程 lease 診斷未知。</p>
+          )}
+          {view.diagnostics && view.diagnostics.failedReads.length > 0 ? (
+            <p role="status" className="text-sm">
+              診斷參考：{view.diagnostics.correlationId}；無法讀取：
+              {view.diagnostics.failedReads.join("、")}
+            </p>
+          ) : null}
           {view.queues ? (
             <section className="rounded-lg border bg-card">
               <div className="border-b p-4">
@@ -224,40 +260,59 @@ function OperationsRoute() {
               <p className="border-t px-4 py-3 text-sm text-muted-foreground">
                 已批准但未能交出的套件：
                 <span className="tabular-nums"> {view.queues.handoffsAwaitingTransmission}</span>
-                。這不是故障，是缺少外部交件連接器。
+                。匯出或批准不代表已交件；請核對上載與提交證明。
               </p>
             </section>
           ) : null}
 
           <section className="rounded-lg border bg-card">
             <div className="border-b p-4">
-              <h2 className="text-base font-semibold">已停用的功能</h2>
+              <h2 className="text-base font-semibold">能力、配置與實際健康</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                以下功能在這個部署上不會運作。它們不是故障，也不會自行恢復。
+                程式實作、綁定配置及 runtime 驗證分開顯示。健康恢復不會取消正式操作的批准要求。
               </p>
+              <a
+                className="mt-2 inline-block text-sm underline"
+                href="https://github.com/YNWAforever/kossilon-hub/blob/main/docs/audit-remediation/capability-runbook.md"
+                target="_blank"
+                rel="noreferrer"
+              >
+                查看診斷及跟進步驟
+              </a>
             </div>
-            {view.staleBlockers.length > 0 ? (
-              <p className="border-b bg-status-yellow-soft px-4 py-3 text-sm text-status-yellow">
-                以下功能仍被列為停用，但它們所說的解除條件看來已經達成：
-                {view.staleBlockers.join("、")}。這不代表功能已恢復——請由人確認後，把它從
-                capabilities.ts 移除。
-              </p>
-            ) : null}
             <ul className="divide-y">
-              {view.blockedIntegrations.map((integration) => (
+              {view.capabilities.map((integration) => (
                 <li className="space-y-1 p-4" key={integration.id}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{integration.capability}</span>
-                    {integration.blocksRelease ? (
+                    {integration.approvalRequired ? (
                       <span className="rounded-full bg-status-red-soft px-2 py-0.5 text-xs text-status-red">
-                        阻擋交件
+                        正式操作需批准
                       </span>
                     ) : null}
-                    <code className="text-xs text-muted-foreground">{integration.id}</code>
                   </div>
-                  <p className="text-sm text-muted-foreground">{integration.effect}</p>
-                  <p className="text-sm">現時做法：{integration.pilotFallback}</p>
-                  <p className="text-sm text-muted-foreground">需要：{integration.clearedBy}</p>
+                  <p className="text-sm">
+                    程式：{integration.implemented ? "已實作" : "待實作"} · 綁定：
+                    {integration.configured === null
+                      ? "未知"
+                      : integration.configured
+                        ? "已配置"
+                        : "未配置"}{" "}
+                    · 健康：
+                    {
+                      {
+                        healthy: "已驗證",
+                        degraded: "降級／過期",
+                        failed: "失敗",
+                        unknown: "未知",
+                      }[integration.health]
+                    }
+                  </p>
+                  <p className="text-sm">
+                    最後驗證：{integration.lastVerifiedAt ?? "尚無證據"} · 跟進：{integration.owner}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{integration.summary}</p>
+                  <p className="text-sm">下一步：{integration.nextAction}</p>
                 </li>
               ))}
             </ul>
@@ -283,6 +338,10 @@ function OperationsRoute() {
                         <th className="px-4 py-2 font-medium">觸發</th>
                         <th className="px-4 py-2 font-medium">已派送</th>
                         <th className="px-4 py-2 font-medium">已攔截</th>
+                        <th className="px-4 py-2 font-medium">
+                          工作 claimed／completed／failed／unknown
+                        </th>
+                        <th className="px-4 py-2 font-medium">參考</th>
                         <th className="px-4 py-2 font-medium">失敗環節</th>
                       </tr>
                     </thead>
@@ -295,13 +354,25 @@ function OperationsRoute() {
                           <td className="px-4 py-2">{entry.outcome}</td>
                           <td className="px-4 py-2 tabular-nums">{entry.durationMs} ms</td>
                           <td className="px-4 py-2">
-                            {entry.triggerSource === "scheduled" ? "排程" : "人手"}
+                            {entry.triggerSource === "scheduled"
+                              ? entry.platformTriggerVerified === false
+                                ? "排程候選（未核實）"
+                                : "排程"
+                              : "人手"}
                           </td>
                           <td className="px-4 py-2 tabular-nums">
                             {dispatchCountLabel(entry.dispatch?.sent ?? null)}
                           </td>
                           <td className="px-4 py-2 tabular-nums">
                             {dispatchCountLabel(entry.dispatch?.suppressedFixtureOrigin ?? null)}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground">
+                            {entry.jobCounts
+                              ? `${entry.jobCounts.claimed} / ${entry.jobCounts.completed} / ${entry.jobCounts.failed} / ${entry.jobCounts.unknown}`
+                              : "無法判斷"}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground">
+                            {entry.correlationId ?? "尚無記錄"}
                           </td>
                           <td className="px-4 py-2 text-muted-foreground">
                             {entry.failedPasses.length > 0 ? entry.failedPasses.join("、") : "—"}

@@ -2,6 +2,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { caseFiltersForActor } from "@/features/annual-return/permissions";
 import type { createWorkItemRepository, PersistedWorkItem, QueueFilters } from "./repository";
 
 const loadWorkItemServerDependencies = createServerOnlyFn(async () => {
@@ -29,7 +30,12 @@ export const listWorkQueueInputSchema = z
   .strict()
   .default({});
 
-export const workItemIdInputSchema = z.object({ workItemId: z.string().uuid() }).strict();
+export const workItemIdInputSchema = z
+  .object({
+    workItemId: z.string().uuid(),
+    assignmentTarget: z.enum(["owner", "reviewer"]).optional(),
+  })
+  .strict();
 
 export const assignWorkItemInputSchema = z
   .object({
@@ -85,6 +91,7 @@ export function assertActorCanAssignWorkItem(
   actor: AuthenticatedActor,
   workItem: PersistedWorkItem,
 ): void {
+  if (!actor.active) throw new Error("Forbidden: inactive users cannot assign work.");
   if (actor.role === "Admin") return;
   if (actor.role !== "Manager") throw new Error("Forbidden: Manager or Admin access is required.");
   if (!actor.teamId || workItem.teamId !== actor.teamId) {
@@ -145,11 +152,17 @@ export async function recommendWorkItemAssigneesForActor(
   repository: ReturnType<typeof createWorkItemRepository>,
   actor: AuthenticatedActor,
   workItemId: string,
+  assignmentTarget: "owner" | "reviewer" = "owner",
 ) {
+  if (!actor.active)
+    throw new Error("Forbidden: inactive users cannot inspect assignment candidates.");
+  if (actor.role === "Manager" && !actor.teamId)
+    throw new Error("Forbidden: manager has no assigned team.");
   if (actor.role !== "Admin" && actor.role !== "Manager") {
     throw new Error("Forbidden: Manager or Admin access is required.");
   }
   return repository.recommendAssignees(workItemId, {
+    ...(assignmentTarget === "reviewer" ? { assignmentTarget } : {}),
     expectedTeamId: expectedManagerTeamId(actor),
   });
 }
@@ -189,7 +202,15 @@ export const listWorkQueue = createServerFn({ method: "GET" })
   .validator(listWorkQueueInputSchema)
   .handler(({ data }) =>
     withDefaultAuthorizedWorkItemRepository((repository, actor) =>
-      repository.listQueue(queueFiltersForActor(actor, data)),
+      repository.listQueue(
+        queueFiltersForActor(actor, data),
+        caseFiltersForActor({
+          id: actor.userId,
+          role: actor.role,
+          teamId: actor.teamId,
+          active: actor.active,
+        }),
+      ),
     ),
   );
 
@@ -197,7 +218,7 @@ export const recommendWorkItemAssignees = createServerFn({ method: "GET" })
   .validator(workItemIdInputSchema)
   .handler(({ data }) =>
     withDefaultAuthorizedWorkItemRepository((repository, actor) =>
-      recommendWorkItemAssigneesForActor(repository, actor, data.workItemId),
+      recommendWorkItemAssigneesForActor(repository, actor, data.workItemId, data.assignmentTarget),
     ),
   );
 

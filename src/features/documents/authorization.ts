@@ -29,6 +29,20 @@ function forbidden(message: string): Error {
   return new Error(`Forbidden: ${message}`);
 }
 
+export type StaffDocumentScope = { teamId?: string; assignedUserId?: string };
+
+/** Shared list/by-ID preconditions; no-team assignments remain closed. */
+export function documentScopeForStaffActor(
+  actor: AuthenticatedActor,
+  purpose: "list" | "access" = "list",
+): StaffDocumentScope {
+  if (!actor.active) throw forbidden(`inactive users cannot ${purpose} documents.`);
+  if (actor.role === "Client" || !actor.userId) throw forbidden("staff access is required.");
+  if (actor.role === "Admin") return {};
+  if (!actor.teamId) throw forbidden("staff actor has no assigned team.");
+  return { teamId: actor.teamId, assignedUserId: actor.userId };
+}
+
 /**
  * Whether a staff actor may reach one document.
  *
@@ -43,9 +57,11 @@ export function isDocumentVisibleToStaffActor(
 ): boolean {
   // Checked before the Admin shortcut, matching caseFiltersForActor: an inactive
   // admin may not act, so they may not read either.
-  if (!actor.active) return false;
-  if (actor.role === "Client") return false;
-  if (!actor.userId) return false;
+  try {
+    documentScopeForStaffActor(actor, "access");
+  } catch {
+    return false;
+  }
 
   if (actor.role === "Admin") return true;
 
@@ -82,9 +98,7 @@ export function assertStaffDocumentAccess(
   actor: AuthenticatedActor,
   subject: DocumentAccessSubject,
 ): AuthenticatedActor {
-  if (!actor.active) throw forbidden("inactive users cannot access documents.");
-  if (actor.role === "Client" || !actor.userId) throw forbidden("staff access is required.");
-  if (actor.role !== "Admin" && !actor.teamId) throw forbidden("staff actor has no assigned team.");
+  documentScopeForStaffActor(actor, "access");
 
   if (!isDocumentVisibleToStaffActor(actor, subject)) {
     throw forbidden("this document is outside your scope.");

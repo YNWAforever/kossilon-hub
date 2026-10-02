@@ -23,6 +23,8 @@ export type ChecklistStatus = "Missing" | "Received" | "Verified" | "Rejected";
 export type AnnualReturnCompany = {
   id: string;
   companyName: string;
+  /** Always supplied by DB reads; absent legacy/test values remain unknown. */
+  dataOrigin?: import("@/features/clients/data-origin").CompanyDataOrigin | null;
   crNumber: string;
   brNumber: string;
   incorporationDate: string;
@@ -47,6 +49,10 @@ export type AnnualReturnChecklistItem = {
 };
 
 export type AnnualReturnPayment = {
+  receivedAmount?: number;
+  balance?: number;
+  evidenceEntries?: import("./payment-evidence-state").PaymentEvidenceEntry[];
+  proofReturns?: import("./payment-evidence-state").PaymentProofReturn[];
   id: string;
   caseId: string;
   invoiceNumber: string;
@@ -59,10 +65,18 @@ export type AnnualReturnPayment = {
 };
 
 export type AnnualReturnCase = {
+  readiness?: import("./readiness").ReadinessSnapshot;
+  handoffExceptions?: {
+    unreconciled: number;
+    rejected: number;
+    unknown: number;
+    awaitingManual: number;
+  };
   id: string;
   companyId: string;
   companyTeamId: string;
   companyName: string;
+  dataOrigin?: import("@/features/clients/data-origin").CompanyDataOrigin | null;
   returnYear: number;
   madeUpDate: string;
   filingDueDate: string;

@@ -1,0 +1,9 @@
+{
+  "environment": "isolated local Postgres 17, kossilon_pr02_ci, portable Node 22.23.3",
+  "operation": "dashboardMetrics across 5001 synthetic client cases, transaction rollback",
+  "before": {"build": "faacd4a", "durationMs": 4686.04, "returnedOverdueCases": 5000, "rssDeltaBytes": 45740032, "heapDeltaBytes": 16749160, "cpuUserUs": 344000, "cpuSystemUs": 62000},
+  "after": {"build": "T09 working diff on faacd4a", "durationMs": 1676.55, "returnedOverdueCases": 5001, "rssDeltaBytes": 3039232, "heapDeltaBytes": 1692400, "cpuUserUs": 0, "cpuSystemUs": 0},
+  "command": "npm run test -- src/features/annual-return/metrics.integration.test.ts --disableConsoleIntercept",
+  "result": "2/2 real Postgres tests pass, 0 skip; affected suite 106/106 pass",
+  "limitations": "One local observation per build; process CPU timer resolution reports zero after. Not a production latency or percentile claim. No real client data or external sends."
+}

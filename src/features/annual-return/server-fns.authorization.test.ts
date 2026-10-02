@@ -142,6 +142,7 @@ describe("production annual return list scoping", () => {
     expect(listCases).toHaveBeenCalledWith({
       teamId: staffActor.teamId,
       visibleToUserId: staffActor.userId,
+      includeFixtures: false,
     });
   });
 
@@ -157,6 +158,7 @@ describe("production annual return list scoping", () => {
     expect(listCases).toHaveBeenCalledWith({
       teamId: staffActor.teamId,
       visibleToUserId: staffActor.userId,
+      includeFixtures: false,
     });
   });
 
@@ -170,6 +172,7 @@ describe("production annual return list scoping", () => {
       limit: 50,
       teamId: staffActor.teamId,
       visibleToUserId: staffActor.userId,
+      includeFixtures: false,
     });
   });
 
@@ -182,7 +185,7 @@ describe("production annual return list scoping", () => {
       { repository },
     );
 
-    expect(listCases).toHaveBeenCalledWith({ status: "Upcoming" });
+    expect(listCases).toHaveBeenCalledWith({ status: "Upcoming", includeFixtures: false });
   });
 
   it("refuses a client", async () => {
@@ -505,6 +508,10 @@ describe("createAnnualReturnCaseForActor / listCompaniesEligibleForCaseForActor"
     await listCompaniesEligibleForCaseForActor(staffActor, {}, dependencies);
 
     expect(listCompaniesEligibleForCase).toHaveBeenCalledOnce();
+    expect(listCompaniesEligibleForCase).toHaveBeenCalledWith({
+      includeFixtures: false,
+      teamId: staffActor.teamId,
+    });
   });
 
   it("scopes eligible companies to the actor's own team for non-Admin actors", async () => {
@@ -566,6 +573,23 @@ describe("createAnnualReturnCaseForActor / listCompaniesEligibleForCaseForActor"
     const result = await listCompaniesEligibleForCaseForActor(adminActor, {}, dependencies);
 
     expect(result).toEqual([ownTeamCompany, otherTeamCompany]);
+  });
+
+  it("permits fixture picker diagnostics only for an active Admin", async () => {
+    const listCompaniesEligibleForCase = vi.fn(async () => []);
+    const dependencies = {
+      repository: { listCompaniesEligibleForCase } as unknown as AnnualReturnRepository,
+    };
+    await expect(
+      listCompaniesEligibleForCaseForActor(staffActor, { includeFixtures: true }, dependencies),
+    ).rejects.toThrow(/only Admin/);
+    expect(listCompaniesEligibleForCase).not.toHaveBeenCalled();
+    await listCompaniesEligibleForCaseForActor(
+      { ...staffActor, role: "Admin" },
+      { includeFixtures: true },
+      dependencies,
+    );
+    expect(listCompaniesEligibleForCase).toHaveBeenLastCalledWith({ includeFixtures: true });
   });
 });
 

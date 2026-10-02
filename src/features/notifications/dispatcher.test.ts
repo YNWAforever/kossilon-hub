@@ -64,6 +64,22 @@ function repository(rows: NotificationOutboxRecord[]): NotificationOutboxReposit
  * guessing. The escalation belongs to a human.
  */
 describe("a dispatch whose outcome is unknown is never re-sent", () => {
+  it("exhausts an explicitly unknown transport outcome without scheduling another send", async () => {
+    const repo = repository([notification()]);
+    const transport: NotificationTransport = {
+      dispatch: async () => {
+        throw Object.assign(new Error("owned connection lost after send"), {
+          dispatchOutcomeUnknown: true,
+        });
+      },
+    };
+    await createNotificationDispatcher(repo, transport).dispatchDue("2026-10-01T00:00:00Z");
+    expect(repo.markRetry).not.toHaveBeenCalled();
+    expect(repo.markFailed).toHaveBeenCalledWith(
+      notification().id,
+      expect.objectContaining({ errorCode: "dispatch_outcome_unknown", spendAttempts: true }),
+    );
+  });
   it("records that a transport call was begun before making it", async () => {
     const order: string[] = [];
     const repo = repository([notification()]);

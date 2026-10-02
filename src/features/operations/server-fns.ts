@@ -4,6 +4,9 @@ import {
   staleBlockedIntegrations,
   type BlockedIntegration,
   type BlockedIntegrationId,
+  capabilityStatuses,
+  type CapabilityStatus,
+  type CapabilityId,
 } from "./capabilities";
 import {
   defaultToleranceSeconds,
@@ -53,6 +56,11 @@ export type OperationsHealthView = {
    * unreadable database is not evidence that a schedule ran.
    */
   staleBlockers: readonly BlockedIntegrationId[];
+  capabilities: CapabilityStatus[];
+  lastSuccessLookupKnown: boolean;
+  executionScope: string | null;
+  schedulerLeases: Awaited<ReturnType<MaintenanceRunRepository["maintenanceLeaseHealth"]>> | null;
+  diagnostics: { correlationId: string; failedReads: string[] } | null;
 };
 
 const RECENT_RUN_LIMIT = 12;
@@ -68,77 +76,70 @@ export async function buildOperationsHealth(
       | "queueDepths"
       | "schemaLedger"
       | "textLayerObserved"
-    >;
+    > &
+      Partial<Pick<MaintenanceRunRepository, "schemaCatalog" | "maintenanceLeaseHealth">>;
+    configuration?: Partial<Record<CapabilityId, boolean>>;
+    diagnostics?: boolean;
   },
 ): Promise<OperationsHealthView> {
   // First, alone, and before anything that could throw. Every other read below
   // queries a table one of the migrations creates, so against a database that
   // is behind they all fail -- and the one screen whose job is to say why would
   // be the one screen that cannot load.
-  const schema = schemaHealthOf({
-    expected: EXPECTED_MIGRATIONS,
-    ledger: await dependencies.repository.schemaLedger(),
-  });
-
+  const correlationId = crypto.randomUUID(),
+    failedReads: string[] = [];
+  const failed = (read: string) => {
+    failedReads.push(read);
+    console.error("operations read unavailable", { correlationId, read });
+  };
+  let schema: SchemaHealth;
   try {
-    return await readOperationsState(input, dependencies, schema);
-  } catch (error) {
-    // Tolerated only where the schema already accounts for it. A failure on a
-    // current schema is a real fault, and dressing it up as a migration problem
-    // would send whoever reads this screen after the wrong thing entirely.
-    if (schema.state === "current") throw error;
-
-    // Logged, not discarded. The screen deliberately does not show this text --
-    // a connection error can name hosts and ports, and this is not the place to
-    // put them in front of staff -- but an error nothing records is an error
-    // nobody can debug, and "the schema explains it" is a reason to keep serving
-    // the page, not a reason to throw the evidence away.
-    console.error("operations health degraded read", { schemaState: schema.state, error });
-
-    return {
-      schema,
-      maintenance: null,
-      recentRuns: null,
-      queues: null,
-      blockedIntegrations: BLOCKED_INTEGRATIONS,
-      staleBlockers: [],
+    schema = schemaHealthOf({
+      expected: EXPECTED_MIGRATIONS,
+      ledger: await dependencies.repository.schemaLedger(),
+    });
+  } catch {
+    failed("schemaLedger");
+    schema = {
+      state: "unavailable",
+      missing: [],
+      ahead: [],
+      appliedCount: null,
+      expectedCount: EXPECTED_MIGRATIONS.length,
+      summary: "結構讀取失敗，遷移狀態未知；不能當作0個遷移或正常。",
     };
   }
-}
-
-async function readOperationsState(
-  input: { now: string },
-  dependencies: {
-    repository: Pick<
-      MaintenanceRunRepository,
-      | "listRecentRuns"
-      | "listRecentScheduledRuns"
-      | "lastScheduledSuccessAt"
-      | "queueDepths"
-      | "textLayerObserved"
-    >;
-  },
-  schema: SchemaHealth,
-): Promise<OperationsHealthView> {
-  const [recentRuns, scheduledRuns, lastScheduledSuccessAt, queues, textLayerObserved] =
-    await Promise.all([
-      dependencies.repository.listRecentRuns(RECENT_RUN_LIMIT),
-      // Judged separately from what the table displays: a window full of manual
-      // runs would leave the health rule nothing to judge the schedule by.
-      dependencies.repository.listRecentScheduledRuns(RECENT_RUN_LIMIT),
-      dependencies.repository.lastScheduledSuccessAt(),
-      dependencies.repository.queueDepths(input.now),
-      dependencies.repository.textLayerObserved(),
-    ]);
-
-  const maintenance = maintenanceHealthOf({
-    runs: scheduledRuns,
-    now: input.now,
-    toleranceSeconds: defaultToleranceSeconds(),
-    // Scoped to all of history, so an hour of partial ticks cannot make the
-    // screen claim the schedule has never once succeeded.
-    lastScheduledSuccessAt,
-  });
+  const repo = dependencies.repository;
+  const results = await Promise.allSettled([
+    Promise.resolve().then(() => repo.listRecentRuns(RECENT_RUN_LIMIT)),
+    Promise.resolve().then(() => repo.listRecentScheduledRuns(RECENT_RUN_LIMIT)),
+    Promise.resolve().then(() => repo.lastScheduledSuccessAt()),
+    Promise.resolve().then(() => repo.queueDepths(input.now)),
+    Promise.resolve().then(() => repo.textLayerObserved()),
+    Promise.resolve().then(() => repo.schemaCatalog?.() ?? null),
+    Promise.resolve().then(() => repo.maintenanceLeaseHealth?.() ?? null),
+  ]);
+  function value<T>(result: PromiseSettledResult<T>, name: string): T | null {
+    if (result.status === "fulfilled") return result.value;
+    failed(name);
+    return null;
+  }
+  const recentRuns = value(results[0], "listRecentRuns"),
+    scheduledRuns = value(results[1], "listRecentScheduledRuns");
+  const lastSuccess = value(results[2], "lastScheduledSuccessAt"),
+    queues = value(results[3], "queueDepths"),
+    textLayerObserved = value(results[4], "textLayerObserved");
+  const catalog = value(results[5], "schemaCatalog"),
+    schedulerLeases = value(results[6], "maintenanceLeaseHealth");
+  const maintenance =
+    scheduledRuns === null
+      ? null
+      : maintenanceHealthOf({
+          runs: scheduledRuns,
+          now: input.now,
+          toleranceSeconds: defaultToleranceSeconds(),
+          lastScheduledSuccessAt: results[2].status === "fulfilled" ? lastSuccess : undefined,
+        });
 
   return {
     schema,
@@ -146,11 +147,25 @@ async function readOperationsState(
     recentRuns,
     queues,
     blockedIntegrations: BLOCKED_INTEGRATIONS,
-    staleBlockers: staleBlockedIntegrations({
-      blocked: BLOCKED_INTEGRATIONS,
-      maintenanceState: maintenance.state,
+    staleBlockers: maintenance
+      ? staleBlockedIntegrations({
+          blocked: BLOCKED_INTEGRATIONS,
+          maintenanceState: maintenance.state,
+          textLayerObserved: textLayerObserved === true,
+        })
+      : [],
+    capabilities: capabilityStatuses({
+      configuration: dependencies.configuration,
+      maintenance,
       textLayerObserved,
+      schemaReady: catalog
+        ? schema.state === "current" && catalog.facts.every((fact) => fact.present)
+        : null,
     }),
+    schedulerLeases,
+    lastSuccessLookupKnown: results[2].status === "fulfilled",
+    executionScope: scheduledRuns?.[0]?.executionScope ?? null,
+    diagnostics: dependencies.diagnostics ? { correlationId, failedReads } : null,
   };
 }
 
@@ -175,11 +190,19 @@ export const getOperationsHealth = createServerFn({ method: "GET" }).handler(asy
 
   // The actor is derived from the request, never from client input, and the
   // gate runs before a repository is opened.
-  await requireStaffActor(getRequest());
+  const actor = await requireStaffActor(getRequest());
+  const { getOperationsConfiguration } = await import("@/server/runtime-env");
 
   const repository = createMaintenanceRunRepository();
   try {
-    return await buildOperationsHealth({ now: new Date().toISOString() }, { repository });
+    return await buildOperationsHealth(
+      { now: new Date().toISOString() },
+      {
+        repository,
+        configuration: getOperationsConfiguration(),
+        diagnostics: actor.role === "Admin",
+      },
+    );
   } finally {
     await repository.close();
   }

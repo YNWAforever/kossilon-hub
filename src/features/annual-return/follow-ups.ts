@@ -27,6 +27,7 @@ export type PersistedFollowUpRecipient = {
 
 export type PersistedFollowUpEvidence = {
   documentId: string;
+  documentVersionId?: string | null;
   caseId: string;
   companyId: string;
   source: "document-review" | "payment-proof-review";
@@ -41,6 +42,11 @@ export type PersistedFollowUpEvidence = {
 export type PersistedFollowUpDelivery = {
   idempotencyKey: string;
   status: NotificationStatus;
+  delivery?: "provider" | "simulated" | null;
+  providerMessageId?: string | null;
+  messageStatus?: "queued" | "sent" | "delivered" | "read" | "failed" | null;
+  lastErrorCode?: string | null;
+  dispatchStarted?: boolean;
 };
 
 export type PersistedFollowUpState = {
@@ -50,6 +56,8 @@ export type PersistedFollowUpState = {
 };
 
 export type ProductionFollowUpDraft = {
+  /** Canonical observed facts, compared again by the server before queueing. */
+  version: string;
   id: string;
   entityId: string;
   source: ProductionFollowUpSource;
@@ -68,7 +76,7 @@ export type ProductionFollowUpDraft = {
    * mode nothing will ever contact the client at all. Collapsing the two told a
    * staff member the chase had gone out when nothing had left the building.
    */
-  status: "draft" | "queued" | "sent" | "blocked";
+  status: "draft" | "queued" | "provider_accepted" | "delivered" | "failed" | "unknown" | "blocked";
 };
 
 export function stableFollowUpIdempotencyKey(identity: ProductionFollowUpIdentity): string {
@@ -106,7 +114,19 @@ function deliveryStatus(
 ): ProductionFollowUpDraft["status"] {
   const stableKey = stableFollowUpIdempotencyKey(identity);
   const delivery = state.deliveries.find((candidate) => candidate.idempotencyKey === stableKey);
-  if (delivery?.status === "sent") return "sent";
+  if (
+    delivery?.lastErrorCode === "dispatch_outcome_unknown" ||
+    delivery?.lastErrorCode === "woztell_accepted_without_message_id" ||
+    delivery?.dispatchStarted
+  )
+    return "unknown";
+  if (delivery?.status === "sent") {
+    if (delivery.delivery !== "provider" || !delivery.providerMessageId) return "unknown";
+    return delivery.messageStatus === "delivered" || delivery.messageStatus === "read"
+      ? "delivered"
+      : "provider_accepted";
+  }
+  if (delivery?.status === "failed") return "failed";
   if (delivery && ["pending", "processing"].includes(delivery.status)) return "queued";
   if (delivery) return "blocked";
   return hasRecipient ? "draft" : "blocked";
@@ -130,6 +150,7 @@ export function deriveProductionFollowUpDrafts(
   const recipients = latestRecipientByCase(state.recipients);
   const mutableCases = cases.filter(
     (caseItem) =>
+      caseItem.dataOrigin === "client" &&
       caseItem.currentStatus !== "Filed" &&
       caseItem.currentStatus !== "Completed" &&
       !caseItem.lockedAt &&
@@ -150,6 +171,7 @@ export function deriveProductionFollowUpDrafts(
       entityId: caseItem.id,
     };
     drafts.push({
+      version: "",
       id: caseItem.id,
       entityId: caseItem.id,
       source: identity.source,
@@ -176,6 +198,7 @@ export function deriveProductionFollowUpDrafts(
     };
     const recipient = recipients.get(caseItem.id);
     drafts.push({
+      version: "",
       id: evidence.documentId,
       entityId: evidence.documentId,
       source,
@@ -191,5 +214,36 @@ export function deriveProductionFollowUpDrafts(
     });
   }
 
-  return drafts;
+  return drafts.map((draft) => {
+    const caseItem = casesById.get(draft.caseId)!;
+    const recipient = recipients.get(draft.caseId);
+    const evidence =
+      draft.source === "annual-return"
+        ? undefined
+        : state.evidence.find(
+            (candidate) =>
+              candidate.documentId === draft.entityId &&
+              candidate.caseId === draft.caseId &&
+              candidate.source === draft.source,
+          );
+    return {
+      ...draft,
+      version: JSON.stringify({
+        caseVersion: caseItem.readiness?.sourceVersion ?? null,
+        scope: [caseItem.companyId, caseItem.companyTeamId, caseItem.ownerId, caseItem.reviewerId],
+        draft: [
+          draft.source,
+          draft.entityId,
+          draft.recipientName,
+          draft.phone,
+          draft.reasonLabel,
+          draft.messagePreview,
+        ],
+        recipientRecord: recipient?.recordedAt ?? null,
+        evidence: evidence
+          ? [evidence.documentVersionId ?? null, evidence.reviewStatus, evidence.uploadedAt]
+          : null,
+      }),
+    };
+  });
 }

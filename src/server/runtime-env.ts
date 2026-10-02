@@ -258,6 +258,29 @@ export function getDocumentAiConfig(
   return { endpoint: endpoint.trim(), apiKey: apiKey.trim() };
 }
 
+/** Presence only, no URLs/tokens or provider calls. Each adapter remains independent. */
+export function getOperationsConfiguration(env: Record<string, unknown> = defaultRuntimeSource()) {
+  const owner = env.MAINTENANCE_SCHEDULER_OWNER;
+  return {
+    database: hasBinding(env, "DATABASE_URL"),
+    "auth-provider": hasBinding(env, "NEON_AUTH_URL") && hasBinding(env, "NEON_AUTH_COOKIE_SECRET"),
+    "document-storage": hasBinding(env, "DOCUMENTS_BUCKET"),
+    "malware-scanner-provider": getDocumentScannerConfig(env) !== null,
+    "document-text-extraction":
+      hasBinding(env, "DATABASE_URL") && hasBinding(env, "DOCUMENTS_BUCKET"),
+    "ai-provider": getDocumentAiConfig(env) !== null,
+    "whatsapp-transport": [
+      "WOZTELL_API_BASE_URL",
+      "WOZTELL_ACCESS_TOKEN",
+      "WOZTELL_CHANNEL_ID",
+      "WOZTELL_WEBHOOK_SECRET",
+    ].every((name) => hasBinding(env, name)),
+    "deployment-runtime":
+      owner === "cloudflare" ||
+      (owner === "vercel" && hasText(env.CRON_SECRET) && env.CRON_SECRET.length >= 16),
+  };
+}
+
 /**
  * Another deliberate sibling to getFirmRuntimeEnv, not part of it — same
  * reasoning as getResendConfig above. Document storage only ever needs its own

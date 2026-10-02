@@ -65,10 +65,11 @@ function repositoryDouble() {
     caseId: "case-1",
     timelineEventCreated: true,
   }));
-  const recordWebhookEvent = vi.fn(async () => ({
+  const recordWebhookEvent = vi.fn(async (_input: unknown) => ({
     id: "evt-row-1",
     processingStatus: "processed" as const,
     errorMessage: null,
+    normalizedMessageId: "msg-1",
   }));
   const recordMessageStatusEvent = vi.fn(async (_input: unknown) => ({
     matched: true,
@@ -334,9 +335,12 @@ describe("createWhatsAppWebhookHandler", () => {
 
       expect(response.status).toBe(200);
       expect(repository.recordInboundMessage).not.toHaveBeenCalled();
-      expect(repository.recordMessageStatusEvent).toHaveBeenCalledTimes(1);
-      expect(repository.recordMessageStatusEvent.mock.calls[0][0]).toMatchObject({
-        providerMessageId: payload.data.messageId,
+      expect(repository.recordMessageStatusEvent).not.toHaveBeenCalled();
+      expect(repository.recordWebhookEvent).toHaveBeenCalledTimes(1);
+      expect(repository.recordWebhookEvent.mock.calls[0][0]).toMatchObject({
+        payload,
+        signatureValid: true,
+        normalizedMessageId: null,
       });
     }
   });

@@ -5,18 +5,17 @@
  * approval is recorded over. This decides whether an approved package may leave
  * the building, and whether what comes back corresponds to what went out.
  *
- * Nothing here transmits. The destination is the firm's internal server and its
- * protocol, address and rights are not known to this repository --
- * BLOCKED_INTEGRATION: external-handoff-destination -- so a handoff is prepared
- * and stays prepared. The adapter that would transmit it is written against a
- * declared contract and disabled, the same way the malware scanner and the AI
- * provider are.
+ * Nothing here transmits. Manual submission is an operator attestation with its
+ * own fact/provenance. The internal-server protocol and receipt remain blocked;
+ * the raw legacy status alone never establishes provider or regulatory acceptance.
  */
 
+import type { ReadinessSnapshot } from "./readiness";
+
 export type HandoffStatus =
-  /** Approved and ready. Every row today, because nothing can transmit. */
+  /** Approved, not yet submitted. */
   | "prepared"
-  /** The destination has it. */
+  /** Submission recorded; deliveryFact distinguishes manual from provider evidence. */
   | "transmitted"
   /** The destination confirmed receipt. */
   | "acknowledged"
@@ -41,7 +40,32 @@ export type HandoffState = {
   manifestSha256: string;
   status: HandoffStatus;
   transmittedAt: string | null;
+  deliveryFact?: HandoffDeliveryFact | null;
 };
+
+export type HandoffDeliveryFact =
+  | "prepared"
+  | "exported"
+  | "manual_recorded"
+  | "provider_accepted"
+  | "unknown";
+
+export function handoffFactLabel(fact: HandoffDeliveryFact | null): string {
+  switch (fact) {
+    case "prepared":
+      return "已批准套件，未提交";
+    case "exported":
+      return "已匯出套件，未提交";
+    case "manual_recorded":
+      return "人工提交紀錄，未有系統收據";
+    case "provider_accepted":
+      return "目的地已確認接收，不代表監管已受理";
+    case "unknown":
+      return "派送結果不明，先查收據或人工核對";
+    default:
+      return "歷史紀錄，證據來源未確認";
+  }
+}
 
 export type ReturnState = {
   id: string;
@@ -61,6 +85,7 @@ export type ReturnState = {
  * moved since the approval.
  */
 export type HandoffRefusal =
+  | { kind: "case-not-ready"; sourceVersion: string | null }
   /** A live handoff exists. A second package is a mistake, not a second filing. */
   | { kind: "already-out"; status: HandoffStatus }
   /** The approval covers a different package than the one being sent. */
@@ -70,10 +95,12 @@ export function refusalForHandoff(input: {
   existing: HandoffState | null;
   approvedManifestSha256: string;
   currentManifestSha256: string;
+  readiness: ReadinessSnapshot | null;
 }): HandoffRefusal | null {
   if (
     input.existing &&
-    ["prepared", "transmitted", "acknowledged"].includes(input.existing.status)
+    (["prepared", "transmitted", "acknowledged"].includes(input.existing.status) ||
+      input.existing.deliveryFact === "unknown")
   ) {
     return { kind: "already-out", status: input.existing.status };
   }
@@ -88,6 +115,9 @@ export function refusalForHandoff(input: {
       currentSha256: input.currentManifestSha256,
     };
   }
+
+  if (!input.readiness?.sourceVersion || !input.readiness.readyToTransmit)
+    return { kind: "case-not-ready", sourceVersion: input.readiness?.sourceVersion ?? null };
 
   return null;
 }

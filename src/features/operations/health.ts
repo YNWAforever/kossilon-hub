@@ -20,6 +20,16 @@
 export type MaintenanceRunOutcome = "succeeded" | "partial" | "failed";
 
 export type MaintenanceRunRecord = {
+  platformTriggerVerified?: boolean | null;
+  executionScope?: string | null;
+  correlationId?: string | null;
+  jobCounts?: {
+    claimed: number;
+    completed: number;
+    failed: number;
+    unknown: number;
+    skipped: number;
+  } | null;
   id: string;
   scheduledFor: string;
   startedAt: string;

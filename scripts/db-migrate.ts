@@ -1,7 +1,12 @@
 import "dotenv/config";
+import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import postgres from "postgres";
+import {
+  assertMigrationPreflight,
+  readSchemaCatalog,
+} from "../src/features/operations/schema-catalog.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -25,32 +30,38 @@ const sql = postgres(databaseUrl, {
 const migrationsDir = join(process.cwd(), "db", "migrations");
 
 try {
-  await sql`
-    create table if not exists schema_migrations (
-      id text primary key,
-      applied_at timestamptz not null default now()
-    )
-  `;
-
   const files = (await readdir(migrationsDir)).filter((file) => file.endsWith(".sql")).sort();
-
-  for (const file of files) {
-    const applied = await sql`
-      select id from schema_migrations where id = ${file}
+  const bodies = new Map(
+    await Promise.all(
+      files.map(async (file) => [file, await readFile(join(migrationsDir, file), "utf8")] as const),
+    ),
+  );
+  const expectedHashes = Object.fromEntries(
+    [...bodies].map(([file, body]) => [file, createHash("sha256").update(body).digest("hex")]),
+  );
+  await sql.begin(async (tx) => {
+    await tx`select pg_advisory_xact_lock(hashtext('kossilon:schema-migrations'))`;
+    const catalog = await readSchemaCatalog(tx);
+    assertMigrationPreflight({ expected: files, expectedHashes, ...catalog });
+    await tx`
+      create table if not exists schema_migrations (
+        id text primary key,
+        applied_at timestamptz not null default now()
+      )
     `;
-
-    if (applied.length > 0) {
-      console.log(`Skipping ${file}`);
-      continue;
-    }
-
-    const body = await readFile(join(migrationsDir, file), "utf8");
-    await sql.begin(async (tx) => {
+    const appliedIds = new Set(catalog.ledger.applied);
+    for (const file of files) {
+      if (appliedIds.has(file)) {
+        console.log(`Skipping ${file}`);
+        continue;
+      }
+      const body = bodies.get(file)!;
       await tx.unsafe(body);
       await tx`insert into schema_migrations (id) values (${file})`;
-    });
-    console.log(`Applied ${file}`);
-  }
+      console.log(`Applied ${file} (commit pending)`);
+    }
+  });
+  console.log("Migration transaction committed.");
 } finally {
   await sql.end();
 }

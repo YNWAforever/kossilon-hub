@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
@@ -6,8 +6,12 @@ import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
-import { listClientAssignmentOptions, listClients } from "../server-fns";
+import { listClientAssignmentOptions, listClientPage } from "../server-fns";
 import type { ClientPaymentStatus, ClientSummary, CompanyStatus } from "../types";
+import { dataOriginLabel } from "../data-origin";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { useRetainedPage } from "@/lib/use-retained-page";
 
 const REGISTER_GRID_COLUMNS =
   "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
@@ -28,40 +32,43 @@ const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
   Overdue: "red",
 };
 
-export function ProductionClientRegister() {
+export function ProductionClientRegister({
+  allowFixtureDiagnostics = false,
+  actor = null,
+}: {
+  allowFixtureDiagnostics?: boolean;
+  actor?: AuthenticatedActor | null;
+}) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [teamFilter, setTeamFilter] = useState("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [includeFixtures, setIncludeFixtures] = useState(false);
+  const [pagination, setPagination] = useState<{ key: string; cursor?: string }>({ key: "" });
+  const filters = {
+    includeFixtures,
+    q: query,
+    ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+    ...(teamFilter !== "all" ? { teamId: teamFilter } : {}),
+  };
+  const filterKey = JSON.stringify(filters),
+    cursor = pagination.key === filterKey ? pagination.cursor : undefined;
 
   const clientsQuery = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => listClients(),
+    queryKey: ["clients", { ...filters, cursor, actorScope: actor }],
+    queryFn: () => listClientPage({ data: { ...filters, cursor, limit: 100 } }),
     retry: false,
   });
 
   const optionsQuery = useQuery({
-    queryKey: ["clients", "assignment-options"],
+    queryKey: ["clients", "assignment-options", actor],
     queryFn: () => listClientAssignmentOptions(),
     retry: false,
   });
 
-  const clients = useMemo(() => clientsQuery.data ?? [], [clientsQuery.data]);
-
-  const visibleClients = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return clients.filter((client) => {
-      const matchesQuery =
-        needle.length === 0 ||
-        client.companyName.toLowerCase().includes(needle) ||
-        client.crNumber.toLowerCase().includes(needle) ||
-        client.brNumber.toLowerCase().includes(needle);
-      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
-      const matchesTeam = teamFilter === "all" || client.teamId === teamFilter;
-      return matchesQuery && matchesStatus && matchesTeam;
-    });
-  }, [clients, query, statusFilter, teamFilter]);
+  const page = useRetainedPage(JSON.stringify([actor, filters]), clientsQuery.data);
+  const visibleClients = page?.clients ?? [];
 
   function handleCreated() {
     void queryClient.invalidateQueries({ queryKey: ["clients"] });
@@ -83,10 +90,44 @@ export function ProductionClientRegister() {
           </button>
         }
       />
+      <p className="text-sm text-muted-foreground">
+        {includeFixtures
+          ? "診斷範圍：包含測試資料；測試與歷史資料不會外發。"
+          : "正式範圍：排除測試資料；歷史資料只供查閱。"}
+      </p>
+      {actor?.active && (actor.role === "Admin" || actor.role === "Manager") ? (
+        <BulkSelectionToolbar
+          actorScope={JSON.stringify(actor)}
+          resource="client_company"
+          filters={{
+            ...(query.trim() ? { q: query.trim() } : {}),
+            ...(statusFilter !== "all" ? { clientStatus: statusFilter } : {}),
+            ...(teamFilter !== "all" ? { teamId: teamFilter } : {}),
+            includeFixtures,
+          }}
+          page={visibleClients.map((c) => ({ id: c.id, label: c.companyName }))}
+          total={page?.total ?? null}
+          pageSize={100}
+          maintenanceActions={["client_maintenance"]}
+        />
+      ) : null}
+      {allowFixtureDiagnostics ? (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={includeFixtures}
+            onChange={(event) => setIncludeFixtures(event.target.checked)}
+          />
+          包含測試資料（Admin 診斷）
+        </label>
+      ) : null}
 
       {clientsQuery.isError ? (
         <p role="alert" className="text-sm text-destructive">
           Client data is unavailable. Try again shortly.
+          <button className="min-h-11 px-3" onClick={() => void clientsQuery.refetch()}>
+            重試客戶頁面
+          </button>
         </p>
       ) : null}
 
@@ -166,6 +207,25 @@ export function ProductionClientRegister() {
           </p>
         ) : null}
       </section>
+      <div className="flex gap-3">
+        {cursor ? (
+          <button
+            className="min-h-11 rounded border px-3"
+            onClick={() => setPagination({ key: filterKey })}
+          >
+            回第一頁客戶
+          </button>
+        ) : null}
+        {page?.nextCursor ? (
+          <button
+            disabled={clientsQuery.isFetching || clientsQuery.isError}
+            className="min-h-11 rounded border px-3"
+            onClick={() => setPagination({ key: filterKey, cursor: page.nextCursor! })}
+          >
+            下一頁客戶
+          </button>
+        ) : null}
+      </div>
 
       {optionsQuery.data ? (
         <ClientFormDialog
@@ -184,6 +244,7 @@ function ClientRow({ client }: { client: ClientSummary }) {
     <div className={`grid gap-3 px-4 py-4 lg:items-center ${REGISTER_GRID_COLUMNS}`}>
       <div className="min-w-0">
         <p className="truncate font-medium">{client.companyName}</p>
+        <span className="text-xs text-muted-foreground">{dataOriginLabel(client.dataOrigin)}</span>
         <p className="truncate text-xs text-muted-foreground">
           CR {client.crNumber} · BR {client.brNumber}
         </p>

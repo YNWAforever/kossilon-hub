@@ -28,6 +28,7 @@ export type ScanJobStatus = "pending" | "processing" | "succeeded" | "failed" | 
 export type ScanJobReason = "initial" | "rescan" | "retry";
 
 export type DocumentScanJob = {
+  documentVersionId?: string | null;
   id: string;
   intentId: string;
   checksum: string;
@@ -44,6 +45,7 @@ export type DocumentScanJob = {
 };
 
 type ScanJobRow = {
+  document_version_id: string | null;
   id: string;
   intent_id: string;
   checksum_sha256: string;
@@ -98,15 +100,17 @@ export function nextScanAttemptAt(attempt: number, now: string): string {
  */
 export function scanJobIdempotencyKey(input: {
   intentId: string;
+  documentVersionId?: string | null;
   checksum: string;
   reason?: ScanJobReason;
 }): string {
-  const base = `scan:${input.intentId}:${input.checksum}`;
+  const base = `scan:${input.intentId}:${input.checksum}${input.documentVersionId ? `:${input.documentVersionId}` : ""}`;
   return input.reason === "rescan" ? `${base}:rescan` : base;
 }
 
 function mapRow(row: ScanJobRow): DocumentScanJob {
   return {
+    documentVersionId: row.document_version_id ?? null,
     id: row.id,
     intentId: row.intent_id,
     checksum: row.checksum_sha256,
@@ -133,16 +137,23 @@ export async function enqueueDocumentScanJob(
   client: QueryClient,
   input: {
     intentId: string;
+    documentVersionId?: string;
     checksum: string;
     reason?: ScanJobReason;
     maxAttempts?: number;
   },
 ): Promise<DocumentScanJob> {
   const reason = input.reason ?? "initial";
-  const idempotencyKey = scanJobIdempotencyKey(input);
+  const [version] = await client<{ id: string }[]>`select v.id from document_versions v
+    join document_upload_intents i on i.id=v.intent_id and i.document_id=v.document_id
+    where i.id=${input.intentId} and i.checksum_sha256=${input.checksum}
+      and v.declared_checksum_sha256=${input.checksum} and v.superseded_by_version_id is null`;
+  if (input.documentVersionId && input.documentVersionId !== version?.id)
+    throw new Error("Scan job version changed.");
+  const idempotencyKey = scanJobIdempotencyKey({ ...input, documentVersionId: version?.id });
   const rows = await client<ScanJobRow[]>`
-    insert into document_scan_jobs (intent_id, checksum_sha256, reason, idempotency_key, max_attempts)
-    values (${input.intentId}, ${input.checksum}, ${reason}, ${idempotencyKey}, ${input.maxAttempts ?? 5})
+    insert into document_scan_jobs (intent_id, document_version_id, checksum_sha256, reason, idempotency_key, max_attempts)
+    values (${input.intentId}, ${version?.id ?? null}, ${input.checksum}, ${reason}, ${idempotencyKey}, ${input.maxAttempts ?? 5})
     on conflict (idempotency_key) do nothing
     returning *
   `;
@@ -167,6 +178,7 @@ function withTransaction<T>(
 export type DocumentScanJobRepository = {
   enqueue(input: {
     intentId: string;
+    documentVersionId?: string;
     checksum: string;
     reason?: ScanJobReason;
     maxAttempts?: number;

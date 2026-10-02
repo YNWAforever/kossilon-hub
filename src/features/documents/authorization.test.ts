@@ -118,6 +118,12 @@ describe("isDocumentVisibleToStaffActor", () => {
   it("refuses a staff actor with no database identity", () => {
     expect(isDocumentVisibleToStaffActor(actor({ userId: null }), subject())).toBe(false);
   });
+  it("keeps no-team assignment access as strict as the throwing policy", () => {
+    const noTeam = actor({ teamId: null });
+    const assigned = subject({ caseId: CASE, companyTeamId: TEAM_B, caseOwnerId: noTeam.userId });
+    expect(isDocumentVisibleToStaffActor(noTeam, assigned)).toBe(false);
+    expect(() => assertStaffDocumentAccess(noTeam, assigned)).toThrow(/no assigned team/);
+  });
 });
 
 describe("assertStaffDocumentAccess", () => {

@@ -12,8 +12,11 @@ import type { ActiveChecklistTemplateSummary } from "@/features/checklist-templa
 import type { ClientAssignmentOptions } from "@/features/clients/types";
 import { createAnnualReturnCase } from "../server-fns";
 import type { EligibleCompanyForCase } from "../repository";
+import { dataOriginLabel } from "@/features/clients/data-origin";
 
 type Props = {
+  companySearch?: string;
+  onCompanySearch?: (value: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companies: EligibleCompanyForCase[];
@@ -86,6 +89,8 @@ export function CreateCaseDialog({
   isLoading,
   hasError,
   onCreated,
+  companySearch,
+  onCompanySearch,
 }: Props) {
   const [form, setForm] = useState<FormState>(() => emptyForm(companies, templates, owners));
   const [saving, setSaving] = useState(false);
@@ -125,6 +130,7 @@ export function CreateCaseDialog({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (!selectedCompany || isLoading || hasError) return;
     setSaving(true);
 
     try {
@@ -157,6 +163,19 @@ export function CreateCaseDialog({
             Create an annual return case for a company that doesn't have one yet this year.
           </DialogDescription>
         </DialogHeader>
+        {onCompanySearch ? (
+          <label className="text-sm">
+            搜尋全範圍可建立案件的公司
+            <input
+              className={inputClass}
+              value={companySearch ?? ""}
+              onChange={(event) => onCompanySearch(event.target.value)}
+            />
+            <span className="text-xs text-muted-foreground">
+              最多顯示200項；搜尋會在你的授權範圍全部公司執行。
+            </span>
+          </label>
+        ) : null}
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -183,13 +202,19 @@ export function CreateCaseDialog({
               <select
                 id="case-company"
                 className={inputClass}
-                value={form.companyId}
+                value={selectedCompany ? form.companyId : ""}
                 onChange={(event) => selectCompany(event.target.value)}
                 required
               >
+                {!selectedCompany ? (
+                  <option value="" disabled>
+                    請從目前搜尋結果選擇公司
+                  </option>
+                ) : null}
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
-                    {company.companyName} ({company.crNumber})
+                    {company.companyName} ({company.crNumber}) ·{" "}
+                    {dataOriginLabel(company.dataOrigin)}
                   </option>
                 ))}
               </select>
@@ -279,7 +304,7 @@ export function CreateCaseDialog({
               </button>
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || !selectedCompany}
                 className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
                 {saving ? "Creating…" : "Create case"}

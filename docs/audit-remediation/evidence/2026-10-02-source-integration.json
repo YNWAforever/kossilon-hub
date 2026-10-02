@@ -1,0 +1,336 @@
+{
+  "date": "2026-10-02",
+  "scope": "authorised reviewed source integration; production release NO_GO",
+  "integrated_development_head": "e5c76b50fefa12925570a7f62dd4480f17025d2d",
+  "reviewed_hold_tree": "e46e7b9b4dba8413e087fe742131164c255f6563",
+  "all_published_original_heads_preserved": true,
+  "merge_method": "merge commits; no rebase/squash/force/delete",
+  "production_before": {
+    "sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "deployment": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "git_branch": "main"
+  },
+  "source_hold": {
+    "git": {
+      "deploymentEnabled": {
+        "main": false
+      }
+    }
+  },
+  "schema": {
+    "source_ids": 50,
+    "production_last_observed_historical_ids": 66,
+    "new_migrations": 0,
+    "production_reconciled": false
+  },
+  "uat": {
+    "original": 50,
+    "local_only_pass": 19,
+    "blocked": 31,
+    "not_run": 0,
+    "runtime_release_ready": false
+  },
+  "main_pr": 102,
+  "main_merge": "pending exact updated-head gates; post-merge receipts recorded in PR102",
+  "rows": [
+    {
+      "number": 114,
+      "head": "34d0c13dd5648472d4d866853eec450ae7fa7973",
+      "base": "codex/audit-20261001-release-uat",
+      "observed_pr_base_oid": "8b834f48b11d4dbdbc81959ec5b01804ab7320d7",
+      "actual_merge_parent_base": "8b834f48b11d4dbdbc81959ec5b01804ab7320d7",
+      "merge_commit": "fcb31932866f43d694306c13a31bd4ec873e7d6b",
+      "merged_at": "2026-10-02T10:45:45Z",
+      "run_id": "36994563832",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/36994563832",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/8BruqNbyGQ2ABt3WxZmPRenFXEKe",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 222.66,
+      "browser_seconds": 31.3,
+      "log_sha256": "0e2441dcd6137ca6bffb675fc21647b5e0cacf266797f59b02f1f84ce51892c2",
+      "tree": "20170ff97a176bab7297e68d8b1c3da53ebcbf28"
+    },
+    {
+      "number": 115,
+      "head": "49f6a56116bfbd68dc68685eb2ee6facb3a767cd",
+      "base": "codex/audit-20261001-release-uat",
+      "observed_pr_base_oid": "fcb31932866f43d694306c13a31bd4ec873e7d6b",
+      "actual_merge_parent_base": "fcb31932866f43d694306c13a31bd4ec873e7d6b",
+      "merge_commit": "fe55fd5b4f6d718e39f30a4806bf8a7197a86159",
+      "merged_at": "2026-10-02T11:03:12Z",
+      "run_id": "36998115411",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/36998115411",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/3CzYeDbMtQMf1VdDuQr81igFaFJB",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 295.09,
+      "browser_seconds": 35.9,
+      "log_sha256": "91fabf0537ff1c4245d48258dbb5c975177755e5d9db9064655f5e2d045fe246",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 109,
+      "head": "99692cee61e04811be60b253fc26090cc8fbf70a",
+      "base": "codex/audit-20261001-release-uat",
+      "observed_pr_base_oid": "fcb31932866f43d694306c13a31bd4ec873e7d6b",
+      "actual_merge_parent_base": "fe55fd5b4f6d718e39f30a4806bf8a7197a86159",
+      "merge_commit": "4a63da48480eb621f785c734f7920000805b1851",
+      "merged_at": "2026-10-02T11:03:58Z",
+      "run_id": "36998284847",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/36998284847",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/44QadL3fccf8uvQnBy2jQmPc68ji",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 211.52,
+      "browser_seconds": 30.5,
+      "log_sha256": "61e9db9cfe1fe8d7f145e0601cc47e5666252bf4e5f3e7be7db8b62b2e81a81f",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 113,
+      "head": "4a63da48480eb621f785c734f7920000805b1851",
+      "base": "codex/audit-20261001-navigation-scale",
+      "observed_pr_base_oid": "918eabb586d70b1b507fa6bfe9e06f7794f344fe",
+      "actual_merge_parent_base": "918eabb586d70b1b507fa6bfe9e06f7794f344fe",
+      "merge_commit": "b8e83ffc00f20dbf5a4f6fbe52cc030243fb8929",
+      "merged_at": "2026-10-02T11:11:17Z",
+      "run_id": "36998952257",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/36998952257",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/E22wNSARKxGizLvkBvvTJ4CjeR53",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 213.54,
+      "browser_seconds": 30,
+      "log_sha256": "f528cc805cf7a47d962ff9d10359d5f38b2b751f671aafd0288552d6664fee0e",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 112,
+      "head": "b8e83ffc00f20dbf5a4f6fbe52cc030243fb8929",
+      "base": "codex/audit-20261001-bulk-handoff",
+      "observed_pr_base_oid": "b94a54d419e86ad336179f56e539bdac2b988980",
+      "actual_merge_parent_base": "b94a54d419e86ad336179f56e539bdac2b988980",
+      "merge_commit": "d39b037c96eeb84fb941b847acf1335c1cb9d36b",
+      "merged_at": "2026-10-02T11:18:05Z",
+      "run_id": "36999628605",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/36999628605",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/Db1mFb5SVKP1xgWh73QTYdu7tdNM",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 206.74,
+      "browser_seconds": 29.5,
+      "log_sha256": "493c7ae6c8b132e1562f06365e3ce144010e77937a2881fff4fd7f03301fa197",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 111,
+      "head": "d39b037c96eeb84fb941b847acf1335c1cb9d36b",
+      "base": "codex/audit-20261001-whatsapp-close-loop",
+      "observed_pr_base_oid": "99a0e1cd80dc96ae3b1c3db3c1c0ecbf40954991",
+      "actual_merge_parent_base": "99a0e1cd80dc96ae3b1c3db3c1c0ecbf40954991",
+      "merge_commit": "9c5176079530660bfb2cd6c51a5afc503e39a2e8",
+      "merged_at": "2026-10-02T11:23:15Z",
+      "run_id": "37000255685",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37000255685",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/BpR6DZgSBoxG4K7nHTBj9CnUneu2",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 158.57,
+      "browser_seconds": 26.3,
+      "log_sha256": "32799fe907963ad4a3b5279c2842a7fb2622201c99fee404380b496398543404",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 110,
+      "head": "9c5176079530660bfb2cd6c51a5afc503e39a2e8",
+      "base": "codex/audit-20261001-document-evidence",
+      "observed_pr_base_oid": "fa829d2d2625c63b77aa9b3fcaa2da0ce20dafb1",
+      "actual_merge_parent_base": "fa829d2d2625c63b77aa9b3fcaa2da0ce20dafb1",
+      "merge_commit": "3dcac40cbb6649254005aaf32d75bca2c2a69dc5",
+      "merged_at": "2026-10-02T11:30:04Z",
+      "run_id": "37000726356",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37000726356",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/J5UNTsSXodjw2G4mtV312R7oZudG",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 208.56,
+      "browser_seconds": 30,
+      "log_sha256": "20ad3a485bebf817a7836a78e849a6af5d1d8c581c039172f3deaf3847c2a791",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 108,
+      "head": "3dcac40cbb6649254005aaf32d75bca2c2a69dc5",
+      "base": "codex/audit-20261001-nar-apply",
+      "observed_pr_base_oid": "16162fb2471ad0066de0a4367a7a54857be415c9",
+      "actual_merge_parent_base": "16162fb2471ad0066de0a4367a7a54857be415c9",
+      "merge_commit": "47ec725187c3e0b41def024ca716728ec8c19516",
+      "merged_at": "2026-10-02T11:36:50Z",
+      "run_id": "37001349377",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37001349377",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/Gx19jPT5r77DU2r7dSrYZq9NR73S",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 207.09,
+      "browser_seconds": 31.5,
+      "log_sha256": "fc9d41d6a8048fc66e599b98ab2a18da7c1d7f6a814d72e25631facdab059531",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 107,
+      "head": "47ec725187c3e0b41def024ca716728ec8c19516",
+      "base": "codex/audit-20261001-admin-bulk",
+      "observed_pr_base_oid": "4eefc4038fe5e25ce6c0a04bf82ddf5cc7750974",
+      "actual_merge_parent_base": "4eefc4038fe5e25ce6c0a04bf82ddf5cc7750974",
+      "merge_commit": "b686f2fa99f70eda1299c99de1896225d8930035",
+      "merged_at": "2026-10-02T11:43:28Z",
+      "run_id": "37001975820",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37001975820",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/6LxQ7EiaoaHSaJsm6T4VVSkjDY8t",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 213.66,
+      "browser_seconds": 31.6,
+      "log_sha256": "26635788696cf1b7fc937757dd0f40f46d047c5458257a31410f0807b2c12a45",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 106,
+      "head": "b686f2fa99f70eda1299c99de1896225d8930035",
+      "base": "codex/audit-20261001-readiness-metrics",
+      "observed_pr_base_oid": "b7bdb4a172683adcea41ac4556a5c04dc6247afc",
+      "actual_merge_parent_base": "b7bdb4a172683adcea41ac4556a5c04dc6247afc",
+      "merge_commit": "182c34a6da10e758e20664b6f7504ea39cf0b36a",
+      "merged_at": "2026-10-02T11:52:34Z",
+      "run_id": "37002584948",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37002584948",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/CmWCoprX2tr5t3iMZ5hEEpHNCKZF",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 304.04,
+      "browser_seconds": 36.3,
+      "log_sha256": "1b0473b2b4321b0bf0ac80e7d1ce1728aa058f9375e0d1a94bd6c99db9e34eb3",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 105,
+      "head": "182c34a6da10e758e20664b6f7504ea39cf0b36a",
+      "base": "codex/audit-20261001-access-pagination",
+      "observed_pr_base_oid": "f9edcdd1f2049badaa6de757b90a16e41166848a",
+      "actual_merge_parent_base": "f9edcdd1f2049badaa6de757b90a16e41166848a",
+      "merge_commit": "1d36a9ae0af5ff42dcc33d0113342c9ca96103c7",
+      "merged_at": "2026-10-02T11:58:46Z",
+      "run_id": "37003433984",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37003433984",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/7sTNNoDt4UU2FWiPqURKRU5WHJdY",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 192.72,
+      "browser_seconds": 28.6,
+      "log_sha256": "8228121d7c623a797b26f665cb9cb2c67cd2083774985f1c56069afc330a84fe",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 104,
+      "head": "1d36a9ae0af5ff42dcc33d0113342c9ca96103c7",
+      "base": "codex/audit-20261001-operations",
+      "observed_pr_base_oid": "fabd24d33a58cb3243b4c44fac2dda3c24d0a654",
+      "actual_merge_parent_base": "fabd24d33a58cb3243b4c44fac2dda3c24d0a654",
+      "merge_commit": "7da8d99a3099526342676a85ec2af1bdbbd47e41",
+      "merged_at": "2026-10-02T12:06:51Z",
+      "run_id": "37004011384",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37004011384",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/CXJz5DKYnTtsDPwBrGX6Np6YkrpU",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 257,
+      "browser_seconds": 34.3,
+      "log_sha256": "30f374d4b0457fccd8a933eaa169977742a087a8644bfac03b95ade2c4c7af21",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    },
+    {
+      "number": 103,
+      "head": "7da8d99a3099526342676a85ec2af1bdbbd47e41",
+      "base": "codex/audit-20261001-baseline-origin",
+      "observed_pr_base_oid": "8a27ff0d7fa3e03491a1729fcef5460d32244019",
+      "actual_merge_parent_base": "8a27ff0d7fa3e03491a1729fcef5460d32244019",
+      "merge_commit": "e5c76b50fefa12925570a7f62dd4480f17025d2d",
+      "merged_at": "2026-10-02T12:14:49Z",
+      "run_id": "37004791720",
+      "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37004791720",
+      "preview": "https://vercel.com/ynwaforevers-projects/kossilon-hub/631AUoTeUxtWaFmrUaJGU8ksJMLv",
+      "tests": {
+        "files": 230,
+        "passed": 2183,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser_passed": 12,
+      "test_seconds": 292.84,
+      "browser_seconds": 35.4,
+      "log_sha256": "184ec9690ec917bb8b5aec363a1f79c2d165a246099294cd56f5fc3d51f54dab",
+      "tree": "e46e7b9b4dba8413e087fe742131164c255f6563"
+    }
+  ]
+}
