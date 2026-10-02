@@ -508,7 +508,10 @@ describe("createAnnualReturnCaseForActor / listCompaniesEligibleForCaseForActor"
     await listCompaniesEligibleForCaseForActor(staffActor, {}, dependencies);
 
     expect(listCompaniesEligibleForCase).toHaveBeenCalledOnce();
-    expect(listCompaniesEligibleForCase).toHaveBeenCalledWith({ includeFixtures: false });
+    expect(listCompaniesEligibleForCase).toHaveBeenCalledWith({
+      includeFixtures: false,
+      teamId: staffActor.teamId,
+    });
   });
 
   it("scopes eligible companies to the actor's own team for non-Admin actors", async () => {

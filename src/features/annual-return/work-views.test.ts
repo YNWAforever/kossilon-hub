@@ -148,21 +148,25 @@ describe("deriveWorkViews", () => {
     ]);
   });
 
-  // An empty list would read as "no exceptions", which is a claim nothing in
-  // this build can make: Phase E owns the returned-file contract.
-  it("marks returns and exceptions unreleased and says why, rather than showing an empty list", () => {
+  it("releases actual manual return reads while keeping connector absence explicit", () => {
     const results = deriveWorkViews([makeCase({ checklist: [item("Missing")] })], TODAY, {
       userId: ME,
     });
     const returns = view(results, "returnsAndExceptions");
-    expect(returns.definition.released).toBe(false);
-    // Names the specific integration that is missing, not a phase number -- and
-    // says outright that the blank is not "no exceptions". No package has been
-    // transmitted, so no return can have arrived, so the absence here is the
-    // absence of the whole process.
-    expect(returns.definition.unavailableReason).toContain("external-handoff-destination");
-    expect(returns.definition.unavailableReason).toContain("空白不代表沒有異常");
+    expect(returns.definition.released).toBe(true);
+    expect(returns.definition.description).toContain("人工");
+    expect(returns.definition.description).toContain("未配置");
     expect(returns.rows).toHaveLength(0);
+  });
+
+  it("keeps actual unresolved return facts visible even after a case closes", () => {
+    const case_ = makeCase({
+      currentStatus: "Filed",
+      handoffExceptions: { unreconciled: 1, rejected: 1, unknown: 0, awaitingManual: 0 },
+    });
+    const returns = view(deriveWorkViews([case_], TODAY, { userId: ME }), "returnsAndExceptions");
+    expect(returns.rows).toHaveLength(1);
+    expect(returns.rows[0].blocker).toContain("1 筆待核對");
   });
 
   it("shows no personal review queue for a viewer with no staff identity", () => {

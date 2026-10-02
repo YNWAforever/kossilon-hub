@@ -6,6 +6,7 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import { rethrowClientWriteError } from "./errors";
+import { boundedPageSize, readTupleCursor, tupleCursor } from "@/server/db/pagination";
 import type {
   AddContactInput,
   AppointOfficerInput,
@@ -48,8 +49,11 @@ export type CreateClientRepositoryOptions = CreateSqlClientOptions & {
 };
 
 export type ClientRepository = {
+  listClientPage(
+    filters?: ClientListFilters,
+  ): Promise<{ clients: ClientSummary[]; nextCursor: string | null; total: number }>;
   listAssignmentOptions(): Promise<ClientAssignmentOptions>;
-  listClients(filters?: { includeFixtures?: boolean }): Promise<ClientSummary[]>;
+  listClients(filters?: ClientListFilters): Promise<ClientSummary[]>;
   getClient(id: string): Promise<ClientDetail | null>;
   getCompanyTeamId(companyId: string): Promise<string | null>;
   createClient(input: CreateClientInput): Promise<ClientDetail>;
@@ -84,6 +88,14 @@ type SummaryRow = {
   filing_due_date: string | Date | null;
   payment_status: ClientPaymentStatus | null;
   payment_amount: number | null;
+};
+export type ClientListFilters = {
+  includeFixtures?: boolean;
+  q?: string;
+  status?: CompanyStatus;
+  teamId?: string;
+  cursor?: string;
+  limit?: number;
 };
 
 type DetailRow = SummaryRow & {
@@ -316,9 +328,18 @@ export function createClientRepository(
     };
   }
 
-  async function listClients(
-    filters: { includeFixtures?: boolean } = {},
-  ): Promise<ClientSummary[]> {
+  function clientListScope(filters: ClientListFilters) {
+    const q = filters.q?.trim()
+      ? `%${filters.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%`
+      : null;
+    return sql`(${filters.includeFixtures === true} or c.data_origin<>'fixture')
+      and (${filters.status ?? null}::text is null or c.status=${filters.status ?? null})
+      and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id=${filters.teamId ?? null}::uuid)
+      and (${q}::text is null or c.company_name ilike ${q} escape '\\' or c.cr_number ilike ${q} escape '\\' or c.br_number ilike ${q} escape '\\')`;
+  }
+  async function clientRows(filters: ClientListFilters = {}, extra = false) {
+    const cursor = readTupleCursor(filters.cursor, 2),
+      limit = boundedPageSize(filters.limit);
     const rows = await sql<SummaryRow[]>`
       select
         c.id,
@@ -348,11 +369,32 @@ export function createClientRepository(
         order by arc.return_year desc, arc.filing_due_date desc
         limit 1
       ) latest on true
-      where (${filters.includeFixtures === true} or c.data_origin <> 'fixture')
-      order by c.company_name asc
+      where ${clientListScope(filters)} and (${cursor === null} or (c.company_name,c.id)>(${cursor?.[0] ?? ""},${cursor?.[1] ?? null}::uuid))
+      order by c.company_name asc,c.id limit ${limit + (extra ? 1 : 0)}
     `;
 
+    return rows;
+  }
+  async function listClients(filters: ClientListFilters = {}) {
+    const rows = await clientRows(filters, true);
+    if (rows.length > boundedPageSize(filters.limit))
+      throw new Error("Client list exceeds its bounded page; use listClientPage to continue.");
     return rows.map(mapSummary);
+  }
+  async function listClientPage(filters: ClientListFilters = {}) {
+    const limit = boundedPageSize(filters.limit),
+      rows = await clientRows(filters, true);
+    const [count] = await sql<
+      { total: number }[]
+    >`select count(*)::int total from companies c where ${clientListScope(filters)}`;
+    if (!count) throw new Error("Client totals unavailable");
+    const page = rows.slice(0, limit),
+      last = page.at(-1);
+    return {
+      clients: page.map(mapSummary),
+      total: count.total,
+      nextCursor: rows.length > limit && last ? tupleCursor([last.company_name, last.id]) : null,
+    };
   }
 
   async function hydrateClient(client: QueryClient, id: string): Promise<ClientDetail | null> {
@@ -1245,6 +1287,7 @@ export function createClientRepository(
   return {
     listAssignmentOptions,
     listClients,
+    listClientPage,
     getClient,
     getCompanyTeamId,
     createClient,

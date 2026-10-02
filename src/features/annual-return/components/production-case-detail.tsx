@@ -1,4 +1,6 @@
 import { CaseFindings } from "./case-findings";
+import { CaseHandoff } from "./case-handoff";
+import { caseReturnPath, dailyViewSearch } from "../daily-view-state";
 import { readinessForCase } from "../readiness";
 import { parseEntityId } from "@/lib/entity-id";
 import { CaseParties } from "./case-parties";
@@ -69,7 +71,15 @@ function PendingIcon({ pending }: { pending: boolean }) {
   return pending ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : null;
 }
 
-export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
+export function ProductionAnnualReturnCaseDetail({
+  caseId,
+  returnTo = "/annual-returns",
+  actorScope = "session",
+}: {
+  caseId: string;
+  returnTo?: string;
+  actorScope?: string;
+}) {
   const queryClient = useQueryClient();
   const actions = createProductionCaseActions(
     caseId,
@@ -213,7 +223,28 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
           title={caseItem.companyName}
           subtitle={`Return year ${caseItem.returnYear} / Due ${caseItem.filingDueDate}`}
           actions={
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {caseReturnPath(returnTo).startsWith("/today") ? (
+                <Link
+                  to="/today"
+                  search={dailyViewSearch(
+                    Object.fromEntries(
+                      new URL(caseReturnPath(returnTo), "https://kossilon.invalid").searchParams,
+                    ),
+                  )}
+                  className="inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm"
+                >
+                  返回工作列表
+                </Link>
+              ) : (
+                <Link
+                  to="/annual-returns"
+                  className="inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm"
+                >
+                  返回工作列表
+                </Link>
+              )}
+
               {/* The demo case detail has always had this. Without it in
                   production there was no link anywhere carrying a caseId, so
                   /portal was unreachable except by hand-editing the URL. */}
@@ -240,6 +271,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
                 <StaffPicker
+                  actorScope={actorScope}
                   id="owner-id"
                   label="負責同事"
                   value={ownerId}
@@ -343,6 +375,8 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
 
           <CaseFindings caseId={caseId} locked={locked} />
 
+          <CaseHandoff caseId={caseId} locked={locked} actorScope={actorScope} />
+
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">Payment</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto]">
@@ -357,6 +391,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 ))}
               </select>
               <DocumentPicker
+                actorScope={actorScope}
                 id="payment-proof-document"
                 label="付款證明文件"
                 caseId={caseItem.id}
@@ -437,6 +472,7 @@ export function ProductionAnnualReturnCaseDetail({ caseId }: { caseId: string })
                 onChange={(event) => setFilingReference(event.target.value)}
               />
               <DocumentPicker
+                actorScope={actorScope}
                 id="confirmation-document"
                 label="已核實回執文件"
                 caseId={caseItem.id}

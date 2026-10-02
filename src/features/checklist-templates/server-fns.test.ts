@@ -46,6 +46,7 @@ function repositoryFor(overrides: Partial<Record<string, ReturnType<typeof vi.fn
     duplicateTemplate: vi.fn(async () => sampleTemplate),
     deleteTemplate: vi.fn(async () => undefined),
     close: vi.fn(async () => undefined),
+    previewCaseMigration: vi.fn(),
     ...overrides,
   };
   return { repository };

@@ -81,6 +81,10 @@ async function render(pathname: string, record = productionCase) {
   });
   await router.load();
   await queryClient.prefetchQuery({
+    queryKey: ["annual-returns", "detail", record.id, JSON.stringify({ authUserId: "test-admin" })],
+    queryFn: () => Promise.resolve(record),
+  });
+  await queryClient.prefetchQuery({
     queryKey: ["annual-returns", "detail", record.id],
     queryFn: () => Promise.resolve(record),
   });

@@ -1,0 +1,41 @@
+{
+  "scope": "LOCAL ONLY synthetic well-formed XML; not scanner/provider acceptance",
+  "advisory": "https://github.com/advisories/GHSA-8344-3jmq-59r6",
+  "observed_at": "2026-10-02T09:25:31.456Z",
+  "node": "v22.23.3",
+  "parser_version": "0.8.13",
+  "repetitions": 3,
+  "timeout_per_worker_ms": 15000,
+  "measurements": [
+    {
+      "attributes": 2000,
+      "bytes": 18894,
+      "samples_ms": [19.76770000000002, 20.9722, 21.165800000000004],
+      "median_ms": 20.9722
+    },
+    {
+      "attributes": 4000,
+      "bytes": 38894,
+      "samples_ms": [61.2565, 74.08709999999999, 83.76590000000002],
+      "median_ms": 74.08709999999999
+    },
+    {
+      "attributes": 8000,
+      "bytes": 78894,
+      "samples_ms": [77.3479, 91.04400000000001, 112.86270000000002],
+      "median_ms": 91.04400000000001
+    },
+    {
+      "attributes": 16000,
+      "bytes": 164894,
+      "samples_ms": [372.8785, 440.1929, 442.8017],
+      "median_ms": 440.1929
+    },
+    {
+      "attributes": 32000,
+      "bytes": 340894,
+      "samples_ms": [1870.7763, 2218.4166999999998, 2346.1977],
+      "median_ms": 2218.4166999999998
+    }
+  ]
+}

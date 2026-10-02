@@ -1,0 +1,8 @@
+{
+  "version": "12.2.0",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
+  "tarball": "https://registry.npmjs.org/npm/-/npm-12.2.0.tgz",
+  "verified_integrity": "sha512-ZsJjKpTnlmSXOLLXiU1xDCzC4Wlok4IwZmh/aw2KUuXytU7q6qMv/cUT7MoeSf95Slwuw/lRXYefGzGCspHPNQ=="
+}

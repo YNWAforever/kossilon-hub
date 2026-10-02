@@ -1,0 +1,113 @@
+{
+  "task": "T21",
+  "finding": "F18",
+  "source_commit": "3b4e4bad70a5a72485068b079982b824c210af8f",
+  "date": "2026-10-02",
+  "environment": {
+    "benchmark": "Bun1.3.14",
+    "node": "22.23.3 actual portable",
+    "postgres": "17 dedicated localhost55441/kossilon_pr02_ci",
+    "browser": "actual installed Chrome LOCAL DEMO",
+    "production_mutated": false
+  },
+  "focused": {
+    "skipped": 0,
+    "seconds": 124.31,
+    "files": 12,
+    "passed": 97,
+    "failed": 0
+  },
+  "browser": {
+    "timing_seconds": 8.5,
+    "genuine_auth": "blocked",
+    "timing_passed": 2,
+    "layout_passed": 4
+  },
+  "benchmark": {
+    "source": "2026-10-02-t21-performance.json",
+    "public_counts_unchanged": true,
+    "failed": 0,
+    "users": [
+      1,
+      10,
+      25
+    ],
+    "owned_schema_removed": true,
+    "requests": 164
+  },
+  "schema": {
+    "source_ids": 50,
+    "new_t21_migration": false,
+    "production_last_observed_historic_ids": 66
+  },
+  "uat": {
+    "blocked": 26,
+    "original": 50,
+    "pass_local_only": 19,
+    "immutable_first_five_verified": true,
+    "not_run": 5
+  },
+  "logs": [
+    {
+      "log": "t21-sql-red.log",
+      "sha256": "7988a73e7d0af3a2d5cb4214e0f10d598c9b2cb9dddc530085222d2d2b02936c"
+    },
+    {
+      "log": "t21-today-pagination-red.log",
+      "sha256": "c3dd1d775bc0e6a2348d15fdf47210f6bc1195b86bdf68f88e4cd91656d7d6ea"
+    },
+    {
+      "log": "t21-microseconds-green.log",
+      "sha256": "091303923602d5baa9290963699733df0413df192e01faf2dc77ef55e13dc2ec"
+    },
+    {
+      "log": "t21-bounded-materialization-green.log",
+      "sha256": "0aac1d46bd747518340d7d8014d9943310229073506daf9f31cf0879467e6541"
+    },
+    {
+      "log": "t21-jit-red.log",
+      "sha256": "a6cf26ae6616cc70c8c3318ed52ba763a3449a89b93be0d1d92a63f4fea70bf6"
+    },
+    {
+      "log": "t21-jit-green.log",
+      "sha256": "345fbf47ef7a7262817c499482b6039d38b7ce7aced3c1b7f5c7c9bd54444f28"
+    },
+    {
+      "log": "t21-picker-ui-red.log",
+      "sha256": "fd224bdae322366370b231365f272a8388f5fa9a138cf64d2ca1c1f3461066af"
+    },
+    {
+      "log": "t21-task-green.log",
+      "sha256": "fe33b4d4aa2199bc133c16b8cfd92d691338021fc455761382530c1ef3c37324"
+    },
+    {
+      "log": "t21-portal-diagnostic.log",
+      "sha256": "6752ecde8690b049f07067e1a445b18e24885d8787fec5b2634229dc061e88f4"
+    },
+    {
+      "log": "t21-portal-green.log",
+      "sha256": "e190c6000da5083cfa55d859e4964a84f6fae893051b0ecd6991dd47b87bf877"
+    },
+    {
+      "log": "t21-typecheck-current.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "log": "t21-lint-current.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "log": "t21-browser-green.log",
+      "sha256": "7c765e28bbc3328c20fe026ce2cd3b4d4a1bf038c5db85dac04a175e9f903b58"
+    },
+    {
+      "log": "t21-browser-performance-green.log",
+      "sha256": "8c60faf04f4263a1a9f7c79b17bcfa98c1dcc1deadd1be017c81f27e28b21066"
+    },
+    {
+      "log": "t21-performance-final.log",
+      "sha256": "b841b9bf44c45c32114b4976b4f6906632409c49b769dd76d43b92fe77c9dffb"
+    }
+  ],
+  "remaining": "PR10 sole review/full CI; T22 release gates; provider/fresh Auth/staging budget blocked; B02 security triage"
+}

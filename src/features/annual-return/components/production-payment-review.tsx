@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
-import { listDocuments } from "@/features/documents/server-fns";
+import { listDocumentPage } from "@/features/documents/server-fns";
 import { SafeDocumentPreview } from "@/features/documents/safe-preview";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentSummary } from "@/features/documents/repository";
@@ -14,11 +14,18 @@ import {
 import { annualReturnQueryKeys } from "../query-keys";
 import { PAYMENT_RETURN_REASONS, type PaymentReviewInput } from "../payment-review-input";
 import type { AnnualReturnCase } from "../types";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 const money = (value: number | undefined) =>
   value === undefined
     ? "待補"
     : `HK$${value.toLocaleString("en-HK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-export function ProductionPaymentReview({ actorScope }: { actorScope: string }) {
+export function ProductionPaymentReview({
+  actorScope,
+  canBulk = false,
+}: {
+  actorScope: string;
+  canBulk?: boolean;
+}) {
   const client = useQueryClient();
   const casesQuery = useInfiniteQuery({
     queryKey: [...annualReturnQueryKeys.list({ paymentEvidence: true }), actorScope],
@@ -30,13 +37,18 @@ export function ProductionPaymentReview({ actorScope }: { actorScope: string }) 
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
-  const documentsQuery = useQuery({
+  const documentsQuery = useInfiniteQuery({
     queryKey: [...annualReturnQueryKeys.payment("all"), actorScope],
-    queryFn: () => listDocuments({ data: {} }),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listDocumentPage({ data: { category: "payment", limit: 100, cursor: pageParam } }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
   const cases = casesQuery.data?.pages.flatMap((page) => page.cases) ?? [],
-    documents = (documentsQuery.data ?? []).filter((d) => d.category === "payment" && d.caseId);
+    documents = (documentsQuery.data?.pages.flatMap((p) => p.documents) ?? []).filter(
+      (d) => d.caseId,
+    );
   const updated = (case_: AnnualReturnCase) => {
     client.setQueryData(annualReturnQueryKeys.detail(case_.id), case_);
     void client.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
@@ -50,6 +62,17 @@ export function ProductionPaymentReview({ actorScope }: { actorScope: string }) 
       <p>
         先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
       </p>
+      {canBulk ? (
+        <BulkSelectionToolbar
+          actorScope={actorScope}
+          resource="annual_return_case"
+          filters={{}}
+          page={cases.map((c) => ({ id: c.id, label: c.companyName }))}
+          total={casesQuery.hasNextPage ? null : casesQuery.isSuccess ? cases.length : null}
+          pageSize={200}
+          maintenanceActions={["payment_list_export"]}
+        />
+      ) : null}
       {casesQuery.isError || documentsQuery.isError ? (
         <p role="alert">Production payment evidence is unavailable.</p>
       ) : null}
@@ -86,6 +109,18 @@ export function ProductionPaymentReview({ actorScope }: { actorScope: string }) 
         >
           載入更多案件
         </button>
+      ) : null}
+      {documentsQuery.hasNextPage ? (
+        <button
+          className="min-h-11 rounded border px-3"
+          disabled={documentsQuery.isFetchingNextPage}
+          onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
+        >
+          載入更多付款憑證
+        </button>
+      ) : null}
+      {documentsQuery.isFetchNextPageError ? (
+        <p role="alert">下一頁付款憑證未能載入，請重試。</p>
       ) : null}
       {casesQuery.isFetchNextPageError ? (
         <p role="alert">下一頁未能載入，已讀取案件仍可查閱，請重試。</p>

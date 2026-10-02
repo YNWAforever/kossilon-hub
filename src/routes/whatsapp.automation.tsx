@@ -42,8 +42,15 @@ type AutomationQueueRow =
     };
 
 function WhatsAppAutomationRoute() {
-  const { dataMode } = Route.useRouteContext();
-  return dataMode === "demo" ? <DemoWhatsAppAutomationRoute /> : <ProductionWhatsAppAutomation />;
+  const { dataMode, actor } = Route.useRouteContext();
+  return dataMode === "demo" ? (
+    <DemoWhatsAppAutomationRoute />
+  ) : (
+    <ProductionWhatsAppAutomation
+      actorScope={JSON.stringify(actor)}
+      canBulk={actor?.active === true && (actor.role === "Admin" || actor.role === "Manager")}
+    />
+  );
 }
 
 function DemoWhatsAppAutomationRoute() {

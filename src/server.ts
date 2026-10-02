@@ -125,6 +125,14 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const pathname = new URL(request.url).pathname;
+      if (pathname === "/api/handoffs/export") {
+        const [{ createHandoffExportHttpHandler }, { buildHandoffExportForRequest }] =
+          await Promise.all([
+            import("./server/handoff-export-http"),
+            import("./features/annual-return/handoff-server-fns"),
+          ]);
+        return createHandoffExportHttpHandler(buildHandoffExportForRequest)(request);
+      }
       if (pathname === "/api/cron/maintenance") {
         const [{ createMaintenanceHttpHandler }, { runRuntimeMaintenanceTick }] = await Promise.all(
           [import("./server/maintenance-http"), import("./server/maintenance-trigger-runtime")],
