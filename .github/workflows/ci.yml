@@ -1,8 +1,7 @@
 name: CI
 
-# The repo has lint, typecheck, ~650 tests and an offline pre-deploy gate, and
-# until now nothing ran any of them automatically. Every check below already
-# passes locally and needs no secrets or network access.
+# Local contracts use isolated Postgres/browser fixtures and no provider secrets.
+# Dependency install/audits contact the public registry; offline gates do not.
 on:
   pull_request:
   push:
@@ -48,7 +47,9 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # Scoped security overrides require the v3 lock format. Keep the
+          # installer consistent with package.json and local verification.
+          bun-version: 1.4.2
 
       - uses: actions/setup-node@v4
         with:
@@ -56,6 +57,11 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Audit both tracked dependency locks
+        run: |
+          bun audit --audit-level=low
+          npm audit --audit-level=low
 
       - name: Apply migrations
         run: bun scripts/db-migrate.ts
