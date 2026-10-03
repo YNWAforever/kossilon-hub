@@ -79,10 +79,14 @@ jobs:
       - name: Verify portable npm lock installation
         run: |
           audit_npm_dir="$(mktemp -d)"
-          cp package.json package-lock.json "$audit_npm_dir/"
+          # Exercise the exact tracked source with npm's own installation tree.
+          # Keep the original Bun tree for every gate below.
+          git archive HEAD | tar -x -C "$audit_npm_dir"
           (
             cd "$audit_npm_dir"
             npm ci --ignore-scripts
+            npm run lint
+            npm run typecheck
           )
 
       - name: Apply migrations
