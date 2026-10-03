@@ -162,6 +162,26 @@ describe.skipIf(!sql)("full read-only release catalog", () => {
     });
   });
 
+  it("refuses security-definer owner membership drift even when the collector role is unchanged", async () => {
+    await withCatalogFixture(async (schema, appRole) => {
+      const delegate = `${appRole}_member`;
+      await sql!.unsafe(`create role ${delegate} nologin nosuperuser nobypassrls;
+        create policy delegated_company_access on companies to ${delegate} using(true);
+        create function visible_company_count() returns bigint language sql
+          security definer as 'select count(*) from ${schema}.companies';
+        alter function visible_company_count() owner to ${appRole}`);
+      expect((await sql!.unsafe("select visible_company_count()::int count"))[0].count).toBe(1);
+      const before = await readReleaseCatalog(sql!, schema);
+      await sql!.unsafe(`grant ${delegate} to ${appRole}`);
+      expect((await sql!.unsafe("select visible_company_count()::int count"))[0].count).toBe(2);
+      const delegated = await readReleaseCatalog(sql!, schema);
+      expect(delegated.catalogSha256).not.toBe(before.catalogSha256);
+      expect(delegated.contractHashes["catalog:role-memberships"]).not.toBe(
+        before.contractHashes["catalog:role-memberships"],
+      );
+    });
+  });
+
   it("detects changes outside the dispatch marker, disabled enforcement and an unexpected table", async () => {
     const schema = `release_catalog_${randomUUID().replaceAll("-", "")}`;
     try {
