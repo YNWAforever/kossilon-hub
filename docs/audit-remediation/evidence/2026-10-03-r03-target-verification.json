@@ -1,0 +1,89 @@
+{
+  "task_ids": [
+    "R03"
+  ],
+  "finding_ids": [
+    "F01",
+    "F02",
+    "F17",
+    "F20"
+  ],
+  "source_build_sha": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+  "recorded_at_utc": "2026-10-03T10:10:00.3213456Z",
+  "environment": "LOCAL_DOCUMENT_VALIDATION plus PRODUCTION_METADATA_READ_ONLY",
+  "commands": [
+    "& ./.worktrees/r03-runtime-target-inventory/verify-r03-inventory.ps1",
+    "git diff --check 60a7b9745ce4e66fe3c4e34848a6aba498a6fc26"
+  ],
+  "actual": {
+    "result": "PASS",
+    "validation_exit": 0,
+    "source_main": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+    "evidence_jsons": 3,
+    "metadata_counts": {
+      "branches": 4,
+      "roles": 4,
+      "databases": 1,
+      "trusted_domains": 4,
+      "scoped_projects": 76,
+      "name_matches": 2,
+      "related_binding_entries": 12,
+      "project_cron_definitions": 0,
+      "deployment_crons": 0,
+      "cron_filtered_log_rows": 0,
+      "unfiltered_distinct_paths": 43,
+      "unfiltered_returned_top_rows": 25
+    },
+    "tracker_rows": 12,
+    "other_task_rows_unchanged": 11,
+    "protected_hashes": {
+      "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae",
+      "docs/audit-remediation/uat-results.csv": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7",
+      "docs/audit-remediation/releases/2026-10-02-historical-release.sql": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    "new_genuine_uat_results": 0,
+    "provider_writes": 0,
+    "product_tests": "not rerun locally: documentation/metadata only; unchanged exact source main CI37113208517; publication CI separate"
+  },
+  "hashes": [
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-03-r03-target-neon.json",
+      "sha256": "bc9eb4b28ffd1084f852bf8be4b3a51496cec2db115a15427a216b7927d8964b"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-03-r03-target-vercel.json",
+      "sha256": "295d8d4a2e0039016ab51ca1e4dc6aa082de10abddedcdff8ee0783e50e6cde2"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-03-r03-target-runtime-logs.json",
+      "sha256": "a95309be480e068191f1f2f191f62496c4f553803625c7b2469bb0b59ff72c74"
+    },
+    {
+      "path": ".worktrees/r03-runtime-target-inventory/vercel-provider-observation.json",
+      "sha256": "851563c2b3a9fcb509c1f627fe62561710e995eae5f3da2ea6091ce26c9e6ccb"
+    },
+    {
+      "path": ".worktrees/r03-runtime-target-inventory/verify-r03-inventory.ps1",
+      "sha256": "068eceb5110c16604dfd489bb6c29c1f872f873e23148339201c72c2a09ccd67"
+    },
+    {
+      "path": ".worktrees/r03-runtime-target-inventory/document-verification-initial.log",
+      "sha256": "7c8b23798f169a3c68149cfbc13e0cd1edc440233d4288b9bf8d93a6d4d21ef2"
+    }
+  ],
+  "actor": "provider-account metadata; Neon SQL observer neondb_owner",
+  "test_data": "none: metadata only",
+  "fixture_cleanup": "not_applicable; historical branches and owned rehearsal databases retained",
+  "ci_status": "publication exact-head CI not yet run; unchanged source baseline main CI37113208517 SUCCESS",
+  "release_status": "NO_GO",
+  "new_genuine_uat_results": 0,
+  "provider_writes": 0,
+  "precommit_failure": {
+    "command": "git diff --cached --check",
+    "exit_code": 2,
+    "reason": "New unpublished JSON CRLF bytes treated as trailing whitespace",
+    "fix": "Normalize only these new JSON files to LF; preserve semantic provider facts and all earlier published evidence",
+    "log_path": ".worktrees/r03-runtime-target-inventory/whitespace-red.log",
+    "log_sha256": "63586c4ba16bfb5e8762e0d6f48c0d02391d4b7dbd917b632550faf4e3a5dab1"
+  }
+}

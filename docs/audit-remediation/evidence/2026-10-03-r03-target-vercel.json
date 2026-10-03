@@ -1,0 +1,199 @@
+{
+  "observed_at": "2026-10-03T09:55:47.2202119Z",
+  "source_main": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+  "team_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+  "project_id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+  "installed_cli": "50.28.0",
+  "cron_cli_probe": {
+    "command": "vercel crons --help",
+    "result": "unsupported subcommand",
+    "official_doc": "https://vercel.com/docs/cli/crons",
+    "invocations": 0
+  },
+  "project_crons": {
+    "enabledAt": 1783194070489,
+    "disabledAt": null,
+    "updatedAt": 1790733359316,
+    "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "definitions": []
+  },
+  "deployment_crons": [],
+  "production": {
+    "deployment_id": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "ready_state": "READY",
+    "git_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "target": "production",
+    "configured_node_major": "24.x",
+    "deployment_plan": "pro",
+    "deployed_runtime_minor": "not_verified"
+  },
+  "related_binding_metadata": [
+    {
+      "key": "MAINTENANCE_SCHEDULER_OWNER",
+      "targets": [
+        "production"
+      ],
+      "git_branch": null,
+      "type": "plain"
+    },
+    {
+      "key": "CRON_SECRET",
+      "targets": [
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "targets": [
+        "preview",
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_ACCOUNT_ID",
+      "targets": [
+        "preview",
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_ACCESS_KEY_ID",
+      "targets": [
+        "preview",
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_SECRET_ACCESS_KEY",
+      "targets": [
+        "preview",
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "R2_BUCKET_NAME",
+      "targets": [
+        "preview",
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "NEON_AUTH_COOKIE_SECRET",
+      "targets": [
+        "preview",
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "NEON_AUTH_URL",
+      "targets": [
+        "preview",
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "DATABASE_URL",
+      "targets": [
+        "development"
+      ],
+      "git_branch": null,
+      "type": "encrypted"
+    },
+    {
+      "key": "DATABASE_URL",
+      "targets": [
+        "preview"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    },
+    {
+      "key": "DATABASE_URL",
+      "targets": [
+        "production"
+      ],
+      "git_branch": null,
+      "type": "sensitive"
+    }
+  ],
+  "project_inventory": {
+    "observed_at": "2026-10-03T09:51:41.1215571Z",
+    "page_count": 1,
+    "total_count": 76,
+    "complete": true,
+    "name_filter": "kossilon",
+    "matching_projects": [
+      {
+        "id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+        "name": "kossilon-hub"
+      },
+      {
+        "id": "prj_gGAnJ3UeweOczw3nRj1Po3sDwZMm",
+        "name": "kossilon-hub-demo"
+      }
+    ],
+    "command": "vercel api /v9/projects?teamId=team_qvzlsFmfCsLkgItSypqHjw3z&limit=100 --method GET --raw"
+  },
+  "observations_only": true,
+  "binding_presence_is_provider_acceptance": false,
+  "provider_writes": 0,
+  "new_genuine_uat_results": 0,
+  "formal_release": "NO_GO",
+  "commands": [
+    "vercel --version",
+    "vercel api /v9/projects/prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC?teamId=team_qvzlsFmfCsLkgItSypqHjw3z --method GET --raw",
+    "vercel api /v13/deployments/dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT?teamId=team_qvzlsFmfCsLkgItSypqHjw3z --method GET --raw",
+    "vercel api /v9/projects/prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC/env?teamId=team_qvzlsFmfCsLkgItSypqHjw3z --method GET --raw"
+  ],
+  "task_ids": [
+    "R03"
+  ],
+  "finding_ids": [
+    "F01",
+    "F02",
+    "F17",
+    "F20"
+  ],
+  "environment": "PRODUCTION_METADATA_READ_ONLY",
+  "source_config_comparison": {
+    "live_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "live_has_vercel_json": false,
+    "source_main": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+    "main_crons": [
+      {
+        "path": "/api/cron/maintenance",
+        "schedule": "*/5 * * * *"
+      }
+    ],
+    "main_git_deployment_enabled": false,
+    "commands": [
+      "git ls-tree --name-only aa5d3cbddd895bca953b6eef7266ae1cc0b46215 -- vercel.json",
+      "read main vercel.json"
+    ],
+    "failed_probe": "git show aa5d3cbddd895bca953b6eef7266ae1cc0b46215:vercel.json returned path missing; subsequent ls-tree exit0 confirms absence"
+  },
+  "limits": [
+    "Zero cron definitions describe only this Vercel project/deployment; Cloudflare or other scheduler ownership is not verified.",
+    "An enabledAt timestamp with an empty definitions list is not an active native job.",
+    "Name-filtered project matches do not identify or approve every differently named staging target.",
+    "Binding names/targets do not reveal values, prove isolated DB/buckets, select a runtime app role, or establish provider capability.",
+    "MAINTENANCE_SCHEDULER_OWNER value was not read; its presence alone does not select a platform.",
+    "The installed CLI50.28.0 lacks the documented crons subcommand; no upgrade, linking, manual cron run or native activation was performed."
+  ]
+}

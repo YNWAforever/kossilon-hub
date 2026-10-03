@@ -1,0 +1,210 @@
+{
+  "task_ids": [
+    "R03"
+  ],
+  "finding_ids": [
+    "F01",
+    "F02",
+    "F17",
+    "F20"
+  ],
+  "case_ids": [
+    "UC07",
+    "UC20"
+  ],
+  "environment": "PRODUCTION_METADATA_READ_ONLY",
+  "source_main": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+  "captured_at_utc": "2026-10-03T10:01:40.066Z",
+  "read_window_utc": {
+    "start": "2026-10-03T09:46:00Z",
+    "end": "2026-10-03T10:01:40.066Z"
+  },
+  "target": {
+    "project": "red-morning-00331124",
+    "branch": "br-muddy-mountain-aov8bbku",
+    "database": "neondb"
+  },
+  "branches": [
+    {
+      "id": "br-muddy-mountain-aov8bbku",
+      "name": "production",
+      "current_state": "ready",
+      "default": true,
+      "parent_id": null
+    },
+    {
+      "id": "br-fancy-rain-aon06iws",
+      "name": "pre-0021-0065-restore-20260929",
+      "current_state": "ready",
+      "default": false,
+      "parent_id": null
+    },
+    {
+      "id": "br-late-sun-aojgnr1k",
+      "name": "authorized-before-0066-20260930",
+      "current_state": "ready",
+      "default": false,
+      "parent_id": "br-muddy-mountain-aov8bbku"
+    },
+    {
+      "id": "br-flat-heart-aovfw8hr",
+      "name": "authorized-before-0021-0065-20260929",
+      "current_state": "ready",
+      "default": false,
+      "parent_id": "br-muddy-mountain-aov8bbku"
+    }
+  ],
+  "roles": [
+    {
+      "name": "neondb_owner"
+    },
+    {
+      "name": "authenticator"
+    },
+    {
+      "name": "anonymous"
+    },
+    {
+      "name": "authenticated"
+    }
+  ],
+  "databases": [
+    {
+      "name": "neondb",
+      "owner_name": "neondb_owner"
+    }
+  ],
+  "role_attributes": [
+    {
+      "rolname": "anonymous",
+      "rolcanlogin": false,
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "rolcreaterole": false,
+      "rolcreatedb": false,
+      "rolinherit": true
+    },
+    {
+      "rolname": "authenticated",
+      "rolcanlogin": false,
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "rolcreaterole": false,
+      "rolcreatedb": false,
+      "rolinherit": true
+    },
+    {
+      "rolname": "authenticator",
+      "rolcanlogin": true,
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "rolcreaterole": false,
+      "rolcreatedb": false,
+      "rolinherit": false
+    },
+    {
+      "rolname": "neondb_owner",
+      "rolcanlogin": true,
+      "rolsuper": false,
+      "rolbypassrls": true,
+      "rolcreaterole": true,
+      "rolcreatedb": true,
+      "rolinherit": true
+    }
+  ],
+  "trusted_domains": [
+    {
+      "domain": "http://localhost:3000",
+      "auth_provider": "better_auth"
+    },
+    {
+      "domain": "https://www.kossilon-hub.vercel.app",
+      "auth_provider": "better_auth"
+    },
+    {
+      "domain": "http://www.kossilon-hub.vercel.app",
+      "auth_provider": "better_auth"
+    },
+    {
+      "domain": "https://kossilon-hub.vercel.app",
+      "auth_provider": "better_auth"
+    }
+  ],
+  "observer": {
+    "observer_role": "neondb_owner",
+    "observed_at": "2026-10-03T10:01:40.066Z",
+    "database_name": "neondb",
+    "server_version": "PostgreSQL 18.6 (4e955f5) on aarch64-unknown-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit"
+  },
+  "observer_identity_sql": "select current_user as observer_role, now() as observed_at, current_database() as database_name, version() as server_version",
+  "app_role_acceptance": "not_verified",
+  "approved_staging_target": "not_supplied",
+  "provider_writes": 0,
+  "new_genuine_uat_results": 0,
+  "formal_release": "NO_GO",
+  "commands": [
+    {
+      "tool": "neon_list_branches",
+      "arguments": {
+        "project_id": "red-morning-00331124",
+        "include_deleted": false
+      },
+      "result_count": 4,
+      "is_error": false
+    },
+    {
+      "tool": "neon_list_postgres_roles",
+      "arguments": {
+        "project_id": "red-morning-00331124",
+        "branch_id": "br-muddy-mountain-aov8bbku"
+      },
+      "result_count": 4,
+      "is_error": false
+    },
+    {
+      "tool": "neon_list_postgres_databases",
+      "arguments": {
+        "project_id": "red-morning-00331124",
+        "branch_id": "br-muddy-mountain-aov8bbku"
+      },
+      "result_count": 1,
+      "is_error": false
+    },
+    {
+      "tool": "neon_list_auth_trusted_domains",
+      "arguments": {
+        "project_id": "red-morning-00331124",
+        "branch_id": "br-muddy-mountain-aov8bbku"
+      },
+      "result_count": 4,
+      "is_error": false
+    },
+    {
+      "tool": "neon_run_sql",
+      "arguments": {
+        "project_id": "red-morning-00331124",
+        "branch_id": "br-muddy-mountain-aov8bbku",
+        "database_name": "neondb",
+        "sql": "select rolname, rolcanlogin, rolsuper, rolbypassrls, rolcreaterole, rolcreatedb, rolinherit from pg_roles where rolname in ('neondb_owner','authenticator','anonymous','authenticated') order by rolname"
+      },
+      "result_count": 4,
+      "is_error": false
+    },
+    {
+      "tool": "neon_run_sql",
+      "arguments": {
+        "project_id": "red-morning-00331124",
+        "branch_id": "br-muddy-mountain-aov8bbku",
+        "database_name": "neondb",
+        "sql": "select current_user as observer_role, now() as observed_at, current_database() as database_name, version() as server_version"
+      },
+      "result_count": 1,
+      "is_error": false
+    }
+  ],
+  "limits": [
+    "Branch labels do not approve repurposing historical backups or classify business-data origins.",
+    "authenticator is a login role, but its use as the web application role, grants, tenant enforcement and credential binding have not been accepted.",
+    "Trusted-domain metadata is not a fresh login, invitation capability or callback acceptance receipt."
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "task_ids": [
+    "R03"
+  ],
+  "case_ids": [
+    "UC07",
+    "UC20"
+  ],
+  "environment": "PRODUCTION_METADATA_READ_ONLY",
+  "captured_at_utc": "2026-10-03T09:58:40Z",
+  "source_main": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+  "target": {
+    "projectId": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+    "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+    "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "web_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215"
+  },
+  "queries": [
+    {
+      "tool": "vercel_get_runtime_logs",
+      "arguments": {
+        "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "projectId": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+        "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+        "environment": "production",
+        "since": "7d",
+        "query": "cron",
+        "group_by": "requestPath",
+        "limit": 100
+      },
+      "is_error": false,
+      "response": "## Runtime Log Counts\n\n**Project:** prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC\n**Grouped by:** requestPath\n\n| requestPath | count |\n|---|---|",
+      "result_rows": 0
+    },
+    {
+      "tool": "vercel_get_runtime_logs",
+      "arguments": {
+        "teamId": "team_qvzlsFmfCsLkgItSypqHjw3z",
+        "projectId": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+        "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+        "environment": "production",
+        "since": "24h",
+        "group_by": "requestPath",
+        "limit": 100
+      },
+      "is_error": false,
+      "response": "## Runtime Log Counts\n\n**Project:** prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC\n**Grouped by:** requestPath\n\n| requestPath | count |\n|---|---|\n| /_serverFn/d923b7cebd9a393b5b7eaae24ad23fce5ebdec157bd20312a05f380e9d3ce74d | 53 |\n| /api/auth/get-session | 22 |\n| /_serverFn/57929b7816a808f705d0e29c6e589335fc0adb56543ba95eab67ce237550ace9 | 22 |\n| /_serverFn/900c4577772a0def3acaaae9d478abcc4768aa0f8ef2ff84af4efa719047b772 | 8 |\n| /_serverFn/9739d85e26295434c15d2ef0a26c299efad07e89ef951ef67711c5f6c6e0cfa7 | 7 |\n| /_serverFn/ad8e2859b699284d0e3b23727dc6ac0c056008dce604900bdc41c7b45de1100d | 6 |\n| /_serverFn/2ed127e7148d83bbb2f89145abfc47e0c0e55ceafd2d066c129fd96bac66a09c | 5 |\n| /_serverFn/87a80d5408fe5bc5e814295550815db2d4dbe2f92bdd6de9ee53c8f3b6ae3c2f | 3 |\n| /documents | 3 |\n| /work-queue | 3 |\n| /_serverFn/2574532f337a838443ba9cb4030a38cb0c0cafe9722d34db3848bddf5525f568 | 3 |\n| /_serverFn/cd52ae3abe62c47f0780177354d30360a47c0b76e9ffc1aef16c6a1206524f80 | 2 |\n| /_serverFn/e16da32e06a10650da834476d306639087660ba439d205bdb4b079ac60419e6a | 2 |\n| /_serverFn/632c7803bc86d6a0d4187830cd2ce10bc009378da8f908e4399339a7b90cfd77 | 2 |\n| /admin | 2 |\n| / | 2 |\n| /_serverFn/bbd18b06c8def9f1620f79527cb185457f1100998f3b84d10927210477ec7a03 | 2 |\n| /_serverFn/3e3dc2ea0d077ff9fde8f886772d87a3b26153023d3952cc39a9eab8d9fc4bbe | 2 |\n| /today | 2 |\n| /_serverFn/e688269462f6cd96165b861fc662acbfbb5cba518f408b612be413ca78f34823 | 2 |\n| /portal | 2 |\n| /_serverFn/42b1d6497287b2384853e4434618fb80b9b9e440ad59d34bcd2f1aebf9b4433a | 2 |\n| /whatsapp/automation | 1 |\n| /settings | 1 |\n| /imports | 1 |\n\n*43 distinct values total; showing top 25.*",
+      "provider_reported_distinct_paths": 43,
+      "provider_returned_top_rows": 25,
+      "complete": false
+    }
+  ],
+  "native_tick_acceptance": "not_run/runtime-blocked",
+  "scheduler_artifact_acceptance": "not_verified",
+  "provider_writes": 0,
+  "new_genuine_uat_results": 0,
+  "limits": [
+    "Empty filtered results do not prove no invocation across providers, retention windows or deployments.",
+    "The unfiltered grouped query returns only top25 of43 reported paths; it is not a complete backlog or native schedule inventory.",
+    "No manual cron HTTP request, CLI run, configuration change or native trigger was executed."
+  ]
+}

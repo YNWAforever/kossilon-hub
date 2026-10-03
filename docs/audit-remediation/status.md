@@ -262,3 +262,11 @@ Final executing code `8e9eeab8c9f466c79b8f2c31fe679e885dabee42`; complete owned 
 Evidence: `evidence/2026-10-03-r02-historical-rehearsal-v5.json`, `evidence/2026-10-03-r02-source-root-verification.json`, `oct3-source-identity-execution-review.md`; original50UAT and frozen SQL/manifest/migrator unchanged. `current_build_sha` records the actual local executing code above; the PR's published head, exact-head CI and normal merge receipt are separate GitHub artifacts in PR127. Previous CI37111128136 SUCCESS is explicitly the older `1cebb79` head and cannot stand in for the root-guard final-head gate.
 
 Runtime remains blocked and formal release NO_GO; no hosted DB/deploy/send/invite/grant occurred. Approved hosted staging/restricted app role/owner and DDL freeze/restore target/external approval binding and genuine provider inputs remain the next dependencies.
+
+## R03 actual target/configuration follow-up — 2026-10-03T10:01Z
+
+Continuation of completed local R00-R11 tasks; baseline main60a7b9745ce4e66fe3c4e34848a6aba498a6fc26/PR127 merged/mainCI37113208517 SUCCESS. Product code retained; this change is new read-only evidence and owner/blocker refinement.
+
+Actual Neon inventory4branches/4roles/1database/4trusted domains; observerneondb_owner has BYPASSRLS/CREATE ROLE/CREATE DB, so restricted web app-role acceptance remains missing. Full scoped Vercel resource inventory76projects/2Kossilon-name matches;12related binding entries do not prove isolation. Production project/deployment both have0cron definitions ataa5d3cb; main declares onefive-minute cron but is held/unpublished, and the actual live source has novercel.json. No claim about other-platform scheduler absence. CLI50.28.0 crons unsupported; GET query access works, cron-filter7d returns0rows and allpaths24h returns top25of43 only. No manual/native tick executed.
+
+R03 code/local: document/hash validation PASS (exit0),3newJSON/12tracker rows/11other rows unchanged; runtime-blocked; formalNO_GO. New JSON receipts preserve commands, source/target identity, safe metadata, actual counts and limits. Original50 remains19historicalLOCALONLYpass/31blocked/0newgenuine. No hosted SQL/DB/schema/config/deploy/send/invite/grant writes. DB/Release/Ops/Auth/Storage owner next steps in r03-staging-acceptance.md; exact-head follow-up CI/merge receipt will be attached to its PR after occurrence.
