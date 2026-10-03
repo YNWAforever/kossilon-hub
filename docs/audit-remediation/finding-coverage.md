@@ -1,6 +1,6 @@
 # F01–F20：候選source、證據及仍未驗收範圍
 
-基準 finding recheck 仍保存於 status.md；本表保留每項修復的原始 source SHA。已交付修復已正常合併至 main `a0b753e`；各Task的 source／review／CI／merge 證據見台賬及相關PR。正式deployment/schema未變更，本地通過不轉成runtime PASS；新B08跟進仍須獨立完成review及最終CI。
+基準 finding recheck 仍保存於 status.md 歷史表；本表保留每項修復的原始 source SHA。已交付修復及B08／B10已正常合併至 implementation checkpoint `dba55b8`；PR121 source／review／merge／mainCI均完成，兩個Linux runtime各235files2214PASS0skip及ChromeDEMO12PASS。B09原c6fddb9 audit失敗仍保存；B10沒有放寬安全門檻。後續純文件提交可有較新SHA，不能以此checkpoint冒充其CI。各Task證據見台賬及相關PR；[最新已驗證交付](delivery-checkpoint.md)保留環境、命令、hash及限制。正式Web GET11:00HK仍aa5d3cb，schema50/last-observed66尚未核對；原50UAT維持19LOCALONLYpass31blocked，本地通過不轉runtime PASS。
 
 | Finding | Task／source                        | 已驗證的修復                                                                                                                   | 真實runtime尚缺                                                  |
 | ------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |

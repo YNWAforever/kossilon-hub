@@ -1,6 +1,6 @@
 # Kossilon audit remediation — 2026-10-01
 
-Current source checkpoint: all fourteen PRs #102–#115 are merged at main `73d999dfa524f273d0c062458cbf780f65630e6c`; exact main CI37006479098 passed 230files/2183tests/0skip/ChromeDEMO12 and all existing gates. Production remains **NO_GO**. B05/T01/T22 historical release compatibility is locally prepared below. Earlier entries are dated historical snapshots.
+Verified implementation checkpoint — 2026-10-03 HK: PR #121 is normally merged at `dba55b8a5259b613ff3f4244aed2660d954f586f`, preserving PR119 and prior work. Exact source [CI37089985919](https://github.com/YNWAforever/kossilon-hub/actions/runs/37089985919) and implementation-main [CI37091315916](https://github.com/YNWAforever/kossilon-hub/actions/runs/37091315916) passed both Linux Node22.23.3/Node24.21.0 legs: each235files/2214PASS/0fail/0skip, actual Postgres17, ChromeDEMO12 and every original gate; both dependency audits0 at the recorded times. B10 removes the vulnerable legacy tagger path through the supported Lovable wrapper2.7.2; original B09/c6fddb9 audit failure remains retained. B08 Windows full235files/2214PASS is separately dated; B10 Windows first dev timeout and possiblewarm repeat remain limitations. This is an implementation checkpoint, not a future document-only main SHA. Source T00–T23 are code_verified; original50UAT remains19 LOCAL ONLY pass/31blocked/0not_run. Read-only production metadata refreshed11:00HK still identifies aa5d3cb; source50 versus last-observedproduction66 remains unreconciled. Production stays **NO_GO**. [Dated delivery evidence](delivery-checkpoint.md) records exact heads, commands, environments, hashes, review and owners. Earlier entries below are historical snapshots.
 
 ## Baseline and authority
 
@@ -43,9 +43,9 @@ Additional bug B01: PR07 preview built successfully, then Vercel blocked vulnera
 | T21  | F18         | code_verified | 3b4e4ba +4a97955; PR10 full2171PASS0skip;10k/50k full traversal;164 benchmark0errors;25users p95 Today525ms/Documents662ms                                                   | Staging owner budget/Auth/platform/cold caches blocked; local performance.md                                                                     |
 | T22  | F01-F20     | code_verified | bc4503f +102b983;228files2179PASS0skip/Chrome10PASS; review2Important fixed; original50:19LOCALONLYpass31blocked0not_run; evidence/2026-10-02-pr11-gates.json                | Genuine Auth/provider/native tick/business acceptance and formal schema/release blocked; concrete preflight/rollback/checklist prepared          |
 
-## T00 finding recheck at main (baseline snapshot)
+## T00 finding recheck at baseline (historical snapshot)
 
-`still-present` denotes source/aggregate evidence, not a fresh multi-role production reproduction. No finding is marked fixed without a tested change.
+This table records the initial aa5d3cb recheck, not the current implementation classification. `still-present` denotes the baseline source/aggregate evidence, not a fresh multi-role production reproduction. Current tested repairs and unresolved runtime gates are in [finding coverage](finding-coverage.md); no local contract is promoted to genuine runtime acceptance.
 
 | Finding | Classification             | Current evidence                                                                                                                                                                         | Task        |
 | ------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
@@ -70,7 +70,7 @@ Additional bug B01: PR07 preview built successfully, then Vercel blocked vulnera
 | F19     | needs-runtime-evidence     | Supplied nav/settings DOM and unchanged source; mobile/keyboard journey not yet executed                                                                                                 | T20         |
 | F20     | still-present              | No displayed data origin/scope; live 3 rows are client, seed resemblance is not classification evidence                                                                                  | T03         |
 
-## Evidence and continuation
+## Evidence and continuation — historical 2026-10-01
 
 - `evidence/2026-10-01-provider-inventory.json`: scoped read-only catalog and active Web metadata; no secrets/recipient data.
 - Local original input evidence: `.worktrees/audit-inputs-20261001/evidence-2026-10-01/` (ignored; supplied artefacts retained).
