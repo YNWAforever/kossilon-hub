@@ -1,6 +1,6 @@
 # BUG-R11-01 / BUG-R11-02 execution and final review
 
-One fresh GPT-6.1 Sol read-only review of f038ee7..273cf6c: Critical0 / Important0 / Minor0; ready subject to unchanged original exact-head CI. Source fixes a851f97/f415cb2. Raw review report SHA256: e4e399b38f150f9d7fae7c11f73623ff365ffde48302bc26a81a2e6e83db2913. No second reviewer or fix pass.
+One fresh GPT-6.1 Sol read-only review of f038ee7..273cf6c: Critical0 / Important0 / Minor0; ready subject to unchanged original exact-head CI. Source fixes a851f97/f415cb2. Author-saved review summary SHA256: e4e399b38f150f9d7fae7c11f73623ff365ffde48302bc26a81a2e6e83db2913. No second reviewer or fix pass.
 
 The author retained all failed receipts, exact tested checkout hashes, source/overlay identities and NO_GO limits. The reviewer independently checked source6/raw100/history9/first8/browser12+12+12/full2263/tracker12+5selected, installed Playwright root/path ownership and historical PR127/128/129 Git/CI identities. Genuine owner inputs and exact web/scheduler artifacts remain separate.
 
@@ -43,3 +43,13 @@ Final: Ruling: hosted candidate CI must run unchanged at the exact final head be
 Final: Ruling: ordinary trusted runner context is the supported boundary; deliberate reserved-env spoofing/CLI output overrides remain outside it — this is local tooling, not an adversarial filesystem sandbox — cost if wrong: an operator override can route outputs into a prior run.
 Final: Ruling: follow standing user authority to push a draft PR and normal-merge only after every original exact-head gate is green, replacing the finishing skill's choice menu — repeated permission is unnecessary and production is held separately — cost if wrong: source integration needs a normal revert, never rewritten history.
 Final: minor (deferred): none.
+
+## Owned scratch archive
+
+The five plan scratch files were copied to ignored .worktrees/preserve-browser-evidence/sdd-archive-273cf6c and each copy hash checked before removing only the resolved owned scratch directory. Sibling plans, this worktree, all raw receipts and local databases remain. Archive hashes:
+
+- plan-path: 7756f9706c18a1ad3cce8c7e93f0a8dfe331b27d8a4de4741cfa7a8049e5a816
+- progress.md: d20d05659bd662e79d03361e122210c9ba3c55290e7b0b772d9bd0da49082ebc
+- review-f038ee7..273cf6c.diff: be4fa6eabd9f39f41f7f939b9a8e0812e5fc1fbf216019b38283f785b8ca7b32
+- task-1-brief.md: c119f1eed89e6cfff0d0b3a93f9bbfea5de673ed4c8193ead570e1fd92df4ef8
+- task-1-tests.log: 83ab68a74104a9b6342aa67cb06074f6edcc17d284ab1ab2cbbe4f5586eddcfc
