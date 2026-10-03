@@ -1,0 +1,143 @@
+{
+  "observedAt": "2026-10-03T07:25:36.9310206Z",
+  "scope": "LOCAL actual disposable PG18.6 / Node22.23.3; no genuine provider/business UAT; formal release NO_GO",
+  "sourceParent": "ae88f194d5862f27399001235102378294989c11",
+  "executingSourceFiles": [
+    {
+      "path": "src/features/operations/release-catalog.ts",
+      "sha256": "40fcb3c88b574257915139af504dbcce4b5eb29e486a1047e763b227b8306ff6"
+    },
+    {
+      "path": "src/features/operations/release-catalog.test.ts",
+      "sha256": "b4c0c99bcece24df90c16949ba7ad7d1ce55d25e9008b20d955cdf7a365d2710"
+    },
+    {
+      "path": "scripts/rehearse-historical-schema-release.mjs",
+      "sha256": "075f55f3fc58b82c7db05ff6329770552181b5a07e48d248b3ea3606a41556f2"
+    }
+  ],
+  "review": {
+    "reviewer": "/root/review_oct3_execution",
+    "critical": 0,
+    "important": 2,
+    "minor": 1,
+    "importantFixed": [
+      "physical durability/view/sequence drift invisible",
+      "BYPASSRLS and ownership/membership privilege drift invisible"
+    ],
+    "deferredMinor": "Rehearsal receipt does not independently record executing revision/source-file hashes; historical provenance retained",
+    "secondReview": "not dispatched; single author RED/GREEN fix pass per executing-plans"
+  },
+  "catalogRegression": {
+    "red": {
+      "passed": 2,
+      "failed": 6
+    },
+    "firstImplementation": {
+      "passed": 1,
+      "failed": 7,
+      "cause": "SQL array sorting alias; raw failure retained"
+    },
+    "green": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "command": "Node22 node_modules/vitest/vitest.mjs run src/features/operations/release-catalog.test.ts (Bun run test invokes existing Vitest entry point)",
+    "coverage": [
+      "UNLOGGED durability",
+      "relation options",
+      "removed tenant view filter",
+      "view security_invoker",
+      "sequence configuration/ownership; nextval stable",
+      "actual restricted-role visibility 1 to 2 on BYPASSRLS",
+      "table and security-definer ownership",
+      "reachable role membership and INHERIT/SET"
+    ]
+  },
+  "fullSuite": {
+    "initial": {
+      "files": 237,
+      "pass": 2243,
+      "fail": 1,
+      "skipped": 0,
+      "failure": "Existing NAR failed-child parent reached unchanged30000ms deadline"
+    },
+    "isolatedReproduction": {
+      "pass": 1,
+      "fail": 0,
+      "command": "Node22 node_modules/vitest/vitest.mjs run src/features/nar-import/fixture-timeout.integration.test.ts",
+      "timeoutChanged": false
+    },
+    "final": {
+      "files": 237,
+      "pass": 2244,
+      "fail": 0,
+      "skipped": 0,
+      "command": "Node22 node_modules/vitest/vitest.mjs run --reporter=json --outputFile=.worktrees/audit-oct3-execution/r02-review-full-final.json"
+    }
+  },
+  "staticGates": {
+    "typecheckExit": 0,
+    "npmLintExit": 0,
+    "lintErrors": 0,
+    "existingLintWarnings": 1,
+    "initialBunShellLintExit": 1,
+    "initialBunShellError": "Windows filename too long before ESLint; no product/config change",
+    "timeoutOrGateRelaxation": false
+  },
+  "rehearsal": "2026-10-03-r02-historical-rehearsal-v2.json",
+  "retainedRawReceipts": [
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-red.log",
+      "sha256": "021c281376fae4b505031c5ebc7801ae7deab49418f11822d79839569a6df410"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-green.log",
+      "sha256": "6fc6a3bebfaf1ac1f13b295e23440df2c87e682ca82d16d137b3a58f4030f660"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-green-final.log",
+      "sha256": "3d13dad8f413f4d217e405f898871e3fac5d318528ee63711e372c22fb68ae0c"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-rehearsal-v2.log",
+      "sha256": "2526d3f3c5eec3c97233b5baabe7f80d9969de1b2b0176412ff3d9bb48a5fe32"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-full.log",
+      "sha256": "2283793c21cd2ef92f062c470a53483328af74493231dda39007a962936a2e32"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-full.json",
+      "sha256": "1e31b061cc27f92ebdddc566a329865221ee20ab2554fe88953a7eb30cd29d63"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-full-final.log",
+      "sha256": "7446663750698a6dad5e115e6103abf4bbf0075bbd08b4d4e7f110a510f94494"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-full-final.json",
+      "sha256": "540ca342bbf7d46d6372de57127a1c68e3ff4d79f6693683ec70b1231d831161"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-typecheck.log",
+      "sha256": "5a3973f79ed9becd5f23c4feff467513814de7ea381d75a4d2e339aa8b8edca9"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-lint.log",
+      "sha256": "2f624ae227ee67c5e9c21c1f0fe7a9ffde9c50eeedc57591e7ff642b8d98cd58"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-npm-lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-review-timeout-reproduction.log",
+      "sha256": "703f1f5667f66effc95ca494883200edebc7d0af8d60a8272cee7d8597f1526e"
+    }
+  ],
+  "externalApprovalArtifact": "not supplied; runtime loader not established; default fail closed",
+  "providerWrites": 0,
+  "productionReleaseGate": "NO_GO"
+}

@@ -54,14 +54,53 @@ export async function readReleaseCatalog(
   namespace = "public",
 ): Promise<ReleaseCatalogSnapshot> {
   const [row] = await sql<{ catalog: Record<string, unknown[]>; role: string }[]>`
-    with relations as (
+    with recursive relations as (
       select c.* from pg_class c join pg_namespace n on n.oid=c.relnamespace
       where n.nspname=${namespace} and c.relkind in ('r','p','v','m','f')
         and not exists(select 1 from pg_depend d where d.classid='pg_class'::regclass
           and d.objid=c.oid and d.deptype='e')
+    ), sequences as (
+      select c.* from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname=${namespace} and c.relkind='S'
+        and not exists(select 1 from pg_depend d where d.classid='pg_class'::regclass
+          and d.objid=c.oid and d.deptype='e')
+    ), routines as (
+      select p.* from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname=${namespace} and p.prokind='f'
+        and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass
+          and d.objid=p.oid and d.deptype='e')
+    ), reachable_roles(oid) as (
+      select oid from pg_roles where rolname=current_user
+      union select m.roleid from pg_auth_members m join reachable_roles r on r.oid=m.member
+    ), security_roles(oid) as (
+      select oid from reachable_roles
+      union select relowner from relations
+      union select relowner from sequences
+      union select proowner from routines
     ) select current_user role, jsonb_build_object(
-      'tables',(select coalesce(jsonb_agg(jsonb_build_object('table',relname,'kind',relkind)
-        order by relname::text collate "C"),'[]'::jsonb) from relations),
+      'tables',(select coalesce(jsonb_agg(jsonb_build_object('table',c.relname,'kind',c.relkind,
+        'owner',pg_get_userbyid(c.relowner),'persistence',c.relpersistence,
+        'options',array(select option from unnest(c.reloptions) options(option) order by option collate "C"),
+        'replicaIdentity',c.relreplident,'accessMethod',a.amname,
+        'viewDefinition',case when c.relkind in ('v','m') then pg_get_viewdef(c.oid,false) end,
+        'partitionKey',case when c.relkind='p' then pg_get_partkeydef(c.oid) end,
+        'partitionBound',pg_get_expr(c.relpartbound,c.oid))
+        order by c.relname::text collate "C"),'[]'::jsonb) from relations c
+        left join pg_am a on a.oid=c.relam),
+      'sequences',(select coalesce(jsonb_agg(jsonb_build_object('table',c.relname,
+        'owner',pg_get_userbyid(c.relowner),'persistence',c.relpersistence,'acl',c.relacl::text,
+        'type',format_type(s.seqtypid,null),'start',s.seqstart,'increment',s.seqincrement,
+        'min',s.seqmin,'max',s.seqmax,'cache',s.seqcache,'cycle',s.seqcycle,
+        'ownedBy',(select jsonb_build_object('schema',n.nspname,'table',t.relname,
+          'column',a.attname,'dependency',d.deptype) from pg_depend d
+          join pg_class t on t.oid=d.refobjid join pg_namespace n on n.oid=t.relnamespace
+          join pg_attribute a on a.attrelid=t.oid and a.attnum=d.refobjsubid
+          where d.classid='pg_class'::regclass and d.objid=c.oid
+            and d.refclassid='pg_class'::regclass and d.deptype in ('a','i')),
+        'usage',has_sequence_privilege(c.oid,'USAGE'),'select',has_sequence_privilege(c.oid,'SELECT'),
+        'update',has_sequence_privilege(c.oid,'UPDATE'))
+        order by c.relname::text collate "C"),'[]'::jsonb)
+        from sequences c join pg_sequence s on s.seqrelid=c.oid),
       'columns',(select coalesce(jsonb_agg(jsonb_build_object('table',c.relname,'name',a.attname,
         'ordinal',(select count(*) from pg_attribute visible where visible.attrelid=a.attrelid
           and visible.attnum>0 and visible.attnum<=a.attnum and not visible.attisdropped),
@@ -86,22 +125,46 @@ export async function readReleaseCatalog(
         from relations c join pg_trigger t on t.tgrelid=c.oid and not t.tgisinternal),
       'functions',(select coalesce(jsonb_agg(jsonb_build_object('name',p.proname,
         'identity',pg_get_function_identity_arguments(p.oid),'definition',pg_get_functiondef(p.oid),
-        'acl',p.proacl::text) order by p.proname::text collate "C",pg_get_function_identity_arguments(p.oid) collate "C"),'[]'::jsonb)
-        from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname=${namespace}
-        and p.prokind='f' and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass
-          and d.objid=p.oid and d.deptype='e')),
+        'owner',pg_get_userbyid(p.proowner),'acl',p.proacl::text,
+        'execute',has_function_privilege(p.oid,'EXECUTE'))
+        order by p.proname::text collate "C",pg_get_function_identity_arguments(p.oid) collate "C"),'[]'::jsonb)
+        from routines p),
       'tenant-access',(select coalesce(jsonb_agg(jsonb_build_object('table',c.relname,
-        'rls',c.relrowsecurity,'forceRls',c.relforcerowsecurity,'acl',c.relacl::text,
+        'owner',pg_get_userbyid(c.relowner),'rls',c.relrowsecurity,'forceRls',c.relforcerowsecurity,
+        'rlsActive',row_security_active(c.oid),'acl',c.relacl::text,
         'select',has_table_privilege(c.oid,'SELECT'),'insert',has_table_privilege(c.oid,'INSERT'),
         'update',has_table_privilege(c.oid,'UPDATE'),'delete',has_table_privilege(c.oid,'DELETE'))
         order by c.relname::text collate "C"),'[]'::jsonb) from relations c),
+      'role-context',jsonb_build_array(jsonb_build_object('role',current_user,
+        'sessionRole',session_user,'rowSecurity',current_setting('row_security'))),
+      'security-roles',(select coalesce(jsonb_agg(jsonb_build_object('name',r.rolname,
+        'superuser',r.rolsuper,'bypassRls',r.rolbypassrls,'inherit',r.rolinherit,
+        'createRole',r.rolcreaterole,'createDb',r.rolcreatedb,'replication',r.rolreplication,
+        'canLogin',r.rolcanlogin,'validUntil',r.rolvaliduntil,
+        'reachable',r.oid in(select oid from reachable_roles),
+        'member',pg_has_role(r.oid,'MEMBER'),'usage',pg_has_role(r.oid,'USAGE'),
+        'set',pg_has_role(r.oid,'SET')) order by r.rolname::text collate "C"),'[]'::jsonb)
+        from pg_roles r join security_roles s on s.oid=r.oid),
+      'role-memberships',(select coalesce(jsonb_agg(jsonb_build_object(
+        'role',pg_get_userbyid(m.roleid),'member',pg_get_userbyid(m.member),
+        'grantor',pg_get_userbyid(m.grantor),'admin',m.admin_option,
+        'inherit',m.inherit_option,'set',m.set_option)
+        order by pg_get_userbyid(m.roleid) collate "C",pg_get_userbyid(m.member) collate "C",
+          pg_get_userbyid(m.grantor) collate "C"),'[]'::jsonb)
+        from pg_auth_members m where m.member in(select oid from reachable_roles)),
       'policies',(select coalesce(jsonb_agg(jsonb_build_object('table',tablename,'name',policyname,
         'permissive',permissive,'roles',roles,'command',cmd,'using',qual,'check',with_check)
         order by tablename::text collate "C",policyname::text collate "C"),'[]'::jsonb)
         from pg_policies where schemaname=${namespace})
     ) catalog
   `;
-  const contracts: Record<string, unknown> = { "tenant-access:database-role": row.role };
+  const contracts: Record<string, unknown> = {
+    "tenant-access:database-role": {
+      context: row.catalog["role-context"],
+      roles: row.catalog["security-roles"],
+      memberships: row.catalog["role-memberships"],
+    },
+  };
   for (const [category, entries] of Object.entries(row.catalog)) {
     contracts[`catalog:${category}`] = entries;
     const perTable = new Map<string, unknown[]>();
