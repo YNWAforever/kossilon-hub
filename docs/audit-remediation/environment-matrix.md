@@ -189,4 +189,3 @@ Actual WindowsNode24.18.0/Bun1.4.2/fresh dedicatedPG17, unfiltered235files2214PA
 | Genuine staging | 未提供 approved app/branch/database/storage/callback/recipient identity | Release/DB/Auth/Storage各 owner 按 evidence-delta 表提供秘密管理位置與非secret identity |
 
 完整 fresh SELECT／metadata／hash 在 [execution baseline](evidence/2026-10-03-execution-baseline.json)。上述每层不互相提升；原環境歷史紀錄如下保留。
-
