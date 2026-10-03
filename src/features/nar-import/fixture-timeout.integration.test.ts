@@ -27,6 +27,7 @@ describe.skipIf(!url)("actual failed NAR child fixture", () => {
         "-t",
         "controlled fixture timeout B07",
         "--pool=threads",
+        "--project=db",
       ],
       {
         cwd: process.cwd(),

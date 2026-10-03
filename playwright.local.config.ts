@@ -1,4 +1,7 @@
 import { defineConfig } from "@playwright/test";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { localBrowserRunRoot } from "./e2e/local-evidence-guard";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:5180";
 const target = new URL(baseURL);
 if (
@@ -7,6 +10,15 @@ if (
   target.port !== "5180"
 )
   throw new Error("Local UX runner permits only dedicated localhost5180.");
+// Every invocation owns its artifacts; later runs must not replace old evidence.
+const runBase = fileURLToPath(new URL("./.worktrees/local-browser-runs/", import.meta.url));
+const runRoot = localBrowserRunRoot(
+  runBase,
+  process.env.KOSSILON_LOCAL_BROWSER_RUN_ROOT,
+  process.env.TEST_WORKER_INDEX !== undefined,
+);
+process.env.KOSSILON_LOCAL_BROWSER_RUN_ROOT = runRoot;
+console.log(`[local-browser-evidence] run root: ${runRoot}`);
 export default defineConfig({
   testDir: "./e2e",
   testMatch: [
@@ -18,11 +30,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [
-    ["list"],
-    ["json", { outputFile: ".worktrees/audit-baseline-20261001/t20-browser-results.json" }],
-  ],
-  outputDir: ".worktrees/audit-baseline-20261001/browser-artifacts",
+  reporter: [["list"], ["json", { outputFile: join(runRoot, "results.json") }]],
+  outputDir: join(runRoot, "artifacts"),
+  globalSetup: fileURLToPath(new URL("./e2e/local-evidence-guard.ts", import.meta.url)),
   use: {
     baseURL,
     browserName: "chromium",
