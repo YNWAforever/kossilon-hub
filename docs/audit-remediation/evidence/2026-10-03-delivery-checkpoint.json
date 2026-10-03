@@ -1,25 +1,25 @@
 {
-  "purpose": "B09 dated verified implementation checkpoint; not future documentation-head CI or production acceptance",
-  "recordedAtUtc": "2026-10-03T01:53:26.2356312+00:00",
-  "recordedAtHongKong": "2026-10-03T09:53:26.2356312+08:00",
+  "purpose": "B09 dated verified implementation checkpoint after B10 prerequisite; not future documentation-head CI or production acceptance",
+  "recordedAtUtc": "2026-10-03T03:00:38.7717195+00:00",
+  "recordedAtHongKong": "2026-10-03T11:00:38.7717195+08:00",
   "implementation": {
-    "pr": 119,
-    "url": "https://github.com/YNWAforever/kossilon-hub/pull/119",
-    "sourceHead": "f48975bdfce9b6b794b3abb5184b2cb78804dedb",
-    "mergeHead": "f07e8226c8575730f5f92fab45c4d2821484e04c",
+    "pr": 121,
+    "url": "https://github.com/YNWAforever/kossilon-hub/pull/121",
+    "sourceHead": "8b3478415d20d36d2b0544151c73e013630d121e",
+    "mergeHead": "dba55b8a5259b613ff3f4244aed2660d954f586f",
     "parents": [
-      "a0b753e4c4bce4c410dcb58cfc381039c82f0c65",
-      "f48975bdfce9b6b794b3abb5184b2cb78804dedb"
+      "f07e8226c8575730f5f92fab45c4d2821484e04c",
+      "8b3478415d20d36d2b0544151c73e013630d121e"
     ],
-    "sourceTree": "3a710614249c15ed126519ee3bbed270d8b75366",
-    "mergeTree": "3a710614249c15ed126519ee3bbed270d8b75366",
-    "mergedAt": "2026-10-02T20:34:12Z"
+    "sourceTree": "478bfbe0427d8b992e5f964434805b42c96ed849",
+    "mergeTree": "478bfbe0427d8b992e5f964434805b42c96ed849",
+    "mergedAt": "2026-10-03T02:52:36Z"
   },
   "ci": [
     {
-      "head": "f48975bdfce9b6b794b3abb5184b2cb78804dedb",
-      "run": 37058943518,
-      "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37058943518",
+      "head": "8b3478415d20d36d2b0544151c73e013630d121e",
+      "run": 37089985919,
+      "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37089985919",
       "conclusion": "success",
       "environment": "Actual Linux GitHub Actions, separate Postgres17 services, Bun1.4.2; no provider credentials",
       "legs": [
@@ -30,9 +30,9 @@
           "passed": 2214,
           "failed": 0,
           "skipped": 0,
-          "seconds": 142.55,
+          "seconds": 178.68,
           "chromeDemoPassed": 12,
-          "chromeDemoSeconds": 31.4,
+          "chromeDemoSeconds": 35.5,
           "successfulSteps": 26,
           "bunAuditFindings": 0,
           "npmAuditFindings": 0
@@ -44,21 +44,21 @@
           "passed": 2214,
           "failed": 0,
           "skipped": 0,
-          "seconds": 134.33,
+          "seconds": 161.19,
           "chromeDemoPassed": 12,
-          "chromeDemoSeconds": 31.2,
+          "chromeDemoSeconds": 32.8,
           "successfulSteps": 26,
           "bunAuditFindings": 0,
           "npmAuditFindings": 0
         }
       ],
-      "rawLogPath": ".worktrees/audit-nar-apply-performance-20261003/ci-f48975b.log",
-      "rawLogSha256": "894A3BB70C848903E73FF7093AC5468797A485B71C181BACA2641B110CFE6930"
+      "rawLogPath": ".worktrees/audit-braces-path-20261003/source-ci.log",
+      "rawLogSha256": "BC20728D06E1220F7341FA8937A8C404881CB184D0C725BD4B5063CE3907665E"
     },
     {
-      "head": "f07e8226c8575730f5f92fab45c4d2821484e04c",
-      "run": 37061430788,
-      "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37061430788",
+      "head": "dba55b8a5259b613ff3f4244aed2660d954f586f",
+      "run": 37091315916,
+      "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37091315916",
       "conclusion": "success",
       "environment": "Actual Linux GitHub Actions, separate Postgres17 services, Bun1.4.2; no provider credentials",
       "legs": [
@@ -69,9 +69,9 @@
           "passed": 2214,
           "failed": 0,
           "skipped": 0,
-          "seconds": 126.18,
+          "seconds": 180.25,
           "chromeDemoPassed": 12,
-          "chromeDemoSeconds": 29.6,
+          "chromeDemoSeconds": 35.8,
           "successfulSteps": 26,
           "bunAuditFindings": 0,
           "npmAuditFindings": 0
@@ -83,16 +83,16 @@
           "passed": 2214,
           "failed": 0,
           "skipped": 0,
-          "seconds": 157.46,
+          "seconds": 159.64,
           "chromeDemoPassed": 12,
-          "chromeDemoSeconds": 33.6,
+          "chromeDemoSeconds": 33.4,
           "successfulSteps": 26,
           "bunAuditFindings": 0,
           "npmAuditFindings": 0
         }
       ],
-      "rawLogPath": ".worktrees/audit-nar-apply-performance-20261003/ci-f07e822.log",
-      "rawLogSha256": "1AAE36F4DF51E6302643A366B75535CD37DC7AD3DF6FC36BA7A1C0453D74B4F3"
+      "rawLogPath": ".worktrees/audit-braces-path-20261003/main-ci.log",
+      "rawLogSha256": "191F45E3657E878BB599CF17837909B672223E70787F737F1705D0FFEEE90836"
     }
   ],
   "localWindows": {
@@ -108,7 +108,7 @@
     "evidence": "docs/audit-remediation/evidence/2026-10-03-sla-calendar-performance.json"
   },
   "production": {
-    "observedAtUtc": "2026-10-03T01:53:26.2356312+00:00",
+    "observedAtUtc": "2026-10-03T03:00:38.7717195+00:00",
     "method": "Authenticated metadata-only Vercel project GET and alias GET",
     "project": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
     "alias": "kossilon-hub.vercel.app",
@@ -138,18 +138,203 @@
     "path": "docs/audit-remediation/uat-results.csv"
   },
   "review": {
-    "scope": "Completed B08 fresh whole-branch review, not new B09 review",
+    "scope": "Completed B10 fresh whole-branch review, not new B09 review",
     "critical": 0,
     "important": 0,
-    "minorDeferred": 1,
-    "minor": "M1/P3 B08 aggregate JSON CRLF245lines; git diff --check noise, no parsing/runtime effect",
-    "rawReportPath": ".worktrees/audit-nar-apply-performance-20261003/final-review.md",
-    "rawReportSha256": "4D77587A1A64DF099CCA014A3452D2DEECD9BBBAEB48CD261C6567D3D23B43B8"
+    "minorDeferred": 0,
+    "rawReportPath": ".worktrees/audit-braces-path-20261003/final-review.md",
+    "rawReportSha256": "3D3861A0B6C99986D44EEBD73E132908F6E95EA68FF51EF429F537BF232B510C"
+  },
+  "dependencyPrerequisite": {
+    "originalB09Source": "c6fddb90b9c0c84a53ec01999d3996df0147a49e",
+    "originalB09CiRun": 37088145785,
+    "originalB09CiConclusion": "failure",
+    "failure": "Both original Bun audit steps failed newly published braces advisory before tests",
+    "rawFailureLogPath": ".worktrees/audit-delivery-ledger-20261003/source-failure.log",
+    "rawFailureLogSha256": "C2042B6C13F41AB6C11E1F36AAE0189CA180D4CE0A1EA7719EF9DD6D74E8C3D9",
+    "fixPr": 121,
+    "fixSource": "8b3478415d20d36d2b0544151c73e013630d121e",
+    "fixMerge": "dba55b8a5259b613ff3f4244aed2660d954f586f",
+    "history": "Normal main integration into published B09; no rebase/amend/force"
+  },
+  "historicalB08": {
+    "purpose": "B09 dated verified implementation checkpoint; not future documentation-head CI or production acceptance",
+    "recordedAtUtc": "2026-10-03T01:53:26.2356312+00:00",
+    "recordedAtHongKong": "2026-10-03T09:53:26.2356312+08:00",
+    "implementation": {
+      "pr": 119,
+      "url": "https://github.com/YNWAforever/kossilon-hub/pull/119",
+      "sourceHead": "f48975bdfce9b6b794b3abb5184b2cb78804dedb",
+      "mergeHead": "f07e8226c8575730f5f92fab45c4d2821484e04c",
+      "parents": [
+        "a0b753e4c4bce4c410dcb58cfc381039c82f0c65",
+        "f48975bdfce9b6b794b3abb5184b2cb78804dedb"
+      ],
+      "sourceTree": "3a710614249c15ed126519ee3bbed270d8b75366",
+      "mergeTree": "3a710614249c15ed126519ee3bbed270d8b75366",
+      "mergedAt": "2026-10-02T20:34:12Z"
+    },
+    "ci": [
+      {
+        "head": "f48975bdfce9b6b794b3abb5184b2cb78804dedb",
+        "run": 37058943518,
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37058943518",
+        "conclusion": "success",
+        "environment": "Actual Linux GitHub Actions, separate Postgres17 services, Bun1.4.2; no provider credentials",
+        "legs": [
+          {
+            "name": "Node22",
+            "node": "v22.23.3",
+            "files": 235,
+            "passed": 2214,
+            "failed": 0,
+            "skipped": 0,
+            "seconds": 142.55,
+            "chromeDemoPassed": 12,
+            "chromeDemoSeconds": 31.4,
+            "successfulSteps": 26,
+            "bunAuditFindings": 0,
+            "npmAuditFindings": 0
+          },
+          {
+            "name": "Node24",
+            "node": "v24.21.0",
+            "files": 235,
+            "passed": 2214,
+            "failed": 0,
+            "skipped": 0,
+            "seconds": 134.33,
+            "chromeDemoPassed": 12,
+            "chromeDemoSeconds": 31.2,
+            "successfulSteps": 26,
+            "bunAuditFindings": 0,
+            "npmAuditFindings": 0
+          }
+        ],
+        "rawLogPath": ".worktrees/audit-nar-apply-performance-20261003/ci-f48975b.log",
+        "rawLogSha256": "894A3BB70C848903E73FF7093AC5468797A485B71C181BACA2641B110CFE6930"
+      },
+      {
+        "head": "f07e8226c8575730f5f92fab45c4d2821484e04c",
+        "run": 37061430788,
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37061430788",
+        "conclusion": "success",
+        "environment": "Actual Linux GitHub Actions, separate Postgres17 services, Bun1.4.2; no provider credentials",
+        "legs": [
+          {
+            "name": "Node22",
+            "node": "v22.23.3",
+            "files": 235,
+            "passed": 2214,
+            "failed": 0,
+            "skipped": 0,
+            "seconds": 126.18,
+            "chromeDemoPassed": 12,
+            "chromeDemoSeconds": 29.6,
+            "successfulSteps": 26,
+            "bunAuditFindings": 0,
+            "npmAuditFindings": 0
+          },
+          {
+            "name": "Node24",
+            "node": "v24.21.0",
+            "files": 235,
+            "passed": 2214,
+            "failed": 0,
+            "skipped": 0,
+            "seconds": 157.46,
+            "chromeDemoPassed": 12,
+            "chromeDemoSeconds": 33.6,
+            "successfulSteps": 26,
+            "bunAuditFindings": 0,
+            "npmAuditFindings": 0
+          }
+        ],
+        "rawLogPath": ".worktrees/audit-nar-apply-performance-20261003/ci-f07e822.log",
+        "rawLogSha256": "1AAE36F4DF51E6302643A366B75535CD37DC7AD3DF6FC36BA7A1C0453D74B4F3"
+      }
+    ],
+    "localWindows": {
+      "scope": "Previously executed B08 full current-source suite, not a new B09 Windows run",
+      "node": "v24.18.0",
+      "bun": "1.4.2",
+      "postgres": "17",
+      "files": 235,
+      "passed": 2214,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 201.53,
+      "evidence": "docs/audit-remediation/evidence/2026-10-03-sla-calendar-performance.json"
+    },
+    "production": {
+      "observedAtUtc": "2026-10-03T01:53:26.2356312+00:00",
+      "method": "Authenticated metadata-only Vercel project GET and alias GET",
+      "project": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "alias": "kossilon-hub.vercel.app",
+      "deployment": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+      "readyState": "READY",
+      "githubCommitSha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+      "configuredNode": "24.x",
+      "deployedRuntimeMinor": "unknown",
+      "mainGitDeploymentEnabled": false,
+      "providerWrites": 0
+    },
+    "schema": {
+      "sourceMigrationCount": 50,
+      "productionHistoricalIdCount": 66,
+      "productionCountScope": "Last-observed dated DB catalogue; not refreshed by this documentation task",
+      "target": "red-morning-00331124 / br-muddy-mountain-aov8bbku / neondb",
+      "evidence": "docs/audit-remediation/runtime-parity-and-db-owners.md",
+      "reconciliation": "blocked",
+      "productionMigrations": 0
+    },
+    "originalUat": {
+      "total": 50,
+      "localOnlyPass": 19,
+      "blocked": 31,
+      "notRun": 0,
+      "sha256": "45D2B0239826EDF41CAD480EC8B7888C426991CD28680F9EBC71DB9E9AF801E7",
+      "path": "docs/audit-remediation/uat-results.csv"
+    },
+    "review": {
+      "scope": "Completed B08 fresh whole-branch review, not new B09 review",
+      "critical": 0,
+      "important": 0,
+      "minorDeferred": 1,
+      "minor": "M1/P3 B08 aggregate JSON CRLF245lines; git diff --check noise, no parsing/runtime effect",
+      "rawReportPath": ".worktrees/audit-nar-apply-performance-20261003/final-review.md",
+      "rawReportSha256": "4D77587A1A64DF099CCA014A3452D2DEECD9BBBAEB48CD261C6567D3D23B43B8"
+    },
+    "commands": [
+      "gh api repos/YNWAforever/kossilon-hub/commits/main --jq .sha",
+      "gh run view 37061430788 --repo YNWAforever/kossilon-hub --json status,conclusion,headSha,url,jobs",
+      "pwsh -NoProfile -File .worktrees/audit-delivery-ledger-20261003/pack-checkpoint.ps1 (saved raw CI SHA/all-step/audit validation and two metadata-only Vercel GETs)"
+    ],
+    "formalRelease": "NO_GO",
+    "providerWrites": 0
+  },
+  "recordingCorrection": {
+    "scope": "Local B09 evidence producer correction before commit; no runtime/product change",
+    "defect": "Default JSON date conversion followed by culture string parse changed Oct03 to Mar09 and lost HK offset",
+    "fix": "JSON DateKind String plus invariant roundtrip DateTimeOffset parse; gate compares exact raw GET UTC and HK offsets",
+    "redCommand": "pwsh -NoProfile -File .worktrees/audit-delivery-ledger-20261003/validate-checkpoint.ps1",
+    "redExit": 1,
+    "redLogPath": ".worktrees/audit-delivery-ledger-20261003/observation-date-red.log",
+    "redLogSha256": "3E6D50A6A954471FCBD216D84DE3F4BBE066F4AF380CD307C04CA1EF01E6F9B9",
+    "rejectedCheckpointPath": ".worktrees/audit-delivery-ledger-20261003/rejected-date-checkpoint.json",
+    "rejectedCheckpointSha256": "1AACBD105CE111440A28E10DCF4B9D4453385A30538D4B74142859BC7BBAA704",
+    "rawObservationPath": ".worktrees/audit-delivery-ledger-20261003/checkpoint-production-observation.json",
+    "rawObservationSha256": "6B7C21579B015596E8D0D5D4C3EC591AF0FFE6763251D914FDD1C88FE7713840",
+    "greenCommand": "pwsh -NoProfile -File .worktrees/audit-delivery-ledger-20261003/validate-checkpoint.ps1 (local precommit working-tree evidence gate)",
+    "greenExit": 0,
+    "greenLogPath": ".worktrees/audit-delivery-ledger-20261003/observation-date-green-final.log",
+    "greenLogSha256": "461DAD0798B4F5508F5E854AA37A4618601E9D965DF395F9E6CE1BCEF3C1BCA2"
   },
   "commands": [
     "gh api repos/YNWAforever/kossilon-hub/commits/main --jq .sha",
-    "gh run view 37061430788 --repo YNWAforever/kossilon-hub --json status,conclusion,headSha,url,jobs",
-    "pwsh -NoProfile -File .worktrees/audit-delivery-ledger-20261003/pack-checkpoint.ps1 (saved raw CI SHA/all-step/audit validation and two metadata-only Vercel GETs)"
+    "gh run view 37091315916 --repo YNWAforever/kossilon-hub --json status,conclusion,headSha,url,jobs",
+    "pwsh -NoProfile -File .worktrees/audit-delivery-ledger-20261003/observe-production.ps1 -SourceMain dba55b8a5259b613ff3f4244aed2660d954f586f",
+    "pwsh -NoProfile -File .worktrees/audit-delivery-ledger-20261003/refresh-checkpoint.ps1"
   ],
   "formalRelease": "NO_GO",
   "providerWrites": 0

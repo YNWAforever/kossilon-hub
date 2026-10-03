@@ -1,5 +1,57 @@
 # 已驗證 implementation checkpoint — 2026-10-03 香港
 
+本頁最新checkpoint記錄B10 prerequisite已發生的交付；後續純文件head需自己的CI。
+正式發布 **NO_GO**；原50UAT仍 **19 LOCAL ONLY pass／31 blocked／0 not_run**。
+[機讀receipt](evidence/2026-10-03-delivery-checkpoint.json)保留原始hash、命令、環境及完整舊B08 checkpoint。
+
+## 最新B10 source、review、merge及完整CI
+
+| Gate | 實際結果 |
+| --- | --- |
+| Source | `8b3478415d20d36d2b0544151c73e013630d121e`；supported Lovable wrapper2.7.0→2.7.2，移除legacy tagger／braces路徑；其餘84direct resolutions保留 |
+| Sole fresh review | 0 Critical／0 Important／0 Minor；兩份lock／actualconsumer版本／24artifact hashes／SRI／UAT bytes核對；没有provider寫入 |
+| 正常合併 | [PR121](https://github.com/YNWAforever/kossilon-hub/pull/121)，`dba55b8a5259b613ff3f4244aed2660d954f586f`；parents `f07e822`＋`8b34784`，source/merge tree一致；保留published歷史 |
+| Source CI | [37089985919](https://github.com/YNWAforever/kossilon-hub/actions/runs/37089985919) exact8b34784 SUCCESS |
+| Implementation-main CI | [37091315916](https://github.com/YNWAforever/kossilon-hub/actions/runs/37091315916) exactdba55b8 SUCCESS；Node22 v22.23.3 suite180.25s／Chrome35.8s；Node24 v24.21.0 suite159.64s／Chrome33.4s |
+
+兩個Linux runtime各235files2214PASS0fail0skip及ChromeDEMO12PASS；各自真正Postgres17、
+Bun1.4.2、原有26steps成功：dual low audits0、portable npm10 install、lint/typecheck、
+完整tests、predeploy／原UAT local ledger、真PDF parser／read-only demo browser、build、
+dev import protection及compiled cron。Compiled hook不是三次native ticks或真provider驗收。
+Source raw-log SHA256 `BC20728D06E1220F7341FA8937A8C404881CB184D0C725BD4B5063CE3907665E`；main raw-log SHA256 `191F45E3657E878BB599CF17837909B672223E70787F737F1705D0FFEEE90836`。
+雙audit0是當時快照，不保證日後沒有新advisory。
+
+原B09 head `c6fddb9`／[CI37088145785](https://github.com/YNWAforever/kossilon-hub/actions/runs/37088145785)
+在兩個原Bun audit步驟失敗，tests未開始；GHSA-vfj7-8cjw-p6xm／braces3.0.3。
+這個RED及raw hash保留，不回寫為GREEN。修復與consumer compatibility證據見
+[dependency-security-b10.md](dependency-security-b10.md)。B09以正常main整合接續，沒有rebase／force。
+
+B10 WindowsNode22.23.3 static/build/audits通過；首輪dev root超過原15s，其他11routes及
+import protection通過，原失敗保留。同Node22 parent/child原budget重跑12PASS可能已warm。
+Fresh Linux原gate通過不等於Windows cold-start或業務SLO。B08 Windows full及性能量度
+是以下歷史checkpoint，不冒充B10/B09新Windows full run。
+
+## 最新正式環境觀察及下一步
+
+2026-10-03 **11:00香港時間**，metadata-only project及alias GET仍一致指向
+`dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT` READY，source `aa5d3cbddd895bca953b6eef7266ae1cc0b46215`。
+ConfiguredNode24.x不是deployed minor/functions驗證，mainGitDeploymentEnabled=false。
+本次沒有DB／env／部署／send／invite／grant操作。Source50對last-observedproduction66尚未
+reconcile；本次沒有重新查DB。原50UAT bytes／19local-only及31blocked不變。
+最新源碼通過沒有新增F01–F20 genuine runtime PASS。
+
+Owner及最小外部依賴沿用下方表及[runtime-parity-and-db-owners.md](runtime-parity-and-db-owners.md)：
+logical DB attribution／actual app role／sole DDL freeze／lineage／recovery、隔離staging及核准既有
+帳戶、真Auth／R2／scanner／OCR-AI／WOZTELL／handoff證據、三次native ticks、31blocked journeys
+及staging p95／cold-cache／業務budget。準備好的SQL／rollback維持可審閱，執行需相應正式授權。
+B09自己的review／exact-head CI／merge／mainCI只在發生後寫入PR，不在checkpoint預報成功。
+
+## 保留的B08歷史checkpoint — 原觀察09:53HK
+
+下文原B08證據及當時敘述完整保留；B08 deferred CRLF minor仍在，未修改raw artifact。
+
+# 已驗證 implementation checkpoint — 2026-10-03 香港
+
 本頁記錄已發生的交付；implementation SHA 不代表往後純文件提交的 main SHA。
 正式發布仍為 **NO_GO**。原50UAT維持 **19 LOCAL ONLY pass／31 blocked／0 not_run**。
 [機讀receipt](evidence/2026-10-03-delivery-checkpoint.json)保存實際環境、命令及原始證據hash。

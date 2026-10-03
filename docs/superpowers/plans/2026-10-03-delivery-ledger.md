@@ -10,6 +10,27 @@ PR119, exact completed main CI37061430788. The current status header still names
 finding coverage still treats B08 review/CI as pending. These statements no longer
 describe the observed implementation checkpoint.
 
+## Continuation after the security prerequisite
+
+The first document head c6fddb9 is preserved. Its CI37088145785 failed both
+unchanged Bun audit steps on the newly indexed braces advisory before tests.
+B10/PR121 subsequently removed the vulnerable legacy tagger path through the
+supported wrapper2.7.2, without weakening audits or age guards. It was normally
+merged as dba55b8a5259b613ff3f4244aed2660d954f586f; exact source/main complete
+CI and the sole fresh review passed. B09 now normally integrates that main,
+retaining its published commit and failed raw receipt, and updates the dated
+implementation checkpoint to dba55b8. The earlier B08 checkpoint and deferred
+minor remain historical evidence. Documentation-only scope is measured against
+this new completed base; B10 dependency edits are inherited, not reimplemented.
+New B09 exact-head CI/review and postmerge verification remain mandatory.
+
+During this local refresh, the metadata producer's default JSON date conversion
+and culture string parse corrupted Oct03/HK time. The raw GET was correct. The
+exact raw UTC/HK offset contract failed first, then passed after DateKind String
+and invariant roundtrip parsing. Rejected outputs and RED/GREEN hashes are retained
+in the checkpoint; the raw observation snapshot is immutable so a later closing
+GET cannot invalidate it. This correction changes local evidence, not runtime.
+
 ## Interfaces and global constraints
 
 status.md, environment-matrix.md and finding-coverage.md consume the same verified
