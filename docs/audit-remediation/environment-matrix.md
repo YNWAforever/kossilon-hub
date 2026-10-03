@@ -189,3 +189,15 @@ Actual WindowsNode24.18.0/Bun1.4.2/fresh dedicatedPG17, unfiltered235files2214PA
 | Genuine staging | 未提供 approved app/branch/database/storage/callback/recipient identity | Release/DB/Auth/Storage各 owner 按 evidence-delta 表提供秘密管理位置與非secret identity |
 
 完整 fresh SELECT／metadata／hash 在 [execution baseline](evidence/2026-10-03-execution-baseline.json)。上述每层不互相提升；原環境歷史紀錄如下保留。
+
+## Oct3 review closeout（LOCAL／CI與正式runtime分開）
+
+| Layer | Verified observation | Unmet genuine gate |
+| --- | --- | --- |
+| Source | baseline/R00 PR122/123 normal merged; main7dcc1fa CI37105773083 Node22/24 green | R02/acceptance exact-head gates on PR125/126; source success cannot authorize production |
+| Local | explicit Node22.23.3／ownedPG18.6 complete237files2245PASS0skip; catalog9PASS; v3restore/rollback/repeatPASS | Hosted target/app role/restore authority absent |
+| Production | fresh alias07:13UTC仍aa5d3cb; mainGitDeploymentEnabled=false; DB66ledger4pending14docs／nohistoricalreceipt | Deployed resolved SBOM/runtime minor; approved same-schema security promotion |
+| Scheduler | exact artifact SHA not_verified; only stale Sep30recorded ticks | Sole native owner/platform/artifact/log access;3native ticks及failure/recovery |
+| Auth/storage/provider/business | Local fixtures/contracts retained; original50runtime結果不提升 | r03-staging-acceptance.md各owner精確protocol/target/identity/approved-data inputs |
+
+No production DB, config, endpoint, deployment, message, invitation or grant was changed. Frozen SQL/manifest/ledger histories remain unchanged. Final fresh receipts are attached to each delivery PR after the action occurs.

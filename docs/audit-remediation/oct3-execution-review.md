@@ -1,0 +1,52 @@
+# Oct3 execution ledger and fresh review
+
+# SDD ledger — plan: docs/audit-remediation/oct3-execution-plan.md
+
+Baseline: latest main6f0a851 / liveaa5d3cb verified read-only; outer14/inner90 hashes MATCH. Original50 CSV preserved.
+Pre-flight: R01 produces patched old-schema candidate; R02 produces approved additive schema contract. Independent: never merge full main into R01.
+Pre-flight: R02 produces exact environment/build/hash/catalog decision; R03 consumes it and additionally requires logical ownership, sole DDL freeze and genuine native ticks. Local evidence cannot meet hosted gate.
+Pre-flight: R04/R05 local contracts independently executable; shared genuine staging gate R03 remains blocked. R06 consumes both authority and readiness; same snapshot/version rules remain.
+Pre-flight: R07/R08 consume current approval; unknown provider acceptance remains fenced. R09/R10 require controlled topology; R11 consumes per-feature genuine evidence and separate web/scheduler artifact identities.
+Ruling: Native worktree creation returned Not a git repository at task root; use git worktree fallback in existing ignored workspace — user explicitly requests actual-live isolation — cost if wrong: extra checkout remains recoverable locally.
+Ruling: Keep complete original plan immutable and create heading-only numeric adapter for task-start/task-done — helper accepts only Task N headings — cost if wrong: compare adapter to source before execution.
+Ruling: Use local source reads under the user's existing refusal of private graph indexing — do not send source to graph service — cost if wrong: architecture discovery takes longer.
+Ruling: Outer supplied implementation ZIP has a different hash; supplied3ba7 identifies its inner audit ZIP and matches all90entries — preserve both identities — cost if wrong: wrong input package would invalidate receipts; outer14 manifest also matches.
+
+Task 1: in-progress — R01 source still vulnerable; actual deployed SBOM unverified; no live exploit or deployment performed.
+Task 2: planned — R00 reproduce two clean source installs before pin change.
+Task 3: planned — R02 exact pure policy and complete physical-contract collector, PG18.6 local rehearsal; ordinary migrator untouched.
+Task 4: planned — R03 local contracts/inventory/runbook; hosted identity/provider owner gates remain external.
+Baseline committed bdc3bcaa50c78c54f4469c5a1de71431745b8d86; git diff --check exit0; original50 unchanged.
+Correction: initial baseline git diff --check exited2 for new blank EOF lines, not0; trailing blank lines corrected without changing old evidence. No product test result affected.
+Task 2: Ruling: Root pin alone retained npm router-generator nested Prettier3.9.9 while Bun uses3.8.3; exact formatter-only override aligns route generation too — prevents install-dependent formatting — cost if wrong: generator compatibility gate must pass with3.8.3.
+Task 2: Correction to formatter ruling: actual baseline Bun lock also contains router-generator Prettier3.9.9; its documented range is separate from root ESLint formatter. Remove unnecessary transitive override; preserve generator version and all unrelated lock nodes via clean lock update. Root formatter parity is the reproduced F22 contract; cost if wrong: actual build/route generation gates expose incompatibility.
+Baseline whitespace correction cf4124939d58c253084aaffe838a7a14d9c9eb5b; actual diff check0; PR122 updated normally.
+Task 2: local/CI complete — R00 cf4124939d58c253084aaffe838a7a14d9c9eb5b..34f6e4e19fe76a46bf0dd7637e6c9bb61fa7fa3c; two clean baseline + two fresh fixed installs; npm RED75errors/Bun0; fixed Node22/24 lint/typecheck0; Bun/npm low audits0. CI37101756077 Node22 and Node24 each235files2214pass0skip plus12demo-browser regressions; all original gates green. PR123 independent; final review pending; no runtime/production acceptance.
+Task 3: in-progress — pure policy/complete catalog RED observed; 64 integrated local PG18.6 tests GREEN. PG dump/restore, forced rollback, repeat refusal GREEN; original82table rows/66ledger unchanged,94post tables/1receipt. Full suite found missing new DB test registration; fix adds it to existing serialized db project.
+Task 3: Ruling: Hash visible column order, not PostgreSQL's dropped-column slot gaps — actual pg_dump restore preserves visible columns but renumbers internal slots — cost if wrong: ordinal-sensitive callers remain covered by visible order; frozen old guard stays unchanged and may require separately reviewed re-observation after a hosted restore.
+Task 1: Ruling: npm10.9.9 lock generation crashes in Arborist peer resolution even in an empty directory; npm11.16.0 clean lock generation succeeds — use current resolver, keep failed logs, require Node22 CI installation/tests — cost if wrong: portable npm or exact-head CI remains red; no gate waived.
+
+Task 3: code ae88f194d5862f27399001235102378294989c11/PR125; full actualPG18 237files2237PASS0skip; final policy-consumption RED1fail18pass->GREEN65focused; exact-head CI pending. Tasks4-11: local R03=61; R04=134 R05=61 R06=129 R07=122 R08=38 R09=42 R10=57 PASS0skip; genuine hosted/provider/native gates blocked with exact owners/inputs. Task12: NO_GO/original50 byte unchanged; no formal operations.
+Ruling: Existing domain UC local suites pass on current architecture; retain code and record genuine-acceptance gaps — user prohibits reimplementation of already fixed tasks — cost if wrong: local mocks cannot expose provider defects, so runtime remains blocked.
+Final review: one fresh reviewer /root/review_oct3_execution; two Important R02 findings, no Critical; PR122/123/124 no additional actionable findings. Local report hashes/counts and frozen package/original50 verified. No second review dispatched.
+Final: minor (deferred): rehearsal receipt lacks executing revision/source-file hashes separate from historical source_baseline; keep prior receipts immutable.
+Final: fixed-pass in progress: six PG18 regressions RED6fail/2pass; minimal collector fix GREEN8/8 after a SQL array-sort syntax correction (failed implementation log retained). v2 pg_dump/restore/rollback/catalog-refusal/repeat-refusal PASS; original82tables/66ledger preserved;94post/1receipt/providerWrites0. Full suite/lint/typecheck in progress.
+Final: Ruling: Apply the user's standing explicit normal merge-if-all-green authorization instead of repeating the finish skill's menu — latest task has not revoked it; freshly verified mainGitDeploymentEnabled=false and exact-head reviewed gates all green — cost if wrong: main source changes are published but production promotion remains disabled; normal revert remains available.
+Baseline PR122 merged normally at3cadecd14bb43ff71f7dca5971914193fd80c7df after exactcf412CI37101137399GREEN; R00 PR123 retargeted main without rewrite, exact34f6e4CI37101756077GREEN and merged normally. No force/rebase/squash/deploy/DB/provider mutation.
+Final verification: full PG18 suite initial post-review run237files2243PASS/1FAIL0skip; existing NAR failed-child parent hit unchanged30000ms deadline. New catalog8PASS. Investigating exact isolated child result; no timeout or config change. npm lint0errors/1existingwarning, typecheck0; Bun-shell lint failed with Windows filename-too-long before ESLint. Both logs retained.
+Final: fixed physical catalog drift and tenant privilege drift — six PG18 tests RED6fail/2pass→GREEN8/8; full explicit Node22/PG18 suite237files2244/2244PASS0skip; npm lint0errors/1existingwarning;typecheck0;immutable v2 restore/rollback/repeat PASS. Commit 9dade4ceb2a859de51210081d1beb541637b1403. Initial failed full suite and Bun-shell failure retained, no timeout/config relaxation.
+Final Important fix pass continuation: object-owner membership traversal has the same tenant privilege drift effect under SECURITY DEFINER. Added actualPG18 count1→2 reproduction with unchanged collector role; targeted RED1fail/8filtered, then complete catalog GREEN9/9no skips. Added recursive object-owner membership closure; no fresh second review, no timeout/config/ledger changes. New v3 restore/refusal/rollback/repeat PASS; catalog hashes match v2 because original historical object owners are all postgres; separate fixture ledger before/after unchanged. Final full suite in progress.
+Final Important fixes complete: security-definer owner membership RED1fail/8filtered→catalogGREEN9/9; final unfiltered Node22/PG18 suite237files2245/2245PASS0skip; npm lint0errors/1existingwarning;typecheck0; v3 restore/rollback/catalog/repeat PASS. Commit 875734397f03479e1a0a915608b7dd60a06a9361. All temporary fixture roles/schemas0; frozen package/original50 unchanged; genuine runtime blocked.
+Task1: complete local reviewable R01 delivery257fb9/PR124; exactCIgreen; genuine SBOM/same-schema/Auth/promotion external blockers.
+Task2: complete R00 local/CI/normal source merge PR123; formal runtime not applicable.
+Task3: complete local R02 reviewable final8757343/PR125; catalog9PASS/full237files2245PASS0skip/v3restore; approved hosted role/artifact/owners/DDLfreeze/restore blocked.
+Task4: complete local R03 delivery61PASS/inventory/native-tick procedure; genuine native owner/platform/artifact/log/target blocked.
+Task5: complete local R04 delivery134PASS; actual bytes/scanner/OCR-AI/fresh role/per-document recovery inputs blocked.
+Task6: complete local R05 delivery61PASS; fresh controlled provider Auth/Google/invite API inputs blocked.
+Task7: complete local R06 delivery129PASS; approved actual XLSX/provenance/scope/native worker inputs blocked.
+Task8: complete local R07 delivery122PASS; sandbox protocol/recipient/purpose/send authority and genuine inbound/outbound/query receipt blocked.
+Task9: complete local R08 delivery38PASS; controlled manual reference/return evidence or verified destination API blocked.
+Task10: complete local R09 delivery42PASS; controlled full fresh-role lifecycle/mobile/keyboard journey blocked.
+Task11: complete local R10 delivery57PASS; hosted topology/dataset/adoptedSLO/25users native ticks blocked; dated local before/after retained.
+Task12: complete reviewable R11 NO_GO package and owner inputs; original50UAT unchanged; genuine acceptance/formal operation unauthorized.
+Final local delivery: all12 tasks have reviewable local evidence or precise external blockers. Original UAT/F/T IDs preserved; no provider acceptance inferred. Exact-head final CI/normal merge/closing observations are appended to delivery PR bodies after occurrence.
