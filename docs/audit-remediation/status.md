@@ -310,3 +310,12 @@ Fresh read-only observation completed by2026-10-04T03:22:50+08:00: production al
 
 
 Oct4 follow-up by03:40:05HKT: scoped Vercel50.28.0 CLI inspect --logs GET succeeded for the same production deployment; no local link was created. New immutable evidence/2026-10-04-live-build-log-fallback.json retains actual historical buildsourceaa5d3cb, buildCLI60.1.3/iad1 and cached npm install. None of the three key resolved-version strings is present; installed deployed SBOM/runtime minor remain not_verified. The earlier connector-unavailable receipt remains unchanged; current R01 blocker now asks only for artifact-bound resolved SBOM rather than unavailable log export. No runtime/UAT/provider-write status advances.
+
+
+## Oct4 R01 staging review package — 2026-10-03T20:40:35.251510+00:00
+
+From main `f5efd1283d00f02189e51ddf1e287d35a547360d`, live GET remains `aa5d3cbddd895bca953b6eef7266ae1cc0b46215` / `dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT`. Fresh Neon metadata lists the same four branches; no approved staging. Actual schema SELECT was not repeated. User selected local preparation of a concrete new-staging review package.
+
+[Exact request](releases/r01-staging-2026-10-04/request.json), [operator/rollback package](releases/r01-staging-2026-10-04/README.md), and [immutable receipt](evidence/2026-10-04-r01-staging-request.json) propose only a new child `kossilon-r01-staging-20261004` in `red-morning-00331124` from `br-muddy-mountain-aov8bbku`, `no_compute=true`. Exact request SHA256 `d2b9cf36449f80e56de63595450da64631c5fb77ce67a15f3907f5f95a184491`. No resource ID/origin is invented and no hosted operation is performed. Phase A copies sensitive production/Auth/role data and requires its own hash-bound approval; Phase B actual endpoint/restricted role/branch Auth/R2/protected origin/binding/deploy acceptance remains separate. The isolated candidate stays `257fb9d0be17525a305f38bd26001ad8fa45deb8`/PR124; migration/domain diff0 versus aa5.
+
+Actual existing LOCAL staging tests7PASS0FAIL0SKIP; request/schema/lock/hash/protected9 checks verified, original release verifier exit0 with NO_GO. Original50 remains19historicalLOCALONLY/31blocked/0newgenuine; no new genuine Auth/provider/native tick or schema/release acceptance. Only R01/R03 tracker rows advance local package evidence; ten unrelated rows and original artifacts remain unchanged. R03 still requires its full-release owners/DDLfreeze/restore/external contract/native artifact/provider receipts.

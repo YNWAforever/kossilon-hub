@@ -1,0 +1,82 @@
+{
+  "request_id": "r01-staging-20261004",
+  "state": "proposed_not_approved",
+  "task_ids": ["R01", "R03"],
+  "finding_ids": ["F21"],
+  "user_cases": ["UC26"],
+  "authorization": {
+    "local_preparation": "user selected new staging review package",
+    "hosted_creation": false,
+    "compute": false,
+    "role_or_auth_write": false,
+    "deployment": false,
+    "migration": false,
+    "native_scheduler": false,
+    "external_send": false
+  },
+  "candidate": {
+    "sha": "257fb9d0be17525a305f38bd26001ad8fa45deb8",
+    "base_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "pr": "https://github.com/YNWAforever/kossilon-hub/pull/124",
+    "ci_run": 37103410777,
+    "ci_status": "historical exact-head SUCCESS; refresh before use",
+    "scope": "security dependency/compatibility only; no main schema/domain cherry-pick"
+  },
+  "phase_a": {
+    "tool": "mcp__codex_apps__neon_create_branch",
+    "arguments": {
+      "project_id": "red-morning-00331124",
+      "parent_id": "br-muddy-mountain-aov8bbku",
+      "name": "kossilon-r01-staging-20261004",
+      "no_compute": true
+    },
+    "expected_database": "neondb",
+    "new_branch_id": null,
+    "new_endpoint_id": null,
+    "sql_statements": [],
+    "migration_files": [],
+    "expected_default": false,
+    "expected_endpoint_count": 0,
+    "copies_production_data_auth_config_and_roles": true,
+    "changes_source_data_or_ledger": false
+  },
+  "do_not_mutate_existing_branch_ids": [
+    "br-muddy-mountain-aov8bbku",
+    "br-fancy-rain-aon06iws",
+    "br-late-sun-aojgnr1k",
+    "br-flat-heart-aovfw8hr"
+  ],
+  "preconditions": [
+    "Fresh source metadata matches project/parent and production remains ready/default.",
+    "Request name does not exist. If it exists, stop and reconcile ownership; never reset or reuse a backup.",
+    "Explicit approval binds this exact request SHA256 and source/target. Copy includes sensitive data/Auth/role configuration.",
+    "Refresh live alias/candidate exact-head CI. If live SHA changed, reassess R01 before executing this request."
+  ],
+  "unknown_result": "Stop. Query project/name/parent/created-at and operation receipt. Do not repeat create until the first outcome and ownership are established.",
+  "rollback": {
+    "default": "Retain the new no-compute branch for review; no auto-delete/reset/restore/swap.",
+    "cleanup": "Separate approval for the exact newly returned branch ID only, after confirming no compute, children, bindings, default status or use; all listed existing branches remain excluded."
+  },
+  "phase_b": {
+    "state": "blocked_not_approved",
+    "proposed_vercel_team": "team_qvzlsFmfCsLkgItSypqHjw3z",
+    "proposed_new_project_name": "kossilon-hub-r01-staging",
+    "assigned_project_id": null,
+    "staging_origin": null,
+    "app_role": null,
+    "auth_url": null,
+    "r2_bucket": null,
+    "web_artifact_sha": null,
+    "scheduler_artifact_sha": null,
+    "required_before_operation": [
+      "Actual new branch ID and branch-specific read-write endpoint, restricted role/effective-grant plan.",
+      "Approved dedicated Vercel project/origin/protection; isolated env/secret binding diff.",
+      "Branch-specific Neon Auth endpoint/callback and controlled existing five identities/two-client scopes; fresh login receipts.",
+      "Isolated R2 bucket/object samples; external providers and scheduler stay unconfigured/held.",
+      "Candidate artifact installed SBOM/hash and same-historical-schema read-only smoke; no ordinary migrate or seed.",
+      "Separate exact target/diff/hash/acceptance/rollback authority for compute/role/Auth/env/deployment."
+    ]
+  },
+  "formal_release_status": "NO_GO",
+  "new_genuine_uat": 0
+}
