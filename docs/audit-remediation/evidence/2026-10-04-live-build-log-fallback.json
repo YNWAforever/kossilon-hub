@@ -1,0 +1,40 @@
+{
+  "recorded_at_utc": "2026-10-03T19:42:36.3693727Z",
+  "observation_completed_by_hkt": "2026-10-04T03:40:05+08:00",
+  "command": "vercel inspect dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT --logs --scope team_qvzlsFmfCsLkgItSypqHjw3z --non-interactive --no-color",
+  "local_cli": "50.28.0",
+  "deployment_id": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+  "web_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "cli_exit": 0,
+  "local_link_created": false,
+  "build_source_short": "aa5d3cb",
+  "historical_build_utc": "2026-09-30T01:55:40Z",
+  "build_region": "iad1",
+  "build_cli": "60.1.3",
+  "installation": "Cached install, npm output up to date in1s; build npm run build",
+  "key_resolved_version_strings": 0,
+  "resolved_sbom": "not_verified",
+  "connector": "get_deployment_build_logs unavailable; CLI fallback succeeded",
+  "minimal_remaining_input": "Security/Release environment owner supplies exact-artifact installed resolved SBOM; DB/Auth still supply approved same-historical-schema hosted staging and fresh controlled Auth; explicit artifact acceptance before promotion",
+  "provider_writes": 0,
+  "formal_release": "NO_GO",
+  "limitations": [
+    "Actual logs prove retained build identity and npm/cache path, not installed package versions.",
+    "Bundle filenames do not prove resolved dependency versions or runtime minor.",
+    "No live exploit, auth session, send, schemaSELECT, link, permission or deployment operation."
+  ],
+  "artifacts": [
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-04-delivery-closure.json",
+      "sha256": "e1abffe6840212e6525f263ae07c46fa7e575de3a14b3c5806ffb0bde76130b6"
+    },
+    {
+      "path": ".worktrees/oct3-close-delivery-ledger/vercel-live-build-log-fallback.log",
+      "sha256": "d8e115d678aa9d104de2fa5c10592fa69b8e3b86892345f9d1165d652b31a6f3"
+    },
+    {
+      "path": ".worktrees/oct3-close-delivery-ledger/vercel-live-build-log-fallback-result.json",
+      "sha256": "2d001fd3be80cfa1a150df40a7ce508d4988c660aff6899ffda9db7a97ca538b"
+    }
+  ]
+}
