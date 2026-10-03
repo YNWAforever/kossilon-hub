@@ -1,0 +1,230 @@
+{
+  "scope": "B10 actual dependency-path repair, not braces patched release",
+  "base": "f07e8226c8575730f5f92fab45c4d2821484e04c",
+  "recordedAtUtc": "2026-10-03T02:26:30.1940735+00:00",
+  "advisory": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+  "upstream": "https://github.com/micromatch/braces/pull/72",
+  "sourceRed": {
+    "pr": 120,
+    "head": "c6fddb90b9c0c84a53ec01999d3996df0147a49e",
+    "ciRun": 37088145785,
+    "bunExit": 1,
+    "bunHighAdvisories": 1,
+    "testsReached": false,
+    "npmExit": 1,
+    "npmHighAggregatedNodes": 7
+  },
+  "wrapper": {
+    "version": "2.7.2",
+    "published": "2026-07-08T13:03:35.024Z",
+    "integrity": "sha512-TwCXJNeCoUMvK3xWTOYAsUk+FpMKgQjKNPnyqsaCpHyHT8l7giEApRNXBXmSy9KJ+Ri8eZed6Exe0ID+Tg9VPA==",
+    "dependencies": {
+      "lightningcss": "^1.30.0",
+      "@tanstack/devtools-vite": "^0.8.1",
+      "@lovable.dev/vite-plugin-hmr-gate": "^1.1.1",
+      "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2"
+    },
+    "peers": {
+      "vite": ">=5.0.0 <9.0.0",
+      "nitro": ">=3.0.260603-beta",
+      "@tailwindcss/vite": ">=4.0.0",
+      "vite-tsconfig-paths": ">=6.0.0",
+      "@vitejs/plugin-react": ">=4.0.0",
+      "@tanstack/react-start": ">=1.100.0"
+    },
+    "verified": true
+  },
+  "green": {
+    "otherDirectResolutionDrift": [],
+    "actualDirectCount": 85,
+    "bunExit": 0,
+    "npmExit": 0,
+    "npmFindings": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "graphBraces": 0,
+    "consumers": 0,
+    "fileLinks": 0,
+    "metadataCorrection": "PowerShell member-enumeration Count corrected from array of85 ones; raw audits/inventories unchanged"
+  },
+  "portable": {
+    "node": "v22.23.3",
+    "installedDirect": 85,
+    "drift": [],
+    "bracesLockNodes": 0,
+    "bracesDirectory": false,
+    "fileLinks": 0,
+    "installExit": 0,
+    "context": "actual independent cwd npm10 ci,658 added/659 audited; optional cross-platform WASM EPERM cleanup warnings retained",
+    "rejectedMetadata": "portable-result.json: empty-root ConvertFrom-Json parsing failed; npm ls absent package exit1 is not a failing install"
+  },
+  "localStatic": [
+    {
+      "name": "typecheck",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0,
+      "seconds": 56.1409924,
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-braces-path-20261003\\typecheck.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "name": "lint",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe node_modules/eslint/bin/eslint.js . --ignore-pattern .worktrees/**",
+      "exit": 0,
+      "seconds": 48.3107835,
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-braces-path-20261003\\lint.log",
+      "sha256": "AD104499727BECD5029F1CA750B7042CA808ACD13B640F440FB7A8D91A938ECB"
+    },
+    {
+      "name": "predeploy",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe --experimental-strip-types scripts/verify-firm-deployment.ts --dry-run",
+      "exit": 0,
+      "seconds": 0.2322395,
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-braces-path-20261003\\predeploy.log",
+      "sha256": "DF21A099921612D40EB5C0D09468553203A13C15785FFA6815102E8C479C20BD"
+    },
+    {
+      "name": "original-uat-ledger",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe --experimental-strip-types scripts/verify-audit-release.ts",
+      "exit": 0,
+      "seconds": 0.1415486,
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-braces-path-20261003\\original-uat-ledger.log",
+      "sha256": "4B35ABC1E61A06ED6C834CA9B29249CF13EBBFCB53C6651C2CF304957A2ACCC8"
+    },
+    {
+      "name": "build",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe node_modules/vite/bin/vite.js build",
+      "exit": 0,
+      "seconds": 62.3986183,
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-braces-path-20261003\\build.log",
+      "sha256": "A6E7A53A6843AFAB069A2774BD7CE9604CFDCA27B65E703837BA77E36D0C1843"
+    },
+    {
+      "name": "dev-imports",
+      "command": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe --experimental-strip-types scripts/verify-dev-server-imports.ts",
+      "exit": 1,
+      "seconds": 34.0136489,
+      "log": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-braces-path-20261003\\dev-imports.log",
+      "sha256": "E6B1FD76094A24D2B478DAF66F021E3AC4A950A081B48F05A86CC25470D725EC"
+    }
+  ],
+  "devNode22Repeat": {
+    "node": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+    "npm": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\npm.cmd",
+    "seconds": 8.9763565,
+    "exit": 0,
+    "compiledHook": true,
+    "scope": "same actual Node22 parent/child and original30s ready/15s request limits; optimizer warm state possible; prior cold timeout and mixed22-parent24-child repeat retained",
+    "sha256": "514E0D2F1AEC88DB9B0F2E8ED533EAB6EE4F105A77B61C6C700762E899CF2648"
+  },
+  "artifacts": [
+    {
+      "path": ".worktrees/audit-braces-path-20261003/npm-audit-red.json",
+      "sha256": "9987EAF3161AF05BA157D53D26911AAA28B8DBA5155EB02075544E828FD9AAEA"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/bun-audit-red.log",
+      "sha256": "E069AEBBFDD7258DB72A3B7045206C6042CE3CA074129CC90F741DC60BC3E34E"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/minimal-verified.json",
+      "sha256": "C0E423F3CBB9F79C14EA9FCD6F6784D57F8E58429123B782743CCDD8EBCCC0B7"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/lovable-version-paths.json",
+      "sha256": "89969513199AF5887B5BF5E236ACB88533EA7EF4ACE474EE1B14CB704873E5CD"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/before-inventory.json",
+      "sha256": "8D2E4E839D3446BB58AD69BA8AF101D2C598776F372402FC735E23CD409E28EE"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/after-inventory.json",
+      "sha256": "D12902332B27241321F5560F79CFCBB233B2341143AAFC6BDCB8090AD2D9FB35"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/bun-install.log",
+      "sha256": "8C454A512C2FD47DEE2BA481E9B7304F06E0473B0BCD1F362D88E495D2912F72"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/npm-lock-update.log",
+      "sha256": "8D259F9BEE800BE1069619A109D381B36CCA3B97614E1D89CD214F5D349EFC17"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/bun-audit-green.log",
+      "sha256": "8B3F099366A1EED1630E70EA33C7A8DF1399BA1238FAA91000EF13BCF75964D6"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/npm-audit-green.json",
+      "sha256": "AF95A642954BD34C41CFEAB0246AA3B8FF2EFB110A71C2569111B80D5A37EBD2"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/graph-audit-green-corrected.json",
+      "sha256": "85177E98D3F2EF60DFD934D54D87CC2F6C8E58B43BC8F1775E7C8E038EDA217C"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/bun-frozen.log",
+      "sha256": "BAC603CB0EA85C68E6DA995BEA5BCC56A620866900F20C9E163CD62EF907F50C"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/portable-npm.log",
+      "sha256": "3D1C93551DD9F6B661FADD0F45479324B9C3C40B29DD0EC525BC323AC5BCBAFB"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/portable-install-proof.json",
+      "sha256": "18F86A2A4F4F5DAD77F38AD25C9624C95301A45AACE962CE33F8A7271161AD1D"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/local-static-results.json",
+      "sha256": "19B1CC4A332B0E1D249251C4DEDF4055211B7AD7D012434DBF4D53FBDC8E6645"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/typecheck.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/lint.log",
+      "sha256": "AD104499727BECD5029F1CA750B7042CA808ACD13B640F440FB7A8D91A938ECB"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/predeploy.log",
+      "sha256": "DF21A099921612D40EB5C0D09468553203A13C15785FFA6815102E8C479C20BD"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/original-uat-ledger.log",
+      "sha256": "4B35ABC1E61A06ED6C834CA9B29249CF13EBBFCB53C6651C2CF304957A2ACCC8"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/build.log",
+      "sha256": "A6E7A53A6843AFAB069A2774BD7CE9604CFDCA27B65E703837BA77E36D0C1843"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/dev-imports.log",
+      "sha256": "E6B1FD76094A24D2B478DAF66F021E3AC4A950A081B48F05A86CC25470D725EC"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/dev-imports-repeat.log",
+      "sha256": "514E0D2F1AEC88DB9B0F2E8ED533EAB6EE4F105A77B61C6C700762E899CF2648"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/dev-imports-node22-repeat.log",
+      "sha256": "514E0D2F1AEC88DB9B0F2E8ED533EAB6EE4F105A77B61C6C700762E899CF2648"
+    },
+    {
+      "path": ".worktrees/audit-braces-path-20261003/dev-imports-node22-repeat.json",
+      "sha256": "0383C296EE4EACBB821463FFD52CEE984B42FB8F410617739F4B83C5589088B3"
+    }
+  ],
+  "originalUatSha256": "45D2B0239826EDF41CAD480EC8B7888C426991CD28680F9EBC71DB9E9AF801E7",
+  "originalUat": "50/19LOCALONLYpass/31blocked/0not_run",
+  "fullNewHeadCI": "pending",
+  "soleReview": "pending",
+  "providerWrites": 0,
+  "productionMigrations": 0,
+  "formalRelease": "NO_GO"
+}

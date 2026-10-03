@@ -215,3 +215,9 @@ Original50UAT byte-unchanged19LOCALONLYpass31blocked0not_run; F09/F18 local foll
 ### B08 complete local suite checkpoint
 
 Actual WindowsNode24.18.0/Bun1.4.2/fresh dedicatedPG17, unfiltered235files2214PASS0fail0skip201.53s; NAR synthetic companies/users/batches all0 after suite. Original timeouts and UATSHA unchanged. This is a complete current-source local PASS, unlike prior mixed-revision diagnostics; old failures remain retained, their entire causal history is not claimed explained. Final exact-head Linux22/24 workflow, fresh sole review, normal merge/mainCI and read-only live-alias receipts are recorded in the delivery PR after occurrence. B08/T21/T22 local-passing, runtime-blocked; original31 genuineUAT/owners/productionNO_GO unchanged.
+
+## B10 dependency path — 2026-10-03 HK
+
+B09 documentPR120/c6fddb9 exactCI37088145785 FAIL beforetests: both originalBun audits braces3.0.3/1high; actualnpm10 audit7high aggregated consumers. Officiallatest3.0.3/no patchedrelease/PR72open. New isolatedB10 wrapperpatch2.7.0->2.7.2 (official2026-07-08/SRIverified) removes legacytagger path; both trackedlocks0braces/0consumers/0filelinks, other84direct versions unchanged. Original low audits actualRED->GREEN0; frozenBun/independentnpm10install/staticbuild/typecheck/lint/offlinePASS. FirstWindows devroot15stimeout preserved; originalbudget Node22 warmrepeat12PASS, notcoldacceptance. New completeexactheadLinux22/24CI/review remainpending. dependency-security-b10.md/evidence/2026-10-03-braces-path.json preservecommands/hash/setupmetadataerrors. B09 remainsdraft/incomplete untilB10green integration; nohistoryrewrite.
+
+Original50UAT byte-unchanged19LOCALONLYpass31blocked0not_run; source50 versus last-observedproduction66unreconciled; productionNO_GO/mainGitdeployhold/providerWrites0. No newmigration/env/deploy/send/invite/grant, noauditseverity/ageexception change. Runtime/provider/business owner gates remainrelease-checklist.md.
