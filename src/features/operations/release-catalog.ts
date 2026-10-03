@@ -72,11 +72,14 @@ export async function readReleaseCatalog(
     ), reachable_roles(oid) as (
       select oid from pg_roles where rolname=current_user
       union select m.roleid from pg_auth_members m join reachable_roles r on r.oid=m.member
-    ), security_roles(oid) as (
+    ), security_roots(oid) as (
       select oid from reachable_roles
       union select relowner from relations
       union select relowner from sequences
       union select proowner from routines
+    ), security_roles(oid) as (
+      select oid from security_roots
+      union select m.roleid from pg_auth_members m join security_roles r on r.oid=m.member
     ) select current_user role, jsonb_build_object(
       'tables',(select coalesce(jsonb_agg(jsonb_build_object('table',c.relname,'kind',c.relkind,
         'owner',pg_get_userbyid(c.relowner),'persistence',c.relpersistence,
@@ -151,7 +154,7 @@ export async function readReleaseCatalog(
         'inherit',m.inherit_option,'set',m.set_option)
         order by pg_get_userbyid(m.roleid) collate "C",pg_get_userbyid(m.member) collate "C",
           pg_get_userbyid(m.grantor) collate "C"),'[]'::jsonb)
-        from pg_auth_members m where m.member in(select oid from reachable_roles)),
+        from pg_auth_members m where m.member in(select oid from security_roles)),
       'policies',(select coalesce(jsonb_agg(jsonb_build_object('table',tablename,'name',policyname,
         'permissive',permissive,'roles',roles,'command',cmd,'using',qual,'check',with_check)
         order by tablename::text collate "C",policyname::text collate "C"),'[]'::jsonb)
