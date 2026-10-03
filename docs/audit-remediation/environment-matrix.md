@@ -177,3 +177,16 @@ Original50UAT byte-unchanged19LOCALONLYpass31blocked0not_run; F09/F18 local foll
 ### B08 complete local suite checkpoint
 
 Actual WindowsNode24.18.0/Bun1.4.2/fresh dedicatedPG17, unfiltered235files2214PASS0fail0skip201.53s; NAR synthetic companies/users/batches all0 after suite. Original timeouts and UATSHA unchanged. This is a complete current-source local PASS, unlike prior mixed-revision diagnostics; old failures remain retained, their entire causal history is not claimed explained. Final exact-head Linux22/24 workflow, fresh sole review, normal merge/mainCI and read-only live-alias receipts are recorded in the delivery PR after occurrence. B08/T21/T22 local-passing, runtime-blocked; original31 genuineUAT/owners/productionNO_GO unchanged.
+# Oct3 execution delta（2026-10-03T05:31Z）
+
+| Layer | Actual identity / result | Remaining owner input |
+| --- | --- | --- |
+| Source / CI | main6f0a851; CI37093325320 Node22/24 each235files2214pass0skip, DEMO12pass | 新 candidate 各自 exact-head CI |
+| Production web | alias/project agree aa5d3cb / dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT READY; configured Node24.x; main deploy hold false | actual build resolved SBOM/runtime minor，candidate preview＋核准 promotion |
+| Production DB read-only | red-morning-00331124 / br-muddy-mountain-aov8bbku / neondb PG18.6; ledger66; dispatch marker absent | DB owner logical attribution、actual app role、sole DDL freeze、hosted restore target及批准 |
+| Local PG18 | existing isolated container kossilon-release-pg18-20261002 / loopback55448，actual18.6 | local disposable rehearsal只驗 contracts；不能代替 hosted clone/recovery |
+| Scheduler | latest recorded Sep30 01:55UTC; production scheduler artifact SHA not_verified | Ops sole native platform、獨立 artifact receipt、3真 native ticks；dispatch保持受控 |
+| Genuine staging | 未提供 approved app/branch/database/storage/callback/recipient identity | Release/DB/Auth/Storage各 owner 按 evidence-delta 表提供秘密管理位置與非secret identity |
+
+完整 fresh SELECT／metadata／hash 在 [execution baseline](evidence/2026-10-03-execution-baseline.json)。上述每层不互相提升；原環境歷史紀錄如下保留。
+
