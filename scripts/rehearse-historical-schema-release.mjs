@@ -1,10 +1,20 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { resolve, sep } from "node:path";
 import postgres from "postgres";
 import { execFileSync } from "node:child_process";
 import { prepareHistoricalSchemaRelease } from "./prepare-historical-schema-release.ts";
-const reportPath = "docs/audit-remediation/evidence/2026-10-02-historical-release-rehearsal.json";
+import { readReleaseCatalog } from "../src/features/operations/release-catalog.ts";
+const reportPath =
+  process.env.HISTORICAL_RELEASE_REHEARSAL_REPORT ??
+  `docs/audit-remediation/evidence/2026-10-03-historical-release-rehearsal-${randomUUID()}.json`;
+const evidenceRoot = resolve("docs/audit-remediation/evidence") + sep;
+assert.ok(
+  resolve(reportPath).startsWith(evidenceRoot) && reportPath.endsWith(".json"),
+  "New report must stay inside the evidence directory",
+);
+assert.ok(!existsSync(reportPath), "Never overwrite prior evidence");
 const observed = JSON.parse(
   readFileSync("docs/audit-remediation/evidence/2026-10-02-historical-schema.json", "utf8"),
 );
@@ -15,7 +25,7 @@ assert.equal(
   "55448",
   "Use the inspected kossilon-release-pg18-20261002 container",
 );
-const database = "kossilon_release_fixture_" + randomUUID().replaceAll("-", "");
+const database = "kossilon_rel_" + randomUUID().replaceAll("-", "");
 const admin = postgres(connection.toString(), { ssl: false, max: 1, onnotice: () => {} });
 assert.match(
   (await admin`show server_version`)[0].server_version,
@@ -79,7 +89,7 @@ try {
   const columns =
     await sql`select table_name,column_name from information_schema.columns where table_schema='public' order by table_name,ordinal_position`;
   const tables = [...new Set(columns.map((c) => c.table_name))];
-  const snapshot = async () =>
+  const snapshot = async (reader = sql) =>
     Object.fromEntries(
       await Promise.all(
         tables.map(async (table) => {
@@ -87,7 +97,7 @@ try {
             .filter((c) => c.table_name === table)
             .map((c) => `"${c.column_name}"`)
             .join(",");
-          const rows = await sql.unsafe(
+          const rows = await reader.unsafe(
             `select ${selected} from "${table}" order by row(${selected})::text`,
           );
           return [table, { rows: rows.length, sha256: digest(rows) }];
@@ -95,6 +105,63 @@ try {
       ),
     );
   const before = await snapshot();
+  const beforeCatalog = await readReleaseCatalog(sql);
+  const restoredDatabase = `${database}_restore`;
+  const dumpPath = `/tmp/${database}.dump`;
+  const container = "kossilon-release-pg18-20261002";
+  execFileSync("docker", [
+    "exec",
+    container,
+    "pg_dump",
+    "-U",
+    "postgres",
+    "-Fc",
+    "-f",
+    dumpPath,
+    database,
+  ]);
+  const dumpSha256 = execFileSync("docker", ["exec", container, "sha256sum", dumpPath], {
+    encoding: "utf8",
+  }).split(" ")[0];
+  execFileSync("docker", [
+    "exec",
+    container,
+    "createdb",
+    "-U",
+    "postgres",
+    "-T",
+    "template0",
+    restoredDatabase,
+  ]);
+  execFileSync("docker", [
+    "exec",
+    container,
+    "pg_restore",
+    "-U",
+    "postgres",
+    "--exit-on-error",
+    "--no-owner",
+    "-d",
+    restoredDatabase,
+    dumpPath,
+  ]);
+  const restoredUrl = new URL(connection);
+  restoredUrl.pathname = `/${restoredDatabase}`;
+  const restored = postgres(restoredUrl.toString(), { ssl: false, max: 1, onnotice: () => {} });
+  try {
+    assert.deepEqual(
+      await snapshot(restored),
+      before,
+      "All original rows and ledger must restore exactly",
+    );
+    assert.deepEqual(
+      await readReleaseCatalog(restored),
+      beforeCatalog,
+      "Full physical catalog, original ledger and effective role privileges must restore exactly",
+    );
+  } finally {
+    await restored.end();
+  }
   const guard = JSON.parse(
     readFileSync(
       "docs/audit-remediation/evidence/2026-10-02-historical-catalog-guard.json",
@@ -107,11 +174,20 @@ try {
     "Full historical physical fingerprint must match provider snapshot",
   );
   const release = prepareHistoricalSchemaRelease();
-  mkdirSync("docs/audit-remediation/releases", { recursive: true });
-  writeFileSync("docs/audit-remediation/releases/2026-10-02-historical-release.sql", release.sql);
-  writeFileSync(
-    "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
-    JSON.stringify({ ...release.manifest, packageSha256: digest(release.sql) }, null, 2) + "\n",
+  assert.equal(
+    readFileSync("docs/audit-remediation/releases/2026-10-02-historical-release.sql", "utf8"),
+    release.sql,
+    "Frozen reviewed SQL must match; rehearsal cannot rewrite it",
+  );
+  assert.deepEqual(
+    JSON.parse(
+      readFileSync(
+        "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+        "utf8",
+      ),
+    ),
+    { ...release.manifest, packageSha256: digest(release.sql) },
+    "Frozen manifest must match; stop on drift",
   );
   let catalogRefusal;
   await sql.unsafe(
@@ -181,6 +257,17 @@ try {
   assert.match(repeat.message, /already recorded; do not replay/);
   assert.deepEqual(await snapshot(), before);
   assert.equal((await sql`select count(*)::int n from schema_release_receipts`)[0].n, 1);
+  const afterCatalog = await readReleaseCatalog(sql);
+  assert.equal(
+    afterCatalog.historicalLedgerSha256,
+    beforeCatalog.historicalLedgerSha256,
+    "Original ledger remains unchanged, including applied times",
+  );
+  assert.notEqual(
+    afterCatalog.catalogSha256,
+    beforeCatalog.catalogSha256,
+    "Post-release fingerprint is a new actual observation, not the pre-release guard",
+  );
   const afterCounts = {
     tables: (await sql`select count(*)::int n from pg_tables where schemaname='public'`)[0].n,
     ledger: (await sql`select count(*)::int n from schema_migrations`)[0].n,
@@ -195,6 +282,15 @@ try {
     version: (await sql`show server_version`)[0].server_version,
     package_sha256: digest(release.sql),
     catalog_sha256: guard.catalog_sha256,
+    complete_catalog_before: beforeCatalog,
+    complete_catalog_after: afterCatalog,
+    restore: {
+      database: restoredDatabase,
+      dumpPath,
+      dumpSha256,
+      original_rows_ledger_catalog_verified: true,
+      hosted_restore: "not_run",
+    },
     catalog_refusal: catalogRefusal,
     payload_sha256: receipt.payload_sha256,
     inputs: release.manifest.inputs,
@@ -226,7 +322,7 @@ try {
       "Scheduler/offline approval/package/source identity/controlled runtime verification required before any hosted operation.",
     ],
   };
-  writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n");
+  writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
   console.log(
     JSON.stringify(
       {

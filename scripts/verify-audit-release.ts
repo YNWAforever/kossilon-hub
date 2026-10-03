@@ -26,6 +26,9 @@ console.log(
     {
       localLedgerContract: "PASS",
       productionReleaseGate: "NO_GO",
+      applicationSchemaCompatibility:
+        "NOT_VERIFIED: reviewed build/environment-bound receipt and complete runtime catalog required; ledger parser PASS is insufficient.",
+      ordinaryHistoricalMigrationAllowed: false,
       authority:
         "This read-only report grants no migration, deployment, send or invitation authority.",
       uat,

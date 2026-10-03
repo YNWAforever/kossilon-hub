@@ -1,0 +1,76 @@
+{
+  "observedAt": "2026-10-03T07:37:24.7394889Z",
+  "scope": "LOCAL owned PG18.6 and explicit Node22.23.3; continuation of the same Important privilege fix pass; no provider/business acceptance",
+  "sourceParent": "0bf703097e2517d091061e3623488a4b61cdd317",
+  "executingSourceFiles": [
+    {
+      "path": "src/features/operations/release-catalog.ts",
+      "sha256": "720db78be05ae652e3d1fbd1f2524daa88f076047c441fda5dfe93388e152ddb"
+    },
+    {
+      "path": "src/features/operations/release-catalog.test.ts",
+      "sha256": "01d1283146ef20776b4a4bd33c463277cab432caaeec8692d1b82f4b830eae91"
+    }
+  ],
+  "importantFinding": "Security-definer owner membership drift changed actual function company count from1 to2 while collector role and previous hash remained unchanged",
+  "red": {
+    "failed": 1,
+    "filteredOut": 8,
+    "command": "Node22 node_modules/vitest/vitest.mjs run src/features/operations/release-catalog.test.ts -t security-definer owner membership"
+  },
+  "green": {
+    "pass": 9,
+    "fail": 0,
+    "skip": 0,
+    "command": "Node22 node_modules/vitest/vitest.mjs run src/features/operations/release-catalog.test.ts"
+  },
+  "fix": "Recursively traverse memberships starting at both current role and relation/sequence/routine owners; fingerprint role security attributes and membership options",
+  "fullSuite": {
+    "files": 237,
+    "pass": 2245,
+    "fail": 0,
+    "skip": 0,
+    "command": "Node22 node_modules/vitest/vitest.mjs run --reporter=json --outputFile=.worktrees/audit-oct3-execution/r02-owner-full.json"
+  },
+  "typecheckExit": 0,
+  "lintExit": 0,
+  "lintErrors": 0,
+  "existingLintWarnings": 1,
+  "rehearsal": "2026-10-03-r02-historical-rehearsal-v3.json",
+  "retainedRawReceipts": [
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-owner-membership-red.log",
+      "sha256": "4dc264a39a837dd5a5f91fd7ac784b9053572f90e667fedbf441eb78cebef0a4"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-owner-membership-green.log",
+      "sha256": "97568c4e7145dc7b710c6937bc2db1aa9b1e8b63e7a8e3c9f84c697a6028bde8"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-owner-rehearsal-v3.log",
+      "sha256": "2526d3f3c5eec3c97233b5baabe7f80d9969de1b2b0176412ff3d9bb48a5fe32"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-owner-full.log",
+      "sha256": "ed20afd9702e7ce8e25998844acb48e055b573fadeecae56af07edc4da261b03"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-owner-full.json",
+      "sha256": "82d7e2b29fa16fe825f99056b61ae4fc838a17e79aba74a7a38ebd668679dc1a"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-owner-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees\\audit-oct3-execution\\r02-owner-lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    }
+  ],
+  "precedingEvidence": "2026-10-03-r02-review-verification.json (initial six REDs, syntax correction, initial full-suite NAR timeout, unmodified isolated child PASS and2244 complete PASS retained)",
+  "ordinaryMigrator": "unchanged",
+  "frozenPackage": "unchanged",
+  "externalApproval": "not supplied; genuine runtime loading/hosted target blocked",
+  "providerWrites": 0,
+  "productionReleaseGate": "NO_GO"
+}

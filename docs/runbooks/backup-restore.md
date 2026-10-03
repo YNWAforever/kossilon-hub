@@ -4,7 +4,7 @@
 
 1. Create a timestamped logical backup from the approved Neon staging branch.
 2. Restore it into an isolated database.
-3. Run `npm.cmd run db:migrate` against the restored database.
+3. Read the restored ledger and full catalog first. Run `npm.cmd run db:migrate` only for a verified contiguous source history. Historical divergent databases must retain the ordinary migrator's refusal and use a separately reviewed, exact-target historical release package. A logical restore may renumber internal dropped-column slots, so re-observe the strict package guard; never bypass a fingerprint refusal.
 4. Run the repository integration tests with `TEST_DATABASE_URL` pointing at the restore.
 5. Record row counts for `companies`, `annual_return_cases`, `documents`, `document_upload_intents`, `work_items`, `notification_outbox`, and `timeline_events`.
 

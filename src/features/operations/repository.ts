@@ -7,6 +7,7 @@ import {
 import type { MaintenanceRunOutcome, MaintenanceRunRecord } from "./health";
 import type { SchemaLedger } from "./schema-health";
 import { readSchemaCatalog } from "./schema-catalog";
+import { readReleaseCatalog } from "./release-catalog";
 
 /**
  * Reads and writes the record of the scheduled tick.
@@ -104,6 +105,7 @@ export type QueueDepths = {
 
 export type MaintenanceRunRepository = {
   schemaCatalog(): ReturnType<typeof readSchemaCatalog>;
+  releaseCatalog(): ReturnType<typeof readReleaseCatalog>;
   maintenanceLeaseHealth(): Promise<{
     startedUnknown: number;
     claimedExpired: number;
@@ -425,6 +427,8 @@ export function createMaintenanceRunRepository(
     },
 
     schemaCatalog: () => readSchemaCatalog(sql),
+    releaseCatalog: () =>
+      sql.begin("isolation level repeatable read read only", (tx) => readReleaseCatalog(tx)),
     async maintenanceLeaseHealth() {
       const [row] = await sql<
         { started_unknown: number; claimed_expired: number; last_started_at: string | null }[]

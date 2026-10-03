@@ -16,6 +16,12 @@ import {
 } from "./health";
 import type { MaintenanceRunRepository, QueueDepths } from "./repository";
 import { EXPECTED_MIGRATIONS, schemaHealthOf, type SchemaHealth } from "./schema-health";
+import { compareRuntimeContracts } from "./release-catalog";
+import {
+  evaluateHistoricalReleaseCompatibility,
+  type ApprovedRelease,
+  type ReleaseCompatibility,
+} from "./release-compatibility";
 
 /**
  * What the operations screen reads.
@@ -32,6 +38,8 @@ export type OperationsHealthView = {
    * a database this code cannot otherwise use.
    */
   schema: SchemaHealth;
+  /** Historical release policy is distinct from ledger history and native health. */
+  releaseCompatibility: ReleaseCompatibility | null;
   /**
    * Null when the schema is not current and these reads could not run.
    *
@@ -77,7 +85,19 @@ export async function buildOperationsHealth(
       | "schemaLedger"
       | "textLayerObserved"
     > &
-      Partial<Pick<MaintenanceRunRepository, "schemaCatalog" | "maintenanceLeaseHealth">>;
+      Partial<
+        Pick<
+          MaintenanceRunRepository,
+          "schemaCatalog" | "releaseCatalog" | "maintenanceLeaseHealth"
+        >
+      >;
+    /** Reviewed, target/build-bound server artifact. Never browser input or a DB receipt. */
+    releasePolicy?: {
+      approved: ApprovedRelease;
+      buildSha: string;
+      targetEnvironmentId: string;
+      expectedContractHashes: Record<string, string>;
+    };
     configuration?: Partial<Record<CapabilityId, boolean>>;
     diagnostics?: boolean;
   },
@@ -118,6 +138,9 @@ export async function buildOperationsHealth(
     Promise.resolve().then(() => repo.textLayerObserved()),
     Promise.resolve().then(() => repo.schemaCatalog?.() ?? null),
     Promise.resolve().then(() => repo.maintenanceLeaseHealth?.() ?? null),
+    Promise.resolve().then(() =>
+      schema.state === "diverged" ? (repo.releaseCatalog?.() ?? null) : null,
+    ),
   ]);
   function value<T>(result: PromiseSettledResult<T>, name: string): T | null {
     if (result.status === "fulfilled") return result.value;
@@ -131,6 +154,27 @@ export async function buildOperationsHealth(
     textLayerObserved = value(results[4], "textLayerObserved");
   const catalog = value(results[5], "schemaCatalog"),
     schedulerLeases = value(results[6], "maintenanceLeaseHealth");
+  const releaseCatalog = value(results[7], "releaseCatalog");
+  const policy = dependencies.releasePolicy;
+  const releaseCompatibility =
+    schema.state === "diverged"
+      ? evaluateHistoricalReleaseCompatibility({
+          buildSha: policy?.buildSha ?? "",
+          targetEnvironmentId: policy?.targetEnvironmentId ?? "",
+          approved: policy?.approved ?? null,
+          receipt: releaseCatalog?.receipt ?? null,
+          historicalLedgerSha256: releaseCatalog?.historicalLedgerSha256 ?? "",
+          postReleaseCatalogSha256: releaseCatalog?.catalogSha256 ?? "",
+          expectedRuntimeContractKeys: Object.keys(policy?.expectedContractHashes ?? {}),
+          runtimeContracts:
+            policy && releaseCatalog
+              ? compareRuntimeContracts(
+                  releaseCatalog.contractHashes,
+                  policy.expectedContractHashes,
+                )
+              : [],
+        })
+      : null;
   const maintenance =
     scheduledRuns === null
       ? null
@@ -143,6 +187,7 @@ export async function buildOperationsHealth(
 
   return {
     schema,
+    releaseCompatibility,
     maintenance,
     recentRuns,
     queues,
@@ -158,9 +203,11 @@ export async function buildOperationsHealth(
       configuration: dependencies.configuration,
       maintenance,
       textLayerObserved,
-      schemaReady: catalog
-        ? schema.state === "current" && catalog.facts.every((fact) => fact.present)
-        : null,
+      schemaReady: releaseCompatibility?.applicationSchemaCompatible
+        ? true
+        : catalog
+          ? schema.state === "current" && catalog.facts.every((fact) => fact.present)
+          : null,
     }),
     schedulerLeases,
     lastSuccessLookupKnown: results[2].status === "fulfilled",

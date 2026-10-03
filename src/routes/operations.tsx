@@ -150,6 +150,19 @@ function OperationsRoute() {
             </dl>
           </section>
 
+          {view.releaseCompatibility ? (
+            <section className="rounded-lg border bg-card p-4">
+              <h2 className="text-base font-semibold">已批准版本的結構相容性</h2>
+              <p
+                className={`mt-2 text-sm ${view.releaseCompatibility.applicationSchemaCompatible ? "text-status-green" : "text-status-yellow"}`}
+              >
+                {view.releaseCompatibility.applicationSchemaCompatible
+                  ? "此版本與環境的結構相容性已核對。歷史遷移仍有分歧，不能執行普通遷移；登入、供應商及業務驗收須另行確認。"
+                  : "尚未核實此版本、環境、批准記錄及完整結構契約。請按發佈程序核對；不能因已有記錄便視為可用。"}
+              </p>
+            </section>
+          ) : null}
+
           {view.maintenance === null ? (
             <p className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
               排程狀態暫時無法判斷。其他成功讀取的隊列或執行紀錄仍會顯示；
