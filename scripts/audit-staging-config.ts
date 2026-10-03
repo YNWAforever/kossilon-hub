@@ -1,4 +1,5 @@
 const ROLES = ["ADMIN", "MANAGER", "STAFF", "CLIENT_A", "CLIENT_B"] as const;
+const PRODUCTION_HOSTS = new Set(["kossilon-hub.vercel.app", "www.kossilon-hub.vercel.app"]);
 export type AuditAccount = (typeof ROLES)[number];
 export const AUDIT_ACCOUNT_ROLES = {
   ADMIN: "Admin",
@@ -11,8 +12,9 @@ export const AUDIT_ACCOUNT_ROLES = {
 export function auditStagingTarget(env: Record<string, string | undefined>) {
   if (!env.AUDIT_STAGING_ORIGIN) throw new Error("BLOCKED: AUDIT_STAGING_ORIGIN is required.");
   const url = new URL(env.AUDIT_STAGING_ORIGIN);
-  if (url.hostname === "kossilon-hub.vercel.app")
-    throw new Error("Refusing the known production target.");
+  // A DNS terminal dot does not turn a known production host into staging.
+  const hostname = url.hostname.replace(/\.$/, "");
+  if (PRODUCTION_HOSTS.has(hostname)) throw new Error("Refusing the known production target.");
   if (
     url.protocol !== "https:" ||
     url.username ||
