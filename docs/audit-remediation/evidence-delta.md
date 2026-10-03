@@ -35,3 +35,7 @@
 ## 邊界和可逆性
 
 本次 providerWrites=0、production exploit=0、externalMessages=0、invite/grant=0。R01 base 是實際 live SHA；其 migration bytes、server authority、data mode 必須保持。R02 使用 PG18.6 local disposable database，不能把 local restore 稱為 hosted recovery。正式 DB、部署和 native activation 仍需 target/hash/diff/rollback 完成後按有效授權處理。
+
+## Verification correction and first deliveries
+
+The structured Vercel receipt says mainGitDeploymentEnabled=false: automatic main deployment is disabled. The earlier prose 'hold false' was ambiguous and is corrected in the current environment matrix; no provider setting was changed. R00PR123 and R01PR124 exact-head CI green; R02PR125/full PG18 local results and per-task local rechecks are linked in oct3-local-acceptance.md. Original50 runtime status and immutable input evidence are preserved.

@@ -224,3 +224,7 @@ Original50UAT byte-unchanged19LOCALONLYpass31blocked0not_run; source50 versus la
 # 2026-10-03 執行版1.1續作
 
 新基線及分類見 [evidence-delta.md](evidence-delta.md)，R00–R11 分層進度見 [execution tracker](execution-tracker-2026-10-03.csv)。已安全解壓／驗證外14、內90項 SHA；main6f0a851／liveaa5d3cb／PG18.6 66歷史 ledger 於05:31UTC重新核對。R01 actual-live candidate 和 R00 clean-install RED 正在執行；R02完整批准相容性 policy 待實作。原 F01–F20／T00–T23／50UAT 及舊 evidence 保留，正式 NO_GO，未有正式寫入或 external send。
+
+## Oct3 local acceptance delivery
+
+R00 PR123 exact-head CI green; R01 PR124 isolated actual-live candidate exact-head CI green (production still aa5d3cb); R02 PR125 local PG18 restore/rollback/complete compatibility policy delivered, exact-head CI pending. R03 local61PASS and read-only backlog inventory delivered; R04–R10 existing local contracts rechecked:134/61/129/122/38/42/57PASS respectively, all0skip. Precise runtime owners/inputs remain in r03-staging-acceptance.md and oct3-local-acceptance.md; every R row updated. R11 formal NO_GO, original50 byte-unchanged19historicalLOCALONLYpass31blocked; no production migration/deployment/send/invite/grant. Same-environment historical local performance receipts preserved, no new hosted/SLO claim. main gitDeploymentEnabled=false means automatic main deployment is disabled; no provider setting changed.

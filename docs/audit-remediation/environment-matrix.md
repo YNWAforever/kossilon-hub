@@ -182,7 +182,7 @@ Actual WindowsNode24.18.0/Bun1.4.2/fresh dedicatedPG17, unfiltered235files2214PA
 | Layer | Actual identity / result | Remaining owner input |
 | --- | --- | --- |
 | Source / CI | main6f0a851; CI37093325320 Node22/24 each235files2214pass0skip, DEMO12pass | 新 candidate 各自 exact-head CI |
-| Production web | alias/project agree aa5d3cb / dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT READY; configured Node24.x; main deploy hold false | actual build resolved SBOM/runtime minor，candidate preview＋核准 promotion |
+| Production web | alias/project agree aa5d3cb / dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT READY; configured Node24.x; main gitDeploymentEnabled=false（自動部署停用） | actual build resolved SBOM/runtime minor，candidate preview＋核准 promotion |
 | Production DB read-only | red-morning-00331124 / br-muddy-mountain-aov8bbku / neondb PG18.6; ledger66; dispatch marker absent | DB owner logical attribution、actual app role、sole DDL freeze、hosted restore target及批准 |
 | Local PG18 | existing isolated container kossilon-release-pg18-20261002 / loopback55448，actual18.6 | local disposable rehearsal只驗 contracts；不能代替 hosted clone/recovery |
 | Scheduler | latest recorded Sep30 01:55UTC; production scheduler artifact SHA not_verified | Ops sole native platform、獨立 artifact receipt、3真 native ticks；dispatch保持受控 |
