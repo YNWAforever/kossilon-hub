@@ -65,7 +65,7 @@ test("captures actual local demo browser timing and parser network boundaries", 
     actual.resources.filter((url) => /pdfjs-dist|mammoth|pdf\.worker|doc-parser/.test(url)),
   ).toEqual([]);
   await writeFile(
-    `docs/audit-remediation/evidence/t21-${info.project.name}-browser-performance.json`,
+    info.outputPath("browser-performance.json"),
     JSON.stringify(
       {
         environment:
@@ -73,7 +73,6 @@ test("captures actual local demo browser timing and parser network boundaries", 
         at: new Date().toISOString(),
         viewport: info.project.use.viewport,
         lcpMs: actual.lcp,
-        cls: actual.cls,
         inpCandidateMs: actual.interactions.length
           ? Math.max(...actual.interactions.map((x) => x.duration))
           : null,

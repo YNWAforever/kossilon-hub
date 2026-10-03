@@ -28,7 +28,7 @@ test("Admin daily entry, all links, keyboard drawer, readable settings and touch
     .evaluateAll((elements) => elements.map((el) => el.getBoundingClientRect().height));
   expect(sizes.every((height) => height >= 44)).toBe(true);
   await page.screenshot({
-    path: `docs/audit-remediation/evidence/t20-${info.project.name}-navigation.png`,
+    path: info.outputPath("navigation.png"),
     fullPage: true,
   });
   if (mobile) {
@@ -53,7 +53,7 @@ test("Admin daily entry, all links, keyboard drawer, readable settings and touch
     true,
   );
   await page.screenshot({
-    path: `docs/audit-remediation/evidence/t20-${info.project.name}-settings.png`,
+    path: info.outputPath("settings.png"),
     fullPage: true,
   });
   await expect(page.locator("vite-error-overlay")).toHaveCount(0);
