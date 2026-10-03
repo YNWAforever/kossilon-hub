@@ -5,9 +5,10 @@ Spec: Oct3 implementation plan R02/F01/F17, current-version build/environment/ha
 ## Task 1: Bind a new rehearsal receipt to the executing source
 
 - Preserve historical `source_baseline`, historical Git provenance, frozen SQL/manifest, original ledger and v1/v2/v3 receipts.
-- RED: real temporary Git repositories must distinguish HEAD/tree from staged, unstaged and untracked executing bytes. Actual source or HEAD drift during a run must refuse a success receipt.
+- RED: real temporary Git repositories must distinguish HEAD/tree from staged, unstaged and untracked executing bytes. A difference between start/end source or HEAD snapshots must refuse a success receipt.
 - Add a small offline collector recording full commit/tree, clean/dirty worktree state, SHA256 of explicitly listed execution source/inputs/locks, Node version/platform/architecture. It is not a resolved dependency SBOM or release approval.
 - Capture before local database work; compare execution bytes and HEAD/tree again before writing the immutable receipt. Unrelated evidence generated during the run may change worktree state without changing execution identity.
+- Fresh review fix: refuse a foreign working directory before capture or DB work, so cwd-relative inputs and Git reads are bound to the same repository. Snapshot comparison is not continuous mutation detection or an atomic filesystem snapshot.
 - GREEN: source contracts, npm lint/typecheck, full existing suite with owned PG18; produce a new v4 real dump/restore/rollback/repeat-refusal rehearsal.
 - Commit the code before the final v4 run so it identifies committed executing code. Commit the resulting receipt and tracker/evidence delta separately.
 

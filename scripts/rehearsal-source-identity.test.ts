@@ -1,7 +1,7 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { afterEach, expect, it } from "vitest";
 import {
   captureRehearsalSourceIdentity,
@@ -98,4 +98,29 @@ it("refuses empty, missing or outside-worktree execution input inventories", () 
     /inside the worktree/,
   );
   expect(() => captureRehearsalSourceIdentity(root, [outside])).toThrow(/inside the worktree/);
+});
+
+it("refuses a foreign working directory before consuming its JSON or reaching database work", () => {
+  const { root } = fixture();
+  const foreignEvidence = join(root, "docs/audit-remediation/evidence");
+  mkdirSync(foreignEvidence, { recursive: true });
+  writeFileSync(
+    join(foreignEvidence, "2026-10-02-historical-schema.json"),
+    JSON.stringify({ source_baseline: "foreign provenance", historical_sources: [] }),
+  );
+  const child = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", resolve("scripts/rehearse-historical-schema-release.mjs")],
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        TEST_DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:1/postgres",
+        HISTORICAL_RELEASE_REHEARSAL_REPORT: "docs/audit-remediation/evidence/foreign.json",
+      },
+      encoding: "utf8",
+    },
+  );
+  expect(child.status).toBe(1);
+  expect(child.stderr).toContain("Run rehearsal from the executing repository root");
 });

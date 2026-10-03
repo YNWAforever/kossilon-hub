@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
-import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync, realpathSync } from "node:fs";
 import { resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import postgres from "postgres";
@@ -12,6 +12,11 @@ import {
   assertRehearsalSourceUnchanged,
 } from "./rehearsal-source-identity.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
+assert.equal(
+  realpathSync(process.cwd()),
+  realpathSync(root),
+  "Run rehearsal from the executing repository root",
+);
 const executionInputs = () => [
   "scripts/rehearse-historical-schema-release.mjs",
   "scripts/rehearsal-source-identity.ts",
@@ -346,6 +351,7 @@ try {
       "Seven unattributed production tables and non-FK dependencies require owner review.",
       "Scheduler/offline approval/deployed artifact identity/controlled runtime verification required before any hosted operation.",
       "Execution source hashes describe local files and lock inputs, not an installed dependency SBOM or hosted release approval.",
+      "Before/after source snapshots detect persistent drift, not reverted edits, ignored runtime files or atomic filesystem integrity.",
     ],
   };
   assertRehearsalSourceUnchanged(
