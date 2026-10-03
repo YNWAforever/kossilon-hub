@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-03T08:26:48.0223801Z",
+  "project": {
+    "id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+    "configuredNodeVersion": "24.x",
+    "productionDeployment": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "readyState": "READY",
+    "githubCommitSha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "githubCommitRef": "main"
+  },
+  "alias": {
+    "name": "kossilon-hub.vercel.app",
+    "projectId": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+    "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT"
+  },
+  "sourceMain": "12fb960da16c577d9aeb8da27f5bd9651c0cedae",
+  "mainGitDeploymentEnabled": false,
+  "providerWrites": 0,
+  "formalRelease": "NO_GO",
+  "deployedRuntimeMinor": "not_verified"
+}

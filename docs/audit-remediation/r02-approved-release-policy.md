@@ -50,3 +50,23 @@ The Minor review finding remains deferred: the rehearsal receipt's `source_basel
 ## Remaining approval inputs
 
 DB owner: approved hosted staging identity and app role; logical owners for the seven unattributed tables; sole DDL owner/freeze and non-FK dependency review. Release owner: reviewed external build/environment-bound approval artifact, complete contract hashes, deployment/scheduler identities and acceptance receipts. No new production migration or deployment has been performed.
+
+## R02 source identity follow-up — 2026-10-03
+
+Closed the previous rehearsal receipt source-identity Minor under the continuing Oct3 build/environment/hash requirement. Executing source commit: `844cc685c33d7ac15effb6659c78e140d241f896`; v4 captures its full tree, clean start state, 28 actual source/input/lock byte hashes and Node22.23.3 identity separately from historical `source_baseline`. Mid-run executing source or HEAD drift refuses a success receipt. This is not an installed dependency SBOM or external approval.
+
+Actual source contract RED6fail → GREEN6pass. First default PG18 full suite: 238files2250PASS1unchangedNARchild-parent-timeout0skip. Unchanged isolated timeout contract: 1PASS12.73s. Complete local rerun with maxWorkers=4: 238files2251PASS0fail0skip; no assertions/timeouts/CI gates changed. Local scheduling and cache effects do not establish timeout causality. npm lint0errors/1existingwarning; project and offline-script typecheck0.
+
+New immutable v4 rehearsal passed real PG18 dump/restore, changed-catalog refusal, forced transaction rollback and repeat refusal. All82 original table row hashes and66 original ledger rows/timestamps stayed unchanged; final94tables/1separate receipt. Frozen SQL/manifest/migrator and original50UAT bytes stay unchanged; no new genuine UAT acceptance. Receipts: `evidence/2026-10-03-r02-historical-rehearsal-v4.json`, `evidence/2026-10-03-r02-source-identity-verification.json`.
+
+Fresh read-only production observations: web `aa5d3cb`, source-main checkpoint `12fb960`, automatic main deployment disabled; PG18.6/66ledger/4pending/14documents, historical receipt and dispatch marker absent, latest recorded tick Sep30. Web and scheduler remain distinct artifacts; scheduler identity still not_verified. Formal release remains NO_GO. DB/Release owners still owe approved isolated hosted staging target/restricted app role, seven table owners/non-FK review/sole DDL freeze, authorized restore target and reviewed external approval artifact/runtime binding. Provider owner inputs remain in r03-staging-acceptance.md. No production migration/deploy/send/invite/grant was performed.
+
+## R02 fresh-review root binding closure — 2026-10-03
+
+PR127 review: Critical0/Important1/Minor0. The Important mismatch between module-root hashes and cwd-relative consumed inputs was fixed in one RED→GREEN pass: refuse a foreign cwd realpath before source capture, JSON/Git reads or DB work. Real script probe RED1fail/6PASS→GREEN7PASS. Its explicit DB URL required conservative registration in the existing serialized DB project; the full-suite convention RED is retained, and registry+source contracts passed9/9. No original gate or timeout was weakened.
+
+Final executing code `8e9eeab8c9f466c79b8f2c31fe679e885dabee42`; complete owned PG18/Node22 suite238files2252PASS0fail0skip (`--maxWorkers=4`); npm lint0errors/1existingwarning, project/script typecheck0. New immutable v5 real dump/restore/catalog refusal/rollback/repeat-refusal passed, clean28source/input hashes,82 originaltables/66ledger preserved,94finaltables/1receipt. Earlier v1–v4 receipts remain unchanged. Source snapshots detect persistent differences; they are not continuous/atomic filesystem, installed SBOM or runtime approval proofs.
+
+Evidence: `evidence/2026-10-03-r02-historical-rehearsal-v5.json`, `evidence/2026-10-03-r02-source-root-verification.json`, `oct3-source-identity-execution-review.md`; original50UAT and frozen SQL/manifest/migrator unchanged. `current_build_sha` records the actual local executing code above; the PR's published head, exact-head CI and normal merge receipt are separate GitHub artifacts in PR127. Previous CI37111128136 SUCCESS is explicitly the older `1cebb79` head and cannot stand in for the root-guard final-head gate.
+
+Runtime remains blocked and formal release NO_GO; no hosted DB/deploy/send/invite/grant occurred. Approved hosted staging/restricted app role/owner and DDL freeze/restore target/external approval binding and genuine provider inputs remain the next dependencies.

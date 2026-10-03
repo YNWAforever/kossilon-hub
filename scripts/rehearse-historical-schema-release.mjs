@@ -1,11 +1,40 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync, realpathSync } from "node:fs";
 import { resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import postgres from "postgres";
 import { execFileSync } from "node:child_process";
 import { prepareHistoricalSchemaRelease } from "./prepare-historical-schema-release.ts";
 import { readReleaseCatalog } from "../src/features/operations/release-catalog.ts";
+import {
+  captureRehearsalSourceIdentity,
+  assertRehearsalSourceUnchanged,
+} from "./rehearsal-source-identity.ts";
+const root = fileURLToPath(new URL("../", import.meta.url));
+assert.equal(
+  realpathSync(process.cwd()),
+  realpathSync(root),
+  "Run rehearsal from the executing repository root",
+);
+const executionInputs = () => [
+  "scripts/rehearse-historical-schema-release.mjs",
+  "scripts/rehearsal-source-identity.ts",
+  "scripts/prepare-historical-schema-release.ts",
+  "src/features/operations/release-catalog.ts",
+  "package.json",
+  "package-lock.json",
+  "bun.lock",
+  "docs/audit-remediation/evidence/2026-10-02-historical-schema.json",
+  "docs/audit-remediation/evidence/2026-10-02-historical-catalog-guard.json",
+  "docs/audit-remediation/historical-contract-bridge.sql",
+  "docs/audit-remediation/releases/2026-10-02-historical-release.sql",
+  "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+  ...readdirSync(resolve(root, "db/migrations"))
+    .filter((file) => /^00(?:6[7-9]|[78]\d)_.*\.sql$/.test(file))
+    .map((file) => `db/migrations/${file}`),
+];
+const executionSource = captureRehearsalSourceIdentity(root, executionInputs());
 const reportPath =
   process.env.HISTORICAL_RELEASE_REHEARSAL_REPORT ??
   `docs/audit-remediation/evidence/2026-10-03-historical-release-rehearsal-${randomUUID()}.json`;
@@ -277,6 +306,7 @@ try {
     observed_at: new Date().toISOString(),
     source_baseline: observed.source_baseline,
     historical_source: observed.historical_source,
+    execution_source: executionSource,
     database: database,
     port: 55448,
     version: (await sql`show server_version`)[0].server_version,
@@ -319,9 +349,15 @@ try {
       "Not a provider clone, production restore, true workload or runtime UAT.",
       "Historical migration ledger intentionally unchanged; strict source history diagnostics still report divergence.",
       "Seven unattributed production tables and non-FK dependencies require owner review.",
-      "Scheduler/offline approval/package/source identity/controlled runtime verification required before any hosted operation.",
+      "Scheduler/offline approval/deployed artifact identity/controlled runtime verification required before any hosted operation.",
+      "Execution source hashes describe local files and lock inputs, not an installed dependency SBOM or hosted release approval.",
+      "Before/after source snapshots detect persistent drift, not reverted edits, ignored runtime files or atomic filesystem integrity.",
     ],
   };
+  assertRehearsalSourceUnchanged(
+    executionSource,
+    captureRehearsalSourceIdentity(root, executionInputs()),
+  );
   writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
   console.log(
     JSON.stringify(

@@ -1,0 +1,141 @@
+{
+  "task_id": "R02",
+  "finding_ids": [
+    "F01",
+    "F17"
+  ],
+  "observed_at": "2026-10-03T08:47:45.2493969Z",
+  "code_source_commit": "844cc685c33d7ac15effb6659c78e140d241f896",
+  "scope": "LOCAL owned PG18.6 + actual Node22.23.3; source provenance only; NO_GO for hosted release",
+  "red": {
+    "old_v3_receipt_assertion_exit": 1,
+    "source_contract_files": 1,
+    "source_contract_failed": 6,
+    "source_contract_passed": 0
+  },
+  "green": {
+    "source_contract_files": 1,
+    "source_contract_passed": 6,
+    "source_contract_failed": 0,
+    "source_contract_skipped": 0
+  },
+  "first_default_full": {
+    "files": 238,
+    "passed": 2250,
+    "failed": 1,
+    "skipped": 0,
+    "failure": "src/features/nar-import/fixture-timeout.integration.test.ts",
+    "duration_seconds": 491.57
+  },
+  "unchanged_timeout_isolated": {
+    "files": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "test_duration_seconds": 12.73
+  },
+  "final_local_full": {
+    "files": 238,
+    "passed": 2251,
+    "failed": 0,
+    "skipped": 0,
+    "max_workers": 4,
+    "duration_seconds": 352.06
+  },
+  "lint": {
+    "exit": 0,
+    "errors": 0,
+    "existing_warnings": 1
+  },
+  "typecheck_exit": 0,
+  "offline_script_typecheck_exit": 0,
+  "rehearsal": {
+    "path": "docs/audit-remediation/evidence/2026-10-03-r02-historical-rehearsal-v4.json",
+    "sha256": "62ab6fa8feaea9546a104e960a30534d989853682557dbba339164aa884f5f19",
+    "executing_source": {
+      "algorithm": "sha256-raw-file-bytes-v1",
+      "git": {
+        "commit": "844cc685c33d7ac15effb6659c78e140d241f896",
+        "tree": "245ff42fefd3b3c70c48ce321b9f904c46f6470b",
+        "worktree_clean": true
+      },
+      "source_files": {
+        "bun.lock": "a2d2388f2d83cfada3847dd44ea0d684b359ac4426381a2ebbb32a21b39336a6",
+        "db/migrations/0067_repair_outbox_dispatch_marker.sql": "660dbe9226514a66cdfedda2a2ed14300c960aee3e384908c28db73ccdf47014",
+        "db/migrations/0068_company_historical_data_origin.sql": "3bada03551f73882074930732205b70986e30ff450445b30152f80f22c34a8eb",
+        "db/migrations/0069_restore_maintenance_job_contract.sql": "54c8fb08e54524b89502c44db02de202ecaca159549ba1d38ee4a34ac2b361ec",
+        "db/migrations/0070_payment_evidence_entries.sql": "77be3213c6eef6529f0f0712afb219158dc1b3b2d42a1d94df13b705714ad4e1",
+        "db/migrations/0071_staff_admin_contract.sql": "41caa6f1b2cab4ab5ce603af67d24c31755154e6d99b9a3aeb68be91c8e7bbd9",
+        "db/migrations/0072_durable_bulk_assignment.sql": "96828ee76f44b7917736c7f1e322f7765424873aa8b1f7121c5459a95ffe7b7f",
+        "db/migrations/0073_bulk_maintenance_job_kind.sql": "0115de0f7773498fc44b105e2614600fe92df84267cd26c998e96b15ff1c6be4",
+        "db/migrations/0074_reviewed_nar_apply.sql": "076adf128c7a55b12572fd5415e698c78190fa744a0e1ae2790a652967094e9e",
+        "db/migrations/0075_nar_legacy_year_review.sql": "1770530e8dc0ab536ada101e64fe201afeb3fdb9d3a94390c12b4d3b770c8078",
+        "db/migrations/0076_document_scan_review_versions.sql": "ee11fedf4f2cc9d2faf4cd845a2e821b9829110fa253d210c2a46a799d902887",
+        "db/migrations/0077_document_analysis_evidence.sql": "e893065da028d8266e384c365fc8d5bd7eb5da7001872118dec9b5a72a08da75",
+        "db/migrations/0078_whatsapp_manual_intake.sql": "5ed629d5ac915e62f126fdc97929da9bcdd87814d451e6dd1117013fc280db69",
+        "db/migrations/0079_bulk_daily_maintenance.sql": "b3666b32fd4a92e49acd9c43959bfa751d1135f9b59b338eb6f5456d9a4732f7",
+        "db/migrations/0080_manual_handoff_provenance.sql": "f7f955a5b186aa4ed16fa95c136402e15c3f265fd6c81a90a0c42c0f9e53866d",
+        "db/migrations/0081_handoff_attempt_idempotency.sql": "dc4cc45e37c05f69e59f19ddd33b37c18960b525726d995ddfe0b864db3a8e45",
+        "db/migrations/0082_case_template_snapshots.sql": "29f13a7f58668c93f25141c90d17206332144a282833597ab43ec654b01dd231",
+        "docs/audit-remediation/evidence/2026-10-02-historical-catalog-guard.json": "053e8ee6504c063216d7fe2bfa0a43c85d1cdbd81a714c141f69995cebb332cc",
+        "docs/audit-remediation/evidence/2026-10-02-historical-schema.json": "e37425e5b67da2827ffbbbb5e2bba5fa3f86580cc29605abc152812c007ec26b",
+        "docs/audit-remediation/historical-contract-bridge.sql": "e39fcb75ab7a9e1d977e0e32880be71ec8521a7b95b3be2a574220a7a7b4f3de",
+        "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae",
+        "docs/audit-remediation/releases/2026-10-02-historical-release.sql": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad",
+        "package-lock.json": "85988563c57cf37497782fee32a9a9f266b6fa34c39324fc298063dcd5a8b195",
+        "package.json": "8053518bb150f79e7fd31cffb2a4c8e1408e571b8ae4f7398088a3b95e0e439c",
+        "scripts/prepare-historical-schema-release.ts": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52",
+        "scripts/rehearsal-source-identity.ts": "c4cdea45991d812fdf916bcf719569ebd2eb60a5800b680dcb30a4dc828ffe13",
+        "scripts/rehearse-historical-schema-release.mjs": "1b69d774cb8480e859286ad160155fe0826a4833b9f1af323dd7250015ea474d",
+        "src/features/operations/release-catalog.ts": "720db78be05ae652e3d1fbd1f2524daa88f076047c441fda5dfe93388e152ddb"
+      },
+      "runtime": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "arch": "x64"
+      }
+    },
+    "original_tables_preserved": 82,
+    "original_ledger_rows_preserved": 66,
+    "post_release_tables": 94,
+    "separate_receipts": 1,
+    "restore": "passing",
+    "catalog_refusal": "P0001",
+    "forced_rollback": "P0001",
+    "repeat_refusal": "P0001",
+    "hosted_restore": "not_run"
+  },
+  "commands": [
+    "node node_modules/vitest/vitest.mjs run scripts/rehearsal-source-identity.test.ts",
+    "node node_modules/vitest/vitest.mjs run --reporter=default --reporter=json --outputFile=.worktrees/audit-oct3-execution/r02-source-identity-full.json",
+    "node node_modules/vitest/vitest.mjs run src/features/nar-import/fixture-timeout.integration.test.ts",
+    "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=default --reporter=json --outputFile=.worktrees/audit-oct3-execution/r02-source-identity-full-bounded.json",
+    "npm run lint",
+    "npm run typecheck",
+    "node node_modules/typescript/bin/tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --skipLibCheck --strict --types node scripts/rehearsal-source-identity.ts scripts/rehearsal-source-identity.test.ts",
+    "HISTORICAL_RELEASE_REHEARSAL_REPORT=docs/audit-remediation/evidence/2026-10-03-r02-historical-rehearsal-v4.json node --experimental-strip-types scripts/rehearse-historical-schema-release.mjs"
+  ],
+  "local_test_target": "postgres://postgres:postgres@127.0.0.1:55448/kossilon_oct3_main_20261003",
+  "rehearsal_admin_target": "loopback 55448/postgres, new owned template0 databases",
+  "raw_log_sha256": {
+    "r02-source-receipt-red.log": "cea260698e52ef1d5b54b39e2ac700c29a8bc517fadd7cbcb793628b0231308d",
+    "r02-source-identity-red.log": "5ca0493d35fb4632038296b0d23e07baae7048c483a2dac932fd3469a24b55bb",
+    "r02-source-identity-green.log": "289c7073ed4bf9042bd843841f16bd2a816bfcfe00b5968baceb417cbdf2aa11",
+    "r02-source-identity-full.json": "ba5888109203684e494dc868772de9217449f77d2cdbf93b54b108f6b777191d",
+    "r02-source-identity-full.log": "b838d4e297642f69df474f53897174fe8b50ebedd056c9536f39bfa805b3eba2",
+    "r02-source-identity-timeout-isolated.log": "272bee1ba87b42b4031b9311dfc31c807049cc6596db77081257e35789841ee1",
+    "r02-source-identity-full-bounded.json": "2953ce8a56e0d286172c92502731b77b2ca459edce9f72c328e363c39453b2aa",
+    "r02-source-identity-full-bounded.log": "e63c18c8d8b2e3142dccc02df3dc695340ad468c3300d2c0703da3088659a96d",
+    "r02-source-identity-lint.log": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+    "r02-source-identity-typecheck.log": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+    "r02-source-identity-script-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r02-source-identity-rehearsal-v4.log": "2526d3f3c5eec3c97233b5baabe7f80d9969de1b2b0176412ff3d9bb48a5fe32"
+  },
+  "provider_writes": 0,
+  "new_genuine_uat_acceptances": 0,
+  "limitations": [
+    "First default full-suite failure remains evidence; bounded scheduling plus warm caches does not establish a root cause. Default CI remains unchanged.",
+    "File hashes are actual local bytes, not resolved installed dependency hashes, deployment proof or external approval.",
+    "Hosted staging/app role/owners/DDL freeze/restore approval artifact/runtime binding and provider inputs remain required."
+  ]
+}

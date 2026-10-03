@@ -17,6 +17,8 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/nar-import/apply.integration.test.ts",
   "scripts/audit-schema-readiness.test.ts",
   "scripts/prepare-historical-schema-release.test.ts",
+  // Rehearsal subprocess refusal uses a DB URL; retain the conservative registry gate.
+  "scripts/rehearsal-source-identity.test.ts",
   "src/features/annual-return/repository.test.ts",
   "src/features/annual-return/readiness.integration.test.ts",
   "src/features/annual-return/scale.integration.test.ts",

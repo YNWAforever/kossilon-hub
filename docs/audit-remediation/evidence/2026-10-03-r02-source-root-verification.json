@@ -1,0 +1,158 @@
+{
+  "task_id": "R02",
+  "finding_ids": [
+    "F01",
+    "F17"
+  ],
+  "observed_at": "2026-10-03T09:18:41.9454785Z",
+  "code_source_commit": "8e9eeab8c9f466c79b8f2c31fe679e885dabee42",
+  "scope": "LOCAL owned loopback PG18.6 / Node22.23.3; one fresh-review Important fix pass; no hosted operations",
+  "fresh_review": {
+    "critical": 0,
+    "important": 1,
+    "minor": 0,
+    "finding": "module-root source hashes vs cwd-relative consumed JSON/Git inputs",
+    "result": "fixed",
+    "second_review": "not_run: executing-plans requires one fix pass verified by RED/GREEN and full suite"
+  },
+  "root_contract_red": {
+    "passed": 6,
+    "failed": 1,
+    "scope": "actual foreign-cwd subprocess; port1 prevents database connection",
+    "actual_failure": "reached port guard instead of rejecting foreign working directory"
+  },
+  "root_contract_green": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "behavior": "refuses foreign cwd before capture, input reads or DB work"
+  },
+  "first_fix_full": {
+    "files": 238,
+    "passed": 2251,
+    "failed": 1,
+    "skipped": 0,
+    "failure": "src/test/db-integration-files.convention.test.ts",
+    "reason": "new TEST_DATABASE_URL subprocess suite absent from conservative serialized registry",
+    "duration_seconds": 223.65
+  },
+  "registry_green": {
+    "files": 2,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "final_full": {
+    "files": 238,
+    "passed": 2252,
+    "failed": 0,
+    "skipped": 0,
+    "max_workers": 4,
+    "duration_seconds": 202.98
+  },
+  "lint": {
+    "exit": 0,
+    "errors": 0,
+    "existing_warnings": 1
+  },
+  "typecheck_exit": 0,
+  "offline_script_typecheck_exit": 0,
+  "rehearsal": {
+    "path": "docs/audit-remediation/evidence/2026-10-03-r02-historical-rehearsal-v5.json",
+    "sha256": "120da1682414384096e692f72ce2ae32c5ab20847f17cf61261a2ad05940799b",
+    "execution_source": {
+      "algorithm": "sha256-raw-file-bytes-v1",
+      "git": {
+        "commit": "8e9eeab8c9f466c79b8f2c31fe679e885dabee42",
+        "tree": "98b11b4557a9ef19063582480f0b2266ba5e6d85",
+        "worktree_clean": true
+      },
+      "source_files": {
+        "bun.lock": "a2d2388f2d83cfada3847dd44ea0d684b359ac4426381a2ebbb32a21b39336a6",
+        "db/migrations/0067_repair_outbox_dispatch_marker.sql": "660dbe9226514a66cdfedda2a2ed14300c960aee3e384908c28db73ccdf47014",
+        "db/migrations/0068_company_historical_data_origin.sql": "3bada03551f73882074930732205b70986e30ff450445b30152f80f22c34a8eb",
+        "db/migrations/0069_restore_maintenance_job_contract.sql": "54c8fb08e54524b89502c44db02de202ecaca159549ba1d38ee4a34ac2b361ec",
+        "db/migrations/0070_payment_evidence_entries.sql": "77be3213c6eef6529f0f0712afb219158dc1b3b2d42a1d94df13b705714ad4e1",
+        "db/migrations/0071_staff_admin_contract.sql": "41caa6f1b2cab4ab5ce603af67d24c31755154e6d99b9a3aeb68be91c8e7bbd9",
+        "db/migrations/0072_durable_bulk_assignment.sql": "96828ee76f44b7917736c7f1e322f7765424873aa8b1f7121c5459a95ffe7b7f",
+        "db/migrations/0073_bulk_maintenance_job_kind.sql": "0115de0f7773498fc44b105e2614600fe92df84267cd26c998e96b15ff1c6be4",
+        "db/migrations/0074_reviewed_nar_apply.sql": "076adf128c7a55b12572fd5415e698c78190fa744a0e1ae2790a652967094e9e",
+        "db/migrations/0075_nar_legacy_year_review.sql": "1770530e8dc0ab536ada101e64fe201afeb3fdb9d3a94390c12b4d3b770c8078",
+        "db/migrations/0076_document_scan_review_versions.sql": "ee11fedf4f2cc9d2faf4cd845a2e821b9829110fa253d210c2a46a799d902887",
+        "db/migrations/0077_document_analysis_evidence.sql": "e893065da028d8266e384c365fc8d5bd7eb5da7001872118dec9b5a72a08da75",
+        "db/migrations/0078_whatsapp_manual_intake.sql": "5ed629d5ac915e62f126fdc97929da9bcdd87814d451e6dd1117013fc280db69",
+        "db/migrations/0079_bulk_daily_maintenance.sql": "b3666b32fd4a92e49acd9c43959bfa751d1135f9b59b338eb6f5456d9a4732f7",
+        "db/migrations/0080_manual_handoff_provenance.sql": "f7f955a5b186aa4ed16fa95c136402e15c3f265fd6c81a90a0c42c0f9e53866d",
+        "db/migrations/0081_handoff_attempt_idempotency.sql": "dc4cc45e37c05f69e59f19ddd33b37c18960b525726d995ddfe0b864db3a8e45",
+        "db/migrations/0082_case_template_snapshots.sql": "29f13a7f58668c93f25141c90d17206332144a282833597ab43ec654b01dd231",
+        "docs/audit-remediation/evidence/2026-10-02-historical-catalog-guard.json": "053e8ee6504c063216d7fe2bfa0a43c85d1cdbd81a714c141f69995cebb332cc",
+        "docs/audit-remediation/evidence/2026-10-02-historical-schema.json": "e37425e5b67da2827ffbbbb5e2bba5fa3f86580cc29605abc152812c007ec26b",
+        "docs/audit-remediation/historical-contract-bridge.sql": "e39fcb75ab7a9e1d977e0e32880be71ec8521a7b95b3be2a574220a7a7b4f3de",
+        "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae",
+        "docs/audit-remediation/releases/2026-10-02-historical-release.sql": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad",
+        "package-lock.json": "85988563c57cf37497782fee32a9a9f266b6fa34c39324fc298063dcd5a8b195",
+        "package.json": "8053518bb150f79e7fd31cffb2a4c8e1408e571b8ae4f7398088a3b95e0e439c",
+        "scripts/prepare-historical-schema-release.ts": "d133620406f8df5adb409d215a1c498e13154b58769ae8b28b5c5203f3f82e52",
+        "scripts/rehearsal-source-identity.ts": "c4cdea45991d812fdf916bcf719569ebd2eb60a5800b680dcb30a4dc828ffe13",
+        "scripts/rehearse-historical-schema-release.mjs": "9d6dc96e571f113808a430d840325f9dca8aaf59c8b89d55a80be1160dc8f561",
+        "src/features/operations/release-catalog.ts": "720db78be05ae652e3d1fbd1f2524daa88f076047c441fda5dfe93388e152ddb"
+      },
+      "runtime": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "arch": "x64"
+      }
+    },
+    "original_tables_preserved": 82,
+    "historical_ledger_preserved": 66,
+    "final_tables": 94,
+    "separate_receipts": 1,
+    "restore": "passing",
+    "catalog_refusal": "P0001",
+    "forced_rollback": "P0001",
+    "repeat_refusal": "P0001",
+    "hosted_restore": "not_run"
+  },
+  "previous_ci": {
+    "run_id": 37111128136,
+    "exact_head": "1cebb79d333bebf23192828eb965776af109a762",
+    "conclusion": "SUCCESS",
+    "node_majors": [
+      22,
+      24
+    ],
+    "scope": "before foreign-cwd fix; not final code gate"
+  },
+  "commands": [
+    "node node_modules/vitest/vitest.mjs run scripts/rehearsal-source-identity.test.ts",
+    "node node_modules/vitest/vitest.mjs run src/test/db-integration-files.convention.test.ts scripts/rehearsal-source-identity.test.ts",
+    "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=default --reporter=json --outputFile=.worktrees/audit-oct3-execution/r02-source-root-full-final.json",
+    "npm run lint",
+    "npm run typecheck",
+    "node node_modules/typescript/bin/tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --skipLibCheck --strict --types node scripts/rehearsal-source-identity.ts scripts/rehearsal-source-identity.test.ts",
+    "HISTORICAL_RELEASE_REHEARSAL_REPORT=docs/audit-remediation/evidence/2026-10-03-r02-historical-rehearsal-v5.json node --experimental-strip-types scripts/rehearse-historical-schema-release.mjs"
+  ],
+  "local_test_target": "postgres://postgres:postgres@127.0.0.1:55448/kossilon_oct3_main_20261003",
+  "raw_log_sha256": {
+    "r02-source-root-red.log": "67b6328ff61dda04d67f8b45fd1bbe0ca909465f104158111e7cae0f5b92ca62",
+    "r02-source-root-green.log": "0755bc8ea41a438c2010c8a6ede3218331c084800a762b69d8e7cde11158dc6c",
+    "r02-source-root-registry-green.log": "995d0b65afb9afd3da95eec33e08cf647c2ec63351a9c4a2085ddb0bdb4347eb",
+    "r02-source-root-full.json": "b3e85c5e4e122ff6c314e3e423e09df4011a7e1becd323e20df261bfc63cfd29",
+    "r02-source-root-full.log": "59ab610a714ae98b99858f55ea2b6cab5a003b723dad4dd86c6fdd131fe3a136",
+    "r02-source-root-full-final.json": "560eb4c16c852d74863c20dcd95b0307c632d815ca5d7cb27a3b6d3be8c60fa1",
+    "r02-source-root-full-final.log": "69193ab04bbfb9b25b88e50170dd0605316dee37ced5b03675e26521bcee2c41",
+    "r02-source-root-lint.log": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+    "r02-source-root-typecheck.log": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+    "r02-source-root-script-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r02-source-root-rehearsal-v5.log": "2526d3f3c5eec3c97233b5baabe7f80d9969de1b2b0176412ff3d9bb48a5fe32",
+    "r02-source-identity-ci-37111128136.log": "c9bef839ae524e87b85fae48718d42e8a7c2fdb50427a12301444d646f86a28a"
+  },
+  "provider_writes": 0,
+  "new_genuine_uat_acceptances": 0,
+  "limitations": [
+    "Persistent before/after source drift only; no reverted-mutation detection, atomic filesystem snapshot or installed SBOM. Git status is not whole runtime integrity.",
+    "Previous default NAR timeout and later registry failure remain immutable evidence; concurrency/cache causality is unproven.",
+    "Final PR127 exact-head CI and merge outcome are recorded in its GitHub delivery receipt; earlier head CI does not substitute.",
+    "Hosted staging/app role/owner freeze/restore/external approval binding and genuine provider acceptance remain blocked."
+  ]
+}
