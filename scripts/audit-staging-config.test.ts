@@ -1,5 +1,38 @@
 import { expect, it } from "vitest";
 import { auditStagingTarget } from "./audit-staging-config";
+
+function controlledAccountEnvironment(origin: string): Record<string, string> {
+  const env: Record<string, string> = {
+    AUDIT_STAGING_ORIGIN: origin,
+    AUDIT_STAGING_ISOLATED: "true",
+    AUDIT_STAGING_RELEASE_SHA: "a".repeat(40),
+    AUDIT_STAGING_APPROVAL_REF: "synthetic controlled-account test approval",
+  };
+  for (const role of ["ADMIN", "MANAGER", "STAFF", "CLIENT_A", "CLIENT_B"]) {
+    env[`AUDIT_${role}_EMAIL`] = `${role.toLowerCase()}@example.test`;
+    env[`AUDIT_${role}_PASSWORD`] = "SYNTHETIC_TEST_ONLY";
+  }
+  return env;
+}
+
+it.each([
+  "https://www.kossilon-hub.vercel.app",
+  "https://kossilon-hub.vercel.app.",
+  "https://www.kossilon-hub.vercel.app.",
+  "https://WWW.KOSSILON-HUB.VERCEL.APP",
+])("refuses production alias %s before staging browser startup", (origin) => {
+  expect(() => auditStagingTarget(controlledAccountEnvironment(origin))).toThrow(/production/);
+});
+
+it("keeps a distinct controlled staging hostname usable", () => {
+  expect(
+    auditStagingTarget(controlledAccountEnvironment("https://kossilon-hub-staging.example.test")),
+  ).toEqual({
+    origin: "https://kossilon-hub-staging.example.test",
+    buildSha: "a".repeat(40),
+  });
+});
+
 it("fails closed before opening a browser with missing runtime authority or credentials", () => {
   expect(() => auditStagingTarget({})).toThrow(/AUDIT_STAGING_ORIGIN/);
   expect(() =>

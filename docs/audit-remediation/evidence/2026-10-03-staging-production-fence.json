@@ -1,0 +1,124 @@
+{
+  "bug_id": "BUG-R03-01",
+  "task_ids": [
+    "R03"
+  ],
+  "related_task": "R05",
+  "finding_ids": [
+    "F01",
+    "F02",
+    "F17",
+    "F20"
+  ],
+  "related_cases": [
+    "UC06",
+    "UC15",
+    "UC23"
+  ],
+  "environment": "LOCAL CONTRACT / owned loopback PG18.6",
+  "observed_at_utc": "2026-10-03T11:57:40.3310981Z",
+  "base_main": "4c00f92a42aa0da3190b4245e129cd22fedef595",
+  "code_commit": "efcd075451febc99bab042a95f21d9e8e25f9dbe",
+  "node": "v22.23.3",
+  "postgres": "18.6",
+  "local_database": {
+    "host": "127.0.0.1",
+    "port": 55448,
+    "database": "kossilon_oct3_main_20261003"
+  },
+  "baseline": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "red": {
+    "exit": 1,
+    "passed": 3,
+    "failed": 4,
+    "skipped": 0,
+    "actual": "Three production-host spellings accepted; uppercase www rejected by generic origin check instead of production fence"
+  },
+  "green": {
+    "exit": 0,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "full": {
+    "exit": 0,
+    "files": 238,
+    "passed": 2257,
+    "failed": 0,
+    "skipped": 0,
+    "workers": 4,
+    "duration_seconds": 368.44
+  },
+  "npm_lint": {
+    "exit": 0,
+    "errors": 0,
+    "existing_warning": 1
+  },
+  "npm_typecheck_exit": 0,
+  "product_file_hashes": {
+    "scripts/audit-staging-config.ts": "af3e195279dd17f27cbf1f94db1099dbb975b7e28a1d82fe1e91c6da29d2a288",
+    "scripts/audit-staging-config.test.ts": "5292ce4e0b8d92f4d501a903993e98641355f115ecbde033d330621217e08c93"
+  },
+  "artifacts": [
+    {
+      "path": ".worktrees/staging-production-fence/baseline.log",
+      "sha256": "258238a0f148f62fe90173b4b68661e9ce3ae0d13cd48e6034d2e3ec81124805"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/red.log",
+      "sha256": "4c1b38a8d1dd00f6f59fc6d3738219b992d139e802f64a44965442c0c1b34e7c"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/green.log",
+      "sha256": "10cd21babc778713b3259cb43415425886285d307111e418b36e1f474cd0031e"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/full.log",
+      "sha256": "84166aea5096a8ea6910ac7c6a723cfa87513ad0ff1980429ead6da763019c15"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/full.json",
+      "sha256": "2f28f0fb5568aecfc8186c0570cc5b3d00d6aa61f61e21bf876bfeda2e0e6049"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/full-exit.json",
+      "sha256": "afcb5de449167a45dca0d930bd8c789bc4bf6fb7f0075e11f4aec0923fbe4439"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/staging-production-fence/consumer-list-only.log",
+      "sha256": "cf59c7e75e2c7bbaa5702861e7f60764eb99117bbb3694b203e0e52b31b8acf2"
+    }
+  ],
+  "hosted_operations": 0,
+  "provider_writes": 0,
+  "new_genuine_uat": 0,
+  "original_uat_sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7",
+  "formal_release": "NO_GO",
+  "scope_limit": "Known production hosts only; this is pre-browser config validation, not production alias discovery or genuine staging/provider acceptance",
+  "commands": [
+    "Node22 Vitest run scripts/audit-staging-config.test.ts baseline/RED/GREEN",
+    "Node22 actual npm run lint; npm run typecheck",
+    "Node22 Vitest run --maxWorkers=4 --reporter=json --outputFile=.worktrees/staging-production-fence/full.json with exact owned loopback TEST_DATABASE_URL"
+  ],
+  "consumer": {
+    "command": "Node22 Playwright test --config playwright.audit.config.ts --list",
+    "inputs": "complete synthetic controlled accounts; production www origin",
+    "exit": 1,
+    "expected": "known production refusal before test discovery",
+    "actual": "known production refusal",
+    "browser_started": false,
+    "network_started": false
+  }
+}

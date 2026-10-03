@@ -237,3 +237,12 @@ Runtime remains blocked and formal release NO_GO; no hosted DB/deploy/send/invit
 | Logs / CLI | GET grouped-query access available; cron-text7d0rows; allpaths24h43distinct/top25partial; CLI50.28.0 crons unsupported | Actual native invocation IDs/artifact/retention/export and3ticks/failure/recovery remain missing |
 
 Evidence: 2026-10-03-r03-target-{neon,vercel,runtime-logs}.json. No provider values, hosted writes, invites, grants or messages; original50 status unchanged and releaseNO_GO.
+
+## BUG-R03-01 — staging production-host fence
+Continuing Oct3 ledger from main4c00f92; no re-audit/reimplementation of completed tasks. The existing pre-browser auditStagingTarget guard rejected only the bare production hostname. Complete synthetic controlled-account inputs admitted www.kossilon-hub.vercel.app and bare/www DNS terminal-dot spellings. Uppercase www was generically rejected by exact-origin validation rather than classified as production. No production browser/network probe was performed.
+
+Minimal tested source efcd075451febc99bab042a95f21d9e8e25f9dbe rejects the two known production hosts after URL hostname normalization and terminal-dot removal. The exact HTTPS origin/build/approval/distinct-account/secret-free-output contracts remain; a distinct staging hostname remains usable. Baseline2PASS; RED4FAIL/3PASS; GREEN7PASS0FAIL0SKIP; actual complete Node22.23.3/owned PG18.6 suite238files2257PASS0FAIL0SKIP (maxWorkers4,368.44s). Real npm lint0errors/1existingwarning, typecheck0. Evidence: evidence/2026-10-03-staging-production-fence.json; raw logs and completion helper retained in the owned ignored staging-production-fence folder.
+
+R03 local code advances only this pre-browser safety contract; related R05 UC06/15/23 genuine Auth acceptance does not advance. Original50UAT/frozen SQL/manifest bytes unchanged;0newgenuineUAT/0hostedwrites; formalNO_GO. This known-host fence does not discover every production alias or prove isolated DB/Auth/R2/provider bindings. Approved staging target/restricted role/owners/restore/external release policy/native receipts/provider inputs remain the minimal external dependencies. One fresh whole-range review and final-head original Node22/24 CI remain required before normal source merge; actual receipts follow in the bug delivery PR. No migration/deployment/cron/env/message/invite/grant change.
+
+Rollback: normal revert of the isolated guard fix; preserve previous evidence and production hold. The weaker previous guard must not be treated as permission to run genuine UAT against production.
