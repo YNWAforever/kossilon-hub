@@ -35,3 +35,15 @@
 ## 邊界和可逆性
 
 本次 providerWrites=0、production exploit=0、externalMessages=0、invite/grant=0。R01 base 是實際 live SHA；其 migration bytes、server authority、data mode 必須保持。R02 使用 PG18.6 local disposable database，不能把 local restore 稱為 hosted recovery。正式 DB、部署和 native activation 仍需 target/hash/diff/rollback 完成後按有效授權處理。
+
+## Verification correction and first deliveries
+
+The structured Vercel receipt says mainGitDeploymentEnabled=false: automatic main deployment is disabled. The earlier prose 'hold false' was ambiguous and is corrected in the current environment matrix; no provider setting was changed. R00PR123 and R01PR124 exact-head CI green; R02PR125/full PG18 local results and per-task local rechecks are linked in oct3-local-acceptance.md. Original50 runtime status and immutable input evidence are preserved.
+
+## Fresh-review evidence delta（追加；舊快照保留）
+
+Two Important R02 findings were independently reproduced on PG18.6: changed durability/view/sequence semantics, and changed BYPASSRLS security, left the previous catalog unchanged. One fix pass now covers both, including table/routine ownership and recursively inherited security-definer-owner roles; actual tenant/function visibility1→2 is fingerprinted. Seven new regression cases watched RED; completecatalog9PASS／finalfull237files2245PASS0skip. The initial1NARparent-timeout failure and unchanged isolated/full reruns remain in receipts. V1/v2/v3 rehearsal evidence is immutable; rejected v1catalog hashes cannot authorize a release.
+
+Baseline/R00 normally merged only after reviewed exact-head SUCCESS; main7dcc1fa also passed originalNode22/24gates. PR124 remains an independent old-schema security draft, not a main downgrade or promoted production artifact. Final R02 source875734397f03479e1a0a915608b7dd60a06a9361／PR125 and PR126 require their own exact-head gates.
+
+Fresh production SELECT shows66ledger／4pending／14documents／no dispatch-started marker or release receipt. Frozen historicalguard6d4451 still matches. Original SQL/manifest/migrator/original50 byte-identical; no14legacyclean/nooriginclassification/noexternalaction. Live alias stillaa5d3cb and scheduler artifactunverified; formalNO_GO and preciseexternalowners remain. Rehearsal executing-source identity is the genuine deferredMinor; separateverification hashes identify this local code.

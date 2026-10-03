@@ -224,3 +224,21 @@ Original50UAT byte-unchanged19LOCALONLYpass31blocked0not_run; source50 versus la
 # 2026-10-03 執行版1.1續作
 
 新基線及分類見 [evidence-delta.md](evidence-delta.md)，R00–R11 分層進度見 [execution tracker](execution-tracker-2026-10-03.csv)。已安全解壓／驗證外14、內90項 SHA；main6f0a851／liveaa5d3cb／PG18.6 66歷史 ledger 於05:31UTC重新核對。R01 actual-live candidate 和 R00 clean-install RED 正在執行；R02完整批准相容性 policy 待實作。原 F01–F20／T00–T23／50UAT 及舊 evidence 保留，正式 NO_GO，未有正式寫入或 external send。
+
+## Oct3 local acceptance delivery
+
+R00 PR123 exact-head CI green; R01 PR124 isolated actual-live candidate exact-head CI green (production still aa5d3cb); R02 PR125 local PG18 restore/rollback/complete compatibility policy delivered, exact-head CI pending. R03 local61PASS and read-only backlog inventory delivered; R04–R10 existing local contracts rechecked:134/61/129/122/38/42/57PASS respectively, all0skip. Precise runtime owners/inputs remain in r03-staging-acceptance.md and oct3-local-acceptance.md; every R row updated. R11 formal NO_GO, original50 byte-unchanged19historicalLOCALONLYpass31blocked; no production migration/deployment/send/invite/grant. Same-environment historical local performance receipts preserved, no new hosted/SLO claim. main gitDeploymentEnabled=false means automatic main deployment is disabled; no provider setting changed.
+
+## Oct3 fresh review／首批本機交付收斂
+
+R00/F22：兩套獨立 clean installers 已由 npm75lint errors/Bun0 的 RED 對齊至 root3.8.3；Node22/24 真 npm lint/typecheck及原 gates 全綠。Baseline PR122、R00 PR123 正常 merge；main7dcc1fa／CI37105773083 每個 Node leg235files2214PASS0skip＋12DEMO。自動 main deployment仍停用。
+
+R01/F21：actual-live aa5d3cb 的獨立最小 security candidate257fb9／PR124，exactCI37103410777全綠，actualPG18 full177files1763PASS0skip／audits0。它仍是 draft maintenance candidate；live resolved artifact SBOM／same historical-schema hosted preview／fresh Auth及正式 promotion 未驗，不能把新 main schema帶進hotfix。
+
+R02/F01/F17：fresh whole-branch review兩項 Important已在同一RED→GREEN fix pass修復，包括view/sequence/durability、BYPASSRLS／table/routine owner及recursive owner memberships。完整catalog9PASS；explicit Node22/actualPG18 full237files2245PASS0fail0skip；npm lint0errors/1existingwarning、typecheck0。v3真 dump/restore／transaction rollback／catalog refusal／repeat refusal全過，82原tables資料與66ledger原封，after94tables1separate receipt。原 SQL、manifest、migrator及50UAT bytes不變。Initial2243PASS/1existingNARchild-timeout、未改timeout的isolatedPASS、Bun-shell path失敗與npmPASS均保留；不能抹成從未失敗。新 source SHA及exact-head gate在execution tracker／PR125；CI只升source/local層。
+
+R03–R10：原architecture保留，本輪local實際結果分別61／134／61／129／122／38／42／57PASS，均0skip；完整suite同時涵蓋既有flows。R11審閱包、SQL/hash、rollback／owner intake／native ticks程序齊備，正式 NO_GO。原50UAT仍19 historical LOCALONLY pass／31blocked，沒有新genuine acceptance。
+
+Production唯讀checkpoint仍aa5d3cb／PG18.6 66ledger／4pending／14documents，dispatch marker absent、historical receipt absent；fresh historical82-table guard6d4451一致。Web artifact已知，scheduler artifact not_verified，Sep30 ticks不可代替本輪native驗收。DB/Auth/R2/scanner/OCR-AI/WOZTELL/manual filing inputs逐owner列於r03-staging-acceptance.md／oct3-local-acceptance.md。沒有production migration／deploy／send／invite／grant。
+
+Fresh review唯一Minor延後：rehearsal receipt內缺獨立executing source identity；保留歷史source_baseline並用separate verification source hashes記本輪。最後exact-head CI、normal merges及closing live觀察在各delivery PR body記錄實際發生的結果，不推定future PASS。

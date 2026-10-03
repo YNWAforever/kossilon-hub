@@ -182,10 +182,22 @@ Actual WindowsNode24.18.0/Bun1.4.2/fresh dedicatedPG17, unfiltered235files2214PA
 | Layer | Actual identity / result | Remaining owner input |
 | --- | --- | --- |
 | Source / CI | main6f0a851; CI37093325320 Node22/24 each235files2214pass0skip, DEMO12pass | 新 candidate 各自 exact-head CI |
-| Production web | alias/project agree aa5d3cb / dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT READY; configured Node24.x; main deploy hold false | actual build resolved SBOM/runtime minor，candidate preview＋核准 promotion |
+| Production web | alias/project agree aa5d3cb / dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT READY; configured Node24.x; main gitDeploymentEnabled=false（自動部署停用） | actual build resolved SBOM/runtime minor，candidate preview＋核准 promotion |
 | Production DB read-only | red-morning-00331124 / br-muddy-mountain-aov8bbku / neondb PG18.6; ledger66; dispatch marker absent | DB owner logical attribution、actual app role、sole DDL freeze、hosted restore target及批准 |
 | Local PG18 | existing isolated container kossilon-release-pg18-20261002 / loopback55448，actual18.6 | local disposable rehearsal只驗 contracts；不能代替 hosted clone/recovery |
 | Scheduler | latest recorded Sep30 01:55UTC; production scheduler artifact SHA not_verified | Ops sole native platform、獨立 artifact receipt、3真 native ticks；dispatch保持受控 |
 | Genuine staging | 未提供 approved app/branch/database/storage/callback/recipient identity | Release/DB/Auth/Storage各 owner 按 evidence-delta 表提供秘密管理位置與非secret identity |
 
 完整 fresh SELECT／metadata／hash 在 [execution baseline](evidence/2026-10-03-execution-baseline.json)。上述每层不互相提升；原環境歷史紀錄如下保留。
+
+## Oct3 review closeout（LOCAL／CI與正式runtime分開）
+
+| Layer | Verified observation | Unmet genuine gate |
+| --- | --- | --- |
+| Source | baseline/R00 PR122/123 normal merged; main7dcc1fa CI37105773083 Node22/24 green | R02/acceptance exact-head gates on PR125/126; source success cannot authorize production |
+| Local | explicit Node22.23.3／ownedPG18.6 complete237files2245PASS0skip; catalog9PASS; v3restore/rollback/repeatPASS | Hosted target/app role/restore authority absent |
+| Production | fresh alias07:13UTC仍aa5d3cb; mainGitDeploymentEnabled=false; DB66ledger4pending14docs／nohistoricalreceipt | Deployed resolved SBOM/runtime minor; approved same-schema security promotion |
+| Scheduler | exact artifact SHA not_verified; only stale Sep30recorded ticks | Sole native owner/platform/artifact/log access;3native ticks及failure/recovery |
+| Auth/storage/provider/business | Local fixtures/contracts retained; original50runtime結果不提升 | r03-staging-acceptance.md各owner精確protocol/target/identity/approved-data inputs |
+
+No production DB, config, endpoint, deployment, message, invitation or grant was changed. Frozen SQL/manifest/ledger histories remain unchanged. Final fresh receipts are attached to each delivery PR after the action occurs.
