@@ -42,6 +42,67 @@ function repository(
 }
 
 describe("buildOperationsHealth", () => {
+  it("accepts exact reviewed historical schema compatibility without rewriting history or native health", async () => {
+    const repo = repository([], queues(), null, {
+      present: true,
+      applied: ["unknown-historical.sql"],
+    });
+    const hashes = { "columns:companies": "f".repeat(64) };
+    const view = await buildOperationsHealth(
+      { now: NOW },
+      {
+        repository: {
+          ...repo,
+          releaseCatalog: async () => ({
+            algorithm: "canonical-json-v1-sha256",
+            catalogSha256: "e".repeat(64),
+            historicalLedgerSha256: "d".repeat(64),
+            contractHashes: hashes,
+            receipt: {
+              id: "reviewed",
+              payloadSha256: "a".repeat(64),
+              manifestSha256: "b".repeat(64),
+            },
+            receiptCount: 1,
+            tableCount: 1,
+            databaseRole: "fixture-role",
+          }),
+        },
+        releasePolicy: {
+          buildSha: "c".repeat(40),
+          targetEnvironmentId: "isolated/fixture",
+          expectedContractHashes: hashes,
+          approved: {
+            id: "reviewed",
+            compatibleBuildSha: "c".repeat(40),
+            targetEnvironmentId: "isolated/fixture",
+            payloadSha256: "a".repeat(64),
+            manifestSha256: "b".repeat(64),
+            expectedHistoricalLedgerSha256: "d".repeat(64),
+            expectedPostReleaseCatalogSha256: "e".repeat(64),
+          },
+        },
+      },
+    );
+    expect(view.releaseCompatibility?.applicationSchemaCompatible).toBe(true);
+    expect(view.schema.state).toBe("diverged");
+    expect(view.maintenance?.state).toBe("never-observed");
+    expect(view.capabilities.find((capability) => capability.id === "database")?.health).toBe(
+      "healthy",
+    );
+  });
+  it("keeps historical compatibility blocked independently of native health without a reviewed artifact", async () => {
+    const repo = repository([], queues(), null, {
+      present: true,
+      applied: ["unknown-historical.sql"],
+    });
+    const view = await buildOperationsHealth({ now: NOW }, { repository: repo });
+    expect(view.schema.state).toBe("diverged");
+    expect(view.releaseCompatibility?.applicationSchemaCompatible).toBe(false);
+    expect(view.releaseCompatibility?.ordinaryMigrationAllowed).toBe(false);
+    expect(view.releaseCompatibility?.blockers).toContain("approved-release-missing");
+    expect(view.maintenance?.state).toBe("never-observed");
+  });
   it("keeps a failed metrics query unknown without losing successful independent reads", async () => {
     const repo = repository([]);
     repo.queueDepths.mockRejectedValue(new Error("password=private-secret"));
