@@ -201,3 +201,14 @@ Actual WindowsNode24.18.0/Bun1.4.2/fresh dedicatedPG17, unfiltered235files2214PA
 | Auth/storage/provider/business | Local fixtures/contracts retained; original50runtime結果不提升 | r03-staging-acceptance.md各owner精確protocol/target/identity/approved-data inputs |
 
 No production DB, config, endpoint, deployment, message, invitation or grant was changed. Frozen SQL/manifest/ledger histories remain unchanged. Final fresh receipts are attached to each delivery PR after the action occurs.
+
+## 2026-10-03 R02 source identity follow-up checkpoint
+
+| Layer | Actual observation | Status |
+|---|---|---|
+| Local source contracts | RED6fail → GREEN6pass; actual source/HEAD drift refusal | local-passing |
+| Local full PG18.6 / Node22.23.3 | first default2250PASS/1NARtimeout/0skip; isolated1PASS; complete maxWorkers4 rerun2251PASS/0fail/0skip | local-passing under recorded scheduling; default failure retained |
+| Owned PG18 historical rehearsal v4 | 28 byte hashes/full commit/tree/clean start; real restore/rollback/refusal;82 originaltables/66ledger preserved;94tables/1receipt | local-passing, hosted restore not_run |
+| Vercel production, GET-only at08:26UTC | aa5d3cb / dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT; main auto deploy disabled | unchanged, not candidate accepted |
+| Neon specified production, SELECT-only at08:28UTC | red-morning-00331124/br-muddy-mountain-aov8bbku/neondb;PG18.6/66ledger/4pending/14documents;receipt/dispatch marker absent | divergent history preserved; no writes |
+| Scheduler / genuine provider UCs / original50UAT | scheduler exact artifact unknown; no new genuine acceptances; original19 historical LOCALONLY pass/31blocked | runtime-blocked; formal NO_GO |
