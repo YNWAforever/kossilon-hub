@@ -109,8 +109,8 @@
     "runtime_acceptance": "not_verified"
   },
   "local_verification": {
-    "command": "node node_modules/vitest/vitest.mjs run scripts/audit-staging-config.test.ts --reporter=json --outputFile=.worktrees/r01-staging-request-20261004/staging-contracts.json",
-    "environment": "Windows Node22.23.3; existing LOCAL contract tests; no DB/provider/browser call",
+    "command": "C:/Program Files/nodejs/node.exe node_modules/vitest/vitest.mjs run scripts/audit-staging-config.test.ts --reporter=json --outputFile=.worktrees/r01-staging-request-20261004/staging-contracts-node24.json",
+    "environment": "Windows Node24.18.0, explicit C:/Program Files/nodejs/node.exe; existing LOCAL contract tests; no DB/provider/browser call",
     "test_files": 1,
     "pass": 7,
     "fail": 0,
@@ -119,12 +119,26 @@
     "release_command": "npm run verify:audit-release",
     "release_exit": 0,
     "release_status": "NO_GO",
-    "docs_only_local_full_db_suite": "not_rerun; no SQL/runtime dependency change"
+    "docs_only_local_full_db_suite": "not_rerun; no SQL/runtime dependency change",
+    "runtime_metadata": {
+      "before": {
+        "version": "v24.18.0",
+        "execPath": "C:\\Program Files\\nodejs\\node.exe",
+        "atUtc": "2026-10-03T20:50:18.438Z"
+      },
+      "after": {
+        "version": "v24.18.0",
+        "execPath": "C:\\Program Files\\nodejs\\node.exe",
+        "atUtc": "2026-10-03T20:50:48.168Z"
+      }
+    },
+    "first_run": "7PASS preserved; unqualified node and no pre/post runtime capture. Initial receipt Node22 label was inaccurate. Exact first-run runtime not established; current controlled rerun is Node24.18.0.",
+    "release_runtime": "First npm verifier invocation had no explicit runtime capture; exit0/NO_GO raw result retained."
   },
   "package_files": [
     {
       "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/request.json",
-      "sha256": "d2b9cf36449f80e56de63595450da64631c5fb77ce67a15f3907f5f95a184491"
+      "sha256": "47770d20a4aa73bfb7ba17618c1b5dfc0ff6548abf8042b4575a2c38f6ab6e1b"
     },
     {
       "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/acceptance-template.json",
@@ -166,7 +180,7 @@
     },
     {
       "path": ".worktrees/r01-staging-request-20261004/verify-package.py",
-      "sha256": "5bfe6e9f7b65ce2da4e6f6054b6865478b57f4c8b5810fe5a60ec46ced2a70cf"
+      "sha256": "ada66a15b68b23a6fbfaa907037095d9d35df5013b96064637f15b6a5f859206"
     },
     {
       "path": ".worktrees/r01-staging-request-20261004/initial-format-failure.log",
@@ -179,6 +193,50 @@
     {
       "path": ".worktrees/r01-staging-request-20261004/staged-format-failure.log",
       "sha256": "dd7046b14ebdd7a1d9c36246b5ff976c54486d26a22bdef81cfb4d0b5695bbed"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/node24-before.json",
+      "sha256": "e484bb11d765c3a46ff064b21c02059a2b13731a5fafcd03a353bb05550a6f52"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/node24-after.json",
+      "sha256": "235b2cac1ea65fe260228e5a754e6e39814cb11e45751c51bad167bd8447c0c3"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/staging-contracts-node24.json",
+      "sha256": "dc229e668087a589b8db591e03b9c54bf3ec12877332b356f6cc152bf859459d"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/staging-contracts-node24.log",
+      "sha256": "7d8803dd386a4d6cce87f167c5e3d9d052fcf30ba7cbfb5da23d58bd93d0bbf3"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/review-fix-red.log",
+      "sha256": "8c966a208f9d738156a7eded6fbc82a94f3f54e5b0a993537584702269f834ef"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/acceptance-template.json",
+      "sha256": "80cc56fb8cb7883c790b656542844f126741fc499a84dac6e663af2a3df523ab"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/initial-receipt.json",
+      "sha256": "437eb343a09092e009b28686cde5443a2ad8380a29dcdf82eaf6dd9ea9a8bf28"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/README.md",
+      "sha256": "138f0b318d6e534d69d904afcde17109143c5dad54feef97a812c3e6ff6177f7"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/request.json",
+      "sha256": "d2b9cf36449f80e56de63595450da64631c5fb77ce67a15f3907f5f95a184491"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/review-fix-green.log",
+      "sha256": "92aec90782ca8bb206252db1e8c13f5a3aaea65dbd37c14d21012db77804d2a8"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/sole-review.txt",
+      "sha256": "cf889502f7b7fb3472b853b90312fab23874a007df075d843dd8d8faec73b0ef"
     }
   ],
   "preserved": [
@@ -245,5 +303,28 @@
       "cause": "Windows Python text writer added CRLF to new receipt JSON; staged check caught untracked-file omission from the earlier worktree check. Normalized only the new receipt to LF and added a staged check to the local verifier.",
       "retained_failure": "Known staged failure repeated once to retain full raw output before correction."
     }
-  ]
+  ],
+  "review_correction": {
+    "frozen_review_head": "a13b973196fbec422afd14e1ebde7191a62a791f",
+    "fresh_reviews": 1,
+    "initial_critical": 0,
+    "initial_important": 1,
+    "initial_minor": 1,
+    "regraded_minor_to_important": "Circular Phase B prerequisites would obstruct approved setup; split inputs and post-operation acceptance while retaining all gates.",
+    "fix_passes": 1,
+    "doc_contract_red_exit": 1,
+    "red_failures": [
+      "current runtime label mismatch",
+      "Phase B prerequisites/results conflated"
+    ],
+    "corrected_runtime": "Node24.18.0 explicit executable and metadata",
+    "initial_request_sha256": "d2b9cf36449f80e56de63595450da64631c5fb77ce67a15f3907f5f95a184491",
+    "current_request_sha256": "47770d20a4aa73bfb7ba17618c1b5dfc0ff6548abf8042b4575a2c38f6ab6e1b",
+    "initial_files_retained": ".worktrees/r01-staging-request-20261004/pre-review-a13b973",
+    "historical_node22_evidence": "unchanged",
+    "genuine_result": 0,
+    "recorded_at_utc": "2026-10-03T20:55:04.150503+00:00",
+    "doc_contract_green_exit": 0,
+    "deferred_minors": 0
+  }
 }

@@ -68,13 +68,20 @@
     "r2_bucket": null,
     "web_artifact_sha": null,
     "scheduler_artifact_sha": null,
-    "required_before_operation": [
-      "Actual new branch ID and branch-specific read-write endpoint, restricted role/effective-grant plan.",
-      "Approved dedicated Vercel project/origin/protection; isolated env/secret binding diff.",
-      "Branch-specific Neon Auth endpoint/callback and controlled existing five identities/two-client scopes; fresh login receipts.",
-      "Isolated R2 bucket/object samples; external providers and scheduler stay unconfigured/held.",
-      "Candidate artifact installed SBOM/hash and same-historical-schema read-only smoke; no ordinary migrate or seed.",
-      "Separate exact target/diff/hash/acceptance/rollback authority for compute/role/Auth/env/deployment."
+    "prerequisite_inputs": [
+      "Actual assigned Phase A branch ID; reviewed branch-scoped compute specification and restricted-role/effective-grant plan. New endpoint ID is an approved creation result, not a precondition.",
+      "Reviewed dedicated Vercel project/origin/protection proposal and isolated environment/secret binding plan. Record assigned IDs/origin only from the approved creation result.",
+      "Approved existing controlled five identities/two-client scopes, branch-specific Auth/callback configuration plan and secret-store mapping; no fresh-login success is required to authorize setup.",
+      "Reviewed isolated R2 bucket/object plan; all external-provider and scheduler activation remains held.",
+      "Exact candidate source/lock/build plan, old historical physical/schema comparison procedure; no ordinary migrate or seed.",
+      "Separate exact scope/target/diff/hash/acceptance/rollback authority for each compute/role/Auth/env/deployment operation before it occurs."
+    ],
+    "acceptance_after_operation": [
+      "Record actual branch-specific read-write endpoint/new project IDs/protected staging origin and verify no production bindings.",
+      "Verify restricted-role effective grants and old historical schema/ledger integrity without ordinary migration or seed.",
+      "After authorized Auth setup, run fresh login/expiry/revoke/negative-scope checks with the approved identities. Real recipient flows require their own explicit scope.",
+      "After authorized build/deployment, capture exact web artifact and installed resolved SBOM/hash, then same-historical-schema read-only core smoke.",
+      "Before any production promotion, require all R01 genuine acceptance and the applicable exact production operation authority. R03 native ticks remain independent and not_run."
     ]
   },
   "formal_release_status": "NO_GO",
