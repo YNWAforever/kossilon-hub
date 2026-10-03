@@ -1,0 +1,49 @@
+{
+  "task_ids": [
+    "R03"
+  ],
+  "recorded_at_utc": "2026-10-03T10:19:52.3834012Z",
+  "reviewed_metadata_commit": "b0cf1bb83141dc987d8a16b034e70e50629edc72",
+  "source_product_baseline": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+  "ci": {
+    "run_id": 37115586545,
+    "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37115586545",
+    "head_sha": "b0cf1bb83141dc987d8a16b034e70e50629edc72",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Node24",
+        "conclusion": "success"
+      },
+      {
+        "name": "Node22",
+        "conclusion": "success"
+      },
+      {
+        "name": "verify",
+        "conclusion": "success"
+      }
+    ],
+    "each_node_leg": {
+      "files": 238,
+      "pass": 2252,
+      "fail": 0,
+      "skip": 0,
+      "postgres": "isolated CI PG17",
+      "demo_browser_pass": 12,
+      "genuine_uat_pass": 0
+    }
+  },
+  "raw_log": {
+    "path": ".worktrees/r03-runtime-target-inventory/ci-37115586545.log",
+    "sha256": "751c149e8aeb286ab69ab40e02e4ceda7e03b5374b30d3371e46820017c06f52"
+  },
+  "commands": [
+    "gh run view 37115586545 --repo YNWAforever/kossilon-hub --json status,conclusion,headSha,url,jobs",
+    "gh run view 37115586545 --repo YNWAforever/kossilon-hub --log"
+  ],
+  "scope": "Earlier b0cf1bb head only; the final documentation head and normal-merge main CI are separate delivery receipts in PR128",
+  "provider_writes": 0,
+  "new_genuine_uat_results": 0,
+  "formal_release": "NO_GO"
+}
