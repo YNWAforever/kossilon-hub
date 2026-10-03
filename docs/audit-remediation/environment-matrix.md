@@ -222,3 +222,18 @@ Final executing code `8e9eeab8c9f466c79b8f2c31fe679e885dabee42`; complete owned 
 Evidence: `evidence/2026-10-03-r02-historical-rehearsal-v5.json`, `evidence/2026-10-03-r02-source-root-verification.json`, `oct3-source-identity-execution-review.md`; original50UAT and frozen SQL/manifest/migrator unchanged. `current_build_sha` records the actual local executing code above; the PR's published head, exact-head CI and normal merge receipt are separate GitHub artifacts in PR127. Previous CI37111128136 SUCCESS is explicitly the older `1cebb79` head and cannot stand in for the root-guard final-head gate.
 
 Runtime remains blocked and formal release NO_GO; no hosted DB/deploy/send/invite/grant occurred. Approved hosted staging/restricted app role/owner and DDL freeze/restore target/external approval binding and genuine provider inputs remain the next dependencies.
+
+## R03 fresh target/configuration inventory — 2026-10-03T10:01Z
+
+| Layer | Actual read-only result | Exact unresolved gate |
+|---|---|---|
+| Source | main60a7b97; PR127/mainCI green238files2252PASS0skip perNode leg,12DEMO each | This follow-up publication/CI receipt remains separate; no runtime PASS |
+| Production web / Vercel cron config | aa5d3cb/dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT READY; project definitions0/deployment crons0; project cron deploymentId matches web | Ops must name/approve one staging native platform/artifact; other-platform scheduler SHA remains not_verified |
+| Current source cron | main vercel.json declares /api/cron/maintenance every5min; automatic main Git deployment held; live source lacks vercel.json | Source declaration is not a deployed or accepted scheduler |
+| Neon resources | 4branches: production+3historicalbackup labels;1db/neondb;4roles | DB/Release must supply approved isolated target, restore scope and restricted app role; retain backup branches |
+| DB technical access | actualPG18.6 observerneondb_owner; BYPASSRLS/CREATE ROLE/CREATE DBtrue | authenticator login capability is not proof of actual web role/grants/tenant enforcement |
+| Vercel related targets | complete76project inventory;2Kossilon-name matches including demo;12related binding entries | Differently named staging may exist; owner must identify it. Preview isolation not accepted from name or binding presence |
+| Auth callbacks | four trusted domains, localhost/production variants | Approved staging callback and fresh controlled role/Google/expiry/revocation receipts |
+| Logs / CLI | GET grouped-query access available; cron-text7d0rows; allpaths24h43distinct/top25partial; CLI50.28.0 crons unsupported | Actual native invocation IDs/artifact/retention/export and3ticks/failure/recovery remain missing |
+
+Evidence: 2026-10-03-r03-target-{neon,vercel,runtime-logs}.json. No provider values, hosted writes, invites, grants or messages; original50 status unchanged and releaseNO_GO.
