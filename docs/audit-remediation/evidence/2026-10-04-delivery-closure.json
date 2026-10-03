@@ -1,0 +1,206 @@
+{
+  "recorded_at_utc": "2026-10-03T19:27:30.0045616Z",
+  "source_delivery": {
+    "pr": 130,
+    "head": "afc86dcd37a19827fea153c4707ceb6d3f15d0f8",
+    "merge": "a5fa31dc16920963a82b802104957e270812e2ba",
+    "parents": [
+      "f038ee79018f9a604e2affc1ef2f85aa3a5a702b",
+      "afc86dcd37a19827fea153c4707ceb6d3f15d0f8"
+    ],
+    "url": "https://github.com/YNWAforever/kossilon-hub/pull/130",
+    "comment": "https://github.com/YNWAforever/kossilon-hub/pull/130#issuecomment-5972554826"
+  },
+  "ci": [
+    {
+      "run": 37145651035,
+      "sha": "afc86dcd37a19827fea153c4707ceb6d3f15d0f8",
+      "raw_json": ".worktrees/preserve-browser-evidence/closing/pr130-ci-20261003T185638380.json",
+      "raw_log": ".worktrees/preserve-browser-evidence/closing/pr130-ci-37145651035.log"
+    },
+    {
+      "run": 37146214027,
+      "sha": "a5fa31dc16920963a82b802104957e270812e2ba",
+      "raw_json": ".worktrees/preserve-browser-evidence/closing/main-ci-37146214027-final.json",
+      "raw_log": ".worktrees/preserve-browser-evidence/closing/main-ci-37146214027.log"
+    }
+  ],
+  "each_ci_runtime": {
+    "node_majors": [
+      22,
+      24
+    ],
+    "postgres_major": 17,
+    "bun": "1.4.2",
+    "files": 239,
+    "pass": 2263,
+    "fail": 0,
+    "skip": 0,
+    "browser_pass": 12,
+    "browser_fail": 0,
+    "browser_skip": 0
+  },
+  "local_tests": "Historical independent LOCAL Linux Node22.23.2/Bun1.4.2/PG18.6 full2263PASS; not rerun for this documentation change",
+  "original_uat": {
+    "total": 50,
+    "historical_local_only": 19,
+    "blocked": 31,
+    "new_genuine": 0
+  },
+  "protected": [
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-navigation.png",
+      "sha256": "bb22d95fea883015b3edaa1db8904634c424c995d4a98de333c9a65d299d8f19"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-settings.png",
+      "sha256": "fc2ad8ddfb32d33ab3b1b10d28e0e47ff123cae396f97cd7271b9d7f6728309e"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-navigation.png",
+      "sha256": "6b4bdad24dbfbca159c043e7146c10ed8fdb143063c4928ee0c7d1ff5c67f9ca"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-settings.png",
+      "sha256": "e9b960635dc5a2a7736750dea0caaed44b2111233c06d1bef6b3f77290a67e33"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-desktop1280-browser-performance.json",
+      "sha256": "3941a8e57079d7e4568ba0c3883dd2580ad2697f706b62a43cb50148209195e1"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-mobile390-browser-performance.json",
+      "sha256": "72985b3d09f86268f3e2f19bcfa7e087ebc98acb57df33fc267c4215c28d3ba1"
+    },
+    {
+      "path": "docs/audit-remediation/uat-results.csv",
+      "sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release.sql",
+      "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+      "sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae"
+    }
+  ],
+  "production_observation": {
+    "observation_completed_by_utc": "2026-10-03T19:22:50Z",
+    "observation_completed_by_hkt": "2026-10-04T03:22:50+08:00",
+    "web": {
+      "id": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+      "project_id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "ready_state": "READY",
+      "target": "production",
+      "source_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+      "aliases": [
+        "kossilon-hub.vercel.app",
+        "kossilon-hub-ynwaforevers-projects.vercel.app",
+        "kossilon-hub-git-main-ynwaforevers-projects.vercel.app"
+      ]
+    },
+    "branches": [
+      {
+        "id": "br-muddy-mountain-aov8bbku",
+        "name": "production",
+        "parent_id": null,
+        "current_state": "ready",
+        "default": true
+      },
+      {
+        "id": "br-fancy-rain-aon06iws",
+        "name": "pre-0021-0065-restore-20260929",
+        "parent_id": null,
+        "current_state": "ready",
+        "default": false
+      },
+      {
+        "id": "br-late-sun-aojgnr1k",
+        "name": "authorized-before-0066-20260930",
+        "parent_id": "br-muddy-mountain-aov8bbku",
+        "current_state": "ready",
+        "default": false
+      },
+      {
+        "id": "br-flat-heart-aovfw8hr",
+        "name": "authorized-before-0021-0065-20260929",
+        "parent_id": "br-muddy-mountain-aov8bbku",
+        "current_state": "ready",
+        "default": false
+      }
+    ],
+    "build_log_error": "McpServerError: Tool get_deployment_build_logs not found",
+    "provider_writes": 0
+  },
+  "schema": "Last actual SELECT 2026-10-03: PG18.6/66 historical ledger; source50files/max0082 remains divergent. No new schema SELECT or DDL in this receipt.",
+  "advisories": [
+    {
+      "url": "https://github.com/TanStack/router/security/advisories/GHSA-qx66-fv34-fjm8",
+      "checked_hkt": "2026-10-04",
+      "patched_react_start": "1.168.60",
+      "patched_server_core": "1.169.39",
+      "scope": "Official advisory rechecked; not deployed dependency proof"
+    },
+    {
+      "url": "https://github.com/mozilla/pdf.js/security/advisories/GHSA-hq66-cqwq-w95j",
+      "checked_hkt": "2026-10-04",
+      "patched_pdfjs_dist": "6.2.108",
+      "scope": "Official advisory rechecked; conditional scripting impact; not scan or deployed dependency proof"
+    }
+  ],
+  "remaining_candidate": {
+    "pr": 124,
+    "head": "257fb9d0be17525a305f38bd26001ad8fa45deb8",
+    "base": "codex/oct3-live-security-base",
+    "ci_run": 37103410777,
+    "scope": "isolated actual-live maintenance candidate only",
+    "minimal_blocker": "Security/Release/DB/Auth: approved same-historical-schema hosted staging, fresh controlled Auth and deployed resolved SBOM; exact artifact acceptance before promotion. Build-log connector is unavailable; environment owner must export an artifact-bound SBOM/log receipt through approved tooling."
+  },
+  "independent_scheduler_artifact": "not_verified",
+  "formal_release": "NO_GO",
+  "provider_writes": 0,
+  "limitations": [
+    "Fresh branch inventory is not approved staging identity, role/isolation proof or restore authority.",
+    "Metadata/source/audits/CI are not installed deployed SBOM, fresh Auth, business UAT or native ticks.",
+    "Existing owned raw captures stay local; tracked hashes do not add durable hosted retention."
+  ],
+  "artifacts": [
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-03-preserve-browser-evidence.json",
+      "sha256": "e804ce96f3a0b61cf073cf2c88b7bdd7f285291d3b429380dad683e70bb2e161"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/completion.json",
+      "sha256": "90a36eddaeaa2169d6713bf5114a6973a602e3314840ec5cbe67c1e54de55289"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/pr130-ci-20261003T185638380.json",
+      "sha256": "7df15269500ede474e55c16385f7841aa172c5d48f80c86914773ea821e175b5"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/pr130-ci-37145651035.log",
+      "sha256": "54babf7b7b04a8b1b892720f17bdc1e4cbc6d2b031b69287185b8047f2b5d1d7"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/pr130-merged.json",
+      "sha256": "55d82a68cb1e878506a1f53548f11e798b6a2636b42d49670731b14c093e01a2"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/main-ci-37146214027-final.json",
+      "sha256": "77b5704caa9b51a4991bf0f84637de831034ca8cf3ae739d0b1661b698826821"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/main-ci-37146214027.log",
+      "sha256": "184b81e4792614f812fb6471ae5fd2f14c5903c773dc9ead840ba4dd31e8f16f"
+    },
+    {
+      "path": ".worktrees/oct3-close-delivery-ledger/live-neon-observation.json",
+      "sha256": "ea3c6164d5ca6acf428478e29630c05c1b017e0cd85e371529a4332efe006635"
+    },
+    {
+      "path": ".worktrees/oct3-close-delivery-ledger/pr124-current.json",
+      "sha256": "bf26694285e9d5b1217c0ab76b233eed1514ac73c85276cbaeb7712eb00a8f76"
+    }
+  ]
+}
