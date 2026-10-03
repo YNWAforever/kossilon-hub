@@ -1,0 +1,330 @@
+{
+  "task_ids": [
+    "R01",
+    "R03"
+  ],
+  "finding_ids": [
+    "F21"
+  ],
+  "case_ids": [
+    "UC26"
+  ],
+  "state": "LOCAL request package verified; hosted operation not performed",
+  "source_main": "f5efd1283d00f02189e51ddf1e287d35a547360d",
+  "candidate_sha": "257fb9d0be17525a305f38bd26001ad8fa45deb8",
+  "recorded_at_utc": "2026-10-03T20:40:35.251510+00:00",
+  "authorization": "User selected local preparation of a concrete new staging package; no hosted creation/compute/grant/Auth/env/deploy/send approval inferred.",
+  "fresh_metadata": {
+    "observed_at_utc": "2026-10-03T20:32:57.892Z",
+    "read_only_calls": [
+      "vercel_get_deployment(kossilon-hub.vercel.app,team_qvzlsFmfCsLkgItSypqHjw3z)",
+      "neon_list_branches(red-morning-00331124,include_deleted=false)"
+    ],
+    "web": {
+      "deployment_id": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+      "project_id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "team_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+      "source_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+      "state": "READY",
+      "aliases": [
+        "kossilon-hub.vercel.app",
+        "kossilon-hub-ynwaforevers-projects.vercel.app",
+        "kossilon-hub-git-main-ynwaforevers-projects.vercel.app"
+      ]
+    },
+    "neon_branches": [
+      {
+        "id": "br-muddy-mountain-aov8bbku",
+        "project_id": "red-morning-00331124",
+        "name": "production",
+        "parent_id": null,
+        "default": true,
+        "current_state": "ready",
+        "protected": false
+      },
+      {
+        "id": "br-fancy-rain-aon06iws",
+        "project_id": "red-morning-00331124",
+        "name": "pre-0021-0065-restore-20260929",
+        "parent_id": null,
+        "default": false,
+        "current_state": "ready",
+        "protected": false
+      },
+      {
+        "id": "br-late-sun-aojgnr1k",
+        "project_id": "red-morning-00331124",
+        "name": "authorized-before-0066-20260930",
+        "parent_id": "br-muddy-mountain-aov8bbku",
+        "default": false,
+        "current_state": "ready",
+        "protected": false
+      },
+      {
+        "id": "br-flat-heart-aovfw8hr",
+        "project_id": "red-morning-00331124",
+        "name": "authorized-before-0021-0065-20260929",
+        "parent_id": "br-muddy-mountain-aov8bbku",
+        "default": false,
+        "current_state": "ready",
+        "protected": false
+      }
+    ],
+    "actual_schema": "not_refreshed: last actual SELECT PG18.6/66 historical ledger; metadata is not schema proof",
+    "scheduler_sha": "not_verified",
+    "deployed_resolved_sbom": "not_verified",
+    "new_genuine_uat": 0,
+    "hosted_writes": 0
+  },
+  "candidate": {
+    "candidate": "257fb9d0be17525a305f38bd26001ad8fa45deb8",
+    "base": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "changed_files": [
+      ".github/workflows/ci.yml",
+      "bun.lock",
+      "docs/audit-remediation/evidence/2026-10-03-r01-security-candidate.json",
+      "docs/audit-remediation/oct3-live-security-candidate.md",
+      "package-lock.json",
+      "package.json",
+      "src/routeTree.gen.ts",
+      "src/routes/-root-error-contract.test.tsx",
+      "src/routes/__root.tsx",
+      "src/server/tanstack-transport-security.test.ts"
+    ],
+    "migration_files": 34,
+    "migration_and_feature_diff": [],
+    "file_sha256": {
+      "package.json": "6dfacfe56c1eb2bc234e1ee75a68a4e5ec9c5f5cdb9f3f5652264318305d2119",
+      "package-lock.json": "b1783c53b4d48da65449460032962a8c938a861b4b89543dcd8e4f39f19c0383",
+      "bun.lock": "7bc7e8416370dba81e4712969504f47a12bb2c1698eb393856f7bb78d678b7d4"
+    }
+  },
+  "candidate_pr": {
+    "url": "https://github.com/YNWAforever/kossilon-hub/pull/124",
+    "base": "codex/oct3-live-security-base",
+    "head": "257fb9d0be17525a305f38bd26001ad8fa45deb8",
+    "is_draft": true,
+    "exact_head_checks_success": 5,
+    "ci_run": 37103410777,
+    "runtime_acceptance": "not_verified"
+  },
+  "local_verification": {
+    "command": "C:/Program Files/nodejs/node.exe node_modules/vitest/vitest.mjs run scripts/audit-staging-config.test.ts --reporter=json --outputFile=.worktrees/r01-staging-request-20261004/staging-contracts-node24.json",
+    "environment": "Windows Node24.18.0, explicit C:/Program Files/nodejs/node.exe; existing LOCAL contract tests; no DB/provider/browser call",
+    "test_files": 1,
+    "pass": 7,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "release_command": "npm run verify:audit-release",
+    "release_exit": 0,
+    "release_status": "NO_GO",
+    "docs_only_local_full_db_suite": "not_rerun; no SQL/runtime dependency change",
+    "runtime_metadata": {
+      "before": {
+        "version": "v24.18.0",
+        "execPath": "C:\\Program Files\\nodejs\\node.exe",
+        "atUtc": "2026-10-03T20:50:18.438Z"
+      },
+      "after": {
+        "version": "v24.18.0",
+        "execPath": "C:\\Program Files\\nodejs\\node.exe",
+        "atUtc": "2026-10-03T20:50:48.168Z"
+      }
+    },
+    "first_run": "7PASS preserved; unqualified node and no pre/post runtime capture. Initial receipt Node22 label was inaccurate. Exact first-run runtime not established; current controlled rerun is Node24.18.0.",
+    "release_runtime": "First npm verifier invocation had no explicit runtime capture; exit0/NO_GO raw result retained."
+  },
+  "package_files": [
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/request.json",
+      "sha256": "47770d20a4aa73bfb7ba17618c1b5dfc0ff6548abf8042b4575a2c38f6ab6e1b"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/acceptance-template.json",
+      "sha256": "80cc56fb8cb7883c790b656542844f126741fc499a84dac6e663af2a3df523ab"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/README.md",
+      "sha256": "138f0b318d6e534d69d904afcde17109143c5dad54feef97a812c3e6ff6177f7"
+    },
+    {
+      "path": "docs/audit-remediation/oct4-r01-staging-package-plan.md",
+      "sha256": "6a9873f504b195b786033db006d4db56868117466a30fe56007ece795067bb4b"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": ".worktrees/r01-staging-request-20261004/fresh-metadata.json",
+      "sha256": "8291b1cee7bf521e91c369eb5bc1a664cfaa3bad6799fdc3ef26c324ee0077ce"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/candidate-source-check.json",
+      "sha256": "c69ea0acba2dd4776c50ee44402dd250d8c6be8d202029a42b112e88407a7955"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/candidate-pr124.json",
+      "sha256": "9a4aa75e0bd2e1b67a42773f363758539532d6752ad272c817250b0b7db14ad4"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/staging-contracts.json",
+      "sha256": "416ce55e93021dd6cddff47b1db9cc7dc4de54f33b05ce29d4a7cdde62d530a1"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/staging-contracts.log",
+      "sha256": "954ddc3982d05643aa554ec612d7cfd9f4e3ff26172e224abd3d007f12d0f10a"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/release-gate.log",
+      "sha256": "efe0518bd37d7e95c89928511496c54108369f1f5251cb555b1db8af83f4556d"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/verify-package.py",
+      "sha256": "ada66a15b68b23a6fbfaa907037095d9d35df5013b96064637f15b6a5f859206"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/initial-format-failure.log",
+      "sha256": "655e4fd3ed50287c640150ee682a5f8dba8c8246bebc0bcccb6ecada81d86699"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/package-green.log",
+      "sha256": "92aec90782ca8bb206252db1e8c13f5a3aaea65dbd37c14d21012db77804d2a8"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/staged-format-failure.log",
+      "sha256": "dd7046b14ebdd7a1d9c36246b5ff976c54486d26a22bdef81cfb4d0b5695bbed"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/node24-before.json",
+      "sha256": "e484bb11d765c3a46ff064b21c02059a2b13731a5fafcd03a353bb05550a6f52"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/node24-after.json",
+      "sha256": "235b2cac1ea65fe260228e5a754e6e39814cb11e45751c51bad167bd8447c0c3"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/staging-contracts-node24.json",
+      "sha256": "dc229e668087a589b8db591e03b9c54bf3ec12877332b356f6cc152bf859459d"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/staging-contracts-node24.log",
+      "sha256": "7d8803dd386a4d6cce87f167c5e3d9d052fcf30ba7cbfb5da23d58bd93d0bbf3"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/review-fix-red.log",
+      "sha256": "8c966a208f9d738156a7eded6fbc82a94f3f54e5b0a993537584702269f834ef"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/acceptance-template.json",
+      "sha256": "80cc56fb8cb7883c790b656542844f126741fc499a84dac6e663af2a3df523ab"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/initial-receipt.json",
+      "sha256": "437eb343a09092e009b28686cde5443a2ad8380a29dcdf82eaf6dd9ea9a8bf28"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/README.md",
+      "sha256": "138f0b318d6e534d69d904afcde17109143c5dad54feef97a812c3e6ff6177f7"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/pre-review-a13b973/request.json",
+      "sha256": "d2b9cf36449f80e56de63595450da64631c5fb77ce67a15f3907f5f95a184491"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/review-fix-green.log",
+      "sha256": "92aec90782ca8bb206252db1e8c13f5a3aaea65dbd37c14d21012db77804d2a8"
+    },
+    {
+      "path": ".worktrees/r01-staging-request-20261004/sole-review.txt",
+      "sha256": "cf889502f7b7fb3472b853b90312fab23874a007df075d843dd8d8faec73b0ef"
+    }
+  ],
+  "preserved": [
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-navigation.png",
+      "sha256": "bb22d95fea883015b3edaa1db8904634c424c995d4a98de333c9a65d299d8f19"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-settings.png",
+      "sha256": "fc2ad8ddfb32d33ab3b1b10d28e0e47ff123cae396f97cd7271b9d7f6728309e"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-navigation.png",
+      "sha256": "6b4bdad24dbfbca159c043e7146c10ed8fdb143063c4928ee0c7d1ff5c67f9ca"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-settings.png",
+      "sha256": "e9b960635dc5a2a7736750dea0caaed44b2111233c06d1bef6b3f77290a67e33"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-desktop1280-browser-performance.json",
+      "sha256": "3941a8e57079d7e4568ba0c3883dd2580ad2697f706b62a43cb50148209195e1"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-mobile390-browser-performance.json",
+      "sha256": "72985b3d09f86268f3e2f19bcfa7e087ebc98acb57df33fc267c4215c28d3ba1"
+    },
+    {
+      "path": "docs/audit-remediation/uat-results.csv",
+      "sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release.sql",
+      "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+      "sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae"
+    }
+  ],
+  "original_uat": {
+    "total": 50,
+    "historical_local_only": 19,
+    "blocked": 31,
+    "new_genuine": 0
+  },
+  "hosted_writes": 0,
+  "native_ticks": 0,
+  "migration_sql": [],
+  "formal_release": "NO_GO",
+  "r01_next": "Explicit Phase A approval bound to exact request hash; create branch only, record actual new ID/endpoints/parent snapshot. Phase B needs restricted-role/Auth/R2/new protected origin and separate exact-operation authority.",
+  "r03_next": "No full-release compatibility/native acceptance advanced. Keep seven owners/DDL freeze/hosted restore/external release contract/native artifact/provider inputs required.",
+  "initial_local_validation_failures": [
+    {
+      "scope": "LOCAL documentation writer",
+      "driver_exit": 1,
+      "git_diff_check_exit": 2,
+      "cause": "Two changed CSV rows used CRLF while Git baseline uses LF; fixed only the two row endings. No product/provider RED claimed.",
+      "retained_failure": "Known failure repeated once to retain a raw log before correction; original wrapper exit0 was not a successful verifier result."
+    },
+    {
+      "scope": "LOCAL staged documentation",
+      "git_cached_diff_check_exit": 2,
+      "cause": "Windows Python text writer added CRLF to new receipt JSON; staged check caught untracked-file omission from the earlier worktree check. Normalized only the new receipt to LF and added a staged check to the local verifier.",
+      "retained_failure": "Known staged failure repeated once to retain full raw output before correction."
+    }
+  ],
+  "review_correction": {
+    "frozen_review_head": "a13b973196fbec422afd14e1ebde7191a62a791f",
+    "fresh_reviews": 1,
+    "initial_critical": 0,
+    "initial_important": 1,
+    "initial_minor": 1,
+    "regraded_minor_to_important": "Circular Phase B prerequisites would obstruct approved setup; split inputs and post-operation acceptance while retaining all gates.",
+    "fix_passes": 1,
+    "doc_contract_red_exit": 1,
+    "red_failures": [
+      "current runtime label mismatch",
+      "Phase B prerequisites/results conflated"
+    ],
+    "corrected_runtime": "Node24.18.0 explicit executable and metadata",
+    "initial_request_sha256": "d2b9cf36449f80e56de63595450da64631c5fb77ce67a15f3907f5f95a184491",
+    "current_request_sha256": "47770d20a4aa73bfb7ba17618c1b5dfc0ff6548abf8042b4575a2c38f6ab6e1b",
+    "initial_files_retained": ".worktrees/r01-staging-request-20261004/pre-review-a13b973",
+    "historical_node22_evidence": "unchanged",
+    "genuine_result": 0,
+    "recorded_at_utc": "2026-10-03T20:55:04.150503+00:00",
+    "doc_contract_green_exit": 0,
+    "deferred_minors": 0
+  }
+}
