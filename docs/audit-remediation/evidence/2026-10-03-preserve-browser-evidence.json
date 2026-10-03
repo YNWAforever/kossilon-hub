@@ -1,0 +1,983 @@
+{
+  "bug_id": "BUG-R11-01",
+  "task_ids": [
+    "R11",
+    "R09",
+    "R10"
+  ],
+  "related_original_tasks": [
+    "T20",
+    "T21",
+    "T22"
+  ],
+  "related_cases": [
+    "UC11",
+    "UC24",
+    "UC25"
+  ],
+  "finding_ids": [
+    "F19",
+    "F18"
+  ],
+  "base_main": "f038ee79018f9a604e2affc1ef2f85aa3a5a702b",
+  "code_commit": "f415cb2ca5255603ee47e9a659d7e9ab1b12dd46",
+  "observed_at_utc": "2026-10-03T18:25:43.3632722Z",
+  "environment": "LOCAL Windows read-only DEMO; Linux complete real PG18.6 contracts, not genuine runtime UAT",
+  "node": "22.23.2 Linux / 22.23.3 Windows browser/static",
+  "bun": "1.4.2",
+  "postgres": "18.6",
+  "local_database": {
+    "database": "kossilon_browser_evidence_linux_20261004_a2",
+    "port": 5432,
+    "host": "localhost",
+    "old_failed_databases_retained": [
+      "kossilon_oct3_main_20261003",
+      "kossilon_browser_evidence_20261003_a1"
+    ]
+  },
+  "test_execution": {
+    "git_head": "f038ee79018f9a604e2affc1ef2f85aa3a5a702b",
+    "source_before": ".worktrees/preserve-browser-evidence/linux-fixed-before.txt",
+    "linux_image_digest": "sha256:dd5847a04b0deee391fa145f1f4c6d214196668b6bcc7988ebed67249f226844",
+    "overlay": "six exact tested checkout source hashes; Git normalizes checkout line endings in published blobs",
+    "source_after": ".worktrees/preserve-browser-evidence/linux-fixed-after.txt"
+  },
+  "red": {
+    "preservation_contract_exit": 1,
+    "browser_exit": 0,
+    "actual_browser_scenarios_passed": 6,
+    "authoritative_history_changed": 0,
+    "historical_copies_changed": 6,
+    "scope": "original evidence-producing consumers in owned baseline Git snapshot"
+  },
+  "intermediate": {
+    "tooling_error": "baseline TS2783 duplicate cls",
+    "tooling_green_exit": 0,
+    "expected_captures": 6,
+    "subsequent_worker_root_fix_verified": true,
+    "main_captures": 0,
+    "worker_root_ownership_red": 1,
+    "tooling_red_exit": 2
+  },
+  "browser": {
+    "failed": 0,
+    "skipped": 0,
+    "second_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\local-browser-runs\\run-JqQ8A8",
+    "first_changed": 0,
+    "passed_per_run": 12,
+    "after_cls_cleanup": {
+      "exit": 0,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "root": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\local-browser-runs\\run-XEtVOh",
+      "captures": 6,
+      "protected_changed": 0,
+      "first_changed": 0,
+      "cls_values": [
+        0,
+        0
+      ],
+      "environment": "LOCAL read-only DEMO / owned warm loopback5180 / Node22.23.3 Chrome",
+      "observed_at_utc": "2026-10-03T18:08:56.4970228Z"
+    },
+    "first_root": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\local-browser-runs\\run-pWXnjD",
+    "different_roots": true,
+    "server": "verified owned warm loopback5180; original fresh-server gate independently required in exact-head CI",
+    "first_files": 8,
+    "captures_per_run": 6
+  },
+  "focused": {
+    "files": 1,
+    "failed": 0,
+    "passed": 6,
+    "skipped": 0
+  },
+  "full": {
+    "skipped": 0,
+    "scope_note": "Complete source-bound real PG18 suite, unchanged test budgets; only the nested controlled NAR child now explicitly selects the existing db project. Root unit and DB projects remain enabled and ordered; original CI unchanged. Earlier failures retained.",
+    "files": 239,
+    "command": "docker exec owned Linux worker: node node_modules/vitest/vitest.mjs run --maxWorkers=1 --reporter=json --outputFile=/workspace/linux-fixed-full.json",
+    "failed": 0,
+    "source_drift": false,
+    "exit": 0,
+    "passed": 2263
+  },
+  "static": {
+    "project_typecheck_exit": 0,
+    "extra_tooling_typecheck_red_exit": 2,
+    "extra_tooling_typecheck_green_exit": 0,
+    "lint_errors": 0,
+    "command": "actual npm CLI run lint/typecheck; explicit tsc ES2022 ESNext Bundler over changed e2e consumers/config/helper/test",
+    "final": {
+      "lint_exit": 0,
+      "lint_errors": 0,
+      "existing_warning": 1,
+      "project_typecheck_exit": 0,
+      "tooling_typecheck_exit": 0,
+      "source_commit": "f415cb2ca5255603ee47e9a659d7e9ab1b12dd46",
+      "observed_at_utc": "2026-10-03T18:25:32.2639225Z"
+    },
+    "existing_warning": 1,
+    "lint_exit": 0
+  },
+  "setup_failures": {
+    "second_full": "239files2240PASS23FAIL0SKIP, NAR first40s timeout/sequential cascade and child30s; unchanged NAR23 isolatedPASS; old DB has2synthetic companies4users2batches, not deleted",
+    "fresh_windows_full": "239files2259PASS4FAIL0SKIP: payment assertion/scale120s/NARchild30s/WhatsApp20s; unchanged isolated payment3PASS.",
+    "linux_with_bun": "239files2260PASS3FAIL0SKIP: scale120s/NARchild30s/Operations no-ledger30s. Unchanged three isolated28PASS; observed document-page SQL progressed without lock wait. Cause unconfirmed.",
+    "initial_full": "239files2262PASS1Today loading assertionFAIL0SKIP; static/full runners overlapped; unchanged isolated Today4PASS",
+    "snapshot_full": "10PASS/2PDF failures; external node_modules junction/Vite worker URL default undefined; main parser unchanged; normal checkout full12 passes",
+    "cold_dev_readiness": "30s timeout before tests; not a preservation RED",
+    "linux_without_bun": "239files2262PASS1FAIL0SKIP: spawn bun ENOENT; not a domain PASS.",
+    "original_single_worker": "239files2262PASS1FAIL0SKIP: NAR controlled-child parent30s; source unchanged, actual RED for BUG-R11-02.",
+    "earliest_snapshot_failure_attachments": "shared old outputDir removed them on later run; actual error text/log retained, original trace not claimed available",
+    "diagnostic": "initial SELECT wrong name columns failed; corrected schema-bound SELECT succeeded",
+    "causality": "fresh fixture and fewer workers do not establish which factor caused the previous failures"
+  },
+  "protected_before": [
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-navigation.png",
+      "sha256": "bb22d95fea883015b3edaa1db8904634c424c995d4a98de333c9a65d299d8f19"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-settings.png",
+      "sha256": "fc2ad8ddfb32d33ab3b1b10d28e0e47ff123cae396f97cd7271b9d7f6728309e"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-navigation.png",
+      "sha256": "6b4bdad24dbfbca159c043e7146c10ed8fdb143063c4928ee0c7d1ff5c67f9ca"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-settings.png",
+      "sha256": "e9b960635dc5a2a7736750dea0caaed44b2111233c06d1bef6b3f77290a67e33"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-desktop1280-browser-performance.json",
+      "sha256": "3941a8e57079d7e4568ba0c3883dd2580ad2697f706b62a43cb50148209195e1"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-mobile390-browser-performance.json",
+      "sha256": "72985b3d09f86268f3e2f19bcfa7e087ebc98acb57df33fc267c4215c28d3ba1"
+    },
+    {
+      "path": "docs/audit-remediation/uat-results.csv",
+      "sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release.sql",
+      "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+      "sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae"
+    }
+  ],
+  "source_file_hashes": {
+    "playwright.local.config.ts": "5446a3636640279bc3254d65e4b9e369fc002d1c61452504a56f9aa212830dcd",
+    "e2e/local-evidence-guard.ts": "65f592daebc4cab84cae08c83ada421bc220751492d8fa77ebee510c6110ed62",
+    "e2e/local-ux.spec.ts": "9061a09f63fe4739d15a8cbf56b74ff25d6e9fc5adf6faec15c6a86d230a31b4",
+    "e2e/performance.spec.ts": "4932f834de1c75c3cba9f36086d9a0b3be29f22bb5d8c0d8106a29320c8020c9",
+    "scripts/local-browser-evidence.test.ts": "135ed3feedeefe895e9309ff54ae84fab7ce44108274a890458c3ba4b7aaf66b",
+    "src/features/nar-import/fixture-timeout.integration.test.ts": "85792e0847c52f69110c2a07526b6a5822c0a9a38f5ea46c16ab674f66fc6915"
+  },
+  "artifacts": [
+    {
+      "path": ".worktrees/preserve-browser-evidence/protected-before.json",
+      "sha256": "ef179525ef076923e4a27b5e432343ed66337f0bd52e41036917adacaaf49ebb"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/red-browser.log",
+      "sha256": "e13041a37604f14668271525dd075b60e3afef309c883249c3f6ff026378b43c"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/red-result.json",
+      "sha256": "ebb2f5293dfcc19261452129f653c3b79ff074f5e776422e7b0c134180454b05"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/red-browser-warm.log",
+      "sha256": "57114ad4f23c7f39c1aabdf01c526e8e620a8c46a6b47333d22a33b38bdf647a"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/red-warm-result.json",
+      "sha256": "006ab94bd7d636d5621226249e7e8959ef08c821d53130398c9b3ca9bfdc0796"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/red-producers.log",
+      "sha256": "1f00cecd6158aa57a1644abed4bb99bd272879d9cad4beda2d13269f861b5253"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/red-producers-result.json",
+      "sha256": "0ba69a01e4e8e1f248b7be3939b9ec002f117464254998daf7a57f397ca76dde"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/worker-import-diagnostic.log",
+      "sha256": "4a049d18d6dd98c07734169dcbe26c7c48b9a7dc7514add9d09f48305fb4cac3"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/worker-root-red.json",
+      "sha256": "d47467c1158e4e25fe2fd019298004368bfc202a9e7a54d8cf637c2d9537514e"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/guard-unit-final.log",
+      "sha256": "6cc150368cf5690ce96b181e3acd477f0e788fe869592d2b823f00d96614f04a"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/green-browser-1.log",
+      "sha256": "8e740dd541392ac5737ad8bce5318beb1f11ed46c25b022b524ecfe29b847ff1"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/green-browser-1-exit.json",
+      "sha256": "a249bd80ab9547d955598d1f150183744e780f5d79d0fea5485fb8736c7f4624"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/green-owned-1.log",
+      "sha256": "178a81866dfe1c506c07311e7533777fb3605cda8f64c4ff55408b78bc56643e"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/green-owned-1-exit.json",
+      "sha256": "2a3766b99681b86211a45e47449418524d65f76c788f5b15bf44356c8ccc45bc"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/owned-first-artifacts.json",
+      "sha256": "e784cc5f6f1b5e5bc2100219efcd96b5cc64839b3b1cfbddea7f18189f81fb9c"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/owned-first-report.json",
+      "sha256": "e08a8b3486d75e5141e4e7d8ae48760833759fd11ea33d0a1559b1dac5620d99"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/green-owned-2.log",
+      "sha256": "12ac6f8b099ef82d1b9f3c0812c96fe508fd980a55e5fe296b25b86a0471975c"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/green-owned-2-result.json",
+      "sha256": "e7a9ca9775277539d252550d5821666e3f6ae6faa54885092608d0dae858c2e5"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/static-result.json",
+      "sha256": "fcda91a28646886a6da113a2a5b2cc305de674794be46bd289f7676bb41724d2"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/tooling-typecheck.log",
+      "sha256": "4130df9a1403d01837f9f7c6579138a7ead7ccab60a1905f75f6897468fe4f4c"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/tooling-typecheck-green.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/tooling-typecheck-green-result.json",
+      "sha256": "e69152d34ed4018f5edb76d53a6b88dc8e4c695da3ea273cbc924dd2ef327ed4"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full.log",
+      "sha256": "92dd8fa9a3bc727452349dcd248f0adb97ef2ab6aaa4e6bb4e002158f51c5253"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full.json",
+      "sha256": "dc675b0c5f66fd4a8755e6224162ea327e74465ed4148f663955e5d3e9e37092"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full-result.json",
+      "sha256": "284aea8b7a7f9ade50aadbd0722e15d9d1f536d6a9476b501f185d4ad5345bd4"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/today-isolated.log",
+      "sha256": "25e8d6594539a491e5f8d4db5919788e4a01f0ee3908e63f292d7071d7cd26a3"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/today-isolated.json",
+      "sha256": "27ada7a8743115d598387aa6cc60f4d1f2bf83e588eb4f17fd27183a71876df3"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/today-isolated-result.json",
+      "sha256": "2a560c11f025571c03c404cfd1ba8428f2df3d36f4945e327b11d17722528b06"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full-final.log",
+      "sha256": "c9034106e4578bca337f1b9302f0bd22bc75cab43efcf916da46afac1fd64b2a"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full-final.json",
+      "sha256": "31ea999c622db02226ed0d49944688309766265519a155e6dcb90280c4133462"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full-final-result.json",
+      "sha256": "843162b0ec350ef11d731636398afcb38058664f30ba9045798c83e804078b6b"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-isolated.log",
+      "sha256": "36c7c7589976a24278f034fb576c3f35fb3bcc290d5c2499949bdb742a4a6c6a"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-isolated.json",
+      "sha256": "83c24bb1752e265a661ed1ae9271b91cc9c58c3bf3b456e8e19ee7a720219073"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-isolated-result.json",
+      "sha256": "69a22b4cdf012a5afc8f15631b6971770da4bce1d2bc13e33a0970c26cfaeb22"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/local-pg-diagnostic.log",
+      "sha256": "ed9eae003ab793e2b6418b3a8377d8cad38bc92ea78e94b75de955a47e782537"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/local-pg-diagnostic-v2.log",
+      "sha256": "62a6791c7e0ac1239599e94eece7f22db71fa3cd6ecbb4471c1658c132382b3f"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/local-pg-after-isolated.log",
+      "sha256": "391edabe7c260cb2b3aa6f3cc2fa8813bbe53816bf6b9e4a5aaf10ec90cf14fd"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/create-owned-fixture.log",
+      "sha256": "7e269e1d07a5ebd2b1c72c5e48b045badd6d482b83396d2d2e2fb4060cc03317"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/fresh-migrate.log",
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/fresh-seed.log",
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/fresh-fixture-result.json",
+      "sha256": "2302f1ebb93de61848ed5a64dc8829a1a65719df71413e5f27768dc1baae0798"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full-owned-final.log",
+      "sha256": "e8ed92a9f976fa6b4984efec7f0353107d0f88f8dd69a22a21d9db4f668d5352"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full-owned-final.json",
+      "sha256": "5dcc459bac2b90fcb69b8483e2b2d10c0eff373113f74467e2fb7fd9fd01ceb1"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/full-owned-final-result.json",
+      "sha256": "a860be915be8413b7197202d7bc501f065632934d7153af91efc781c38819604"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-source-before.json",
+      "sha256": "8a4a87b4d9df8af2c2d8fc5e0c3c488ae1d24b18ee59aac41292cd64415280d8"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-browser.log",
+      "sha256": "683d0b4265a947c61cf990e28a0c06da678b99e6a2ce337e392d3a06b3014129"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-browser-result.json",
+      "sha256": "5194a08a77d21be6b4faad40ff36fd4ff6ab207c9ec465053dd6b050baa45c55"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/historical-delivery-receipts.json",
+      "sha256": "b6a401574d7c1b96feb215c90bc226c1a8b2042423d868c15b091f3f7eb46347"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/payment-isolated-result.json",
+      "sha256": "15f2371ecc7b19f5a498073d2638c3062961a65588f98f8fe3c86a18c09c8dc1"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/payment-isolated.log",
+      "sha256": "df744dd05c9a1cc96f9037dae1aff2f3c09a6782ade69417fea2e4a144f0ae04"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-full.json",
+      "sha256": "4b3fa588240611b4ae644535eb594e8f1ec529ce45167bc7a75929584aabc2cc"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-full.log",
+      "sha256": "a4febfeaf4a644877c39f2a3091f724047e3ea32fdd2ea2c312e488e73bbe570"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-full-result.json",
+      "sha256": "e0b3d60a2dd38b0b375d77932768cb51af69d5e2e3e4dea44175d562b8fb4332"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-source-before.txt",
+      "sha256": "6365eec12791d447539b1164b02b725df5c360767db019ad49e9bd14685f316b"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-source-after.txt",
+      "sha256": "6365eec12791d447539b1164b02b725df5c360767db019ad49e9bd14685f316b"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-full-bun.json",
+      "sha256": "213794df5fd41d2a0cd42b4754819fe3c8f8236799c11cd4435a9f3a07e0a907"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-full-bun.log",
+      "sha256": "5450174120dfbcf95a820effe11360eb8b42c31637001833810b1aa9a0bae417"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-full-bun-result.json",
+      "sha256": "47aea195d53ddd9e5c972c495673610744e00b53b68c1e30e99f870ad106fe9d"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-source-bun-before.txt",
+      "sha256": "6365eec12791d447539b1164b02b725df5c360767db019ad49e9bd14685f316b"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-source-bun-after.txt",
+      "sha256": "6365eec12791d447539b1164b02b725df5c360767db019ad49e9bd14685f316b"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-bun-exec.log",
+      "sha256": "9e9d069e88f6dbe817b898378ed3d7338757721304e4b74b1e7f73fb872c9881"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/bun-linux-asset.json",
+      "sha256": "8121b2a719e04c6e74650c7fbb1e78518f3a04dac346930bba7c0c3705b123fa"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-clone.log",
+      "sha256": "6d749d2c0e2f377dda34d1578ac24fa33b2cda190ca67b3d9fc3b2fa2a22afa1"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-install.log",
+      "sha256": "902354761e7f9ca53420e5946f937b92a732d6e5ffe2a9dccabe73b3abfa90c6"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-migrate.log",
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-seed.log",
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/diagnostic-three.json",
+      "sha256": "1b2c88cf1991455576d533bddd43ccd37d3056f4c3fcbf161e603ea60d5bf33c"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/diagnostic-three.log",
+      "sha256": "ff835ff442c725fda134a5c964c6b97311fe93cc0f7c6b150ec9e7d39fa9d242"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/diagnostic-three-exit.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-serial.json",
+      "sha256": "6c58ad8a0d3fe0a21959728516d47aa6db03e6139ae36098fac20640ed1ec237"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-serial.log",
+      "sha256": "e1be0872f126dede081d72237b0b8e2e9beff9fc713345ab70f95724efbd6dce"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-serial-result.json",
+      "sha256": "dcea770387a65c5f50831adebec6c1aee425325d173a2a9a86d3a421668478d9"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-serial-before.txt",
+      "sha256": "6365eec12791d447539b1164b02b725df5c360767db019ad49e9bd14685f316b"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-serial-after.txt",
+      "sha256": "6365eec12791d447539b1164b02b725df5c360767db019ad49e9bd14685f316b"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/production-observation.json",
+      "sha256": "30f900c895c706b756ebb36928aa0695a0d591f2cf2a38e2e4ea31d83627d33c"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-startup.log",
+      "sha256": "29cb328f0b6937237d1926f99635466110c70ae3e5a19521c7a55ee70b5e9a67"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-startup-time.txt",
+      "sha256": "72abdf67be7ce66531d4f374dbcf5aaff23901330b771fcde6a8c74995185cc2"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-startup.cpuprofile",
+      "sha256": "1d5d03f9281ee04453f63c0bff43862ddae299d44d9b785b86f8d4d18e9b1d2a"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-db-project.log",
+      "sha256": "c5865c5902ba49d2eb745fe74bde0d4fa60ec6e9a9ccfbfdd99fcc8f9e3eafcd"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-db-project-time.txt",
+      "sha256": "6b9eb81631dc53b2cdb75eee33ff09fe3eef930932d5fe4a96f537385f231ead"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-db-project.cpuprofile",
+      "sha256": "3409df6f2e8cfff54459a9c051bd474d5def27651527f800bc8bd856b56cfb1c"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-parent-fixed.json",
+      "sha256": "e1a8ed2d098f27ff917f15fae459f3e04eef3bb77887e6d271c3f052632013ba"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-parent-fixed.log",
+      "sha256": "a342ce20c7e20491532583f6d8c4aa69ad5df2a059724eecff67d2a3c300f634"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/nar-parent-fixed-result.json",
+      "sha256": "9f3f3f1d7149e8473a383f48459d64f00ff09090d91028e09102704ff6b9fb8a"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-fixed-source-before.json",
+      "sha256": "dd126803a00d2bbb6d5cb0577d8bab66accf84724ff93a9c236569998c1f107e"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-fixed-full.json",
+      "sha256": "c8db8fe2b047c610cc6ee3ccf931800ce9a75593f7cd20e1a15cfd4f989fe058"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-fixed-full.log",
+      "sha256": "1de76497a503eb7b29fd0bc78f7cdf5988683d8b96f8d40d00d769a4d03f5158"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-fixed-full-result.json",
+      "sha256": "36dd7b26082a27798a2b9284b8d165b92e5e0e00b76373e8c384b06bfc0ddd3f"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-fixed-before.txt",
+      "sha256": "b39a725a82eed931b71cd4b3a266fdceaef685d3921cff267eb469175294a9fb"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/linux-fixed-after.txt",
+      "sha256": "b39a725a82eed931b71cd4b3a266fdceaef685d3921cff267eb469175294a9fb"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-setup-probe.log",
+      "sha256": "81f98140d2e1dde126f24954e8901c6b13a00601c7832f92f76f67932ee34742"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-dev-server.log",
+      "sha256": "68c460e49aea5943a788cfcd9af74b7d40ff6a83e8a4e08f55fb81e6951e3685"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-static-result.json",
+      "sha256": "79855aa788cab0974446a8f54fd7022311ed9ede7c7d870cab9f748a4a2202da"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/final-tooling-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/production-observation.json",
+      "sha256": "2b31298a91f328c2e56b63a946e09e3d2255de1b3e6c0567ac3549768c414437"
+    },
+    {
+      "path": ".worktrees/preserve-browser-evidence/closing/production-observation.log",
+      "sha256": "2b31298a91f328c2e56b63a946e09e3d2255de1b3e6c0567ac3549768c414437"
+    }
+  ],
+  "historical_delivery_receipts": {
+    "observed_at_utc": "2026-10-03T15:21:41.5919034Z",
+    "prs": [
+      {
+        "number": 127,
+        "url": "https://github.com/YNWAforever/kossilon-hub/pull/127",
+        "state": "MERGED",
+        "head": "e82d05141a40be24daea68aae029eb5e40f66144",
+        "base": "main",
+        "merge": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+        "merged_at": "2026-10-03T09:29:13Z",
+        "checks": [
+          {
+            "name": "Node22",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": "Node24",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": "verify",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": null,
+            "context": "Vercel",
+            "conclusion": null,
+            "state": "SUCCESS"
+          },
+          {
+            "name": "Vercel Preview Comments",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          }
+        ]
+      },
+      {
+        "number": 128,
+        "url": "https://github.com/YNWAforever/kossilon-hub/pull/128",
+        "state": "MERGED",
+        "head": "dd1347eb295aac5c3ea46c2ba88ca14249e5df8b",
+        "base": "main",
+        "merge": "4c00f92a42aa0da3190b4245e129cd22fedef595",
+        "merged_at": "2026-10-03T10:30:56Z",
+        "checks": [
+          {
+            "name": "Node22",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": "Node24",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": "verify",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": null,
+            "context": "Vercel",
+            "conclusion": null,
+            "state": "SUCCESS"
+          },
+          {
+            "name": "Vercel Preview Comments",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          }
+        ]
+      },
+      {
+        "number": 129,
+        "url": "https://github.com/YNWAforever/kossilon-hub/pull/129",
+        "state": "MERGED",
+        "head": "13ea7d5edc704bf9f00eac725665bb6d47f03dc7",
+        "base": "main",
+        "merge": "f038ee79018f9a604e2affc1ef2f85aa3a5a702b",
+        "merged_at": "2026-10-03T12:25:17Z",
+        "checks": [
+          {
+            "name": "Node22",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": "Node24",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": "verify",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          },
+          {
+            "name": null,
+            "context": "Vercel",
+            "conclusion": null,
+            "state": "SUCCESS"
+          },
+          {
+            "name": "Vercel Preview Comments",
+            "context": null,
+            "conclusion": "SUCCESS",
+            "state": null
+          }
+        ]
+      }
+    ],
+    "runs": [
+      {
+        "id": 37112675810,
+        "head": "e82d05141a40be24daea68aae029eb5e40f66144",
+        "status": "completed",
+        "conclusion": "success",
+        "event": "pull_request",
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37112675810",
+        "jobs": [
+          {
+            "name": "Node22",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "Node24",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "verify",
+            "conclusion": "success",
+            "steps": 3,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          }
+        ]
+      },
+      {
+        "id": 37113208517,
+        "head": "60a7b9745ce4e66fe3c4e34848a6aba498a6fc26",
+        "status": "completed",
+        "conclusion": "success",
+        "event": "push",
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37113208517",
+        "jobs": [
+          {
+            "name": "Node24",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "Node22",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "verify",
+            "conclusion": "success",
+            "steps": 3,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          }
+        ]
+      },
+      {
+        "id": 37116219485,
+        "head": "dd1347eb295aac5c3ea46c2ba88ca14249e5df8b",
+        "status": "completed",
+        "conclusion": "success",
+        "event": "pull_request",
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37116219485",
+        "jobs": [
+          {
+            "name": "Node24",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "Node22",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "verify",
+            "conclusion": "success",
+            "steps": 3,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          }
+        ]
+      },
+      {
+        "id": 37116670752,
+        "head": "4c00f92a42aa0da3190b4245e129cd22fedef595",
+        "status": "completed",
+        "conclusion": "success",
+        "event": "push",
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37116670752",
+        "jobs": [
+          {
+            "name": "Node24",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "Node22",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "verify",
+            "conclusion": "success",
+            "steps": 3,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          }
+        ]
+      },
+      {
+        "id": 37122276438,
+        "head": "13ea7d5edc704bf9f00eac725665bb6d47f03dc7",
+        "status": "completed",
+        "conclusion": "success",
+        "event": "pull_request",
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37122276438",
+        "jobs": [
+          {
+            "name": "Node22",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "Node24",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "verify",
+            "conclusion": "success",
+            "steps": 3,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          }
+        ]
+      },
+      {
+        "id": 37122816502,
+        "head": "f038ee79018f9a604e2affc1ef2f85aa3a5a702b",
+        "status": "completed",
+        "conclusion": "success",
+        "event": "push",
+        "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37122816502",
+        "jobs": [
+          {
+            "name": "Node22",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "Node24",
+            "conclusion": "success",
+            "steps": 26,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          },
+          {
+            "name": "verify",
+            "conclusion": "success",
+            "steps": 3,
+            "failed_steps": 0,
+            "skipped_steps": 0
+          }
+        ]
+      }
+    ]
+  },
+  "limits": [
+    "Pre/post hash observations, not continuous/atomic file protection.",
+    "Local artifacts are ignored and retained on this checkout; CI does not upload durable artifacts.",
+    "No installed SBOM, approved external contract, genuine provider/business/UAT acceptance or deployment proof."
+  ],
+  "provider_writes": 0,
+  "new_genuine_uat": 0,
+  "schema_changes": 0,
+  "deployment_changes": 0,
+  "formal_release": "NO_GO",
+  "guard_source_commit": "a851f975128d12334febb2a686c39a43b360235f",
+  "verification_dependency": {
+    "controlled_failed_tests": 1,
+    "official_project_filter": "https://vitest.dev/guide/projects",
+    "controlled_exit": 1,
+    "original_parent_full": "2262PASS1parent30sFAIL0SKIP",
+    "profiled_original_wall_ms": 36905,
+    "limits": "Sequential profile/cache/platform comparison supports bounded project selection but does not establish sole cause or hosted performance.",
+    "bug_id": "BUG-R11-02",
+    "timeouts_changed": 0,
+    "configuration_counts": [
+      3,
+      2
+    ],
+    "controlled_filtered_tests": 22,
+    "parent_green": {
+      "exit": 0,
+      "files": 1,
+      "passed": 1,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "duration_ms": 11568.893310546875,
+      "environment": "LOCAL Linux Node22.23.2/Bun1.4.2 real owned PG18.6",
+      "observed_at_utc": "2026-10-03T18:12:57.0382543Z"
+    },
+    "profiled_db_project_wall_ms": 16755
+  },
+  "production_observation": {
+    "observedAt": "2026-10-03T16:13:45.34118Z",
+    "project": {
+      "id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "configuredNodeVersion": "24.x",
+      "productionDeployment": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+      "readyState": "READY",
+      "githubCommitSha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+      "githubCommitRef": "main"
+    },
+    "alias": {
+      "name": "kossilon-hub.vercel.app",
+      "projectId": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT"
+    },
+    "sourceMain": "f038ee79018f9a604e2affc1ef2f85aa3a5a702b",
+    "mainGitDeploymentEnabled": false,
+    "providerWrites": 0,
+    "formalRelease": "NO_GO",
+    "deployedRuntimeMinor": "not_verified"
+  },
+  "schema_changes_scope": "No source migrations/contracts changed and no hosted DDL; existing migrations applied only to owned disposable local databases.",
+  "production_closing_observation": {
+    "observedAt": "2026-10-03T18:17:34.6479599Z",
+    "project": {
+      "id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "configuredNodeVersion": "24.x",
+      "productionDeployment": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+      "readyState": "READY",
+      "githubCommitSha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+      "githubCommitRef": "main"
+    },
+    "alias": {
+      "name": "kossilon-hub.vercel.app",
+      "projectId": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "deploymentId": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT"
+    },
+    "sourceMain": "f038ee79018f9a604e2affc1ef2f85aa3a5a702b",
+    "mainGitDeploymentEnabled": false,
+    "providerWrites": 0,
+    "formalRelease": "NO_GO",
+    "deployedRuntimeMinor": "not_verified"
+  }
+}
