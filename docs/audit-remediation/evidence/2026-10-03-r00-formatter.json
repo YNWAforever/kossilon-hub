@@ -1,0 +1,215 @@
+{
+  "task": "R00",
+  "finding": "F22",
+  "uc": "UC27",
+  "sourceBaseline": "6f0a851a5826030eca903d86f5d7a22b8331a46c",
+  "evidenceScope": "LOCAL configuration; no runtime/provider acceptance",
+  "updatedAt": "2026-10-03T06:00:48.4221583Z",
+  "receipts": [
+    {
+      "name": "npm-red-receipt.json",
+      "sha256": "3bbc2fd247446ce9f9b42f6ff1155f2a7077222c886d946b5eba0ce0cfdb9756",
+      "result": {
+        "observedAt": "2026-10-03T05:38:57.1907831Z",
+        "phase": "npm-red",
+        "tree": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-red",
+        "manager": "npm",
+        "nodeVersion": "v22.23.3",
+        "bunVersion": "1.4.2",
+        "installedPrettier": "3.9.9",
+        "installExit": 0,
+        "lintExit": 1,
+        "typecheckExit": 0,
+        "logs": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-red-install.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-red-lint.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-red-typecheck.log"
+        ]
+      }
+    },
+    {
+      "name": "bun-red-receipt.json",
+      "sha256": "28ac560a59b9d547379fb3efc1e25483114fe964b6aab0e3e050219c07080bb1",
+      "result": {
+        "observedAt": "2026-10-03T05:38:57.2723792Z",
+        "phase": "bun-red",
+        "tree": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-red",
+        "manager": "bun",
+        "nodeVersion": "v22.23.3",
+        "bunVersion": "1.4.2",
+        "installedPrettier": "3.8.3",
+        "installExit": 0,
+        "lintExit": 0,
+        "typecheckExit": 0,
+        "logs": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-red-install.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-red-lint.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-red-typecheck.log"
+        ]
+      }
+    },
+    {
+      "name": "npm-green-receipt.json",
+      "sha256": "ed4fa549221365bd9d395eb3e568f5e5412caa4b818ea84d643527c96370249c",
+      "result": {
+        "observedAt": "2026-10-03T05:48:07.0080636Z",
+        "phase": "npm-green",
+        "tree": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-green",
+        "manager": "npm",
+        "nodeVersion": "v22.23.3",
+        "bunVersion": "1.4.2",
+        "installedPrettier": "3.8.3",
+        "installExit": 0,
+        "lintExit": 0,
+        "typecheckExit": 0,
+        "logs": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-green-install.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-green-lint.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\npm-green-typecheck.log"
+        ]
+      }
+    },
+    {
+      "name": "bun-green-receipt.json",
+      "sha256": "7c0a9fdcaff75764a2a61af9bee2c1a4778dd08d202f2a340beecdb605f4e251",
+      "result": {
+        "observedAt": "2026-10-03T05:48:07.6137817Z",
+        "phase": "bun-green",
+        "tree": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-green",
+        "manager": "bun",
+        "nodeVersion": "v22.23.3",
+        "bunVersion": "1.4.2",
+        "installedPrettier": "3.8.3",
+        "installExit": 0,
+        "lintExit": 0,
+        "typecheckExit": 0,
+        "logs": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-green-install.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-green-lint.log",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\audit-oct3-execution\\bun-green-typecheck.log"
+        ]
+      }
+    },
+    {
+      "name": "r00-node24-receipt.json",
+      "sha256": "bde28a8fbb501797771c2fb68c90c71a6933ba99ee721894fdfe11be52fad954",
+      "result": [
+        {
+          "tree": "npm-green",
+          "nodeVersion": "v24.18.0",
+          "npmVersion": "11.16.0",
+          "prettier": "3.8.3",
+          "lintExit": 0,
+          "typecheckExit": 0
+        },
+        {
+          "tree": "bun-green",
+          "nodeVersion": "v24.18.0",
+          "npmVersion": "11.16.0",
+          "prettier": "3.8.3",
+          "lintExit": 0,
+          "typecheckExit": 0
+        }
+      ]
+    },
+    {
+      "name": "r00-audits.json",
+      "sha256": "a25502e7085c134e693276a3f802cdb0208b17d10ef58774deb099d9a5e8f230",
+      "result": {
+        "bunAuditExit": 0,
+        "npmAuditExit": 0
+      }
+    }
+  ],
+  "logs": [
+    {
+      "name": "bun-green-install.log",
+      "sha256": "bcc9af9a72d7c416e89ce5298c28a6a27d68949bbd8b7bf7030e70534955eed5"
+    },
+    {
+      "name": "bun-green-lint.log",
+      "sha256": "9835a6165e6b2147e79f1db847cb23d48f6e7264d83a329768cc764452e56e47"
+    },
+    {
+      "name": "bun-green-node24-lint.log",
+      "sha256": "9835a6165e6b2147e79f1db847cb23d48f6e7264d83a329768cc764452e56e47"
+    },
+    {
+      "name": "bun-green-node24-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "name": "bun-green-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "name": "bun-red-install.log",
+      "sha256": "08b35afaf3251663e7828c8f9e159820fc78722732bf781e9dd119f68f0a135e"
+    },
+    {
+      "name": "bun-red-lint.log",
+      "sha256": "cf014eb2011658d1eb51e2ccb661aab984322874581d24a03f594f812b622754"
+    },
+    {
+      "name": "bun-red-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "name": "npm-green-install.log",
+      "sha256": "0fadea63b89d82134632b43ba3c279d6798cd9f0e2ab489d69fa30bdf5c534b5"
+    },
+    {
+      "name": "npm-green-lint.log",
+      "sha256": "14227cc2595b872bc7ee0732e7f32038f093134326c717578185ebead6673a77"
+    },
+    {
+      "name": "npm-green-node24-lint.log",
+      "sha256": "14227cc2595b872bc7ee0732e7f32038f093134326c717578185ebead6673a77"
+    },
+    {
+      "name": "npm-green-node24-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "name": "npm-green-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "name": "npm-red-install.log",
+      "sha256": "1af20b076205d52c6310707b5234060529dac8a7461acdeaf942601b82ea8deb"
+    },
+    {
+      "name": "npm-red-lint.log",
+      "sha256": "1196535c0f48453df7d45b5d585bcc3df7c5564a1466c00c5a867e7c84dc4665"
+    },
+    {
+      "name": "npm-red-typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "name": "r00-bun-audit.log",
+      "sha256": "adc4701ef7e0466ed7c72a68c54818b3b80a2477060c1c5123951bab3ca5d2b9"
+    },
+    {
+      "name": "r00-npm-audit.log",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601"
+    },
+    {
+      "name": "r00-root-frozen.log",
+      "sha256": "3549e353b26a6a2b0695fa85f9a77eb06c6f7bee6393edaf039b0fbd2c1a3e95"
+    }
+  ],
+  "redLintErrors": 75,
+  "greenLintErrors": 0,
+  "existingWarnings": 1,
+  "commands": [
+    "npm ci --ignore-scripts",
+    "bun install --frozen-lockfile",
+    "npm run lint",
+    "npm run typecheck",
+    "bun audit --audit-level low",
+    "npm audit --audit-level low"
+  ],
+  "ciStatus": "new candidate pending",
+  "productionWrites": 0
+}
