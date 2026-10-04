@@ -1,0 +1,92 @@
+{
+  "request_id": "r01-staging-b1-20261004",
+  "state": "proposed_not_approved",
+  "source_phase_a_receipt": "../../evidence/2026-10-04-r01-staging-created.json",
+  "task_ids": ["R01", "R03"],
+  "target": {
+    "project_id": "red-morning-00331124",
+    "branch_id": "br-fragrant-sunset-aosoylhr",
+    "branch_name": "kossilon-r01-staging-20261004",
+    "database_name": "neondb",
+    "parent_id": "br-muddy-mountain-aov8bbku"
+  },
+  "authorization": {
+    "compute_creation": false,
+    "branch_catalog_select": false,
+    "role_auth_or_env_write": false,
+    "deployment": false,
+    "migration": false,
+    "scheduler": false,
+    "external_send": false
+  },
+  "operation": {
+    "tool": "mcp__codex_apps__neon_create_postgres_endpoint",
+    "arguments": {
+      "project_id": "red-morning-00331124",
+      "branch_id": "br-fragrant-sunset-aosoylhr",
+      "type": "read_write",
+      "autoscaling_limit_min_cu": 0.25,
+      "autoscaling_limit_max_cu": 0.25,
+      "suspend_timeout_seconds": 300,
+      "region_id": "aws-ap-southeast-1",
+      "pooler_enabled": false,
+      "passwordless_access": false,
+      "disabled": false
+    }
+  },
+  "after_operation": {
+    "new_endpoint_id": null,
+    "connection_strings": "Do not print or write into repo; use connected provider query tool scoped to the exact branch",
+    "catalog_tool": "mcp__codex_apps__neon_run_sql",
+    "catalog_arguments": {
+      "project_id": "red-morning-00331124",
+      "branch_id": "br-fragrant-sunset-aosoylhr",
+      "database_name": "neondb",
+      "sql_source": "phase-b1-catalog-inventory.sql",
+      "sql_sha256": "1bb16a5935970e2674ba27584249ccf54681e2efe982b9daa21b08e1125063d9"
+    }
+  },
+  "preconditions": [
+    "Explicit exact request hash approval for paid compute activation and read-only catalog queries on this cloned sensitive-data branch.",
+    "Refresh actual child/parent/default/endpoint inventory; child must remain ready/non-default with no read-write endpoint. Existing or unknown creation means stop/reconcile; no repeat or resource reuse.",
+    "Refresh branch Auth management status; if Auth is enabled or copied-provider state is uncertain, hold activation for Auth owner review. Current three GETs returned404; this does not prove copied Auth tables are empty.",
+    "Keep this child unbound from app/cron/provider runtime. No env/role/Auth/dispatch write is included. Verify identities before each approved read-only query.",
+    "Original production/default/backups/endpoint and all immutable evidence remain excluded."
+  ],
+  "acceptance": [
+    "Record actual endpoint ID from the provider; verify exact child, RW0.25-0.25CU/300s/poolerfalse/passwordlessfalse/defaultunchanged and ready/idle state.",
+    "Run only the committed single SELECT catalog SQL against this branch/neondb. Record actual PG version/principal flags/schema metadata, not customer/document rows. Privileged observer is not an app role acceptance.",
+    "Compare the actual cloned catalog with the historical candidate contracts before authorizing any app role, Auth or deployment. Do not run normal migrator/seed/ledger rewrite."
+  ],
+  "cost_and_risk": "Adds billed compute capacity; copied DB/Auth/role data exists. Enabling a SQL endpoint is separate from an isolated safe app, restricted-role verification or genuine Auth acceptance.",
+  "unknown_result": "Stop and query actual branch/endpoints/creation time; do not resend create until the first outcome is reconciled.",
+  "rollback": {
+    "scope_if_b1_explicitly_approved": "On B1 failure only, suspend the newly returned endpoint after verifying its branch ID equals br-fragrant-sunset-aosoylhr and it has no app/cron binding; retain branch/endpoint/receipts. No deletion/reset/restore.",
+    "operation": {
+      "tool": "mcp__codex_apps__neon_suspend_postgres_endpoint",
+      "arguments": {
+        "project_id": "red-morning-00331124",
+        "endpoint_id": null
+      }
+    },
+    "endpoint_id_source": "Only the actual create result, verified against the new child; never ep-patient-block-aoxmgw78 or an existing endpoint.",
+    "approved": false
+  },
+  "excluded_operations": [
+    "production resource/SQL/config mutation",
+    "schema/ledger/migration/seed/reset/restore",
+    "role or permission write",
+    "Neon Auth enable/provision/domain/OAuth/email/user changes",
+    "Vercel/R2/env/deploy",
+    "cron/manual tick",
+    "real recipient send/invite"
+  ],
+  "formal_release_status": "NO_GO",
+  "genuine_acceptance": "not_run",
+  "local_sql_rehearsal": {
+    "status": "runtime-blocked",
+    "reason": "WSL/Service/0x8007274c",
+    "sql_executions": 0,
+    "evidence": ".worktrees/r01-phase-a-execution-20261004/local-pg-probe.json"
+  }
+}
