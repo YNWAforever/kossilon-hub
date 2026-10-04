@@ -2,6 +2,8 @@
 
 `BUG-R10-DEV-WATCH-01` 是本機 development tooling 缺陷。原 R10 的
 F02/F07/F17/F18、UC07/18/20/24 仍保留各自驗收；本修復不結案業務 finding。
+本文件保留初始 glob 修復及其量度。唯一 review 後的最新修正採 literal
+root-relative predicate，見[review／裁定](r10-dev-watcher-review.md)及其獨立回條。
 
 ## 重現及最小修復
 
@@ -21,7 +23,7 @@ TanStack/Lovable plugins、原 test projects、CI、locks、依賴及所有 dead
 
 ## 實際量度與限制
 
-修復後同一 root 的 watcher 量度為 77 個目錄、0 個 nested worktree 目錄。
+初始 `dbcb821` 修復後同一 root 的 watcher 量度為 77 個目錄、0 個 nested worktree 目錄。
 這證明 scope 改正；未證明所有啟動問題的單一原因，沒有 production SLO 結論。
 
 原 Windows Node22.23.3／existing dependency tree 的 probe 保留：

@@ -1,0 +1,282 @@
+{
+  "version": 1,
+  "task": "R10",
+  "bug_id": "BUG-R10-DEV-WATCH-01",
+  "finding_context": ["F02", "F07", "F17", "F18"],
+  "recorded_at_utc": "2026-10-04T20:40:59.462487+00:00",
+  "base_sha": "348da8a4de0d93adf773671f75ee9b4dc3dd78a9",
+  "initial_reviewed_head": "43e50ad03c32e742a4fbc7f19effdf883362c1e6",
+  "tested_fix_sha": "0c374bab6e18fba1bae4f87ddd6a44475b4be73a",
+  "code_status": "local-passing; final exact-head CI/publication pending",
+  "runtime_status": "blocked",
+  "release_status": "NO_GO",
+  "prior_immutable_receipt": "evidence/2026-10-05-r10-dev-watcher.json",
+  "sole_review": {
+    "model": "GPT-6 Astra/high",
+    "fresh_context": true,
+    "read_only": true,
+    "critical": 0,
+    "important": 1,
+    "minor": 0,
+    "finding": "Unescaped root enters glob syntax; literal-path predicate required",
+    "author_grade": "Important stands",
+    "fix_pass": 1,
+    "re_review": 0,
+    "report": "r10-dev-watcher-review.md"
+  },
+  "focused_red_green": [
+    {
+      "record": "review-red",
+      "files": 2,
+      "passed": 4,
+      "failed": 1,
+      "skipped": 0,
+      "success": false,
+      "result_sha256": "a8818fd5bd645578417e1fdda37933cd248bf56fcaee2f45b3697b6771388674",
+      "log_sha256": "0480c17e510ece979dad438c5a618774bdfe86a18bc4ddc2ffe269d4f103b668",
+      "command": [
+        "node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "src/test/dev-worktree-watch.test.ts",
+        "scripts/verify-dev-server-imports.test.ts",
+        "--maxWorkers=2",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=.worktrees/windows-dev-probe-20261005/review-red.json"
+      ]
+    },
+    {
+      "record": "review-green",
+      "files": 2,
+      "passed": 4,
+      "failed": 1,
+      "skipped": 0,
+      "success": false,
+      "result_sha256": "97a1e4289e6a76190fa463d364f78a15c9eddd520b94b13c1481b23a83bbecb8",
+      "log_sha256": "d0243cb4941a8aaaa2f42c59b81665f0b48d86406971a1fb85b83888fd2d163f",
+      "command": [
+        "node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "src/test/dev-worktree-watch.test.ts",
+        "scripts/verify-dev-server-imports.test.ts",
+        "--maxWorkers=2",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=.worktrees/windows-dev-probe-20261005/review-green.json"
+      ]
+    },
+    {
+      "record": "review-green-predicate",
+      "files": 2,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "result_sha256": "d6a3d36703f9d862234e253cc25770e2c375b93d27bac3c809c46466be72e331",
+      "log_sha256": "73150f7e439eed67abaf641b7a8eea00ae20c856ac5bc875359d7a6db2882e06",
+      "command": [
+        "node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "src/test/dev-worktree-watch.test.ts",
+        "scripts/verify-dev-server-imports.test.ts",
+        "--maxWorkers=2",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=.worktrees/windows-dev-probe-20261005/review-green-predicate.json"
+      ]
+    }
+  ],
+  "final_windows_watch_probe": {
+    "mode": "current-watch",
+    "source_sha": "0c374bab6e18fba1bae4f87ddd6a44475b4be73a",
+    "command": [
+      "node.exe",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\windows-dev-probe-20261005\\watch.mjs"
+    ],
+    "started_at_utc": "2026-10-04T20:37:49.661178+00:00",
+    "ended_at_utc": "2026-10-04T20:38:20.767400+00:00",
+    "elapsed_seconds": 30.013,
+    "ready_within_30s": null,
+    "natural_exit": null,
+    "owned_process_exit": 1,
+    "provider_bindings": 0,
+    "installed_dependencies": "existing Windows tree, shared unchanged; not a fresh install",
+    "log_sha256": "eb723fe8974b112dee368c2d1e4d996f7f923b43ef6bc8b37a38c057e6a86423",
+    "result_sha256": "388e5ad8bab9a0adcbe01221cd6a8420aa275c44c02e43ce187a4c4b0076819b",
+    "interpretation": "INCOMPLETE: create-server only in30s; no listening/counts observed; owned teardown. Not a scope PASS or root-cause proof. Previous scoped-glob counts remain dated at their recorded source, not final predicate counts."
+  },
+  "premerge_live_metadata": {
+    "observed_at_utc": "2026-10-04 20:31:50 UTC",
+    "alias": "https://kossilon-hub.vercel.app",
+    "method": "Vercel get_deployment metadata-only GET; withGitRepoInfo=true",
+    "deployment_id": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "url": "kossilon-r6oxr7d3r-ynwaforevers-projects.vercel.app",
+    "target": "production",
+    "readyState": "READY",
+    "git_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "git_ref": "main",
+    "scheduler_exact_sha": "not_verified",
+    "resolved_dependencies": "not_verified",
+    "business_uat": "not_verified"
+  },
+  "source_blobs": {
+    "vite.config.ts": "d6fa421a6b6dafe0af56fd791c4fc485944b98b12365ed04265448b8dc2df6dd",
+    "src/test/dev-worktree-watch.test.ts": "903170d63e4a8cb2b7fb4190a0298ce858b1eeb6760ed435f706f6e16feac56b"
+  },
+  "original50": {
+    "historical_local_only": 19,
+    "blocked": 31,
+    "new_genuine_pass": 0
+  },
+  "production_operations": {
+    "sql": 0,
+    "role_grant": 0,
+    "compute": 0,
+    "migration": 0,
+    "env": 0,
+    "deploy": 0,
+    "send": 0,
+    "invite": 0
+  },
+  "remaining_inputs": "DB/Release restricted role/private service/TLS/freeze/exact approved scope; Operations/Business isolated UC24 workload/SLO and exact native scheduler artifact/owner/ticks; fresh Auth/Scanner/OCR/WOZTELL/filing evidence unchanged.",
+  "initial_ci": {
+    "run_id": 37232074979,
+    "headSha": "43e50ad03c32e742a4fbc7f19effdf883362c1e6",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37232074979",
+    "actual_counts": {
+      "Node22": {
+        "files": 243,
+        "passed": 2322,
+        "failed": 0,
+        "skipped": 0,
+        "local_browser_passed": 12,
+        "postgres": "17 (original CI)",
+        "all_original_steps": "success"
+      },
+      "Node24": {
+        "files": 243,
+        "passed": 2322,
+        "failed": 0,
+        "skipped": 0,
+        "local_browser_passed": 12,
+        "postgres": "17 (original CI)",
+        "all_original_steps": "success"
+      }
+    },
+    "log_sha256": "08176fd20819191dfe0c1e26744f5559c91d2f44631d26e5cf5e86cf993214d3",
+    "all_original_jobs_steps_success": true,
+    "merge": "HELD: Important finding confirmed; superseded head not approved",
+    "metadata_sha256": "9f0bf437192df53964c78a69ba2490b1a49f777685972224b2c40d3b53ecbe38"
+  },
+  "linux_full": {
+    "source_sha": "0c374bab6e18fba1bae4f87ddd6a44475b4be73a",
+    "environment": {
+      "node": "v22.23.2",
+      "platform": "linux"
+    },
+    "bun": "1.4.2",
+    "postgres": "18.6",
+    "files": 243,
+    "passed": 2323,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=default --reporter=json --outputFile=/evidence/full-results.json",
+    "output_sha256": "d253001f17e2bafcbaeadc35b415afd6b7192975e5401654b7b8dbb215ff8d9e"
+  },
+  "remaining_local_gates": [],
+  "final_windows_watch_probe_second_observation": {
+    "mode": "current-watch",
+    "source_sha": "0c374bab6e18fba1bae4f87ddd6a44475b4be73a",
+    "command": [
+      "node.exe",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\windows-dev-probe-20261005\\watch.mjs"
+    ],
+    "started_at_utc": "2026-10-04T20:52:27.137510+00:00",
+    "ended_at_utc": "2026-10-04T20:52:57.792452+00:00",
+    "elapsed_seconds": 30.029,
+    "ready_within_30s": null,
+    "natural_exit": null,
+    "owned_process_exit": 1,
+    "provider_bindings": 0,
+    "installed_dependencies": "existing Windows tree, shared unchanged; not a fresh install",
+    "log_sha256": "50e37e188143f1663b4cf6fe3d9e4befd6e34728c5866d7bd23af51c8febe0e9",
+    "listening": {
+      "phase": "listening",
+      "elapsedMs": 24120.3791,
+      "directories": 65,
+      "nestedWorktreeDirectories": 0
+    },
+    "last_sample": {
+      "phase": "watch-sample",
+      "elapsedMs": 27709.5725,
+      "directories": 77,
+      "nestedWorktreeDirectories": 0
+    },
+    "record_sha256": "60801057654361818fc1fc367f12c38bdbda0732772e21f71c36ae5d43ddd514",
+    "interpretation": "Actual final predicate same-root watcher observation:77directories/0nested; listening24.12s, final sample27.71s. First incomplete30s observation retained; cache/order/load uncontrolled; no startup speed/cold/SLO conclusion. created.ignored [null] is JSON function serialization, not watch=null. Lock bytes unchanged despite generic re-optimizing log."
+  },
+  "linux_run": {
+    "source_sha": "0c374bab6e18fba1bae4f87ddd6a44475b4be73a",
+    "started_at_utc": "2026-10-04T20:36:46.597938+00:00",
+    "ended_at_utc": "2026-10-04T20:57:22.101151+00:00",
+    "exit": 0,
+    "oom": false,
+    "maxWorkers": 4,
+    "files": {
+      "linux-browser-install.log": "5dd04b41cffc284d3d22fb684362ac9d9272c7544d26bd16280ea1c51d643958",
+      "linux-build.log": "3114ac4af0aed2b8877c61af1e681e37aa8d2fb15344ef75db26c326fe77bd51",
+      "linux-bun-audit.log": "e05c3803d1c038a9b0df44cc4db75e29f6e15ff9b5e61c59bf8a4e5dd9c5515d",
+      "linux-bun-install.log": "91d378056fdb57408e4616d421c19be59ebbe43f5a7c9143e20727f7d9d44aa4",
+      "linux-bun-version.log": "b99b4c7cdf236f59bc9f65d963deaecae3b16a7dad87939cacb9057f7664daee",
+      "linux-cron-hook.log": "d25fa72f9cd2ef1811176719266a65f630fcab07dc331fabc8b1914c67196219",
+      "linux-dev-import.log": "7b49377e6cbc8437605be0b14ec3f6e8067e08b802ae532de514326a783707a4",
+      "linux-e2e.log": "83ce15c2b176d9513db80935dd91004b26f60b92fbf866259e84fe2b08d3ef70",
+      "linux-firm.log": "07346dcc93d56f5ae958837d88b0936ba1f275a76bd490bb139f15c4bb70f56a",
+      "linux-full-results.json": "d253001f17e2bafcbaeadc35b415afd6b7192975e5401654b7b8dbb215ff8d9e",
+      "linux-full.log": "7c053856f1cfbc3bb39c04db2ce70edd9b854b6e5b45353c6207387eb41d0295",
+      "linux-install.log": "c0c835b3befbcef6eaa684fb5a80265d95bd4f3b7aaa3b51becc77407cf690ab",
+      "linux-lint.log": "a706734beda959903cea05f6ba8e118f88ed2a89f88d4ae72c03b28e0e4b1253",
+      "linux-migrate.log": "d668e6e1a3b1b6ee4b77748442ef28f759e178d20978eaabebc8dfc51fd34ce1",
+      "linux-npm-audit.log": "6d8c5c8f3d7684adb070417bd608d01ae90aa3dc26a65af03ffda4955f38d9a3",
+      "linux-npm-ci.log": "836c66200b9098477b13387422d9f0ba3b12a2cb28946b94323097ebdb3f2b2f",
+      "linux-npm-lint.log": "17309854a19423b690ef90f958305c3d43c87fbe1e2edb4ab8bcc1e59935a2b4",
+      "linux-npm-typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f",
+      "linux-release.log": "7074a8914b25102b52a573c43e6535c20f1c1eb315cb3fdf769e7997e5556fb0",
+      "linux-runner-exit.json": "8105264899a6cef65d89313cb15b88d73fd58d892a3de899d3767c0698a98cf7",
+      "linux-seed.log": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+      "linux-typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f",
+      "linux-versions.json": "d1be61b601293657a75334c2f603315880820aa48baa59ff117f20aeab2a7402"
+    },
+    "raw_evidence_directory": ".worktrees/windows-dev-probe-20261005/fix-pass"
+  },
+  "linux_commands": "#!/bin/bash\nset -euo pipefail\ntrap 'printf \"{\\\"exit\\\":%s}\\n\" \"$?\" > /evidence/runner-exit.json' EXIT\ncp -a /input/. /workspace/\nnode -e 'console.log(JSON.stringify({node:process.version,platform:process.platform}))' > /evidence/versions.json\nnpm install --global bun@1.4.2 > /evidence/bun-install.log 2>&1\nbun --version > /evidence/bun-version.log\nbun install --frozen-lockfile > /evidence/install.log 2>&1\nbun audit --audit-level=low > /evidence/bun-audit.log 2>&1\nnpm audit --audit-level=low > /evidence/npm-audit.log 2>&1\nmkdir /npm-tree\ncp -a /input/. /npm-tree/\n(cd /npm-tree; npm ci --ignore-scripts > /evidence/npm-ci.log 2>&1; npm run lint > /evidence/npm-lint.log 2>&1; npm run typecheck > /evidence/npm-typecheck.log 2>&1)\nbun scripts/db-migrate.ts > /evidence/migrate.log 2>&1\nbun scripts/db-seed-annual-return.ts > /evidence/seed.log 2>&1\nnpm run lint > /evidence/lint.log 2>&1\nnpm run typecheck > /evidence/typecheck.log 2>&1\nnode node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=default --reporter=json --outputFile=/evidence/full-results.json > /evidence/full.log 2>&1\nnpm run verify:firm -- --dry-run > /evidence/firm.log 2>&1\nnpm run verify:audit-release > /evidence/release.log 2>&1\nbunx playwright install --with-deps chromium > /evidence/browser-install.log 2>&1\nnpm run test:e2e:local > /evidence/e2e.log 2>&1\nnpm run build > /evidence/build.log 2>&1\nnpm run verify:dev-server-imports > /evidence/dev-import.log 2>&1\nnode -e 'const fs=require(\"fs\"); if (!fs.readFileSync(\".output/server/index.mjs\",\"utf8\").includes(\"hooks.hook(\\\"cloudflare:scheduled\\\"\")) throw new Error(\"scheduled hook missing\"); console.log(JSON.stringify({exact_hook:true,bundle_sha256:require(\"crypto\").createHash(\"sha256\").update(fs.readFileSync(\".output/server/index.mjs\")).digest(\"hex\")}))' > /evidence/cron-hook.log 2>&1\n",
+  "linux_gates": {
+    "runner_exit": 0,
+    "Bun1.4.2_frozen_install": "PASS",
+    "Bun_low_audit": "0 vulnerabilities",
+    "npm_low_audit": "0 vulnerabilities",
+    "independent_npm_ci_ignore_scripts": "PASS",
+    "npm_tree_lint": "PASS0errors/1existing Fast Refresh warning",
+    "npm_tree_typecheck": "PASS",
+    "source_migrations": 50,
+    "reference_seed": "PASS",
+    "Bun_tree_lint": "PASS0errors/1existing warning",
+    "Bun_tree_typecheck": "PASS",
+    "full_vitest": "243files2323PASS0FAIL0SKIP",
+    "local_browser": "12PASS0FAIL0SKIP demo/parser only",
+    "build": "PASS",
+    "original_dev_import_gate": "PASS12routes+no import-protection; original30s/15s deadlines",
+    "exact_built_hook": {
+      "exact_hook": true,
+      "bundle_sha256": "2a906461bf4871a89651de32dc0ae347cf4d9ffaa4c7711051d51f36d37aa9ac"
+    },
+    "firm_dry_run": "PASS offline structure; bindings/providers BLOCKED; not runtime UAT",
+    "original_release_ledger": "PASS ledger contract / productionReleaseGate NO_GO"
+  }
+}
