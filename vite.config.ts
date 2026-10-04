@@ -86,9 +86,22 @@ export default async function config(env: ConfigEnv) {
     plugins.unshift(sourceInjection);
   }
 
+  const watch = resolved.server?.watch;
+  const existingIgnored = watch?.ignored;
+  const ignored =
+    existingIgnored == null
+      ? []
+      : Array.isArray(existingIgnored)
+        ? existingIgnored
+        : [existingIgnored];
+
   return {
     ...resolved,
     plugins,
+    server: {
+      ...resolved.server,
+      watch: watch === null ? null : { ...watch, ignored: [...ignored, WORKTREE_EXCLUDE] },
+    },
     test: {
       // The validator/CLI suites spawn `node --experimental-strip-types`
       // subprocesses that take ~5s to boot, which sits right on Vitest's 5000ms
