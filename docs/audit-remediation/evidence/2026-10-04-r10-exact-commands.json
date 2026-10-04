@@ -1,0 +1,160 @@
+{
+  "kind": "append_only_exact_command_correction",
+  "task_id": "R10",
+  "case_id": "UC24",
+  "recorded_at_utc": "2026-10-04T06:54:19.829085+00:00",
+  "prior_receipt": {
+    "path": "docs/audit-remediation/evidence/2026-10-04-r10-measurement-report.json",
+    "sha256": "4348e276394f26e26319d4a0f780a24cf0d38673f19204924602812d1689e93f"
+  },
+  "commands": {
+    "red": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "& 'C:\\Program Files\\nodejs\\node.exe' node_modules/vitest/vitest.mjs run scripts/audit-performance-report.test.ts --reporter=json --outputFile=.worktrees/r10-measurement-report-20261004/red.json",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/red.log",
+      "exit": 1,
+      "runtime": "Node24.18.0",
+      "assertions": {
+        "numPassedTests": 0,
+        "numFailedTests": 25,
+        "numPendingTests": 0
+      }
+    },
+    "green": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "& 'C:\\Program Files\\nodejs\\node.exe' node_modules/vitest/vitest.mjs run scripts/audit-performance-report.test.ts --reporter=json --outputFile=.worktrees/r10-measurement-report-20261004/green.json",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/green.log",
+      "exit": 0,
+      "runtime": "Node24.18.0",
+      "assertions": {
+        "numPassedTests": 25,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      }
+    },
+    "focused": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "& 'C:\\Program Files\\nodejs\\node.exe' node_modules/vitest/vitest.mjs run scripts/audit-performance-report.test.ts scripts/audit-staging-config.test.ts scripts/audit-uat-ledger.test.ts --reporter=json --outputFile=.worktrees/r10-measurement-report-20261004/focused.json",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/focused.log",
+      "exit": 0,
+      "runtime": "Node24.18.0",
+      "assertions": {
+        "numPassedTests": 37,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      }
+    },
+    "full": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=json --outputFile=.worktrees/r10-measurement-report-20261004/full.json",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/full.log",
+      "exit": 0,
+      "runtime": "Node22.23.3/Bun1.4.2/PG18.6",
+      "assertions": {
+        "numPassedTests": 2289,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      }
+    },
+    "lint": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "npm.cmd run lint",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/lint.log",
+      "exit": 0,
+      "runtime": "Node24.18.0"
+    },
+    "typecheck": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "npm.cmd run typecheck",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/typecheck.log",
+      "exit": 0,
+      "runtime": "Node24.18.0"
+    },
+    "tool_typecheck": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "& 'C:\\Program Files\\nodejs\\node.exe' node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution Bundler --types node --skipLibCheck --strict scripts/audit-performance-report.ts scripts/audit-performance-report.test.ts",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/tool-typecheck.log",
+      "exit": 0,
+      "runtime": "Node24.18.0"
+    },
+    "release_gate": {
+      "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree",
+      "invocation": "& 'C:\\Program Files\\nodejs\\node.exe' --experimental-strip-types scripts/verify-audit-release.ts",
+      "stdout_stderr_redirect": ".worktrees/r10-measurement-report-20261004/release-gate.log",
+      "exit": 0,
+      "runtime": "Node24.18.0"
+    }
+  },
+  "full_runtime_selection": {
+    "PATH_prefix_directories": [
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64",
+      "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime"
+    ],
+    "selected_node": "v22.23.3",
+    "selected_bun": "1.4.2",
+    "postgres": "18.6",
+    "DATABASE_SSL": "disable",
+    "DATABASE_URL_and_TEST_DATABASE_URL": "same exclusively owned loopback target; password/connection-string values omitted",
+    "target": {
+      "host": "127.0.0.1",
+      "port": 54143,
+      "database": "kossilon_r10_measurement_20261004"
+    },
+    "before_after_metadata": "full-runtime-before.json/full-runtime-after.json"
+  },
+  "raw_files": [
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/full-runtime-before.json",
+      "sha256": "fe8e38aeaffe08aeaf68bae1e51aab694b03f884b3e09519b87c96a0cab0f62d"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/full-runtime-after.json",
+      "sha256": "7c46d782d4e4ff078aa594fb743adb9dae45fb2110fe411a4b5e5603875db909"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/red.json",
+      "sha256": "f0cec063a46e11c8e603117c0ccddc0b0ac2aecaf93a82f386e93e0264502e5c"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/green.json",
+      "sha256": "bfb26424aed07d2dfc15be6b0e825783d22f6e30d5d2da90cab60fc5386336ed"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/focused.json",
+      "sha256": "eebcca8515700520c18f70259efbcf6a51968b9b9d4a2d11886d4366e3285a2a"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/full.json",
+      "sha256": "fd7552561eb602ec2978c8e1cd32a28797a4235c9e7590d8b1b07d1a2d844d8a"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/tool-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/release-gate.log",
+      "sha256": "b764aa355398855e71e13825924b4fa2f9b0ed99aaf71501659c810b57ae1900"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/review-fix-red.log",
+      "sha256": "d3a0a2ccb3d963538e1816a04e53daec7e6bdc52dda7af800d270b8ea14e2e07"
+    }
+  ],
+  "new_test_execution": false,
+  "new_genuine_acceptance": 0,
+  "release_decision": "NO_GO",
+  "review_ruling": "Minor regraded Important for the explicit exact-command evidence requirement; append this supplement without modifying the published prior receipt.",
+  "limits": [
+    "Historical RED/GREEN/focused source was not yet committed; no retroactive immutable source snapshot is claimed.",
+    "This supplements commands already observed; it does not claim a new full suite or genuine load.",
+    "Runtime/environment metadata does not constitute adopted SLO, provider or business approval."
+  ]
+}
