@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "task": "R03",
+  "findings": [
+    "F01",
+    "F17"
+  ],
+  "recorded_at_utc": "2026-10-04T19:06:45.543735+00:00",
+  "base_sha": "243b28c0b43859b09521eb4e483c0e0f05eb993d",
+  "tested_source_sha": "64edcaac3a4afd2e006ccceffabaaab38bd9537e",
+  "code_status": "local_passing",
+  "runtime_status": "blocked",
+  "release_status": "NO_GO",
+  "scope": "metadata-only trigger inventory evidence gap; no production privilege vulnerability claim",
+  "query_sha256": {
+    "scripts/audit-app-role-inventory.sql": "4be89014591a7d0d5599b5aeaef9a1e320156fadb24a9090dc699e2aa681ea6b",
+    "scripts/audit-app-role-inventory-v2.sql": "02a89e162623319b4c1435acc46d9020a570a22281cd01252c43d0b2cc87a463"
+  },
+  "preserved_bytes_against_base": {
+    ".github/workflows/ci.yml": "232818ad0d5c754485ec1a0572e7de9348168c87c941bf3059a00fe890e2e73a",
+    "package.json": "8053518bb150f79e7fd31cffb2a4c8e1408e571b8ae4f7398088a3b95e0e439c",
+    "bun.lock": "a2d2388f2d83cfada3847dd44ea0d684b359ac4426381a2ebbb32a21b39336a6",
+    "package-lock.json": "85988563c57cf37497782fee32a9a9f266b6fa34c39324fc298063dcd5a8b195",
+    "docs/audit-remediation/uat-results.csv": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7",
+    "scripts/audit-app-role-inventory.sql": "4be89014591a7d0d5599b5aeaef9a1e320156fadb24a9090dc699e2aa681ea6b"
+  },
+  "focused_red": {
+    "files": 2,
+    "passed": 15,
+    "failed": 3,
+    "skipped": 0,
+    "success": false,
+    "command": [
+      "node.exe",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/features/operations/app-role-inventory.integration.test.ts",
+      "src/test/db-integration-files.convention.test.ts",
+      "--maxWorkers=4",
+      "--reporter=default",
+      "--reporter=json",
+      "--outputFile=.worktrees/r03-trigger-inventory-20261005/red-results.json"
+    ],
+    "started_at_utc": "2026-10-04T18:24:16.487759+00:00",
+    "ended_at_utc": "2026-10-04T18:25:17.845698+00:00",
+    "exit": 1,
+    "provider_calls": 0,
+    "environment": "Windows Node22.23.3 / owned PG18.6"
+  },
+  "focused_green": {
+    "files": 2,
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "command": [
+      "node.exe",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "src/features/operations/app-role-inventory.integration.test.ts",
+      "src/test/db-integration-files.convention.test.ts",
+      "--maxWorkers=4",
+      "--reporter=default",
+      "--reporter=json",
+      "--outputFile=.worktrees/r03-trigger-inventory-20261005/task1-green-results.json"
+    ],
+    "started_at_utc": "2026-10-04T18:30:22.836084+00:00",
+    "ended_at_utc": "2026-10-04T18:30:49.881475+00:00",
+    "exit": 0,
+    "provider_calls": 0,
+    "environment": "Windows Node22.23.3 / owned PG18.6"
+  },
+  "linux_full": {
+    "files": 242,
+    "passed": 2320,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "environment": {
+      "node": "v22.23.2",
+      "platform": "linux"
+    },
+    "postgres": "18.6",
+    "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=default --reporter=json --outputFile=/evidence/full-results.json",
+    "duration_seconds": 345.79,
+    "bun": "1.4.2"
+  },
+  "linux_gates": {
+    "bun_frozen_install": "PASS",
+    "bun_low_audit": "0 vulnerabilities",
+    "npm_low_audit": "0 vulnerabilities",
+    "independent_npm_ci_ignore_scripts": "PASS",
+    "npm_tree_lint": "PASS (0 errors; 1 existing work-queue Fast Refresh warning)",
+    "npm_tree_typecheck": "PASS",
+    "source_migrations": 50,
+    "reference_seed": "PASS",
+    "bun_tree_lint": "PASS (same existing warning)",
+    "bun_tree_typecheck": "PASS",
+    "firm_dry_run": "PASS dry-run safety, structure and offline contracts; external providers/bindings remain BLOCKED; not runtime UAT",
+    "original_release_ledger": {
+      "localLedgerContract": "PASS",
+      "productionReleaseGate": "NO_GO",
+      "applicationSchemaCompatibility": "NOT_VERIFIED: reviewed build/environment-bound receipt and complete runtime catalog required; ledger parser PASS is insufficient.",
+      "ordinaryHistoricalMigrationAllowed": false,
+      "authority": "This read-only report grants no migration, deployment, send or invitation authority.",
+      "uat": {
+        "original": 50,
+        "counts": {
+          "pass": 19,
+          "fail": 0,
+          "blocked": 31,
+          "not_run": 0
+        },
+        "localOnlyPasses": 19,
+        "runtimeReleaseReady": false
+      },
+      "sourceMigrationCount": 50,
+      "productionLastObservedHistoricalCount": 66,
+      "historyReconciliation": "BLOCKED: physical DDL and historical IDs differ; do not replay this manifest or fabricate ledger IDs."
+    },
+    "local_browser": {
+      "command": "npm run test:e2e:local",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "local demo/parser contracts only"
+    }
+  },
+  "linux_gate_commands": [
+    "bun install --frozen-lockfile",
+    "bun audit --audit-level=low",
+    "npm audit --audit-level=low",
+    "npm ci --ignore-scripts (independent npm source tree)",
+    "npm run lint (independent npm tree and Bun tree)",
+    "npm run typecheck (both trees)",
+    "bun scripts/db-migrate.ts",
+    "bun scripts/db-seed-annual-return.ts",
+    "npm run verify:firm -- --dry-run",
+    "npm run verify:audit-release",
+    "bunx playwright install --with-deps chromium",
+    "npm run test:e2e:local"
+  ],
+  "windows_remaining_gates": {
+    "build": {
+      "command": [
+        "node.exe",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "started_at_utc": "2026-10-04T18:59:30.524912+00:00",
+      "ended_at_utc": "2026-10-04T19:01:56.975028+00:00",
+      "exit": 0,
+      "provider_calls": 0
+    },
+    "dev_server_imports": {
+      "command": [
+        "node.exe",
+        "--experimental-strip-types",
+        "scripts/verify-dev-server-imports.ts"
+      ],
+      "started_at_utc": "2026-10-04T19:05:02.891569+00:00",
+      "ended_at_utc": "2026-10-04T19:05:35.710473+00:00",
+      "exit": 1,
+      "provider_calls": 0
+    },
+    "built_cron_hook": {
+      "command": "assert built .output/server/index.mjs contains hooks.hook(\"cloudflare:scheduled\"",
+      "passed": true,
+      "artifact_sha256": "b28d1892e5ff6861db6eefc57c21f37a6063b0268b87340036c302368e860557",
+      "source_sha": "64edcaac3a4afd2e006ccceffabaaab38bd9537e",
+      "recorded_at_utc": "2026-10-04T19:04:00.334694+00:00",
+      "environment": "Windows Node22.23.3 local build; not deployed scheduler evidence"
+    },
+    "dev_gate_status": "FAIL: original 30000ms startup limit; not attributed to this metadata-only source delta; Linux CI gate still required",
+    "prior_failed_attempt": {
+      "command": [
+        "node.exe",
+        "--experimental-strip-types",
+        "scripts/verify-dev-server-imports.ts"
+      ],
+      "started_at_utc": "2026-10-04T19:03:04.996831+00:00",
+      "ended_at_utc": "2026-10-04T19:03:36.663145+00:00",
+      "exit": 1,
+      "provider_calls": 0,
+      "cause_assessment": "parent Node22; child PATH was inherited, not pinned; original 30s readiness failure retained",
+      "harness_change": "prepend selected runtime directory to child PATH; no product/gate changes"
+    }
+  },
+  "remote_ci": {
+    "status": "not_run_at_receipt",
+    "required": [
+      "Node22",
+      "Node24",
+      "verify"
+    ],
+    "merge_condition": "original exact-head CI and review all green; normal merge only"
+  },
+  "raw_evidence_directory": ".worktrees/r03-trigger-inventory-20261005/",
+  "linux_raw_hash_manifest": {
+    "source_sha": "64edcaac3a4afd2e006ccceffabaaab38bd9537e",
+    "started_at_utc": "2026-10-04T18:33:12.069547+00:00",
+    "ended_at_utc": "2026-10-04T19:02:18.491472+00:00",
+    "exit": 0,
+    "oom": false,
+    "maxWorkers": 4,
+    "files": {
+      "linux-browser-install.log": "05c392f461bee4478e9dff061882c748e718966a80e966995ce5ab91a9833db2",
+      "linux-bun-audit.log": "3e33f6bd364e69382a85a55391d20571ee6a7f5c9c50d21481a13d1addc6405a",
+      "linux-bun-install.log": "672e2c9b7bd1440869569675898064f3c2717c11cdeb115cb8f111427b1f6baa",
+      "linux-bun-version.log": "b99b4c7cdf236f59bc9f65d963deaecae3b16a7dad87939cacb9057f7664daee",
+      "linux-e2e.log": "12f178f564234638eddc1b8d2d843c849c9a10cb249d7ac80a7e908babc00e94",
+      "linux-firm.log": "07346dcc93d56f5ae958837d88b0936ba1f275a76bd490bb139f15c4bb70f56a",
+      "linux-full-results.json": "e37334d8436576cb6038d4061b108e36e7e0dee5f864d14b540888d821247861",
+      "linux-full.log": "c06f1ea8dab363ced24ca5d4a43b1de77d700ec0fec747d56e994901e9d09f8e",
+      "linux-install.log": "d2578fc490bb22311776ff1ef784cc59be95ff04040f7b3c089389468a1d70e8",
+      "linux-lint.log": "a706734beda959903cea05f6ba8e118f88ed2a89f88d4ae72c03b28e0e4b1253",
+      "linux-migrate.log": "d668e6e1a3b1b6ee4b77748442ef28f759e178d20978eaabebc8dfc51fd34ce1",
+      "linux-npm-audit.log": "6d8c5c8f3d7684adb070417bd608d01ae90aa3dc26a65af03ffda4955f38d9a3",
+      "linux-npm-ci.log": "026ca5b074955c286008ea2d97976aa3475f6203a0fd62580778bb1466c45139",
+      "linux-npm-lint.log": "17309854a19423b690ef90f958305c3d43c87fbe1e2edb4ab8bcc1e59935a2b4",
+      "linux-npm-typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f",
+      "linux-release.log": "7074a8914b25102b52a573c43e6535c20f1c1eb315cb3fdf769e7997e5556fb0",
+      "linux-runner-exit.json": "8105264899a6cef65d89313cb15b88d73fd58d892a3de899d3767c0698a98cf7",
+      "linux-seed.log": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+      "linux-typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f",
+      "linux-versions.json": "d1be61b601293657a75334c2f603315880820aa48baa59ff117f20aeab2a7402"
+    }
+  },
+  "hosted": {
+    "query_executions": 0,
+    "role_or_grant_writes": 0,
+    "provider_calls": 0,
+    "migration_writes": 0,
+    "deployments": 0,
+    "messages": 0,
+    "invites": 0,
+    "new_genuine_uat_passes": 0,
+    "query_v2_authorized": false,
+    "blocker": "DB/Release owner identity, private service/TLS policy reference, DDL/GRANT freeze, exact target/hash scope and fresh restricted LOGIN credential; never provide secrets in chat"
+  },
+  "limitations": [
+    "metadata remains not_assessed/NO_GO",
+    "raw flags do not classify trigger reachability",
+    "no routine body, trigger args, WHEN expression or business rows exported",
+    "old v1 authorization does not extend to v2",
+    "local source50 is not compatibility with historical hosted66",
+    "no new web or scheduler artifact observation; exact runtime SHAs remain separately gated"
+  ]
+}
