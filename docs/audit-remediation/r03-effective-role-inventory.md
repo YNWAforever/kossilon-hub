@@ -100,3 +100,17 @@ They are LOCAL REAL DB contracts, not Neon role provisioning or genuine Auth.
 All fixture roles/schema/objects roll back, and each successful test checks zero
 residue. Read-only transaction execution is tested separately. The approved B1
 SQL and old audit evidence remain unchanged. No new hosted operation is implied.
+
+
+## Oct4 fresh local LOGIN regression contract
+
+The existing transaction-local SET ROLE cases remain negative identity tests.
+Two added cases create and commit a uniquely named synthetic LOGIN/schema on the
+owned disposable database, then open a separate createSqlClient connection using
+that LOGIN's generated password. Current/session identities must both match;
+incorrect password must fail28P01 without admin fallback. Granted synthetic reads,
+ungranted SELECT42501 and read-only UPDATE25006 are checked. Finally closes the
+new client, drops only its exact owned schema/role and checks zero residue, even
+on callback failure. This is LOCAL REAL DB coverage; it does not provision a
+Neon role, validate TLS/secret-store mapping or pass UC07/UC20 genuine acceptance.
+Original metadata SQL bytes and hosted owner gates above remain unchanged.
