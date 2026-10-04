@@ -5,7 +5,7 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { loadEnv, type ConfigEnv, type Plugin, type PluginOption } from "vite";
+import { loadEnv, normalizePath, type ConfigEnv, type Plugin, type PluginOption } from "vite";
 import { defaultExclude } from "vitest/config";
 
 import { DB_INTEGRATION_TEST_FILES } from "./src/test/db-integration-files";
@@ -86,22 +86,30 @@ export default async function config(env: ConfigEnv) {
     plugins.unshift(sourceInjection);
   }
 
-  const watch = resolved.server?.watch;
-  const existingIgnored = watch?.ignored;
-  const ignored =
-    existingIgnored == null
-      ? []
-      : Array.isArray(existingIgnored)
-        ? existingIgnored
-        : [existingIgnored];
+  plugins.push({
+    name: "kossilon:exclude-other-worktrees",
+    apply: "serve",
+    configResolved(config) {
+      const watch = config.server.watch;
+      if (watch === null) return;
+      const existingIgnored = watch?.ignored;
+      const ignored =
+        existingIgnored == null
+          ? []
+          : Array.isArray(existingIgnored)
+            ? existingIgnored
+            : [existingIgnored];
+      // Scope to the active root so a checkout inside .worktrees still receives HMR.
+      config.server.watch = {
+        ...watch,
+        ignored: [...ignored, `${normalizePath(config.root)}/${WORKTREE_EXCLUDE}`],
+      };
+    },
+  });
 
   return {
     ...resolved,
     plugins,
-    server: {
-      ...resolved.server,
-      watch: watch === null ? null : { ...watch, ignored: [...ignored, WORKTREE_EXCLUDE] },
-    },
     test: {
       // The validator/CLI suites spawn `node --experimental-strip-types`
       // subprocesses that take ~5s to boot, which sits right on Vitest's 5000ms
