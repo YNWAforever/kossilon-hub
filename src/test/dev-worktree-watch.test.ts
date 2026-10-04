@@ -15,11 +15,16 @@ async function removeOwnedFixture(ownerRoot: string) {
   await rm(ownerRoot, { recursive: true, force: true });
 }
 
-it.each([false, true])(
-  "watches active source and excludes children when root is nested=%s",
-  async (nested) => {
+it.each(["plain", "nested", "glob characters"])(
+  "watches active source and excludes children from a %s root",
+  async (location) => {
     const ownerRoot = await mkdtemp(path.join(tmpdir(), "kossilon-dev-watch-"));
-    const root = nested ? path.join(ownerRoot, ".worktrees", "active-checkout") : ownerRoot;
+    const root =
+      location === "nested"
+        ? path.join(ownerRoot, ".worktrees", "active-checkout")
+        : location === "glob characters"
+          ? path.join(ownerRoot, "project (copy) [draft] {a,b} + @tag!")
+          : ownerRoot;
     let server: ViteDevServer | undefined;
     try {
       const activeDirectory = path.join(root, "src");
