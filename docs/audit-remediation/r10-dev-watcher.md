@@ -43,7 +43,12 @@ API watcher probe 沒有 CLI ready marker；最初 raw `ready=false` 是 classif
 
 ## 驗證及交付
 
-完整本地 Linux／PG18 與 exact-head CI 結果，按實際完成後記入
+本地 Linux Node22.23.2／Bun1.4.2／PG18.6：243 files、2322 PASS／0 FAIL／0 SKIP；
+12 local browser tests、build 及原 dev import gate 通過。獨立 npm/Bun trees 的
+lint/typecheck 及兩個 lock audits 通過。tmpfs build artifact 在 runner 退出後不可讀；
+本地只驗 scheduler marker，原 CI exact hook gate 仍為合併必要條件。
+
+exact-head CI 結果，按實際完成後記入
 [本次回條](evidence/2026-10-05-r10-dev-watcher.json)。每個結果分開列命令、
 source SHA、環境、count、raw hash 及限制；CI 不代替 genuine runtime UAT。
 

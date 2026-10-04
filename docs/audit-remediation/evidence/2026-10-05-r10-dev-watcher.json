@@ -6,7 +6,7 @@
   "recorded_at_utc": "2026-10-04T20:14:41.914460+00:00",
   "base_sha": "348da8a4de0d93adf773671f75ee9b4dc3dd78a9",
   "tested_code_sha": "dbcb821d396b79d4172e93ff8b08efeea7fa6694",
-  "code_status": "focused-local-passing; full gates pending",
+  "code_status": "local-passing; exact-head CI/publication pending",
   "runtime_status": "blocked",
   "release_status": "NO_GO",
   "preserved_bytes_against_base": {
@@ -445,12 +445,51 @@
     "bun_tree_lint": "PASS0errors/1existingwarning",
     "bun_tree_typecheck": "PASS",
     "firm_dry_run": "PASS offline structure only; external bindings/providers BLOCKED",
-    "original_release_ledger": "PASS ledger contract; productionReleaseGate NO_GO; not genuine UAT"
+    "original_release_ledger": "PASS ledger contract; productionReleaseGate NO_GO; not genuine UAT",
+    "browser": "12 PASS /0FAIL/0SKIP (local demo/parser only)",
+    "build": "PASS",
+    "original_dev_import_gate": "PASS12routes+no import-protection; original30s/15s limits",
+    "local_built_scheduler_marker": "PASS cloudflare:scheduled string presence only; original CI exact hooks.hook literal still REQUIRED before merge",
+    "post_exit_build_artifact_probe": "not available: owned tmpfs unmounted on runner exit; docker cp failed. No artifact hash/exact-hook PASS claimed locally."
   },
-  "linux_remaining_gates": [
-    "local browser12",
-    "build",
-    "original dev import gate",
-    "built scheduler hook"
-  ]
+  "linux_remaining_gates": [],
+  "linux_run": {
+    "source_sha": "dbcb821d396b79d4172e93ff8b08efeea7fa6694",
+    "started_at_utc": "2026-10-04T20:10:19.218253+00:00",
+    "ended_at_utc": "2026-10-04T20:23:51.123224+00:00",
+    "exit": 0,
+    "oom": false,
+    "maxWorkers": 4,
+    "files": {
+      "linux-browser-install.log": "dfdf8482582e252ddec84f994d82f0eaf36141a0f10779de21459c8e2780cefa",
+      "linux-build.log": "1816a22a46372b702248ce5b8eb0f8ecfced6b5bae8ca3e3150b24a9a6a717b1",
+      "linux-bun-audit.log": "d67352bfd1ec2fb22de320b765f96c67212801899ffe458c7ab7e709a161885a",
+      "linux-bun-install.log": "456b420dba107aa674040fc4da0481d4b01262258ff05fa7c965be08b27fa989",
+      "linux-bun-version.log": "b99b4c7cdf236f59bc9f65d963deaecae3b16a7dad87939cacb9057f7664daee",
+      "linux-cron-hook.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "linux-dev-import.log": "7b49377e6cbc8437605be0b14ec3f6e8067e08b802ae532de514326a783707a4",
+      "linux-e2e.log": "6b814ed9beb5ac7283f2512ccaebfafcdb9ee9b75dbfdbf7422b0f5008f5eb5d",
+      "linux-firm.log": "07346dcc93d56f5ae958837d88b0936ba1f275a76bd490bb139f15c4bb70f56a",
+      "linux-full-results.json": "af1bb78117b49ea8b4637d23fac0fbfe26f4bd34b92c193587511757a07005a5",
+      "linux-full.log": "c1b2b68f4ebf02134ae8e36eea4c0ade5cea6017ab6db882b378ca629be33311",
+      "linux-install.log": "e21edbd5c21c259458a3cc454081078632a524242ea8334c06789b1417317ad8",
+      "linux-lint.log": "a706734beda959903cea05f6ba8e118f88ed2a89f88d4ae72c03b28e0e4b1253",
+      "linux-migrate.log": "d668e6e1a3b1b6ee4b77748442ef28f759e178d20978eaabebc8dfc51fd34ce1",
+      "linux-npm-audit.log": "6d8c5c8f3d7684adb070417bd608d01ae90aa3dc26a65af03ffda4955f38d9a3",
+      "linux-npm-ci.log": "8ac02efcf85692954335e74d3dd71d60287d92c988e3ee1609f077eea0768f01",
+      "linux-npm-lint.log": "17309854a19423b690ef90f958305c3d43c87fbe1e2edb4ab8bcc1e59935a2b4",
+      "linux-npm-typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f",
+      "linux-release.log": "7074a8914b25102b52a573c43e6535c20f1c1eb315cb3fdf769e7997e5556fb0",
+      "linux-runner-exit.json": "8105264899a6cef65d89313cb15b88d73fd58d892a3de899d3767c0698a98cf7",
+      "linux-seed.log": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+      "linux-typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f",
+      "linux-versions.json": "d1be61b601293657a75334c2f603315880820aa48baa59ff117f20aeab2a7402"
+    },
+    "raw_evidence_directory": ".worktrees/windows-dev-probe-20261005"
+  },
+  "linux_commands": "#!/bin/bash\nset -euo pipefail\ntrap 'printf \"{\\\"exit\\\":%s}\\n\" \"$?\" > /evidence/runner-exit.json' EXIT\ncp -a /input/. /workspace/\nnode -e 'console.log(JSON.stringify({node:process.version,platform:process.platform}))' > /evidence/versions.json\nnpm install --global bun@1.4.2 > /evidence/bun-install.log 2>&1\nbun --version > /evidence/bun-version.log\nbun install --frozen-lockfile > /evidence/install.log 2>&1\nbun audit --audit-level=low > /evidence/bun-audit.log 2>&1\nnpm audit --audit-level=low > /evidence/npm-audit.log 2>&1\nmkdir /npm-tree\ncp -a /input/. /npm-tree/\n(cd /npm-tree; npm ci --ignore-scripts > /evidence/npm-ci.log 2>&1; npm run lint > /evidence/npm-lint.log 2>&1; npm run typecheck > /evidence/npm-typecheck.log 2>&1)\nbun scripts/db-migrate.ts > /evidence/migrate.log 2>&1\nbun scripts/db-seed-annual-return.ts > /evidence/seed.log 2>&1\nnpm run lint > /evidence/lint.log 2>&1\nnpm run typecheck > /evidence/typecheck.log 2>&1\nnode node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=default --reporter=json --outputFile=/evidence/full-results.json > /evidence/full.log 2>&1\nnpm run verify:firm -- --dry-run > /evidence/firm.log 2>&1\nnpm run verify:audit-release > /evidence/release.log 2>&1\nbunx playwright install --with-deps chromium > /evidence/browser-install.log 2>&1\nnpm run test:e2e:local > /evidence/e2e.log 2>&1\nnpm run build > /evidence/build.log 2>&1\nnpm run verify:dev-server-imports > /evidence/dev-import.log 2>&1\nnode -e 'const fs=require(\"fs\"); if (!fs.readFileSync(\".output/server/index.mjs\",\"utf8\").includes(\"cloudflare:scheduled\")) throw new Error(\"scheduled hook missing\")' > /evidence/cron-hook.log 2>&1\n",
+  "tested_source_blobs": {
+    "vite.config.ts": "44a4880e5636c0ec87ec8d4a05dab5c3416890f703646ed3f3f95be75d085e92",
+    "src/test/dev-worktree-watch.test.ts": "f285f3ffcbe01e9b9a804c822eef468f4cb11948e4663e558598aa0856957da7"
+  }
 }
