@@ -1,0 +1,256 @@
+{
+  "recorded_at_utc": "2026-10-04T05:00:49.448066+00:00",
+  "source_sha": "96ea6b2ac01c7f0a65e4e91af91092d3e838ff50",
+  "task_ids": [
+    "R01",
+    "R03"
+  ],
+  "finding_ids": [
+    "F21",
+    "F01",
+    "F02",
+    "F17",
+    "F20"
+  ],
+  "status": "runtime-blocked/provider-capability",
+  "approval": {
+    "text": "批准B一V二",
+    "request_sha256": "7243bf157f1d8622894d62900198bef30f2c33dbf2acb8b542242ebc44f50af4",
+    "scope": "exact B1 v2 endpoint create, single catalog SELECT, verified new-endpoint-only failure suspend"
+  },
+  "target": {
+    "project_id": "red-morning-00331124",
+    "branch_id": "br-fragrant-sunset-aosoylhr",
+    "branch_name": "kossilon-r01-staging-20261004",
+    "database_name": "neondb",
+    "parent_id": "br-muddy-mountain-aov8bbku"
+  },
+  "operation_tool": "mcp__codex_apps__neon_create_postgres_endpoint",
+  "operation_arguments": {
+    "project_id": "red-morning-00331124",
+    "branch_id": "br-fragrant-sunset-aosoylhr",
+    "type": "read_write",
+    "autoscaling_limit_min_cu": 0.25,
+    "autoscaling_limit_max_cu": 0.25,
+    "suspend_timeout_seconds": 300,
+    "region_id": "aws-ap-southeast-1",
+    "pooler_enabled": false,
+    "passwordless_access": false,
+    "disabled": false
+  },
+  "actual_create_result": {
+    "attempts": 1,
+    "successes": 0,
+    "http_status": 400,
+    "error_code": "INVALID_ARGUMENT",
+    "message": "creating an endpoint with passwordless access disabled is currently not supported",
+    "new_endpoint_id": null
+  },
+  "preflight": {
+    "metadata_reads": 9,
+    "branch_ready": true,
+    "branch_default": false,
+    "existing_branches": 5,
+    "child_endpoints": 0,
+    "child_computes": 0,
+    "databases": [
+      "neondb"
+    ],
+    "auth_management": "config HTTP404 not enabled; domains/oauth HTTP404 integration not found",
+    "initial_guard_failure": "Auth domains/oauth use HTTP404 integration not found, not the config endpoint's not enabled text; stopped before any resource mutation, then verified exact actual responses",
+    "auth_ruling": "Management404/not enabled/not found consistent with prior receipt; not proof cloned Auth rows empty; no Auth activation authorized"
+  },
+  "post_error": {
+    "observed_at_utc": "2026-10-04 04:52:34 UTC",
+    "metadata_reads": 4,
+    "outcome": "failed/reconciled/no new resource",
+    "child_ready": true,
+    "child_default": false,
+    "child_endpoints": 0,
+    "child_computes": 0,
+    "existing_branches_identity_matched": 5,
+    "original_production_endpoint_id": "ep-patient-block-aoxmgw78",
+    "original_production_branch_id": "br-muddy-mountain-aov8bbku",
+    "endpoint_identity_unchanged": true,
+    "source_endpoint_passwordless_metadata": true
+  },
+  "catalog_sql": {
+    "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-catalog-inventory.sql",
+    "sha256": "5e5d984a7487995b74808b39c133c05f5ad11c1747305ce3eca63fee15d2b58f",
+    "status": "not_run/dependency-blocked",
+    "statements_executed": 0
+  },
+  "hosted_historical_contract_comparison": "not_run/catalog dependency blocked; existing R02 local proofs retained",
+  "rollback": {
+    "status": "not_run/no newly assigned endpoint",
+    "suspend_operations": 0,
+    "delete_reset_restore_operations": 0
+  },
+  "provider_capability": {
+    "official_url": "https://neon.com/api_spec/release/v2.json",
+    "spec_sha256": "54dfd27c22f64fb31f100497885cb2465a512028aa3ca5e17ac574d554fb20e5",
+    "schema_fields": {
+      "EndpointCreateRequest": {
+        "type": "boolean",
+        "description": "NOT YET IMPLEMENTED. Whether to permit passwordless access to the compute endpoint.\n"
+      },
+      "EndpointUpdateRequest": {
+        "description": "NOT YET IMPLEMENTED. Whether to permit passwordless access to the compute endpoint.\n",
+        "type": "boolean"
+      }
+    },
+    "interpretation": "Connected create rejects false; current official create/update field is marked not implemented. No equivalent false-setting route verified.",
+    "passwordless_semantics": "No claim of anonymous SQL access; endpoint flag mapping and effective authorization require provider confirmation."
+  },
+  "local_verification": {
+    "command": "C:/Program Files/nodejs/node.exe node_modules/vitest/vitest.mjs run scripts/audit-staging-config.test.ts --reporter=json --outputFile=.worktrees/r01-b1-execution-20261004/staging-contracts.json",
+    "node": "v24.18.0",
+    "test_files": 1,
+    "pass": 7,
+    "fail": 0,
+    "skip": 0,
+    "release_verifier_exit": 0,
+    "release_result": "NO_GO",
+    "scope": "LOCAL safety contracts only; no provider success"
+  },
+  "protected_hashes": [
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/request.json",
+      "sha256": "47770d20a4aa73bfb7ba17618c1b5dfc0ff6548abf8042b4575a2c38f6ab6e1b"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/acceptance-template.json",
+      "sha256": "80cc56fb8cb7883c790b656542844f126741fc499a84dac6e663af2a3df523ab"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/README.md",
+      "sha256": "138f0b318d6e534d69d904afcde17109143c5dad54feef97a812c3e6ff6177f7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-compute-request.json",
+      "sha256": "0445f6a5a45bf4661f19306b5a0f178074da8dd3abfcfe8b330790d89b72eb98"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-compute-request-v2.json",
+      "sha256": "7243bf157f1d8622894d62900198bef30f2c33dbf2acb8b542242ebc44f50af4"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-catalog-inventory.sql",
+      "sha256": "5e5d984a7487995b74808b39c133c05f5ad11c1747305ce3eca63fee15d2b58f"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-a-result.md",
+      "sha256": "d3ca9c9c7bd925fe63bea9be92bd17452edac46eca3148ff7be7d2e3dc9f2271"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-04-r01-staging-created.json",
+      "sha256": "befae6d233286e8f9bc3b906be6f32767f20687e7f0477eea242b377f9a54c48"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-04-r01-catalog-syntax-rehearsal.json",
+      "sha256": "dafb5443dfeed53c1354fe02a3a17b283f05596ccef2ddf5fdd7cba548b9e6bf"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-navigation.png",
+      "sha256": "bb22d95fea883015b3edaa1db8904634c424c995d4a98de333c9a65d299d8f19"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-settings.png",
+      "sha256": "fc2ad8ddfb32d33ab3b1b10d28e0e47ff123cae396f97cd7271b9d7f6728309e"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-navigation.png",
+      "sha256": "6b4bdad24dbfbca159c043e7146c10ed8fdb143063c4928ee0c7d1ff5c67f9ca"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-settings.png",
+      "sha256": "e9b960635dc5a2a7736750dea0caaed44b2111233c06d1bef6b3f77290a67e33"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-desktop1280-browser-performance.json",
+      "sha256": "3941a8e57079d7e4568ba0c3883dd2580ad2697f706b62a43cb50148209195e1"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-mobile390-browser-performance.json",
+      "sha256": "72985b3d09f86268f3e2f19bcfa7e087ebc98acb57df33fc267c4215c28d3ba1"
+    },
+    {
+      "path": "docs/audit-remediation/uat-results.csv",
+      "sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release.sql",
+      "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+      "sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/preflight.json",
+      "sha256": "c47886ac5ce180d2f45ed56f425b78640c9ceef009995e158cf04dcaf5a83259"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/operation-intent.json",
+      "sha256": "718ea36637844c4e272f1c661a94680bccd394d1e6e72e541b0c6b07d1a7c772"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/create-result.json",
+      "sha256": "90cfe5819bb20130cb7b57643b856e7bc2c7375f3e76dd9c5325837ac2e7f29a"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/after-create-error.json",
+      "sha256": "56af7a323bae2e3750c806221e2f809f029722eb96f0b527d703c6a2b07f56fe"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/official-neon-openapi.json",
+      "sha256": "54dfd27c22f64fb31f100497885cb2465a512028aa3ca5e17ac574d554fb20e5"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/node-before.json",
+      "sha256": "1fd2546e3d31e552f9454a47283677e18b98ea30e45927ccdca8e66e61c3827c"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/node-after.json",
+      "sha256": "0442fa17f2a054604327808b0ce3cc2cdfb23fcc659f56839d9fd23a652bed24"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/staging-contracts.json",
+      "sha256": "17a1b28663efa678e91beddfc6547bbde5b4921c444e320ea9686053906042d0"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/staging-contracts.log",
+      "sha256": "f76c472abf447683ad190c02ba9daa6fdfafc73e119a4ae7049091b961253918"
+    },
+    {
+      "path": ".worktrees/r01-b1-execution-20261004/release-gate.log",
+      "sha256": "b764aa355398855e71e13825924b4fa2f9b0ed99aaf71501659c810b57ae1900"
+    }
+  ],
+  "blocker": {
+    "id": "NEON_ENDPOINT_PASSWORDLESS_FALSE_UNSUPPORTED",
+    "owner": "DB/Release owner and Neon control-plane support",
+    "required_input": "Provider-confirmed endpoint policy/route that preserves the approved access requirement, or a reviewed equivalent access-control policy and separately hash-approved replacement request. No plaintext secret is needed.",
+    "next_action": "Verify supported endpoint flag semantics and access controls before a changed request; retain one failed attempt and no-resource reconciliation, do not resend or change false to true."
+  },
+  "write_counts": {
+    "endpoint_create_attempts": 1,
+    "successful_endpoint_creates": 0,
+    "sql_statements": 0,
+    "migration": 0,
+    "ledger": 0,
+    "role_auth_env": 0,
+    "deployment": 0,
+    "scheduler_tick": 0,
+    "send_invite": 0
+  },
+  "original_uat": {
+    "total": 50,
+    "historical_local_only": 19,
+    "blocked": 31,
+    "new_genuine": 0
+  },
+  "release_status": "NO_GO"
+}
