@@ -1,0 +1,277 @@
+{
+  "task_id": "R10",
+  "finding_ids": [
+    "F02",
+    "F07",
+    "F17",
+    "F18"
+  ],
+  "case_ids": [
+    "UC24"
+  ],
+  "observed_at_utc": "2026-10-04T06:41:48.298307+00:00",
+  "source_baseline": "8037729c2150918234f16b4d9b65f4f6ca215b4d",
+  "executing_code_sha": "3e2c1463fbaafeb337acebe4004cf0fc3ad55d9d",
+  "environment": "LOCAL offline contract; full regression LOCAL REAL DB, owned disposable PG18.6",
+  "actor": "synthetic pseudonymous input; local reference fixtures only",
+  "dataset_version": "version-1 synthetic 900-sample contract fixture; not a measured load export",
+  "expected": "offline bounded reports retain errors, refuse sparse/malformed profiles and never grant genuine/SLO/release acceptance",
+  "actual": "RED25 failed/0 passed; GREEN25; real CLI and adjacent focused37; full240files2289PASS0FAIL0SKIP; lint0errors/1existingwarning; project/tooltypecheck0; release NO_GO",
+  "commands": {
+    "red": "explicit Node24.18.0 vitest run scripts/audit-performance-report.test.ts --reporter=json --outputFile=<owned>/red.json",
+    "green": "explicit Node24.18.0 vitest run scripts/audit-performance-report.test.ts --reporter=json --outputFile=<owned>/green.json",
+    "focused": "explicit Node24.18.0 vitest run scripts/audit-performance-report.test.ts scripts/audit-staging-config.test.ts scripts/audit-uat-ledger.test.ts --reporter=json --outputFile=<owned>/focused.json",
+    "full": "explicit Node22.23.3/Bun1.4.2/local PG18.6 vitest run --maxWorkers=4 --reporter=json --outputFile=<owned>/full.json",
+    "lint": "npm run lint",
+    "typecheck": "npm run typecheck",
+    "tool_typecheck": "node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution Bundler --types node --skipLibCheck --strict scripts/audit-performance-report.ts scripts/audit-performance-report.test.ts",
+    "release_gate": "explicit Node24.18.0 --experimental-strip-types scripts/verify-audit-release.ts"
+  },
+  "test_results": {
+    "red": {
+      "numTotalTests": 25,
+      "numPassedTests": 0,
+      "numFailedTests": 25,
+      "numPendingTests": 0,
+      "success": false
+    },
+    "green": {
+      "numTotalTests": 25,
+      "numPassedTests": 25,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "focused": {
+      "numTotalTests": 37,
+      "numPassedTests": 37,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "full": {
+      "numTotalTests": 2289,
+      "numPassedTests": 2289,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "full_files": 240
+  },
+  "runtime_before": {
+    "node": "v22.23.3",
+    "bun": "1.4.2",
+    "postgres": "18.6 (Debian 18.6-1.pgdg13+2)",
+    "container_id": "a385d7cebea744b343f3d713a47b115826a61c319168f445f9d1fc466484b7d3",
+    "container_name": "kossilon-r10-ci-pg18-20261004",
+    "port": "54143",
+    "target": "local owned synthetic",
+    "build": "3e2c1463fbaafeb337acebe4004cf0fc3ad55d9d"
+  },
+  "runtime_after": {
+    "node": "v22.23.3",
+    "bun": "1.4.2",
+    "build": "3e2c1463fbaafeb337acebe4004cf0fc3ad55d9d",
+    "tests_exit": 0
+  },
+  "gates": {
+    "lint_exit": 0,
+    "existing_warnings": 1,
+    "project_typecheck_exit": 0,
+    "tool_typecheck_exit": 0,
+    "release_verifier_exit": 0,
+    "release_decision": "NO_GO"
+  },
+  "source_files": [
+    {
+      "path": "scripts/audit-performance-report.ts",
+      "sha256": "eb81ec9dd29229a8abbee9885dfd4ec72167bab6e15a98b85347b6ddcb561305"
+    },
+    {
+      "path": "scripts/audit-performance-report.test.ts",
+      "sha256": "723c27da6972ea3aaa187720b7e8946ec000641b26e3c3fefcd3b523508bd65a"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/red.json",
+      "sha256": "f0cec063a46e11c8e603117c0ccddc0b0ac2aecaf93a82f386e93e0264502e5c"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/red.log",
+      "sha256": "0fddc124d3cb6d33cee3be7cbeb3ce918df8e714f542b027dede841c72ab2b40"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/green.json",
+      "sha256": "bfb26424aed07d2dfc15be6b0e825783d22f6e30d5d2da90cab60fc5386336ed"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/green.log",
+      "sha256": "2b2f5ef50c0f70b48f4702895faf404f4f1193e8e8c74a5a4f4ac8371fa46e26"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/focused.json",
+      "sha256": "eebcca8515700520c18f70259efbcf6a51968b9b9d4a2d11886d4366e3285a2a"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/focused.log",
+      "sha256": "36c0c948fcdce70b450b217830d3e60ba9d538cc91c02e96ff2f74f6df07286a"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/full.json",
+      "sha256": "fd7552561eb602ec2978c8e1cd32a28797a4235c9e7590d8b1b07d1a2d844d8a"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/full.log",
+      "sha256": "63c8936eb1deffad6b3cfc113eb9371f8de0d35284453cb4750381165c9a7467"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/full-runtime-before.json",
+      "sha256": "fe8e38aeaffe08aeaf68bae1e51aab694b03f884b3e09519b87c96a0cab0f62d"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/full-runtime-after.json",
+      "sha256": "7c46d782d4e4ff078aa594fb743adb9dae45fb2110fe411a4b5e5603875db909"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/tool-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/local-migrate.log",
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/local-seed.log",
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/cleanup.json",
+      "sha256": "5735c9fbbb45867999097038f5f8da0d480bc539a110f3de5463de8f7fcc272d"
+    },
+    {
+      "path": ".worktrees/r10-measurement-report-20261004/release-gate.log",
+      "sha256": "b764aa355398855e71e13825924b4fa2f9b0ed99aaf71501659c810b57ae1900"
+    }
+  ],
+  "protected_hashes": [
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/request.json",
+      "sha256": "47770d20a4aa73bfb7ba17618c1b5dfc0ff6548abf8042b4575a2c38f6ab6e1b"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/acceptance-template.json",
+      "sha256": "80cc56fb8cb7883c790b656542844f126741fc499a84dac6e663af2a3df523ab"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/README.md",
+      "sha256": "138f0b318d6e534d69d904afcde17109143c5dad54feef97a812c3e6ff6177f7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-compute-request.json",
+      "sha256": "0445f6a5a45bf4661f19306b5a0f178074da8dd3abfcfe8b330790d89b72eb98"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-compute-request-v2.json",
+      "sha256": "7243bf157f1d8622894d62900198bef30f2c33dbf2acb8b542242ebc44f50af4"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-catalog-inventory.sql",
+      "sha256": "5e5d984a7487995b74808b39c133c05f5ad11c1747305ce3eca63fee15d2b58f"
+    },
+    {
+      "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-a-result.md",
+      "sha256": "d3ca9c9c7bd925fe63bea9be92bd17452edac46eca3148ff7be7d2e3dc9f2271"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-04-r01-staging-created.json",
+      "sha256": "befae6d233286e8f9bc3b906be6f32767f20687e7f0477eea242b377f9a54c48"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-04-r01-catalog-syntax-rehearsal.json",
+      "sha256": "dafb5443dfeed53c1354fe02a3a17b283f05596ccef2ddf5fdd7cba548b9e6bf"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-navigation.png",
+      "sha256": "bb22d95fea883015b3edaa1db8904634c424c995d4a98de333c9a65d299d8f19"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-settings.png",
+      "sha256": "fc2ad8ddfb32d33ab3b1b10d28e0e47ff123cae396f97cd7271b9d7f6728309e"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-navigation.png",
+      "sha256": "6b4bdad24dbfbca159c043e7146c10ed8fdb143063c4928ee0c7d1ff5c67f9ca"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-settings.png",
+      "sha256": "e9b960635dc5a2a7736750dea0caaed44b2111233c06d1bef6b3f77290a67e33"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-desktop1280-browser-performance.json",
+      "sha256": "3941a8e57079d7e4568ba0c3883dd2580ad2697f706b62a43cb50148209195e1"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-mobile390-browser-performance.json",
+      "sha256": "72985b3d09f86268f3e2f19bcfa7e087ebc98acb57df33fc267c4215c28d3ba1"
+    },
+    {
+      "path": "docs/audit-remediation/uat-results.csv",
+      "sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release.sql",
+      "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+      "sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/2026-10-04-r01-b1-capability-blocked.json",
+      "sha256": "1b84068dbc661cd5b73ccc79aea30325c7b40c13deb24abd6eb0f314df772be9"
+    }
+  ],
+  "cleanup": {
+    "container_id": "a385d7cebea744b343f3d713a47b115826a61c319168f445f9d1fc466484b7d3",
+    "container_name": "kossilon-r10-ci-pg18-20261004",
+    "label": "r10-measurement-report-20261004",
+    "loopback_only": true,
+    "exact_identity_guard": "PASS",
+    "remove_exit": 0,
+    "remaining_matching_containers": 0,
+    "existing_containers_touched": 0,
+    "at_utc": "2026-10-04T06:41:45.4345180Z"
+  },
+  "side_effects": {
+    "hosted_db_sql": 0,
+    "production_mutation": 0,
+    "provider_writes": 0,
+    "deployment": 0,
+    "load_requests": 0,
+    "send_invite_grant": 0,
+    "local_disposable_db": "exact newly created owned container migrated/seeded for regression and removed"
+  },
+  "original_uat": {
+    "total": 50,
+    "historical_local_only": 19,
+    "blocked": 31,
+    "new_genuine": 0
+  },
+  "limits": [
+    "Report profile completeness is sample structure, never concurrency/cold state/genuine acceptance.",
+    "Input metadata is caller asserted; actual provider identity, artifact/SBOM, SLO/business approval and native tick receipts remain independent.",
+    "No new before-after, hosted25user load or production performance result measured.",
+    "B1 approved passwordless=false endpoint still HTTP400 capability-blocked; no second create or changed flag.",
+    "Original full Node22/24 CI is an independent post-publication gate."
+  ],
+  "next_owner_inputs": "Operations/Business adopted SLO, approved25-user equivalent workload/window/cost, active-user/cold-state receipts; DB/Release supportedB1 policy/restricted role/PG18 target/owners/restore; Auth/Storage/provider controlled identities/bindings"
+}
