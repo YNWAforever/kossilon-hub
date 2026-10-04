@@ -324,3 +324,36 @@ R10 sole fresh review: originalCritical0/Important0/Minor1. Exact-command placeh
 Master R10/UC24 requires per-endpoint sample CSV; PR135 JSON reporting did not supply it. Source fd29666b3c1d5f5c23e627ddbcf037e71dfd4b02, base f61b1ae70954311fac314d1069785445f91ee7a2. New optional --samples-csv emits every error/success in source order, SHA/environment/target identity, elapsed and optional layer timings; missing stays blank, zero stays zero, spreadsheet prefixes escaped. Shared validation/default JSON and exits retained; NO_GO/not_assessed on every observed row. No real load or new before/after performance result.
 
 Actual baseline26PASS; RED14expectedFAIL/1existingrefusalPASS/0SKIP -> focused41PASS0FAIL0SKIP; full241files2304PASS0FAIL0SKIP on owned loopbackPG18.6/Node22.23.3/Bun1.4.2/maxWorkers4. Lint0errors/1existingwarning, project+script typecheck0, original release verifier0NO_GO. Exact commands/raw hashes: evidence/2026-10-04-r10-sample-csv.json; operator: r10-measurement-report.md. 177 protected artifacts unchanged; original50 remains19historicalLOCALONLY/31blocked/0newgenuine. Formal NO_GO; B1 capability/role/restore/SLO/native/provider inputs remain separately blocked. Source publication/review/exact-head/main gates recorded after occurrence in delivery PR.
+
+
+## Oct4 R03 effective-role metadata inventory — 2026-10-04T10:49:07.595791+00:00
+
+Master R03 restricted web-role gate continuation from e38a310187aa5b06ba42fc4bc0811b7822191344; source 56c0f05e9214d9c585da95d19a4f43b4b26475ba.
+New independent metadata-only SELECT includes inherited/PUBLIC/column grants,
+grant options, MEMBER/USAGE/SET routes, current/session identities, owner/RLS,
+SECURITY DEFINER exposure and stored future default ACLs. This is an acceptance
+tool gap, not a reproduced product authorization defect. Report always
+not_assessed/NO_GO; user-object/current-database limits are explicit. Operator:
+r03-effective-role-inventory.md; SQL SHA256 4be89014591a7d0d5599b5aeaef9a1e320156fadb24a9090dc699e2aa681ea6b; receipt:
+evidence/2026-10-04-r03-effective-role-inventory.json.
+
+Actual existing B1 baseline RED10FAIL → focused2files12PASS0FAIL0SKIP; complete
+local candidate then reproduced BUG-R03-02 user-schema operator execution:
+RED10PASS/1FAIL→final2files13PASS0FAIL0SKIP. Functions/operators/types now bind
+to pg_catalog, with caller search_path unchanged. Complete final
+local242files2315PASS0FAIL0SKIP on owned loopbackPG18.6/Node22.23.3/Bun1.4.2,
+maxWorkers4. Lint0errors/1existingwarning, project typecheck0, original release
+verifier0NO_GO. Exact container removed; role/schema fixtures0remaining.
+Initial full suite was2313PASS/1FAIL at the unchanged NAR fixture parent30s
+timeout; isolated unchanged reproduction1PASS/0FAIL/0SKIP10.42s with exact child
+cleanup, followed by the complete GREEN run. Local startup contention is a
+suspected cause, not a proved diagnosis; no scope/timeout/expected/skip changed.
+925 protected old tracked artifacts unchanged; original50 remains
+19historicalLOCALONLY/31blocked/0newgenuine, all11othertrackerrows unchanged.
+No migration/lock/CI/app domain change; no hosted SQL/role write/deploy/send/invite.
+Old B1 approved SQL bytes stay unchanged and its approval does not cover this new
+query. Actual restricted credential/binding, allowlist/new query scope authority,
+endpoint capability, restore/freeze, fresh Auth/negative tenancy, native ticks
+and provider inputs remain separately blocked by the R03 owner matrix. Pending
+policy work stays on its existing separate unpublished branch. Source review,
+exact-head CI, normal merge and independent-main CI are separate delivery gates.
