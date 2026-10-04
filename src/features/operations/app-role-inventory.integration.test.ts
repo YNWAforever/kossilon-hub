@@ -106,6 +106,59 @@ async function readInventory(tx: TransactionSql): Promise<Inventory> {
   return (row.inventory ?? row) as Inventory;
 }
 
+async function withLoginFixture(
+  check: (app: SqlClient, fixture: { role: string; schema: string }) => Promise<void>,
+  invalidPassword = false,
+) {
+  if (!databaseUrl) throw new Error("TEST_DATABASE_URL required for role inventory tests.");
+  const prefix = `login_probe_${crypto.randomUUID().replaceAll("-", "")}`;
+  const fixture = { role: `${prefix}_app`, schema: `${prefix}_schema` };
+  const password = crypto.randomUUID().replaceAll("-", "");
+  const admin = sqlForTests();
+  let app: SqlClient | undefined;
+
+  try {
+    // Commit before opening a separate connection: uncommitted CREATE ROLE is
+    // invisible to authentication. All identifiers/passwords here are generated.
+    await admin.begin(async (tx) => {
+      await tx.unsafe(`
+        CREATE ROLE ${fixture.role} LOGIN PASSWORD '${password}'
+          NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOREPLICATION;
+        CREATE SCHEMA ${fixture.schema};
+        GRANT USAGE ON SCHEMA ${fixture.schema} TO ${fixture.role};
+        CREATE TABLE ${fixture.schema}.allowed_rows (id integer, value text);
+        INSERT INTO ${fixture.schema}.allowed_rows VALUES (1, 'synthetic fixture');
+        GRANT SELECT, UPDATE ON ${fixture.schema}.allowed_rows TO ${fixture.role};
+        CREATE TABLE ${fixture.schema}.denied_rows (secret text);
+        INSERT INTO ${fixture.schema}.denied_rows VALUES ('${SENTINEL}');
+      `);
+    });
+    const url = new URL(databaseUrl);
+    url.username = fixture.role;
+    url.password = invalidPassword ? `${password}_incorrect` : password;
+    app = createSqlClient(url.toString(), { max: 1 });
+    await check(app, fixture);
+  } finally {
+    try {
+      await app?.end({ timeout: 5 });
+    } finally {
+      await admin.begin(async (tx) => {
+        await tx.unsafe(`
+          DROP SCHEMA IF EXISTS ${fixture.schema} CASCADE;
+          DROP ROLE IF EXISTS ${fixture.role};
+        `);
+      });
+      const [residue] = await admin<{ roles: number; schemas: number }[]>`
+        SELECT (SELECT count(*)::int FROM pg_catalog.pg_roles
+                WHERE rolname = ${fixture.role}) AS roles,
+               (SELECT count(*)::int FROM pg_catalog.pg_namespace
+                WHERE nspname = ${fixture.schema}) AS schemas
+      `;
+      expect(residue).toEqual({ roles: 0, schemas: 0 });
+    }
+  }
+}
+
 function named(rows: Metadata[] | undefined, key: string, value: string) {
   return (rows ?? []).find((row) => row[key] === value);
 }
@@ -115,6 +168,46 @@ afterAll(async () => {
 });
 
 describe.skipIf(!databaseUrl)("actual app-role metadata inventory", () => {
+  it("authenticates a fresh restricted LOGIN and preserves its identity and read-only boundary", async () => {
+    await withLoginFixture(async (app, fixture) => {
+      const report = await app.begin("read only", async (tx) => readInventory(tx));
+      const attributes = {
+        superuser: false,
+        bypassrls: false,
+        create_role: false,
+        create_db: false,
+        replication: false,
+        login: true,
+      };
+      expect(report.context).toMatchObject({
+        current_user: fixture.role,
+        session_user: fixture.role,
+        transaction_read_only: "on",
+        current_attributes: attributes,
+        session_attributes: attributes,
+      });
+      expect(report).toMatchObject({ assessment: "not_assessed", release_decision: "NO_GO" });
+      expect(JSON.stringify(report)).not.toContain(SENTINEL);
+      expect(await app.unsafe(`SELECT value FROM ${fixture.schema}.allowed_rows`)).toEqual([
+        { value: "synthetic fixture" },
+      ]);
+      await expect(
+        app.unsafe(`SELECT secret FROM ${fixture.schema}.denied_rows`),
+      ).rejects.toMatchObject({ code: "42501" });
+      await expect(
+        app.begin("read only", async (tx) => {
+          await tx.unsafe(`UPDATE ${fixture.schema}.allowed_rows SET value = 'changed'`);
+        }),
+      ).rejects.toMatchObject({ code: "25006" });
+    });
+  });
+
+  it("rejects an incorrect fresh LOGIN password without falling back to the admin connection", async () => {
+    await withLoginFixture(async (app) => {
+      await expect(app`SELECT current_user`).rejects.toMatchObject({ code: "28P01" });
+    }, true);
+  });
+
   it("retains the privileged session identity behind a basic current role without assessing safety", async () => {
     await withFixture(async (tx, f) => {
       const report = await readInventory(tx);
