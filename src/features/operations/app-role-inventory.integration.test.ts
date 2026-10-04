@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import type { TransactionSql } from "postgres";
 import { afterAll, describe, expect, it } from "vitest";
 
@@ -10,6 +11,11 @@ const inventoryQuery = readFileSync(
   new URL("../../../scripts/audit-app-role-inventory.sql", import.meta.url),
   "utf8",
 );
+const triggerQueryPath = new URL(
+  "../../../scripts/audit-app-role-inventory-v2.sql",
+  import.meta.url,
+);
+const triggerInventoryQuery = readFileSync(triggerQueryPath, "utf8");
 const SENTINEL = "private-row-and-routine-body-must-not-be-exported";
 
 type Metadata = Record<string, unknown>;
@@ -26,6 +32,7 @@ type Inventory = {
   columns: Metadata[];
   sequences: Metadata[];
   routines: Metadata[];
+  triggers?: Metadata[];
   default_acls: Metadata[];
 };
 
@@ -101,8 +108,8 @@ async function withFixture(check: (tx: TransactionSql, fixture: Fixture) => Prom
   expect(residue).toEqual({ roles: 0, schemas: 0 });
 }
 
-async function readInventory(tx: TransactionSql): Promise<Inventory> {
-  const [row] = await tx.unsafe(inventoryQuery);
+async function readInventory(tx: TransactionSql, query = inventoryQuery): Promise<Inventory> {
+  const [row] = await tx.unsafe(query);
   return (row.inventory ?? row) as Inventory;
 }
 
@@ -170,7 +177,6 @@ afterAll(async () => {
 describe.skipIf(!databaseUrl)("actual app-role metadata inventory", () => {
   it("authenticates a fresh restricted LOGIN and preserves its identity and read-only boundary", async () => {
     await withLoginFixture(async (app, fixture) => {
-      const report = await app.begin("read only", async (tx) => readInventory(tx));
       const attributes = {
         superuser: false,
         bypassrls: false,
@@ -179,15 +185,18 @@ describe.skipIf(!databaseUrl)("actual app-role metadata inventory", () => {
         replication: false,
         login: true,
       };
-      expect(report.context).toMatchObject({
-        current_user: fixture.role,
-        session_user: fixture.role,
-        transaction_read_only: "on",
-        current_attributes: attributes,
-        session_attributes: attributes,
-      });
-      expect(report).toMatchObject({ assessment: "not_assessed", release_decision: "NO_GO" });
-      expect(JSON.stringify(report)).not.toContain(SENTINEL);
+      for (const query of [inventoryQuery, triggerInventoryQuery]) {
+        const report = await app.begin("read only", async (tx) => readInventory(tx, query));
+        expect(report.context).toMatchObject({
+          current_user: fixture.role,
+          session_user: fixture.role,
+          transaction_read_only: "on",
+          current_attributes: attributes,
+          session_attributes: attributes,
+        });
+        expect(report).toMatchObject({ assessment: "not_assessed", release_decision: "NO_GO" });
+        expect(JSON.stringify(report)).not.toContain(SENTINEL);
+      }
       expect(await app.unsafe(`SELECT value FROM ${fixture.schema}.allowed_rows`)).toEqual([
         { value: "synthetic fixture" },
       ]);
@@ -349,6 +358,114 @@ describe.skipIf(!databaseUrl)("actual app-role metadata inventory", () => {
   it("executes as a SELECT in a read-only transaction", async () => {
     const report = await sqlForTests().begin("read only", async (tx) => readInventory(tx));
     expect(report.context).toMatchObject({ transaction_read_only: "on" });
+    expect(report.release_decision).toBe("NO_GO");
+  });
+
+  it("reports a definer trigger that executes despite revoked direct EXECUTE", async () => {
+    await withFixture(async (tx, f) => {
+      await tx.unsafe(`
+        RESET ROLE;
+        INSERT INTO ${f.schema}.public_rows VALUES (1);
+        CREATE FUNCTION ${f.schema}.trigger_body() RETURNS trigger
+          LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog
+          AS $$ BEGIN UPDATE ${f.schema}.private_rows SET id = id + 1; RETURN NEW; END $$;
+        CREATE TRIGGER guarded_update BEFORE UPDATE ON ${f.schema}.public_rows
+          FOR EACH ROW EXECUTE FUNCTION ${f.schema}.trigger_body('${SENTINEL}');
+        REVOKE EXECUTE ON FUNCTION ${f.schema}.trigger_body() FROM PUBLIC;
+        SET LOCAL ROLE ${f.app};
+      `);
+      await expect(
+        tx.savepoint(async (probe) => probe.unsafe(`UPDATE ${f.schema}.private_rows SET id = id`)),
+      ).rejects.toMatchObject({ code: "42501" });
+      // Actual trigger invocation is a separate LOCAL fixture action, never
+      // performed by the metadata SELECT itself.
+      await tx.unsafe(`UPDATE ${f.schema}.public_rows SET id = id + 1; RESET ROLE;`);
+      expect(await tx.unsafe(`SELECT id FROM ${f.schema}.private_rows`)).toEqual([{ id: 2 }]);
+      await tx.unsafe(`SET LOCAL ROLE ${f.app};`);
+      const report = await readInventory(tx, triggerInventoryQuery);
+      expect(named(report.routines, "routine", "trigger_body")).toMatchObject({
+        execute: false,
+        security_definer: true,
+      });
+      expect(named(report.triggers, "trigger", "guarded_update")).toMatchObject({
+        schema: f.schema,
+        relation: "public_rows",
+        enabled: "O",
+        internal: false,
+        function_schema: f.schema,
+        function: "trigger_body",
+        security_definer: true,
+        function_execute: false,
+        function_owner: report.context.session_user,
+      });
+      expect(JSON.stringify(report)).not.toContain(SENTINEL);
+      // Collecting metadata did not invoke the trigger again.
+      await tx.unsafe("RESET ROLE");
+      expect(await tx.unsafe(`SELECT id FROM ${f.schema}.private_rows`)).toEqual([{ id: 2 }]);
+    });
+  });
+
+  it("retains disabled, replica, always and invoker trigger facts without classifying safety", async () => {
+    await withFixture(async (tx, f) => {
+      await tx.unsafe(`
+        RESET ROLE;
+        CREATE FUNCTION ${f.schema}.invoker_trigger() RETURNS trigger LANGUAGE plpgsql
+          AS $$ BEGIN RETURN NEW; END $$;
+        CREATE TRIGGER disabled_trigger BEFORE INSERT ON ${f.schema}.public_rows
+          FOR EACH ROW EXECUTE FUNCTION ${f.schema}.invoker_trigger();
+        CREATE TRIGGER replica_trigger BEFORE UPDATE ON ${f.schema}.public_rows
+          FOR EACH ROW EXECUTE FUNCTION ${f.schema}.invoker_trigger();
+        CREATE TRIGGER always_trigger BEFORE DELETE ON ${f.schema}.public_rows
+          FOR EACH ROW EXECUTE FUNCTION ${f.schema}.invoker_trigger();
+        ALTER TABLE ${f.schema}.public_rows DISABLE TRIGGER disabled_trigger;
+        ALTER TABLE ${f.schema}.public_rows ENABLE REPLICA TRIGGER replica_trigger;
+        ALTER TABLE ${f.schema}.public_rows ENABLE ALWAYS TRIGGER always_trigger;
+        SET LOCAL ROLE ${f.app};
+      `);
+      const report = await readInventory(tx, triggerInventoryQuery);
+      for (const [name, enabled] of [
+        ["disabled_trigger", "D"],
+        ["replica_trigger", "R"],
+        ["always_trigger", "A"],
+      ]) {
+        expect(named(report.triggers, "trigger", name)).toMatchObject({
+          enabled,
+          security_definer: false,
+          function: "invoker_trigger",
+        });
+      }
+      expect(report).toMatchObject({
+        version: 2,
+        assessment: "not_assessed",
+        release_decision: "NO_GO",
+        context: { session_replication_role: "origin" },
+      });
+    });
+  });
+
+  it("keeps v1 immutable and v2 read-only behind hostile application search_path", async () => {
+    expect(createHash("sha256").update(inventoryQuery).digest("hex")).toBe(
+      "4be89014591a7d0d5599b5aeaef9a1e320156fadb24a9090dc699e2aa681ea6b",
+    );
+    await withFixture(async (tx, f) => {
+      await tx.unsafe(`
+        RESET ROLE;
+        CREATE FUNCTION ${f.schema}.unsafe_concat(text, text) RETURNS text
+          LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'application operator executed'; END $$;
+        CREATE OPERATOR ${f.schema}.|| (LEFTARG = text, RIGHTARG = text,
+          FUNCTION = ${f.schema}.unsafe_concat);
+        SET LOCAL ROLE ${f.app};
+        SET LOCAL search_path = ${f.schema}, pg_catalog;
+      `);
+      const report = await readInventory(tx, triggerInventoryQuery);
+      expect(report.version).toBe(2);
+      expect(report.context.current_user).toBe(f.app);
+      expect(JSON.stringify(report)).not.toContain(SENTINEL);
+    });
+    const report = await sqlForTests().begin("read only", async (tx) =>
+      readInventory(tx, triggerInventoryQuery),
+    );
+    expect(report.context.transaction_read_only).toBe("on");
     expect(report.release_decision).toBe("NO_GO");
   });
 
