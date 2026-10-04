@@ -4,8 +4,9 @@
 //     devtools source locations (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+import path from "node:path";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { loadEnv, type ConfigEnv, type Plugin, type PluginOption } from "vite";
+import { loadEnv, normalizePath, type ConfigEnv, type Plugin, type PluginOption } from "vite";
 import { defaultExclude } from "vitest/config";
 
 import { DB_INTEGRATION_TEST_FILES } from "./src/test/db-integration-files";
@@ -85,6 +86,37 @@ export default async function config(env: ConfigEnv) {
     const [sourceInjection] = plugins.splice(sourceInjectionIndex, 1);
     plugins.unshift(sourceInjection);
   }
+
+  plugins.push({
+    name: "kossilon:exclude-other-worktrees",
+    apply: "serve",
+    configResolved(config) {
+      const watch = config.server.watch;
+      if (watch === null) return;
+      const existingIgnored = watch?.ignored;
+      const ignored =
+        existingIgnored == null
+          ? []
+          : Array.isArray(existingIgnored)
+            ? existingIgnored
+            : [existingIgnored];
+      // Scope to the active root so a checkout inside .worktrees still receives HMR.
+      const excludeOtherWorktrees = (filename: string) => {
+        const relative = normalizePath(
+          path.relative(config.root, path.resolve(watch?.cwd ?? config.root, filename)),
+        );
+        return (
+          !relative.startsWith("../") &&
+          !path.isAbsolute(relative) &&
+          relative.split("/").includes(".worktrees")
+        );
+      };
+      config.server.watch = {
+        ...watch,
+        ignored: [...ignored, excludeOtherWorktrees],
+      };
+    },
+  });
 
   return {
     ...resolved,
