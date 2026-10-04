@@ -23,17 +23,17 @@ every object boundary. Identifiers are pseudonymous labels of 1–100 ASCII
 letters/digits/underscore/dot/hyphen; never insert credentials, URLs, emails,
 customer names or document bytes.
 
-| Field | Required content |
-| --- | --- |
-| `formatVersion` | `1` |
-| `environment` | `level`, `targetId`, exact 40-character lowercase `buildSha`, `platform`, `runtime`, `postgresMajor`, `webRegion`, `databaseRegion`, `poolSize`, `hardware` |
-| `environment.level` | `LOCAL_CONTRACT`, `LOCAL_REAL_DB`, `CI_DEMO`, `STAGING_OBSERVATION` or `PRODUCTION_OBSERVATION`; these are input classifications, not verified identities |
-| `dataset` | Actual non-negative integer `cases`, `documents`, `versions`, `officers`; counts do not establish business approval or representativeness |
-| `profile` | UTC `rampStartUtc`, `steadyStartUtc`, `endUtc`, strictly ordered; each phase at most one hour |
-| `expectedEndpoints` | Unique reviewed workload labels, 1–50; declare every endpoint in scope |
-| `expectedActors` | Unique pseudonymous actors, 1–100; complete profile requires exactly 25 |
-| `samples[]` | Unique `id`, declared `endpoint`/`actorId`, `phase` (`ramp`/`steady`), `cache` (`cold`/`warm`/`unknown`), UTC `startedAtUtc`/`endedAtUtc`, `outcome` (`success`/`error`) |
-| `samples[].timings` | Optional observed `httpMs`, `dbRttMs`, `sqlMs`, `serializationMs`, `renderMs`, `providerMs`; each finite and non-negative |
+| Field               | Required content                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `formatVersion`     | `1`                                                                                                                                                                      |
+| `environment`       | `level`, `targetId`, exact 40-character lowercase `buildSha`, `platform`, `runtime`, `postgresMajor`, `webRegion`, `databaseRegion`, `poolSize`, `hardware`              |
+| `environment.level` | `LOCAL_CONTRACT`, `LOCAL_REAL_DB`, `CI_DEMO`, `STAGING_OBSERVATION` or `PRODUCTION_OBSERVATION`; these are input classifications, not verified identities                |
+| `dataset`           | Actual non-negative integer `cases`, `documents`, `versions`, `officers`; counts do not establish business approval or representativeness                                |
+| `profile`           | UTC `rampStartUtc`, `steadyStartUtc`, `endUtc`, strictly ordered; each phase at most one hour                                                                            |
+| `expectedEndpoints` | Unique reviewed workload labels, 1–50; declare every endpoint in scope                                                                                                   |
+| `expectedActors`    | Unique pseudonymous actors, 1–100; complete profile requires exactly 25                                                                                                  |
+| `samples[]`         | Unique `id`, declared `endpoint`/`actorId`, `phase` (`ramp`/`steady`), `cache` (`cold`/`warm`/`unknown`), UTC `startedAtUtc`/`endedAtUtc`, `outcome` (`success`/`error`) |
+| `samples[].timings` | Optional observed `httpMs`, `dbRttMs`, `sqlMs`, `serializationMs`, `renderMs`, `providerMs`; each finite and non-negative                                                |
 
 Samples must start and finish inside the declared observation window; a phase
 is determined by its start time. Retain requests that cross a load-stop time in
@@ -80,3 +80,28 @@ their separate owners and review under the master plan.
 The current local slice produces no new before/after runtime performance result
 and does not change original50 UAT status. The existing before/after query and
 SLA/NAR evidence remains in `performance.md` and `sla-calendar-performance.md`.
+
+## Individual sample CSV (R10 / UC24)
+
+The same bounded input can be exported as quoted RFC4180 rows with CRLF:
+
+```sh
+node --experimental-strip-types scripts/audit-performance-report.ts owned-run/samples.json --samples-csv > owned-run/samples.csv
+```
+
+Keep a new output path, the unchanged original JSON/hash and the default JSON
+report together. CSV retains each sample in source order, including errors,
+endpoint, actor, phase, cache label, original timestamps, elapsed milliseconds,
+six optional timing layers and exact build/environment/target identity.
+Missing timings are empty cells; an observed zero remains zero. Empty samples
+produce the header only. Every observed row includes `NO_GO` and `not_assessed`.
+CSV does not replace the JSON report's profile blockers, coverage, full runtime
+metadata or dataset counts, and creates no new performance or genuine UAT result.
+
+Identifiers beginning with a spreadsheet formula prefix receive a leading
+apostrophe before CSV quoting; retain their original identity in the source JSON.
+Import identity/SHA columns as text when using a spreadsheet. The exporter uses
+the same strict validation as the JSON reporter; invalid input is refused before
+any stdout. The existing 32 MiB/250,000-sample bounds and exit 0/1/2 meaning remain.
+Exit 0 still means structurally complete coverage, never an adopted SLO or release
+approval. Default CLI invocation continues to emit JSON.
