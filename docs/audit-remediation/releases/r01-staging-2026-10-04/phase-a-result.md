@@ -30,3 +30,7 @@ unknown create先GET核對，不盲目重送。失敗停止讀取並保留新資
 - Ops/DB/Data：R03七logical owners/sole DDL freeze/hosted restore/external contract、scheduler exact artifact/唯一owner及三次真tick。
 
 Rollback：Phase A目前保留no-compute child；沒有SQL、migration、Auth、角色、部署、cron、send或invite寫入。本輪resource verification PASS只能結束Phase A，不能結束F21或任一genuine UAT。
+
+## 最新 B1 revision v2／本地 SQL 回條
+
+原PhaseA回條及B1v1 bytes保持。已有Docker提供真正LOCAL PG18.6 single SELECT語法驗證：exit0/1row、相同SQL hash；不是historical clone／role／Auth驗收。初始WSL error仍保留。最新未批准提案為[phase-b1-compute-request-v2.json](phase-b1-compute-request-v2.json)，其create/SQL/rollback scope與v1相同，只更新request identity及實際local rehearsal metadata。[獨立新回條](../../evidence/2026-10-04-r01-catalog-syntax-rehearsal.json)。Neon零compute、正式NO_GO與全部genuine gate不變。

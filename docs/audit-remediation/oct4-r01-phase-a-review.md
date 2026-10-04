@@ -31,3 +31,7 @@ Initial commit362b325的staged diff顯示SQL末尾空白行，作者於review前
 ## Remaining gates
 
 Original exact-head CI / exact-main CI；B1 compute/catalog-read/new-ID-only rollback批准；hosted historical schema/restricted role；Auth；R2/protected origin/env/deployed SBOM；restore/owners/external contract；獨立native scheduler；原50genuineUAT。沒有deferred minors。原request／not_run template／舊evidence不改。
+
+## 審閱後的獨立本地 metadata 回條
+
+在review range後，原SQL bytes不變，作者找到已有Docker並於空白LOCAL PG18.6執行同一SELECT，exit0/1row、inputhash相符；exact-owned network-none/no-bind container已清理。新增SQL syntax receipt及未批准B1v2，原PhaseA/B1v1不改；v2operation/catalog/rollback scopes全部與已審v1相同。裁決4的local語法部分由新實際回條支持，hosted historical/grants/Auth部分仍blocked。這是新verification metadata，沒有product／SQL／provider payload修改，不另派第二review；完整exact-headCI仍必須重新以實際final head驗證。
