@@ -85,8 +85,7 @@ function percentiles(values: number[]) {
   return { p50: rank(0.5), p95: rank(0.95), p99: rank(0.99) };
 }
 
-/** Offline aggregation only. All metadata/classifications are caller assertions. */
-export function buildAuditPerformanceReport(input: unknown) {
+function parseMeasurements(input: unknown) {
   const parsed = schema.safeParse(input);
   if (!parsed.success) invalid();
   const data = parsed.data;
@@ -125,6 +124,13 @@ export function buildAuditPerformanceReport(input: unknown) {
     ids.add(sample.id);
     return { ...sample, started, elapsedMs: ended - started };
   });
+  return { data, samples, rampStart, steadyStart, end, actors, endpoints };
+}
+
+/** Offline aggregation only. All metadata/classifications are caller assertions. */
+export function buildAuditPerformanceReport(input: unknown) {
+  const { data, samples, rampStart, steadyStart, end, actors, endpoints } =
+    parseMeasurements(input);
   const blockers: string[] = [];
   if (steadyStart - rampStart < 300_000) blockers.push("ramp-duration-below-300s");
   if (end - steadyStart < 900_000) blockers.push("steady-duration-below-900s");
@@ -231,6 +237,58 @@ export function buildAuditPerformanceReport(input: unknown) {
   };
 }
 
+/** Derived observations only; preserve the original input and its JSON report. */
+export function buildAuditPerformanceSamplesCsv(input: unknown): string {
+  const { data, samples } = parseMeasurements(input);
+  const cell = (value: string | number | undefined) => {
+    const text = value === undefined ? "" : String(value);
+    const safe = typeof value === "string" && /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
+    return '"' + safe.replaceAll('"', '""') + '"';
+  };
+  const header = [
+    "format_version",
+    "build_sha",
+    "environment_level",
+    "target_id",
+    "sample_id",
+    "endpoint",
+    "actor_id",
+    "phase",
+    "cache",
+    "started_at_utc",
+    "ended_at_utc",
+    "elapsed_ms",
+    "outcome",
+    "http_ms",
+    "db_rtt_ms",
+    "sql_ms",
+    "serialization_ms",
+    "render_ms",
+    "provider_ms",
+    "release_decision",
+    "slo_assessment",
+  ];
+  const rows = samples.map((sample) => [
+    data.formatVersion,
+    data.environment.buildSha,
+    data.environment.level,
+    data.environment.targetId,
+    sample.id,
+    sample.endpoint,
+    sample.actorId,
+    sample.phase,
+    sample.cache,
+    sample.startedAtUtc,
+    sample.endedAtUtc,
+    sample.elapsedMs,
+    sample.outcome,
+    ...layerKeys.map((key) => sample.timings?.[key]),
+    "NO_GO",
+    "not_assessed",
+  ]);
+  return [header, ...rows].map((row) => row.map(cell).join(",")).join("\r\n") + "\r\n";
+}
+
 function readBoundedJson(path: string): unknown {
   const fd = openSync(path, "r");
   try {
@@ -255,9 +313,14 @@ function readBoundedJson(path: string): unknown {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
-    if (process.argv.length !== 3) invalid();
-    const report = buildAuditPerformanceReport(readBoundedJson(process.argv[2]));
-    process.stdout.write(JSON.stringify(report, null, 2) + "\n");
+    const csv = process.argv.length === 4 && process.argv[3] === "--samples-csv";
+    if (process.argv.length !== 3 && !csv) invalid();
+    const input = readBoundedJson(process.argv[2]);
+    const report = buildAuditPerformanceReport(input);
+    const output = csv
+      ? buildAuditPerformanceSamplesCsv(input)
+      : JSON.stringify(report, null, 2) + "\n";
+    process.stdout.write(output);
     process.exitCode = report.profileCompleteness === "complete" ? 0 : 1;
   } catch {
     process.stderr.write("Invalid performance measurement input.\n");

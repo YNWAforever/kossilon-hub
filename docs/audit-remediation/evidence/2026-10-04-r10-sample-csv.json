@@ -1,0 +1,252 @@
+{
+  "task_id": "R10",
+  "finding_ids": [
+    "F02",
+    "F07",
+    "F17",
+    "F18"
+  ],
+  "case_ids": [
+    "UC24"
+  ],
+  "observed_at_utc": "2026-10-04T08:44:25.716470+00:00",
+  "base_sha": "f61b1ae70954311fac314d1069785445f91ee7a2",
+  "source_commit": "fd29666b3c1d5f5c23e627ddbcf037e71dfd4b02",
+  "environment": "LOCAL offline Node24.18.0; full Windows Node22.23.3/Bun1.4.2/owned loopback PG18.6; hosted acceptance not_run",
+  "change": "individual sample CSV; shared unchanged validation; default JSON/exit behavior retained",
+  "commands": [
+    {
+      "command": "& 'C:\\Program Files\\nodejs\\node.exe' node_modules/vitest/vitest.mjs run scripts/audit-performance-report.test.ts --reporter=json --outputFile=.worktrees/r10-sample-csv-20261004/baseline.json",
+      "exit": 0,
+      "pass": 26,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "powershell.exe -NoProfile -File .worktrees/r10-sample-csv-20261004/verify-red.ps1",
+      "exit": 0,
+      "underlying_vitest_exit": 1,
+      "pass": 1,
+      "expected_feature_failures": 14,
+      "skip": 0
+    },
+    {
+      "command": "& 'C:\\Program Files\\nodejs\\node.exe' node_modules/vitest/vitest.mjs run scripts/audit-performance-samples.test.ts scripts/audit-performance-report.test.ts --reporter=json --outputFile=.worktrees/r10-sample-csv-20261004/green.json",
+      "exit": 0,
+      "pass": 41,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "npm.cmd run lint",
+      "exit": 0,
+      "errors": 0,
+      "existing_work_queue_fast_refresh_warnings": 1
+    },
+    {
+      "command": "npm.cmd run typecheck",
+      "exit": 0
+    },
+    {
+      "command": "& 'C:\\Program Files\\nodejs\\node.exe' node_modules/typescript/bin/tsc --noEmit --module ESNext --moduleResolution Bundler --target ES2022 --types node --esModuleInterop --skipLibCheck scripts/audit-performance-report.ts scripts/audit-performance-samples.test.ts",
+      "exit": 0
+    },
+    {
+      "command": "npm.cmd run verify:audit-release",
+      "exit": 0,
+      "formal_decision": "NO_GO"
+    },
+    {
+      "command": "powershell.exe -NoProfile -File .worktrees/r10-sample-csv-20261004/run-full.ps1",
+      "exit": 0,
+      "files": 241,
+      "pass": 2304,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "& $taskBun scripts/db-migrate.ts; & $taskBun scripts/db-seed-annual-return.ts; & $taskNode 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js' run test -- --reporter=json --outputFile=.worktrees/r10-sample-csv-20261004/full.json --maxWorkers=4",
+      "runner_reference": "raw_files/run-full.ps1",
+      "target": "127.0.0.1:54144/kossilon_r10_csv_20261004; exact owned ID/mount guard in runner",
+      "exit": 0
+    }
+  ],
+  "source_files": [
+    {
+      "path": "scripts/audit-performance-report.ts",
+      "sha256": "ee1dcc9aa382abd0e2c843e4ffc62f2f6edf6d449c10508804367c7e6c16530c"
+    },
+    {
+      "path": "scripts/audit-performance-samples.test.ts",
+      "sha256": "b2ea4fda8b97ccb9dccf72da68f842848e839668df118e098f5362091f2b7f38"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/baseline.json",
+      "sha256": "d6d1b7f39902af7b13ffb14bf133b37afe50a770f759d508ded8c70dabb1fd25"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/baseline.log",
+      "sha256": "1fbedab4ae478c19875a6740e5db6c2a5694efe5f46b2f34371b781f952d215d"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/red.json",
+      "sha256": "3158a8518be0349a6a6fa80c2825c6b52ee5f73d9aed11ee0d5b4862f081e108"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/red.log",
+      "sha256": "9cf09a593784138b61d09d6ab9bba307db5965f7073e1a17441980b3c61a4f3b"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/green.json",
+      "sha256": "1676a8d2012991a71bdc0ccd095d1dfc1477902445bd266e5f6e2525e136e574"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/lint.log",
+      "sha256": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/typecheck.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/script-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/release-verifier.log",
+      "sha256": "efe0518bd37d7e95c89928511496c54108369f1f5251cb555b1db8af83f4556d"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/typecheck-exits.json",
+      "sha256": "6003c603260f507b6266aa93da37f4318db00286f5197d3b188f448c293e744a"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/run-full.ps1",
+      "sha256": "de15b9bfd06c9625e6d33ad9dff1f03868a8e5fa6624999de35c55389bb90550"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/verify-red.ps1",
+      "sha256": "f33354e770783e9b5e10d6c77f4c87ce85a4578f8c657e77bc98bbbf48f5f5bb"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/full.json",
+      "sha256": "72ffb04e77c68fd325472f4af9b48b3ebd92cda8c20e9398f03b5c9a1c19d3f6"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/full.log",
+      "sha256": "6c7df502924625bc0637174498708486a50fd0a0ace0126a6e7035fd6bd9a24b"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/full-summary.json",
+      "sha256": "3d7a8ac46e07c2c844ce3d0eff10f9a1b17b984fd771edf2d1b8dd0aff08d968"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/migrate.log",
+      "sha256": "c7b202c314d76816012409620a271db4babc01030f9a045d5f88b29afef8c2c2"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/seed.log",
+      "sha256": "dcfea6165a861831c12ae39833eb80f628bc32b48921be5e44047660b4e6771c"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/postgres-version.txt",
+      "sha256": "7d79749dde98c73065c2caca09cbc5465e60a94add33f71bfa4e6431fe3c9597"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/node-full-version.txt",
+      "sha256": "0dad4e5704ab68f2268ed07a191ec93206ada146353e90fc27eb51787ad7cfd9"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/bun-full-version.txt",
+      "sha256": "d63588ea4b78e83a37d1219d7c9f625e5080a5b269d1784819cba93a86c14ee1"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/owned-container-inspect.json",
+      "sha256": "9b6741e909436e248dde7dba6b165aa2f382876097b9721b0093bb06a38a83b2"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/protected-before.json",
+      "sha256": "e434c4c1e6cb0a5de09bf64b64cf381f9af376a23805b18202a0507cdabd051c"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/cleanup.json",
+      "sha256": "f5b64447c04f1846cb787141a14c91384d05f0f0b22700c430b2a902d7fcff05"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/full-process-runtime.json",
+      "sha256": "28a9f3d912387e3786433a17eed4e0c26ce7b98509be50c220d5812887b51059"
+    },
+    {
+      "path": ".worktrees/r10-sample-csv-20261004/prepare-receipt.py",
+      "sha256": "21d311f4e1da33b228bd1590d46142bd04d3881b11bfb515195d025021c3fdd6"
+    }
+  ],
+  "protected_artifacts_unchanged": 177,
+  "side_effects": "only owned local DB migrate/reference seed/full regression; exporter itself has no network/DB/provider/fixture writes",
+  "performance_before_after": "no new performance result; original benchmark/SLA/NAR receipts byte-preserved",
+  "original_uat": {
+    "total": 50,
+    "historical_local_only": 19,
+    "blocked": 31,
+    "new_genuine": 0
+  },
+  "deployment_and_schema": "no hosted SQL/catalog/schema query, migration, ledger, Auth/role/env/deploy/tick/send/invite/grant write; previous provider observations retained with original timestamps",
+  "runtime_status": "runtime-blocked",
+  "release_decision": "NO_GO",
+  "blocker_owners": "DB/Release + Neon control-plane support; Operations/Business + Auth/Storage/provider owners",
+  "next": "supported B1 endpoint access policy/route; restricted-role/owners/hosted restore; adopted SLO/equivalent hosted profile and authentic sample producer/timeline/cold evidence",
+  "publication": "local snapshot; exact-head/normal-merge/main CI receipts added after real events in delivery PR",
+  "cleanup": {
+    "removed_container_id": "617687dab9dc280695bc7b56a19495ee78da6686b1bc0a66400137de15ecd71b",
+    "remaining_owned_containers": 0,
+    "storage": "tmpfs /var/lib/postgresql; exact pre-cleanup mounts0; no anonymous/named volume created or removed",
+    "other_resource_operations": 0,
+    "observed_at_utc": "2026-10-04T08:45:43.1945056Z"
+  },
+  "actual_full_test_processes": [
+    {
+      "id": 21988,
+      "parent": 13064,
+      "name": "powershell.exe",
+      "executable": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "cpu_seconds": 1.078125
+    },
+    {
+      "id": 11748,
+      "parent": 21988,
+      "name": "node.exe",
+      "executable": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+      "cpu_seconds": 0.453125
+    },
+    {
+      "id": 42408,
+      "parent": 11748,
+      "name": "cmd.exe",
+      "executable": "C:\\WINDOWS\\system32\\cmd.exe",
+      "cpu_seconds": 0.03125
+    },
+    {
+      "id": 31548,
+      "parent": 42408,
+      "name": "vitest.exe",
+      "executable": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\node_modules\\.bin\\vitest.exe",
+      "cpu_seconds": 0.0
+    },
+    {
+      "id": 49180,
+      "parent": 31548,
+      "name": "node.exe",
+      "executable": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+      "cpu_seconds": 49.359375
+    },
+    {
+      "id": 1776,
+      "parent": 49180,
+      "name": "node.exe",
+      "executable": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+      "cpu_seconds": 1.0
+    }
+  ]
+}
