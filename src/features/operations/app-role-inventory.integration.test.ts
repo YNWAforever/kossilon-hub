@@ -1,0 +1,281 @@
+import "dotenv/config";
+import { readFileSync } from "node:fs";
+import type { TransactionSql } from "postgres";
+import { afterAll, describe, expect, it } from "vitest";
+
+import { createSqlClient, type SqlClient } from "@/server/db/client";
+
+const databaseUrl = process.env.TEST_DATABASE_URL;
+const inventoryQuery = readFileSync(
+  new URL("../../../scripts/audit-app-role-inventory.sql", import.meta.url),
+  "utf8",
+);
+const SENTINEL = "private-row-and-routine-body-must-not-be-exported";
+
+type Metadata = Record<string, unknown>;
+type Inventory = {
+  version: number;
+  assessment: string;
+  release_decision: string;
+  context: Metadata;
+  roles: Metadata[];
+  memberships: Metadata[];
+  database: Metadata;
+  schemas: Metadata[];
+  relations: Metadata[];
+  columns: Metadata[];
+  sequences: Metadata[];
+  routines: Metadata[];
+  default_acls: Metadata[];
+};
+
+let client: SqlClient | undefined;
+function sqlForTests() {
+  if (!databaseUrl) throw new Error("TEST_DATABASE_URL required for role inventory tests.");
+  return (client ??= createSqlClient(databaseUrl, { max: 1 }));
+}
+
+type Fixture = {
+  schema: string;
+  app: string;
+  reader: string;
+  nested: string;
+  power: string;
+  off: string;
+};
+async function withFixture(check: (tx: TransactionSql, fixture: Fixture) => Promise<void>) {
+  const prefix = `role_probe_${crypto.randomUUID().replaceAll("-", "")}`;
+  const f: Fixture = {
+    schema: `${prefix}_schema`,
+    app: `${prefix}_app`,
+    reader: `${prefix}_reader`,
+    nested: `${prefix}_nested`,
+    power: `${prefix}_power`,
+    off: `${prefix}_off`,
+  };
+  const rollback = new Error("owned role inventory fixture rollback");
+  const sql = sqlForTests();
+  try {
+    await sql.begin(async (tx) => {
+      await tx.unsafe(`
+        CREATE ROLE ${f.app} NOLOGIN;
+        CREATE ROLE ${f.reader} NOLOGIN;
+        CREATE ROLE ${f.nested} NOLOGIN;
+        CREATE ROLE ${f.power} NOLOGIN BYPASSRLS CREATEROLE;
+        CREATE ROLE ${f.off} NOLOGIN;
+        GRANT ${f.reader} TO ${f.nested} WITH INHERIT TRUE, SET FALSE;
+        GRANT ${f.nested} TO ${f.app} WITH INHERIT TRUE, SET FALSE;
+        GRANT ${f.power} TO ${f.app} WITH INHERIT FALSE, SET TRUE;
+        GRANT ${f.off} TO ${f.app} WITH INHERIT FALSE, SET FALSE;
+        CREATE SCHEMA ${f.schema};
+        GRANT USAGE ON SCHEMA ${f.schema} TO ${f.app};
+        CREATE TABLE ${f.schema}.private_rows (id integer, secret text);
+        INSERT INTO ${f.schema}.private_rows VALUES (1, '${SENTINEL}');
+        GRANT SELECT ON ${f.schema}.private_rows TO ${f.reader};
+        ALTER TABLE ${f.schema}.private_rows ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE ${f.schema}.private_rows FORCE ROW LEVEL SECURITY;
+        CREATE TABLE ${f.schema}.public_rows (id integer);
+        GRANT SELECT ON ${f.schema}.public_rows TO PUBLIC;
+        GRANT UPDATE ON ${f.schema}.public_rows TO ${f.app} WITH GRANT OPTION;
+        CREATE TABLE ${f.schema}.column_rows (id integer, secret text);
+        GRANT SELECT (id) ON ${f.schema}.column_rows TO ${f.app};
+        CREATE SEQUENCE ${f.schema}.counter;
+        GRANT USAGE ON SEQUENCE ${f.schema}.counter TO ${f.app};
+        CREATE FUNCTION ${f.schema}.sensitive_body() RETURNS text
+          LANGUAGE sql SECURITY DEFINER AS $$ SELECT '${SENTINEL}'::text $$;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA ${f.schema} GRANT SELECT ON TABLES TO ${f.app};
+        SET LOCAL ROLE ${f.app};
+      `);
+      await check(tx, f);
+      throw rollback;
+    });
+  } catch (error) {
+    if (error !== rollback) throw error;
+  }
+  const [residue] = await sql<{ roles: number; schemas: number }[]>`
+    SELECT (SELECT count(*)::int FROM pg_catalog.pg_roles
+            WHERE rolname LIKE ${`${prefix}%`}) AS roles,
+           (SELECT count(*)::int FROM pg_catalog.pg_namespace
+            WHERE nspname = ${f.schema}) AS schemas
+  `;
+  expect(residue).toEqual({ roles: 0, schemas: 0 });
+}
+
+async function readInventory(tx: TransactionSql): Promise<Inventory> {
+  const [row] = await tx.unsafe(inventoryQuery);
+  return (row.inventory ?? row) as Inventory;
+}
+
+function named(rows: Metadata[] | undefined, key: string, value: string) {
+  return (rows ?? []).find((row) => row[key] === value);
+}
+
+afterAll(async () => {
+  await client?.end();
+});
+
+describe.skipIf(!databaseUrl)("actual app-role metadata inventory", () => {
+  it("retains the privileged session identity behind a basic current role without assessing safety", async () => {
+    await withFixture(async (tx, f) => {
+      const report = await readInventory(tx);
+      expect(report).toMatchObject({
+        version: 1,
+        assessment: "not_assessed",
+        release_decision: "NO_GO",
+      });
+      expect(report.context).toMatchObject({
+        current_user: f.app,
+        current_attributes: { superuser: false, bypassrls: false, create_role: false },
+        session_attributes: { superuser: true },
+      });
+      expect(report.context.session_user).not.toBe(f.app);
+    });
+  });
+
+  it("reports predefined inherited data access despite false direct role flags", async () => {
+    await withFixture(async (tx, f) => {
+      await tx.unsafe(`RESET ROLE; GRANT pg_read_all_data TO ${f.app}; SET LOCAL ROLE ${f.app};`);
+      const report = await readInventory(tx);
+      expect(named(report.roles, "name", "pg_read_all_data")).toMatchObject({
+        member: true,
+        usage: true,
+      });
+      expect(named(report.relations, "relation", "column_rows")).toMatchObject({
+        privileges: expect.arrayContaining(["SELECT"]),
+      });
+    });
+  });
+
+  it("reports nested inherited grants independently of SET reachability", async () => {
+    await withFixture(async (tx, f) => {
+      const report = await readInventory(tx);
+      expect(named(report.roles, "name", f.reader)).toMatchObject({
+        member: true,
+        usage: true,
+        set: false,
+      });
+      expect(named(report.relations, "relation", "private_rows")).toMatchObject({
+        rls: true,
+        force_rls: true,
+        privileges: ["SELECT"],
+      });
+    });
+  });
+
+  it("exposes SET-only privileged roles without inventing inherited BYPASSRLS", async () => {
+    await withFixture(async (tx, f) => {
+      const report = await readInventory(tx);
+      expect(named(report.roles, "name", f.power)).toMatchObject({
+        member: true,
+        usage: false,
+        set: true,
+        attributes: { bypassrls: true, create_role: true },
+      });
+      expect(report.context).toMatchObject({
+        current_attributes: { bypassrls: false, create_role: false },
+      });
+    });
+  });
+
+  it("distinguishes disabled inheritance and SET options from membership alone", async () => {
+    await withFixture(async (tx, f) => {
+      const report = await readInventory(tx);
+      expect(named(report.roles, "name", f.off)).toMatchObject({
+        member: true,
+        usage: false,
+        set: false,
+      });
+      expect(named(report.memberships, "role", f.off)).toMatchObject({
+        member: f.app,
+        inherit_option: false,
+        set_option: false,
+        admin_option: false,
+      });
+    });
+  });
+
+  it("includes PUBLIC privileges and separates grantable privileges", async () => {
+    await withFixture(async (tx) => {
+      const report = await readInventory(tx);
+      expect(named(report.relations, "relation", "public_rows")).toMatchObject({
+        privileges: ["SELECT", "UPDATE"],
+        grantable: ["UPDATE"],
+      });
+    });
+  });
+
+  it("exposes column-only access without falsely granting whole-table SELECT", async () => {
+    await withFixture(async (tx) => {
+      const report = await readInventory(tx);
+      expect(named(report.relations, "relation", "column_rows")).toMatchObject({ privileges: [] });
+      const columns = (report.columns ?? []).filter((row) => row.relation === "column_rows");
+      expect(named(columns, "column", "id")).toMatchObject({
+        privileges: ["SELECT"],
+        grantable: [],
+      });
+      expect(named(columns, "column", "secret")).toMatchObject({ privileges: [] });
+    });
+  });
+
+  it("reports effective schema, sequence and database access plus future default ACLs", async () => {
+    await withFixture(async (tx, f) => {
+      const report = await readInventory(tx);
+      expect(named(report.schemas, "schema", f.schema)).toMatchObject({
+        privileges: ["USAGE"],
+        grantable: [],
+      });
+      expect(named(report.sequences, "sequence", "counter")).toMatchObject({
+        privileges: ["USAGE"],
+        grantable: [],
+      });
+      expect(report.database).toMatchObject({
+        privileges: expect.arrayContaining(["CONNECT", "TEMPORARY"]),
+      });
+      expect(
+        (report.default_acls ?? []).find((row) => row.schema === f.schema && row.grantee === f.app),
+      ).toMatchObject({
+        object_type: "r",
+        privilege: "SELECT",
+        grantable: false,
+      });
+    });
+  });
+
+  it("reports accessible SECURITY DEFINER metadata without invoking or exporting bodies or rows", async () => {
+    await withFixture(async (tx) => {
+      const report = await readInventory(tx);
+      expect(named(report.routines, "routine", "sensitive_body")).toMatchObject({
+        security_definer: true,
+        execute: true,
+        grantable: false,
+      });
+      expect(JSON.stringify(report)).not.toContain(SENTINEL);
+    });
+  });
+
+  it("executes as a SELECT in a read-only transaction", async () => {
+    const report = await sqlForTests().begin("read only", async (tx) => readInventory(tx));
+    expect(report.context).toMatchObject({ transaction_read_only: "on" });
+    expect(report.release_decision).toBe("NO_GO");
+  });
+
+  it("does not invoke application operators when search_path places a user schema before pg_catalog", async () => {
+    await withFixture(async (tx, f) => {
+      await tx.unsafe(`
+        RESET ROLE;
+        CREATE FUNCTION ${f.schema}.unsafe_concat(text, text) RETURNS text
+          LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'application operator executed'; END $$;
+        CREATE OPERATOR ${f.schema}.|| (LEFTARG = text, RIGHTARG = text,
+          FUNCTION = ${f.schema}.unsafe_concat);
+        SET LOCAL ROLE ${f.app};
+        SET LOCAL search_path = ${f.schema}, pg_catalog;
+      `);
+      const report = await readInventory(tx);
+      expect(report.context).toMatchObject({ current_user: f.app });
+      expect(named(report.relations, "relation", "public_rows")).toMatchObject({
+        privileges: ["SELECT", "UPDATE"],
+        grantable: ["UPDATE"],
+      });
+    });
+  });
+});

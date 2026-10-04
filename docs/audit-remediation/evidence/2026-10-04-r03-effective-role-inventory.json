@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "task_ids": [
+    "R03"
+  ],
+  "related_finding_ids": [
+    "F01",
+    "F17"
+  ],
+  "related_runtime_case_ids": [
+    "UC07",
+    "UC20"
+  ],
+  "utc": "2026-10-04T10:49:07.595791+00:00",
+  "base_sha": "e38a310187aa5b06ba42fc4bc0811b7822191344",
+  "source_sha": "56c0f05e9214d9c585da95d19a4f43b4b26475ba",
+  "build_identity_policy": "All local test invocations ran on base e38a310 with uncommitted tool artifacts. source_sha is the final SQL/test/registry bytes subsequently committed unchanged after the final 2315-PASS run. Earlier 2314-test runs use the initial probe/query and green-test-source snapshot hashes in candidate_bug_R03_02; they are not final source_sha evidence. No application artifact or genuine hosted build was produced by these tests.",
+  "scope": "LOCAL REAL DB acceptance probe; no established product authorization defect",
+  "runtime": {
+    "node": "22.23.3",
+    "bun": "1.4.2",
+    "postgres": "18.6",
+    "postgres_image": "sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941",
+    "container_id": "e2c119e9ce6c6eec6f250d3e75903f4a9e3ddce514a9e744a7f0cff7fc43b785",
+    "local_target": "127.0.0.1:55486/kossilon_test",
+    "ssl": "disable on owned loopback only",
+    "maxWorkers": 4,
+    "actual_catalog_runtime": {
+      "server_version": "18.6 (Debian 18.6-1.pgdg13+2)",
+      "server_version_num": "180006",
+      "database": "kossilon_test",
+      "current_user": "postgres"
+    },
+    "test_env": "TEST_DATABASE_URL and DATABASE_URL only target this owned fixture DB; DATABASE_SSL=disable"
+  },
+  "node_resolution": "PATH prepends .worktrees/node22-runtime/node-v22.23.3-win-x64; node/child node use that pinned binary",
+  "initial_non_red": "first test URL had one excess parent segment; 0 tests/ENOENT, preserved setup-error.log, corrected before meaningful RED",
+  "existing_timeout_investigation": "initial complete suite had one unchanged NAR child-startup timeout. Isolated unchanged test passes. Local startup contention is suspected from concurrent checks/slow initial imports, not proven causality. All first-run failure evidence retained; no test timeout, expected value, skip or scope changed. Final complete run is separate fresh evidence.",
+  "red": {
+    "pass": 0,
+    "fail": 10,
+    "skip": 0,
+    "exit": 1,
+    "query": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-catalog-inventory.sql",
+    "query_sha256": "5e5d984a7487995b74808b39c133c05f5ad11c1747305ce3eca63fee15d2b58f",
+    "test_source_sha256": "13d278c00a37fd54b94086d60ea8a693ab1fc99cbf88f52d66342791b5ec1dfd",
+    "actual": "missing inventory fields; no connection/import/Postgres error"
+  },
+  "candidate_bug_R03_02": {
+    "scope": "new local probe only; no hosted execution",
+    "red": "10PASS/1FAIL/0SKIP: application operator executed under user-schema-first search_path",
+    "red_query_sha256": "b4a5e622c5880eda23e9277d03e465c6ad78f14e2f93e6b9f07ec182a20a4bbb",
+    "red_test_sha256": "baaafabd6405271da8a3c327babfda39aa3256b433a63017c23d8b13471ebfdf",
+    "initial_full_test_sha256": "883d2364b87971b811c470d23bade4eaa7057815ea0be29223bbad3975b5b989",
+    "fix": "bind operators and type casts to pg_catalog; keep the single SELECT and caller path unchanged",
+    "green": "final 11 role contracts + 2 existing registry contracts PASS"
+  },
+  "commands": [
+    {
+      "command": ".worktrees/bun142-runtime/bun.exe scripts/db-migrate.ts",
+      "exit": 0,
+      "scope": "owned localhost:55486/kossilon_test",
+      "actual_applied_count": 50,
+      "last_filename": "0082_case_template_snapshots.sql"
+    },
+    {
+      "command": ".worktrees/bun142-runtime/bun.exe scripts/db-seed-annual-return.ts",
+      "exit": 0,
+      "scope": "same owned DB; 3 synthetic companies"
+    },
+    {
+      "command": "python -X utf8 .worktrees/r03-role-inventory-20261004/recapture-red.py",
+      "exit": 0,
+      "actual": "real baseline child exit1/10FAIL; finally restores exact tested file bytes"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/operations/app-role-inventory.integration.test.ts --maxWorkers=4",
+      "run": "candidate operator RED",
+      "exit": 1,
+      "files": 1,
+      "pass": 10,
+      "fail": 1,
+      "skip": 0
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/operations/app-role-inventory.integration.test.ts src/test/db-integration-files.convention.test.ts --maxWorkers=4",
+      "run": "final operator GREEN",
+      "exit": 0,
+      "files": 2,
+      "pass": 13,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4",
+      "run": "first, alongside lint/typecheck",
+      "exit": 1,
+      "files": 242,
+      "pass": 2313,
+      "fail": 1,
+      "skip": 0,
+      "failure": "src/features/nar-import/fixture-timeout.integration.test.ts: retains the child timeout failure while removing only that fixture rows; parent 30000ms timeout; 687.27s full duration"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run src/features/nar-import/fixture-timeout.integration.test.ts --maxWorkers=4",
+      "run": "unchanged isolated reproduction",
+      "exit": 0,
+      "files": 1,
+      "pass": 1,
+      "fail": 0,
+      "skip": 0,
+      "duration_seconds": 10.42,
+      "actual": "controlled child exit1/1000ms expected timeout and zero exact fixture residue verified by existing parent test"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4",
+      "run": "before operator regression/hardening",
+      "exit": 0,
+      "files": 242,
+      "pass": 2314,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=4",
+      "run": "final operator/source bytes",
+      "exit": 0,
+      "files": 242,
+      "pass": 2315,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "npm.cmd run lint",
+      "exit": 0,
+      "errors": 0,
+      "warnings": 1,
+      "warning": "existing react-refresh/only-export-components src/routes/work-queue.tsx:41"
+    },
+    {
+      "command": "npm.cmd run typecheck",
+      "exit": 0
+    },
+    {
+      "command": "node --experimental-strip-types scripts/verify-audit-release.ts",
+      "exit": 0,
+      "productionReleaseGate": "NO_GO"
+    }
+  ],
+  "source_artifacts": {
+    "scripts/audit-app-role-inventory.sql": "4be89014591a7d0d5599b5aeaef9a1e320156fadb24a9090dc699e2aa681ea6b",
+    "src/features/operations/app-role-inventory.integration.test.ts": "baaafabd6405271da8a3c327babfda39aa3256b433a63017c23d8b13471ebfdf",
+    "src/test/db-integration-files.ts": "5f6f19e7231089f611ee8f7db0a107f6068f2c51e3f77d2269cd667b8a887202"
+  },
+  "raw_evidence": {
+    ".worktrees\\r03-role-inventory-20261004\\cleanup.json": "2840830da442ff1a33d80ae52a541cae10f70fbd497b2faf6c93c3ae8b10f825",
+    ".worktrees\\r03-role-inventory-20261004\\container.json": "97bcb93c70762e06706b04314033cbf96e00ccc5a346ceb0ab59cd522fed16ad",
+    ".worktrees\\r03-role-inventory-20261004\\final-green-test-source.ts": "baaafabd6405271da8a3c327babfda39aa3256b433a63017c23d8b13471ebfdf",
+    ".worktrees\\r03-role-inventory-20261004\\full-before-operator.exit": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+    ".worktrees\\r03-role-inventory-20261004\\full-before-operator.log": "307b6f95ed42e5310056b72acb37617d96b0a892f7bba1ddb860719045d0971c",
+    ".worktrees\\r03-role-inventory-20261004\\full-first.exit": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+    ".worktrees\\r03-role-inventory-20261004\\full-first.log": "3b821f752b35e016986a316dd6de1112169b4a1c6db75733cf7672effbe3e2dd",
+    ".worktrees\\r03-role-inventory-20261004\\full.exit": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+    ".worktrees\\r03-role-inventory-20261004\\full.log": "2909daaa9b9fa406e9810b9d8e2e527671a4a5c24ea98ae76b2bf6973d4598e6",
+    ".worktrees\\r03-role-inventory-20261004\\green-test-source.ts": "883d2364b87971b811c470d23bade4eaa7057815ea0be29223bbad3975b5b989",
+    ".worktrees\\r03-role-inventory-20261004\\green.exit": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+    ".worktrees\\r03-role-inventory-20261004\\green.log": "4d8ae5d70e4707b3940c48db453761ed985ed09be43cf57bf23657395d244b7e",
+    ".worktrees\\r03-role-inventory-20261004\\lint.exit": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+    ".worktrees\\r03-role-inventory-20261004\\lint.log": "cc4d0f3c8127e6c66aa500a04d3b66e88042570457bad4dc75752c6908fa2153",
+    ".worktrees\\r03-role-inventory-20261004\\migrate.log": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+    ".worktrees\\r03-role-inventory-20261004\\operator-red-source.sql": "b4a5e622c5880eda23e9277d03e465c6ad78f14e2f93e6b9f07ec182a20a4bbb",
+    ".worktrees\\r03-role-inventory-20261004\\operator-red.exit": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+    ".worktrees\\r03-role-inventory-20261004\\operator-red.log": "6c6abf6f571fbe034ee02576dee5215f155e81e8668c1cf3c3e25a8ff56b11f2",
+    ".worktrees\\r03-role-inventory-20261004\\operator-test-source.ts": "baaafabd6405271da8a3c327babfda39aa3256b433a63017c23d8b13471ebfdf",
+    ".worktrees\\r03-role-inventory-20261004\\protected-before.json": "9e9a6ce2f7d8c28b48b2c78e37adcd66b41f12faa97c18073539857b00e910f7",
+    ".worktrees\\r03-role-inventory-20261004\\recapture-red.py": "60500514b1ab5f73e63b1be780db11aa043dddb1abc8be93c84c528c17761189",
+    ".worktrees\\r03-role-inventory-20261004\\red-captured.exit": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+    ".worktrees\\r03-role-inventory-20261004\\red-captured.log": "2f82799bca873d5e0c3070e18c879758bf54f79a9299300978f110ba1c0a1db9",
+    ".worktrees\\r03-role-inventory-20261004\\red-test-source.ts": "13d278c00a37fd54b94086d60ea8a693ab1fc99cbf88f52d66342791b5ec1dfd",
+    ".worktrees\\r03-role-inventory-20261004\\red.exit": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+    ".worktrees\\r03-role-inventory-20261004\\red.log": "847b698851307f63fbc8f7650ee45c18eb1e333a75c2569052d9fdf1920aff6f",
+    ".worktrees\\r03-role-inventory-20261004\\release.exit": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+    ".worktrees\\r03-role-inventory-20261004\\release.log": "b764aa355398855e71e13825924b4fa2f9b0ed99aaf71501659c810b57ae1900",
+    ".worktrees\\r03-role-inventory-20261004\\runtime.json": "e31edae031ef73e2e193898cc23bbf92611af924d9242712ee0ad041f12efcf4",
+    ".worktrees\\r03-role-inventory-20261004\\seed.log": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+    ".worktrees\\r03-role-inventory-20261004\\setup-error.log": "8275040cc5d83a959922f35fea01b9b4036f7fe3a7857d2347778dc49d22576e",
+    ".worktrees\\r03-role-inventory-20261004\\timeout-isolated.exit": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+    ".worktrees\\r03-role-inventory-20261004\\timeout-isolated.log": "a5fc330102fb495150e28a886663fd691ed7684acba632215a40a4c3d72eda71",
+    ".worktrees\\r03-role-inventory-20261004\\typecheck.exit": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+    ".worktrees\\r03-role-inventory-20261004\\typecheck.log": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+    ".worktrees\\r03-role-inventory-20261004\\verify-evidence.py": "3fa2529cbd0b39255170c9e1214c44b115c95245afbd8cde269c92baf6483fab"
+  },
+  "preservation": {
+    "protected_old_tracked_files": 925,
+    "all_hashes_match": true,
+    "original_uat_sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7",
+    "old_b1_query_sha256": "5e5d984a7487995b74808b39c133c05f5ad11c1747305ce3eca63fee15d2b58f",
+    "other_tracker_rows": 11,
+    "original_50": "19 historical LOCAL ONLY / 31 blocked / 0 new genuine; bytes unchanged",
+    "migrations_locks_ci_old_evidence": "bytes unchanged"
+  },
+  "cleanup": {
+    "remaining_owned_container": 0,
+    "remaining_schema_fixtures": 0,
+    "other_resources": "untouched",
+    "remaining_role_fixtures": 0,
+    "utc": "2026-10-04T10:49:07.4037214Z",
+    "tmpfs": "/var/lib/postgresql",
+    "mounts": 0,
+    "removed_exact_container": "e2c119e9ce6c6eec6f250d3e75903f4a9e3ddce514a9e744a7f0cff7fc43b785"
+  },
+  "limits": "not a full escalation classifier; user objects/current database only; metadata cannot prove tenant policies or genuine Auth; default ACLs are future rules",
+  "runtime_provider_calls": 0,
+  "hosted_sql": 0,
+  "hosted_role_writes": 0,
+  "deployments": 0,
+  "sends": 0,
+  "invites": 0,
+  "genuine_uat": 0,
+  "productionReleaseGate": "NO_GO",
+  "blocked_inputs": [
+    "DB/Release: supported approved endpoint access policy; actual restricted app-role secret-store binding; owner-adopted allowlist and new query scope/hash authority",
+    "DB/Data: logical owners, sole DDL freeze and hosted restore receipt",
+    "Auth/QA: approved origin/callback and controlled current four-persona/two-company fresh negative access/revoke proof",
+    "Ops: exact separate web/scheduler artifacts and one native owner, 3 actual ticks plus failure/recovery",
+    "Storage/Scanner/AI/Channel/Filing/Business: precise resources/protocol/corpus/recipient-purpose/submission/provenance/SLO inputs in r03-staging-acceptance.md"
+  ]
+}
