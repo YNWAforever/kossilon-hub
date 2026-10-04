@@ -23,17 +23,17 @@ every object boundary. Identifiers are pseudonymous labels of 1–100 ASCII
 letters/digits/underscore/dot/hyphen; never insert credentials, URLs, emails,
 customer names or document bytes.
 
-| Field               | Required content                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `formatVersion`     | `1`                                                                                                                                                                      |
-| `environment`       | `level`, `targetId`, exact 40-character lowercase `buildSha`, `platform`, `runtime`, `postgresMajor`, `webRegion`, `databaseRegion`, `poolSize`, `hardware`              |
-| `environment.level` | `LOCAL_CONTRACT`, `LOCAL_REAL_DB`, `CI_DEMO`, `STAGING_OBSERVATION` or `PRODUCTION_OBSERVATION`; these are input classifications, not verified identities                |
-| `dataset`           | Actual non-negative integer `cases`, `documents`, `versions`, `officers`; counts do not establish business approval or representativeness                                |
-| `profile`           | UTC `rampStartUtc`, `steadyStartUtc`, `endUtc`, strictly ordered; each phase at most one hour                                                                            |
-| `expectedEndpoints` | Unique reviewed workload labels, 1–50; declare every endpoint in scope                                                                                                   |
-| `expectedActors`    | Unique pseudonymous actors, 1–100; complete profile requires exactly 25                                                                                                  |
-| `samples[]`         | Unique `id`, declared `endpoint`/`actorId`, `phase` (`ramp`/`steady`), `cache` (`cold`/`warm`/`unknown`), UTC `startedAtUtc`/`endedAtUtc`, `outcome` (`success`/`error`) |
-| `samples[].timings` | Optional observed `httpMs`, `dbRttMs`, `sqlMs`, `serializationMs`, `renderMs`, `providerMs`; each finite and non-negative                                                |
+| Field | Required content |
+| --- | --- |
+| `formatVersion` | `1` |
+| `environment` | `level`, `targetId`, exact 40-character lowercase `buildSha`, `platform`, `runtime`, `postgresMajor`, `webRegion`, `databaseRegion`, `poolSize`, `hardware` |
+| `environment.level` | `LOCAL_CONTRACT`, `LOCAL_REAL_DB`, `CI_DEMO`, `STAGING_OBSERVATION` or `PRODUCTION_OBSERVATION`; these are input classifications, not verified identities |
+| `dataset` | Actual non-negative integer `cases`, `documents`, `versions`, `officers`; counts do not establish business approval or representativeness |
+| `profile` | UTC `rampStartUtc`, `steadyStartUtc`, `endUtc`, strictly ordered; each phase at most one hour |
+| `expectedEndpoints` | Unique reviewed workload labels, 1–50; declare every endpoint in scope |
+| `expectedActors` | Unique pseudonymous actors, 1–100; complete profile requires exactly 25 |
+| `samples[]` | Unique `id`, declared `endpoint`/`actorId`, `phase` (`ramp`/`steady`), `cache` (`cold`/`warm`/`unknown`), UTC `startedAtUtc`/`endedAtUtc`, `outcome` (`success`/`error`) |
+| `samples[].timings` | Optional observed `httpMs`, `dbRttMs`, `sqlMs`, `serializationMs`, `renderMs`, `providerMs`; each finite and non-negative |
 
 Samples must start and finish inside the declared observation window; a phase
 is determined by its start time. Retain requests that cross a load-stop time in
