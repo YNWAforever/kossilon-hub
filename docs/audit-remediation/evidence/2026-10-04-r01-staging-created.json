@@ -211,7 +211,7 @@
   "instructions": "New actual receipt. Immutable original request and acceptance-template remain unchanged. resource_verified is not business runtime acceptance.",
   "phase_b1_request": {
     "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-compute-request.json",
-    "sha256": "d04ae79eecf73b27af22ddfe720094aa981a6507dfb53d27e3911dcfa5f8b627",
+    "sha256": "0445f6a5a45bf4661f19306b5a0f178074da8dd3abfcfe8b330790d89b72eb98",
     "state": "proposed_not_approved"
   },
   "preserved": [

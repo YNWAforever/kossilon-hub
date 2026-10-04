@@ -43,7 +43,7 @@
       "branch_id": "br-fragrant-sunset-aosoylhr",
       "database_name": "neondb",
       "sql_source": "phase-b1-catalog-inventory.sql",
-      "sql_sha256": "1bb16a5935970e2674ba27584249ccf54681e2efe982b9daa21b08e1125063d9"
+      "sql_sha256": "5e5d984a7487995b74808b39c133c05f5ad11c1747305ce3eca63fee15d2b58f"
     }
   },
   "preconditions": [

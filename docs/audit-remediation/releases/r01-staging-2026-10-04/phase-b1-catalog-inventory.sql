@@ -31,4 +31,3 @@ SELECT
    WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
      AND a.attnum > 0 AND NOT a.attisdropped
      AND c.relkind IN ('r', 'p', 'v', 'm', 'f')) AS columns;
-
