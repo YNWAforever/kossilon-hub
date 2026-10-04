@@ -396,3 +396,23 @@ endpoint capability, restore/freeze, fresh Auth/negative tenancy, native ticks
 and provider inputs remain separately blocked by the R03 owner matrix. Pending
 policy work stays on its existing separate unpublished branch. Source review,
 exact-head CI, normal merge and independent-main CI are separate delivery gates.
+
+
+## Oct4 R11 source-publication ledger closure
+
+Receipt: evidence/2026-10-04-source-publication-closure.json. Completed R10
+PR136 head6c9db0e/normal mergee38a310, exact CI37190490404/37191108857: each
+Node22/24 each241files2304PASS0FAIL0SKIP+12DEMO. Completed R03/BUG-R03-02
+PR137 head2681abf/normal merge360dc75, exact CI37197306735/37198190257: each
+Node22/24 each242files2315PASS0FAIL0SKIP+12DEMO. All original jobs/steps success;
+merge parents and reviewed/merged trees match. This records already executed
+source/CI results, not a new local full suite, PG rehearsal or genuine UAT.
+
+Only R10/R03 source-delivery fields advance; runtime/release and executing-code
+SHA fields remain unchanged. Tracker header/10other physical records and old
+UAT/evidence/migration/lock/CI bytes preserved. Original50 remains19historical
+LOCALONLY/31blocked/0newgenuine; formalNO_GO. Schema/app/CI/provider config
+unchanged; pending B1 policy remains excluded. Hosted role/Auth/restore/native/
+provider/business inputs remain in the existing owner runbooks. No new private
+provider payload or current production/scheduler identity is included. New
+document-publication head/main gates follow only after actual occurrence.

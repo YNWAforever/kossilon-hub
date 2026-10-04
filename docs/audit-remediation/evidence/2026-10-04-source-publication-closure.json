@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "recorded_at_utc": "2026-10-04T12:33:01.473251+00:00",
+  "scope": "R11 source-only ledger closure for completed R10/R03 deliveries",
+  "baseline_main_sha": "360dc756cbadfd732de1d95aab5b643e42e87989",
+  "deliveries": [
+    {
+      "task_id": "R10",
+      "pr": "https://github.com/YNWAforever/kossilon-hub/pull/136",
+      "published_head_sha": "6c9db0e418547b5e0da6d8ecc8c7ff57903118dd",
+      "normal_merge_sha": "e38a310187aa5b06ba42fc4bc0811b7822191344",
+      "merge_parents": [
+        "f61b1ae70954311fac314d1069785445f91ee7a2",
+        "6c9db0e418547b5e0da6d8ecc8c7ff57903118dd"
+      ],
+      "merged_tree_equals_reviewed_head": true,
+      "ci": [
+        {
+          "kind": "source",
+          "run_id": 37190490404,
+          "sha": "6c9db0e418547b5e0da6d8ecc8c7ff57903118dd",
+          "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37190490404",
+          "every_original_job_and_step": "success",
+          "configured_db_service": "original postgres:17-alpine",
+          "per_node_actual_counts": {
+            "Node22": {
+              "files": 241,
+              "pass": 2304,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v22.23.3"
+            },
+            "Node24": {
+              "files": 241,
+              "pass": 2304,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v24.21.0"
+            }
+          },
+          "raw_state_sha256": "6ba7589a05f34f285800c368e66dda83e72a8da755f6cd42843d67c0767fc6f9",
+          "raw_log_sha256": "1fe15038d5cc585740a8fc3d8a7d98ca593067d3d7bad5427b022c0a0f8d8a48"
+        },
+        {
+          "kind": "main",
+          "run_id": 37191108857,
+          "sha": "e38a310187aa5b06ba42fc4bc0811b7822191344",
+          "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37191108857",
+          "every_original_job_and_step": "success",
+          "configured_db_service": "original postgres:17-alpine",
+          "per_node_actual_counts": {
+            "Node22": {
+              "files": 241,
+              "pass": 2304,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v22.23.3"
+            },
+            "Node24": {
+              "files": 241,
+              "pass": 2304,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v24.21.0"
+            }
+          },
+          "raw_state_sha256": "14035c381b016fff284395a924b71d615a7763ee744bcc5858a06215c79f6f8e",
+          "raw_log_sha256": "8bc73c6b5aa5c98ef9a87d5444717923d9b4c55f04be38a3fa347d08b984010f"
+        }
+      ],
+      "source_status": "merged; original exact-head and independent-main CI passing",
+      "runtime_status": "runtime-blocked; no genuine acceptance advanced",
+      "release_status": "NO_GO"
+    },
+    {
+      "task_id": "R03",
+      "pr": "https://github.com/YNWAforever/kossilon-hub/pull/137",
+      "published_head_sha": "2681abf163111837f21b69d574673e813cb08cb4",
+      "normal_merge_sha": "360dc756cbadfd732de1d95aab5b643e42e87989",
+      "merge_parents": [
+        "e38a310187aa5b06ba42fc4bc0811b7822191344",
+        "2681abf163111837f21b69d574673e813cb08cb4"
+      ],
+      "merged_tree_equals_reviewed_head": true,
+      "ci": [
+        {
+          "kind": "head",
+          "run_id": 37197306735,
+          "sha": "2681abf163111837f21b69d574673e813cb08cb4",
+          "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37197306735",
+          "every_original_job_and_step": "success",
+          "configured_db_service": "original postgres:17-alpine",
+          "per_node_actual_counts": {
+            "Node22": {
+              "files": 242,
+              "pass": 2315,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v22.23.3"
+            },
+            "Node24": {
+              "files": 242,
+              "pass": 2315,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v24.21.0"
+            }
+          },
+          "raw_state_sha256": "4865658f46802e9d3fc20fb00b1da99ea3c79936155c5cefb6b5128600bd1e28",
+          "raw_log_sha256": "c97733fc84643cb0e398dc9505129acc3d27beca5387e0d0abc5bc5e782b95dd"
+        },
+        {
+          "kind": "main",
+          "run_id": 37198190257,
+          "sha": "360dc756cbadfd732de1d95aab5b643e42e87989",
+          "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37198190257",
+          "every_original_job_and_step": "success",
+          "configured_db_service": "original postgres:17-alpine",
+          "per_node_actual_counts": {
+            "Node22": {
+              "files": 242,
+              "pass": 2315,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v22.23.3"
+            },
+            "Node24": {
+              "files": 242,
+              "pass": 2315,
+              "fail": 0,
+              "skip": 0,
+              "demo_browser_pass": 12,
+              "actual_node_version": "v24.21.0"
+            }
+          },
+          "raw_state_sha256": "d64eda44cc799f046dc2d458ce72664824c39364c60862d76baf8802cb789165",
+          "raw_log_sha256": "52db3792f27cd165ec0dac8d11c13c02daff5a8ddd7978796f867bcefbaa0aac"
+        }
+      ],
+      "source_status": "merged; original exact-head and independent-main CI passing",
+      "runtime_status": "runtime-blocked; no genuine acceptance advanced",
+      "release_status": "NO_GO"
+    }
+  ],
+  "new_local_full_suite": "not_run: documents-only; original executed CI logs verified",
+  "commands": [
+    "python .worktrees/source-ledger-closure-20261004/close-source-ledger.py capture",
+    "python .worktrees/source-ledger-closure-20261004/close-source-ledger.py build",
+    "python .worktrees/source-ledger-closure-20261004/close-source-ledger.py verify",
+    "npm.cmd run verify:audit-release"
+  ],
+  "new_genuine_uat_count": 0,
+  "original_50": {
+    "historical_local_only": 19,
+    "blocked": 31,
+    "sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7"
+  },
+  "hosted_operations_in_this_document_slice": 0,
+  "no_new_production_or_scheduler_identity_claim": true,
+  "no_new_private_provider_payload": true,
+  "pending_policy_branch_excluded": true,
+  "formal_release_status": "NO_GO"
+}
