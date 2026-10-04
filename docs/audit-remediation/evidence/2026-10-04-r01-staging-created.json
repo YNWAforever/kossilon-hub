@@ -1,0 +1,255 @@
+{
+  "request_id": "r01-staging-20261004",
+  "status": "phase_a_resource_verified",
+  "request_sha256": "47770d20a4aa73bfb7ba17618c1b5dfc0ff6548abf8042b4575a2c38f6ab6e1b",
+  "approval_reference": "Direct user message approve, following the exact Phase A approval scope; no Phase B authority inferred",
+  "actor_owner": "DB/Release owner: user; executor: Codex via connected Neon",
+  "operation_id": null,
+  "operation_id_note": "Connector returned branch ID, no separate operation ID",
+  "attempted_at_utc": "2026-10-04T01:59:52Z",
+  "completed_at_utc": "2026-10-04T01:59:55Z",
+  "verified_at_utc": "2026-10-04T02:01:23Z",
+  "observed_project_id": "red-morning-00331124",
+  "observed_parent_id": "br-muddy-mountain-aov8bbku",
+  "assigned_branch_id": "br-fragrant-sunset-aosoylhr",
+  "observed_branch_name": "kossilon-r01-staging-20261004",
+  "observed_parent_lsn": "0/628F120",
+  "observed_parent_timestamp": "2026-10-03T12:23:35Z",
+  "observed_created_at": "2026-10-04T01:59:54Z",
+  "observed_branch_state": "ready",
+  "observed_default": false,
+  "observed_endpoint_ids": [],
+  "observed_compute_ids": [],
+  "observed_database": {
+    "name": "neondb",
+    "id": 1152602,
+    "owner_name": "neondb_owner"
+  },
+  "source_default_after": true,
+  "existing_branch_identity_comparison": {
+    "status": "matched",
+    "checked": 4,
+    "fields": ["id", "project_id", "parent_id", "name", "default", "protected", "created_at"],
+    "branch_ids": [
+      "br-muddy-mountain-aov8bbku",
+      "br-fancy-rain-aon06iws",
+      "br-late-sun-aojgnr1k",
+      "br-flat-heart-aovfw8hr"
+    ]
+  },
+  "existing_endpoint_identity_comparison": {
+    "status": "matched",
+    "checked": 1,
+    "endpoint_id": "ep-patient-block-aoxmgw78",
+    "branch_id": "br-muddy-mountain-aov8bbku"
+  },
+  "auth_role_config_review": "not_run: database/Auth users and role state not queried",
+  "branch_auth_management": {
+    "status": "HTTP404_not_enabled",
+    "queries": 3,
+    "limit": "Management GETs do not establish that copied Auth database rows are absent or authorize provisioning/login"
+  },
+  "database_schema_and_ledger_comparison": "not_run_requires_later_approved_compute",
+  "compute_and_deployment": "not_authorized",
+  "genuine_auth": "not_run",
+  "native_ticks": "not_run",
+  "original_uat_result": "unchanged",
+  "task_ids": ["R01", "R03"],
+  "finding_ids": ["F21"],
+  "user_case_ids": ["UC26"],
+  "code_status": "source unchanged; documentation/evidence only",
+  "runtime_status": "resource verification only; deployed SBOM, schema, restricted role, fresh Auth, providers and native ticks remain blocked",
+  "release_status": "NO_GO",
+  "source_main": "0f509e8f0913a3931a14a1bdeba317b7dca2ad1e",
+  "candidate_sha": "257fb9d0be17525a305f38bd26001ad8fa45deb8",
+  "candidate_pr": 124,
+  "candidate_checks": {
+    "refreshed": true,
+    "count": 5,
+    "success": 5,
+    "ci_run": 37103410777
+  },
+  "live_web": {
+    "deployment_id": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "source_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "state": "READY"
+  },
+  "scheduler_artifact_sha": "not_verified",
+  "deployed_resolved_sbom": "not_verified",
+  "actual_counts": {
+    "create_attempts": 1,
+    "post_operation_metadata_reads": 5,
+    "verified_existing_branch_identities": 4,
+    "verified_existing_endpoint_identities": 1,
+    "new_endpoint_count": 0,
+    "new_compute_count": 0,
+    "branch_databases": 1,
+    "auth_management_404": 3,
+    "new_genuine_uat": 0,
+    "hosted_sql_statements": 0
+  },
+  "original_uat": {
+    "total": 50,
+    "historical_local_only": 19,
+    "blocked": 31,
+    "new_genuine": 0
+  },
+  "commands": [
+    "Neon create_branch exact reviewed request arguments",
+    "Neon get_branch(new ID)",
+    "Neon list_postgres_endpoints(project)",
+    "Neon list_branch_computes(new ID)",
+    "Neon list_branches(project)",
+    "Neon list_postgres_databases(new ID)",
+    "Neon get_neon_auth_config/list_auth_trusted_domains/list_auth_oauth_providers(new ID):404"
+  ],
+  "rollback": "Retain new branch and receipts. No auto-delete/reset/restore/default/endpoint swap. Exact new-ID cleanup needs separate review and approval.",
+  "remaining": [
+    {
+      "owner": "DB/Release",
+      "input": "Review exact B1 compute/catalog-read request; restricted-role/effective-grant plan remains separate"
+    },
+    {
+      "owner": "Auth/Release",
+      "input": "Explicit existing Neon Auth branch integration/config/callback and controlled five identities/two scopes; not provisioned by Phase A"
+    },
+    {
+      "owner": "Release/Storage",
+      "input": "Dedicated protected Vercel project/origin/env and isolated R2, exact candidate artifact/SBOM before genuine acceptance"
+    },
+    {
+      "owner": "Ops/DB/Data",
+      "input": "R03 seven owners/DDL freeze/hosted restore/release contract and separate native scheduler artifact/three real ticks"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/preflight.json",
+      "sha256": "0fff7f8c8238597525ac5193b1f1e0926faefbd00b1438178c51dabea7cc8174"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/operation-intent.json",
+      "sha256": "69a654ec05e33982e0680e12b4c4625fbd8cd998d93025cf82c0d5c236102401"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/create-result.json",
+      "sha256": "d1ec7ebd427869de188d3a8607d5d602c0ad3aca5e1db2330ba46db5991240c5"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/after-new-branch.json",
+      "sha256": "9ac1e640367795ee35da3b03a8c902877ae1d47023096ea07f1bc8fd1190c95a"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/after-endpoints.json",
+      "sha256": "32d4e573c1f5d28889483087eda767d1f5141158bd6d842b3a3f50b6efd30ae7"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/after-computes.json",
+      "sha256": "e33d9003771430794e06c37217ea14cf36c9590d2ae197d8c610f6661f6c1e17"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/after-branches.json",
+      "sha256": "a7b18478b494e65fdd7390f7318b022bc37011748366ca05989709348d4e416a"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/after-databases.json",
+      "sha256": "caff806362d6b62cc558a6b55747fd1e3cf2ef93b964b6e1c3d3d35e7977392e"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/auth-get-0.json",
+      "sha256": "e4857f4c071b268333eb22e6ed9dd07b63e107b959e5e5d8ab836f9fc1513098"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/auth-get-1.json",
+      "sha256": "410a68bdfe43d13634a9a897aef46e93ef254c4b3c8f71c3ac9e50ec2abcfa3d"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/auth-get-2.json",
+      "sha256": "f0ab457c44309f3acaf4ef9e3d94826cb80cb26c177ec5bf7822c0e84307e990"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg-probe.json",
+      "sha256": "08a5a1e1de5c98ed0e223d5b352f0d9ea2177c8db9cecba7b361f7755cd5d40d"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/node-before.json",
+      "sha256": "2da375db33a58ab33ec952b0e1322bd4abb8edae409e8c7a86c7b04e3ff3eebe"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/node-after.json",
+      "sha256": "722b823a9009e51b0f1610bc2f9d9a4d9b23ce074c60edf242937e9b85c22cd2"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/staging-contracts.json",
+      "sha256": "49a4591f090232c3c801b8588cf766fc0181523c403d1cfcd9f7ec016cff4749"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/staging-contracts.log",
+      "sha256": "0b5252d1b739865e793c0cbb5b4847d6247bb1c03a6517d472dae5ed7ff18f8f"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/release-gate.log",
+      "sha256": "b764aa355398855e71e13825924b4fa2f9b0ed99aaf71501659c810b57ae1900"
+    }
+  ],
+  "local_verification": {
+    "status": "local-passing",
+    "environment": "Windows Node24.18.0",
+    "test_command": "C:/Program Files/nodejs/node.exe node_modules/vitest/vitest.mjs run scripts/audit-staging-config.test.ts --reporter=json --outputFile=.worktrees/r01-phase-a-execution-20261004/staging-contracts.json",
+    "files": 1,
+    "pass": 7,
+    "fail": 0,
+    "skip": 0,
+    "release_gate": "original verify-audit-release.ts exit0 / NO_GO",
+    "catalog_sql_rehearsal": {
+      "status": "runtime-blocked",
+      "reason": "WSL/Service/0x8007274c",
+      "sql_executions": 0,
+      "evidence": ".worktrees/r01-phase-a-execution-20261004/local-pg-probe.json"
+    }
+  },
+  "instructions": "New actual receipt. Immutable original request and acceptance-template remain unchanged. resource_verified is not business runtime acceptance.",
+  "phase_b1_request": {
+    "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-compute-request.json",
+    "sha256": "0445f6a5a45bf4661f19306b5a0f178074da8dd3abfcfe8b330790d89b72eb98",
+    "state": "proposed_not_approved"
+  },
+  "preserved": [
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-navigation.png",
+      "sha256": "bb22d95fea883015b3edaa1db8904634c424c995d4a98de333c9a65d299d8f19"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-desktop1280-settings.png",
+      "sha256": "fc2ad8ddfb32d33ab3b1b10d28e0e47ff123cae396f97cd7271b9d7f6728309e"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-navigation.png",
+      "sha256": "6b4bdad24dbfbca159c043e7146c10ed8fdb143063c4928ee0c7d1ff5c67f9ca"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t20-mobile390-settings.png",
+      "sha256": "e9b960635dc5a2a7736750dea0caaed44b2111233c06d1bef6b3f77290a67e33"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-desktop1280-browser-performance.json",
+      "sha256": "3941a8e57079d7e4568ba0c3883dd2580ad2697f706b62a43cb50148209195e1"
+    },
+    {
+      "path": "docs/audit-remediation/evidence/t21-mobile390-browser-performance.json",
+      "sha256": "72985b3d09f86268f3e2f19bcfa7e087ebc98acb57df33fc267c4215c28d3ba1"
+    },
+    {
+      "path": "docs/audit-remediation/uat-results.csv",
+      "sha256": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release.sql",
+      "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    {
+      "path": "docs/audit-remediation/releases/2026-10-02-historical-release-manifest.json",
+      "sha256": "e1abf95905a5be9315eccf62446cab368f6e3c5941b008e52f644aa728618cae"
+    }
+  ]
+}

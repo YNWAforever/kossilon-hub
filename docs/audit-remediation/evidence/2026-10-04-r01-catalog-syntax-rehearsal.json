@@ -1,0 +1,96 @@
+{
+  "task_ids": ["R01", "R03"],
+  "finding_ids": ["F21"],
+  "user_case_ids": ["UC26"],
+  "status": "local-passing",
+  "observed_at_utc": "2026-10-04T02:29:20.8549426Z",
+  "source_sha": "02680c1fe0892453f2c6b14c1b67e9c238762492",
+  "environment": "LOCAL empty disposable Docker PG18.6; network none; no host port/bind",
+  "image_id": "sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941",
+  "container_id": "1e4dbeeb9b1ad94d38ad403e84cb4bda771aabeb7fde6b7dc7468d3619ebc962",
+  "server_version": "18.6 (Debian 18.6-1.pgdg13+2)",
+  "server_version_num": 180006,
+  "database_name": "postgres",
+  "observer": "postgres",
+  "sql": {
+    "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-catalog-inventory.sql",
+    "sha256": "5e5d984a7487995b74808b39c133c05f5ad11c1747305ce3eca63fee15d2b58f",
+    "copied_hash_verified": true,
+    "executions": 1,
+    "exit_code": 0,
+    "result_rows": 1
+  },
+  "scope": "Actual parser/catalog SELECT execution on an empty local PG18 database; not historical clone, hosted physical contracts/data/grants/Auth or business acceptance",
+  "cleanup": {
+    "verified_exact_task_label": true,
+    "network": "none",
+    "host_binds": 0,
+    "exit": 0,
+    "exact_name_remaining": 0,
+    "observed_at_utc": "2026-10-04T02:32:00.4098926Z",
+    "initial_guard_failure": "@($null).Count falsely counted null binds as1; diagnostic verified exact owner/network/null binds, no deletion occurred before corrected guard"
+  },
+  "original_wsl_probe": {
+    "retained": true,
+    "status": "runtime-blocked",
+    "code": "WSL/Service/0x8007274c",
+    "pg_execution": 0
+  },
+  "phase_a_receipt": {
+    "path": "docs/audit-remediation/evidence/2026-10-04-r01-staging-created.json",
+    "sha256": "befae6d233286e8f9bc3b906be6f32767f20687e7f0477eea242b377f9a54c48",
+    "unchanged": true
+  },
+  "original_b1": {
+    "path": "docs/audit-remediation/releases/r01-staging-2026-10-04/phase-b1-compute-request.json",
+    "sha256": "0445f6a5a45bf4661f19306b5a0f178074da8dd3abfcfe8b330790d89b72eb98",
+    "unchanged": true
+  },
+  "raw_files": [
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-image.json",
+      "sha256": "64a5a6db594c32980e56971cf0c5feacf4a92a186afb8109a123b89038628731"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-container-id.txt",
+      "sha256": "3ce5b11ac504459c527ccbfea479a30b2bf5c6d700899160924a1234567bd55e"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-readiness.log",
+      "sha256": "febe982ad7accae664f6fae4ccaa3331e50ce64457a90e8e69d4c5ea6466314c"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-sql-sha256.txt",
+      "sha256": "b9fa9c4c7b72fc0346654279c694a350fa32adc724caaac90f8b65f72f21fffb"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-catalog.csv",
+      "sha256": "100caa5edf0adb7788b1f8281c3d3996e54fae53d884887eb76fc7d163599cef"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-container-inspect.json",
+      "sha256": "b9c526ec6914353918c190f21dca7b847e5a38abeba9a52e9cb31ab2fd483147"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-container.log",
+      "sha256": "e926ece3fc1f1242fa1ead2ed63ac015604d06936c72a468ee71808d9a909c35"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-result.json",
+      "sha256": "11a0d90a8c21028f8af515bac3a395982667aec78cbad5bcbf07f2714ad6a357"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-cleanup.log",
+      "sha256": "41001c2d0ba2c7893ceb17f339cff1938beed582f991e2b0d05a61094ff61796"
+    },
+    {
+      "path": ".worktrees/r01-phase-a-execution-20261004/local-pg18-cleanup.json",
+      "sha256": "b8aff66b21179fb5526a258b7839bab56dd2d7be019d7c7970da08f26281e182"
+    }
+  ],
+  "verification": "Actual result/SQL-copy/image/container identity/cleanup verified; hosted schema/Auth/grants not_run",
+  "hosted_queries": 0,
+  "neon_compute_operations": 0,
+  "new_genuine_uat": 0,
+  "formal_release": "NO_GO"
+}
