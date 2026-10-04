@@ -377,3 +377,35 @@ unchanged; pending B1 policy remains excluded. Hosted role/Auth/restore/native/
 provider/business inputs remain in the existing owner runbooks. No new private
 provider payload or current production/scheduler identity is included. New
 document-publication head/main gates follow only after actual occurrence.
+
+
+## Oct4 R03 fresh restricted LOGIN local contracts
+
+Receipt: evidence/2026-10-04-r03-fresh-login-contract.json; codeeac8e357e5544920a6a8e9b3c284e324e5388167.
+Existing product client honors supplied URL; no new production bug claimed. Added
+real independent LOGIN/current=session identity, restricted flags, allowed synthetic
+read, deniedSELECT42501, read-only UPDATE25006 and wrong-password28P01/no-admin
+fallback. Local SCRAM disposable PG18.6; initial Node24.18.0 baseline11PASS and
+focused13PASS, final Node22.23.3 focused2files15PASS. Temporary admin-URL mutation
+RED2FAIL/11filtered, restored original exact client bytes → GREEN. Complete final
+242files2317PASS0FAIL0SKIP. Lint0errors/1existingwarning; typecheck0; release verifier
+0/NO_GO. Initial owned-local migration/seed used actual Bun1.3.14; original CI
+remains Bun1.4.2 and Node22/24/PG17. Exact fixture roles/schema0residue; owned
+container removed. Source tests only: original SQL4be890..., app client, migrations,
+locks, CI, prior evidence and original50 unchanged19historicalLOCALONLY/31blocked/
+0newgenuine. No hosted SQL/role/compute/deploy/send/invite; actual restricted Neon
+credential/binding/TLS/allowlist/new query authority, hosted restore/freeze, fresh
+Auth/provider/native gates remain blocked. Review/head/main CI gates separately
+recorded only after actual occurrence; no new production/scheduler identity claim.
+
+Initial Windows full2316PASS/1NARparent30s-timeoutFAIL/0SKIP retained; unchanged
+isolated reproduction1PASS20.60s/0FAIL/0SKIP with exact owned rows0remaining.
+Second Windows default-forks241files2295PASS0FAIL0SKIP/1worker-startup-error/exit1;
+JSONsuccess=true alone is not a passing gate. Third Windows threads native crash
+3221225477/0xC0000005, incomplete/noJSON. All retained as Windows runtime limitations
+with cause not proven. Initial Linux setup failed before tests: tmpfs defaultnoexec
+prevented native loading, proved by network-none mount probe. V2 corrects only owned
+exec mount/evidence persistence; first temp files unavailable after stop, original
+startup error preserved in tool trace. Final complete GREEN uses owned
+LinuxNode22.23.2/Bun1.4.2/default forks, same SCRAM PG18.6/exact candidate test bytes.
+No source/config/timeout/expectation/skip weakened; original CI/default forks unchanged.

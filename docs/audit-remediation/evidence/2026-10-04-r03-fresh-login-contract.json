@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "task": "R03",
+  "findings": [
+    "F01",
+    "F02",
+    "F17",
+    "F20"
+  ],
+  "uc_links": [
+    "UC07",
+    "UC20"
+  ],
+  "observed_at_utc": "2026-10-04T15:52:27.413644+00:00",
+  "base_sha": "59d6d717c9c926ae539402d9d5321d6f8e175a9a",
+  "code_commit_sha": "eac8e357e5544920a6a8e9b3c284e324e5388167",
+  "scope": "LOCAL REAL DB fresh restricted LOGIN regression contracts; no reproduced production defect",
+  "runtimes": {
+    "initial_baseline_and_focused": "Windows Node24.18.0; initial local migration/seed Bun1.3.14",
+    "sensitivity_and_focused_green": "Windows Node22.23.3; Bun1.4.2 available; postgres18.6 disposable loopback/SCRAM",
+    "final_full": "owned Linux cached official Node22.23.2/Bun1.4.2 default forks pool, same owned PG18.6/SCRAM via container namespace; tracked base snapshot + exact test overlay; no provider bindings"
+  },
+  "counts": {
+    "baseline": {
+      "files": 1,
+      "pass": 11,
+      "fail": 0,
+      "skip": 0,
+      "success": true
+    },
+    "focused": {
+      "files": 1,
+      "pass": 13,
+      "fail": 0,
+      "skip": 0,
+      "success": true
+    },
+    "sensitivity": {
+      "files": 1,
+      "pass": 0,
+      "fail": 2,
+      "skip": 11,
+      "success": false
+    },
+    "green": {
+      "files": 2,
+      "pass": 15,
+      "fail": 0,
+      "skip": 0,
+      "success": true
+    },
+    "nar-isolated": {
+      "files": 1,
+      "pass": 1,
+      "fail": 0,
+      "skip": 0,
+      "success": true
+    },
+    "initial-full": {
+      "files": 242,
+      "pass": 2316,
+      "fail": 1,
+      "skip": 0,
+      "success": false
+    },
+    "second-full": {
+      "files": 241,
+      "pass": 2295,
+      "fail": 0,
+      "skip": 0,
+      "success": false,
+      "exit": 1,
+      "unhandled_worker_errors": 1
+    },
+    "third-local-attempt": {
+      "native_exit": 3221225477,
+      "complete": false,
+      "observed_files_pass": 2,
+      "observed_tests_pass": 8,
+      "json_report": "not produced"
+    },
+    "full": {
+      "files": 242,
+      "pass": 2317,
+      "fail": 0,
+      "skip": 0,
+      "success": true
+    }
+  },
+  "sensitivity": "supplied URL temporarily replaced by admin DATABASE_URL; two tests failed; original client bytes restored; 11 old cases filtered only for mutation run",
+  "commands": [
+    "node node_modules/vitest/vitest.mjs run src/features/operations/app-role-inventory.integration.test.ts --maxWorkers=4",
+    "temporary supplied-URL/admin mutation + -t fresh restricted LOGIN|incorrect fresh LOGIN (expected exit1)",
+    "node node_modules/vitest/vitest.mjs run src/features/operations/app-role-inventory.integration.test.ts src/test/db-integration-files.convention.test.ts --maxWorkers=4",
+    "bun scripts/db-migrate.ts (owned local URL)",
+    "bun scripts/db-seed-annual-return.ts (owned local URL)",
+    "node node_modules/vitest/vitest.mjs run --maxWorkers=4",
+    "node node_modules/eslint/bin/eslint.js . --ignore-pattern .worktrees/**",
+    "node node_modules/typescript/bin/tsc --noEmit",
+    "node --experimental-strip-types scripts/verify-audit-release.ts"
+  ],
+  "initial_full_failure": "2316PASS/1FAIL/0SKIP: unchanged NAR parent child fixture reached original30s timeout; isolated unchanged1PASS/0FAIL/0SKIP20.60s with exact fixture0residue; startup/contention suspected, cause not proven; no timeout/expectation/skip changed; complete final GREEN required",
+  "second_full_failure": "Windows default forks241files2295PASS0FAIL0SKIP; 1 unhandled worker startup timeout, process exit1 (JSON success=true is insufficient). Third Windows threads attempt native process crash3221225477/0xC0000005, incomplete/no JSON. Final full uses owned Linux original default forks; original CI/pool/timeouts/gates unchanged. Windows runtime limitation retained, cause not proven.",
+  "linux_initial_setup_failure": "exit1/0tests: tmpfs defaultnoexec caused ERR_DLOPEN_FAILED/failed to map segment; isolated network-none mount probe provednoexec. Exact first container removed. V2 only fixes owned tmpfs exec and retains evidence via exact task output bind; no source/lock/test/config fix. First tmpfs files disappeared at container stop, exact startup error retained in tool trace rather than claiming recovered raw files.",
+  "gates": {
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "existing_warnings": 1
+    },
+    "typecheck_exit": 0,
+    "release_verifier_exit": 0,
+    "release_decision": "NO_GO",
+    "head_ci": "pending publication",
+    "main_ci": "pending normal merge"
+  },
+  "original_uat": {
+    "total": 50,
+    "historical_localonly": 19,
+    "blocked": 31,
+    "new_genuine": 0
+  },
+  "hosted_operations": {
+    "sql": 0,
+    "role_writes": 0,
+    "compute": 0,
+    "deploy": 0,
+    "sends": 0,
+    "invites": 0
+  },
+  "remaining": {
+    "DB/Release": "actual restricted LOGIN/binding/TLS, adopted per-object allowlist, compatible artifact/freeze, separately approved exact metadata query/resume/suspend scope; hosted restore/physical contracts",
+    "Auth/QA": "controlled staging origin/callback and fresh four-persona/two-company negative tests",
+    "Ops/Providers": "exact web/scheduler artifacts + three native ticks, actual scanner/storage/AI/channel/handoff inputs in existing owner matrix"
+  },
+  "schema_and_deploy_diff": "0 migrations/ledger/grants/provider config/deploy changes; production client and original inventory SQL unchanged",
+  "cleanup": {
+    "id": "76ab298038425dc874c6ead720cb13d5f21efadc737f0e1e96e402830f75cd7a",
+    "owned_container_remaining": 0,
+    "removed": true,
+    "linux_v1": {
+      "id": "ddb6e4028a300ffed70e71fe95d9feb67f0e32a99e3773cc650fba0b9b23765d",
+      "remaining_owned_container": 0
+    },
+    "linux_v2": {
+      "id": "8471d0e756e5d873c72b95222c1ef7ba404d3e0f3c5709e5c1d0b7d6529f9c31",
+      "remaining_owned_container": 0
+    }
+  },
+  "source_artifacts": {
+    "src/features/operations/app-role-inventory.integration.test.ts": "d0ca2feedf7ef4434bda7d65ae7961a06968fee71b3e0adc54dd15bcc55cb7ff",
+    "src/server/db/client.ts": "21072e5a098a5ee5e16c42e92d38a763a52d898279b3fb7e684c6f402a846bbd",
+    "scripts/audit-app-role-inventory.sql": "4be89014591a7d0d5599b5aeaef9a1e320156fadb24a9090dc699e2aa681ea6b"
+  },
+  "raw_evidence": {
+    ".worktrees/r03-fresh-login-20261004/baseline-results.json": "967f41a8a51f753d6c32ec78976171b07e7c66ce0004ba273cb2a98ccdf33326",
+    ".worktrees/r03-fresh-login-20261004/baseline.log": "8180c1bbe19f6322e7f65d83bd79c8fcc199a58bae12b744ac549abc9e171566",
+    ".worktrees/r03-fresh-login-20261004/bun-version.log": "d63588ea4b78e83a37d1219d7c9f625e5080a5b269d1784819cba93a86c14ee1",
+    ".worktrees/r03-fresh-login-20261004/cleanup.json": "36ec8510d58a1d0c8d52763c1a4208a8f51610209b96793c3ccc9e3ccde96e4a",
+    ".worktrees/r03-fresh-login-20261004/container.json": "c398a35d0340823c872787100cf3ea8b8e6067327949ba5750f731870b446759",
+    ".worktrees/r03-fresh-login-20261004/focused-green.log": "0182b2941be3b99917ead132cbce633931f2b6be27b39ef8e993b4fe30d6ab06",
+    ".worktrees/r03-fresh-login-20261004/focused-results.json": "5b22d131949ec774f1288806a61b05507086a969bfd5590bb09585a77d83325f",
+    ".worktrees/r03-fresh-login-20261004/focused.log": "be60e54bdd51807f0dd2eb6eba82293a146d8b5fe5e5845bfb1d4e10e4f6cd61",
+    ".worktrees/r03-fresh-login-20261004/full-green-results.json": "ca327ebdd9fe76e03ed7fd23a8286e8c2b796f599a1940738c63515021e68043",
+    ".worktrees/r03-fresh-login-20261004/full-green.log": "ac6fea1ed784793d78fc076a59caa67f6232988ccf255f6c096fd78107832ef8",
+    ".worktrees/r03-fresh-login-20261004/full-linux-results.json": "70e292195b5f7070ec81923838aa8cdd4450a1eff436b05dffbd17dd75c214f1",
+    ".worktrees/r03-fresh-login-20261004/full-linux.log": "7ba0a9887f677d3256f32455027d822d6487f071eb0b23d8527e7931b76220f5",
+    ".worktrees/r03-fresh-login-20261004/full-results.json": "7261692dba498f91de2b3034340e6c26d1ff36240c70148c1700fc03b5adf4bc",
+    ".worktrees/r03-fresh-login-20261004/full-threads.log": "1b30e0eea4fa5273acc27461dbc990b93eb7c6f5e94500f7ee63b073400893ac",
+    ".worktrees/r03-fresh-login-20261004/full.log": "632bd1f0d6205ee3f6b372eb7aafafcb684cfdb694aa4fda9dd7b1f0cb9a4cd8",
+    ".worktrees/r03-fresh-login-20261004/green-results.json": "9973529efbd8651b7693dbabca274440f0454508d88d74f94ec047c68baeee2c",
+    ".worktrees/r03-fresh-login-20261004/lint.log": "ad104499727becd5029f1ca750b7042ca808acd13b640f440fb7a8d91a938ecb",
+    ".worktrees/r03-fresh-login-20261004/linux-v2-bun-install.log": "38e52724612a7580e8d50bb84ab98b85fdd136506510b44ac58f41a297b3d0e1",
+    ".worktrees/r03-fresh-login-20261004/linux-v2-bun-version.log": "b99b4c7cdf236f59bc9f65d963deaecae3b16a7dad87939cacb9057f7664daee",
+    ".worktrees/r03-fresh-login-20261004/linux-v2-npm-ci.log": "f6a8dbb840a9256b119cdd275aaea6100002a7563f01abc144f7961bdc4ff513",
+    ".worktrees/r03-fresh-login-20261004/linux-v2-workspace-mount.log": "bba62c6368417b871385de9f2780508cd49cb6711b88c74681f82eddd9c14208",
+    ".worktrees/r03-fresh-login-20261004/migrate.log": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+    ".worktrees/r03-fresh-login-20261004/nar-isolated-results.json": "8a09669574ef17f989fe4417e73b507f04c2682b6f7628e4fb7fd89cafbd2e16",
+    ".worktrees/r03-fresh-login-20261004/nar-isolated.log": "6cd79501fe3754fbd2e3813add34805903a8c43c09673ad4987a895a964e4763",
+    ".worktrees/r03-fresh-login-20261004/release-verifier.log": "b764aa355398855e71e13825924b4fa2f9b0ed99aaf71501659c810b57ae1900",
+    ".worktrees/r03-fresh-login-20261004/runtime.json": "98b744f208ae18dfb74b66699a0ac65e8cbd4301d6e4455e4c99cf2ea21820c6",
+    ".worktrees/r03-fresh-login-20261004/seed.log": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+    ".worktrees/r03-fresh-login-20261004/sensitivity-red.log": "05494875330a7dade177dfb947a8ad43366f8b59434819e84177b5c205f8e61f",
+    ".worktrees/r03-fresh-login-20261004/sensitivity-results.json": "1d472f0ba30f33eaeb1d3c6aea804ca912a67d7c2bccfb777eed1f0bb582ce38",
+    ".worktrees/r03-fresh-login-20261004/typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".worktrees/r03-fresh-login-20261004/versions.log": "62bf8660f661ac5076dfb989ae986d6a2f89be03fe5be0adce3a7c56f898e873"
+  }
+}
