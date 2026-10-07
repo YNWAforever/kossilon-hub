@@ -1,0 +1,128 @@
+{
+  "task": "R01",
+  "finding": "F21",
+  "uc": "UC26",
+  "base": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "scope": "LOCAL candidate; deployed SBOM/same-schema hosted preview not_verified",
+  "resolved": {
+    "@tanstack/router-plugin": {
+      "installed": "1.168.42",
+      "npmLock": "1.168.42"
+    },
+    "@tanstack/react-router": {
+      "installed": "1.170.41",
+      "npmLock": "1.170.41"
+    },
+    "@vitest/mocker": {
+      "installed": "4.1.11",
+      "npmLock": "4.1.11"
+    },
+    "vitest": {
+      "installed": "4.1.11",
+      "npmLock": "4.1.11"
+    },
+    "@lovable.dev/vite-tanstack-config": {
+      "installed": "2.7.2",
+      "npmLock": "2.7.2"
+    },
+    "prettier": {
+      "installed": "3.8.3",
+      "npmLock": "3.8.3"
+    },
+    "pdfjs-dist": {
+      "installed": "6.2.108",
+      "npmLock": "6.2.108"
+    },
+    "@tanstack/start-server-core": {
+      "installed": "1.169.39",
+      "npmLock": "1.169.39"
+    },
+    "@tanstack/react-start": {
+      "installed": "1.168.60",
+      "npmLock": "1.168.60"
+    }
+  },
+  "locks": {
+    "npm": "b1783c53b4d48da65449460032962a8c938a861b4b89543dcd8e4f39f19c0383",
+    "bun": "7bc7e8416370dba81e4712969504f47a12bb2c1698eb393856f7bb78d678b7d4"
+  },
+  "testFiles": 177,
+  "testPass": 1763,
+  "testSkip": 0,
+  "pgVersion": "18.6",
+  "pgTarget": "loopback55448/kossilon_oct3_security_20261003",
+  "providerWrites": 0,
+  "productionDeployment": "not_performed",
+  "ci": "pending",
+  "logs": [
+    {
+      "file": "r01-security-red.log",
+      "sha256": "ac8837de55ddb33325b98b4bd6712ab8b8888491194c5ae75ea187d166ee53f3"
+    },
+    {
+      "file": "r01-router-red.log",
+      "sha256": "87eb50252f8862bea04b0144f6a6f121402418ea5893663471fa51ac7483deea"
+    },
+    {
+      "file": "r01-security-green11.log",
+      "sha256": "f9e9fd4c462d86813c90cc7a7bc4f4ef8a1adf50b25cccd2875510a24a9c1b05"
+    },
+    {
+      "file": "r01-bun-audit.log",
+      "sha256": "c89168ba77b732ed651edff0af99bd952b9961a4fee78a80c5b9e2f8a9a77b28"
+    },
+    {
+      "file": "r01-npm-audit.log",
+      "sha256": "2b4ca302e62bf423b74a26a6d65969515e88c116413948bfad1a478a495ad300"
+    },
+    {
+      "file": "r01-bun-audit-green.log",
+      "sha256": "b96ddcea3d167e47acc58871b52a0757d3c3147cd4c4de485bc5b9f6672bca9d"
+    },
+    {
+      "file": "r01-npm-audit-green.log",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601"
+    },
+    {
+      "file": "r01-typecheck-green.log",
+      "sha256": "797d80c5023fead8588bd0088a0fc23effb033efb40fadd618ecb37511c9e797"
+    },
+    {
+      "file": "r01-typecheck-final.log",
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0"
+    },
+    {
+      "file": "r01-full-pg18.log",
+      "sha256": "aa1e010a8d9aea50cd9879e39c92841a518a64394b79532443e4054c7d628e3a"
+    },
+    {
+      "file": "r01-build.log",
+      "sha256": "7a2144109cef4b851aa41373a2f28bd7103523d0530b52ebcbdcf4b26d47bcaf"
+    },
+    {
+      "file": "r01-imports.log",
+      "sha256": "2a5ea626a6cb52da054b84cad95dffe508993b7d650abc43ce214b33f5499d5c"
+    },
+    {
+      "file": "r01-imports-repeat.log",
+      "sha256": "a30b17a3b922c9b355b7bda4e9e63723f9928d74cf8ab2dcf0959ac7a2421bc7"
+    },
+    {
+      "file": "r01-firm-gate.log",
+      "sha256": "b838c05856e4d299694a4b0470e809d2c6fc6175702c9690d019d169d3205cdd"
+    },
+    {
+      "file": "r01-vitest-npm-lock.log",
+      "sha256": "e1d72c77316d3e8dcf00f4c8cfb8257f0eaaab6b15b779c8d1f6615fb5dc3483"
+    },
+    {
+      "file": "r01-vitest-npm-clean-lock.log",
+      "sha256": "e706df53a9b2b9c705b13ed652a95a9d1944b1f61417a10648984f08e7e59b7c"
+    },
+    {
+      "file": "r01-vitest-npm11-lock.log",
+      "sha256": "3a5ebf049effcc7eef042fafbeb715af05806e199b490ffbd2e3e5c3e9a95550"
+    }
+  ],
+  "observedAt": "2026-10-03T06:32:18.7420467Z"
+}
