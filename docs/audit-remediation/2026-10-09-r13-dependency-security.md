@@ -59,3 +59,7 @@ Source 789db5859010426adce4f0cb290ce4c4cc42ea9e: the single final reviewer repro
 Main merge is HOLD: read-only Vercel linkage confirms productionBranch=main/autoAssignCustomDomains=true; a merge could cause an unapproved formal deploy. Prepare draft only and a separate d8c9312 schema-preserving R01 follow-up. No hosted SQL/deploy/provider/role operations; original50UAT bytes retained;0new genuine PASS; releaseNO_GO.
 
 Native npm deduplication detail: previous LRU versions5.1.1/11.5.2/11.5.3 become5.1.1/11.5.3; existing11.5.3 is hoisted, duplicate11.5.2 is removed, Babel retains5.1.1. No new LRU version was fetched. Actual10-case contracts plus full2333 suite cover this installer layout.
+
+## R13 draft CI receipt — 2026-10-09
+
+PR143 headcedace5c2c04c7444684e0c265ceef69f67b6e32, run37893421011: Node22/24 and verify all success. Each actual runtime:244files/2333tests/0fail/0skip; isolated npm10 and local demo browser12 pass. Full step/log hash receipt: evidence/2026-10-09-r13-ci-green.json. This evidence commit changes docs only; its new PR head must be independently GREEN before completion. Release remainsNO_GO, main mergeHOLD,0newgenuineUAT.
