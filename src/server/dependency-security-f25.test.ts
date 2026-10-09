@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve, sep } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
@@ -70,6 +71,27 @@ describe("F25 dependency security and document compatibility", () => {
   it("still extracts real synthetic DOCX bytes through the existing API", async () => {
     const result = await mammoth.extractRawText({ buffer: await docxFixture() });
     expect(result.value).toBe("Kossilon compatibility 公司文件\n\n");
+  });
+
+  it("preserves Nitro's real bounded in-memory LRU driver in the installed graph", () => {
+    const nitroRequire = createRequire(require.resolve("nitro/package.json"));
+    const driver = pathToFileURL(nitroRequire.resolve("unstorage/drivers/lru-cache")).href;
+    const script = [
+      "const { default: createDriver } = await import(process.argv[1]);",
+      "const cache = createDriver({ max: 2 });",
+      "cache.setItem('first', 'one');",
+      "cache.setItem('second', 'two');",
+      "cache.setItem('third', 'three');",
+      "console.log(JSON.stringify([cache.getItem('first'), cache.getItem('second'), cache.getItem('third')]));",
+    ].join("\n");
+    const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script, driver], {
+      encoding: "utf8",
+      timeout: 15_000,
+      windowsHide: true,
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual([null, "two", "three"]);
   });
 
   it("preserves mammoth CLI input and output-format arguments after the parser change", async () => {

@@ -11,3 +11,5 @@ Run fresh npm and Bun installations/audits, npm-installed lint/typecheck, whole 
 Preserve original50 UAT, prior evidence, all application authorization/domain code and the consumed P1v6 packet/claims. R01 production maintenance candidate is based on aa5d3cb and remains a separate release contract; do not bring main's schema/domain changes into that candidate. Exact current web/scheduler artifact evidence is distinct from main CI.
 
 Rollback: ordinary forward revert of this isolated patch before release; do not choose a known-vulnerable deployment as a routine production rollback. No DB changes are part of this task.
+
+Review addendum: preserve Nitro's actual optional LRU driver through an explicit dependency on its existing baseline lru-cache11.5.3. npm ci ignored a manually restored optional-peer lock entry, so regenerate both locks from this declared dependency. Add a real import/store/eviction test and run the focused suite in the existing portable npm CI step as well as Bun; preserve every original CI gate/threshold/matrix. This supersedes initial CI byte-identity expectations without weakening any gate.
