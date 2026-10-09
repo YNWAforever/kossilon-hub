@@ -1,0 +1,272 @@
+{
+  "task": "R01",
+  "finding": "F25 maintenance follow-up",
+  "pr": 144,
+  "tested_head_sha": "da4ecebd1a591dc8bf164a391504f40f18d317f4",
+  "source_build_sha": "3e5eb75e714d7c63de81c7800c881252e2dfdca4",
+  "run_id": 37894936496,
+  "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37894936496",
+  "observed_at_utc": "2026-10-09T06:47:37.310442+00:00",
+  "conclusion": "success",
+  "jobs": {
+    "Node24": {
+      "job_id": 113704046850,
+      "full_files": 178,
+      "full_passed": 1773,
+      "full_failed": 0,
+      "full_skipped": 0,
+      "npm_installed_focused": 10,
+      "raw_log_sha256": "03ae69d32fc22afe6acb060839cccac823a9f8479caf2d57525eaa163b7e1df6",
+      "all_steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit Bun resolved dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit npm resolved dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify portable npm-installed dependency contracts",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Apply migrations",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Seed reference data",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Typecheck",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pre-deploy gate",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Dev server import boundaries",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Cron trigger has a handler in the built Worker",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "Node22": {
+      "job_id": 113704046982,
+      "full_files": 178,
+      "full_passed": 1773,
+      "full_failed": 0,
+      "full_skipped": 0,
+      "npm_installed_focused": 10,
+      "raw_log_sha256": "870415006bfecabe0c91ce6ebce99cf9ec7a5e93a749774d02777d2f812da39a",
+      "all_steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit Bun resolved dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit npm resolved dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify portable npm-installed dependency contracts",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Apply migrations",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Seed reference data",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Typecheck",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pre-deploy gate",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Dev server import boundaries",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Cron trigger has a handler in the built Worker",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  },
+  "verify": "success",
+  "source_migrations": 34,
+  "classification": "actual CI PG17/localfixture; not genuine hosted acceptance",
+  "original_main_50_uat": "unchanged;0newgenuinePASS",
+  "runtime_status": "blocked on physical/privateSQL/backendTLS/restrictedRole/Auth/provider/native tick inputs",
+  "release_status": "NO_GO",
+  "source_only": "no production DB/deploy/role/send/suspend/claim operations"
+}

@@ -1,0 +1,950 @@
+{
+  "task": "R01",
+  "finding": "F25 maintenance follow-up (F21 transport fixes retained)",
+  "source_build_sha": "3e5eb75e714d7c63de81c7800c881252e2dfdca4",
+  "baseline_sha": "d8c9312ba84778bbfb4268cfb1d69ec80949e923",
+  "live_source_ancestor": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+  "recorded_at_utc": "2026-10-09T06:36:58.738945+00:00",
+  "code_status": "local-passing; one whole-branch review/remote CI pending",
+  "runtime_status": "local fixture only; not hosted verified",
+  "release_status": "NO_GO; no promotion authorised by source work",
+  "local": {
+    "baseline_security_failures": 7,
+    "baseline_positive_passes": 3,
+    "focused_npm": 10,
+    "focused_bun": 10,
+    "full_files": 178,
+    "full_passed": 1773,
+    "full_failed": 0,
+    "full_skipped": 0,
+    "source_migrations_applied_locally": 34,
+    "postgres": "18.6",
+    "node": "22.23.3",
+    "npm": "12.2.0",
+    "bun": "1.4.2",
+    "npm_audit_vulnerabilities": 0,
+    "bun_audit_vulnerabilities": 0,
+    "lint_errors": 0,
+    "lint_existing_warnings": 1,
+    "typecheck_exit": 0,
+    "build_exit": 0,
+    "built_scheduled_hook": true,
+    "dry_run": "36 reads/0network/0writes; real provider gates BLOCKED"
+  },
+  "input_contract": {
+    "protected_source_files": 300,
+    "source_migrations": 34,
+    "physical_production_contract": "not_observed; no parity claim",
+    "existing_CI_gates": "exact bytes retained after removing new npm gate",
+    "dependency_version_sets_changed": [
+      "argparse",
+      "lru-cache",
+      "shell-quote",
+      "source-map-js",
+      "sprintf-js"
+    ],
+    "lru_before": [
+      "11.5.2",
+      "5.1.1"
+    ],
+    "lru_after": [
+      "11.5.3",
+      "5.1.1"
+    ],
+    "lru_compatibility_patch": "11.5.2 ->11.5.3 explicitly declared; legacy Babel5.1.1 retained; independently tested real driver",
+    "published_age_guard": {
+      "shell-quote": {
+        "version": "1.11.0",
+        "published_at_utc": "2026-09-29T02:34:24.391Z",
+        "age_seconds_at_read": 878204,
+        "source": "https://registry.npmjs.org/shell-quote",
+        "response_sha256": "cd26d5ea554500f66f2638b4503c911b061d9d8c366773d4a6307d529534c26e"
+      },
+      "source-map-js": {
+        "version": "1.2.2",
+        "published_at_utc": "2026-09-30T14:08:09.382Z",
+        "age_seconds_at_read": 750179,
+        "source": "https://registry.npmjs.org/source-map-js",
+        "response_sha256": "f9fd77ed10814e5a3b5bd0d49fb56f195483ed3ed77164b308ca295e51209604"
+      },
+      "argparse": {
+        "version": "2.0.1",
+        "published_at_utc": "2020-08-28T21:14:26.713Z",
+        "age_seconds_at_read": 192878202,
+        "source": "https://registry.npmjs.org/argparse",
+        "response_sha256": "5f5216a2a0bb18f52bb55fc172f3c02360423819da7ee55f882e94aaf082e8a8"
+      },
+      "lru-cache": {
+        "version": "11.5.3",
+        "published_at_utc": "2026-09-18T23:46:33.023Z",
+        "age_seconds_at_read": 1752276,
+        "source": "https://registry.npmjs.org/lru-cache",
+        "response_sha256": "6e465200ff3e787e26f305c7eaea740defb24b098c938fe65ce5ad446958cb36"
+      }
+    },
+    "prettier": "3.8.3",
+    "npm_root_versions": {
+      "argparse": "2.0.1",
+      "shell-quote": "1.11.0",
+      "source-map-js": "1.2.2",
+      "lru-cache": "11.5.3"
+    },
+    "input_hashes": {
+      "package.json": "9d294f6bb6541244c5ee34c33a4d6715cb9f9557b67c2d7e032e979f81132874",
+      "package-lock.json": "c1f67a131af5a75914e0a9dff9f41ff19e17cab1928a29cba7f1e08f39430adf",
+      "bun.lock": "6f6cb8b2df0dba06811bc40a7905d44d003e55881bcb11495f04791d21a2249d",
+      ".github/workflows/ci.yml": "aa33415cacedf53beb208abf2657c272f15fbe78eb0e63f79d7b4da50b30a8f2",
+      "src/server/dependency-security-f25.test.ts": "f84540da83e18aca4e8b9ae9928c31b8b76e980a402037e3b67322dd25d2ef46"
+    }
+  },
+  "baseline_contract": {
+    "baseline_sha": "d8c9312ba84778bbfb4268cfb1d69ec80949e923",
+    "live_source_ancestor": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "captured_at_utc": "2026-10-09T06:22:14.433324+00:00",
+    "migration_file_count": 34,
+    "protected_hashes": {
+      "db/migrations/0001_annual_return_control_center.sql": "abfdf5e3ae51038fe90550288f10a570290736db263fce14842841211fe6fa2e",
+      "db/migrations/0002_harden_annual_return_schema.sql": "5b4be0f06d1c65a51846870e94b8007b27830a5d4ff20c6fbd8f1c80fd900fea",
+      "db/migrations/0003_annual_return_audit_events.sql": "74716ab004e5b26be3185a2757b0f816bef73118f9c143e7b1605c860774ffd5",
+      "db/migrations/0004_retain_annual_return_audit_events.sql": "7c6375fb32ec90d2083d4b275fcc315f1f29132fc7f7b61eca898caeac55ef2a",
+      "db/migrations/0005_whatsapp_integration_foundation.sql": "550f6dbcdacdf49ef6b761b91e804ca8043e85cdb6ba3f479ae0dbc188c4053b",
+      "db/migrations/0006_production_assignment_sla_foundation.sql": "f5247427ddcb7a57ffbc77c6c900030d993f85930a1c2a918b6694e1469138ca",
+      "db/migrations/0007_whatsapp_inbox_ordering_indexes.sql": "35e01dc6abda8dbb94c08c8c54a4e9bb56d7a3a6185fc44702a03647e1fbc666",
+      "db/migrations/0008_client_register.sql": "95af94ec995307cd58bd96df4cdbb21a5713d26954f817b1aedeee135ee88a0a",
+      "db/migrations/0009_reclaim_stranded_outbox_rows.sql": "fe1395126ec40e856225b0fe176daf2aa7ffa461463ee6e3402fa2bd9924fd34",
+      "db/migrations/0010_index_timeline_and_upload_intent_lookups.sql": "ca0c2565399c6891e3dc34e706368d5c54b0842e7ae46f9bfca3d0ae2b62f771",
+      "db/migrations/0011_whatsapp_delivery_receipts.sql": "2c161cd3593e093f147fb21190bdbf5a1b75f4f2226f5c1b738fd2e1a9b36183",
+      "db/migrations/0012_annual_return_reminder_events.sql": "1b5a2d6857363781b5368cb833c7af91876277ca2933f58ac1c959daf8b81c5d",
+      "db/migrations/0013_checklist_templates.sql": "f487ee664d5c4e20946a8e31d55a0d7502b9b8cfd69f66e575d6eb08a64b1e10",
+      "db/migrations/0014_generalize_work_item_case_reference.sql": "0c3a635da7a8e14ae8261dc0dfdf69a4da6112c1b866a6a83a616365750d864c",
+      "db/migrations/0015_officers_and_shareholdings.sql": "e6202e25b89e5b88d7b5f0c9a8c2a4bf22ba7943b2f428d25cb2ce6f3d7542ea",
+      "db/migrations/0016_significant_controllers_and_dr.sql": "92d2be3fd59b0a85ec7606a81b28a873f54483695df089f910ef74f5600c4ab3",
+      "db/migrations/0017_incorporation_intake.sql": "5a40f9ba4ca33c7f88f33cfc1c216969938d18649509d6dd0a208d8b998297f1",
+      "db/migrations/0018_recurring_service_subscriptions.sql": "69f1b0cc6a0c0c710f18b341bd112c4edefd89c3d04caa312998d0ed63a37a0b",
+      "db/migrations/0019_corporate_change_requests.sql": "3b74b1de0bc58c7eaaa1eb089aa214c03ff1aea35e2d779b6f8326fca1bd2b1b",
+      "db/migrations/0020_corporate_change_work_items.sql": "d4e600a00cc5a2f544674364be351466ab68727982e38cc8ea3298471b0be492",
+      "db/migrations/0021_whatsapp_session_window_indexes.sql": "22cab690cb48883d72c59e959d4af5a7dc02742e85c5a0a17d4e0f508505885a",
+      "db/migrations/0022_notification_outbox_delivery.sql": "a1d18d0ea91ff274dce73be35cb4bd4b503f834451ba4adcf5d5668e9a35bc0b",
+      "db/migrations/0023_document_scan_jobs_and_quarantine_retention.sql": "3d74d1f25aaa842548cd8f90dbe6134135ad8f1cdf2274995873dd91dfd9b9fb",
+      "db/migrations/0024_link_uploads_to_checklist_items.sql": "23105326908b594afafa0b0bc0a00e888a6b061e1bdeef8c19b0d307fa81a21b",
+      "db/migrations/0025_nar_import_staging.sql": "ff0c6c72e8465dd7fc997bb0264c1e8fface6c3c507a74071a5609424b1f035c",
+      "db/migrations/0026_case_parties_and_requirement_instances.sql": "9767057c89ec0266d587f9bd2598db6d89af00eb7c41ac60ed2ed084111c0019",
+      "db/migrations/0027_document_versions.sql": "41dd0155edd40c0d0033c0a82f16a40dbc09fc332a1a1a24b974d3f3a50e3f22",
+      "db/migrations/0028_document_analysis_jobs_and_findings.sql": "0a0522892b647e3be2332bae2b719266901de047912474e6ed169efa12cf4e84",
+      "db/migrations/0029_whatsapp_send_mode.sql": "85c3b00b6e791a931c1d51de02b9f28b719bef8c09bc6bb24cbeb0ed9d06a5b3",
+      "db/migrations/0030_company_data_origin.sql": "6292c2c5a6a0e2d18f04a6ac500c0da84fef1b43ca9b3de14c504732e76dae99",
+      "db/migrations/0031_whatsapp_message_media.sql": "22b92e7dd307e3f2a3d089642fd6e69ff2da47e8d05f74f7ccc0c9f8c006a932",
+      "db/migrations/0032_package_handoffs_and_returns.sql": "8554f605b59183454f4b74e78e351c5e991499d631cae95e94aa4d5927480fba",
+      "db/migrations/0033_maintenance_runs.sql": "72c597510ef7fda9a84a02c4bd87a3a4ad6cb5a941362c347d2c477b9f71cd69",
+      "db/migrations/0034_notification_outbox_dispatch_marker.sql": "996ab823833183bc6b964b9b45d6b1726e1149eb5b74c5379362e3afc94e993a",
+      "src/features/annual-return/board-filters.test.ts": "2f3fc12b1e1c5676085e5479daa88f43f926e5f7d05b267418f124ed11c56464",
+      "src/features/annual-return/board-filters.ts": "6f559d565df503d509f8a081341608d36adb95143b1777df73101dc0ed458631",
+      "src/features/annual-return/board-metrics.test.ts": "f53113067cded1da63f9b438579c3b0793d5371e0fa1c5430ec6add10df46fd0",
+      "src/features/annual-return/board-metrics.ts": "1df4d3971901d3394c41cc17d35b035669183da6887f9bcdd5f0469dae21f17f",
+      "src/features/annual-return/case-history.test.ts": "bfb49ccf312758b8e016c77a33b30c3286dc03cb724e0a154224906203d0d6d4",
+      "src/features/annual-return/case-history.ts": "1ca8cdcc40d57d159c1ca7cbe4c14451142809e4dfd192e47e28e0ad56c05d08",
+      "src/features/annual-return/client-portal-server-fns.test.ts": "4e8143cb7189975f1e23a5c18228b8f69632fe3607da45285f9021b0bd3a8edd",
+      "src/features/annual-return/client-portal-server-fns.ts": "2be10fd379d4cb0883c68857b0e30d75093f84d09af01f04a6739e0006ae3533",
+      "src/features/annual-return/components/case-findings.tsx": "fa2b28ecd776318866df1ac2475b65720c18dea6b60989edfa7445de21c3e3f3",
+      "src/features/annual-return/components/case-parties.tsx": "dbae601cf815c0dc1f417305322cb7002f92dec2049f9f76ab3dfc6bb29aa622",
+      "src/features/annual-return/components/create-case-dialog.tsx": "1a568076e8d5025f4edcd7f7bc3e9eac783ab3cce52abad7df0198d23e638c2b",
+      "src/features/annual-return/components/demo-case-detail.interaction.test.tsx": "1927e3f2e2f84971b2a8664f273e97573b1a4f78351e1aea14f03721a1c04b95",
+      "src/features/annual-return/components/demo-case-detail.tsx": "e4bf38eedffb6af5ea7a87c52c6b277495d9a9cc82ab07562b405d18cca48fc6",
+      "src/features/annual-return/components/production-case-actions.ts": "246bd7d56d64be115a7b0f60b842f3e71d1b0eb197b80d884cea92098c081a70",
+      "src/features/annual-return/components/production-case-detail.interaction.test.tsx": "9142a0ac8ca04d98ff5035c3fafdb1e73332cee522135b7c05ec8156be26fb4e",
+      "src/features/annual-return/components/production-case-detail.test.ts": "f204a430414bea6dc0852ac6a69243653487ae6896ef2b53ef912f0563c10e38",
+      "src/features/annual-return/components/production-case-detail.tsx": "dbfb96bf4e69cc0842d37e4e390c5c1333778aea357b1baa30998f3019f6bace",
+      "src/features/annual-return/components/production-command-center.interaction.test.tsx": "8f6b7ee310fcc16e7d538447a59d0b7e43fa36bf464d5ff965bbfdfbcfaecb3c",
+      "src/features/annual-return/components/production-command-center.tsx": "94034ba82e8e7a4508f02ac7432aa6c3fdba93ec3b67285e9de8f2fbbee9c23e",
+      "src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx": "376134d2dc2394873a1c4e030cfc015e4602836d3bc9d1d7ff3027d185bd0c3e",
+      "src/features/annual-return/components/production-whatsapp-automation.tsx": "dcc1f9bf24efdacaf3082633c78fee1c32f2432ea55a498e82579dcacdf67b23",
+      "src/features/annual-return/components/scoped-pickers.tsx": "d176625fee8d8cf696976a93bc132dbdea1e428e5aa670d569029b1996b22870",
+      "src/features/annual-return/evidence-file-types.test.ts": "32dac0c4d9c66f8f21b0fd02baf0e99627bb6c74c7c33a3302859938fa4b0ff7",
+      "src/features/annual-return/evidence-file-types.ts": "d45cd468125584f5440142ad6cef2d0b326c0f1cc2e997cc36d8639c8afa22bf",
+      "src/features/annual-return/evidence-server-fns.test.ts": "038eb74b54c7d4c897f60482d1d1b448cb8900a61854b5288dc6314b06619fb9",
+      "src/features/annual-return/evidence-server-fns.ts": "9a45f40d02eeace59d44f5166fd7273f2fb876380f3868e9924e14792ad9bb25",
+      "src/features/annual-return/evidence-service.test.ts": "0b759d34a4c593874eb1aba665eb35a6f976c7bc862d28ab1b3eff62e9afe5f6",
+      "src/features/annual-return/evidence-service.ts": "c36e17d0be3b8418488e933e12e560c6e15447d888fe7a4e8ce166498b5e36a3",
+      "src/features/annual-return/follow-up-repository.test.ts": "bdf472613d2a3531e65f4acb33fc30ab007226b38bc75683e1209315835d16df",
+      "src/features/annual-return/follow-up-repository.ts": "46b58512935b5ab903a4c03d4a2e6f83b6930b286dcba298dd46b29df5a81551",
+      "src/features/annual-return/follow-up-server-fns.test.ts": "578e8a2b4f6df8eb7cbbd01631df7e1ee9423e8b22af2e39651586303e9f11df",
+      "src/features/annual-return/follow-up-server-fns.ts": "ba8abef989544ae795c64d6f53f2466dc26e5c63fcb8308022b24846509cc744",
+      "src/features/annual-return/follow-ups.test.ts": "e52a8c70bbb645d0e3a1bfadf599d303203ebc2037480c5d16148509127d932c",
+      "src/features/annual-return/follow-ups.ts": "3e143b349cba81a48a0136aee33c533466d98adc7f3146027deaf3bf466ceda7",
+      "src/features/annual-return/handoff-destination.test.ts": "11227390be4c1efa698d3ad19b39e2b83c475506a928b777418d53363da58540",
+      "src/features/annual-return/handoff-destination.ts": "98fc854c20c13d362fdca69e4f61ef42c23fe132646c1c718a8f510350f61cd6",
+      "src/features/annual-return/handoff.test.ts": "40caa8cea72f1a759f3d588c60f875d72d951213cb833ea8cbd92c84a5a0ae7c",
+      "src/features/annual-return/handoff.ts": "edfd9cad5aed6c097f665451a9678682405ebd83ac4150495f33f8528b476fa2",
+      "src/features/annual-return/outstanding.test.ts": "ed83e15d3a1b14d20f20224e5b80bbce3e61ea73a7881779baabaede62ec593a",
+      "src/features/annual-return/outstanding.ts": "cfe826f1afc0712fd4a5dfb8fc2473681e811e29b8f60cbb291635d4e521988f",
+      "src/features/annual-return/package-manifest.test.ts": "1fbeb3d33d0d2c73f6a43ce89a963a64ca29f4434284a8cc771b116d8cb5ab7f",
+      "src/features/annual-return/package-manifest.ts": "39b2caad5b5b089eb982315686120c98c7bae20a8ba5dc5bb2b67866625e0188",
+      "src/features/annual-return/permissions.test.ts": "34fad42130b9d74f75d218747b218e326153a46ee9fa7d8089e2a3720f7b4397",
+      "src/features/annual-return/permissions.ts": "675198748f93c12564aadd33024596544d6102ba423cbe69ae20fe86d056ab62",
+      "src/features/annual-return/query-keys.ts": "d8a6526b666709115d3feb206897fefd57b602f05243fe82d3c06f547cb09639",
+      "src/features/annual-return/reminder-cadence.ts": "f57c45a02587a401cace51ab3e70633b55380a4dcb890640c3c96775b2dfc571",
+      "src/features/annual-return/reminder-idempotency-key.ts": "338f069021eac493391bfc2f28be084098a572432d84c88a3726afbbbc0935b0",
+      "src/features/annual-return/reminder-sweep.test.ts": "f5446f9fcfe9039784a9dbe601259e5eac4f738d834f5e53de34e5174caf4c4a",
+      "src/features/annual-return/repository.test.ts": "52fe1c7d7e1b7af5eeb12fd4b0b6f36ac22158c3c8997379f051e3b9ca50104c",
+      "src/features/annual-return/repository.ts": "7b0b894ef62f56fde8df3e46c5b47163f580368d4037a3cc9361a7d148adb702",
+      "src/features/annual-return/requirement-template.test.ts": "ca6f5331dd4e74bd1c166b142a06a951c0152d2e8178a23a18b92c9d71213943",
+      "src/features/annual-return/requirement-template.ts": "f9118551341a177c52fce03dfb4cc3615b61d899d61d772d74fe8a95a944383d",
+      "src/features/annual-return/requirements.test.ts": "8f064f3db21ee8c53e40d11df9016037325ecbc9c197b1f2bcfcb86432c46075",
+      "src/features/annual-return/requirements.ts": "73d059d18cb08144857f3f5b136ea25ed739773e1a714d7ddf1ce701d8a6afef",
+      "src/features/annual-return/server-fns.authorization.test.ts": "f0a4166ac947fedf9cb8a2a88f6d1d37b4f0d750a0d8e42e9b01438c4c5e5e37",
+      "src/features/annual-return/server-fns.test.ts": "ed5bf8fa27150d4823c43176bff10183b116322e06955ed014c45c11a8690ebe",
+      "src/features/annual-return/server-fns.ts": "4274c34688df21c029f0ee3c34e94820d0204c068d3bde20d2ffb36ab7ffafe5",
+      "src/features/annual-return/session.test.ts": "9f2ab20df5f45770451edefdde177a12291f79f0a3672ed56cc3c6c78d3585c6",
+      "src/features/annual-return/session.ts": "1095b05c759e97956bd96fa042d8c7b1117d2f3c49daf45e493291b3c91c1bc4",
+      "src/features/annual-return/types.ts": "fa603c820a97ae8b35f591891d6cb3b0bb45a1b29cdbaf8abd429f2204463c6c",
+      "src/features/annual-return/whatsapp-reminders.test.ts": "2d04d853fb65cd34da847c7b1e7915a9555e51ae39aef6476829282a78b2dc5d",
+      "src/features/annual-return/whatsapp-reminders.ts": "f78bac9eadbd946de1f9cd3cac6e1f745f25189189c9b8b849be51fea555b15f",
+      "src/features/annual-return/work-views.test.ts": "3282cc0e9795d0ea33dd858a7ba549c6ade81806a24ffdd491b6ab2059c51cdf",
+      "src/features/annual-return/work-views.ts": "c85922b94fe65ae6bc2e78f4a29f38865d449a4cac3e0fcffbf83e9048aa2f41",
+      "src/features/annual-return/workflow.test.ts": "1130e2dbcbf8dc2b7ab2bb69b6207e0182e0655af7f5833029d7637d3beaf765",
+      "src/features/annual-return/workflow.ts": "ac47e3faae4be2e1d8e387bdf1f4278aad8af9991ff90c47fc75fae8e1dfdfb1",
+      "src/features/auth/auth-context-neon.test.tsx": "6b6d9bb85ea7344d8178df23242a26277c42c9567ba25301f734f8e1ee24c14d",
+      "src/features/auth/auth-context-neon.tsx": "07450c74208797b53f699506741b5a56cbd11642da8d2c541d61b5e63b69eb53",
+      "src/features/auth/auth-context.tsx": "11d7b17fa76744688de45cfebe6ee2c327da17b6e07d4e1da4c975ce41cb6bd2",
+      "src/features/auth/authorization.test.ts": "b8c9d03c8a2b91227d4ee0afdd9ef72b82538e7bc4a81f141a46d18aceceb642",
+      "src/features/auth/authorization.ts": "398ebeac3b9d659a57819e46276655ed05dde414fa5ae07aaf1fb1cd22477826",
+      "src/features/auth/neon-auth-client.test.ts": "c0e282d1fc1c28309e55f13cfebb20aef032bdf3eb6a22b189005f9df41a5978",
+      "src/features/auth/neon-auth-client.ts": "20ec47dde6b03a09f64d6ecc40ba00c4fabcfd9bbb44f5e1ea7dca6b009c9023",
+      "src/features/auth/neon-auth-cookies.ts": "13eb9da0de0df640eac9ad4adf3f68fd1dc6d69aa0afde645f5c18b31e2456f3",
+      "src/features/auth/neon-auth-magic-link.test.ts": "8d757437874358255713901a967c10df9a54514e381cf1eedefa77e80688b3cf",
+      "src/features/auth/neon-auth-magic-link.ts": "7750cc2070d20d16ad4a05fccc328a9af9d8c38249d0020d9832c95f39509aac",
+      "src/features/auth/neon-auth-proxy.test.ts": "2ab3a2c9848efe2bd105ff8c336cbd3eac32ba88f7bff3cbc6facafccd720175",
+      "src/features/auth/neon-auth-proxy.ts": "101c810eb402f69b3b5bc3fb0554565550bdc4ae424077ffcb669705b8650869",
+      "src/features/auth/neon-auth-rpc.ts": "19e88f8189c850d4b26ef7661670f18eced73726ff53dff2341a602a3dda3a9d",
+      "src/features/auth/neon-auth-server.test.ts": "f9680836a4a386771258f37d024a3ebf88e024a72e510123156d9c327f096b86",
+      "src/features/auth/neon-auth-server.ts": "e74d6474c35defcb099439bb2f27df13fa438ec232ee39342eef5fdca916441f",
+      "src/features/auth/route-guard.test.ts": "cd75b8bebb693a46a2ff09444e348fc309a153eff9a5b32f5f00e22746a7d5a0",
+      "src/features/auth/route-guard.ts": "fb0d861587d3f331149f48e5ebbf7b79afddc2f754a250838665cc0cccfd0d37",
+      "src/features/auth/session.test.ts": "aa4a1d75778155ed6ab591d17c23727860180d83b6031266a1c99ff90a8efb75",
+      "src/features/auth/session.ts": "f1bb115214f7b19f2133beaff467acf162cd6086c0329fceff769cf6f779eed3",
+      "src/features/auth/types.ts": "2b5eabe13d61dfdc2f54851bf372cdccc86ebf6696005274916bd68097b3dafa",
+      "src/features/checklist-templates/errors.ts": "782844178972550eeacfb75985ca7d2162acaed0fbed2e9656008a02c597779f",
+      "src/features/checklist-templates/repository.test.ts": "0945551714c17c8c63beb3e113257cd901623253496e69adaeb4f131ef91d339",
+      "src/features/checklist-templates/repository.ts": "8bce6d4571b003985be205ca9d6ee6ced1b334620f8566c5b896787c719af751",
+      "src/features/checklist-templates/server-fns.test.ts": "f1a518c56427a1da52aa6c62e5408e406728c25303db89ad1aa744d5e201be79",
+      "src/features/checklist-templates/server-fns.ts": "f7f30d54afcfb555c28cb5c91160e99cc4fe03405b8fcaf656e6d00199b780c7",
+      "src/features/checklist-templates/types.ts": "442e9672368a45941857e7d79c82fa8ffdbc156cfa734711f8bde908a33c8378",
+      "src/features/clients/authorization.test.ts": "ecdb3b8e598c86b0d5fb02a746203330ff98d3d784e8a39510f962389fb7d876",
+      "src/features/clients/authorization.ts": "982f6046c6831ebe4287b7492c6a4bdae0b3ff47963c32e3cab7f1843dc5073d",
+      "src/features/clients/components/demo-client-notice.test.tsx": "8c1dec70436fff90a693989ffed0c684115bdb7b56feda94ca54b1abbf5c1f66",
+      "src/features/clients/components/demo-client-notice.tsx": "85f5bbb9b24bc5407f94fed4740266b4243ae2549816560f5294ddc096b7e219",
+      "src/features/clients/components/production-client-detail.interaction.test.tsx": "c0c40180de88a44c870c68677d802b4683c9f085bfb266e4535c7c64f305bad9",
+      "src/features/clients/components/production-client-detail.tsx": "9c594340bded0c5cb6c30c66ef464c217cdf3b7b26c881724a0d66c522a5b7c2",
+      "src/features/clients/components/production-client-register.interaction.test.tsx": "9144a99eac93a74147988db788177e84fee0923ebdd215d3e3cb8772c3fed505",
+      "src/features/clients/components/production-client-register.tsx": "261903c7b0e67e347c223139d27f3f5408fbffa1c367131d8e8689f2e98d05b9",
+      "src/features/clients/components/service-subscriptions-section.test.tsx": "9586c83932cc25fddef71584afcdf4a475b07180d71c83be9b3615ad7abb4f61",
+      "src/features/clients/components/service-subscriptions-section.tsx": "9f885f70afb443de0f896dd013966406eedfea61e99f90af78f39af5b90791f3",
+      "src/features/clients/errors.test.ts": "f2145297bd0eba438d9cc195a85272fd5b66980579899f176b3d045329b06032",
+      "src/features/clients/errors.ts": "4ecb08c4d8f2cb1d1baed34317962cea443688cf58939e222a4ff52d12c453de",
+      "src/features/clients/repository.test.ts": "48beb4d676bc7321e5f507680395ad6deb7c257fbe6a6528e17a8fd65515cfb7",
+      "src/features/clients/repository.ts": "15279a8a8d947364b1235277953249027feaf0d21b30dd2823c8684ff21faf9a",
+      "src/features/clients/server-fns.ts": "473952bc80f3cdabd85c4cf3b3153c8f93085525afaf0ff8d4d5b3c168fed401",
+      "src/features/clients/types.ts": "303365e29497185dc07b66ab98fd540d63aa87f76e2e5ce9f556a72b624f4f8c",
+      "src/features/corporate-changes/authorization.test.ts": "0e3c30722b7f82d1ab479701ca07c9c826db91902884cb34bb6e9015105739a4",
+      "src/features/corporate-changes/authorization.ts": "f89d413db658db48550a7131720a6421576534e56a84d34a8c05300baea8d09d",
+      "src/features/corporate-changes/components/demo-corporate-change-notice.tsx": "0a51be988c89b180b03e87cbd9143c5584ec0e60177197c1cf1a66f7274d9db7",
+      "src/features/corporate-changes/components/production-corporate-change-detail.test.tsx": "33c87e94f5eeaf68aef7b5ab219a83dea39f9eadcc9a9d902c593fde85333b00",
+      "src/features/corporate-changes/components/production-corporate-change-detail.tsx": "d2f780ca0d773de4b7fc95b8854495e868f2ea6ea8d722ea51aac6830f440f96",
+      "src/features/corporate-changes/components/production-corporate-change-list.tsx": "9e84cff5ac3b42845b2e85dfcb9d8b1a8c367d727b67ffde0cc18e9d523b059e",
+      "src/features/corporate-changes/repository.test.ts": "9e1d1a6ab5718da67e77e18a5497b751b83e531874ecd23819a40f6320e6ec3c",
+      "src/features/corporate-changes/repository.ts": "6539fc5a6738705cf89e948f706d767bc30ccf2eb5afbfdfd6f09f3129c05d07",
+      "src/features/corporate-changes/server-fns.test.ts": "85f74ea2df1f4099e4e0c51573ee87ab4ac575233f2512aabb55de582b88285e",
+      "src/features/corporate-changes/server-fns.ts": "5736a717e34d5589b0e2ce48fbf73f42f94e9c4d1b4620285d2c0eabd871a205",
+      "src/features/corporate-changes/types.ts": "d749d7db74c6bbbb28dd4ada178f8ca560fc0cce52d956d78fe77a3f13639ad6",
+      "src/features/corporate-changes/workflow.test.ts": "59f4a4b7dd5de8dcc66b05db4c2768b3f658e23670129ff5658e0a7965340079",
+      "src/features/corporate-changes/workflow.ts": "3a15c5560960929de7979034def9702d6f2af009df60657a9ccfad8c08ff79e6",
+      "src/features/dashboard/dashboard-data.test.ts": "ec38c3fa36adb00fe9a1e7203c7a32b2ef404351d12afe817ba9571a0b7f16a6",
+      "src/features/dashboard/dashboard-data.ts": "97258b740fa447fa6144cacff240517086e0fe5c06931fc41a045c03b337c66b",
+      "src/features/dashboard/demo-dashboard-data.test.ts": "03665766b6be52222d129bc8b80e68ce1c21f0985dd47e7f9039d480e599557f",
+      "src/features/dashboard/demo-dashboard-data.ts": "3cd8e5c11d5d12c3b0cb7bb17d144765d403d6c00e964b43df017882d92200cb",
+      "src/features/dashboard/types.ts": "01dfc862d26b5194b2ae35e8c9a109c8924d90457b20c67c88ee64c35ca756d2",
+      "src/features/documents/ai-provider.test.ts": "6efc5a5583a34d65075b3b8e227bde3b095e861f954c6701c0514049a6e55c01",
+      "src/features/documents/ai-provider.ts": "5bee6c214b0c19bfb7f9f0ad421219fdaf76bd9945fcc1458fed9a46ec1963f9",
+      "src/features/documents/analysis-checks.test.ts": "307b199090095bcb78817067c80cddc0d93ebe96b8d7a840f0482a62450a1008",
+      "src/features/documents/analysis-checks.ts": "4f2e9bfc47f8dae80d75d3c625b0f457e8d5bf9ce54675465cc11d4c71cd5246",
+      "src/features/documents/analysis-jobs.ts": "7b3d51282430509e6b069a3027b18276c03144ac5b81f96e224830b8d75aeb8b",
+      "src/features/documents/analysis-repository.ts": "b934f160ba59e5eb88dd9aaa7a6995780583c3d459d41efb625c7bc8e02aea11",
+      "src/features/documents/analysis-worker.test.ts": "72a2ff8389bb083b9a5df53147c083b7df1ab85586807fa4eaf01e36c2dfbcb0",
+      "src/features/documents/analysis-worker.ts": "86f44fb9f630be411c0a77a8f94a1bf4d1c328ced5706c172a0b86d78a62c564",
+      "src/features/documents/authorization.test.ts": "8241ac6ce36e507d5cd5a277b03485d9b2a593ef1d02c495d60e67fd3f7f9fa2",
+      "src/features/documents/authorization.ts": "47555104803ebe05f8f6c4b141e9c0b41e9174bd62994f1f5b87be9c0003667d",
+      "src/features/documents/findings-review.test.ts": "b54e5da78be46274f9f1ea5c81a7f942f587c4cfc0fba225201d46e035ef496b",
+      "src/features/documents/findings-review.ts": "fd0bec67a92513ee55b2c12c8d426a1a8403a1fe16c36939abb670cea0934f86",
+      "src/features/documents/findings.test.ts": "2714c36432337189342017a8626af13ec7e12dbbaa3818e7be16c1f5632dbabd",
+      "src/features/documents/findings.ts": "7a999c4ed8da339c33c1cd8d031d0c42efb40eb3138c62638b060d49bccd5706",
+      "src/features/documents/live-scanner.test.ts": "7b1e7a8dfc8c1be006885cca6f64482698b8129ba8f3188dcbcdc7ef8dc03b33",
+      "src/features/documents/live-scanner.ts": "b9b4c669168c1848396ebdea6d3d148caceef86fb5b957e42322373b6e747e60",
+      "src/features/documents/local-r2.test.ts": "deea41938bec991d350fdd3bc15f409327de3aec6236d790cb4da6c249bd07c6",
+      "src/features/documents/local-r2.ts": "5e95e95a775a5803cab94dd95ca50b3de3ccb34b19eb43a027784f4a52e851bb",
+      "src/features/documents/rejection-reasons.ts": "fdcce02dafc66ea9be15699bc1dd6e6795315095230278972d9cd52419ef3963",
+      "src/features/documents/repository.integration.test.ts": "e98165c710d13ea2380901885994690846455e7b49715940e7e17a69cc83f4c6",
+      "src/features/documents/repository.test.ts": "46441fa41b86f31c40e1bf356e7088caee8f03e63ac152a6066b537aa0952e02",
+      "src/features/documents/repository.ts": "a51e5c28917a4a3e27ba34a70c695852bb099d5d0b284aa8e743ed850236819b",
+      "src/features/documents/safety.test.ts": "5c2a535a89c8364b21b0c3e6b6adb97a0257cc7499c8e49d2b60e4d6df3ff6d5",
+      "src/features/documents/safety.ts": "94365b9fb54cb0331e0c17c5afded317a3531f57ebb98504953bf36171124a7a",
+      "src/features/documents/scan-jobs.test.ts": "059680064312dfd1fb72d634cc79e1445e1b029360dd609fa97266853fb784c7",
+      "src/features/documents/scan-jobs.ts": "5a9d52cb23d6e974f9385e07d752f5787f7fd97f98d96340507751a5724863bb",
+      "src/features/documents/scan-worker.test.ts": "8fd923fa85fa33d8c94da42327b9df3bc7619dd7a868b6d3211d929ce1b7359a",
+      "src/features/documents/scan-worker.ts": "56a33c4eafdfd29e27739801bac072f20604fa26dd20af58495061833e23062d",
+      "src/features/documents/scanner-selection.test.ts": "1dce62441246264ac941fbe479f7bb85f46e21a6e85d0cc4667f38798edac5f9",
+      "src/features/documents/scanner.test.ts": "9ce66587a8b90dc1c14f4f36c9ccc15eef7fcb17cab0f2e28dc24d9e25e073e0",
+      "src/features/documents/scanner.ts": "7386db6712271f244336452997177fa5504c89176de9afc141219c067938c47a",
+      "src/features/documents/server-fns.test.ts": "849f719e4c45ead9c5ce8b3cf70e314434144ac17e1f6b49a528b64856ca238e",
+      "src/features/documents/server-fns.ts": "81b2d5c1447f19f622b5022eda45afb34818f16f98ce38015a73feb76d9aaf9a",
+      "src/features/documents/storage.test.ts": "226eb77fbebf7174b7e839aa6fe902a82d777f9a147cd28f3455b413c69b5744",
+      "src/features/documents/storage.ts": "5bc1a4a6a10e8e3621859e0d8adfc988202b3a094a520e34ceb5a51a1cd34176",
+      "src/features/documents/text-extraction.convention.test.ts": "9a8c2ef4b25c8c3eaf1abf4e3b3ce88dbda498fc1502082a68951bc63d86a827",
+      "src/features/documents/text-extraction.test.ts": "9da09556db35be0d94506933ec36431a7de7d148ad363d6fcb0efc94d57194a0",
+      "src/features/documents/text-extraction.ts": "f7e34cca1f63e70bb5ef1cda7a379eb9643ce6a3b43f0abc9fb33c8b77545971",
+      "src/features/documents/types.ts": "1c61a90f99f33740db31d5bc747ce1198b292c605d5b0f8029c032cf403eb239",
+      "src/features/documents/versions.test.ts": "e90093e2a890dba961b6921fb74196b3f4f731045541be94734391e34e464cf4",
+      "src/features/documents/versions.ts": "d6b7b3b85c774612f9637ce0f96f867b0435be6c886e067b9db2a53aab866c48",
+      "src/features/incorporation/authorization.ts": "8b4d0f5615db69bd363cce211be0aab83d73057f109af68ecfac99c8a138c833",
+      "src/features/incorporation/components/demo-incorporation-notice.tsx": "2b0618f97048d3165f646eb51ab656a79ae57d8f5d9b20e442abc54289b28a14",
+      "src/features/incorporation/components/production-incorporation-detail.tsx": "d96514cf378c2d76d70ab8f4a4751113e202ebc1ebb3809355603650797ee260",
+      "src/features/incorporation/components/production-incorporation-list.tsx": "cfe46a1445bffdaa4b5e87fe8720bf46cc5bc18d26e382d576d5a81c78b4c06f",
+      "src/features/incorporation/repository.test.ts": "e7b70e6fcfff00911be439f69713950444b3dc38e110ebbf9ac304e66f96aa65",
+      "src/features/incorporation/repository.ts": "a1dc335686274041680750a997342b38da8ecce7557a53d1d67a529c0d5a4ba4",
+      "src/features/incorporation/server-fns.ts": "22de8ea29b7e2a4fe4bd42a67d8cf0c5f16b4af741593a844167486e7e00f604",
+      "src/features/incorporation/types.ts": "ef6c43858fc792d8fa05d02d8e032b4ce75a657dc46ad649531a53e8e0749fa2",
+      "src/features/incorporation/workflow.test.ts": "48084b34ec9349b2de4a641c0f1bb09eacd2dd28a2cf55009895ce48670877b3",
+      "src/features/incorporation/workflow.ts": "6ca5787a0f346edaa92698ffffb65809424c19238b53923902b09dc1fa0207d4",
+      "src/features/nar-import/mapping.test.ts": "105090d373f589b4a6090074a938c7dc8ee4e1f040a1acc85209e9d4bab721e2",
+      "src/features/nar-import/mapping.ts": "e1403ea55bbe031a5997e79acb435e76e57cf63ffa8317b6e3f8ecbac43bb5df",
+      "src/features/nar-import/normalize.test.ts": "93f07c71ee5b53f2e2fc9398c09832b985283c339fd08f4d75dfbc4cc51fa504",
+      "src/features/nar-import/normalize.ts": "02a7fe33549140a2f0a3d88d646b4e572ff5f558ed4455e3976f7c462126f897",
+      "src/features/nar-import/repository.ts": "f5dd4f6f1d50d58a51e46ef0d07ac77dbf1f3a96d5261be0bfb713acfe4100bc",
+      "src/features/nar-import/server-fns.test.ts": "9eedaaa99cea0a072764c35ce968ddbeb94a1c4846c3d52724c9ead05ca1cc6c",
+      "src/features/nar-import/server-fns.ts": "56bba941d220a389288e341cafd5785e63a180ac4a39679973901e495ea2cb9e",
+      "src/features/nar-import/xlsx/workbook.test.ts": "6db8e01ffb897e21e1d5ceb8a61cb01a67e4b5bda9345c1e1e8caf16b4ead8aa",
+      "src/features/nar-import/xlsx/workbook.ts": "e7c57423f7df0af529abd27b052d03ea2e4b1a50973761be827865e236e80a9e",
+      "src/features/nar-import/xlsx/zip.test.ts": "653f6255d506ed7c4e8463461e19463c070a00a039a5390f5b036d55e78f47f3",
+      "src/features/nar-import/xlsx/zip.ts": "21627c995b1ebe4257d82457602b175d3dde7735a12a9ac0f686bf77285800ad",
+      "src/features/notifications/dispatcher.test.ts": "4e9f207adeda4d91123f7fbf1168074f14aae5a3522927c5ff86af533e16207a",
+      "src/features/notifications/dispatcher.ts": "717b7a6c300436224e7b807307d73a3edacd088d47d06d136609f46cb5b1756f",
+      "src/features/notifications/local-transport.test.ts": "daa485e322bdd64b809cf84d75dc44a6bd7852fe76cabf2db9d0f938f625a294",
+      "src/features/notifications/local-transport.ts": "c986d36671a29ca222e7dc6f13bb2c13ccfb8dea543f2a2dbf7c08c8ef1bf7c7",
+      "src/features/notifications/outbox.integration.test.ts": "0b5085b1e77f23d0ba6cdf7d15118af36987fdb4e7be54187c029f3a7337e0fe",
+      "src/features/notifications/outbox.test.ts": "6f616b5dcb65a6abe3a3b1c894e5aa9a7121d98f872141ed5a9937c88d89b9d9",
+      "src/features/notifications/outbox.ts": "b14663cd5ff045cff6469fdc187ea5ae0920ae2fe6b775263ac5dd3717a4b0c0",
+      "src/features/notifications/resend-transport.test.ts": "d5350f18e7aaebfd661b7ba155a9c5e24c6b408916b2fa2fbd3917084a7ab077",
+      "src/features/notifications/resend-transport.ts": "0b3ef4033ed6c6a6e35e7f1cdcc2ea063fcd4401e086a1b077f20826fbcaaf12",
+      "src/features/notifications/runtime-dispatch.test.ts": "168fc2d8e3b3431fce40383ceca14ed1e7db65a8c3b7fa2ea453ec3973f115b9",
+      "src/features/notifications/runtime-dispatch.ts": "f296f9050b775fb5d95540163b5dd2522e8f3a2f74d82a6392f9b7ec88d2efbb",
+      "src/features/notifications/simulated-transport.test.ts": "7b2cff38fbc89df20517e821796b377abc673e5ebe7bd591af588d2831b68fc7",
+      "src/features/notifications/simulated-transport.ts": "25a5328665364867739ad957d8113b34b1afc2142c93ea909c35eec6519b71ff",
+      "src/features/notifications/types.ts": "2878d1fed48544b2b313838ac8e81d4da36150db36c0280d5c5f71368c9e5cd7",
+      "src/features/operations/capabilities.test.ts": "96e805d378863ab7559293804d76fcd285c88f2f77c1656f72e82b2369bee686",
+      "src/features/operations/capabilities.ts": "409994eeed2e75a5b848349dcc03706bf0e01df60a413850c9d43fc75c57c4f4",
+      "src/features/operations/health.test.ts": "ae1b3d906e95df0733c3459c101d18038c3f25f2f04c1bfeb3760725ea5a62ef",
+      "src/features/operations/health.ts": "139f70c3d155e40fbb5cd7d3483979fddf29157886b8570f15dc8d9efc5931dc",
+      "src/features/operations/repository.integration.test.ts": "12239399339049634a1b5751bbeb4cb76b0bad4976c555042e3704ad31b4abc7",
+      "src/features/operations/repository.ts": "9e2b7ec8c96b6eba4473904204ba0be04dee961befe0131d91f7fb7e0d6ef295",
+      "src/features/operations/schema-health.test.ts": "6ba5183c4ecb782b9294bbcb9ffc13d66d3f318224b428e4070f1f214d29075a",
+      "src/features/operations/schema-health.ts": "b6279ebc90f913ee901e637a9f21f0230a882708e8f030510bbcd6830a5c7521",
+      "src/features/operations/server-fns.test.ts": "31b3adce61f0a7cc33ce76fe914611f9dc681559d602cfa71940c3ba9e57dd84",
+      "src/features/operations/server-fns.ts": "a495bdbb5de5deb5d824a8e387cdbf39c4abf654b5be2b6673b9cb9739fce00d",
+      "src/features/runtime/data-mode.test.ts": "35923d510ab422f49aef34438358d68b2d6af7f8afb615964c086d2d2551ef11",
+      "src/features/runtime/data-mode.ts": "dbbbe3b246cf2130534ee98d307fda4b8eb9fe586fa6147c7b45d1d908ee2e57",
+      "src/features/service-subscriptions/authorization.ts": "54ff42202195a9f8001f89dc7a8711aa89765374a0cf36e3f9a4af4927164a1e",
+      "src/features/service-subscriptions/constants.ts": "c1314811c6718e84656e3f2d0d0eb093fd4431b00b6f95d0e9b3b0c25411eea4",
+      "src/features/service-subscriptions/errors.ts": "cea22fb280af8c58edaa9f8a5d1648349344b186fbe43d94b31b95ef367c425c",
+      "src/features/service-subscriptions/reminder-draft.test.ts": "b0a1f88ac92980a6643d7d04e3da013d124f927e8db533d4321dc181636bb893",
+      "src/features/service-subscriptions/reminder-draft.ts": "86c2ebf4977b2564ba59834c1691bfe67753d40e934246cbd561c38cc1b184f1",
+      "src/features/service-subscriptions/repository.test.ts": "f9783da66ae0682b0c7dad4eee05710f20a518cc2b56964d33df88f347d5e7bf",
+      "src/features/service-subscriptions/repository.ts": "576fa0e1f618b8befecc1fd7fa73572b3a80ef4022813022908216113b685c79",
+      "src/features/service-subscriptions/server-fns.ts": "ab66c1508b8e9397ed5b0ebffdc4038f09d617f56f5f6a5eda0e891dfc31200b",
+      "src/features/service-subscriptions/types.ts": "68fb9e98fd529a6cfd373b2d5ad6dd1622cf2dd71de76a5eabd29e60287bb2e2",
+      "src/features/whatsapp/approved-templates.test.ts": "121f9e1df9b487526ab5906ee519125af949e165a423de6a1817e998c6ee88cd",
+      "src/features/whatsapp/approved-templates.ts": "c870b049518f4232b136d1459145570a0de63dacc52117dce5c1248a2f63dcd9",
+      "src/features/whatsapp/components/production-inbox.interaction.test.tsx": "3fcfdc61f16f0a85f601d51e236c35a193dc03a1fe8f595c150927810e847f14",
+      "src/features/whatsapp/components/production-inbox.tsx": "4fe1a5a5d8ae79e26c0d9bbb4ac1dfea39c3881ceddf36a87a51a99d5b3f79b6",
+      "src/features/whatsapp/config.test.ts": "2b2bb52d9122521dfbbad2bcf878db53681324a5dd57349975fe8e154dc89a63",
+      "src/features/whatsapp/config.ts": "8ec802ceb4adfe00aee53a9a3d795b4bbc4f341e1ccd25a4eb2cdef19a8a1b12",
+      "src/features/whatsapp/conversations.test.ts": "d9b45fe31c9a19d36dac23d24e0282412eb06bf2e51b3f16a0babc8fd042e698",
+      "src/features/whatsapp/conversations.ts": "d52a93b3f439ef0ef038e00d405d25f40d6a3eb31e7daa5558567942f84f635e",
+      "src/features/whatsapp/fallback-templates.test.ts": "972bb2be855361a65963cf572bf48e26af2375d52c0acbaf2651ac118b592b27",
+      "src/features/whatsapp/fallback-templates.ts": "e419b4baf4ef26459f3959d8877d63e157a691c58dd4dad723d4d4ae11c4d540",
+      "src/features/whatsapp/phone.test.ts": "781259f3759b07f7e391fefbb44dc5b051c39da6f94ece9cfabf83005d8b3ba3",
+      "src/features/whatsapp/phone.ts": "0b6df3441435804f1d43cd9ce3d549f1c63fa4fb46c7b3f10687ef48bf11bed8",
+      "src/features/whatsapp/repository.test.ts": "644aadfaf2451cb137fdb1acdf9ccb11d6a7b2f9f5ed956dd7184884b700d29d",
+      "src/features/whatsapp/repository.ts": "783f908cad7a10782833cf22eda27fcebf8e2619e50c2e64118013af33c68bed",
+      "src/features/whatsapp/server-fns.test.ts": "f96dd143101c9c490bb5fd8b960c7be2d5aa9d373b78f1b51352ac5dd540822c",
+      "src/features/whatsapp/server-fns.ts": "4acf72d4f723970e2a072b97a64274e74e238ec9583753d80c5f9f0ccc115b52",
+      "src/features/whatsapp/session-window.test.ts": "8282d52df6af0a167ce7f553e60989252b58276cb0a91281f284c06b73a97748",
+      "src/features/whatsapp/session-window.ts": "77bb940c55a5687c850feeb13ec08615eed1b8b2e00d8ec6432ecfcd9116b165",
+      "src/features/whatsapp/types.ts": "24977301298b243d45bdbb69530bda2977c45e7b6a1217b01f6766a7d7c0a2e8",
+      "src/features/whatsapp/webhook-route.test.ts": "b76e504f21bfc6670e9017504ad25315bfebae17499792f8fcc7acb1cd4b905f",
+      "src/features/whatsapp/webhook.test.ts": "c2492f78dbea0de9ea777c773e4404d46fe72e605270b378805a8a25d67c9a0b",
+      "src/features/whatsapp/webhook.ts": "99ba24bec882e33e3b19578b79425daa5c794e7c26dc98e0092028a3aa067459",
+      "src/features/whatsapp/woztell-fixtures.ts": "842ed75eec5c99a74464afedc2523d4acd4546c42e3fb442e35efb6ebb1d432b",
+      "src/features/whatsapp/woztell.test.ts": "61f8a2c352e4faf4a39f25a797e457d0cd18511e1cac409b8ad760478ae70d20",
+      "src/features/whatsapp/woztell.ts": "ed2cf986cd376106eeedcacb573a0d62888d30f8739aab0631177d8abff6130b",
+      "src/features/work-items/assignment.test.ts": "bffc30a0fb1cc7660faa9e7f5e1c88625b54e9693f3b4b903e14a7de8774b4ec",
+      "src/features/work-items/assignment.ts": "dfe09aa0847729013330fd2d39992f4018244a9e82c97bbec45b8c12517f2f70",
+      "src/features/work-items/business-calendar.test.ts": "1f994f21b635873f6442dec0cf7f77f0868b3256b3fb80848a9e8f8e79e2b9fa",
+      "src/features/work-items/business-calendar.ts": "4b182ff3ff0a14642416cb15fecba8a9f4851c481957a8698dc4548f802dde32",
+      "src/features/work-items/repository.test.ts": "c95738563ffacf55caec6a994e88b941155fc5160cd8706520bb0960801d7335",
+      "src/features/work-items/repository.ts": "b0f8d68d3322a6fa1dd3492a4698c52987d8bd4983dd9d02a54ba7ddef3d916e",
+      "src/features/work-items/server-fns.test.ts": "f0c63cdb38f9922037ae4bc78b552a16b6a7f4597459885228611f0d90793fee",
+      "src/features/work-items/server-fns.ts": "2131b419b8a04188637a67ea82fe047aed48253e9766ba471b10a1564352a1fd",
+      "src/features/work-items/server-orchestration.test.ts": "7be767fde0c7d49def4ceddbc73ab4ae13005e14e95334c4ea329e45b35e2107",
+      "src/features/work-items/sla.test.ts": "07ff1ae163eb4e693bf4ebd2eefa1c0f1ed0304edf23b38bce88e18cc2687157",
+      "src/features/work-items/sla.ts": "5a780efbea5f4dac2dca62c4fac692669bcc723a3f274eb1f2ff7221daaed041",
+      "src/features/work-items/types.ts": "a08750ec161e99a7470ad3e839f24e782aa6755facfbb9e0a398d8521c39de08",
+      "src/server.ts": "7c9acd0e3196e8fa66c593c12390217c52e5a536d3b78fbb62bce87a5f922e5d",
+      "src/server/db/client.test.ts": "e0ff7209c80517e270c1863cb052cf8db957d804961576dc3281de4d2120c089",
+      "src/server/db/client.ts": "21072e5a098a5ee5e16c42e92d38a763a52d898279b3fb7e684c6f402a846bbd",
+      "src/server/db/production-schema.test.ts": "1f3ff3ff2e51d972c875e0b7d0e9df0b06d93bfe66afa6dc788fd9ef8216f81b",
+      "src/server/db/schema.sql": "7c0ef5d8d83032cab16f122836257250d17b8b6f29cdc4c1c42e4d175c70bdc5",
+      "src/start.ts": "4fe2da2dd955e5562e20344acbc795d0894666173d01fab4433cc61599ae25e3"
+    }
+  },
+  "newline_only_changes": {
+    "package.json": {
+      "before": "cfa631c668729201277bb0a5730a33cd868e9b89d39681500fc710dd91ce7689",
+      "after": "9d294f6bb6541244c5ee34c33a4d6715cb9f9557b67c2d7e032e979f81132874",
+      "only_crlf_normalization": true
+    },
+    "package-lock.json": {
+      "before": "1133684cdae7c1c3cf199d29755d3af929d9129dccbf4c0c4513c8a54b3e560f",
+      "after": "c1f67a131af5a75914e0a9dff9f41ff19e17cab1928a29cba7f1e08f39430adf",
+      "only_crlf_normalization": true
+    },
+    ".github/workflows/ci.yml": {
+      "before": "629d6befd1469716458d19702981698ee2a96c9f3b7b604bf613b171f1e88ed6",
+      "after": "aa33415cacedf53beb208abf2657c272f15fbe78eb0e63f79d7b4da50b30a8f2",
+      "only_crlf_normalization": true
+    }
+  },
+  "commands": {
+    "baseline-npm-audit": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "audit",
+          "--json",
+          "--audit-level=low"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:18:21.988390+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 1,
+        "started_at_utc": "2026-10-09T06:18:21.988390+00:00",
+        "ended_at_utc": "2026-10-09T06:18:24.170435+00:00",
+        "stdout_sha256": "6a3c87c170732f4c2b9d88a5e3be73746cf2e2a03b7f8abb3a5261f8bd06c154",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "baseline-bun-audit": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "audit",
+          "--audit-level=low"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:18:37.705472+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 1,
+        "started_at_utc": "2026-10-09T06:18:37.705472+00:00",
+        "ended_at_utc": "2026-10-09T06:18:38.184563+00:00",
+        "stdout_sha256": "e431c5f5e6b4216e1ca9309c7599fcdbe32e16bc7b221ec52bbc00beab820e79",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "baseline-bun-install": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "install",
+          "--frozen-lockfile",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009\\.worktrees\\baseline-bun",
+        "started_at_utc": "2026-10-09T06:18:52.442678+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:18:52.442678+00:00",
+        "ended_at_utc": "2026-10-09T06:19:55.590809+00:00",
+        "stdout_sha256": "b1b9433aa6541a32f53297b8989b05574c028954fa2f0aaf8756077fcdf6aa34",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "baseline-regression": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009\\.worktrees\\baseline-bun",
+        "started_at_utc": "2026-10-09T06:21:35.508923+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 1,
+        "started_at_utc": "2026-10-09T06:21:35.508923+00:00",
+        "ended_at_utc": "2026-10-09T06:21:40.473655+00:00",
+        "stdout_sha256": "9bb81a00aa98179b317838c006bfbfdd4053a439585985c170ae1facf45cc5a2",
+        "stderr_sha256": "695fd4eebed4e3fa986f0463244828e5dece59592757855a70b6455b226e5a9c"
+      }
+    },
+    "npm-lock": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "install",
+          "--package-lock-only",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009\\.worktrees\\native-npm-lock",
+        "started_at_utc": "2026-10-09T06:22:14.561472+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:22:14.561472+00:00",
+        "ended_at_utc": "2026-10-09T06:22:16.682732+00:00",
+        "stdout_sha256": "033b1d78600dd7c3aff45d1646835c90804315521983da48ec90229c416f22f7",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "bun-lock": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "install",
+          "--lockfile-only",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:22:33.768578+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:22:33.768578+00:00",
+        "ended_at_utc": "2026-10-09T06:22:33.907050+00:00",
+        "stdout_sha256": "3291dee496f080c14b7f8610953875541c25765c6413b97afe4e5d3be3401e13",
+        "stderr_sha256": "699dcaffb4c14b58385c34ec424f094ee65cce316a26456eedede18d6ac7e4c3"
+      }
+    },
+    "npm-install": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "ci",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:23:04.975436+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:23:04.975436+00:00",
+        "ended_at_utc": "2026-10-09T06:23:42.754092+00:00",
+        "stdout_sha256": "dd20e915c41508ed2d3aad58c7a616d0a545a1a0e23f95f2e818f9e641091d60",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "npm-regression": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:24:46.283067+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:24:46.283067+00:00",
+        "ended_at_utc": "2026-10-09T06:25:05.971305+00:00",
+        "stdout_sha256": "6ff3b42953b665b4ec618ab04657767900b2f481edce56a2d3edc9040290676b",
+        "stderr_sha256": "af2063effa70875544a7ba0fb2853bd1a59f1621a36a9c604cdac857e350781d"
+      }
+    },
+    "bun-install": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "install",
+          "--frozen-lockfile",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009\\.worktrees\\final-bun",
+        "started_at_utc": "2026-10-09T06:26:06.478984+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:26:06.478984+00:00",
+        "ended_at_utc": "2026-10-09T06:27:01.507774+00:00",
+        "stdout_sha256": "db78929dc2600497a94ca9dbe1fa994ee92895401a8e3260395697d72fb53cc0",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "bun-regression": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009\\.worktrees\\final-bun",
+        "started_at_utc": "2026-10-09T06:27:58.142395+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:27:58.142395+00:00",
+        "ended_at_utc": "2026-10-09T06:28:03.920222+00:00",
+        "stdout_sha256": "b46bb6bee09727ef689c6650512fa939b91966a65857b3cbca7cef16837198a9",
+        "stderr_sha256": "af2063effa70875544a7ba0fb2853bd1a59f1621a36a9c604cdac857e350781d"
+      }
+    },
+    "npm-audit": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "audit",
+          "--json",
+          "--audit-level=low"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:28:19.366969+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:28:19.366969+00:00",
+        "ended_at_utc": "2026-10-09T06:28:20.758100+00:00",
+        "stdout_sha256": "102ade7ccd3f904e7ece3cc8ca7887d0c3681910df74b32f3bbba1293bcae0f3",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "bun-audit": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "audit",
+          "--audit-level=low"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:28:21.371420+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:28:21.371420+00:00",
+        "ended_at_utc": "2026-10-09T06:28:21.814617+00:00",
+        "stdout_sha256": "9e41e18bbd3bbdcda3e125b206497de618a5783ab6bd4dd47a6898ecac7dcd15",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "lint": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/eslint/bin/eslint.js",
+          ".",
+          "--ignore-pattern",
+          ".worktrees/**"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:30:01.033239+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:30:01.033239+00:00",
+        "ended_at_utc": "2026-10-09T06:30:42.786071+00:00",
+        "stdout_sha256": "017e695192f48269bcb3ebfa3fac70d6eea1fab801b67591330e074b6e98b37d",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "typecheck": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:31:29.700364+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:31:29.700364+00:00",
+        "ended_at_utc": "2026-10-09T06:32:02.199824+00:00",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "build": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:32:02.280945+00:00",
+        "environment": "OS only; no database/provider bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:32:02.280945+00:00",
+        "ended_at_utc": "2026-10-09T06:32:24.176202+00:00",
+        "stdout_sha256": "0a41a6bc66520e0eec807417359e2791fc089e458468c2c4b0f2b141df9e21f1",
+        "stderr_sha256": "18832fa8a6d785d7b5873c02a683e0ae77aaaddb61388d78af2d9468f26252ae"
+      }
+    },
+    "pg18-migrate": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:25:35.291675+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-migrate",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:25:35.291675+00:00",
+        "ended_at_utc": "2026-10-09T06:25:35.848363+00:00",
+        "stdout_sha256": "3ec073d0c6f25dc50c66849d17b233405b1584e94231da218739b0ac279174b9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "pg18-seed": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:25:35.849901+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-seed",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:25:35.849901+00:00",
+        "ended_at_utc": "2026-10-09T06:25:35.992763+00:00",
+        "stdout_sha256": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "pg18-full": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:25:36.098221+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-full",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:25:36.098221+00:00",
+        "ended_at_utc": "2026-10-09T06:28:34.919515+00:00",
+        "stdout_sha256": "5408ea57da02ed6ea1cf85451c56821692968606ef3f69dad2e999e526a7b7a8",
+        "stderr_sha256": "474ae13dd98d5407442d6cd00efc659924ebbecbea80abd641b61ed09350387b"
+      }
+    },
+    "pg18-firm-dry-run": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r01-f25-maintenance-20261009",
+        "started_at_utc": "2026-10-09T06:28:34.921578+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-firm-dry-run",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:28:34.921578+00:00",
+        "ended_at_utc": "2026-10-09T06:28:35.079183+00:00",
+        "stdout_sha256": "e01703fcb062bcfdd13a0eb10b31f51f845dda7d591840a905beee666cffa88d",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "fixture": {
+    "identity": "0e5a4852-2ebf-4946-a27d-239eb15672b8",
+    "name": "kossilon-r01f25-0e5a4852-2ebf-4946-a27d-239eb15672b8",
+    "image": "sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941",
+    "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+    "started_at_utc": "2026-10-09T06:25:33.373215+00:00",
+    "steps": [
+      {
+        "key": "pg18-migrate",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:25:35.291675+00:00",
+        "ended_at_utc": "2026-10-09T06:25:35.848363+00:00",
+        "stdout_sha256": "3ec073d0c6f25dc50c66849d17b233405b1584e94231da218739b0ac279174b9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "pg18-seed",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:25:35.849901+00:00",
+        "ended_at_utc": "2026-10-09T06:25:35.992763+00:00",
+        "stdout_sha256": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "pg18-full",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:25:36.098221+00:00",
+        "ended_at_utc": "2026-10-09T06:28:34.919515+00:00",
+        "stdout_sha256": "5408ea57da02ed6ea1cf85451c56821692968606ef3f69dad2e999e526a7b7a8",
+        "stderr_sha256": "474ae13dd98d5407442d6cd00efc659924ebbecbea80abd641b61ed09350387b"
+      },
+      {
+        "key": "pg18-firm-dry-run",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:28:34.921578+00:00",
+        "ended_at_utc": "2026-10-09T06:28:35.079183+00:00",
+        "stdout_sha256": "e01703fcb062bcfdd13a0eb10b31f51f845dda7d591840a905beee666cffa88d",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "container_id": "50811c2cfbe10825067b658ad3bd2568208e63b973c913e0a431689bffdaa614",
+    "anonymous_volumes": [
+      "d54c11918bb4053aaa30f9213921d83724c07d0e53d00a7ea9d0006cdaa1e35e"
+    ],
+    "listen_address": "127.0.0.1:62189",
+    "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "migration_count_after_apply": 34,
+    "fixture_result": "PASS",
+    "owned_container_removed": true,
+    "anonymous_volumes_removed": {
+      "d54c11918bb4053aaa30f9213921d83724c07d0e53d00a7ea9d0006cdaa1e35e": true
+    },
+    "ended_at_utc": "2026-10-09T06:28:35.731151+00:00"
+  },
+  "boundaries": {
+    "protected_source_files": 300,
+    "source_migrations": "34 retained byte-for-byte; main50 not imported",
+    "physical_production_schema_compatible": "not_observed; no acceptance claim",
+    "existing_transport_regressions": "retained and included in full suite",
+    "original_main_50_uat": "untouched; no new genuine PASS",
+    "p1v6": "expired/consumed; no claim/SQL/suspend retry",
+    "production_database_writes": 0,
+    "role_writes": 0,
+    "provider_sends": 0,
+    "formal_deploys": 0,
+    "scheduler_native_ticks": 0,
+    "deployed_resolved_dependencies": "not_observed",
+    "scheduler_sha": "not_observed"
+  },
+  "ci": {
+    "status": "pending exact draft head",
+    "base_branch": "codex/oct3-live-security-base",
+    "original_runtime_matrix": "Node22/24 and verify retained",
+    "added_gate": "separate clean npm install/lint/typecheck/ten focused tests; all existing CI bytes retained after removing this step"
+  },
+  "advisories": [
+    "https://github.com/advisories/GHSA-pqg4-j6r4-53mv",
+    "https://github.com/advisories/GHSA-68fv-2mgg-jv7q",
+    "https://github.com/advisories/GHSA-hp3w-g68c-fv3c"
+  ]
+}
