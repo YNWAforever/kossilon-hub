@@ -1,0 +1,13 @@
+{
+  "target_deployment": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+  "team_id": "team_qvzlsFmfCsLkgItSypqHjw3z",
+  "observed_at_utc": "2026-10-09 07:07:55 UTC",
+  "operation": "GET /v6/deployments/{id}/files",
+  "status": 404,
+  "code": "not_found",
+  "message": "Vercel API request failed (404: not_found). File tree not found",
+  "result": "runtime resolved dependencies remain unobserved; no source-lock substitute",
+  "minimal_input_owner": "Human Release/Security owner",
+  "minimal_input": "deployed build SBOM or actual function dependency/install receipt bound to this deployment and artifact hash",
+  "retry_count": 0
+}

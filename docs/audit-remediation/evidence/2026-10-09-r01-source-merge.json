@@ -1,0 +1,20 @@
+{
+  "baseRefName": "codex/oct3-live-security-base",
+  "headRefOid": "d53acdf13c4915fabcf54334322d64f8a7fb473d",
+  "mergeCommit": {
+    "oid": "2063d08272a647f8475b3e43aaa0b2e203b254b2"
+  },
+  "mergedAt": "2026-10-09T07:11:52Z",
+  "state": "MERGED",
+  "tree": "32ad2235108f1b9177569326bc1bbcd9cc7d4fc6",
+  "equals_tested_candidate_tree": true,
+  "full_CI": "Node22/24/verify/Vercel allGREEN before merge",
+  "CI_run": 37895415275,
+  "runtime": "BLOCKED",
+  "release": "NO_GO",
+  "formal_deploy_count": 0,
+  "production_db_write_count": 0,
+  "role_write_count": 0,
+  "provider_send_count": 0,
+  "observed_at_utc": "2026-10-09T07:11:53.562868+00:00"
+}
