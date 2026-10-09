@@ -1,0 +1,753 @@
+{
+  "task": "R13",
+  "finding": "F25",
+  "baseline_sha": "da82677bdeb35b9255425be61bd66abd295f5cc1",
+  "source_build_sha": "789db5859010426adce4f0cb290ce4c4cc42ea9e",
+  "recorded_at_utc": "2026-10-09T06:22:52.483868+00:00",
+  "supersedes_current_conclusion": "initial a12d53e evidence remains historical; npm optional peer omission was a compatibility failure despite initial full suite green",
+  "review": {
+    "reviewer": "one fresh gpt-6-astra/high",
+    "critical": 0,
+    "important": 1,
+    "minor_requiring_change": 0,
+    "finding": "clean npm tree failed actual Nitro unstorage LRU driver; Bun passed",
+    "fix_passes": 1,
+    "re_review": false,
+    "final_verification": "actual npm/Bun installed driver+DOCX+security10each and complete PG18 suite"
+  },
+  "failed_or_invalid_attempts": {
+    "optional_peer_entry_only": "fresh npm ci exit0 did not install peer; actual driver1fail9pass",
+    "premature_regression_lint_typecheck": "before installer completion; setup-invalid, not RED or PASS; only owned tsc PID stopped",
+    "original_fixture": "initial wrapper failed absence case check; product child0 preserved separately in original receipt"
+  },
+  "commands": {
+    "review-lru-red": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T05:47:26.164035+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 1,
+        "started_at_utc": "2026-10-09T05:47:26.164035+00:00",
+        "ended_at_utc": "2026-10-09T05:47:55.239403+00:00",
+        "stdout_sha256": "7da50a59e4ac7b47f3a9287adf87e422485c5ed4dabc96b80b0a895e4a4c1fee",
+        "stderr_sha256": "cbe1187588767d01079c37c7218731e14f1212d697f927164aa58ee1a3abc4c0"
+      }
+    },
+    "review-install-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "ci",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T05:49:07.886270+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T05:49:07.886270+00:00",
+        "ended_at_utc": "2026-10-09T05:59:21.510208+00:00",
+        "stdout_sha256": "b7bf8743556affba5af29a8aa1b1bbe886d004e05e641a455c38aab88becf9f2",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-regression-after-install": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:01:51.740977+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 1,
+        "started_at_utc": "2026-10-09T06:01:51.740977+00:00",
+        "ended_at_utc": "2026-10-09T06:02:23.674051+00:00",
+        "stdout_sha256": "274f813f4064e778796e79fd07dbf195d27709e4a2e614c872f6ef00efae1e0d",
+        "stderr_sha256": "cbe1187588767d01079c37c7218731e14f1212d697f927164aa58ee1a3abc4c0"
+      }
+    },
+    "review-bun-regression-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009\\.worktrees\\r13-bun-clean",
+        "started_at_utc": "2026-10-09T06:02:23.847342+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:02:23.847342+00:00",
+        "ended_at_utc": "2026-10-09T06:02:49.870058+00:00",
+        "stdout_sha256": "628bd91ede8011d6a68e1ef46c5197890167f9b042de9d6d1439586d80c03e07",
+        "stderr_sha256": "af2063effa70875544a7ba0fb2853bd1a59f1621a36a9c604cdac857e350781d"
+      }
+    },
+    "review-regression-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T05:51:17.591875+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 1,
+        "started_at_utc": "2026-10-09T05:51:17.591875+00:00",
+        "ended_at_utc": "2026-10-09T05:51:18.380913+00:00",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "09460c985834fb4c757a4fdef44ac0cbf86c6a7fa512785bc253cd3cd7cbdc8d"
+      }
+    },
+    "review-lint-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/eslint/bin/eslint.js",
+          ".",
+          "--ignore-pattern",
+          ".worktrees/**"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T05:51:21.415999+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 1,
+        "started_at_utc": "2026-10-09T05:51:21.415999+00:00",
+        "ended_at_utc": "2026-10-09T05:51:22.105791+00:00",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "c0dace838ad58aafcb94ac7a88aab54227fbb53be05ad5c6e842dca9556542ce"
+      }
+    },
+    "review-typecheck-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T05:51:23.836982+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 4294967295,
+        "started_at_utc": "2026-10-09T05:51:23.836982+00:00",
+        "ended_at_utc": "2026-10-09T05:58:24.112760+00:00",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-lint-after-install": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/eslint/bin/eslint.js",
+          ".",
+          "--ignore-pattern",
+          ".worktrees/**"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:01:53.219205+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:01:53.219205+00:00",
+        "ended_at_utc": "2026-10-09T06:02:56.408263+00:00",
+        "stdout_sha256": "ea0e3398227883d97dd3a529d9b4e526a072341995571e2ff9873d8fdd7633bf",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-typecheck-after-install": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:02:56.554992+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:02:56.554992+00:00",
+        "ended_at_utc": "2026-10-09T06:03:24.916395+00:00",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "update-npm-lock-clean-lru": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "install",
+          "--package-lock-only",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009\\.worktrees\\update-npm-lock-clean-lru",
+        "started_at_utc": "2026-10-09T06:04:16.607712+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:04:16.607712+00:00",
+        "ended_at_utc": "2026-10-09T06:04:30.541155+00:00",
+        "stdout_sha256": "7f203e50284b10283d7b68d1dbcd2c7f8c5aa6fad82ae52caca4cb9168d89a77",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "update-bun-lock-lru": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "install",
+          "--lockfile-only",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:04:30.612583+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:04:30.612583+00:00",
+        "ended_at_utc": "2026-10-09T06:04:30.768110+00:00",
+        "stdout_sha256": "0916b4bf9e942120f6ec67d653321fe020e81578a994bbb5222466059188fb85",
+        "stderr_sha256": "47f54b390e29cf9d23c0e13e15bbff6224c42e067872d642b63deb38a8c5152c"
+      }
+    },
+    "lru-install-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "ci",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:04:30.841351+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:04:30.841351+00:00",
+        "ended_at_utc": "2026-10-09T06:05:25.227659+00:00",
+        "stdout_sha256": "54aef75653b4f3c84e9e221f19fe8e3318a59dee4bfbc9aaa6f4215b4a8ef2cb",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "lru-regression-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:07:14.447793+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:07:14.447793+00:00",
+        "ended_at_utc": "2026-10-09T06:07:46.757083+00:00",
+        "stdout_sha256": "a87848e8eca2c39cf93d6be459d7d23eeeace151b52227937279f35f9c887bcf",
+        "stderr_sha256": "af2063effa70875544a7ba0fb2853bd1a59f1621a36a9c604cdac857e350781d"
+      }
+    },
+    "lru-bun-install-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "install",
+          "--frozen-lockfile",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009\\.worktrees\\r13-bun-final",
+        "started_at_utc": "2026-10-09T06:07:16.612212+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:07:16.612212+00:00",
+        "ended_at_utc": "2026-10-09T06:08:15.753878+00:00",
+        "stdout_sha256": "3bf97405846f622dfc427e1df8c583b5dd47771f242553f14e4b5c6835afed3b",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "lru-bun-regression-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/server/dependency-security-f25.test.ts",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009\\.worktrees\\r13-bun-final",
+        "started_at_utc": "2026-10-09T06:08:15.878559+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:08:15.878559+00:00",
+        "ended_at_utc": "2026-10-09T06:08:20.266868+00:00",
+        "stdout_sha256": "871859b451402e54d94ff678e8c3c0fbda29239ed5c55067881289399538656e",
+        "stderr_sha256": "af2063effa70875544a7ba0fb2853bd1a59f1621a36a9c604cdac857e350781d"
+      }
+    },
+    "lru-npm-audit-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "audit",
+          "--json",
+          "--audit-level=low"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:07:14.535764+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:07:14.535764+00:00",
+        "ended_at_utc": "2026-10-09T06:07:16.249635+00:00",
+        "stdout_sha256": "e5865eab9c1f90de0a3bd1593058a9111970ee5beb91c7de003b1064cfdf12fa",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "lru-bun-audit-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "audit",
+          "--audit-level=low"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:07:16.365007+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:07:16.365007+00:00",
+        "ended_at_utc": "2026-10-09T06:07:16.861177+00:00",
+        "stdout_sha256": "8089d9023ccdd9648672fa430e318559d1350eb3e8b40249714e6aa335297811",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "lru-lint-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/eslint/bin/eslint.js",
+          ".",
+          "--ignore-pattern",
+          ".worktrees/**"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:08:00.782950+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:08:00.782950+00:00",
+        "ended_at_utc": "2026-10-09T06:08:48.873115+00:00",
+        "stdout_sha256": "ea0e3398227883d97dd3a529d9b4e526a072341995571e2ff9873d8fdd7633bf",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "lru-typecheck-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:08:48.960114+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:08:48.960114+00:00",
+        "ended_at_utc": "2026-10-09T06:09:36.391572+00:00",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-pg18-migrate": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:09:28.079609+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "review-pg18-migrate",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:09:28.079609+00:00",
+        "ended_at_utc": "2026-10-09T06:09:29.601067+00:00",
+        "stdout_sha256": "d668e6e1a3b1b6ee4b77748442ef28f759e178d20978eaabebc8dfc51fd34ce1",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-pg18-seed": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:09:29.603578+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "review-pg18-seed",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:09:29.603578+00:00",
+        "ended_at_utc": "2026-10-09T06:09:29.891001+00:00",
+        "stdout_sha256": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-pg18-full": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:09:30.083425+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "review-pg18-full",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:09:30.083425+00:00",
+        "ended_at_utc": "2026-10-09T06:14:25.836197+00:00",
+        "stdout_sha256": "a5c6f7f3dcb0c76d1cda2433ed21c11bd9ebe70f85b645650ca6d6b096a0c54f",
+        "stderr_sha256": "42865232718121ca522344ecf7db8e4d6c0ac7af3774df76ad44a64f765a4e80"
+      }
+    },
+    "review-pg18-firm-dry-run": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:14:25.838153+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "review-pg18-firm-dry-run",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:14:25.838153+00:00",
+        "ended_at_utc": "2026-10-09T06:14:25.979443+00:00",
+        "stdout_sha256": "1831b3c4d020b0da67db0ecd4cae3213089c7aa3e539339dc581bd361b238121",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-pg18-original-ledger": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-audit-release.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:14:25.981734+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "review-pg18-original-ledger",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-audit-release.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:14:25.981734+00:00",
+        "ended_at_utc": "2026-10-09T06:14:26.108201+00:00",
+        "stdout_sha256": "d75d6c3e1f3a19ba7ac7ac4ef2fd5ac86fcdbe3f88b44138f43ac5c9047178ba",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "review-build-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r13-dependency-audit-20261009",
+        "started_at_utc": "2026-10-09T06:17:15.798944+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:17:15.798944+00:00",
+        "ended_at_utc": "2026-10-09T06:17:46.419727+00:00",
+        "stdout_sha256": "565b4ef75c52d2cb4f4d5fb79aa4cd896f68c69f712ce3a95e8b0f475a18aaad",
+        "stderr_sha256": "eed3520e84cc3cd7736549d188fc63f1e168b5cdfecd777aae340df48ea213e0"
+      }
+    }
+  },
+  "protected_bytes": {
+    "bunfig.toml": "2606e248dd6fc7c17f87a50f5e2c55120560ca858cd0007c0419704296f25f5a",
+    "vite.config.ts": "d6fa421a6b6dafe0af56fd791c4fc485944b98b12365ed04265448b8dc2df6dd",
+    "docs/audit-remediation/uat-results.csv": "45d2b0239826edf41cad480ec8b7888c426991cd28680f9ebc71db9e9af801e7",
+    "docs/audit-remediation/uat-original-2026-10-01.json": "0253fceee6752a51ae747dea5734474ecbf519aa67e6e643d466b83fa20cd070",
+    "src/test/db-integration-files.ts": "5f6f19e7231089f611ee8f7db0a107f6068f2c51e3f77d2269cd667b8a887202"
+  },
+  "ci_change": {
+    "baseline_sha256": "232818ad0d5c754485ec1a0572e7de9348168c87c941bf3059a00fe890e2e73a",
+    "current_sha256": "b00865ba06b157098099ffd51d3da26ce0c2398e1f5209544f18112b8f5b81af",
+    "added_command": "npm run test -- src/server/dependency-security-f25.test.ts in existing portable npm tree",
+    "all_existing_gates_matrix_thresholds": "byte retained after removing exactly the added line",
+    "remote_status": "pending exact PR head"
+  },
+  "dependency_contract": {
+    "changed_resolved_version_sets": [
+      "argparse",
+      "lru-cache",
+      "shell-quote",
+      "source-map-js",
+      "sprintf-js"
+    ],
+    "lru_cache_before_versions": [
+      "11.5.2",
+      "11.5.3",
+      "5.1.1"
+    ],
+    "lru_cache_after_versions": [
+      "11.5.3",
+      "5.1.1"
+    ],
+    "lru_deduplication": "npm hoists existing11.5.3; removes duplicate11.5.2; legacy5.1.1 retained under Babel",
+    "explicit_existing_peer": "11.5.3",
+    "no_new_lru_version": true,
+    "no_other_package_version_set_changes": true,
+    "prettier": "3.8.3",
+    "minimum_release_age": "unchanged86400s"
+  },
+  "input_hashes": {
+    "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49",
+    "package-lock.json": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465",
+    "bun.lock": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+    "src/server/dependency-security-f25.test.ts": "f84540da83e18aca4e8b9ae9928c31b8b76e980a402037e3b67322dd25d2ef46"
+  },
+  "local": {
+    "focused_npm": 10,
+    "focused_bun": 10,
+    "full_files": 244,
+    "full_passed": 2333,
+    "full_failed": 0,
+    "full_skipped": 0,
+    "npm_audit_vulnerabilities": 0,
+    "bun_audit_vulnerabilities": 0,
+    "lint_errors": 0,
+    "lint_existing_warnings": 1,
+    "typecheck_exit": 0,
+    "build_exit": 0,
+    "built_scheduled_hook": true,
+    "postgres": "18.6",
+    "source_migrations_applied_locally": 50,
+    "node": "22.23.3",
+    "npm": "12.2.0",
+    "bun": "1.4.2"
+  },
+  "fixture": {
+    "identity": "5103bcdb-aade-4c47-9f58-f827f67080b5",
+    "name": "kossilon-r13-5103bcdb-aade-4c47-9f58-f827f67080b5",
+    "image": "sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941",
+    "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+    "started_at_utc": "2026-10-09T06:09:24.613122+00:00",
+    "steps": [
+      {
+        "key": "review-pg18-migrate",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:09:28.079609+00:00",
+        "ended_at_utc": "2026-10-09T06:09:29.601067+00:00",
+        "stdout_sha256": "d668e6e1a3b1b6ee4b77748442ef28f759e178d20978eaabebc8dfc51fd34ce1",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "review-pg18-seed",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:09:29.603578+00:00",
+        "ended_at_utc": "2026-10-09T06:09:29.891001+00:00",
+        "stdout_sha256": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "review-pg18-full",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:09:30.083425+00:00",
+        "ended_at_utc": "2026-10-09T06:14:25.836197+00:00",
+        "stdout_sha256": "a5c6f7f3dcb0c76d1cda2433ed21c11bd9ebe70f85b645650ca6d6b096a0c54f",
+        "stderr_sha256": "42865232718121ca522344ecf7db8e4d6c0ac7af3774df76ad44a64f765a4e80"
+      },
+      {
+        "key": "review-pg18-firm-dry-run",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:14:25.838153+00:00",
+        "ended_at_utc": "2026-10-09T06:14:25.979443+00:00",
+        "stdout_sha256": "1831b3c4d020b0da67db0ecd4cae3213089c7aa3e539339dc581bd361b238121",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "review-pg18-original-ledger",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-audit-release.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:14:25.981734+00:00",
+        "ended_at_utc": "2026-10-09T06:14:26.108201+00:00",
+        "stdout_sha256": "d75d6c3e1f3a19ba7ac7ac4ef2fd5ac86fcdbe3f88b44138f43ac5c9047178ba",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "container_id": "01024977802bec00f191f77486a329a4c0276fabba8d2170302fc8a7b043c3e5",
+    "anonymous_volumes": [
+      "07800f82174b1af40f5fca8e5cdd61c203b3740119d6352b5f8f7c12e8a0db81"
+    ],
+    "listen_address": "127.0.0.1:64031",
+    "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "migration_count_after_apply": 50,
+    "fixture_result": "PASS",
+    "owned_container_removed": true,
+    "anonymous_volumes_removed": {
+      "07800f82174b1af40f5fca8e5cdd61c203b3740119d6352b5f8f7c12e8a0db81": true
+    },
+    "ended_at_utc": "2026-10-09T06:14:26.919327+00:00"
+  },
+  "release": {
+    "production": "NO_GO",
+    "new_genuine_uat_passes": 0,
+    "original_50": "byte retained;19historical LOCAL_ONLY/31blocked",
+    "main_merge": "HOLD: read-only project linkage confirms main productionBranch and autoAssignCustomDomains=true; latest authority excludes inferred formal deploy",
+    "linkage_receipt": {
+      "project_id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+      "production_branch": "main",
+      "auto_assign_custom_domains": true,
+      "git_deployment_enabled": null,
+      "observed_at_utc": "2026-10-09T05:44:07.8113424Z"
+    },
+    "separate_security_base": "d8c9312ba84778bbfb4268cfb1d69ec80949e923; R01 follow-up in separate worktree",
+    "production_schema_writes": 0,
+    "production_deploys": 0,
+    "provider_sends": 0,
+    "role_writes": 0,
+    "scheduler_sha": "not_observed",
+    "deployed_resolved_dependencies": "not_observed",
+    "p1v6": "expired/consumed; untouched"
+  }
+}
