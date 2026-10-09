@@ -464,3 +464,11 @@ Main merge is HOLD: read-only Vercel linkage confirms productionBranch=main/auto
 ## R13 draft CI receipt — 2026-10-09
 
 PR143 headcedace5c2c04c7444684e0c265ceef69f67b6e32, run37893421011: Node22/24 and verify all success. Each actual runtime:244files/2333tests/0fail/0skip; isolated npm10 and local demo browser12 pass. Full step/log hash receipt: evidence/2026-10-09-r13-ci-green.json. This evidence commit changes docs only; its new PR head must be independently GREEN before completion. Release remainsNO_GO, main mergeHOLD,0newgenuineUAT.
+
+## 2026-10-09 master-plan executable follow-ups
+
+R13/F25 draft143 local244files/2333PASS/0skip and actual Node22/24+verify GREEN (cedace5 and evidence successor edf5db2). Separate R01/F25 maintenance draft144 is based solely on d8c9312/aa5 source lineage:34source bodies/300protected files retained, local178files/1773PASS/0skip, both installed10PASS/audits0, its own da4eceb/run37894936496 allGREEN. Production physical parity is stillunobserved. These are different source/schema candidates; never substitute the main bundle for the maintenance hotfix.
+
+R12/F23/F24 draft142 source58860eb had failed both low audits before tests. Ordinary merge6a3f61f of reviewedR13 preserves the exact Operations bytes/six tests and all published ancestors; combined freshPG18.6 245files/2339PASS/0FAIL/0SKIP, lint0errors1baselinewarning/typecheck/build0; owned container+volume removal verified. Stack on draft143 so the Operations diff stays reviewable; own exact-head CI receipt remains inPR142 metadata. No additional product source was rewritten.
+
+Mutable execution fields forR01 andR13 updated, newR12 rowadded without renumbering originalR00–R11/UC/UAT. Full pre-update tracker retained as evidence/2026-10-09-tracker-before-followups.csv; all other existing rows kept their bytes. Old snapshots/initial receipts are never overwritten. Production alias readback2026-10-09T06:38:47Z stillaa5d3cb/dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT. Scheduler/deployed dependency contents unobserved. Main mergeHOLD due production auto-linkage; no formal deployment inferred;0new genuine50UAT PASS/releaseNO_GO. P1v6 expired/consumed resources and previous runtime branch38123c9 untouched. Exact owner inputs remain in environment matrix and independentR01 receipt.
