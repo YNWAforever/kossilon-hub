@@ -40,3 +40,7 @@ Before release, rollback this isolated commit with an ordinary forward revert; d
 Provide binding identities/secure-channel references, not plaintext secrets in chat. Source work proceeds without these credentials; genuine runtime gates remain blocked.
 
 Review b844452:0Critical/0Important/1deferredMinor. No source change/fix pass; exact candidate CI pending. See [review and rulings](2026-10-09-r01-f25-review-rulings.md).
+
+## Independent exact-head CI GREEN
+
+PR144 head da4ecebd1a591dc8bf164a391504f40f18d317f4／run37894936496: Node22/24 and verify all SUCCESS. Each actual runtime:178files/1773PASS/0FAIL/0SKIP plus separate npm-installed10PASS; all old build/dev-import/cron gates retained and passed. Receipt: evidence/2026-10-09-r01-f25-ci-green.json. This docs-only successor will run its own CI; final-head receipt is maintained in PR144 metadata to avoid claiming a previous head is current. Runtimeblocked/releaseNO_GO unchanged.
