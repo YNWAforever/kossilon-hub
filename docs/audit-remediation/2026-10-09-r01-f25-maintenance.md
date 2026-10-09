@@ -38,3 +38,5 @@ Before release, rollback this isolated commit with an ordinary forward revert; d
 | Release/Operations | Reviewed safe web and scheduler artifacts separately identified, genuine native ticks and build/environment/hash receipt; no existing session/manualtick/mock substitution. |
 
 Provide binding identities/secure-channel references, not plaintext secrets in chat. Source work proceeds without these credentials; genuine runtime gates remain blocked.
+
+Review b844452:0Critical/0Important/1deferredMinor. No source change/fix pass; exact candidate CI pending. See [review and rulings](2026-10-09-r01-f25-review-rulings.md).
