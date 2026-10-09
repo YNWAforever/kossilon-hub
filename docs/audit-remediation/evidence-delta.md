@@ -252,3 +252,9 @@ exec mount/evidence persistence; first temp files unavailable after stop, origin
 startup error preserved in tool trace. Final complete GREEN uses owned
 LinuxNode22.23.2/Bun1.4.2/default forks, same SCRAM PG18.6/exact candidate test bytes.
 No source/config/timeout/expectation/skip weakened; original CI/default forks unchanged.
+
+## 2026-10-09 R13/F25 dependency gate refresh
+
+Current main remains da82677; production web remains aa5d3cb (READY dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT); scheduler artifact and deployed resolved dependencies were not observed. PR124 is now merged as d8c9312 into codex/oct3-live-security-base, not main. That candidate and live-source locks still contain the F25 paths; a maintenance follow-up must preserve its schema boundary. PR142/58860eb remains an independent Operations slice; run37678792755 failed both runtime audits before product tests. Historical main CI37234812040 does not clear newer advisories.
+
+R13 local source a12d53ec3935b82b1be09020f05eb547fa324661: npm/Bun audit0; focused9/9 each; fresh PG18.6 full244files/2332pass/0fail/0skip; source50migrations committed only locally, reference fixtures, build/typecheck pass, lint0errors/1existing warning. CI is pending exact PR head. No formal runtime/UAT acceptance: original50 bytes unchanged19historical LOCAL_ONLY/31blocked,0new genuine PASS. Evidence: evidence/2026-10-09-r13-dependency-gates.json and 2026-10-09-r13-dependency-security.md. P1v6 requests/claims and prior runtime worktree38123c9 remain untouched; its time window is expired.
