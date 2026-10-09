@@ -1,0 +1,392 @@
+{
+  "task": "R12",
+  "findings": [
+    "F23",
+    "F24"
+  ],
+  "pr": 142,
+  "combined_source_sha": "6a3f61fbffdd7d04d2eba9826a8337624bb2cd75",
+  "executed_code_preserved_at_evidence_head": "0ba698c12ed8170b86be78f1c8bc8be131108be0",
+  "parent_input_contract": {
+    "combined_source_sha": "6a3f61fbffdd7d04d2eba9826a8337624bb2cd75",
+    "operations_parent": "58860eb645edc1a5b104272089337ca8ce9249d5",
+    "reviewed_dependency_parent": "edf5db2261ca6a877532b6d5e0a4988538c00204",
+    "captured_at_utc": "2026-10-09T06:48:53.054562+00:00",
+    "input_hashes": {
+      "src/routes/operations.tsx": "e16e98792e95a12a3aac125204d1dd7dbc42e5c8520424b8d203376f501fac46",
+      "src/routes/-operations.interaction.test.tsx": "445b7e68b2268250aac9b8e1397425e8f2ab3e628b6709fbfc20f5e8506f7127",
+      "package.json": "a59dd2177080ce3e77cb9414948f0d030c58bfeac96150a217cfd20784275b49",
+      "package-lock.json": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465",
+      "bun.lock": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+      ".github/workflows/ci.yml": "b00865ba06b157098099ffd51d3da26ce0c2398e1f5209544f18112b8f5b81af",
+      "src/server/dependency-security-f25.test.ts": "f84540da83e18aca4e8b9ae9928c31b8b76e980a402037e3b67322dd25d2ef46"
+    },
+    "only_src_diff_from_r13": [
+      "src/routes/-operations.interaction.test.tsx",
+      "src/routes/operations.tsx"
+    ],
+    "operations_source_bytes": "exact58860eb; no new feature code",
+    "all_other_src_db_scripts": "Git diff empty vs reviewed R13",
+    "history": "both parents ancestors; ordinary merge; no rewrite"
+  },
+  "recorded_at_utc": "2026-10-09T06:57:40.335512+00:00",
+  "baseline_RED": "run37678792755 Node22/24 low audits failed before tests; reviewedR13 corrects paths",
+  "local": {
+    "full_files": 245,
+    "full_passed": 2339,
+    "full_failed": 0,
+    "full_skipped": 0,
+    "included_existing_ops_cases": 6,
+    "included_dependency_cases": 10,
+    "npm_installed_audit_report": 0,
+    "lint_errors": 0,
+    "lint_existing_warnings": 1,
+    "typecheck_exit": 0,
+    "build_exit": 0,
+    "source_migrations_applied_locally": 50,
+    "postgres": "18.6",
+    "node": "22.23.3",
+    "npm": "12.2.0",
+    "dry_run": "38reads/0network/0writes; genuine providersBLOCKED"
+  },
+  "commands": {
+    "install-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\npm122-runtime\\package\\bin\\npm-cli.js",
+          "ci",
+          "--ignore-scripts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:45:48.755614+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:45:48.755614+00:00",
+        "ended_at_utc": "2026-10-09T06:46:31.476156+00:00",
+        "stdout_sha256": "2cd39e4dfedc5d180e22b0c1836906d342d3136c988b343ceb6862c125a423da",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "lint-green-corrected": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/eslint/bin/eslint.js",
+          ".",
+          "--ignore-pattern",
+          ".worktrees/**"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:49:14.006820+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:49:14.006820+00:00",
+        "ended_at_utc": "2026-10-09T06:50:03.920742+00:00",
+        "stdout_sha256": "0357e8a04eee8ade30693099bbe31b1f9a32c87e75bcac9321434d1b7e39689b",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "typecheck-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:50:04.075313+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:50:04.075313+00:00",
+        "ended_at_utc": "2026-10-09T06:50:53.247984+00:00",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "build-green": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:53:49.710378+00:00",
+        "environment": "clean OS-only; no provider/database bindings"
+      },
+      "result": {
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:53:49.710378+00:00",
+        "ended_at_utc": "2026-10-09T06:54:12.716721+00:00",
+        "stdout_sha256": "7c3b7817071acaeb904611419390c3703e82875b3cce7515f4e3f7df2a02da0d",
+        "stderr_sha256": "2e4998a9810f9782f80c1c4abe0f9a7be52a68403974744d57a4771b394066bb"
+      }
+    },
+    "pg18-migrate": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:46:36.149637+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-migrate",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:46:36.149637+00:00",
+        "ended_at_utc": "2026-10-09T06:46:36.943410+00:00",
+        "stdout_sha256": "d668e6e1a3b1b6ee4b77748442ef28f759e178d20978eaabebc8dfc51fd34ce1",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "pg18-seed": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:46:36.944585+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-seed",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:46:36.944585+00:00",
+        "ended_at_utc": "2026-10-09T06:46:37.177574+00:00",
+        "stdout_sha256": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "pg18-full": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:46:37.304595+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-full",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:46:37.304595+00:00",
+        "ended_at_utc": "2026-10-09T06:51:47.210284+00:00",
+        "stdout_sha256": "0507df96065797277090a2807790ec6f5c578dc2ffb037bb947095f537f74ccf",
+        "stderr_sha256": "5df296c56d5606e80d1eeeb2cdd0af90fa794808560dd26805ca2b2ee14a0691"
+      }
+    },
+    "pg18-firm-dry-run": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:51:47.212935+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-firm-dry-run",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:51:47.212935+00:00",
+        "ended_at_utc": "2026-10-09T06:51:47.385895+00:00",
+        "stdout_sha256": "1831b3c4d020b0da67db0ecd4cae3213089c7aa3e539339dc581bd361b238121",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "pg18-original-ledger": {
+      "command": {
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-audit-release.ts"
+        ],
+        "cwd": "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\r12-f25-ci-20261009",
+        "started_at_utc": "2026-10-09T06:51:47.387631+00:00",
+        "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+        "binding_names": [
+          "DATABASE_URL",
+          "TEST_DATABASE_URL",
+          "DATABASE_SSL"
+        ]
+      },
+      "result": {
+        "key": "pg18-original-ledger",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-audit-release.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:51:47.387631+00:00",
+        "ended_at_utc": "2026-10-09T06:51:47.567851+00:00",
+        "stdout_sha256": "d75d6c3e1f3a19ba7ac7ac4ef2fd5ac86fcdbe3f88b44138f43ac5c9047178ba",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "fixture": {
+    "identity": "01fa7d78-67b7-4663-a586-623cef7ced6a",
+    "name": "kossilon-r12f25-01fa7d78-67b7-4663-a586-623cef7ced6a",
+    "image": "sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941",
+    "environment": "fresh localhost-only disposable PG18; synthetic data; no provider bindings",
+    "started_at_utc": "2026-10-09T06:46:31.619854+00:00",
+    "steps": [
+      {
+        "key": "pg18-migrate",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-migrate.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:46:36.149637+00:00",
+        "ended_at_utc": "2026-10-09T06:46:36.943410+00:00",
+        "stdout_sha256": "d668e6e1a3b1b6ee4b77748442ef28f759e178d20978eaabebc8dfc51fd34ce1",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "pg18-seed",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\bun142-runtime\\bun.exe",
+          "scripts/db-seed-annual-return.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:46:36.944585+00:00",
+        "ended_at_utc": "2026-10-09T06:46:37.177574+00:00",
+        "stdout_sha256": "399b4351e26a358e311cc028a727753e3fcc0fcc733ffdae7eb08e0680b98f63",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "pg18-full",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=4"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:46:37.304595+00:00",
+        "ended_at_utc": "2026-10-09T06:51:47.210284+00:00",
+        "stdout_sha256": "0507df96065797277090a2807790ec6f5c578dc2ffb037bb947095f537f74ccf",
+        "stderr_sha256": "5df296c56d5606e80d1eeeb2cdd0af90fa794808560dd26805ca2b2ee14a0691"
+      },
+      {
+        "key": "pg18-firm-dry-run",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-firm-deployment.ts",
+          "--dry-run"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:51:47.212935+00:00",
+        "ended_at_utc": "2026-10-09T06:51:47.385895+00:00",
+        "stdout_sha256": "1831b3c4d020b0da67db0ecd4cae3213089c7aa3e539339dc581bd361b238121",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "key": "pg18-original-ledger",
+        "argv": [
+          "C:\\Users\\laich\\Documents\\kossilon-hub\\audit-t03-readiness-worktree\\.worktrees\\node22-runtime\\node-v22.23.3-win-x64\\node.exe",
+          "--experimental-strip-types",
+          "scripts/verify-audit-release.ts"
+        ],
+        "exit": 0,
+        "started_at_utc": "2026-10-09T06:51:47.387631+00:00",
+        "ended_at_utc": "2026-10-09T06:51:47.567851+00:00",
+        "stdout_sha256": "d75d6c3e1f3a19ba7ac7ac4ef2fd5ac86fcdbe3f88b44138f43ac5c9047178ba",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "container_id": "feb5084218bdd1d5e9720cc5eb4879ea5cd0876dfd4c1a33fe09dece033f6b3b",
+    "anonymous_volumes": [
+      "c50d38cf8186f57892472966717302b9fa36069c8599a2decb479fd873cd0614"
+    ],
+    "listen_address": "127.0.0.1:50671",
+    "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "migration_count_after_apply": 50,
+    "fixture_result": "PASS",
+    "owned_container_removed": true,
+    "anonymous_volumes_removed": {
+      "c50d38cf8186f57892472966717302b9fa36069c8599a2decb479fd873cd0614": true
+    },
+    "ended_at_utc": "2026-10-09T06:51:48.500263+00:00"
+  },
+  "integration_rulings": [
+    "ordinary merge reviewedR13, no product code rewritten; both published parents ancestors",
+    "stackPR142 base onPR143 branch to retain independent Operations diff; mainmergeHOLD due productionauto-link",
+    "no extra product review for unchanged parent source; originalR12 review+fix and R13 review+fix retained; actual combined full suite/CI proves integration"
+  ],
+  "CI": {
+    "status": "own exact-head native CI required; actual receipt in PR142 metadata",
+    "original_gates": "all retained; including low audits, PG, portable npm10, browser12, build/import/cron"
+  },
+  "release": {
+    "runtime": "BLOCKED",
+    "production": "NO_GO",
+    "new_genuine_original50_UAT_passes": 0,
+    "production_db_writes": 0,
+    "formal_deploys": 0,
+    "role_writes": 0,
+    "provider_sends": 0,
+    "native_scheduler_ticks": 0,
+    "scheduler_sha": "not_observed",
+    "deployed_dependency_contents": "not_observed",
+    "P1v6": "expired/consumed; frozen worktree untouched"
+  }
+}

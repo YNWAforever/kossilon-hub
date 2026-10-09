@@ -74,3 +74,9 @@ provider message or scheduler trigger is included. This main-based change
 must follow the existing historical-schema release process; do not cherry-pick
 it into the isolated security patch without separate compatibility review.
 Rollback is an ordinary revert of this source commit; no data rollback needed.
+
+## 2026-10-09 dependency integration correction
+
+Original head58860eb and its exact Operations route/six regression bytes retained. Its run37678792755 failed both existing low audit gates before tests. Ordinary merge6a3f61f incorporates separately reviewed R13 F25 pins/driver contracts; both published ancestors retained. Fresh npm install0vulnerabilities; actual new localhostPG18.6 full245files/2339PASS/0FAIL/0SKIP including sixOps+ten dependency contracts;50source bodies/seed onlylocal, lint0errors1baselinewarning/typecheck/build0; owned container+volume absence verified. Final master-ledger parenta8b348f adds documents only; executing code hashes stay identical. Full command/hash receipt: evidence/2026-10-09-r12-f25-integration.json.
+
+PR142 stacks on draft143 dependency branch so its Operations changes remain independently reviewable. Own exact-head CI receipt retained in PR142 metadata; do not reuse main/security-candidate CI. RuntimeBLOCKED/releaseNO_GO/mainmergeHOLD; no formal SQL/deploy/role/send/tick and no P1v6 retry. Original50UAT immutable and0new genuine PASS.
