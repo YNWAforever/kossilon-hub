@@ -51,3 +51,11 @@ This patch adds no migration and changes no authorization/domain/provider code. 
 | Same-schema patched web/scheduler candidates, restore/freeze and native ticks | Release/DB/Operations owners | Prepare independent R01 follow-up and obtain genuine staging receipts before formal promotion. Record web and scheduler SHAs separately. |
 
 Prior P1v6 requests, claims, SQL, raw results and worktree38123c9 were untouched. Seven unknown table owners and other historical release gates are not cleared by these local tests.
+
+## 2026-10-09 R13 final review correction
+
+Source 789db5859010426adce4f0cb290ce4c4cc42ea9e: the single final reviewer reproduced a real npm Nitro LRU driver failure missed by the initial2332 suite. Restoring only the optional-peer lock entry did not fix clean npm installation. Explicitly declare the already-baseline lru-cache11.5.3 and regenerate both native locks; no new LRU version. Final fresh npm/Bun10/10 each, both low audits0, complete PG18.6 full244files/2333PASS/0FAIL/0SKIP, lint0errors/1baseline warning, typecheck/build0. Exact-owned container and anonymous volume removal verified. The original a12 receipt remains history; this correction supersedes its compatibility conclusion. Add the real driver regression to the existing portable npm CI tree; retain every old gate, matrix and threshold. Receipt: evidence/2026-10-09-r13-review-fix.json.
+
+Main merge is HOLD: read-only Vercel linkage confirms productionBranch=main/autoAssignCustomDomains=true; a merge could cause an unapproved formal deploy. Prepare draft only and a separate d8c9312 schema-preserving R01 follow-up. No hosted SQL/deploy/provider/role operations; original50UAT bytes retained;0new genuine PASS; releaseNO_GO.
+
+Native npm deduplication detail: previous LRU versions5.1.1/11.5.2/11.5.3 become5.1.1/11.5.3; existing11.5.3 is hoisted, duplicate11.5.2 is removed, Babel retains5.1.1. No new LRU version was fetched. Actual10-case contracts plus full2333 suite cover this installer layout.
