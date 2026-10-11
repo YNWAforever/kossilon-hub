@@ -101,10 +101,16 @@ describe("production route authorization contract", () => {
     expect(inbox).not.toContain("annual-return-store");
     expect(inbox).not.toContain("client-portal-store");
 
-    for (const command of ["listWhatsAppConversations", "listWhatsAppConversationMessages"]) {
+    const historyFunctions = readFileSync(
+      new URL("../features/whatsapp/history-server-fns.ts", import.meta.url),
+      "utf8",
+    );
+    for (const command of ["listWhatsAppConversationPage", "listWhatsAppMessagePage"]) {
       expect(inbox).toContain(command);
-      expect(serverFunctions).toContain("export const " + command + " = createServerFn");
+      expect(historyFunctions).toContain("export const " + command + " = createServerFn");
     }
+    expect(historyFunctions).toContain("requireStaffActor(getRequest())");
+    expect(historyFunctions).toContain("const actor = await requireStaffActor");
     expect(serverFunctions).toContain("requireStaffActor");
     expect(serverFunctions).toContain("assertStaffAccess");
 

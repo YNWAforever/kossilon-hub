@@ -137,6 +137,13 @@ describe("formatHongKongTimestamp", () => {
 });
 
 describe("sortConversationMessagesOldestFirst with Postgres timestamps", () => {
+  it("keeps microsecond order before the ID tie breaker", () => {
+    const sorted = sortConversationMessagesOldestFirst([
+      message({ id: "a-later", sentAt: "2026-07-30 02:00:00.123999+00" }),
+      message({ id: "z-earlier", sentAt: "2026-07-30T10:00:00.123001+08:00" }),
+    ]);
+    expect(sorted.map((m) => m.id)).toEqual(["z-earlier", "a-later"]);
+  });
   it("orders fractional and whole seconds chronologically", () => {
     // "+" sorts before "." by code unit, and locale collation can discount
     // punctuation entirely, so the whole-second row must not jump ahead.

@@ -85,6 +85,11 @@ export function sortConversationMessagesOldestFirst<T extends WhatsAppConversati
 
     if (!Number.isNaN(leftMs) && !Number.isNaN(rightMs)) {
       if (leftMs !== rightMs) return leftMs - rightMs;
+      // Date retains milliseconds; the server cursor retains Postgres microseconds.
+      // Compare the remaining fraction before falling back to the UUID.
+      const fraction = (value: string) =>
+        Number((/\.(\d+)/.exec(value)?.[1] ?? "").padEnd(6, "0").slice(3, 6));
+      if (fraction(leftAt) !== fraction(rightAt)) return fraction(leftAt) - fraction(rightAt);
     } else if (leftAt !== rightAt) {
       // Neither is a usable instant; fall back to a stable textual order rather
       // than declaring them equal and letting sort order drift.

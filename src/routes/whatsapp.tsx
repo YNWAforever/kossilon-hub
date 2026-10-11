@@ -17,7 +17,7 @@ export const Route = createFileRoute("/whatsapp")({
 
 function WhatsAppRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { dataMode } = Route.useRouteContext();
+  const { dataMode, actor } = Route.useRouteContext();
 
   // Must stay above the data-mode branch: /whatsapp/automation renders through
   // this Outlet, and a branch that returns a screen unconditionally would blank it.
@@ -25,7 +25,11 @@ function WhatsAppRoute() {
     return <Outlet />;
   }
 
-  return dataMode === "demo" ? <DemoWhatsAppInbox /> : <ProductionWhatsAppInbox />;
+  return dataMode === "demo" ? (
+    <DemoWhatsAppInbox />
+  ) : (
+    <ProductionWhatsAppInbox actorScope={JSON.stringify(actor)} />
+  );
 }
 
 function DemoWhatsAppInbox() {
