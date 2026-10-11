@@ -62,6 +62,22 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("Queue review regressions", () =
           await expect(
             repo.listQueueFilterOptions(scope, { kind: "owner", limit: 51 }),
           ).rejects.toThrow();
+          await tx`insert into work_items(company_id,case_type,annual_return_case_id,source_event_key,source_event_type,work_type,title,owner_id,team_id,sla_policy_version_id,sla_started_at,sla_warning_at,sla_due_at)
+          select ${f.company_id},'annual_return',${f.case_id},${tag}||':utf8:'||n,'test','工作型'||lpad(n::text,3,'0'),'Facet Unicode',${a},${team},${f.policy_id},'2026-10-01T00:00Z','2026-10-01T01:00Z','2026-10-01T02:00Z' from generate_series(1,60)n`;
+          const types = await repo.listQueueFilterOptions(scope, { kind: "workType" });
+          expect(types.items).toHaveLength(50);
+          const tail = await repo.listQueueFilterOptions(scope, {
+            kind: "workType",
+            cursor: types.nextCursor!,
+          });
+          expect(tail.items).toHaveLength(12);
+          expect(new Set([...types.items, ...tail.items].map((x) => x.id)).size).toBe(62);
+          await expect(
+            repo.listQueueFilterOptions(
+              { ...scope, teamId: foreignTeam },
+              { kind: "workType", cursor: types.nextCursor! },
+            ),
+          ).rejects.toThrow(/cursor/i);
           throw Error("rollback queue review fixture");
         }),
       ).rejects.toThrow("rollback queue review fixture");

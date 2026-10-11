@@ -10,7 +10,10 @@ export const listPageSize = z.number().int().min(1).max(50).default(50);
 
 /** A cursor is a boundary, never authority. The query reapplies scope on every page. */
 export function encodeListCursor(key: string, values: readonly string[]): string {
-  return btoa(JSON.stringify({ v: 1, key: encodeURIComponent(key), values }));
+  const bytes = new TextEncoder().encode(
+    JSON.stringify({ v: 1, key: encodeURIComponent(key), values }),
+  );
+  return btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
 }
 export function decodeListCursor(
   cursor: string | undefined,
@@ -26,7 +29,15 @@ export function decodeListCursor(
         values: z.array(z.string().max(512)).length(length),
       })
       .strict()
-      .parse(JSON.parse(atob(z.string().max(8192).parse(cursor))));
+      .parse(
+        JSON.parse(
+          new TextDecoder("utf-8", { fatal: true }).decode(
+            Uint8Array.from(atob(z.string().max(8192).parse(cursor)), (character) =>
+              character.charCodeAt(0),
+            ),
+          ),
+        ),
+      );
     if (parsed.key !== encodeURIComponent(key)) throw Error("Changed query");
     return parsed.values;
   } catch {
