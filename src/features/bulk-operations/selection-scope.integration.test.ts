@@ -36,6 +36,9 @@ describe.skipIf(!url)("R18.1 real PostgreSQL draft selection", () => {
           await tx`insert into companies ${tx(companies.map((id, index) => ({ id, company_name: "R18.1 isolated " + index, cr_number: id, br_number: id, incorporation_date: "2020-01-01", annual_return_basis_date: "2026-10-01", registered_office: "Isolated", company_secretary: "Isolated", status: "active", data_origin: "client", assigned_owner_id: index === 20 ? ownerB : ownerA, assigned_team_id: index === 20 ? teamB : teamA })))}`;
           await tx`insert into annual_return_cases ${tx(ids.map((id, index) => ({ id, company_id: companies[index], return_year: 2026, made_up_date: "2026-10-01", filing_due_date: "2026-11-12", owner_id: index === 20 ? ownerB : ownerA, current_status: "Upcoming", risk_level: "green" })))}`;
           await tx`insert into annual_return_checklist_items ${tx(ids.map((id, index) => ({ case_id: id, item_label: "R18.1 isolated evidence", required: true, status: index < 2 || index === 20 ? "Missing" : "Received", due_date: "2026-11-12" })))}`;
+          // An assigned owner/reviewer can act on an individual foreign-team case,
+          // but the AR list and bulk selection retain the existing team predicate.
+          await tx`update annual_return_cases set owner_id=${ownerA},reviewer_id=${ownerA} where id=${ids[20]}`;
           const docs = createDocumentRepository({ sql: tx });
           for (const index of [0, 1, 2]) {
             const checksum = "a".repeat(64);
@@ -80,6 +83,16 @@ describe.skipIf(!url)("R18.1 real PostgreSQL draft selection", () => {
           expect([...new Set(drafts.map((d) => d.caseId))].sort()).toEqual(ids.slice(0, 2).sort());
           expect(drafts.filter((d) => d.caseId === ids[0])).toHaveLength(2);
           expect(drafts.find((d) => d.caseId === ids[1])?.source).toBe("document-review");
+          await expect(
+            listProductionFollowUpDraftsForActor(
+              { ...actor, teamId: null },
+              {
+                annualReturnRepository: createAnnualReturnRepository({ sql: tx }),
+                followUpRepository: createProductionFollowUpRepository({ sql: tx }),
+                whatsAppRepository: {} as WhatsAppRepository,
+              },
+            ),
+          ).rejects.toThrow(/Forbidden/);
           // Real nested savepoints let job creation exercise SQL while the entire fixture rolls back.
           const transactionalSql = Object.assign(tx, { begin: tx.savepoint.bind(tx) });
           const repo = createBulkOperationsRepository({
