@@ -1,5 +1,6 @@
 import { queueScopeSql } from "@/features/work-items/queue-scope";
 import type postgres from "postgres";
+import { documentScopeSql } from "@/features/documents/list-scope";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { caseFiltersForActor } from "@/features/annual-return/permissions";
@@ -110,7 +111,14 @@ export function createBulkOperationsRepository({
       const allowed = new Set(
         resource === "client_company"
           ? ["q", "teamId", "ownerId", "clientStatus", "includeFixtures"]
-          : ["q", "caseId", "includeFixtures"],
+          : [
+              "q",
+              "caseId",
+              "ownerId",
+              "documentCategory",
+              "documentReviewStatus",
+              "includeFixtures",
+            ],
       );
       if (Object.keys(filters).some((key) => !allowed.has(key)))
         throw new Error("Unsupported filters for this resource.");
@@ -127,7 +135,7 @@ export function createBulkOperationsRepository({
           case_owner_id: string | null;
           case_reviewer_id: string | null;
         })[]
-      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where (${actor.role === "Admin"} or c.assigned_team_id=${actor.teamId}::uuid or arc.owner_id=${actor.userId!} or arc.reviewer_id=${actor.userId!}) and (${filters.includeFixtures === true && actor.role === "Admin"} or c.data_origin<>'fixture') and (${ids ? [...ids] : null}::uuid[] is null or d.id=any(${ids ? [...ids] : null}::uuid[])) and (${filters.caseId ?? null}::uuid is null or d.case_id=${filters.caseId ?? null}::uuid) and (${q}::text is null or d.file_name ilike ${q} escape '\\') order by d.id limit 20001`;
+      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where ${documentScopeSql(db, { ...filters, category: filters.documentCategory, reviewStatus: filters.documentReviewStatus, teamId: actor.role === "Admin" ? undefined : actor.teamId!, assignedUserId: actor.role === "Admin" ? undefined : actor.userId!, includeFixtures: filters.includeFixtures === true && actor.role === "Admin", ids })} order by d.id limit 20001`;
       return rows.filter((r) =>
         isDocumentVisibleToStaffActor(actor, {
           companyId: r.company_id,

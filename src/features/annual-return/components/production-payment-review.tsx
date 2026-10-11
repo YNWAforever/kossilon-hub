@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
-import { listDocumentPage } from "@/features/documents/server-fns";
+import { useRetainedPage } from "@/lib/use-retained-page";
 import { SafeDocumentPreview } from "@/features/documents/safe-preview";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentSummary } from "@/features/documents/repository";
 import {
-  listAnnualReturnCasePage,
+  listPaymentWorkspace,
+  getAnnualReturnCase,
   recordAnnualReturnPaymentEvidence,
   reviewAnnualReturnPaymentEvidence,
 } from "../server-fns";
@@ -27,104 +28,170 @@ export function ProductionPaymentReview({
   canBulk?: boolean;
 }) {
   const client = useQueryClient();
-  const casesQuery = useInfiniteQuery({
-    queryKey: [...annualReturnQueryKeys.list({ paymentEvidence: true }), actorScope],
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }) =>
-      listAnnualReturnCasePage({
-        data: { limit: 200, ...(pageParam ? { cursor: pageParam } : {}) },
-      }),
-    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  const [mode, setMode] = useState<"review" | "outstanding">("review"),
+    [q, setQ] = useState(""),
+    [cursor, setCursor] = useState<string>(),
+    [selectedRowId, setSelectedRowId] = useState<string>();
+  const workspace = useQuery({
+    queryKey: ["payment-workspace", actorScope, mode, q, cursor],
+    queryFn: () => listPaymentWorkspace({ data: { mode, q, cursor, limit: 50 } }),
     retry: false,
   });
-  const documentsQuery = useInfiniteQuery({
-    queryKey: [...annualReturnQueryKeys.payment("all"), actorScope],
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }) =>
-      listDocumentPage({ data: { category: "payment", limit: 100, cursor: pageParam } }),
-    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  const page = useRetainedPage(JSON.stringify([actorScope, mode, q]), workspace.data),
+    items = page?.items ?? [];
+  const activeRow = selectedRowId ?? items.find((r) => r.document)?.rowId;
+  const selected = items.find((r) => r.rowId === activeRow),
+    activeId = selected?.caseId;
+  const detail = useQuery({
+    queryKey: [...annualReturnQueryKeys.detail(activeId ?? "none"), actorScope],
+    queryFn: () => getAnnualReturnCase({ data: { id: activeId! } }),
+    enabled: !!selected?.document && mode === "review",
     retry: false,
   });
-  const cases = casesQuery.data?.pages.flatMap((page) => page.cases) ?? [],
-    documents = (documentsQuery.data?.pages.flatMap((p) => p.documents) ?? []).filter(
-      (d) => d.caseId,
-    );
   const updated = (case_: AnnualReturnCase) => {
     client.setQueryData(annualReturnQueryKeys.detail(case_.id), case_);
     void client.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
-    void client.invalidateQueries({ queryKey: ["annual-return"] });
+    void client.invalidateQueries({ queryKey: ["payment-workspace"] });
     void client.invalidateQueries({ queryKey: ["documents"] });
     void client.invalidateQueries({ queryKey: ["work-queue"] });
+  };
+  const changeMode = (next: "review" | "outstanding") => {
+    setMode(next);
+    setCursor(undefined);
+    setSelectedRowId(undefined);
   };
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title="Payments" />
+      <p>先核對當前安全憑證，再由人手記錄及批准入賬；欠款包括沒有上載憑證的案件。</p>
+      <div className="flex flex-wrap gap-3">
+        <button className="min-h-11 rounded border px-3" onClick={() => changeMode("review")}>
+          付款憑證覆核
+        </button>
+        <button className="min-h-11 rounded border px-3" onClick={() => changeMode("outstanding")}>
+          欠款／未有憑證
+        </button>
+        <input
+          aria-label="Search payment cases"
+          value={q}
+          maxLength={200}
+          className="min-h-11 rounded border px-3"
+          onChange={(e) => {
+            setQ(e.target.value);
+            setCursor(undefined);
+            setSelectedRowId(undefined);
+          }}
+        />
+      </div>
       <p>
-        先預覽當前憑證，記錄文件所示金額及日期，再批准入賬或退回。批准部分款只更新已核對金額，餘額未清仍待付款。
+        已載入{items.length}
+        {mode === "review" ? "份憑證" : "案"}／共{page?.total ?? "待確認"}
+        {mode === "review" ? "份憑證" : "案"}
       </p>
-      {canBulk ? (
+      {canBulk && mode === "outstanding" ? (
         <BulkSelectionToolbar
           actorScope={actorScope}
           resource="annual_return_case"
-          filters={{}}
-          page={cases.map((c) => ({ id: c.id, label: c.companyName }))}
-          total={casesQuery.hasNextPage ? null : casesQuery.isSuccess ? cases.length : null}
-          pageSize={200}
+          filters={{
+            selectionContext: "payment_outstanding_cases",
+            ...(q.trim() ? { q: q.trim() } : {}),
+          }}
+          page={items.map((r) => ({ id: r.caseId, label: r.companyName }))}
+          total={page?.total ?? null}
+          pageSize={50}
           maintenanceActions={["payment_list_export"]}
         />
       ) : null}
-      {casesQuery.isError || documentsQuery.isError ? (
-        <p role="alert">Production payment evidence is unavailable.</p>
+      {workspace.isPending ? <p>Loading payment evidence...</p> : null}
+      {workspace.isError ? (
+        <p role="alert">
+          Production payment evidence is unavailable. 已讀資料保留。
+          <button className="min-h-11 px-3" onClick={() => void workspace.refetch()}>
+            重試付款頁
+          </button>
+        </p>
       ) : null}
-      {casesQuery.isPending || documentsQuery.isPending ? <p>Loading payment evidence...</p> : null}
       <section className="divide-y border-y">
-        {documents.map((document) => {
-          const case_ = cases.find((c) => c.id === document.caseId);
-          return case_ ? (
-            <PaymentEvidenceRow
-              key={`${document.id}:${case_.readiness?.sourceVersion ?? "unknown"}`}
-              document={document}
-              case_={case_}
-              onUpdated={updated}
-            />
+        {items.map((row) =>
+          mode === "review" &&
+          row.document &&
+          selected?.rowId === row.rowId &&
+          detail.data?.id === row.caseId ? (
+            row.sourceVersion === detail.data.readiness?.sourceVersion ? (
+              <PaymentEvidenceRow
+                key={row.rowId + ":" + row.document.currentVersionId + ":" + row.sourceVersion}
+                document={row.document}
+                case_={detail.data}
+                onUpdated={updated}
+              />
+            ) : (
+              <article key={row.rowId} className="p-4">
+                <p>案件或文件已更新，請重讀付款頁後覆核。</p>
+                <button className="min-h-11 px-3" onClick={() => void workspace.refetch()}>
+                  重讀付款頁
+                </button>
+              </article>
+            )
           ) : (
-            <div key={document.id} className="p-4">
-              <p>{document.fileName}：先載入所屬案件資料；暫不可審核。</p>
-            </div>
-          );
-        })}
+            <article key={row.rowId} className="space-y-2 p-4">
+              <Link
+                to="/annual-returns/$id"
+                params={{ id: row.caseId }}
+                className="font-semibold underline"
+              >
+                {row.companyName}
+              </Link>
+              <p>
+                應收：{money(row.payment.amount)} · 已核對：{money(row.payment.receivedAmount)} ·
+                餘額：{money(row.payment.balance)}
+              </p>
+              <p>
+                {row.document ? row.document.fileName : "未有付款憑證"} · {row.proofCount}
+                份憑證；法定申報日{row.filingDueDate}
+              </p>
+              {mode === "review" && row.document ? (
+                <button
+                  className="min-h-11 rounded border px-3"
+                  onClick={() => setSelectedRowId(row.rowId)}
+                >
+                  開啟覆核
+                </button>
+              ) : null}
+            </article>
+          ),
+        )}
       </section>
-      {!casesQuery.isPending &&
-      !documentsQuery.isPending &&
-      !casesQuery.isError &&
-      !documentsQuery.isError &&
-      documents.length === 0 ? (
-        <p>No production payment evidence is awaiting review.</p>
+      {detail.isError ? (
+        <p role="alert">
+          當前案件覆核資料未能載入，請重試；未有批准。
+          <button className="min-h-11 px-3" onClick={() => void detail.refetch()}>
+            重試案件覆核
+          </button>
+        </p>
       ) : null}
-      {casesQuery.hasNextPage ? (
-        <button
-          className="rounded border px-3 py-2"
-          disabled={casesQuery.isFetchingNextPage}
-          onClick={() => void casesQuery.fetchNextPage({ cancelRefetch: false })}
-        >
-          載入更多案件
-        </button>
+      {!workspace.isPending && !workspace.isError && items.length === 0 ? (
+        <p>
+          {mode === "review"
+            ? "No production payment evidence is awaiting review."
+            : "目前授權範圍沒有未清欠款。"}
+        </p>
       ) : null}
-      {documentsQuery.hasNextPage ? (
-        <button
-          className="min-h-11 rounded border px-3"
-          disabled={documentsQuery.isFetchingNextPage}
-          onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
-        >
-          載入更多付款憑證
-        </button>
-      ) : null}
-      {documentsQuery.isFetchNextPageError ? (
-        <p role="alert">下一頁付款憑證未能載入，請重試。</p>
-      ) : null}
-      {casesQuery.isFetchNextPageError ? (
-        <p role="alert">下一頁未能載入，已讀取案件仍可查閱，請重試。</p>
-      ) : null}
+      <div className="flex gap-3">
+        {cursor ? (
+          <button className="min-h-11 rounded border px-3" onClick={() => setCursor(undefined)}>
+            回第一頁付款
+          </button>
+        ) : null}
+        {page?.nextCursor ? (
+          <button
+            disabled={workspace.isFetching || workspace.isError}
+            className="min-h-11 rounded border px-3"
+            onClick={() => setCursor(page.nextCursor!)}
+          >
+            下一頁付款
+          </button>
+        ) : null}
+      </div>
     </main>
   );
 }

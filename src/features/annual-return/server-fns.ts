@@ -34,6 +34,7 @@ import {
 import type { DocumentFindingsView } from "@/features/documents/findings-review";
 import type { DocumentAnalysisRepository } from "@/features/documents/analysis-repository";
 import { originFilterForActor } from "@/features/clients/data-origin";
+import { paymentWorkspaceInput } from "./payment-workspace";
 
 const RISK_LEVELS = ["green", "yellow", "orange", "red"] as const;
 const CHECKLIST_STATUSES = ["Missing", "Received", "Verified", "Rejected"] as const;
@@ -890,6 +891,17 @@ export const listAnnualReturnCasePage = createServerFn({ method: "GET" })
     withAnnualReturnActorRepository((repository, actor) =>
       listAnnualReturnCasePageForActor(actor, data, { repository }),
     ),
+  );
+export const listPaymentWorkspace = createServerFn({ method: "GET" })
+  .validator(paymentWorkspaceInput)
+  .handler(({ data }) =>
+    withAnnualReturnActorRepository(async (_repository, actor) => {
+      const [{ getSqlClient }, { createPaymentWorkspaceRepository }] = await Promise.all([
+        import("@/server/db/client"),
+        import("./payment-workspace-repository"),
+      ]);
+      return createPaymentWorkspaceRepository(getSqlClient()).list(actor, data);
+    }),
   );
 
 export const getAnnualReturnBoardTotals = createServerFn({ method: "GET" })

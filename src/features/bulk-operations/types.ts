@@ -18,8 +18,10 @@ export const selectionSchema = z.discriminatedUnion("mode", [
 ]);
 export const scopeFiltersSchema = z
   .object({
-    q: z.string().trim().min(1).max(120).optional(),
-    selectionContext: z.literal("whatsapp_draft_cases").optional(),
+    q: z.string().trim().min(1).max(200).optional(),
+    selectionContext: z
+      .enum(["whatsapp_draft_cases", "payment_review_cases", "payment_outstanding_cases"])
+      .optional(),
     ownerId: z.string().uuid().optional(),
     reviewerId: z.string().uuid().optional(),
     teamId: z.string().uuid().optional(),
@@ -40,6 +42,8 @@ export const scopeFiltersSchema = z
     unassigned: z.boolean().optional(),
     clientStatus: z.enum(["active", "inactive"]).optional(),
     caseId: z.string().uuid().optional(),
+    documentCategory: z.string().max(100).optional(),
+    documentReviewStatus: z.enum(["pending", "verified", "rejected"]).optional(),
   })
   .strict();
 export const snapshotSchema = z

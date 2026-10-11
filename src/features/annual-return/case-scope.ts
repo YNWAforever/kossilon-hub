@@ -2,6 +2,7 @@ import type postgres from "postgres";
 import type { SqlClient } from "@/server/db/client";
 import type { CaseFilters } from "./repository";
 import { whatsappDraftCasesSql } from "./follow-up-scope";
+import { paymentWorkspaceCaseSql } from "./payment-workspace-scope";
 
 type Query = SqlClient | postgres.TransactionSql;
 
@@ -37,6 +38,7 @@ export function caseScopeSql(sql: Query, filters: CaseFilters, today: string) {
   return sql`
     (${filters.ownerId ?? null}::uuid is null or arc.owner_id=${filters.ownerId ?? null}::uuid)
     and ${filters.selectionContext === "whatsapp_draft_cases" ? whatsappDraftCasesSql(sql) : sql`true`}
+    and ${paymentWorkspaceCaseSql(sql, filters.selectionContext)}
     and (${filters.caseIds ? [...filters.caseIds] : null}::uuid[] is null or arc.id=any(${filters.caseIds ? [...filters.caseIds] : null}::uuid[]))
     and (${filters.includeFixtures === true} or c.data_origin<>'fixture')
     and (${filters.activeOnly !== true} or ${activeCaseSql(sql)})
@@ -50,6 +52,7 @@ export function caseScopeSql(sql: Query, filters: CaseFilters, today: string) {
     and (${typeof filters.missingDocuments !== "boolean"} or ${filters.missingDocuments === true}=exists(select 1 from annual_return_checklist_items i where i.case_id=arc.id and ${outstandingChecklistSql(sql)}))
     and (${query}::text is null or c.company_name ilike ${query} escape '\\' or c.cr_number ilike ${query} escape '\\'
       or arc.return_year::text ilike ${query} escape '\\'
+      or (${filters.selectionContext?.startsWith("payment_") ?? false} and exists(select 1 from documents proof where proof.case_id=arc.id and proof.company_id=arc.company_id and proof.file_type='payment' and proof.file_name ilike ${query}))
       or exists(select 1 from users search_owner where search_owner.id=arc.owner_id and search_owner.name ilike ${query} escape '\\'))
     and (${filters.risk ?? null}::text is null or ${caseRiskSql(sql, today)}=${filters.risk ?? null})`;
 }

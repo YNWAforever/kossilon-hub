@@ -467,11 +467,21 @@ export async function listDocumentPageForActor(
   if (actor.role === "Client") {
     if (!filters.companyId) throw new Error("Client document lists require a company ID.");
     await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
-    return dependencies.repository.listDocumentPage(filters);
+    return dependencies.repository.listDocumentPage({
+      ...filters,
+      actorKey: JSON.stringify([actor.authUserId, actor.userId, actor.role, actor.active]),
+    });
   }
   return dependencies.repository.listDocumentPage({
     ...filters,
     ...documentFiltersForActor(actor),
+    actorKey: JSON.stringify([
+      actor.authUserId,
+      actor.userId,
+      actor.role,
+      actor.teamId,
+      actor.active,
+    ]),
   });
 }
 
@@ -593,7 +603,9 @@ const documentListPageSchema = z
     caseId: z.string().uuid().optional(),
     q: z.string().max(200).optional(),
     category: z.enum(DOCUMENT_CATEGORIES).optional(),
-    cursor: z.string().max(2048).optional(),
+    reviewStatus: z.enum(["pending", "verified", "rejected"]).optional(),
+    ownerId: z.string().uuid().optional(),
+    cursor: z.string().max(8192).optional(),
     limit: z.number().int().min(1).max(200).optional(),
   })
   .strict();

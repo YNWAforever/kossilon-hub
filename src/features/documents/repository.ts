@@ -8,8 +8,11 @@ import {
   type SqlClient,
 } from "@/server/db/client";
 import type postgres from "postgres";
-import { boundedPageSize, readTupleCursor, tupleCursor } from "@/server/db/pagination";
-export type DocumentListFilters = {
+import { boundedPageSize } from "@/server/db/pagination";
+import { decodeTimestampCursor, encodeListCursor } from "@/lib/list-page";
+import { documentScopeSql, type DocumentReadFilters } from "./list-scope";
+export type DocumentListFilters = DocumentReadFilters & {
+  actorKey?: string;
   id?: string;
   companyId?: string;
   caseId?: string;
@@ -197,6 +200,10 @@ export function assertDocumentCompanyAccess(
 
 type QueryClient = SqlClient | postgres.TransactionSql;
 type Tx = postgres.TransactionSql;
+function documentCursorKey(filters: DocumentListFilters) {
+  const { cursor: _cursor, ...query } = filters;
+  return JSON.stringify(query);
+}
 type IntentRow = {
   current_version_id?: string | null;
   scan_document_version_id?: string | null;
@@ -397,9 +404,12 @@ export type DocumentRepository = {
   getDocument(id: string): Promise<PrivateDocument | null>;
   getDocumentRecoveryPreview(id: string): Promise<DocumentRecoveryPreview | null>;
   listDocuments(filters?: DocumentListFilters): Promise<DocumentSummary[]>;
-  listDocumentPage(
-    filters?: DocumentListFilters,
-  ): Promise<{ documents: DocumentSummary[]; nextCursor: string | null }>;
+  listDocumentPage(filters?: DocumentListFilters): Promise<{
+    documents: DocumentSummary[];
+    nextCursor: string | null;
+    total: number;
+    observedAt: string;
+  }>;
   /**
    * The authoritative scope of one document/intent/company, for
    * `assertStaffDocumentAccess`. Loaded here rather than accepted from the
@@ -479,26 +489,13 @@ export function createDocumentRepository(
     extra = false,
   ) {
     const limit = boundedPageSize(filters.limit),
-      cursor = readTupleCursor(filters.cursor, 2);
-    const q = filters.q?.trim()
-      ? `%${filters.q.trim().replace(/[\\%_]/g, (c) => "\\" + c)}%`
-      : null;
+      cursor = decodeTimestampCursor(filters.cursor, documentCursorKey(filters));
     return client<DocumentRow[]>`
       with page as materialized (
-      select d.* from documents d join companies c on c.id=d.company_id
-      where (${filters.id ?? null}::uuid is null or d.id = ${filters.id ?? null})
-        and (${filters.companyId ?? null}::uuid is null or d.company_id = ${filters.companyId ?? null})
-        and (${filters.caseId ?? null}::uuid is null or d.case_id = ${filters.caseId ?? null})
-        and (${filters.category ?? null}::text is null or d.file_type=${filters.category ?? null})
-        and (${q}::text is null or d.file_name ilike ${q} escape '\\' or c.company_name ilike ${q} escape '\\')
+      select d.* from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id
+      where ${documentScopeSql(client, filters)}
         -- Send the boundary as text: postgres.js serializes timestamptz through JS Date, losing microseconds.
         and (${cursor === null} or d.uploaded_at<${cursor?.[0] ?? null}::text::timestamptz or (d.uploaded_at=${cursor?.[0] ?? null}::text::timestamptz and d.id>${cursor?.[1] ?? null}::uuid))
-        and (
-          (${filters.teamId ?? null}::uuid is null and ${filters.assignedUserId ?? null}::uuid is null)
-          or c.assigned_team_id = ${filters.teamId ?? null}::uuid
-          or exists(select 1 from annual_return_cases a where a.id=d.case_id and a.company_id=d.company_id
-            and (a.owner_id=${filters.assignedUserId ?? null}::uuid or a.reviewer_id=${filters.assignedUserId ?? null}::uuid))
-        )
       order by d.uploaded_at desc, d.id limit ${limit + (extra ? 1 : 0)})
       select d.*, d.uploaded_at::text as cursor_uploaded_at, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status,
         i.scan_verdict_source,i.scan_document_version_id,v.id current_version_id,i.id intent_id,v.verified_checksum_sha256,
@@ -520,7 +517,7 @@ export function createDocumentRepository(
     if (versions[0]?.intent_id)
       await tx`select id from document_upload_intents where id=${versions[0].intent_id} for update`;
     await tx`select id from document_versions where document_id=${id} and superseded_by_version_id is null for update`;
-    return (await documentRows({ id }, tx))[0];
+    return (await documentRows({ id, includeFixtures: true }, tx))[0];
   }
 
   return {
@@ -785,7 +782,7 @@ export function createDocumentRepository(
       });
     },
     async getDocument(id) {
-      const rows = await documentRows({ id });
+      const rows = await documentRows({ id, includeFixtures: true });
       const row = rows[0];
       if (
         !row ||
@@ -804,7 +801,7 @@ export function createDocumentRepository(
       };
     },
     async getDocumentRecoveryPreview(id) {
-      const [row] = await documentRows({ id });
+      const [row] = await documentRows({ id, includeFixtures: true });
       if (!row) return null;
       return {
         documentId: row.id,
@@ -851,8 +848,11 @@ export function createDocumentRepository(
       return rows[0] ? mapAccessSubject(rows[0]) : null;
     },
     async listDocuments(filters = {}) {
+      // Preserve the legacy explicit-company/internal adapter. The staff page
+      // and bulk selection both default to production rows through listDocumentPage.
+      const legacyFilters = { includeFixtures: true, ...filters };
       const limit = boundedPageSize(filters.limit),
-        rows = await documentRows(filters, sql, true);
+        rows = await documentRows(legacyFilters, sql, true);
       if (rows.length > limit)
         throw new Error(
           "Document list exceeds its bounded page; use listDocumentPage to continue.",
@@ -864,11 +864,18 @@ export function createDocumentRepository(
         rows = await documentRows(filters, sql, true);
       const page = rows.slice(0, limit).map(mapDocumentSummary),
         last = page.at(-1);
+      const [count] =
+        await sql`select count(*)::int total from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where ${documentScopeSql(sql, filters)}`;
       return {
         documents: page,
+        total: count.total,
+        observedAt: new Date().toISOString(),
         nextCursor:
           rows.length > limit && last
-            ? tupleCursor([rows[limit - 1].cursor_uploaded_at, last.id])
+            ? encodeListCursor(documentCursorKey(filters), [
+                rows[limit - 1].cursor_uploaded_at,
+                last.id,
+              ])
             : null,
       };
     },
@@ -980,7 +987,7 @@ export function createDocumentRepository(
     },
     reviewDocument(input) {
       return withTransaction(sql, async (tx) => {
-        const [initial] = await documentRows({ id: input.documentId }, tx);
+        const [initial] = await documentRows({ id: input.documentId, includeFixtures: true }, tx);
         if (!initial) throw new Error("Document not found.");
         if (!input.expectedVersionId || initial.current_version_id !== input.expectedVersionId)
           throw new DocumentVersionConflictError();

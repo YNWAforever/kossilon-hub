@@ -1,5 +1,7 @@
 # Execution ledger — plan: docs/superpowers/plans/2026-10-12-kossilon-staff-remediation.md
 
+The initial table below is the preserved first-batch record. Second-batch entries follow it; final candidate evidence is in batch2-release-dossier.md when available.
+
 Normal branch: codex/staff-remediation-20261012. Stack base:9f2483dfd80433afc3df38f99014bb37746c2168 (PR142). Code/test head:c88b530497d22159e2ceab22662f04a1a2dc620f. Release remains NO_GO.
 Input evidence ZIP SHA256:49aa13837926e25a5d058150c1b4b7c7b0442c326477ceb32020c1ca6445e2ee. Original65 UC historical result/actual/evidence/baseline fields preserved; tracker-preservation.json asserts unchanged cells. New results33partial/12blocked/20not-tested; no new full-scenario PASS claimed.
 

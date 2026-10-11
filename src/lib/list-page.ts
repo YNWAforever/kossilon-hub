@@ -36,3 +36,15 @@ export function decodeListCursor(
 export function literalContains(value: string): string {
   return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
 }
+export function decodeTimestampCursor(cursor: string | undefined, key: string): string[] | null {
+  const values = decodeListCursor(cursor, key, 2);
+  if (
+    values &&
+    (!z.string().uuid().safeParse(values[1]).success ||
+      !Number.isFinite(
+        new Date(values[0].replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00")).getTime(),
+      ))
+  )
+    throw Error("Invalid list cursor; return to the first page.");
+  return values;
+}

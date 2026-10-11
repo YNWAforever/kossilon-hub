@@ -700,10 +700,16 @@ describe.skipIf(!databaseUrl)("metadata document lineage", () => {
       });
       const wrap = (tx: postgres.TransactionSql, after: (text: string) => Promise<void>) =>
         Object.assign(
-          async (parts: TemplateStringsArray, ...values: unknown[]) => {
-            const rows = await tx(parts, ...(values as never[]));
-            await after(parts.join(" "));
-            return rows;
+          (parts: TemplateStringsArray, ...values: unknown[]) => {
+            const query = tx(parts, ...(values as never[]));
+            // Predicate fragments must stay lazy so postgres.js embeds them in
+            // the outer query. Observe only executable statements for lock timing.
+            if (!/^\s*(select|insert|update|delete|with)\b/i.test(parts.join(" "))) return query;
+            return (async () => {
+              const rows = await query;
+              await after(parts.join(" "));
+              return rows;
+            })();
           },
           { json: tx.json },
         ) as unknown as postgres.TransactionSql;
