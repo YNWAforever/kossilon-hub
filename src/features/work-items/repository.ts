@@ -569,13 +569,20 @@ export function createWorkItemRepository(
           cursor_sort_c: string;
         })[]
       >`
-        with scoped as (
-          select w.*,c.company_name,owner.name owner_name,ot.name owner_team_name,reviewer.name reviewer_name,rt.name reviewer_team_name,
-            a.filing_due_date::text,a.current_status case_status,p.status payment_status,
+          with scoped as (
+            select w.id,
             case when ${filters.sort === "recent"} then 0 when w.sla_due_at is null then 2 when w.sla_breached_at is not null then 0 else 1 end sort_a,
             case when ${filters.sort === "recent"} then to_timestamp(-extract(epoch from w.updated_at)) else coalesce(w.sla_due_at,'0001-01-01'::timestamptz) end sort_b,
             -w.priority sort_c
-          from work_items w left join companies c on c.id=w.company_id
+            from work_items w left join companies c on c.id=w.company_id where ${scope}
+          ), bounded as materialized (
+            select * from scoped
+            where (${cursor?.[3] ?? null}::uuid is null or (sort_a,sort_b,sort_c,id)>(${cursor?.[0] ?? "0"}::int,${cursor?.[1] ?? "1970-01-01T00:00:00Z"}::timestamptz,${cursor?.[2] ?? "0"}::int,${cursor?.[3] ?? null}::uuid))
+            order by sort_a,sort_b,sort_c,id limit ${limit + 1}
+          ) select w.*,c.company_name,owner.name owner_name,ot.name owner_team_name,reviewer.name reviewer_name,rt.name reviewer_team_name,
+              a.filing_due_date::text,a.current_status case_status,p.status payment_status,
+              b.sort_a::text cursor_sort_a,b.sort_b::text cursor_sort_b,b.sort_c::text cursor_sort_c
+            from bounded b join work_items w on w.id=b.id left join companies c on c.id=w.company_id
           left join users owner on owner.id=w.owner_id left join teams ot on ot.id=owner.team_id
           left join users reviewer on reviewer.id=w.reviewer_id left join teams rt on rt.id=reviewer.team_id
           left join annual_return_cases a on a.id=w.annual_return_case_id and a.company_id=w.company_id
@@ -584,10 +591,7 @@ export function createWorkItemRepository(
             and (${businessScope?.companyIds === undefined ? null : [...businessScope.companyIds]}::uuid[] is null or c.id=any(${businessScope?.companyIds === undefined ? null : [...businessScope.companyIds]}::uuid[]))
             and (${businessScope?.includeFixtures ?? false} or c.data_origin<>'fixture')
           left join payments p on p.case_id=a.id and p.company_id=c.id
-          where ${scope}
-        ) select *,sort_a::text cursor_sort_a,sort_b::text cursor_sort_b,sort_c::text cursor_sort_c from scoped
-        where (${cursor?.[3] ?? null}::uuid is null or (sort_a,sort_b,sort_c,id)>(${cursor?.[0] ?? "0"}::int,${cursor?.[1] ?? "1970-01-01T00:00:00Z"}::timestamptz,${cursor?.[2] ?? "0"}::int,${cursor?.[3] ?? null}::uuid))
-        order by sort_a,sort_b,sort_c,id limit ${limit + 1}`;
+        order by b.sort_a,b.sort_b,b.sort_c,w.id`;
       const page = rows.slice(0, limit),
         last = page.at(-1);
       return {

@@ -30,7 +30,7 @@ export function decodeListCursor(
     if (parsed.key !== encodeURIComponent(key)) throw Error("Changed query");
     return parsed.values;
   } catch {
-    throw Error("Invalid or changed list cursor; return to the first page.");
+    throw Error("Invalid list cursor or changed query; return to the first page.");
   }
 }
 export function literalContains(value: string): string {
