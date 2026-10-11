@@ -146,7 +146,12 @@ export function ProductionPaymentReview({
                 餘額：{money(row.payment.balance)}
               </p>
               <p>
-                {row.document ? row.document.fileName : "未有付款憑證"} · {row.proofCount}
+                {row.document
+                  ? row.document.fileName
+                  : row.proofCount > 0
+                    ? "已有付款憑證，待核對入賬"
+                    : "未有付款憑證"}{" "}
+                · {row.proofCount}
                 份憑證；法定申報日{row.filingDueDate}
               </p>
               {mode === "review" && row.document ? (

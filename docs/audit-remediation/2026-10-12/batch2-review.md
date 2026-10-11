@@ -1,0 +1,16 @@
+# Batch2 whole-branch review and rulings
+
+One fresh read-only GPT-6.1 Sol reviewer inspected base9f2483dfd80433afc3df38f99014bb37746c2168 to3a3a4a50625a2c48714259b02493dc8f8998b1fb. Critical:0. Important:3. Minor:1. Verdict:with fixes. The review included the plan's five Review Focus areas. Genuine role/browser sessions, native platform recovery, scheduler ticks, provider delivery, later UX scope and hosted SLA acceptance were explicitly declined for lack of evidence.
+
+All three Important findings and the Minor finding received one fix pass:
+
+- Team owner B carried into My work: list selected A while snapshot added a second owner B predicate. Removed the redundant owner predicate; the effective owner used by queueScopeSql now governs list/count/snapshot. My work navigation clears the incompatible owner URL filter. Real SQL RED reproduced snapshot0 versus list50, then GREEN verifies50 versus50.
+- Owner/type choices came only from the loaded page. Added a separately authorized, searchable, cursor-bound filter option endpoint capped50. It applies queue scope before distinct choices and joins names only for authorized rows. UI retains selected choices, supports more/retry and resets its cache scope with actor/view. SQL excludes foreign owner/type and includes row51; component test selects those choices from page1 and retains the selected owner after narrowing option search.
+- Documents default100/max200 violated the hard50 gate. Public schema and paged repository now reject51 and default50; UI loads50. Separately justified legacy internal listDocuments retains its old bounded adapter. Real SQL RED reproduced100 instead of50, then GREEN verifies default/explicit50 and rejection51. Bulk snapshot still selects all1000 authorized filtered rows from50 loaded rows.
+- Outstanding cases with proofCount>0 were labelled missing proof. Label now says the existing proof awaits posting/review, with a component assertion and no payment write.
+
+Exact regression commands and retained logs are in batch2-release-dossier.md / batch2-evidence-index.json. First review GREEN:7files35tests, then final extended GREEN:5files39tests,0skips. No follow-up reviewer was spawned.
+
+Local whole-suite failures are retained: the first run used DATABASE_SSL=false although three direct postgres test clients require the explicit disable value. A second run on3a3a4a5 with disable recorded Today asynchronous UI1s timeout and 500-row scenario120s timeout, then was interrupted to address review findings. The UI test now allows5s for query notification; the500-row scenario allows240s for multiple complete SQL import/replay passes. Assertions, zero-skip integration requirement and production/provider gates remain unchanged. These are test harness budgets, not hosted performance PASS evidence.
+
+Production/outbound remain held; native role UAT and full release gates remain NO_GO.

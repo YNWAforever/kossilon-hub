@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { queueSearch, safeListReturnTo } from "@/lib/list-navigation";
 import { useRetainedPage } from "@/lib/use-retained-page";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, type SearchSchemaInput } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -27,6 +27,7 @@ import {
   acknowledgeWorkItemEscalation,
   assignWorkItem,
   listWorkQueuePage,
+  listWorkQueueFilterOptions,
   recommendWorkItemAssignees,
 } from "@/features/work-items/server-fns";
 import { cn } from "@/lib/utils";
@@ -100,29 +101,6 @@ export function WorkQueueRoute() {
   });
   const page = useRetainedPage(JSON.stringify([actorScope, filters]), queueQuery.data);
   const items = useMemo(() => page?.items ?? [], [page]);
-  const owners = useMemo(
-    () =>
-      assignmentLabels(
-        items.flatMap((item) =>
-          item.ownerId
-            ? [
-                {
-                  userId: item.ownerId,
-                  displayName: item.ownerName ?? "",
-                  teamName: item.ownerTeamName ?? null,
-                  active: true,
-                  workload: 0,
-                },
-              ]
-            : [],
-        ),
-      ),
-    [items],
-  );
-  const workTypes = useMemo(
-    () => Array.from(new Set(items.map((item) => item.workType))).sort(),
-    [items],
-  );
   const visibleItems = items;
   const bulkFilters: BulkFilters = {
     view,
@@ -188,7 +166,13 @@ export function WorkQueueRoute() {
               <Link
                 key={value}
                 to="/work-queue"
-                search={{ ...search, view: value, cursor: undefined, anchor: undefined }}
+                search={{
+                  ...search,
+                  view: value,
+                  ...(value === "mine" ? { owner: "all" } : {}),
+                  cursor: undefined,
+                  anchor: undefined,
+                }}
                 className={cn(
                   "min-h-9 border-b-2 px-3 py-2 text-sm font-medium",
                   view === value
@@ -223,31 +207,24 @@ export function WorkQueueRoute() {
         </div>
 
         <div className="grid gap-2 border-b border-border py-3 sm:grid-cols-2 xl:grid-cols-5">
-          <FilterSelect
+          <QueueFacetSelect
+            key={actorScope + view + "owner"}
+            actorScope={actorScope}
+            view={view}
+            kind="owner"
             label="Filter by owner"
             value={owner}
             onChange={(value) => setFilter("owner", value)}
-          >
-            <option value="all">All owners</option>
-            <option value="unassigned">Unassigned</option>
-            {[...owners].map(([ownerId, label]) => (
-              <option key={ownerId} value={ownerId}>
-                {label}
-              </option>
-            ))}
-          </FilterSelect>
-          <FilterSelect
+          />
+          <QueueFacetSelect
+            key={actorScope + view + "workType"}
+            actorScope={actorScope}
+            view={view}
+            kind="workType"
             label="Filter by work type"
             value={workType}
             onChange={(value) => setFilter("workType", value)}
-          >
-            <option value="all">All work types</option>
-            {workTypes.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </FilterSelect>
+          />
           <FilterSelect
             label="Filter by SLA state"
             value={sla}
@@ -739,6 +716,92 @@ function BusinessBlockers({ item }: { item: PersistedWorkItem }) {
           </ul>
         </details>
       )}
+    </div>
+  );
+}
+
+function QueueFacetSelect({
+  actorScope,
+  view,
+  kind,
+  label,
+  value,
+  onChange,
+}: {
+  actorScope: string;
+  view: "mine" | "team" | "breached";
+  kind: "owner" | "workType";
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [chosen, setChosen] = useState<{ id: string; label: string } | null>(null);
+  const choices = useInfiniteQuery({
+    queryKey: ["queue-filter-options", actorScope, view, kind, q],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listWorkQueueFilterOptions({ data: { view, kind, q, cursor: pageParam, limit: 50 } }),
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    retry: false,
+  });
+  const options = new Map(
+    (choices.data?.pages ?? []).flatMap((page) =>
+      page.items.map((item) => [item.id, item.label] as const),
+    ),
+  );
+  if (value !== "all" && value !== "unassigned" && !options.has(value))
+    options.set(
+      value,
+      chosen?.id === value ? chosen.label : kind === "workType" ? value : "目前選擇的負責人",
+    );
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <input
+        aria-label={kind === "owner" ? "搜尋負責人選項" : "搜尋工作類型選項"}
+        value={q}
+        onChange={(event) => setQ(event.target.value)}
+        placeholder={kind === "owner" ? "搜尋負責人" : "搜尋工作類型"}
+        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+      />
+      <FilterSelect
+        label={label}
+        value={value}
+        onChange={(id) => {
+          setChosen({ id, label: options.get(id) ?? id });
+          onChange(id);
+        }}
+      >
+        <option value="all">{kind === "owner" ? "All owners" : "All work types"}</option>
+        {kind === "owner" ? <option value="unassigned">Unassigned</option> : null}
+        {[...options].map(([id, text]) => (
+          <option key={id} value={id}>
+            {text}
+          </option>
+        ))}
+      </FilterSelect>
+      {choices.isPending ? <p role="status">選項載入中</p> : null}
+      {choices.isError ? (
+        <button
+          type="button"
+          className="min-h-9 border px-2"
+          onClick={() =>
+            choices.isFetchNextPageError ? void choices.fetchNextPage() : void choices.refetch()
+          }
+        >
+          重試篩選選項
+        </button>
+      ) : null}
+      {choices.hasNextPage ? (
+        <button
+          type="button"
+          className="min-h-9 border px-2"
+          disabled={choices.isFetchingNextPage}
+          onClick={() => void choices.fetchNextPage()}
+        >
+          載入更多{kind === "owner" ? "負責人" : "工作類型"}
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   page: vi.fn(),
+  options: vi.fn(),
+  search: null as Record<string, string> | null,
   recommend: vi.fn(),
   assign: vi.fn(),
   ack: vi.fn(),
@@ -16,6 +18,25 @@ vi.mock("@/components/bulk-selection-toolbar", () => ({
   ),
 }));
 vi.mock("@/features/work-items/server-fns", () => ({
+  listWorkQueueFilterOptions: async (input: { data: { kind: string } }) => {
+    if (mocks.options.getMockImplementation()) return mocks.options(input);
+    const items = (await mocks.list()) ?? [];
+    return {
+      items:
+        input.data.kind === "owner"
+          ? items
+              .filter((x: { ownerId?: string }) => x.ownerId)
+              .map((x: { ownerId: string; ownerName: string; ownerTeamName?: string }) => ({
+                id: x.ownerId,
+                label: x.ownerName + (x.ownerTeamName ? " · " + x.ownerTeamName : ""),
+              }))
+          : [...new Set(items.map((x: { workType: string }) => x.workType))].map((id) => ({
+              id,
+              label: id,
+            })),
+      nextCursor: null,
+    };
+  },
   listWorkQueue: mocks.list,
   listWorkQueuePage: async (input: unknown) => {
     if (mocks.page.getMockImplementation()) return mocks.page(input);
@@ -39,28 +60,95 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   createFileRoute: () => (options: object) => ({
     ...options,
-    useSearch: () => ({
-      view: "team",
-      owner: "all",
-      workType: "all",
-      sla: "all",
-      priority: "all",
-      status: "all",
-    }),
+    useSearch: () =>
+      mocks.search ?? {
+        view: "team",
+        owner: "all",
+        workType: "all",
+        sla: "all",
+        priority: "all",
+        status: "all",
+      },
     useNavigate: () => mocks.navigate,
     useRouteContext: () => ({
       dataMode: "production",
       actor: { userId: "admin", authUserId: "auth", role: "Admin", teamId: null, active: true },
     }),
   }),
-  Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  Link: ({ children, search }: { children: React.ReactNode; search: unknown }) => (
+    <span data-search={JSON.stringify(search)}>{children}</span>
+  ),
 }));
 import { WorkQueueRoute } from "./work-queue";
 afterEach(() => {
   cleanup();
   mocks.page.mockReset();
+  mocks.options.mockReset();
+  mocks.search = null;
 });
 describe("work queue assignment and blockers", () => {
+  it("offers authorized owner and type found beyond the loaded page and retains a narrowed selection", async () => {
+    mocks.page.mockResolvedValue({
+      items: [],
+      total: 51,
+      nextCursor: "next",
+      observedAt: "2026-10-12T00:00:00Z",
+      metrics: { dueToday: 0, atRisk: 0, breached: 0, unassigned: 0 },
+    });
+    mocks.options.mockImplementation(({ data }: { data: { kind: string; q: string } }) =>
+      Promise.resolve({
+        items: data.q
+          ? []
+          : [
+              {
+                id: data.kind === "owner" ? "20000000-0000-0000-0000-000000000099" : "later_type",
+                label: data.kind === "owner" ? "Owner beyond row50" : "later_type",
+              },
+            ],
+        nextCursor: null,
+      }),
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const rendered = render(
+      <QueryClientProvider client={client}>
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+    await screen.findByRole("option", { name: "Owner beyond row50" });
+    expect(screen.getByRole("option", { name: "later_type" })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Filter by owner"), {
+      target: { value: "20000000-0000-0000-0000-000000000099" },
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        search: expect.objectContaining({ owner: "20000000-0000-0000-0000-000000000099" }),
+      }),
+    );
+    expect(mocks.options).toHaveBeenCalledWith({
+      data: expect.objectContaining({ kind: "owner", view: "team", limit: 50 }),
+    });
+    mocks.search = {
+      view: "team",
+      owner: "20000000-0000-0000-0000-000000000099",
+      workType: "all",
+      sla: "all",
+      priority: "all",
+      status: "all",
+    };
+    rendered.rerender(
+      <QueryClientProvider client={client}>
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText("My work").getAttribute("data-search")).toContain('"owner":"all"');
+    fireEvent.change(screen.getByLabelText("搜尋負責人選項"), { target: { value: "no match" } });
+    await waitFor(() =>
+      expect(mocks.options).toHaveBeenCalledWith({
+        data: expect.objectContaining({ q: "no match" }),
+      }),
+    );
+    expect(screen.getByRole("option", { name: "Owner beyond row50" })).toBeTruthy();
+  });
   it("reads a bounded server page and displays the server total rather than loaded rows", async () => {
     mocks.page.mockResolvedValue({
       items: [],

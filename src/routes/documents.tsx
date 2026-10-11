@@ -109,7 +109,7 @@ function DocumentsRoute() {
       listDocumentPage({
         data: {
           ...documentFilters,
-          limit: 100,
+          limit: 50,
           cursor: search.cursor,
         },
       }),
@@ -234,7 +234,7 @@ function DocumentsRoute() {
           }}
           page={productionDocuments.map((d) => ({ id: d.id, label: d.fileName }))}
           total={documentPage?.total ?? null}
-          pageSize={100}
+          pageSize={50}
           maintenanceActions={[
             "document_assignment",
             "document_return_draft",

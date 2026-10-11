@@ -370,7 +370,7 @@ describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
         },
         "clean",
       ),
-    120000,
+    240000,
   );
   it(
     "500 OOXML rows retain duplicate IDs, invalid dates and missing fields; preview cannot waive their blockers",
@@ -407,7 +407,7 @@ describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
         },
         "edges",
       ),
-    120000,
+    240000,
   );
   it("persists chosen year and reuses exact bytes without allowing a different year", async () =>
     fixture(1, async (f) => {

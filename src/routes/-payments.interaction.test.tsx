@@ -85,6 +85,30 @@ function renderPayments() {
 }
 
 describe("production payments route", () => {
+  it("distinguishes outstanding debt with existing proof from missing proof", async () => {
+    serverFns.workspace.mockResolvedValue({
+      items: [
+        {
+          rowId: "debt",
+          kind: "outstanding",
+          caseId: "case",
+          companyName: "Proof still under review",
+          filingDueDate: "2026-10-12",
+          proofCount: 2,
+          document: null,
+          payment: { id: "payment", amount: 1200, receivedAmount: 0, balance: 1200 },
+        },
+      ],
+      total: 1,
+      nextCursor: null,
+      observedAt: "2026-10-12T00:00:00Z",
+    });
+    renderPayments();
+    fireEvent.click(screen.getByText("欠款／未有憑證"));
+    await screen.findByText(/已有付款憑證，待核對入賬/);
+    expect(screen.queryByText(/^未有付款憑證/)).toBeNull();
+    expect(serverFns.record).not.toHaveBeenCalled();
+  });
   it("shows case201 debt without a proof through the bounded workspace", async () => {
     serverFns.workspace.mockResolvedValue({
       items: [

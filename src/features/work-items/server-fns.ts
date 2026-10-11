@@ -5,6 +5,7 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import { caseFiltersForActor } from "@/features/annual-return/permissions";
 import type { createWorkItemRepository, PersistedWorkItem, QueueFilters } from "./repository";
 import { workQueuePageInputSchema } from "./queue-page";
+import { queueFilterOptionsSchema } from "./queue-filter-options";
 
 const loadWorkItemServerDependencies = createServerOnlyFn(async () => {
   const [{ getRequest }, { requireStaffActor }, { createWorkItemRepository }] = await Promise.all([
@@ -243,6 +244,27 @@ export const listWorkQueuePage = createServerFn({ method: "GET" })
           teamId: actor.teamId,
           active: actor.active,
         }),
+      ),
+    ),
+  );
+
+export const listWorkQueueFilterOptions = createServerFn({ method: "GET" })
+  .validator(queueFilterOptionsSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      repository.listQueueFilterOptions(
+        {
+          ...queueFiltersForActor(actor, { view: data.view }),
+          ...(data.view === "breached" ? { escalationState: "breach" as const } : {}),
+          actorKey: JSON.stringify([
+            actor.authUserId,
+            actor.userId,
+            actor.role,
+            actor.teamId,
+            actor.active,
+          ]),
+        },
+        data,
       ),
     ),
   );

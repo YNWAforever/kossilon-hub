@@ -203,7 +203,7 @@ export function createBulkOperationsRepository({
    })}
    and (${ids ? [...ids] : null}::uuid[] is null or w.id=any(${ids ? [...ids] : null}::uuid[]))
    and (${filters.teamId ?? null}::uuid is null or w.team_id=${filters.teamId ?? null}::uuid)
-   and (${filters.ownerId ?? null}::uuid is null or w.owner_id=${filters.ownerId ?? null}::uuid) order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
+   order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
   }
   const snapshotItems = (rows: ResourceRow[]): SnapshotItem[] =>
     rows.map((r) => ({ id: r.id, version: r.version, reason: r.locked ? "locked" : null }));

@@ -597,7 +597,7 @@ export const listDocuments = createServerFn({ method: "GET" })
       listDocumentsForActor(actor, data, dependencies),
     ),
   );
-const documentListPageSchema = z
+export const documentListPageSchema = z
   .object({
     companyId: z.string().uuid().optional(),
     caseId: z.string().uuid().optional(),
@@ -606,7 +606,7 @@ const documentListPageSchema = z
     reviewStatus: z.enum(["pending", "verified", "rejected"]).optional(),
     ownerId: z.string().uuid().optional(),
     cursor: z.string().max(8192).optional(),
-    limit: z.number().int().min(1).max(200).optional(),
+    limit: z.number().int().min(1).max(50).optional(),
   })
   .strict();
 export const listDocumentPage = createServerFn({ method: "GET" })

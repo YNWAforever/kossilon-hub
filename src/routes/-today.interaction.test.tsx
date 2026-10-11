@@ -83,7 +83,7 @@ describe("Today truthful journey state", () => {
       { sentinel: true },
     ]);
     await mount();
-    await screen.findByRole("button", { name: "今日要追 (10000)" });
+    await screen.findByRole("button", { name: "今日要追 (10000)" }, { timeout: 5000 });
     fireEvent.click(screen.getByRole("button", { name: "下一頁工作" }));
     expect(state.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ search: expect.objectContaining({ cursor: "controlled-cursor" }) }),

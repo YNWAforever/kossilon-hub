@@ -17,6 +17,11 @@ import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 import { z } from "zod";
 import { decodeListCursor, encodeListCursor, listPageSize, type ListPage } from "@/lib/list-page";
 import { queueScopeSql } from "./queue-scope";
+import {
+  readQueueFilterOptions,
+  type QueueFilterOptionsInput,
+  type QueueFilterOptionPage,
+} from "./queue-filter-options";
 import type { WorkQueueSummary } from "./queue-page";
 import {
   caseBusinessContext,
@@ -454,6 +459,10 @@ export async function ensureWorkItemForEvent(
 }
 
 export type WorkItemRepository = {
+  listQueueFilterOptions(
+    scope: QueueFilters,
+    input: QueueFilterOptionsInput,
+  ): Promise<QueueFilterOptionPage>;
   listQueue(filters?: QueueFilters, businessScope?: CaseFilters): Promise<PersistedWorkItem[]>;
   listQueuePage(
     filters?: QueueFilters,
@@ -499,6 +508,7 @@ export function createWorkItemRepository(
     typeof options.now === "function" ? options.now() : (options.now ?? new Date().toISOString());
 
   const repository: WorkItemRepository = {
+    listQueueFilterOptions: (scope, input) => readQueueFilterOptions(sql, scope, input),
     async listQueue(filters = {}, businessScope) {
       const statuses = filters.statuses ?? ["open", "in_progress", "blocked"];
       const rows = await sql<WorkItemRow[]>`

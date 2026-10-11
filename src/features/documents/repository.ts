@@ -9,7 +9,7 @@ import {
 } from "@/server/db/client";
 import type postgres from "postgres";
 import { boundedPageSize } from "@/server/db/pagination";
-import { decodeTimestampCursor, encodeListCursor } from "@/lib/list-page";
+import { decodeTimestampCursor, encodeListCursor, listPageSize } from "@/lib/list-page";
 import { documentScopeSql, type DocumentReadFilters } from "./list-scope";
 export type DocumentListFilters = DocumentReadFilters & {
   actorKey?: string;
@@ -860,8 +860,9 @@ export function createDocumentRepository(
       return rows.map(mapDocumentSummary);
     },
     async listDocumentPage(filters = {}) {
-      const limit = boundedPageSize(filters.limit),
-        rows = await documentRows(filters, sql, true);
+      const limit = listPageSize.parse(filters.limit);
+      filters = { ...filters, limit };
+      const rows = await documentRows(filters, sql, true);
       const page = rows.slice(0, limit).map(mapDocumentSummary),
         last = page.at(-1);
       const [count] =
