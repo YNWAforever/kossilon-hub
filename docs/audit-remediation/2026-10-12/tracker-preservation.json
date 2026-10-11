@@ -1,0 +1,22 @@
+{
+  "user_cases": 65,
+  "tasks": 14,
+  "frozen_uc_fields": [
+    "user_case_id",
+    "finding_ids",
+    "actual",
+    "result",
+    "evidence_ids",
+    "baseline_result",
+    "baseline_actual",
+    "baseline_evidence_ids"
+  ],
+  "baseline_cells_unchanged": true,
+  "new_candidate_results": {
+    "partial": 33,
+    "blocked": 12,
+    "not-tested": 20,
+    "pass": 0
+  },
+  "verified_at_hkt": "2026-10-12T02:19:09.970804+08:00"
+}

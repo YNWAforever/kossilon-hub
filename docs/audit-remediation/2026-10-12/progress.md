@@ -1,0 +1,25 @@
+# Execution ledger — plan: docs/superpowers/plans/2026-10-12-kossilon-staff-remediation.md
+
+Normal branch: codex/staff-remediation-20261012. Stack base:9f2483dfd80433afc3df38f99014bb37746c2168 (PR142). Code/test head:c88b530497d22159e2ceab22662f04a1a2dc620f. Release remains NO_GO.
+Input evidence ZIP SHA256:49aa13837926e25a5d058150c1b4b7c7b0442c326477ceb32020c1ca6445e2ee. Original65 UC historical result/actual/evidence/baseline fields preserved; tracker-preservation.json asserts unchanged cells. New results33partial/12blocked/20not-tested; no new full-scenario PASS claimed.
+
+| Task | Current state/evidence | Next/owner |
+|---|---|---|
+| R25.1 | 進行中: reused independent PR144 source2063d082; normal npm install/audit0/SBOM;1,773 tests0skip; Cloudflare and Vercel Node24 builds retained | Security/Release: isolated production-runtime compatibility and deployed artifact before promotion |
+| R25.2–3 | 進行中: fresh read-only production/staging catalog; ledger66/hash0/source50; marker absent,147 candidate columns missing; four pending unapproved email rows; latest tickSep30 | DB: populated restore/reconciliation; Scheduler: sole owner/source and3native ticks; Ops: provenance/recipient/consent. Outbound hold retained. |
+| R14 | 待驗收:99c74f0d175672fda306c1dfe558380b728e3c04; two real PG foreign-row RED; scoped list/count/detail GREEN13 exact tests0skip / expanded32 | QA/Auth: genuine five-role sessions, guessed IDs/revocation and ClientA/B |
+| R18.1 | Source verified; parentR18進行中:fb1c66208dd195079545527c087ccfffe83dbe8d; review fix6e70d707baae76177d8974542801467da1f49828; exact14tests0skip | R18.2–3 global snapshots/results recovery next; preserve unknown/idempotency controls |
+| R24 | 待驗收:5700833dffdd4dd8205a78aee679e702e2b753f9; session/actor fault RED→GREEN; original auth tests retained; no cookie changes | QA/Auth: real callback/reload/consumed-link/retry acceptance |
+| R26 | 待驗收: reuse PR142/143 fixes; exact9files77tests0skip; audit HK midnight testc88b530 | QA: real role/device scenarios and500-row workbook |
+| R16/R17 | 待開始; independent of provider availability | Backend/Frontend: bounded Queue/URL, document search,201-case payment join/unpaid view |
+| R15/R19/R20/R21/R18.2–3/R22 | 待開始; delivery dependencies retained in task tracker | Daily/company workflows,300-case lists,101threads/201messages, global snapshots, result/handoff UX |
+| R27 | 受阻; no native provider or external send execution | Integration/Ops: approved namespace/corpus/scanner/OCR/AI, WOZTELL recipient and filing receipt capability |
+| R23 | 進行中; local dossier ready; productionReleaseGate NO_GO; new-head CI recorded separately | Release/QA: exact-head CI plus missing runtime/restore/roles/capacity/provider/rollback acceptance |
+
+Reviewed source:252files/2,370tests0skip with maxWorkers4; unrestricted local concurrency's Today lazy-import1s wait failure retained. Lint/types pass (2lint warnings); builds/imports pass; local demo browser12tests390/1280 plus6tests1366 pass. Staging guard blocks before network:14required bindings absent. See release-dossier.md/evidence-index.json for exact commands/failures/artifact hashes.
+
+Rulings: reuse clean linked worktree on new branch; normal commits and stacked PR preserve all three other worktrees/history. PR144 security stays separate from UX schema. Initial graph calls timed out; subsequent indexing succeeded and graph discovery resumed. Startup57P03, EPERM, wrong seed name, test-label mistake and no-env skips are setup evidence, not product RED.
+
+One required independent read-only Sol review found one Important cross-team draft/list vs snapshot mismatch and no Critical. Reproduced3vs2 on PG; list now consumes existing caseFiltersForActor without widening bulk/changing send-by-ID;29targeted tests pass. Reviewer's exclusions (new read models, native/runtime/capacity/role UAT and wider recovery UX) remain open in trackers/dossier. No second reviewer or implementation subagent.
+
+Next batch: R25.2 populated restore/physical contract; R16→R17 local read models; R26 capacity workbook and independent R21 history. Missing staging/providers are specific acceptance blockers, not blanket implementation blockers. No production migration/deployment/accounts/roles/native scheduler/customer outbound mutation performed.

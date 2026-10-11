@@ -1,0 +1,71 @@
+{
+  "observedAt": "2026-10-11T17:57:21.787Z",
+  "authority": "local installed trees only; production artifact not observed",
+  "advisory": "https://github.com/TanStack/router/security/advisories/GHSA-qx66-fv34-fjm8",
+  "maintenanceSource": "2063d08272a647f8475b3e43aaa0b2e203b254b2",
+  "candidateSource": "c88b530497d22159e2ceab22662f04a1a2dc620f",
+  "trees": {
+    "candidate": {
+      "installed": {
+        "@tanstack/react-start": "1.168.60",
+        "@tanstack/start-server-core": "1.169.39",
+        "@tanstack/react-router": "1.170.41",
+        "better-auth": "1.6.23",
+        "lru-cache": "11.5.3",
+        "vite": "8.0.16"
+      },
+      "locks": {
+        "bun.lock": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+        "package-lock.json": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465"
+      }
+    },
+    "maintenance": {
+      "installed": {
+        "@tanstack/react-start": "1.168.60",
+        "@tanstack/start-server-core": "1.169.39",
+        "@tanstack/react-router": "1.170.41",
+        "better-auth": "1.6.23",
+        "lru-cache": "11.5.3",
+        "vite": "8.0.16"
+      },
+      "locks": {
+        "bun.lock": "6f6cb8b2df0dba06811bc40a7905d44d003e55881bcb11495f04791d21a2249d",
+        "package-lock.json": "c1f67a131af5a75914e0a9dff9f41ff19e17cab1928a29cba7f1e08f39430adf"
+      }
+    }
+  },
+  "artifactManifests": {
+    "candidate": "0739ae23e22af4606c8b7114e467e17eeb9f421cecebbebccced7810b8125566",
+    "maintenance_cloudflare": "66bb8ebd93cf698dccc0b9020dce3a9a3b9b57c7aff7a16e141c8cc5e70f31a5",
+    "maintenance_vercel": "9274fee271d9d0ee064f69356cce5d0dd485604636e28f35c4cd30c821f8cd3c"
+  },
+  "maintenanceInstall": {
+    "command": "npm ci",
+    "ignore_scripts": false,
+    "exit_code": 0,
+    "audit_vulnerabilities": 0,
+    "full_test_pass": 1773,
+    "full_test_skip": 0,
+    "build": "PASS",
+    "production_compatibility": "NOT_ACCEPTED: deployed artifact and production runtime contract unverified"
+  },
+  "candidateInstall": {
+    "command": "bun install --frozen-lockfile",
+    "bun": "1.4.2",
+    "exit_code": 0,
+    "bun_audit_vulnerabilities": 0,
+    "npm_audit_vulnerabilities": 0
+  },
+  "schemaDiffMaintenanceVsLiveSource": {
+    "files_changed_under_db_migrations_and_src_server_db": [],
+    "comparison": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215..2063d08272a647f8475b3e43aaa0b2e203b254b2"
+  },
+  "maintenanceBuildTargets": {
+    "default": "cloudflare-module",
+    "explicit_environment": "NITRO_PRESET=vercel",
+    "source_config_mutated": false,
+    "vercel_artifact": ".worktrees/maintenance-2063-20261012/.vercel/output",
+    "node_runtime": "nodejs24.x",
+    "production_match": "NOT_VERIFIED: locally built platform artifact does not prove deployed installed/runtime parity"
+  }
+}
