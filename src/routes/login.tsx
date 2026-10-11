@@ -12,6 +12,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
 import { useAuth } from "@/features/auth/auth-context-neon";
+import { authResolutionMessage, classifyAuthError } from "@/features/auth/auth-result";
 import {
   consumeRedirectPath,
   getSafeRedirectPath,
@@ -39,6 +40,8 @@ export function LoginPage() {
   const {
     session,
     isHydrated,
+    resolution,
+    refreshSession,
     login,
     loginWithMagicLink,
     loginWithGoogle,
@@ -54,6 +57,11 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [denied, setDenied] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("error");
+    if (code === "INVALID_TOKEN") setError(authResolutionMessage(classifyAuthError({ code })));
+  }, []);
 
   useEffect(() => {
     if (!isHydrated || !session) return;
@@ -240,6 +248,22 @@ export function LoginPage() {
             </div>
           )}
 
+          {isHydrated &&
+          resolution &&
+          resolution.kind !== "authenticated" &&
+          resolution.kind !== "unauthenticated" ? (
+            <div role="alert" className="mt-4 space-y-2 rounded border p-3">
+              <p>{authResolutionMessage(resolution)}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  void refreshSession();
+                }}
+              >
+                重試身份驗證
+              </button>
+            </div>
+          ) : null}
           <form onSubmit={submitLogin} className="mt-4 space-y-4">
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">Email</span>
