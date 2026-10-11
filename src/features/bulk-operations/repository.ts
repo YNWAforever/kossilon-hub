@@ -151,6 +151,7 @@ export function createBulkOperationsRepository({
             "paymentStatus",
             "overdueOnly",
             "includeFixtures",
+            "selectionContext",
           ])
         : new Set([
             "q",
@@ -220,12 +221,14 @@ export function createBulkOperationsRepository({
     const data = previewSchema.parse(input);
     const verified = await currentActor(sql, actor);
     let items: SnapshotItem[];
+    let filters = data.filters ?? {};
     if (data.selection.mode === "filtered_snapshot") {
       const [s] = await sql<
-        { resource: BulkResource; items: SnapshotItem[] }[]
-      >`select resource,items from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
+        { resource: BulkResource; items: SnapshotItem[]; filters: BulkFilters }[]
+      >`select resource,items,filters from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
       if (!s || s.resource !== data.resource)
         throw new Error("Forbidden: own unexpired matching snapshot required.");
+      filters = s.filters;
       const excluded = new Set(data.selection.excludedIds);
       const all = new Set(s.items.map((i) => i.id));
       if ([...excluded].some((id) => !all.has(id)))
@@ -237,7 +240,7 @@ export function createBulkOperationsRepository({
             sql,
             verified,
             data.resource,
-            {},
+            filters,
             items.map((i) => i.id),
           )
         ).map((r) => [r.id, r]),
@@ -249,7 +252,7 @@ export function createBulkOperationsRepository({
     } else {
       const ids = unique(data.selection.ids);
       const current = new Map(
-        (await resources(sql, verified, data.resource, {}, ids)).map((r) => [r.id, r]),
+        (await resources(sql, verified, data.resource, filters, ids)).map((r) => [r.id, r]),
       );
       items = ids.map((id) => {
         const r = current.get(id);
@@ -344,12 +347,14 @@ export function createBulkOperationsRepository({
     definition.permission(verified);
     if (definition.resource !== data.resource) throw new Error("Action does not match resource.");
     let items: SnapshotItem[];
+    let filters = data.filters ?? {};
     if (data.selection.mode === "filtered_snapshot") {
       const [saved] = await sql<
-        { resource: BulkResource; items: SnapshotItem[] }[]
-      >`select resource,items from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
+        { resource: BulkResource; items: SnapshotItem[]; filters: BulkFilters }[]
+      >`select resource,items,filters from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
       if (!saved || saved.resource !== data.resource)
         throw new Error("Forbidden: own matching unexpired snapshot required.");
+      filters = saved.filters;
       const excluded = new Set(data.selection.excludedIds),
         original = new Set(saved.items.map((i) => i.id));
       if ([...excluded].some((id) => !original.has(id)))
@@ -362,7 +367,7 @@ export function createBulkOperationsRepository({
           sql,
           verified,
           data.resource,
-          {},
+          filters,
           items.map((i) => i.id),
         )
       ).map((r) => [r.id, r]),

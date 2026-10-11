@@ -175,6 +175,7 @@ type QueryClient = SqlClient | postgres.TransactionSql;
 type TransactionSqlClient = postgres.TransactionSql;
 
 export type CaseFilters = {
+  selectionContext?: "whatsapp_draft_cases";
   /** Internal server scope only; never accepted from client authority. */
   caseIds?: readonly string[];
   activeOnly?: boolean;

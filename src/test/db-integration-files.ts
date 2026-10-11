@@ -14,6 +14,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/admin/repository.integration.test.ts",
   "src/features/bulk-operations/repository.integration.test.ts",
   "src/features/bulk-operations/actions.integration.test.ts",
+  "src/features/bulk-operations/selection-scope.integration.test.ts",
   "src/features/nar-import/apply.integration.test.ts",
   "scripts/audit-schema-readiness.test.ts",
   "scripts/prepare-historical-schema-release.test.ts",

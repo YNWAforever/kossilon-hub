@@ -1,6 +1,7 @@
 import type postgres from "postgres";
 import type { SqlClient } from "@/server/db/client";
 import type { CaseFilters } from "./repository";
+import { whatsappDraftCasesSql } from "./follow-up-scope";
 
 type Query = SqlClient | postgres.TransactionSql;
 
@@ -35,6 +36,7 @@ export function caseScopeSql(sql: Query, filters: CaseFilters, today: string) {
   const companyIds = filters.companyIds ? [...filters.companyIds] : null;
   return sql`
     (${filters.ownerId ?? null}::uuid is null or arc.owner_id=${filters.ownerId ?? null}::uuid)
+    and ${filters.selectionContext === "whatsapp_draft_cases" ? whatsappDraftCasesSql(sql) : sql`true`}
     and (${filters.caseIds ? [...filters.caseIds] : null}::uuid[] is null or arc.id=any(${filters.caseIds ? [...filters.caseIds] : null}::uuid[]))
     and (${filters.includeFixtures === true} or c.data_origin<>'fixture')
     and (${filters.activeOnly !== true} or ${activeCaseSql(sql)})

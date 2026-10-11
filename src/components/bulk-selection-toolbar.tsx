@@ -147,7 +147,9 @@ function SelectionControls({
               : actionKind === "document_return_draft"
                 ? { kind: actionKind, reasons: returnReasons }
                 : { kind: actionKind };
-        return previewBulkMaintenance({ data: { resource, selection, action } });
+        return previewBulkMaintenance({
+          data: { resource, selection, action, ...(filters.selectionContext ? { filters } : {}) },
+        });
       }
       if (resource !== "annual_return_case" && resource !== "work_item")
         throw new Error("Unsupported assignment resource");
@@ -155,6 +157,7 @@ function SelectionControls({
         data: {
           resource,
           selection,
+          ...(filters.selectionContext ? { filters } : {}),
           assignment: {
             target,
             assigneeId,

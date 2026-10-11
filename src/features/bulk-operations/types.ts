@@ -19,6 +19,7 @@ export const selectionSchema = z.discriminatedUnion("mode", [
 export const scopeFiltersSchema = z
   .object({
     q: z.string().trim().min(1).max(120).optional(),
+    selectionContext: z.literal("whatsapp_draft_cases").optional(),
     ownerId: z.string().uuid().optional(),
     reviewerId: z.string().uuid().optional(),
     teamId: z.string().uuid().optional(),
@@ -56,6 +57,7 @@ export const previewSchema = z
     resource: z.enum(["annual_return_case", "work_item"]),
     selection: selectionSchema,
     assignment: assignmentSchema,
+    filters: scopeFiltersSchema.optional(),
   })
   .strict();
 export const maintenanceActionSchema = z.discriminatedUnion("kind", [
@@ -83,7 +85,12 @@ export const maintenanceActionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("payment_list_export") }).strict(),
 ]);
 export const previewActionSchema = z
-  .object({ resource: resourceSchema, selection: selectionSchema, action: maintenanceActionSchema })
+  .object({
+    resource: resourceSchema,
+    selection: selectionSchema,
+    action: maintenanceActionSchema,
+    filters: scopeFiltersSchema.optional(),
+  })
   .strict();
 export type MaintenanceAction = z.infer<typeof maintenanceActionSchema>;
 export type MaintenanceActionKind = MaintenanceAction["kind"];
