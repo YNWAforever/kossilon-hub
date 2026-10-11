@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { getCurrentTest } from "@vitest/runner";
 import { afterAll, describe, expect, it, onTestFinished } from "vitest";
@@ -13,6 +14,9 @@ import {
   type NarRowInputs,
 } from "./apply";
 import { createNotificationOutboxRepository } from "@/features/notifications/outbox";
+import { monthlyWorkbookFixture } from "./monthly-workbook-fixture";
+import { readXlsxWorkbook } from "./xlsx/workbook";
+import { readNarSheet } from "./mapping";
 const url = process.env.TEST_DATABASE_URL;
 const rawSql = url ? createSqlClient(url, { max: 4 }) : null;
 let activeSignal: AbortSignal | undefined;
@@ -63,13 +67,17 @@ function openFixtureWorker() {
   const raw = createSqlClient(url!, { max: 1 });
   return { sql: guardSqlTestLifetime(raw, () => signal), close: () => raw.end() };
 }
-async function fixture(n: number, run: Parameters<typeof fixtureCore>[1]) {
+async function fixture(
+  n: number,
+  run: Parameters<typeof fixtureCore>[1],
+  workbook?: "clean" | "edges",
+) {
   const context = getCurrentTest()?.context;
   if (!context) throw new Error("The NAR fixture requires a running Vitest test.");
   if (activeSignal) throw new Error("The shared NAR fixture must run sequentially.");
   // Capture now: runner context can disappear while a timed-out body unwinds.
   activeSignal = context.signal;
-  const pending = fixtureCore(n, run).finally(() => {
+  const pending = fixtureCore(n, run, workbook).finally(() => {
     activeSignal = undefined;
   });
   onTestFinished(async () => {
@@ -93,6 +101,7 @@ async function fixtureCore(
     inputs: Record<string, NarRowInputs>;
     stage: StageBatchInput;
   }) => Promise<void>,
+  workbook?: "clean" | "edges",
 ) {
   const actorId = crypto.randomUUID(),
     ownerId = crypto.randomUUID(),
@@ -169,10 +178,33 @@ async function fixtureCore(
   const repo = createNarImportRepository({ sql: sql! });
   let batchId = "";
   try {
+    if (workbook) {
+      const bytes = await monthlyWorkbookFixture(tag, n, workbook === "edges"),
+        parsed = await readXlsxWorkbook(bytes);
+      stage.read = readNarSheet(parsed.sheets[0], parsed.date1904);
+      stage.sourceFileName = `synthetic-${n}-rows-${workbook}.xlsx`;
+      stage.sourceSha256 = createHash("sha256").update(bytes).digest("hex");
+      stage.sourceSizeBytes = bytes.byteLength;
+      stage.parserVersion = parsed.parserVersion;
+    }
     const staged = await repo.stageBatch(stage);
     batchId = staged.batch.id;
     // Multi-row fixture setup is not an application bulk write; actual mapping commands have dedicated tests below.
-    await sql!`insert into company_external_references ${sql!(companies.map((id, i) => ({ source_system: "nar-monthly-workbook", external_client_id: tag + "-" + i, company_id: id, mapped_by: actorId })))}`;
+    if (workbook) {
+      const mapped = new Set<string>();
+      for (const row of stage.read.rows) {
+        if (mapped.has(row.externalClientId)) continue;
+        await repo.mapExternalReference({
+          externalClientId: row.externalClientId,
+          companyId: companies[row.rowNumber - 3],
+          mappedBy: actorId,
+          authUserId: actor.authUserId,
+          expectedCompanyId: null,
+        });
+        mapped.add(row.externalClientId);
+      }
+    } else
+      await sql!`insert into company_external_references ${sql!(companies.map((id, i) => ({ source_system: "nar-monthly-workbook", external_client_id: tag + "-" + i, company_id: id, mapped_by: actorId })))}`;
     const rows = await repo.listRows(batchId);
     const inputs = Object.fromEntries(
       rows.map((r) => [
@@ -219,6 +251,164 @@ async function fixtureCore(
   }
 }
 describe.skipIf(!url)("actual PostgreSQL reviewed NAR apply", () => {
+  it(
+    "500 real OOXML rows: mapping/preview writes no cases; crash, per-row SQL failure, resume and reviewed replay preserve exactly 500 unpaid cases",
+    async () =>
+      fixture(
+        500,
+        async (f) => {
+          expect(f.stage.parserVersion).toBe("kossilon-xlsx-1");
+          expect(f.stage.read.rows).toHaveLength(500);
+          expect(
+            f.stage.read.rows.every((r) =>
+              r.issues.some((i) => i.code === "duplicate-invoice-number"),
+            ),
+          ).toBe(true);
+          const source = createNarImportRepository({ sql: sql! }),
+            normal = createNarApplyRepository({ sql: sql! });
+          const before =
+            await sql!`select count(*)::int n from annual_return_cases where company_id=any(${f.companies}::uuid[])`;
+          expect(before[0].n).toBe(0);
+          const preview = await normal.preview(f.actor, {
+            batchId: f.batchId,
+            rowIds: f.rowIds,
+            inputs: f.inputs,
+          });
+          expect(preview.eligibleCount).toBe(500);
+          expect(
+            (
+              await sql!`select count(*)::int n from payments where company_id=any(${f.companies}::uuid[])`
+            )[0].n,
+          ).toBe(0);
+          const command = { previewId: preview.previewId, idempotencyKey: crypto.randomUUID() },
+            job = await normal.execute(f.actor, command);
+          let fault = true;
+          const faulty = createNarApplyRepository({
+            sql: sql!,
+            applyRow: async (tx, actor, context, item) => {
+              const id = await applyNarRow(tx, actor, context, item);
+              if (fault) {
+                fault = false;
+                await tx.unsafe(
+                  "do $$ begin raise exception using errcode='23514',message='Owned 500-row rollback'; end $$;",
+                );
+              }
+              return id;
+            },
+          });
+          await expect(
+            runNarApplyChunk({
+              repository: faulty,
+              actor: f.actor,
+              jobId: job.jobId,
+              limit: 50,
+              afterCommit: (n) => {
+                if (n === 23) throw Error("Owned 500-row interruption");
+              },
+            }),
+          ).rejects.toThrow(/interruption/);
+          expect((await normal.getJob(f.actor, job.jobId)).counts).toMatchObject({
+            failed: 1,
+            applied: 22,
+            pending: 477,
+          });
+          for (let pass = 0; pass < 10; pass++)
+            await runNarApplyChunk({
+              repository: normal,
+              actor: f.actor,
+              jobId: job.jobId,
+              limit: 50,
+            });
+          const completed = await normal.getJob(f.actor, job.jobId);
+          expect(completed.counts).toMatchObject({ failed: 1, applied: 499, pending: 0 });
+          await normal.execute(f.actor, command);
+          await runNarApplyChunk({ repository: normal, actor: f.actor, jobId: job.jobId });
+          expect((await normal.getJob(f.actor, job.jobId)).counts).toEqual(completed.counts);
+          const failed = completed.rows.find((r) => r.state === "failed")!;
+          const repair = await normal.preview(f.actor, {
+            batchId: f.batchId,
+            rowIds: [failed.row_id],
+            inputs: f.inputs,
+          });
+          expect(repair.eligibleCount).toBe(1);
+          const repairJob = await normal.execute(f.actor, {
+            previewId: repair.previewId,
+            idempotencyKey: crypto.randomUUID(),
+          });
+          await runNarApplyChunk({ repository: normal, actor: f.actor, jobId: repairJob.jobId });
+          expect((await source.stageBatch(f.stage)).reused).toBe(true);
+          const replay = await normal.preview(f.actor, {
+            batchId: f.batchId,
+            rowIds: f.rowIds,
+            inputs: f.inputs,
+          });
+          expect(replay.rows.every((r) => r.command === "already_applied")).toBe(true);
+          const replayJob = await normal.execute(f.actor, {
+            previewId: replay.previewId,
+            idempotencyKey: crypto.randomUUID(),
+          });
+          for (let i = 0; i < 5; i++)
+            await runNarApplyChunk({ repository: normal, actor: f.actor, jobId: replayJob.jobId });
+          const [counts] =
+            await sql!`select (select count(*)::int from annual_return_cases where company_id=any(${f.companies}::uuid[])) cases,(select count(*)::int from work_items where company_id=any(${f.companies}::uuid[])) work,(select count(*)::int from payments where company_id=any(${f.companies}::uuid[])) payments,(select count(*)::int from nar_apply_journal where batch_id=${f.batchId}) journals`;
+          // A newly reviewed replay has its own immutable no-op receipts. Reusing
+          // the original key above created none; neither replay creates domain rows.
+          expect(counts).toEqual({ cases: 500, work: 500, payments: 500, journals: 1000 });
+          const [receipts] =
+            await sql!`select count(distinct row_id)::int rows,count(*) filter(where command='already_applied' and before_value=after_value)::int noops from nar_apply_journal where batch_id=${f.batchId}`;
+          expect(receipts).toEqual({ rows: 500, noops: 500 });
+          expect(
+            (
+              await sql!`select count(*)::int n from payments where company_id=any(${f.companies}::uuid[]) and (paid_at is not null or status<>'Payment pending')`
+            )[0].n,
+          ).toBe(0);
+          expect(
+            (
+              await sql!`select count(*)::int n from notification_outbox where company_id=any(${f.companies}::uuid[])`
+            )[0].n,
+          ).toBe(0);
+        },
+        "clean",
+      ),
+    120000,
+  );
+  it(
+    "500 OOXML rows retain duplicate IDs, invalid dates and missing fields; preview cannot waive their blockers",
+    async () =>
+      fixture(
+        500,
+        async (f) => {
+          expect(f.stage.read.rows).toHaveLength(500);
+          const issues = f.stage.read.rows.flatMap((r) => r.issues);
+          expect(issues.some((i) => i.code === "duplicate-client-id")).toBe(true);
+          expect(issues.some((i) => i.code === "date-unreadable")).toBe(true);
+          const inputs = {
+            ...f.inputs,
+            [f.rowIds.at(-1)!]: { ...f.inputs[f.rowIds.at(-1)!], feeAmount: undefined },
+          };
+          const preview = await createNarApplyRepository({ sql: sql! }).preview(f.actor, {
+            batchId: f.batchId,
+            rowIds: f.rowIds,
+            inputs,
+          });
+          expect(preview.eligibleCount).toBeLessThan(500);
+          expect(preview.rows.some((r) => r.requiredInputs.includes("sourceFilingDueDate"))).toBe(
+            true,
+          );
+          expect(preview.rows.some((r) => r.requiredInputs.includes("feeAmount"))).toBe(true);
+          expect(
+            preview.rows.filter((r) => r.conflicts.includes("source_row_invalid")).length,
+          ).toBeGreaterThanOrEqual(3);
+          expect(
+            (
+              await sql!`select count(*)::int n from annual_return_cases where company_id=any(${f.companies}::uuid[])`
+            )[0].n,
+          ).toBe(0);
+        },
+        "edges",
+      ),
+    120000,
+  );
   it("persists chosen year and reuses exact bytes without allowing a different year", async () =>
     fixture(1, async (f) => {
       const repo = createNarImportRepository({ sql: sql! });
