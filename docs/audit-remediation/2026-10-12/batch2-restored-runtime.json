@@ -1,0 +1,15 @@
+{
+  "transaction": "READ ONLY",
+  "queue": {
+    "loaded": 2,
+    "total": 2,
+    "nullableSla": 0
+  },
+  "cases": {
+    "loaded": 3
+  },
+  "documents": {
+    "loaded": 14
+  },
+  "sideEffects": 0
+}
