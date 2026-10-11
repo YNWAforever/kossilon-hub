@@ -23,3 +23,5 @@ Rulings: reuse clean linked worktree on new branch; normal commits and stacked P
 One required independent read-only Sol review found one Important cross-team draft/list vs snapshot mismatch and no Critical. Reproduced3vs2 on PG; list now consumes existing caseFiltersForActor without widening bulk/changing send-by-ID;29targeted tests pass. Reviewer's exclusions (new read models, native/runtime/capacity/role UAT and wider recovery UX) remain open in trackers/dossier. No second reviewer or implementation subagent.
 
 Next batch: R25.2 populated restore/physical contract; R16→R17 local read models; R26 capacity workbook and independent R21 history. Missing staging/providers are specific acceptance blockers, not blanket implementation blockers. No production migration/deployment/accounts/roles/native scheduler/customer outbound mutation performed.
+
+Batch2 R16: bounded Queue SQL/count/shared bulk scope, literal global search and Queue/Clients URL return state implemented.31 targeted tests0skip plus nullable historical SLA contract1test0skip; capacity/browser full scenarios remain partial. See batch2-r16.md.

@@ -1,3 +1,4 @@
+import { queueScopeSql } from "@/features/work-items/queue-scope";
 import type postgres from "postgres";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -181,19 +182,20 @@ export function createBulkOperationsRepository({
       return db<
         ResourceRow[]
       >`select arc.id,c.company_name label,arc.owner_id,arc.reviewer_id,array(select wi.owner_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_owner_ids,array(select wi.reviewer_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_reviewer_ids,${caseAssignmentVersionSql(db)} version,(arc.locked_at is not null or arc.completed_at is not null or arc.current_status='Completed' or c.data_origin='fixture') locked from annual_return_cases arc join companies c on c.id=arc.company_id where ${caseScopeSql(db, { ...filters, ...origin }, today)} and ${caseScopeSql(db, { ...scoped, ...origin }, today)} and (${ids ? [...ids] : null}::uuid[] is null or arc.id=any(${ids ? [...ids] : null}::uuid[])) order by arc.id limit 20001 ${lock ? db`for update of arc for share of c` : db``}`;
-    const q = filters.q ? `%${filters.q.replace(/[\\%_]/g, (v) => `\\${v}`)}%` : null;
     return db<
       ResourceRow[]
     >`select w.id,w.title||' · '||c.company_name label,w.owner_id,w.reviewer_id,w.version::text version,(w.status in ('completed','cancelled') or arc.current_status='Completed' or arc.locked_at is not null or c.data_origin='fixture') locked from work_items w join companies c on c.id=w.company_id left join annual_return_cases arc on arc.id=w.annual_return_case_id
-   where (${actor.role === "Admin"} or (w.team_id=${actor.teamId}::uuid and c.assigned_team_id=${actor.teamId}::uuid)) and (${origin.includeFixtures} or c.data_origin<>'fixture')
+   where ${queueScopeSql(db, {
+     ...filters,
+     activeOnly: filters.activeOnly === true,
+     teamId: actor.role === "Admin" ? filters.teamId : actor.teamId!,
+     ownerId: filters.view === "mine" ? actor.userId! : filters.ownerId,
+     escalationState: filters.view === "breached" ? "breach" : filters.escalationState,
+     includeFixtures: origin.includeFixtures,
+   })}
    and (${ids ? [...ids] : null}::uuid[] is null or w.id=any(${ids ? [...ids] : null}::uuid[]))
-   and (${filters.teamId ?? null}::uuid is null or w.team_id=${filters.teamId ?? null}::uuid) and (${filters.ownerId ?? null}::uuid is null or w.owner_id=${filters.ownerId ?? null}::uuid)
-   and (${filters.reviewerId ?? null}::uuid is null or w.reviewer_id=${filters.reviewerId ?? null}::uuid) and (${filters.unassigned !== true} or w.owner_id is null)
-   and (${filters.view !== "mine"} or w.owner_id=${actor.userId!}) and (${filters.view !== "breached"} or w.escalation_state='breach')
-   and (${filters.activeOnly !== true} or w.status in ('open','in_progress','blocked'))
-   and (${filters.workType ?? null}::text is null or w.work_type=${filters.workType ?? null}) and (${filters.workStatus ?? null}::text is null or w.status=${filters.workStatus ?? null})
-   and (${filters.escalationState ?? null}::text is null or w.escalation_state=${filters.escalationState ?? null}) and (${filters.priority ?? null}::text is null or (${filters.priority === "high"} and w.priority>=70) or (${filters.priority === "normal"} and w.priority<70))
-   and (${q}::text is null or (w.title||' '||w.work_type||' '||c.company_name) ilike ${q} escape '\\') order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
+   and (${filters.teamId ?? null}::uuid is null or w.team_id=${filters.teamId ?? null}::uuid)
+   and (${filters.ownerId ?? null}::uuid is null or w.owner_id=${filters.ownerId ?? null}::uuid) order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
   }
   const snapshotItems = (rows: ResourceRow[]): SnapshotItem[] =>
     rows.map((r) => ({ id: r.id, version: r.version, reason: r.locked ? "locked" : null }));

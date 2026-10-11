@@ -1,3 +1,4 @@
+import { safeListReturnTo } from "@/lib/list-navigation";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -78,7 +79,13 @@ function today(): string {
   return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
 }
 
-export function ProductionClientDetail({ clientId }: { clientId: string }) {
+export function ProductionClientDetail({
+  clientId,
+  returnTo,
+}: {
+  clientId: string;
+  returnTo?: string;
+}) {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [contactDialog, setContactDialog] = useState<{ open: boolean; contact?: CompanyContact }>({
@@ -224,6 +231,14 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
+      {returnTo ? (
+        <a
+          href={safeListReturnTo(returnTo)}
+          className="inline-flex min-h-11 items-center rounded border px-3"
+        >
+          返回客戶清單
+        </a>
+      ) : null}
       <PageHeader
         eyebrow="Client"
         title={client.companyName}

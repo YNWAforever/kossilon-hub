@@ -42,4 +42,5 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/whatsapp/repository.test.ts",
   "src/features/whatsapp/intake-repository.integration.test.ts",
   "src/features/work-items/repository.test.ts",
+  "src/features/work-items/queue-pagination.integration.test.ts",
 ] as const;

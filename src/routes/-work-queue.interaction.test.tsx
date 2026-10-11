@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
+  page: vi.fn(),
   recommend: vi.fn(),
   assign: vi.fn(),
   ack: vi.fn(),
@@ -16,6 +17,17 @@ vi.mock("@/components/bulk-selection-toolbar", () => ({
 }));
 vi.mock("@/features/work-items/server-fns", () => ({
   listWorkQueue: mocks.list,
+  listWorkQueuePage: async (input: unknown) => {
+    if (mocks.page.getMockImplementation()) return mocks.page(input);
+    const items = await mocks.list(input);
+    return {
+      items,
+      total: items.length,
+      nextCursor: null,
+      observedAt: "2026-10-12T00:00:00Z",
+      metrics: { dueToday: 0, atRisk: 0, breached: 0, unassigned: 0 },
+    };
+  },
   recommendWorkItemAssignees: mocks.recommend,
   assignWorkItem: mocks.assign,
   acknowledgeWorkItemEscalation: mocks.ack,
@@ -44,8 +56,37 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
   Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 import { WorkQueueRoute } from "./work-queue";
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mocks.page.mockReset();
+});
 describe("work queue assignment and blockers", () => {
+  it("reads a bounded server page and displays the server total rather than loaded rows", async () => {
+    mocks.page.mockResolvedValue({
+      items: [],
+      total: 153,
+      nextCursor: "next",
+      observedAt: "2026-10-12T00:00:00Z",
+      metrics: { dueToday: 3, atRisk: 4, breached: 5, unassigned: 6 },
+    });
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+    await screen.findByText(/共153項/);
+    expect(mocks.page).toHaveBeenCalledWith({
+      data: expect.objectContaining({ view: "team", limit: 50 }),
+    });
+    expect(screen.getByRole("button", { name: /下一頁/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /下一頁/ }));
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ search: expect.objectContaining({ cursor: "next" }) }),
+    );
+    mocks.page.mockReset();
+  });
   it("shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates", async () => {
     const userId = "20000000-0000-0000-0000-000000000001";
     const factors = {

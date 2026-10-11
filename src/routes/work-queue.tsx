@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { queueSearch, safeListReturnTo } from "@/lib/list-navigation";
+import { useRetainedPage } from "@/lib/use-retained-page";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, type SearchSchemaInput } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
@@ -20,19 +22,14 @@ import {
   activeAssignmentOptions,
   type AssignmentOption,
 } from "@/features/work-items/assignment-labels";
-import type { PersistedWorkItem } from "@/features/work-items/repository";
+import type { WorkQueueSummary as PersistedWorkItem } from "@/features/work-items/queue-page";
 import {
   acknowledgeWorkItemEscalation,
   assignWorkItem,
-  listWorkQueue,
+  listWorkQueuePage,
   recommendWorkItemAssignees,
 } from "@/features/work-items/server-fns";
 import { cn } from "@/lib/utils";
-
-type QueueView = "mine" | "team" | "breached";
-type SlaFilter = "all" | PersistedWorkItem["escalationState"];
-type PriorityFilter = "all" | "high" | "normal";
-type StatusFilter = "all" | PersistedWorkItem["status"];
 
 type CaseDetailLink =
   | { to: "/annual-returns/$id"; params: { id: string } }
@@ -56,29 +53,7 @@ export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | nul
 }
 
 export const Route = createFileRoute("/work-queue")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    view:
-      search.view === "team" || search.view === "breached"
-        ? (search.view as QueueView)
-        : ("mine" as QueueView),
-    owner: typeof search.owner === "string" ? search.owner : "all",
-    workType: typeof search.workType === "string" ? search.workType : "all",
-    sla:
-      search.sla === "none" ||
-      search.sla === "warning" ||
-      search.sla === "breach" ||
-      search.sla === "acknowledged"
-        ? (search.sla as SlaFilter)
-        : ("all" as SlaFilter),
-    priority:
-      search.priority === "high" || search.priority === "normal"
-        ? (search.priority as PriorityFilter)
-        : ("all" as PriorityFilter),
-    status:
-      search.status === "open" || search.status === "in_progress" || search.status === "blocked"
-        ? (search.status as StatusFilter)
-        : ("all" as StatusFilter),
-  }),
+  validateSearch: (input: SearchSchemaInput & Record<string, unknown>) => queueSearch(input),
   component: WorkQueueRoute,
 });
 
@@ -91,20 +66,40 @@ export function WorkQueueRoute() {
     actor ? [actor.authUserId, actor.userId, actor.role, actor.teamId, actor.active] : null,
   );
   const navigate = Route.useNavigate();
-  const { view, owner, workType, sla, priority, status } = search;
-  const [query, setQuery] = useState("");
+  const {
+    view,
+    owner,
+    workType,
+    sla,
+    priority,
+    status,
+    q: query = "",
+    sort = "sla",
+    cursor,
+    anchor,
+  } = search;
   const [assignmentItem, setAssignmentItem] = useState<PersistedWorkItem | null>(null);
   const [acknowledgementItem, setAcknowledgementItem] = useState<PersistedWorkItem | null>(null);
   const canManage = session?.role === "Admin" || session?.role === "Manager";
   const filters = {
     view,
-    escalationState: view === "breached" ? ("breach" as const) : undefined,
+    q: query,
+    sort,
+    limit: 50,
+    ...(owner === "unassigned" ? { unassigned: true } : owner !== "all" ? { ownerId: owner } : {}),
+    ...(workType !== "all" ? { workType } : {}),
+    ...(sla !== "all" ? { escalationState: sla } : {}),
+    ...(priority !== "all" ? { priority } : {}),
+    ...(status !== "all" ? { workStatus: status } : {}),
+    ...(view === "breached" ? { escalationState: "breach" as const } : {}),
   };
   const queueQuery = useQuery({
-    queryKey: ["work-queue", view, actorScope],
-    queryFn: () => listWorkQueue({ data: filters }),
+    queryKey: ["work-queue", actorScope, filters, cursor],
+    queryFn: () => listWorkQueuePage({ data: { ...filters, cursor } }),
+    retry: false,
   });
-  const items = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
+  const page = useRetainedPage(JSON.stringify([actorScope, filters]), queueQuery.data);
+  const items = useMemo(() => page?.items ?? [], [page]);
   const owners = useMemo(
     () =>
       assignmentLabels(
@@ -128,29 +123,7 @@ export function WorkQueueRoute() {
     () => Array.from(new Set(items.map((item) => item.workType))).sort(),
     [items],
   );
-  const visibleItems = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return items.filter((item) => {
-      const matchesQuery =
-        !needle ||
-        `${item.title} ${item.workType} ${item.companyName ?? ""}`.toLowerCase().includes(needle);
-      const matchesOwner =
-        owner === "all" || (owner === "unassigned" ? !item.ownerId : item.ownerId === owner);
-      const matchesWorkType = workType === "all" || item.workType === workType;
-      const matchesSla = sla === "all" || item.escalationState === sla;
-      const matchesPriority =
-        priority === "all" || (priority === "high" ? item.priority >= 70 : item.priority < 70);
-      const matchesStatus = status === "all" || item.status === status;
-      return (
-        matchesQuery &&
-        matchesOwner &&
-        matchesWorkType &&
-        matchesSla &&
-        matchesPriority &&
-        matchesStatus
-      );
-    });
-  }, [items, owner, priority, query, sla, status, workType]);
+  const visibleItems = items;
   const bulkFilters: BulkFilters = {
     view,
     activeOnly: true,
@@ -161,21 +134,32 @@ export function WorkQueueRoute() {
     ...(priority !== "all" ? { priority } : {}),
     ...(status !== "all" ? { workStatus: status } : {}),
   };
-  const presentationScope = JSON.stringify([actorScope, bulkFilters]);
-  const [loadedScope, setLoadedScope] = useState({ scope: presentationScope, limit: 50 });
-  const visibleLimit = loadedScope.scope === presentationScope ? loadedScope.limit : 50;
-  const pageItems = visibleItems.slice(0, visibleLimit);
-
-  const setFilter = (key: "owner" | "workType" | "sla" | "priority" | "status", value: string) =>
-    void navigate({ search: { ...search, [key]: value }, replace: true });
-
-  const metrics = {
-    dueToday: items.filter((item) => hongKongDateKey(item.slaDueAt) === hongKongDateKey(new Date()))
-      .length,
-    atRisk: items.filter((item) => item.escalationState === "warning").length,
-    breached: items.filter((item) => item.escalationState === "breach").length,
-    unassigned: items.filter((item) => !item.ownerId).length,
-  };
+  const pageItems = items;
+  const setFilter = (
+    key: "owner" | "workType" | "sla" | "priority" | "status" | "sort",
+    value: string,
+  ) =>
+    void navigate({
+      search: { ...search, [key]: value, cursor: undefined, anchor: undefined },
+      replace: true,
+    });
+  const metrics = page?.metrics ?? { dueToday: 0, atRisk: 0, breached: 0, unassigned: 0 };
+  const returnTo = (id: string) =>
+    safeListReturnTo(
+      "/work-queue?" +
+        new URLSearchParams(
+          Object.fromEntries(
+            Object.entries({ ...search, anchor: id }).filter(([, v]) => typeof v === "string"),
+          ) as Record<string, string>,
+        ).toString(),
+    );
+  useEffect(() => {
+    if (anchor && !queueQuery.isFetching) {
+      document.querySelectorAll<HTMLElement>('[data-work-id="' + anchor + '"]').forEach((row) => {
+        if (row.offsetParent) row.scrollIntoView({ block: "center" });
+      });
+    }
+  }, [anchor, queueQuery.isFetching, page]);
 
   return (
     <>
@@ -204,7 +188,7 @@ export function WorkQueueRoute() {
               <Link
                 key={value}
                 to="/work-queue"
-                search={{ ...search, view: value }}
+                search={{ ...search, view: value, cursor: undefined, anchor: undefined }}
                 className={cn(
                   "min-h-9 border-b-2 px-3 py-2 text-sm font-medium",
                   view === value
@@ -221,7 +205,17 @@ export function WorkQueueRoute() {
             <span className="sr-only">Search work queue</span>
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) =>
+                void navigate({
+                  search: {
+                    ...search,
+                    q: event.target.value,
+                    cursor: undefined,
+                    anchor: undefined,
+                  },
+                  replace: true,
+                })
+              }
               placeholder="Search case or work type"
               className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
             />
@@ -287,6 +281,23 @@ export function WorkQueueRoute() {
         </div>
 
         {queueQuery.isLoading ? <QueueMessage>Loading work queue...</QueueMessage> : null}
+        <p aria-live="polite" className="my-3 text-sm">
+          已載入{pageItems.length}項／共{page?.total ?? "待載入"}項
+        </p>
+        {anchor && !queueQuery.isFetching && !items.some((i) => i.id === anchor) ? (
+          <p role="status">原工作已更新或移出目前範圍；查詢已保留。</p>
+        ) : null}
+        <label>
+          排序
+          <select
+            aria-label="工作排序"
+            value={sort}
+            onChange={(e) => setFilter("sort", e.target.value)}
+          >
+            <option value="sla">SLA 到期</option>
+            <option value="recent">最近更新</option>
+          </select>
+        </label>
         {dataMode === "production" &&
         actor?.active &&
         (actor.role === "Admin" || actor.role === "Manager") ? (
@@ -298,11 +309,21 @@ export function WorkQueueRoute() {
               id: i.id,
               label: `${i.companyName ?? "Company unavailable"} · ${i.title}`,
             }))}
-            total={queueQuery.isError || !queueQuery.data ? null : visibleItems.length}
+            total={queueQuery.isError || !page ? null : page.total}
           />
         ) : null}
         {queueQuery.isError ? (
-          <QueueMessage>Work queue could not be loaded. Refresh to try again.</QueueMessage>
+          <QueueMessage>
+            工作頁面未能載入；已載入的資料保留。
+            <button onClick={() => void queueQuery.refetch()}>重試目前頁面</button>
+            <button
+              onClick={() =>
+                void navigate({ search: { ...search, cursor: undefined, anchor: undefined } })
+              }
+            >
+              返回第一頁
+            </button>
+          </QueueMessage>
         ) : null}
         {!queueQuery.isLoading && !queueQuery.isError && visibleItems.length === 0 ? (
           <QueueMessage>No work items match this view.</QueueMessage>
@@ -336,6 +357,7 @@ export function WorkQueueRoute() {
                 {pageItems.map((item) => (
                   <div
                     key={item.id}
+                    data-work-id={item.id}
                     role="row"
                     className="grid min-h-20 grid-cols-[1.4fr_110px_110px_110px_140px_90px_100px_110px] items-center gap-3 px-3 py-4 hover:bg-muted/30"
                   >
@@ -350,6 +372,7 @@ export function WorkQueueRoute() {
                         <Link
                           to={caseDetailLinkFor(item)!.to}
                           params={caseDetailLinkFor(item)!.params}
+                          search={{ returnTo: returnTo(item.id) }}
                           className="font-medium hover:underline"
                         >
                           {item.title}
@@ -370,7 +393,11 @@ export function WorkQueueRoute() {
                       {item.ownerName ?? (item.ownerId ? "Unknown owner" : "Unassigned")}
                     </span>
                     <span role="cell">
-                      <SlaPill state={item.escalationState} />
+                      {item.slaDueAt ? (
+                        <SlaPill state={item.escalationState} />
+                      ) : (
+                        <span>SLA 待確認</span>
+                      )}
                     </span>
                     <span role="cell">
                       <BusinessBlockers item={item} />
@@ -409,6 +436,7 @@ export function WorkQueueRoute() {
                       <Link
                         to={caseDetailLinkFor(item)!.to}
                         params={caseDetailLinkFor(item)!.params}
+                        search={{ returnTo: returnTo(item.id) }}
                         className="font-medium hover:underline"
                       >
                         {item.title}
@@ -427,7 +455,11 @@ export function WorkQueueRoute() {
                     {item.ownerName ?? (item.ownerId ? "姓名待補" : "Unassigned")}
                   </QueueField>
                   <QueueField label="SLA">
-                    <SlaPill state={item.escalationState} />
+                    {item.slaDueAt ? (
+                      <SlaPill state={item.escalationState} />
+                    ) : (
+                      <span>SLA 待確認</span>
+                    )}
                   </QueueField>
                   <QueueField label="業務 blocker">
                     <BusinessBlockers item={item} />
@@ -449,12 +481,15 @@ export function WorkQueueRoute() {
           </section>
         ) : null}
       </main>
-      {visibleItems.length > pageItems.length ? (
+      {page?.nextCursor ? (
         <button
-          className="m-4 rounded border px-3 py-2"
-          onClick={() => setLoadedScope({ scope: presentationScope, limit: visibleLimit + 50 })}
+          disabled={queueQuery.isFetching}
+          className="m-4 min-h-11 rounded border px-3 py-2"
+          onClick={() =>
+            void navigate({ search: { ...search, cursor: page.nextCursor!, anchor: undefined } })
+          }
         >
-          載入更多工作（每次50筆）
+          下一頁（最多50項）
         </button>
       ) : null}
       {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
@@ -828,22 +863,11 @@ function QueueMessage({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-function formatDateTime(value: string) {
+function formatDateTime(value: string | null) {
+  if (!value) return "待確認";
   return new Intl.DateTimeFormat("en-HK", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "Asia/Hong_Kong",
   }).format(new Date(value));
-}
-
-function hongKongDateKey(value: string | Date): string {
-  const parts = new Intl.DateTimeFormat("en", {
-    timeZone: "Asia/Hong_Kong",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date(value));
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((candidate) => candidate.type === type)?.value ?? "";
-  return `${part("year")}-${part("month")}-${part("day")}`;
 }
