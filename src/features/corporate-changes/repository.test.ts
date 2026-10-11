@@ -75,10 +75,10 @@ describe.skipIf(!databaseUrl)("corporate change request repository", () => {
       expect(created.checklistItems).toHaveLength(3);
       expect(created.checklistItems.map((item) => item.itemLabel)).toContain("NR1 form");
 
-      const fetched = await repository.getRequest(created.id);
+      const fetched = await repository.getRequest(created.id, { kind: "all" });
       expect(fetched.newRegisteredOffice).toBe("88 New Road, Central, Hong Kong");
 
-      const list = await repository.listRequests({ companyId } as never);
+      const list = await repository.listRequests({ companyId } as never, { kind: "all" });
       expect(list.some((row) => row.id === created.id)).toBe(true);
 
       await repository.close();

@@ -1,6 +1,7 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { requireTeamReadScope } from "@/features/auth/team-read-scope";
 import { assertCorporateChangeRequestWritable } from "./authorization";
 import type { CorporateChangeRequestRepository } from "./repository";
 import type { CreateCorporateChangeRequestInput } from "./types";
@@ -135,7 +136,10 @@ export const updateCorporateChangeChecklistItemStatus = createServerFn({ method:
   .validator(updateChecklistItemStatusSchema)
   .handler(async ({ data }) =>
     withRepository(async (repository) => {
-      const request = await repository.getRequest(data.requestId);
+      const request = await repository.getRequest(
+        data.requestId,
+        requireTeamReadScope(await getCurrentCorporateChangeActor()),
+      );
       const actorId = await requireWritableRequestCompany(repository, request.companyId);
       return repository.updateChecklistItemStatus({ ...data, actorId });
     }),
@@ -157,7 +161,10 @@ export const transitionCorporateChangeRequestStatus = createServerFn({ method: "
   .validator(transitionStatusSchema)
   .handler(async ({ data }) =>
     withRepository(async (repository) => {
-      const request = await repository.getRequest(data.requestId);
+      const request = await repository.getRequest(
+        data.requestId,
+        requireTeamReadScope(await getCurrentCorporateChangeActor()),
+      );
       const actorId = await requireWritableRequestCompany(repository, request.companyId);
       return repository.transitionStatus({ ...data, actorId });
     }),
@@ -169,7 +176,10 @@ export const cancelCorporateChangeRequest = createServerFn({ method: "POST" })
   .validator(requestIdSchema)
   .handler(async ({ data }) =>
     withRepository(async (repository) => {
-      const request = await repository.getRequest(data.requestId);
+      const request = await repository.getRequest(
+        data.requestId,
+        requireTeamReadScope(await getCurrentCorporateChangeActor()),
+      );
       const actorId = await requireWritableRequestCompany(repository, request.companyId);
       return repository.cancelRequest({ ...data, actorId });
     }),
@@ -179,7 +189,10 @@ export const completeCorporateChangeRequest = createServerFn({ method: "POST" })
   .validator(requestIdSchema)
   .handler(async ({ data }) =>
     withRepository(async (repository) => {
-      const request = await repository.getRequest(data.requestId);
+      const request = await repository.getRequest(
+        data.requestId,
+        requireTeamReadScope(await getCurrentCorporateChangeActor()),
+      );
       const actorId = await requireWritableRequestCompany(repository, request.companyId);
       return repository.completeRequest({ ...data, actorId });
     }),
@@ -207,10 +220,7 @@ export const listCorporateChangeRequests = createServerFn({ method: "GET" })
     withRepository(async (repository) => {
       const { getRequest, requireStaffActor } = await loadDefaultCorporateChangeContext();
       const actor = await requireStaffActor(getRequest());
-      return repository.listRequests({
-        ...data,
-        teamId: actor.role === "Admin" ? undefined : (actor.teamId ?? undefined),
-      });
+      return repository.listRequests(data, requireTeamReadScope(actor));
     }),
   );
 
@@ -218,6 +228,6 @@ export const getCorporateChangeRequest = createServerFn({ method: "GET" })
   .validator(z.object({ requestId: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultCorporateChangeContext();
-    await requireStaffActor(getRequest());
-    return withRepository((repository) => repository.getRequest(data.requestId));
+    const scope = requireTeamReadScope(await requireStaffActor(getRequest()));
+    return withRepository((repository) => repository.getRequest(data.requestId, scope));
   });

@@ -1,4 +1,5 @@
 import type postgres from "postgres";
+import { assertTeamReadScope, type TeamReadScope } from "@/features/auth/team-read-scope";
 import {
   createSqlClient,
   getSqlClient,
@@ -160,8 +161,12 @@ const REQUEST_COLUMNS = `
 `;
 
 export interface CorporateChangeRequestRepository {
-  listRequests(filter: ListCorporateChangeRequestsFilter): Promise<CorporateChangeRequestSummary[]>;
-  getRequest(requestId: string): Promise<CorporateChangeRequestDetail>;
+  listRequests(
+    filter: ListCorporateChangeRequestsFilter,
+    scope: TeamReadScope,
+  ): Promise<CorporateChangeRequestSummary[]>;
+  countRequests(filter: ListCorporateChangeRequestsFilter, scope: TeamReadScope): Promise<number>;
+  getRequest(requestId: string, scope: TeamReadScope): Promise<CorporateChangeRequestDetail>;
   createRequest(input: CreateCorporateChangeRequestInput): Promise<CorporateChangeRequestDetail>;
   updateChecklistItemStatus(
     input: UpdateChecklistItemStatusInput,
@@ -184,12 +189,35 @@ export function createCorporateChangeRequestRepository(
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
 
+  const readPredicate = (client: QueryClient, scope: TeamReadScope) => {
+    const valid = assertTeamReadScope(scope);
+    return valid.kind === "all" ? client`true` : client`c.assigned_team_id = ${valid.teamId}::uuid`;
+  };
+  const listPredicate = (filter: ListCorporateChangeRequestsFilter, scope: TeamReadScope) => sql`
+    ${readPredicate(sql, scope)}
+    and (${filter.changeType ?? null}::text is null or r.change_type = ${filter.changeType ?? null})
+    and (${filter.status ?? null}::text is null or r.status = ${filter.status ?? null})
+    and (${filter.teamId ?? null}::uuid is null or c.assigned_team_id = ${filter.teamId ?? null}::uuid)`;
+
+  async function countRequests(
+    filter: ListCorporateChangeRequestsFilter,
+    scope: TeamReadScope,
+  ): Promise<number> {
+    const predicate = listPredicate(filter, scope);
+    const [row] = await sql<
+      { total: number }[]
+    >`select count(*)::int total from corporate_change_requests r join companies c on c.id=r.company_id where ${predicate}`;
+    return row.total;
+  }
+
   async function hydrateOrThrow(
     tx: TransactionSqlClient,
     requestId: string,
+    scope?: TeamReadScope,
   ): Promise<CorporateChangeRequestDetail> {
     const rows = await tx<RequestRow[]>`
       select ${sql.unsafe(REQUEST_COLUMNS)} from corporate_change_requests where id = ${requestId}
+        and company_id in (select c.id from companies c where ${scope ? readPredicate(tx, scope) : tx`true`})
     `;
     const [row] = rows;
     if (!row) throw new Error("Corporate change request not found.");
@@ -206,15 +234,15 @@ export function createCorporateChangeRequestRepository(
 
   async function listRequests(
     filter: ListCorporateChangeRequestsFilter,
+    scope: TeamReadScope,
   ): Promise<CorporateChangeRequestSummary[]> {
+    const predicate = listPredicate(filter, scope);
     const rows = await sql<RequestSummaryRow[]>`
       select r.id, r.company_id, r.change_type, r.status, r.owner_id, r.quoted_fee, r.created_at,
              c.company_name
       from corporate_change_requests r
       join companies c on c.id = r.company_id
-      where (${filter.changeType ?? null}::text is null or r.change_type = ${filter.changeType ?? null})
-        and (${filter.status ?? null}::text is null or r.status = ${filter.status ?? null})
-        and (${filter.teamId ?? null}::uuid is null or c.assigned_team_id = ${filter.teamId ?? null})
+      where ${predicate}
       order by r.created_at desc
     `;
 
@@ -230,8 +258,12 @@ export function createCorporateChangeRequestRepository(
     }));
   }
 
-  async function getRequest(requestId: string): Promise<CorporateChangeRequestDetail> {
-    return withTransaction(sql, (tx) => hydrateOrThrow(tx, requestId));
+  async function getRequest(
+    requestId: string,
+    scope: TeamReadScope,
+  ): Promise<CorporateChangeRequestDetail> {
+    const valid = assertTeamReadScope(scope);
+    return withTransaction(sql, (tx) => hydrateOrThrow(tx, requestId, valid));
   }
 
   async function getCompanyTeamId(companyId: string): Promise<string> {
@@ -560,6 +592,7 @@ export function createCorporateChangeRequestRepository(
 
   return {
     listRequests,
+    countRequests,
     getRequest,
     getCompanyTeamId,
     createRequest,

@@ -1,6 +1,7 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
+import { requireTeamReadScope } from "@/features/auth/team-read-scope";
 import { assertIncorporationCaseCreatable, assertIncorporationCaseWritable } from "./authorization";
 import type { IncorporationRepository } from "./repository";
 import { INCORPORATION_STATUSES } from "./types";
@@ -87,16 +88,16 @@ const completeCaseSchema = z.object({
 
 export const listIncorporationCases = createServerFn({ method: "GET" }).handler(async () => {
   const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
-  await requireStaffActor(getRequest());
-  return withIncorporationRepository((repository) => repository.listCases());
+  const scope = requireTeamReadScope(await requireStaffActor(getRequest()));
+  return withIncorporationRepository((repository) => repository.listCases(scope));
 });
 
 export const getIncorporationCase = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultIncorporationContext();
-    await requireStaffActor(getRequest());
-    return withIncorporationRepository((repository) => repository.getCase(data.id));
+    const scope = requireTeamReadScope(await requireStaffActor(getRequest()));
+    return withIncorporationRepository((repository) => repository.getCase(data.id, scope));
   });
 
 export const createIncorporationCase = createServerFn({ method: "POST" })

@@ -1,4 +1,5 @@
 import type postgres from "postgres";
+import { assertTeamReadScope, type TeamReadScope } from "@/features/auth/team-read-scope";
 import { rethrowClientWriteError } from "@/features/clients/errors";
 import {
   createSqlClient,
@@ -27,8 +28,9 @@ export type CreateIncorporationRepositoryOptions = CreateSqlClientOptions & {
 };
 
 export type IncorporationRepository = {
-  listCases(): Promise<IncorporationCaseSummary[]>;
-  getCase(id: string): Promise<IncorporationCase | null>;
+  listCases(scope: TeamReadScope): Promise<IncorporationCaseSummary[]>;
+  countCases(scope: TeamReadScope): Promise<number>;
+  getCase(id: string, scope: TeamReadScope): Promise<IncorporationCase | null>;
   getCaseTeamId(caseId: string): Promise<string | null>;
   createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase>;
   updateChecklistItem(input: UpdateIncorporationChecklistItemInput): Promise<IncorporationCase>;
@@ -138,7 +140,21 @@ export function createIncorporationRepository(
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
 
-  async function listCases(): Promise<IncorporationCaseSummary[]> {
+  const readPredicate = (client: QueryClient, scope: TeamReadScope) => {
+    const valid = assertTeamReadScope(scope);
+    return valid.kind === "all" ? client`true` : client`ic.team_id = ${valid.teamId}::uuid`;
+  };
+
+  async function countCases(scope: TeamReadScope): Promise<number> {
+    const predicate = readPredicate(sql, scope);
+    const [row] = await sql<
+      { total: number }[]
+    >`select count(*)::int total from incorporation_cases ic where ${predicate}`;
+    return row.total;
+  }
+
+  async function listCases(scope: TeamReadScope): Promise<IncorporationCaseSummary[]> {
+    const predicate = readPredicate(sql, scope);
     const rows = await sql<CaseRow[]>`
       select
         ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
@@ -149,12 +165,17 @@ export function createIncorporationRepository(
       from incorporation_cases ic
       join users u on u.id = ic.owner_id
       join teams t on t.id = ic.team_id
+      where ${predicate}
       order by ic.created_at desc
     `;
     return rows.map(mapCaseSummary);
   }
 
-  async function hydrateCase(client: QueryClient, id: string): Promise<IncorporationCase | null> {
+  async function hydrateCase(
+    client: QueryClient,
+    id: string,
+    scope?: TeamReadScope,
+  ): Promise<IncorporationCase | null> {
     const caseRows = await client<CaseRow[]>`
       select
         ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
@@ -165,7 +186,7 @@ export function createIncorporationRepository(
       from incorporation_cases ic
       join users u on u.id = ic.owner_id
       join teams t on t.id = ic.team_id
-      where ic.id = ${id}
+      where ic.id = ${id} and ${scope ? readPredicate(client, scope) : client`true`}
       limit 1
     `;
 
@@ -185,8 +206,8 @@ export function createIncorporationRepository(
     };
   }
 
-  async function getCase(id: string): Promise<IncorporationCase | null> {
-    return hydrateCase(sql, id);
+  async function getCase(id: string, scope: TeamReadScope): Promise<IncorporationCase | null> {
+    return hydrateCase(sql, id, assertTeamReadScope(scope));
   }
 
   async function getCaseTeamId(caseId: string): Promise<string | null> {
@@ -363,6 +384,7 @@ export function createIncorporationRepository(
 
   return {
     listCases,
+    countCases,
     getCase,
     getCaseTeamId,
     createCase,

@@ -31,6 +31,8 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/features/corporate-changes/repository.test.ts",
   "src/features/documents/repository.integration.test.ts",
   "src/features/incorporation/repository.test.ts",
+  "src/features/incorporation/read-scope.integration.test.ts",
+  "src/features/corporate-changes/read-scope.integration.test.ts",
   "src/features/notifications/outbox.integration.test.ts",
   "src/features/operations/repository.integration.test.ts",
   "src/features/operations/app-role-inventory.integration.test.ts",
