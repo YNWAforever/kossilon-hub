@@ -1,0 +1,27 @@
+{
+  "other_worktrees": [
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work",
+      "expected_head": "76ad310ca8bad75a7ce44c82c9e20db734fd6eaa",
+      "actual_head": "76ad310ca8bad75a7ce44c82c9e20db734fd6eaa",
+      "head_unchanged": true,
+      "dirty_status": ""
+    },
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree",
+      "expected_head": "38123c96ed84fae84e41f17d4dea606c7a8938d0",
+      "actual_head": "38123c96ed84fae84e41f17d4dea606c7a8938d0",
+      "head_unchanged": true,
+      "dirty_status": ""
+    },
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009",
+      "expected_head": "01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e",
+      "actual_head": "01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e",
+      "head_unchanged": true,
+      "dirty_status": ""
+    }
+  ],
+  "no_force_push": true,
+  "no_user_file_reset": true
+}

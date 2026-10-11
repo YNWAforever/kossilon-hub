@@ -1,0 +1,31 @@
+{
+  "compared_to": "5563bd48253f42a9d9fa179c826de8ca4b8b95bc",
+  "original_user_cases": 65,
+  "preserved_columns": [
+    "user_case_id",
+    "finding_ids",
+    "role",
+    "preconditions",
+    "steps",
+    "expected",
+    "actual",
+    "result",
+    "evidence_ids",
+    "verification_environment",
+    "cleanup",
+    "execution_phase",
+    "route",
+    "task_ids",
+    "baseline_result",
+    "baseline_actual",
+    "baseline_evidence_ids"
+  ],
+  "all_original_fields_equal": true,
+  "original_fields_sha256": "8cf6c8def58cad67445a09bd9f5a3e0d6e63b5201aa1daf4b8230e31abd8cb93",
+  "new_execution_results": {
+    "not-tested": 12,
+    "partial": 43,
+    "blocked": 10
+  },
+  "complete_native_scenario_passes": 0
+}

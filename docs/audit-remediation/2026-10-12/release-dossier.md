@@ -1,5 +1,7 @@
 # First-batch release dossier — 2026-10-12
 
+Second-batch incremental evidence is in [batch2-release-dossier.md](batch2-release-dossier.md). This first-batch record retains its original source/test/result claims.
+
 This is a review candidate, not full-project or production acceptance. Scope: R14/F16, R18.1/F35, R24/F36; R26 reused-source regression; R25.1 independent security artifact investigation and R25.2 read-only catalog comparison. The original 65 UC baseline records are unchanged. New results: 33 partial, 12 blocked, 20 not-tested, 0 complete scenario passes. Source, staging and release are separate in both execution trackers.
 
 ## Exact sources and artifacts
