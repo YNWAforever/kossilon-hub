@@ -1,5 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { listPageSize } from "@/lib/list-page";
 import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type {
@@ -194,6 +195,7 @@ export async function listAnnualReturnCasePageForActor(
 
   return dependencies.repository.listCasePage({
     ...filters,
+    limit: listPageSize.parse(filters.limit),
     ...scope,
     ...originFilterForActor(actor, filters.includeFixtures),
   });
@@ -847,11 +849,11 @@ const workPageSchema = z.object({
   q: z.string().max(200).optional(),
   cursor: z.string().max(2048).optional(),
   sort: z.enum(["deadline", "company"]).optional(),
-  limit: z.number().int().min(1).max(200).optional(),
+  limit: listPageSize,
 });
 export async function getAnnualReturnWorkPageForActor(
   actor: AuthenticatedActor,
-  input: z.infer<typeof workPageSchema>,
+  input: z.input<typeof workPageSchema>,
   dependencies: { repository: Pick<AnnualReturnRepository, "listWorkView"> },
 ) {
   const data = workPageSchema.parse(input);
@@ -886,7 +888,9 @@ export const getAnnualReturnWorkMetrics = createServerFn({ method: "GET" })
   );
 
 export const listAnnualReturnCasePage = createServerFn({ method: "GET" })
-  .validator(listAnnualReturnCasesSchema)
+  .validator(
+    listAnnualReturnCasesSchema.removeDefault().extend({ limit: listPageSize }).default({}),
+  )
   .handler(({ data }) =>
     withAnnualReturnActorRepository((repository, actor) =>
       listAnnualReturnCasePageForActor(actor, data, { repository }),

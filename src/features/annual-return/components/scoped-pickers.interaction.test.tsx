@@ -82,13 +82,13 @@ it("does not claim no evidence while more authorised pages exist and searches th
   fireEvent.click(more);
   await waitFor(() =>
     expect(mocks.documents).toHaveBeenCalledWith({
-      data: { caseId: "case", category: "payment", q: "", limit: 100, cursor: "next" },
+      data: { caseId: "case", category: "payment", q: "", limit: 50, cursor: "next" },
     }),
   );
   fireEvent.change(screen.getByLabelText("搜尋Proof文件"), { target: { value: "5001" } });
   await waitFor(() =>
     expect(mocks.documents).toHaveBeenCalledWith({
-      data: { caseId: "case", category: "payment", q: "5001", limit: 100, cursor: undefined },
+      data: { caseId: "case", category: "payment", q: "5001", limit: 50, cursor: undefined },
     }),
   );
 });

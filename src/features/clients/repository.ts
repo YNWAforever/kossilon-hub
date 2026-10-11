@@ -7,6 +7,7 @@ import {
 } from "@/server/db/client";
 import { rethrowClientWriteError } from "./errors";
 import { boundedPageSize, readTupleCursor, tupleCursor } from "@/server/db/pagination";
+import { listPageSize } from "@/lib/list-page";
 import type {
   AddContactInput,
   AppointOfficerInput,
@@ -382,8 +383,9 @@ export function createClientRepository(
     return rows.map(mapSummary);
   }
   async function listClientPage(filters: ClientListFilters = {}) {
-    const limit = boundedPageSize(filters.limit),
-      rows = await clientRows(filters, true);
+    const limit = listPageSize.parse(filters.limit);
+    filters = { ...filters, limit };
+    const rows = await clientRows(filters, true);
     const [count] = await sql<
       { total: number }[]
     >`select count(*)::int total from companies c where ${clientListScope(filters)}`;

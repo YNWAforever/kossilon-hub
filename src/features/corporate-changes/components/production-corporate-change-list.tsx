@@ -22,7 +22,7 @@ export function ProductionCorporateChangeList() {
   // company picker is fed from `listClients` (the same list the client register renders).
   const clientsQuery = useQuery({
     queryKey: ["clients", "corporate-picker", companySearch],
-    queryFn: () => listClientPage({ data: { q: companySearch, limit: 200 } }),
+    queryFn: () => listClientPage({ data: { q: companySearch, limit: 50 } }),
     retry: false,
   });
 
@@ -77,7 +77,7 @@ export function ProductionCorporateChangeList() {
           onChange={(event) => setCompanySearch(event.target.value)}
         />
         <span className="block text-xs text-muted-foreground">
-          最多顯示200項；搜尋涵蓋授權公司。
+          最多顯示50項；搜尋涵蓋授權公司。
         </span>
       </label>
       {clientsQuery.isError ? (

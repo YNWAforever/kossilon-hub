@@ -155,6 +155,13 @@ export function WorkQueueRoute() {
         </div>
 
         <div className="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
+          {anchor &&
+          page &&
+          !queueQuery.isFetching &&
+          !queueQuery.isError &&
+          !items.some((item) => item.id === anchor) ? (
+            <p role="status">原工作已離開此清單，請重新選擇。</p>
+          ) : null}
           <nav aria-label="Queue views" className="flex min-w-0 gap-1">
             {(
               [

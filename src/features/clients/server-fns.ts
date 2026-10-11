@@ -6,6 +6,7 @@ import { assertClientCompanyCreatable, assertClientCompanyWritable } from "./aut
 import type { ClientRepository } from "./repository";
 import type { ClientListFilters } from "./repository";
 import { originFilterForActor } from "./data-origin";
+import { listPageSize } from "@/lib/list-page";
 
 const loadDefaultClientContext = createServerOnlyFn(async () => {
   const [{ getRequest }, { requireStaffActor }, { createClientRepository }] = await Promise.all([
@@ -258,7 +259,7 @@ const clientPageSchema = z
     status: z.enum(["active", "inactive"]).optional(),
     teamId: z.string().uuid().optional(),
     cursor: z.string().max(2048).optional(),
-    limit: z.number().int().min(1).max(200).optional(),
+    limit: listPageSize,
   })
   .strict()
   .default({});

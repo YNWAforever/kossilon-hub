@@ -76,7 +76,10 @@ function PortalRoute() {
       actor?.role,
       caseSearch,
     ],
-    queryFn: () => listAnnualReturnCasePage({ data: { limit: 200, q: caseSearch } }),
+    queryFn: () =>
+      listAnnualReturnCasePage({
+        data: { limit: 50, ...(caseSearch.trim() ? { q: caseSearch.trim() } : {}) },
+      }),
     enabled:
       dataMode === "production" && actor?.role !== "Client" && !productionCaseId && !invalidCaseId,
     retry: false,
@@ -151,7 +154,7 @@ function PortalRoute() {
               onChange={(event) => setCaseSearch(event.target.value)}
             />
             <span className="block text-xs text-muted-foreground">
-              最多顯示200項；搜尋在授權範圍執行。
+              最多顯示50項；搜尋在授權範圍執行。
             </span>
           </label>
           <label className="block text-sm">
@@ -788,7 +791,7 @@ function ScopedDocumentPanel({
     queryKey: [...annualReturnQueryKeys.documents(caseId), companyId, actorScope],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
-      listDocumentPage({ data: { companyId, caseId, limit: 100, cursor: pageParam } }),
+      listDocumentPage({ data: { companyId, caseId, limit: 50, cursor: pageParam } }),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: productionReady,
     retry: false,

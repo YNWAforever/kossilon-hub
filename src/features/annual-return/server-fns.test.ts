@@ -10,11 +10,36 @@ import {
   resolveAnnualReturnCaseFindingForActor,
   listAnnualReturnCasePageForActor,
   getAnnualReturnBoardTotalsForActor,
+  getAnnualReturnWorkPageForActor,
   updateAnnualReturnStatusForActor,
   recordAnnualReturnPaymentEvidenceForActor,
   reviewAnnualReturnPaymentEvidenceForActor,
 } from "./server-fns";
 import { ReadinessConflictError } from "./readiness";
+it("caps public Today and case pages at50 and rejects51 before any repository read", async () => {
+  const listWorkView = vi.fn().mockResolvedValue({ rows: [], nextCursor: null });
+  const listCasePage = vi.fn().mockResolvedValue({ cases: [], nextCursor: null });
+  await expect(
+    getAnnualReturnWorkPageForActor(
+      staffActor,
+      { view: "chaseToday", limit: 51 },
+      { repository: { listWorkView } },
+    ),
+  ).rejects.toThrow(/50/);
+  await expect(
+    listAnnualReturnCasePageForActor(staffActor, { limit: 51 }, { repository: { listCasePage } }),
+  ).rejects.toThrow(/50/);
+  expect(listWorkView).not.toHaveBeenCalled();
+  expect(listCasePage).not.toHaveBeenCalled();
+  await getAnnualReturnWorkPageForActor(
+    staffActor,
+    { view: "chaseToday" },
+    { repository: { listWorkView } },
+  );
+  await listAnnualReturnCasePageForActor(staffActor, {}, { repository: { listCasePage } });
+  expect(listWorkView).toHaveBeenCalledWith(expect.objectContaining({ limit: 50 }));
+  expect(listCasePage).toHaveBeenCalledWith(expect.objectContaining({ limit: 50 }));
+});
 
 const caseId = "91000000-0000-0000-0000-000000000001";
 const ownerId = "20000000-0000-0000-0000-000000000002";
@@ -162,9 +187,9 @@ describe("origin diagnostics server authorization", () => {
       { includeFixtures: true },
       { repository: { listCasePage } },
     );
-    expect(listCasePage).toHaveBeenLastCalledWith({ includeFixtures: true });
+    expect(listCasePage).toHaveBeenLastCalledWith({ includeFixtures: true, limit: 50 });
     await listAnnualReturnCasePageForActor(actor, {}, { repository: { listCasePage } });
-    expect(listCasePage).toHaveBeenLastCalledWith({ includeFixtures: false });
+    expect(listCasePage).toHaveBeenLastCalledWith({ includeFixtures: false, limit: 50 });
   });
 });
 
