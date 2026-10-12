@@ -14,7 +14,15 @@ R25 baseline exact command:6files74tests0skip,4.38s, local PG17 kossilon_staff_b
 
 | Task | State | Next |
 |---|---|---|
-| R25.2 | 進行中 | READ ONLY current-reader restore rehearsal; immutable catalog/data check |
+| R25.2 | 進行中 | current-reader local restore verified; native/Auth/current rollback gates pending |
 | R25.3 | 進行中 | existing safe SQL lease/recovery/receipt regression; native owner/ticks gate separate |
 | R27 | 進行中 | exact source regression; approved namespace/recipient and native adapters absent |
 | Cross-role isolated UAT | 受阻 | Auth/QA/Release: compatible isolated exact-artifact origin, approval ref and controlled Admin/Manager/Staff/Client A-B accounts |
+
+R25.2 source batch af2a7b468f840b483af2e93df1eb68956ea50fec committed/pushed. Actual READ ONLY restored reads:daily2/all3sources available,inc0/change0/all5company tabs;89original projections/66ledger/4outbox unchanged. PG18 returned stopped. Original initial word-match RED corrected to behavior RED; full pre-review local run interrupted. CI290 both legs actual1failed/2424passed due fixture localhost alias, with downstream build/browser skipped.
+
+R25.3 reusable adapters accepted manually on a separate newly initialized/migrated/seeded owned PG17 DB:five actual safe-runtime SQL passes succeeded with persisted per-pass started/finished; exact same-slot replay skip5; stale token begin/finish denied after unstarted lease takeover; committed SQL witness plus lost receipt stays unknown/started after expiry, no replay,2durable witness effects total. All output records native_ticks0/platformTriggerVerifiedfalse; external provider markers0. This is not three native five-minute ticks or a native service identity. Witness DB/receipts retained; no customer restore fixture writes.
+
+Fresh production READ ONLY:66ledger/4pending outbox match the child; dispatch marker absent;113historical maintenance runs, last started2026-09-30T01:55:14.448Z. Configured production scheduler owner isvercel; current-candidate native ticks remain0. Outbox client-origin/seeded event/no approval/provider refs must be reviewed by Ops; no blind fixture classification/deletion/cancellation. Current Native Auth mapping only1Admin/unexpired DB session; active accepted Client membership has no native Auth user. Cross-role UAT remains blocked, without treating another browser session as root cause.
+
+Final review four findings fixed in one pass; exact details/RED/GREEN in batch4-review.md. No deferred minors or additional design rulings. Ruling retained: current-candidate native restore requires an approved current recovery/runtime point; the one historical native snapshot is not substituted for it. Minimum missing approvals/identities/provider namespace are recorded in the final dossier; no new native provisioning or dispatch was guessed.

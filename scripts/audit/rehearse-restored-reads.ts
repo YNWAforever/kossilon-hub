@@ -9,6 +9,7 @@ import { createDailyWorkRepository } from "../../src/features/daily-work/reposit
 import { createCompanyWorkspaceRepository } from "../../src/features/clients/company-workspace";
 import { readIncorporationPage } from "../../src/features/incorporation/list-page-repository";
 import { readCorporateChangePage } from "../../src/features/corporate-changes/list-page-repository";
+import { observeCompanyWorkspace } from "./restored-company-evidence";
 const url = process.env.R25_LOCAL_URL!;
 if (new URL(url).hostname !== "127.0.0.1")
   throw Error("This rehearsal permits only the owned localhost restore.");
@@ -16,6 +17,8 @@ const sql = createSqlClient(url, { ssl: false, max: 1 });
 try {
   const receipt = await sql.begin(async (tx) => {
     await tx.unsafe("set transaction read only");
+    await tx.unsafe("set local statement_timeout='15s'");
+    await tx.unsafe("set local lock_timeout='5s'");
     const queue = await createWorkItemRepository({ sql: tx }).listQueuePage({ limit: 50 });
     const cases = await createAnnualReturnRepository({ sql: tx }).listCasePage({ limit: 50 });
     const documents = await createDocumentRepository({ sql: tx }).listDocumentPage({ limit: 50 });
@@ -74,21 +77,16 @@ try {
     if (company) {
       const repository = createCompanyWorkspaceRepository({ sql: tx });
       const data = { companyId: company.id as string, limit: 50 };
-      const summary = await repository.summary(actor, data);
-      if (summary.partial)
-        throw Error("BLOCKED: the current company summary is partial on the restored schema.");
-      await repository.cases(actor, data);
-      await repository.documents(actor, data);
-      await repository.payments(actor, data);
-      const activity = await repository.activity(actor, data);
-      Object.assign(companyWorkspace, {
-        observed: true,
-        tabs: ["overview", "cases", "documents", "payments", "activity"],
-        openCases: summary.openCases,
-        documents: summary.documents,
-        paymentCases: summary.paymentCases,
-        activityRows: activity.items.length,
-      });
+      Object.assign(
+        companyWorkspace,
+        await observeCompanyWorkspace({
+          summary: () => repository.summary(actor, data),
+          cases: () => repository.cases(actor, data),
+          documents: () => repository.documents(actor, data),
+          payments: () => repository.payments(actor, data),
+          activity: () => repository.activity(actor, data),
+        }),
+      );
     }
     return {
       transaction: "READ ONLY",
