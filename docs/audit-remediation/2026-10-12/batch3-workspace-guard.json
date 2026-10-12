@@ -1,0 +1,67 @@
+{
+  "source_sha": "d332cd2c0e8bc59971be66e8f42f8ffb1bd7f08c",
+  "other_worktrees": [
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work",
+      "expected_head": "76ad310ca8bad75a7ce44c82c9e20db734fd6eaa",
+      "actual_head": "76ad310ca8bad75a7ce44c82c9e20db734fd6eaa",
+      "head_unchanged": true,
+      "dirty_status": ""
+    },
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree",
+      "expected_head": "38123c96ed84fae84e41f17d4dea606c7a8938d0",
+      "actual_head": "38123c96ed84fae84e41f17d4dea606c7a8938d0",
+      "head_unchanged": true,
+      "dirty_status": ""
+    },
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009",
+      "expected_head": "01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e",
+      "actual_head": "01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e",
+      "head_unchanged": true,
+      "dirty_status": ""
+    }
+  ],
+  "original_uc_baseline": {
+    "reference_sha": "93ad5eb8dee82ed28b48856dc27efa5bcbafa28e",
+    "denominator": 65,
+    "all_pre_execution_columns_cell_for_cell_identical": true,
+    "baseline_projection_sha256": "30053479ae713280565d2bf31d7dfccb730789966aa38a6443508015d2069720",
+    "execution_result_totals": {
+      "partial": 56,
+      "blocked": 9
+    },
+    "touched_uc_ids": [
+      "UC34",
+      "UC41",
+      "UC42",
+      "UC43",
+      "UC44",
+      "UC45",
+      "UC46",
+      "UC47",
+      "UC49",
+      "UC50",
+      "UC51",
+      "UC54",
+      "UC55",
+      "UC59",
+      "UC68",
+      "UC76",
+      "UC82",
+      "UC83",
+      "UC92",
+      "UC93",
+      "UC94"
+    ]
+  },
+  "migrations_unchanged": true,
+  "no_force_push": true,
+  "no_user_file_reset": true,
+  "holds": {
+    "production": true,
+    "outbound": true,
+    "customer_restore_pg18_stopped": true
+  }
+}

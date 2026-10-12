@@ -15,11 +15,11 @@ Ruling: incorporation/change schemas require owner_id; expose truthful mandatory
 
 | Task | State | Verification / next |
 |---|---|---|
-| R20 |待驗收 |d5615be4/cdebdb6c;12files30pass0skip +5files31pass0skip original writes; types/lint; full/native gates pending |
-| R15 |進行中 |6 mixed business cases, mine/team, partial source and AR five categories |
-| R19 |待開始 |company summary/tab-scoped bounded reads and lawful current-document links |
-| R18.2–3 |待開始 |1000 frozen selection, labelled jobs,47/1/1/1 safe recovery and export |
-| R22 |待開始 |role navigation, safe handoff, template conflict retention, staff copy/accessibility |
+| R15 | 待驗收 | Mixed AR/incorporation/change scoped daily work; own/reviewer/team, five AR categories, partial outages/day/cursor returns; collation traversal regression. Local complete; native journey partial. Final source d332cd2; complete local/CI receipt below. |
+| R19 | 待驗收 | Company UUID/tab-bound cases/documents/payments/activity; current authority, metadata-only links, debt, retained navigation; legacy maintenance preserved. Local complete; native journey partial. Final source d332cd2; complete local/CI receipt below. |
+| R20 | 待驗收 | 300 incorporation +300 change fixtures; scope/count/global search/Completed history/real ownership, truthful deadline/unassigned capabilities; original create guards and lifecycle locks. Local complete; native journey partial. Final source d332cd2; complete local/CI receipt below. |
+| R18.2–3 | 待驗收 | F35 2-of-20 baseline retained;1000 documents/page50/998 preview/997 eligible/1 locked;1000-item lease takeover/1000 unique audit effects;50 mixed47/1/1/1 and49 final successful receipts without replay; job center/poll/receipt/export. Native scheduler/heartbeat pending. Final source d332cd2; complete local/CI receipt below. |
+| R22 | 待驗收 | Admin-only imports/navigation; current active profile lifecycle locks, verified resource-team handover/same-key receipts/conflict/rejection/unknown handling/recount; last Admin protected; immutable templates/retained edits;44px primary targets and1366/390 demo. Native role journey partial. Final source d332cd2; complete local/CI receipt below. |
 
 Environment: fresh owned localhost PG17 kossilon_staff_batch3, DATABASE_SSL=disable, DATABASE_URL=TEST_DATABASE_URL, REQUIRE_INTEGRATION_TESTS=1. PG18 customer public restore stays stopped; no production/provider/account mutation. Synthetic local actors are contract evidence only. Native role/browser/scheduler/provider gates remain separate.
 
@@ -32,3 +32,6 @@ R19: source/local complete 53c1973aa8a0112ac666897cb89a95429aabaa25; 7files29pas
 R18: source/local complete 60202a6e16cf84f76645e33e14d12fe9418ee00b; 6files42pass0skip;1000documents/page50/998preview/997eligible/1locked;1000committed interruption/lease takeover/1000 audit effects;50mixed47success/1conflict/1retryable/1unknown no success replay; scoped job metadata, worker receipt separately from unknown heartbeat; final composite types/CI pending. Exact evidence batch3-r18.md / batch3-r18-tests.json. Native gates remain待驗收/受阻, release NO_GO. Next: R22 handover/role/settings; final batch3 whole suite/build/CI and native scheduler/device/auth acceptance pending.
 
 R22: source/local complete 3bf8d8ecdd278e2fd48c21de67251740c83ed52e; 7files29pass0skip; same-key SQL business receipts, version conflict/re-preview/recount, role navigation, original last Admin/current session/in-flight assignment checks and template immutable snapshots; explicit confirmation/unknown receipt read and retained draft; types/lint0 two prior warnings. Exact evidence batch3-r22.md / batch3-r22-tests.json. Native gates remain待驗收/受阻, release NO_GO. Next: Single whole-batch review, complete candidate suite/build/exact-head CI; genuine four-role sessions/device/provider/native scheduler remain release gates.
+
+
+Final batch3 checkpoint: sourced332cd2c0e8bc59971be66e8f42f8ffb1bd7f08c, artifact25891030962b0ed9010f48c90c420f7d51c41f64ff0ca2e5739777e19a501592. Final owned fresh DB277files2424tests0skips; build exit0; local Edge demo12browser tests at390/1366; historical9browser files unchanged. Exact-source CI288 run38204660838 Node22/24+aggregateverify all success. Single whole-batch review four findings repaired; prior source124ce31 full run/CI287 failed due two cross-team fixtures seeded with an arbitrary Staff. Fixture-only d332cd2 change uses verified Admin to create cross-team data; original negative authorization assertions unchanged. Original65UC baseline cells preserved. All5requested source deliveries locally verified, task state待驗收; native staging受阻/releaseNO_GO. See batch3-release-dossier.md for blockers/rollback and exact receipts. No further implementation batch is pending within this requested local scope.
