@@ -1,0 +1,297 @@
+{
+  "head_sha": "0f66695738fca588d2e03931aee5d3f3db0dc625",
+  "tested_source_sha": "5caa59a3dad927ad05c0e261a4a0fd66d04338f6",
+  "run": 38217322848,
+  "run_number": 292,
+  "url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/38217322848",
+  "conclusion": "success",
+  "scope": "Exact evidence-head CI; application/test/config bytes identical to tested source; not native UAT",
+  "jobs": [
+    {
+      "id": 114704997294,
+      "name": "Node22",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify selected runtimes",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit both tracked dependency locks",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify portable npm lock installation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Apply migrations",
+          "conclusion": "success"
+        },
+        {
+          "name": "Seed reference data",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint",
+          "conclusion": "success"
+        },
+        {
+          "name": "Typecheck",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pre-deploy gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Original audit acceptance ledger (local contracts only)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install isolated local browser",
+          "conclusion": "success"
+        },
+        {
+          "name": "Local demo browser and real parser regressions (not runtime UAT)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build",
+          "conclusion": "success"
+        },
+        {
+          "name": "Dev server import boundaries",
+          "conclusion": "success"
+        },
+        {
+          "name": "Cron trigger has a handler in the built Worker",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 114704997694,
+      "name": "Node24",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify selected runtimes",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit both tracked dependency locks",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify portable npm lock installation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Apply migrations",
+          "conclusion": "success"
+        },
+        {
+          "name": "Seed reference data",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint",
+          "conclusion": "success"
+        },
+        {
+          "name": "Typecheck",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pre-deploy gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Original audit acceptance ledger (local contracts only)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install isolated local browser",
+          "conclusion": "success"
+        },
+        {
+          "name": "Local demo browser and real parser regressions (not runtime UAT)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build",
+          "conclusion": "success"
+        },
+        {
+          "name": "Dev server import boundaries",
+          "conclusion": "success"
+        },
+        {
+          "name": "Cron trigger has a handler in the built Worker",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 114708349590,
+      "name": "verify",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Require both Node runtime legs",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "runtime_legs": [
+    {
+      "node": 22,
+      "log_bytes": 502318,
+      "log_sha256": "323d9f6ab1174236cf66d4f8b5dbabce574607829cc87b14440ba950b12ce84f",
+      "test_files": 280,
+      "tests": 2431,
+      "skips": 0,
+      "browser_tests": 12,
+      "result_lines": [
+        "2026-10-12T07:22:38.5608813Z No vulnerabilities found (checked 674 packages) [90.00ms]",
+        "2026-10-12T07:22:39.3218778Z found 0 vulnerabilities",
+        "2026-10-12T07:22:55.2842535Z found 0 vulnerabilities",
+        "2026-10-12T07:23:34.6389073Z  Test Files  1 passed (1)",
+        "2026-10-12T07:23:34.6390764Z       Tests  10 passed (10)",
+        "2026-10-12T07:23:34.6393469Z    Duration  405ms (transform 39ms, setup 0ms, import 113ms, tests 183ms, environment 0ms)",
+        "2026-10-12T07:31:13.0658045Z  Test Files  280 passed (280)",
+        "2026-10-12T07:31:13.0676326Z       Tests  2431 passed (2431)",
+        "2026-10-12T07:31:13.0681136Z    Duration  418.99s (transform 22.70s, setup 0ms, import 53.81s, tests 409.17s, environment 39.95s)",
+        "2026-10-12T07:32:09.1549648Z   12 passed (33.3s)"
+      ]
+    },
+    {
+      "node": 24,
+      "log_bytes": 503123,
+      "log_sha256": "7b678e425af7352fd85c9f99fac7859acc6768e820d6ecd44b3f21891a83ea98",
+      "test_files": 280,
+      "tests": 2431,
+      "skips": 0,
+      "browser_tests": 12,
+      "result_lines": [
+        "2026-10-12T07:22:27.8105012Z No vulnerabilities found (checked 674 packages) [101.00ms]",
+        "2026-10-12T07:22:28.8246216Z found 0 vulnerabilities",
+        "2026-10-12T07:22:46.3590769Z found 0 vulnerabilities",
+        "2026-10-12T07:23:23.7042119Z  Test Files  1 passed (1)",
+        "2026-10-12T07:23:23.7043087Z       Tests  10 passed (10)",
+        "2026-10-12T07:23:23.7045248Z    Duration  464ms (transform 46ms, setup 0ms, import 134ms, tests 203ms, environment 0ms)",
+        "2026-10-12T07:31:51.8620660Z  Test Files  280 passed (280)",
+        "2026-10-12T07:31:51.8634939Z       Tests  2431 passed (2431)",
+        "2026-10-12T07:31:51.8639993Z    Duration  470.27s (transform 19.78s, setup 0ms, import 49.91s, tests 460.32s, environment 40.46s)",
+        "2026-10-12T07:32:45.1737844Z   12 passed (33.6s)"
+      ]
+    }
+  ],
+  "authority": "Decoded GitHub job logs and final workflow/job readback; publicly safe summary, no raw credentials/native values"
+}

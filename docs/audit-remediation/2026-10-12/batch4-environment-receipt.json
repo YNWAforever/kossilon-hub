@@ -131,5 +131,17 @@
       "bytes": 5848,
       "sha256": "da1332856fa0b9405d666faf2d3bedc82a37622d20b6623d58c921431f22e063"
     }
-  ]
+  ],
+  "user_environment_confirmation": {
+    "recorded_at_hkt": "2026-10-12T15:59:19.748+08:00",
+    "source": "Direct human reply in execution session",
+    "response": "尚未備好，保留 blocker 並完成可做的證據",
+    "isolated_acceptance_package_available": false,
+    "scope": "origin/version, five controlled identities, provider test namespace/recipient",
+    "decision": "Retain minimum native blockers and owners; finish feasible evidence. No provisioning, role changes, native dispatch, official migration/deploy or release authority inferred.",
+    "holds": {
+      "production": true,
+      "outbound": true
+    }
+  }
 }
