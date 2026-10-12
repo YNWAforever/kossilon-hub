@@ -2,6 +2,7 @@ import { checklistTemplates, daysUntil, type ClientCase } from "./app-data";
 import { type AnnualReturnAiContext } from "./annual-return-store";
 import { type ClientPortalPaymentProofAiContext } from "./client-portal-store";
 import { type FaqEntry, type ReferenceDoc } from "./knowledge-base";
+import { formatDate } from "./format-date";
 import { tokenize } from "./text-tokens";
 
 export type AiEnquiry = {
@@ -80,15 +81,6 @@ function normalizeIntent(intent: string): NormalizedIntent {
   return "General";
 }
 
-const annualReturnStatusLabels: Record<AnnualReturnAiContext["status"], string> = {
-  preparing: "Preparing",
-  "waiting-documents": "Waiting documents",
-  "payment-pending": "Payment pending",
-  "internal-review": "Internal review",
-  "ready-to-file": "Ready to file",
-  filed: "Filed",
-};
-
 const annualReturnPaymentStatusLabels: Record<AnnualReturnAiContext["paymentStatus"], string> = {
   pending: "Pending",
   paid: "Paid",
@@ -163,6 +155,16 @@ export function retrieveContext(
   return { faqs: scoredFaqs, documents: scoredDocs, checklistItems, caseFields };
 }
 
+/** `subject` is written as it should read in place, e.g. "The filing" or "your annual return". */
+function dueSentence(subject: string, dueDate: string, daysToDue: number): string {
+  const date = `**${formatDate(dueDate)}**`;
+  if (daysToDue < 0) {
+    return `${subject} was due on ${date}. That date has passed, so we would like to file as soon as possible.`;
+  }
+  const when = daysToDue === 0 ? "today" : daysToDue === 1 ? "tomorrow" : `in ${daysToDue} days`;
+  return `${subject} is due on ${date} (${when}).`;
+}
+
 export function draftReply(
   enquiry: AiEnquiry,
   context: RetrievalContext,
@@ -173,9 +175,6 @@ export function draftReply(
   const normalizedIntent = normalizeIntent(enquiry.intent);
   const topFaq = context.faqs[0]?.item;
   const topDoc = context.documents[0]?.item;
-  const annualReturnStatusLabel = annualReturnContext
-    ? annualReturnStatusLabels[annualReturnContext.status]
-    : undefined;
   const annualReturnPaymentStatusLabel = annualReturnContext
     ? annualReturnPaymentStatusLabels[annualReturnContext.paymentStatus]
     : undefined;
@@ -191,17 +190,24 @@ export function draftReply(
             : " Payment proof has not been uploaded yet."
     : "";
   const existingBasicClientCaseLine = clientCase
-    ? `\n\nFor **${clientCase.companyName}**, the current case status is **${clientCase.status}**. The filing due date is **${clientCase.dueDate}** (${daysUntil(clientCase.dueDate)} days from today). ${
+    ? `\n\nFor **${clientCase.companyName}**, the current case status is **${clientCase.status}**. ${dueSentence("The filing", clientCase.dueDate, daysUntil(clientCase.dueDate))} ${
         clientCase.missingDocs.length
           ? `We are still missing: **${clientCase.missingDocs.join(", ")}**.`
           : "All required documents are currently marked as received."
       } Payment status: **${clientCase.paymentStatus}**.`
     : "";
+  // This paragraph is sent to the client. Owner, readiness, internal status,
+  // the staff next action and review blockers are workflow detail -- staff see
+  // them in the case-context panel beside the draft -- so only what the client
+  // can supply is asked for here.
+  const clientActionable = annualReturnContext?.blockers.filter(
+    (blocker) => blocker.type === "document" || blocker.type === "signature",
+  );
   const enrichedCaseLine = annualReturnContext
-    ? `\n\nFor **${annualReturnContext.companyName}**, owner **${annualReturnContext.owner}** is currently tracking **${annualReturnStatusLabel}**. The filing due date is **${annualReturnContext.dueDate}** (${annualReturnContext.daysToDue} days from today), readiness is **${annualReturnContext.readinessScore}%**, and the next action is **${annualReturnContext.nextAction}**. ${
-        annualReturnContext.blockers.length
-          ? `Current blockers: **${annualReturnContext.blockers.map((blocker) => blocker.label).join(", ")}**.`
-          : "No blockers are currently open."
+    ? `\n\nFor **${annualReturnContext.companyName}**, ${dueSentence("your annual return", annualReturnContext.dueDate, annualReturnContext.daysToDue)} ${
+        clientActionable?.length
+          ? `To complete the filing we still need: **${clientActionable.map((blocker) => blocker.label).join(", ")}**.`
+          : "We have everything we need from you for the filing."
       } Payment status: **${annualReturnPaymentStatusLabel}**.${paymentProofLine}`
     : "";
   const caseLine = enrichedCaseLine || `${existingBasicClientCaseLine}${paymentProofLine}`;
