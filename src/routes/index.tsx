@@ -194,11 +194,19 @@ function DashboardPage() {
         ) : (
           <ul className="divide-y divide-border">
             {digest.items.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-start gap-3 px-5 py-3">
-                <StatusPill tone={digestTone(item.severity)} className="capitalize">
+              // Phones put severity and action on one line and give the title the
+              // full width below; three columns left about a word per line.
+              <li
+                key={item.id}
+                className="grid grid-cols-[auto_auto] items-start justify-between gap-x-3 gap-y-2 px-5 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
+              >
+                <StatusPill
+                  tone={digestTone(item.severity)}
+                  className="justify-self-start capitalize"
+                >
                   {item.severity}
                 </StatusPill>
-                <div className="min-w-0 flex-1">
+                <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold text-foreground">{item.title}</p>
                     <span className="text-[11px] capitalize text-muted-foreground">
@@ -207,7 +215,9 @@ function DashboardPage() {
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
                 </div>
-                <DigestActionLink item={item} />
+                <div className="col-start-2 row-start-1 justify-self-end sm:col-start-3">
+                  <DigestActionLink item={item} />
+                </div>
               </li>
             ))}
           </ul>

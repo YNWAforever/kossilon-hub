@@ -114,7 +114,7 @@ function DemoAnnualReturnCommandCenter() {
         }
       />
 
-      <div className="grid gap-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <Metric label="Overdue" value={metrics.overdue} tone="red" />
         <Metric label="Due soon" value={metrics.dueSoon} tone="orange" />
         <Metric label="Blocked" value={metrics.blocked} tone="yellow" />
