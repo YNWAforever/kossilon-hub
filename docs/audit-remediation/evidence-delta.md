@@ -252,3 +252,33 @@ exec mount/evidence persistence; first temp files unavailable after stop, origin
 startup error preserved in tool trace. Final complete GREEN uses owned
 LinuxNode22.23.2/Bun1.4.2/default forks, same SCRAM PG18.6/exact candidate test bytes.
 No source/config/timeout/expectation/skip weakened; original CI/default forks unchanged.
+
+## 2026-10-09 R13/F25 dependency gate refresh
+
+Current main remains da82677; production web remains aa5d3cb (READY dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT); scheduler artifact and deployed resolved dependencies were not observed. PR124 is now merged as d8c9312 into codex/oct3-live-security-base, not main. That candidate and live-source locks still contain the F25 paths; a maintenance follow-up must preserve its schema boundary. PR142/58860eb remains an independent Operations slice; run37678792755 failed both runtime audits before product tests. Historical main CI37234812040 does not clear newer advisories.
+
+R13 local source a12d53ec3935b82b1be09020f05eb547fa324661: npm/Bun audit0; focused9/9 each; fresh PG18.6 full244files/2332pass/0fail/0skip; source50migrations committed only locally, reference fixtures, build/typecheck pass, lint0errors/1existing warning. CI is pending exact PR head. No formal runtime/UAT acceptance: original50 bytes unchanged19historical LOCAL_ONLY/31blocked,0new genuine PASS. Evidence: evidence/2026-10-09-r13-dependency-gates.json and 2026-10-09-r13-dependency-security.md. P1v6 requests/claims and prior runtime worktree38123c9 remain untouched; its time window is expired.
+
+## 2026-10-09 R13 final review correction
+
+Source 789db5859010426adce4f0cb290ce4c4cc42ea9e: the single final reviewer reproduced a real npm Nitro LRU driver failure missed by the initial2332 suite. Restoring only the optional-peer lock entry did not fix clean npm installation. Explicitly declare the already-baseline lru-cache11.5.3 and regenerate both native locks; no new LRU version. Final fresh npm/Bun10/10 each, both low audits0, complete PG18.6 full244files/2333PASS/0FAIL/0SKIP, lint0errors/1baseline warning, typecheck/build0. Exact-owned container and anonymous volume removal verified. The original a12 receipt remains history; this correction supersedes its compatibility conclusion. Add the real driver regression to the existing portable npm CI tree; retain every old gate, matrix and threshold. Receipt: evidence/2026-10-09-r13-review-fix.json.
+
+Main merge is HOLD: read-only Vercel linkage confirms productionBranch=main/autoAssignCustomDomains=true; a merge could cause an unapproved formal deploy. Prepare draft only and a separate d8c9312 schema-preserving R01 follow-up. No hosted SQL/deploy/provider/role operations; original50UAT bytes retained;0new genuine PASS; releaseNO_GO.
+
+## R13 draft CI receipt — 2026-10-09
+
+PR143 headcedace5c2c04c7444684e0c265ceef69f67b6e32, run37893421011: Node22/24 and verify all success. Each actual runtime:244files/2333tests/0fail/0skip; isolated npm10 and local demo browser12 pass. Full step/log hash receipt: evidence/2026-10-09-r13-ci-green.json. This evidence commit changes docs only; its new PR head must be independently GREEN before completion. Release remainsNO_GO, main mergeHOLD,0newgenuineUAT.
+
+## 2026-10-09 master-plan executable follow-ups
+
+R13/F25 draft143 local244files/2333PASS/0skip and actual Node22/24+verify GREEN (cedace5 and evidence successor edf5db2). Separate R01/F25 maintenance draft144 is based solely on d8c9312/aa5 source lineage:34source bodies/300protected files retained, local178files/1773PASS/0skip, both installed10PASS/audits0, its own da4eceb/run37894936496 allGREEN. Production physical parity is stillunobserved. These are different source/schema candidates; never substitute the main bundle for the maintenance hotfix.
+
+R12/F23/F24 draft142 source58860eb had failed both low audits before tests. Ordinary merge6a3f61f of reviewedR13 preserves the exact Operations bytes/six tests and all published ancestors; combined freshPG18.6 245files/2339PASS/0FAIL/0SKIP, lint0errors1baselinewarning/typecheck/build0; owned container+volume removal verified. Stack on draft143 so the Operations diff stays reviewable; own exact-head CI receipt remains inPR142 metadata. No additional product source was rewritten.
+
+Mutable execution fields forR01 andR13 updated, newR12 rowadded without renumbering originalR00–R11/UC/UAT. Full pre-update tracker retained as evidence/2026-10-09-tracker-before-followups.csv; all other existing rows kept their bytes. Old snapshots/initial receipts are never overwritten. Production alias readback2026-10-09T06:38:47Z stillaa5d3cb/dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT. Scheduler/deployed dependency contents unobserved. Main mergeHOLD due production auto-linkage; no formal deployment inferred;0new genuine50UAT PASS/releaseNO_GO. P1v6 expired/consumed resources and previous runtime branch38123c9 untouched. Exact owner inputs remain in environment matrix and independentR01 receipt.
+
+## 2026-10-09 source-only maintenance merge and artifact capability
+
+Under the existing explicit green-merge instruction, PR144 was normal-merged only into codex/oct3-live-security-base as2063d08272a647f8475b3e43aaa0b2e203b254b2 (07:11:52Z). Premerge Vercel linkage rechecked productionBranch=main, all5checksGREEN, head d53acdf/base d8c9312 unchanged. Actual merge tree32ad2235108f1b9177569326bc1bbcd9cc7d4fc6 exactly equals the tested candidate; both parents retained, no rewrite. R01 current execution fields updated; original snapshot/UAT unchanged. Receipt: evidence/2026-10-09-r01-source-merge.json.
+
+Postmerge production alias readback07:13:45Z stilldpl_5Q1h65fxtUByWTJLTngCgsdvpmnT/aa5d3cb; no formal deploy. Exact deployment file-tree API returned404not_found/File tree not found (no retry), so runtime resolved dependencies remainunobserved. Minimal additional Release/Security input: deployed SBOM or actual function install/dependency receipt bound to this deployment and artifact hash; source locks cannot substitute. Capability receipt: evidence/2026-10-09-production-artifact-capability.json. Existing privateSQL/backendTLS/restricted-role/freshAuth/provider/native-tick inputs remain. Source merge is not physical/runtime acceptance: releaseNO_GO/0newgenuineUAT. PR143/main and stackedPR142 remainheld due productionauto-linkage and unresolved release contract.

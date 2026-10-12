@@ -1,0 +1,303 @@
+{
+  "task": "R13",
+  "finding": "F25",
+  "pr": 143,
+  "tested_head_sha": "cedace5c2c04c7444684e0c265ceef69f67b6e32",
+  "source_build_sha": "789db5859010426adce4f0cb290ce4c4cc42ea9e",
+  "run_id": 37893421011,
+  "run_url": "https://github.com/YNWAforever/kossilon-hub/actions/runs/37893421011",
+  "observed_at_utc": "2026-10-09T06:34:50.515398+00:00",
+  "conclusion": "success",
+  "jobs": {
+    "Node24": {
+      "job_id": 113699453053,
+      "full_files": 244,
+      "full_passed": 2333,
+      "full_failed": 0,
+      "full_skipped": 0,
+      "npm_installed_focused": 10,
+      "local_demo_browser": 12,
+      "raw_log_sha256": "e6cb51ffaedf906b89dc95ac3456b9cca577eb5e6c1e215ed2d71a45f1f0fcb6",
+      "all_steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify selected runtimes",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit both tracked dependency locks",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify portable npm lock installation",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Apply migrations",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Seed reference data",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Typecheck",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pre-deploy gate",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Original audit acceptance ledger (local contracts only)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install isolated local browser",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Local demo browser and real parser regressions (not runtime UAT)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Dev server import boundaries",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Cron trigger has a handler in the built Worker",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "Node22": {
+      "job_id": 113699453110,
+      "full_files": 244,
+      "full_passed": 2333,
+      "full_failed": 0,
+      "full_skipped": 0,
+      "npm_installed_focused": 10,
+      "local_demo_browser": 12,
+      "raw_log_sha256": "d6fce7b2b01086aee72081ad869d02cc8b7d8260539981a983655f2248d48bfa",
+      "all_steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify selected runtimes",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Audit both tracked dependency locks",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify portable npm lock installation",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Apply migrations",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Seed reference data",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Typecheck",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pre-deploy gate",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Original audit acceptance ledger (local contracts only)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install isolated local browser",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Local demo browser and real parser regressions (not runtime UAT)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Dev server import boundaries",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Cron trigger has a handler in the built Worker",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  },
+  "aggregate_verify": "success",
+  "classification": "CI/local fixture/demo only; not hosted or business acceptance",
+  "release": "NO_GO; main merge HOLD due automatic production linkage",
+  "new_genuine_uat_passes": 0,
+  "deployed_dependency_artifact": "not_observed",
+  "scheduler_sha": "not_observed"
+}

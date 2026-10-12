@@ -1,0 +1,64 @@
+{
+  "recorded_at_utc": "2026-10-09T06:55:19.044704+00:00",
+  "updated_current_rows": [
+    "R01",
+    "R13"
+  ],
+  "added_task": "R12 (existingF23/F24; no renumber)",
+  "prior_tracker_sha256": "e4cec880a802ac18d31a7e5b900d9cef09d503346e2d81fa56f3cdfd13c7f3c1",
+  "prior_tracker_copy": "2026-10-09-tracker-before-followups.csv",
+  "unchanged_rows": [
+    "R00",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06",
+    "R07",
+    "R08",
+    "R09",
+    "R10",
+    "R11"
+  ],
+  "R01": {
+    "source": "3e5eb75e714d7c63de81c7800c881252e2dfdca4",
+    "draft_pr": 144,
+    "source_schema_bodies": 34,
+    "full_local": 1773,
+    "ci_first_head": "da4ecebd1a591dc8bf164a391504f40f18d317f4",
+    "ci_first_run": 37894936496,
+    "current_receipt": "PR144 metadata final exact-head CI"
+  },
+  "R13": {
+    "source": "789db5859010426adce4f0cb290ce4c4cc42ea9e",
+    "draft_pr": 143,
+    "source_schema_bodies": 50,
+    "full_local": 2333,
+    "ci_green_successor_head": "edf5db2261ca6a877532b6d5e0a4988538c00204",
+    "ci_successor_run": 37894281717
+  },
+  "R12": {
+    "combined_source": "6a3f61fbffdd7d04d2eba9826a8337624bb2cd75",
+    "draft_pr": 142,
+    "full_local": 2339,
+    "full_files": 245,
+    "ops_source": "byte identical58860eb",
+    "dependency_inputs": "byte identical reviewedR13",
+    "exact_ci": "PR142 metadata after safe stack"
+  },
+  "production_readback": {
+    "observed_at_utc": "2026-10-09 06:38:47 UTC",
+    "alias": "kossilon-hub.vercel.app",
+    "deployment_id": "dpl_5Q1h65fxtUByWTJLTngCgsdvpmnT",
+    "project_id": "prj_FLAfZbaiLb9sAhrssXTUtlOYfBdC",
+    "state": "READY",
+    "target": "production",
+    "web_sha": "aa5d3cbddd895bca953b6eef7266ae1cc0b46215",
+    "scheduler_sha": "not_observed",
+    "resolved_dependencies": "not_observed"
+  },
+  "runtime_release": "NO_GO",
+  "original50_UAT": "byte unchanged;19historicalLOCAL_ONLY/31blocked/0newgenuinePASS",
+  "P1v6": "frozen worktree/claims unchanged; expired/consumed; no retry",
+  "permissions": "no formal DB/deploy/role/send/nativecron operations"
+}
