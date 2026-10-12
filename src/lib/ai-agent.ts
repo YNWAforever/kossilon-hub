@@ -200,15 +200,23 @@ export function draftReply(
   // the staff next action and review blockers are workflow detail -- staff see
   // them in the case-context panel beside the draft -- so only what the client
   // can supply is asked for here.
-  const clientActionable = annualReturnContext?.blockers.filter(
-    (blocker) => blocker.type === "document" || blocker.type === "signature",
+  // Payment is reported on its own line below. Signature blockers carry staff
+  // status labels ("Signature requested"), so they are named as the thing the
+  // client sends.
+  const clientActionable = (annualReturnContext?.blockers ?? []).flatMap((blocker) =>
+    blocker.type === "document"
+      ? [blocker.label]
+      : blocker.type === "signature"
+        ? ["your signature on the NAR1"]
+        : [],
   );
+  const outstandingSentence = clientActionable.length
+    ? `To complete the filing we still need: **${clientActionable.join(", ")}**.`
+    : annualReturnContext?.paymentStatus === "paid"
+      ? "We have everything we need from you for the filing."
+      : "Once we receive your payment we can complete the filing.";
   const enrichedCaseLine = annualReturnContext
-    ? `\n\nFor **${annualReturnContext.companyName}**, ${dueSentence("your annual return", annualReturnContext.dueDate, annualReturnContext.daysToDue)} ${
-        clientActionable?.length
-          ? `To complete the filing we still need: **${clientActionable.map((blocker) => blocker.label).join(", ")}**.`
-          : "We have everything we need from you for the filing."
-      } Payment status: **${annualReturnPaymentStatusLabel}**.${paymentProofLine}`
+    ? `\n\nFor **${annualReturnContext.companyName}**, ${dueSentence("your annual return", annualReturnContext.dueDate, annualReturnContext.daysToDue)} ${outstandingSentence} Payment status: **${annualReturnPaymentStatusLabel}**.${paymentProofLine}`
     : "";
   const caseLine = enrichedCaseLine || `${existingBasicClientCaseLine}${paymentProofLine}`;
 

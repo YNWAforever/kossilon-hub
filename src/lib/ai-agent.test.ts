@@ -152,7 +152,7 @@ describe("draftReply case paragraph is written for the client", () => {
   it("asks only for what the client can provide and keeps internal workflow out", () => {
     const { markdown } = draftReply(enquiry, empty, undefined, overdueCase);
 
-    expect(markdown).toContain("**Signed NAR1, Signature requested**");
+    expect(markdown).toContain("**Signed NAR1, your signature on the NAR1**");
     expect(markdown).not.toContain("Internal review");
     expect(markdown).not.toContain("readiness");
     expect(markdown).not.toContain("is currently tracking");
@@ -163,10 +163,22 @@ describe("draftReply case paragraph is written for the client", () => {
     const { markdown } = draftReply(enquiry, empty, undefined, {
       ...overdueCase,
       daysToDue: 1,
+      paymentStatus: "paid",
       blockers: [],
     });
 
     expect(markdown).toContain("due on **12 Aug 2026** (tomorrow)");
     expect(markdown).toContain("We have everything we need from you");
+  });
+
+  it("does not tell a client with an unpaid invoice that nothing is outstanding", () => {
+    const { markdown } = draftReply(enquiry, empty, undefined, {
+      ...overdueCase,
+      paymentStatus: "overdue",
+      blockers: [{ id: "b4", type: "payment", label: "Payment overdue", action: "" }],
+    });
+
+    expect(markdown).not.toContain("everything we need");
+    expect(markdown).toContain("Once we receive your payment");
   });
 });
