@@ -1,0 +1,202 @@
+{
+  "source_sha": "348b94e6afe29d196d1dc34ed8edd38642aa3539",
+  "recorded_at_hkt": "2026-10-12 10:49:16+08:00",
+  "scope": "R15 scoped mixed-source local SQL/components only",
+  "artifact_digest": null,
+  "release": "NO_GO",
+  "production_outbound_hold": true,
+  "files": [
+    {
+      "file": "r15-company-sort-red.log",
+      "bytes": 2214,
+      "sha256": "45953db588c2c2672babd25a274706ddef5387a10b00ad0b99514308603433e5",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  4.45s (transform 2.04s, setup 0ms, import 2.23s, tests 1.75s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r15-format-rule.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r15-format.log",
+      "bytes": 583,
+      "sha256": "daed92e032ac39b6054d9143559cfbb52f7c8d1fa446544b81fdefc1bdbcc572",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r15-green-attempt1.log",
+      "bytes": 2276,
+      "sha256": "c29ed891caa19c9611963edaa1af522acc6fa026c8757f10f05e83f42bc78381",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  1.33s (transform 438ms, setup 0ms, import 746ms, tests 304ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r15-green-attempt2.log",
+      "bytes": 1074,
+      "sha256": "e62b88686eabced63ddf59b8e31613ff7eac0c36b8bcd43194a060b6495aad54",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  1 passed (1)",
+        "   Duration  1.30s (transform 353ms, setup 0ms, import 484ms, tests 627ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r15-lint-final.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r15-lint.log",
+      "bytes": 4285,
+      "sha256": "394ac44f118e6062c3ca21803259bf5d0b0b4ee4c29907f6b8bb8d861906ff82",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 24 problems (22 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r15-red.log",
+      "bytes": 2077,
+      "sha256": "c1d220c8841fd1e552753708e7b8215d32ce0db02a5b6204c25f575cd7a0e9b9",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "   Duration  332ms (transform 84ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r15-regression-attempt1.log",
+      "bytes": 1651,
+      "sha256": "c7abd33ffd18734384427b937f03ccc7e6da1d9a19f5e280ec575f9f9f437c36",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/repository.integration.test.ts src/features/daily-work/components/daily-work-screen.interaction.test.tsx src/routes/-today.interaction.test.tsx src/lib/list-navigation.test.ts src/lib/business-list-navigation.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  5 passed (5)",
+        "      Tests  10 passed (10)",
+        "   Duration  6.43s (transform 1.01s, setup 0ms, import 3.19s, tests 1.59s, environment 4.61s)"
+      ]
+    },
+    {
+      "file": "r15-regression-final.log",
+      "bytes": 1702,
+      "sha256": "b99724b97501483b7a294a51bb18d39ad9760a15d9e8ffcb900515caa42721b3",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/repository.integration.test.ts src/features/daily-work/components/daily-work-screen.interaction.test.tsx src/routes/-today.interaction.test.tsx src/lib/list-navigation.test.ts src/lib/business-list-navigation.test.ts src/test/db-integration-files.convention.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  6 passed (6)",
+        "      Tests  12 passed (12)",
+        "   Duration  24.34s (transform 1.21s, setup 0ms, import 9.96s, tests 1.61s, environment 33.02s)"
+      ]
+    },
+    {
+      "file": "r15-sql-green-final.log",
+      "bytes": 1074,
+      "sha256": "fb4caedc837c2fef357ab51fd690ec5440155db9b2c21d7c7578e70958c83b35",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  1 passed (1)",
+        "   Duration  2.09s (transform 335ms, setup 0ms, import 728ms, tests 683ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r15-types-attempt1.log",
+      "bytes": 163,
+      "sha256": "139d1b7e44f244bfde11d9e28d409e8b73d27664842fd4ef6109f825fe6073b3",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r15-types-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r15-types-ui.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r15-ui-green-attempt1.log",
+      "bytes": 1095,
+      "sha256": "700151dd60dc6b16afe3ae4d91bab560b7eae46edc5cb159cfda81a97f1d8fff",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/components/daily-work-screen.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  3 passed (3)",
+        "   Duration  9.57s (transform 542ms, setup 0ms, import 5.97s, tests 639ms, environment 2.60s)"
+      ]
+    },
+    {
+      "file": "r15-ui-red.log",
+      "bytes": 2840,
+      "sha256": "7e85a9ac06c7a91d3b06e477209f278afa0f2a3a33de91592bd4a8ec924cfdd6",
+      "commands": [
+        "> test",
+        "> vitest run src/features/daily-work/components/daily-work-screen.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "   Duration  15.44s (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 14.81s)"
+      ]
+    }
+  ]
+}
