@@ -116,4 +116,15 @@ describe("whatsapp route across data modes", () => {
     expect(html).toContain("Mandy Lee");
     expect(html).not.toContain(PRODUCTION_INBOX);
   });
+
+  it.each(["demo", "production"] as const)(
+    "gives the %s inbox a main landmark like every other screen",
+    async (dataMode) => {
+      // The inbox used a bare <div> root, so screen-reader landmark navigation
+      // had no "main" to jump to on this one screen.
+      const html = await renderRoute("/whatsapp", dataMode);
+
+      expect(html.match(/<main[\s>]/g)).toHaveLength(1);
+    },
+  );
 });

@@ -51,7 +51,7 @@ function DemoWhatsAppInbox() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[320px_minmax(0,1fr)_420px]">
+    <main className="grid min-h-screen lg:grid-cols-[320px_minmax(0,1fr)_420px]">
       <section className="border-r bg-card">
         {/* The conversation rail is this screen's header — an inbox has no room
             for a page title above it, so PageHeader sits inside the rail. */}
@@ -146,6 +146,6 @@ function DemoWhatsAppInbox() {
           }}
         />
       </div>
-    </div>
+    </main>
   );
 }

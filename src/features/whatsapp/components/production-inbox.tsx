@@ -105,7 +105,7 @@ export function ProductionWhatsAppInbox() {
           : "live";
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]">
+    <main className="grid min-h-screen lg:grid-cols-[340px_minmax(0,1fr)]">
       <section className="border-r bg-card">
         {/* The conversation rail is this screen's header — an inbox has no room
             for a page title above it, so PageHeader sits inside the rail. */}
@@ -327,6 +327,6 @@ export function ProductionWhatsAppInbox() {
           </div>
         )}
       </section>
-    </div>
+    </main>
   );
 }
