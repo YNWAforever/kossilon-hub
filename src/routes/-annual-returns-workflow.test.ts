@@ -137,11 +137,19 @@ describe("annual return workflow route regressions", () => {
     expect(desktopNavigation).toContain(">管理<");
   });
 
-  it("keeps the blockers column in the command center alongside packet and follow-up columns", () => {
-    expect(annualReturnsRouteSource).toContain("<span>Blockers</span>");
-    expect(annualReturnsRouteSource).toContain("<span>Packet</span>");
-    expect(annualReturnsRouteSource).toContain("<span>Follow-ups</span>");
-    expect(annualReturnsRouteSource).toContain('<Field label="Blockers" value={blockerSummary} />');
+  it("keeps blockers, packet and follow-ups on every command-center row", async () => {
+    // Grouped as Progress (case + packet) and Outstanding (blockers +
+    // follow-ups) so the board fits a laptop without sideways scrolling.
+    expect(annualReturnsRouteSource).toContain("<span>Progress</span>");
+    expect(annualReturnsRouteSource).toContain("<span>Outstanding</span>");
+
+    const html = (await renderRoute("/annual-returns")).replaceAll("<!-- -->", "");
+
+    expect(html).toContain("Signed NAR1 +");
+    expect(html).toMatch(/Packet (not started|approved|accepted)/);
+    // A filed return is not overdue, whatever its statutory date.
+    expect(html).not.toMatch(/Summit Bamboo[\s\S]*?overdue[\s\S]*?Open Summit/);
+    expect(html).toMatch(/\d+ follow-ups open/);
   });
 
   it("renders the annual-return detail route instead of swallowing it in the parent list route", async () => {

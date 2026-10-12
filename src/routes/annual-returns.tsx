@@ -16,6 +16,7 @@ import {
   type AnnualReturnRiskLevel,
 } from "../lib/annual-return-store";
 import { daysUntil } from "../lib/app-data";
+import { formatDate } from "../lib/format-date";
 import { PageHeader } from "@/components/page-header";
 import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
 import { boardSearchFromUrl } from "../features/annual-return/board-filters";
@@ -176,14 +177,10 @@ function DemoAnnualReturnCommandCenter() {
             >
               <span>Company</span>
               <span>Owner</span>
-              <span>Risk</span>
               <span>Due</span>
-              <span>Case</span>
-              <span>Blockers</span>
-              <span>Packet</span>
-              <span>Follow-ups</span>
+              <span>Progress</span>
+              <span>Outstanding</span>
               <span>Next action</span>
-              <span>Payment</span>
               <span className="text-right">Open</span>
             </div>
 
@@ -207,18 +204,18 @@ function DemoAnnualReturnCommandCenter() {
 // One template shared by the header row and every data row — maintained as two
 // separate literals they drifted, and the columns stopped lining up.
 //
-// The nine fixed tracks (886px) plus ten 12px gaps plus the two minmax floors
-// come to ~1356px, which is wider than the content area on a 1280-1440px
-// laptop once the 300px sidebar and the p-6 padding are taken out. That is why
-// the rows live inside an `overflow-x-auto` container: the board scrolls
-// sideways rather than overflowing and drawing its cells on top of each other.
+// Related facts share a column (risk over due date, case over packet, blockers
+// over follow-ups, next action over payment) so the tracks, six 12px gaps and
+// row padding fit the ~960px content area of a 1280px laptop beside the
+// sidebar. Narrower `lg` widths still get an `overflow-x-auto` container, so
+// the board scrolls sideways rather than drawing cells on top of each other.
 //
 // The floors matter as much as the fixed widths. With `minmax(0, 1.4fr)` the
 // company and next-action columns could be squeezed to nothing, which is what
 // let their text escape the grid in the first place.
 const CASE_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.4fr)_110px_96px_130px_64px_140px_110px_80px_minmax(130px,1fr)_84px_72px]";
-const CASE_GRID_MIN_WIDTH = "lg:min-w-[1356px]";
+  "lg:grid-cols-[minmax(180px,1.6fr)_96px_136px_116px_minmax(140px,1fr)_minmax(140px,1.2fr)_72px]";
+const CASE_GRID_MIN_WIDTH = "lg:min-w-[952px]";
 
 function Metric({
   label,
@@ -260,23 +257,67 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
   return (
     <div className={`grid gap-3 px-4 py-4 lg:items-center ${CASE_GRID_COLUMNS}`}>
       <div className="min-w-0">
-        <p className="truncate font-medium">{caseItem.companyName}</p>
+        <p className="font-medium leading-5 [overflow-wrap:anywhere]">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
       </div>
 
       <Field label="Owner" value={caseItem.owner} />
-      <Field label="Risk" value={<RiskPill risk={risk} />} />
-      <Field label="Due" value={formatDue(caseItem.dueDate, dueInDays)} />
-      <Field label="Case" value={`${readiness}%`} />
-      <Field label="Blockers" value={blockerSummary} />
-      <Field label="Packet" value={`${packetLabel(packetStatus)} / ${packetReadiness}%`} />
-      <Field label="Follow-ups" value={openFollowUps === 0 ? "None" : `${openFollowUps} open`} />
-      <Field label="Next action" value={nextAction} />
-      <Field label="Payment" value={paymentLabel(caseItem.paymentStatus)} />
+      <Field
+        label="Due"
+        value={
+          <div className="space-y-1">
+            <RiskPill risk={risk} />
+            <p className="text-xs text-muted-foreground">
+              {risk === "filed"
+                ? `${formatDate(caseItem.dueDate)} · filed`
+                : formatDue(caseItem.dueDate, dueInDays)}
+            </p>
+          </div>
+        }
+      />
+      <Field
+        label="Progress"
+        value={
+          <div>
+            <p>{readiness}% case</p>
+            <p className="text-xs text-muted-foreground">
+              Packet {packetLabel(packetStatus).toLowerCase()}
+              {packetReadiness > 0 && packetReadiness < 100 ? ` · ${packetReadiness}%` : ""}
+            </p>
+          </div>
+        }
+      />
+      <Field
+        label="Outstanding"
+        value={
+          <div className="min-w-0">
+            <p className="truncate" title={blockerSummary}>
+              {blockerSummary === "None" ? "No blockers" : blockerSummary}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {openFollowUps === 0 ? "No follow-ups" : `${openFollowUps} follow-ups open`}
+            </p>
+          </div>
+        }
+      />
+      <Field
+        label="Next action"
+        value={
+          <div>
+            <p>{nextAction}</p>
+            <p
+              className={`text-xs ${caseItem.paymentStatus === "overdue" ? "font-medium text-red-700" : "text-muted-foreground"}`}
+            >
+              Payment {paymentLabel(caseItem.paymentStatus).toLowerCase()}
+            </p>
+          </div>
+        }
+      />
 
       <div className="flex justify-start lg:justify-end">
         <Link
-          className="rounded-md border px-3 py-2 text-center text-sm"
+          aria-label={`Open ${caseItem.companyName}`}
+          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
           to="/annual-returns/$id"
           params={{ id: caseItem.id }}
         >
@@ -376,9 +417,13 @@ function paymentLabel(paymentStatus: AnnualReturnCase["paymentStatus"]): string 
 }
 
 function formatDue(dueDate: string, dueInDays: number): string {
+  const date = formatDate(dueDate);
   if (dueInDays < 0) {
-    return `${dueDate} (${Math.abs(dueInDays)}d overdue)`;
+    return `${date} · ${Math.abs(dueInDays)}d overdue`;
+  }
+  if (dueInDays === 0) {
+    return `${date} · due today`;
   }
 
-  return `${dueDate} (${dueInDays}d)`;
+  return `${date} · in ${dueInDays}d`;
 }

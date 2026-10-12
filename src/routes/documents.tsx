@@ -10,6 +10,7 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { formatDate } from "@/lib/format-date";
 import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocumentPage } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
@@ -717,14 +718,6 @@ function Field({
       ) : null}
     </div>
   );
-}
-
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function formatTimestamp(value: string): string {
