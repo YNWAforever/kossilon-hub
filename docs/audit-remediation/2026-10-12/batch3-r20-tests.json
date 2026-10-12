@@ -1,0 +1,298 @@
+{
+  "source_sha": "cdebdb6cb3a423bb893cce34494f74f572fa6e00",
+  "recorded_at_hkt": "2026-10-12 09:49:23+08:00",
+  "scope": "R20 local scoped SQL/components only; full batch3 gates pending",
+  "artifact_digest": null,
+  "release": "NO_GO",
+  "production_outbound_hold": true,
+  "files": [
+    {
+      "file": "db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "commands": [],
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "file": "db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "commands": [],
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "file": "r20-actor-format-fix.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r20-actor-red.log",
+      "bytes": 3325,
+      "sha256": "0c3735f555f1a33c8c79c47d42f5e65119d0af76c69b4d38fba9afad9feafe43",
+      "commands": [
+        "> test",
+        "> vitest run src/lib/business-page-actor.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  4 failed (4)",
+        "   Duration  556ms (transform 190ms, setup 0ms, import 361ms, tests 6ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r20-format-final.log",
+      "bytes": 345,
+      "sha256": "9826a4ccf1d255c2efc555ef2ca48484ec0f8245fc2f0895809224d753842ed5",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r20-format-routes.log",
+      "bytes": 147,
+      "sha256": "533910445cf517e11cb1b553acc6741650d8a680c7a208f4211e3897830c4b11",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r20-format.log",
+      "bytes": 1449,
+      "sha256": "e3967bba70ffc45aa57888838d64332b056a28a8fbade41d3ccd7e5928e51c57",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r20-green-attempt1.log",
+      "bytes": 1137,
+      "sha256": "a62bb793cd4ea80278d3020b5a84039d1264e31df07c51e2ec7c34e2ca385eca",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/list-page.integration.test.ts src/features/corporate-changes/list-page.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 passed (2)",
+        "      Tests  2 passed (2)",
+        "   Duration  1.35s (transform 522ms, setup 0ms, import 713ms, tests 299ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r20-lint-accepted.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r20-lint-attempt1.log",
+      "bytes": 15555,
+      "sha256": "a1979eb8c057a667ff5d050a7319d4ac67b4b6655e78c645eb8adae069d3f057",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 34 problems (32 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r20-lint-complete.log",
+      "bytes": 1620,
+      "sha256": "21028c98914651db838fb09d372b77582546dac914cce6024e297b68d169274f",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 8 problems (6 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r20-lint-final.log",
+      "bytes": 1620,
+      "sha256": "21028c98914651db838fb09d372b77582546dac914cce6024e297b68d169274f",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 8 problems (6 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r20-red-contract.log",
+      "bytes": 3342,
+      "sha256": "175e2ca57bb87c6cb6526d5d16231e32564144bb0a3641a434381eb48f971f11",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/list-page.integration.test.ts src/features/corporate-changes/list-page.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 failed (2)",
+        "      Tests  2 failed (2)",
+        "   Duration  894ms (transform 624ms, setup 0ms, import 834ms, tests 182ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r20-red.log",
+      "bytes": 3387,
+      "sha256": "05cd4e916270e32ca6919f73bb1c1453ca5cd267dd25b8b20fb755f1a66720b9",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/list-page.integration.test.ts src/features/corporate-changes/list-page.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 failed (2)",
+        "      Tests  2 failed (2)",
+        "   Duration  1.64s (transform 770ms, setup 0ms, import 1.29s, tests 129ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r20-regression-attempt1.log",
+      "bytes": 6163,
+      "sha256": "57aaaf6aa162eebd4debf6bbe40dd86df3fa8b8fd5bf6a026bdfe47728904d17",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/list-page.integration.test.ts src/features/corporate-changes/list-page.integration.test.ts src/lib/business-list-navigation.test.ts src/features/incorporation/components/production-incorporation-list.interaction.test.tsx src/features/corporate-changes/components/production-corporate-change-list.interaction.test.tsx src/features/incorporation/read-scope.integration.test.ts src/features/corporate-changes/read-scope.integration.test.ts src/features/incorporation/server-fns.test.ts src/features/corporate-changes/server-fns.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 7 passed (8)",
+        "      Tests  1 failed | 13 passed (14)",
+        "   Duration  6.92s (transform 1.30s, setup 0ms, import 4.12s, tests 1.52s, environment 3.09s)"
+      ]
+    },
+    {
+      "file": "r20-regression-attempt2.log",
+      "bytes": 1753,
+      "sha256": "4a1a20c12ecfaefbdd350ca83939245d190b74853f080a6ba6a017f72dd8a272",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/list-page.integration.test.ts src/features/corporate-changes/list-page.integration.test.ts src/lib/business-list-navigation.test.ts src/lib/business-page-actor.test.ts src/features/incorporation/components/production-incorporation-list.interaction.test.tsx src/features/corporate-changes/components/production-corporate-change-list.interaction.test.tsx src/features/incorporation/read-scope.integration.test.ts src/features/corporate-changes/read-scope.integration.test.ts src/features/incorporation/authorization.ts src/features/corporate-changes/authorization.test.ts src/features/corporate-changes/server-fns.test.ts src/lib/list-navigation.test.ts src/test/db-integration-files.convention.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  12 passed (12)",
+        "      Tests  30 passed (30)",
+        "   Duration  5.42s (transform 1.08s, setup 0ms, import 3.00s, tests 1.44s, environment 2.02s)"
+      ]
+    },
+    {
+      "file": "r20-return-red.log",
+      "bytes": 2269,
+      "sha256": "85084026d016476535b1db6c23d6c9837fb264a68be79b48c9340bfa57f32ead",
+      "commands": [
+        "> test",
+        "> vitest run src/lib/business-list-navigation.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  290ms (transform 73ms, setup 0ms, import 103ms, tests 8ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r20-types-attempt1.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r20-types-complete.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r20-types-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r20-types-ui.log",
+      "bytes": 4250,
+      "sha256": "8ebace1efce2f805378b1abda138aed57218c17ba23be55cdb24e740c0cb457d",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r20-ui-green-attempt1.log",
+      "bytes": 3104,
+      "sha256": "85db21a58596e9582dd4bf1bb2cf091e8762bd06e73652f4aae2a3ed9d41a842",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/components/production-incorporation-list.interaction.test.tsx src/features/corporate-changes/components/production-corporate-change-list.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 failed (2)",
+        "      Tests  3 failed (3)",
+        "   Duration  3.44s (transform 609ms, setup 0ms, import 2.16s, tests 524ms, environment 3.32s)"
+      ]
+    },
+    {
+      "file": "r20-ui-green-attempt2.log",
+      "bytes": 5529,
+      "sha256": "d1d041b40f8257567a562851a4555c25c45ee09e62da93c0ca844d4eab658138",
+      "commands": [
+        "> test",
+        "> vitest run src/lib/business-list-navigation.test.ts src/features/incorporation/components/production-incorporation-list.interaction.test.tsx src/features/corporate-changes/components/production-corporate-change-list.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 failed | 1 passed (3)",
+        "      Tests  2 failed | 2 passed (4)",
+        "   Duration  3.20s (transform 554ms, setup 0ms, import 1.80s, tests 538ms, environment 3.09s)"
+      ]
+    },
+    {
+      "file": "r20-ui-red.log",
+      "bytes": 18592,
+      "sha256": "ee300e67dcfb1603ba295956bbd94047924b6ff5638c4195c8b03cde302374f6",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/components/production-incorporation-list.interaction.test.tsx src/features/corporate-changes/components/production-corporate-change-list.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 failed (2)",
+        "      Tests  3 failed (3)",
+        "   Duration  20.77s (transform 680ms, setup 0ms, import 9.63s, tests 2.18s, environment 29.25s)"
+      ]
+    },
+    {
+      "file": "r20-write-regression.log",
+      "bytes": 1307,
+      "sha256": "3aa21d6379254e7b643b24ed4f1a80081aff7905ad7a188b3c99e847ad802473",
+      "commands": [
+        "> test",
+        "> vitest run src/features/incorporation/repository.test.ts src/features/corporate-changes/repository.test.ts src/components/incorporation/create-incorporation-case-dialog.test.tsx src/components/corporate-changes/create-corporate-change-request-dialog.test.tsx src/lib/business-page-actor.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  5 passed (5)",
+        "      Tests  31 passed (31)",
+        "   Duration  9.33s (transform 994ms, setup 0ms, import 2.07s, tests 6.62s, environment 2.52s)"
+      ]
+    }
+  ]
+}
