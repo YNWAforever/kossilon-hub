@@ -6,6 +6,7 @@ import { getOperationsHealth } from "@/features/operations/server-fns";
 import { dispatchCountLabel, type MaintenanceHealthState } from "@/features/operations/health";
 import type { JobQueueDepth } from "@/features/operations/repository";
 import { earliestMissingLabel, type SchemaHealthState } from "@/features/operations/schema-health";
+import { formatHongKongTimestamp } from "@/features/whatsapp/conversations";
 
 /**
  * 系統運作 — whether the parts of the product that run without a person are
@@ -74,7 +75,7 @@ function QueueRow({ label, depth }: { label: string; depth: JobQueueDepth }) {
       <td className="px-4 py-2 tabular-nums">{depth.failed}</td>
       <td className="px-4 py-2 text-muted-foreground">
         {/* A depth alone cannot tell a busy queue from a stuck one. */}
-        {depth.oldestPendingAt ? depth.oldestPendingAt.slice(0, 16).replace("T", " ") : "—"}
+        {depth.oldestPendingAt ? formatHongKongTimestamp(depth.oldestPendingAt) : "—"}
       </td>
     </tr>
   );
@@ -88,6 +89,8 @@ function OperationsRoute() {
     queryFn: () => getOperationsHealth(),
     enabled: dataMode === "production",
     retry: false,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
 
   if (dataMode !== "production") {
@@ -101,15 +104,51 @@ function OperationsRoute() {
     );
   }
 
-  const view = healthQuery.data;
+  // A failed refresh leaves the previous data in Query's cache. Do not render
+  // its green health labels as a current observation after access/read failure,
+  // or while a reconnect is still waiting for a fresh authorised response.
+  const unavailable = healthQuery.isError || healthQuery.fetchStatus === "paused";
+  const view = unavailable || healthQuery.isFetching ? undefined : healthQuery.data;
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title="系統運作" />
+      <PageHeader
+        eyebrow="Operations"
+        title="系統運作"
+        subtitle="所有時間均為香港時間（UTC+8）；此頁開啟時每分鐘更新。"
+        actions={
+          <button
+            type="button"
+            className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            onClick={() => void healthQuery.refetch()}
+            disabled={healthQuery.isFetching}
+          >
+            {healthQuery.isFetching ? "正在更新" : "重新載入"}
+          </button>
+        }
+      />
 
-      {healthQuery.error ? (
-        <p className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
-          無法載入系統運作狀態。這不代表排程正常——這個畫面本身讀不到，就無從判斷。
+      {healthQuery.dataUpdatedAt > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          最近成功讀取：{formatHongKongTimestamp(new Date(healthQuery.dataUpdatedAt).toISOString())}
+          。讀取成功不代表排程或供應商操作成功。
+        </p>
+      ) : null}
+
+      {healthQuery.isFetching && !unavailable ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          正在載入系統運作狀態…
+        </p>
+      ) : null}
+
+      {unavailable ? (
+        <p
+          role="alert"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        >
+          {healthQuery.fetchStatus === "paused"
+            ? "連線暫停，現時狀態未知。恢復連線後會重新讀取。"
+            : "無法載入系統運作狀態，現時狀態未知。請重新載入；若仍失敗，請核對登入及存取權限。"}
         </p>
       ) : null}
 
@@ -192,7 +231,9 @@ function OperationsRoute() {
                 <div>
                   <dt className="text-muted-foreground">最後一次執行</dt>
                   <dd className="tabular-nums">
-                    {view.maintenance.lastRunAt?.slice(0, 16).replace("T", " ") ?? "從未"}
+                    {view.maintenance.lastRunAt
+                      ? formatHongKongTimestamp(view.maintenance.lastRunAt)
+                      : "從未"}
                   </dd>
                 </div>
                 <div>
@@ -202,8 +243,11 @@ function OperationsRoute() {
                   <dd className="tabular-nums">
                     {!view.lastSuccessLookupKnown
                       ? "無法判斷"
-                      : (view.maintenance.lastSuccessAt?.slice(0, 16).replace("T", " ") ??
-                        (view.maintenance.lastRunAt ? "從未成功" : "從未"))}
+                      : view.maintenance.lastSuccessAt
+                        ? formatHongKongTimestamp(view.maintenance.lastSuccessAt)
+                        : view.maintenance.lastRunAt
+                          ? "從未成功"
+                          : "從未"}
                   </dd>
                 </div>
                 <div>
@@ -322,7 +366,11 @@ function OperationsRoute() {
                     }
                   </p>
                   <p className="text-sm">
-                    最後驗證：{integration.lastVerifiedAt ?? "尚無證據"} · 跟進：{integration.owner}
+                    最後驗證：
+                    {integration.lastVerifiedAt
+                      ? formatHongKongTimestamp(integration.lastVerifiedAt)
+                      : "尚無證據"}{" "}
+                    · 跟進：{integration.owner}
                   </p>
                   <p className="text-sm text-muted-foreground">{integration.summary}</p>
                   <p className="text-sm">下一步：{integration.nextAction}</p>
@@ -362,7 +410,7 @@ function OperationsRoute() {
                       {view.recentRuns.map((entry) => (
                         <tr className="border-t" key={entry.id}>
                           <td className="px-4 py-2 tabular-nums">
-                            {entry.scheduledFor.slice(0, 16).replace("T", " ")}
+                            {formatHongKongTimestamp(entry.scheduledFor)}
                           </td>
                           <td className="px-4 py-2">{entry.outcome}</td>
                           <td className="px-4 py-2 tabular-nums">{entry.durationMs} ms</td>
