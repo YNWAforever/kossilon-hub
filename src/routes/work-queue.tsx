@@ -103,6 +103,7 @@ export function WorkQueueRoute() {
   const queueQuery = useQuery({
     queryKey: ["work-queue", view, actorScope],
     queryFn: () => listWorkQueue({ data: filters }),
+    enabled: dataMode === "production",
   });
   const items = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
   const owners = useMemo(
@@ -176,6 +177,29 @@ export function WorkQueueRoute() {
     breached: items.filter((item) => item.escalationState === "breach").length,
     unassigned: items.filter((item) => !item.ownerId).length,
   };
+
+  if (dataMode !== "production") {
+    // Work items, SLA clocks and assignments exist only in Postgres; demo mode
+    // has no server data to read (docs/adr/0001-demo-mode-is-read-only.md).
+    return (
+      <main className="min-w-0 flex-1 space-y-4 p-4 md:p-6">
+        <PageHeader
+          eyebrow="Operations"
+          title="Work queue"
+          subtitle="Assignment, capacity, and SLA control"
+        />
+        <p className="text-sm text-muted-foreground">
+          工作隊列讀取正式指派與 SLA 資料，示範模式沒有可讀取的工作項目。
+        </p>
+        <Link
+          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
+          to="/annual-returns"
+        >
+          瀏覽周年申報案件
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <>

@@ -13,9 +13,8 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));
 
-vi.mock("@/features/work-items/server-fns", () => ({
-  listWorkQueue: vi.fn(async () => []),
-}));
+const listWorkQueue = vi.hoisted(() => vi.fn(async () => []));
+vi.mock("@/features/work-items/server-fns", () => ({ listWorkQueue }));
 
 function renderDetail(caseId = "ar-delta") {
   return render(
@@ -39,6 +38,14 @@ describe("demo annual return case detail", () => {
 
   afterEach(() => {
     cleanup();
+  });
+
+  it("never asks the production work queue about a fixture case", () => {
+    listWorkQueue.mockClear();
+    renderDetail();
+
+    expect(listWorkQueue).not.toHaveBeenCalled();
+    expect(screen.queryByText(/SLA state/)).toBeNull();
   });
 
   it("renders the seeded case", () => {

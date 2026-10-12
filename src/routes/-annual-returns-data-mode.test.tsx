@@ -149,6 +149,15 @@ describe("annual returns route across data modes", () => {
     expect(html).toContain("New case");
   });
 
+  it("does not show production work-item placeholders on the demo board", async () => {
+    // Demo case ids (ar-*) never match a production work item, so these lines
+    // could only ever read "Loading" and then "Unavailable".
+    const html = await renderRoute("/annual-returns", "demo");
+
+    expect(html).not.toContain("Work owner:");
+    expect(html).not.toContain("SLA state:");
+  });
+
   it("shows no New case action in demo mode", async () => {
     const html = await renderRoute("/annual-returns", "demo");
 

@@ -1,5 +1,4 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
 import {
@@ -18,10 +17,8 @@ import {
 } from "../lib/annual-return-store";
 import { daysUntil } from "../lib/app-data";
 import { PageHeader } from "@/components/page-header";
-import { listWorkQueue } from "../features/work-items/server-fns";
 import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
 import { boardSearchFromUrl } from "../features/annual-return/board-filters";
-import type { PersistedWorkItem } from "../features/work-items/repository";
 
 export const Route = createFileRoute("/annual-returns")({
   // Board filters live in the URL so they survive a reload and a return from a
@@ -60,19 +57,6 @@ function AnnualReturnsRoute() {
 
 function DemoAnnualReturnCommandCenter() {
   const cases = useAnnualReturnCases();
-  const workItemsQuery = useQuery({
-    queryKey: ["work-queue", "annual-return-list"],
-    queryFn: () => listWorkQueue({ data: { view: "team" } }),
-  });
-  const workItemsByCase = useMemo(() => {
-    const map = new Map<string, PersistedWorkItem>();
-    for (const item of workItemsQuery.data ?? []) {
-      if (item.annualReturnCaseId && !map.has(item.annualReturnCaseId)) {
-        map.set(item.annualReturnCaseId, item);
-      }
-    }
-    return map;
-  }, [workItemsQuery.data]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<
     "all" | "urgent" | "blocked" | "ready" | "packet-ready" | "needs-follow-up" | "filed"
@@ -205,18 +189,7 @@ function DemoAnnualReturnCommandCenter() {
 
             <div className="divide-y">
               {visibleCases.map((caseItem) => (
-                <CaseRow
-                  key={caseItem.id}
-                  caseItem={caseItem}
-                  workItem={workItemsByCase.get(caseItem.id)}
-                  workItemQueryState={
-                    workItemsQuery.isPending
-                      ? "loading"
-                      : workItemsQuery.isError
-                        ? "error"
-                        : "ready"
-                  }
-                />
+                <CaseRow key={caseItem.id} caseItem={caseItem} />
               ))}
               {visibleCases.length === 0 ? (
                 <div className="px-4 py-8 text-sm text-muted-foreground">
@@ -267,15 +240,7 @@ function Metric({
   );
 }
 
-function CaseRow({
-  caseItem,
-  workItem,
-  workItemQueryState,
-}: {
-  caseItem: AnnualReturnCase;
-  workItem?: PersistedWorkItem;
-  workItemQueryState: "loading" | "error" | "ready";
-}) {
+function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
   const risk = getRiskLevel(caseItem);
   const readiness = getReadinessScore(caseItem);
   const nextAction = getNextAction(caseItem);
@@ -297,28 +262,6 @@ function CaseRow({
       <div className="min-w-0">
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Work owner:{" "}
-          {workItemQueryState === "loading"
-            ? "Loading"
-            : workItemQueryState === "error"
-              ? "Unavailable"
-              : workItem?.ownerId
-                ? `Staff ${workItem.ownerId.slice(0, 8)}`
-                : workItem
-                  ? "Unassigned"
-                  : "No work item"}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          SLA state:{" "}
-          {workItemQueryState === "loading"
-            ? "Loading"
-            : workItemQueryState === "error"
-              ? "Unavailable"
-              : workItem
-                ? workItem.escalationState
-                : "No work item"}
-        </p>
       </div>
 
       <Field label="Owner" value={caseItem.owner} />

@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
@@ -25,7 +24,6 @@ import {
   getDocumentArchiveRows,
   useClientPortalSnapshot,
 } from "@/lib/client-portal-store";
-import { listWorkQueue } from "@/features/work-items/server-fns";
 
 const ownerOptions = ["Iris Wong", "Calvin Ho", "Mandy Lee", "Operations"] as const;
 type MetricTone = "red" | "orange" | "yellow" | "green" | "blue";
@@ -68,11 +66,6 @@ const riskToneClasses: Record<AnnualReturnRiskLevel, string> = {
 export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   const id = caseId;
   const caseItem = useAnnualReturnCase(id);
-  const workItemsQuery = useQuery({
-    queryKey: ["work-queue", "annual-return-detail", id],
-    queryFn: () => listWorkQueue({ data: { view: "team" } }),
-  });
-  const workItem = (workItemsQuery.data ?? []).find((item) => item.annualReturnCaseId === id);
   const portalSnapshot = useClientPortalSnapshot();
 
   if (!caseItem) {
@@ -163,30 +156,6 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium">
                   {statusLabel(caseItem.status)}
                 </span>
-              </div>
-              <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                <p>
-                  <span className="text-muted-foreground">Work owner:</span>{" "}
-                  {workItemsQuery.isPending
-                    ? "Loading"
-                    : workItemsQuery.isError
-                      ? "Unavailable"
-                      : workItem?.ownerId
-                        ? `Staff ${workItem.ownerId.slice(0, 8)}`
-                        : workItem
-                          ? "Unassigned"
-                          : "No work item"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">SLA state:</span>{" "}
-                  {workItemsQuery.isPending
-                    ? "Loading"
-                    : workItemsQuery.isError
-                      ? "Unavailable"
-                      : workItem
-                        ? workItem.escalationState
-                        : "No work item"}
-                </p>
               </div>
             </div>
 

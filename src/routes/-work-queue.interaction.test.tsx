@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   assign: vi.fn(),
   ack: vi.fn(),
   navigate: vi.fn(),
+  dataMode: "production" as "demo" | "production",
 }));
 vi.mock("@/components/bulk-selection-toolbar", () => ({
   BulkSelectionToolbar: ({ resource }: { resource: string }) => (
@@ -37,14 +38,34 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
     }),
     useNavigate: () => mocks.navigate,
     useRouteContext: () => ({
-      dataMode: "production",
+      dataMode: mocks.dataMode,
       actor: { userId: "admin", authUserId: "auth", role: "Admin", teamId: null, active: true },
     }),
   }),
   Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 import { WorkQueueRoute } from "./work-queue";
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mocks.dataMode = "production";
+});
+describe("work queue in demo mode", () => {
+  it("explains the empty queue instead of calling the production server", () => {
+    // Demo mode has no database; the call used to spin on "Loading work
+    // queue..." through three retries and then report a load failure.
+    mocks.dataMode = "demo";
+    mocks.list.mockClear();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkQueueRoute />
+      </QueryClientProvider>,
+    );
+
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(screen.queryByText("Loading work queue...")).toBeNull();
+    expect(screen.getByText(/示範模式/)).toBeTruthy();
+  });
+});
 describe("work queue assignment and blockers", () => {
   it("shows real identity, payment blocker with on-track SLA, and current owner/reviewer candidates", async () => {
     const userId = "20000000-0000-0000-0000-000000000001";
