@@ -21,7 +21,7 @@ describe("DemoUnavailable", () => {
 
     expect(screen.getByRole("region", { name: "Not available in demo mode" })).toBeTruthy();
     expect(screen.getByText("系統運作讀取正式資料。")).toBeTruthy();
-    expect(screen.getByRole("link", { name: /瀏覽周年申報示範案件/ }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: /瀏覽周年申報案件/ }).getAttribute("href")).toBe(
       "/annual-returns",
     );
   });

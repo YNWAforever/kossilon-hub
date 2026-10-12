@@ -25,7 +25,7 @@ export function DemoUnavailable({ message }: { message: string }) {
         className="mt-5 inline-flex min-h-10 items-center gap-1.5 rounded-md border bg-background px-4 text-sm font-medium hover:bg-accent"
         to="/annual-returns"
       >
-        瀏覽周年申報示範案件
+        瀏覽周年申報案件
         <ArrowRight aria-hidden="true" className="h-4 w-4" />
       </Link>
     </section>
