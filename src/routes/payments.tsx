@@ -2,6 +2,7 @@ import { ProductionPaymentReview } from "@/features/annual-return/components/pro
 import { type ReactNode, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
+import { formatDate } from "@/lib/format-date";
 
 import {
   type AnnualReturnCase,
@@ -117,19 +118,50 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-muted-foreground">{caseItem.contactName}</p>
       </div>
-      <Field label="Owner / due" value={`${caseItem.owner} | ${caseItem.dueDate}`} />
+      <Field
+        label="Owner / due"
+        value={
+          <>
+            <p>{caseItem.owner}</p>
+            <p className="text-xs text-muted-foreground">Due {formatDate(caseItem.dueDate)}</p>
+          </>
+        }
+      />
       <Field
         label="Payment"
-        value={`${paymentLabels[caseItem.paymentStatus]} | ${getReadinessScore(caseItem)}% ready`}
+        value={
+          <>
+            <p
+              className={
+                caseItem.paymentStatus === "overdue"
+                  ? "font-medium text-red-700"
+                  : caseItem.paymentStatus === "paid"
+                    ? "text-green-700"
+                    : undefined
+              }
+            >
+              {paymentLabels[caseItem.paymentStatus]}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Case {getReadinessScore(caseItem)}% ready
+            </p>
+          </>
+        }
       />
       <ProofCell proof={proof} previousProofs={previousProofs} />
-      <ReviewOutcome proof={proof} />
+      <ReviewOutcome proof={proof} closed={isReadOnly} />
 
       <div className="min-w-0">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
           Actions
         </p>
-        {!proof ? (
+        {isReadOnly && (!proof || proof.status === "rejected") ? (
+          // A closed case takes no new proof. A greyed-out button with no reason
+          // read as broken; say why there is nothing to do.
+          <p className="text-sm text-muted-foreground">
+            {caseItem.status === "filed" ? "Return filed" : "Packet accepted"} — no proof needed.
+          </p>
+        ) : !proof ? (
           <button
             aria-label={`Attach payment proof for ${caseItem.companyName}`}
             className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
@@ -266,8 +298,12 @@ function ProofCell({
   );
 }
 
-function ReviewOutcome({ proof }: { proof?: ClientPortalPaymentProof }) {
-  const label = proof ? paymentProofStatusLabel(proof.status) : "Awaiting proof";
+function ReviewOutcome({ proof, closed }: { proof?: ClientPortalPaymentProof; closed: boolean }) {
+  const label = proof
+    ? paymentProofStatusLabel(proof.status)
+    : closed
+      ? "Not required"
+      : "Awaiting proof";
 
   return (
     <div className="min-w-0">
