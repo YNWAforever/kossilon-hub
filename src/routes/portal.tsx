@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { formatDate } from "@/lib/format-date";
+import { labelValue } from "@/lib/format-label";
 import {
   getClientPortalCase,
   listClientPortalCases,
@@ -227,7 +228,7 @@ function PortalRoute() {
       <PageHeader
         eyebrow="Client portal demo"
         title={selectedCase.companyName}
-        subtitle={`Annual return due ${formatDate(selectedCase.dueDate)} · Packet ${packetStatus}`}
+        subtitle={`Annual return due ${formatDate(selectedCase.dueDate)} · Packet ${labelValue(packetStatus).toLowerCase()}`}
         actions={
           <select
             aria-label="Select portal case"
@@ -402,7 +403,9 @@ function PortalActionRow({
           <p className="font-medium">{action.label}</p>
           <p className="mt-1 text-sm text-muted-foreground">{action.detail}</p>
         </div>
-        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{action.status}</span>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">
+          {labelValue(action.status)}
+        </span>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
         {showPrimaryAction ? (
@@ -1030,13 +1033,6 @@ function bytesToBase64(bytes: Uint8Array): string {
   }
   return btoa(binary);
 }
-function labelValue(value: string): string {
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 function formatTimestamp(value: string): string {
   return new Date(value).toLocaleString("en-HK", {
     year: "numeric",

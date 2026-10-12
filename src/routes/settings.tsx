@@ -753,7 +753,7 @@ export function DocumentsTab({
 
   return (
     <div className="rounded-lg border border-border">
-      <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_120px_110px_80px]">
+      <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_170px_110px_80px]">
         <span>Document</span>
         <span>Expected</span>
         <span>Required</span>
@@ -806,7 +806,7 @@ function DocumentRow({
   const [daysBeforeDue, setDaysBeforeDue] = useState(doc.daysBeforeDue);
 
   return (
-    <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_120px_110px_80px] [&>input]:min-w-0 [&>input]:w-full">
+    <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_170px_110px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
         aria-label={`Document name: ${doc.label}`}
         value={label}
@@ -818,7 +818,6 @@ function DocumentRow({
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-1 text-xs">
-        <span className="text-muted-foreground">-</span>
         <input
           type="number"
           min={0}
@@ -831,7 +830,7 @@ function DocumentRow({
           disabled={dataMode === "demo" || isSaving}
           className="w-14 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
-        <span className="text-muted-foreground">days</span>
+        <span className="whitespace-nowrap text-muted-foreground">days before due</span>
       </div>
       <label className="inline-flex items-center gap-2 text-xs">
         <input
@@ -897,7 +896,7 @@ function RemindersTab({
 
   return (
     <div className="rounded-lg border border-border">
-      <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_140px_130px_80px]">
+      <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_170px_130px_80px]">
         <span>Reminder</span>
         <span>Days before due</span>
         <span>Channel</span>
@@ -953,7 +952,7 @@ function ReminderRow({
   const [daysBeforeDue, setDaysBeforeDue] = useState(reminder.daysBeforeDue);
 
   return (
-    <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_140px_130px_80px] [&>input]:min-w-0 [&>input]:w-full">
+    <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_170px_130px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
         aria-label={`Reminder name: ${reminder.label}`}
         value={label}
@@ -965,7 +964,6 @@ function ReminderRow({
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-1 text-xs">
-        <span className="text-muted-foreground">-</span>
         <input
           type="number"
           min={0}
@@ -978,7 +976,7 @@ function ReminderRow({
           disabled={dataMode === "demo" || isSaving}
           className="w-16 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
-        <span className="text-muted-foreground">days</span>
+        <span className="whitespace-nowrap text-muted-foreground">days before due</span>
       </div>
       <select
         value={reminder.channel}

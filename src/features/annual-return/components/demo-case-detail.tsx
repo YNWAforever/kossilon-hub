@@ -160,7 +160,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
               <DenseStat
                 label="Due"
                 value={formatDueDate(caseItem.dueDate, dueInDays)}
@@ -218,7 +218,9 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   Document, payment, signature, and review blockers holding readiness down.
                 </p>
               </div>
-              <span className="text-sm text-muted-foreground">{blockers.length} open</span>
+              <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
+                {blockers.length} open
+              </span>
             </div>
 
             <div className="mt-4 divide-y">
@@ -366,7 +368,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   Mock WhatsApp reminders generated from current blockers.
                 </p>
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
                 {followUps.filter((draft) => draft.status === "draft").length} open
               </span>
             </div>
@@ -470,7 +472,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   Client-facing actions and archive records for this case.
                 </p>
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
                 {portalActions.filter((action) => action.status === "open").length} open
               </span>
             </div>
@@ -515,7 +517,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 <h2 className="text-lg font-semibold">Timeline</h2>
                 <p className="text-sm text-muted-foreground">Newest case activity appears first.</p>
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
                 {caseItem.timeline.length} {caseItem.timeline.length === 1 ? "event" : "events"}
               </span>
             </div>
