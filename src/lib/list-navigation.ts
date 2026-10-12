@@ -1,11 +1,24 @@
 import { z } from "zod";
 import { getSafeRedirectPath } from "@/features/auth/route-guard";
+import { INCORPORATION_STATUSES } from "@/features/incorporation/types";
+import { CORPORATE_CHANGE_STATUSES } from "@/features/corporate-changes/types";
 const id = z.string().uuid();
 const q = z
   .string()
   .max(200)
   .refine((v) => !Array.from(v).some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127));
 const cursor = z.string().max(8192);
+const business = {
+  q,
+  owner: z.union([z.enum(["all", "unassigned"]), id]),
+  view: z.enum(["all", "mine", "overdue", "unassigned"]),
+  history: z.enum(["true", "false"]),
+  due: z.enum(["all", "overdue", "next30", "none"]),
+  sort: z.enum(["deadline", "recent", "company"]),
+  cursor,
+  anchor: id,
+  companyId: id,
+};
 const queue = {
   view: z.enum(["mine", "team", "breached"]),
   q,
@@ -19,6 +32,11 @@ const queue = {
   anchor: id,
 };
 const contracts: Record<string, Record<string, z.ZodTypeAny>> = {
+  "/incorporation": { ...business, status: z.enum(["open", "all", ...INCORPORATION_STATUSES]) },
+  "/corporate-changes": {
+    ...business,
+    status: z.enum(["open", "all", ...CORPORATE_CHANGE_STATUSES]),
+  },
   "/work-queue": queue,
   "/clients": {
     q,

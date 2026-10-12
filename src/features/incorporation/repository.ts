@@ -1,4 +1,7 @@
 import type postgres from "postgres";
+import { readIncorporationPage } from "./list-page-repository";
+import type { IncorporationListInput, IncorporationListRow } from "./list-page";
+import type { ListPage } from "@/lib/list-page";
 import { assertTeamReadScope, type TeamReadScope } from "@/features/auth/team-read-scope";
 import { rethrowClientWriteError } from "@/features/clients/errors";
 import {
@@ -28,6 +31,11 @@ export type CreateIncorporationRepositoryOptions = CreateSqlClientOptions & {
 };
 
 export type IncorporationRepository = {
+  listCasePage(
+    scope: TeamReadScope,
+    input?: IncorporationListInput,
+    viewerUserId?: string,
+  ): Promise<ListPage<IncorporationListRow>>;
   listCases(scope: TeamReadScope): Promise<IncorporationCaseSummary[]>;
   countCases(scope: TeamReadScope): Promise<number>;
   getCase(id: string, scope: TeamReadScope): Promise<IncorporationCase | null>;
@@ -383,6 +391,8 @@ export function createIncorporationRepository(
   }
 
   return {
+    listCasePage: (scope, input, viewerUserId) =>
+      readIncorporationPage(sql, scope, input, viewerUserId),
     listCases,
     countCases,
     getCase,

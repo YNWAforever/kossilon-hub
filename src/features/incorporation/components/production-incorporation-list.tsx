@@ -1,131 +1,192 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
-import { StatusPill } from "@/components/status-pill";
-import { DeadlinePill } from "@/components/deadline-pill";
-import type { StatusTone } from "@/lib/status";
+import { BusinessListControls } from "@/components/business-list-controls";
+import { useRetainedPage } from "@/lib/use-retained-page";
+import {
+  businessListSearch,
+  businessReturnPath,
+  type BusinessListSearch,
+} from "@/lib/business-list";
+import { businessStatusLabel } from "@/lib/staff-copy.zh-HK";
+import type { AuthenticatedActor } from "@/features/auth/types";
+
 import { CreateIncorporationCaseDialog } from "@/components/incorporation/create-incorporation-case-dialog";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
-import { listIncorporationCases } from "../server-fns";
-import type { IncorporationStatus } from "../types";
-
-const statusTone: Record<IncorporationStatus, StatusTone> = {
-  Intake: "neutral",
-  "Documents pending": "yellow",
-  "Ready to file": "yellow",
-  "Filed with Registrar": "yellow",
-  Completed: "green",
-};
-
-export function ProductionIncorporationList() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-  const casesQuery = useQuery({
-    queryKey: ["incorporation-cases"],
-    queryFn: () => listIncorporationCases(),
+import { listIncorporationCasePage } from "../server-fns";
+import { incorporationListPageSchema } from "../list-page";
+import { INCORPORATION_STATUSES } from "../types";
+export function ProductionIncorporationList({
+  search: provided,
+  onSearchChange,
+  actor,
+}: {
+  search?: BusinessListSearch;
+  onSearchChange?: (search: BusinessListSearch) => void;
+  actor?: AuthenticatedActor;
+} = {}) {
+  const navigate = useNavigate(),
+    client = useQueryClient(),
+    createButton = useRef<HTMLButtonElement>(null);
+  const [local, setLocal] = useState(() =>
+      businessListSearch({}, incorporationListPageSchema.shape.status),
+    ),
+    [open, setOpen] = useState(false);
+  const search = provided ?? local,
+    change = onSearchChange ?? setLocal,
+    { anchor, ...filters } = search;
+  const cases = useQuery({
+    queryKey: ["incorporation-cases", "page", actor, search],
+    queryFn: () =>
+      listIncorporationCasePage({
+        data: incorporationListPageSchema.parse({ ...filters, limit: 50 }),
+      }),
     retry: false,
   });
-
-  const optionsQuery = useQuery({
-    queryKey: ["clients", "assignment-options"],
+  const options = useQuery({
+    queryKey: ["clients", "assignment-options", actor],
     queryFn: () => listClientAssignmentOptions(),
     retry: false,
   });
-
-  if (casesQuery.isPending) {
-    return (
-      <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
-        <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        Loading incorporation cases
-      </div>
-    );
-  }
-
-  if (casesQuery.isError) {
-    return (
-      <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Operations" title="Incorporation" />
-        <p role="alert" className="text-sm text-destructive">
-          Incorporation case data is unavailable. Try again shortly.
-        </p>
-      </main>
-    );
-  }
-
-  const cases = casesQuery.data ?? [];
-
+  const page = useRetainedPage(
+    JSON.stringify([actor, { ...filters, cursor: undefined }]),
+    cases.data,
+  );
+  const owners = (options.data?.owners ?? []).filter(
+    (o) => !actor || actor.role === "Admin" || o.teamId === actor.teamId,
+  );
+  const setDialog = (value: boolean) => {
+    setOpen(value);
+    if (!value) requestAnimationFrame(() => createButton.current?.focus());
+  };
   return (
-    <main className="flex-1 space-y-6 p-4 md:p-6">
+    <main className="min-w-0 flex-1 space-y-5 p-4 md:p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Incorporation"
-        subtitle="New-HK-company intake, from case creation through Companies Registry approval."
+        eyebrow="日常工作"
+        title="公司註冊"
+        subtitle="預設顯示授權範圍內未完成的案件。"
         actions={
-          optionsQuery.data ? (
-            <button
-              type="button"
-              onClick={() => setIsCreateOpen(true)}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Start incorporation
-            </button>
-          ) : null
+          <button
+            ref={createButton}
+            className="min-h-11 rounded-md bg-primary px-3 text-primary-foreground disabled:opacity-50"
+            disabled={!options.data}
+            onClick={() => setOpen(true)}
+          >
+            新增註冊案件
+          </button>
         }
       />
-
-      {optionsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
-          Owner and team options are unavailable. Starting a new case is disabled until this loads.
+      <BusinessListControls
+        search={search}
+        onChange={change}
+        statuses={INCORPORATION_STATUSES}
+        owners={owners}
+      />
+      {options.isError ? (
+        <p role="status">
+          分派名單未能載入，暫不能建立案件。
+          <button className="min-h-11 px-3" onClick={() => void options.refetch()}>
+            重試分派名單
+          </button>
         </p>
       ) : null}
-
-      <section className="rounded-lg border bg-card p-4">
-        <div className="divide-y">
-          {cases.map((incorporationCase) => (
-            <div
-              key={incorporationCase.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-            >
-              <span className="min-w-0 truncate font-medium">
-                {incorporationCase.proposedCompanyNameEn}
-              </span>
-              <StatusPill tone={statusTone[incorporationCase.status]}>
-                {incorporationCase.status}
-              </StatusPill>
-              {incorporationCase.status !== "Completed" ? (
-                <DeadlinePill dueDate={incorporationCase.targetCompletionDate} />
-              ) : null}
-              <span className="text-muted-foreground">{incorporationCase.ownerName}</span>
-              <Link
-                to="/incorporation/$id"
-                params={{ id: incorporationCase.id }}
-                className="rounded-md border px-2 py-1 text-xs"
-              >
-                Open
-              </Link>
-            </div>
-          ))}
-          {cases.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No incorporation cases yet.</p>
+      {cases.isPending ? <p role="status">正在載入註冊案件…</p> : null}
+      {cases.isError ? (
+        <p role="alert" className="rounded border p-3">
+          列表未能載入；這不代表沒有案件。
+          <button className="min-h-11 rounded border px-3" onClick={() => void cases.refetch()}>
+            重試列表
+          </button>
+          <button
+            className="min-h-11 px-3"
+            onClick={() => change({ ...search, cursor: undefined })}
+          >
+            回第一頁
+          </button>
+        </p>
+      ) : null}
+      {page ? (
+        <>
+          <p aria-live="polite">
+            篩選總數 {page.total} · 此頁 {page.items.length} · 觀察時間{" "}
+            {new Date(page.observedAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}
+            （香港時間）
+          </p>
+          {anchor &&
+          !cases.isFetching &&
+          !cases.isError &&
+          !page.items.some((r) => r.id === anchor) ? (
+            <p role="status">原案件已離開此清單，請重新選擇。</p>
           ) : null}
-        </div>
-      </section>
-
-      {optionsQuery.data ? (
+          <section className="divide-y rounded-lg border bg-card" aria-label="註冊案件列表">
+            {page.items.length ? (
+              page.items.map((row) => (
+                <article
+                  key={row.id}
+                  data-return-anchor={row.id === anchor || undefined}
+                  className={
+                    "grid min-w-0 gap-2 p-4 md:grid-cols-[minmax(0,1fr)_auto_auto] " +
+                    (row.id === anchor ? "outline outline-2 outline-primary" : "")
+                  }
+                >
+                  <div className="min-w-0">
+                    <p className="break-words font-medium">{row.proposedCompanyNameEn}</p>
+                    <p className="text-sm">
+                      {row.ownerName} · {businessStatusLabel(row.status)}
+                    </p>
+                  </div>
+                  <p className="text-sm">限期：{row.dueDate ?? "未設定"}</p>
+                  <Link
+                    className="inline-flex min-h-11 items-center justify-self-start rounded border px-3 focus-visible:outline focus-visible:outline-2"
+                    to="/incorporation/$id"
+                    params={{ id: row.id }}
+                    search={{ returnTo: businessReturnPath("/incorporation", search, row.id) }}
+                  >
+                    開啟案件
+                  </Link>
+                </article>
+              ))
+            ) : (
+              <p className="p-4">此篩選沒有符合案件。可清除搜尋、切換範圍或查看歷史案件。</p>
+            )}
+          </section>
+          <div className="flex flex-wrap gap-3">
+            {search.cursor ? (
+              <button
+                className="min-h-11 rounded border px-3"
+                onClick={() => change({ ...search, cursor: undefined })}
+              >
+                回第一頁
+              </button>
+            ) : null}
+            {page.nextCursor ? (
+              <button
+                className="min-h-11 rounded border px-3"
+                disabled={cases.isFetching || cases.isError}
+                onClick={() => change({ ...search, cursor: page.nextCursor! })}
+              >
+                下一頁
+              </button>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+      {options.data ? (
         <CreateIncorporationCaseDialog
-          open={isCreateOpen}
-          onOpenChange={setIsCreateOpen}
-          owners={optionsQuery.data.owners}
-          teams={optionsQuery.data.teams}
+          open={open}
+          onOpenChange={setDialog}
+          owners={owners}
+          teams={options.data.teams}
           isLoading={false}
           hasError={false}
-          onCreated={(caseId) => {
-            void queryClient.invalidateQueries({ queryKey: ["incorporation-cases"] });
-            void navigate({ to: "/incorporation/$id", params: { id: caseId } });
+          onCreated={(id) => {
+            void client.invalidateQueries({ queryKey: ["incorporation-cases"] });
+            void navigate({
+              to: "/incorporation/$id",
+              params: { id },
+              search: { returnTo: businessReturnPath("/incorporation", search, id) },
+            });
           }}
         />
       ) : null}
