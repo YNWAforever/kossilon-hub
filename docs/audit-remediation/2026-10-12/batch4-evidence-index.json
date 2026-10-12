@@ -1,0 +1,678 @@
+{
+  "source_sha": "5caa59a3dad927ad05c0e261a4a0fd66d04338f6",
+  "recorded_at_hkt": "2026-10-12T15:17:55.299+08:00",
+  "release": "NO_GO",
+  "production_outbound_hold": true,
+  "environment": {
+    "os": "Windows",
+    "node": "v24.18.0",
+    "npm": "11.16.0",
+    "bun": "1.4.2",
+    "database": "Owned PG17 kossilon_staff_batch4_reviewed @ 127.0.0.1:56433",
+    "DATABASE_SSL": "disable",
+    "DATABASE_URL_EQUALS_TEST_DATABASE_URL": true,
+    "REQUIRE_INTEGRATION_TESTS": "1",
+    "BUN_EXECUTABLE": "Task-local direct bun.exe",
+    "migrations_applied": 50,
+    "seeded_cases": 3
+  },
+  "final": {
+    "command": "npm test -- --maxWorkers=2",
+    "files": 280,
+    "tests": 2431,
+    "skips": 0,
+    "seconds": 488.98,
+    "build_command": "npm run build",
+    "build_exit": 0,
+    "browser_command": "PLAYWRIGHT_BROWSER_CHANNEL=msedge; npm run test:e2e:local",
+    "browser_tests": 12,
+    "browser_skips": 0,
+    "browser_seconds": 42,
+    "browser_scope": "local demo/parser; no genuine native Auth/provider UAT",
+    "viewports": [
+      {
+        "width": 390,
+        "height": 844
+      },
+      {
+        "width": 1366,
+        "height": 900
+      }
+    ],
+    "historical_browser_files_unchanged": 9,
+    "artifact_digest": "92f03f028367e3de287c65d08761785c04975ceb2029b14093a869e6d3df56d3",
+    "typecheck_exit": 0,
+    "lint_errors": 0,
+    "preexisting_lint_warnings": 2,
+    "release_dry_run": "localLedgerContract PASS; productionReleaseGate NO_GO",
+    "firm_dry_run": {
+      "reads": 39,
+      "network_calls": 0,
+      "writes": 0,
+      "native_bindings": "BLOCKED"
+    }
+  },
+  "plan_exact_commands": [
+    {
+      "id": "R25",
+      "command": "npx vitest run scripts/dependency-locks.test.ts scripts/prepare-historical-schema-release.test.ts src/features/operations/release-compatibility.test.ts src/server/maintenance.test.ts src/server/maintenance-trigger.test.ts src/server/cron-wiring.test.ts",
+      "files": 6,
+      "tests": 74,
+      "skips": 0,
+      "seconds": 4.38,
+      "log": "r25-plan-baseline.log"
+    },
+    {
+      "id": "R27",
+      "command": "npx vitest run src/features/documents/analysis-golden.test.ts src/features/documents/live-scanner.test.ts src/features/whatsapp/webhook.test.ts src/features/whatsapp/woztell.test.ts src/features/annual-return/handoff.integration.test.ts",
+      "files": 5,
+      "tests": 91,
+      "skips": 0,
+      "seconds": 7.45,
+      "log": "r27-plan-baseline.log",
+      "limit": "Source/fixture adapter contracts, not genuine native provider closure"
+    }
+  ],
+  "restored_current_readers": {
+    "source_sha": "5caa59a3dad927ad05c0e261a4a0fd66d04338f6",
+    "transaction": "READ ONLY",
+    "actorEvidence": "Admin DTO derived from an existing current SQL role/team; not an authenticated session or cross-role acceptance",
+    "queue": {
+      "loaded": 2,
+      "total": 2,
+      "nullableSla": 0,
+      "ownerOptions": 2
+    },
+    "cases": {
+      "loaded": 3
+    },
+    "documents": {
+      "loaded": 14,
+      "total": 14
+    },
+    "paymentReview": {
+      "loaded": 0,
+      "total": 0
+    },
+    "outstanding": {
+      "loaded": 3,
+      "total": 3
+    },
+    "history": {
+      "threadsLoaded": 0,
+      "threadsTotal": 0,
+      "messagesLoaded": 0,
+      "messagesTotal": 0
+    },
+    "dailyWork": {
+      "loaded": 2,
+      "total": 2,
+      "sources": [
+        {
+          "sourceType": "annual_return",
+          "status": "available",
+          "total": 2
+        },
+        {
+          "sourceType": "incorporation",
+          "status": "available",
+          "total": 0
+        },
+        {
+          "sourceType": "corporate_change_request",
+          "status": "available",
+          "total": 0
+        }
+      ],
+      "partial": false
+    },
+    "incorporation": {
+      "loaded": 0,
+      "total": 0
+    },
+    "corporateChanges": {
+      "loaded": 0,
+      "total": 0
+    },
+    "companyWorkspace": {
+      "observed": true,
+      "tabs": [
+        "overview",
+        "cases",
+        "documents",
+        "payments",
+        "activity"
+      ],
+      "openCases": 1,
+      "documents": 2,
+      "paymentCases": 1,
+      "activityRows": 5
+    },
+    "sideEffects": 0,
+    "original_table_projections_unchanged": 89,
+    "ledger_count": 66,
+    "original_pending_outbox": {
+      "total": 4,
+      "pending": 4
+    },
+    "local_tables_after_prior_additive_reconciliation": 101,
+    "backup_and_packet_manifest": {
+      "clone-public.dump": {
+        "bytes": 448528,
+        "sha256": "faa5564428634ba5b90b2e4977418333d426b458b44c9c2e90d630960111a794"
+      },
+      "original-reconciliation.sql": {
+        "bytes": 47310,
+        "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+      },
+      "local-restored-reconciliation.sql": {
+        "bytes": 47564,
+        "sha256": "63c932db8ef3008c24425e2abe5c013729e3cab295f2121975cd2a26d8f8cb3a"
+      }
+    },
+    "private_receipts": [
+      {
+        "path": "restored-readers-final.json",
+        "bytes": 1392,
+        "sha256": "e4c56ebb32ab7f55ced12a7f1a91ead0f8ea40cf69f8239ff2e7ed6c696f9a98"
+      },
+      {
+        "path": "restored-guard-final.json",
+        "bytes": 8752,
+        "sha256": "ec9a96645c2902ff4d4fed1daac9d0ade8bfa44c211d9b5c7523f1626d788fe2"
+      }
+    ]
+  },
+  "safe_runtime_receipt": "batch4-safe-runtime-receipt.json",
+  "retained_failures": [
+    {
+      "source_sha": "af2a7b468f840b483af2e93df1eb68956ea50fec",
+      "ci_run": 38212717493,
+      "ci_number": 290,
+      "actual": "Both Node legs: one integration test failed strict localhost alias guard, 2424 tests passed; downstream build/browser skipped."
+    },
+    {
+      "log": "full-af2a7b4.log",
+      "actual": "Deliberately interrupted before repair; not an acceptance pass."
+    },
+    {
+      "log": "restored-readers-5caa59a.log",
+      "actual": "57P03 local database starting up; readiness checked before successful same-source final rerun."
+    },
+    {
+      "logs": [
+        "current-readers-red.log",
+        "current-readers-red2.log",
+        "company-partial-red.log",
+        "review-red.log"
+      ],
+      "actual": "Retained original wording assertion, corrected missing-reader regression, real partial-case false acceptance, and portability/child-runner RED evidence."
+    }
+  ],
+  "logs": [
+    {
+      "path": "browser-5caa59a.log",
+      "bytes": 28580,
+      "sha256": "3a291518fbe2083e1c2568514a898f59ec0d1544222055277d9aadd7f7d5e252",
+      "result_lines": [
+        "[local-browser-evidence] historical bytes unchanged: 9",
+        "  12 passed (42.0s)"
+      ]
+    },
+    {
+      "path": "build-5caa59a.log",
+      "bytes": 70777,
+      "sha256": "ea8caac8fbe0c0b90f3fff9e70905c2e079ad6622d58b0b25a54d8cc31723ce9",
+      "result_lines": []
+    },
+    {
+      "path": "ci290-node22.log",
+      "bytes": 361476,
+      "sha256": "081f7f84d1d3811a04cd9806ebbd989328967055155f1afdf36a908b69a0c8db",
+      "result_lines": []
+    },
+    {
+      "path": "ci290-node24.log",
+      "bytes": 363977,
+      "sha256": "21f9420c816eb81b53e4531b4ab5e9c0a2425155e424142da3e1be1d0523beb3",
+      "result_lines": []
+    },
+    {
+      "path": "ci291-node22.log",
+      "bytes": 503233,
+      "sha256": "73742a04f5dcab575909d8f8ba5c738e11baae8fe07588ad09bdb05f14f82575",
+      "result_lines": [
+        "2026-10-12T07:04:11.5178991Z   \"localLedgerContract\": \"PASS\",",
+        "2026-10-12T07:04:11.5179558Z   \"productionReleaseGate\": \"NO_GO\",",
+        "2026-10-12T07:05:08.4578158Z [local-browser-evidence] historical bytes unchanged: 9"
+      ]
+    },
+    {
+      "path": "ci291-node24.log",
+      "bytes": 503125,
+      "sha256": "c5eeaa959e78c3225d7ad8be810b3d52a5842dcf55c5cd5fcef537bbc1425542",
+      "result_lines": [
+        "2026-10-12T07:03:33.0066248Z   \"localLedgerContract\": \"PASS\",",
+        "2026-10-12T07:03:33.0066898Z   \"productionReleaseGate\": \"NO_GO\",",
+        "2026-10-12T07:04:27.8938700Z [local-browser-evidence] historical bytes unchanged: 9"
+      ]
+    },
+    {
+      "path": "company-partial-red.log",
+      "bytes": 2267,
+      "sha256": "f583e9eeed074928ae382e78af87f8425fe7648eac4a9dfed830712dc668eed8",
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 1 passed (2)",
+        "   Duration  280ms (transform 43ms, setup 0ms, import 65ms, tests 13ms, environment 0ms)"
+      ]
+    },
+    {
+      "path": "current-readers-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "current-readers-green1.log",
+      "bytes": 1246,
+      "sha256": "c6efd41619be3cec63bb1b415454490da5cb3bfe13adc2815b562807bfd5c900",
+      "result_lines": [
+        " Test Files  4 passed (4)",
+        "      Tests  28 passed (28)",
+        "   Duration  5.80s (transform 585ms, setup 0ms, import 899ms, tests 4.09s, environment 0ms)"
+      ]
+    },
+    {
+      "path": "current-readers-red.log",
+      "bytes": 2514,
+      "sha256": "7f99bd436bf5d5e4b555fffff5058824f028ae69521799a5d264f2431318970d",
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  1.20s (transform 50ms, setup 0ms, import 89ms, tests 858ms, environment 0ms)"
+      ]
+    },
+    {
+      "path": "current-readers-red2.log",
+      "bytes": 2285,
+      "sha256": "d79cff8c5b8f65e568a0358550e8cd3bfed2dadefcb3e1c2ecb422c9d59742a4",
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  1.99s (transform 93ms, setup 0ms, import 171ms, tests 1.35s, environment 0ms)"
+      ]
+    },
+    {
+      "path": "final-audit-release.log",
+      "bytes": 9955,
+      "sha256": "efe0518bd37d7e95c89928511496c54108369f1f5251cb555b1db8af83f4556d",
+      "result_lines": [
+        "  \"localLedgerContract\": \"PASS\",",
+        "  \"productionReleaseGate\": \"NO_GO\","
+      ]
+    },
+    {
+      "path": "final-db-create.log",
+      "bytes": 17,
+      "sha256": "c4f0e6a1d4c0f5670985351933a6e3b37f82d0e083b70cd21e88d7d6258dd588",
+      "result_lines": []
+    },
+    {
+      "path": "final-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "path": "final-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "path": "final-firm-dry-run.log",
+      "bytes": 1259,
+      "sha256": "755da7c72439244db05b867e17c3b7f59696246641eea519ff3e0d1fa677a061",
+      "result_lines": [
+        "PASS dry-run safety: 39 read operations; 0 network calls and 0 resource writes performed"
+      ]
+    },
+    {
+      "path": "full-5caa59a.log",
+      "bytes": 2207,
+      "sha256": "bf940ea4fae1491ea6e5be7bd76a3757cbe417e7050d397ca8d597dd75d9f61d",
+      "result_lines": [
+        " Test Files  280 passed (280)",
+        "      Tests  2431 passed (2431)",
+        "   Duration  488.98s (transform 14.91s, setup 0ms, import 63.13s, tests 418.69s, environment 58.07s)"
+      ]
+    },
+    {
+      "path": "full-af2a7b4.log",
+      "bytes": 2014,
+      "sha256": "014d602f3468faf991ac9fa8f87c8689ecc45383031782f2b845b830b5a1935d",
+      "result_lines": []
+    },
+    {
+      "path": "local-restore-start.log",
+      "bytes": 31,
+      "sha256": "a2dfb9e5ca93e9ea9430ca72ae4469b4f3a91b85ec84a9212c2977fdfccb3f08",
+      "result_lines": []
+    },
+    {
+      "path": "local-restore-stop.log",
+      "bytes": 31,
+      "sha256": "a2dfb9e5ca93e9ea9430ca72ae4469b4f3a91b85ec84a9212c2977fdfccb3f08",
+      "result_lines": []
+    },
+    {
+      "path": "neon-demo-branches-error.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "neon-hub-branches-error.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "neon-personal-projects-error.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "neon-projects-error.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "neon-vercel-projects-error.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "r25-current-readers-lint.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "result_lines": []
+    },
+    {
+      "path": "r25-current-readers-types.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "result_lines": []
+    },
+    {
+      "path": "r25-plan-baseline.log",
+      "bytes": 980,
+      "sha256": "d2ef8ff796692e8b4ac9cbe8f07c008b73b212e35a9855a72792ab74d1e1fcd5",
+      "result_lines": [
+        " Test Files  6 passed (6)",
+        "      Tests  74 passed (74)",
+        "   Duration  4.38s (transform 923ms, setup 0ms, import 1.76s, tests 2.67s, environment 1ms)"
+      ]
+    },
+    {
+      "path": "r27-plan-baseline.log",
+      "bytes": 980,
+      "sha256": "489f7d2b1b9e506df5d5241f1be22029fa1a41e3928025db183cbd6420807941",
+      "result_lines": [
+        " Test Files  5 passed (5)",
+        "      Tests  91 passed (91)",
+        "   Duration  7.45s (transform 1.80s, setup 0ms, import 3.90s, tests 4.36s, environment 1ms)"
+      ]
+    },
+    {
+      "path": "restore-readiness.log",
+      "bytes": 50,
+      "sha256": "febe982ad7accae664f6fae4ccaa3331e50ce64457a90e8e69d4c5ea6466314c",
+      "result_lines": []
+    },
+    {
+      "path": "restore-retry-start.log",
+      "bytes": 31,
+      "sha256": "a2dfb9e5ca93e9ea9430ca72ae4469b4f3a91b85ec84a9212c2977fdfccb3f08",
+      "result_lines": []
+    },
+    {
+      "path": "restore-retry-stop.log",
+      "bytes": 31,
+      "sha256": "a2dfb9e5ca93e9ea9430ca72ae4469b4f3a91b85ec84a9212c2977fdfccb3f08",
+      "result_lines": []
+    },
+    {
+      "path": "restored-after-current-readers.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "result_lines": []
+    },
+    {
+      "path": "restored-before-current-readers.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "result_lines": []
+    },
+    {
+      "path": "restored-current-readers.log",
+      "bytes": 1060,
+      "sha256": "78235dd28d2c901afdfdc59ff8099bca3225fc1579c84b94de847ad647e7ff70",
+      "result_lines": []
+    },
+    {
+      "path": "restored-guard-5caa59a.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "result_lines": []
+    },
+    {
+      "path": "restored-guard-final.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "result_lines": []
+    },
+    {
+      "path": "restored-readers-5caa59a.log",
+      "bytes": 1207,
+      "sha256": "b09a399cfdd2feb8cbd5b9d188daa8c9a3f4859f02fe5875f0e206fffdc68f73",
+      "result_lines": []
+    },
+    {
+      "path": "restored-readers-final.log",
+      "bytes": 1060,
+      "sha256": "78235dd28d2c901afdfdc59ff8099bca3225fc1579c84b94de847ad647e7ff70",
+      "result_lines": []
+    },
+    {
+      "path": "review-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "review-green-final.log",
+      "bytes": 978,
+      "sha256": "4d3032421eefec9c6a0efa825f8e53273e373a13959f3d92d5ab2862e0f14af7",
+      "result_lines": [
+        " Test Files  4 passed (4)",
+        "      Tests  9 passed (9)",
+        "   Duration  9.72s (transform 210ms, setup 0ms, import 533ms, tests 9.02s, environment 0ms)"
+      ]
+    },
+    {
+      "path": "review-green1.log",
+      "bytes": 978,
+      "sha256": "ee424039812f05e529286b00ea8d89f44b7810a6d9c383af9fb5bf3114a14075",
+      "result_lines": [
+        " Test Files  3 passed (3)",
+        "      Tests  6 passed (6)",
+        "   Duration  4.16s (transform 125ms, setup 0ms, import 211ms, tests 3.58s, environment 0ms)"
+      ]
+    },
+    {
+      "path": "review-last-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "review-lint-final.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "result_lines": []
+    },
+    {
+      "path": "review-lock-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result_lines": []
+    },
+    {
+      "path": "review-red.log",
+      "bytes": 4744,
+      "sha256": "bd3c38178cb5db3438fe7f844e6a519018fe2634e3c65e3712c97b2b501e39d9",
+      "result_lines": [
+        " Test Files  3 failed (3)",
+        "      Tests  1 failed (1)",
+        "   Duration  795ms (transform 108ms, setup 0ms, import 53ms, tests 252ms, environment 0ms)"
+      ]
+    },
+    {
+      "path": "review-types-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "result_lines": []
+    },
+    {
+      "path": "review-types.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "result_lines": []
+    },
+    {
+      "path": "reviewed-db-create.log",
+      "bytes": 17,
+      "sha256": "c4f0e6a1d4c0f5670985351933a6e3b37f82d0e083b70cd21e88d7d6258dd588",
+      "result_lines": []
+    },
+    {
+      "path": "reviewed-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "path": "reviewed-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "path": "reviewed-restore-start.log",
+      "bytes": 31,
+      "sha256": "a2dfb9e5ca93e9ea9430ca72ae4469b4f3a91b85ec84a9212c2977fdfccb3f08",
+      "result_lines": []
+    },
+    {
+      "path": "reviewed-restore-stop.log",
+      "bytes": 31,
+      "sha256": "a2dfb9e5ca93e9ea9430ca72ae4469b4f3a91b85ec84a9212c2977fdfccb3f08",
+      "result_lines": []
+    },
+    {
+      "path": "safe-db-create.log",
+      "bytes": 17,
+      "sha256": "c4f0e6a1d4c0f5670985351933a6e3b37f82d0e083b70cd21e88d7d6258dd588",
+      "result_lines": []
+    },
+    {
+      "path": "safe-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "path": "safe-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "path": "safe-runtime-rehearsal.log",
+      "bytes": 298,
+      "sha256": "713447e4dd7cde361e8f0cc944f38bae1142ebb6eda6699265c5ba0ff106f9ec",
+      "result_lines": []
+    },
+    {
+      "path": "vercel-all-env-error.log",
+      "bytes": 155,
+      "sha256": "c385597ad52ecf0e96c6bf9faca1b6acddbafe0df22f4a37fc1f160279b25c9e",
+      "result_lines": []
+    },
+    {
+      "path": "vercel-env-error.log",
+      "bytes": 155,
+      "sha256": "c385597ad52ecf0e96c6bf9faca1b6acddbafe0df22f4a37fc1f160279b25c9e",
+      "result_lines": []
+    }
+  ],
+  "browser_files": [
+    {
+      "path": "artifacts/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "artifacts/local-ux-Admin-daily-entry-87113--settings-and-touch-targets-desktop1366/navigation.png",
+      "bytes": 44830,
+      "sha256": "de953a3fa48621394f70d14d728abd3609308c96a4c001038a176738e8b9d819"
+    },
+    {
+      "path": "artifacts/local-ux-Admin-daily-entry-87113--settings-and-touch-targets-desktop1366/settings.png",
+      "bytes": 312027,
+      "sha256": "d27c335f68023e851d3d285e60d49afe5560ba479f011929501413e4c00359e4"
+    },
+    {
+      "path": "artifacts/local-ux-Admin-daily-entry-87113--settings-and-touch-targets-mobile390/navigation.png",
+      "bytes": 12707,
+      "sha256": "06bc84b78b28bfe245c1d6ee0b310e3480752d5f620a2c35ade4b102becc05de"
+    },
+    {
+      "path": "artifacts/local-ux-Admin-daily-entry-87113--settings-and-touch-targets-mobile390/settings.png",
+      "bytes": 272648,
+      "sha256": "ef31ae7d96348c67d285e9b932676f2ea1640ea631158de4154b4e9d573ff9dc"
+    },
+    {
+      "path": "artifacts/performance-captures-actua-7dd74-d-parser-network-boundaries-desktop1366/browser-performance.json",
+      "bytes": 12022,
+      "sha256": "637c4a511bbcef1a5d6c2f3763f31605778a8c9f40ed527cef5c0e154b6248f3"
+    },
+    {
+      "path": "artifacts/performance-captures-actua-7dd74-d-parser-network-boundaries-mobile390/browser-performance.json",
+      "bytes": 11938,
+      "sha256": "52d90e8c254a26b1bf8b26e0fb8909cca2f7e6249524ac42f46f0cd2179de748"
+    },
+    {
+      "path": "results.json",
+      "bytes": 17167,
+      "sha256": "e90c7f337caa5eb072d21fbebb40300bade38e3d73810a79cd3955b4b74a3241"
+    }
+  ]
+}

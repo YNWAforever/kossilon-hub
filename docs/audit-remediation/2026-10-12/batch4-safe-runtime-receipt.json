@@ -1,0 +1,108 @@
+{
+  "source_sha": "af2a7b468f840b483af2e93df1eb68956ea50fec",
+  "runtime_source_equivalent_to": "5caa59a3dad927ad05c0e261a4a0fd66d04338f6",
+  "equivalence_paths": [
+    "src/features",
+    "src/server",
+    "migrations",
+    "package.json",
+    "bun.lock",
+    "package-lock.json",
+    "vite.config.ts",
+    "vercel.json",
+    "wrangler.jsonc"
+  ],
+  "evidence_kind": "Actual SQL runtime/manual owned disposable PG17; not native platform trigger",
+  "native_ticks": 0,
+  "first_counts": {
+    "claimed": 5,
+    "completed": 5,
+    "failed": 0,
+    "unknown": 0,
+    "skipped": 0
+  },
+  "same_slot_replay_counts": {
+    "claimed": 0,
+    "completed": 0,
+    "failed": 0,
+    "unknown": 0,
+    "skipped": 5
+  },
+  "per_pass_receipts": [
+    {
+      "job_kind": "escalateStalledQuarantine",
+      "state": "succeeded",
+      "started_at": "2026-10-12T06:26:54.934Z",
+      "finished_at": "2026-10-12T06:26:54.973Z"
+    },
+    {
+      "job_kind": "evaluateEscalations",
+      "state": "succeeded",
+      "started_at": "2026-10-12T06:26:54.689Z",
+      "finished_at": "2026-10-12T06:26:54.885Z"
+    },
+    {
+      "job_kind": "redactNotifications",
+      "state": "succeeded",
+      "started_at": "2026-10-12T06:26:54.918Z",
+      "finished_at": "2026-10-12T06:26:54.926Z"
+    },
+    {
+      "job_kind": "runBulkAssignments",
+      "state": "succeeded",
+      "started_at": "2026-10-12T06:26:54.979Z",
+      "finished_at": "2026-10-12T06:26:55.145Z"
+    },
+    {
+      "job_kind": "settleNotificationAttempts",
+      "state": "succeeded",
+      "started_at": "2026-10-12T06:26:54.900Z",
+      "finished_at": "2026-10-12T06:26:54.909Z"
+    }
+  ],
+  "run_receipt": {
+    "build": "af2a7b468f840b483af2e93df1eb68956ea50fec",
+    "execution_scope": "safe-maintenance-only",
+    "trigger_evidence": "manual",
+    "platform_trigger_verified": false
+  },
+  "expired_claim": {
+    "stale_token_begin": false,
+    "stale_token_finish": false,
+    "renewed_token_completed": true
+  },
+  "unknown_after_committed_effect": {
+    "first_counts": {
+      "claimed": 1,
+      "completed": 0,
+      "failed": 0,
+      "unknown": 1,
+      "skipped": 0
+    },
+    "replay_counts": {
+      "claimed": 0,
+      "completed": 0,
+      "failed": 0,
+      "unknown": 1,
+      "skipped": 1
+    },
+    "persisted_state": "started",
+    "durable_effects_total": 2,
+    "unknown_reexecuted": false
+  },
+  "outbox": {
+    "before": {
+      "total": 0,
+      "external_effects": 0
+    },
+    "after": {
+      "total": 4,
+      "external_effects": 0
+    }
+  },
+  "private_receipt": {
+    "path": "safe-runtime-receipt.json",
+    "bytes": 5005,
+    "sha256": "f78372556a53c3c9d0fbed89338548babfc778e641c039f3197a04ef5a8e9528"
+  }
+}
