@@ -300,7 +300,7 @@ function UsersPanel({
                   disabled
                   onChange={(event) => onRoleChange(user.id, event.target.value as AuthRole)}
                   aria-label={`Role for ${user.name}`}
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
+                  className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="Admin">Admin</option>
                   <option value="Manager">Manager</option>
@@ -332,7 +332,7 @@ function UsersPanel({
                     disabled
                     onClick={() => onToggleActive(user.id)}
                     aria-label={`${user.active ? "Deactivate" : "Activate"} ${user.name}`}
-                    className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent"
+                    className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                   >
                     {user.active ? "Deactivate" : "Activate"}
                   </button>

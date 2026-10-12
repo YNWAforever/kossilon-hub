@@ -57,7 +57,6 @@ function DemoWhatsAppAutomationRoute() {
   const cases = useAnnualReturnCases();
   const portalSnapshot = useClientPortalSnapshot();
   const [filter, setFilter] = useState<"open" | "sent" | "all">("open");
-  const [warning, setWarning] = useState<string | undefined>();
 
   const rows = useMemo<AutomationQueueRow[]>(() => {
     const casesById = new Map(cases.map((caseItem) => [caseItem.id, caseItem] as const));
@@ -128,11 +127,14 @@ function DemoWhatsAppAutomationRoute() {
         ))}
       />
 
-      {warning ? (
-        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
-          {warning}
-        </div>
-      ) : null}
+      {/* Said once, up front: a live-looking Send button that only answered
+          with a warning read as a failed send rather than a read-only demo. */}
+      <p
+        className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
+        role="status"
+      >
+        Read-only demo. Production follow-ups are dispatched by the notification outbox.
+      </p>
 
       <section className="rounded-lg border bg-card">
         <div className="hidden grid-cols-[1.2fr_1fr_140px_120px_110px_minmax(0,1.5fr)_120px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
@@ -149,15 +151,7 @@ function DemoWhatsAppAutomationRoute() {
           {visibleRows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">No follow-ups match this filter.</p>
           ) : (
-            visibleRows.map((row) => (
-              <AutomationRow
-                key={`${row.source}-${row.id}`}
-                row={row}
-                onSend={() =>
-                  setWarning("Production follow-ups are dispatched by the notification outbox.")
-                }
-              />
-            ))
+            visibleRows.map((row) => <AutomationRow key={`${row.source}-${row.id}`} row={row} />)
           )}
         </div>
       </section>
@@ -165,9 +159,8 @@ function DemoWhatsAppAutomationRoute() {
   );
 }
 
-function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () => void }) {
+function AutomationRow({ row }: { row: AutomationQueueRow }) {
   const { caseItem, draft } = row;
-  const disabled = draft.status !== "draft";
   const reasonLabel = "reasonLabel" in draft ? draft.reasonLabel : "Annual return follow-up";
 
   return (
@@ -202,8 +195,7 @@ function AutomationRow({ row, onSend }: { row: AutomationQueueRow; onSend: () =>
       <div className="flex justify-start lg:justify-end">
         <button
           className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-          disabled={disabled}
-          onClick={onSend}
+          disabled
           type="button"
         >
           {draft.status === "sent" ? "Sent" : draft.status === "blocked" ? "Blocked" : "Send now"}

@@ -98,6 +98,15 @@ describe("whatsapp route across data modes", () => {
     expect(html).not.toContain(DEMO_COMPOSER);
   });
 
+  it("presents the demo automation queue as read-only instead of offering dead Send buttons", async () => {
+    const html = await renderRoute("/whatsapp/automation", "demo");
+    const sendButtons = [...html.matchAll(/<button[^>]*>Send now<\/button>/g)].map((m) => m[0]);
+
+    expect(html).toContain("Read-only demo.");
+    expect(sendButtons.length).toBeGreaterThan(0);
+    expect(sendButtons.every((button) => button.includes("disabled"))).toBe(true);
+  });
+
   it("renders the production inbox at /whatsapp in production mode", async () => {
     // renderToString does not run TanStack Query, so this asserts the production
     // component is mounted rather than that the server call fired. The server call
