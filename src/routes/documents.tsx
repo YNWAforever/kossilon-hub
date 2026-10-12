@@ -246,6 +246,8 @@ function DocumentsRoute() {
           actorScope={JSON.stringify(actor)}
           resource="document"
           filters={{
+            ...(documentFilters.companyId ? { companyId: documentFilters.companyId } : {}),
+            ...(documentFilters.id ? { documentId: documentFilters.id } : {}),
             ...(search.q?.trim() ? { q: search.q.trim() } : {}),
             ...(productionCaseId ? { caseId: productionCaseId } : {}),
             ...(search.ownerId ? { ownerId: search.ownerId } : {}),

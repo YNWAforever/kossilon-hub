@@ -154,7 +154,7 @@ describe("explicit scope and durable bulk toolbar", () => {
     fireEvent.click(await screen.findByRole("button", { name: "載入較早的工作" }));
     await screen.findByRole("option", { name: /100筆.*partial/ });
     expect(api.jobs).toHaveBeenLastCalledWith({
-      data: { cursor: { id: snapshotId, createdAt: "2026-10-01T00:00:00.000001Z" } },
+      data: { limit: 20, cursor: { id: snapshotId, createdAt: "2026-10-01T00:00:00.000001Z" } },
     });
   });
   it("shows business labels and allows safe failures on later result pages to be retried", async () => {
@@ -291,4 +291,47 @@ describe("explicit scope and durable bulk toolbar", () => {
     expect(screen.getByText("先核對未知結果")).toBeTruthy();
     expect(screen.queryByText(/40000000/)).toBeNull();
   });
+});
+it("document page50 can select fixed1000, exclude two and preview997 executable with one locked", async () => {
+  api.snapshot.mockResolvedValue({ snapshotId, count: 1000 });
+  api.maintenance.mockResolvedValue({
+    previewId: snapshotId,
+    count: 998,
+    eligibleCount: 997,
+    reasons: { locked: 1, forbidden: 0, failed: 0, conflict: 0 },
+    payloadHash: "h",
+  });
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <BulkSelectionToolbar
+        actorScope="manager-docs"
+        resource="document"
+        filters={{ companyId: assignee }}
+        page={page}
+        total={1000}
+        maintenanceActions={["document_assignment"]}
+      />
+    </QueryClientProvider>,
+  );
+  await screen.findByRole("option", { name: /Mei Lam/ });
+  fireEvent.click(screen.getByText("選取全部篩選結果"));
+  await screen.findByText("已選取1000筆");
+  await waitFor(() =>
+    expect((screen.getByLabelText("Select Scoped case 1") as HTMLInputElement).disabled).toBe(
+      false,
+    ),
+  );
+  fireEvent.click(screen.getByLabelText("Select Scoped case 1"));
+  fireEvent.click(screen.getByLabelText("Select Scoped case 2"));
+  fireEvent.change(screen.getByLabelText("Bulk assignee"), { target: { value: assignee } });
+  fireEvent.click(screen.getByText("預覽批量維護"));
+  await screen.findByText(/預覽998筆；可執行997；鎖定1/);
+  expect(api.maintenance).toHaveBeenCalledWith({
+    data: expect.objectContaining({
+      selection: { mode: "filtered_snapshot", snapshotId, excludedIds: ids.slice(0, 2) },
+    }),
+  });
+  expect(api.execute).not.toHaveBeenCalled();
 });

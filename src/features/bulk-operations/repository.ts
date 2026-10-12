@@ -1,3 +1,4 @@
+import { bulkOperationLabels } from "./job-view";
 import { queueScopeSql } from "@/features/work-items/queue-scope";
 import type postgres from "postgres";
 import { documentScopeSql } from "@/features/documents/list-scope";
@@ -58,6 +59,8 @@ type JobRow = {
   lease_token: string | null;
   valid_lease: boolean;
   cancel_requested: boolean;
+  created_at: string | Date;
+  updated_at: string | Date;
 };
 type ItemRow = {
   ordinal: number;
@@ -114,6 +117,8 @@ export function createBulkOperationsRepository({
           : [
               "q",
               "caseId",
+              "companyId",
+              "documentId",
               "ownerId",
               "documentCategory",
               "documentReviewStatus",
@@ -135,7 +140,7 @@ export function createBulkOperationsRepository({
           case_owner_id: string | null;
           case_reviewer_id: string | null;
         })[]
-      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where ${documentScopeSql(db, { ...filters, category: filters.documentCategory, reviewStatus: filters.documentReviewStatus, teamId: actor.role === "Admin" ? undefined : actor.teamId!, assignedUserId: actor.role === "Admin" ? undefined : actor.userId!, includeFixtures: filters.includeFixtures === true && actor.role === "Admin", ids })} order by d.id limit 20001`;
+      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where ${documentScopeSql(db, { ...filters, id: filters.documentId, category: filters.documentCategory, reviewStatus: filters.documentReviewStatus, teamId: actor.role === "Admin" ? undefined : actor.teamId!, assignedUserId: actor.role === "Admin" ? undefined : actor.userId!, includeFixtures: filters.includeFixtures === true && actor.role === "Admin", ids })} order by d.id limit 20001`;
       return rows.filter((r) =>
         isDocumentVisibleToStaffActor(actor, {
           companyId: r.company_id,
@@ -513,8 +518,20 @@ export function createBulkOperationsRepository({
     const [retryable] = await sql<
       { n: number }[]
     >`select count(*)::int n from bulk_operation_job_items where job_id=${j.id} and state='failed' and retryable`;
+    const [meta] =
+      await sql`select u.name actor_name,(select min(started_at)::text from bulk_operation_job_items where job_id=${j.id}) started_at,(select max((event->>'at')::timestamptz)::text from bulk_operation_job_items i cross join lateral jsonb_array_elements(coalesce(i.result->'history','[]'::jsonb)) event where i.job_id=${j.id} and event ? 'attempt') receipt_at from users u where u.id=${j.actor_user_id}`;
     return {
       jobId: j.id,
+      operation: j.action_key,
+      operationLabel: bulkOperationLabels[j.action_key],
+      scopeSummary: `固定 ${j.total} 筆 ${j.resource}`,
+      actorId: j.actor_user_id,
+      actorName: meta.actor_name,
+      createdAt: new Date(j.created_at).toISOString(),
+      updatedAt: new Date(j.updated_at).toISOString(),
+      startedAt: meta.started_at,
+      lastHeartbeat: null,
+      lastWorkerReceiptAt: meta.receipt_at,
       resource: j.resource,
       state: j.state,
       total: j.total,
@@ -735,13 +752,36 @@ export function createBulkOperationsRepository({
     const verified = await currentActor(sql, actor);
     const limit = data.limit ?? 20;
     const rows = await sql<
-      { id: string; state: JobResult["state"]; total: number; created_at: string }[]
-    >`select id,state,total,to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') created_at from bulk_operation_jobs where actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and (${data.cursor?.createdAt ?? null}::timestamptz is null or (created_at,id)<(${data.cursor?.createdAt ?? null}::timestamptz,${data.cursor?.id ?? null}::uuid)) order by created_at desc,id desc limit ${limit + 1}`;
+      {
+        id: string;
+        state: JobResult["state"];
+        total: number;
+        created_at: string;
+        updated_at: string;
+        resource: BulkResource;
+        action_key: "assignment" | MaintenanceActionKind;
+        actor_name: string;
+      }[]
+    >`select j.id,j.state,j.total,j.resource,j.action_key,u.name actor_name,to_char(j.created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') created_at,j.updated_at::text updated_at from bulk_operation_jobs j join users u on u.id=j.actor_user_id
+    where j.actor_user_id=${verified.userId!} and j.auth_user_id=${verified.authUserId}
+    and (${data.operation ?? null}::text is null or j.action_key=${data.operation ?? null}) and (${data.resource ?? null}::text is null or j.resource=${data.resource ?? null})
+    and (${data.actorId ?? null}::uuid is null or j.actor_user_id=${data.actorId ?? null})
+    and (${data.createdFrom ?? null}::text::timestamptz is null or j.created_at>=${data.createdFrom ?? null}::text::timestamptz)
+    and (${data.createdTo ?? null}::text::timestamptz is null or j.created_at<=${data.createdTo ?? null}::text::timestamptz)
+    and (${data.cursor?.createdAt ?? null}::text::timestamptz is null or (j.created_at,j.id)<(${data.cursor?.createdAt ?? null}::text::timestamptz,${data.cursor?.id ?? null}::uuid)) order by j.created_at desc,j.id desc limit ${limit + 1}`;
     const jobs = rows.slice(0, limit).map((r) => ({
       jobId: r.id,
       state: r.state,
       total: r.total,
+      resource: r.resource,
+      operation: r.action_key,
+      operationLabel: bulkOperationLabels[r.action_key],
+      scopeSummary: `固定 ${r.total} 筆 ${r.resource}`,
+      actorId: verified.userId!,
+      actorName: r.actor_name,
       createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      lastHeartbeat: null,
     }));
     const last = rows[limit - 1];
     return {
