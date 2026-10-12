@@ -43,7 +43,7 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
     ).values(),
   ];
   return (
-    <main className="min-w-0 flex-1 space-y-6 p-4 md:p-6">
+    <main className="min-w-0 flex-1 space-y-6 break-words p-4 md:p-6 [&_button]:min-h-11 [&_input:not([type=checkbox])]:min-h-11 [&_select]:min-h-11 [&_select]:max-w-full">
       <PageHeader eyebrow="Administration" title="Admin" subtitle="員工與團隊管理" />
       <p>{staffInvitationCapability.message}</p>
       <p>只維護已核實綁定的既有身份。最後登入：沒有可靠紀錄時顯示未知。</p>
@@ -276,7 +276,7 @@ function StaffRow({
                   key={member.userId + ":" + member.expectedVersion}
                   userId={member.userId}
                   expectedVersion={member.expectedVersion}
-                  teamId={member.teamId}
+                  teamId={member.role === "Admin" ? null : member.teamId}
                   actorScope={actorScope}
                   items={preview.data.businessItems ?? []}
                   onUnconfirmedChange={setUnconfirmed}

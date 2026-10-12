@@ -1,3 +1,5 @@
+import { BusinessHandoverRejection } from "./business-handover-errors";
+import type { BusinessHandoverReceipt } from "./types";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { assertStaffAccess } from "@/features/auth/authorization";
@@ -92,7 +94,7 @@ export const transferStaffBusinessHandover = createServerFn({ method: "POST" })
   .validator(businessHandoverSchema)
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
-    return repository.transferBusinessHandover(actor, data);
+    return transferStaffBusinessHandoverForActor(actor, data, repository);
   });
 export const getStaffBusinessHandoverReceipt = createServerFn({ method: "GET" })
   .validator(z.object({ userId: z.string().uuid(), operationId: z.string().uuid() }).strict())
@@ -100,3 +102,26 @@ export const getStaffBusinessHandoverReceipt = createServerFn({ method: "GET" })
     const { actor, repository } = await context();
     return repository.getBusinessHandoverReceipt(actor, data.userId, data.operationId);
   });
+
+export async function transferStaffBusinessHandoverForActor(
+  actor: AuthenticatedActor,
+  input: unknown,
+  repository: Pick<AdminRepository, "transferBusinessHandover">,
+): Promise<BusinessHandoverReceipt> {
+  adminActor(actor);
+  const data = businessHandoverSchema.parse(input);
+  try {
+    return await repository.transferBusinessHandover(actor, data);
+  } catch (error) {
+    if (error instanceof BusinessHandoverRejection)
+      return {
+        operationId: data.operationId,
+        resourceId: data.item.id,
+        kind: data.item.kind,
+        state: "rejected",
+        reason: error.reason,
+        recipientId: data.recipientId,
+      };
+    throw error;
+  }
+}

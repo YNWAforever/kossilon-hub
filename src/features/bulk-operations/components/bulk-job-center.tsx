@@ -117,7 +117,10 @@ export function BulkJobCenter({
   });
   const busy = resume.isPending || cancel.isPending || retry.isPending || reconcile.isPending;
   return (
-    <section aria-label="批次工作中心" className="min-w-0 space-y-3 border-t pt-3">
+    <section
+      aria-label="批次工作中心"
+      className="min-w-0 space-y-3 border-t pt-3 [&_button]:min-h-11 [&_button]:rounded [&_button]:border [&_button]:px-3 [&_input]:min-h-11 [&_select]:min-h-11 [&_select]:max-w-full"
+    >
       <h2 className="font-semibold">批次工作中心</h2>
       <p>只讀取本人的已核准工作；伺服器在每次讀取及執行時重新核對授權。</p>
       <a className="inline-flex min-h-11 items-center underline" href="/bulk-jobs">
@@ -225,7 +228,7 @@ export function BulkJobCenter({
           </div>
           <p>衝突需重新預覽；取消保留成功項。匯出結果不等於交件。</p>
           {items.map((i) => (
-            <p key={i.ordinal}>
+            <p key={i.ordinal} className="break-words">
               {i.resourceId && i.resourceLabel ? (
                 <>
                   <a className="underline" href={bulkResourceHref(first.resource, i.resourceId)}>

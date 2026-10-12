@@ -44,7 +44,10 @@ export function BulkSelectionToolbar(props: Props) {
 function BulkSession(props: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
   return (
-    <section aria-label="Bulk assignment" className="space-y-3 rounded border p-4">
+    <section
+      aria-label="Bulk assignment"
+      className="min-w-0 space-y-3 rounded border p-4 [&_button]:min-h-11 [&_button]:rounded [&_button]:border [&_button]:px-3 [&_input:not([type=checkbox])]:min-h-11 [&_select]:min-h-11 [&_select]:max-w-full"
+    >
       <SelectionControls
         key={JSON.stringify([props.resource, props.filters])}
         {...props}

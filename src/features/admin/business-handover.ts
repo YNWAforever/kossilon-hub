@@ -1,3 +1,4 @@
+import { BusinessHandoverRejection } from "./business-handover-errors";
 import type postgres from "postgres";
 import type { SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -69,18 +70,11 @@ export function createBusinessHandoverRepository({
       }
       const source = await target(tx, input.userId, true);
       if (source.access_revision !== input.expectedVersion)
-        throw Object.assign(Error("Staff version changed. Refresh."), { statusCode: 409 });
+        throw new BusinessHandoverRejection("staff_version_conflict");
       const [recipient] =
         await tx`select u.id,u.team_id from users u join staff_profiles sp on sp.user_id=u.id join teams t on t.id=u.team_id where u.id=${input.recipientId} and u.active and sp.active and u.role in ('Admin','Manager','Staff') and sp.role=u.role and sp.team_id=u.team_id and t.active for share of u,sp`;
-      if (
-        !recipient ||
-        recipient.id === input.userId ||
-        !source.team_id ||
-        recipient.team_id !== source.team_id
-      )
-        throw Error(
-          "Forbidden: a different verified active recipient in the same team is required.",
-        );
+      if (!recipient || recipient.id === input.userId)
+        throw new BusinessHandoverRejection("recipient_unavailable");
       const item = input.item;
       let rows;
       if (item.kind === "incorporation")

@@ -1,3 +1,4 @@
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import type postgres from "postgres";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { createCompanyWorkspaceRepository } from "./company-workspace";
@@ -680,10 +681,27 @@ export function createClientRepository(
     return detail;
   }
 
+  async function lockClientOwnership(
+    tx: TransactionSqlClient,
+    actorId: string,
+    ownerId: string,
+    teamId: string,
+  ) {
+    await assertActor(tx, actorId);
+    const actor = await lockActiveStaffUser(tx, actorId),
+      owner = await lockActiveStaffUser(tx, ownerId);
+    if (
+      (actor.role !== "Admin" && actor.team_id !== teamId) ||
+      (owner.role !== "Admin" && owner.team_id !== teamId)
+    )
+      throw Error("Forbidden: current company team required.");
+    const [team] = await tx`select id from teams where id=${teamId} and active for share`;
+    if (!team) throw Error("Active company team required.");
+  }
   async function createClient(input: CreateClientInput): Promise<ClientDetail> {
     try {
       return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
+        await lockClientOwnership(tx, input.actorId, input.ownerId, input.teamId);
 
         const rows = await tx<{ id: string }[]>`
           insert into companies (
@@ -741,7 +759,7 @@ export function createClientRepository(
   async function updateClient(input: UpdateClientInput): Promise<ClientDetail> {
     try {
       return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
+        await lockClientOwnership(tx, input.actorId, input.ownerId, input.teamId);
 
         const before = await hydrateOrThrow(tx, input.id);
         const changed = changedFields(before, input);

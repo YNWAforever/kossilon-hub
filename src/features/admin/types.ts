@@ -91,6 +91,7 @@ export type BusinessHandoverReceipt = {
   operationId: string;
   resourceId: string;
   kind: BusinessHandoverItem["kind"];
-  state: "succeeded" | "conflict";
+  state: "succeeded" | "conflict" | "rejected";
+  reason?: "staff_version_conflict" | "recipient_unavailable";
   recipientId: string;
 };

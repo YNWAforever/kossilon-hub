@@ -19,7 +19,7 @@ export async function readCorporateChangePage(
   const due = sql`(select min((w.sla_due_at at time zone 'Asia/Hong_Kong')::date) from work_items w where w.corporate_change_request_id=r.id and w.company_id=r.company_id and w.status not in ('completed','cancelled'))`;
   const key =
     input.sort === "company"
-      ? sql`c.company_name`
+      ? sql`c.company_name collate "C"`
       : input.sort === "recent"
         ? sql`-extract(epoch from r.created_at)`
         : sql`coalesce(${due},'9999-12-31'::date)`;

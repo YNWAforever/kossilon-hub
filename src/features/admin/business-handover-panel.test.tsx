@@ -70,3 +70,57 @@ it("confirms a version-bound transfer and reconciles an unknown response before 
     data: expect.objectContaining({ userId, operationId: expect.any(String) }),
   });
 });
+it("a definite pre-write refusal permits a new preview without unknown reconciliation", async () => {
+  api.listStaff.mockResolvedValue({
+    staff: [
+      {
+        userId: "22222222-2222-4222-8222-222222222222",
+        displayName: "陳同事",
+        role: "Staff",
+        active: true,
+        stateMismatch: false,
+      },
+    ],
+    nextCursor: null,
+  });
+  api.transferStaffBusinessHandover.mockResolvedValue({
+    state: "rejected",
+    operationId: "receipt",
+    reason: "staff_version_conflict",
+  });
+  const blocked = vi.fn();
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <BusinessHandoverPanel
+        userId="11111111-1111-4111-8111-111111111111"
+        expectedVersion={1}
+        teamId={null}
+        actorScope="admin"
+        items={[
+          {
+            id: "22222222-2222-4222-8222-222222222222",
+            kind: "incorporation",
+            label: "新預覽案",
+            status: "Intake",
+            version: "a".repeat(32),
+          },
+        ]}
+        onUnconfirmedChange={blocked}
+      />
+    </QueryClientProvider>,
+  );
+  await screen.findByRole("option", { name: "陳同事" });
+  fireEvent.change(screen.getByLabelText("接手同事"), {
+    target: { value: "22222222-2222-4222-8222-222222222222" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "轉交 新預覽案" }));
+  fireEvent.click(await screen.findByRole("button", { name: "確認轉交這一項" }));
+  await screen.findByText(/這一項未套用/);
+  expect(blocked).toHaveBeenLastCalledWith(false);
+  expect(api.getStaffBusinessHandoverReceipt).not.toHaveBeenCalled();
+  expect(
+    (screen.getByRole("button", { name: "轉交 新預覽案" }) as HTMLButtonElement).disabled,
+  ).toBe(false);
+});

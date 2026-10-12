@@ -1,3 +1,4 @@
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import type postgres from "postgres";
 import { readIncorporationPage } from "./list-page-repository";
 import type { IncorporationListInput, IncorporationListRow } from "./list-page";
@@ -243,12 +244,15 @@ export function createIncorporationRepository(
 
   async function createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
-      await assertActor(tx, input.actorId);
-
-      const ownerRows = await tx<{ id: string }[]>`
-        select id from users where id = ${input.ownerId} and active limit 1
-      `;
-      if (ownerRows.length !== 1) throw new Error("Incorporation owner not found or inactive.");
+      const actor = await lockActiveStaffUser(tx, input.actorId),
+        owner = await lockActiveStaffUser(tx, input.ownerId);
+      if (
+        (actor.role !== "Admin" && actor.team_id !== input.teamId) ||
+        (owner.role !== "Admin" && owner.team_id !== input.teamId)
+      )
+        throw Error("Forbidden: current business team required.");
+      const [team] = await tx`select id from teams where id=${input.teamId} and active for share`;
+      if (!team) throw Error("Active business team required.");
 
       const templateRows = await tx<{ documents: { label: string; required: boolean }[] }[]>`
         select documents from checklist_templates

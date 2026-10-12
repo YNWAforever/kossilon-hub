@@ -8,6 +8,7 @@
 export const DB_INTEGRATION_TEST_FILES = [
   "src/features/clients/company-workspace.integration.test.ts",
   "src/features/daily-work/repository.integration.test.ts",
+  "src/features/daily-work/collation.integration.test.ts",
   "src/features/incorporation/list-page.integration.test.ts",
   "src/features/corporate-changes/list-page.integration.test.ts",
   "src/features/work-items/queue-review.integration.test.ts",
@@ -20,6 +21,7 @@ export const DB_INTEGRATION_TEST_FILES = [
   "src/server/db/operational-read.integration.test.ts",
   "src/server/db/release-preflight.integration.test.ts",
   "src/features/admin/repository.integration.test.ts",
+  "src/features/admin/business-creation-lifecycle.integration.test.ts",
   "src/features/bulk-operations/repository.integration.test.ts",
   "src/features/bulk-operations/actions.integration.test.ts",
   "src/features/bulk-operations/selection-scope.integration.test.ts",

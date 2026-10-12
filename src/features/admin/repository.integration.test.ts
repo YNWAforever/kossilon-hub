@@ -395,3 +395,38 @@ it.skipIf(!url)(
     ).rejects.toBe(rollback);
   },
 );
+it.skipIf(!url)(
+  "review: a no-team Admin can hand over a case to staff in the actual resource team",
+  async () => {
+    const { businessCaseFixture } = await import("@/test/business-case-fixture");
+    await expect(
+      sql!.begin(async (tx) => {
+        const original = await fixture(tx);
+        await tx`update users set team_id=null where id=${original.userId!}`;
+        await tx`update staff_profiles set team_id=null where user_id=${original.userId!}`;
+        const actor = { ...original, teamId: null },
+          f = await businessCaseFixture(tx, 1);
+        await tx`insert into staff_profiles(user_id,auth_user_id,role,team_id) values(${f.owner},${"r22-nullteam-" + f.owner},'Staff',${f.team})`;
+        await tx`update incorporation_cases set owner_id=${actor.userId!} where id=${f.incorporation[0].id}`;
+        const repo = createAdminRepository({ sql: tx }),
+          preview = await repo.previewReassignment(actor, {
+            userId: actor.userId!,
+            expectedVersion: 1,
+          }),
+          item = preview.businessItems!.find((i) => i.kind === "incorporation")!;
+        expect(
+          (
+            await repo.transferBusinessHandover(actor, {
+              userId: actor.userId!,
+              expectedVersion: 1,
+              recipientId: f.owner,
+              operationId: crypto.randomUUID(),
+              item: { kind: item.kind, id: item.id, version: item.version },
+            })
+          ).state,
+        ).toBe("succeeded");
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  },
+);

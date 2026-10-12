@@ -51,7 +51,7 @@ export function BusinessHandoverPanel({
     retry: false,
   });
   function refresh() {
-    void client.invalidateQueries({ queryKey: ["staff-admin", actorScope, "handover", userId] });
+    void client.invalidateQueries({ queryKey: ["staff-admin", actorScope] });
     void client.invalidateQueries({ queryKey: ["staff-admin", actorScope, "audit", userId] });
     void client.invalidateQueries({ queryKey: ["daily-work"] });
     void client.invalidateQueries({ queryKey: ["company-workspace"] });
@@ -159,7 +159,9 @@ export function BusinessHandoverPanel({
         <p key={r.operationId} role="status">
           {r.state === "succeeded"
             ? "這一項已轉交；仍需重新盤點。"
-            : "這一項版本或責任已改變；重新預覽後才可再轉交。"}{" "}
+            : r.state === "rejected"
+              ? "這一項未套用；更新員工／接手人及預覽後才可再轉交。"
+              : "這一項版本或責任已改變；重新預覽後才可再轉交。"}{" "}
           回執：{r.operationId}
         </p>
       ))}

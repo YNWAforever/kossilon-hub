@@ -1,3 +1,4 @@
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import type postgres from "postgres";
 import { readCorporateChangePage } from "./list-page-repository";
 import type { CorporateChangeListInput, CorporateChangeListRow } from "./list-page";
@@ -287,11 +288,14 @@ export function createCorporateChangeRequestRepository(
   ): Promise<CorporateChangeRequestDetail> {
     try {
       return await withTransaction(sql, async (tx) => {
+        const actor = await lockActiveStaffUser(tx, input.actorId);
         const companyRows = await tx<{ id: string; assigned_team_id: string }[]>`
           select id, assigned_team_id from companies where id = ${input.companyId} for update
         `;
         const company = companyRows[0];
         if (!company) throw new Error("Company not found.");
+        if (actor.role !== "Admin" && actor.team_id !== company.assigned_team_id)
+          throw Error("Forbidden: current company team required.");
 
         let insertedId: string;
 

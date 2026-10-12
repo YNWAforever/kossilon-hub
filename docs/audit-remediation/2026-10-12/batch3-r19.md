@@ -1,4 +1,4 @@
-# R19 — F25; UC45/76 company workspace
+# R19 — F31; UC45/76 company workspace
 
 Source 53c1973aa8a0112ac666897cb89a95429aabaa25. PR145 remains a stacked draft. `/clients/:id` now has validated URL tabs for overview, work, documents, payments and activity. Each active tab reads a scoped count plus at most 50 rows; overview reads small previews and a SQL decimal balance. Completed incorporation joins only its explicit company ID; equal names never invent a link. Cases preserve their canonical owner/reviewer/team policies, and company context checks current SQL staff role/team/active before reads.
 

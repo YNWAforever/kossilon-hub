@@ -18,7 +18,7 @@ export async function readIncorporationPage(
     ctx = businessListContext("incorporation", scope, input, viewerUserId);
   const key =
     input.sort === "company"
-      ? sql`ic.proposed_company_name_en`
+      ? sql`ic.proposed_company_name_en collate "C"`
       : input.sort === "recent"
         ? sql`-extract(epoch from ic.created_at)`
         : sql`ic.target_completion_date`;
