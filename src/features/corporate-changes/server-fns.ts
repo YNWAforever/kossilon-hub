@@ -5,6 +5,23 @@ import { requireTeamReadScope } from "@/features/auth/team-read-scope";
 import { assertCorporateChangeRequestWritable } from "./authorization";
 import type { CorporateChangeRequestRepository } from "./repository";
 import type { CreateCorporateChangeRequestInput } from "./types";
+import { corporateChangeListPageSchema, type CorporateChangeListInput } from "./list-page";
+export async function listCorporateChangePageForActor(
+  actor: AuthenticatedActor,
+  repo: Pick<CorporateChangeRequestRepository, "listRequestPage">,
+  raw: CorporateChangeListInput = {},
+) {
+  const input = corporateChangeListPageSchema.parse(raw),
+    scope = requireTeamReadScope(actor);
+  return repo.listRequestPage(scope, input, actor.userId!);
+}
+export const listCorporateChangeRequestPage = createServerFn({ method: "GET" })
+  .validator((input: CorporateChangeListInput) => corporateChangeListPageSchema.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const actor = await getCurrentCorporateChangeActor();
+    requireTeamReadScope(actor);
+    return withRepository((repo) => listCorporateChangePageForActor(actor, repo, data));
+  });
 
 const loadDefaultCorporateChangeContext = createServerOnlyFn(async () => {
   const [{ getRequest }, { requireStaffActor }, { createCorporateChangeRequestRepository }] =

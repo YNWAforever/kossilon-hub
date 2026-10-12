@@ -1,4 +1,7 @@
 import type postgres from "postgres";
+import { readCorporateChangePage } from "./list-page-repository";
+import type { CorporateChangeListInput, CorporateChangeListRow } from "./list-page";
+import type { ListPage } from "@/lib/list-page";
 import { assertTeamReadScope, type TeamReadScope } from "@/features/auth/team-read-scope";
 import {
   createSqlClient,
@@ -161,6 +164,11 @@ const REQUEST_COLUMNS = `
 `;
 
 export interface CorporateChangeRequestRepository {
+  listRequestPage(
+    scope: TeamReadScope,
+    input?: CorporateChangeListInput,
+    viewerUserId?: string,
+  ): Promise<ListPage<CorporateChangeListRow>>;
   listRequests(
     filter: ListCorporateChangeRequestsFilter,
     scope: TeamReadScope,
@@ -591,6 +599,8 @@ export function createCorporateChangeRequestRepository(
   }
 
   return {
+    listRequestPage: (scope, input, viewerUserId) =>
+      readCorporateChangePage(sql, scope, input, viewerUserId),
     listRequests,
     countRequests,
     getRequest,

@@ -1,134 +1,227 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
+import { BusinessListControls } from "@/components/business-list-controls";
+import { useRetainedPage } from "@/lib/use-retained-page";
+import {
+  businessListSearch,
+  businessReturnPath,
+  type BusinessListSearch,
+} from "@/lib/business-list";
+import { businessStatusLabel, corporateChangeLabel } from "@/lib/staff-copy.zh-HK";
+import type { AuthenticatedActor } from "@/features/auth/types";
+
 import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-dialog";
-import { listCorporateChangeRequests } from "@/features/corporate-changes/server-fns";
-import { listClientPage } from "@/features/clients/server-fns";
-
-export function ProductionCorporateChangeList() {
-  const queryClient = useQueryClient();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [companySearch, setCompanySearch] = useState("");
-
-  const requestsQuery = useQuery({
-    queryKey: ["corporate-change-requests"],
-    queryFn: () => listCorporateChangeRequests({ data: {} }),
+import { listClientPage, listClientAssignmentOptions } from "@/features/clients/server-fns";
+import { listCorporateChangeRequestPage } from "../server-fns";
+import { corporateChangeListPageSchema } from "../list-page";
+import { CORPORATE_CHANGE_STATUSES } from "../types";
+export function ProductionCorporateChangeList({
+  search: provided,
+  onSearchChange,
+  actor,
+}: {
+  search?: BusinessListSearch;
+  onSearchChange?: (search: BusinessListSearch) => void;
+  actor?: AuthenticatedActor;
+} = {}) {
+  const navigate = useNavigate(),
+    client = useQueryClient(),
+    createButton = useRef<HTMLButtonElement>(null);
+  const [local, setLocal] = useState(() =>
+      businessListSearch({}, corporateChangeListPageSchema.shape.status),
+    ),
+    [open, setOpen] = useState(false),
+    [companyQ, setCompanyQ] = useState("");
+  const search = provided ?? local,
+    change = onSearchChange ?? setLocal,
+    { anchor, ...filters } = search;
+  const requests = useQuery({
+    queryKey: ["corporate-change-requests", "page", actor, search],
+    queryFn: () =>
+      listCorporateChangeRequestPage({
+        data: corporateChangeListPageSchema.parse({ ...filters, limit: 50 }),
+      }),
     retry: false,
   });
-
-  // `listClientAssignmentOptions` only returns owner/team pairs, not companies, so the
-  // company picker is fed from `listClients` (the same list the client register renders).
-  const clientsQuery = useQuery({
-    queryKey: ["clients", "corporate-picker", companySearch],
-    queryFn: () => listClientPage({ data: { q: companySearch, limit: 50 } }),
+  const options = useQuery({
+    queryKey: ["clients", "assignment-options", actor],
+    queryFn: () => listClientAssignmentOptions(),
     retry: false,
   });
-
-  if (requestsQuery.isPending) {
-    return (
-      <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
-        <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        Loading corporate change requests
-      </div>
-    );
-  }
-
-  if (requestsQuery.isError) {
-    return (
-      <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Operations" title="Corporate changes" />
-        <p role="alert" className="text-sm text-destructive">
-          Corporate change request data is unavailable. Try again shortly.
-        </p>
-      </main>
-    );
-  }
-
-  const requests = requestsQuery.data ?? [];
-  const companies = (clientsQuery.data?.clients ?? []).map((client) => ({
-    id: client.id,
-    companyName: client.companyName,
-  }));
-
+  const clients = useQuery({
+    queryKey: ["clients", "corporate-picker", actor, companyQ],
+    queryFn: () => listClientPage({ data: { q: companyQ, limit: 50 } }),
+    enabled: open,
+    retry: false,
+  });
+  const page = useRetainedPage(
+    JSON.stringify([actor, { ...filters, cursor: undefined }]),
+    requests.data,
+  );
+  const owners = (options.data?.owners ?? []).filter(
+    (o) => !actor || actor.role === "Admin" || o.teamId === actor.teamId,
+  );
+  const setDialog = (value: boolean) => {
+    setOpen(value);
+    if (!value) requestAnimationFrame(() => createButton.current?.focus());
+  };
   return (
-    <main className="flex-1 space-y-6 p-4 md:p-6">
+    <main className="min-w-0 flex-1 space-y-5 p-4 md:p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Corporate changes"
-        subtitle="Name changes, share transfers, officer changes, and registered-office changes."
+        eyebrow="日常工作"
+        title="公司變更"
+        subtitle="搜尋涵蓋全部授權變更案件；預設排除已完成／取消。"
         actions={
           <button
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            ref={createButton}
+            className="min-h-11 rounded bg-primary px-3 text-primary-foreground"
+            onClick={() => setOpen(true)}
           >
-            New request
+            新增變更
           </button>
         }
       />
-
-      <label className="block text-sm">
-        搜尋可選公司
-        <input
-          className="min-h-11 ml-2 rounded border px-3"
-          value={companySearch}
-          onChange={(event) => setCompanySearch(event.target.value)}
-        />
-        <span className="block text-xs text-muted-foreground">
-          最多顯示50項；搜尋涵蓋授權公司。
-        </span>
-      </label>
-      {clientsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
-          Company options are unavailable. Starting a new request is disabled until this loads.
+      <BusinessListControls
+        search={search}
+        onChange={change}
+        statuses={CORPORATE_CHANGE_STATUSES}
+        owners={owners}
+      />
+      {options.isError ? (
+        <p role="status">
+          負責人名單未能載入。
+          <button className="min-h-11 px-3" onClick={() => void options.refetch()}>
+            重試負責人名單
+          </button>
         </p>
       ) : null}
-
-      <section className="rounded-lg border bg-card">
-        {requests.length === 0 ? (
-          <p className="p-6 text-sm text-muted-foreground">No corporate change requests yet.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="p-3 font-medium">Company</th>
-                <th className="p-3 font-medium">Type</th>
-                <th className="p-3 font-medium">Status</th>
-                <th className="p-3 font-medium">Quoted fee</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request) => (
-                <tr key={request.id} className="border-b last:border-0">
-                  <td className="p-3 font-medium">
-                    <Link
-                      to="/corporate-changes/$id"
-                      params={{ id: request.id }}
-                      className="underline"
-                    >
-                      {request.companyName}
-                    </Link>
-                  </td>
-                  <td className="p-3">{request.changeType.replace("_", " ")}</td>
-                  <td className="p-3">{request.status}</td>
-                  <td className="p-3">HKD {request.quotedFee.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
+      {requests.isPending ? <p role="status">正在載入變更案件…</p> : null}
+      {requests.isError ? (
+        <p role="alert" className="rounded border p-3">
+          列表未能載入；這不代表沒有案件。
+          <button className="min-h-11 rounded border px-3" onClick={() => void requests.refetch()}>
+            重試列表
+          </button>
+          <button
+            className="min-h-11 px-3"
+            onClick={() => change({ ...search, cursor: undefined })}
+          >
+            回第一頁
+          </button>
+        </p>
+      ) : null}
+      {page ? (
+        <>
+          <p aria-live="polite">
+            篩選總數 {page.total} · 此頁 {page.items.length} · 觀察時間{" "}
+            {new Date(page.observedAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}
+            （香港時間）
+          </p>
+          {anchor &&
+          !requests.isFetching &&
+          !requests.isError &&
+          !page.items.some((r) => r.id === anchor) ? (
+            <p role="status">原案件已離開此清單，請重新選擇。</p>
+          ) : null}
+          <section className="divide-y rounded-lg border bg-card" aria-label="變更案件列表">
+            {page.items.length ? (
+              page.items.map((row) => (
+                <article
+                  key={row.id}
+                  data-return-anchor={row.id === anchor || undefined}
+                  className={
+                    "grid min-w-0 gap-2 p-4 md:grid-cols-[minmax(0,1fr)_auto_auto] " +
+                    (row.id === anchor ? "outline outline-2 outline-primary" : "")
+                  }
+                >
+                  <div className="min-w-0">
+                    <p className="break-words font-medium">{row.companyName}</p>
+                    <p className="text-sm">
+                      {corporateChangeLabel(row.changeType)} · {businessStatusLabel(row.status)} ·{" "}
+                      {row.ownerName}
+                    </p>
+                  </div>
+                  <div className="text-sm">
+                    <p>限期：{row.dueDate ?? "未設定"}</p>
+                    <p>
+                      報價：HKD{" "}
+                      {row.quotedFee.toLocaleString("zh-HK", { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <Link
+                    className="inline-flex min-h-11 items-center justify-self-start rounded border px-3 focus-visible:outline focus-visible:outline-2"
+                    to="/corporate-changes/$id"
+                    params={{ id: row.id }}
+                    search={{ returnTo: businessReturnPath("/corporate-changes", search, row.id) }}
+                  >
+                    開啟案件
+                  </Link>
+                </article>
+              ))
+            ) : (
+              <p className="p-4">此篩選沒有符合案件。可清除搜尋、切換範圍或查看歷史案件。</p>
+            )}
+          </section>
+          <div className="flex flex-wrap gap-3">
+            {search.cursor ? (
+              <button
+                className="min-h-11 rounded border px-3"
+                onClick={() => change({ ...search, cursor: undefined })}
+              >
+                回第一頁
+              </button>
+            ) : null}
+            {page.nextCursor ? (
+              <button
+                className="min-h-11 rounded border px-3"
+                disabled={requests.isFetching || requests.isError}
+                onClick={() => change({ ...search, cursor: page.nextCursor! })}
+              >
+                下一頁
+              </button>
+            ) : null}
+          </div>
+        </>
+      ) : null}
       <CreateCorporateChangeRequestDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        companies={companies}
-        isLoading={clientsQuery.isLoading}
-        hasError={clientsQuery.isError}
-        onCreated={() => {
-          void queryClient.invalidateQueries({ queryKey: ["corporate-change-requests"] });
+        open={open}
+        onOpenChange={setDialog}
+        companies={(clients.data?.clients ?? []).map((c) => ({
+          id: c.id,
+          companyName: c.companyName,
+        }))}
+        isLoading={clients.isPending}
+        hasError={clients.isError}
+        companySearchControl={
+          <div className="flex flex-col gap-1 text-sm">
+            <label htmlFor="corporate-picker-q">搜尋可選公司</label>
+            <input
+              id="corporate-picker-q"
+              className="min-h-11 rounded border px-3"
+              value={companyQ}
+              onChange={(e) => setCompanyQ(e.target.value)}
+            />
+            <span>最多顯示50項；搜尋涵蓋授權公司。</span>
+            {clients.isError ? (
+              <button
+                type="button"
+                className="min-h-11 rounded border px-3"
+                onClick={() => void clients.refetch()}
+              >
+                重試公司名單
+              </button>
+            ) : null}
+          </div>
+        }
+        onCreated={(id) => {
+          void client.invalidateQueries({ queryKey: ["corporate-change-requests"] });
+          void navigate({
+            to: "/corporate-changes/$id",
+            params: { id },
+            search: { returnTo: businessReturnPath("/corporate-changes", search, id) },
+          });
         }}
       />
     </main>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,7 @@ type Props = {
   isLoading: boolean;
   hasError: boolean;
   onCreated: (requestId: string) => void;
+  companySearchControl?: ReactNode;
 };
 
 type CreateChangePayload =
@@ -89,6 +90,7 @@ export function CreateCorporateChangeRequestDialog({
   isLoading,
   hasError,
   onCreated,
+  companySearchControl,
 }: Props) {
   const [form, setForm] = useState(emptyForm);
   const [officers, setOfficers] = useState<Officer[]>([]);
@@ -255,6 +257,7 @@ export function CreateCorporateChangeRequestDialog({
             Record an ad hoc name change, share transfer, officer change, or address change.
           </DialogDescription>
         </DialogHeader>
+        {companySearchControl}
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>

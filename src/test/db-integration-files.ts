@@ -7,6 +7,7 @@
  */
 export const DB_INTEGRATION_TEST_FILES = [
   "src/features/incorporation/list-page.integration.test.ts",
+  "src/features/corporate-changes/list-page.integration.test.ts",
   "src/features/work-items/queue-review.integration.test.ts",
   "src/features/whatsapp/history-pagination.integration.test.ts",
   "src/features/annual-return/payment-workspace.integration.test.ts",
