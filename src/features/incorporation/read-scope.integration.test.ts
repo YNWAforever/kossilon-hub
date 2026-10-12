@@ -12,7 +12,8 @@ describe.skipIf(!url)("R14 incorporation reads on real PostgreSQL", () => {
       await expect(
         sql.begin(async (tx) => {
           const repository = createIncorporationRepository({ sql: tx });
-          const [owner] = await tx`select id from users where active limit 1`;
+          const [owner] =
+            await tx`select u.id from users u join staff_profiles sp on sp.user_id=u.id where u.active and sp.active and u.role='Admin' and sp.role='Admin' and u.team_id is not distinct from sp.team_id order by u.id limit 1`;
           const teamA = randomUUID(),
             teamB = randomUUID();
           await tx`insert into teams(id,name) values (${teamA},'R14 isolated A'),(${teamB},'R14 isolated B')`;
