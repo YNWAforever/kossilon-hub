@@ -460,7 +460,7 @@ export async function listDocumentsForActor(
 }
 export async function listDocumentPageForActor(
   actor: AuthenticatedActor,
-  filters: Omit<DocumentListFilters, "id" | "teamId" | "assignedUserId">,
+  filters: Omit<DocumentListFilters, "teamId" | "assignedUserId">,
   dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeDocument">,
 ) {
   if (!actor.active) throw new Error("Forbidden: inactive users cannot list documents.");
@@ -599,6 +599,7 @@ export const listDocuments = createServerFn({ method: "GET" })
   );
 export const documentListPageSchema = z
   .object({
+    id: z.string().uuid().optional(),
     companyId: z.string().uuid().optional(),
     caseId: z.string().uuid().optional(),
     q: z.string().max(200).optional(),

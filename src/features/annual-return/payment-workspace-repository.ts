@@ -40,6 +40,7 @@ export function createPaymentWorkspaceRepository(sql: SqlClient | postgres.Trans
           active: actor.active,
         }),
         q: review ? undefined : input.q,
+        ...(input.companyId ? { companyIds: [input.companyId] } : {}),
         selectionContext: review ? undefined : ("payment_outstanding_cases" as const),
       };
       const key = JSON.stringify([
@@ -64,6 +65,7 @@ export function createPaymentWorkspaceRepository(sql: SqlClient | postgres.Trans
       const documentPredicate = documentScopeSql(sql, {
         ...documentScopeForStaffActor(actor, "access"),
         category: "payment",
+        companyId: input.companyId,
         q: input.q,
       });
       const reviewFrom = sql`from documents d join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id join companies c on c.id=arc.company_id join payments p on p.case_id=arc.id and p.company_id=arc.company_id`;

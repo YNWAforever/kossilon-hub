@@ -17,12 +17,16 @@ export const dailyWorkInputSchema = z
       .default("all"),
     sort: z.enum(["deadline", "company"]).default("deadline"),
     companyId: z.string().uuid().optional(),
+    history: z.boolean().default(false),
     cursor: z.string().max(8192).optional(),
     limit: listPageSize,
   })
   .strict()
   .refine((v) => v.view === "all" || v.sourceType === "annual_return", {
     message: "Annual return categories require the annual return source.",
+  })
+  .refine((v) => !v.history || v.view === "all", {
+    message: "History cannot bypass an annual return work category.",
   });
 export type DailyWorkInput = z.input<typeof dailyWorkInputSchema>;
 export type DailyWorkRow = {

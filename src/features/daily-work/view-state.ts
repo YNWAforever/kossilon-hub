@@ -30,7 +30,7 @@ export function dailyWorkSearch(raw: Record<string, unknown>): DailyWorkSearch {
   };
 }
 export function dailyWorkReturnPath(search: DailyWorkSearch, anchor?: string) {
-  const { limit: _limit, ...rest } = search;
+  const { limit: _limit, history: _history, ...rest } = search;
   const query = new URLSearchParams();
   for (const [k, v] of Object.entries({ ...rest, anchor: anchor ?? rest.anchor }))
     if (v !== undefined && v !== "") query.set(k, String(v));

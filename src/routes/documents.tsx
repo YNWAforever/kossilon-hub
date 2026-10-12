@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { safeListReturnTo } from "@/lib/list-navigation";
 import { parseEntityId } from "@/lib/entity-id";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, type SearchSchemaInput } from "@tanstack/react-router";
@@ -37,6 +38,9 @@ import {
 
 type DocumentsSearch = {
   caseId?: unknown;
+  companyId?: unknown;
+  documentId?: unknown;
+  returnTo?: string;
   q?: string;
   category?: DocumentCategory;
   reviewStatus?: "pending" | "verified" | "rejected";
@@ -47,6 +51,9 @@ type DocumentsSearch = {
 export const Route = createFileRoute("/documents")({
   validateSearch: (search: SearchSchemaInput & Record<string, unknown>): DocumentsSearch => ({
     caseId: search.caseId,
+    companyId: search.companyId,
+    documentId: search.documentId,
+    ...(search.returnTo !== undefined ? { returnTo: safeListReturnTo(search.returnTo) } : {}),
     ...(z.string().max(200).safeParse(search.q).success ? { q: search.q as string } : {}),
     ...(z.enum(DOCUMENT_CATEGORIES).safeParse(search.category).success
       ? { category: search.category as DocumentCategory }
@@ -86,8 +93,13 @@ function DocumentsRoute() {
     });
   const [warning, setWarning] = useState<string | undefined>();
   const productionCaseId = parseEntityId(caseFilter) ?? undefined;
-  const invalidCaseId = caseId !== undefined && !productionCaseId;
+  const invalidCaseId =
+    (caseId !== undefined && !productionCaseId) ||
+    (search.companyId !== undefined && !parseEntityId(search.companyId)) ||
+    (search.documentId !== undefined && !parseEntityId(search.documentId));
   const documentFilters = {
+    companyId: parseEntityId(search.companyId) ?? undefined,
+    id: parseEntityId(search.documentId) ?? undefined,
     q: search.q ?? "",
     category: search.category,
     reviewStatus: search.reviewStatus,
@@ -217,6 +229,14 @@ function DocumentsRoute() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
+      {search.returnTo ? (
+        <a
+          className="inline-flex min-h-11 items-center underline"
+          href={safeListReturnTo(search.returnTo)}
+        >
+          返回客戶工作頁
+        </a>
+      ) : null}
       <PageHeader eyebrow="Operations" title="Documents" />
       {dataMode === "production" &&
       !invalidCaseId &&

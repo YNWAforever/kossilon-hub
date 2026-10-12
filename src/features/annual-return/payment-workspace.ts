@@ -6,6 +6,7 @@ export const paymentWorkspaceInput = z
   .object({
     mode: z.enum(["review", "outstanding"]).default("review"),
     q: z.string().trim().max(200).default(""),
+    companyId: z.string().uuid().optional(),
     cursor: z.string().max(8192).optional(),
     limit: listPageSize,
   })

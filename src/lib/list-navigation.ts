@@ -72,7 +72,28 @@ export function safeListReturnTo(input: unknown): string {
   if (typeof input !== "string" || getSafeRedirectPath(input) !== input) return "/today";
   try {
     const url = new URL(input, "https://kossilon.invalid");
-    const schema = contracts[url.pathname];
+    const companyPath =
+      /^\/clients\/[0-9a-f-]{36}$/i.test(url.pathname) &&
+      id.safeParse(url.pathname.split("/").at(-1)).success;
+    const schema = companyPath
+      ? {
+          tab: z.enum(["overview", "cases", "documents", "payments", "activity"]),
+          q,
+          cursor,
+          history: z.enum(["true", "false"]),
+          kind: z.enum(["all", "annual_return", "incorporation", "corporate_change_request"]),
+          eventType: z.string().max(80),
+          returnTo: z
+            .string()
+            .max(10000)
+            .refine(
+              (value) =>
+                value.startsWith("/clients") &&
+                safeListReturnTo(value) === value &&
+                new URL(value, "https://kossilon.invalid").pathname === "/clients",
+            ),
+        }
+      : contracts[url.pathname];
     if (url.origin !== "https://kossilon.invalid" || !schema || url.hash) return "/today";
     for (const [key, value] of url.searchParams) {
       if (

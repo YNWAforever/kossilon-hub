@@ -39,9 +39,13 @@ export function createDailyWorkRepository({
   sql = getSqlClient(),
   now = () => new Date(),
 }: { sql?: Query; now?: () => Date } = {}) {
-  async function currentActor(actor: AuthenticatedActor, scope: "mine" | "team") {
+  async function currentActor(
+    actor: AuthenticatedActor,
+    scope: "mine" | "team",
+    companyContext = false,
+  ) {
     const team = requireTeamReadScope(actor);
-    if (scope === "team" && actor.role !== "Admin" && actor.role !== "Manager")
+    if (scope === "team" && actor.role !== "Admin" && actor.role !== "Manager" && !companyContext)
       throw Error("Forbidden: team view requires Manager or Admin.");
     const [current] =
       await sql`select role,team_id,active from users where id=${actor.userId}::uuid`;
@@ -66,9 +70,10 @@ export function createDailyWorkRepository({
   async function listPage(
     actor: AuthenticatedActor,
     raw: DailyWorkInput = {},
+    companyContext = false,
   ): Promise<DailyWorkPage> {
     const input = dailyWorkInputSchema.parse(raw),
-      scope = await currentActor(actor, input.scope),
+      scope = await currentActor(actor, input.scope, companyContext),
       date = today();
     const { cursor, ...filters } = input,
       key = JSON.stringify([actor, filters, date]),
@@ -103,8 +108,9 @@ export function createDailyWorkRepository({
               ...(input.scope === "mine" ? { visibleToUserId: actor.userId! } : {}),
               ...(input.companyId ? { companyIds: [input.companyId] } : {}),
             };
-            const predicate =
-              input.view === "all"
+            const predicate = input.history
+              ? tx`true`
+              : input.view === "all"
                 ? tx`(arc.current_status not in ('Filed','Completed') or ${annualReturnWorkViewPredicate(tx, "returnsAndExceptions", date, actor.userId)})`
                 : annualReturnWorkViewPredicate(tx, input.view, date, actor.userId);
             const sort =
@@ -155,6 +161,7 @@ export function createDailyWorkRepository({
             };
           }
           const rawBusiness = {
+            history: input.history,
             q: input.q,
             view: input.scope === "mine" ? ("mine" as const) : ("all" as const),
             sort: input.sort,
@@ -311,5 +318,10 @@ export function createDailyWorkRepository({
     };
     return workViewMetrics(sql, { scope, viewerUserId: actor.userId }, today());
   }
-  return { listPage, metrics };
+  return {
+    listPage: (actor: AuthenticatedActor, raw: DailyWorkInput = {}) => listPage(actor, raw, false),
+    metrics,
+    listCompanyCases: (actor: AuthenticatedActor, raw: DailyWorkInput & { companyId: string }) =>
+      listPage(actor, { ...raw, scope: "team" }, true),
+  };
 }

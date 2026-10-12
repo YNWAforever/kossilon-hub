@@ -292,9 +292,10 @@ export const listClientAssignmentOptions = createServerFn({ method: "GET" }).han
 export const getClient = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    const { getRequest, requireStaffActor } = await loadDefaultClientContext();
-    await requireStaffActor(getRequest());
-    return withClientRepository((repository) => repository.getClient(data.id));
+    const actor = await getCurrentClientActor();
+    return withClientRepository((repository) =>
+      repository.getClient(data.id, { actor, profileOnly: true }),
+    );
   });
 
 export const createClient = createServerFn({ method: "POST" })

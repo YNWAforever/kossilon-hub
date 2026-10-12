@@ -82,9 +82,11 @@ function today(): string {
 export function ProductionClientDetail({
   clientId,
   returnTo,
+  managedWorkspace = false,
 }: {
   clientId: string;
   returnTo?: string;
+  managedWorkspace?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -547,75 +549,79 @@ export function ProductionClientDetail({
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Annual return history</h2>
-        <div className="divide-y">
-          {client.annualReturnHistory.map((entry) => (
-            <div
-              key={entry.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-            >
-              <span>Return year {entry.returnYear}</span>
-              <span className="text-muted-foreground">Made up {entry.madeUpDate}</span>
-              <span className="text-muted-foreground">Due {entry.filingDueDate}</span>
-              <span>{entry.currentStatus}</span>
-              <Link
-                className="rounded-md border px-2 py-1 text-xs"
-                to="/annual-returns/$id"
-                params={{ id: entry.id }}
-              >
-                Open case
-              </Link>
+      {!managedWorkspace ? (
+        <>
+          <section className="rounded-lg border bg-card p-4">
+            <h2 className="mb-3 text-sm font-semibold">Annual return history</h2>
+            <div className="divide-y">
+              {client.annualReturnHistory.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                >
+                  <span>Return year {entry.returnYear}</span>
+                  <span className="text-muted-foreground">Made up {entry.madeUpDate}</span>
+                  <span className="text-muted-foreground">Due {entry.filingDueDate}</span>
+                  <span>{entry.currentStatus}</span>
+                  <Link
+                    className="rounded-md border px-2 py-1 text-xs"
+                    to="/annual-returns/$id"
+                    params={{ id: entry.id }}
+                  >
+                    Open case
+                  </Link>
+                </div>
+              ))}
+              {client.annualReturnHistory.length === 0 ? (
+                <p className="py-3 text-sm text-muted-foreground">No annual return cases yet.</p>
+              ) : null}
             </div>
-          ))}
-          {client.annualReturnHistory.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No annual return cases yet.</p>
-          ) : null}
-        </div>
-      </section>
+          </section>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Documents</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          文件登記及業務覆核狀態；不代表儲存物件已核對或掃描安全。請在文件庫核對來源。
-        </p>
-        <div className="divide-y">
-          {client.documents.map((document) => (
-            <div
-              key={document.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-            >
-              <span className="truncate">{document.fileName}</span>
-              <span className="text-muted-foreground">{document.fileType}</span>
-              <StatusPill tone={verificationTone[document.verificationStatus]}>
-                {document.verificationStatus}
-              </StatusPill>
-              <span className="text-muted-foreground">{document.uploadedAt.slice(0, 10)}</span>
+          <section className="rounded-lg border bg-card p-4">
+            <h2 className="mb-3 text-sm font-semibold">Documents</h2>
+            <p className="mb-3 text-xs text-muted-foreground">
+              文件登記及業務覆核狀態；不代表儲存物件已核對或掃描安全。請在文件庫核對來源。
+            </p>
+            <div className="divide-y">
+              {client.documents.map((document) => (
+                <div
+                  key={document.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                >
+                  <span className="truncate">{document.fileName}</span>
+                  <span className="text-muted-foreground">{document.fileType}</span>
+                  <StatusPill tone={verificationTone[document.verificationStatus]}>
+                    {document.verificationStatus}
+                  </StatusPill>
+                  <span className="text-muted-foreground">{document.uploadedAt.slice(0, 10)}</span>
+                </div>
+              ))}
+              {client.documents.length === 0 ? (
+                <p className="py-3 text-sm text-muted-foreground">No documents on file.</p>
+              ) : null}
             </div>
-          ))}
-          {client.documents.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No documents on file.</p>
-          ) : null}
-        </div>
-      </section>
+          </section>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Timeline</h2>
-        <div className="divide-y">
-          {client.timeline.map((entry) => (
-            <div key={entry.id} className="py-3 text-sm">
-              <p>{entry.description}</p>
-              <p className="text-xs text-muted-foreground">
-                {entry.actorName ?? "System"} · {new Date(entry.createdAt).toLocaleString("en-HK")}
-              </p>
+          <section className="rounded-lg border bg-card p-4">
+            <h2 className="mb-3 text-sm font-semibold">Timeline</h2>
+            <div className="divide-y">
+              {client.timeline.map((entry) => (
+                <div key={entry.id} className="py-3 text-sm">
+                  <p>{entry.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.actorName ?? "System"} ·{" "}
+                    {new Date(entry.createdAt).toLocaleString("en-HK")}
+                  </p>
+                </div>
+              ))}
+              {client.timeline.length === 0 ? (
+                <p className="py-3 text-sm text-muted-foreground">No activity yet.</p>
+              ) : null}
             </div>
-          ))}
-          {client.timeline.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No activity yet.</p>
-          ) : null}
-        </div>
-      </section>
-
+          </section>
+        </>
+      ) : null}
       {optionsQuery.data ? (
         <ClientFormDialog
           open={isEditOpen}
