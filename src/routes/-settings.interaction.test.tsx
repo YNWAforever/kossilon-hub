@@ -178,3 +178,31 @@ describe("DocumentsTab — concurrent-write protection", () => {
     await waitFor(() => expect(addButton.disabled).toBe(false));
   });
 });
+
+describe("DocumentsTab — accessible row controls", () => {
+  it("names each editable field after the document it edits", () => {
+    // The inline inputs had no label at all, so a screen reader announced
+    // fifteen unnamed "edit text" fields on the Settings screen.
+    render(
+      <DocumentsTab
+        t={{
+          id: "11111111-1111-4111-8111-111111111111",
+          name: "Annual return — Private Ltd",
+          serviceType: "Annual Return — Private Ltd",
+          description: "",
+          active: true,
+          documents: [{ id: "d1", label: "Signed NAR1", required: true, daysBeforeDue: 14 }],
+          reminders: [],
+          riskRules: [],
+          updatedAt: "2026-08-18T00:00:00.000Z",
+        }}
+        dataMode="production"
+        isSaving={false}
+        updateMutation={{ mutate: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Document name: Signed NAR1")).toBeTruthy();
+    expect(screen.getByLabelText("Days before due for Signed NAR1")).toBeTruthy();
+  });
+});

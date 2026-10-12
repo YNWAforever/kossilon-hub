@@ -808,6 +808,7 @@ function DocumentRow({
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_120px_110px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
+        aria-label={`Document name: ${doc.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => {
@@ -821,6 +822,7 @@ function DocumentRow({
         <input
           type="number"
           min={0}
+          aria-label={`Days before due for ${doc.label}`}
           value={daysBeforeDue}
           onChange={(e) => setDaysBeforeDue(Math.max(0, Number(e.target.value) || 0))}
           onBlur={() => {
@@ -953,6 +955,7 @@ function ReminderRow({
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_140px_130px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
+        aria-label={`Reminder name: ${reminder.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => {
@@ -966,6 +969,7 @@ function ReminderRow({
         <input
           type="number"
           min={0}
+          aria-label={`Days before due for ${reminder.label}`}
           value={daysBeforeDue}
           onChange={(e) => setDaysBeforeDue(Math.max(0, Number(e.target.value) || 0))}
           onBlur={() => {
@@ -1108,6 +1112,7 @@ function RiskRow({
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_110px_90px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
+        aria-label={`Risk rule name: ${risk.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => {
@@ -1117,6 +1122,7 @@ function RiskRow({
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <input
+        aria-label={`Trigger for ${risk.label}`}
         value={trigger}
         onChange={(e) => setTrigger(e.target.value)}
         onBlur={() => {
@@ -1128,6 +1134,7 @@ function RiskRow({
       <div className="flex items-center gap-2">
         <StatusPill tone={tone(risk.severity)}>{risk.severity}</StatusPill>
         <select
+          aria-label={`Severity for ${risk.label}`}
           value={risk.severity}
           onChange={(e) => onUpdate({ severity: e.target.value as RiskRule["severity"] })}
           disabled={dataMode === "demo" || isSaving}
