@@ -21,6 +21,9 @@ vi.mock("@tanstack/react-router", async (original) => ({
   ...(await original<typeof import("@tanstack/react-router")>()),
   Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
+vi.mock("@/components/bulk-selection-toolbar", () => ({
+  BulkSelectionToolbar: () => <p>批次交接逐項結果入口</p>,
+}));
 import { ProductionStaffAdmin } from "./production-staff-admin";
 const member: StaffMember = {
   userId: "20000000-0000-0000-0000-000000000003",
@@ -98,7 +101,7 @@ describe("verified staff maintenance UI", () => {
     const details = screen.getByText("維護帳戶／轉交預覽").closest("details")!;
     details.open = true;
     fireEvent(details, new Event("toggle"));
-    await screen.findByText("當前未交案件：0；工作：0。");
+    await screen.findByText(/當前未交案件：0；工作：0；/);
     fireEvent.click(screen.getByLabelText("Active for Mei Lam"));
     fireEvent.click(screen.getByText("套用帳戶變更"));
     await waitFor(() =>

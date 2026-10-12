@@ -120,7 +120,7 @@ describe("actual settings save feedback", () => {
     const name = await screen.findByDisplayValue("Controlled template");
     fireEvent.change(name, { target: { value: "Keep me" } });
     fireEvent.blur(name);
-    expect((await screen.findByRole("alert")).textContent).toContain("Controlled offline");
+    expect((await screen.findByRole("alert")).textContent).toContain("R22-SETTINGS-SAVE");
     expect(screen.getByDisplayValue("Keep me")).toBeTruthy();
     expect(fns.updateChecklistTemplate).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: "重試儲存" }));

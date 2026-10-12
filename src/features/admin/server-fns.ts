@@ -4,6 +4,7 @@ import { assertStaffAccess } from "@/features/auth/authorization";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { AdminRepository } from "./repository";
 import {
+  businessHandoverSchema,
   staffFiltersSchema,
   updateStaffSchema,
   reassignmentPreviewSchema,
@@ -85,4 +86,17 @@ export const listStaffAudit = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { actor, repository } = await context();
     return repository.listAudit(actor, data.userId);
+  });
+
+export const transferStaffBusinessHandover = createServerFn({ method: "POST" })
+  .validator(businessHandoverSchema)
+  .handler(async ({ data }) => {
+    const { actor, repository } = await context();
+    return repository.transferBusinessHandover(actor, data);
+  });
+export const getStaffBusinessHandoverReceipt = createServerFn({ method: "GET" })
+  .validator(z.object({ userId: z.string().uuid(), operationId: z.string().uuid() }).strict())
+  .handler(async ({ data }) => {
+    const { actor, repository } = await context();
+    return repository.getBusinessHandoverReceipt(actor, data.userId, data.operationId);
   });

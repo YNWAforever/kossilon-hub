@@ -1,3 +1,4 @@
+import { staffSettingsError } from "@/lib/staff-copy.zh-HK";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
@@ -70,7 +71,8 @@ type UpdateTemplateMutation = {
 const EMPTY_TEMPLATES: ChecklistTemplate[] = [];
 
 function describeMutationError(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
+  void fallback;
+  return staffSettingsError(error);
 }
 
 function SettingsPage() {

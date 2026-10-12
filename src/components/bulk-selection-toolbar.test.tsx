@@ -209,6 +209,7 @@ describe("explicit scope and durable bulk toolbar", () => {
       expect(api.preview).toHaveBeenCalledWith({
         data: {
           resource: "annual_return_case",
+          filters: { q: "scoped" },
           selection: { mode: "filtered_snapshot", snapshotId, excludedIds: [ids[0]] },
           assignment: { target: "owner", assigneeId: assignee },
         },

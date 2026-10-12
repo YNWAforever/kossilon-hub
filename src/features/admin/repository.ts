@@ -1,3 +1,4 @@
+import { createBusinessHandoverRepository, staffBusinessOutstanding } from "./business-handover";
 import type postgres from "postgres";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import { assertStaffAccess } from "@/features/auth/authorization";
@@ -112,12 +113,30 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
     await requireCurrentAdmin(sql, actor);
     const row = await target(sql, data.userId);
     if (row.access_revision !== data.expectedVersion) throw new StaffAccessConflictError();
+    const business = await createBusinessHandoverRepository({
+      sql,
+      transact,
+      authorize: requireCurrentAdmin,
+      target,
+    }).previewBusiness(row.id);
     const cases = await sql<
-      { id: string; company_name: string; status: string }[]
-    >`select a.id,c.company_name,a.current_status status from annual_return_cases a join companies c on c.id=a.company_id where (a.owner_id=${row.id} or a.reviewer_id=${row.id}) and a.current_status<>'Completed' order by a.id limit 101`;
+      {
+        id: string;
+        company_name: string;
+        status: string;
+        owner_id: string | null;
+        reviewer_id: string | null;
+      }[]
+    >`select a.id,a.owner_id,a.reviewer_id,c.company_name,a.current_status status from annual_return_cases a join companies c on c.id=a.company_id where (a.owner_id=${row.id} or a.reviewer_id=${row.id}) and a.current_status<>'Completed' order by a.id limit 101`;
     const items = await sql<
-      { id: string; title: string; version: number }[]
-    >`select id,title,version from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled') order by id limit 101`;
+      {
+        id: string;
+        title: string;
+        version: number;
+        ownerId: string | null;
+        reviewerId: string | null;
+      }[]
+    >`select id,title,version,owner_id as "ownerId",reviewer_id as "reviewerId" from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled') order by id limit 101`;
     const [count] = await sql<
       { cases: number; items: number }[]
     >`select (select count(*)::int from annual_return_cases where (owner_id=${row.id} or reviewer_id=${row.id}) and current_status<>'Completed') cases,(select count(*)::int from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled')) items`;
@@ -126,11 +145,16 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
       expectedVersion: row.access_revision,
       openCases: count.cases,
       openWorkItems: count.items,
-      cases: cases
-        .slice(0, 100)
-        .map((c) => ({ id: c.id, companyName: c.company_name, status: c.status })),
+      cases: cases.slice(0, 100).map((c) => ({
+        id: c.id,
+        companyName: c.company_name,
+        status: c.status,
+        ownerId: c.owner_id,
+        reviewerId: c.reviewer_id,
+      })),
       workItems: items.slice(0, 100),
-      truncated: cases.length > 100 || items.length > 100,
+      ...business,
+      truncated: business.businessTruncated || cases.length > 100 || items.length > 100,
     };
   }
   async function updateStaff(actor: AuthenticatedActor, input: UpdateStaffInput) {
@@ -158,7 +182,11 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
         const [work] = await tx<
           { n: number }[]
         >`select (select count(*)::int from annual_return_cases where (owner_id=${row.id} or reviewer_id=${row.id}) and current_status<>'Completed')+(select count(*)::int from work_items where (owner_id=${row.id} or reviewer_id=${row.id}) and status not in ('completed','cancelled')) n`;
-        if (work.n > 0)
+        const business = await staffBusinessOutstanding(tx, row.id);
+        if (
+          work.n + business.openBusinessCases + business.ownedCompanies + business.unresolvedJobs >
+          0
+        )
           throw new Error(
             "Outstanding handover: preview and transfer open cases/work items first.",
           );
@@ -172,6 +200,7 @@ export function createAdminRepository({ sql = getSqlClient() }: { sql?: Query } 
     });
   }
   return {
+    ...createBusinessHandoverRepository({ sql, transact, authorize: requireCurrentAdmin, target }),
     listStaff,
     updateStaff,
     previewReassignment,

@@ -307,3 +307,91 @@ describe.skipIf(!url)("actual PostgreSQL staff administration", () => {
     }
   });
 });
+it.skipIf(!url)(
+  "R22 business handover persists one receipt, replays its key safely and blocks disable until all ownership is transferred",
+  async () => {
+    const { businessCaseFixture } = await import("@/test/business-case-fixture");
+    await expect(
+      sql!.begin(async (tx) => {
+        const actor = await fixture(tx),
+          f = await businessCaseFixture(tx, 2);
+        for (const user of [f.owner, f.colleague])
+          await tx`insert into staff_profiles(user_id,auth_user_id,role,team_id) values(${user},${"r22-" + user},'Staff',${f.team})`;
+        const repo = createAdminRepository({ sql: tx });
+        const preview = await repo.previewReassignment(actor, {
+          userId: f.owner,
+          expectedVersion: 1,
+        });
+        expect(preview.openBusinessCases).toBe(2);
+        expect(preview.ownedCompanies).toBe(1);
+        await expect(
+          repo.updateStaff(actor, {
+            userId: f.owner,
+            expectedVersion: 1,
+            role: "Staff",
+            teamId: f.team,
+            active: false,
+          }),
+        ).rejects.toThrow(/handover/);
+        const first = preview.businessItems!.find((i) => i.kind === "incorporation")!,
+          command = {
+            userId: f.owner,
+            expectedVersion: 1,
+            recipientId: f.colleague,
+            operationId: crypto.randomUUID(),
+            item: { kind: first.kind, id: first.id, version: first.version },
+          };
+        const receipt = await repo.transferBusinessHandover(actor, command);
+        expect(receipt.state).toBe("succeeded");
+        expect(await repo.transferBusinessHandover(actor, command)).toEqual(receipt);
+        expect(await repo.getBusinessHandoverReceipt(actor, f.owner, command.operationId)).toEqual(
+          receipt,
+        );
+        await expect(
+          repo.transferBusinessHandover(actor, { ...command, recipientId: f.owner }),
+        ).rejects.toThrow(/key|payload/i);
+        const changed = preview.businessItems!.find((i) => i.kind === "corporate_change_request")!;
+        await tx`update corporate_change_requests set new_name_en='concurrent change' where id=${changed.id}`;
+        expect(
+          (
+            await repo.transferBusinessHandover(actor, {
+              ...command,
+              operationId: crypto.randomUUID(),
+              item: { kind: changed.kind, id: changed.id, version: changed.version },
+            })
+          ).state,
+        ).toBe("conflict");
+        const fresh = await repo.previewReassignment(actor, {
+          userId: f.owner,
+          expectedVersion: 1,
+        });
+        for (const item of fresh.businessItems!)
+          expect(
+            (
+              await repo.transferBusinessHandover(actor, {
+                ...command,
+                operationId: crypto.randomUUID(),
+                item: { kind: item.kind, id: item.id, version: item.version },
+              })
+            ).state,
+          ).toBe("succeeded");
+        const after = await repo.previewReassignment(actor, {
+          userId: f.owner,
+          expectedVersion: 1,
+        });
+        expect(after.openBusinessCases).toBe(0);
+        expect(after.ownedCompanies).toBe(0);
+        await repo.updateStaff(actor, {
+          userId: f.owner,
+          expectedVersion: 1,
+          role: "Staff",
+          teamId: f.team,
+          active: false,
+        });
+        const [target] = await tx`select active from users where id=${f.owner}`;
+        expect(target.active).toBe(false);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  },
+);

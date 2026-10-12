@@ -172,6 +172,7 @@ export function createBulkOperationsRepository({
             "ownerId",
             "reviewerId",
             "teamId",
+            "reviewerId",
             "workType",
             "activeOnly",
             "workStatus",
@@ -338,7 +339,7 @@ export function createBulkOperationsRepository({
     const payloadHash = await hash({ resource: data.resource, assignment: data.assignment, items });
     const [p] = await sql<
       { id: string }[]
-    >`insert into bulk_operation_previews(actor_user_id,auth_user_id,resource,assignment,items,payload_hash) values(${verified.userId!},${verified.authUserId},${data.resource},${sql.json(data.assignment)},${sql.json(items)},${payloadHash}) returning id`;
+    >`insert into bulk_operation_previews(actor_user_id,auth_user_id,resource,assignment,items,payload_hash) values(${verified.userId!},${verified.authUserId},${data.resource},${sql.json({ ...data.assignment, selectionFilters: filters })},${sql.json(items)},${payloadHash}) returning id`;
     return {
       previewId: p.id,
       count: items.length,

@@ -1,3 +1,5 @@
+import { BusinessHandoverPanel } from "./business-handover-panel";
+import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,7 +43,7 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
     ).values(),
   ];
   return (
-    <main className="flex-1 space-y-6 p-6">
+    <main className="min-w-0 flex-1 space-y-6 p-4 md:p-6">
       <PageHeader eyebrow="Administration" title="Admin" subtitle="員工與團隊管理" />
       <p>{staffInvitationCapability.message}</p>
       <p>只維護已核實綁定的既有身份。最後登入：沒有可靠紀錄時顯示未知。</p>
@@ -138,6 +140,7 @@ function StaffRow({
   teams: { id: string; name: string; active: boolean }[];
   actorScope: string;
 }) {
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const [open, setOpen] = useState(false),
     [role, setRole] = useState(member.role),
     [teamId, setTeamId] = useState(member.teamId ?? ""),
@@ -179,7 +182,14 @@ function StaffRow({
   });
   const handoverNeeded = !active || teamId !== (member.teamId ?? "") || role === "Client";
   const blocked =
-    handoverNeeded && (preview.data?.openCases ?? 0) + (preview.data?.openWorkItems ?? 0) > 0;
+    unconfirmed ||
+    (handoverNeeded &&
+      (preview.data?.openCases ?? 0) +
+        (preview.data?.openWorkItems ?? 0) +
+        (preview.data?.openBusinessCases ?? 0) +
+        (preview.data?.ownedCompanies ?? 0) +
+        (preview.data?.unresolvedJobs ?? 0) >
+        0);
   return (
     <article className="space-y-2 p-4">
       <h2 className="font-semibold">
@@ -239,7 +249,9 @@ function StaffRow({
           ) : preview.data ? (
             <div>
               <p>
-                當前未交案件：{preview.data.openCases}；工作：{preview.data.openWorkItems}。
+                當前未交案件：{preview.data.openCases}；工作：{preview.data.openWorkItems}
+                ；註冊／變更：{preview.data.openBusinessCases ?? 0}；客戶負責人：
+                {preview.data.ownedCompanies ?? 0}；待核對批次：{preview.data.unresolvedJobs ?? 0}。
               </p>
               {preview.data.cases.map((c) => (
                 <p key={c.id}>
@@ -251,6 +263,71 @@ function StaffRow({
               {preview.data.workItems.map((w) => (
                 <p key={w.id}>{w.title}</p>
               ))}
+              <button
+                className="min-h-11 rounded border px-3"
+                type="button"
+                disabled={preview.isFetching}
+                onClick={() => void preview.refetch()}
+              >
+                重新盤點交接
+              </button>
+              {preview.data.businessItems?.length || unconfirmed ? (
+                <BusinessHandoverPanel
+                  key={member.userId + ":" + member.expectedVersion}
+                  userId={member.userId}
+                  expectedVersion={member.expectedVersion}
+                  teamId={member.teamId}
+                  actorScope={actorScope}
+                  items={preview.data.businessItems ?? []}
+                  onUnconfirmedChange={setUnconfirmed}
+                />
+              ) : null}
+              {preview.data.cases.length ? (
+                <details>
+                  <summary>周年申報批次轉交（先核對責任）</summary>
+                  <p>
+                    只選取當前預覽列；分別選負責人或覆核人，不把對方責任一併覆寫。衝突／未知須在批次中心核對後重新盤點。
+                  </p>
+                  {(["owner", "reviewer"] as const).map((target) => (
+                    <BulkSelectionToolbar
+                      key={target}
+                      actorScope={actorScope}
+                      resource="annual_return_case"
+                      assignmentTarget={target}
+                      filters={{ [target === "owner" ? "ownerId" : "reviewerId"]: member.userId }}
+                      page={preview
+                        .data!.cases.filter(
+                          (c) => (target === "owner" ? c.ownerId : c.reviewerId) === member.userId,
+                        )
+                        .map((c) => ({ id: c.id, label: c.companyName }))}
+                      total={null}
+                    />
+                  ))}{" "}
+                </details>
+              ) : null}
+              {preview.data.workItems.length ? (
+                <details>
+                  <summary>工作項目批次轉交（先核對責任）</summary>
+                  {(["owner", "reviewer"] as const).map((target) => (
+                    <BulkSelectionToolbar
+                      key={target}
+                      actorScope={actorScope}
+                      resource="work_item"
+                      assignmentTarget={target}
+                      filters={{ [target === "owner" ? "ownerId" : "reviewerId"]: member.userId }}
+                      page={preview
+                        .data!.workItems.filter(
+                          (w) => (target === "owner" ? w.ownerId : w.reviewerId) === member.userId,
+                        )
+                        .map((w) => ({ id: w.id, label: w.title }))}
+                      total={null}
+                    />
+                  ))}{" "}
+                </details>
+              ) : null}
+              <a className="inline-flex min-h-11 items-center underline" href="/bulk-jobs">
+                核對批次逐項結果
+              </a>
               {preview.data.truncated ? <p>只顯示首100筆，請在工作隊列核對完整範圍。</p> : null}
               <Link
                 to="/work-queue"
@@ -283,7 +360,7 @@ function StaffRow({
           </button>
           {mutation.isError ? (
             <p role="alert">
-              未能保存。身份、版本或未交工作可能已改變，請重新載入並核對；沒有自動重試。
+              未能保存。身份、版本或未交工作可能已改變，請重新載入並核對；沒有自動重試。支援編號：R22-STAFF-SAVE。
             </p>
           ) : null}
           <h3>最近50筆帳戶紀錄</h3>

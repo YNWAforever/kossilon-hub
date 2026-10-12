@@ -27,6 +27,7 @@ type Props = {
   total: number | null;
   pageSize?: number;
   maintenanceActions?: MaintenanceActionKind[];
+  assignmentTarget?: "owner" | "reviewer";
 };
 const maintenanceLabels: Record<MaintenanceActionKind, string> = {
   client_maintenance: "客戶 owner／team 維護（改資料）",
@@ -61,12 +62,13 @@ function SelectionControls({
   total,
   pageSize = 50,
   maintenanceActions,
+  assignmentTarget,
   onCreated,
 }: Props & { onCreated: (jobId: string) => void }) {
   const [selection, setSelection] = useState<BulkSelection>({ mode: "explicit_ids", ids: [] }),
     [fixedCount, setFixedCount] = useState(0),
     [assigneeId, setAssigneeId] = useState(""),
-    [target, setTarget] = useState<"owner" | "reviewer">("owner"),
+    [target, setTarget] = useState<"owner" | "reviewer">(assignmentTarget ?? "owner"),
     [overrideReason, setOverrideReason] = useState("");
   const [actionKind, setActionKind] = useState<MaintenanceActionKind | "assignment">(
       maintenanceActions?.[0] ?? "assignment",
@@ -140,7 +142,12 @@ function SelectionControls({
                 ? { kind: actionKind, reasons: returnReasons }
                 : { kind: actionKind };
         return previewBulkMaintenance({
-          data: { resource, selection, action, ...(filters.selectionContext ? { filters } : {}) },
+          data: {
+            resource,
+            selection,
+            action,
+            ...(Object.keys(filters).length ? { filters } : {}),
+          },
         });
       }
       if (resource !== "annual_return_case" && resource !== "work_item")
@@ -149,7 +156,7 @@ function SelectionControls({
         data: {
           resource,
           selection,
-          ...(filters.selectionContext ? { filters } : {}),
+          ...(Object.keys(filters).length ? { filters } : {}),
           assignment: {
             target,
             assigneeId,
@@ -309,7 +316,7 @@ function SelectionControls({
             責任
             <select
               aria-label="Bulk responsibility"
-              disabled={busy}
+              disabled={busy || !!assignmentTarget}
               value={target}
               onChange={(e) => {
                 setTarget(e.target.value as typeof target);

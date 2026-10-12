@@ -44,7 +44,53 @@ export type HandoverPreview = {
   expectedVersion: number;
   openCases: number;
   openWorkItems: number;
-  cases: { id: string; companyName: string; status: string }[];
-  workItems: { id: string; title: string; version: number }[];
+  cases: {
+    id: string;
+    companyName: string;
+    status: string;
+    ownerId?: string | null;
+    reviewerId?: string | null;
+  }[];
+  workItems: {
+    id: string;
+    title: string;
+    version: number;
+    ownerId?: string | null;
+    reviewerId?: string | null;
+  }[];
   truncated: boolean;
+  openBusinessCases?: number;
+  ownedCompanies?: number;
+  unresolvedJobs?: number;
+  businessItems?: BusinessHandoverItem[];
+};
+
+export const businessHandoverSchema = z
+  .object({
+    userId: z.string().uuid(),
+    expectedVersion: z.number().int().positive(),
+    recipientId: z.string().uuid(),
+    operationId: z.string().uuid(),
+    item: z
+      .object({
+        kind: z.enum(["incorporation", "corporate_change_request", "client_company"]),
+        id: z.string().uuid(),
+        version: z.string().regex(/^[a-f0-9]{32}$/),
+      })
+      .strict(),
+  })
+  .strict();
+export type BusinessHandoverItem = {
+  kind: "incorporation" | "corporate_change_request" | "client_company";
+  id: string;
+  version: string;
+  label: string;
+  status: string;
+};
+export type BusinessHandoverReceipt = {
+  operationId: string;
+  resourceId: string;
+  kind: BusinessHandoverItem["kind"];
+  state: "succeeded" | "conflict";
+  recipientId: string;
 };
