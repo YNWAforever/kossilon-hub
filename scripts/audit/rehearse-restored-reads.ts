@@ -5,6 +5,10 @@ import { createAnnualReturnRepository } from "../../src/features/annual-return/r
 import { createDocumentRepository } from "../../src/features/documents/repository";
 import { createPaymentWorkspaceRepository } from "../../src/features/annual-return/payment-workspace-repository";
 import { createWhatsAppHistoryRepository } from "../../src/features/whatsapp/history-repository";
+import { createDailyWorkRepository } from "../../src/features/daily-work/repository";
+import { createCompanyWorkspaceRepository } from "../../src/features/clients/company-workspace";
+import { readIncorporationPage } from "../../src/features/incorporation/list-page-repository";
+import { readCorporateChangePage } from "../../src/features/corporate-changes/list-page-repository";
 const url = process.env.R25_LOCAL_URL!;
 if (new URL(url).hostname !== "127.0.0.1")
   throw Error("This rehearsal permits only the owned localhost restore.");
@@ -15,12 +19,17 @@ try {
     const queue = await createWorkItemRepository({ sql: tx }).listQueuePage({ limit: 50 });
     const cases = await createAnnualReturnRepository({ sql: tx }).listCasePage({ limit: 50 });
     const documents = await createDocumentRepository({ sql: tx }).listDocumentPage({ limit: 50 });
-    const [user] = await tx`select id from users where active limit 1`;
+    const [user] =
+      await tx`select id,team_id from users where active and role='Admin' order by id limit 1`;
+    if (!user)
+      throw Error(
+        "BLOCKED: an existing active Admin SQL row is required for this read-only compatibility rehearsal.",
+      );
     const actor = {
       userId: user.id,
-      authUserId: "local-readonly-DTO-not-auth-session",
+      authUserId: "sql-compatibility-only-not-session",
       role: "Admin" as const,
-      teamId: null,
+      teamId: user.team_id as string | null,
       active: true,
     };
     const paymentRepo = createPaymentWorkspaceRepository(tx);
@@ -35,10 +44,56 @@ try {
       {},
       { kind: "owner" },
     );
+    const dailyWork = await createDailyWorkRepository({ sql: tx }).listPage(actor, {
+      scope: "team",
+      limit: 50,
+    });
+    if (dailyWork.partial)
+      throw Error("BLOCKED: a current daily-work source is unavailable on the restored schema.");
+    const incorporation = await readIncorporationPage(
+      tx,
+      { kind: "all" },
+      { limit: 50 },
+      actor.userId,
+    );
+    const corporateChanges = await readCorporateChangePage(
+      tx,
+      { kind: "all" },
+      { limit: 50 },
+      actor.userId,
+    );
+    const [company] = await tx`select id from companies order by id limit 1`;
+    const companyWorkspace = {
+      observed: false,
+      tabs: [] as string[],
+      openCases: null as number | null,
+      documents: null as number | null,
+      paymentCases: null as number | null,
+      activityRows: null as number | null,
+    };
+    if (company) {
+      const repository = createCompanyWorkspaceRepository({ sql: tx });
+      const data = { companyId: company.id as string, limit: 50 };
+      const summary = await repository.summary(actor, data);
+      if (summary.partial)
+        throw Error("BLOCKED: the current company summary is partial on the restored schema.");
+      await repository.cases(actor, data);
+      await repository.documents(actor, data);
+      await repository.payments(actor, data);
+      const activity = await repository.activity(actor, data);
+      Object.assign(companyWorkspace, {
+        observed: true,
+        tabs: ["overview", "cases", "documents", "payments", "activity"],
+        openCases: summary.openCases,
+        documents: summary.documents,
+        paymentCases: summary.paymentCases,
+        activityRows: activity.items.length,
+      });
+    }
     return {
       transaction: "READ ONLY",
       actorEvidence:
-        "synthetic Admin DTO for local SQL compatibility only, no authenticated session",
+        "Admin DTO derived from an existing current SQL role/team; not an authenticated session or cross-role acceptance",
       queue: {
         loaded: queue.items.length,
         total: queue.total,
@@ -55,6 +110,15 @@ try {
         messagesLoaded: messages?.items.length ?? 0,
         messagesTotal: messages?.total ?? 0,
       },
+      dailyWork: {
+        loaded: dailyWork.items.length,
+        total: dailyWork.total,
+        sources: dailyWork.sources,
+        partial: dailyWork.partial,
+      },
+      incorporation: { loaded: incorporation.items.length, total: incorporation.total },
+      corporateChanges: { loaded: corporateChanges.items.length, total: corporateChanges.total },
+      companyWorkspace,
       sideEffects: 0,
     };
   });
