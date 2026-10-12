@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDueDate } from "@/lib/format-date";
 
 const originalTimeZone = process.env.TZ;
 
@@ -33,5 +33,11 @@ describe("formatDate", () => {
     process.env.TZ = "America/Los_Angeles";
     expect(formatDate("2026-07-05T17:00:00.000Z")).toBe("06 Jul 2026");
     expect(formatDate("2026-07-05T15:59:00.000Z")).toBe("05 Jul 2026");
+  });
+
+  it("describes a due date relative to today without a signed day count", () => {
+    expect(formatDueDate("2026-06-10", -124)).toBe("10 Jun 2026 · 124d overdue");
+    expect(formatDueDate("2026-06-10", 0)).toBe("10 Jun 2026 · due today");
+    expect(formatDueDate("2026-06-10", 9)).toBe("10 Jun 2026 · in 9d");
   });
 });

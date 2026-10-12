@@ -16,7 +16,7 @@ import {
   type AnnualReturnRiskLevel,
 } from "../lib/annual-return-store";
 import { daysUntil } from "../lib/app-data";
-import { formatDate } from "../lib/format-date";
+import { formatDate, formatDueDate } from "../lib/format-date";
 import { PageHeader } from "@/components/page-header";
 import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
 import { boardSearchFromUrl } from "../features/annual-return/board-filters";
@@ -270,7 +270,7 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
             <p className="text-xs text-muted-foreground">
               {risk === "filed"
                 ? `${formatDate(caseItem.dueDate)} · filed`
-                : formatDue(caseItem.dueDate, dueInDays)}
+                : formatDueDate(caseItem.dueDate, dueInDays)}
             </p>
           </div>
         }
@@ -414,16 +414,4 @@ function paymentLabel(paymentStatus: AnnualReturnCase["paymentStatus"]): string 
     paid: "Paid",
     pending: "Pending",
   }[paymentStatus];
-}
-
-function formatDue(dueDate: string, dueInDays: number): string {
-  const date = formatDate(dueDate);
-  if (dueInDays < 0) {
-    return `${date} · ${Math.abs(dueInDays)}d overdue`;
-  }
-  if (dueInDays === 0) {
-    return `${date} · due today`;
-  }
-
-  return `${date} · in ${dueInDays}d`;
 }

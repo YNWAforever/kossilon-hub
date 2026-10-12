@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import { CaseFindings } from "./case-findings";
 import { CaseHandoff } from "./case-handoff";
 import { caseReturnPath, dailyViewSearch } from "../daily-view-state";
@@ -221,7 +222,7 @@ export function ProductionAnnualReturnCaseDetail({
         <PageHeader
           eyebrow="Annual return case"
           title={caseItem.companyName}
-          subtitle={`Return year ${caseItem.returnYear} / Due ${caseItem.filingDueDate}`}
+          subtitle={`Return year ${caseItem.returnYear} · Due ${formatDate(caseItem.filingDueDate)}`}
           actions={
             <div className="flex flex-wrap items-center gap-3">
               {caseReturnPath(returnTo).startsWith("/today") ? (

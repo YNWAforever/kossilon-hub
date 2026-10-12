@@ -1,3 +1,4 @@
+import { formatDate, formatDueDate } from "@/lib/format-date";
 import { useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -448,7 +449,7 @@ function BoardRow({
           {dataOriginLabel(caseItem.dataOrigin)}
         </span>
         <p className="truncate text-sm text-muted-foreground">
-          {caseItem.returnYear} · made up {caseItem.madeUpDate}
+          {caseItem.returnYear} · made up {formatDate(caseItem.madeUpDate)}
         </p>
         <p className="truncate text-xs text-muted-foreground">
           SLA:{" "}
@@ -459,7 +460,7 @@ function BoardRow({
               : "No work item"}
         </p>
       </div>
-      <Field label="Due" value={formatDue(caseItem.filingDueDate, daysRemaining)} />
+      <Field label="Due" value={formatDueDate(caseItem.filingDueDate, daysRemaining)} />
       <Field label="Status" value={caseItem.currentStatus} />
       <Field
         label="Risk"
@@ -504,9 +505,4 @@ function Metric({ label, value }: { label: string; value: number | null }) {
       <p className="mt-2 text-lg font-semibold">{value ?? "—"}</p>
     </div>
   );
-}
-
-function formatDue(dueDate: string, daysRemaining: number): string {
-  if (daysRemaining < 0) return `${dueDate} (${Math.abs(daysRemaining)}d overdue)`;
-  return `${dueDate} (${daysRemaining}d)`;
 }

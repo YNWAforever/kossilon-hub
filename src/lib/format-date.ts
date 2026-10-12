@@ -33,3 +33,15 @@ export const formatDate = (isoDate: string) => {
   const [year, month, day] = toHongKongBusinessDate(isoDate).split("-");
   return `${day} ${MONTH_LABELS[Number(month) - 1] ?? month} ${year}`;
 };
+
+/**
+ * A due date with how far away it is, e.g. "10 Jun 2026 · 124d overdue".
+ * `daysRemaining` is passed in rather than derived so each screen keeps its own
+ * notion of "today" (fixtures pin one; production uses the Hong Kong day).
+ */
+export const formatDueDate = (dueDate: string, daysRemaining: number) => {
+  const date = formatDate(dueDate);
+  if (daysRemaining < 0) return `${date} · ${Math.abs(daysRemaining)}d overdue`;
+  if (daysRemaining === 0) return `${date} · due today`;
+  return `${date} · in ${daysRemaining}d`;
+};

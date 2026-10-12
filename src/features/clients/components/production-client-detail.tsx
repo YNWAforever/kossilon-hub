@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -294,8 +295,8 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   </span>
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  Appointed {officer.appointmentDate}
-                  {officer.cessationDate ? ` · Ceased ${officer.cessationDate}` : ""}
+                  Appointed {formatDate(officer.appointmentDate)}
+                  {officer.cessationDate ? ` · Ceased ${formatDate(officer.cessationDate)}` : ""}
                   {officer.identificationNumber ? ` · ${officer.identificationNumber}` : ""}
                 </p>
               </div>
@@ -340,8 +341,10 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                 <p className="truncate text-sm font-medium">{shareholding.shareholderName}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {shareholding.numberOfShares} {shareholding.shareClass} shares · Allotted{" "}
-                  {shareholding.allotmentDate}
-                  {shareholding.cessationDate ? ` · Ceased ${shareholding.cessationDate}` : ""}
+                  {formatDate(shareholding.allotmentDate)}
+                  {shareholding.cessationDate
+                    ? ` · Ceased ${formatDate(shareholding.cessationDate)}`
+                    : ""}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
@@ -386,8 +389,10 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{controller.controllerName}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  Registered {controller.registeredDate}
-                  {controller.cessationDate ? ` · Ceased ${controller.cessationDate}` : ""}
+                  Registered {formatDate(controller.registeredDate)}
+                  {controller.cessationDate
+                    ? ` · Ceased ${formatDate(controller.cessationDate)}`
+                    : ""}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {controller.controlBases.map((basis) => (
@@ -454,7 +459,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{request.requesterName}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {request.requesterAuthority} · Requested {request.requestDate}
+                  {request.requesterAuthority} · Requested {formatDate(request.requestDate)}
                   {request.resolutionNote ? ` · ${request.resolutionNote}` : ""}
                 </p>
               </div>
@@ -541,8 +546,8 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
             >
               <span>Return year {entry.returnYear}</span>
-              <span className="text-muted-foreground">Made up {entry.madeUpDate}</span>
-              <span className="text-muted-foreground">Due {entry.filingDueDate}</span>
+              <span className="text-muted-foreground">Made up {formatDate(entry.madeUpDate)}</span>
+              <span className="text-muted-foreground">Due {formatDate(entry.filingDueDate)}</span>
               <span>{entry.currentStatus}</span>
               <Link
                 className="rounded-md border px-2 py-1 text-xs"

@@ -227,7 +227,7 @@ function PortalRoute() {
       <PageHeader
         eyebrow="Client portal demo"
         title={selectedCase.companyName}
-        subtitle={`Annual return due ${selectedCase.dueDate} / Packet ${packetStatus}`}
+        subtitle={`Annual return due ${formatDate(selectedCase.dueDate)} · Packet ${packetStatus}`}
         actions={
           <select
             aria-label="Select portal case"

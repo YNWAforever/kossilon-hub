@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -220,7 +221,7 @@ export function CreateCaseDialog({
               </select>
               {selectedCompany ? (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Basis date {selectedCompany.annualReturnBasisDate} · Team{" "}
+                  Basis date {formatDate(selectedCompany.annualReturnBasisDate)} · Team{" "}
                   {selectedCompany.assignedTeamName}
                 </p>
               ) : null}

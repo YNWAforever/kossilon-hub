@@ -1,3 +1,4 @@
+import { formatDate, formatDueDate } from "@/lib/format-date";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
@@ -101,7 +102,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
       <PageHeader
         eyebrow="Annual return case"
         title={caseItem.companyName}
-        subtitle={`${caseItem.contactName} / ${caseItem.phone} / Basis date ${caseItem.basisDate}`}
+        subtitle={`${caseItem.contactName} · ${caseItem.phone} · Basis date ${formatDate(caseItem.basisDate)}`}
         actions={
           <>
             <Link className="rounded-md border px-3 py-2 text-sm" to="/annual-returns">
@@ -162,7 +163,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <DenseStat
                 label="Due"
-                value={formatDue(caseItem.dueDate, dueInDays)}
+                value={formatDueDate(caseItem.dueDate, dueInDays)}
                 tone={dueInDays < 0 ? "red" : dueInDays <= 14 ? "orange" : "blue"}
               />
               <DenseStat
@@ -515,7 +516,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 <p className="text-sm text-muted-foreground">Newest case activity appears first.</p>
               </div>
               <span className="text-sm text-muted-foreground">
-                {caseItem.timeline.length} events
+                {caseItem.timeline.length} {caseItem.timeline.length === 1 ? "event" : "events"}
               </span>
             </div>
 
@@ -557,14 +558,6 @@ function RiskPill({ risk }: { risk: AnnualReturnRiskLevel }) {
       {riskLabel(risk)}
     </span>
   );
-}
-
-function formatDue(dueDate: string, dueInDays: number): string {
-  if (dueInDays < 0) {
-    return `${dueDate} (${Math.abs(dueInDays)}d overdue)`;
-  }
-
-  return `${dueDate} (${dueInDays}d)`;
 }
 
 function formatTimestamp(value: string): string {

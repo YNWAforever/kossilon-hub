@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -117,7 +118,7 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
       <PageHeader
         eyebrow="Incorporation"
         title={incorporationCase.proposedCompanyNameEn}
-        subtitle={`Target completion ${incorporationCase.targetCompletionDate}`}
+        subtitle={`Target completion ${formatDate(incorporationCase.targetCompletionDate)}`}
       />
 
       <section className="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3">
