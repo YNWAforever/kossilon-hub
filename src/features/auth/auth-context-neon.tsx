@@ -238,9 +238,13 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
 
 function DemoAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
+  // Storage is only readable after mount. Until then the session is unknown, not
+  // absent — reporting hydrated early sent every refresh/deep link to /login.
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     setSession(getStoredSession());
+    setIsHydrated(true);
   }, []);
 
   const wrapResult = useCallback((result: ReturnType<typeof loginWithCredentials>) => {
@@ -274,7 +278,7 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
-      isHydrated: true,
+      isHydrated,
       demoUsers,
       isCurrentUserAdmin: isAdmin(session),
       login,
@@ -284,7 +288,7 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
       loginDemoUser,
       signOut,
     }),
-    [login, loginDemo, loginDemoUser, magicLinkUnavailable, session, signOut],
+    [isHydrated, login, loginDemo, loginDemoUser, magicLinkUnavailable, session, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

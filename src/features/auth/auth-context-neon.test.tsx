@@ -171,3 +171,38 @@ describe("Neon Auth context Google login", () => {
     expect(await screen.findByText("Google sign-in is not configured.")).toBeTruthy();
   });
 });
+
+describe("Demo auth context hydration", () => {
+  beforeEach(() => {
+    isDemoAuthEnabled.mockReturnValue(true);
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    window.localStorage.clear();
+  });
+
+  it("never reports hydrated-without-session while a stored session is being restored", async () => {
+    const { demoUsers, loginWithDemoUser } = await import("./session");
+    loginWithDemoUser(demoUsers[0]!);
+    const observed: Array<{ isHydrated: boolean; hasSession: boolean }> = [];
+
+    function Probe() {
+      const { isHydrated, session } = useAuth();
+      observed.push({ isHydrated, hasSession: session !== null });
+      return <output>{session?.name ?? ""}</output>;
+    }
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe(demoUsers[0]!.name));
+    // A refresh or deep link would otherwise read as "signed out" for one render
+    // and the protected shell bounces to /login, losing the requested route.
+    expect(observed.filter((entry) => entry.isHydrated && !entry.hasSession)).toEqual([]);
+  });
+});
