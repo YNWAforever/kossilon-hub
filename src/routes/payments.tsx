@@ -1,5 +1,5 @@
 import { ProductionPaymentReview } from "@/features/annual-return/components/production-payment-review";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
 import { formatDate } from "@/lib/format-date";
@@ -12,12 +12,10 @@ import {
   useAnnualReturnCases,
 } from "../lib/annual-return-store";
 import {
-  clientPortalPaymentProofReviewReasons,
   getCurrentPaymentProof,
   getPaymentProofsForCase,
   useClientPortalSnapshot,
   type ClientPortalPaymentProof,
-  type ClientPortalPaymentProofReviewReasonCode,
 } from "../lib/client-portal-store";
 
 export const Route = createFileRoute("/payments")({
@@ -56,6 +54,12 @@ function DemoPaymentsRoute() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title="Payments" />
+      <p
+        className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
+        role="status"
+      >
+        Read-only demo. Payment proof is attached and reviewed in production.
+      </p>
 
       <section className="rounded-lg border bg-card">
         <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
@@ -89,25 +93,8 @@ type PaymentReviewRowProps = {
 };
 
 function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
-  const [reasonCode, setReasonCode] =
-    useState<ClientPortalPaymentProofReviewReasonCode>("unreadable");
-  const [note, setNote] = useState("");
-  const [warning, setWarning] = useState<string | undefined>();
-  const [isRejecting, setIsRejecting] = useState(false);
-  const isReadOnly = caseItem.status === "filed" || getPacketStatus(caseItem) === "accepted";
+  const isClosed = caseItem.status === "filed" || getPacketStatus(caseItem) === "accepted";
   const previousProofs = history.filter((candidate) => candidate.id !== proof?.id);
-
-  function handleAttach(_filename: string) {
-    setWarning("Demo payment proof upload is read-only.");
-  }
-
-  function handleAccept() {
-    setWarning("Demo payment proof review is read-only.");
-  }
-
-  function handleReject() {
-    setWarning("Demo payment proof review is read-only.");
-  }
 
   return (
     <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] lg:items-start">
@@ -149,123 +136,60 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
         }
       />
       <ProofCell proof={proof} previousProofs={previousProofs} />
-      <ReviewOutcome proof={proof} closed={isReadOnly} />
+      <ReviewOutcome proof={proof} closed={isClosed} />
 
       <div className="min-w-0">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
           Actions
         </p>
-        {isReadOnly && (!proof || proof.status === "rejected") ? (
+        {isClosed && (!proof || proof.status === "rejected") ? (
           // A closed case takes no new proof. A greyed-out button with no reason
           // read as broken; say why there is nothing to do.
           <p className="text-sm text-muted-foreground">
             {caseItem.status === "filed" ? "Return filed" : "Packet accepted"} — no proof needed.
           </p>
-        ) : !proof ? (
-          <button
-            aria-label={`Attach payment proof for ${caseItem.companyName}`}
-            className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isReadOnly}
-            onClick={() => handleAttach(`${caseItem.id}-payment-proof.png`)}
-            type="button"
-          >
-            Attach proof
-          </button>
-        ) : proof.status === "rejected" ? (
-          <button
-            aria-label={`Attach replacement payment proof for ${caseItem.companyName}`}
-            className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isReadOnly}
-            onClick={() => handleAttach(`${caseItem.id}-payment-proof-replacement.png`)}
-            type="button"
-          >
-            Attach replacement
-          </button>
-        ) : proof.status === "pending-review" ? (
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-2">
-              <button
-                aria-label={`Accept payment proof for ${caseItem.companyName}`}
-                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={isReadOnly}
-                onClick={handleAccept}
-                type="button"
-              >
-                Accept
-              </button>
-              <button
-                aria-label={`Reject payment proof for ${caseItem.companyName}`}
-                className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={isReadOnly}
-                onClick={() => setIsRejecting((current) => !current)}
-                type="button"
-              >
-                Reject
-              </button>
-            </div>
-            {isRejecting ? (
-              <div className="space-y-2">
-                <div className="space-y-1">
-                  <label
-                    className="text-xs font-medium text-muted-foreground"
-                    htmlFor={`payment-proof-reason-${proof.id}`}
-                  >
-                    Rejection reason
-                  </label>
-                  <select
-                    aria-label="Payment proof rejection reason"
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                    disabled={isReadOnly}
-                    id={`payment-proof-reason-${proof.id}`}
-                    onChange={(event) =>
-                      setReasonCode(event.target.value as ClientPortalPaymentProofReviewReasonCode)
-                    }
-                    value={reasonCode}
-                  >
-                    {clientPortalPaymentProofReviewReasons.map((reason) => (
-                      <option key={reason.code} value={reason.code}>
-                        {reason.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label
-                    className="text-xs font-medium text-muted-foreground"
-                    htmlFor={`payment-proof-note-${proof.id}`}
-                  >
-                    Client-visible note
-                  </label>
-                  <input
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                    disabled={isReadOnly}
-                    id={`payment-proof-note-${proof.id}`}
-                    onChange={(event) => setNote(event.target.value)}
-                    value={note}
-                  />
-                </div>
-                <button
-                  aria-label={`Confirm payment proof rejection for ${caseItem.companyName}`}
-                  className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isReadOnly}
-                  onClick={handleReject}
-                  type="button"
-                >
-                  Confirm rejection
-                </button>
-              </div>
-            ) : null}
-          </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No further payment proof action.</p>
+          // The demo is read-only (docs/adr/0001-demo-mode-is-read-only.md): the
+          // action is shown so the workflow reads true, but it is disabled and the
+          // page says why once, rather than each click answering with a warning.
+          <div className="flex flex-wrap gap-2">
+            {!proof ? (
+              <DemoAction label={`Attach payment proof for ${caseItem.companyName}`}>
+                Attach proof
+              </DemoAction>
+            ) : proof.status === "rejected" ? (
+              <DemoAction label={`Attach replacement payment proof for ${caseItem.companyName}`}>
+                Attach replacement
+              </DemoAction>
+            ) : proof.status === "pending-review" ? (
+              <>
+                <DemoAction label={`Accept payment proof for ${caseItem.companyName}`}>
+                  Accept
+                </DemoAction>
+                <DemoAction label={`Reject payment proof for ${caseItem.companyName}`}>
+                  Reject
+                </DemoAction>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">No further payment proof action.</p>
+            )}
+          </div>
         )}
-        {warning ? (
-          <p className="mt-2 text-sm text-destructive" role="alert">
-            {warning}
-          </p>
-        ) : null}
       </div>
     </div>
+  );
+}
+
+function DemoAction({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <button
+      aria-label={label}
+      className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+      disabled
+      type="button"
+    >
+      {children}
+    </button>
   );
 }
 
