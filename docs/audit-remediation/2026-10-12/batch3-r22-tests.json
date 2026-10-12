@@ -1,0 +1,167 @@
+{
+  "source_sha": "3bf8d8ecdd278e2fd48c21de67251740c83ed52e",
+  "recorded_at_hkt": "2026-10-12 11:48:41+08:00",
+  "scope": "R22 role gates/actual SQL ownership receipt lifecycle/local React",
+  "artifact_digest": null,
+  "release": "NO_GO",
+  "production_outbound_hold": true,
+  "files": [
+    {
+      "file": "r22-backend-green.log",
+      "bytes": 2083,
+      "sha256": "6c7fed2e3c4ce24303ef34b9d728a27efc9b3728c35947734599b41296e1a62e",
+      "commands": [
+        "> test",
+        "> vitest run src/components/navigation.test.tsx src/features/admin/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 1 passed (2)",
+        "      Tests  1 failed | 10 passed (11)",
+        "   Duration  3.10s (transform 534ms, setup 0ms, import 896ms, tests 834ms, environment 975ms)"
+      ]
+    },
+    {
+      "file": "r22-format-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r22-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r22-lint-final.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r22-panel-red.log",
+      "bytes": 2694,
+      "sha256": "cc55b5cfb851a0ca4b3c4d387d58b9beba30e0ac23b9eaf257f8c06084710dd1",
+      "commands": [
+        "> test",
+        "> vitest run src/features/admin/business-handover-panel.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "   Duration  1.41s (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 1.09s)"
+      ]
+    },
+    {
+      "file": "r22-red.log",
+      "bytes": 3674,
+      "sha256": "e5928473b2b95a71bc35de7f66a44e83881a9af25df01c3a62926406b8364ac2",
+      "commands": [
+        "> test",
+        "> vitest run src/components/navigation.test.tsx src/features/admin/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 failed (2)",
+        "      Tests  2 failed | 9 passed (11)",
+        "   Duration  2.94s (transform 534ms, setup 0ms, import 877ms, tests 754ms, environment 993ms)"
+      ]
+    },
+    {
+      "file": "r22-regression-final.log",
+      "bytes": 1378,
+      "sha256": "be82cb9881581d08a9faffedfbe3a0315dad12bcfc52d278ca07aa06823d53d3",
+      "commands": [
+        "> test",
+        "> vitest run src/components/navigation.test.tsx src/features/admin/production-staff-admin.interaction.test.tsx src/features/admin/repository.integration.test.ts src/features/checklist-templates/version.integration.test.ts src/routes/-settings-save.interaction.test.tsx src/features/admin/business-handover-panel.test.tsx src/components/bulk-selection-toolbar.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  7 passed (7)",
+        "      Tests  29 passed (29)",
+        "   Duration  7.16s (transform 1.47s, setup 0ms, import 2.85s, tests 3.35s, environment 4.13s)"
+      ]
+    },
+    {
+      "file": "r22-regression1.log",
+      "bytes": 6185,
+      "sha256": "9ddd12947a8939588ece3413979378128bd56af8f20823e9d840070d9f734f37",
+      "commands": [
+        "> test",
+        "> vitest run src/components/navigation.test.tsx src/features/admin/production-staff-admin.interaction.test.tsx src/features/admin/repository.integration.test.ts src/features/checklist-templates/version.integration.test.ts src/routes/-settings-save.interaction.test.tsx src/features/admin/business-handover-panel.test.tsx src/components/bulk-selection-toolbar.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 6 passed (7)",
+        "      Tests  4 failed | 25 passed (29)",
+        "   Duration  7.48s (transform 1.55s, setup 0ms, import 3.24s, tests 2.97s, environment 5.09s)"
+      ]
+    },
+    {
+      "file": "r22-sql-green.log",
+      "bytes": 2270,
+      "sha256": "5515f8ee26b754da1d47b10520c4d3f8a0039f1335b93e9734603fc3e4e448b5",
+      "commands": [
+        "> test",
+        "> vitest run src/features/admin/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 5 passed (6)",
+        "   Duration  1.17s (transform 376ms, setup 0ms, import 472ms, tests 533ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r22-sql-green2.log",
+      "bytes": 1069,
+      "sha256": "204bb983b5204b80c5fa12d17f64b4fbe400890715446763cf52cb9ed7535d68",
+      "commands": [
+        "> test",
+        "> vitest run src/features/admin/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  6 passed (6)",
+        "   Duration  1.34s (transform 440ms, setup 0ms, import 554ms, tests 618ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r22-typecheck-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r22-typecheck.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r22-ui-green.log",
+      "bytes": 14646,
+      "sha256": "1e6919a25cf30911d31eac17b99f4972f1977f25bd5aead4f0c1c8c153e94259",
+      "commands": [
+        "> test",
+        "> vitest run src/features/admin/business-handover-panel.test.tsx src/features/admin/production-staff-admin.interaction.test.tsx src/routes/-settings-save.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 2 passed (3)",
+        "      Tests  1 failed | 7 passed (8)",
+        "   Duration  7.73s (transform 1.10s, setup 0ms, import 5.35s, tests 2.76s, environment 3.77s)"
+      ]
+    }
+  ]
+}

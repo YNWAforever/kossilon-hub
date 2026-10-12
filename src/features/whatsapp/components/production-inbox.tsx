@@ -1,24 +1,20 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Paperclip } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { MessageIntake } from "./message-intake";
 import {
-  CONVERSATION_MESSAGE_PAGE_SIZE,
-  CONVERSATION_PAGE_SIZE,
   conversationContactLabel,
   conversationMessageOccurredAt,
   formatHongKongTimestamp,
   sortConversationMessagesOldestFirst,
-  type WhatsAppConversation,
+  type WhatsAppConversationMessage,
 } from "../conversations";
-import {
-  getWhatsAppIntegrationStatus,
-  listWhatsAppConversationMessages,
-  listWhatsAppConversations,
-} from "../server-fns";
+import { getWhatsAppIntegrationStatus } from "../server-fns";
+import { listWhatsAppConversationPage, listWhatsAppMessagePage } from "../history-server-fns";
+import type { HistoryThread } from "../history-page";
 
 const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations are recorded in your current scope.";
 
@@ -45,50 +41,103 @@ type InboxConnection = "checking" | "unknown" | "blocked" | "simulated" | "live"
  * - No intent or conversation status chips. Neither has a column behind it;
  *   per-message delivery status does, and is shown.
  */
-export function ProductionWhatsAppInbox() {
+export function ProductionWhatsAppInbox({ actorScope = "" }: { actorScope?: string }) {
+  return <InboxSession key={actorScope} actorScope={actorScope} />;
+}
+function InboxSession({ actorScope }: { actorScope: string }) {
   const [selectedContactId, setSelectedContactId] = useState<string | undefined>();
+  const [q, setQ] = useState("");
+  const [newMessages, setNewMessages] = useState<WhatsAppConversationMessage[]>([]);
+  const transcript = useRef<HTMLDivElement>(null),
+    anchor = useRef<{ height: number; top: number } | null>(null);
 
-  const conversationsQuery = useQuery({
-    queryKey: ["whatsapp-conversations", CONVERSATION_PAGE_SIZE],
-    queryFn: () => listWhatsAppConversations({ data: { limit: CONVERSATION_PAGE_SIZE } }),
+  const conversationsQuery = useInfiniteQuery({
+    queryKey: ["whatsapp-conversations", actorScope, q],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listWhatsAppConversationPage({ data: { q, cursor: pageParam, limit: 50 } }),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 
   const integrationQuery = useQuery({
-    queryKey: ["whatsapp-integration-status"],
+    queryKey: ["whatsapp-integration-status", actorScope],
     queryFn: () => getWhatsAppIntegrationStatus(),
     retry: false,
   });
 
-  const conversations = useMemo(() => conversationsQuery.data ?? [], [conversationsQuery.data]);
+  const conversations = useMemo(
+    () => [
+      ...new Map(
+        (conversationsQuery.data?.pages.flatMap((p) => p.items) ?? []).map((c) => [c.contactId, c]),
+      ).values(),
+    ],
+    [conversationsQuery.data],
+  );
+  useEffect(() => {
+    if (!selectedContactId && conversations[0]) setSelectedContactId(conversations[0].contactId);
+  }, [selectedContactId, conversations]);
 
   // No silent fallback to conversations[0]: once a contact has been chosen, losing
   // it from a refreshed page must not swap another client's thread in underneath
   // someone who is reading.
-  const selected: WhatsAppConversation | undefined = selectedContactId
+  const selected: HistoryThread | undefined = selectedContactId
     ? conversations.find((entry) => entry.contactId === selectedContactId)
     : conversations[0];
   const selectionDropped = Boolean(selectedContactId) && selected === undefined;
   const activeContactId = selected?.contactId;
 
-  const messagesQuery = useQuery({
-    queryKey: ["whatsapp-conversation-messages", activeContactId],
-    queryFn: () => {
+  const messagesQuery = useInfiniteQuery({
+    queryKey: ["whatsapp-conversation-messages", actorScope, activeContactId],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => {
       // Guard rather than assert, so the precondition lives with the call it
       // protects instead of being split across `enabled`.
       if (!activeContactId) throw new Error("No WhatsApp conversation is selected.");
-      return listWhatsAppConversationMessages({
-        data: { contactId: activeContactId, limit: CONVERSATION_MESSAGE_PAGE_SIZE },
+      return listWhatsAppMessagePage({
+        data: { contactId: activeContactId, cursor: pageParam, limit: 50 },
       });
     },
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: activeContactId !== undefined,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 
   const messages = useMemo(
-    () => sortConversationMessagesOldestFirst(messagesQuery.data ?? []),
-    [messagesQuery.data],
+    () =>
+      sortConversationMessagesOldestFirst([
+        ...new Map(
+          [...newMessages, ...(messagesQuery.data?.pages.flatMap((p) => p.items) ?? [])].map(
+            (m) => [m.id, m],
+          ),
+        ).values(),
+      ]),
+    [messagesQuery.data, newMessages],
   );
+  const latest = useQuery({
+    queryKey: ["whatsapp-latest", actorScope, activeContactId],
+    queryFn: () => listWhatsAppMessagePage({ data: { contactId: activeContactId!, limit: 50 } }),
+    enabled: !!activeContactId && !!messagesQuery.data,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const hasNew = latest.data?.items.some((m) => !messages.some((old) => old.id === m.id)) ?? false;
+  useLayoutEffect(() => {
+    const saved = anchor.current,
+      node = transcript.current;
+    if (saved && node) {
+      node.scrollTop = saved.top + node.scrollHeight - saved.height;
+      anchor.current = null;
+    }
+  }, [messages]);
+  const choose = (id: string | undefined) => {
+    setSelectedContactId(id);
+    setNewMessages([]);
+    anchor.current = null;
+  };
 
   // A blocked provider cannot verify a webhook signature and a simulated one sends
   // nothing, so neither records inbound messages. A failed status check means the
@@ -111,6 +160,20 @@ export function ProductionWhatsAppInbox() {
             for a page title above it, so PageHeader sits inside the rail. */}
         <div className="border-b p-4">
           <PageHeader eyebrow="Messaging" title="WhatsApp Inbox" />
+          <input
+            aria-label="Search all recorded conversations"
+            value={q}
+            maxLength={200}
+            className="mt-3 min-h-11 w-full rounded border px-3"
+            onChange={(e) => {
+              setQ(e.target.value);
+              choose(undefined);
+            }}
+          />
+          <p className="mt-2 text-xs">
+            已載入{conversations.length}個對話／共
+            {conversationsQuery.data?.pages[0]?.total ?? "待確認"}個
+          </p>
           <p className="mt-2 text-xs text-muted-foreground">
             Configuration shows binding presence only. Connection health and live receipt
             verification remain unverified.
@@ -120,6 +183,16 @@ export function ProductionWhatsAppInbox() {
         {conversationsQuery.isError ? (
           <p role="alert" className="p-4 text-sm text-destructive">
             {errorMessage(conversationsQuery.error)}
+            <button
+              className="min-h-11 px-3"
+              onClick={() =>
+                void (conversationsQuery.isFetchNextPageError
+                  ? conversationsQuery.fetchNextPage()
+                  : conversationsQuery.refetch())
+              }
+            >
+              重試對話
+            </button>
           </p>
         ) : null}
 
@@ -158,11 +231,7 @@ export function ProductionWhatsAppInbox() {
             <p>That conversation is no longer in this page of the inbox.</p>
             {/* Without this the notice is a dead end: selectedContactId is only
                 otherwise reassigned by clicking a row, and the list may be empty. */}
-            <button
-              type="button"
-              className="mt-1 underline"
-              onClick={() => setSelectedContactId(undefined)}
-            >
+            <button type="button" className="mt-1 underline" onClick={() => choose(undefined)}>
               Show the newest conversation
             </button>
           </div>
@@ -190,18 +259,20 @@ export function ProductionWhatsAppInbox() {
               className={`w-full px-4 py-3 text-left hover:bg-muted ${
                 selected?.contactId === conversation.contactId ? "bg-muted" : ""
               }`}
-              onClick={() => setSelectedContactId(conversation.contactId)}
+              onClick={() => choose(conversation.contactId)}
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="min-w-0 truncate font-medium">
                   {conversationContactLabel(conversation)}
                 </p>
                 <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatHongKongTimestamp(conversation.lastMessageAt)}
+                  {conversation.lastMessageAt
+                    ? formatHongKongTimestamp(conversation.lastMessageAt)
+                    : "尚未通訊"}
                 </span>
               </div>
               <p className="mt-1 max-h-10 overflow-hidden text-sm text-muted-foreground">
-                {conversation.lastMessageBody}
+                {conversation.lastMessageBody || "未有訊息紀錄"}
               </p>
               {conversation.companyName ? (
                 <span className="mt-2 inline-flex rounded-full bg-secondary px-2 py-1 text-xs">
@@ -211,6 +282,15 @@ export function ProductionWhatsAppInbox() {
             </button>
           ))}
         </div>
+        {conversationsQuery.hasNextPage ? (
+          <button
+            className="min-h-11 w-full border-t px-3"
+            disabled={conversationsQuery.isFetching}
+            onClick={() => void conversationsQuery.fetchNextPage()}
+          >
+            載入較早對話
+          </button>
+        ) : null}
       </section>
 
       <section className="flex min-h-screen flex-col">
@@ -238,10 +318,53 @@ export function ProductionWhatsAppInbox() {
               </div>
             </div>
 
-            <div className="flex-1 space-y-3 p-6">
+            <div
+              ref={transcript}
+              role="log"
+              aria-label="Recorded WhatsApp transcript"
+              style={{ overflowAnchor: "none" }}
+              className="max-h-[75vh] flex-1 space-y-3 overflow-y-auto p-6"
+            >
+              <p className="text-xs">
+                已載入{messages.length}則／共
+                {latest.data?.total ?? messagesQuery.data?.pages[0]?.total ?? "待確認"}則
+              </p>
+              {hasNew ? (
+                <button
+                  className="min-h-11 rounded border px-3"
+                  onClick={() => setNewMessages((old) => [...(latest.data?.items ?? []), ...old])}
+                >
+                  有新訊息：載入最新記錄
+                </button>
+              ) : null}
+              {messagesQuery.hasNextPage ? (
+                <button
+                  className="min-h-11 rounded border px-3"
+                  disabled={messagesQuery.isFetching}
+                  onClick={() => {
+                    const node = transcript.current;
+                    if (node) anchor.current = { height: node.scrollHeight, top: node.scrollTop };
+                    void messagesQuery.fetchNextPage().catch(() => {
+                      anchor.current = null;
+                    });
+                  }}
+                >
+                  載入更早訊息
+                </button>
+              ) : null}
               {messagesQuery.isError ? (
                 <p role="alert" className="text-sm text-destructive">
                   {errorMessage(messagesQuery.error)}
+                  <button
+                    className="min-h-11 px-3"
+                    onClick={() =>
+                      void (messagesQuery.isFetchNextPageError
+                        ? messagesQuery.fetchNextPage()
+                        : messagesQuery.refetch())
+                    }
+                  >
+                    重試訊息
+                  </button>
                 </p>
               ) : null}
 

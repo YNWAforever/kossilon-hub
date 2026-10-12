@@ -24,12 +24,16 @@ import type { DataMode } from "@/features/runtime/data-mode";
 import {
   getSafeRedirectPath,
   isClientRoute,
-  isForbiddenAuthError,
   isPublicRoute,
   rememberRedirectPath,
 } from "@/features/auth/route-guard";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { ensureActorQueryScope } from "@/features/auth/query-scope";
+import {
+  AuthResolutionError,
+  classifyAuthError,
+  authResolutionMessage,
+} from "@/features/auth/auth-result";
 
 /**
  * `actor` is resolved in beforeLoad and handed to every route. The call was
@@ -71,6 +75,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const [copied, setCopied] = useState(false);
   const details = errorDetails(error, pathname);
   const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+  const authFailure = error instanceof AuthResolutionError ? error.resolution : null;
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
@@ -79,8 +84,12 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-xl text-center">
-        <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Try refreshing the page.</p>
+        <h1 className="text-xl font-semibold text-foreground">
+          {authFailure ? "未能確認工作區身份" : "Something went wrong"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {authFailure ? authResolutionMessage(authFailure) : "Try refreshing the page."}
+        </p>
 
         <p className="mt-4 break-words rounded-md bg-muted px-4 py-3 text-left text-sm text-foreground">
           {message || "No error message was provided."}
@@ -134,13 +143,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         actor = await getAuthenticatedActor();
       } catch (error) {
         await ensureActorQueryScope(context.queryClient, null);
-        // A Forbidden account is not "not signed in" — sending it through the
-        // same redirect=... path would bounce it back here after every future
-        // sign-in, identically and silently, since the sign-in step itself keeps
-        // succeeding. Only the authorisation check fails.
-        if (isForbiddenAuthError(error)) {
-          throw redirect({ href: "/login?denied=1", replace: true });
-        }
+        const resolution = classifyAuthError(error);
+        if (resolution.kind !== "unauthenticated") throw new AuthResolutionError(resolution);
 
         const redirectPath = getSafeRedirectPath(location.href);
         rememberRedirectPath(redirectPath);
@@ -221,18 +225,18 @@ function RootComponent() {
 }
 
 function ProtectedAppShell() {
-  const { session, isHydrated } = useAuth();
+  const { session, isHydrated, resolution, refreshSession } = useAuth();
   const navigate = useNavigate();
   const redirectPath = useRouterState({
     select: (state) => `${state.location.pathname}${state.location.searchStr}`,
   });
 
   useEffect(() => {
-    if (!isHydrated || session) return;
+    if (!isHydrated || session || resolution.kind !== "unauthenticated") return;
 
     rememberRedirectPath(redirectPath);
     void navigate({ href: "/login", replace: true });
-  }, [isHydrated, navigate, redirectPath, session]);
+  }, [isHydrated, navigate, redirectPath, session, resolution]);
 
   if (!isHydrated) {
     return (
@@ -248,6 +252,22 @@ function ProtectedAppShell() {
   }
 
   if (!session) {
+    if (resolution.kind !== "unauthenticated" && resolution.kind !== "authenticated") {
+      return (
+        <div role="alert" className="mx-auto max-w-xl space-y-4 p-6">
+          <p>{authResolutionMessage(resolution)}</p>
+          <button
+            type="button"
+            onClick={() => {
+              void refreshSession();
+            }}
+            className="rounded border px-4 py-2"
+          >
+            重試身份驗證
+          </button>
+        </div>
+      );
+    }
     return null;
   }
 

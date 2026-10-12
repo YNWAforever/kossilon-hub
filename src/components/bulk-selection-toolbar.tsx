@@ -1,6 +1,6 @@
+import { BulkJobCenter } from "@/features/bulk-operations/components/bulk-job-center";
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
 import { readSnapshotMembership } from "@/features/bulk-operations/membership";
 import {
@@ -9,13 +9,6 @@ import {
   previewBulkAssignment,
   previewBulkMaintenance,
   executeBulkAssignment,
-  listBulkJobs,
-  getBulkJob,
-  resumeBulkJob,
-  cancelBulkJob,
-  retryFailedBulkItems,
-  reconcileUnknownBulkItems,
-  exportBulkResults,
   listBulkAssignees,
 } from "@/features/bulk-operations/server-fns";
 import type {
@@ -23,7 +16,6 @@ import type {
   BulkFilters,
   BulkSelection,
   BulkPreview,
-  BulkJobCursor,
   MaintenanceActionKind,
   MaintenanceAction,
 } from "@/features/bulk-operations/types";
@@ -35,6 +27,7 @@ type Props = {
   total: number | null;
   pageSize?: number;
   maintenanceActions?: MaintenanceActionKind[];
+  assignmentTarget?: "owner" | "reviewer";
 };
 const maintenanceLabels: Record<MaintenanceActionKind, string> = {
   client_maintenance: "客戶 owner／team 維護（改資料）",
@@ -51,13 +44,16 @@ export function BulkSelectionToolbar(props: Props) {
 function BulkSession(props: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
   return (
-    <section aria-label="Bulk assignment" className="space-y-3 rounded border p-4">
+    <section
+      aria-label="Bulk assignment"
+      className="min-w-0 space-y-3 rounded border p-4 [&_button]:min-h-11 [&_button]:rounded [&_button]:border [&_button]:px-3 [&_input:not([type=checkbox])]:min-h-11 [&_select]:min-h-11 [&_select]:max-w-full"
+    >
       <SelectionControls
         key={JSON.stringify([props.resource, props.filters])}
         {...props}
         onCreated={setJobId}
       />
-      <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
+      <BulkJobCenter actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
     </section>
   );
 }
@@ -69,12 +65,13 @@ function SelectionControls({
   total,
   pageSize = 50,
   maintenanceActions,
+  assignmentTarget,
   onCreated,
 }: Props & { onCreated: (jobId: string) => void }) {
   const [selection, setSelection] = useState<BulkSelection>({ mode: "explicit_ids", ids: [] }),
     [fixedCount, setFixedCount] = useState(0),
     [assigneeId, setAssigneeId] = useState(""),
-    [target, setTarget] = useState<"owner" | "reviewer">("owner"),
+    [target, setTarget] = useState<"owner" | "reviewer">(assignmentTarget ?? "owner"),
     [overrideReason, setOverrideReason] = useState("");
   const [actionKind, setActionKind] = useState<MaintenanceActionKind | "assignment">(
       maintenanceActions?.[0] ?? "assignment",
@@ -147,7 +144,14 @@ function SelectionControls({
               : actionKind === "document_return_draft"
                 ? { kind: actionKind, reasons: returnReasons }
                 : { kind: actionKind };
-        return previewBulkMaintenance({ data: { resource, selection, action } });
+        return previewBulkMaintenance({
+          data: {
+            resource,
+            selection,
+            action,
+            ...(Object.keys(filters).length ? { filters } : {}),
+          },
+        });
       }
       if (resource !== "annual_return_case" && resource !== "work_item")
         throw new Error("Unsupported assignment resource");
@@ -155,6 +159,7 @@ function SelectionControls({
         data: {
           resource,
           selection,
+          ...(Object.keys(filters).length ? { filters } : {}),
           assignment: {
             target,
             assigneeId,
@@ -247,13 +252,19 @@ function SelectionControls({
         >
           選取已載入紀錄
         </button>
-        <button disabled={busy || total === null} onClick={() => snapshot.mutate()}>
+        <button
+          disabled={busy || total === null || total > 20000}
+          onClick={() => snapshot.mutate()}
+        >
           選取全部篩選結果
         </button>
         <button disabled={busy} onClick={() => change({ mode: "explicit_ids", ids: [] })}>
           清空選取
         </button>
       </div>
+      {total !== null && total > 20000 ? (
+        <p role="alert">範圍超過20,000筆；請縮小篩選後分批處理，不會截斷選取。</p>
+      ) : null}
       <p>已選取{count}筆</p>
       {selection.mode === "filtered_snapshot" ? (
         <p>
@@ -308,7 +319,7 @@ function SelectionControls({
             責任
             <select
               aria-label="Bulk responsibility"
-              disabled={busy}
+              disabled={busy || !!assignmentTarget}
               value={target}
               onChange={(e) => {
                 setTarget(e.target.value as typeof target);
@@ -316,8 +327,8 @@ function SelectionControls({
                 setRequest(null);
               }}
             >
-              <option value="owner">Owner</option>
-              <option value="reviewer">Reviewer</option>
+              <option value="owner">負責人</option>
+              <option value="reviewer">覆核人</option>
             </select>
           </label>
           {actionKind === "client_maintenance" ? (
@@ -427,7 +438,7 @@ function SelectionControls({
       {preview ? (
         <div role="status">
           <p>
-            預覽{preview.count}筆；可分派{preview.eligibleCount}；鎖定{preview.reasons.locked}；無權
+            預覽{preview.count}筆；可執行{preview.eligibleCount}；鎖定{preview.reasons.locked}；無權
             {preview.reasons.forbidden}；版本衝突{preview.reasons.conflict}；不合條件
             {preview.reasons.failed}
           </p>
@@ -465,194 +476,6 @@ function SelectionControls({
           操作結果未確認。請先查看已保存工作；若需核對本次批准，可用同一確認再次查核。沒有自動重試。
         </p>
       ) : null}
-    </div>
-  );
-}
-function BulkJobProgress({
-  actorScope,
-  jobId,
-  onJobChange,
-}: {
-  actorScope: string;
-  jobId: string | null;
-  onJobChange: (id: string | null) => void;
-}) {
-  const client = useQueryClient();
-  const jobs = useInfiniteQuery({
-    queryKey: ["bulk-jobs", actorScope, "saved"],
-    queryFn: ({ pageParam }) => listBulkJobs({ data: pageParam ? { cursor: pageParam } : {} }),
-    initialPageParam: undefined as BulkJobCursor | undefined,
-    getNextPageParam: (p) => p.nextCursor ?? undefined,
-    retry: false,
-  });
-  const result = useInfiniteQuery({
-    queryKey: ["bulk-jobs", actorScope, "detail", jobId],
-    queryFn: ({ pageParam }) =>
-      getBulkJob({
-        data: { jobId: jobId!, ...(pageParam !== undefined ? { cursor: pageParam } : {}) },
-      }),
-    initialPageParam: undefined as number | undefined,
-    getNextPageParam: (p) => p.nextCursor ?? undefined,
-    enabled: !!jobId,
-    retry: false,
-  });
-  const first = result.data?.pages[0];
-  const items = result.data?.pages.flatMap((p) => p.items) ?? [];
-  function refreshed() {
-    void client.invalidateQueries({ queryKey: ["bulk-jobs", actorScope] });
-    void client.invalidateQueries({ queryKey: ["annual-returns"] });
-    void client.invalidateQueries({ queryKey: ["annual-return"] });
-    void client.invalidateQueries({ queryKey: ["work-queue"] });
-    void client.invalidateQueries({ queryKey: ["staff-admin"] });
-    void client.invalidateQueries({ queryKey: ["clients"] });
-    void client.invalidateQueries({ queryKey: ["documents"] });
-  }
-  const resume = useMutation({
-    mutationFn: () => resumeBulkJob({ data: { jobId: jobId! } }),
-    retry: false,
-    onSuccess: refreshed,
-  });
-  const cancel = useMutation({
-    mutationFn: () => cancelBulkJob({ data: { jobId: jobId! } }),
-    retry: false,
-    onSuccess: refreshed,
-  });
-  const retry = useMutation({
-    mutationFn: () => retryFailedBulkItems({ data: { jobId: jobId! } }),
-    retry: false,
-    onSuccess: refreshed,
-  });
-  const reconcile = useMutation({
-    mutationFn: () => reconcileUnknownBulkItems({ data: { jobId: jobId! } }),
-    retry: false,
-    onSuccess: refreshed,
-  });
-  const exporting = useMutation({
-    mutationFn: () => exportBulkResults({ data: { jobId: jobId! } }),
-    retry: false,
-    onSuccess: (data) => {
-      const url = URL.createObjectURL(new Blob([data.csv], { type: "text/csv;charset=utf-8" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "bulk-assignment-results.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    },
-  });
-  const busy = resume.isPending || cancel.isPending || retry.isPending || reconcile.isPending;
-  return (
-    <div className="space-y-2 border-t pt-3">
-      <label>
-        已保存工作
-        <select
-          aria-label="Saved bulk job"
-          value={jobId ?? ""}
-          onChange={(e) => onJobChange(e.target.value || null)}
-        >
-          <option value="">選擇工作以恢復進度</option>
-          {jobs.data?.pages
-            .flatMap((p) => p.jobs)
-            .map((j) => (
-              <option key={j.jobId} value={j.jobId}>
-                {new Date(j.createdAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })} ·{" "}
-                {j.total}筆 · {j.state}
-              </option>
-            ))}
-        </select>
-      </label>
-      {jobs.hasNextPage ? (
-        <button
-          disabled={jobs.isFetchingNextPage}
-          onClick={() => void jobs.fetchNextPage({ cancelRefetch: false })}
-        >
-          載入較早的工作
-        </button>
-      ) : null}
-      {jobs.isError ? <p role="alert">未能讀取已保存工作，請重新載入。</p> : null}
-      {jobId ? <button onClick={() => void result.refetch()}>刷新工作結果</button> : null}
-      {first ? (
-        <>
-          <p>
-            工作{first.state}；共{first.total}；成功{first.counts.succeeded ?? 0}；待處理
-            {first.counts.pending ?? 0}；鎖定{first.counts.locked ?? 0}；無權
-            {first.counts.forbidden ?? 0}；衝突{first.counts.conflict ?? 0}；失敗
-            {first.counts.failed ?? 0}；結果未知{first.counts.unknown ?? 0}；取消
-            {first.counts.cancelled ?? 0}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <button
-              disabled={busy || !["queued", "running"].includes(first.state)}
-              onClick={() => resume.mutate()}
-            >
-              繼續最多100筆
-            </button>
-            <button
-              disabled={busy || !["queued", "running"].includes(first.state)}
-              onClick={() => cancel.mutate()}
-            >
-              取消尚未開始項目
-            </button>
-            <button disabled={busy || !first.retryableFailedCount} onClick={() => retry.mutate()}>
-              只重試可重試失敗
-            </button>
-            {(first.counts.unknown ?? 0) > 0 ? (
-              <button disabled={busy} onClick={() => reconcile.mutate()}>
-                先核對未知結果
-              </button>
-            ) : null}
-            <button disabled={exporting.isPending} onClick={() => exporting.mutate()}>
-              匯出可查閱結果
-            </button>
-          </div>
-          <p>衝突需重新預覽；取消保留成功項。匯出結果不等於交件。</p>
-          {items.map((i) => (
-            <p key={i.ordinal}>
-              {i.resourceId && i.resourceLabel ? (
-                <>
-                  {first.resource === "annual_return_case" ? (
-                    <Link to="/annual-returns/$id" params={{ id: i.resourceId }}>
-                      {i.resourceLabel}
-                    </Link>
-                  ) : (
-                    <span>{i.resourceLabel}</span>
-                  )}{" "}
-                  ·{" "}
-                </>
-              ) : (
-                "無權查閱此項 · "
-              )}
-              {i.state} · {i.reason ?? "已保存"} · 嘗試{i.attempts}
-              {i.output ? (
-                <span>
-                  {" "}
-                  · {String(i.output.kind)} ·{" "}
-                  {String(
-                    i.output.messagePreview ??
-                      i.output.reason ??
-                      i.output.fileName ??
-                      i.output.invoiceNumber ??
-                      "已保存結果",
-                  )}{" "}
-                  {i.output.approvalRequired ? "（草稿，須單筆覆核）" : ""}
-                </span>
-              ) : null}
-            </p>
-          ))}
-          {result.hasNextPage ? (
-            <button
-              disabled={result.isFetchingNextPage}
-              onClick={() => void result.fetchNextPage({ cancelRefetch: false })}
-            >
-              載入更多逐筆結果
-            </button>
-          ) : null}
-        </>
-      ) : null}
-      {result.isError ? <p role="alert">工作結果未能刷新；保留上次結果，請重新核對。</p> : null}
-      {resume.isError || cancel.isError || retry.isError || reconcile.isError ? (
-        <p role="alert">工作操作未確認；請先刷新結果。沒有自動重試，已保存成功項不會重做。</p>
-      ) : null}
-      {exporting.isError ? <p role="alert">未能匯出結果。</p> : null}
     </div>
   );
 }

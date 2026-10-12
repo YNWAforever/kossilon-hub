@@ -21,7 +21,7 @@ import { PageHeader } from "@/components/page-header";
 import { listWorkQueue } from "../features/work-items/server-fns";
 import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
 import { boardSearchFromUrl } from "../features/annual-return/board-filters";
-import type { PersistedWorkItem } from "../features/work-items/repository";
+import type { WorkQueueSummary as PersistedWorkItem } from "../features/work-items/queue-page";
 
 export const Route = createFileRoute("/annual-returns")({
   // Board filters live in the URL so they survive a reload and a return from a

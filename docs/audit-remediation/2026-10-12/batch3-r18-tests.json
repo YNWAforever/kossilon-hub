@@ -1,0 +1,119 @@
+{
+  "source_sha": "60202a6e16cf84f76645e33e14d12fe9418ee00b",
+  "recorded_at_hkt": "2026-10-12 11:41:38+08:00",
+  "scope": "R18.2–3 immutable document snapshot/scoped SQL job center",
+  "artifact_digest": null,
+  "release": "NO_GO",
+  "production_outbound_hold": true,
+  "files": [
+    {
+      "file": "r18-format-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r18-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r18-history-green.log",
+      "bytes": 1127,
+      "sha256": "dd3f1f531a896725546f0eb48a7fa4a628602534d544713ba58fc45f5a4a30a3",
+      "commands": [
+        "> test",
+        "> vitest run src/features/bulk-operations/repository.integration.test.ts src/features/bulk-operations/job-view.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 passed (2)",
+        "      Tests  18 passed (18)",
+        "   Duration  9.96s (transform 667ms, setup 0ms, import 838ms, tests 8.81s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r18-history-red.log",
+      "bytes": 3243,
+      "sha256": "cd2effd56ef97032a005ad05cdf1c2fb922f48cfa48e71f9a1fea09bc3b21d90",
+      "commands": [
+        "> test",
+        "> vitest run src/features/bulk-operations/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  2 failed | 15 passed (17)",
+        "   Duration  9.96s (transform 732ms, setup 0ms, import 901ms, tests 8.85s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r18-last-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r18-lint-final.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r18-regression-final.log",
+      "bytes": 1349,
+      "sha256": "1a94ea06165c0bbd5aa223490e389f7846877d6d3d0460e442dc3c7637c3d629",
+      "commands": [
+        "> test",
+        "> vitest run src/features/bulk-operations/repository.integration.test.ts src/features/bulk-operations/actions.integration.test.ts src/features/bulk-operations/membership.test.ts src/features/bulk-operations/components/bulk-job-center.test.tsx src/components/bulk-selection-toolbar.test.tsx src/features/bulk-operations/job-view.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  6 passed (6)",
+        "      Tests  42 passed (42)",
+        "   Duration  80.93s (transform 1.08s, setup 0ms, import 8.51s, tests 61.14s, environment 28.41s)"
+      ]
+    },
+    {
+      "file": "r18-regression1.log",
+      "bytes": 2453,
+      "sha256": "e1d9f6ed458d21aa92afdeb88b20edc9d1a13f5888508e641ecfd6ddd1e72f4a",
+      "commands": [
+        "> test",
+        "> vitest run src/features/bulk-operations/repository.integration.test.ts src/features/bulk-operations/components/bulk-job-center.test.tsx src/components/bulk-selection-toolbar.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 2 passed (3)",
+        "      Tests  1 failed | 27 passed (28)",
+        "   Duration  75.52s (transform 1.10s, setup 0ms, import 6.89s, tests 58.50s, environment 25.92s)"
+      ]
+    },
+    {
+      "file": "r18-typecheck-final.log",
+      "bytes": 259,
+      "sha256": "54cf97915843dfa240b0c74774c7011c763bad342d9a46c41c04f9b452675ee9",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r18-types1.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    }
+  ]
+}

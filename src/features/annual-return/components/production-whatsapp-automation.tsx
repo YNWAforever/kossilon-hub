@@ -78,7 +78,7 @@ export function ProductionWhatsAppAutomation({
         <BulkSelectionToolbar
           actorScope={actorScope}
           resource="annual_return_case"
-          filters={{}}
+          filters={{ selectionContext: "whatsapp_draft_cases" }}
           page={[
             ...new Map(
               drafts.map((d) => [d.caseId, { id: d.caseId, label: d.companyName }]),
@@ -88,6 +88,12 @@ export function ProductionWhatsAppAutomation({
           pageSize={drafts.length}
           maintenanceActions={["follow_up_draft"]}
         />
+      ) : null}
+
+      {canBulk ? (
+        <p className="text-sm text-muted-foreground">
+          選取草稿所屬案件；同案多份草稿只計一案，批次只建立草稿。
+        </p>
       ) : null}
 
       {integrationQuery.data?.deliveryMode === "simulated" ? (

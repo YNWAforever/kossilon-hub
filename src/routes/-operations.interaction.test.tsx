@@ -16,7 +16,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
 }));
 import { Route } from "./operations";
 const Page = Route.options.component!;
-const instant = "2026-10-07T16:05:00.000Z";
+const instant = "2026-10-11T16:05:00.000Z";
 const queue = {
   pending: 1,
   dueNow: 1,
@@ -131,9 +131,9 @@ describe("Operations trustworthy observation", () => {
     await mount();
     await screen.findByText("正常", { exact: true });
     expect(screen.getByText(/香港時間/)).toBeTruthy();
-    expect(screen.getAllByText("2026-10-08 00:05").length).toBeGreaterThanOrEqual(4);
-    expect(screen.getByText(/最後驗證：2026-10-08 00:05/)).toBeTruthy();
-    expect(screen.queryByText("2026-10-07 16:05")).toBeNull();
+    expect(screen.getAllByText("2026-10-12 00:05").length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByText(/最後驗證：2026-10-12 00:05/)).toBeTruthy();
+    expect(screen.queryByText("2026-10-11 16:05")).toBeNull();
   });
 
   it("refreshes an open page and replaces a healthy result with the server's stale result", async () => {

@@ -92,16 +92,28 @@ async function render(options: {
   });
   await router.load();
   const actorScope = router.state.matches.at(-1)?.context.actor;
-  await queryClient.prefetchInfiniteQuery({
-    queryKey: ["documents", "archive", options.withCaseId ? selectedId : "all", { actorScope }],
-    initialPageParam: undefined,
-    queryFn: () => Promise.resolve({ documents: options.documents, nextCursor: null }),
+  await queryClient.prefetchQuery({
+    queryKey: [
+      "documents",
+      "archive",
+      {
+        actorScope,
+        q: "",
+        category: undefined,
+        reviewStatus: undefined,
+        ownerId: undefined,
+        ...(options.withCaseId ? { caseId: selectedId } : {}),
+        cursor: undefined,
+      },
+    ],
+    queryFn: () =>
+      Promise.resolve({
+        documents: options.documents,
+        nextCursor: null,
+        total: options.documents.length,
+        observedAt: "2026-10-12T00:00:00Z",
+      }),
   });
-  if (options.withCaseId)
-    queryClient.setQueryData(["documents", "archive", "all", { actorScope }], {
-      pages: [{ documents: options.documents, nextCursor: null }],
-      pageParams: [undefined],
-    });
   if (options.withCaseId) {
     await queryClient.prefetchQuery({
       // Was ["annual-return", ...] — singular. The factory produces

@@ -42,7 +42,7 @@ export default defineConfig({
   },
   projects: [
     { name: "mobile390", use: { viewport: { width: 390, height: 844 } } },
-    { name: "desktop1280", use: { viewport: { width: 1280, height: 900 } } },
+    { name: "desktop1366", use: { viewport: { width: 1366, height: 900 } } },
   ],
   webServer: {
     command: "npm run dev -- --host 127.0.0.1 --port 5180",

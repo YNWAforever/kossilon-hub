@@ -4,6 +4,8 @@ import type { requireStaffActor } from "@/features/auth/neon-auth-server";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { caseFiltersForActor } from "@/features/annual-return/permissions";
 import type { createWorkItemRepository, PersistedWorkItem, QueueFilters } from "./repository";
+import { workQueuePageInputSchema } from "./queue-page";
+import { queueFilterOptionsSchema } from "./queue-filter-options";
 
 const loadWorkItemServerDependencies = createServerOnlyFn(async () => {
   const [{ getRequest }, { requireStaffActor }, { createWorkItemRepository }] = await Promise.all([
@@ -65,6 +67,8 @@ export function queueFiltersForActor(
   actor: AuthenticatedActor,
   requested: RequestedQueueFilters,
 ): QueueFilters {
+  if (!actor.active || !actor.userId || !actor.authUserId)
+    throw Error("Forbidden: verified active staff identity required.");
   const shared = { escalationState: requested.escalationState };
   const mine = requested.view === "mine";
   if (actor.role === "Admin") {
@@ -198,18 +202,69 @@ export async function acknowledgeWorkItemForActor(
   });
 }
 
+/** Legacy maintenance reads remain internal. Browser consumers use the bounded page below. */
 export const listWorkQueue = createServerFn({ method: "GET" })
   .validator(listWorkQueueInputSchema)
   .handler(({ data }) =>
     withDefaultAuthorizedWorkItemRepository((repository, actor) =>
-      repository.listQueue(
-        queueFiltersForActor(actor, data),
+      repository
+        .listQueuePage(
+          queueFiltersForActor(actor, data),
+          caseFiltersForActor({
+            id: actor.userId,
+            role: actor.role,
+            teamId: actor.teamId,
+            active: actor.active,
+          }),
+        )
+        .then((page) => page.items),
+    ),
+  );
+
+export const listWorkQueuePage = createServerFn({ method: "GET" })
+  .validator(workQueuePageInputSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      repository.listQueuePage(
+        {
+          ...data,
+          ...queueFiltersForActor(actor, data),
+          actorKey: JSON.stringify([
+            actor.authUserId,
+            actor.userId,
+            actor.role,
+            actor.teamId,
+            actor.active,
+          ]),
+          ...(data.view === "breached" ? { escalationState: "breach" as const } : {}),
+        },
         caseFiltersForActor({
           id: actor.userId,
           role: actor.role,
           teamId: actor.teamId,
           active: actor.active,
         }),
+      ),
+    ),
+  );
+
+export const listWorkQueueFilterOptions = createServerFn({ method: "GET" })
+  .validator(queueFilterOptionsSchema)
+  .handler(({ data }) =>
+    withDefaultAuthorizedWorkItemRepository((repository, actor) =>
+      repository.listQueueFilterOptions(
+        {
+          ...queueFiltersForActor(actor, { view: data.view }),
+          ...(data.view === "breached" ? { escalationState: "breach" as const } : {}),
+          actorKey: JSON.stringify([
+            actor.authUserId,
+            actor.userId,
+            actor.role,
+            actor.teamId,
+            actor.active,
+          ]),
+        },
+        data,
       ),
     ),
   );

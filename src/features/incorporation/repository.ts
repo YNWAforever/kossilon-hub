@@ -1,4 +1,9 @@
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import type postgres from "postgres";
+import { readIncorporationPage } from "./list-page-repository";
+import type { IncorporationListInput, IncorporationListRow } from "./list-page";
+import type { ListPage } from "@/lib/list-page";
+import { assertTeamReadScope, type TeamReadScope } from "@/features/auth/team-read-scope";
 import { rethrowClientWriteError } from "@/features/clients/errors";
 import {
   createSqlClient,
@@ -27,8 +32,14 @@ export type CreateIncorporationRepositoryOptions = CreateSqlClientOptions & {
 };
 
 export type IncorporationRepository = {
-  listCases(): Promise<IncorporationCaseSummary[]>;
-  getCase(id: string): Promise<IncorporationCase | null>;
+  listCasePage(
+    scope: TeamReadScope,
+    input?: IncorporationListInput,
+    viewerUserId?: string,
+  ): Promise<ListPage<IncorporationListRow>>;
+  listCases(scope: TeamReadScope): Promise<IncorporationCaseSummary[]>;
+  countCases(scope: TeamReadScope): Promise<number>;
+  getCase(id: string, scope: TeamReadScope): Promise<IncorporationCase | null>;
   getCaseTeamId(caseId: string): Promise<string | null>;
   createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase>;
   updateChecklistItem(input: UpdateIncorporationChecklistItemInput): Promise<IncorporationCase>;
@@ -138,7 +149,21 @@ export function createIncorporationRepository(
   const sql = options.sql ?? (databaseUrl ? createSqlClient(databaseUrl, options) : getSqlClient());
   const ownsClient = !options.sql && Boolean(databaseUrl);
 
-  async function listCases(): Promise<IncorporationCaseSummary[]> {
+  const readPredicate = (client: QueryClient, scope: TeamReadScope) => {
+    const valid = assertTeamReadScope(scope);
+    return valid.kind === "all" ? client`true` : client`ic.team_id = ${valid.teamId}::uuid`;
+  };
+
+  async function countCases(scope: TeamReadScope): Promise<number> {
+    const predicate = readPredicate(sql, scope);
+    const [row] = await sql<
+      { total: number }[]
+    >`select count(*)::int total from incorporation_cases ic where ${predicate}`;
+    return row.total;
+  }
+
+  async function listCases(scope: TeamReadScope): Promise<IncorporationCaseSummary[]> {
+    const predicate = readPredicate(sql, scope);
     const rows = await sql<CaseRow[]>`
       select
         ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
@@ -149,12 +174,17 @@ export function createIncorporationRepository(
       from incorporation_cases ic
       join users u on u.id = ic.owner_id
       join teams t on t.id = ic.team_id
+      where ${predicate}
       order by ic.created_at desc
     `;
     return rows.map(mapCaseSummary);
   }
 
-  async function hydrateCase(client: QueryClient, id: string): Promise<IncorporationCase | null> {
+  async function hydrateCase(
+    client: QueryClient,
+    id: string,
+    scope?: TeamReadScope,
+  ): Promise<IncorporationCase | null> {
     const caseRows = await client<CaseRow[]>`
       select
         ic.id, ic.proposed_company_name_en, ic.proposed_company_name_zh,
@@ -165,7 +195,7 @@ export function createIncorporationRepository(
       from incorporation_cases ic
       join users u on u.id = ic.owner_id
       join teams t on t.id = ic.team_id
-      where ic.id = ${id}
+      where ic.id = ${id} and ${scope ? readPredicate(client, scope) : client`true`}
       limit 1
     `;
 
@@ -185,8 +215,8 @@ export function createIncorporationRepository(
     };
   }
 
-  async function getCase(id: string): Promise<IncorporationCase | null> {
-    return hydrateCase(sql, id);
+  async function getCase(id: string, scope: TeamReadScope): Promise<IncorporationCase | null> {
+    return hydrateCase(sql, id, assertTeamReadScope(scope));
   }
 
   async function getCaseTeamId(caseId: string): Promise<string | null> {
@@ -214,12 +244,15 @@ export function createIncorporationRepository(
 
   async function createCase(input: CreateIncorporationCaseInput): Promise<IncorporationCase> {
     return withTransaction(sql, async (tx) => {
-      await assertActor(tx, input.actorId);
-
-      const ownerRows = await tx<{ id: string }[]>`
-        select id from users where id = ${input.ownerId} and active limit 1
-      `;
-      if (ownerRows.length !== 1) throw new Error("Incorporation owner not found or inactive.");
+      const actor = await lockActiveStaffUser(tx, input.actorId),
+        owner = await lockActiveStaffUser(tx, input.ownerId);
+      if (
+        (actor.role !== "Admin" && actor.team_id !== input.teamId) ||
+        (owner.role !== "Admin" && owner.team_id !== input.teamId)
+      )
+        throw Error("Forbidden: current business team required.");
+      const [team] = await tx`select id from teams where id=${input.teamId} and active for share`;
+      if (!team) throw Error("Active business team required.");
 
       const templateRows = await tx<{ documents: { label: string; required: boolean }[] }[]>`
         select documents from checklist_templates
@@ -362,7 +395,10 @@ export function createIncorporationRepository(
   }
 
   return {
+    listCasePage: (scope, input, viewerUserId) =>
+      readIncorporationPage(sql, scope, input, viewerUserId),
     listCases,
+    countCases,
     getCase,
     getCaseTeamId,
     createCase,

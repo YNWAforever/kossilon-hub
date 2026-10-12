@@ -348,7 +348,7 @@ describe.skipIf(!databaseUrl)("incorporation intake integration", () => {
         "Cannot complete a case from status Completed",
       );
 
-      const finalCase = await repository.getCase(created.id);
+      const finalCase = await repository.getCase(created.id, { kind: "all" });
       expect(finalCase?.companyId).not.toBeNull();
 
       // The whole point of the fix: only ONE companies row exists for this

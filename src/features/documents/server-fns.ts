@@ -460,18 +460,28 @@ export async function listDocumentsForActor(
 }
 export async function listDocumentPageForActor(
   actor: AuthenticatedActor,
-  filters: Omit<DocumentListFilters, "id" | "teamId" | "assignedUserId">,
+  filters: Omit<DocumentListFilters, "teamId" | "assignedUserId">,
   dependencies: Pick<DocumentOperationDependencies, "repository" | "authorizeDocument">,
 ) {
   if (!actor.active) throw new Error("Forbidden: inactive users cannot list documents.");
   if (actor.role === "Client") {
     if (!filters.companyId) throw new Error("Client document lists require a company ID.");
     await authorizeCompanyScope(actor, { companyId: filters.companyId }, dependencies);
-    return dependencies.repository.listDocumentPage(filters);
+    return dependencies.repository.listDocumentPage({
+      ...filters,
+      actorKey: JSON.stringify([actor.authUserId, actor.userId, actor.role, actor.active]),
+    });
   }
   return dependencies.repository.listDocumentPage({
     ...filters,
     ...documentFiltersForActor(actor),
+    actorKey: JSON.stringify([
+      actor.authUserId,
+      actor.userId,
+      actor.role,
+      actor.teamId,
+      actor.active,
+    ]),
   });
 }
 
@@ -587,14 +597,17 @@ export const listDocuments = createServerFn({ method: "GET" })
       listDocumentsForActor(actor, data, dependencies),
     ),
   );
-const documentListPageSchema = z
+export const documentListPageSchema = z
   .object({
+    id: z.string().uuid().optional(),
     companyId: z.string().uuid().optional(),
     caseId: z.string().uuid().optional(),
     q: z.string().max(200).optional(),
     category: z.enum(DOCUMENT_CATEGORIES).optional(),
-    cursor: z.string().max(2048).optional(),
-    limit: z.number().int().min(1).max(200).optional(),
+    reviewStatus: z.enum(["pending", "verified", "rejected"]).optional(),
+    ownerId: z.string().uuid().optional(),
+    cursor: z.string().max(8192).optional(),
+    limit: z.number().int().min(1).max(50).optional(),
   })
   .strict();
 export const listDocumentPage = createServerFn({ method: "GET" })

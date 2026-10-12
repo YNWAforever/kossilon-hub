@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnnualReturnsRouteImport } from './routes/annual-returns'
+import { Route as BulkJobsRouteImport } from './routes/bulk-jobs'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as CorporateChangesRouteImport } from './routes/corporate-changes'
 import { Route as DocumentsRouteImport } from './routes/documents'
@@ -44,6 +45,11 @@ const AdminRoute = AdminRouteImport.update({
 const AnnualReturnsRoute = AnnualReturnsRouteImport.update({
   id: '/annual-returns',
   path: '/annual-returns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BulkJobsRoute = BulkJobsRouteImport.update({
+  id: '/bulk-jobs',
+  path: '/bulk-jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsRoute = ClientsRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/bulk-jobs': typeof BulkJobsRoute
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/bulk-jobs': typeof BulkJobsRoute
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/annual-returns': typeof AnnualReturnsRouteWithChildren
+  '/bulk-jobs': typeof BulkJobsRoute
   '/clients': typeof ClientsRouteWithChildren
   '/corporate-changes': typeof CorporateChangesRouteWithChildren
   '/documents': typeof DocumentsRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/annual-returns'
+    | '/bulk-jobs'
     | '/clients'
     | '/corporate-changes'
     | '/documents'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/annual-returns'
+    | '/bulk-jobs'
     | '/clients'
     | '/corporate-changes'
     | '/documents'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/annual-returns'
+    | '/bulk-jobs'
     | '/clients'
     | '/corporate-changes'
     | '/documents'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AnnualReturnsRoute: typeof AnnualReturnsRouteWithChildren
+  BulkJobsRoute: typeof BulkJobsRoute
   ClientsRoute: typeof ClientsRouteWithChildren
   CorporateChangesRoute: typeof CorporateChangesRouteWithChildren
   DocumentsRoute: typeof DocumentsRoute
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       path: '/annual-returns'
       fullPath: '/annual-returns'
       preLoaderRoute: typeof AnnualReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bulk-jobs': {
+      id: '/bulk-jobs'
+      path: '/bulk-jobs'
+      fullPath: '/bulk-jobs'
+      preLoaderRoute: typeof BulkJobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients': {
@@ -512,6 +532,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AnnualReturnsRoute: AnnualReturnsRouteWithChildren,
+  BulkJobsRoute: BulkJobsRoute,
   ClientsRoute: ClientsRouteWithChildren,
   CorporateChangesRoute: CorporateChangesRouteWithChildren,
   DocumentsRoute: DocumentsRoute,

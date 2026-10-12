@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -23,12 +24,20 @@ import {
   type DemoUser,
 } from "./session";
 import type { AuthenticatedActor, VerifiedAuthUser } from "./types";
+import {
+  classifyAuthError,
+  authResolutionMessage,
+  type AuthFailure,
+  type AuthResolution,
+} from "./auth-result";
 
 type AuthActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
 type AuthContextValue = {
   session: AuthSession | null;
   isHydrated: boolean;
+  resolution: AuthResolution;
+  refreshSession: () => Promise<AuthResolution>;
   demoUsers: readonly DemoUser[];
   isCurrentUserAdmin: boolean;
   login: (email: string, password: string) => Promise<AuthActionResult>;
@@ -51,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 function NeonAuthBootstrap({ children }: { children: ReactNode }) {
   const [url, setUrl] = useState<string | null>(null);
-  const [configurationError, setConfigurationError] = useState<string | null>(null);
+  const [configurationError, setConfigurationError] = useState<AuthFailure | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -62,9 +71,7 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
       })
       .catch((error: unknown) => {
         if (active) {
-          setConfigurationError(
-            error instanceof Error ? error.message : "Authentication unavailable.",
-          );
+          setConfigurationError(classifyAuthError(error));
         }
       });
 
@@ -73,10 +80,25 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const retryConfiguration = useCallback(async (): Promise<AuthResolution> => {
+    setConfigurationError(null);
+    try {
+      const configuration = await getNeonAuthClientConfiguration();
+      setUrl(configuration.url);
+      return { kind: "unauthenticated" };
+    } catch (error) {
+      const failure = classifyAuthError(error);
+      setConfigurationError(failure);
+      return failure;
+    }
+  }, []);
+
   const unavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
-      error: configurationError ?? "Authentication is loading.",
+      error: configurationError
+        ? authResolutionMessage(configurationError)
+        : "Authentication is loading.",
     }),
     [configurationError],
   );
@@ -84,6 +106,8 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
     () => ({
       session: null,
       isHydrated: configurationError !== null,
+      resolution: configurationError ?? { kind: "unauthenticated" },
+      refreshSession: retryConfiguration,
       demoUsers: [],
       isCurrentUserAdmin: false,
       login: unavailable,
@@ -93,7 +117,7 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
       loginDemoUser: unavailable,
       signOut: async () => undefined,
     }),
-    [configurationError, unavailable],
+    [configurationError, retryConfiguration, unavailable],
   );
 
   // The useCallback/useMemo above must run unconditionally on every render —
@@ -132,31 +156,49 @@ function toAuthSession(actor: AuthenticatedActor, user: VerifiedAuthUser): AuthS
 
 function NeonAuthProvider({ children, url }: { children: ReactNode; url: string }) {
   const client = useMemo(() => createNeonAuthClient(url), [url]);
-  const [session, setSession] = useState<AuthSession | null>(null);
+  const [resolution, setResolution] = useState<AuthResolution>({ kind: "unauthenticated" });
+  const session = resolution.kind === "authenticated" ? resolution.session : null;
   const [isHydrated, setIsHydrated] = useState(false);
+  const requestVersion = useRef(0);
 
-  const refreshSession = useCallback(async () => {
+  const refreshSession = useCallback(async (): Promise<AuthResolution> => {
+    const version = ++requestVersion.current;
     setIsHydrated(false);
-    const result = await client.getSession();
-
-    if (!result.data?.user) {
-      setSession(null);
-      setIsHydrated(true);
-      return;
-    }
-
+    setResolution({ kind: "unauthenticated" });
+    let next: AuthResolution;
     try {
-      const actor = await getAuthenticatedActor();
-      setSession(toAuthSession(actor, result.data.user));
-    } catch {
-      setSession(null);
+      const result = await client.getSession();
+      if (result.error) next = classifyAuthError(result.error);
+      else if (!result.data?.user) next = { kind: "unauthenticated" };
+      else {
+        const actor = await getAuthenticatedActor();
+        if (
+          !actor.active ||
+          actor.authUserId !== result.data.user.id ||
+          (actor.role !== "Client" && !actor.userId)
+        ) {
+          throw new Error("Forbidden: verified actor identity required.");
+        }
+        next = { kind: "authenticated", session: toAuthSession(actor, result.data.user) };
+      }
+      if (version !== requestVersion.current)
+        return classifyAuthError(new Error("Auth refresh superseded."));
+      if (version === requestVersion.current) setResolution(next);
+      return next;
+    } catch (error) {
+      next = classifyAuthError(error);
+      if (version === requestVersion.current) setResolution(next);
+      return next;
     } finally {
-      setIsHydrated(true);
+      if (version === requestVersion.current) setIsHydrated(true);
     }
   }, [client]);
 
   useEffect(() => {
     void refreshSession();
+    return () => {
+      ++requestVersion.current;
+    };
   }, [refreshSession]);
 
   const login = useCallback(
@@ -166,8 +208,10 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
         return { ok: false, error: result.error.message ?? "Sign in failed." };
       }
 
-      await refreshSession();
-      return { ok: true };
+      const resolved = await refreshSession();
+      return resolved.kind === "authenticated"
+        ? { ok: true }
+        : { ok: false, error: authResolutionMessage(resolved) };
     },
     [client, refreshSession],
   );
@@ -213,14 +257,21 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     [],
   );
   const signOut = useCallback(async () => {
-    await client.signOut();
-    setSession(null);
+    ++requestVersion.current;
+    try {
+      await client.signOut();
+    } finally {
+      setResolution({ kind: "unauthenticated" });
+      setIsHydrated(true);
+    }
   }, [client]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
       isHydrated,
+      resolution,
+      refreshSession,
       demoUsers: [],
       isCurrentUserAdmin: isAdmin(session),
       login,
@@ -230,7 +281,17 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
       loginDemoUser: demoUnavailable,
       signOut,
     }),
-    [demoUnavailable, isHydrated, login, loginWithGoogle, loginWithMagicLink, session, signOut],
+    [
+      demoUnavailable,
+      isHydrated,
+      login,
+      loginWithGoogle,
+      loginWithMagicLink,
+      session,
+      signOut,
+      resolution,
+      refreshSession,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -238,6 +299,11 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
 
 function DemoAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
+  const refreshSession = useCallback(async (): Promise<AuthResolution> => {
+    const next = getStoredSession();
+    setSession(next);
+    return next ? { kind: "authenticated", session: next } : { kind: "unauthenticated" };
+  }, []);
 
   useEffect(() => {
     setSession(getStoredSession());
@@ -275,6 +341,8 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
     () => ({
       session,
       isHydrated: true,
+      resolution: session ? { kind: "authenticated", session } : { kind: "unauthenticated" },
+      refreshSession,
       demoUsers,
       isCurrentUserAdmin: isAdmin(session),
       login,
@@ -284,7 +352,7 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
       loginDemoUser,
       signOut,
     }),
-    [login, loginDemo, loginDemoUser, magicLinkUnavailable, session, signOut],
+    [login, loginDemo, loginDemoUser, magicLinkUnavailable, session, signOut, refreshSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
@@ -12,6 +12,7 @@ import { dataOriginLabel } from "../data-origin";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { useRetainedPage } from "@/lib/use-retained-page";
+import { clientListSearch, safeListReturnTo, type ClientListSearch } from "@/lib/list-navigation";
 
 const REGISTER_GRID_COLUMNS =
   "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
@@ -35,14 +36,25 @@ const paymentStatusTone: Record<ClientPaymentStatus, StatusTone> = {
 export function ProductionClientRegister({
   allowFixtureDiagnostics = false,
   actor = null,
+  search,
+  onSearchChange,
 }: {
   allowFixtureDiagnostics?: boolean;
   actor?: AuthenticatedActor | null;
+  search?: ClientListSearch;
+  onSearchChange?: (next: ClientListSearch) => void;
 }) {
   const queryClient = useQueryClient();
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [teamFilter, setTeamFilter] = useState("all");
+  const [queryState, setQuery] = useState("");
+  const [statusState, setStatusFilter] = useState<StatusFilter>("all");
+  const [teamState, setTeamFilter] = useState("all");
+  const query = search?.q ?? queryState,
+    statusFilter = search?.status ?? statusState,
+    teamFilter = search?.team ?? teamState;
+  const changeSearch = (key: "q" | "status" | "team", value: string) =>
+    onSearchChange?.(
+      clientListSearch({ ...search, [key]: value, cursor: undefined, anchor: undefined }),
+    );
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [includeFixtures, setIncludeFixtures] = useState(false);
   const [pagination, setPagination] = useState<{ key: string; cursor?: string }>({ key: "" });
@@ -53,11 +65,26 @@ export function ProductionClientRegister({
     ...(teamFilter !== "all" ? { teamId: teamFilter } : {}),
   };
   const filterKey = JSON.stringify(filters),
-    cursor = pagination.key === filterKey ? pagination.cursor : undefined;
+    cursor = search ? search.cursor : pagination.key === filterKey ? pagination.cursor : undefined;
+  const setCursor = (next?: string) =>
+    search && onSearchChange
+      ? onSearchChange({ ...search, cursor: next, anchor: undefined })
+      : setPagination({ key: filterKey, cursor: next });
+  const listReturn = (id: string) =>
+    safeListReturnTo(
+      "/clients?" +
+        new URLSearchParams({
+          q: query,
+          status: statusFilter,
+          team: teamFilter,
+          ...(cursor ? { cursor } : {}),
+          anchor: id,
+        }).toString(),
+    );
 
   const clientsQuery = useQuery({
     queryKey: ["clients", { ...filters, cursor, actorScope: actor }],
-    queryFn: () => listClientPage({ data: { ...filters, cursor, limit: 100 } }),
+    queryFn: () => listClientPage({ data: { ...filters, cursor, limit: 50 } }),
     retry: false,
   });
 
@@ -69,6 +96,12 @@ export function ProductionClientRegister({
 
   const page = useRetainedPage(JSON.stringify([actor, filters]), clientsQuery.data);
   const visibleClients = page?.clients ?? [];
+  useEffect(() => {
+    if (!search?.anchor || !clientsQuery.data) return;
+    document
+      .querySelector(`[data-client-id="${search.anchor}"]`)
+      ?.scrollIntoView?.({ block: "center" });
+  }, [search?.anchor, clientsQuery.data]);
 
   function handleCreated() {
     void queryClient.invalidateQueries({ queryKey: ["clients"] });
@@ -107,7 +140,7 @@ export function ProductionClientRegister({
           }}
           page={visibleClients.map((c) => ({ id: c.id, label: c.companyName }))}
           total={page?.total ?? null}
-          pageSize={100}
+          pageSize={50}
           maintenanceActions={["client_maintenance"]}
         />
       ) : null}
@@ -144,7 +177,10 @@ export function ProductionClientRegister({
             aria-label="Search company, CR or BR number"
             placeholder="Search company, CR or BR number"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              changeSearch("q", event.target.value);
+            }}
           />
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((value) => (
@@ -154,7 +190,10 @@ export function ProductionClientRegister({
                 className={`rounded-md border px-3 py-2 text-sm capitalize ${
                   statusFilter === value ? "bg-primary text-primary-foreground" : "bg-background"
                 }`}
-                onClick={() => setStatusFilter(value)}
+                onClick={() => {
+                  setStatusFilter(value);
+                  changeSearch("status", value);
+                }}
               >
                 {value}
               </button>
@@ -164,7 +203,10 @@ export function ProductionClientRegister({
             className="rounded-md border bg-background px-3 py-2 text-sm"
             aria-label="Filter by team"
             value={teamFilter}
-            onChange={(event) => setTeamFilter(event.target.value)}
+            onChange={(event) => {
+              setTeamFilter(event.target.value);
+              changeSearch("team", event.target.value);
+            }}
           >
             <option value="all">All teams</option>
             {(optionsQuery.data?.teams ?? []).map((team) => (
@@ -191,7 +233,7 @@ export function ProductionClientRegister({
 
             <div className="divide-y">
               {visibleClients.map((client) => (
-                <ClientRow key={client.id} client={client} />
+                <ClientRow key={client.id} client={client} returnTo={listReturn(client.id)} />
               ))}
             </div>
           </div>
@@ -209,10 +251,7 @@ export function ProductionClientRegister({
       </section>
       <div className="flex gap-3">
         {cursor ? (
-          <button
-            className="min-h-11 rounded border px-3"
-            onClick={() => setPagination({ key: filterKey })}
-          >
+          <button className="min-h-11 rounded border px-3" onClick={() => setCursor()}>
             回第一頁客戶
           </button>
         ) : null}
@@ -220,7 +259,7 @@ export function ProductionClientRegister({
           <button
             disabled={clientsQuery.isFetching || clientsQuery.isError}
             className="min-h-11 rounded border px-3"
-            onClick={() => setPagination({ key: filterKey, cursor: page.nextCursor! })}
+            onClick={() => setCursor(page.nextCursor!)}
           >
             下一頁客戶
           </button>
@@ -239,9 +278,12 @@ export function ProductionClientRegister({
   );
 }
 
-function ClientRow({ client }: { client: ClientSummary }) {
+function ClientRow({ client, returnTo }: { client: ClientSummary; returnTo?: string }) {
   return (
-    <div className={`grid gap-3 px-4 py-4 lg:items-center ${REGISTER_GRID_COLUMNS}`}>
+    <div
+      data-client-id={client.id}
+      className={`grid gap-3 px-4 py-4 lg:items-center ${REGISTER_GRID_COLUMNS}`}
+    >
       <div className="min-w-0">
         <p className="truncate font-medium">{client.companyName}</p>
         <span className="text-xs text-muted-foreground">{dataOriginLabel(client.dataOrigin)}</span>
@@ -273,6 +315,7 @@ function ClientRow({ client }: { client: ClientSummary }) {
           className="rounded-md border px-3 py-2 text-center text-sm"
           to="/clients/$id"
           params={{ id: client.id }}
+          search={{ returnTo }}
         >
           Open
         </Link>

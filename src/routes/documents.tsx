@@ -1,13 +1,11 @@
 import { useMemo, useState } from "react";
+import { safeListReturnTo } from "@/lib/list-navigation";
 import { parseEntityId } from "@/lib/entity-id";
-import {
-  useMutation,
-  useMutationState,
-  useQuery,
-  useQueryClient,
-  useInfiniteQuery,
-} from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, createFileRoute, type SearchSchemaInput } from "@tanstack/react-router";
+import { z } from "zod";
+import { useRetainedPage } from "@/lib/use-retained-page";
+import { DOCUMENT_CATEGORIES, type DocumentCategory } from "@/features/documents/types";
 import { Download, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { labelValue } from "@/lib/format-label";
@@ -40,11 +38,35 @@ import {
 
 type DocumentsSearch = {
   caseId?: unknown;
+  companyId?: unknown;
+  documentId?: unknown;
+  returnTo?: string;
+  q?: string;
+  category?: DocumentCategory;
+  reviewStatus?: "pending" | "verified" | "rejected";
+  ownerId?: string;
+  cursor?: string;
 };
 
 export const Route = createFileRoute("/documents")({
-  validateSearch: (search): DocumentsSearch => ({
+  validateSearch: (search: SearchSchemaInput & Record<string, unknown>): DocumentsSearch => ({
     caseId: search.caseId,
+    companyId: search.companyId,
+    documentId: search.documentId,
+    ...(search.returnTo !== undefined ? { returnTo: safeListReturnTo(search.returnTo) } : {}),
+    ...(z.string().max(200).safeParse(search.q).success ? { q: search.q as string } : {}),
+    ...(z.enum(DOCUMENT_CATEGORIES).safeParse(search.category).success
+      ? { category: search.category as DocumentCategory }
+      : {}),
+    ...(z.enum(["pending", "verified", "rejected"]).safeParse(search.reviewStatus).success
+      ? { reviewStatus: search.reviewStatus as "pending" | "verified" | "rejected" }
+      : {}),
+    ...(z.string().uuid().safeParse(search.ownerId).success
+      ? { ownerId: search.ownerId as string }
+      : {}),
+    ...(z.string().max(8192).safeParse(search.cursor).success
+      ? { cursor: search.cursor as string }
+      : {}),
   }),
   component: DocumentsRoute,
 });
@@ -54,7 +76,8 @@ function DocumentsRoute() {
   const cases = useAnnualReturnCases();
   const snapshot = useClientPortalSnapshot();
   const queryClient = useQueryClient();
-  const { caseId } = Route.useSearch();
+  const search = Route.useSearch();
+  const { caseId } = search;
   const navigate = Route.useNavigate();
   const [query, setQuery] = useState("");
   const [caseQueryText, setCaseQueryText] = useState("");
@@ -64,27 +87,52 @@ function DocumentsRoute() {
   const caseFilter =
     caseId === undefined ? "all" : typeof caseId === "string" ? caseId : "__invalid__";
   const setCaseFilter = (next: string) =>
-    void navigate({ search: { caseId: next === "all" ? undefined : next }, replace: true });
+    void navigate({
+      search: { ...search, cursor: undefined, caseId: next === "all" ? undefined : next },
+      replace: true,
+    });
   const [warning, setWarning] = useState<string | undefined>();
   const productionCaseId = parseEntityId(caseFilter) ?? undefined;
-  const invalidCaseId = caseId !== undefined && !productionCaseId;
-  const productionDocumentsQuery = useInfiniteQuery({
-    queryKey: ["documents", "archive", productionCaseId ?? "all", { actorScope: actor }],
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }) =>
+  const invalidCaseId =
+    (caseId !== undefined && !productionCaseId) ||
+    (search.companyId !== undefined && !parseEntityId(search.companyId)) ||
+    (search.documentId !== undefined && !parseEntityId(search.documentId));
+  const documentFilters = {
+    companyId: parseEntityId(search.companyId) ?? undefined,
+    id: parseEntityId(search.documentId) ?? undefined,
+    q: search.q ?? "",
+    category: search.category,
+    reviewStatus: search.reviewStatus,
+    ownerId: search.ownerId,
+    ...(productionCaseId ? { caseId: productionCaseId } : {}),
+  };
+  const changeDocumentFilter = (field: string, value: string) =>
+    void navigate({
+      search: { ...search, [field]: value === "all" ? undefined : value, cursor: undefined },
+      replace: true,
+    });
+  const productionDocumentsQuery = useQuery({
+    queryKey: [
+      "documents",
+      "archive",
+      { actorScope: actor, ...documentFilters, cursor: search.cursor },
+    ],
+    queryFn: () =>
       listDocumentPage({
         data: {
-          ...(productionCaseId ? { caseId: productionCaseId } : {}),
-          limit: 100,
-          cursor: pageParam,
+          ...documentFilters,
+          limit: 50,
+          cursor: search.cursor,
         },
       }),
-    getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: dataMode === "production" && !invalidCaseId,
     retry: false,
   });
-  const productionDocuments =
-    productionDocumentsQuery.data?.pages.flatMap((p) => p.documents ?? []) ?? [];
+  const documentPage = useRetainedPage(
+    JSON.stringify([actor, documentFilters, invalidCaseId, dataMode]),
+    productionDocumentsQuery.data,
+  );
+  const productionDocuments = documentPage?.documents ?? [];
   // The production section had no filter of its own: the only case <select> on
   // this screen lived inside the demo branch and listed demo cases, so in
   // production the case filter was reachable only by typing ?caseId=<uuid> into
@@ -92,7 +140,10 @@ function DocumentsRoute() {
   // production case" using a control that was not rendered.
   const productionCasesQuery = useQuery({
     queryKey: annualReturnQueryKeys.list({ actorScope: actor, q: caseQueryText }),
-    queryFn: () => listAnnualReturnCases({ data: { q: caseQueryText, limit: 200 } }),
+    queryFn: () =>
+      listAnnualReturnCases({
+        data: { ...(caseQueryText.trim() ? { q: caseQueryText.trim() } : {}), limit: 50 },
+      }),
     enabled: dataMode === "production",
     retry: false,
     staleTime: 60_000,
@@ -178,6 +229,14 @@ function DocumentsRoute() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
+      {search.returnTo ? (
+        <a
+          className="inline-flex min-h-11 items-center underline"
+          href={safeListReturnTo(search.returnTo)}
+        >
+          返回客戶工作頁
+        </a>
+      ) : null}
       <PageHeader eyebrow="Operations" title="Documents" />
       {dataMode === "production" &&
       !invalidCaseId &&
@@ -186,16 +245,18 @@ function DocumentsRoute() {
         <BulkSelectionToolbar
           actorScope={JSON.stringify(actor)}
           resource="document"
-          filters={productionCaseId ? { caseId: productionCaseId } : {}}
+          filters={{
+            ...(documentFilters.companyId ? { companyId: documentFilters.companyId } : {}),
+            ...(documentFilters.id ? { documentId: documentFilters.id } : {}),
+            ...(search.q?.trim() ? { q: search.q.trim() } : {}),
+            ...(productionCaseId ? { caseId: productionCaseId } : {}),
+            ...(search.ownerId ? { ownerId: search.ownerId } : {}),
+            ...(search.category ? { documentCategory: search.category } : {}),
+            ...(search.reviewStatus ? { documentReviewStatus: search.reviewStatus } : {}),
+          }}
           page={productionDocuments.map((d) => ({ id: d.id, label: d.fileName }))}
-          total={
-            productionDocumentsQuery.hasNextPage
-              ? null
-              : productionDocumentsQuery.isSuccess
-                ? productionDocuments.length
-                : null
-          }
-          pageSize={100}
+          total={documentPage?.total ?? null}
+          pageSize={50}
           maintenanceActions={[
             "document_assignment",
             "document_return_draft",
@@ -225,9 +286,65 @@ function DocumentsRoute() {
             onChange={(event) => setCaseQueryText(event.target.value)}
           />
           <span className="block text-xs text-muted-foreground">
-            最多顯示200項；搜尋在授權範圍執行。
+            最多顯示50項；搜尋在授權範圍執行。
           </span>
         </label>
+      ) : null}
+      {dataMode === "production" ? (
+        <section aria-label="Search all production documents" className="flex flex-wrap gap-3">
+          <input
+            aria-label="Search production documents globally"
+            maxLength={200}
+            value={search.q ?? ""}
+            onChange={(e) => changeDocumentFilter("q", e.target.value)}
+            className="min-h-11 rounded border px-3"
+            placeholder="搜尋公司或文件名稱"
+          />
+          <select
+            aria-label="Production document category"
+            value={search.category ?? "all"}
+            onChange={(e) => changeDocumentFilter("category", e.target.value)}
+            className="min-h-11 rounded border px-3"
+          >
+            <option value="all">所有文件類別</option>
+            {DOCUMENT_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {labelValue(c)}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Production document review status"
+            value={search.reviewStatus ?? "all"}
+            onChange={(e) => changeDocumentFilter("reviewStatus", e.target.value)}
+            className="min-h-11 rounded border px-3"
+          >
+            <option value="all">所有覆核狀態</option>
+            <option value="pending">待覆核</option>
+            <option value="verified">已核實</option>
+            <option value="rejected">已退回</option>
+          </select>
+          <select
+            aria-label="Production document owner"
+            value={search.ownerId ?? "all"}
+            onChange={(e) => changeDocumentFilter("ownerId", e.target.value)}
+            className="min-h-11 rounded border px-3"
+          >
+            <option value="all">所有案件負責人</option>
+            {Array.from(
+              new Map(
+                (productionCasesQuery.data ?? []).map((c) => [c.ownerId, c.ownerName]),
+              ).entries(),
+            ).map(([id, name]) => (
+              <option key={id} value={id}>
+                {name ?? "姓名待補"}
+              </option>
+            ))}
+          </select>
+          <p>
+            已載入{productionDocuments.length}份／共{documentPage?.total ?? "待確認"}份
+          </p>
+        </section>
       ) : null}
       <ProductionDocumentsSection
         caseItem={productionCaseQuery.data ?? undefined}
@@ -243,17 +360,32 @@ function DocumentsRoute() {
         onReview={(input) => reviewMutation.mutate({ data: input })}
         pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
       />
-      {dataMode === "production" && productionDocumentsQuery.hasNextPage ? (
+      {dataMode === "production" && documentPage?.nextCursor ? (
         <button
           className="min-h-11 rounded border px-3"
-          disabled={productionDocumentsQuery.isFetchingNextPage}
-          onClick={() => void productionDocumentsQuery.fetchNextPage({ cancelRefetch: false })}
+          disabled={productionDocumentsQuery.isFetching}
+          onClick={() =>
+            void navigate({ search: { ...search, cursor: documentPage!.nextCursor! } })
+          }
         >
-          載入更多文件
+          下一頁文件
         </button>
       ) : null}
-      {productionDocumentsQuery.isFetchNextPageError ? (
-        <p role="alert">下一頁文件未能載入；保留已讀資料，請重試。</p>
+      {search.cursor ? (
+        <button
+          className="min-h-11 rounded border px-3"
+          onClick={() => void navigate({ search: { ...search, cursor: undefined } })}
+        >
+          回第一頁文件
+        </button>
+      ) : null}
+      {productionDocumentsQuery.isError ? (
+        <p role="alert">
+          文件頁未能載入；保留已讀資料。
+          <button className="min-h-11 px-3" onClick={() => void productionDocumentsQuery.refetch()}>
+            重試文件頁
+          </button>
+        </p>
       ) : null}
 
       {/* The archive below is fixture-backed: getDocumentArchiveRows reads the

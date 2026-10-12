@@ -1,4 +1,7 @@
+import { bulkOperationLabels } from "./job-view";
+import { queueScopeSql } from "@/features/work-items/queue-scope";
 import type postgres from "postgres";
+import { documentScopeSql } from "@/features/documents/list-scope";
 import { getSqlClient, type SqlClient } from "@/server/db/client";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { caseFiltersForActor } from "@/features/annual-return/permissions";
@@ -56,6 +59,8 @@ type JobRow = {
   lease_token: string | null;
   valid_lease: boolean;
   cancel_requested: boolean;
+  created_at: string | Date;
+  updated_at: string | Date;
 };
 type ItemRow = {
   ordinal: number;
@@ -109,7 +114,16 @@ export function createBulkOperationsRepository({
       const allowed = new Set(
         resource === "client_company"
           ? ["q", "teamId", "ownerId", "clientStatus", "includeFixtures"]
-          : ["q", "caseId", "includeFixtures"],
+          : [
+              "q",
+              "caseId",
+              "companyId",
+              "documentId",
+              "ownerId",
+              "documentCategory",
+              "documentReviewStatus",
+              "includeFixtures",
+            ],
       );
       if (Object.keys(filters).some((key) => !allowed.has(key)))
         throw new Error("Unsupported filters for this resource.");
@@ -126,7 +140,7 @@ export function createBulkOperationsRepository({
           case_owner_id: string | null;
           case_reviewer_id: string | null;
         })[]
-      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where (${actor.role === "Admin"} or c.assigned_team_id=${actor.teamId}::uuid or arc.owner_id=${actor.userId!} or arc.reviewer_id=${actor.userId!}) and (${filters.includeFixtures === true && actor.role === "Admin"} or c.data_origin<>'fixture') and (${ids ? [...ids] : null}::uuid[] is null or d.id=any(${ids ? [...ids] : null}::uuid[])) and (${filters.caseId ?? null}::uuid is null or d.case_id=${filters.caseId ?? null}::uuid) and (${q}::text is null or d.file_name ilike ${q} escape '\\') order by d.id limit 20001`;
+      >`select d.id,d.file_name label,arc.owner_id,arc.reviewer_id,c.id company_id,c.assigned_team_id company_team_id,d.case_id,arc.owner_id case_owner_id,arc.reviewer_id case_reviewer_id,md5(jsonb_build_object('document',to_jsonb(d),'versions',(select jsonb_agg(to_jsonb(v) order by v.id) from document_versions v where v.document_id=d.id),'scope',jsonb_build_array(c.assigned_team_id,c.data_origin,arc.owner_id,arc.reviewer_id))::text) version,(c.data_origin<>'client' or arc.current_status in ('Filed','Completed') or arc.locked_at is not null) locked from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id where ${documentScopeSql(db, { ...filters, id: filters.documentId, category: filters.documentCategory, reviewStatus: filters.documentReviewStatus, teamId: actor.role === "Admin" ? undefined : actor.teamId!, assignedUserId: actor.role === "Admin" ? undefined : actor.userId!, includeFixtures: filters.includeFixtures === true && actor.role === "Admin", ids })} order by d.id limit 20001`;
       return rows.filter((r) =>
         isDocumentVisibleToStaffActor(actor, {
           companyId: r.company_id,
@@ -151,12 +165,14 @@ export function createBulkOperationsRepository({
             "paymentStatus",
             "overdueOnly",
             "includeFixtures",
+            "selectionContext",
           ])
         : new Set([
             "q",
             "ownerId",
             "reviewerId",
             "teamId",
+            "reviewerId",
             "workType",
             "activeOnly",
             "workStatus",
@@ -180,19 +196,20 @@ export function createBulkOperationsRepository({
       return db<
         ResourceRow[]
       >`select arc.id,c.company_name label,arc.owner_id,arc.reviewer_id,array(select wi.owner_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_owner_ids,array(select wi.reviewer_id from work_items wi where wi.annual_return_case_id=arc.id and wi.status in ('open','in_progress','blocked')) child_reviewer_ids,${caseAssignmentVersionSql(db)} version,(arc.locked_at is not null or arc.completed_at is not null or arc.current_status='Completed' or c.data_origin='fixture') locked from annual_return_cases arc join companies c on c.id=arc.company_id where ${caseScopeSql(db, { ...filters, ...origin }, today)} and ${caseScopeSql(db, { ...scoped, ...origin }, today)} and (${ids ? [...ids] : null}::uuid[] is null or arc.id=any(${ids ? [...ids] : null}::uuid[])) order by arc.id limit 20001 ${lock ? db`for update of arc for share of c` : db``}`;
-    const q = filters.q ? `%${filters.q.replace(/[\\%_]/g, (v) => `\\${v}`)}%` : null;
     return db<
       ResourceRow[]
     >`select w.id,w.title||' · '||c.company_name label,w.owner_id,w.reviewer_id,w.version::text version,(w.status in ('completed','cancelled') or arc.current_status='Completed' or arc.locked_at is not null or c.data_origin='fixture') locked from work_items w join companies c on c.id=w.company_id left join annual_return_cases arc on arc.id=w.annual_return_case_id
-   where (${actor.role === "Admin"} or (w.team_id=${actor.teamId}::uuid and c.assigned_team_id=${actor.teamId}::uuid)) and (${origin.includeFixtures} or c.data_origin<>'fixture')
+   where ${queueScopeSql(db, {
+     ...filters,
+     activeOnly: filters.activeOnly === true,
+     teamId: actor.role === "Admin" ? filters.teamId : actor.teamId!,
+     ownerId: filters.view === "mine" ? actor.userId! : filters.ownerId,
+     escalationState: filters.view === "breached" ? "breach" : filters.escalationState,
+     includeFixtures: origin.includeFixtures,
+   })}
    and (${ids ? [...ids] : null}::uuid[] is null or w.id=any(${ids ? [...ids] : null}::uuid[]))
-   and (${filters.teamId ?? null}::uuid is null or w.team_id=${filters.teamId ?? null}::uuid) and (${filters.ownerId ?? null}::uuid is null or w.owner_id=${filters.ownerId ?? null}::uuid)
-   and (${filters.reviewerId ?? null}::uuid is null or w.reviewer_id=${filters.reviewerId ?? null}::uuid) and (${filters.unassigned !== true} or w.owner_id is null)
-   and (${filters.view !== "mine"} or w.owner_id=${actor.userId!}) and (${filters.view !== "breached"} or w.escalation_state='breach')
-   and (${filters.activeOnly !== true} or w.status in ('open','in_progress','blocked'))
-   and (${filters.workType ?? null}::text is null or w.work_type=${filters.workType ?? null}) and (${filters.workStatus ?? null}::text is null or w.status=${filters.workStatus ?? null})
-   and (${filters.escalationState ?? null}::text is null or w.escalation_state=${filters.escalationState ?? null}) and (${filters.priority ?? null}::text is null or (${filters.priority === "high"} and w.priority>=70) or (${filters.priority === "normal"} and w.priority<70))
-   and (${q}::text is null or (w.title||' '||w.work_type||' '||c.company_name) ilike ${q} escape '\\') order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
+   and (${filters.teamId ?? null}::uuid is null or w.team_id=${filters.teamId ?? null}::uuid)
+   order by w.id limit 20001 ${lock ? db`for update of w for share of c` : db``}`;
   }
   const snapshotItems = (rows: ResourceRow[]): SnapshotItem[] =>
     rows.map((r) => ({ id: r.id, version: r.version, reason: r.locked ? "locked" : null }));
@@ -220,12 +237,14 @@ export function createBulkOperationsRepository({
     const data = previewSchema.parse(input);
     const verified = await currentActor(sql, actor);
     let items: SnapshotItem[];
+    let filters = data.filters ?? {};
     if (data.selection.mode === "filtered_snapshot") {
       const [s] = await sql<
-        { resource: BulkResource; items: SnapshotItem[] }[]
-      >`select resource,items from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
+        { resource: BulkResource; items: SnapshotItem[]; filters: BulkFilters }[]
+      >`select resource,items,filters from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
       if (!s || s.resource !== data.resource)
         throw new Error("Forbidden: own unexpired matching snapshot required.");
+      filters = s.filters;
       const excluded = new Set(data.selection.excludedIds);
       const all = new Set(s.items.map((i) => i.id));
       if ([...excluded].some((id) => !all.has(id)))
@@ -237,7 +256,7 @@ export function createBulkOperationsRepository({
             sql,
             verified,
             data.resource,
-            {},
+            filters,
             items.map((i) => i.id),
           )
         ).map((r) => [r.id, r]),
@@ -249,7 +268,7 @@ export function createBulkOperationsRepository({
     } else {
       const ids = unique(data.selection.ids);
       const current = new Map(
-        (await resources(sql, verified, data.resource, {}, ids)).map((r) => [r.id, r]),
+        (await resources(sql, verified, data.resource, filters, ids)).map((r) => [r.id, r]),
       );
       items = ids.map((id) => {
         const r = current.get(id);
@@ -320,7 +339,7 @@ export function createBulkOperationsRepository({
     const payloadHash = await hash({ resource: data.resource, assignment: data.assignment, items });
     const [p] = await sql<
       { id: string }[]
-    >`insert into bulk_operation_previews(actor_user_id,auth_user_id,resource,assignment,items,payload_hash) values(${verified.userId!},${verified.authUserId},${data.resource},${sql.json(data.assignment)},${sql.json(items)},${payloadHash}) returning id`;
+    >`insert into bulk_operation_previews(actor_user_id,auth_user_id,resource,assignment,items,payload_hash) values(${verified.userId!},${verified.authUserId},${data.resource},${sql.json({ ...data.assignment, selectionFilters: filters })},${sql.json(items)},${payloadHash}) returning id`;
     return {
       previewId: p.id,
       count: items.length,
@@ -344,12 +363,14 @@ export function createBulkOperationsRepository({
     definition.permission(verified);
     if (definition.resource !== data.resource) throw new Error("Action does not match resource.");
     let items: SnapshotItem[];
+    let filters = data.filters ?? {};
     if (data.selection.mode === "filtered_snapshot") {
       const [saved] = await sql<
-        { resource: BulkResource; items: SnapshotItem[] }[]
-      >`select resource,items from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
+        { resource: BulkResource; items: SnapshotItem[]; filters: BulkFilters }[]
+      >`select resource,items,filters from bulk_selection_snapshots where id=${data.selection.snapshotId} and actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and expires_at>now()`;
       if (!saved || saved.resource !== data.resource)
         throw new Error("Forbidden: own matching unexpired snapshot required.");
+      filters = saved.filters;
       const excluded = new Set(data.selection.excludedIds),
         original = new Set(saved.items.map((i) => i.id));
       if ([...excluded].some((id) => !original.has(id)))
@@ -362,7 +383,7 @@ export function createBulkOperationsRepository({
           sql,
           verified,
           data.resource,
-          {},
+          filters,
           items.map((i) => i.id),
         )
       ).map((r) => [r.id, r]),
@@ -498,8 +519,20 @@ export function createBulkOperationsRepository({
     const [retryable] = await sql<
       { n: number }[]
     >`select count(*)::int n from bulk_operation_job_items where job_id=${j.id} and state='failed' and retryable`;
+    const [meta] =
+      await sql`select u.name actor_name,(select min(started_at)::text from bulk_operation_job_items where job_id=${j.id}) started_at,(select max((event->>'at')::timestamptz)::text from bulk_operation_job_items i cross join lateral jsonb_array_elements(coalesce(i.result->'history','[]'::jsonb)) event where i.job_id=${j.id} and event ? 'attempt') receipt_at from users u where u.id=${j.actor_user_id}`;
     return {
       jobId: j.id,
+      operation: j.action_key,
+      operationLabel: bulkOperationLabels[j.action_key],
+      scopeSummary: `固定 ${j.total} 筆 ${j.resource}`,
+      actorId: j.actor_user_id,
+      actorName: meta.actor_name,
+      createdAt: new Date(j.created_at).toISOString(),
+      updatedAt: new Date(j.updated_at).toISOString(),
+      startedAt: meta.started_at,
+      lastHeartbeat: null,
+      lastWorkerReceiptAt: meta.receipt_at,
       resource: j.resource,
       state: j.state,
       total: j.total,
@@ -720,13 +753,36 @@ export function createBulkOperationsRepository({
     const verified = await currentActor(sql, actor);
     const limit = data.limit ?? 20;
     const rows = await sql<
-      { id: string; state: JobResult["state"]; total: number; created_at: string }[]
-    >`select id,state,total,to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') created_at from bulk_operation_jobs where actor_user_id=${verified.userId!} and auth_user_id=${verified.authUserId} and (${data.cursor?.createdAt ?? null}::timestamptz is null or (created_at,id)<(${data.cursor?.createdAt ?? null}::timestamptz,${data.cursor?.id ?? null}::uuid)) order by created_at desc,id desc limit ${limit + 1}`;
+      {
+        id: string;
+        state: JobResult["state"];
+        total: number;
+        created_at: string;
+        updated_at: string;
+        resource: BulkResource;
+        action_key: "assignment" | MaintenanceActionKind;
+        actor_name: string;
+      }[]
+    >`select j.id,j.state,j.total,j.resource,j.action_key,u.name actor_name,to_char(j.created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') created_at,j.updated_at::text updated_at from bulk_operation_jobs j join users u on u.id=j.actor_user_id
+    where j.actor_user_id=${verified.userId!} and j.auth_user_id=${verified.authUserId}
+    and (${data.operation ?? null}::text is null or j.action_key=${data.operation ?? null}) and (${data.resource ?? null}::text is null or j.resource=${data.resource ?? null})
+    and (${data.actorId ?? null}::uuid is null or j.actor_user_id=${data.actorId ?? null})
+    and (${data.createdFrom ?? null}::text::timestamptz is null or j.created_at>=${data.createdFrom ?? null}::text::timestamptz)
+    and (${data.createdTo ?? null}::text::timestamptz is null or j.created_at<=${data.createdTo ?? null}::text::timestamptz)
+    and (${data.cursor?.createdAt ?? null}::text::timestamptz is null or (j.created_at,j.id)<(${data.cursor?.createdAt ?? null}::text::timestamptz,${data.cursor?.id ?? null}::uuid)) order by j.created_at desc,j.id desc limit ${limit + 1}`;
     const jobs = rows.slice(0, limit).map((r) => ({
       jobId: r.id,
       state: r.state,
       total: r.total,
+      resource: r.resource,
+      operation: r.action_key,
+      operationLabel: bulkOperationLabels[r.action_key],
+      scopeSummary: `固定 ${r.total} 筆 ${r.resource}`,
+      actorId: verified.userId!,
+      actorName: r.actor_name,
       createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      lastHeartbeat: null,
     }));
     const last = rows[limit - 1];
     return {

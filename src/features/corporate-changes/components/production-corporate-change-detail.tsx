@@ -1,3 +1,4 @@
+import { safeListReturnTo } from "@/lib/list-navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +11,13 @@ import {
 } from "../server-fns";
 import type { ChecklistItemStatus } from "../types";
 
-export function ProductionCorporateChangeDetail({ requestId }: { requestId: string }) {
+export function ProductionCorporateChangeDetail({
+  requestId,
+  returnTo,
+}: {
+  requestId: string;
+  returnTo?: string;
+}) {
   const queryClient = useQueryClient();
 
   const requestQuery = useQuery({
@@ -83,6 +90,14 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
+      {returnTo ? (
+        <a
+          href={safeListReturnTo(returnTo)}
+          className="inline-flex min-h-11 items-center rounded border px-3"
+        >
+          返回工作清單
+        </a>
+      ) : null}
       <PageHeader
         eyebrow="Operations"
         title="Corporate change request"

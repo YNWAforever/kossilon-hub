@@ -14,6 +14,15 @@ import {
   type CaseFilters,
 } from "@/features/annual-return/repository";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
+import { z } from "zod";
+import { decodeListCursor, encodeListCursor, listPageSize, type ListPage } from "@/lib/list-page";
+import { queueScopeSql } from "./queue-scope";
+import {
+  readQueueFilterOptions,
+  type QueueFilterOptionsInput,
+  type QueueFilterOptionPage,
+} from "./queue-filter-options";
+import type { WorkQueueSummary } from "./queue-page";
 import {
   caseBusinessContext,
   type AssignmentOption,
@@ -108,6 +117,16 @@ export type QueueFilters = {
   teamId?: string;
   statuses?: readonly WorkItemStatus[];
   escalationState?: EscalationState;
+  q?: string;
+  workType?: string;
+  unassigned?: boolean;
+  priority?: "high" | "normal";
+  workStatus?: "open" | "in_progress" | "blocked";
+  sort?: "sla" | "recent";
+  cursor?: string;
+  limit?: number;
+  actorKey?: string;
+  includeFixtures?: boolean;
 };
 export type AssignmentTarget = "owner" | "reviewer";
 export type AssignWorkItemInput = {
@@ -440,7 +459,19 @@ export async function ensureWorkItemForEvent(
 }
 
 export type WorkItemRepository = {
+  listQueueFilterOptions(
+    scope: QueueFilters,
+    input: QueueFilterOptionsInput,
+  ): Promise<QueueFilterOptionPage>;
   listQueue(filters?: QueueFilters, businessScope?: CaseFilters): Promise<PersistedWorkItem[]>;
+  listQueuePage(
+    filters?: QueueFilters,
+    businessScope?: CaseFilters,
+  ): Promise<
+    ListPage<WorkQueueSummary> & {
+      metrics: { dueToday: number; atRisk: number; breached: number; unassigned: number };
+    }
+  >;
   get(id: string): Promise<PersistedWorkItem | null>;
   recommendAssignees(
     id: string,
@@ -477,6 +508,7 @@ export function createWorkItemRepository(
     typeof options.now === "function" ? options.now() : (options.now ?? new Date().toISOString());
 
   const repository: WorkItemRepository = {
+    listQueueFilterOptions: (scope, input) => readQueueFilterOptions(sql, scope, input),
     async listQueue(filters = {}, businessScope) {
       const statuses = filters.statuses ?? ["open", "in_progress", "blocked"];
       const rows = await sql<WorkItemRow[]>`
@@ -511,6 +543,112 @@ export function createWorkItemRepository(
           ? (contexts.get(item.annualReturnCaseId) ?? null)
           : null,
       }));
+    },
+    async listQueuePage(
+      filters = {},
+      businessScope,
+    ): Promise<
+      ListPage<WorkQueueSummary> & {
+        metrics: { dueToday: number; atRisk: number; breached: number; unassigned: number };
+      }
+    > {
+      const limit = listPageSize.parse(filters.limit);
+      const { cursor: _cursor, ...queryFilters } = filters;
+      const key = JSON.stringify([queryFilters, businessScope ?? null]);
+      const cursor = decodeListCursor(filters.cursor, key, 4);
+      if (cursor) {
+        z.enum(["0", "1", "2"]).parse(cursor[0]);
+        z.string().datetime({ offset: true }).parse(cursor[1]);
+        z.coerce.number().int().min(-100).max(0).parse(cursor[2]);
+        z.string().uuid().parse(cursor[3]);
+      }
+      const scope = queueScopeSql(sql, filters);
+      const [count] = await sql`select count(*)::int total,
+        count(*) filter(where (w.sla_due_at at time zone 'Asia/Hong_Kong')::date=${hongKongBusinessDate(new Date(readNow()))}::date)::int due_today,
+        count(*) filter(where w.escalation_state='warning')::int at_risk,
+        count(*) filter(where w.escalation_state='breach')::int breached,
+        count(*) filter(where w.owner_id is null)::int unassigned
+        from work_items w left join companies c on c.id=w.company_id where ${scope}`;
+      const rows = await sql<
+        (WorkItemRow & {
+          filing_due_date: string | null;
+          payment_status: string | null;
+          case_status: string | null;
+          cursor_sort_a: string;
+          cursor_sort_b: string;
+          cursor_sort_c: string;
+        })[]
+      >`
+          with scoped as (
+            select w.id,
+            case when ${filters.sort === "recent"} then 0 when w.sla_due_at is null then 2 when w.sla_breached_at is not null then 0 else 1 end sort_a,
+            case when ${filters.sort === "recent"} then to_timestamp(-extract(epoch from w.updated_at)) else coalesce(w.sla_due_at,'0001-01-01'::timestamptz) end sort_b,
+            -w.priority sort_c
+            from work_items w left join companies c on c.id=w.company_id where ${scope}
+          ), bounded as materialized (
+            select * from scoped
+            where (${cursor?.[3] ?? null}::uuid is null or (sort_a,sort_b,sort_c,id)>(${cursor?.[0] ?? "0"}::int,${cursor?.[1] ?? "1970-01-01T00:00:00Z"}::timestamptz,${cursor?.[2] ?? "0"}::int,${cursor?.[3] ?? null}::uuid))
+            order by sort_a,sort_b,sort_c,id limit ${limit + 1}
+          ) select w.*,c.company_name,owner.name owner_name,ot.name owner_team_name,reviewer.name reviewer_name,rt.name reviewer_team_name,
+              a.filing_due_date::text,a.current_status case_status,p.status payment_status,
+              b.sort_a::text cursor_sort_a,b.sort_b::text cursor_sort_b,b.sort_c::text cursor_sort_c
+            from bounded b join work_items w on w.id=b.id left join companies c on c.id=w.company_id
+          left join users owner on owner.id=w.owner_id left join teams ot on ot.id=owner.team_id
+          left join users reviewer on reviewer.id=w.reviewer_id left join teams rt on rt.id=reviewer.team_id
+          left join annual_return_cases a on a.id=w.annual_return_case_id and a.company_id=w.company_id
+            and (${businessScope?.teamId ?? null}::uuid is null or c.assigned_team_id=${businessScope?.teamId ?? null})
+            and (${businessScope?.visibleToUserId ?? null}::uuid is null or a.owner_id=${businessScope?.visibleToUserId ?? null} or a.reviewer_id=${businessScope?.visibleToUserId ?? null})
+            and (${businessScope?.companyIds === undefined ? null : [...businessScope.companyIds]}::uuid[] is null or c.id=any(${businessScope?.companyIds === undefined ? null : [...businessScope.companyIds]}::uuid[]))
+            and (${businessScope?.includeFixtures ?? false} or c.data_origin<>'fixture')
+          left join payments p on p.case_id=a.id and p.company_id=c.id
+        order by b.sort_a,b.sort_b,b.sort_c,w.id`;
+      const page = rows.slice(0, limit),
+        last = page.at(-1);
+      return {
+        items: page.map((row) => ({
+          ...mapWorkItem(row),
+          slaStartedAt: row.sla_started_at ? iso(row.sla_started_at) : null,
+          slaWarningAt: row.sla_warning_at ? iso(row.sla_warning_at) : null,
+          slaDueAt: row.sla_due_at ? iso(row.sla_due_at) : null,
+          businessContext: row.filing_due_date
+            ? {
+                filingDueDate: row.filing_due_date,
+                sourceVersion: null,
+                blockers: [
+                  {
+                    code:
+                      row.payment_status && row.payment_status !== "Payment received"
+                        ? "payment_not_received"
+                        : "readiness_review_required",
+                    stage: "prepare" as const,
+                    message:
+                      row.payment_status && row.payment_status !== "Payment received"
+                        ? "付款尚未核實入賬，先核對款項。"
+                        : "開啟案件核對當前文件及交件安全狀態。",
+                    action: `/annual-returns/${row.annual_return_case_id}`,
+                  },
+                ],
+              }
+            : null,
+        })),
+        total: count.total,
+        observedAt: readNow(),
+        nextCursor:
+          rows.length > limit && last
+            ? encodeListCursor(key, [
+                last.cursor_sort_a,
+                last.cursor_sort_b.replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00"),
+                last.cursor_sort_c,
+                last.id,
+              ])
+            : null,
+        metrics: {
+          dueToday: count.due_today,
+          atRisk: count.at_risk,
+          breached: count.breached,
+          unassigned: count.unassigned,
+        },
+      };
     },
     get(id) {
       return getWorkItem(sql, id);

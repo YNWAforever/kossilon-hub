@@ -14,6 +14,18 @@ const serverFns = vi.hoisted(() => ({
 const whatsAppServerFns = vi.hoisted(() => ({
   getWhatsAppIntegrationStatus: vi.fn(),
 }));
+const bulk = vi.hoisted(() => ({
+  snapshot: vi.fn(),
+  preview: vi.fn(),
+  jobs: vi.fn(),
+  assignees: vi.fn(),
+}));
+vi.mock("@/features/bulk-operations/server-fns", () => ({
+  createBulkSelectionSnapshot: bulk.snapshot,
+  previewBulkMaintenance: bulk.preview,
+  listBulkJobs: bulk.jobs,
+  listBulkAssignees: bulk.assignees,
+}));
 
 vi.mock("../follow-up-server-fns", () => serverFns);
 vi.mock("@/features/whatsapp/server-fns", () => whatsAppServerFns);
@@ -67,14 +79,14 @@ const drafts: ProductionFollowUpDraft[] = [
   },
 ];
 
-function renderAutomation() {
+function renderAutomation(canBulk = false) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>
-      <ProductionWhatsAppAutomation />
+      <ProductionWhatsAppAutomation canBulk={canBulk} actorScope="isolated-manager" />
     </QueryClientProvider>,
   );
   return invalidateSpy;
@@ -82,6 +94,8 @@ function renderAutomation() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  bulk.jobs.mockResolvedValue({ jobs: [], nextCursor: null });
+  bulk.assignees.mockResolvedValue([]);
   serverFns.listProductionFollowUpDrafts.mockResolvedValue(drafts);
   serverFns.sendProductionFollowUp.mockResolvedValue({ replayed: false });
   whatsAppServerFns.getWhatsAppIntegrationStatus.mockResolvedValue({
@@ -101,6 +115,46 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ProductionWhatsAppAutomation", () => {
+  it("selects only the two draft cases, deduplicates repeated drafts and previews the frozen scope", async () => {
+    const otherId = "55555555-5555-4555-8555-555555555555";
+    const snapshotId = "66666666-6666-4666-8666-666666666666";
+    serverFns.listProductionFollowUpDrafts.mockResolvedValue([
+      ...drafts,
+      { ...drafts[0], id: otherId, entityId: otherId, caseId: otherId },
+    ]);
+    bulk.snapshot.mockResolvedValue({ snapshotId, count: 2 });
+    bulk.preview.mockResolvedValue({
+      previewId: snapshotId,
+      count: 2,
+      eligibleCount: 2,
+      reasons: { forbidden: 0, locked: 0, conflict: 0, failed: 0 },
+      payloadHash: "isolated-draft-hash",
+    });
+    renderAutomation(true);
+    await screen.findAllByRole("button", { name: "Preview and approve" });
+    fireEvent.click(screen.getByText("選取全部篩選結果"));
+    await waitFor(() =>
+      expect(bulk.snapshot).toHaveBeenCalledWith({
+        data: {
+          resource: "annual_return_case",
+          filters: { selectionContext: "whatsapp_draft_cases" },
+        },
+      }),
+    );
+    fireEvent.click(screen.getByText("預覽批量維護"));
+    await waitFor(() =>
+      expect(bulk.preview).toHaveBeenCalledWith({
+        data: {
+          resource: "annual_return_case",
+          filters: { selectionContext: "whatsapp_draft_cases" },
+          selection: { mode: "filtered_snapshot", snapshotId, excludedIds: [] },
+          action: { kind: "follow_up_draft" },
+        },
+      }),
+    );
+    expect(await screen.findByText("批准並建立維護工作")).toBeTruthy();
+    expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
+  });
   it("shows the full recipient and message before approval queues anything", async () => {
     serverFns.listProductionFollowUpDrafts.mockResolvedValue([drafts[0]]);
     renderAutomation();

@@ -1,0 +1,20 @@
+{
+  "source_sha": "d332cd2c0e8bc59971be66e8f42f8ffb1bd7f08c",
+  "authority": "local installed package JSON and exact-source CI dual-lock audits; deployed packages unobserved",
+  "locks_unchanged": true,
+  "locks": {
+    "bun.lock": "d3275fa41f0415571262ec3aeff1707791bccf3438d60d275cc236659043f8be",
+    "package-lock.json": "d15cefb788e67b59c49d56e0ca674e158615181ad86667dde4d72ce186d53465"
+  },
+  "installed": {
+    "@tanstack/react-start": "1.168.60",
+    "@tanstack/start-server-core": "1.169.39",
+    "@tanstack/react-router": "1.170.41",
+    "better-auth": "1.6.23",
+    "lru-cache": "11.5.3",
+    "vite": "8.0.16",
+    "postgres": "3.4.9"
+  },
+  "security_maintenance": "PR144 separate security base; no deployment performed",
+  "production_outbound_hold": true
+}

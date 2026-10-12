@@ -12,6 +12,7 @@ import {
   downloadDocumentForActor,
   finalizeDocumentUploadForActor,
   listDocumentsForActor,
+  documentListPageSchema,
   previewDocumentRecoveryForActor,
   scanQuarantinedDocumentForActor,
 } from "./server-fns";
@@ -24,6 +25,11 @@ const actor: AuthenticatedActor = {
   active: true,
 };
 const companyId = "10000000-0000-0000-0000-000000000001";
+it("enforces the public document page contract without accepting limit51", () => {
+  expect(documentListPageSchema.safeParse({}).success).toBe(true);
+  expect(documentListPageSchema.safeParse({ limit: 50 }).success).toBe(true);
+  expect(documentListPageSchema.safeParse({ limit: 51 }).success).toBe(false);
+});
 const staffActor: AuthenticatedActor = {
   authUserId: "staff-auth",
   userId: "20000000-0000-0000-0000-000000000002",

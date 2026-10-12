@@ -3,6 +3,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { AnnualReturnCase } from "@/features/annual-return/types";
+import type { DocumentSummary } from "@/features/documents/repository";
 
 const serverFns = vi.hoisted(() => ({
   listAnnualReturnCases: vi.fn(),
@@ -11,9 +13,35 @@ const serverFns = vi.hoisted(() => ({
   record: vi.fn(),
   review: vi.fn(),
   download: vi.fn(),
+  workspace: vi.fn(),
 }));
 
 vi.mock("../features/annual-return/server-fns", () => ({
+  listPaymentWorkspace: async (input: { data: { mode: string } }) => {
+    if (serverFns.workspace.getMockImplementation()) return serverFns.workspace(input);
+    const cases = (await serverFns.listAnnualReturnCases()) as AnnualReturnCase[],
+      documents = (await serverFns.listDocuments()) as DocumentSummary[];
+    const items = documents.flatMap((document) => {
+      const c = cases.find((c) => document.caseId === c.id);
+      return c
+        ? [
+            {
+              rowId: document.id,
+              sourceVersion: c.readiness?.sourceVersion,
+              caseId: c.id,
+              companyName: c.companyName,
+              payment: c.payment,
+              document,
+              proofCount: 1,
+              kind: "review",
+            },
+          ]
+        : [];
+    });
+    return { items, total: items.length, nextCursor: null, observedAt: "2026-10-12T00:00:00Z" };
+  },
+  getAnnualReturnCase: async ({ data }: { data: { id: string } }) =>
+    ((await serverFns.listAnnualReturnCases()) as AnnualReturnCase[]).find((c) => c.id === data.id),
   listAnnualReturnCases: serverFns.listAnnualReturnCases,
   listAnnualReturnCasePage: async () => ({
     cases: await serverFns.listAnnualReturnCases(),
@@ -57,7 +85,58 @@ function renderPayments() {
 }
 
 describe("production payments route", () => {
+  it("distinguishes outstanding debt with existing proof from missing proof", async () => {
+    serverFns.workspace.mockResolvedValue({
+      items: [
+        {
+          rowId: "debt",
+          kind: "outstanding",
+          caseId: "case",
+          companyName: "Proof still under review",
+          filingDueDate: "2026-10-12",
+          proofCount: 2,
+          document: null,
+          payment: { id: "payment", amount: 1200, receivedAmount: 0, balance: 1200 },
+        },
+      ],
+      total: 1,
+      nextCursor: null,
+      observedAt: "2026-10-12T00:00:00Z",
+    });
+    renderPayments();
+    fireEvent.click(screen.getByText("欠款／未有憑證"));
+    await screen.findByText(/已有付款憑證，待核對入賬/);
+    expect(screen.queryByText(/^未有付款憑證/)).toBeNull();
+    expect(serverFns.record).not.toHaveBeenCalled();
+  });
+  it("shows case201 debt without a proof through the bounded workspace", async () => {
+    serverFns.workspace.mockResolvedValue({
+      items: [
+        {
+          caseId: "40000000-0000-4000-8000-000000000201",
+          companyName: "Unpaid case201",
+          filingDueDate: "2026-10-12",
+          proofCount: 0,
+          document: null,
+          payment: { id: "payment", amount: 1200, receivedAmount: 0, balance: 1200 },
+        },
+      ],
+      total: 201,
+      nextCursor: "next",
+      observedAt: "2026-10-12T00:00:00Z",
+    });
+    renderPayments();
+    fireEvent.click(screen.getByText("欠款／未有憑證"));
+    await screen.findByText("Unpaid case201");
+    expect(screen.getByText(/未有付款憑證/)).toBeTruthy();
+    expect(serverFns.workspace).toHaveBeenCalledWith({
+      data: expect.objectContaining({ mode: "outstanding", limit: 50 }),
+    });
+    expect(screen.queryByText("批准此筆憑證金額")).toBeNull();
+    expect(serverFns.record).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
+    serverFns.workspace.mockReset();
     serverFns.listAnnualReturnCases.mockReset();
     serverFns.listDocuments.mockReset();
     serverFns.record.mockReset();

@@ -1,0 +1,474 @@
+{
+  "scope": "populated public-only local restore; no platform Auth or live dispatch",
+  "ledgerOriginalPreserved": true,
+  "ledgerCount": 66,
+  "originalLedgerCount": 66,
+  "originalRows": [
+    {
+      "table": "annual_return_audit_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "annual_return_case_tags",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "annual_return_cases",
+      "count": 3,
+      "equal": true
+    },
+    {
+      "table": "annual_return_checklist_items",
+      "count": 15,
+      "equal": true
+    },
+    {
+      "table": "annual_return_reminder_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "assignment_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "bulk_operation_attempts",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "bulk_operation_items",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "bulk_operations",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "bulk_previews",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "bulk_reminder_reviews",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "business_calendar_holidays",
+      "count": 1,
+      "equal": true
+    },
+    {
+      "table": "business_calendars",
+      "count": 1,
+      "equal": true
+    },
+    {
+      "table": "case_notes",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "case_parties",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "case_requirement_instances",
+      "count": 15,
+      "equal": true
+    },
+    {
+      "table": "checklist_template_versions",
+      "count": 4,
+      "equal": true
+    },
+    {
+      "table": "checklist_templates",
+      "count": 5,
+      "equal": true
+    },
+    {
+      "table": "client_company_memberships",
+      "count": 1,
+      "equal": true
+    },
+    {
+      "table": "companies",
+      "count": 3,
+      "equal": true
+    },
+    {
+      "table": "company_contacts",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "company_external_references",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "company_tags",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "corporate_change_checklist_items",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "corporate_change_requests",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "document_analysis_jobs",
+      "count": 14,
+      "equal": true
+    },
+    {
+      "table": "document_analysis_run_metadata",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "document_findings",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "document_scan_jobs",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "document_upload_intents",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "document_version_texts",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "document_versions",
+      "count": 14,
+      "equal": true
+    },
+    {
+      "table": "documents",
+      "count": 14,
+      "equal": true
+    },
+    {
+      "table": "escalation_events",
+      "count": 4,
+      "equal": true
+    },
+    {
+      "table": "filing_packages",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "filing_return_source_cursors",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "filing_return_source_objects",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "handoff_returns",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "hk_funding_schema_migrations",
+      "count": 1,
+      "equal": true
+    },
+    {
+      "table": "incorporation_cases",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "incorporation_checklist_items",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "maintenance_job_runs",
+      "count": 683,
+      "equal": true
+    },
+    {
+      "table": "maintenance_runs",
+      "count": 113,
+      "equal": true
+    },
+    {
+      "table": "nar_import_apply_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "nar_import_approvals",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "nar_import_batches",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "nar_import_payment_observations",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "nar_import_previews",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "nar_import_rows",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "nar_import_stage_jobs",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "notification_delivery_attempts",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "notification_outbox",
+      "count": 4,
+      "equal": true
+    },
+    {
+      "table": "officers",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "package_handoffs",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "payment_proof_allocations",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "payment_reconciliation_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "payments",
+      "count": 3,
+      "equal": true
+    },
+    {
+      "table": "personal_workspaces",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "reminder_logs",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "requirement_evidence_links",
+      "count": 12,
+      "equal": true
+    },
+    {
+      "table": "resource_tag_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "schema_migrations",
+      "count": 66,
+      "equal": true
+    },
+    {
+      "table": "scr_inspection_requests",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "service_subscription_reminder_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "service_subscriptions",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "shareholdings",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "significant_controllers",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "sla_policies",
+      "count": 2,
+      "equal": true
+    },
+    {
+      "table": "staff_access_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "staff_profiles",
+      "count": 5,
+      "equal": true
+    },
+    {
+      "table": "staff_provisioning_requests",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "staff_skills",
+      "count": 3,
+      "equal": true
+    },
+    {
+      "table": "sync_changes",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "sync_conflicts",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "sync_entities",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "sync_field_revisions",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "sync_operation_receipts",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "teams",
+      "count": 3,
+      "equal": true
+    },
+    {
+      "table": "timeline_events",
+      "count": 13,
+      "equal": true
+    },
+    {
+      "table": "users",
+      "count": 5,
+      "equal": true
+    },
+    {
+      "table": "whatsapp_contacts",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "whatsapp_message_media",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "whatsapp_message_previews",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "whatsapp_messages",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "whatsapp_templates",
+      "count": 1,
+      "equal": true
+    },
+    {
+      "table": "whatsapp_webhook_events",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "work_item_sla_attachments",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "work_item_tags",
+      "count": 0,
+      "equal": true
+    },
+    {
+      "table": "work_items",
+      "count": 3,
+      "equal": true
+    }
+  ],
+  "notificationOutbox": {
+    "total": 4,
+    "pending": 4
+  },
+  "catalog": {
+    "tables": 101
+  },
+  "manifest": {
+    "clone-public.dump": {
+      "bytes": 448528,
+      "sha256": "faa5564428634ba5b90b2e4977418333d426b458b44c9c2e90d630960111a794"
+    },
+    "original-reconciliation.sql": {
+      "bytes": 47310,
+      "sha256": "3b8bb4362dac26b2dead8df843288af5f975d9f523c99fc67d17284fec6195ad"
+    },
+    "local-restored-reconciliation.sql": {
+      "bytes": 47564,
+      "sha256": "63c932db8ef3008c24425e2abe5c013729e3cab295f2121975cd2a26d8f8cb3a"
+    }
+  }
+}

@@ -1,0 +1,1316 @@
+{
+  "source_sha": "b25575e762b9be953669ecd662290c0b5fe24f49",
+  "artifact_digest": "f78e6b9e0a68f71a0bf20020570bd7131a5f987001c04930e38e2f52c4b861a0",
+  "recorded_at_hkt": "2026-10-12 05:22:16+08:00",
+  "environment": {
+    "os": "Windows",
+    "node": "24.18.0",
+    "npm": "11.16.0",
+    "bun": "1.4.2",
+    "fixture": "Owned localhost PostgreSQL17; fresh kossilon_staff_batch2_utf8final",
+    "restore": "Owned localhost PostgreSQL18.6; READ ONLY; public-only restore",
+    "DATABASE_SSL": "disable",
+    "REQUIRE_INTEGRATION_TESTS": "1",
+    "roles": "Synthetic DTOs/owned SQL profiles; no genuine Auth/browser role acceptance"
+  },
+  "raw_evidence_location": ".worktrees/staff-batch2-20261012/",
+  "release": "NO_GO",
+  "production_outbound_hold": true,
+  "files": [
+    {
+      "file": "batch2-build.log",
+      "bytes": 65985,
+      "sha256": "1dffeceda31b92f57be2f1a18651a4a860102121fa319c815b78fb8f986cec57",
+      "command_lines": [
+        "> vite build"
+      ],
+      "result_lines": [
+        "✓ built in 30.12s",
+        "✓ built in 12.14s",
+        "✓ built in 9.90s"
+      ]
+    },
+    {
+      "file": "batch2-format.log",
+      "bytes": 1609,
+      "sha256": "a47b652a189ab09e2fec4ea09dbb726512d507def31d43bb022374829e2d5b84",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "batch2-format2.log",
+      "bytes": 325,
+      "sha256": "b3fc297734d3a821423e2fd3f7a3245d2220611026d47b3b824e17ad18167fb1",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "batch2-format3.log",
+      "bytes": 311,
+      "sha256": "2bf2f7e266fe39987edc0b9aced862f12b8b96aaa29c56521021995038cf6c4a",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "batch2-lint-attempt1.log",
+      "bytes": 374057,
+      "sha256": "bbbcdc3d2f6262f052d2f68241fc5e3597fa1673b870a01d9dc3efd67bebe9f9",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 492 problems (490 errors, 2 warnings)",
+        "  490 errors and 0 warnings potentially fixable with the `--fix` option."
+      ]
+    },
+    {
+      "file": "batch2-lint-attempt2.log",
+      "bytes": 1210,
+      "sha256": "5521941ad1774d9e35e0a1d85d208026fd59cbf7509a6806a0eb72f47bbab13c",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "batch2-lint-attempt3.log",
+      "bytes": 867,
+      "sha256": "98b479cdef4b06f6ad1eae87059333030bd95b34c677c071ef67f47db813cafb",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "batch2-release-verify.log",
+      "bytes": 9955,
+      "sha256": "efe0518bd37d7e95c89928511496c54108369f1f5251cb555b1db8af83f4556d",
+      "command_lines": [
+        "> node --experimental-strip-types scripts/verify-audit-release.ts"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "batch2-types-attempt1.log",
+      "bytes": 502,
+      "sha256": "f884d6fde9fa0d7970fe5e76341f371ae769d9516a9ab126dccff62a0660cbbd",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "batch2-types-attempt2.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "clone-pg-dump.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "cursor-utf8-red.log",
+      "bytes": 1923,
+      "sha256": "83437f028779967c044fd01e8d801fd9c611afc02b0f46a9e31c2b0b1f2541c9",
+      "command_lines": [
+        "> vitest run src/lib/list-page.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  390ms (transform 70ms, setup 0ms, import 114ms, tests 6ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "db-migrate-no-ssl.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "command_lines": [],
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "file": "db-migrate.log",
+      "bytes": 433,
+      "sha256": "d78e85be49d122724dbc4aa447e11115c09c43db8736ab0dd2b0c417943e258e",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "command_lines": [],
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "file": "facet-utf8-red.log",
+      "bytes": 2131,
+      "sha256": "9fa7ca84d794963a8e8aa316a807c02abc5077e4368d67124556b0984f9af859",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-review.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  1.31s (transform 633ms, setup 0ms, import 957ms, tests 167ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "final-build.log",
+      "bytes": 66199,
+      "sha256": "b8a116e99bcf214828c66389046a391013466b469448d2e579c6bdcc3d10e0bd",
+      "command_lines": [
+        "> vite build"
+      ],
+      "result_lines": [
+        "✓ built in 10.01s",
+        "✓ built in 2.82s",
+        "✓ built in 2.10s"
+      ]
+    },
+    {
+      "file": "final-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "command_lines": [],
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "file": "final-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "command_lines": [],
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "file": "final-format.log",
+      "bytes": 1007,
+      "sha256": "5871498fbbf7b16eb7fdcef0df84a4ee16c684f69f7170ddfff8c919669b2abb",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "final-release-gate.log",
+      "bytes": 9955,
+      "sha256": "efe0518bd37d7e95c89928511496c54108369f1f5251cb555b1db8af83f4556d",
+      "command_lines": [
+        "> node --experimental-strip-types scripts/verify-audit-release.ts"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "fixed-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "command_lines": [],
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "file": "fixed-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "command_lines": [],
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "file": "fresh-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "command_lines": [],
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "file": "fresh-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "command_lines": [],
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "file": "full-suite-attempt1.log",
+      "bytes": 51942,
+      "sha256": "c58596e28e97e80b2e1d23b0da52c8ad8331186e0ae64b0545af27c213f259ac",
+      "command_lines": [
+        "> vitest run --maxWorkers=4"
+      ],
+      "result_lines": [
+        "Error: Hook timed out in 10000ms.",
+        "Error: Test timed out in 30000ms.",
+        "Error: Test timed out in 30000ms.",
+        "Error: Test timed out in 30000ms.",
+        "Error: Test timed out in 30000ms.",
+        " Test Files  8 failed | 250 passed (258)",
+        "      Tests  31 failed | 2353 passed (2384)",
+        "   Duration  627.27s (transform 60.74s, setup 0ms, import 133.47s, tests 679.88s, environment 77.97s)"
+      ]
+    },
+    {
+      "file": "full-suite-final.log",
+      "bytes": 2036,
+      "sha256": "9c73877f827db05d9f557649503b37d1c4433333f423625bcc3eefda9c2de259",
+      "command_lines": [
+        "> vitest run --maxWorkers=4"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "full-suite-fixed.log",
+      "bytes": 1627,
+      "sha256": "782684c2c1858a3af7d3b33852e8a56dea74529768d51a34f854fce03c226d9e",
+      "command_lines": [
+        "> vitest run --maxWorkers=2"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "full-suite-reviewfinal.log",
+      "bytes": 1834,
+      "sha256": "4585075e68847d06b9c39bbf13a4e9841d895573a63c67aa4c741395e5e67748",
+      "command_lines": [
+        "> vitest run --maxWorkers=2"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "full-suite-utf8final.log",
+      "bytes": 1820,
+      "sha256": "42c485122c5049d058e2de5e0c55f0657527d6feac4e9b3efacbba1906ace666",
+      "command_lines": [
+        "> vitest run --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  260 passed (260)",
+        "      Tests  2390 passed (2390)",
+        "   Duration  450.37s (transform 13.70s, setup 0ms, import 51.20s, tests 393.32s, environment 39.31s)"
+      ]
+    },
+    {
+      "file": "last-regressions-attempt1.log",
+      "bytes": 1363,
+      "sha256": "b19a3a3da0ce99252e3e4b17ee356327d6b31fad2d2dc683077e8cf2daa4564f",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-capacity.integration.test.ts src/features/work-items/queue-pagination.integration.test.ts src/features/whatsapp/conversations.test.ts src/routes/-production-authorization.test.ts src/features/annual-return/components/production-whatsapp-automation.interaction.test.tsx src/routes/-today.interaction.test.tsx --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  6 passed (6)",
+        "      Tests  34 passed (34)",
+        "   Duration  24.76s (transform 1.16s, setup 0ms, import 2.74s, tests 21.41s, environment 3.46s)"
+      ]
+    },
+    {
+      "file": "local-reconciliation-prepare.log",
+      "bytes": 197,
+      "sha256": "fcf51af3abb40b6364ad392e688e7c2c7efb37329bf4736745de221458cad5af",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "local-reconciliation.log",
+      "bytes": 861,
+      "sha256": "b8913f99be190ffe3c49335d80103a5126f90fc64b360749140ae16fd46d1a6d",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "nar500-attempt1.log",
+      "bytes": 2404,
+      "sha256": "3f10761671f10c5a5f1b932c458a6d88f02c7e8329c51b736959ba051e2a3656",
+      "command_lines": [
+        "> vitest run src/features/nar-import/apply.integration.test.ts -t 500 --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 1 passed | 22 skipped (24)",
+        "   Duration  68.05s (transform 690ms, setup 0ms, import 857ms, tests 67.03s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "nar500-regression-attempt2.log",
+      "bytes": 1073,
+      "sha256": "01d9d2e9b2169e9c2a33d344b8a6d48fbf000e1f7eb365d15d16ac52650a1141",
+      "command_lines": [
+        "> vitest run src/features/nar-import/apply.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  24 passed (24)",
+        "   Duration  83.43s (transform 512ms, setup 0ms, import 652ms, tests 82.60s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "pg18-image.log",
+      "bytes": 1034,
+      "sha256": "4c0e868d127fcaab18ee0962532c64149c4517f10223f8a2e474a1f468435159",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "post-reconciliation-final.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "post-reconciliation.log",
+      "bytes": 665,
+      "sha256": "c99290f6ef9a68d230e1fb04903db3c6470c67efebfae69395def9b3d336e7b5",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "public-boundary-green-attempt1.log",
+      "bytes": 6554,
+      "sha256": "292c5637ef223b3d30b98f7ba834ebef5ac699889545ec348de4bc90abe2d20f",
+      "command_lines": [
+        "> vitest run src/features/annual-return/scale.integration.test.ts src/features/annual-return/server-fns.test.ts src/features/annual-return/components/scoped-pickers.interaction.test.tsx src/routes/-portal-identity.interaction.test.tsx src/features/clients/repository.test.ts src/features/clients/components/production-client-register.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        "Error: Hook timed out in 10000ms.",
+        "Error: Test timed out in 120000ms.",
+        " Test Files  3 failed | 3 passed (6)",
+        "      Tests  2 failed | 46 passed (48)",
+        "   Duration  141.89s (transform 2.10s, setup 0ms, import 3.55s, tests 136.25s, environment 4.95s)"
+      ]
+    },
+    {
+      "file": "public-boundary-green-final.log",
+      "bytes": 3537,
+      "sha256": "6c14ddadfd48f3e27e4cdba9389f06dae5b7b94c39ddd3fe0c036f4121a902dc",
+      "command_lines": [
+        "> vitest run src/features/annual-return/scale.integration.test.ts src/features/annual-return/server-fns.test.ts src/features/annual-return/components/scoped-pickers.interaction.test.tsx src/routes/-portal-identity.interaction.test.tsx src/features/clients/repository.test.ts src/features/clients/components/production-client-register.interaction.test.tsx src/routes/-work-queue.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        "Error: Hook timed out in 10000ms.",
+        "Error: Test timed out in 120000ms.",
+        " Test Files  1 failed | 6 passed (7)",
+        "      Tests  1 failed | 68 passed (69)",
+        "   Duration  141.54s (transform 2.20s, setup 0ms, import 4.78s, tests 135.75s, environment 5.08s)"
+      ]
+    },
+    {
+      "file": "public-boundary-red.log",
+      "bytes": 3649,
+      "sha256": "f9c92788b80a288528c605a108f100911f585816fc1d04a2317f35d507497f0a",
+      "command_lines": [
+        "> vitest run src/features/annual-return/scale.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  2 failed (2)",
+        "   Duration  7.23s (transform 623ms, setup 0ms, import 796ms, tests 6.14s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "public-callers-complete.log",
+      "bytes": 1715,
+      "sha256": "a0712f30b24ad0207268dd62fee68247399df5345dbe24ec564426d148d0951f",
+      "command_lines": [
+        "> vitest run src/features/annual-return/server-fns.test.ts src/features/annual-return/components/scoped-pickers.interaction.test.tsx src/routes/-portal-identity.interaction.test.tsx src/features/clients/components/production-client-register.interaction.test.tsx src/routes/-work-queue.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  5 passed (5)",
+        "      Tests  33 passed (33)",
+        "   Duration  24.06s (transform 1.88s, setup 0ms, import 11.57s, tests 1.60s, environment 33.16s)"
+      ]
+    },
+    {
+      "file": "public-callers-final.log",
+      "bytes": 2881,
+      "sha256": "5c0c2d164774296a68bb2b180097cc8393605ead4e621faa7852e5440105d4c5",
+      "command_lines": [
+        "> vitest run src/features/annual-return/server-fns.test.ts src/features/annual-return/components/scoped-pickers.interaction.test.tsx src/routes/-portal-identity.interaction.test.tsx src/features/clients/components/production-client-register.interaction.test.tsx src/routes/-work-queue.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 4 passed (5)",
+        "      Tests  1 failed | 32 passed (33)",
+        "   Duration  7.85s (transform 1.76s, setup 0ms, import 4.60s, tests 2.17s, environment 6.87s)"
+      ]
+    },
+    {
+      "file": "public-format-final.log",
+      "bytes": 123,
+      "sha256": "bdf1c48695bfaaaa82efc030278c2e72f5bc95dd4535d44bc0aa37ad5f0fcad2",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "public-format-tests.log",
+      "bytes": 192,
+      "sha256": "6fcd12348c72bef92556bad94b1920b3cb927665bf779e7ee50c8e5c7ac20459",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "public-format.log",
+      "bytes": 444,
+      "sha256": "1de195ff9be099f62cf413f3f298c3728c64fa33439325e3b4be3ac89872c968",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "public-lint-complete.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "public-types-complete.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "public-types-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "public-types.log",
+      "bytes": 829,
+      "sha256": "2298d55d644e5d1dc36d2d069c3fa82e399de28c1382121bc89d698ab85fb1b7",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-capacity-attempt1.log",
+      "bytes": 2115,
+      "sha256": "7c3b8741cbf36aa7035db863e26987575e8717147a2ce5f96f902fff5b667a21",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-capacity.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  992ms (transform 502ms, setup 0ms, import 643ms, tests 94ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r16-capacity-attempt2.log",
+      "bytes": 1080,
+      "sha256": "429040b21512e12d79ac06de7683bbf437bc89e478138ed6136f101ca35c1e4b",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-capacity.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  1 passed (1)",
+        "   Duration  33.40s (transform 585ms, setup 0ms, import 737ms, tests 32.37s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r16-clients-red.log",
+      "bytes": 2077,
+      "sha256": "4352b2b831da791cbda87c0bfb3fbdb9bc47a2874027072a1ddc0776706c04e1",
+      "command_lines": [],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 6 passed (7)",
+        "   Duration  6.62s (transform 979ms, setup 0ms, import 2.42s, tests 1.06s, environment 2.69s)"
+      ]
+    },
+    {
+      "file": "r16-format-final.log",
+      "bytes": 1042,
+      "sha256": "54c8d259c005d88c86eceebd8fac70746bf5c7e895b70c51d2cedf88d96012bf",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "r16-format-final2.log",
+      "bytes": 1282,
+      "sha256": "5ae6caf4eda9b6bbc795826cb8a312f1b16aa6e6f866f42d8180b7b44c4c6a6e",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "r16-format.log",
+      "bytes": 432,
+      "sha256": "ce771e7e5d423a994087d01d54a628240545f2839c5a307d8f2da39380796519",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "r16-green-attempt1.log",
+      "bytes": 978,
+      "sha256": "84aade58819f7c8798b69f1734c5a41827ea963e540c220f4bc8a12915b4bd0e",
+      "command_lines": [],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  1 passed (1)",
+        "   Duration  8.64s (transform 469ms, setup 0ms, import 610ms, tests 7.79s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r16-green-attempt2.log",
+      "bytes": 3021,
+      "sha256": "e7e7f79efacbdec58c3466d0faa009a78aa0f9525cf62a597178d1d4a9c016ef",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-pagination.integration.test.ts src/features/work-items/server-fns.test.ts src/features/bulk-operations/repository.integration.test.ts src/routes/-work-queue.interaction.test.tsx src/features/clients/components/production-client-register.interaction.test.tsx src/lib/list-navigation.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 5 passed (6)",
+        "      Tests  1 failed | 30 passed (31)",
+        "   Duration  71.16s (transform 2.97s, setup 0ms, import 17.66s, tests 44.35s, environment 35.09s)"
+      ]
+    },
+    {
+      "file": "r16-green-final.log",
+      "bytes": 1741,
+      "sha256": "69190b2b4a7b2784fcba0670837a7ab5f616c29a85c81e5092d30ca0c8b67c95",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-pagination.integration.test.ts src/features/work-items/server-fns.test.ts src/features/bulk-operations/repository.integration.test.ts src/routes/-work-queue.interaction.test.tsx src/features/clients/components/production-client-register.interaction.test.tsx src/lib/list-navigation.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  6 passed (6)",
+        "      Tests  31 passed (31)",
+        "   Duration  17.87s (transform 1.91s, setup 0ms, import 3.67s, tests 14.27s, environment 3.23s)"
+      ]
+    },
+    {
+      "file": "r16-green-null.log",
+      "bytes": 2864,
+      "sha256": "1b95b02676ca4a2ab5a2fad2cd102be1c5a3aae00683603d9af56272d52163eb",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-pagination.integration.test.ts src/features/work-items/server-fns.test.ts src/features/bulk-operations/repository.integration.test.ts src/routes/-work-queue.interaction.test.tsx src/features/clients/components/production-client-register.interaction.test.tsx src/lib/list-navigation.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 5 passed (6)",
+        "      Tests  1 failed | 30 passed (31)",
+        "   Duration  16.48s (transform 1.73s, setup 0ms, import 3.30s, tests 13.55s, environment 2.17s)"
+      ]
+    },
+    {
+      "file": "r16-lint-final.log",
+      "bytes": 352,
+      "sha256": "28e0b3b04d301d5f5323e9804f218f0951bbc4394e7b1744252d5eab6c58c67d",
+      "command_lines": [],
+      "result_lines": [
+        "✖ 1 problem (0 errors, 1 warning)"
+      ]
+    },
+    {
+      "file": "r16-lint.log",
+      "bytes": 580,
+      "sha256": "05b887d58ced33dde86035752933ec422fcc15744794c4fccaac67226e332bf8",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "r16-navigation-red.log",
+      "bytes": 1698,
+      "sha256": "b8703a359b75620fb39b1292a246bd223b20c15fba1556631174105c6f29a2ec",
+      "command_lines": [],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  1.45s (transform 536ms, setup 0ms, import 606ms, tests 11ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r16-null-final.log",
+      "bytes": 1080,
+      "sha256": "b0b3b570885ccfbfac97b50d46b0c69c7a3250380da033d233c82735d114b131",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-pagination.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  1 passed (1)",
+        "   Duration  6.37s (transform 518ms, setup 0ms, import 645ms, tests 5.50s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r16-red.log",
+      "bytes": 2160,
+      "sha256": "e71fb8895ad33893ec5a69d36f367315a477f41ab8c63f30553201938ede87f2",
+      "command_lines": [],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  8.64s (transform 549ms, setup 0ms, import 1.06s, tests 6.86s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r16-typecheck-attempt.log",
+      "bytes": 4529,
+      "sha256": "c9ac4b8f03324c27d20921e6bfdf990e513f92065d5ee99b3d39fa1a4a91cea8",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-typecheck-attempt2.log",
+      "bytes": 614,
+      "sha256": "3ccaadf20e6efbd412da19206798265b34369efdf6f0e074450da4f3990f1b17",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-typecheck-attempt3.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-typecheck-final.log",
+      "bytes": 712,
+      "sha256": "a4125963975c2954cb9c6b15696ea04f9659434afb699dd601f7d68bc373e34e",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-typecheck-final2.log",
+      "bytes": 392,
+      "sha256": "6d555cba16c2bd730739f583992995879014dcafaf23d750fde801ed5aed70d2",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-types-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-types-final2.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r16-ui-green-attempt.log",
+      "bytes": 1376,
+      "sha256": "97f09c9b3eaffaf53a4cfd62d249380043b06fcf38a5ee8c316772b5b3a962c3",
+      "command_lines": [],
+      "result_lines": [
+        " Test Files  3 passed (3)",
+        "      Tests  8 passed (8)",
+        "   Duration  3.34s (transform 1.35s, setup 0ms, import 3.06s, tests 394ms, environment 1.83s)"
+      ]
+    },
+    {
+      "file": "r16-ui-red.log",
+      "bytes": 17097,
+      "sha256": "6cb8ccfcdfd7e97079b3d3b66d61286aa9edcda8d3d46cecf552d9a72dc4d031",
+      "command_lines": [],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 1 passed (2)",
+        "   Duration  29.00s (transform 725ms, setup 0ms, import 7.81s, tests 1.46s, environment 18.98s)"
+      ]
+    },
+    {
+      "file": "r17-document-safety-green.log",
+      "bytes": 1075,
+      "sha256": "240b7ea3f1b418f2a927945085b93ae15681ed10661ba9e6005a7e8f6b84448b",
+      "command_lines": [
+        "> vitest run src/features/documents/repository.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  43 passed (43)",
+        "   Duration  5.53s (transform 616ms, setup 0ms, import 900ms, tests 4.43s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r17-documents-red.log",
+      "bytes": 2224,
+      "sha256": "c5c310131b5b8e9cb455a9fda93064b5e900df9cf631513d99c5ac2ce3481dd0",
+      "command_lines": [
+        "> vitest run src/features/documents/global-search.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  624ms (transform 194ms, setup 0ms, import 266ms, tests 53ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r17-documents-red2.log",
+      "bytes": 2186,
+      "sha256": "38f296e92eb7ae14b5ca28608f4d7dc75d6db3d8f0cdcb2ff813507be0c2741e",
+      "command_lines": [
+        "> vitest run src/features/documents/global-search.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  477ms (transform 157ms, setup 0ms, import 216ms, tests 98ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r17-final.log",
+      "bytes": 1469,
+      "sha256": "ee40da81176dc530dd3b980c5cb66b791c409346cf9ddffe286c17447e63e18f",
+      "command_lines": [
+        "> vitest run src/features/annual-return/payment-workspace.integration.test.ts src/features/annual-return/payment-review.integration.test.ts src/features/annual-return/readiness.integration.test.ts src/features/documents/global-search.integration.test.ts src/features/documents/repository.integration.test.ts src/features/bulk-operations/repository.integration.test.ts src/routes/-payments.interaction.test.tsx src/routes/-documents-production-data.test.tsx --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  8 passed (8)",
+        "      Tests  95 passed (95)",
+        "   Duration  32.65s (transform 5.79s, setup 0ms, import 8.39s, tests 24.64s, environment 1.75s)"
+      ]
+    },
+    {
+      "file": "r17-payments-red.log",
+      "bytes": 2147,
+      "sha256": "a792ebe34e14a5506166c692cea2446421693f9a3734163fb755de4b0fa8136c",
+      "command_lines": [
+        "> vitest run src/features/annual-return/payment-workspace.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "   Duration  677ms (transform 310ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r17-readmodels-green-attempt1.log",
+      "bytes": 3388,
+      "sha256": "53073766ca43d92896ef37b06814c8e52e1a42090c01caa156c6b02c42337f10",
+      "command_lines": [
+        "> vitest run src/features/annual-return/payment-workspace.integration.test.ts src/features/documents/global-search.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  2 failed (2)",
+        "      Tests  2 failed (2)",
+        "   Duration  1.37s (transform 254ms, setup 0ms, import 401ms, tests 413ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r17-readmodels-green-attempt2.log",
+      "bytes": 1187,
+      "sha256": "b758385ff232397b39c7e7105d0557977371ef9bab8464089e22fbf534b604d6",
+      "command_lines": [
+        "> vitest run src/features/annual-return/payment-workspace.integration.test.ts src/features/documents/global-search.integration.test.ts src/routes/-payments.interaction.test.tsx --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  3 passed (3)",
+        "      Tests  7 passed (7)",
+        "   Duration  25.41s (transform 965ms, setup 0ms, import 5.79s, tests 893ms, environment 17.95s)"
+      ]
+    },
+    {
+      "file": "r17-regression-attempt1.log",
+      "bytes": 14094,
+      "sha256": "ab85bdbe08f20f39f0f60e774a12f6065861ea03d846d63efbe3297799a6f19d",
+      "command_lines": [
+        "> vitest run src/features/annual-return/payment-workspace.integration.test.ts src/features/annual-return/payment-review.integration.test.ts src/features/documents/global-search.integration.test.ts src/features/documents/repository.integration.test.ts src/features/bulk-operations/repository.integration.test.ts src/routes/-payments.interaction.test.tsx src/routes/-documents-production-data.test.tsx --maxWorkers=4"
+      ],
+      "result_lines": [
+        "Error: Test timed out in 30000ms.",
+        " Test Files  1 failed | 6 passed (7)",
+        "      Tests  11 failed | 73 passed (84)",
+        "   Duration  82.08s (transform 3.86s, setup 0ms, import 6.66s, tests 75.60s, environment 1.81s)"
+      ]
+    },
+    {
+      "file": "r17-regression-attempt2.log",
+      "bytes": 8380,
+      "sha256": "87798a73fc0f7c1a3db9517166b375a920d65a8c7461b1f7b5aeea35a353fe3f",
+      "command_lines": [
+        "> vitest run src/features/annual-return/payment-workspace.integration.test.ts src/features/annual-return/payment-review.integration.test.ts src/features/documents/global-search.integration.test.ts src/features/documents/repository.integration.test.ts src/features/bulk-operations/repository.integration.test.ts src/routes/-payments.interaction.test.tsx src/routes/-documents-production-data.test.tsx --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 6 passed (7)",
+        "      Tests  2 failed | 82 passed (84)",
+        "   Duration  51.51s (transform 6.08s, setup 0ms, import 16.22s, tests 22.58s, environment 19.74s)"
+      ]
+    },
+    {
+      "file": "r17-regression-attempt3.log",
+      "bytes": 1469,
+      "sha256": "ce8cee7bc4122896fd9ccc9b31883138402098f8dcc29276e6e34eb7a54fc7bf",
+      "command_lines": [
+        "> vitest run src/features/annual-return/payment-workspace.integration.test.ts src/features/annual-return/payment-review.integration.test.ts src/features/annual-return/readiness.integration.test.ts src/features/documents/global-search.integration.test.ts src/features/documents/repository.integration.test.ts src/features/bulk-operations/repository.integration.test.ts src/routes/-payments.interaction.test.tsx src/routes/-documents-production-data.test.tsx --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  8 passed (8)",
+        "      Tests  95 passed (95)",
+        "   Duration  29.43s (transform 4.99s, setup 0ms, import 9.15s, tests 21.01s, environment 1.69s)"
+      ]
+    },
+    {
+      "file": "r17-typecheck-attempt1.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r17-typecheck-attempt2.log",
+      "bytes": 483,
+      "sha256": "ae155112f126930367494c1aea248dfb781aa9a9aacd6195caab7b4d124ff1f9",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r21-microseconds-red.log",
+      "bytes": 2175,
+      "sha256": "71692e8e0f0fb360bf26b4f5874d66d7df818fefc98c79ee6c0592dc836da8b6",
+      "command_lines": [
+        "> vitest run src/features/whatsapp/conversations.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 17 passed (18)",
+        "   Duration  520ms (transform 71ms, setup 0ms, import 110ms, tests 21ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r21-red.log",
+      "bytes": 2108,
+      "sha256": "6fd463700aa4e256a6b9368eddcc8acafe21889ce68c55cf438a3706584f7bb8",
+      "command_lines": [
+        "> vitest run src/features/whatsapp/history-pagination.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "   Duration  301ms (transform 59ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r21-regression-attempt1.log",
+      "bytes": 1197,
+      "sha256": "8abead193637ce0fb1b9b2a92f79b86d4ac06cc89b047abece43968d56b2ddfb",
+      "command_lines": [
+        "> vitest run src/features/whatsapp/history-pagination.integration.test.ts src/features/whatsapp/components/production-inbox.interaction.test.tsx src/features/whatsapp/server-fns.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  3 passed (3)",
+        "      Tests  34 passed (34)",
+        "   Duration  10.62s (transform 956ms, setup 0ms, import 1.94s, tests 1.05s, environment 7.87s)"
+      ]
+    },
+    {
+      "file": "r21-regression-attempt2.log",
+      "bytes": 1196,
+      "sha256": "202f8c4a3bd96f703d8e01308c6baef6b59ec0bda21b7af0360c87e15a60faa0",
+      "command_lines": [
+        "> vitest run src/features/whatsapp/history-pagination.integration.test.ts src/features/whatsapp/components/production-inbox.interaction.test.tsx src/features/whatsapp/server-fns.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  3 passed (3)",
+        "      Tests  36 passed (36)",
+        "   Duration  4.01s (transform 539ms, setup 0ms, import 1.27s, tests 1.15s, environment 1.63s)"
+      ]
+    },
+    {
+      "file": "r21-sql-attempt1.log",
+      "bytes": 1080,
+      "sha256": "b817ca7400ec5177d6de1d60e9b523d7d40971127e5665ee62a23937fbe74f39",
+      "command_lines": [
+        "> vitest run src/features/whatsapp/history-pagination.integration.test.ts --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  1 passed (1)",
+        "   Duration  530ms (transform 101ms, setup 0ms, import 152ms, tests 156ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r25-format.log",
+      "bytes": 331,
+      "sha256": "3eeed9b50f80c1d973658a5bf7a0dd7ce7e8345313b7f854bd740a2c8d5f2f83",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "rehearsal-format.log",
+      "bytes": 116,
+      "sha256": "00f483138d5b28e52bc8ad64c78dc6f8003d8a9765bfb8868dc20391c7cac656",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-b255-invariance.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-comparison-extension.log",
+      "bytes": 864,
+      "sha256": "69761de6f4e167823824faf05835b986731f304c090a685d8648ddadbaae0e9b",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-comparison.log",
+      "bytes": 864,
+      "sha256": "c7f741c9a8381b676e91b89cd5a7e49eb9427bb4bdb687e1d5d41d1a873e450d",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-final-invariance.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-local-retry.log",
+      "bytes": 228,
+      "sha256": "0d17c7b898e42923ddd70fa0fe656cabed1cd95cbbe93cfa9f3b0c9e87190568",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-local-retry2.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-local-roles.log",
+      "bytes": 30,
+      "sha256": "a438548063c45b78c98250bde49f7de1eb40e22c46a62f5c9cb854e3902e419b",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restore-local.log",
+      "bytes": 231,
+      "sha256": "ba79922449432f0de1b39caa4ce93814bf4e14fc80392c5800bc66761c52b692",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restored-contract.log",
+      "bytes": 3625,
+      "sha256": "25adea60b34a80d4b2cf55cd3797ee122d6f4533afb05c1830653f1971aba7ff",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restored-runtime-b255.log",
+      "bytes": 559,
+      "sha256": "336e6a0eb907f22b3acdb479803ed469c333d4986551c1c5678ad37a4a25fce0",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restored-runtime-final.log",
+      "bytes": 559,
+      "sha256": "336e6a0eb907f22b3acdb479803ed469c333d4986551c1c5678ad37a4a25fce0",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restored-runtime-new-reads.log",
+      "bytes": 559,
+      "sha256": "336e6a0eb907f22b3acdb479803ed469c333d4986551c1c5678ad37a4a25fce0",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restored-runtime-read-attempt2.log",
+      "bytes": 197,
+      "sha256": "354175b9ce815e64591a9d61d35aec02c4d9594d0b5a096d7329828ca5c15a09",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "restored-runtime-read.log",
+      "bytes": 250,
+      "sha256": "a9667cc69b3b38c22d04cd0189bf037354ef4415c410da63ef227096ad095221",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "review-format-tests.log",
+      "bytes": 97,
+      "sha256": "3ea2497e807b0a2762e9d2ff7919afc83bd300821c62bee74cd45d23da527df7",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "review-format.log",
+      "bytes": 812,
+      "sha256": "714c43aba18825ab6f61220aafa24a8c68ba68a3d0faee3186fc23649e782b60",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "review-green-attempt1.log",
+      "bytes": 1751,
+      "sha256": "6084b771654c7fe384f19cea4ba68558a4377eaa3bb2cc000bf2f47238ec8fc3",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-review.integration.test.ts src/features/documents/global-search.integration.test.ts src/features/work-items/server-fns.test.ts src/routes/-work-queue.interaction.test.tsx src/routes/-documents-production-data.test.tsx src/routes/-payments.interaction.test.tsx src/routes/-today.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  7 passed (7)",
+        "      Tests  35 passed (35)",
+        "   Duration  23.28s (transform 3.65s, setup 0ms, import 11.90s, tests 2.16s, environment 27.85s)"
+      ]
+    },
+    {
+      "file": "review-green-final.log",
+      "bytes": 1661,
+      "sha256": "8968361950515d0b8ce74366aad1885299e8d6754fe2f0c1d3313cba782fdb80",
+      "command_lines": [
+        "> vitest run src/features/documents/server-fns.test.ts src/features/work-items/queue-review.integration.test.ts src/features/documents/global-search.integration.test.ts src/routes/-work-queue.interaction.test.tsx src/routes/-payments.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  5 passed (5)",
+        "      Tests  39 passed (39)",
+        "   Duration  5.60s (transform 1.80s, setup 0ms, import 3.75s, tests 1.50s, environment 2.04s)"
+      ]
+    },
+    {
+      "file": "review-lint-complete.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "review-lint-final.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "review-lint-tests-final.log",
+      "bytes": 44424,
+      "sha256": "59986fcd1cef44734c08320e0ebdea9437ce582ea021aa0ea6877960334d874e",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "review-red.log",
+      "bytes": 3314,
+      "sha256": "d277571fd520134384bb2f92dcf92a4bf8e56abbe5c90bbadd2b8438d1edfd1e",
+      "command_lines": [
+        "> vitest run src/features/work-items/queue-review.integration.test.ts src/features/documents/global-search.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 failed (2)",
+        "      Tests  2 failed (2)",
+        "   Duration  10.26s (transform 1.84s, setup 0ms, import 3.15s, tests 5.89s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "review-types-attempt1.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "review-types-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "review-types-tests-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "reviewfinal-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "command_lines": [],
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "file": "reviewfinal-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "command_lines": [],
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    },
+    {
+      "file": "scale-cursor-failure.log",
+      "bytes": 2207,
+      "sha256": "3bd8dbfd603584bbe1107d871261a617f7f4fb1750d6f603d037a8bf6f660959",
+      "command_lines": [
+        "> vitest run src/features/annual-return/scale.integration.test.ts -t rejects invalid --maxWorkers=4"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 1 skipped (2)",
+        "   Duration  922ms (transform 523ms, setup 0ms, import 662ms, tests 15ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "scale-document-boundary-attempt1.log",
+      "bytes": 2731,
+      "sha256": "0f5f912996efe25ad3694067795a1debaaa1e3ce3c38ba9222b7ed1db1cd4e74",
+      "command_lines": [
+        "> vitest run src/features/annual-return/scale.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed | 1 passed (2)",
+        "   Duration  6.49s (transform 471ms, setup 0ms, import 600ms, tests 5.69s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "scale-final.log",
+      "bytes": 1076,
+      "sha256": "734eaed681ed7c4de241aabe15f4ae125e1038381a140029be400b76c5e8029f",
+      "command_lines": [
+        "> vitest run src/features/annual-return/scale.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  2 passed (2)",
+        "   Duration  241.59s (transform 517ms, setup 0ms, import 674ms, tests 240.70s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "tracked-restore-verifier.log",
+      "bytes": 664,
+      "sha256": "09c923d9fb1d27f4bc482fa4257bf870dd2316099a4fb3dd17465766d2716045",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "utf8-format.log",
+      "bytes": 121,
+      "sha256": "8bbd5cad5ba4fc8f96ee8dbd3c96d2ff41f9856a28611e792bd6d46364407962",
+      "command_lines": [],
+      "result_lines": []
+    },
+    {
+      "file": "utf8-green.log",
+      "bytes": 1378,
+      "sha256": "7a227d555bde69b18555989eb2efdb48816dd056b262a7e2e34268c9e2e99710",
+      "command_lines": [
+        "> vitest run src/lib/list-page.test.ts src/lib/list-navigation.test.ts src/features/work-items/queue-review.integration.test.ts src/features/work-items/queue-pagination.integration.test.ts src/features/documents/global-search.integration.test.ts src/features/annual-return/payment-workspace.integration.test.ts src/features/whatsapp/history-pagination.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  7 passed (7)",
+        "      Tests  7 passed (7)",
+        "   Duration  8.49s (transform 1.08s, setup 0ms, import 2.02s, tests 5.43s, environment 1ms)"
+      ]
+    },
+    {
+      "file": "utf8-lint.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "command_lines": [
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "utf8-types.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "command_lines": [
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "utf8final-db-migrate.log",
+      "bytes": 3173,
+      "sha256": "2495bfbdcbdcb5ea96749cd0e7e638e3d2a54f040b1dfcfc72dafb1b79bd7a25",
+      "command_lines": [],
+      "result_lines": [
+        "Migration transaction committed."
+      ]
+    },
+    {
+      "file": "utf8final-db-seed.log",
+      "bytes": 45,
+      "sha256": "43b066ad1c7185e0c74ef5905999d1124ce4862268d86c7db59d6e4fc9453f30",
+      "command_lines": [],
+      "result_lines": [
+        "Seeded 3 companies and annual return cases."
+      ]
+    }
+  ]
+}

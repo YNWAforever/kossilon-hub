@@ -18,7 +18,7 @@ test("Admin daily entry, all links, keyboard drawer, readable settings and touch
     await expect(page.getByRole("dialog")).toBeVisible();
   }
   const nav = page.getByRole("navigation", { name: "Primary navigation" });
-  await expect(nav.getByRole("link")).toHaveCount(16);
+  await expect(nav.getByRole("link")).toHaveCount(17);
   await expect(nav.getByRole("link", { name: "今日工作", exact: true })).toHaveAttribute(
     "aria-current",
     "page",

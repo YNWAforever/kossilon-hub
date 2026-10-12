@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WhatsAppConversation } from "../conversations";
@@ -15,6 +15,20 @@ const serverFns = vi.hoisted(() => ({
 }));
 
 vi.mock("../server-fns", () => serverFns);
+vi.mock("../history-server-fns", () => ({
+  listWhatsAppConversationPage: async (input: unknown) => {
+    const items = await serverFns.listWhatsAppConversations(input);
+    return Array.isArray(items)
+      ? { items, total: items.length, nextCursor: null, observedAt: "2026-10-12T00:00Z" }
+      : items;
+  },
+  listWhatsAppMessagePage: async (input: unknown) => {
+    const items = await serverFns.listWhatsAppConversationMessages(input);
+    return Array.isArray(items)
+      ? { items, total: items.length, nextCursor: null, observedAt: "2026-10-12T00:00Z" }
+      : items;
+  },
+}));
 vi.mock("./message-intake", () => ({ MessageIntake: () => null }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
@@ -65,6 +79,100 @@ function renderInbox() {
 }
 
 describe("production WhatsApp inbox", () => {
+  it("loads thread101 by its cursor and searches recorded scope instead of the current rail", async () => {
+    serverFns.listWhatsAppConversations.mockImplementation(
+      ({ data }: { data: { q: string; cursor?: string; limit: number } }) => {
+        expect(data.limit).toBe(50);
+        const items =
+          data.cursor || data.q
+            ? [
+                makeConversation({
+                  contactId: "44444444-4444-4444-8444-444444444444",
+                  displayName: "中文 thread101",
+                }),
+              ]
+            : [makeConversation()];
+        return {
+          items,
+          total: data.q ? 1 : 101,
+          nextCursor: data.cursor || data.q ? null : "thread-cursor",
+          observedAt: "2026-10-12T00:00Z",
+        };
+      },
+    );
+    renderInbox();
+    fireEvent.click(await screen.findByRole("button", { name: "載入較早對話" }));
+    await screen.findByRole("button", { name: /中文 thread101/ });
+    expect(screen.getByRole("heading", { name: "Ada Wong" })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Search all recorded conversations"), {
+      target: { value: "中文" },
+    });
+    await screen.findByRole("heading", { name: "中文 thread101" });
+    expect(screen.queryByRole("button", { name: /Ada Wong/ })).toBeNull();
+  });
+  it("retains old messages on a failed older page, retries its cursor, preserves scroll and accepts new messages without changing thread", async () => {
+    const message = (id: string) => ({
+      id,
+      direction: "inbound",
+      status: "received",
+      body: "page-message " + id,
+      caseId: null,
+      createdAt: "2026-10-01T00:00Z",
+      receivedAt: "2026-10-01T00:00Z",
+      sentAt: null,
+      sentAs: null,
+      sentTemplateName: null,
+      attachments: [],
+    });
+    const page = (ids: string[], nextCursor: string | null) => ({
+      items: ids.map(message),
+      total: 201,
+      nextCursor,
+      observedAt: "2026-10-12T00:00Z",
+    });
+    let failure = true,
+      arrived = false;
+    serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
+    serverFns.listWhatsAppConversationMessages.mockImplementation(
+      ({ data }: { data: { cursor?: string; limit: number } }) => {
+        expect(data.limit).toBe(50);
+        if (data.cursor) {
+          if (failure) {
+            failure = false;
+            throw Error("offline older");
+          }
+          return page(["001", "002"], null);
+        }
+        return page(arrived ? ["203", "201", "202"] : ["201", "202"], "message-cursor");
+      },
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ProductionWhatsAppInbox />
+      </QueryClientProvider>,
+    );
+    await screen.findByText("page-message 201");
+    const log = screen.getByRole("log");
+    Object.defineProperty(log, "scrollHeight", {
+      configurable: true,
+      get: () => screen.queryAllByText(/^page-message/).length * 100,
+    });
+    log.scrollTop = 77;
+    fireEvent.click(screen.getByRole("button", { name: "載入更早訊息" }));
+    await screen.findByText("offline older");
+    expect(screen.getByText("page-message 201")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "重試訊息" }));
+    await screen.findByText("page-message 001");
+    await waitFor(() => expect(log.scrollTop).toBe(277));
+    arrived = true;
+    await act(() => client.refetchQueries({ queryKey: ["whatsapp-latest"] }));
+    fireEvent.click(await screen.findByRole("button", { name: /有新訊息/ }));
+    await screen.findByText("page-message 203");
+    expect(screen.getByRole("heading", { name: "Ada Wong" })).toBeTruthy();
+    expect(screen.getByText("page-message 001")).toBeTruthy();
+    expect(log.scrollTop).toBe(277);
+  });
   it("does not claim inbound is disabled when only outbound bindings are missing", async () => {
     serverFns.listWhatsAppConversations.mockResolvedValue([]);
     serverFns.getWhatsAppIntegrationStatus.mockResolvedValue({

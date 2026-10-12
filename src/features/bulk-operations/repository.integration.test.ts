@@ -624,3 +624,195 @@ describe.skipIf(!url)("actual PostgreSQL resumable bulk assignments", () => {
       expect(hidden.items.every((i) => i.resourceId === null)).toBe(true);
     }));
 });
+it.skipIf(!url)(
+  "R18 history filters and metadata come from persisted approval and worker evidence",
+  async () =>
+    fixture(1, async (f) => {
+      const repo = createBulkOperationsRepository({ sql: sql! });
+      const p = await repo.preview(f.actor, {
+          resource: "annual_return_case",
+          selection: { mode: "explicit_ids", ids: f.caseIds },
+          assignment: { target: "owner", assigneeId: f.assigneeId },
+        }),
+        j = await repo.execute(f.actor, {
+          previewId: p.previewId,
+          idempotencyKey: crypto.randomUUID(),
+        });
+      const history = await repo.listJobs(f.actor, {
+        operation: "assignment",
+        resource: "annual_return_case",
+        actorId: f.actor.userId!,
+        createdFrom: "2000-01-01T00:00:00Z",
+        limit: 1,
+      });
+      expect(history.jobs[0]).toMatchObject({
+        jobId: j.jobId,
+        operation: "assignment",
+        actorId: f.actor.userId,
+        lastHeartbeat: null,
+      });
+      expect(history.jobs[0].scopeSummary).toContain("1");
+      expect(await repo.listJobs(f.actor, { operation: "document_list_export" })).toMatchObject({
+        jobs: [],
+      });
+      const before = await repo.getJob(f.actor, { jobId: j.jobId });
+      expect(before.lastWorkerReceiptAt).toBeNull();
+      await runBulkAssignmentChunk({ repository: repo, actor: f.actor, jobId: j.jobId });
+      expect((await repo.getJob(f.actor, { jobId: j.jobId })).lastWorkerReceiptAt).toBeTruthy();
+    }),
+);
+
+it.skipIf(!url)(
+  "R18 fifty-item mixed results retain 47 successes and reconcile unknown before retry",
+  async () =>
+    fixture(50, async (f) => {
+      const ids = [...f.caseIds].sort();
+      let failed = false,
+        unknown = false;
+      const repo = createBulkOperationsRepository({
+        sql: sql!,
+        assign: async (tx, actor, command) => {
+          if (command.id === ids[48] && !failed) {
+            failed = true;
+            await tx.unsafe(
+              "do $$begin raise exception using errcode='40001',message='Local R18 serialization';end$$;",
+            );
+          }
+          await applyAssignment(tx, actor, command);
+          if (command.id === ids[49] && !unknown) {
+            unknown = true;
+            throw Object.assign(Error("Local R18 unknown transport"), { code: "ECONNRESET" });
+          }
+        },
+      });
+      const p = await repo.preview(f.actor, {
+        resource: "annual_return_case",
+        selection: { mode: "explicit_ids", ids },
+        assignment: { target: "owner", assigneeId: f.assigneeId },
+      });
+      await sql!`update annual_return_cases set updated_at=now() where id=${ids[47]}`;
+      const input = { previewId: p.previewId, idempotencyKey: crypto.randomUUID() },
+        j = await repo.execute(f.actor, input);
+      expect((await repo.execute(f.actor, input)).jobId).toBe(j.jobId);
+      await runBulkAssignmentChunk({ repository: repo, actor: f.actor, jobId: j.jobId });
+      const result = await repo.getJob(f.actor, { jobId: j.jobId });
+      expect(result.counts).toMatchObject({ succeeded: 47, conflict: 1, failed: 1, unknown: 1 });
+      expect(result.retryableFailedCount).toBe(1);
+      expect((await repo.retryFailed(f.actor, j.jobId)).retryCount).toBe(1);
+      await runBulkAssignmentChunk({ repository: repo, actor: f.actor, jobId: j.jobId });
+      expect((await repo.getJob(f.actor, { jobId: j.jobId })).counts.unknown).toBe(1);
+      expect((await repo.reconcileUnknown(f.actor, j.jobId)).reconciledCount).toBe(1);
+      await runBulkAssignmentChunk({ repository: repo, actor: f.actor, jobId: j.jobId });
+      const final = await repo.getJob(f.actor, { jobId: j.jobId });
+      expect(final.counts).toMatchObject({ succeeded: 49, conflict: 1 });
+      expect(final.items.filter((i) => i.attempts === 1 && i.state === "succeeded")).toHaveLength(
+        47,
+      );
+      const [audit] =
+        await sql!`select count(*)::int n from annual_return_audit_events where case_id=any(${ids}::uuid[])`;
+      expect(audit.n).toBe(49);
+    }),
+);
+it.skipIf(!url)(
+  "R18 1000 document snapshot from page50 binds company/document scope and excludes locked rows",
+  async () =>
+    fixture(2, async (f) => {
+      const { createDocumentRepository } = await import("@/features/documents/repository");
+      const docs = Array.from({ length: 1001 }, () => crypto.randomUUID()),
+        tag = crypto.randomUUID();
+      await sql!.begin(async (tx) => {
+        await tx`update annual_return_cases set locked_at=now() where id=${f.caseIds[1]}`;
+        await tx`insert into documents ${tx(docs.map((id, n) => ({ id, company_id: n === 1000 ? f.foreignCompanyId : f.companyId, case_id: n === 1000 ? null : n === 999 ? f.caseIds[1] : f.caseIds[0], file_type: "other", file_name: tag + " file " + n, storage_url: "", upload_source: "staff" })))}`;
+      });
+      try {
+        const dr = createDocumentRepository({ sql: sql! }),
+          page = await dr.listDocumentPage({
+            q: tag,
+            teamId: f.actor.teamId!,
+            assignedUserId: f.actor.userId!,
+            limit: 50,
+          });
+        expect(page.total).toBe(1000);
+        expect(page.documents).toHaveLength(50);
+        const repo = createBulkOperationsRepository({ sql: sql! }),
+          snap = await repo.createSnapshot(f.actor, {
+            resource: "document",
+            filters: { q: tag, companyId: f.companyId },
+          });
+        expect(snap.count).toBe(1000);
+        const one = await repo.createSnapshot(f.actor, {
+          resource: "document",
+          filters: { companyId: f.companyId, documentId: docs[0] },
+        });
+        expect(one.count).toBe(1);
+        const extra = crypto.randomUUID();
+        docs.push(extra);
+        await sql!`insert into documents(id,company_id,case_id,file_type,file_name,storage_url,upload_source) values(${extra},${f.companyId},${f.caseIds[0]},'other',${tag + " late"},'','staff')`;
+        expect(
+          (
+            await repo.snapshotMembership(f.actor, {
+              snapshotId: snap.snapshotId,
+              ids: [extra, docs[1000], docs[0]],
+            })
+          ).ids,
+        ).toEqual([docs[0]]);
+        const preview = await repo.previewAction(f.actor, {
+          resource: "document",
+          selection: {
+            mode: "filtered_snapshot",
+            snapshotId: snap.snapshotId,
+            excludedIds: docs.slice(0, 2),
+          },
+          action: { kind: "document_assignment", target: "owner", assigneeId: f.assigneeId },
+        });
+        expect(preview).toMatchObject({
+          count: 998,
+          eligibleCount: 997,
+          reasons: { locked: 1, forbidden: 0, conflict: 0 },
+        });
+        expect(JSON.stringify(preview)).not.toContain(docs[1000]);
+      } finally {
+        await sql!`delete from documents where id=any(${docs}::uuid[])`;
+      }
+    }),
+  60000,
+);
+
+it.skipIf(!url)(
+  "R18 1000 items survive committed interruption, expire the first lease and finish through isolated scheduler chunks",
+  async () =>
+    fixture(1000, async (f) => {
+      const repo = createBulkOperationsRepository({ sql: sql! }),
+        p = await repo.preview(f.actor, {
+          resource: "annual_return_case",
+          selection: { mode: "explicit_ids", ids: f.caseIds },
+          assignment: { target: "owner", assigneeId: f.assigneeId },
+        }),
+        j = await repo.execute(f.actor, {
+          previewId: p.previewId,
+          idempotencyKey: crypto.randomUUID(),
+        });
+      await expect(
+        runBulkAssignmentChunk({
+          repository: repo,
+          actor: f.actor,
+          jobId: j.jobId,
+          afterCommit: () => {
+            throw Error("Local R18 interrupt after committed item");
+          },
+        }),
+      ).rejects.toThrow("Local R18 interrupt");
+      await sql!`update bulk_operation_jobs set lease_until=now()-interval '1 second' where id=${j.jobId}`;
+      for (let n = 0; n < 10; n++)
+        await runScheduledBulkAssignments({
+          repository: createBulkOperationsRepository({ sql: sql! }),
+        });
+      const final = await repo.getJob(f.actor, { jobId: j.jobId });
+      expect(final.state).toBe("completed");
+      expect(final.counts.succeeded).toBe(1000);
+      const [audit] =
+        await sql!`select count(*)::int n from annual_return_audit_events where case_id=any(${f.caseIds}::uuid[])`;
+      expect(audit.n).toBe(1000);
+    }),
+  60000,
+);

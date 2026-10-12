@@ -148,15 +148,9 @@ type Snapshot = {
   }[];
 };
 
-/** One statement observes all evidence and its change token at the same MVCC snapshot. */
-export async function attachCaseReadiness(
-  sql: Query,
-  cases: AnnualReturnCase[],
-): Promise<AnnualReturnCase[]> {
-  if (!cases.length) return cases;
-  const rows = await sql<{ payload: Snapshot; source_version: string }[]>`
-    with snapshots as (
-      select jsonb_build_object(
+/** Shared evidence token; aliases arc,c. Page reads return its hash, never invent a readiness version. */
+export function caseReadinessPayloadSql(sql: Query) {
+  return sql`jsonb_build_object(
         'case',to_jsonb(arc),'company',to_jsonb(c)||jsonb_build_object('data_origin',case when c.data_origin='client' then coalesce(arc.import_origin,c.data_origin) else c.data_origin end),
         'checklist',coalesce((select jsonb_agg(to_jsonb(x) order by x.id) from annual_return_checklist_items x where x.case_id=arc.id),'[]'::jsonb),
         'payments',coalesce((select jsonb_agg(to_jsonb(x)||jsonb_build_object('credited_amount',(select coalesce(sum(e.amount),0)::text from payments p join payment_evidence_entries e on e.payment_id=p.id join documents d on d.id=e.document_id join document_versions v on v.id=e.proof_version_id join document_upload_intents i on i.id=v.intent_id where p.id=x.id and ${creditedPaymentEvidenceSql(sql)})) order by x.id) from payments x where x.case_id=arc.id),'[]'::jsonb),
@@ -187,7 +181,18 @@ export async function attachCaseReadiness(
             d.id in(select document_id from annual_return_checklist_items where case_id=arc.id)
             or d.id in(select payment_proof_document_id from payments where case_id=arc.id)
             or d.id in(select l.document_id from requirement_evidence_links l join case_requirement_instances r on r.id=l.requirement_instance_id where r.case_id=arc.id)))))),'[]'::jsonb)
-      ) payload from annual_return_cases arc join companies c on c.id=arc.company_id where arc.id=any(${cases.map((case_) => case_.id)}::uuid[])
+      )`;
+}
+
+/** One statement observes all evidence and its change token at the same MVCC snapshot. */
+export async function attachCaseReadiness(
+  sql: Query,
+  cases: AnnualReturnCase[],
+): Promise<AnnualReturnCase[]> {
+  if (!cases.length) return cases;
+  const rows = await sql<{ payload: Snapshot; source_version: string }[]>`
+    with snapshots as (
+      select ${caseReadinessPayloadSql(sql)} payload from annual_return_cases arc join companies c on c.id=arc.company_id where arc.id=any(${cases.map((case_) => case_.id)}::uuid[])
     ) select payload,md5(payload::text) source_version from snapshots`;
   const byId = new Map(rows.map((row) => [row.payload.case.id, row]));
   return cases.map((base) => {

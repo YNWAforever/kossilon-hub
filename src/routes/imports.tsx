@@ -190,7 +190,10 @@ function ImportsWorkspace({
     return (
       <main className="flex-1 p-6">
         <PageHeader eyebrow="Operations" title="月表匯入" />
-        <p>只有已核實的現任 Admin 可以覆核跨公司月表。</p>
+        <p>
+          只有已核實的現任 Admin 可以覆核跨公司月表。請聯絡 Admin
+          提交檔案及覆核範圍；需要更改角色時由 Admin 核對。支援編號：R22-IMPORT-ROLE。
+        </p>
       </main>
     );
   const review = reviewQuery.data;

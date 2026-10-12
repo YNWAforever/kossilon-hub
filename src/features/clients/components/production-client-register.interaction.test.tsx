@@ -76,6 +76,23 @@ function renderRegister() {
 }
 
 describe("production client register", () => {
+  it("restores query/status from URL rather than only filtering the loaded page", async () => {
+    serverFns.listClients.mockResolvedValue([makeClient({ companyName: "中文公司" })]);
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <ProductionClientRegister
+          search={{ q: "中文", status: "active", team: "all" }}
+          onSearchChange={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+    await screen.findByText("中文公司");
+    expect(serverFns.listClients).toHaveBeenCalledWith({
+      data: expect.objectContaining({ q: "中文", status: "active", limit: 50 }),
+    });
+  });
   beforeEach(() => {
     serverFns.listClients.mockReset();
     serverFns.listClientAssignmentOptions.mockReset();
@@ -124,7 +141,7 @@ describe("production client register", () => {
     await waitFor(() => expect(screen.queryByText("Acme Company Limited")).toBeNull());
     expect(await screen.findByText("Beta Holdings")).toBeTruthy();
     expect(serverFns.listClients).toHaveBeenLastCalledWith({
-      data: expect.objectContaining({ q: "Beta", limit: 100 }),
+      data: expect.objectContaining({ q: "Beta", limit: 50 }),
     });
   });
 

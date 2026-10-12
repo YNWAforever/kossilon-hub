@@ -1,5 +1,6 @@
 import { WORK_VIEWS, type WorkViewKey } from "./work-views";
 import { getSafeRedirectPath } from "@/features/auth/route-guard";
+import { safeListReturnTo } from "@/lib/list-navigation";
 export type DailyViewSearch = {
   view: WorkViewKey;
   q: string;
@@ -29,6 +30,10 @@ export function dailyReturnPath(search: DailyViewSearch) {
 }
 export function caseReturnPath(input: unknown): string {
   if (typeof input !== "string" || getSafeRedirectPath(input) !== input) return "/annual-returns";
+  if (input.split(/[?#]/, 1)[0] === "/work-queue") {
+    const safe = safeListReturnTo(input);
+    return safe.startsWith("/work-queue") ? safe : "/annual-returns";
+  }
   return ["/today", "/annual-returns"].includes(input.split(/[?#]/, 1)[0])
     ? input
     : "/annual-returns";

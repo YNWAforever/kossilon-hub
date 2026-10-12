@@ -1,0 +1,32 @@
+{
+  "transaction": "READ ONLY",
+  "actorEvidence": "synthetic Admin DTO for local SQL compatibility only, no authenticated session",
+  "queue": {
+    "loaded": 2,
+    "total": 2,
+    "nullableSla": 0,
+    "ownerOptions": 2
+  },
+  "cases": {
+    "loaded": 3
+  },
+  "documents": {
+    "loaded": 14,
+    "total": 14
+  },
+  "paymentReview": {
+    "loaded": 0,
+    "total": 0
+  },
+  "outstanding": {
+    "loaded": 3,
+    "total": 3
+  },
+  "history": {
+    "threadsLoaded": 0,
+    "threadsTotal": 0,
+    "messagesLoaded": 0,
+    "messagesTotal": 0
+  },
+  "sideEffects": 0
+}

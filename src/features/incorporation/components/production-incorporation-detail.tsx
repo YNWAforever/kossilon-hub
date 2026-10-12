@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { safeListReturnTo } from "@/lib/list-navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
@@ -29,7 +30,13 @@ function nextStatus(current: IncorporationStatus): IncorporationStatus | null {
     : null;
 }
 
-export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
+export function ProductionIncorporationDetail({
+  caseId,
+  returnTo,
+}: {
+  caseId: string;
+  returnTo?: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [completionForm, setCompletionForm] = useState({
@@ -102,6 +109,12 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
   if (caseQuery.isError || !incorporationCase) {
     return (
       <main className="flex-1 space-y-3 p-6">
+        <a
+          className="inline-flex min-h-11 items-center rounded border px-3"
+          href={returnTo ? safeListReturnTo(returnTo) : "/incorporation"}
+        >
+          返回案件列表
+        </a>
         <PageHeader eyebrow="Incorporation" title="Case unavailable" />
         <p role="alert" className="text-sm text-destructive">
           Case data is unavailable. Try again shortly.
@@ -114,6 +127,12 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
+      <a
+        className="inline-flex min-h-11 items-center rounded border px-3"
+        href={returnTo ? safeListReturnTo(returnTo) : "/incorporation"}
+      >
+        返回案件列表
+      </a>
       <PageHeader
         eyebrow="Incorporation"
         title={incorporationCase.proposedCompanyNameEn}

@@ -6,7 +6,7 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DispatchSummary } from "@/features/notifications/types";
 import type { ProviderMode } from "@/server/provider-mode";
 import type { WhatsAppRepository } from "@/features/whatsapp/repository";
-import { getAnnualReturnActionPermission } from "./permissions";
+import { caseFiltersForActor, getAnnualReturnActionPermission } from "./permissions";
 import type { AnnualReturnRepository } from "./repository";
 import { hongKongBusinessDate } from "./workflow";
 import { ReadinessConflictError } from "./readiness";
@@ -65,7 +65,10 @@ export async function listProductionFollowUpDraftsForActor(
   // listCases({}) is the 200 earliest-due cases, so every client past that row
   // was silently never chased at all. That is a correctness bug, not a display
   // one, and it is why this drains pages instead.
-  const cases = await dependencies.annualReturnRepository.listAllCases({});
+  const cases = await dependencies.annualReturnRepository.listAllCases({
+    ...caseFiltersForActor(staff),
+    selectionContext: "whatsapp_draft_cases",
+  });
   const authorizedCases = cases.filter(
     (caseItem) => getAnnualReturnActionPermission(staff, caseItem, "record_reminder").allowed,
   );

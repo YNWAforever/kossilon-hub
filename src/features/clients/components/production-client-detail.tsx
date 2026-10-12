@@ -1,3 +1,4 @@
+import { safeListReturnTo } from "@/lib/list-navigation";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -78,7 +79,15 @@ function today(): string {
   return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
 }
 
-export function ProductionClientDetail({ clientId }: { clientId: string }) {
+export function ProductionClientDetail({
+  clientId,
+  returnTo,
+  managedWorkspace = false,
+}: {
+  clientId: string;
+  returnTo?: string;
+  managedWorkspace?: boolean;
+}) {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [contactDialog, setContactDialog] = useState<{ open: boolean; contact?: CompanyContact }>({
@@ -224,6 +233,14 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
+      {returnTo ? (
+        <a
+          href={safeListReturnTo(returnTo)}
+          className="inline-flex min-h-11 items-center rounded border px-3"
+        >
+          返回客戶清單
+        </a>
+      ) : null}
       <PageHeader
         eyebrow="Client"
         title={client.companyName}
@@ -532,75 +549,79 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Annual return history</h2>
-        <div className="divide-y">
-          {client.annualReturnHistory.map((entry) => (
-            <div
-              key={entry.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-            >
-              <span>Return year {entry.returnYear}</span>
-              <span className="text-muted-foreground">Made up {entry.madeUpDate}</span>
-              <span className="text-muted-foreground">Due {entry.filingDueDate}</span>
-              <span>{entry.currentStatus}</span>
-              <Link
-                className="rounded-md border px-2 py-1 text-xs"
-                to="/annual-returns/$id"
-                params={{ id: entry.id }}
-              >
-                Open case
-              </Link>
+      {!managedWorkspace ? (
+        <>
+          <section className="rounded-lg border bg-card p-4">
+            <h2 className="mb-3 text-sm font-semibold">Annual return history</h2>
+            <div className="divide-y">
+              {client.annualReturnHistory.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                >
+                  <span>Return year {entry.returnYear}</span>
+                  <span className="text-muted-foreground">Made up {entry.madeUpDate}</span>
+                  <span className="text-muted-foreground">Due {entry.filingDueDate}</span>
+                  <span>{entry.currentStatus}</span>
+                  <Link
+                    className="rounded-md border px-2 py-1 text-xs"
+                    to="/annual-returns/$id"
+                    params={{ id: entry.id }}
+                  >
+                    Open case
+                  </Link>
+                </div>
+              ))}
+              {client.annualReturnHistory.length === 0 ? (
+                <p className="py-3 text-sm text-muted-foreground">No annual return cases yet.</p>
+              ) : null}
             </div>
-          ))}
-          {client.annualReturnHistory.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No annual return cases yet.</p>
-          ) : null}
-        </div>
-      </section>
+          </section>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Documents</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          文件登記及業務覆核狀態；不代表儲存物件已核對或掃描安全。請在文件庫核對來源。
-        </p>
-        <div className="divide-y">
-          {client.documents.map((document) => (
-            <div
-              key={document.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-            >
-              <span className="truncate">{document.fileName}</span>
-              <span className="text-muted-foreground">{document.fileType}</span>
-              <StatusPill tone={verificationTone[document.verificationStatus]}>
-                {document.verificationStatus}
-              </StatusPill>
-              <span className="text-muted-foreground">{document.uploadedAt.slice(0, 10)}</span>
+          <section className="rounded-lg border bg-card p-4">
+            <h2 className="mb-3 text-sm font-semibold">Documents</h2>
+            <p className="mb-3 text-xs text-muted-foreground">
+              文件登記及業務覆核狀態；不代表儲存物件已核對或掃描安全。請在文件庫核對來源。
+            </p>
+            <div className="divide-y">
+              {client.documents.map((document) => (
+                <div
+                  key={document.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                >
+                  <span className="truncate">{document.fileName}</span>
+                  <span className="text-muted-foreground">{document.fileType}</span>
+                  <StatusPill tone={verificationTone[document.verificationStatus]}>
+                    {document.verificationStatus}
+                  </StatusPill>
+                  <span className="text-muted-foreground">{document.uploadedAt.slice(0, 10)}</span>
+                </div>
+              ))}
+              {client.documents.length === 0 ? (
+                <p className="py-3 text-sm text-muted-foreground">No documents on file.</p>
+              ) : null}
             </div>
-          ))}
-          {client.documents.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No documents on file.</p>
-          ) : null}
-        </div>
-      </section>
+          </section>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Timeline</h2>
-        <div className="divide-y">
-          {client.timeline.map((entry) => (
-            <div key={entry.id} className="py-3 text-sm">
-              <p>{entry.description}</p>
-              <p className="text-xs text-muted-foreground">
-                {entry.actorName ?? "System"} · {new Date(entry.createdAt).toLocaleString("en-HK")}
-              </p>
+          <section className="rounded-lg border bg-card p-4">
+            <h2 className="mb-3 text-sm font-semibold">Timeline</h2>
+            <div className="divide-y">
+              {client.timeline.map((entry) => (
+                <div key={entry.id} className="py-3 text-sm">
+                  <p>{entry.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.actorName ?? "System"} ·{" "}
+                    {new Date(entry.createdAt).toLocaleString("en-HK")}
+                  </p>
+                </div>
+              ))}
+              {client.timeline.length === 0 ? (
+                <p className="py-3 text-sm text-muted-foreground">No activity yet.</p>
+              ) : null}
             </div>
-          ))}
-          {client.timeline.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No activity yet.</p>
-          ) : null}
-        </div>
-      </section>
-
+          </section>
+        </>
+      ) : null}
       {optionsQuery.data ? (
         <ClientFormDialog
           open={isEditOpen}

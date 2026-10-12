@@ -1,0 +1,215 @@
+{
+  "source_sha": "53c1973aa8a0112ac666897cb89a95429aabaa25",
+  "recorded_at_hkt": "2026-10-12 11:18:38+08:00",
+  "scope": "R19 scoped company SQL/components only",
+  "artifact_digest": null,
+  "release": "NO_GO",
+  "production_outbound_hold": true,
+  "files": [
+    {
+      "file": "r19-eslint-fix.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r19-format-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r19-green-attempt1.log",
+      "bytes": 2384,
+      "sha256": "10170ba507bb537bae363eca8df0cf3ca45f7b49469ea2f5ef5cac28d19320fa",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts src/features/daily-work/repository.integration.test.ts src/features/annual-return/payment-workspace.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 2 passed (3)",
+        "      Tests  1 failed | 2 passed (3)",
+        "   Duration  2.68s (transform 426ms, setup 0ms, import 787ms, tests 1.37s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r19-lint-final.log",
+      "bytes": 867,
+      "sha256": "9e506dc10c915230484631c5449afc98238b542e25b36a71cf2f3e207d516fc8",
+      "commands": [
+        "> lint",
+        "> eslint . --ignore-pattern .worktrees/**"
+      ],
+      "result_lines": [
+        "✖ 2 problems (0 errors, 2 warnings)"
+      ]
+    },
+    {
+      "file": "r19-navigation.log",
+      "bytes": 1075,
+      "sha256": "af59f96eda49dabee5c5d83960ba6ebb58a53168872f16d420778ea96c1a04e2",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace-navigation.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 passed (1)",
+        "      Tests  1 passed (1)",
+        "   Duration  358ms (transform 164ms, setup 0ms, import 211ms, tests 5ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r19-profile-green.log",
+      "bytes": 2388,
+      "sha256": "14510abdd292b593a724f600d9ff90af29cc4335d5fb585de626529bec8346a4",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts src/features/daily-work/repository.integration.test.ts src/features/annual-return/payment-workspace.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 2 passed (3)",
+        "      Tests  1 failed | 2 passed (3)",
+        "   Duration  3.40s (transform 820ms, setup 0ms, import 1.20s, tests 1.49s, environment 1ms)"
+      ]
+    },
+    {
+      "file": "r19-profile-green2.log",
+      "bytes": 2385,
+      "sha256": "7bbaf867ab33d12dddb0119ea12bd3b70ef29b231d9ab1b51c4a1d7b429b4a08",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts src/features/daily-work/repository.integration.test.ts src/features/annual-return/payment-workspace.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed | 2 passed (3)",
+        "      Tests  1 failed | 2 passed (3)",
+        "   Duration  2.24s (transform 395ms, setup 0ms, import 633ms, tests 1.15s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r19-profile-green3.log",
+      "bytes": 1990,
+      "sha256": "152c034212b1c4c5737f2074f5886b44e1a52d18671974a7e29878d75f94d7f2",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  1.22s (transform 556ms, setup 0ms, import 701ms, tests 278ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r19-profile-red.log",
+      "bytes": 2246,
+      "sha256": "f75939ba8316ad81b87433a49fbacf32c779661f3ef469020a9152afa020e81d",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "      Tests  1 failed (1)",
+        "   Duration  976ms (transform 512ms, setup 0ms, import 652ms, tests 109ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r19-red.log",
+      "bytes": 1728,
+      "sha256": "e6a45295e715bdec52a7c609cf015011f73f8b2c847cf90405958bb9e9c7f769",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "   Duration  829ms (transform 83ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r19-regression.log",
+      "bytes": 1496,
+      "sha256": "6a1e0a587d93c8afc8f4252ae9750f49741a959baecc2bf3ba085823a500f7fb",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts src/features/clients/components/company-workspace.interaction.test.tsx src/features/clients/components/production-client-detail.interaction.test.tsx src/routes/-documents-production-data.test.tsx src/features/daily-work/repository.integration.test.ts src/routes/-today.production.test.tsx src/lib/list-navigation.test.ts src/lib/business-list-navigation.test.ts src/features/clients/repository.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  7 passed (7)",
+        "      Tests  29 passed (29)",
+        "   Duration  6.36s (transform 3.25s, setup 0ms, import 5.70s, tests 2.26s, environment 1.81s)"
+      ]
+    },
+    {
+      "file": "r19-sql-green.log",
+      "bytes": 1198,
+      "sha256": "bf0f8786c61afb75642ac75988a15fe332a5778d6aa9e7687f70137a37273824",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/company-workspace.integration.test.ts src/features/daily-work/repository.integration.test.ts src/features/annual-return/payment-workspace.integration.test.ts --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  3 passed (3)",
+        "      Tests  3 passed (3)",
+        "   Duration  2.33s (transform 419ms, setup 0ms, import 683ms, tests 1.16s, environment 0ms)"
+      ]
+    },
+    {
+      "file": "r19-typecheck-final.log",
+      "bytes": 33,
+      "sha256": "e5046545a3a9fcc0cf6950c9402c78a2b227f07a6a658d2a0c1fbc5f4a194da0",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r19-typecheck.log",
+      "bytes": 774,
+      "sha256": "db846d8cdef379ad389b078e81419a00e01c201743b51df5dc41db068641e68e",
+      "commands": [
+        "> typecheck",
+        "> tsc --noEmit"
+      ],
+      "result_lines": []
+    },
+    {
+      "file": "r19-types.log",
+      "bytes": 246,
+      "sha256": "44a601b7896df68060e84d7b8c4fee78b511f392db5594f11c07d3055b0165bc",
+      "commands": [],
+      "result_lines": []
+    },
+    {
+      "file": "r19-ui-green.log",
+      "bytes": 1215,
+      "sha256": "dc36dbbc9ddb04cfdbc485880db0ca2c5d09bf680744c116230d9d2b332f28ec",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/components/company-workspace.interaction.test.tsx src/features/clients/components/production-client-detail.interaction.test.tsx src/routes/-documents.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  2 passed (2)",
+        "      Tests  10 passed (10)",
+        "   Duration  7.07s (transform 734ms, setup 0ms, import 9.23s, tests 828ms, environment 1.61s)"
+      ]
+    },
+    {
+      "file": "r19-ui-red.log",
+      "bytes": 2856,
+      "sha256": "bd755de3206e20b264b9dd9f19c6477e2151201bf839cf60ecdf14dc44a962c0",
+      "commands": [
+        "> test",
+        "> vitest run src/features/clients/components/company-workspace.interaction.test.tsx --maxWorkers=2"
+      ],
+      "result_lines": [
+        " Test Files  1 failed (1)",
+        "   Duration  14.59s (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 14.33s)"
+      ]
+    }
+  ]
+}

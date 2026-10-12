@@ -8,7 +8,7 @@ import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
 import { listWorkQueue } from "@/features/work-items/server-fns";
-import type { PersistedWorkItem } from "@/features/work-items/repository";
+import type { WorkQueueSummary as PersistedWorkItem } from "@/features/work-items/queue-page";
 import { boardFiltersFromSearch, type AnnualReturnBoardSearch } from "../board-filters";
 import { annualReturnQueryKeys } from "../query-keys";
 import {

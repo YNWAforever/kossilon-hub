@@ -1,4 +1,13 @@
+import { lockActiveStaffUser } from "@/features/auth/staff-state";
 import type postgres from "postgres";
+import type { AuthenticatedActor } from "@/features/auth/types";
+import { createCompanyWorkspaceRepository } from "./company-workspace";
+import { caseFiltersForActor } from "@/features/annual-return/permissions";
+import { caseScopeSql } from "@/features/annual-return/case-scope";
+import { documentScopeForStaffActor } from "@/features/documents/authorization";
+import { documentScopeSql } from "@/features/documents/list-scope";
+import { hongKongBusinessDate } from "@/features/annual-return/workflow";
+type ClientReadContext = { actor: AuthenticatedActor; profileOnly?: boolean };
 import {
   createSqlClient,
   getSqlClient,
@@ -7,6 +16,7 @@ import {
 } from "@/server/db/client";
 import { rethrowClientWriteError } from "./errors";
 import { boundedPageSize, readTupleCursor, tupleCursor } from "@/server/db/pagination";
+import { listPageSize } from "@/lib/list-page";
 import type {
   AddContactInput,
   AppointOfficerInput,
@@ -54,7 +64,7 @@ export type ClientRepository = {
   ): Promise<{ clients: ClientSummary[]; nextCursor: string | null; total: number }>;
   listAssignmentOptions(): Promise<ClientAssignmentOptions>;
   listClients(filters?: ClientListFilters): Promise<ClientSummary[]>;
-  getClient(id: string): Promise<ClientDetail | null>;
+  getClient(id: string, context?: ClientReadContext): Promise<ClientDetail | null>;
   getCompanyTeamId(companyId: string): Promise<string | null>;
   createClient(input: CreateClientInput): Promise<ClientDetail>;
   updateClient(input: UpdateClientInput): Promise<ClientDetail>;
@@ -382,8 +392,9 @@ export function createClientRepository(
     return rows.map(mapSummary);
   }
   async function listClientPage(filters: ClientListFilters = {}) {
-    const limit = boundedPageSize(filters.limit),
-      rows = await clientRows(filters, true);
+    const limit = listPageSize.parse(filters.limit);
+    filters = { ...filters, limit };
+    const rows = await clientRows(filters, true);
     const [count] = await sql<
       { total: number }[]
     >`select count(*)::int total from companies c where ${clientListScope(filters)}`;
@@ -397,7 +408,25 @@ export function createClientRepository(
     };
   }
 
-  async function hydrateClient(client: QueryClient, id: string): Promise<ClientDetail | null> {
+  async function hydrateClient(
+    client: QueryClient,
+    id: string,
+    context?: ClientReadContext,
+  ): Promise<ClientDetail | null> {
+    if (context) await createCompanyWorkspaceRepository({ sql: client }).access(context.actor, id);
+    const caseScope = context
+      ? caseFiltersForActor({
+          id: context.actor.userId,
+          role: context.actor.role,
+          teamId: context.actor.teamId,
+          active: context.actor.active,
+        })
+      : {};
+    const casePredicate = caseScopeSql(client, caseScope, hongKongBusinessDate());
+    const docPredicate = documentScopeSql(
+      client,
+      context ? documentScopeForStaffActor(context.actor) : { includeFixtures: true },
+    );
     const detailRows = await client<DetailRow[]>`
       select
         c.id,
@@ -499,7 +528,7 @@ export function createClientRepository(
                te.description, te.created_at
         from timeline_events te
         left join users u on u.id = te.actor_id
-        where te.company_id = ${id}
+        where te.company_id = ${id} and ${!context?.profileOnly}
         order by te.created_at desc
         limit 50
       `,
@@ -512,10 +541,10 @@ export function createClientRepository(
           current_status: string;
         }[]
       >`
-        select id, return_year, made_up_date, filing_due_date, current_status
-        from annual_return_cases
-        where company_id = ${id}
-        order by return_year desc
+        select arc.id, return_year, made_up_date, filing_due_date, current_status
+        from annual_return_cases arc join companies c on c.id=arc.company_id
+        where arc.company_id = ${id} and ${casePredicate} and ${!context?.profileOnly}
+        order by return_year desc,arc.id limit 50
       `,
       client<
         {
@@ -526,10 +555,11 @@ export function createClientRepository(
           uploaded_at: string | Date;
         }[]
       >`
-        select id, file_name, file_type, verification_status, uploaded_at
-        from documents
-        where company_id = ${id}
-        order by uploaded_at desc
+        select d.id, file_name, file_type,
+        case when d.reviewed_document_version_id=(select v.id from document_versions v where v.document_id=d.id and v.superseded_by_version_id is null order by v.version_number desc limit 1) then d.verification_status else 'pending' end verification_status, uploaded_at
+        from documents d join companies c on c.id=d.company_id left join annual_return_cases arc on arc.id=d.case_id and arc.company_id=d.company_id
+        where d.company_id = ${id} and ${docPredicate} and ${!context?.profileOnly}
+        order by uploaded_at desc,d.id limit 50
       `,
     ]);
 
@@ -575,8 +605,8 @@ export function createClientRepository(
     };
   }
 
-  async function getClient(id: string): Promise<ClientDetail | null> {
-    return hydrateClient(sql, id);
+  async function getClient(id: string, context?: ClientReadContext): Promise<ClientDetail | null> {
+    return hydrateClient(sql, id, context);
   }
 
   /**
@@ -651,10 +681,27 @@ export function createClientRepository(
     return detail;
   }
 
+  async function lockClientOwnership(
+    tx: TransactionSqlClient,
+    actorId: string,
+    ownerId: string,
+    teamId: string,
+  ) {
+    await assertActor(tx, actorId);
+    const actor = await lockActiveStaffUser(tx, actorId),
+      owner = await lockActiveStaffUser(tx, ownerId);
+    if (
+      (actor.role !== "Admin" && actor.team_id !== teamId) ||
+      (owner.role !== "Admin" && owner.team_id !== teamId)
+    )
+      throw Error("Forbidden: current company team required.");
+    const [team] = await tx`select id from teams where id=${teamId} and active for share`;
+    if (!team) throw Error("Active company team required.");
+  }
   async function createClient(input: CreateClientInput): Promise<ClientDetail> {
     try {
       return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
+        await lockClientOwnership(tx, input.actorId, input.ownerId, input.teamId);
 
         const rows = await tx<{ id: string }[]>`
           insert into companies (
@@ -712,7 +759,7 @@ export function createClientRepository(
   async function updateClient(input: UpdateClientInput): Promise<ClientDetail> {
     try {
       return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
+        await lockClientOwnership(tx, input.actorId, input.ownerId, input.teamId);
 
         const before = await hydrateOrThrow(tx, input.id);
         const changed = changedFields(before, input);

@@ -1,0 +1,147 @@
+{
+  "source_sha": "5caa59a3dad927ad05c0e261a4a0fd66d04338f6",
+  "recorded_at_hkt": "2026-10-12T15:17:55.299+08:00",
+  "holds": {
+    "production": true,
+    "outbound": true
+  },
+  "native_reads_only": true,
+  "account_or_permission_changes": 0,
+  "provider_calls": 0,
+  "native_scheduler_invocations": 0,
+  "native_branch_or_snapshot_mutations": 0,
+  "observed": {
+    "neon_cli": "4.13.0",
+    "native_project": "red-morning-00331124",
+    "production_branch": "br-muddy-mountain-aov8bbku",
+    "existing_approved_restore_child": "br-dry-wind-aop8mz93",
+    "native_public_tables": 89,
+    "native_auth_tables": 9,
+    "native_ledger": 66,
+    "production_ledger_digest_md5": "6e274af0d4bb037dd97f318ff0e97279",
+    "native_dispatch_started_attempt_column": false,
+    "native_maintenance_runs": 113,
+    "last_native_started_at": "2026-09-30T01:55:14.448Z",
+    "current_candidate_native_ticks": 0,
+    "mapped_genuine_staff_roles": {
+      "Admin": 1
+    },
+    "admin_unexpired_database_session_records": 1,
+    "browser_verified_controlled_roles": 0,
+    "client_membership_without_native_auth_user": 1,
+    "preview_observed_source": "8163713095aa0aa3e0531dc5f059a67b1b8ac45c",
+    "preview_deployment": "dpl_BiHPWf83WCbnYeSphrYZGjxAcbVh",
+    "preview_login_visible": true,
+    "preview_branch_specific_overrides": 0,
+    "configured_shared_preview_production": [
+      "Neon Auth",
+      "R2",
+      "Resend"
+    ],
+    "configured_production_only": [
+      "MAINTENANCE_SCHEDULER_OWNER=vercel",
+      "CRON_SECRET"
+    ],
+    "absent_observed_config": [
+      "DOCUMENT_SCANNER_URL",
+      "DOCUMENT_SCANNER_API_KEY",
+      "DOCUMENT_AI_URL",
+      "DOCUMENT_AI_API_KEY",
+      "WOZTELL_API_BASE_URL",
+      "WOZTELL_ACCESS_TOKEN",
+      "WOZTELL_CHANNEL_ID",
+      "WOZTELL_WEBHOOK_SECRET"
+    ],
+    "cloudflare_inventory": "unverified; Wrangler unavailable and no process credential observed",
+    "original_outbox": {
+      "total": 4,
+      "pending_email": 4,
+      "data_origin": "client",
+      "source_event_type": "annual_return_case_seeded",
+      "warning": 2,
+      "breach": 2,
+      "recipients_match_current_active_owner": 4,
+      "approved": 0,
+      "sent": 0,
+      "provider_message_references": 0
+    }
+  },
+  "evidence_limits": [
+    "Configured presence does not prove provider health or isolation.",
+    "Database session record does not establish browser Auth success.",
+    "No available browser session is not a claim about prior cloud login or cookie root cause.",
+    "Historical snapshot and maintenance runs do not prove current candidate rollback/native ticks."
+  ],
+  "blockers": [
+    {
+      "gate": "R25.2 native recovery/runtime",
+      "owner": "DB/Release",
+      "minimum": "Approved current native recovery point and isolated Auth-compatible restore/runtime target; reviewed forward packet bound to exact web/scheduler SHA. The only observed snapshot is 2026-09-29; current native marker is absent.",
+      "status": "受阻"
+    },
+    {
+      "gate": "Genuine cross-role isolated UAT",
+      "owner": "QA/Auth/Release",
+      "minimum": "Approved exact-artifact isolated origin/bindings plus controlled Admin/Manager/Staff/Client A/Client B identities, sessions, teams and companies. Native mapping currently yields one Admin only; Client membership has no native Auth user.",
+      "status": "受阻"
+    },
+    {
+      "gate": "R25.3 native scheduling",
+      "owner": "Scheduler/Release",
+      "minimum": "One isolated native scheduler owner/service credential, exact worker/web/schema bindings and three native five-minute tick/per-pass/heartbeat receipts over at least ten minutes. Cloudflare inventory identity/access if applicable remains unverified.",
+      "status": "受阻"
+    },
+    {
+      "gate": "R27 scan/OCR/AI/WhatsApp/handoff",
+      "owner": "Integration/QA/Ops",
+      "minimum": "Scanner URL/key, approved OCR/AI capability and AI URL/key, four WOZTELL bindings; approved known-answer corpus, test namespace/recipient consent, filing destination and native callback/delivery/filing receipts. R2/Resend presence does not establish isolation or health.",
+      "status": "受阻"
+    },
+    {
+      "gate": "Original four outbox items",
+      "owner": "Ops",
+      "minimum": "Confirm client-origin/annual_return_case_seeded provenance classification and external consent/approval. All four recipients match current active work owners; no approval, sent or provider references exist. Do not infer deletion authority from seed event.",
+      "status": "受阻"
+    },
+    {
+      "gate": "Hosted operator/device/capacity acceptance",
+      "owner": "QA/Release",
+      "minimum": "Controlled-role native sessions and isolated bindings for operator 500-row workflow, devices, disconnect/conflict/unknown and hosted 10k/50k/25-concurrent measurements. Prior local SQL/parser evidence retained.",
+      "status": "受阻"
+    }
+  ],
+  "private_readback_receipts": [
+    {
+      "path": "native-readbacks-private.json",
+      "bytes": 2679,
+      "sha256": "1bb1be93f220834aefecd8810ffd3cd08dd9b476099ec86b431783393033d1c5"
+    },
+    {
+      "path": "recipient-comparison-private.json",
+      "bytes": 440,
+      "sha256": "02786274ec957234adcdaf0701e85ae2beeaf83fae78c89ccf9d2edd4ad8f178"
+    },
+    {
+      "path": "vercel-all-env-private.json",
+      "bytes": 9672,
+      "sha256": "24060d440296556244d0c69a4bcda30c42408998262887cabfc6042f38594c88"
+    },
+    {
+      "path": "neon-hub-branches-private.json",
+      "bytes": 5848,
+      "sha256": "da1332856fa0b9405d666faf2d3bedc82a37622d20b6623d58c921431f22e063"
+    }
+  ],
+  "user_environment_confirmation": {
+    "recorded_at_hkt": "2026-10-12T15:59:19.748+08:00",
+    "source": "Direct human reply in execution session",
+    "response": "尚未備好，保留 blocker 並完成可做的證據",
+    "isolated_acceptance_package_available": false,
+    "scope": "origin/version, five controlled identities, provider test namespace/recipient",
+    "decision": "Retain minimum native blockers and owners; finish feasible evidence. No provisioning, role changes, native dispatch, official migration/deploy or release authority inferred.",
+    "holds": {
+      "production": true,
+      "outbound": true
+    }
+  }
+}

@@ -18,7 +18,10 @@ export const selectionSchema = z.discriminatedUnion("mode", [
 ]);
 export const scopeFiltersSchema = z
   .object({
-    q: z.string().trim().min(1).max(120).optional(),
+    q: z.string().trim().min(1).max(200).optional(),
+    selectionContext: z
+      .enum(["whatsapp_draft_cases", "payment_review_cases", "payment_outstanding_cases"])
+      .optional(),
     ownerId: z.string().uuid().optional(),
     reviewerId: z.string().uuid().optional(),
     teamId: z.string().uuid().optional(),
@@ -39,6 +42,10 @@ export const scopeFiltersSchema = z
     unassigned: z.boolean().optional(),
     clientStatus: z.enum(["active", "inactive"]).optional(),
     caseId: z.string().uuid().optional(),
+    companyId: z.string().uuid().optional(),
+    documentId: z.string().uuid().optional(),
+    documentCategory: z.string().max(100).optional(),
+    documentReviewStatus: z.enum(["pending", "verified", "rejected"]).optional(),
   })
   .strict();
 export const snapshotSchema = z
@@ -56,6 +63,7 @@ export const previewSchema = z
     resource: z.enum(["annual_return_case", "work_item"]),
     selection: selectionSchema,
     assignment: assignmentSchema,
+    filters: scopeFiltersSchema.optional(),
   })
   .strict();
 export const maintenanceActionSchema = z.discriminatedUnion("kind", [
@@ -83,7 +91,12 @@ export const maintenanceActionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("payment_list_export") }).strict(),
 ]);
 export const previewActionSchema = z
-  .object({ resource: resourceSchema, selection: selectionSchema, action: maintenanceActionSchema })
+  .object({
+    resource: resourceSchema,
+    selection: selectionSchema,
+    action: maintenanceActionSchema,
+    filters: scopeFiltersSchema.optional(),
+  })
   .strict();
 export type MaintenanceAction = z.infer<typeof maintenanceActionSchema>;
 export type MaintenanceActionKind = MaintenanceAction["kind"];
@@ -94,6 +107,21 @@ export const executeSchema = z
 export const jobSchema = z.object({ jobId: z.string().uuid() }).strict();
 export const jobHistorySchema = z
   .object({
+    operation: z
+      .enum([
+        "assignment",
+        "client_maintenance",
+        "document_assignment",
+        "document_return_draft",
+        "document_list_export",
+        "follow_up_draft",
+        "payment_list_export",
+      ])
+      .optional(),
+    resource: resourceSchema.optional(),
+    actorId: z.string().uuid().optional(),
+    createdFrom: z.string().datetime().optional(),
+    createdTo: z.string().datetime().optional(),
     cursor: z
       .object({ createdAt: z.string().datetime(), id: z.string().uuid() })
       .strict()
@@ -148,6 +176,16 @@ export type JobItemResult = {
 export type JobResult = {
   jobId: string;
   resource: BulkResource;
+  operation?: "assignment" | MaintenanceActionKind;
+  operationLabel?: string;
+  scopeSummary?: string;
+  actorId?: string;
+  actorName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  startedAt?: string | null;
+  lastHeartbeat?: string | null;
+  lastWorkerReceiptAt?: string | null;
   state: "queued" | "running" | "completed" | "partial" | "cancelled";
   total: number;
   counts: Record<string, number>;

@@ -1,0 +1,75 @@
+{
+  "source_sha": "5caa59a3dad927ad05c0e261a4a0fd66d04338f6",
+  "base_sha": "8163713095aa0aa3e0531dc5f059a67b1b8ac45c",
+  "other_worktrees": [
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/kossilon-hub-work",
+      "expected_head": "76ad310ca8bad75a7ce44c82c9e20db734fd6eaa",
+      "actual_head": "76ad310ca8bad75a7ce44c82c9e20db734fd6eaa",
+      "head_unchanged": true,
+      "dirty_status": ""
+    },
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree",
+      "expected_head": "38123c96ed84fae84e41f17d4dea606c7a8938d0",
+      "actual_head": "38123c96ed84fae84e41f17d4dea606c7a8938d0",
+      "head_unchanged": true,
+      "dirty_status": ""
+    },
+    {
+      "path": "C:/Users/laich/Documents/kossilon-hub/audit-t03-readiness-worktree/.worktrees/r13-dependency-audit-20261009",
+      "expected_head": "01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e",
+      "actual_head": "01b56fa2efd719209c1f9a36ee9cab6cb9b70d3e",
+      "head_unchanged": true,
+      "dirty_status": ""
+    }
+  ],
+  "original_uc_baseline": {
+    "reference_sha": "93ad5eb8dee82ed28b48856dc27efa5bcbafa28e",
+    "denominator": 65,
+    "all_pre_execution_columns_cell_for_cell_identical": true,
+    "baseline_projection_sha256": "30053479ae713280565d2bf31d7dfccb730789966aa38a6443508015d2069720",
+    "execution_result_totals": {
+      "partial": 56,
+      "blocked": 9
+    },
+    "touched_uc_ids": [
+      "UC52",
+      "UC53",
+      "UC55",
+      "UC56",
+      "UC57",
+      "UC58",
+      "UC77",
+      "UC85",
+      "UC86",
+      "UC88",
+      "UC89",
+      "UC90",
+      "UC91",
+      "UC95",
+      "UC96",
+      "UC98"
+    ]
+  },
+  "runtime_schema_dependency_config_unchanged": true,
+  "source_changes": [
+    "docs/audit-remediation/2026-10-12/batch4-progress.md",
+    "docs/audit-remediation/2026-10-12/batch4-r25-restored-readers.md",
+    "docs/audit-remediation/2026-10-12/batch4-review.md",
+    "scripts/audit/rehearse-restored-reads.integration.test.ts",
+    "scripts/audit/rehearse-restored-reads.ts",
+    "scripts/audit/restored-company-evidence.test.ts",
+    "scripts/audit/restored-company-evidence.ts",
+    "src/test/bun-process.test.ts",
+    "src/test/bun-process.ts",
+    "src/test/db-integration-files.ts"
+  ],
+  "no_force_push": true,
+  "no_user_file_reset": true,
+  "holds": {
+    "production": true,
+    "outbound": true,
+    "populated_restore_pg18_stopped": true
+  }
+}

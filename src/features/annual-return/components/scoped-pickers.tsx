@@ -156,7 +156,7 @@ export function DocumentPicker({
     queryKey: ["documents", "picker", caseId, actorScope, query, categories],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
-      listDocumentPage({ data: { caseId, q: query, category, limit: 100, cursor: pageParam } }),
+      listDocumentPage({ data: { caseId, q: query, category, limit: 50, cursor: pageParam } }),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });

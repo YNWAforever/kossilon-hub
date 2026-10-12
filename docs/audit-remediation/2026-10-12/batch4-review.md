@@ -1,0 +1,12 @@
+# Single batch4 source review and one repair pass
+
+One fresh read-only GPT-6.1 Sol reviewer examined8163713..af2a7b4 against the approved R25/R27 briefs and hold/evidence boundaries. Four material findings; no second review.
+
+1. P1 CI portability: the new integration test forwarded CI localhost unchanged into the strict127.0.0.1-only restored-reader guard. Both actual CI290 Node legs failed precisely here:277files/2424tests passed,1file/1test failed; later build/browser gates skipped. Fixture URL normalization now maps only localhost to127.0.0.1; the production restore guard is unchanged. Both configured fixture host variants run through the real Bun/PG rehearsal.
+2. P2 company-case partial evidence: the later bounded case read could be partial after an earlier complete summary. Extracted the original observation path, reproduced false acceptance in company-partial-red.log, then reject partial summary or cases before marking tabs observed. Typed fault-boundary tests and actual PG integration cover the guard.
+3. P2 Windows argv: unquoted shell spawning splits receipt paths with spaces. The test-only child runner resolves the verified installed Bun binary and spawns directly with shellfalse/windowsHidetrue. Real child argv tests preserve paths/values with spaces and literal ampersands; no shell command is composed.
+4. P2 ineffective timeout: unbounded spawnSync prevented the Vitest timer from interrupting a blocked child. Async owned child execution has a25s deadline and rejects only after process termination; SQL uses local15s statement/5s lock deadlines. Actual blocked-child termination and an actual exclusive SQL source lock prove failure produces no acceptance receipt and releases the owned transaction.
+
+Review RED retained3failedfiles (localhost assertion plus new missing guard/child modules); extracted partial-case RED1failed/1passed. Final targeted4files9tests0skip,9.72s before the added absent-output assertion, which is included in the final complete suite. Types/lint exit0; same2preexisting warnings. Pre-repair local full run was deliberately interrupted and is not acceptance. CI290 is retained as failure, not overwritten or retried unchanged. Final suite/build/exact-head CI receipts appear in the batch4 dossier.
+
+No production/native schema, account/permission, scheduler configuration or provider call was changed. Reused maintenance/provider adapters remain unchanged. New helper code is confined to audit observation and test-owned subprocess control.

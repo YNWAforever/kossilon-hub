@@ -26,7 +26,7 @@ import { navGroups } from "./navigation";
 import { NavList } from "./nav-content";
 afterEach(cleanup);
 describe("daily role navigation", () => {
-  it("retains all sixteen Admin destinations in five business groups", () => {
+  it("retains all seventeen Admin destinations in five business groups", () => {
     expect(navGroups.map((g) => g.heading)).toEqual([
       "今日工作",
       "案件與客戶",
@@ -36,7 +36,7 @@ describe("daily role navigation", () => {
     ]);
     auth.role = "Admin";
     render(<NavList pathname="/today" />);
-    expect(screen.getAllByRole("link")).toHaveLength(16);
+    expect(screen.getAllByRole("link")).toHaveLength(17);
     expect(screen.getByRole("link", { name: "今日工作" }).getAttribute("aria-current")).toBe(
       "page",
     );
@@ -65,4 +65,9 @@ describe("daily role navigation", () => {
       "/portal",
     ]);
   });
+});
+it("Manager cannot see the Admin-only import action", () => {
+  auth.role = "Manager";
+  render(<NavList pathname="/imports" />);
+  expect(screen.queryByRole("link", { name: "月表匯入" })).toBeNull();
 });

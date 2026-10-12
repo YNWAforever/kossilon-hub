@@ -27,6 +27,49 @@ vi.mock("@/features/annual-return/server-fns", () => ({
     returnsAndExceptions: 0,
   }),
 }));
+vi.mock("@/features/daily-work/server-fns", () => ({
+  listDailyWorkPage: async ({ data }: { data: { view: string } }) => {
+    const results = await state.query();
+    const rows =
+      results.find((v: { definition?: { key: string } }) => v.definition?.key === data.view)
+        ?.rows ?? [];
+    return {
+      items: rows.map(
+        (r: {
+          caseId: string;
+          companyName: string;
+          filingDueDate: string;
+          ownerName: string;
+          blocker: string;
+        }) => ({
+          workKey: "annual_return:" + r.caseId,
+          sourceType: "annual_return",
+          sourceId: r.caseId,
+          companyId: "22222222-2222-4222-8222-222222222222",
+          companyName: r.companyName,
+          dueDate: r.filingDueDate,
+          ownerName: r.ownerName,
+          blocker: r.blocker,
+          nextAction: { label: "開啟案件", href: "/annual-returns/" + r.caseId, enabled: true },
+          updatedAt: "2026-10-12T00:00:00Z",
+        }),
+      ),
+      nextCursor: results.length > 5 ? "controlled-cursor" : null,
+      total: 10000,
+      observedAt: "2026-10-12T00:00:00Z",
+      businessDate: "2026-10-12",
+      partial: false,
+      sources: [{ sourceType: "annual_return", status: "available", total: 10000 }],
+    };
+  },
+  getDailyAnnualReturnMetrics: async () => ({
+    chaseToday: 10000,
+    newlyReceived: 0,
+    awaitingMyReview: 0,
+    readyToFile: 0,
+    returnsAndExceptions: 0,
+  }),
+}));
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   createFileRoute: () => (options: unknown) => ({
@@ -83,7 +126,7 @@ describe("Today truthful journey state", () => {
       { sentinel: true },
     ]);
     await mount();
-    await screen.findByRole("button", { name: "今日要追 (10000)" });
+    await screen.findByRole("button", { name: "今日要追 (10000)" }, { timeout: 5000 });
     fireEvent.click(screen.getByRole("button", { name: "下一頁工作" }));
     expect(state.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ search: expect.objectContaining({ cursor: "controlled-cursor" }) }),
@@ -129,9 +172,9 @@ describe("Today truthful journey state", () => {
       "A very long reason that must remain available to the operator without a clipped line",
     );
     expect(reason.closest("details")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "開啟案件" }).getAttribute("data-search")).toContain(
-      "q=Harbour",
-    );
+    const action = screen.getByRole("link", { name: "開啟案件" }).getAttribute("href")!;
+    const back = new URL(action, "https://local.invalid").searchParams.get("returnTo")!;
+    expect(new URL(back, "https://local.invalid").searchParams.get("q")).toBe("Harbour");
     fireEvent.change(screen.getByLabelText("搜尋今日工作"), { target: { value: "New search" } });
     expect(state.navigate).toHaveBeenCalled();
   });

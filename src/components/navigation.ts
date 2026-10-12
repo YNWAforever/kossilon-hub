@@ -58,6 +58,7 @@ export const navGroups: NavGroup[] = [
       { to: "/today", label: "今日工作", icon: CalendarClock, exact: true },
       { to: "/", label: "總覽", icon: LayoutDashboard, exact: true },
       { to: "/work-queue", label: "工作隊列", icon: ListChecks },
+      { to: "/bulk-jobs", label: "批次工作中心", icon: ListChecks, roles: ["Admin", "Manager"] },
     ],
   },
   {
@@ -67,7 +68,7 @@ export const navGroups: NavGroup[] = [
       { to: "/clients", label: "客戶", icon: Building2 },
       { to: "/incorporation", label: "公司註冊", icon: Rocket },
       { to: "/corporate-changes", label: "公司變更", icon: Repeat2 },
-      { to: "/imports", label: "月表匯入", icon: Upload, roles: ["Admin", "Manager"] },
+      { to: "/imports", label: "月表匯入", icon: Upload, roles: ["Admin"] },
     ],
   },
   {
