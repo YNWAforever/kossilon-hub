@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
+}));
+
 import { DemoClientNotice } from "./demo-client-notice";
 
 describe("DemoClientNotice", () => {

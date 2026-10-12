@@ -1,3 +1,4 @@
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 
 type Props = {
@@ -23,9 +24,7 @@ export function DemoIncorporationNotice({ variant }: Props) {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader eyebrow="Operations" title={copy.title} />
-      <section className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-        {copy.message}
-      </section>
+      <DemoUnavailable message={copy.message} />
     </main>
   );
 }

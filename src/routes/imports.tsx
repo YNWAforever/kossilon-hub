@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import { NarApplyPanel } from "@/features/nar-import/apply-panel";
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -179,9 +180,7 @@ function ImportsWorkspace({
     return (
       <main className="flex-1 space-y-4 p-6">
         <PageHeader eyebrow="Operations" title="月表匯入" />
-        <p className="text-sm text-muted-foreground">
-          匯入只在正式環境提供，示範模式沒有可寫入的資料庫。
-        </p>
+        <DemoUnavailable message="匯入只在正式環境提供，示範模式沒有可寫入的資料庫。" />
       </main>
     );
   }

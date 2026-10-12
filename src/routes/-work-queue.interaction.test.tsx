@@ -63,7 +63,7 @@ describe("work queue in demo mode", () => {
 
     expect(mocks.list).not.toHaveBeenCalled();
     expect(screen.queryByText("Loading work queue...")).toBeNull();
-    expect(screen.getByText(/示範模式/)).toBeTruthy();
+    expect(screen.getByText(/示範模式沒有可讀取的工作項目/)).toBeTruthy();
   });
 });
 describe("work queue assignment and blockers", () => {

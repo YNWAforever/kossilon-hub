@@ -13,6 +13,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
     options,
     useRouteContext: () => ({ dataMode: state.dataMode }),
   }),
+  Link: ({ children }: { children: React.ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));
 import { Route } from "./operations";
 const Page = Route.options.component!;

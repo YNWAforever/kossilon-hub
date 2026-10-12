@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import { getOperationsHealth } from "@/features/operations/server-fns";
 import { dispatchCountLabel, type MaintenanceHealthState } from "@/features/operations/health";
@@ -97,9 +98,7 @@ function OperationsRoute() {
     return (
       <main className="flex-1 space-y-4 p-6">
         <PageHeader eyebrow="Operations" title="系統運作" />
-        <p className="text-sm text-muted-foreground">
-          系統運作讀取正式資料。示範模式沒有排程，也沒有可讀取的執行紀錄。
-        </p>
+        <DemoUnavailable message="系統運作讀取正式資料。示範模式沒有排程，也沒有可讀取的執行紀錄。" />
       </main>
     );
   }

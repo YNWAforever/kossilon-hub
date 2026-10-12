@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { BulkFilters } from "@/features/bulk-operations/types";
@@ -188,15 +189,7 @@ export function WorkQueueRoute() {
           title="Work queue"
           subtitle="Assignment, capacity, and SLA control"
         />
-        <p className="text-sm text-muted-foreground">
-          工作隊列讀取正式指派與 SLA 資料，示範模式沒有可讀取的工作項目。
-        </p>
-        <Link
-          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
-          to="/annual-returns"
-        >
-          瀏覽周年申報案件
-        </Link>
+        <DemoUnavailable message="工作隊列讀取正式指派與 SLA 資料，示範模式沒有可讀取的工作項目。" />
       </main>
     );
   }

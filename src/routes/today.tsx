@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate, type SearchSchemaInput } from "@tanstack/react-router";
 
+import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import {
   getAnnualReturnWorkPage,
@@ -67,12 +68,7 @@ function TodayRoute() {
     return (
       <main className="flex-1 space-y-4 p-6">
         <PageHeader eyebrow="Operations" title="今日工作" />
-        <p className="text-sm text-muted-foreground">
-          今日工作讀取正式資料，示範模式沒有可讀取的案件。
-        </p>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          瀏覽周年申報案件
-        </Link>
+        <DemoUnavailable message="今日工作讀取正式資料，示範模式沒有可讀取的案件。" />
       </main>
     );
   }
