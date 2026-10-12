@@ -48,15 +48,22 @@ const contracts: Record<string, Record<string, z.ZodTypeAny>> = {
   "/today": {
     q,
     view: z.enum([
+      "all",
       "chaseToday",
       "newlyReceived",
       "awaitingMyReview",
       "readyToFile",
       "returnsAndExceptions",
     ]),
+    scope: z.enum(["mine", "team"]),
+    sourceType: z.enum(["all", "annual_return", "incorporation", "corporate_change_request"]),
+    companyId: id,
     sort: z.enum(["deadline", "company"]),
     cursor,
-    anchor: id,
+    anchor: z.union([
+      id,
+      z.string().regex(/^(annual_return|incorporation|corporate_change_request):[0-9a-f-]{36}$/i),
+    ]),
   },
   "/annual-returns": { q, cursor, anchor: id },
 };

@@ -8,6 +8,7 @@ import { daysBetween } from "@/lib/date-math";
 import { boundedPageSize } from "@/server/db/pagination";
 import { operationalRead } from "@/server/db/operational-read";
 type Query = SqlClient | postgres.TransactionSql;
+export { predicate as annualReturnWorkViewPredicate };
 export type WorkViewQuery = {
   view: WorkViewKey;
   scope: CaseFilters;
