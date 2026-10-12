@@ -230,4 +230,15 @@ describe("/documents in production must not link demo rows into production route
     expect(demoLinks.length).toBeGreaterThan(0);
     expect(html).toContain("Search company, contact, title, or filename");
   });
+
+  it("does not show the empty production vault in demo mode", async () => {
+    // Demo mode never reads Postgres, so the vault could only ever say "No
+    // production documents match this scope" above a populated fixture archive.
+    resetAnnualReturnCasesForTest();
+    resetClientPortalStoreForTest();
+
+    const html = await render({ documents: [], withCaseId: false, dataMode: "demo" });
+
+    expect(html).not.toContain("Production document vault");
+  });
 });

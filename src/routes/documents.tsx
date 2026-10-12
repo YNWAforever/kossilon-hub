@@ -229,20 +229,22 @@ function DocumentsRoute() {
           </span>
         </label>
       ) : null}
-      <ProductionDocumentsSection
-        caseItem={productionCaseQuery.data ?? undefined}
-        cases={productionCasesQuery.data ?? []}
-        casesLoading={productionCasesQuery.isLoading}
-        selectedCaseId={productionCaseId}
-        onSelectCase={(next) => setCaseFilter(next)}
-        documents={invalidCaseId ? [] : productionDocuments}
-        error={productionDocumentsQuery.error}
-        loading={productionDocumentsQuery.isLoading}
-        onDownload={handleDownload}
-        onPreview={handlePreview}
-        onReview={(input) => reviewMutation.mutate({ data: input })}
-        pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
-      />
+      {dataMode === "production" ? (
+        <ProductionDocumentsSection
+          caseItem={productionCaseQuery.data ?? undefined}
+          cases={productionCasesQuery.data ?? []}
+          casesLoading={productionCasesQuery.isLoading}
+          selectedCaseId={productionCaseId}
+          onSelectCase={(next) => setCaseFilter(next)}
+          documents={invalidCaseId ? [] : productionDocuments}
+          error={productionDocumentsQuery.error}
+          loading={productionDocumentsQuery.isLoading}
+          onDownload={handleDownload}
+          onPreview={handlePreview}
+          onReview={(input) => reviewMutation.mutate({ data: input })}
+          pendingDocumentIds={pendingEvidenceIds.filter((id): id is string => Boolean(id))}
+        />
+      ) : null}
       {dataMode === "production" && productionDocumentsQuery.hasNextPage ? (
         <button
           className="min-h-11 rounded border px-3"
@@ -263,10 +265,10 @@ function DocumentsRoute() {
           Production has its own vault above, which reads Postgres. */}
       {dataMode === "demo" ? (
         <section className="rounded-lg border bg-card">
-          <div className="grid gap-3 border-b p-4 xl:grid-cols-[1fr_180px_180px_180px_220px]">
+          <div className="grid gap-3 border-b p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
             <input
               aria-label="Search documents"
-              className="rounded-md border bg-background px-3 py-2 text-sm"
+              className="rounded-md border bg-background px-3 py-2 text-sm sm:col-span-2 lg:col-span-1"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search company, contact, title, or filename"
               value={query}
@@ -313,14 +315,12 @@ function DocumentsRoute() {
             </select>
           </div>
 
-          <div className="hidden grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+          <div className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.5fr)_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
             <span>Document</span>
             <span>Company</span>
-            <span>Category</span>
-            <span>Source</span>
+            <span>Type</span>
             <span>Status</span>
             <span>Uploaded by</span>
-            <span>Updated</span>
             <span>Review</span>
             <span className="text-right">Case</span>
           </div>
@@ -394,21 +394,26 @@ function DocumentRow({
   }
 
   return (
-    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[1.4fr_1fr_120px_130px_130px_150px_140px_170px_100px] lg:items-center">
-      <div className="min-w-0">
-        <p className="truncate font-medium">{row.title}</p>
-        <p className="truncate text-muted-foreground">{row.filename}</p>
+    <div className="grid grid-cols-2 gap-3 px-4 py-4 text-sm lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.5fr)_72px] lg:items-center">
+      <div className="col-span-2 min-w-0 lg:col-span-1">
+        <p className="truncate font-medium" title={row.title}>
+          {row.title}
+        </p>
+        <p className="truncate text-xs text-muted-foreground" title={row.filename}>
+          {row.filename}
+        </p>
       </div>
-      <Field label="Company" value={row.companyName} />
-      <Field label="Category" value={labelValue(row.category)} />
-      <Field label="Source" value={labelValue(row.source)} />
+      <Field label="Company" value={row.companyName} className="col-span-2 lg:col-span-1" />
+      <Field label="Type" value={labelValue(row.category)} detail={labelValue(row.source)} />
       <Field label="Status" value={labelValue(row.status)} />
-      <Field label="Uploaded by" value={row.actor} />
-      <Field label="Updated" value={formatTimestamp(row.createdAt)} />
-      <ReviewCell row={row} followUpStatus={followUp?.status} onReview={handleReview} />
-      <div className="flex justify-start lg:justify-end">
+      <Field label="Uploaded by" value={row.actor} detail={formatDate(row.createdAt)} />
+      <div className="col-span-2 min-w-0 lg:col-span-1">
+        <ReviewCell row={row} followUpStatus={followUp?.status} onReview={handleReview} />
+      </div>
+      <div className="col-span-2 flex justify-start lg:col-span-1 lg:justify-end">
         <Link
-          className="rounded-md border px-3 py-2 text-sm"
+          aria-label={`Open case for ${row.title}`}
+          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
           to="/annual-returns/$id"
           params={{ id: row.caseId }}
         >
@@ -686,15 +691,40 @@ function isUuid(value: string | undefined): value is string {
   return parseEntityId(value) !== null;
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({
+  label,
+  value,
+  detail,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+  className?: string;
+}) {
   return (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${className}`}>
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
         {label}
       </p>
-      <p className="truncate">{value}</p>
+      <p className="truncate" title={value}>
+        {value}
+      </p>
+      {detail ? (
+        <p className="truncate text-xs text-muted-foreground" title={detail}>
+          {detail}
+        </p>
+      ) : null}
     </div>
   );
+}
+
+function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString("en-HK", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function formatTimestamp(value: string): string {
