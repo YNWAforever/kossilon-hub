@@ -61,6 +61,11 @@
   --color-status-red-soft: var(--status-red-soft);
   --color-status-blue: var(--status-blue);
   --color-status-blue-soft: var(--status-blue-soft);
+  --color-status-green-text: var(--status-green-text);
+  --color-status-yellow-text: var(--status-yellow-text);
+  --color-status-orange-text: var(--status-orange-text);
+  --color-status-red-text: var(--status-red-text);
+  --color-status-blue-text: var(--status-blue-text);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -76,7 +81,8 @@
   --radius: 0.625rem;
 
   /* Warm neutral palette */
-  --sand: oklch(0.68 0.04 75); /* #A69572 */
+  /* Avatar fill behind white initials; 0.54 keeps them at 5:1 (WCAG AA). */
+  --sand: oklch(0.54 0.04 75);
   --taupe: oklch(0.66 0.05 80); /* #B39A6C */
   --warm-gray: oklch(0.74 0.01 80); /* #BBB5A5 */
   --ink: oklch(0.22 0.01 70);
@@ -113,6 +119,14 @@
   --status-red-soft: oklch(0.94 0.05 27);
   --status-blue: oklch(0.55 0.14 240);
   --status-blue-soft: oklch(0.94 0.04 240);
+  /* Text on the soft fills and on white. The base colours above stay vivid for
+     dots and fills, but as small text they measured 2.2-4.0:1; these clear
+     WCAG AA 4.5:1 on both (~4.8:1 on soft, 5.5:1+ on white). */
+  --status-green-text: oklch(0.5 0.14 150);
+  --status-yellow-text: oklch(0.52 0.14 85);
+  --status-orange-text: oklch(0.52 0.16 55);
+  --status-red-text: oklch(0.525 0.19 27);
+  --status-blue-text: oklch(0.5 0.14 240);
 
   --sidebar: oklch(0.97 0.008 80);
   --sidebar-foreground: oklch(0.28 0.01 70);

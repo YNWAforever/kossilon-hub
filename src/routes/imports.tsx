@@ -44,12 +44,12 @@ const DISPOSITION_LABELS: Record<NarRowDisposition, string> = {
 };
 
 const DISPOSITION_TONES: Record<NarRowDisposition, string> = {
-  new: "bg-status-green-soft text-status-green",
-  updated: "bg-status-yellow-soft text-status-yellow",
+  new: "bg-status-green-soft text-status-green-text",
+  updated: "bg-status-yellow-soft text-status-yellow-text",
   unchanged: "bg-muted text-muted-foreground",
-  conflict: "bg-status-orange-soft text-status-orange",
-  invalid: "bg-status-red-soft text-status-red",
-  needsCompanyMapping: "bg-status-orange-soft text-status-orange",
+  conflict: "bg-status-orange-soft text-status-orange-text",
+  invalid: "bg-status-red-soft text-status-red-text",
+  needsCompanyMapping: "bg-status-orange-soft text-status-orange-text",
 };
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -199,7 +199,7 @@ function ImportsWorkspace({
       <PageHeader eyebrow="Operations" title="月表匯入" subtitle="NAR Monthly Working" />
 
       {error ? (
-        <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
+        <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red-text">
           {error}
         </div>
       ) : null}
@@ -265,7 +265,7 @@ function ImportsWorkspace({
           </p>
         ) : null}
         {stageMutation.data?.sheetIssues.map((issue) => (
-          <p key={issue.code + issue.message} className="mt-2 text-sm text-status-yellow">
+          <p key={issue.code + issue.message} className="mt-2 text-sm text-status-yellow-text">
             {issue.message}
           </p>
         ))}
@@ -365,7 +365,9 @@ function ImportsWorkspace({
                       <li
                         key={`${row.id}-${issue.code}-${index}`}
                         className={
-                          issue.severity === "blocking" ? "text-status-red" : "text-status-yellow"
+                          issue.severity === "blocking"
+                            ? "text-status-red-text"
+                            : "text-status-yellow-text"
                         }
                       >
                         {issue.message}

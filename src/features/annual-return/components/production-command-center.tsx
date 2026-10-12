@@ -246,7 +246,7 @@ export function ProductionAnnualReturnCommandCenter({
       ) : null}
 
       {workItemsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
+        <p role="status" className="text-sm text-status-yellow-text">
           Assignment and SLA data is unavailable. Case details below are unaffected.
         </p>
       ) : null}

@@ -140,7 +140,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           so once here is more honest than letting each control look live and
           then explaining itself after the click. */}
       <p
-        className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+        className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         role="status"
       >
         Read-only demo. Case state is changed in production, through the annual-return server

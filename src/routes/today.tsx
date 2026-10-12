@@ -126,7 +126,7 @@ function TodayRoute() {
       {viewsQuery.error ? (
         <p
           role="alert"
-          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         >
           無法載入今日工作。這不代表沒有工作，請直接開啟案件板。
           <button
@@ -175,7 +175,9 @@ function TodayRoute() {
           </div>
 
           {!current.definition.released ? (
-            <p className="p-4 text-sm text-status-yellow">{current.definition.unavailableReason}</p>
+            <p className="p-4 text-sm text-status-yellow-text">
+              {current.definition.unavailableReason}
+            </p>
           ) : rows.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
               {search.q
@@ -203,7 +205,9 @@ function TodayRoute() {
                     <p className="break-words py-2">{row.blocker}</p>
                   </details>
                   <p
-                    className={row.daysRemaining < 0 ? "text-status-red" : "text-muted-foreground"}
+                    className={
+                      row.daysRemaining < 0 ? "text-status-red-text" : "text-muted-foreground"
+                    }
                   >
                     {row.daysRemaining < 0
                       ? `逾期 ${-row.daysRemaining} 天`

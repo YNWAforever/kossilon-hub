@@ -34,11 +34,11 @@ const STATE_LABEL: Record<MaintenanceHealthState, string> = {
 // `never-observed` is amber, not grey and not green. It is an unknown, and an
 // unknown about the one subsystem nobody watches is worth a colour.
 const STATE_TONE: Record<MaintenanceHealthState, string> = {
-  "never-observed": "bg-status-yellow-soft text-status-yellow",
-  stale: "bg-status-red-soft text-status-red",
-  failing: "bg-status-red-soft text-status-red",
-  degraded: "bg-status-yellow-soft text-status-yellow",
-  healthy: "bg-status-green-soft text-status-green",
+  "never-observed": "bg-status-yellow-soft text-status-yellow-text",
+  stale: "bg-status-red-soft text-status-red-text",
+  failing: "bg-status-red-soft text-status-red-text",
+  degraded: "bg-status-yellow-soft text-status-yellow-text",
+  healthy: "bg-status-green-soft text-status-green-text",
 };
 
 const SCHEMA_LABEL: Record<SchemaHealthState, string> = {
@@ -55,12 +55,12 @@ const SCHEMA_LABEL: Record<SchemaHealthState, string> = {
 // `ahead` is red rather than amber -- it means the running code is older than
 // the database, which running the migrator cannot fix.
 const SCHEMA_TONE: Record<SchemaHealthState, string> = {
-  unavailable: "bg-status-yellow-soft text-status-yellow",
-  "no-ledger": "bg-status-yellow-soft text-status-yellow",
-  behind: "bg-status-red-soft text-status-red",
-  ahead: "bg-status-red-soft text-status-red",
-  diverged: "bg-status-red-soft text-status-red",
-  current: "bg-status-green-soft text-status-green",
+  unavailable: "bg-status-yellow-soft text-status-yellow-text",
+  "no-ledger": "bg-status-yellow-soft text-status-yellow-text",
+  behind: "bg-status-red-soft text-status-red-text",
+  ahead: "bg-status-red-soft text-status-red-text",
+  diverged: "bg-status-red-soft text-status-red-text",
+  current: "bg-status-green-soft text-status-green-text",
 };
 
 function QueueRow({ label, depth }: { label: string; depth: JobQueueDepth }) {
@@ -143,7 +143,7 @@ function OperationsRoute() {
       {unavailable ? (
         <p
           role="alert"
-          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         >
           {healthQuery.fetchStatus === "paused"
             ? "連線暫停，現時狀態未知。恢復連線後會重新讀取。"
@@ -192,7 +192,7 @@ function OperationsRoute() {
             <section className="rounded-lg border bg-card p-4">
               <h2 className="text-base font-semibold">已批准版本的結構相容性</h2>
               <p
-                className={`mt-2 text-sm ${view.releaseCompatibility.applicationSchemaCompatible ? "text-status-green" : "text-status-yellow"}`}
+                className={`mt-2 text-sm ${view.releaseCompatibility.applicationSchemaCompatible ? "text-status-green-text" : "text-status-yellow-text"}`}
               >
                 {view.releaseCompatibility.applicationSchemaCompatible
                   ? "此版本與環境的結構相容性已核對。歷史遷移仍有分歧，不能執行普通遷移；登入、供應商及業務驗收須另行確認。"
@@ -202,7 +202,7 @@ function OperationsRoute() {
           ) : null}
 
           {view.maintenance === null ? (
-            <p className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red">
+            <p className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red-text">
               排程狀態暫時無法判斷。其他成功讀取的隊列或執行紀錄仍會顯示；
               缺少的資料保持未知，請按診斷參考跟進。
             </p>
@@ -260,12 +260,12 @@ function OperationsRoute() {
           ) : null}
 
           {view.queues === null ? (
-            <p role="status" className="text-sm text-status-yellow">
+            <p role="status" className="text-sm text-status-yellow-text">
               工作隊列無法讀取，數量未知；不能當作0。
             </p>
           ) : null}
           {view.maintenance === null ? (
-            <p role="status" className="text-sm text-status-yellow">
+            <p role="status" className="text-sm text-status-yellow-text">
               排程證據無法讀取，健康狀態未知。
             </p>
           ) : null}
@@ -275,7 +275,7 @@ function OperationsRoute() {
               {view.schedulerLeases.claimedExpired}。未知結果不自動重跑。
             </p>
           ) : (
-            <p className="text-sm text-status-yellow">排程 lease 診斷未知。</p>
+            <p className="text-sm text-status-yellow-text">排程 lease 診斷未知。</p>
           )}
           {view.diagnostics && view.diagnostics.failedReads.length > 0 ? (
             <p role="status" className="text-sm">
@@ -342,7 +342,7 @@ function OperationsRoute() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{integration.capability}</span>
                     {integration.approvalRequired ? (
-                      <span className="rounded-full bg-status-red-soft px-2 py-0.5 text-xs text-status-red">
+                      <span className="rounded-full bg-status-red-soft px-2 py-0.5 text-xs text-status-red-text">
                         正式操作需批准
                       </span>
                     ) : null}

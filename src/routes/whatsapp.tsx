@@ -102,7 +102,7 @@ function DemoWhatsAppInbox() {
 
         <div className="border-t bg-card p-4">
           {notice ? (
-            <p className="mb-3 rounded-md bg-status-blue-soft px-3 py-2 text-sm text-status-blue">
+            <p className="mb-3 rounded-md bg-status-blue-soft px-3 py-2 text-sm text-status-blue-text">
               {notice}
             </p>
           ) : null}

@@ -132,7 +132,7 @@ export function ProductionClientRegister({
       ) : null}
 
       {optionsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
+        <p role="status" className="text-sm text-status-yellow-text">
           Owner and team options are unavailable. New client is disabled until this loads.
         </p>
       ) : null}

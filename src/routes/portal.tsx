@@ -251,7 +251,7 @@ function PortalRoute() {
       />
 
       {warning ? (
-        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           {warning}
         </div>
       ) : null}
@@ -968,7 +968,9 @@ function ScopedDocumentPanel({
           ) : null}
           <div className="mt-4 divide-y">
             {documentsQuery.error ? (
-              <p className="py-3 text-sm text-status-yellow">Production documents unavailable.</p>
+              <p className="py-3 text-sm text-status-yellow-text">
+                Production documents unavailable.
+              </p>
             ) : null}
             {!documentsQuery.isLoading && !documentsQuery.error && documentRows.length === 0 ? (
               <p className="py-3 text-sm text-muted-foreground">No production documents yet.</p>
@@ -1080,10 +1082,10 @@ function UploadOutcomeLabel({ outcome }: { outcome?: UploadOutcome }) {
     return <span className="text-xs text-muted-foreground">上載中…</span>;
   }
   if (outcome.state === "received") {
-    return <span className="text-xs text-status-green">已收到，等待掃描</span>;
+    return <span className="text-xs text-status-green-text">已收到，等待掃描</span>;
   }
   return (
-    <span className="text-xs text-status-red" title={outcome.message}>
+    <span className="text-xs text-status-red-text" title={outcome.message}>
       失敗：{outcome.message}
     </span>
   );

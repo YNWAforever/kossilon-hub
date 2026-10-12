@@ -101,6 +101,7 @@ function FaqManager() {
           />
         </div>
         <select
+          aria-label="Filter FAQs by category"
           value={category}
           onChange={(e) => setCategory(e.target.value as FaqCategory | "All")}
           className="rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"

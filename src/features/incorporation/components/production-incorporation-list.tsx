@@ -78,7 +78,7 @@ export function ProductionIncorporationList() {
       />
 
       {optionsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
+        <p role="status" className="text-sm text-status-yellow-text">
           Owner and team options are unavailable. Starting a new case is disabled until this loads.
         </p>
       ) : null}

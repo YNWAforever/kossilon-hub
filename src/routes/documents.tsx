@@ -212,7 +212,7 @@ function DocumentsRoute() {
       ) : null}
 
       {warning ? (
-        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           {warning}
         </div>
       ) : null}
@@ -593,7 +593,7 @@ function ProductionDocumentsSection({
         </div>
       </div>
       {error ? (
-        <p className="mt-4 text-sm text-status-yellow">Production records unavailable.</p>
+        <p className="mt-4 text-sm text-status-yellow-text">Production records unavailable.</p>
       ) : null}
       {loading ? (
         <p className="mt-4 text-sm text-muted-foreground">Loading production records...</p>
@@ -740,10 +740,10 @@ function formatTimestamp(value: string): string {
  */
 function SafetyBadge({ safety, status }: { safety: DocumentSafety; status: string | null }) {
   const presentation: Record<DocumentSafety, { label: string; className: string }> = {
-    verified: { label: "已掃描安全", className: "bg-status-green-soft text-status-green" },
-    pending: { label: "等待掃描", className: "bg-status-yellow-soft text-status-yellow" },
-    unknown: { label: "安全未經核實", className: "bg-status-orange-soft text-status-orange" },
-    unsafe: { label: "掃描拒絕", className: "bg-status-red-soft text-status-red" },
+    verified: { label: "已掃描安全", className: "bg-status-green-soft text-status-green-text" },
+    pending: { label: "等待掃描", className: "bg-status-yellow-soft text-status-yellow-text" },
+    unknown: { label: "安全未經核實", className: "bg-status-orange-soft text-status-orange-text" },
+    unsafe: { label: "掃描拒絕", className: "bg-status-red-soft text-status-red-text" },
   };
   const { label, className } = presentation[safety];
   return (
@@ -811,7 +811,7 @@ function ReviewActions({
   if (record.availability === "metadata_only" || record.availability === "missing_object") {
     return (
       <div className="space-y-2">
-        <p className="text-sm text-status-orange md:text-right">
+        <p className="text-sm text-status-orange-text md:text-right">
           {record.availability === "metadata_only"
             ? "文件登記未有完整上載來源；物件尚未核對。"
             : "已核對但找不到儲存物件。"}
@@ -827,7 +827,7 @@ function ReviewActions({
 
   if (safety === "unsafe") {
     return (
-      <p className="text-sm text-status-red md:text-right">
+      <p className="text-sm text-status-red-text md:text-right">
         掃描拒絕，不能開啟。請要求客戶重新提供。
       </p>
     );
@@ -842,7 +842,7 @@ function ReviewActions({
   if (safety === "unknown") {
     return (
       <div className="space-y-2">
-        <p className="text-sm text-status-orange md:text-right">
+        <p className="text-sm text-status-orange-text md:text-right">
           此檔案的來源或實際掃描尚未核實，不能批准。請核對來源並取得真實掃描結果。
         </p>
         <DocumentRecoveryPanel

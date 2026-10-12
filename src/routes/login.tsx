@@ -160,7 +160,7 @@ export function LoginPage() {
         </div>
 
         <div className="max-w-xl">
-          <p className="text-sm uppercase tracking-[0.2em] text-primary-foreground/60">
+          <p className="text-sm uppercase tracking-[0.2em] text-primary-foreground/80">
             Compliance Core
           </p>
           <h1 className="mt-4 font-display text-4xl font-semibold leading-tight">
@@ -172,7 +172,7 @@ export function LoginPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 text-xs text-primary-foreground/75">
+        <div className="grid grid-cols-3 gap-3 text-xs text-primary-foreground/90">
           <div className="rounded-md bg-primary-foreground/10 p-3">Annual return workflow</div>
           <div className="rounded-md bg-primary-foreground/10 p-3">Role-aware workspace</div>
           <div className="rounded-md bg-primary-foreground/10 p-3">Compliance visibility</div>
@@ -203,7 +203,7 @@ export function LoginPage() {
 
           {denied && (
             <div
-              className="mt-6 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red"
+              className="mt-6 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red-text"
               role="alert"
             >
               This account does not have access to Kossilon Hub. Ask an administrator to grant
@@ -271,7 +271,7 @@ export function LoginPage() {
 
             {error && (
               <div
-                className="flex items-start gap-2 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red"
+                className="flex items-start gap-2 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red-text"
                 role="alert"
               >
                 <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -281,7 +281,7 @@ export function LoginPage() {
 
             {success && (
               <div
-                className="rounded-md border border-status-green/30 bg-status-green-soft px-3 py-2 text-xs text-status-green"
+                className="rounded-md border border-status-green/30 bg-status-green-soft px-3 py-2 text-xs text-status-green-text"
                 role="status"
               >
                 {success}

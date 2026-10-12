@@ -86,7 +86,7 @@ function ProductionAdminConsole() {
         <section className="rounded-xl border border-border bg-card p-6">
           <div className="flex max-w-2xl items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
-              <LockKeyhole className="h-5 w-5 text-status-orange" />
+              <LockKeyhole className="h-5 w-5 text-status-orange-text" />
             </div>
             <div className="min-w-0">
               <h2 className="font-display text-lg font-semibold text-foreground">
@@ -145,7 +145,7 @@ function DemoAdminConsole() {
         <section className="rounded-xl border border-border bg-card p-6">
           <div className="flex max-w-2xl items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
-              <LockKeyhole className="h-5 w-5 text-status-orange" />
+              <LockKeyhole className="h-5 w-5 text-status-orange-text" />
             </div>
             <div className="min-w-0">
               <h2 className="font-display text-lg font-semibold text-foreground">

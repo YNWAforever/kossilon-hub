@@ -67,7 +67,7 @@ export function DocumentRecoveryPanel({
     );
   if (upload.isError)
     return (
-      <p role="alert" className="text-sm text-status-orange">
+      <p role="alert" className="text-sm text-status-orange-text">
         補傳結果未確認。請先核對文件庫及上載記錄，避免重複補傳。
         {intentId ? ` 上載 ID：${intentId}` : ""}
       </p>

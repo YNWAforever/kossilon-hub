@@ -89,12 +89,12 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="font-semibold">AI Assistant</h2>
-              <span className="rounded-full bg-status-blue-soft px-2 py-1 text-xs font-medium text-status-blue">
+              <span className="rounded-full bg-status-blue-soft px-2 py-1 text-xs font-medium text-status-blue-text">
                 Kossilon AI mocked
               </span>
             </div>
             {draft.grounding.ungrounded ? (
-              <p className="mt-1 text-sm text-status-yellow">
+              <p className="mt-1 text-sm text-status-yellow-text">
                 No knowledge-base match. This is template text; read it before sending.
               </p>
             ) : (

@@ -93,7 +93,7 @@ export function CaseHandoff({
       <p className="text-sm text-muted-foreground">
         匯出不等於提交。人工紀錄是操作員陳述；目的地收據亦不等於監管已受理。所有寫入重新核對權限及當前版本。
       </p>
-      <p className="text-sm text-status-yellow">
+      <p className="text-sm text-status-yellow-text">
         未配置外部交件連接器；現時只提供人工流程，未驗證系統傳送。
       </p>
       {workflow.isPending ? (
@@ -112,7 +112,7 @@ export function CaseHandoff({
             {p?.blockers
               .filter((b) => b.stage !== "transmit")
               .map((b) => (
-                <p key={`${b.code}-${b.message}`} className="text-sm text-status-yellow">
+                <p key={`${b.code}-${b.message}`} className="text-sm text-status-yellow-text">
                   {b.message}
                 </p>
               ))}

@@ -81,7 +81,7 @@ export function ProductionCorporateChangeList() {
         </span>
       </label>
       {clientsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
+        <p role="status" className="text-sm text-status-yellow-text">
           Company options are unavailable. Starting a new request is disabled until this loads.
         </p>
       ) : null}

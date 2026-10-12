@@ -129,7 +129,7 @@ function DemoWhatsAppAutomationRoute() {
       />
 
       {warning ? (
-        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <div className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           {warning}
         </div>
       ) : null}

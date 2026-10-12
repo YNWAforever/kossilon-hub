@@ -132,7 +132,7 @@ export function ProductionWhatsAppInbox() {
 
         {connection === "blocked" ? (
           <div
-            className="border-b bg-status-yellow-soft p-4 text-sm text-status-yellow"
+            className="border-b bg-status-yellow-soft p-4 text-sm text-status-yellow-text"
             role="status"
           >
             <p className="font-medium">WhatsApp setup is incomplete</p>
@@ -145,7 +145,10 @@ export function ProductionWhatsAppInbox() {
         ) : null}
 
         {connection === "simulated" ? (
-          <div className="border-b bg-status-blue-soft p-4 text-sm text-status-blue" role="status">
+          <div
+            className="border-b bg-status-blue-soft p-4 text-sm text-status-blue-text"
+            role="status"
+          >
             <p className="font-medium">Demo simulation</p>
             <p className="mt-1">
               No external WhatsApp message is sent or received, so no conversation is recorded.
@@ -273,7 +276,7 @@ export function ProductionWhatsAppInbox() {
                       {message.attachments.map((attachment) => (
                         <p
                           key={attachment.providerMediaId}
-                          className="flex items-center gap-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow"
+                          className="flex items-center gap-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow-text"
                         >
                           <Paperclip aria-hidden className="h-3 w-3" />
                           客戶傳送了 {attachment.mediaType.toLowerCase()} 檔案
@@ -296,7 +299,7 @@ export function ProductionWhatsAppInbox() {
                     />
                   ) : null}
                   {message.sentAs === "template" ? (
-                    <p className="mt-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow">
+                    <p className="mt-2 rounded bg-status-yellow-soft px-2 py-1 text-xs text-status-yellow-text">
                       客戶收到的是範本訊息
                       {message.sentTemplateName ? `（${message.sentTemplateName}）` : ""}
                       ，不是上面這段文字。範本不含公司名稱或限期。

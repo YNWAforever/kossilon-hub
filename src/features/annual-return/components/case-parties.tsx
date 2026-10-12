@@ -68,7 +68,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       </div>
 
       {partiesQuery.error ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           無法載入相關人士名單。在確認之前，個人層面的要求不會出現。
         </p>
       ) : null}
@@ -77,7 +77,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
           unconfirmed, and saying so is the point. A short list presented as the
           whole list is exactly the false completeness this model prevents. */}
       {unconfirmed.length > 0 ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           尚有 {unconfirmed.length}{" "}
           位人士未經確認。在確認之前，他們的身分證明及地址證明要求不會建立，
           因此本案件的要求清單並不完整。
@@ -127,7 +127,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       )}
 
       {confirmMutation.error ? (
-        <p className="mt-3 text-sm text-status-red">無法確認，請再試一次。</p>
+        <p className="mt-3 text-sm text-status-red-text">無法確認，請再試一次。</p>
       ) : null}
     </section>
   );

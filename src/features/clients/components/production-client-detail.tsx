@@ -243,7 +243,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       />
 
       {optionsQuery.isError ? (
-        <p role="status" className="text-sm text-status-yellow">
+        <p role="status" className="text-sm text-status-yellow-text">
           Owner and team options are unavailable. Edit is disabled until this loads.
         </p>
       ) : null}

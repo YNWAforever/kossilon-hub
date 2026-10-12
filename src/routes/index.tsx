@@ -85,7 +85,7 @@ function DashboardPage() {
       {!annualReturnDataAvailable && (
         <section className="rounded-lg border border-status-yellow/40 bg-status-yellow-soft px-4 py-3">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 text-status-orange" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 text-status-orange-text" />
             <div>
               <h2 className="text-sm font-semibold text-foreground">
                 {annualReturnDataErrorKind === "forbidden"
@@ -297,17 +297,17 @@ function DashboardPage() {
         <section>
           <div className="rounded-xl border border-status-yellow/30 bg-status-yellow-soft p-5">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-status-yellow" />
+              <AlertTriangle className="h-5 w-5 text-status-yellow-text" />
               <div>
-                <h2 className="font-display text-base font-semibold text-status-yellow">
+                <h2 className="font-display text-base font-semibold text-status-yellow-text">
                   Overdue count unavailable
                 </h2>
-                <p className="mt-1 text-xs text-status-yellow/80">
+                <p className="mt-1 text-xs text-status-yellow-text">
                   This is not the same as nothing being overdue. Open the board to check directly.
                 </p>
                 <Link
                   to="/annual-returns"
-                  className="mt-3 inline-flex items-center rounded-md border border-status-yellow px-3 py-1.5 text-xs font-medium text-status-yellow"
+                  className="mt-3 inline-flex items-center rounded-md border border-status-yellow px-3 py-1.5 text-xs font-medium text-status-yellow-text"
                 >
                   Open the board
                 </Link>
@@ -319,12 +319,12 @@ function DashboardPage() {
         <section>
           <div className="rounded-xl border border-status-red/30 bg-status-red-soft p-5">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-status-red" />
+              <AlertTriangle className="h-5 w-5 text-status-red-text" />
               <div>
-                <h2 className="font-display text-base font-semibold text-status-red">
+                <h2 className="font-display text-base font-semibold text-status-red-text">
                   Requires immediate attention
                 </h2>
-                <p className="mt-1 text-xs text-status-red/80">
+                <p className="mt-1 text-xs text-status-red-text">
                   {`${m.overdue} annual return${m.overdue === 1 ? " is" : "s are"} overdue. Assign or escalate now to avoid Companies Registry penalties.`}
                 </p>
                 <Link

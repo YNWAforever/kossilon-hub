@@ -299,7 +299,7 @@ function SettingsPage() {
       {warning ? (
         <div
           role="alert"
-          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow"
+          className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         >
           {warning}
           {failed ? (

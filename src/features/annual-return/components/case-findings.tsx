@@ -27,11 +27,11 @@ import {
  */
 
 function outcomeTone(finding: Finding): string {
-  if (finding.outcome === "uncertain") return "bg-status-yellow-soft text-status-yellow";
+  if (finding.outcome === "uncertain") return "bg-status-yellow-soft text-status-yellow-text";
   if (finding.outcome === "pass") return "bg-muted text-muted-foreground";
   return finding.severity === "critical"
-    ? "bg-status-red-soft text-status-red"
-    : "bg-status-orange-soft text-status-orange";
+    ? "bg-status-red-soft text-status-red-text"
+    : "bg-status-orange-soft text-status-orange-text";
 }
 
 function outcomeLabel(finding: Finding): string {
@@ -79,13 +79,13 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
         <h2 className="text-base font-semibold">自動檢查</h2>
         {findingsQuery.isPending ? null : (
           <div className="flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full bg-status-red-soft px-2 py-1 text-status-red">
+            <span className="rounded-full bg-status-red-soft px-2 py-1 text-status-red-text">
               {summary.blocking} 必須處理
             </span>
-            <span className="rounded-full bg-status-orange-soft px-2 py-1 text-status-orange">
+            <span className="rounded-full bg-status-orange-soft px-2 py-1 text-status-orange-text">
               {summary.advisory} 建議查看
             </span>
-            <span className="rounded-full bg-status-yellow-soft px-2 py-1 text-status-yellow">
+            <span className="rounded-full bg-status-yellow-soft px-2 py-1 text-status-yellow-text">
               {summary.uncertain} 無法檢查
             </span>
             {/* Never folded into the counts beside it. "0 problems" across
@@ -99,7 +99,7 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
       </div>
 
       {findingsQuery.error ? (
-        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow">
+        <p className="mt-3 rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text">
           無法載入自動檢查結果。這不代表文件沒有問題，請直接查閱文件。
         </p>
       ) : null}
@@ -150,7 +150,9 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
                 // words, rather than showing the same blank space as a clean one.
                 <p
                   className={`mt-2 text-xs ${
-                    isSilenceMeaningful(view.state) ? "text-muted-foreground" : "text-status-yellow"
+                    isSilenceMeaningful(view.state)
+                      ? "text-muted-foreground"
+                      : "text-status-yellow-text"
                   }`}
                 >
                   {describeSilence(view.state)}
@@ -233,7 +235,7 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
       )}
 
       {resolveMutation.error ? (
-        <p className="mt-3 text-sm text-status-red">無法標記為已處理，請再試一次。</p>
+        <p className="mt-3 text-sm text-status-red-text">無法標記為已處理，請再試一次。</p>
       ) : null}
     </section>
   );
