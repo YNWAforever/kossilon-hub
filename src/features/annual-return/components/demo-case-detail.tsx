@@ -1,3 +1,4 @@
+import { RiskPill } from "./risk-pill";
 import { formatDate, formatDateTime, formatDueDate } from "@/lib/format-date";
 import { Link } from "@tanstack/react-router";
 
@@ -8,7 +9,6 @@ import {
   type AnnualReturnCase,
   type AnnualReturnFollowUpDraft,
   type AnnualReturnPacketStatus,
-  type AnnualReturnRiskLevel,
   type AnnualReturnStatus,
   canSendFollowUp,
   getBlockers,
@@ -39,30 +39,12 @@ const statusLabels: Record<AnnualReturnStatus, string> = {
   filed: "已遞交",
 };
 
-const riskLabels: Record<AnnualReturnRiskLevel, string> = {
-  overdue: "已逾期",
-  "due-soon": "即將到期",
-  blocked: "受阻",
-  healthy: "正常",
-  "ready-to-file": "可遞交",
-  filed: "已遞交",
-};
-
 const metricToneClasses: Record<MetricTone, string> = {
   red: "bg-red-500",
   orange: "bg-orange-500",
   yellow: "bg-yellow-500",
   green: "bg-green-500",
   blue: "bg-blue-500",
-};
-
-const riskToneClasses: Record<AnnualReturnRiskLevel, string> = {
-  overdue: "bg-red-100 text-red-700",
-  "due-soon": "bg-orange-100 text-orange-700",
-  blocked: "bg-yellow-100 text-yellow-800",
-  healthy: "bg-slate-100 text-slate-700",
-  "ready-to-file": "bg-green-100 text-green-700",
-  filed: "bg-blue-100 text-blue-700",
 };
 
 export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
@@ -538,28 +520,12 @@ function DenseStat({ label, value, tone }: { label: string; value: string; tone:
   );
 }
 
-function RiskPill({ risk }: { risk: AnnualReturnRiskLevel }) {
-  return (
-    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClass(risk)}`}>
-      {riskLabel(risk)}
-    </span>
-  );
-}
-
 function statusLabel(status: AnnualReturnStatus): string {
   return statusLabels[status];
 }
 
-function riskLabel(risk: AnnualReturnRiskLevel): string {
-  return riskLabels[risk];
-}
-
 function metricToneClass(tone: MetricTone): string {
   return metricToneClasses[tone];
-}
-
-function riskToneClass(risk: AnnualReturnRiskLevel): string {
-  return riskToneClasses[risk];
 }
 
 function FollowUpCard({

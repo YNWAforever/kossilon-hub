@@ -1,3 +1,4 @@
+import { RiskPill } from "@/features/annual-return/components/risk-pill";
 import { pageTitle } from "@/lib/page-title";
 import { type ReactNode, useMemo, useState } from "react";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
@@ -352,27 +353,8 @@ function Field({
   );
 }
 
-function RiskPill({ risk }: { risk: AnnualReturnRiskLevel }) {
-  return (
-    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClass(risk)}`}>
-      {riskLabel(risk)}
-    </span>
-  );
-}
-
 function riskSortValue(risk: AnnualReturnRiskLevel): number {
   return { overdue: 0, "due-soon": 1, blocked: 2, "ready-to-file": 3, healthy: 4, filed: 5 }[risk];
-}
-
-function riskLabel(risk: AnnualReturnRiskLevel): string {
-  return {
-    overdue: "已逾期",
-    "due-soon": "即將到期",
-    blocked: "受阻",
-    healthy: "正常",
-    "ready-to-file": "可遞交",
-    filed: "已遞交",
-  }[risk];
 }
 
 function filterLabel(
@@ -408,17 +390,6 @@ function metricToneClass(tone: "red" | "orange" | "yellow" | "green" | "blue"): 
     green: "bg-green-500",
     blue: "bg-blue-500",
   }[tone];
-}
-
-function riskToneClass(risk: AnnualReturnRiskLevel): string {
-  return {
-    overdue: "bg-red-100 text-red-700",
-    "due-soon": "bg-orange-100 text-orange-700",
-    blocked: "bg-yellow-100 text-yellow-800",
-    healthy: "bg-slate-100 text-slate-700",
-    "ready-to-file": "bg-green-100 text-green-700",
-    filed: "bg-blue-100 text-blue-700",
-  }[risk];
 }
 
 function paymentLabel(paymentStatus: AnnualReturnCase["paymentStatus"]): string {
