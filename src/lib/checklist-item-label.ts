@@ -60,3 +60,14 @@ export function checklistItemText(label: string): string {
   const chinese = checklistItemChineseName(label);
   return chinese ? `${chinese}（${label.trim()}）` : label;
 }
+
+/**
+ * A 「、」-joined list of document names (as the work views build in SQL), with
+ * each built-in name in Chinese. A firm's own name passes through unchanged.
+ */
+export function checklistSummaryText(joined: string): string {
+  return joined
+    .split("、")
+    .map((label) => checklistItemChineseName(label) ?? label)
+    .join("、");
+}

@@ -4,6 +4,7 @@ import type { CaseFilters } from "./repository";
 import type { WorkViewKey, WorkViewRow } from "./work-views";
 import { caseScopeSql } from "./case-scope";
 import { readyForApprovalSql } from "./readiness-sql";
+import { checklistSummaryText } from "@/lib/checklist-item-label";
 import { daysBetween } from "@/lib/date-math";
 import { boundedPageSize } from "@/server/db/pagination";
 import { operationalRead } from "@/server/db/operational-read";
@@ -94,7 +95,9 @@ async function workPageQuery(
       filingDueDate: r.filing_due_date,
       daysRemaining: daysBetween(today, r.filing_due_date),
       ownerName: r.owner_name,
-      blocker: r.blocker,
+      // string_agg joins the stored names; built-in ones read in Chinese here.
+      blocker:
+        input.view === "chaseToday" && r.blocker ? checklistSummaryText(r.blocker) : r.blocker,
     })),
     nextCursor: rows.length > limit ? cursorOf(page.at(-1)!, sort) : null,
   };

@@ -89,6 +89,14 @@ describe("deriveWorkViews", () => {
     expect(view(results, "chaseToday").rows[0].blocker).toBe("CDD、地址證明");
   });
 
+  it("names built-in documents in Chinese and keeps a firm's own wording", () => {
+    const case_ = makeCase({
+      checklist: [item("Missing", "Register of directors"), item("Missing", "地址證明")],
+    });
+    const results = deriveWorkViews([case_], TODAY, { userId: ME });
+    expect(view(results, "chaseToday").rows[0].blocker).toBe("董事登記冊、地址證明");
+  });
+
   it("shows me only the review work I am allowed to do", () => {
     const mine = makeCase({ ownerId: ME, checklist: [item("Received")] });
     const theirs = makeCase({ ownerId: SOMEONE_ELSE, checklist: [item("Received")] });

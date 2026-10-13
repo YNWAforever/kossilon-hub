@@ -1,3 +1,4 @@
+import { checklistItemChineseName } from "@/lib/checklist-item-label";
 import { daysBetween } from "@/lib/date-math";
 import { awaitingInternalReview, outstandingSummary } from "./outstanding";
 import type { AnnualReturnCase } from "./types";
@@ -131,7 +132,12 @@ export function deriveWorkViews(
           today,
           // Named, not counted: "3 documents" does not tell anyone what to ask for.
           summary.items
-            .map((item) => ("itemLabel" in item ? String(item.itemLabel) : "文件"))
+            // A one-line summary, so the Chinese name alone; the English stays on the case.
+            .map((item) => {
+              if (!("itemLabel" in item)) return "文件";
+              const label = String(item.itemLabel);
+              return checklistItemChineseName(label) ?? label;
+            })
             .join("、"),
         ),
       );

@@ -66,6 +66,13 @@ const LABELS: Record<string, string> = {
   "staff-packet": "同事交件套件",
   "filing-submission": "遞交記錄",
   "filing-receipt": "遞交回條",
+  // Legacy document file types, written before the category list existed
+  // (see features/annual-return/evidence-file-types.ts).
+  "annual-return-evidence": "周年申報證明文件",
+  "business-registration": "商業登記",
+  "payment-proof": "付款證明",
+  register: "登記冊",
+  "filing-confirmation": "遞交確認",
   // Payment
   paid: "已付款",
   pending: "待付款",

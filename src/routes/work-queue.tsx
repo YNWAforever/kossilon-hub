@@ -1,4 +1,5 @@
 import { pageTitle } from "@/lib/page-title";
+import { describeWorkItemTitle } from "@/features/work-items/title";
 import { formatDateTime } from "@/lib/format-date";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -145,7 +146,7 @@ export function WorkQueueRoute() {
     return items.filter((item) => {
       const matchesQuery =
         !needle ||
-        `${item.title} ${item.workType} ${workTypeLabel(item.workType)} ${item.companyName ?? ""}`
+        `${describeWorkItemTitle(item.title)} ${item.workType} ${workTypeLabel(item.workType)} ${item.companyName ?? ""}`
           .toLowerCase()
           .includes(needle);
       const matchesOwner =
@@ -317,7 +318,7 @@ export function WorkQueueRoute() {
             filters={bulkFilters}
             page={pageItems.map((i) => ({
               id: i.id,
-              label: `${i.companyName ?? "公司資料不詳"} · ${i.title}`,
+              label: `${i.companyName ?? "公司資料不詳"} · ${describeWorkItemTitle(i.title)}`,
             }))}
             total={queueQuery.isError || !queueQuery.data ? null : visibleItems.length}
           />
@@ -373,10 +374,10 @@ export function WorkQueueRoute() {
                           params={caseDetailLinkFor(item)!.params}
                           className="font-medium hover:underline"
                         >
-                          {item.title}
+                          {describeWorkItemTitle(item.title)}
                         </Link>
                       ) : (
-                        <p className="font-medium">{item.title}</p>
+                        <p className="font-medium">{describeWorkItemTitle(item.title)}</p>
                       )}
                       <p className="truncate text-xs text-muted-foreground">
                         {workTypeLabel(item.workType)}
@@ -430,10 +431,10 @@ export function WorkQueueRoute() {
                         params={caseDetailLinkFor(item)!.params}
                         className="font-medium hover:underline"
                       >
-                        {item.title}
+                        {describeWorkItemTitle(item.title)}
                       </Link>
                     ) : (
-                      <p className="font-medium">{item.title}</p>
+                      <p className="font-medium">{describeWorkItemTitle(item.title)}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {workTypeLabel(item.workType)}
@@ -549,7 +550,7 @@ function AssignmentDialog({
         <div className="border-b border-border px-5 py-4">
           <DialogHeader>
             <DialogTitle>分配工作項目</DialogTitle>
-            <DialogDescription>{item.title}</DialogDescription>
+            <DialogDescription>{describeWorkItemTitle(item.title)}</DialogDescription>
           </DialogHeader>
         </div>
         <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
@@ -629,7 +630,9 @@ function AcknowledgementDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>確認知悉升級</DialogTitle>
-          <DialogDescription>記錄已覆核的內容，以及「{item.title}」的下一步。</DialogDescription>
+          <DialogDescription>
+            記錄已覆核的內容，以及「{describeWorkItemTitle(item.title)}」的下一步。
+          </DialogDescription>
         </DialogHeader>
         <Textarea
           autoFocus
