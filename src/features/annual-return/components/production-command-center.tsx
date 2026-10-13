@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { formatDate, formatDueDate } from "@/lib/format-date";
 import { useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -390,9 +391,7 @@ export function ProductionAnnualReturnCommandCenter({
           </div>
         </div>
 
-        {casesQuery.isPending ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">正在載入周年申報案件…</p>
-        ) : null}
+        {casesQuery.isPending ? <LoadingRows label="正在載入周年申報案件…" rows={5} /> : null}
 
         {/* Gated on isError as well as isPending. payments.tsx omits the isError
             half and so renders "unavailable" and "nothing to review" together. */}

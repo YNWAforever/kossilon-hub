@@ -304,7 +304,7 @@ describe("ProductionCorporateChangeDetail", () => {
 
     renderDetail();
 
-    expect(screen.getByText(/載入中/)).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("正在載入公司變更申請");
   });
 
   it("shows an error state when the request fails to load", async () => {

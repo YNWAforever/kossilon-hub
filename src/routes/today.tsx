@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { pageTitle } from "@/lib/page-title";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate, type SearchSchemaInput } from "@tanstack/react-router";
@@ -121,11 +122,7 @@ function TodayRoute() {
           </Select>
         </label>
       </div>
-      {viewsQuery.isPending ? (
-        <p role="status" aria-live="polite">
-          正在載入今日工作…
-        </p>
-      ) : null}
+      {viewsQuery.isPending ? <LoadingRows label="正在載入今日工作…" rows={5} /> : null}
 
       {viewsQuery.error ? (
         <p

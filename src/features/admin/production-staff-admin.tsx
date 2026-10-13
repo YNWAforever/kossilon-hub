@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -114,7 +115,7 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
       {staff.isError || teams.isError ? (
         <p role="alert">未能取得員工資料，請重新載入。已讀取紀錄仍可查閱。</p>
       ) : null}
-      {staff.isPending ? <p>員工資料載入中…</p> : null}
+      {staff.isPending ? <LoadingRows label="員工資料載入中…" rows={4} /> : null}
       <section className="divide-y border-y">
         {rows.map((member) => (
           <StaffRow

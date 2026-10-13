@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { CaseFindings } from "./case-findings";
 import { CaseHandoff } from "./case-handoff";
@@ -185,12 +186,7 @@ export function ProductionAnnualReturnCaseDetail({
   }, [caseItem]);
 
   if (caseQuery.isPending) {
-    return (
-      <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
-        <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        正在載入周年申報案件
-      </div>
-    );
+    return <LoadingRows label="正在載入周年申報案件" rows={6} className="p-6" />;
   }
 
   if (caseQuery.isError) {
@@ -534,7 +530,7 @@ export function ProductionAnnualReturnCaseDetail({
             <MutationMessage error={noteMutation.error} />
             <div className="mt-4 space-y-3">
               {notesQuery.isPending ? (
-                <p className="text-sm text-muted-foreground">正在載入備註…</p>
+                <LoadingRows label="正在載入備註…" rows={2} className="p-0" />
               ) : notesQuery.isError ? (
                 <p role="alert" className="text-sm text-destructive">
                   {notesQuery.error.message}
@@ -557,7 +553,7 @@ export function ProductionAnnualReturnCaseDetail({
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">審計記錄</h2>
             {historyQuery.isPending ? (
-              <p className="mt-3 text-sm text-muted-foreground">正在載入記錄…</p>
+              <LoadingRows label="正在載入記錄…" rows={3} className="mt-3 p-0" />
             ) : historyQuery.isError ? (
               <p role="alert" className="mt-3 text-sm text-destructive">
                 {historyQuery.error.message}

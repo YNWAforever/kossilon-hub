@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
       ) : null}
 
       {partiesQuery.isPending ? (
-        <p className="mt-3 text-sm text-muted-foreground">載入中…</p>
+        <LoadingRows label="正在載入當事人…" rows={2} className="mt-3 p-0" />
       ) : parties.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
           公司董事名冊沒有在任人士，因此沒有可確認的對象。個人層面的要求不會建立。

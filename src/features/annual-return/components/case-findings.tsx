@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CircleHelp, FileSearch, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,7 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
       ) : null}
 
       {findingsQuery.isPending ? (
-        <p className="mt-3 text-sm text-muted-foreground">載入中…</p>
+        <LoadingRows label="正在載入核對結果…" rows={2} className="mt-3 p-0" />
       ) : views.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">此案件尚未收到文件。</p>
       ) : (

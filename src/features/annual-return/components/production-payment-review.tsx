@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -91,7 +92,9 @@ export function ProductionPaymentReview({
       {casesQuery.isError || documentsQuery.isError ? (
         <p role="alert">暫時無法載入付款憑證。</p>
       ) : null}
-      {casesQuery.isPending || documentsQuery.isPending ? <p>正在載入付款憑證…</p> : null}
+      {casesQuery.isPending || documentsQuery.isPending ? (
+        <LoadingRows label="正在載入付款憑證…" rows={4} />
+      ) : null}
       <section className="divide-y border-y">
         {documents.map((document) => {
           const case_ = cases.find((c) => c.id === document.caseId);

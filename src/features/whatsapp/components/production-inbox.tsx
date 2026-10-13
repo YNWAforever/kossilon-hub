@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -170,9 +171,7 @@ export function ProductionWhatsAppInbox() {
         ) : null}
 
         <div className="divide-y">
-          {conversationsQuery.isPending ? (
-            <p className="p-4 text-sm text-muted-foreground">對話載入中…</p>
-          ) : null}
+          {conversationsQuery.isPending ? <LoadingRows label="對話載入中…" rows={5} /> : null}
 
           {/* Only a confirmed-live provider licenses this claim. Under checking,
               unknown, blocked or simulated an empty list says nothing about
@@ -245,7 +244,7 @@ export function ProductionWhatsAppInbox() {
               ) : null}
 
               {messagesQuery.isPending ? (
-                <p className="text-sm text-muted-foreground">對話載入中…</p>
+                <LoadingRows label="對話載入中…" rows={3} className="p-0" />
               ) : null}
 
               {messages.map((message) => (

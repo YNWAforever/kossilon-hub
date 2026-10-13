@@ -1,5 +1,5 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
@@ -61,10 +61,7 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
     return (
       <main className="flex-1 space-y-6 p-4 md:p-6">
         <PageHeader eyebrow="案件與客戶" title="公司變更申請" />
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-          載入中…
-        </div>
+        <LoadingRows label="正在載入公司變更申請…" rows={6} className="p-6" />
       </main>
     );
   }

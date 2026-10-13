@@ -1,3 +1,4 @@
+import { LoadingRows } from "@/components/ui/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -130,7 +131,7 @@ export function ProductionWhatsAppAutomation({
         </div>
         <div className="divide-y">
           {draftsQuery.isPending ? (
-            <p className="p-4 text-sm text-muted-foreground">正在載入跟進…</p>
+            <LoadingRows label="正在載入跟進…" rows={4} />
           ) : drafts.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">沒有待處理的跟進。</p>
           ) : (
