@@ -1,3 +1,4 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/field";
@@ -233,7 +234,7 @@ export function MessageIntake({
                     <option value="">未連結 — 須於內部覆核時連結要求</option>
                     {mappedCase.data.checklist.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.itemLabel} · {checklistStatusLabel(item.status)}
+                        {checklistItemText(item.itemLabel)} · {checklistStatusLabel(item.status)}
                       </option>
                     ))}
                   </Select>

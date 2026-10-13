@@ -248,7 +248,7 @@ describe("stage-specific current evidence readiness", () => {
       { ...value.case_.checklist[0], id: "item-2", itemLabel: "Register of directors" },
     ];
     expect(computeReadiness(value).blockers.map((blocker) => blocker.message)).toContain(
-      "Register of directors 未有適用需求實例。",
+      "董事登記冊（Register of directors） 未有適用需求實例。",
     );
   });
 });

@@ -1,3 +1,4 @@
+import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { parseEntityId } from "@/lib/entity-id";
 import { LoadingRows } from "@/components/ui/skeleton";
 import { RecordUnavailable } from "@/components/record-unavailable";
@@ -192,7 +193,7 @@ function IncorporationDetail({ caseId }: { caseId: string }) {
         <div className="divide-y">
           {incorporationCase.checklist.map((item) => (
             <div key={item.id} className="flex items-center justify-between gap-3 py-3">
-              <span className="min-w-0 truncate text-sm">{item.itemLabel}</span>
+              <ChecklistItemLabel label={item.itemLabel} className="truncate text-sm" />
               <div className="flex shrink-0 items-center gap-2">
                 <StatusPill tone={statusTone[item.status]}>
                   {CHECKLIST_ITEM_STATUS_LABELS[item.status]}

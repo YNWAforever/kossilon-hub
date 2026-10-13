@@ -1,3 +1,4 @@
+import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { LoadingRows } from "@/components/ui/skeleton";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { CaseFindings } from "./case-findings";
@@ -366,7 +367,9 @@ function CaseDetail({
                 return (
                   <div key={item.id} className="flex items-center justify-between gap-3 py-3">
                     <div>
-                      <p className="text-sm font-medium">{item.itemLabel}</p>
+                      <p className="text-sm font-medium">
+                        <ChecklistItemLabel label={item.itemLabel} />
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {checklistStatusLabel(item.status)}
                       </p>

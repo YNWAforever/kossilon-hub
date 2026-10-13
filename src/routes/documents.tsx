@@ -1,3 +1,4 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
 import { pageTitle } from "@/lib/page-title";
 import { useMemo, useState } from "react";
 import { parseEntityId } from "@/lib/entity-id";
@@ -656,7 +657,7 @@ function ProductionDocumentsSection({
                       <option value="">選擇清單項目</option>
                       {(caseItem.checklist ?? []).map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.itemLabel}
+                          {checklistItemText(item.itemLabel)}
                         </option>
                       ))}
                     </Select>

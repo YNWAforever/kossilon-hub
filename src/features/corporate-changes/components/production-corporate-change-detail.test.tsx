@@ -300,7 +300,12 @@ describe("ProductionCorporateChangeDetail", () => {
 
     renderDetail();
 
-    expect(await screen.findByText("NR1 form（選填）")).toBeTruthy();
+    const select = await screen.findByRole("combobox", {
+      name: "NR1 註冊辦事處地址變更通知書（NR1 form） 狀態",
+    });
+    expect(select.parentElement?.textContent).toContain(
+      "NR1 註冊辦事處地址變更通知書NR1 form（選填）",
+    );
   });
 
   it("shows a loading state before the request resolves", () => {

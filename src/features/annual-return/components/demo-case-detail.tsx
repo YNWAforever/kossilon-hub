@@ -1,3 +1,4 @@
+import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { RiskPill } from "./risk-pill";
 import { formatDate, formatDateTime, formatDueDate } from "@/lib/format-date";
 import { Link } from "@tanstack/react-router";
@@ -205,7 +206,9 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   className="flex items-center justify-between gap-3 border-b py-3 last:border-b-0"
                 >
                   <div>
-                    <p className="font-medium">{doc.label}</p>
+                    <p className="font-medium">
+                      <ChecklistItemLabel label={doc.label} />
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {doc.received ? "已收到" : "缺少"}
                     </p>

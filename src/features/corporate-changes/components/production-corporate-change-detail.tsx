@@ -1,3 +1,5 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
+import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { Link } from "@tanstack/react-router";
 import { LoadingRows } from "@/components/ui/skeleton";
 import { parseEntityId } from "@/lib/entity-id";
@@ -160,12 +162,12 @@ function CorporateChangeDetail({ requestId }: { requestId: string }) {
           {request.checklistItems.map((item) => (
             <div key={item.id} className="flex items-center justify-between gap-3 py-3">
               <span className="min-w-0 truncate text-sm">
-                {item.itemLabel}
+                <ChecklistItemLabel label={item.itemLabel} />
                 {item.required ? "" : "（選填）"}
               </span>
               <Select
                 size="sm"
-                aria-label={`${item.itemLabel} 狀態`}
+                aria-label={`${checklistItemText(item.itemLabel)} 狀態`}
                 className="shrink-0"
                 value={item.status}
                 onChange={(event) =>

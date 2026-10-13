@@ -1,3 +1,5 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
+import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { pageTitle } from "@/lib/page-title";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import {
@@ -573,7 +575,9 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
         {outstanding.length > 0 ? (
           <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground">
             {outstanding.map((item) => (
-              <li key={item.id}>{item.itemLabel}</li>
+              <li key={item.id}>
+                <ChecklistItemLabel label={item.itemLabel} />
+              </li>
             ))}
           </ul>
         ) : null}
@@ -892,7 +896,7 @@ function ScopedDocumentPanel({
                   <option value="">未指定（由我們的同事配對）</option>
                   {requirements.map((requirement) => (
                     <option key={requirement.id} value={requirement.id}>
-                      {requirement.itemLabel}
+                      {checklistItemText(requirement.itemLabel)}
                     </option>
                   ))}
                 </Select>
