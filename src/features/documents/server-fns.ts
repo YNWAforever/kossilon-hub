@@ -20,7 +20,11 @@ import type {
 import { assertDocumentServable, canApproveDocument, documentSafetyOf } from "./safety";
 import { createDeterministicDocumentScanner } from "./scanner";
 import { DOCUMENT_CATEGORIES, type DocumentStorage, type IdentifiedDocumentScanner } from "./types";
-import { createDocumentStorage, createOpaqueDocumentKey } from "./storage";
+import {
+  createDocumentStorage,
+  createLazyDocumentStorage,
+  createOpaqueDocumentKey,
+} from "./storage";
 import { DocumentVersionConflictError, withDocumentVersionConflict } from "./version-conflict";
 
 export function createDocumentStorageForProviderMode(
@@ -111,9 +115,12 @@ export const createDocumentContextForRequest = createServerOnlyFn(async (request
   const actor = await requireActor(request);
   const repository = createDocumentRepository();
   const providerMode = currentProviderMode();
-  const storage = createDocumentStorageForProviderMode(
-    providerMode,
-    providerMode === "live" ? getDocumentsBucketBinding() : undefined,
+  // Resolved on first use, so metadata-only reads still work without a bucket.
+  const storage = createLazyDocumentStorage(() =>
+    createDocumentStorageForProviderMode(
+      providerMode,
+      providerMode === "live" ? getDocumentsBucketBinding() : undefined,
+    ),
   );
   return {
     actor,

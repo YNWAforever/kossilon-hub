@@ -80,3 +80,30 @@ export function createDocumentStorage(bucket: R2BucketLike): DocumentStorage {
     },
   };
 }
+
+/**
+ * Storage that is only resolved when a document's bytes are actually touched.
+ *
+ * Every document server function used to resolve the R2 binding up front, and
+ * getDocumentsBucketBinding() throws when it is missing — so a storage outage
+ * or misconfiguration also broke database-only reads: the document lists, the
+ * payment review and the case page's document pickers all failed with
+ * "DOCUMENTS_BUCKET requires a Workers R2 binding". Reads of metadata now work
+ * regardless; uploads, previews and recovery still fail loudly, at the point
+ * they need the bucket.
+ */
+export function createLazyDocumentStorage(resolve: () => DocumentStorage): DocumentStorage {
+  let storage: DocumentStorage | undefined;
+  const current = () => (storage ??= resolve());
+  return {
+    // async so a missing bucket rejects like any other storage failure.
+    put: async (input) => current().put(input),
+    get: async (objectKey) => current().get(objectKey),
+    delete: async (objectKey) => current().delete(objectKey),
+    head: async (objectKey) => current().head(objectKey),
+    inspect: async (objectKey) => {
+      const resolved = current();
+      return resolved.inspect ? resolved.inspect(objectKey) : { state: "unknown" as const };
+    },
+  };
+}
