@@ -1,3 +1,4 @@
+import { annualReturnStatusLabel, checklistStatusLabel, paymentStatusLabel } from "./labels";
 import type { AnnualReturnAction, AnnualReturnActorRole } from "./permissions";
 
 // jsonb columns (audit_events.metadata, assignment_events.recommendation_factors)
@@ -143,12 +144,62 @@ const ASSIGNMENT_DECISION_LABELS: Record<AssignmentEventRow["decision"], string>
   manual: "分配：手動",
 };
 
+const ASSIGNMENT_TARGET_LABELS: Record<string, string> = {
+  owner: "負責同事",
+  reviewer: "覆核同事",
+};
+
+/**
+ * The repository writes audit summaries in English, and they stay that way:
+ * they are evidence, written once. The screen describes the known shapes in
+ * the UI language and shows anything else exactly as stored.
+ */
+const AUDIT_SUMMARY_PATTERNS: [RegExp, (...match: string[]) => string][] = [
+  [/^Annual return case created\.$/, () => "已建立周年申報案件。"],
+  [/^(?:Case )?[Nn]ote added\.$/, () => "已加入備註。"],
+  [
+    /^Annual return (\w+) assigned\.$/,
+    (target) => `已分配${ASSIGNMENT_TARGET_LABELS[target] ?? target}。`,
+  ],
+  [
+    /^Status changed from (.+) to (.+)\.$/,
+    (from, to) =>
+      `狀態由「${annualReturnStatusLabel(from)}」改為「${annualReturnStatusLabel(to)}」。`,
+  ],
+  [
+    /^Payment status changed to (.+)\.$/,
+    (status) => `付款狀態改為「${paymentStatusLabel(status)}」。`,
+  ],
+  [
+    /^(.+) marked as (Missing|Received|Verified|Rejected)\.$/,
+    (item, status) => `「${item}」已標記為「${checklistStatusLabel(status)}」。`,
+  ],
+  [
+    /^Manual WhatsApp reminder logged for (.+)\.$/,
+    (recipient) => `已記錄向 ${recipient} 發出的 WhatsApp 提醒。`,
+  ],
+  [/^Filing reference and confirmation proof updated\.$/, () => "已更新遞交編號及回條證明。"],
+  [/^Payment evidence record\.$/, () => "已記錄付款證明。"],
+  [/^Payment evidence review\.$/, () => "已覆核付款證明。"],
+];
+
+function describeAuditSummary(summary: string): string {
+  for (const [pattern, describe] of AUDIT_SUMMARY_PATTERNS) {
+    const match = pattern.exec(summary);
+    if (match) return describe(...match.slice(1));
+  }
+  return summary;
+}
+
 export function describeCaseHistoryEntry(entry: CaseHistoryEntry): {
   label: string;
   description: string;
 } {
   if (entry.kind === "audit") {
-    return { label: AUDIT_ACTION_LABELS[entry.action] ?? entry.action, description: entry.summary };
+    return {
+      label: AUDIT_ACTION_LABELS[entry.action] ?? entry.action,
+      description: describeAuditSummary(entry.summary),
+    };
   }
 
   const from = entry.previousAssigneeName ?? "未分配";

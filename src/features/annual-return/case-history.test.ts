@@ -145,10 +145,37 @@ describe("describeCaseHistoryEntry", () => {
     },
   );
 
-  it("labels an audit entry's description as its stored summary", () => {
-    const [entry] = mergeCaseHistory([baseAuditRow], []);
+  // The stored summaries are English audit evidence and stay as written; the
+  // screen describes them in the UI language.
+  it.each([
+    ["Annual return case created.", "已建立周年申報案件。"],
+    ["Case note added.", "已加入備註。"],
+    ["Note added.", "已加入備註。"],
+    ["Annual return owner assigned.", "已分配負責同事。"],
+    ["Annual return reviewer assigned.", "已分配覆核同事。"],
+    [
+      "Status changed from Upcoming to Client reminder sent.",
+      "狀態由「即將開始」改為「已提醒客戶」。",
+    ],
+    ["Payment status changed to Payment pending.", "付款狀態改為「待付款」。"],
+    ["Register of directors marked as Received.", "「Register of directors」已標記為「已收到」。"],
+    [
+      "Manual WhatsApp reminder logged for Ada Director.",
+      "已記錄向 Ada Director 發出的 WhatsApp 提醒。",
+    ],
+    ["Filing reference and confirmation proof updated.", "已更新遞交編號及回條證明。"],
+    ["Payment evidence record.", "已記錄付款證明。"],
+    ["Payment evidence review.", "已覆核付款證明。"],
+  ])("describes the stored summary %j in Chinese", (summary, description) => {
+    const [entry] = mergeCaseHistory([{ ...baseAuditRow, summary }], []);
 
-    expect(describeCaseHistoryEntry(entry).description).toBe("Note added.");
+    expect(describeCaseHistoryEntry(entry).description).toBe(description);
+  });
+
+  it("shows a summary it does not recognise as stored rather than hiding it", () => {
+    const [entry] = mergeCaseHistory([{ ...baseAuditRow, summary: "approve_handoff" }], []);
+
+    expect(describeCaseHistoryEntry(entry).description).toBe("approve_handoff");
   });
 
   it("labels a manual assignment and describes the reassignment", () => {
