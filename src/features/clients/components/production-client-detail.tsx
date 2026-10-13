@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { RecordUnavailable } from "@/components/record-unavailable";
+import { LoadingRows } from "@/components/ui/skeleton";
+import { parseEntityId } from "@/lib/entity-id";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -82,6 +84,17 @@ function today(): string {
 }
 
 export function ProductionClientDetail({ clientId }: { clientId: string }) {
+  // A malformed link can never name a client; asking the server only fails
+  // its schema validation, which used to read as a temporary outage.
+  if (parseEntityId(clientId) === null) return <ClientNotFound />;
+  return <ClientDetail clientId={clientId} />;
+}
+
+function ClientNotFound() {
+  return <RecordUnavailable title="找不到客戶" back={<Link to="/clients">返回客戶</Link>} />;
+}
+
+function ClientDetail({ clientId }: { clientId: string }) {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [contactDialog, setContactDialog] = useState<{ open: boolean; contact?: CompanyContact }>({
@@ -190,40 +203,23 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
   }
 
   if (clientQuery.isPending) {
-    return (
-      <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
-        <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        載入客戶資料中
-      </div>
-    );
+    return <LoadingRows label="載入客戶資料中" rows={6} className="p-6" />;
   }
 
   if (clientQuery.isError) {
     return (
-      <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="案件與客戶" title="客戶資料無法載入" />
-        <p role="alert" className="text-sm text-destructive">
-          客戶資料暫時無法載入，請稍後再試。
-        </p>
-        <Button asChild>
-          <Link to="/clients">Back to clients</Link>
-        </Button>
-      </main>
+      <RecordUnavailable
+        title="客戶資料無法載入"
+        message="客戶資料暫時無法載入，請稍後再試。"
+        back={<Link to="/clients">返回客戶</Link>}
+        onRetry={() => void clientQuery.refetch()}
+      />
     );
   }
 
   const client = clientQuery.data;
 
-  if (!client) {
-    return (
-      <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="案件與客戶" title="找不到客戶" />
-        <Button asChild>
-          <Link to="/clients">Back to clients</Link>
-        </Button>
-      </main>
-    );
-  }
+  if (!client) return <ClientNotFound />;
 
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">

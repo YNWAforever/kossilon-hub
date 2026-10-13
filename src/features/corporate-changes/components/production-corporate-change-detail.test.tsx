@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
@@ -15,11 +16,14 @@ const serverFns = vi.hoisted(() => ({
 }));
 
 vi.mock("../server-fns", () => serverFns);
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }: { children: ReactNode }) => <a href="/corporate-changes">{children}</a>,
+}));
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const requestId = "request-1";
+const requestId = "11111111-1111-4111-8111-111111111111";
 
 const baseRequest: CorporateChangeRequestDetail = {
   id: requestId,
@@ -312,6 +316,28 @@ describe("ProductionCorporateChangeDetail", () => {
 
     renderDetail();
 
-    expect(await screen.findByText("未能載入此申請。")).toBeTruthy();
+    expect((await screen.findByRole("alert")).textContent).toBe("未能載入此申請。請稍後再試。");
+    expect(screen.getByRole("button", { name: "重試" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "返回公司變更" })).toBeTruthy();
+  });
+
+  it("says a request that does not exist is not found, not temporarily unavailable", async () => {
+    serverFns.getCorporateChangeRequest.mockResolvedValue(null);
+
+    renderDetail();
+
+    expect(await screen.findByRole("heading", { name: "找不到公司變更申請" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "重試" })).toBeNull();
+  });
+
+  it("treats a malformed link as not found without asking the server", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ProductionCorporateChangeDetail requestId="bad" />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("heading", { name: "找不到公司變更申請" })).toBeTruthy();
+    expect(serverFns.getCorporateChangeRequest).not.toHaveBeenCalled();
   });
 });

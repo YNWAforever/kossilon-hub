@@ -1,3 +1,6 @@
+import { parseEntityId } from "@/lib/entity-id";
+import { LoadingRows } from "@/components/ui/skeleton";
+import { RecordUnavailable } from "@/components/record-unavailable";
 import {
   BR_NUMBER_MESSAGE,
   CR_NUMBER_MESSAGE,
@@ -7,8 +10,7 @@ import {
 import { formatDate } from "@/lib/format-date";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,22 @@ function nextStatus(current: IncorporationStatus): IncorporationStatus | null {
 const REGISTRY_NUMBERS_ERROR = "必須填寫 CR 號碼及 BR 號碼。";
 
 export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
+  // A malformed link can never name a case; asking the server only fails its
+  // schema validation, which used to read as a temporary outage.
+  if (parseEntityId(caseId) === null) return <IncorporationNotFound />;
+  return <IncorporationDetail caseId={caseId} />;
+}
+
+function IncorporationNotFound() {
+  return (
+    <RecordUnavailable
+      title="找不到公司註冊案件"
+      back={<Link to="/incorporation">返回公司註冊</Link>}
+    />
+  );
+}
+
+function IncorporationDetail({ caseId }: { caseId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [completionForm, setCompletionForm] = useState({
@@ -104,26 +122,23 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
   });
 
   if (caseQuery.isPending) {
+    return <LoadingRows label="載入案件中" rows={6} className="p-6" />;
+  }
+
+  if (caseQuery.isError) {
     return (
-      <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
-        <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        載入案件中
-      </div>
+      <RecordUnavailable
+        title="案件無法載入"
+        message="案件資料暫時無法載入，請稍後再試。"
+        back={<Link to="/incorporation">返回公司註冊</Link>}
+        onRetry={() => void caseQuery.refetch()}
+      />
     );
   }
 
   const incorporationCase = caseQuery.data;
 
-  if (caseQuery.isError || !incorporationCase) {
-    return (
-      <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="案件與客戶" title="案件無法載入" />
-        <p role="alert" className="text-sm text-destructive">
-          案件資料暫時無法載入，請稍後再試。
-        </p>
-      </main>
-    );
-  }
+  if (!incorporationCase) return <IncorporationNotFound />;
 
   const upcoming = nextStatus(incorporationCase.status);
 

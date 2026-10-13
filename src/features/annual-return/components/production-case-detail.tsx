@@ -81,15 +81,36 @@ function PendingIcon({ pending }: { pending: boolean }) {
   return pending ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : null;
 }
 
-export function ProductionAnnualReturnCaseDetail({
-  caseId,
-  returnTo = "/annual-returns",
-  actorScope = "session",
-}: {
+type CaseDetailProps = {
   caseId: string;
   returnTo?: string;
   actorScope?: string;
-}) {
+};
+
+export function ProductionAnnualReturnCaseDetail(props: CaseDetailProps) {
+  // A truncated or hand-edited link can never name a case. Asking the server
+  // anyway only fails schema validation, which the query retried behind an
+  // endless loading state before showing the raw validation error.
+  if (parseEntityId(props.caseId) === null) return <CaseNotFound />;
+  return <CaseDetail {...props} />;
+}
+
+function CaseNotFound() {
+  return (
+    <main className="flex-1 space-y-3 p-6">
+      <PageHeader eyebrow="案件與客戶" title="找不到案件" />
+      <Button asChild>
+        <Link to="/annual-returns">返回周年申報</Link>
+      </Button>
+    </main>
+  );
+}
+
+function CaseDetail({
+  caseId,
+  returnTo = "/annual-returns",
+  actorScope = "session",
+}: CaseDetailProps) {
   const queryClient = useQueryClient();
   const actions = createProductionCaseActions(
     caseId,
@@ -203,16 +224,7 @@ export function ProductionAnnualReturnCaseDetail({
     );
   }
 
-  if (!caseItem) {
-    return (
-      <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="案件與客戶" title="找不到案件" />
-        <Button asChild>
-          <Link to="/annual-returns">返回周年申報</Link>
-        </Button>
-      </main>
-    );
-  }
+  if (!caseItem) return <CaseNotFound />;
 
   const readiness = readinessForCase(caseItem);
   const packetReady = readiness.readyToPrepare && Boolean(readiness.sourceVersion);

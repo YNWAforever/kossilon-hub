@@ -190,6 +190,18 @@ beforeEach(() => {
 });
 
 describe("ProductionAnnualReturnCaseDetail", () => {
+  it("treats a malformed case link as not found instead of loading forever", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ProductionAnnualReturnCaseDetail caseId="not-a-case" />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "找不到案件" })).toBeTruthy();
+    expect(screen.queryByText("正在載入周年申報案件")).toBeNull();
+    expect(serverFns.getAnnualReturnCase).not.toHaveBeenCalled();
+  });
+
   it("disables preparation for unknown current evidence and shows an actionable blocker", async () => {
     serverFns.getAnnualReturnCase.mockResolvedValue({ ...caseItem, readiness: undefined });
     renderDetail();

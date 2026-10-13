@@ -131,6 +131,27 @@ describe("production client detail", () => {
     expect(alert.textContent).not.toContain("ECONNREFUSED");
   });
 
+  it("retries a failed load and shows the client once it arrives", async () => {
+    serverFns.getClient.mockRejectedValueOnce(new Error("boom")).mockResolvedValue(makeClient());
+    renderDetail();
+
+    fireEvent.click(await screen.findByRole("button", { name: "重試" }));
+
+    expect(await screen.findByText("Acme Company Limited")).toBeTruthy();
+  });
+
+  it("treats a malformed link as not found without asking the server", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ProductionClientDetail clientId="not-a-client" />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("heading", { name: "找不到客戶" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "返回客戶" })).toBeTruthy();
+    expect(serverFns.getClient).not.toHaveBeenCalled();
+  });
+
   it("renders each contact and removes one on click", async () => {
     serverFns.getClient.mockResolvedValue(
       makeClient({

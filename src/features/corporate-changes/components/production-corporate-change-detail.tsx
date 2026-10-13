@@ -1,4 +1,7 @@
+import { Link } from "@tanstack/react-router";
 import { LoadingRows } from "@/components/ui/skeleton";
+import { parseEntityId } from "@/lib/entity-id";
+import { RecordUnavailable } from "@/components/record-unavailable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +21,22 @@ import {
 } from "../labels";
 
 export function ProductionCorporateChangeDetail({ requestId }: { requestId: string }) {
+  // A malformed link can never name a request; asking the server only fails
+  // its schema validation, which used to read as a temporary outage.
+  if (parseEntityId(requestId) === null) return <CorporateChangeNotFound />;
+  return <CorporateChangeDetail requestId={requestId} />;
+}
+
+function CorporateChangeNotFound() {
+  return (
+    <RecordUnavailable
+      title="找不到公司變更申請"
+      back={<Link to="/corporate-changes">返回公司變更</Link>}
+    />
+  );
+}
+
+function CorporateChangeDetail({ requestId }: { requestId: string }) {
   const queryClient = useQueryClient();
 
   const requestQuery = useQuery({
@@ -66,18 +85,20 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
     );
   }
 
-  const request = requestQuery.data;
-
-  if (requestQuery.isError || !request) {
+  if (requestQuery.isError) {
     return (
-      <main className="flex-1 space-y-3 p-4 md:p-6">
-        <PageHeader eyebrow="案件與客戶" title="公司變更申請" />
-        <p role="alert" className="text-sm text-destructive">
-          未能載入此申請。
-        </p>
-      </main>
+      <RecordUnavailable
+        title="公司變更申請無法載入"
+        message="未能載入此申請。請稍後再試。"
+        back={<Link to="/corporate-changes">返回公司變更</Link>}
+        onRetry={() => void requestQuery.refetch()}
+      />
     );
   }
+
+  const request = requestQuery.data;
+
+  if (!request) return <CorporateChangeNotFound />;
 
   const requiredItemsVerified = request.checklistItems
     .filter((item) => item.required)
