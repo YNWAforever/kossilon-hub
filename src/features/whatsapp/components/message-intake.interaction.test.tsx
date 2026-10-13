@@ -47,15 +47,15 @@ describe("inbound mapping and quarantine approval", () => {
         <MessageIntake messageId="owned-message" canManageMapping />
       </QueryClientProvider>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Review message mapping and attachments" }));
-    fireEvent.change(await screen.findByLabelText("Target client case"), {
+    fireEvent.click(screen.getByRole("button", { name: "覆核訊息配對及附件" }));
+    fireEvent.change(await screen.findByLabelText("目標客戶案件"), {
       target: { value: "owned-case" },
     });
-    fireEvent.change(screen.getByLabelText("Mapping confirmation reason"), {
+    fireEvent.change(screen.getByLabelText("配對確認原因"), {
       target: { value: "Confirmed client evidence" },
     });
     expect(api.mapWhatsAppMessage).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Approve case mapping" }));
+    fireEvent.click(screen.getByRole("button", { name: "批准案件配對" }));
     await vi.waitFor(() =>
       expect(api.mapWhatsAppMessage).toHaveBeenCalledWith({
         data: {
@@ -89,18 +89,16 @@ describe("inbound mapping and quarantine approval", () => {
         <MessageIntake messageId="owned-message" canManageMapping={false} />
       </QueryClientProvider>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Review message mapping and attachments" }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Receive attachment into quarantine" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "覆核訊息配對及附件" }));
+    fireEvent.click(await screen.findByRole("button", { name: "將附件收入隔離區" }));
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
       expect.stringContaining("media-host-policy-missing"),
     );
-    expect(screen.queryByText(/Attachment received/)).toBeNull();
+    expect(screen.queryByText(/已收到附件/)).toBeNull();
     expect(api.intakeWhatsAppMedia).toHaveBeenCalledWith({
       data: { mediaId: "owned-media", expectedMappingVersion: 2, category: "other" },
     });
-    expect(screen.queryByRole("button", { name: "Approve case mapping" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "批准案件配對" })).toBeNull();
   });
 });

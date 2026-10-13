@@ -39,9 +39,9 @@ describe("WhatsAppIntegrationStatus", () => {
       />,
     );
 
-    expect(screen.getByText("Demo simulation")).toBeTruthy();
-    expect(screen.getByText("No external WhatsApp or email message is sent.")).toBeTruthy();
-    expect(screen.queryByText(/Missing bindings:/)).toBeNull();
+    expect(screen.getByText("示範模擬")).toBeTruthy();
+    expect(screen.getByText("不會發送任何外部 WhatsApp 或電郵訊息。")).toBeTruthy();
+    expect(screen.queryByText(/缺少綁定：/)).toBeNull();
   });
 
   it("shows missing live bindings only when delivery is blocked", () => {
@@ -54,18 +54,16 @@ describe("WhatsAppIntegrationStatus", () => {
       />,
     );
 
-    expect(screen.getByText("Blocked")).toBeTruthy();
-    expect(
-      screen.getByText("Missing bindings: WOZTELL_API_BASE_URL, WOZTELL_CHANNEL_ID"),
-    ).toBeTruthy();
+    expect(screen.getByText("受阻")).toBeTruthy();
+    expect(screen.getByText("缺少綁定：WOZTELL_API_BASE_URL, WOZTELL_CHANNEL_ID")).toBeTruthy();
   });
 
   it("shows configured without a demo notice for live delivery", () => {
     render(<WhatsAppIntegrationStatus status={{ deliveryMode: "live", missingLiveEnvVars: [] }} />);
 
-    expect(screen.getByText("Configured")).toBeTruthy();
-    expect(screen.queryByText("Demo simulation")).toBeNull();
-    expect(screen.queryByText(/Missing bindings:/)).toBeNull();
+    expect(screen.getByText("已設定")).toBeTruthy();
+    expect(screen.queryByText("示範模擬")).toBeNull();
+    expect(screen.queryByText(/缺少綁定：/)).toBeNull();
   });
 });
 
@@ -151,7 +149,7 @@ describe("DocumentsTab — concurrent-write protection", () => {
     serverFns.updateChecklistTemplate.mockReturnValue(promise);
 
     renderHarness();
-    const addButton = screen.getByRole("button", { name: /add document/i }) as HTMLButtonElement;
+    const addButton = screen.getByRole("button", { name: /新增文件/ }) as HTMLButtonElement;
 
     // Two clicks, back to back, with nothing awaited in between — the exact "click twice
     // quickly" scenario from the bug report, before the first mutation's promise has resolved.
@@ -202,7 +200,7 @@ describe("DocumentsTab — accessible row controls", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Document name: Signed NAR1")).toBeTruthy();
-    expect(screen.getByLabelText("Days before due for Signed NAR1")).toBeTruthy();
+    expect(screen.getByLabelText("文件名稱：Signed NAR1")).toBeTruthy();
+    expect(screen.getByLabelText("Signed NAR1 的到期前日數")).toBeTruthy();
   });
 });

@@ -175,10 +175,7 @@ export function createServiceSubscriptionRepository(
         `;
 
         if (existing[0]?.status === "Active") {
-          throw new ServiceSubscriptionWriteError(
-            "serviceType",
-            "This company already has an active subscription for that service.",
-          );
+          throw new ServiceSubscriptionWriteError("serviceType", "此公司已有該服務的有效訂閱。");
         }
 
         if (existing[0]) {

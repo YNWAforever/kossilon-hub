@@ -108,7 +108,7 @@ describe("ProductionCorporateChangeDetail", () => {
     const { invalidateSpy } = renderDetail();
 
     const completeButton = (await screen.findByRole("button", {
-      name: /^complete$/i,
+      name: "完成",
     })) as HTMLButtonElement;
     expect(completeButton.disabled).toBe(false);
 
@@ -136,13 +136,13 @@ describe("ProductionCorporateChangeDetail", () => {
     renderDetail();
 
     const completeButton = (await screen.findByRole("button", {
-      name: /^complete$/i,
+      name: "完成",
     })) as HTMLButtonElement;
 
     fireEvent.click(completeButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Unable to complete this request. Try again.");
+      expect(toast.error).toHaveBeenCalledWith("未能完成此申請，請再試一次。");
     });
 
     // The mutation failing must not leave the button stuck disabled — the user should be able
@@ -160,13 +160,13 @@ describe("ProductionCorporateChangeDetail", () => {
     const { invalidateSpy } = renderDetail();
 
     const cancelButton = (await screen.findByRole("button", {
-      name: /cancel request/i,
+      name: "取消申請",
     })) as HTMLButtonElement;
 
     fireEvent.click(cancelButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Unable to cancel this request. Try again.");
+      expect(toast.error).toHaveBeenCalledWith("未能取消此申請，請再試一次。");
     });
     expect(cancelButton.disabled).toBe(false);
     expect(invalidateSpy).not.toHaveBeenCalled();
@@ -181,7 +181,7 @@ describe("ProductionCorporateChangeDetail", () => {
     fireEvent.change(statusSelect, { target: { value: "Rejected" } });
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Unable to update the checklist item. Try again.");
+      expect(toast.error).toHaveBeenCalledWith("未能更新清單項目，請再試一次。");
     });
 
     // The select must not get stuck disabled after a failed update.
@@ -197,7 +197,7 @@ describe("ProductionCorporateChangeDetail", () => {
     renderDetail();
 
     const completeButton = (await screen.findByRole("button", {
-      name: /^complete$/i,
+      name: "完成",
     })) as HTMLButtonElement;
     expect(completeButton.disabled).toBe(true);
   });
@@ -211,7 +211,7 @@ describe("ProductionCorporateChangeDetail", () => {
     renderDetail();
 
     const completeButton = (await screen.findByRole("button", {
-      name: /^complete$/i,
+      name: "完成",
     })) as HTMLButtonElement;
     expect(completeButton.disabled).toBe(true);
   });
@@ -220,7 +220,7 @@ describe("ProductionCorporateChangeDetail", () => {
     renderDetail();
 
     const cancelButton = (await screen.findByRole("button", {
-      name: /cancel request/i,
+      name: "取消申請",
     })) as HTMLButtonElement;
     expect(cancelButton.disabled).toBe(false);
 
@@ -240,7 +240,7 @@ describe("ProductionCorporateChangeDetail", () => {
     renderDetail();
 
     const cancelButton = (await screen.findByRole("button", {
-      name: /cancel request/i,
+      name: "取消申請",
     })) as HTMLButtonElement;
     expect(cancelButton.disabled).toBe(true);
   });
@@ -248,10 +248,10 @@ describe("ProductionCorporateChangeDetail", () => {
   it("shows the summary fields and checklist, and updates a checklist item's status", async () => {
     renderDetail();
 
-    await screen.findByRole("button", { name: /^complete$/i });
+    await screen.findByRole("button", { name: "完成" });
 
-    expect(screen.getByText("address change")).toBeTruthy();
-    expect(screen.getByText("Filed with Registrar")).toBeTruthy();
+    expect(screen.getByText("更改註冊辦事處地址")).toBeTruthy();
+    expect(screen.getByText("已遞交公司註冊處")).toBeTruthy();
     expect(screen.getByText("HKD 2,800")).toBeTruthy();
     expect(screen.getByText("NR1 form")).toBeTruthy();
 
@@ -296,7 +296,7 @@ describe("ProductionCorporateChangeDetail", () => {
 
     renderDetail();
 
-    expect(await screen.findByText("NR1 form (optional)")).toBeTruthy();
+    expect(await screen.findByText("NR1 form（選填）")).toBeTruthy();
   });
 
   it("shows a loading state before the request resolves", () => {
@@ -304,7 +304,7 @@ describe("ProductionCorporateChangeDetail", () => {
 
     renderDetail();
 
-    expect(screen.getByText(/loading/i)).toBeTruthy();
+    expect(screen.getByText(/載入中/)).toBeTruthy();
   });
 
   it("shows an error state when the request fails to load", async () => {
@@ -312,6 +312,6 @@ describe("ProductionCorporateChangeDetail", () => {
 
     renderDetail();
 
-    expect(await screen.findByText(/failed to load this request/i)).toBeTruthy();
+    expect(await screen.findByText("未能載入此申請。")).toBeTruthy();
   });
 });

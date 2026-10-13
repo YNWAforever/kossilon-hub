@@ -67,7 +67,7 @@ function TodayRoute() {
   if (dataMode !== "production") {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Operations" title="今日工作" />
+        <PageHeader eyebrow="今日工作" title="今日工作" />
         <DemoUnavailable message="今日工作讀取正式資料，示範模式沒有可讀取的案件。" />
       </main>
     );
@@ -80,7 +80,7 @@ function TodayRoute() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="日常工作" title="今日工作" />
+      <PageHeader eyebrow="今日工作" title="今日工作" />
 
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-col gap-1 text-sm">
@@ -112,7 +112,7 @@ function TodayRoute() {
               })
             }
           >
-            <option value="deadline">限期先後</option>
+            <option value="deadline">到期日先後</option>
             <option value="company">公司名稱</option>
           </select>
         </label>
@@ -200,7 +200,7 @@ function TodayRoute() {
                   {/* The reason this row is here, named. */}
                   <details className="text-muted-foreground">
                     <summary className="flex min-h-11 cursor-pointer items-center">
-                      查看阻擋原因
+                      查看阻礙事項
                     </summary>
                     <p className="break-words py-2">{row.blocker}</p>
                   </details>
@@ -210,8 +210,8 @@ function TodayRoute() {
                     }
                   >
                     {row.daysRemaining < 0
-                      ? `逾期 ${-row.daysRemaining} 天`
-                      : `尚餘 ${row.daysRemaining} 天`}
+                      ? `已逾期 ${-row.daysRemaining} 日`
+                      : `尚餘 ${row.daysRemaining} 日`}
                   </p>
                   <Link
                     className="inline-flex min-h-11 items-center justify-self-start rounded-md border px-3 py-2 text-sm md:justify-self-end"

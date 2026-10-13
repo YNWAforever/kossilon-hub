@@ -126,21 +126,21 @@ export function mergeCaseHistory(
 }
 
 const AUDIT_ACTION_LABELS: Record<AnnualReturnAction, string> = {
-  create_case: "Case created",
-  assign_owner: "Owner reassigned",
-  add_note: "Note added",
-  record_reminder: "Reminder recorded",
-  update_checklist: "Checklist updated",
-  update_payment: "Payment updated",
-  update_filing_proof: "Filing proof updated",
-  change_status: "Status changed",
-  complete: "Case completed",
+  create_case: "已建立案件",
+  assign_owner: "已重新分配負責同事",
+  add_note: "已加入備註",
+  record_reminder: "已記錄提醒",
+  update_checklist: "已更新清單",
+  update_payment: "已更新付款",
+  update_filing_proof: "已更新遞交證明",
+  change_status: "已更改狀態",
+  complete: "案件已完成",
 };
 
 const ASSIGNMENT_DECISION_LABELS: Record<AssignmentEventRow["decision"], string> = {
-  accepted_recommendation: "Assignment: accepted recommendation",
-  override: "Assignment: overridden",
-  manual: "Assignment: manual",
+  accepted_recommendation: "分配：接納建議",
+  override: "分配：已改選",
+  manual: "分配：手動",
 };
 
 export function describeCaseHistoryEntry(entry: CaseHistoryEntry): {
@@ -151,7 +151,7 @@ export function describeCaseHistoryEntry(entry: CaseHistoryEntry): {
     return { label: AUDIT_ACTION_LABELS[entry.action] ?? entry.action, description: entry.summary };
   }
 
-  const from = entry.previousAssigneeName ?? "Unassigned";
+  const from = entry.previousAssigneeName ?? "未分配";
   const base = `${from} → ${entry.assignedToName}`;
   const description =
     entry.decision === "override" && entry.overrideReason

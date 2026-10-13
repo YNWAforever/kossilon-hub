@@ -45,20 +45,20 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
     mutationFn: (subscriptionId: string) =>
       renewServiceSubscription({ data: { subscriptionId, companyId } }),
     onSuccess: () => {
-      toast.success("Subscription renewed.");
+      toast.success("已更新續期。");
       void queryClient.invalidateQueries({ queryKey });
     },
-    onError: () => toast.error("Unable to renew the subscription. Try again."),
+    onError: () => toast.error("未能為訂閱續期，請再試一次。"),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (subscriptionId: string) =>
       cancelServiceSubscription({ data: { subscriptionId, companyId } }),
     onSuccess: () => {
-      toast.success("Subscription cancelled.");
+      toast.success("已取消訂閱。");
       void queryClient.invalidateQueries({ queryKey });
     },
-    onError: () => toast.error("Unable to cancel the subscription. Try again."),
+    onError: () => toast.error("未能取消訂閱，請再試一次。"),
   });
 
   const subscriptions = subscriptionsQuery.data ?? [];
@@ -70,21 +70,21 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
   return (
     <section className="rounded-lg border bg-card p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Subscriptions</h2>
+        <h2 className="text-sm font-semibold">服務訂閱</h2>
         {offeredTypes.length > 0 ? (
           <button
             type="button"
             onClick={() => setIsAddOpen(true)}
             className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
           >
-            Add subscription
+            新增訂閱
           </button>
         ) : null}
       </div>
 
       {subscriptionsQuery.isError ? (
         <p role="alert" className="mb-3 text-sm text-destructive">
-          Subscriptions are unavailable. Try again shortly.
+          服務訂閱暫時無法載入，請稍後再試。
         </p>
       ) : null}
 
@@ -101,7 +101,7 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
             {subscription.status === "Active" ? (
               <DeadlinePill dueDate={subscription.renewalDate} />
             ) : (
-              <span className="text-xs text-muted-foreground">Cancelled</span>
+              <span className="text-xs text-muted-foreground">已取消</span>
             )}
             {subscription.status === "Active" ? (
               <div className="flex shrink-0 gap-2">
@@ -111,7 +111,7 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
                   onClick={() => renewMutation.mutate(subscription.id)}
                   className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-60"
                 >
-                  Mark renewed
+                  標記已續期
                 </button>
                 <button
                   type="button"
@@ -121,14 +121,14 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
                   onClick={() => cancelMutation.mutate(subscription.id)}
                   className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
-                  Cancel
+                  取消訂閱
                 </button>
               </div>
             ) : null}
           </div>
         ))}
         {!subscriptionsQuery.isPending && subscriptions.length === 0 ? (
-          <p className="py-3 text-sm text-muted-foreground">No subscriptions on file.</p>
+          <p className="py-3 text-sm text-muted-foreground">未有服務訂閱紀錄。</p>
         ) : null}
       </div>
 
@@ -186,11 +186,11 @@ function AddSubscriptionDialog({
           renewalDate,
         },
       });
-      toast.success("Subscription added.");
+      toast.success("已新增訂閱。");
       onAdded();
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to add subscription.");
+      toast.error(error instanceof Error ? error.message : "未能新增訂閱。");
     } finally {
       setSaving(false);
     }
@@ -200,16 +200,12 @@ function AddSubscriptionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add subscription</DialogTitle>
-          <DialogDescription>
-            Start tracking a recurring service for this company.
-          </DialogDescription>
+          <DialogTitle>新增訂閱</DialogTitle>
+          <DialogDescription>開始追蹤此公司的定期服務。</DialogDescription>
         </DialogHeader>
 
         {offeredTypes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Every service already has an active subscription.
-          </p>
+          <p className="text-sm text-muted-foreground">所有服務均已有有效訂閱。</p>
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <div>
@@ -217,7 +213,7 @@ function AddSubscriptionDialog({
                 className="text-[10px] uppercase tracking-wider text-muted-foreground"
                 htmlFor="subscription-type"
               >
-                Service
+                服務
               </label>
               <select
                 id="subscription-type"
@@ -231,7 +227,7 @@ function AddSubscriptionDialog({
                 required
               >
                 <option value="" disabled>
-                  Select a service
+                  選擇服務
                 </option>
                 {offeredTypes.map((type) => (
                   <option key={type} value={type}>
@@ -245,7 +241,7 @@ function AddSubscriptionDialog({
                 className="text-[10px] uppercase tracking-wider text-muted-foreground"
                 htmlFor="subscription-fee"
               >
-                Fee (HKD)
+                費用（HKD）
               </label>
               <input
                 id="subscription-fee"
@@ -263,7 +259,7 @@ function AddSubscriptionDialog({
                 className="text-[10px] uppercase tracking-wider text-muted-foreground"
                 htmlFor="subscription-renewal"
               >
-                Renewal date
+                續期日期
               </label>
               <input
                 id="subscription-renewal"
@@ -280,14 +276,14 @@ function AddSubscriptionDialog({
                 onClick={() => onOpenChange(false)}
                 className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
               >
-                Cancel
+                取消
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                {saving ? "Adding…" : "Add subscription"}
+                {saving ? "新增中…" : "新增訂閱"}
               </button>
             </DialogFooter>
           </form>

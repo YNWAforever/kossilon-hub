@@ -132,7 +132,7 @@ describe("production payments route", () => {
       }),
     );
     expect(await screen.findByTitle("付款憑證預覽")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Concrete return reason"), {
+    fireEvent.change(screen.getByLabelText("具體退回原因"), {
       target: { value: "Cannot read transaction number" },
     });
     fireEvent.click(screen.getByText("退回補傳"));
@@ -207,9 +207,9 @@ describe("production payments route", () => {
     serverFns.review.mockResolvedValue(case_[0]);
     renderPayments();
     await screen.findByText("Unreadable company");
-    expect((screen.getByLabelText("Receipt amount") as HTMLInputElement).value).toBe("");
-    expect((screen.getByLabelText("Receipt date") as HTMLInputElement).value).toBe("");
-    fireEvent.change(screen.getByLabelText("Concrete return reason"), {
+    expect((screen.getByLabelText("憑證金額") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("憑證收款日期") as HTMLInputElement).value).toBe("");
+    fireEvent.change(screen.getByLabelText("具體退回原因"), {
       target: { value: "Amount and date are unreadable" },
     });
     fireEvent.click(screen.getByText("退回補傳"));
@@ -240,7 +240,7 @@ describe("production payments route", () => {
 
     await screen.findByRole("alert");
 
-    expect(screen.queryByText("No production payment evidence is awaiting review.")).toBeNull();
+    expect(screen.queryByText("沒有待覆核的付款憑證。")).toBeNull();
   });
 
   it("still shows the empty state when the queries succeed with nothing to review", async () => {
@@ -248,8 +248,6 @@ describe("production payments route", () => {
     serverFns.listDocuments.mockResolvedValue([]);
     renderPayments();
 
-    expect(
-      await screen.findByText("No production payment evidence is awaiting review."),
-    ).toBeTruthy();
+    expect(await screen.findByText("沒有待覆核的付款憑證。")).toBeTruthy();
   });
 });

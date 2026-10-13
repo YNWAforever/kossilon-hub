@@ -94,8 +94,8 @@ function DemoAnnualReturnCommandCenter() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Annual returns"
+        eyebrow="案件與客戶"
+        title="周年申報"
         actions={
           <Link
             to="/work-queue"
@@ -109,25 +109,25 @@ function DemoAnnualReturnCommandCenter() {
             }}
             className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
           >
-            Open work queue
+            開啟工作隊列
           </Link>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-        <Metric label="Overdue" value={metrics.overdue} tone="red" />
-        <Metric label="Due soon" value={metrics.dueSoon} tone="orange" />
-        <Metric label="Blocked" value={metrics.blocked} tone="yellow" />
-        <Metric label="Ready to file" value={metrics.readyToFile} tone="green" />
-        <Metric label="Filed" value={metrics.filed} tone="blue" />
+        <Metric label="已逾期" value={metrics.overdue} tone="red" />
+        <Metric label="即將到期" value={metrics.dueSoon} tone="orange" />
+        <Metric label="受阻" value={metrics.blocked} tone="yellow" />
+        <Metric label="可遞交" value={metrics.readyToFile} tone="green" />
+        <Metric label="已遞交" value={metrics.filed} tone="blue" />
       </div>
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto]">
           <input
             className="rounded-md border bg-background px-3 py-2 text-sm"
-            aria-label="Search company or contact"
-            placeholder="Search company or contact"
+            aria-label="搜尋公司或聯絡人"
+            placeholder="搜尋公司或聯絡人"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -159,9 +159,9 @@ function DemoAnnualReturnCommandCenter() {
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={owner}
             onChange={(event) => setOwner(event.target.value)}
-            aria-label="Filter by owner"
+            aria-label="按負責同事篩選"
           >
-            <option value="all">All owners</option>
+            <option value="all">全部負責同事</option>
             {owners.map((ownerName) => (
               <option key={ownerName} value={ownerName}>
                 {ownerName}
@@ -175,13 +175,13 @@ function DemoAnnualReturnCommandCenter() {
             <div
               className={`hidden gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid ${CASE_GRID_COLUMNS}`}
             >
-              <span>Company</span>
-              <span>Owner</span>
-              <span>Due</span>
-              <span>Progress</span>
-              <span>Outstanding</span>
-              <span>Next action</span>
-              <span className="text-right">Open</span>
+              <span>公司</span>
+              <span>負責同事</span>
+              <span>到期日</span>
+              <span>進度</span>
+              <span>未完成事項</span>
+              <span>下一步</span>
+              <span className="text-right">開啟</span>
             </div>
 
             <div className="divide-y">
@@ -190,7 +190,7 @@ function DemoAnnualReturnCommandCenter() {
               ))}
               {visibleCases.length === 0 ? (
                 <div className="px-4 py-8 text-sm text-muted-foreground">
-                  No annual return cases match the current filters.
+                  沒有符合篩選條件的周年申報案件。
                 </div>
               ) : null}
             </div>
@@ -249,7 +249,7 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
   const blockers = getBlockers(caseItem);
   const blockerSummary =
     blockers.length === 0
-      ? "None"
+      ? null
       : blockers.length === 1
         ? blockers[0].label
         : `${blockers[0].label} +${blockers.length - 1}`;
@@ -261,54 +261,54 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
       </div>
 
-      <Field label="Owner" value={caseItem.owner} />
+      <Field label="負責同事" value={caseItem.owner} />
       <Field
-        label="Due"
+        label="到期日"
         value={
           <div className="space-y-1">
             <RiskPill risk={risk} />
             <p className="text-xs text-muted-foreground">
               {risk === "filed"
-                ? `${formatDate(caseItem.dueDate)} · filed`
+                ? `${formatDate(caseItem.dueDate)} · 已遞交`
                 : formatDueDate(caseItem.dueDate, dueInDays)}
             </p>
           </div>
         }
       />
       <Field
-        label="Progress"
+        label="進度"
         value={
           <div>
-            <p>{readiness}% case</p>
+            <p>案件 {readiness}%</p>
             <p className="text-xs text-muted-foreground">
-              Packet {packetLabel(packetStatus).toLowerCase()}
+              交件套件：{packetLabel(packetStatus)}
               {packetReadiness > 0 && packetReadiness < 100 ? ` · ${packetReadiness}%` : ""}
             </p>
           </div>
         }
       />
       <Field
-        label="Outstanding"
+        label="未完成事項"
         value={
           <div className="min-w-0">
-            <p className="truncate" title={blockerSummary}>
-              {blockerSummary === "None" ? "No blockers" : blockerSummary}
+            <p className="truncate" title={blockerSummary ?? "沒有阻礙事項"}>
+              {blockerSummary ?? "沒有阻礙事項"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {openFollowUps === 0 ? "No follow-ups" : `${openFollowUps} follow-ups open`}
+              {openFollowUps === 0 ? "沒有待跟進" : `${openFollowUps} 項待跟進`}
             </p>
           </div>
         }
       />
       <Field
-        label="Next action"
+        label="下一步"
         value={
           <div>
             <p>{nextAction}</p>
             <p
               className={`text-xs ${caseItem.paymentStatus === "overdue" ? "font-medium text-red-700" : "text-muted-foreground"}`}
             >
-              Payment {paymentLabel(caseItem.paymentStatus).toLowerCase()}
+              付款：{paymentLabel(caseItem.paymentStatus)}
             </p>
           </div>
         }
@@ -316,12 +316,12 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
 
       <div className="flex justify-start lg:justify-end">
         <Link
-          aria-label={`Open ${caseItem.companyName}`}
+          aria-label={`開啟 ${caseItem.companyName}`}
           className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
           to="/annual-returns/$id"
           params={{ id: caseItem.id }}
         >
-          Open
+          開啟
         </Link>
       </div>
     </div>
@@ -353,12 +353,12 @@ function riskSortValue(risk: AnnualReturnRiskLevel): number {
 
 function riskLabel(risk: AnnualReturnRiskLevel): string {
   return {
-    overdue: "Overdue",
-    "due-soon": "Due soon",
-    blocked: "Blocked",
-    healthy: "Healthy",
-    "ready-to-file": "Ready",
-    filed: "Filed",
+    overdue: "已逾期",
+    "due-soon": "即將到期",
+    blocked: "受阻",
+    healthy: "正常",
+    "ready-to-file": "可遞交",
+    filed: "已遞交",
   }[risk];
 }
 
@@ -366,24 +366,24 @@ function filterLabel(
   filter: "all" | "urgent" | "blocked" | "ready" | "packet-ready" | "needs-follow-up" | "filed",
 ): string {
   return {
-    all: "All",
-    urgent: "Urgent",
-    blocked: "Blocked",
-    ready: "Ready",
-    "packet-ready": "Packet ready",
-    "needs-follow-up": "Needs follow-up",
-    filed: "Filed",
+    all: "全部",
+    urgent: "緊急",
+    blocked: "受阻",
+    ready: "可遞交",
+    "packet-ready": "交件套件就緒",
+    "needs-follow-up": "需要跟進",
+    filed: "已遞交",
   }[filter];
 }
 
 function packetLabel(status: AnnualReturnPacketStatus): string {
   return {
-    "not-started": "Not started",
-    building: "Building",
-    "ready-for-review": "Review",
-    approved: "Approved",
-    submitted: "Submitted",
-    accepted: "Accepted",
+    "not-started": "未開始",
+    building: "準備中",
+    "ready-for-review": "待覆核",
+    approved: "已批准",
+    submitted: "已提交",
+    accepted: "已接納",
   }[status];
 }
 
@@ -410,8 +410,8 @@ function riskToneClass(risk: AnnualReturnRiskLevel): string {
 
 function paymentLabel(paymentStatus: AnnualReturnCase["paymentStatus"]): string {
   return {
-    overdue: "Overdue",
-    paid: "Paid",
-    pending: "Pending",
+    overdue: "逾期未付",
+    paid: "已付款",
+    pending: "待付款",
   }[paymentStatus];
 }

@@ -15,7 +15,7 @@ const CONSTRAINT_FIELDS: Record<string, { field: ServiceSubscriptionWriteField; 
   {
     service_subscriptions_one_per_type: {
       field: "serviceType",
-      message: "This company already has an active subscription for that service.",
+      message: "此公司已有該服務的有效訂閱。",
     },
   };
 

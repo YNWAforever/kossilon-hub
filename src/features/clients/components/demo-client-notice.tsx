@@ -7,14 +7,12 @@ type Props = {
 
 const COPY: Record<Props["variant"], { title: string; message: string }> = {
   register: {
-    title: "Clients",
-    message:
-      "The client register reads live company records and has no demo fixtures. Sign in to a production environment to use it.",
+    title: "客戶",
+    message: "客戶名冊讀取實時公司紀錄，並無示範資料。請登入正式環境使用。",
   },
   detail: {
-    title: "Client",
-    message:
-      "Client profiles read live company records and have no demo fixtures. Sign in to a production environment to view one.",
+    title: "客戶資料",
+    message: "客戶資料讀取實時公司紀錄，並無示範資料。請登入正式環境查看。",
   },
 };
 
@@ -23,7 +21,7 @@ export function DemoClientNotice({ variant }: Props) {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title={copy.title} />
+      <PageHeader eyebrow="案件與客戶" title={copy.title} />
       <DemoUnavailable message={copy.message} />
     </main>
   );

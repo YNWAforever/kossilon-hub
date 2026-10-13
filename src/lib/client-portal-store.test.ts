@@ -42,7 +42,7 @@ describe("client portal store", () => {
     expect(getClientPortalProgress(requireCase("ar-delta"))).toMatchObject({
       completed: 2,
       total: 6,
-      nextAction: "Replace Signed NAR1",
+      nextAction: "更換 Signed NAR1",
       percentage: 33,
       isReadOnly: false,
     });
@@ -61,10 +61,10 @@ describe("client portal store", () => {
         phone: "+852 9333 2211",
         documentTitle: "Signed NAR1",
         reasonCode: "missing-signature",
-        reasonLabel: "Required signature is missing",
+        reasonLabel: "缺少必要簽署",
         note: "Director signature is missing on page 2.",
         status: "draft",
-        suggestedTiming: "Send now",
+        suggestedTiming: "立即發送",
       }),
     ]);
 
@@ -81,7 +81,7 @@ describe("client portal store", () => {
       expect.objectContaining({
         id: `document-review-follow-up-${documentId}`,
         status: "blocked",
-        blockedReason: "Filed cases cannot send follow-ups",
+        blockedReason: "已遞交的案件不能發送跟進",
       }),
     ]);
   });
@@ -98,7 +98,7 @@ describe("client portal store", () => {
     ]);
     expect(getClientPortalReviewReason("missing-signature")).toEqual({
       code: "missing-signature",
-      label: "Required signature is missing",
+      label: "缺少必要簽署",
     });
     expect(getClientPortalReviewReason(undefined)).toBeUndefined();
   });

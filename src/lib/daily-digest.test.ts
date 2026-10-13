@@ -33,14 +33,14 @@ describe("daily AI digest", () => {
       ],
     });
 
-    expect(digest.headline).toBe("1 priority action before close of business");
+    expect(digest.headline).toBe("今日下班前有 1 項優先工作");
     expect(digest.counts).toEqual({ critical: 1, high: 0, medium: 0 });
     expect(digest.items.map((item) => item.id)).toEqual(["annual-return:ar-critical"]);
     expect(digest.items[0]).toMatchObject({
       kind: "annual-return",
       severity: "critical",
-      title: "Escalate Harbour Trading Ltd annual return",
-      actionLabel: "Open case",
+      title: "升級處理 Harbour Trading Ltd 的周年申報",
+      actionLabel: "開啟案件",
       route: { to: "/annual-returns/$id", params: { id: "ar-critical" } },
     });
     expect(digestTone("critical")).toBe("red");
@@ -95,7 +95,7 @@ describe("daily AI digest", () => {
       ],
     });
 
-    expect(digest.headline).toBe("No priority actions detected");
+    expect(digest.headline).toBe("未發現需優先處理的工作");
     expect(digest.items).toEqual([]);
     expect(digest.counts).toEqual({ critical: 0, high: 0, medium: 0 });
   });
@@ -114,7 +114,7 @@ describe("daily AI digest during the Hong Kong overnight window", () => {
       annualReturnCases: [annualReturnCase({ id: "ar-today", filingDueDate: "2026-07-05" })],
     });
 
-    expect(digest.items[0].detail).toContain("due today");
+    expect(digest.items[0].detail).toContain("今日到期");
   });
 
   it("reads a case due yesterday as overdue", () => {
@@ -123,7 +123,7 @@ describe("daily AI digest during the Hong Kong overnight window", () => {
       annualReturnCases: [annualReturnCase({ id: "ar-late", filingDueDate: "2026-07-04" })],
     });
 
-    expect(digest.items[0].detail).toContain("1d overdue");
+    expect(digest.items[0].detail).toContain("已逾期 1 日");
     expect(digest.items[0].severity).toBe("critical");
   });
 

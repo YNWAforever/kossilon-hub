@@ -1,5 +1,13 @@
 import { z } from "zod";
 export const STAFF_ROLES = ["Admin", "Manager", "Staff", "Client"] as const;
+
+/** Display labels; the role values themselves are stored and compared in code. */
+export const STAFF_ROLE_LABELS: Record<(typeof STAFF_ROLES)[number], string> = {
+  Admin: "管理員",
+  Manager: "經理",
+  Staff: "同事",
+  Client: "客戶",
+};
 export const staffFiltersSchema = z
   .object({
     q: z.string().trim().min(1).max(120).optional(),

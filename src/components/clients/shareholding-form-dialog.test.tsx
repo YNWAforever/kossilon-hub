@@ -33,14 +33,14 @@ describe("ShareholdingFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Shareholder name"), {
+    fireEvent.change(screen.getByLabelText("股東名稱"), {
       target: { value: "Jane Shareholder" },
     });
-    fireEvent.change(screen.getByLabelText("Number of shares"), { target: { value: "100" } });
-    fireEvent.change(screen.getByLabelText("Allotment date"), {
+    fireEvent.change(screen.getByLabelText("股數"), { target: { value: "100" } });
+    fireEvent.change(screen.getByLabelText("配發日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record shareholding" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄股權" }));
 
     await waitFor(() =>
       expect(serverFns.recordClientShareholding).toHaveBeenCalledWith({
@@ -69,14 +69,14 @@ describe("ShareholdingFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Shareholder name"), {
+    fireEvent.change(screen.getByLabelText("股東名稱"), {
       target: { value: "Jane Shareholder" },
     });
-    fireEvent.change(screen.getByLabelText("Number of shares"), { target: { value: "100" } });
-    fireEvent.change(screen.getByLabelText("Allotment date"), {
+    fireEvent.change(screen.getByLabelText("股數"), { target: { value: "100" } });
+    fireEvent.change(screen.getByLabelText("配發日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record shareholding" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄股權" }));
 
     expect(await screen.findByText("Client not found.")).toBeTruthy();
   });
@@ -91,18 +91,16 @@ describe("ShareholdingFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Shareholder name"), {
+    fireEvent.change(screen.getByLabelText("股東名稱"), {
       target: { value: "Jane Shareholder" },
     });
-    fireEvent.change(screen.getByLabelText("Number of shares"), { target: { value: "5e2" } });
-    fireEvent.change(screen.getByLabelText("Allotment date"), {
+    fireEvent.change(screen.getByLabelText("股數"), { target: { value: "5e2" } });
+    fireEvent.change(screen.getByLabelText("配發日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record shareholding" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄股權" }));
 
-    expect(
-      await screen.findByText("Enter a whole number of shares greater than zero."),
-    ).toBeTruthy();
+    expect(await screen.findByText("請輸入大於零的整數股數。")).toBeTruthy();
     expect(serverFns.recordClientShareholding).not.toHaveBeenCalled();
   });
 });

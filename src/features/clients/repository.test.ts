@@ -378,7 +378,7 @@ describe.skipIf(!databaseUrl)(
       ).rejects.toMatchObject({
         name: "ClientWriteError",
         field: "crNumber",
-        message: "A company with this CR number already exists.",
+        message: "已有公司使用此 CR 號碼。",
       });
     });
 

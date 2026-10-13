@@ -76,7 +76,7 @@ describe("ServiceSubscriptionsSection", () => {
 
     renderSection();
 
-    expect(await screen.findByText("Company Secretary")).toBeTruthy();
+    expect(await screen.findByText("公司秘書")).toBeTruthy();
     expect(screen.getByText("HKD 2,800")).toBeTruthy();
   });
 
@@ -85,16 +85,16 @@ describe("ServiceSubscriptionsSection", () => {
 
     renderSection();
 
-    await screen.findByText("Company Secretary");
-    fireEvent.click(screen.getByRole("button", { name: "Add subscription" }));
+    await screen.findByText("公司秘書");
+    fireEvent.click(screen.getByRole("button", { name: "新增訂閱" }));
 
-    const select = screen.getByLabelText("Service") as HTMLSelectElement;
+    const select = screen.getByLabelText("服務") as HTMLSelectElement;
     const options = Array.from(select.querySelectorAll("option")).map(
       (option) => option.textContent,
     );
 
-    expect(options).not.toContain("Company Secretary");
-    expect(options).toContain("Registered Office");
+    expect(options).not.toContain("公司秘書");
+    expect(options).toContain("註冊辦事處");
   });
 
   it("calls renewServiceSubscription when Mark renewed is clicked", async () => {
@@ -106,8 +106,8 @@ describe("ServiceSubscriptionsSection", () => {
 
     renderSection();
 
-    await screen.findByText("Company Secretary");
-    fireEvent.click(screen.getByRole("button", { name: "Mark renewed" }));
+    await screen.findByText("公司秘書");
+    fireEvent.click(screen.getByRole("button", { name: "標記已續期" }));
 
     await waitFor(() =>
       expect(serverFns.renewServiceSubscription).toHaveBeenCalledWith({
@@ -126,8 +126,8 @@ describe("ServiceSubscriptionsSection", () => {
 
     renderSection();
 
-    await screen.findByText("Company Secretary");
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await screen.findByText("公司秘書");
+    fireEvent.click(screen.getByRole("button", { name: "取消訂閱" }));
 
     await waitFor(() =>
       expect(serverFns.cancelServiceSubscription).toHaveBeenCalledWith({
@@ -140,29 +140,29 @@ describe("ServiceSubscriptionsSection", () => {
     serverFns.listServiceSubscriptions.mockResolvedValue([secretarySubscription]);
 
     renderSection();
-    await screen.findByText("Company Secretary");
+    await screen.findByText("公司秘書");
 
-    fireEvent.click(screen.getByRole("button", { name: "Add subscription" }));
-    fireEvent.change(screen.getByLabelText("Fee (HKD)"), { target: { value: "9999" } });
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "新增訂閱" }));
+    fireEvent.change(screen.getByLabelText("費用（HKD）"), { target: { value: "9999" } });
+    fireEvent.click(screen.getByRole("button", { name: "取消" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Add subscription" }));
+    fireEvent.click(screen.getByRole("button", { name: "新增訂閱" }));
 
-    expect((screen.getByLabelText("Fee (HKD)") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("費用（HKD）") as HTMLInputElement).value).toBe("");
   });
 
   it("defaults the fee to the selected service type's standard rate", async () => {
     serverFns.listServiceSubscriptions.mockResolvedValue([secretarySubscription]);
 
     renderSection();
-    await screen.findByText("Company Secretary");
+    await screen.findByText("公司秘書");
 
-    fireEvent.click(screen.getByRole("button", { name: "Add subscription" }));
-    fireEvent.change(screen.getByLabelText("Service"), {
+    fireEvent.click(screen.getByRole("button", { name: "新增訂閱" }));
+    fireEvent.change(screen.getByLabelText("服務"), {
       target: { value: "registered_office" },
     });
 
-    expect((screen.getByLabelText("Fee (HKD)") as HTMLInputElement).value).toBe("2800");
+    expect((screen.getByLabelText("費用（HKD）") as HTMLInputElement).value).toBe("2800");
   });
 
   it("only disables the row being acted on, not every subscription's buttons", async () => {
@@ -178,9 +178,9 @@ describe("ServiceSubscriptionsSection", () => {
     );
 
     renderSection();
-    await screen.findByText("Company Secretary");
+    await screen.findByText("公司秘書");
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Mark renewed" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "標記已續期" })[0]);
 
     await waitFor(() =>
       expect(serverFns.renewServiceSubscription).toHaveBeenCalledWith({
@@ -189,7 +189,7 @@ describe("ServiceSubscriptionsSection", () => {
     );
     await waitFor(() => {
       const [first, second] = screen.getAllByRole("button", {
-        name: "Mark renewed",
+        name: "標記已續期",
       }) as HTMLButtonElement[];
       expect(first.disabled).toBe(true);
       expect(second.disabled).toBe(false);

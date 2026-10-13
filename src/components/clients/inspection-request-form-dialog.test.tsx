@@ -33,16 +33,16 @@ describe("InspectionRequestFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Requester name"), {
+    fireEvent.change(screen.getByLabelText("要求人名稱"), {
       target: { value: "Officer Lee" },
     });
-    fireEvent.change(screen.getByLabelText("Requester authority"), {
+    fireEvent.change(screen.getByLabelText("要求人身分／機構"), {
       target: { value: "Companies Registry" },
     });
-    fireEvent.change(screen.getByLabelText("Request date"), {
+    fireEvent.change(screen.getByLabelText("要求日期"), {
       target: { value: "2026-01-15" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record request" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄查閱要求" }));
 
     await waitFor(() =>
       expect(serverFns.recordClientInspectionRequest).toHaveBeenCalledWith({
@@ -69,13 +69,13 @@ describe("InspectionRequestFormDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Requester name"), {
+    fireEvent.change(screen.getByLabelText("要求人名稱"), {
       target: { value: "Officer Lee" },
     });
-    fireEvent.change(screen.getByLabelText("Requester authority"), {
+    fireEvent.change(screen.getByLabelText("要求人身分／機構"), {
       target: { value: "Companies Registry" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Record request" }));
+    fireEvent.click(screen.getByRole("button", { name: "記錄查閱要求" }));
 
     expect(await screen.findByText("Client not found.")).toBeTruthy();
   });

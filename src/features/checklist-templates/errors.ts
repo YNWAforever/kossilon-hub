@@ -14,7 +14,7 @@ export class ChecklistTemplateWriteError extends Error {
 const CONSTRAINT_FIELDS: Record<string, { field: ChecklistTemplateWriteField; message: string }> = {
   checklist_templates_name_key: {
     field: "name",
-    message: "A checklist template with this name already exists.",
+    message: "已有同名的清單模板。",
   },
 };
 

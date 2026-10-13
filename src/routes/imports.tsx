@@ -16,6 +16,7 @@ import {
   mapNarImportCompany,
   stageNarImportBatch,
 } from "@/features/nar-import/server-fns";
+import { formatDate } from "@/lib/format-date";
 
 /**
  * The monthly workbook import.
@@ -122,7 +123,7 @@ function ImportsWorkspace({
 
   const stageMutation = useMutation({
     mutationFn: async () => {
-      if (!file) throw new Error("Choose a workbook first.");
+      if (!file) throw new Error("請先選擇月表檔案。");
       const bytes = new Uint8Array(await file.arrayBuffer());
       return stageNarImportBatch({
         data: {
@@ -179,7 +180,7 @@ function ImportsWorkspace({
   if (dataMode !== "production") {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Operations" title="月表匯入" />
+        <PageHeader eyebrow="案件與客戶" title="月表匯入" />
         <DemoUnavailable message="匯入只在正式環境提供，示範模式沒有可寫入的資料庫。" />
       </main>
     );
@@ -188,15 +189,19 @@ function ImportsWorkspace({
   if (!allowed)
     return (
       <main className="flex-1 p-6">
-        <PageHeader eyebrow="Operations" title="月表匯入" />
-        <p>只有已核實的現任 Admin 可以覆核跨公司月表。</p>
+        <PageHeader eyebrow="案件與客戶" title="月表匯入" />
+        <p>只有已核實的在職管理員可以覆核跨公司月表。</p>
       </main>
     );
   const review = reviewQuery.data;
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title="月表匯入" subtitle="NAR Monthly Working" />
+      <PageHeader
+        eyebrow="案件與客戶"
+        title="月表匯入"
+        subtitle="匯入 NAR Monthly Working 月表，逐行覆核後才套用。"
+      />
 
       {error ? (
         <div className="rounded-md bg-status-red-soft px-3 py-2 text-sm text-status-red-text">
@@ -215,7 +220,7 @@ function ImportsWorkspace({
           <label className="grid gap-1 text-sm">
             檔案
             <input
-              aria-label="Workbook file"
+              aria-label="月表檔案"
               className="rounded-md border bg-background px-3 py-2"
               type="file"
               accept=".xlsx"
@@ -225,7 +230,7 @@ function ImportsWorkspace({
           <label className="grid gap-1 text-sm">
             申報年度
             <input
-              aria-label="Return year"
+              aria-label="申報年度"
               className="rounded-md border bg-background px-3 py-2"
               type="number"
               min={1900}
@@ -237,7 +242,7 @@ function ImportsWorkspace({
           <label className="grid gap-1 text-sm">
             工作表（可留空）
             <input
-              aria-label="Sheet name"
+              aria-label="工作表名稱"
               className="rounded-md border bg-background px-3 py-2"
               placeholder="8.2025"
               value={sheetName}
@@ -383,7 +388,7 @@ function ImportsWorkspace({
                     </label>
                     <select
                       id={`map-${row.id}`}
-                      aria-label={`Map ${row.externalClientId} to a company`}
+                      aria-label={`將客戶編號 ${row.externalClientId} 對應公司`}
                       className="rounded-md border bg-background px-2 py-1 text-sm"
                       defaultValue=""
                       onChange={(event) => {
@@ -450,7 +455,7 @@ function ImportsWorkspace({
                 {batch.sourceFileName} · {batch.sheetName}
               </span>
               <span className="text-xs text-muted-foreground">
-                {`${batch.rowCount} 筆 · ${new Date(batch.createdAt).toLocaleDateString("en-HK")}`}
+                {`${batch.rowCount} 筆 · ${formatDate(batch.createdAt)}`}
               </span>
             </button>
           ))}

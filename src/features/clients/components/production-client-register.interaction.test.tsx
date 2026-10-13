@@ -99,7 +99,7 @@ describe("production client register", () => {
 
     const alert = await screen.findByRole("alert");
 
-    expect(alert.textContent).toContain("Client data is unavailable.");
+    expect(alert.textContent).toContain("客戶資料暫時無法載入");
     expect(alert.textContent).not.toContain("ECONNREFUSED");
   });
 
@@ -107,7 +107,7 @@ describe("production client register", () => {
     serverFns.listClients.mockResolvedValue([]);
     renderRegister();
 
-    expect(await screen.findByText("No clients match the current filters.")).toBeTruthy();
+    expect(await screen.findByText("沒有客戶符合目前的篩選條件。")).toBeTruthy();
   });
 
   it("filters rows by the search box", async () => {
@@ -118,7 +118,7 @@ describe("production client register", () => {
     renderRegister();
     await screen.findByText("Acme Company Limited");
 
-    const search = screen.getByPlaceholderText("Search company, CR or BR number");
+    const search = screen.getByPlaceholderText("搜尋公司名稱、CR 或 BR 號碼");
     fireEvent.change(search, { target: { value: "Beta" } });
 
     await waitFor(() => expect(screen.queryByText("Acme Company Limited")).toBeNull());
@@ -138,7 +138,7 @@ describe("production client register", () => {
     );
     renderRegister();
 
-    const button = () => screen.getByRole("button", { name: "New client" }) as HTMLButtonElement;
+    const button = () => screen.getByRole("button", { name: "新增客戶" }) as HTMLButtonElement;
     expect(button().disabled).toBe(true);
 
     resolveOptions(makeOptions());
@@ -151,9 +151,9 @@ describe("production client register", () => {
     renderRegister();
 
     const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("Owner and team options are unavailable.");
+    expect(status.textContent).toContain("負責同事及團隊選項暫時無法載入");
 
-    const button = screen.getByRole("button", { name: "New client" }) as HTMLButtonElement;
+    const button = screen.getByRole("button", { name: "新增客戶" }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
 });

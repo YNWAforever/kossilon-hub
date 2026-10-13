@@ -48,7 +48,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
     event.preventDefault();
 
     if (!email.trim() && !phone.trim()) {
-      setError("Provide an email or a phone number.");
+      setError("請提供電郵地址或電話號碼。");
       return;
     }
 
@@ -67,16 +67,16 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
 
       if (contact) {
         await updateClientContact({ data: { ...payload, contactId: contact.id } });
-        toast.success("Contact updated.");
+        toast.success("已更新聯絡人。");
       } else {
         await addClientContact({ data: payload });
-        toast.success("Contact added.");
+        toast.success("已新增聯絡人。");
       }
 
       onSaved();
       onOpenChange(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to save the contact.");
+      setError(caught instanceof Error ? caught.message : "未能儲存聯絡人。");
     } finally {
       setSaving(false);
     }
@@ -86,17 +86,15 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{contact ? "Edit contact" : "Add contact"}</DialogTitle>
-          <DialogDescription>
-            A contact needs at least an email or a phone number.
-          </DialogDescription>
+          <DialogTitle>{contact ? "編輯聯絡人" : "新增聯絡人"}</DialogTitle>
+          <DialogDescription>聯絡人須至少提供電郵地址或電話號碼。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="contact-form-name">
-                Name
+                姓名
               </label>
               <input
                 id="contact-form-name"
@@ -108,7 +106,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
             </div>
             <div>
               <label className={labelClass} htmlFor="contact-form-role">
-                Role
+                職位
               </label>
               <input
                 id="contact-form-role"
@@ -120,7 +118,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
             </div>
             <div>
               <label className={labelClass} htmlFor="contact-form-email">
-                Email
+                電郵
               </label>
               <input
                 id="contact-form-email"
@@ -132,7 +130,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
             </div>
             <div>
               <label className={labelClass} htmlFor="contact-form-phone">
-                Phone
+                電話
               </label>
               <input
                 id="contact-form-phone"
@@ -149,10 +147,10 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
               checked={isPrimary}
               onChange={(event) => setIsPrimary(event.target.checked)}
             />
-            Primary contact
+            主要聯絡人
           </label>
           <p className="text-xs text-muted-foreground">
-            Marking this contact primary demotes the company&apos;s current primary contact.
+            設為主要聯絡人後，公司現有的主要聯絡人會改為一般聯絡人。
           </p>
 
           {error && <p className="text-xs text-destructive">{error}</p>}
@@ -163,14 +161,14 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
               onClick={() => onOpenChange(false)}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              {saving ? "Saving…" : "Save contact"}
+              {saving ? "儲存中…" : "儲存聯絡人"}
             </button>
           </DialogFooter>
         </form>

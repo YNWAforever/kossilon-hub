@@ -17,14 +17,14 @@ describe("DemoClientNotice", () => {
   it("renders a register-specific message and a PageHeader h1", () => {
     render(<DemoClientNotice variant="register" />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Clients" })).toBeTruthy();
-    expect(screen.getByText(/no demo fixtures/i)).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "客戶" })).toBeTruthy();
+    expect(screen.getByText(/並無示範資料/)).toBeTruthy();
   });
 
   it("renders a detail-specific message", () => {
     render(<DemoClientNotice variant="detail" />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Client" })).toBeTruthy();
-    expect(screen.getByText(/no demo fixtures/i)).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "客戶資料" })).toBeTruthy();
+    expect(screen.getByText(/並無示範資料/)).toBeTruthy();
   });
 });

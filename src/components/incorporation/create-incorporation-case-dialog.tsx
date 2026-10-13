@@ -94,7 +94,7 @@ export function CreateIncorporationCaseDialog({
     const parsedCapital = Number.parseInt(trimmedCapital, 10);
 
     if (!/^\d+$/.test(trimmedCapital) || parsedCapital <= 0) {
-      setError("Enter a whole number of dollars greater than zero for registered capital.");
+      setError("註冊資本須為大於零的整數金額。");
       return;
     }
 
@@ -115,11 +115,11 @@ export function CreateIncorporationCaseDialog({
           targetCompletionDate: form.targetCompletionDate,
         },
       });
-      toast.success("Incorporation case created.");
+      toast.success("已開立公司註冊案件。");
       onCreated(created.id);
       onOpenChange(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to create the case.");
+      setError(caught instanceof Error ? caught.message : "未能開立案件。");
     } finally {
       setSaving(false);
     }
@@ -129,34 +129,30 @@ export function CreateIncorporationCaseDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Start incorporation</DialogTitle>
-          <DialogDescription>
-            Track a new HK company's incorporation from intake through Companies Registry approval.
-          </DialogDescription>
+          <DialogTitle>開始公司註冊</DialogTitle>
+          <DialogDescription>追蹤新香港公司由受理至公司註冊處批核的註冊進度。</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">載入中…</p>
         ) : hasError ? (
           <p role="alert" className="text-sm text-destructive">
-            Unable to load owner or team data. Try again shortly.
+            未能載入負責同事或團隊資料，請稍後再試。
           </p>
         ) : owners.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No active staff members are available to assign as owner. Ask an Admin to activate one
-            before starting an incorporation case.
+            沒有可分配為負責同事的在職同事。請先由 Admin 啟用同事，再開立公司註冊案件。
           </p>
         ) : teams.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No teams are configured. Ask an Admin to configure one before starting an incorporation
-            case.
+            尚未設定任何團隊。請先由 Admin 設定團隊，再開立公司註冊案件。
           </p>
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass} htmlFor="intake-name-en">
-                  Proposed name (English)
+                  擬用名稱（英文）
                 </label>
                 <input
                   id="intake-name-en"
@@ -168,7 +164,7 @@ export function CreateIncorporationCaseDialog({
               </div>
               <div>
                 <label className={labelClass} htmlFor="intake-name-zh">
-                  Proposed name (Chinese)
+                  擬用名稱（中文）
                 </label>
                 <input
                   id="intake-name-zh"
@@ -181,7 +177,7 @@ export function CreateIncorporationCaseDialog({
 
             <div>
               <label className={labelClass} htmlFor="intake-office">
-                Proposed registered office
+                擬用註冊辦事處
               </label>
               <input
                 id="intake-office"
@@ -194,7 +190,7 @@ export function CreateIncorporationCaseDialog({
 
             <div>
               <label className={labelClass} htmlFor="intake-secretary">
-                Proposed company secretary
+                擬任公司秘書
               </label>
               <input
                 id="intake-secretary"
@@ -208,7 +204,7 @@ export function CreateIncorporationCaseDialog({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass} htmlFor="intake-capital">
-                  Registered capital (HKD)
+                  註冊資本（HKD）
                 </label>
                 <input
                   id="intake-capital"
@@ -223,7 +219,7 @@ export function CreateIncorporationCaseDialog({
               </div>
               <div>
                 <label className={labelClass} htmlFor="intake-nature">
-                  Business nature
+                  業務性質
                 </label>
                 <input
                   id="intake-nature"
@@ -238,7 +234,7 @@ export function CreateIncorporationCaseDialog({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <label className={labelClass} htmlFor="intake-owner">
-                  Owner
+                  負責同事
                 </label>
                 <select
                   id="intake-owner"
@@ -256,7 +252,7 @@ export function CreateIncorporationCaseDialog({
               </div>
               <div>
                 <label className={labelClass} htmlFor="intake-team">
-                  Team
+                  團隊
                 </label>
                 <select
                   id="intake-team"
@@ -274,7 +270,7 @@ export function CreateIncorporationCaseDialog({
               </div>
               <div>
                 <label className={labelClass} htmlFor="intake-target-date">
-                  Target completion date
+                  目標完成日期
                 </label>
                 <input
                   id="intake-target-date"
@@ -295,14 +291,14 @@ export function CreateIncorporationCaseDialog({
                 onClick={() => onOpenChange(false)}
                 className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
               >
-                Cancel
+                取消
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                {saving ? "Creating…" : "Start incorporation"}
+                {saving ? "開立中…" : "開始公司註冊"}
               </button>
             </DialogFooter>
           </form>

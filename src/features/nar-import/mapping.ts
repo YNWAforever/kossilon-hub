@@ -60,6 +60,21 @@ export type NarColumnKey =
   | "arDue"
   | "brDue";
 
+// Display names for issue messages only; the keys are the parser's contract.
+const NAR_COLUMN_LABELS: Record<NarColumnKey, string> = {
+  clientId: "客戶編號",
+  companyName: "公司名稱",
+  incorporation: "成立日期",
+  invoice: "發票編號",
+  paymentReceived: "收款日期",
+  arDue: "周年申報到期日",
+  brDue: "BR 到期日",
+};
+
+const NAR_FIELD_LABELS: Record<string, string> = {
+  filingDueDate: "申報到期日",
+};
+
 export type NarSheetReadResult = {
   sheetName: string;
   headerRowNumber: number;
@@ -113,7 +128,7 @@ function dateIssues(
       code: "date-unreadable",
       column,
       severity: "attention",
-      message: `${label} could not be read as a date: ${value.raw}. ${value.reason}`,
+      message: `${label}無法讀取為日期：${value.raw}。${value.reason}`,
     });
   }
   if (value.kind === "nil") {
@@ -121,7 +136,7 @@ function dateIssues(
       code: "nil-marker",
       column,
       severity: "attention",
-      message: `${label} is "(Nil)". Its meaning has to be confirmed before it is treated as paid, unpaid or cancelled.`,
+      message: `${label}為「(Nil)」。須先確認其意思，才可視為已付款、未付款或已取消。`,
     });
   }
   if (value.kind === "text") {
@@ -129,14 +144,14 @@ function dateIssues(
       code: "date-arrived-as-text",
       column,
       severity: "attention",
-      message: `${label} was typed as text ("${value.raw}") rather than stored as a date.`,
+      message: `${label}以文字輸入（「${value.raw}」），而不是以日期儲存。`,
     });
     if (value.note) {
       issues.push({
         code: "date-carries-note",
         column,
         severity: "attention",
-        message: `${label} carries the note ${value.note}, which is kept verbatim for confirmation.`,
+        message: `${label}附有備註 ${value.note}，已原文保留以待確認。`,
       });
     }
   }
@@ -177,8 +192,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
         {
           code: "header-not-found",
           severity: "blocking",
-          message:
-            'No header row was found. The sheet needs a row containing "Client ID" and "Name".',
+          message: "找不到標題行。工作表須有一行包含「Client ID」及「Name」。",
         },
       ],
     };
@@ -189,7 +203,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
       sheetIssues.push({
         code: "column-missing",
         severity: "attention",
-        message: `The ${key} column was not found; those values will be absent for every row.`,
+        message: `找不到「${NAR_COLUMN_LABELS[key]}」欄；所有行都不會有這項資料。`,
       });
     }
   }
@@ -221,7 +235,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
         code: "company-name-missing",
         column: columns.companyName,
         severity: "blocking",
-        message: "The row has a client id but no company name.",
+        message: "此行有客戶編號，但沒有公司名稱。",
       });
     }
 
@@ -231,7 +245,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
         code: "incorporation-unreadable",
         column: columns.incorporation,
         severity: "attention",
-        message: `Date of incorporation could not be read: ${incorporation.raw}. ${incorporation.reason}`,
+        message: `無法讀取成立日期：${incorporation.raw}。${incorporation.reason}`,
       });
     }
     if (incorporation.kind === "dayMonth") {
@@ -241,7 +255,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
         code: "incorporation-year-unknown",
         column: columns.incorporation,
         severity: "attention",
-        message: `Incorporation is ${incorporation.raw} with no year in the source. The year is not inferred.`,
+        message: `成立日期為 ${incorporation.raw}，來源沒有年份；系統不會推斷年份。`,
       });
     }
 
@@ -257,8 +271,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
         code: "nil-marker",
         column: columns.invoice,
         severity: "attention",
-        message:
-          'Invoice number is "(Nil)". Its meaning has to be confirmed; it is not read as unbilled.',
+        message: "發票編號為「(Nil)」。須先確認其意思；系統不會視之為未開發票。",
       });
     }
 
@@ -266,16 +279,16 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
     const arDue = normalizeDateCell(cells.get(columns.arDue), date1904);
     const brDue = normalizeDateCell(cells.get(columns.brDue), date1904);
 
-    dateIssues(paymentReceived, columns.paymentReceived, "Payment received date", issues);
-    dateIssues(arDue, columns.arDue, "AR due date", issues);
-    dateIssues(brDue, columns.brDue, "BR due date", issues);
+    dateIssues(paymentReceived, columns.paymentReceived, "收款日期", issues);
+    dateIssues(arDue, columns.arDue, "周年申報到期日", issues);
+    dateIssues(brDue, columns.brDue, "BR 到期日", issues);
 
     if (arDue.kind === "absent") {
       issues.push({
         code: "ar-due-missing",
         column: columns.arDue,
         severity: "blocking",
-        message: "The row has no AR due date, which is the deadline the case is built around.",
+        message: "此行沒有周年申報到期日，而案件正是以此日期為限期。",
       });
     }
 
@@ -289,7 +302,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
         code: "payment-after-ar-due",
         column: columns.paymentReceived,
         severity: "attention",
-        message: `Payment date ${paymentIso} falls after the AR due date ${arIso}. Recorded as observed; it does not establish late filing.`,
+        message: `收款日期 ${paymentIso} 晚於周年申報到期日 ${arIso}。只按來源記錄，不代表逾期遞交。`,
       });
     }
 
@@ -299,7 +312,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
           code: "value-computed-by-workbook",
           column,
           severity: "attention",
-          message: `${cell.ref} holds a value the workbook computed rather than one the source system asserted.`,
+          message: `${cell.ref} 的數值由工作簿公式計算，並非來源系統提供。`,
         });
       }
     }
@@ -337,7 +350,7 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
       row.issues.push({
         code: "duplicate-client-id",
         severity: "blocking",
-        message: `Client id ${row.externalClientId} appears on rows ${sameClientId.join(", ")}. It identifies one company, so the rows cannot both be right.`,
+        message: `客戶編號 ${row.externalClientId} 出現在第 ${sameClientId.join("、")} 行。一個編號只代表一間公司，這些行不可能同時正確。`,
       });
     }
     if (row.invoice.kind === "value") {
@@ -349,9 +362,9 @@ export function readNarSheet(sheet: WorkbookSheet, date1904: boolean): NarSheetR
         row.issues.push({
           code: "duplicate-invoice-number",
           severity: "attention",
-          message: `Invoice ${row.invoice.raw} also appears on rows ${sameInvoice
+          message: `發票 ${row.invoice.raw} 亦出現在第 ${sameInvoice
             .filter((candidate) => candidate !== row.rowNumber)
-            .join(", ")}. The invoice number is not used to match records.`,
+            .join("、")} 行。系統不會以發票編號配對記錄。`,
         });
       }
     }
@@ -428,7 +441,7 @@ export function dispositionFor(
         issues.push({
           code: "ar-due-differs-from-anniversary-rule",
           severity: "attention",
-          message: `The source AR due date is ${arIso}; incorporation anniversary plus 42 days would be ${derived.iso}. The source value is kept.`,
+          message: `來源的周年申報到期日為 ${arIso}；按成立周年日加 42 日計算應為 ${derived.iso}。已保留來源數值。`,
         });
       }
     }
@@ -448,9 +461,12 @@ export function dispositionFor(
     issues.push({
       code: "source-differs-from-worked-case",
       severity: "attention",
-      message: `The source disagrees with a case that already has staff work on it: ${changes
-        .map((change) => `${change.field} ${change.from} to ${change.to}`)
-        .join("; ")}.`,
+      message: `來源與已有同事處理的案件不一致：${changes
+        .map(
+          (change) =>
+            `${NAR_FIELD_LABELS[change.field] ?? change.field} 由 ${change.from} 改為 ${change.to}`,
+        )
+        .join("；")}。`,
     });
     return { disposition: "conflict", changes, issues };
   }

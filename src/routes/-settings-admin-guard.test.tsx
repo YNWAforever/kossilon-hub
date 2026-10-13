@@ -71,7 +71,7 @@ describe("/settings, gated by role", () => {
     const html = await renderSettings();
 
     expect(html).toContain("WOZTELL");
-    expect(html).not.toContain("Admin access required");
+    expect(html).not.toContain("須具備管理員權限");
   });
 
   it("shows a denied state to a non-admin", async () => {
@@ -79,7 +79,7 @@ describe("/settings, gated by role", () => {
 
     const html = await renderSettings();
 
-    expect(html).toContain("Admin access required");
+    expect(html).toContain("須具備管理員權限");
   });
 
   it("stays fully open in demo mode regardless of role", async () => {
@@ -87,6 +87,6 @@ describe("/settings, gated by role", () => {
 
     const html = await renderSettings("demo");
 
-    expect(html).not.toContain("Admin access required");
+    expect(html).not.toContain("須具備管理員權限");
   });
 });

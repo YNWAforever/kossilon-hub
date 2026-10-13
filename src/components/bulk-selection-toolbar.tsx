@@ -26,6 +26,8 @@ import type {
   BulkJobCursor,
   MaintenanceActionKind,
   MaintenanceAction,
+  ItemState,
+  JobResult,
 } from "@/features/bulk-operations/types";
 type Props = {
   actorScope: string;
@@ -37,13 +39,33 @@ type Props = {
   maintenanceActions?: MaintenanceActionKind[];
 };
 const maintenanceLabels: Record<MaintenanceActionKind, string> = {
-  client_maintenance: "客戶 owner／team 維護（改資料）",
-  document_assignment: "分派文件所屬案件（同步案及工作）",
+  client_maintenance: "客戶負責同事／團隊維護（更改資料）",
+  document_assignment: "分配文件所屬案件（同步案件及工作）",
   document_return_draft: "文件退回草稿（待單筆覆核）",
-  document_list_export: "安全文件清單（只有 metadata）",
+  document_list_export: "安全文件清單（只含基本資料）",
   follow_up_draft: "追件草稿（不派送）",
   payment_list_export: "付款核對清單（不入賬）",
 };
+const jobStateLabels: Record<JobResult["state"], string> = {
+  queued: "排隊中",
+  running: "進行中",
+  completed: "已完成",
+  partial: "部分完成",
+  cancelled: "已取消",
+};
+const itemStateLabels: Record<ItemState, string> = {
+  pending: "待處理",
+  succeeded: "成功",
+  forbidden: "無權",
+  locked: "鎖定",
+  conflict: "衝突",
+  failed: "失敗",
+  unknown: "結果未知",
+  cancelled: "已取消",
+};
+function stateLabel(labels: Record<string, string>, state: string): string {
+  return labels[state] ?? state;
+}
 /** Changing actor replaces the entire session; changing filters replaces selection only. */
 export function BulkSelectionToolbar(props: Props) {
   return <BulkSession key={props.actorScope} {...props} />;
@@ -51,7 +73,7 @@ export function BulkSelectionToolbar(props: Props) {
 function BulkSession(props: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
   return (
-    <section aria-label="Bulk assignment" className="space-y-3 rounded border p-4">
+    <section aria-label="批量分配" className="space-y-3 rounded border p-4">
       <SelectionControls
         key={JSON.stringify([props.resource, props.filters])}
         {...props}
@@ -210,13 +232,13 @@ function SelectionControls({
   const busy = snapshot.isPending || dryRun.isPending || execute.isPending;
   return (
     <div className="space-y-3">
-      <h2 className="font-semibold">{maintenanceActions ? "批量日常維護" : "批量分派"}</h2>
+      <h2 className="font-semibold">{maintenanceActions ? "批量日常維護" : "批量分配"}</h2>
       {maintenanceActions ? (
         <>
           <label>
             操作
             <select
-              aria-label="Bulk action"
+              aria-label="批量操作"
               value={actionKind}
               disabled={busy}
               onChange={(e) => {
@@ -234,7 +256,7 @@ function SelectionControls({
               ))}
             </select>
           </label>
-          <p>草稿須另作單筆批准；清單不包含文件 bytes，不代表已付款、已派送或已交件。</p>
+          <p>草稿須另作單筆批准；清單不包含文件內容，不代表已付款、已派送或已交件。</p>
         </>
       ) : null}
       <p>
@@ -267,7 +289,7 @@ function SelectionControls({
             <label className="block" key={p.id}>
               <input
                 type="checkbox"
-                aria-label={`Select ${p.label}`}
+                aria-label={`選取 ${p.label}`}
                 checked={
                   selection.mode === "explicit_ids"
                     ? selection.ids.includes(p.id)
@@ -288,9 +310,9 @@ function SelectionControls({
       {needsAssignee ? (
         <>
           <label>
-            搜尋批量員工
+            搜尋同事
             <input
-              aria-label="搜尋批量員工"
+              aria-label="搜尋同事"
               className="min-h-11 rounded border px-3"
               value={assigneeSearch}
               disabled={busy}
@@ -302,12 +324,12 @@ function SelectionControls({
                 setRequest(null);
               }}
             />
-            <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權員工。</span>
+            <span className="block text-xs">最多 200 項；搜尋範圍涵蓋所有獲授權同事。</span>
           </label>
           <label>
-            責任
+            負責角色
             <select
-              aria-label="Bulk responsibility"
+              aria-label="負責角色"
               disabled={busy}
               value={target}
               onChange={(e) => {
@@ -316,15 +338,15 @@ function SelectionControls({
                 setRequest(null);
               }}
             >
-              <option value="owner">Owner</option>
-              <option value="reviewer">Reviewer</option>
+              <option value="owner">負責同事</option>
+              <option value="reviewer">覆核人</option>
             </select>
           </label>
           {actionKind === "client_maintenance" ? (
             <label>
-              目標 team
+              目標團隊
               <select
-                aria-label="Bulk company team"
+                aria-label="目標團隊"
                 value={teamId}
                 disabled={busy}
                 onChange={(e) => {
@@ -333,7 +355,7 @@ function SelectionControls({
                   setRequest(null);
                 }}
               >
-                <option value="">選擇目標 team</option>
+                <option value="">選擇目標團隊</option>
                 {[
                   ...new Map(
                     (assignees.data ?? [])
@@ -349,9 +371,9 @@ function SelectionControls({
             </label>
           ) : null}
           <label>
-            員工
+            同事
             <select
-              aria-label="Bulk assignee"
+              aria-label="同事"
               disabled={busy || assignees.isError}
               value={assigneeId}
               onChange={(e) => {
@@ -360,7 +382,7 @@ function SelectionControls({
                 setRequest(null);
               }}
             >
-              <option value="">選擇有效員工</option>
+              <option value="">選擇在職同事</option>
               {assignees.data?.map((s) => (
                 <option key={s.id} value={s.id}>
                   {labels.get(s.id)}
@@ -383,7 +405,7 @@ function SelectionControls({
               <label className="block" key={p.id}>
                 {p.label}
                 <input
-                  aria-label={`Return reason ${p.label}`}
+                  aria-label={`退回原因：${p.label}`}
                   maxLength={500}
                   disabled={busy}
                   value={returnReasons[p.id] ?? ""}
@@ -401,7 +423,7 @@ function SelectionControls({
         <label>
           非首選或超額原因
           <input
-            aria-label="Bulk override reason"
+            aria-label="非首選或超額原因"
             value={overrideReason}
             disabled={busy}
             onChange={(e) => {
@@ -422,12 +444,12 @@ function SelectionControls({
         }
         onClick={() => dryRun.mutate()}
       >
-        {maintenanceActions ? "預覽批量維護" : "預覽批量分派"}
+        {maintenanceActions ? "預覽批量維護" : "預覽批量分配"}
       </button>
       {preview ? (
         <div role="status">
           <p>
-            預覽{preview.count}筆；可分派{preview.eligibleCount}；鎖定{preview.reasons.locked}；無權
+            預覽{preview.count}筆；可分配{preview.eligibleCount}；鎖定{preview.reasons.locked}；無權
             {preview.reasons.forbidden}；版本衝突{preview.reasons.conflict}；不合條件
             {preview.reasons.failed}
           </p>
@@ -441,7 +463,7 @@ function SelectionControls({
                     item.output.reason ??
                     item.output.fileName ??
                     item.output.invoiceNumber ??
-                    item.output.kind,
+                    stateLabel(maintenanceLabels, String(item.output.kind)),
                 )}
               </p>
             </div>
@@ -450,7 +472,7 @@ function SelectionControls({
             disabled={busy || preview.eligibleCount === 0 || !request}
             onClick={() => execute.mutate()}
           >
-            {maintenanceActions ? "批准並建立維護工作" : "批准並建立分派工作"}
+            {maintenanceActions ? "批准並建立維護工作" : "批准並建立分配工作"}
           </button>
         </div>
       ) : null}
@@ -458,7 +480,7 @@ function SelectionControls({
       dryRun.isError ||
       (needsAssignee && assignees.isError) ||
       membership.isError ? (
-        <p role="alert">未能取得當前範圍、員工或預覽；請重新核對，暫不套用。</p>
+        <p role="alert">未能取得目前範圍、同事或預覽；請重新核對，暫不套用。</p>
       ) : null}
       {execute.isError ? (
         <p role="alert">
@@ -545,7 +567,7 @@ function BulkJobProgress({
       <label>
         已保存工作
         <select
-          aria-label="Saved bulk job"
+          aria-label="已保存工作"
           value={jobId ?? ""}
           onChange={(e) => onJobChange(e.target.value || null)}
         >
@@ -555,7 +577,7 @@ function BulkJobProgress({
             .map((j) => (
               <option key={j.jobId} value={j.jobId}>
                 {new Date(j.createdAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })} ·{" "}
-                {j.total}筆 · {j.state}
+                {j.total}筆 · {stateLabel(jobStateLabels, j.state)}
               </option>
             ))}
         </select>
@@ -573,7 +595,8 @@ function BulkJobProgress({
       {first ? (
         <>
           <p>
-            工作{first.state}；共{first.total}；成功{first.counts.succeeded ?? 0}；待處理
+            工作狀態：{stateLabel(jobStateLabels, first.state)}；共{first.total}；成功
+            {first.counts.succeeded ?? 0}；待處理
             {first.counts.pending ?? 0}；鎖定{first.counts.locked ?? 0}；無權
             {first.counts.forbidden ?? 0}；衝突{first.counts.conflict ?? 0}；失敗
             {first.counts.failed ?? 0}；結果未知{first.counts.unknown ?? 0}；取消
@@ -621,11 +644,11 @@ function BulkJobProgress({
               ) : (
                 "無權查閱此項 · "
               )}
-              {i.state} · {i.reason ?? "已保存"} · 嘗試{i.attempts}
+              {stateLabel(itemStateLabels, i.state)} · {i.reason ?? "已保存"} · 嘗試{i.attempts}
               {i.output ? (
                 <span>
                   {" "}
-                  · {String(i.output.kind)} ·{" "}
+                  · {stateLabel(maintenanceLabels, String(i.output.kind))} ·{" "}
                   {String(
                     i.output.messagePreview ??
                       i.output.reason ??

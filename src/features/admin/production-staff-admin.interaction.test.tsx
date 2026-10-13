@@ -69,7 +69,7 @@ describe("verified staff maintenance UI", () => {
     details.open = true;
     fireEvent(details, new Event("toggle"));
     await screen.findByText(/Outstanding company/);
-    fireEvent.click(screen.getByLabelText("Active for Mei Lam"));
+    fireEvent.click(screen.getByLabelText("Mei Lam 的帳戶有效狀態"));
     expect((screen.getByText("套用帳戶變更") as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByText("套用帳戶變更"));
     expect(api.update).not.toHaveBeenCalled();
@@ -99,7 +99,7 @@ describe("verified staff maintenance UI", () => {
     details.open = true;
     fireEvent(details, new Event("toggle"));
     await screen.findByText("當前未交案件：0；工作：0。");
-    fireEvent.click(screen.getByLabelText("Active for Mei Lam"));
+    fireEvent.click(screen.getByLabelText("Mei Lam 的帳戶有效狀態"));
     fireEvent.click(screen.getByText("套用帳戶變更"));
     await waitFor(() =>
       expect(api.update).toHaveBeenCalledExactlyOnceWith({

@@ -16,6 +16,7 @@ import type {
   IdentificationType,
   SignificantController,
 } from "@/features/clients/types";
+import { CONTROL_BASIS_LABELS, IDENTIFICATION_TYPE_LABELS } from "@/features/clients/labels";
 
 type Props = {
   open: boolean;
@@ -53,12 +54,14 @@ function today(): string {
   return `${datePart(parts, "year")}-${datePart(parts, "month")}-${datePart(parts, "day")}`;
 }
 
-const CONTROL_BASIS_OPTIONS: { value: ControlBasis; label: string }[] = [
-  { value: "shares_over_25pct", label: "Holds more than 25% of shares" },
-  { value: "votes_over_25pct", label: "Holds more than 25% of voting rights" },
-  { value: "board_appointment_right", label: "Right to appoint/remove a majority of the board" },
-  { value: "significant_influence", label: "Exercises significant influence or control" },
-];
+const CONTROL_BASIS_OPTIONS: { value: ControlBasis; label: string }[] = (
+  [
+    "shares_over_25pct",
+    "votes_over_25pct",
+    "board_appointment_right",
+    "significant_influence",
+  ] as const
+).map((value) => ({ value, label: CONTROL_BASIS_LABELS[value] }));
 
 export function ControllerFormDialog({
   open,
@@ -100,14 +103,14 @@ export function ControllerFormDialog({
     event.preventDefault();
 
     if (controlBases.length === 0) {
-      setError("Select at least one control basis.");
+      setError("請選擇最少一項控制條件。");
       return;
     }
 
     const registeredDateForComparison = controller?.registeredDate ?? registeredDate;
 
     if (registerUpdateDueDate && registerUpdateDueDate < registeredDateForComparison) {
-      setError("Register update due date cannot be before the registered date.");
+      setError("登記冊更新到期日不可早於登記日期。");
       return;
     }
 
@@ -143,7 +146,7 @@ export function ControllerFormDialog({
       onSaved();
       onOpenChange(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to save the controller.");
+      setError(caught instanceof Error ? caught.message : "未能儲存重要控制人。");
     } finally {
       setSaving(false);
     }
@@ -153,19 +156,15 @@ export function ControllerFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {controller ? "Edit controller particulars" : "Record significant controller"}
-          </DialogTitle>
-          <DialogDescription>
-            A controller must satisfy at least one of the four control tests.
-          </DialogDescription>
+          <DialogTitle>{controller ? "編輯重要控制人資料" : "記錄重要控制人"}</DialogTitle>
+          <DialogDescription>重要控制人須符合四項控制條件中最少一項。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           {!controller ? (
             <div>
               <label className={labelClass} htmlFor="controller-form-name">
-                Controller name
+                重要控制人名稱
               </label>
               <input
                 id="controller-form-name"
@@ -178,7 +177,7 @@ export function ControllerFormDialog({
           ) : null}
 
           <div>
-            <p className={labelClass}>Control bases</p>
+            <p className={labelClass}>控制條件</p>
             <div className="mt-1 space-y-1">
               {CONTROL_BASIS_OPTIONS.map((option) => (
                 <label key={option.value} className="flex items-center gap-2 text-sm">
@@ -197,7 +196,7 @@ export function ControllerFormDialog({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass} htmlFor="controller-form-id-type">
-                  Identification type
+                  身份證明類別
                 </label>
                 <select
                   id="controller-form-id-type"
@@ -207,15 +206,15 @@ export function ControllerFormDialog({
                     setIdentificationType(event.target.value as IdentificationType | "")
                   }
                 >
-                  <option value="">Not on file</option>
-                  <option value="hkid">HKID</option>
-                  <option value="passport">Passport</option>
-                  <option value="br_number">BR number (corporate)</option>
+                  <option value="">未有紀錄</option>
+                  <option value="hkid">{IDENTIFICATION_TYPE_LABELS.hkid}</option>
+                  <option value="passport">{IDENTIFICATION_TYPE_LABELS.passport}</option>
+                  <option value="br_number">{IDENTIFICATION_TYPE_LABELS.br_number}</option>
                 </select>
               </div>
               <div>
                 <label className={labelClass} htmlFor="controller-form-id-number">
-                  Identification number
+                  身份證明號碼
                 </label>
                 <input
                   id="controller-form-id-number"
@@ -229,7 +228,7 @@ export function ControllerFormDialog({
 
           <div>
             <label className={labelClass} htmlFor="controller-form-address">
-              Address
+              地址
             </label>
             <input
               id="controller-form-address"
@@ -243,7 +242,7 @@ export function ControllerFormDialog({
             {!controller ? (
               <div>
                 <label className={labelClass} htmlFor="controller-form-registered-date">
-                  Registered date
+                  登記日期
                 </label>
                 <input
                   id="controller-form-registered-date"
@@ -257,7 +256,7 @@ export function ControllerFormDialog({
             ) : null}
             <div>
               <label className={labelClass} htmlFor="controller-form-due-date">
-                Register update due date
+                登記冊更新到期日
               </label>
               <input
                 id="controller-form-due-date"
@@ -277,14 +276,14 @@ export function ControllerFormDialog({
               onClick={() => onOpenChange(false)}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              {saving ? "Saving…" : controller ? "Save particulars" : "Record controller"}
+              {saving ? "儲存中…" : controller ? "儲存資料" : "記錄重要控制人"}
             </button>
           </DialogFooter>
         </form>

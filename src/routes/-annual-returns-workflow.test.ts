@@ -101,13 +101,11 @@ describe("annual return workflow route regressions", () => {
   it("renders the operational workflow routes in labeled desktop and mobile root navigation", async () => {
     const html = await renderRoute("/portal?caseId=ar-delta");
     const desktopNavigation = html.match(
-      /<nav[^>]*aria-label="Primary navigation"[^>]*>[\s\S]*?<\/nav>/,
+      /<nav[^>]*aria-label="主要導覽"[^>]*>[\s\S]*?<\/nav>/,
     )?.[0];
     // Mobile navigation is now a drawer: its contents mount on open, so the shell
     // renders the trigger rather than a second inline <nav>.
-    const mobileNavigationTrigger = html.match(
-      /<button[^>]*aria-label="Open navigation menu"[^>]*>/,
-    )?.[0];
+    const mobileNavigationTrigger = html.match(/<button[^>]*aria-label="開啟導覽選單"[^>]*>/)?.[0];
 
     expect(desktopNavigation).toBeDefined();
     expect(mobileNavigationTrigger).toBeDefined();
@@ -140,24 +138,24 @@ describe("annual return workflow route regressions", () => {
   it("keeps blockers, packet and follow-ups on every command-center row", async () => {
     // Grouped as Progress (case + packet) and Outstanding (blockers +
     // follow-ups) so the board fits a laptop without sideways scrolling.
-    expect(annualReturnsRouteSource).toContain("<span>Progress</span>");
-    expect(annualReturnsRouteSource).toContain("<span>Outstanding</span>");
+    expect(annualReturnsRouteSource).toContain("<span>進度</span>");
+    expect(annualReturnsRouteSource).toContain("<span>未完成事項</span>");
 
     const html = (await renderRoute("/annual-returns")).replaceAll("<!-- -->", "");
 
     expect(html).toContain("Signed NAR1 +");
-    expect(html).toMatch(/Packet (not started|approved|accepted)/);
+    expect(html).toMatch(/交件套件：(未開始|已批准|已接納)/);
     // A filed return is not overdue, whatever its statutory date.
-    expect(html).not.toMatch(/Summit Bamboo[\s\S]*?overdue[\s\S]*?Open Summit/);
-    expect(html).toMatch(/\d+ follow-ups open/);
+    expect(html).not.toMatch(/Summit Bamboo[\s\S]*?已逾期[\s\S]*?開啟 Summit/);
+    expect(html).toMatch(/\d+ 項待跟進/);
   });
 
   it("renders the annual-return detail route instead of swallowing it in the parent list route", async () => {
     const html = await renderRoute("/annual-returns/ar-delta");
 
-    expect(html).toContain("Client portal activity");
+    expect(html).toContain("客戶入口活動");
     expect(html).toContain("Delta Bloom Ventures Limited");
-    expect(html).not.toContain("Search company or contact");
+    expect(html).not.toContain("搜尋公司或聯絡人");
   });
 
   it("renders the root not-found state for a route that no longer exists", async () => {
@@ -165,14 +163,12 @@ describe("annual return workflow route regressions", () => {
     // it doesn't recognize, checked with a path guaranteed never to be real.
     const html = await renderRoute("/this-route-does-not-exist");
 
-    expect(html).toContain("Page not found");
+    expect(html).toContain("找不到頁面");
   });
 
   it("marks only WhatsApp Automation active on its nested route", async () => {
     const html = await renderRoute("/whatsapp/automation");
-    const navigation = html.match(
-      /<nav[^>]*aria-label="Primary navigation"[^>]*>[\s\S]*?<\/nav>/,
-    )?.[0];
+    const navigation = html.match(/<nav[^>]*aria-label="主要導覽"[^>]*>[\s\S]*?<\/nav>/)?.[0];
     const inboxLink = navigation?.match(/<a[^>]*href="\/whatsapp"[^>]*>/)?.[0];
     const automationLink = navigation?.match(/<a[^>]*href="\/whatsapp\/automation"[^>]*>/)?.[0];
 
@@ -185,8 +181,8 @@ describe("annual return workflow route regressions", () => {
   });
 
   it("renders an explicit status column in WhatsApp automation", () => {
-    expect(whatsappAutomationRouteSource).toContain("<span>Status</span>");
-    expect(whatsappAutomationRouteSource).toContain('label="Status"');
+    expect(whatsappAutomationRouteSource).toContain("<span>狀態</span>");
+    expect(whatsappAutomationRouteSource).toContain('label="狀態"');
     expect(whatsappAutomationRouteSource).toContain("statusToneClass(draft.status)");
   });
 
@@ -203,11 +199,11 @@ describe("annual return workflow route regressions", () => {
   it("renders the client portal action center with mocked client actions", () => {
     expect(portalRouteSource).toContain('createFileRoute("/portal")');
     expect(portalRouteSource).toContain("caseId");
-    expect(portalRouteSource).toContain("Upload");
-    expect(portalRouteSource).toContain("Replace");
-    expect(portalRouteSource).toContain("Acknowledge payment");
-    expect(portalRouteSource).toContain("Approve packet");
-    expect(portalRouteSource).toContain("View receipt");
+    expect(portalRouteSource).toContain('"上載"');
+    expect(portalRouteSource).toContain('"更換"');
+    expect(portalRouteSource).toContain("確認付款");
+    expect(portalRouteSource).toContain("批核交件套件");
+    expect(portalRouteSource).toContain("查看收據");
   });
 
   it("keeps the portal and documents route contract aligned around case search and receipt access", () => {

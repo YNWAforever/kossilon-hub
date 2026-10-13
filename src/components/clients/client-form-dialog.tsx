@@ -110,7 +110,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
 
     return [
       ...options.owners,
-      { id: client.ownerId, name: `${client.ownerName} (inactive)`, teamId: null },
+      { id: client.ownerId, name: `${client.ownerName}（已停用）`, teamId: null },
     ];
   }, [client, options.owners]);
 
@@ -119,7 +119,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
       return options.teams;
     }
 
-    return [...options.teams, { id: client.teamId, name: `${client.teamName} (inactive)` }];
+    return [...options.teams, { id: client.teamId, name: `${client.teamName}（已停用）` }];
   }, [client, options.teams]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -142,7 +142,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             teamId: form.teamId,
           },
         });
-        toast.success("Client updated.");
+        toast.success("已更新客戶資料。");
         onSaved(saved.id);
       } else {
         const hasContact = form.contactName.trim().length > 0;
@@ -170,14 +170,14 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               : [],
           },
         });
-        toast.success("Client added.");
+        toast.success("已新增客戶。");
         onSaved(saved.id);
       }
 
       onOpenChange(false);
     } catch (error) {
       const field = (error as { field?: string }).field;
-      const message = error instanceof Error ? error.message : "Unable to save the client.";
+      const message = error instanceof Error ? error.message : "未能儲存客戶資料。";
 
       // Only these fields have somewhere to render an inline error. Anything else falls back
       // to a toast — without this the message would be swallowed entirely, because a truthy
@@ -196,18 +196,18 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit client" : "Add client"}</DialogTitle>
+          <DialogTitle>{isEdit ? "編輯客戶" : "新增客戶"}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the company record. Changes are recorded on the company timeline."
-              : "Create a company in the register. CR and BR numbers must be unique."}
+              ? "更新公司紀錄，所有變更會記錄在公司時間線。"
+              : "在客戶名冊新增公司，CR 及 BR 號碼不得重複。"}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className={labelClass} htmlFor="client-name">
-              Company name
+              公司名稱
             </label>
             <input
               id="client-name"
@@ -222,7 +222,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass} htmlFor="client-cr">
-                  CR number
+                  CR 號碼
                 </label>
                 <input
                   id="client-cr"
@@ -237,7 +237,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-br">
-                  BR number
+                  BR 號碼
                 </label>
                 <input
                   id="client-br"
@@ -252,7 +252,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-incorporated">
-                  Incorporation date
+                  成立日期
                 </label>
                 <input
                   id="client-incorporated"
@@ -265,7 +265,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-basis">
-                  Annual return basis date
+                  周年申報基準日
                 </label>
                 <input
                   id="client-basis"
@@ -281,7 +281,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
 
           <div>
             <label className={labelClass} htmlFor="client-office">
-              Registered office
+              註冊辦事處
             </label>
             <input
               id="client-office"
@@ -295,7 +295,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="client-owner">
-                Owner
+                負責同事
               </label>
               <select
                 id="client-owner"
@@ -312,7 +312,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             </div>
             <div>
               <label className={labelClass} htmlFor="client-team">
-                Team
+                團隊
               </label>
               <select
                 id="client-team"
@@ -332,7 +332,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
           {isEdit && (
             <div>
               <label className={labelClass} htmlFor="client-status">
-                Status
+                狀態
               </label>
               <select
                 id="client-status"
@@ -340,23 +340,22 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 value={form.status}
                 onChange={(event) => set("status", event.target.value as "active" | "inactive")}
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="active">有效</option>
+                <option value="inactive">已停用</option>
               </select>
               <p className="mt-1 text-xs text-muted-foreground">
-                Clients are deactivated, never deleted — deleting a company would remove its annual
-                return history.
+                客戶只會停用而不會刪除——刪除公司會一併移除其周年申報紀錄。
               </p>
             </div>
           )}
 
           {!isEdit && (
             <div className="rounded-lg border border-border p-4">
-              <p className="mb-3 text-xs font-medium text-foreground">Primary contact (optional)</p>
+              <p className="mb-3 text-xs font-medium text-foreground">主要聯絡人（選填）</p>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className={labelClass} htmlFor="contact-name">
-                    Name
+                    姓名
                   </label>
                   <input
                     id="contact-name"
@@ -367,7 +366,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="contact-role">
-                    Role
+                    職位
                   </label>
                   <input
                     id="contact-role"
@@ -378,7 +377,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="contact-email">
-                    Email
+                    電郵
                   </label>
                   <input
                     id="contact-email"
@@ -390,7 +389,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="contact-phone">
-                    Phone
+                    電話
                   </label>
                   <input
                     id="contact-phone"
@@ -412,14 +411,14 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               onClick={() => onOpenChange(false)}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              {saving ? "Saving…" : isEdit ? "Save changes" : "Add client"}
+              {saving ? "儲存中…" : isEdit ? "儲存變更" : "新增客戶"}
             </button>
           </DialogFooter>
         </form>

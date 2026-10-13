@@ -50,7 +50,7 @@ export function ResolveInspectionRequestDialog({
       onSaved();
       onOpenChange(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to resolve the request.");
+      setError(caught instanceof Error ? caught.message : "未能處理查閱要求。");
     } finally {
       setSaving(false);
     }
@@ -60,14 +60,14 @@ export function ResolveInspectionRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Resolve inspection request</DialogTitle>
-          <DialogDescription>Record how and when the request was fulfilled.</DialogDescription>
+          <DialogTitle>處理查閱要求</DialogTitle>
+          <DialogDescription>記錄如何及何時完成此要求。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className={labelClass} htmlFor="resolve-inspection-note">
-              Resolution note
+              處理備註
             </label>
             <textarea
               id="resolve-inspection-note"
@@ -87,14 +87,14 @@ export function ResolveInspectionRequestDialog({
               onClick={() => onOpenChange(false)}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              {saving ? "Saving…" : "Resolve"}
+              {saving ? "儲存中…" : "完成處理"}
             </button>
           </DialogFooter>
         </form>

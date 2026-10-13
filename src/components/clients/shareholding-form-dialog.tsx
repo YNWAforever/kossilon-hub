@@ -70,7 +70,7 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
     const parsedShares = Number.parseInt(trimmedShares, 10);
 
     if (!/^\d+$/.test(trimmedShares) || parsedShares <= 0) {
-      setError("Enter a whole number of shares greater than zero.");
+      setError("請輸入大於零的整數股數。");
       return;
     }
 
@@ -92,7 +92,7 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
       onSaved();
       onOpenChange(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to record the shareholding.");
+      setError(caught instanceof Error ? caught.message : "未能記錄股權。");
     } finally {
       setSaving(false);
     }
@@ -102,14 +102,14 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Record shareholding</DialogTitle>
-          <DialogDescription>Record a member of this company's share register.</DialogDescription>
+          <DialogTitle>記錄股權</DialogTitle>
+          <DialogDescription>在此公司的成員登記冊記錄一名股東。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className={labelClass} htmlFor="shareholding-form-name">
-              Shareholder name
+              股東名稱
             </label>
             <input
               id="shareholding-form-name"
@@ -122,7 +122,7 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
 
           <div>
             <label className={labelClass} htmlFor="shareholding-form-address">
-              Address
+              地址
             </label>
             <input
               id="shareholding-form-address"
@@ -135,7 +135,7 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <label className={labelClass} htmlFor="shareholding-form-class">
-                Share class
+                股份類別
               </label>
               <input
                 id="shareholding-form-class"
@@ -147,7 +147,7 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
             </div>
             <div>
               <label className={labelClass} htmlFor="shareholding-form-number">
-                Number of shares
+                股數
               </label>
               <input
                 id="shareholding-form-number"
@@ -162,7 +162,7 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
             </div>
             <div>
               <label className={labelClass} htmlFor="shareholding-form-date">
-                Allotment date
+                配發日期
               </label>
               <input
                 id="shareholding-form-date"
@@ -183,14 +183,14 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
               onClick={() => onOpenChange(false)}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              {saving ? "Saving…" : "Record shareholding"}
+              {saving ? "儲存中…" : "記錄股權"}
             </button>
           </DialogFooter>
         </form>

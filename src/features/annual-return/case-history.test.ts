@@ -125,15 +125,15 @@ describe("mergeCaseHistory", () => {
 
 describe("describeCaseHistoryEntry", () => {
   const auditActionLabels: Record<AuditEventRow["action"], string> = {
-    create_case: "Case created",
-    assign_owner: "Owner reassigned",
-    add_note: "Note added",
-    record_reminder: "Reminder recorded",
-    update_checklist: "Checklist updated",
-    update_payment: "Payment updated",
-    update_filing_proof: "Filing proof updated",
-    change_status: "Status changed",
-    complete: "Case completed",
+    create_case: "已建立案件",
+    assign_owner: "已重新分配負責同事",
+    add_note: "已加入備註",
+    record_reminder: "已記錄提醒",
+    update_checklist: "已更新清單",
+    update_payment: "已更新付款",
+    update_filing_proof: "已更新遞交證明",
+    change_status: "已更改狀態",
+    complete: "案件已完成",
   };
 
   it.each(Object.entries(auditActionLabels) as [AuditEventRow["action"], string][])(
@@ -155,7 +155,7 @@ describe("describeCaseHistoryEntry", () => {
     const [entry] = mergeCaseHistory([], [baseAssignmentRow]);
 
     const { label, description } = describeCaseHistoryEntry(entry);
-    expect(label).toBe("Assignment: manual");
+    expect(label).toBe("分配：手動");
     expect(description).toBe("Amy Chan → Ken Wong");
   });
 
@@ -166,7 +166,7 @@ describe("describeCaseHistoryEntry", () => {
     );
 
     const { label, description } = describeCaseHistoryEntry(entry);
-    expect(label).toBe("Assignment: overridden");
+    expect(label).toBe("分配：已改選");
     expect(description).toBe("Amy Chan → Ken Wong (Amy is on leave.)");
   });
 
@@ -176,15 +176,15 @@ describe("describeCaseHistoryEntry", () => {
       [{ ...baseAssignmentRow, decision: "accepted_recommendation" }],
     );
 
-    expect(describeCaseHistoryEntry(entry).label).toBe("Assignment: accepted recommendation");
+    expect(describeCaseHistoryEntry(entry).label).toBe("分配：接納建議");
   });
 
-  it("describes an assignment with no previous assignee as Unassigned", () => {
+  it("describes an assignment with no previous assignee as 未分配", () => {
     const [entry] = mergeCaseHistory(
       [],
       [{ ...baseAssignmentRow, previous_assignee_id: null, previous_assignee_name: null }],
     );
 
-    expect(describeCaseHistoryEntry(entry).description).toBe("Unassigned → Ken Wong");
+    expect(describeCaseHistoryEntry(entry).description).toBe("未分配 → Ken Wong");
   });
 });

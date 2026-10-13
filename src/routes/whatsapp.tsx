@@ -4,7 +4,12 @@ import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router"
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { PageHeader } from "@/components/page-header";
 import { ProductionWhatsAppInbox } from "../features/whatsapp/components/production-inbox";
-import { enquiries, findClientForEnquiry } from "../lib/app-data";
+import {
+  enquiries,
+  enquiryIntentLabels,
+  enquiryStatusLabels,
+  findClientForEnquiry,
+} from "../lib/app-data";
 
 export const Route = createFileRoute("/whatsapp")({
   // `enquiry` addresses a demo fixture. Production conversations are keyed by
@@ -56,7 +61,7 @@ function DemoWhatsAppInbox() {
         {/* The conversation rail is this screen's header — an inbox has no room
             for a page title above it, so PageHeader sits inside the rail. */}
         <div className="border-b p-4">
-          <PageHeader eyebrow="Messaging" title="WhatsApp Inbox" />
+          <PageHeader eyebrow="通訊" title="WhatsApp 收件箱" />
         </div>
         <div className="divide-y">
           {enquiries.map((enquiry) => (
@@ -76,7 +81,7 @@ function DemoWhatsAppInbox() {
                 {enquiry.lastMessage}
               </p>
               <span className="mt-2 inline-flex rounded-full bg-secondary px-2 py-1 text-xs">
-                {enquiry.intent}
+                {enquiryIntentLabels[enquiry.intent]}
               </span>
             </button>
           ))}
@@ -88,7 +93,7 @@ function DemoWhatsAppInbox() {
           <div>
             <h2 className="text-xl font-semibold">{selected.name}</h2>
             <p className="text-sm text-muted-foreground">
-              {selected.phone} - {selected.status}
+              {selected.phone} · {enquiryStatusLabels[selected.status]}
             </p>
           </div>
         </div>
@@ -108,14 +113,14 @@ function DemoWhatsAppInbox() {
           ) : null}
           <textarea
             className="min-h-32 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm"
-            placeholder="Type a reply or insert an AI draft..."
+            placeholder="輸入回覆，或插入 AI 草稿…"
             value={composer}
             onChange={(event) => setComposer(event.target.value)}
           />
           <div className="mt-3 flex items-center justify-between gap-3">
             <button
               className="rounded-md border px-3 py-2 text-sm"
-              onClick={() => showNotice("AI draft panel is open")}
+              onClick={() => showNotice("已開啟 AI 草稿面板")}
             >
               AI
             </button>
@@ -123,10 +128,10 @@ function DemoWhatsAppInbox() {
               className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
               onClick={() => {
                 setComposer("");
-                showNotice("Mock reply sent");
+                showNotice("示範回覆已發送");
               }}
             >
-              Send reply
+              發送回覆
             </button>
           </div>
         </div>
@@ -138,11 +143,11 @@ function DemoWhatsAppInbox() {
           clientCase={clientCase}
           onInsert={(draft) => {
             setComposer(draft);
-            showNotice("Draft inserted into composer");
+            showNotice("草稿已插入輸入框");
           }}
           onSend={(draft) => {
             setComposer(draft);
-            showNotice("Mock AI reply sent");
+            showNotice("示範 AI 回覆已發送");
           }}
         />
       </div>

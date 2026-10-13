@@ -128,7 +128,7 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
     await expect(repository.createTemplate("Annual Return — Private Ltd")).rejects.toMatchObject({
       name: "ChecklistTemplateWriteError",
       field: "name",
-      message: "A checklist template with this name already exists.",
+      message: "已有同名的清單模板。",
     });
 
     await repository.close();
@@ -146,7 +146,7 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
     await expect(repository.duplicateTemplate(created.id)).rejects.toMatchObject({
       name: "ChecklistTemplateWriteError",
       field: "name",
-      message: "A checklist template with this name already exists.",
+      message: "已有同名的清單模板。",
     });
 
     await repository.close();
@@ -165,7 +165,7 @@ describe.skipIf(!databaseUrl)("checklist template repository", () => {
     ).rejects.toMatchObject({
       name: "ChecklistTemplateWriteError",
       field: "name",
-      message: "A checklist template with this name already exists.",
+      message: "已有同名的清單模板。",
     });
 
     await repository.close();

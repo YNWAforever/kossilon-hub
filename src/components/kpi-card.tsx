@@ -32,7 +32,7 @@ export function KpiCard({
       <div className="mt-4">
         <p
           data-testid="kpi-value"
-          aria-label={unavailable ? `${label}: unavailable` : undefined}
+          aria-label={unavailable ? `${label}：無法載入` : undefined}
           className={cn(
             "font-display text-3xl font-semibold tabular-nums",
             unavailable ? "text-muted-foreground" : "text-foreground",
@@ -40,7 +40,7 @@ export function KpiCard({
         >
           {unavailable ? "—" : value}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">{unavailable ? "Unavailable" : hint}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{unavailable ? "無法載入" : hint}</p>
       </div>
     </div>
   );

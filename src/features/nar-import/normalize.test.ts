@@ -188,7 +188,7 @@ describe("normalizeDayMonthCell", () => {
   it("refuses a date serial in the day/month column rather than truncating it", () => {
     expect(normalizeDayMonthCell(numericCell(45913))).toMatchObject({
       kind: "unparsed",
-      reason: expect.stringContaining("day/month"),
+      reason: expect.stringContaining("日／月"),
     });
   });
 

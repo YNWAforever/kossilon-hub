@@ -21,10 +21,10 @@ import {
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Login - Kossilon CoSec OS" },
+      { title: "登入 - Kossilon CoSec OS" },
       {
         name: "description",
-        content: "Sign in to Kossilon Compliance Core.",
+        content: "登入 Kossilon Compliance Core。",
       },
     ],
   }),
@@ -114,15 +114,13 @@ export function LoginPage() {
 
       if (result.ok) {
         setError(null);
-        setSuccess(
-          mode === "magic-link" ? (result.message ?? "Check your email for a magic link.") : null,
-        );
+        setSuccess(mode === "magic-link" ? (result.message ?? "請查看電郵中的登入連結。") : null);
       } else {
         setError(result.error);
         setSuccess(null);
       }
     } catch {
-      setError("Unable to complete sign-in request. Please try again.");
+      setError("未能完成登入要求，請再試一次。");
       setSuccess(null);
     } finally {
       setIsSubmitting(false);
@@ -156,7 +154,7 @@ export function LoginPage() {
           <div>
             <div className="font-display text-lg font-semibold">Kossilon</div>
             <div className="text-xs uppercase tracking-wider text-primary-foreground/70">
-              Company Secretary Operating System
+              公司秘書營運系統
             </div>
           </div>
         </div>
@@ -166,18 +164,17 @@ export function LoginPage() {
             Compliance Core
           </p>
           <h1 className="mt-4 font-display text-4xl font-semibold leading-tight">
-            Secure access for filings, client evidence, reminders, and team operations.
+            安全處理申報遞交、客戶證明文件、提醒及團隊運作。
           </h1>
           <p className="mt-4 text-sm leading-6 text-primary-foreground/75">
-            Coordinate annual returns, WhatsApp enquiries, document chasing, and approvals from one
-            operating system.
+            在同一系統統籌周年申報、WhatsApp 查詢、文件追收及審批。
           </p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-xs text-primary-foreground/90">
-          <div className="rounded-md bg-primary-foreground/10 p-3">Annual return workflow</div>
-          <div className="rounded-md bg-primary-foreground/10 p-3">Role-aware workspace</div>
-          <div className="rounded-md bg-primary-foreground/10 p-3">Compliance visibility</div>
+          <div className="rounded-md bg-primary-foreground/10 p-3">周年申報流程</div>
+          <div className="rounded-md bg-primary-foreground/10 p-3">按角色分配的工作區</div>
+          <div className="rounded-md bg-primary-foreground/10 p-3">合規狀況一目了然</div>
         </div>
       </section>
 
@@ -190,16 +187,16 @@ export function LoginPage() {
             <div>
               <div className="font-display text-lg font-semibold">Kossilon</div>
               <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                Company Secretary OS
+                公司秘書營運系統
               </div>
             </div>
           </div>
 
           <div>
-            <StatusPill tone="blue">Secure access</StatusPill>
-            <h1 className="mt-4 font-display text-2xl font-semibold">Sign in to Compliance Core</h1>
+            <StatusPill tone="blue">安全登入</StatusPill>
+            <h1 className="mt-4 font-display text-2xl font-semibold">登入 Compliance Core</h1>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Sign in with your firm's Neon Auth account.
+              請使用貴公司的 Neon Auth 帳戶登入。
             </p>
           </div>
 
@@ -208,8 +205,7 @@ export function LoginPage() {
               className="mt-6 rounded-md border border-status-red/30 bg-status-red-soft px-3 py-2 text-xs text-status-red-text"
               role="alert"
             >
-              This account does not have access to Kossilon Hub. Ask an administrator to grant
-              access, or sign in with a different account below.
+              此帳戶未獲授權使用 Kossilon Hub。請聯絡管理員開通權限，或於下方改用其他帳戶登入。
             </div>
           )}
 
@@ -217,7 +213,7 @@ export function LoginPage() {
             <div
               className="mt-6 grid grid-cols-2 rounded-md border border-border bg-muted/40 p-1"
               role="group"
-              aria-label="Sign-in method"
+              aria-label="登入方式"
             >
               <button
                 type="button"
@@ -227,7 +223,7 @@ export function LoginPage() {
                 className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <KeyRound className="h-3.5 w-3.5" />
-                Password
+                密碼
               </button>
               <button
                 type="button"
@@ -237,14 +233,14 @@ export function LoginPage() {
                 className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Mail className="h-3.5 w-3.5" />
-                Magic link
+                電郵登入連結
               </button>
             </div>
           )}
 
           <form onSubmit={submitLogin} className="mt-4 space-y-4">
             <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">Email</span>
+              <span className="text-xs font-medium text-muted-foreground">電郵</span>
               <input
                 value={email}
                 onChange={(event) => {
@@ -260,7 +256,7 @@ export function LoginPage() {
 
             {mode === "password" && (
               <label className="block">
-                <span className="text-xs font-medium text-muted-foreground">Password</span>
+                <span className="text-xs font-medium text-muted-foreground">密碼</span>
                 <input
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -298,12 +294,12 @@ export function LoginPage() {
               {mode === "password" ? (
                 <>
                   <ShieldCheck className="h-4 w-4" />
-                  Sign in
+                  登入
                 </>
               ) : (
                 <>
                   <Mail className="h-4 w-4" />
-                  Email me a magic link
+                  以電郵傳送登入連結
                 </>
               )}
             </button>
@@ -316,19 +312,18 @@ export function LoginPage() {
               disabled={!isHydrated || googleSubmitting}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Chrome className="h-4 w-4" />
-              Continue with Google
+              <Chrome className="h-4 w-4" />以 Google 帳戶登入
             </button>
           )}
 
           {magicLinkEnabled && (
             <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
-              Access is invite-only. Contact the firm administrator to request access.{" "}
+              只限受邀用戶使用。如需開通，請聯絡公司管理員。
               <a
                 href="mailto:willylai@fimmick.com?subject=Kossilon%20demo%20invitation%20request"
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
-                Request an invitation
+                申請邀請
               </a>
             </p>
           )}
@@ -337,7 +332,7 @@ export function LoginPage() {
             <div className="mt-7 border-t border-border pt-6">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Demo identities
+                  示範身份
                 </p>
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </div>

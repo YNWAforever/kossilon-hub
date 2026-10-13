@@ -62,7 +62,7 @@ describe("work queue in demo mode", () => {
     );
 
     expect(mocks.list).not.toHaveBeenCalled();
-    expect(screen.queryByText("Loading work queue...")).toBeNull();
+    expect(screen.queryByText("工作隊列載入中…")).toBeNull();
     expect(screen.getByText(/示範模式沒有可讀取的工作項目/)).toBeTruthy();
   });
 });
@@ -139,17 +139,17 @@ describe("work queue assignment and blockers", () => {
     );
     await screen.findByText("Amy Chan · Team A");
     expect(screen.getByText("work_item")).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText("Search case or work type"), {
+    fireEvent.change(screen.getByPlaceholderText("搜尋案件或工作類型"), {
       target: { value: "Scoped company" },
     });
     expect(screen.getAllByText("Review case").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Payment missing").length).toBeGreaterThan(0);
     expect(screen.queryByText("None")).toBeNull();
     expect(screen.queryByText("Staff 20000000")).toBeNull();
-    fireEvent.click(screen.getAllByTitle("Assign work item")[0]);
+    fireEvent.click(screen.getAllByTitle("分配工作項目")[0]);
     await screen.findByRole("button", { name: /Amy Chan · Team A/ });
     expect(screen.queryByText("Inactive person")).toBeNull();
-    fireEvent.change(screen.getByLabelText("Assignment responsibility"), {
+    fireEvent.change(screen.getByLabelText("分配角色"), {
       target: { value: "reviewer" },
     });
     await waitFor(() =>

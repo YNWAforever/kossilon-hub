@@ -17,28 +17,28 @@ describe("toClientWriteError", () => {
 
     expect(mapped).toBeInstanceOf(ClientWriteError);
     expect(mapped?.field).toBe("crNumber");
-    expect(mapped?.message).toBe("A company with this CR number already exists.");
+    expect(mapped?.message).toBe("已有公司使用此 CR 號碼。");
   });
 
   it("maps a duplicate BR number to the brNumber field", () => {
     const mapped = toClientWriteError(postgresError("23505", "companies_br_number_key"));
 
     expect(mapped?.field).toBe("brNumber");
-    expect(mapped?.message).toBe("A company with this BR number already exists.");
+    expect(mapped?.message).toBe("已有公司使用此 BR 號碼。");
   });
 
   it("maps an unreachable contact to the contact field", () => {
     const mapped = toClientWriteError(postgresError("23514", "company_contacts_reachable_check"));
 
     expect(mapped?.field).toBe("contact");
-    expect(mapped?.message).toBe("Provide an email or a phone number.");
+    expect(mapped?.message).toBe("請提供電郵地址或電話號碼。");
   });
 
   it("maps a duplicate primary contact to the isPrimary field", () => {
     const mapped = toClientWriteError(postgresError("23505", "company_contacts_primary_uidx"));
 
     expect(mapped?.field).toBe("isPrimary");
-    expect(mapped?.message).toBe("This company already has a primary contact.");
+    expect(mapped?.message).toBe("此公司已有主要聯絡人。");
   });
 
   it("returns null for an unrelated constraint", () => {

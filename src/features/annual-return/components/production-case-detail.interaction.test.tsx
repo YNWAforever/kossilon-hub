@@ -195,9 +195,9 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
     expect(
-      (screen.getByRole("button", { name: "Prepare packet" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "準備交件套件" }) as HTMLButtonElement).disabled,
     ).toBe(true);
-    expect(screen.getByLabelText("交件阻擋原因").textContent).toContain("未取得當前付款");
+    expect(screen.getByLabelText("交件阻礙事項").textContent).toContain("未取得當前付款");
     expect(serverFns.updateAnnualReturnStatus).not.toHaveBeenCalled();
   });
   it("clicks every production command with case-scoped payloads and refreshes cache", async () => {
@@ -209,44 +209,44 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     const ownerPicker = await screen.findByLabelText("負責同事");
     expect(within(ownerPicker as HTMLSelectElement).getByText(/Calvin Ho/)).toBeTruthy();
     fireEvent.change(ownerPicker, { target: { value: nextOwnerId } });
-    fireEvent.click(screen.getByRole("button", { name: "Assign" }));
+    fireEvent.click(screen.getByRole("button", { name: "分配" }));
 
-    fireEvent.change(screen.getByLabelText("Case status"), {
+    fireEvent.change(screen.getByLabelText("案件狀態"), {
       target: { value: "Ready to file" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    fireEvent.click(screen.getByRole("button", { name: "更新" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Mark missing" }));
+    fireEvent.click(screen.getByRole("button", { name: "標記為缺少" }));
 
-    fireEvent.change(screen.getByLabelText("Payment status"), {
+    fireEvent.change(screen.getByLabelText("付款狀態"), {
       target: { value: "Payment pending" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Update payment" }));
+    fireEvent.click(screen.getByRole("button", { name: "更新付款" }));
 
-    fireEvent.change(screen.getByLabelText("Case note"), {
+    fireEvent.change(screen.getByLabelText("案件備註"), {
       target: { value: "Checked with the client." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
 
-    fireEvent.change(screen.getByLabelText("Reminder recipient name"), {
+    fireEvent.change(screen.getByLabelText("提醒收件人姓名"), {
       target: { value: "Ada Chan" },
     });
-    fireEvent.change(screen.getByLabelText("Reminder phone"), {
+    fireEvent.change(screen.getByLabelText("提醒電話號碼"), {
       target: { value: "+85291234567" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send reminder" }));
+    fireEvent.click(screen.getByRole("button", { name: "發送提醒" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Prepare packet" }));
+    fireEvent.click(screen.getByRole("button", { name: "準備交件套件" }));
 
-    fireEvent.change(screen.getByLabelText("Filing reference"), {
+    fireEvent.change(screen.getByLabelText("遞交編號"), {
       target: { value: "NAR1-2026-001" },
     });
-    const receiptPicker = await screen.findByLabelText("已核實回執文件");
+    const receiptPicker = await screen.findByLabelText("已核對回條文件");
     expect(
       within(receiptPicker as HTMLSelectElement).getByText(/filing-receipt\.pdf/),
     ).toBeTruthy();
     fireEvent.change(receiptPicker, { target: { value: receiptId } });
-    fireEvent.click(screen.getByRole("button", { name: "Accept receipt" }));
+    fireEvent.click(screen.getByRole("button", { name: "接納回條" }));
 
     await waitFor(() => {
       expect(serverFns.assignAnnualReturnCaseOwner).toHaveBeenCalledWith({
@@ -307,23 +307,23 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
-    fireEvent.change(screen.getByLabelText("Case status"), {
+    fireEvent.change(screen.getByLabelText("案件狀態"), {
       target: { value: "Ready to file" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Assign" }));
+    fireEvent.click(screen.getByRole("button", { name: "分配" }));
 
     await waitFor(() =>
-      expect((screen.getByRole("button", { name: "Assign" }) as HTMLButtonElement).disabled).toBe(
+      expect((screen.getByRole("button", { name: "分配" }) as HTMLButtonElement).disabled).toBe(
         true,
       ),
     );
-    expect((screen.getByRole("button", { name: "Update" }) as HTMLButtonElement).disabled).toBe(
+    expect((screen.getByRole("button", { name: "更新" }) as HTMLButtonElement).disabled).toBe(
       false,
     );
 
     await act(async () => resolveAssignment(caseItem));
     await waitFor(() =>
-      expect((screen.getByRole("button", { name: "Assign" }) as HTMLButtonElement).disabled).toBe(
+      expect((screen.getByRole("button", { name: "分配" }) as HTMLButtonElement).disabled).toBe(
         false,
       ),
     );
@@ -352,7 +352,7 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
-    const checklistButtons = screen.getAllByRole("button", { name: "Mark missing" });
+    const checklistButtons = screen.getAllByRole("button", { name: "標記為缺少" });
     fireEvent.click(checklistButtons[0]);
 
     await waitFor(() => expect((checklistButtons[0] as HTMLButtonElement).disabled).toBe(true));
@@ -374,13 +374,13 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
-    const note = screen.getByLabelText("Case note");
+    const note = screen.getByLabelText("案件備註");
     fireEvent.change(note, { target: { value: "Keep this draft." } });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "加入備註" }));
 
     expect((await screen.findByRole("alert")).textContent).toContain("Unable to save note.");
     expect((note as HTMLTextAreaElement).value).toBe("Keep this draft.");
-    expect((screen.getByRole("button", { name: "Add note" }) as HTMLButtonElement).disabled).toBe(
+    expect((screen.getByRole("button", { name: "加入備註" }) as HTMLButtonElement).disabled).toBe(
       false,
     );
   });
@@ -421,19 +421,19 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    const history = (await screen.findByText("Audit history")).closest("section")!;
-    await within(history).findByText("Assignment: manual");
+    const history = (await screen.findByText("審計記錄")).closest("section")!;
+    await within(history).findByText("分配：手動");
     const [firstEntry, secondEntry] = within(history).getAllByRole("listitem");
-    expect(firstEntry.textContent).toContain("Assignment: manual");
-    expect(secondEntry.textContent).toContain("Note added");
-    expect(firstEntry.textContent).toContain("by Mei Lam");
-    expect(secondEntry.textContent).toContain("by System");
+    expect(firstEntry.textContent).toContain("分配：手動");
+    expect(secondEntry.textContent).toContain("已加入備註");
+    expect(firstEntry.textContent).toContain("操作人：Mei Lam");
+    expect(secondEntry.textContent).toContain("操作人：系統");
   });
 
   it("shows an empty state when no history exists", async () => {
     renderDetail();
     await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    expect(await screen.findByText("No history yet.")).toBeTruthy();
+    expect(await screen.findByText("暫時沒有記錄。")).toBeTruthy();
   });
 });

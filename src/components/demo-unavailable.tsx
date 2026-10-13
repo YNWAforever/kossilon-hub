@@ -13,7 +13,7 @@ import { ArrowRight, DatabaseZap } from "lucide-react";
 export function DemoUnavailable({ message }: { message: string }) {
   return (
     <section
-      aria-label="Not available in demo mode"
+      aria-label="示範模式未提供"
       className="flex flex-col items-center rounded-lg border border-dashed bg-card px-6 py-12 text-center"
     >
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground">

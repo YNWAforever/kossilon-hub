@@ -2,7 +2,8 @@ import { checklistTemplates, daysUntil, type ClientCase } from "./app-data";
 import { type AnnualReturnAiContext } from "./annual-return-store";
 import { type ClientPortalPaymentProofAiContext } from "./client-portal-store";
 import { type FaqEntry, type ReferenceDoc } from "./knowledge-base";
-import { formatDate } from "./format-date";
+import { formatDate, formatDateEnglish } from "./format-date";
+import { labelValue } from "./format-label";
 import { tokenize } from "./text-tokens";
 
 export type AiEnquiry = {
@@ -94,6 +95,21 @@ function scoreText(query: string[], target: string, boosts: string[]): number {
   return queryScore + boostScore;
 }
 
+// The grounding list is shown to staff beside the draft, so it is in the UI
+// language; the draft itself is English text written to the client.
+const clientCaseStatusLabels: Record<ClientCase["status"], string> = {
+  Preparing: "準備中",
+  "Waiting documents": "等待文件",
+  "Ready to file": "可遞交",
+  Filed: "已遞交",
+};
+
+const clientPaymentLabels: Record<ClientCase["paymentStatus"], string> = {
+  Paid: "已付款",
+  Pending: "待付款",
+  Overdue: "逾期未付",
+};
+
 export function retrieveContext(
   enquiry: AiEnquiry,
   faqs: FaqEntry[],
@@ -145,10 +161,10 @@ export function retrieveContext(
 
   const caseFields = clientCase
     ? [
-        `${clientCase.companyName} status: ${clientCase.status}`,
-        `Due date: ${clientCase.dueDate}`,
-        `Payment: ${clientCase.paymentStatus}`,
-        `Missing documents: ${clientCase.missingDocs.length || "none"}`,
+        `${clientCase.companyName} 狀態：${clientCaseStatusLabels[clientCase.status]}`,
+        `到期日：${formatDate(clientCase.dueDate)}`,
+        `付款：${clientPaymentLabels[clientCase.paymentStatus]}`,
+        `欠缺文件：${clientCase.missingDocs.length || "無"}`,
       ]
     : [];
 
@@ -157,7 +173,7 @@ export function retrieveContext(
 
 /** `subject` is written as it should read in place, e.g. "The filing" or "your annual return". */
 function dueSentence(subject: string, dueDate: string, daysToDue: number): string {
-  const date = `**${formatDate(dueDate)}**`;
+  const date = `**${formatDateEnglish(dueDate)}**`;
   if (daysToDue < 0) {
     return `${subject} was due on ${date}. That date has passed, so we would like to file as soon as possible.`;
   }
@@ -266,11 +282,11 @@ export function draftReply(
           {
             id: "payment-proof-status",
             type: "Case" as const,
-            label: "Payment proof",
+            label: "付款證明",
             preview:
               paymentProofContext.status === "rejected"
-                ? `${paymentProofContext.reasonLabel ?? "Payment proof rejected"}${paymentProofContext.note ? `: ${paymentProofContext.note}` : ""}`
-                : `Payment proof status: ${paymentProofContext.status}`,
+                ? `${paymentProofContext.reasonLabel ?? "付款證明已退回"}${paymentProofContext.note ? `：${paymentProofContext.note}` : ""}`
+                : `付款證明狀態：${labelValue(paymentProofContext.status)}`,
           },
         ]
       : []),

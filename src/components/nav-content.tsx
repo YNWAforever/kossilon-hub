@@ -74,14 +74,14 @@ export function AccountBlock() {
       </div>
       <div className="min-w-0 flex-1 leading-tight">
         <div className="truncate text-xs font-semibold text-foreground">
-          {session?.name ?? "Signed in"}
+          {session?.name ?? "已登入"}
         </div>
-        <div className="truncate text-[10px] text-muted-foreground">{session?.role ?? "User"}</div>
+        <div className="truncate text-[10px] text-muted-foreground">{session?.role ?? "用戶"}</div>
       </div>
       <button
         onClick={signOut}
-        aria-label="Sign out"
-        title="Sign out"
+        aria-label="登出"
+        title="登出"
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
       >
         <LogOut className="h-4 w-4" />

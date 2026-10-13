@@ -62,9 +62,7 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
       })
       .catch((error: unknown) => {
         if (active) {
-          setConfigurationError(
-            error instanceof Error ? error.message : "Authentication unavailable.",
-          );
+          setConfigurationError(error instanceof Error ? error.message : "登入服務暫時無法使用。");
         }
       });
 
@@ -76,7 +74,7 @@ function NeonAuthBootstrap({ children }: { children: ReactNode }) {
   const unavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
-      error: configurationError ?? "Authentication is loading.",
+      error: configurationError ?? "登入服務載入中…",
     }),
     [configurationError],
   );
@@ -125,7 +123,7 @@ function toAuthSession(actor: AuthenticatedActor, user: VerifiedAuthUser): AuthS
     email: user.email,
     role: actor.role,
     initials: initials(name),
-    team: actor.teamId ?? (actor.role === "Client" ? "Client portal" : "Unassigned"),
+    team: actor.teamId ?? (actor.role === "Client" ? "客戶入口" : "未分配"),
     signedInAt: new Date().toISOString(),
   };
 }
@@ -163,7 +161,7 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     async (email: string, password: string): Promise<AuthActionResult> => {
       const result = await client.signIn.email({ email, password });
       if (result.error) {
-        return { ok: false, error: result.error.message ?? "Sign in failed." };
+        return { ok: false, error: result.error.message ?? "登入失敗。" };
       }
 
       await refreshSession();
@@ -181,10 +179,10 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
       });
 
       if (result.error) {
-        return { ok: false, error: result.error.message ?? "Magic link request failed." };
+        return { ok: false, error: result.error.message ?? "未能傳送登入連結。" };
       }
 
-      return { ok: true, message: "Check your email for a magic link." };
+      return { ok: true, message: "請查看電郵中的登入連結。" };
     },
     [client],
   );
@@ -196,7 +194,7 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
     });
 
     if (result.error) {
-      return { ok: false, error: result.error.message ?? "Google sign-in failed." };
+      return { ok: false, error: result.error.message ?? "Google 登入失敗。" };
     }
 
     // better-auth's default redirectPlugin has already started navigating the
@@ -208,7 +206,7 @@ function NeonAuthProvider({ children, url }: { children: ReactNode; url: string 
   const demoUnavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
-      error: "Demo authentication is disabled.",
+      error: "示範登入已停用。",
     }),
     [],
   );
@@ -266,7 +264,7 @@ function DemoAuthProvider({ children }: { children: ReactNode }) {
   const magicLinkUnavailable = useCallback(
     async (): Promise<AuthActionResult> => ({
       ok: false,
-      error: "Demo authentication is disabled.",
+      error: "示範登入已停用。",
     }),
     [],
   );

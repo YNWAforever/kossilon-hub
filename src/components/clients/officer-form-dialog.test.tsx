@@ -28,11 +28,11 @@ describe("OfficerFormDialog", () => {
       <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Jane Director" } });
-    fireEvent.change(screen.getByLabelText("Appointment date"), {
+    fireEvent.change(screen.getByLabelText("姓名"), { target: { value: "Jane Director" } });
+    fireEvent.change(screen.getByLabelText("委任日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Appoint officer" }));
+    fireEvent.click(screen.getByRole("button", { name: "委任高級人員" }));
 
     await waitFor(() =>
       expect(serverFns.appointClientOfficer).toHaveBeenCalledWith({
@@ -58,14 +58,14 @@ describe("OfficerFormDialog", () => {
       <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Type"), {
+    fireEvent.change(screen.getByLabelText("類別"), {
       target: { value: "designated_representative" },
     });
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Jane DR" } });
-    fireEvent.change(screen.getByLabelText("Appointment date"), {
+    fireEvent.change(screen.getByLabelText("姓名"), { target: { value: "Jane DR" } });
+    fireEvent.change(screen.getByLabelText("委任日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Appoint officer" }));
+    fireEvent.click(screen.getByRole("button", { name: "委任高級人員" }));
 
     await waitFor(() =>
       expect(serverFns.appointClientOfficer).toHaveBeenCalledWith({
@@ -92,11 +92,11 @@ describe("OfficerFormDialog", () => {
       <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={() => {}} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Jane Director" } });
-    fireEvent.change(screen.getByLabelText("Appointment date"), {
+    fireEvent.change(screen.getByLabelText("姓名"), { target: { value: "Jane Director" } });
+    fireEvent.change(screen.getByLabelText("委任日期"), {
       target: { value: "2026-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Appoint officer" }));
+    fireEvent.click(screen.getByRole("button", { name: "委任高級人員" }));
 
     expect(await screen.findByText("Officer not found for this company.")).toBeTruthy();
   });

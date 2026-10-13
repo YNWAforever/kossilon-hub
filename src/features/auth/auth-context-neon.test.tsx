@@ -71,7 +71,7 @@ describe("Neon Auth context magic-link login", () => {
     await waitFor(() => expect(createNeonAuthClient).toHaveBeenCalledOnce());
     fireEvent.click(screen.getByRole("button", { name: "Request magic link" }));
 
-    expect(await screen.findByText("Check your email for a magic link.")).toBeTruthy();
+    expect(await screen.findByText("請查看電郵中的登入連結。")).toBeTruthy();
     expect(authClient.signIn.magicLink).toHaveBeenCalledWith({
       email: "user@example.test",
       callbackURL: `${window.location.origin}/login`,

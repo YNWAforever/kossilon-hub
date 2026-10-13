@@ -21,7 +21,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const contactId = "11111111-1111-4111-8111-111111111111";
-const EMPTY_INBOX_MESSAGE = "No WhatsApp conversations are recorded in your current scope.";
+const EMPTY_INBOX_MESSAGE = "您目前的權限範圍內未有 WhatsApp 對話記錄。";
 
 function makeConversation(overrides: Partial<WhatsAppConversation> = {}): WhatsAppConversation {
   return {
@@ -127,7 +127,7 @@ describe("production WhatsApp inbox", () => {
     serverFns.getWhatsAppIntegrationStatus.mockResolvedValue(notConnected);
     renderInbox();
 
-    expect(await screen.findByText(/WhatsApp setup is incomplete/i)).toBeTruthy();
+    expect(await screen.findByText(/WhatsApp 設定未完成/)).toBeTruthy();
     expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
   });
 
@@ -167,7 +167,7 @@ describe("production WhatsApp inbox", () => {
     });
     renderInbox();
 
-    expect(await screen.findByText("Demo simulation")).toBeTruthy();
+    expect(await screen.findByText("示範模擬")).toBeTruthy();
     expect(screen.queryByText(EMPTY_INBOX_MESSAGE)).toBeNull();
   });
 
@@ -197,7 +197,7 @@ describe("production WhatsApp inbox", () => {
     // Awaited, not read synchronously: if the refetch has not propagated yet the
     // pane still shows Bo Ng, and the "Ada Wong" assertion below would pass for
     // the wrong reason.
-    expect(await screen.findByText(/no longer in this page/i)).toBeTruthy();
+    expect(await screen.findByText(/已不在收件箱的這一頁/)).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Ada Wong" })).toBeNull();
   });
 
@@ -217,7 +217,7 @@ describe("production WhatsApp inbox", () => {
     serverFns.listWhatsAppConversations.mockResolvedValue([makeConversation()]);
     await act(() => client.refetchQueries({ queryKey: ["whatsapp-conversations"] }));
 
-    fireEvent.click(await screen.findByRole("button", { name: "Show the newest conversation" }));
+    fireEvent.click(await screen.findByRole("button", { name: "顯示最新對話" }));
 
     expect(await screen.findByRole("heading", { name: "Ada Wong" })).toBeTruthy();
   });

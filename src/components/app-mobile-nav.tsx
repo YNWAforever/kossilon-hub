@@ -22,17 +22,17 @@ export function AppMobileNav() {
     <header className="flex h-14 items-center gap-3 border-b border-border bg-background px-3 md:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
-          aria-label="Open navigation menu"
+          aria-label="開啟導覽選單"
           className="flex h-11 w-11 items-center justify-center rounded-md text-foreground transition hover:bg-accent"
         >
           <Menu className="h-5 w-5" />
         </SheetTrigger>
         <SheetContent side="left" className="flex w-72 flex-col gap-0 bg-sidebar p-0">
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SheetTitle className="sr-only">導覽</SheetTitle>
           <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border px-5">
             <BrandBlock />
           </div>
-          <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto p-2">
+          <nav aria-label="主要導覽" className="flex-1 overflow-y-auto p-2">
             <NavList pathname={pathname} onNavigate={() => setOpen(false)} />
           </nav>
           <AccountBlock />

@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -31,6 +31,13 @@ import type {
   CompanyStatus,
   SignificantController,
 } from "../types";
+import {
+  COMPANY_STATUS_LABELS,
+  CONTROL_BASIS_LABELS,
+  DOCUMENT_VERIFICATION_LABELS,
+  OFFICER_TYPE_LABELS,
+  PAYMENT_STATUS_LABELS,
+} from "../labels";
 
 const companyStatusTone: Record<CompanyStatus, StatusTone> = {
   active: "green",
@@ -48,12 +55,6 @@ const verificationTone: Record<"pending" | "verified" | "rejected", StatusTone> 
   pending: "yellow",
   verified: "green",
   rejected: "red",
-};
-
-const officerTypeLabel: Record<"director" | "secretary" | "designated_representative", string> = {
-  director: "Director",
-  secretary: "Secretary",
-  designated_representative: "Designated Representative",
 };
 
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
@@ -124,7 +125,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       await removeClientContact({ data: { companyId: clientId, contactId } });
       invalidate();
     } catch {
-      toast.error("Unable to remove the contact. Try again.");
+      toast.error("未能移除聯絡人，請再試一次。");
     } finally {
       setRemovingContactId(null);
     }
@@ -143,7 +144,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       });
       invalidate();
     } catch {
-      toast.error("Unable to cease the officer. Try again.");
+      toast.error("未能終止該高級人員的任職，請再試一次。");
     } finally {
       setCeasingOfficerId(null);
     }
@@ -162,7 +163,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       });
       invalidate();
     } catch {
-      toast.error("Unable to cease the shareholding. Try again.");
+      toast.error("未能終止該股權，請再試一次。");
     } finally {
       setCeasingShareholdingId(null);
     }
@@ -181,7 +182,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       });
       invalidate();
     } catch {
-      toast.error("Unable to cease the controller. Try again.");
+      toast.error("未能終止該重要控制人，請再試一次。");
     } finally {
       setCeasingControllerId(null);
     }
@@ -191,7 +192,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
     return (
       <div className="flex min-h-64 items-center justify-center p-6 text-sm text-muted-foreground">
         <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
-        Loading client
+        載入客戶資料中
       </div>
     );
   }
@@ -199,9 +200,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
   if (clientQuery.isError) {
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Client" title="Client unavailable" />
+        <PageHeader eyebrow="案件與客戶" title="客戶資料無法載入" />
         <p role="alert" className="text-sm text-destructive">
-          Client data is unavailable. Try again shortly.
+          客戶資料暫時無法載入，請稍後再試。
         </p>
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/clients">
           Back to clients
@@ -215,7 +216,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
   if (!client) {
     return (
       <main className="flex-1 space-y-3 p-6">
-        <PageHeader eyebrow="Client" title="Client not found" />
+        <PageHeader eyebrow="案件與客戶" title="找不到客戶" />
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/clients">
           Back to clients
         </Link>
@@ -226,7 +227,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
   return (
     <main className="flex-1 space-y-6 p-4 md:p-6">
       <PageHeader
-        eyebrow="Client"
+        eyebrow="案件與客戶"
         title={client.companyName}
         subtitle={`CR ${client.crNumber} · BR ${client.brNumber}`}
         actions={
@@ -236,7 +237,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               onClick={() => setIsEditOpen(true)}
               className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
             >
-              Edit
+              編輯客戶
             </button>
           ) : null
         }
@@ -244,30 +245,34 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
       {optionsQuery.isError ? (
         <p role="status" className="text-sm text-status-yellow-text">
-          Owner and team options are unavailable. Edit is disabled until this loads.
+          負責同事及團隊選項暫時無法載入，載入前未能編輯客戶。
         </p>
       ) : null}
 
       <section className="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-3">
         <Detail
-          label="Status"
-          value={<StatusPill tone={companyStatusTone[client.status]}>{client.status}</StatusPill>}
+          label="狀態"
+          value={
+            <StatusPill tone={companyStatusTone[client.status]}>
+              {COMPANY_STATUS_LABELS[client.status]}
+            </StatusPill>
+          }
         />
-        <Detail label="Owner" value={client.ownerName} />
-        <Detail label="Team" value={client.teamName} />
-        <Detail label="Incorporation date" value={client.incorporationDate} />
-        <Detail label="AR basis date" value={client.annualReturnBasisDate} />
-        <Detail label="Registered office" value={client.registeredOffice} />
-        <Detail label="Company secretary" value={client.companySecretary} />
+        <Detail label="負責同事" value={client.ownerName} />
+        <Detail label="團隊" value={client.teamName} />
+        <Detail label="成立日期" value={client.incorporationDate} />
+        <Detail label="周年申報基準日" value={client.annualReturnBasisDate} />
+        <Detail label="註冊辦事處" value={client.registeredOffice} />
+        <Detail label="公司秘書" value={client.companySecretary} />
         <Detail
-          label="Latest payment"
+          label="最近付款"
           value={
             client.paymentStatus ? (
               <StatusPill tone={paymentStatusTone[client.paymentStatus]}>
-                {client.paymentStatus}
+                {PAYMENT_STATUS_LABELS[client.paymentStatus]}
               </StatusPill>
             ) : (
-              "No case yet"
+              "尚未有案件"
             )
           }
         />
@@ -275,13 +280,13 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Officers</h2>
+          <h2 className="text-sm font-semibold">高級人員</h2>
           <button
             type="button"
             onClick={() => setIsOfficerDialogOpen(true)}
             className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
           >
-            Appoint officer
+            委任高級人員
           </button>
         </div>
         <div className="divide-y">
@@ -291,18 +296,18 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                 <p className="truncate text-sm font-medium">
                   {officer.name}
                   <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
-                    {officerTypeLabel[officer.officerType]}
+                    {OFFICER_TYPE_LABELS[officer.officerType]}
                   </span>
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  Appointed {formatDate(officer.appointmentDate)}
-                  {officer.cessationDate ? ` · Ceased ${formatDate(officer.cessationDate)}` : ""}
+                  委任日期 {formatDate(officer.appointmentDate)}
+                  {officer.cessationDate ? ` · 終止日期 ${formatDate(officer.cessationDate)}` : ""}
                   {officer.identificationNumber ? ` · ${officer.identificationNumber}` : ""}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <StatusPill tone={officer.cessationDate ? "neutral" : "green"}>
-                  {officer.cessationDate ? "Ceased" : "Active"}
+                  {officer.cessationDate ? "已終止" : "在任"}
                 </StatusPill>
                 {!officer.cessationDate ? (
                   <button
@@ -311,27 +316,27 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                     disabled={ceasingOfficerId === officer.id}
                     className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                   >
-                    Cease
+                    終止
                   </button>
                 ) : null}
               </div>
             </div>
           ))}
           {client.officers.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No officers on file.</p>
+            <p className="py-3 text-sm text-muted-foreground">未有高級人員紀錄。</p>
           ) : null}
         </div>
       </section>
 
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Shareholders</h2>
+          <h2 className="text-sm font-semibold">股東</h2>
           <button
             type="button"
             onClick={() => setIsShareholdingDialogOpen(true)}
             className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
           >
-            Record shareholding
+            記錄股權
           </button>
         </div>
         <div className="divide-y">
@@ -340,16 +345,16 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{shareholding.shareholderName}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {shareholding.numberOfShares} {shareholding.shareClass} shares · Allotted{" "}
+                  {shareholding.numberOfShares} 股（{shareholding.shareClass}）· 配發日期{" "}
                   {formatDate(shareholding.allotmentDate)}
                   {shareholding.cessationDate
-                    ? ` · Ceased ${formatDate(shareholding.cessationDate)}`
+                    ? ` · 終止日期 ${formatDate(shareholding.cessationDate)}`
                     : ""}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <StatusPill tone={shareholding.cessationDate ? "neutral" : "green"}>
-                  {shareholding.cessationDate ? "Ceased" : "Active"}
+                  {shareholding.cessationDate ? "已終止" : "有效"}
                 </StatusPill>
                 {!shareholding.cessationDate ? (
                   <button
@@ -358,14 +363,14 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                     disabled={ceasingShareholdingId === shareholding.id}
                     className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                   >
-                    Cease
+                    終止
                   </button>
                 ) : null}
               </div>
             </div>
           ))}
           {client.shareholdings.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No shareholdings on file.</p>
+            <p className="py-3 text-sm text-muted-foreground">未有股權紀錄。</p>
           ) : null}
         </div>
       </section>
@@ -374,13 +379,13 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
 
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Significant controllers</h2>
+          <h2 className="text-sm font-semibold">重要控制人</h2>
           <button
             type="button"
             onClick={() => setControllerDialog({ open: true })}
             className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
           >
-            Record controller
+            記錄重要控制人
           </button>
         </div>
         <div className="divide-y">
@@ -389,9 +394,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{controller.controllerName}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  Registered {formatDate(controller.registeredDate)}
+                  登記日期 {formatDate(controller.registeredDate)}
                   {controller.cessationDate
-                    ? ` · Ceased ${formatDate(controller.cessationDate)}`
+                    ? ` · 終止日期 ${formatDate(controller.cessationDate)}`
                     : ""}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-1">
@@ -400,7 +405,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                       key={basis}
                       className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground"
                     >
-                      {basis.replaceAll("_", " ")}
+                      {CONTROL_BASIS_LABELS[basis] ?? basis.replaceAll("_", " ")}
                     </span>
                   ))}
                 </div>
@@ -410,7 +415,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   <DeadlinePill dueDate={controller.registerUpdateDueDate} />
                 ) : null}
                 <StatusPill tone={controller.cessationDate ? "neutral" : "green"}>
-                  {controller.cessationDate ? "Ceased" : "Active"}
+                  {controller.cessationDate ? "已終止" : "有效"}
                 </StatusPill>
                 {!controller.cessationDate ? (
                   <>
@@ -419,7 +424,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                       onClick={() => setControllerDialog({ open: true, controller })}
                       className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
                     >
-                      Edit particulars
+                      編輯資料
                     </button>
                     <button
                       type="button"
@@ -427,7 +432,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                       disabled={ceasingControllerId === controller.id}
                       className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                     >
-                      Cease
+                      終止
                     </button>
                   </>
                 ) : null}
@@ -435,22 +440,20 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
             </div>
           ))}
           {client.significantControllers.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">
-              No significant controllers on file.
-            </p>
+            <p className="py-3 text-sm text-muted-foreground">未有重要控制人紀錄。</p>
           ) : null}
         </div>
       </section>
 
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Inspection requests</h2>
+          <h2 className="text-sm font-semibold">查閱要求</h2>
           <button
             type="button"
             onClick={() => setIsInspectionDialogOpen(true)}
             className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
           >
-            Record request
+            記錄查閱要求
           </button>
         </div>
         <div className="divide-y">
@@ -459,13 +462,13 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{request.requesterName}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {request.requesterAuthority} · Requested {formatDate(request.requestDate)}
+                  {request.requesterAuthority} · 要求日期 {formatDate(request.requestDate)}
                   {request.resolutionNote ? ` · ${request.resolutionNote}` : ""}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <StatusPill tone={request.resolvedAt ? "green" : "yellow"}>
-                  {request.resolvedAt ? "Resolved" : "Pending"}
+                  {request.resolvedAt ? "已處理" : "待處理"}
                 </StatusPill>
                 {!request.resolvedAt ? (
                   <button
@@ -473,27 +476,27 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                     onClick={() => setResolvingInspectionRequestId(request.id)}
                     className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
                   >
-                    Resolve
+                    處理
                   </button>
                 ) : null}
               </div>
             </div>
           ))}
           {client.inspectionRequests.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No inspection requests on file.</p>
+            <p className="py-3 text-sm text-muted-foreground">未有查閱要求紀錄。</p>
           ) : null}
         </div>
       </section>
 
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Contacts</h2>
+          <h2 className="text-sm font-semibold">聯絡人</h2>
           <button
             type="button"
             onClick={() => setContactDialog({ open: true })}
             className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
           >
-            Add contact
+            新增聯絡人
           </button>
         </div>
         <div className="divide-y">
@@ -504,12 +507,12 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   {contact.name}
                   {contact.isPrimary ? (
                     <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
-                      Primary
+                      主要
                     </span>
                   ) : null}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {contact.role} · {contact.email ?? contact.phone ?? "No contact details"}
+                  {contact.role} · {contact.email ?? contact.phone ?? "未有聯絡資料"}
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
@@ -518,7 +521,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   onClick={() => setContactDialog({ open: true, contact })}
                   className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
                 >
-                  Edit
+                  編輯
                 </button>
                 <button
                   type="button"
@@ -526,46 +529,48 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   disabled={removingContactId === contact.id}
                   className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
-                  Remove
+                  移除
                 </button>
               </div>
             </div>
           ))}
           {client.contacts.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No contacts on file.</p>
+            <p className="py-3 text-sm text-muted-foreground">未有聯絡人紀錄。</p>
           ) : null}
         </div>
       </section>
 
       <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Annual return history</h2>
+        <h2 className="mb-3 text-sm font-semibold">周年申報紀錄</h2>
         <div className="divide-y">
           {client.annualReturnHistory.map((entry) => (
             <div
               key={entry.id}
               className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
             >
-              <span>Return year {entry.returnYear}</span>
-              <span className="text-muted-foreground">Made up {formatDate(entry.madeUpDate)}</span>
-              <span className="text-muted-foreground">Due {formatDate(entry.filingDueDate)}</span>
+              <span>申報年度 {entry.returnYear}</span>
+              <span className="text-muted-foreground">結算日 {formatDate(entry.madeUpDate)}</span>
+              <span className="text-muted-foreground">
+                到期日 {formatDate(entry.filingDueDate)}
+              </span>
               <span>{entry.currentStatus}</span>
               <Link
                 className="rounded-md border px-2 py-1 text-xs"
                 to="/annual-returns/$id"
                 params={{ id: entry.id }}
               >
-                Open case
+                開啟案件
               </Link>
             </div>
           ))}
           {client.annualReturnHistory.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No annual return cases yet.</p>
+            <p className="py-3 text-sm text-muted-foreground">尚未有周年申報案件。</p>
           ) : null}
         </div>
       </section>
 
       <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Documents</h2>
+        <h2 className="mb-3 text-sm font-semibold">文件</h2>
         <p className="mb-3 text-xs text-muted-foreground">
           文件登記及業務覆核狀態；不代表儲存物件已核對或掃描安全。請在文件庫核對來源。
         </p>
@@ -578,30 +583,30 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
               <span className="truncate">{document.fileName}</span>
               <span className="text-muted-foreground">{document.fileType}</span>
               <StatusPill tone={verificationTone[document.verificationStatus]}>
-                {document.verificationStatus}
+                {DOCUMENT_VERIFICATION_LABELS[document.verificationStatus]}
               </StatusPill>
               <span className="text-muted-foreground">{document.uploadedAt.slice(0, 10)}</span>
             </div>
           ))}
           {client.documents.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No documents on file.</p>
+            <p className="py-3 text-sm text-muted-foreground">未有文件紀錄。</p>
           ) : null}
         </div>
       </section>
 
       <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-3 text-sm font-semibold">Timeline</h2>
+        <h2 className="mb-3 text-sm font-semibold">時間線</h2>
         <div className="divide-y">
           {client.timeline.map((entry) => (
             <div key={entry.id} className="py-3 text-sm">
               <p>{entry.description}</p>
               <p className="text-xs text-muted-foreground">
-                {entry.actorName ?? "System"} · {new Date(entry.createdAt).toLocaleString("en-HK")}
+                {entry.actorName ?? "系統"} · {formatDateTime(entry.createdAt)}
               </p>
             </div>
           ))}
           {client.timeline.length === 0 ? (
-            <p className="py-3 text-sm text-muted-foreground">No activity yet.</p>
+            <p className="py-3 text-sm text-muted-foreground">尚未有活動。</p>
           ) : null}
         </div>
       </section>

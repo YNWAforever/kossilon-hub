@@ -2,7 +2,7 @@ import { ProductionPaymentReview } from "@/features/annual-return/components/pro
 import { type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 
 import {
   type AnnualReturnCase,
@@ -23,9 +23,9 @@ export const Route = createFileRoute("/payments")({
 });
 
 const paymentLabels: Record<AnnualReturnPaymentStatus, string> = {
-  pending: "Pending",
-  paid: "Paid",
-  overdue: "Overdue",
+  pending: "待付款",
+  paid: "已付款",
+  overdue: "逾期未付",
 };
 
 function PaymentsRoute() {
@@ -53,22 +53,22 @@ function DemoPaymentsRoute() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title="Payments" />
+      <PageHeader eyebrow="文件與付款" title="付款" />
       <p
         className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         role="status"
       >
-        Read-only demo. Payment proof is attached and reviewed in production.
+        唯讀示範。付款證明須在正式環境上載及覆核。
       </p>
 
       <section className="rounded-lg border bg-card">
         <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
-          <span>Company</span>
-          <span>Owner / due</span>
-          <span>Payment</span>
-          <span>Current proof</span>
-          <span>Review outcome</span>
-          <span>Actions</span>
+          <span>公司</span>
+          <span>負責同事／到期日</span>
+          <span>付款</span>
+          <span>目前證明</span>
+          <span>覆核結果</span>
+          <span>操作</span>
         </div>
 
         <div className="divide-y">
@@ -100,22 +100,22 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
     <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] lg:items-start">
       <div className="min-w-0">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-          Company
+          公司
         </p>
         <p className="truncate font-medium">{caseItem.companyName}</p>
         <p className="truncate text-muted-foreground">{caseItem.contactName}</p>
       </div>
       <Field
-        label="Owner / due"
+        label="負責同事／到期日"
         value={
           <>
             <p>{caseItem.owner}</p>
-            <p className="text-xs text-muted-foreground">Due {formatDate(caseItem.dueDate)}</p>
+            <p className="text-xs text-muted-foreground">到期日 {formatDate(caseItem.dueDate)}</p>
           </>
         }
       />
       <Field
-        label="Payment"
+        label="付款"
         value={
           <>
             <p
@@ -130,7 +130,7 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
               {paymentLabels[caseItem.paymentStatus]}
             </p>
             <p className="text-xs text-muted-foreground">
-              Case {getReadinessScore(caseItem)}% ready
+              案件完成度 {getReadinessScore(caseItem)}%
             </p>
           </>
         }
@@ -140,13 +140,13 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
 
       <div className="min-w-0">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-          Actions
+          操作
         </p>
         {isClosed && (!proof || proof.status === "rejected") ? (
           // A closed case takes no new proof. A greyed-out button with no reason
           // read as broken; say why there is nothing to do.
           <p className="text-sm text-muted-foreground">
-            {caseItem.status === "filed" ? "Return filed" : "Packet accepted"} — no proof needed.
+            {caseItem.status === "filed" ? "周年申報已遞交" : "交件套件已接納"}，毋須付款證明。
           </p>
         ) : (
           // The demo is read-only (docs/adr/0001-demo-mode-is-read-only.md): the
@@ -154,24 +154,18 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
           // page says why once, rather than each click answering with a warning.
           <div className="flex flex-wrap gap-2">
             {!proof ? (
-              <DemoAction label={`Attach payment proof for ${caseItem.companyName}`}>
-                Attach proof
-              </DemoAction>
+              <DemoAction label={`為 ${caseItem.companyName} 上載付款證明`}>上載證明</DemoAction>
             ) : proof.status === "rejected" ? (
-              <DemoAction label={`Attach replacement payment proof for ${caseItem.companyName}`}>
-                Attach replacement
+              <DemoAction label={`為 ${caseItem.companyName} 重新上載付款證明`}>
+                重新上載
               </DemoAction>
             ) : proof.status === "pending-review" ? (
               <>
-                <DemoAction label={`Accept payment proof for ${caseItem.companyName}`}>
-                  Accept
-                </DemoAction>
-                <DemoAction label={`Reject payment proof for ${caseItem.companyName}`}>
-                  Reject
-                </DemoAction>
+                <DemoAction label={`接納 ${caseItem.companyName} 的付款證明`}>接納</DemoAction>
+                <DemoAction label={`退回 ${caseItem.companyName} 的付款證明`}>退回</DemoAction>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">No further payment proof action.</p>
+              <p className="text-sm text-muted-foreground">付款證明毋須進一步處理。</p>
             )}
           </div>
         )}
@@ -203,19 +197,19 @@ function ProofCell({
   return (
     <div className="min-w-0">
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-        Current proof
+        目前證明
       </p>
       {proof ? (
         <>
           <p className="truncate font-medium">{proof.filename}</p>
-          <p className="text-muted-foreground">{`Attached by ${proof.uploadedBy}`}</p>
+          <p className="text-muted-foreground">{`上載者：${proof.uploadedBy}`}</p>
         </>
       ) : (
-        <p className="text-muted-foreground">No proof attached</p>
+        <p className="text-muted-foreground">未有上載證明</p>
       )}
       {previousProofs.length > 0 ? (
         <p className="mt-1 truncate text-xs text-muted-foreground">
-          {`History: ${previousProofs.map((candidate) => candidate.filename).join(", ")}`}
+          {`記錄：${previousProofs.map((candidate) => candidate.filename).join("、")}`}
         </p>
       ) : null}
     </div>
@@ -223,16 +217,12 @@ function ProofCell({
 }
 
 function ReviewOutcome({ proof, closed }: { proof?: ClientPortalPaymentProof; closed: boolean }) {
-  const label = proof
-    ? paymentProofStatusLabel(proof.status)
-    : closed
-      ? "Not required"
-      : "Awaiting proof";
+  const label = proof ? paymentProofStatusLabel(proof.status) : closed ? "毋須提供" : "等待證明";
 
   return (
     <div className="min-w-0">
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
-        Review outcome
+        覆核結果
       </p>
       <p className="font-medium">{proof?.reviewSummary ?? label}</p>
       {proof?.reviewReasonLabel ? (
@@ -240,7 +230,7 @@ function ReviewOutcome({ proof, closed }: { proof?: ClientPortalPaymentProof; cl
       ) : null}
       {proof?.reviewNote ? <p className="text-muted-foreground">{proof.reviewNote}</p> : null}
       {proof?.reviewedAt ? (
-        <p className="text-xs text-muted-foreground">{`Reviewed ${formatTimestamp(proof.reviewedAt)}`}</p>
+        <p className="text-xs text-muted-foreground">{`覆核時間：${formatDateTime(proof.reviewedAt)}`}</p>
       ) : null}
     </div>
   );
@@ -259,19 +249,9 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
 
 function paymentProofStatusLabel(status: ClientPortalPaymentProof["status"]): string {
   return {
-    "pending-review": "Pending review",
-    accepted: "Accepted",
-    rejected: "Rejected",
-    superseded: "Superseded",
+    "pending-review": "待覆核",
+    accepted: "已接納",
+    rejected: "已退回",
+    superseded: "已被取代",
   }[status];
-}
-
-function formatTimestamp(value: string): string {
-  return new Date(value).toLocaleString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }

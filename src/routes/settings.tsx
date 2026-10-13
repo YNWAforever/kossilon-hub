@@ -20,6 +20,7 @@ import {
 import { useTemplates as useDemoTemplates } from "@/lib/templates";
 import {
   SERVICE_TYPES,
+  serviceTypeLabel,
   type ChecklistTemplate,
   type ChecklistTemplatePatch,
   type DocumentItem,
@@ -46,11 +47,10 @@ import { TemplateImpactPreview } from "@/features/checklist-templates/components
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Kossilon CoSec OS" },
+      { title: "設定 — Kossilon CoSec OS" },
       {
         name: "description",
-        content:
-          "Manage checklist templates, required documents, reminder cadence, risk rules, service packages, and WOZTELL WhatsApp integration.",
+        content: "管理清單模板、所需文件、提醒節奏、風險規則、服務套餐及 WOZTELL WhatsApp 整合。",
       },
     ],
   }),
@@ -144,7 +144,7 @@ function SettingsPage() {
       finishSave();
     },
     onError: (error, input) => {
-      setWarning(describeMutationError(error, "Unable to create the template."));
+      setWarning(describeMutationError(error, "未能建立模板。"));
       setFailed({ kind: "create", input });
     },
     onSettled: clearMutationInFlight,
@@ -160,7 +160,7 @@ function SettingsPage() {
       finishSave();
     },
     onError: (error, input) => {
-      setWarning(describeMutationError(error, "Unable to save the change."));
+      setWarning(describeMutationError(error, "未能儲存更改。"));
       setFailed({ kind: "update", input });
     },
     onSettled: clearMutationInFlight,
@@ -175,7 +175,7 @@ function SettingsPage() {
       finishSave();
     },
     onError: (error, input) => {
-      setWarning(describeMutationError(error, "Unable to duplicate the template."));
+      setWarning(describeMutationError(error, "未能複製模板。"));
       setFailed({ kind: "duplicate", input });
     },
     onSettled: clearMutationInFlight,
@@ -189,7 +189,7 @@ function SettingsPage() {
       finishSave();
     },
     onError: (error, input) => {
-      setWarning(describeMutationError(error, "Unable to delete the template."));
+      setWarning(describeMutationError(error, "未能刪除模板。"));
       setFailed({ kind: "delete", input });
     },
     onSettled: clearMutationInFlight,
@@ -248,7 +248,7 @@ function SettingsPage() {
     try {
       const result = await productionTemplatesQuery.refetch();
       if (result.isError) {
-        setWarning(describeMutationError(result.error, "Unable to reload the template."));
+        setWarning(describeMutationError(result.error, "未能重新載入模板。"));
         return;
       }
       setEditorReload((value) => value + 1);
@@ -267,7 +267,8 @@ function SettingsPage() {
       templates.filter(
         (t) =>
           t.name.toLowerCase().includes(query.toLowerCase()) ||
-          t.serviceType.toLowerCase().includes(query.toLowerCase()),
+          t.serviceType.toLowerCase().includes(query.toLowerCase()) ||
+          serviceTypeLabel(t.serviceType).includes(query),
       ),
     [templates, query],
   );
@@ -275,10 +276,10 @@ function SettingsPage() {
   if (dataMode === "production" && !isCurrentUserAdmin) {
     return (
       <main className="flex-1 space-y-6 p-6">
-        <PageHeader eyebrow="Administration" title="Settings" subtitle="Restricted area" />
+        <PageHeader eyebrow="管理" title="設定" subtitle="限制存取" />
         <section className="rounded-xl border border-border bg-card p-6">
           <p className="text-sm leading-6 text-muted-foreground">
-            Admin access required. Settings are limited to Admin users.
+            須具備管理員權限。只有管理員可使用設定。
           </p>
         </section>
       </main>
@@ -288,13 +289,9 @@ function SettingsPage() {
   return (
     <main className="settings-page flex-1 space-y-6 p-4 md:p-6">
       <PageHeader
-        eyebrow="Administration"
-        title="Settings"
-        subtitle={
-          sections.checklistTemplates
-            ? "Checklist templates, packages, integrations"
-            : "Integrations"
-        }
+        eyebrow="管理"
+        title="設定"
+        subtitle={sections.checklistTemplates ? "清單模板、服務套餐及整合" : "整合"}
       />
       {warning ? (
         <div
@@ -350,13 +347,10 @@ function SettingsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-primary" />
-                <h2 className="font-display text-base font-semibold text-foreground">
-                  Checklist templates
-                </h2>
+                <h2 className="font-display text-base font-semibold text-foreground">清單模板</h2>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Each new case preloads required documents, reminder cadence, and risk rules from the
-                active template for its service type.
+                每宗新案件會按其服務類型，從啟用中的模板預載所需文件、提醒節奏及風險規則。
               </p>
             </div>
             {dataMode === "production" && (
@@ -365,7 +359,7 @@ function SettingsPage() {
                 disabled={isSaving}
                 className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <Plus className="h-3.5 w-3.5" /> New template
+                <Plus className="h-3.5 w-3.5" /> 新增模板
               </button>
             )}
           </div>
@@ -379,7 +373,8 @@ function SettingsPage() {
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search templates"
+                    placeholder="搜尋模板"
+                    aria-label="搜尋模板"
                     className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-2 text-xs outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
@@ -412,12 +407,12 @@ function SettingsPage() {
                             {t.name}
                           </span>
                           <StatusPill tone={t.active ? "green" : "yellow"}>
-                            {t.active ? "Active" : "Draft"}
+                            {t.active ? "啟用中" : "草稿"}
                           </StatusPill>
                         </div>
                         <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                          {t.serviceType}
-                          {usage > 0 && ` · ${usage} cases`}
+                          {serviceTypeLabel(t.serviceType)}
+                          {usage > 0 && ` · ${usage} 宗案件`}
                         </div>
                       </button>
                     </li>
@@ -453,9 +448,7 @@ function SettingsPage() {
                   />
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  No templates yet. Create one to get started.
-                </p>
+                <p className="text-sm text-muted-foreground">暫未有模板。請新增模板以開始。</p>
               )}
             </div>
           </div>
@@ -468,20 +461,20 @@ function SettingsPage() {
         {sections.servicePackages ? (
           <SimpleCard
             icon={<Package className="h-4 w-4 text-primary" />}
-            title="Service packages"
-            desc="Fee structure by tier"
+            title="服務套餐"
+            desc="按級別劃分的收費"
           >
             <Row
-              label="Basic — HKD 2,800"
-              right={<span className="text-xs text-muted-foreground">Filing only</span>}
+              label="基本 — HKD 2,800"
+              right={<span className="text-xs text-muted-foreground">只限遞交</span>}
             />
             <Row
-              label="Standard — HKD 3,800"
-              right={<span className="text-xs text-muted-foreground">Filing + 1 change</span>}
+              label="標準 — HKD 3,800"
+              right={<span className="text-xs text-muted-foreground">遞交 + 1 項變更</span>}
             />
             <Row
-              label="Premium — HKD 5,200"
-              right={<span className="text-xs text-muted-foreground">Full-service + advisory</span>}
+              label="尊尚 — HKD 5,200"
+              right={<span className="text-xs text-muted-foreground">全面服務 + 諮詢</span>}
             />
           </SimpleCard>
         ) : null}
@@ -497,18 +490,18 @@ function SettingsPage() {
             通訊設定由伺服器環境管理。此頁不儲存憑證；已配置不代表實際收發已驗證。
           </p>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <LabeledInput label="API endpoint" readOnly placeholder="伺服器管理；不在此頁顯示" />
-            <LabeledInput label="Channel ID" readOnly placeholder="伺服器管理；不在此頁顯示" />
+            <LabeledInput label="API 端點" readOnly placeholder="伺服器管理；不在此頁顯示" />
+            <LabeledInput label="頻道 ID" readOnly placeholder="伺服器管理；不在此頁顯示" />
           </div>
           <div className="mt-4 flex items-center justify-between">
             {integrationQuery.isPending ? (
-              <StatusPill tone="yellow">Checking</StatusPill>
+              <StatusPill tone="yellow">檢查中</StatusPill>
             ) : integrationQuery.isError ? (
-              <StatusPill tone="yellow">Unavailable</StatusPill>
+              <StatusPill tone="yellow">無法使用</StatusPill>
             ) : integrationQuery.data ? (
               <WhatsAppIntegrationStatus status={integrationQuery.data} />
             ) : (
-              <StatusPill tone="yellow">Unavailable</StatusPill>
+              <StatusPill tone="yellow">無法使用</StatusPill>
             )}
           </div>
         </div>
@@ -527,18 +520,16 @@ export function WhatsAppIntegrationStatus({ status }: { status: WhatsAppIntegrat
     <div className="flex items-center justify-between">
       <StatusPill tone={status.deliveryMode === "live" ? "green" : "yellow"}>
         {status.deliveryMode === "live"
-          ? "Configured"
+          ? "已設定"
           : status.deliveryMode === "simulated"
-            ? "Demo simulation"
-            : "Blocked"}
+            ? "示範模擬"
+            : "受阻"}
       </StatusPill>
       {status.deliveryMode === "simulated" ? (
-        <p className="text-xs text-muted-foreground">
-          No external WhatsApp or email message is sent.
-        </p>
+        <p className="text-xs text-muted-foreground">不會發送任何外部 WhatsApp 或電郵訊息。</p>
       ) : status.deliveryMode === "blocked" && status.missingLiveEnvVars.length ? (
         <p className="text-xs text-muted-foreground">
-          Missing bindings: {status.missingLiveEnvVars.join(", ")}
+          缺少綁定：{status.missingLiveEnvVars.join(", ")}
         </p>
       ) : null}
     </div>
@@ -598,14 +589,14 @@ function TemplateEditor({
               if (description !== t.description)
                 updateMutation.mutate({ id: t.id, patch: { description } });
             }}
-            placeholder="Describe when this template applies…"
+            placeholder="說明此模板適用的情況…"
             rows={2}
             disabled={dataMode === "demo" || isSaving}
             className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
           />
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <label className="flex items-center gap-2">
-              <span className="text-muted-foreground">Service type</span>
+              <span className="text-muted-foreground">服務類型</span>
               <select
                 value={t.serviceType}
                 onChange={(e) =>
@@ -619,7 +610,7 @@ function TemplateEditor({
               >
                 {SERVICE_TYPES.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {serviceTypeLabel(s)}
                   </option>
                 ))}
               </select>
@@ -633,9 +624,9 @@ function TemplateEditor({
                 }
                 disabled={dataMode === "demo" || isSaving}
               />
-              <span className="text-muted-foreground">Active</span>
+              <span className="text-muted-foreground">啟用</span>
             </label>
-            <span className="text-muted-foreground">Updated {formatDate(t.updatedAt)}</span>
+            <span className="text-muted-foreground">更新於 {formatDate(t.updatedAt)}</span>
           </div>
         </div>
         {dataMode === "production" && (
@@ -645,14 +636,14 @@ function TemplateEditor({
               disabled={isSaving}
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <Copy className="h-3.5 w-3.5" /> Duplicate
+              <Copy className="h-3.5 w-3.5" /> 複製
             </button>
             <button
               onClick={onDelete}
               disabled={isSaving}
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <Trash2 className="h-3.5 w-3.5" /> Delete
+              <Trash2 className="h-3.5 w-3.5" /> 刪除
             </button>
           </div>
         )}
@@ -660,11 +651,11 @@ function TemplateEditor({
 
       {/* Summary chips */}
       <div className="flex flex-wrap gap-2 text-[11px]">
-        <Chip icon={<FileText className="h-3 w-3" />} label={`${t.documents.length} documents`} />
-        <Chip icon={<Bell className="h-3 w-3" />} label={`${t.reminders.length} reminders`} />
+        <Chip icon={<FileText className="h-3 w-3" />} label={`${t.documents.length} 份文件`} />
+        <Chip icon={<Bell className="h-3 w-3" />} label={`${t.reminders.length} 項提醒`} />
         <Chip
           icon={<Shield className="h-3 w-3" />}
-          label={`${t.riskRules.filter((r) => r.enabled).length} risk rules`}
+          label={`${t.riskRules.filter((r) => r.enabled).length} 條風險規則`}
         />
       </div>
 
@@ -672,9 +663,9 @@ function TemplateEditor({
       <div className="flex gap-1 border-b border-border">
         {(
           [
-            ["documents", "Documents", FileText],
-            ["reminders", "Reminders", Bell],
-            ["risks", "Risk rules", Shield],
+            ["documents", "文件", FileText],
+            ["reminders", "提醒", Bell],
+            ["risks", "風險規則", Shield],
           ] as const
         ).map(([key, label, Icon]) => (
           <button
@@ -744,7 +735,7 @@ export function DocumentsTab({
   function addDocument() {
     const newDocument: DocumentItem = {
       id: crypto.randomUUID(),
-      label: "New document",
+      label: "新文件",
       required: true,
       daysBeforeDue: 14,
     };
@@ -754,13 +745,13 @@ export function DocumentsTab({
   return (
     <div className="rounded-lg border border-border">
       <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_170px_110px_80px]">
-        <span>Document</span>
-        <span>Expected</span>
-        <span>Required</span>
-        <span className="text-right">Actions</span>
+        <span>文件</span>
+        <span>預期提交</span>
+        <span>必需</span>
+        <span className="text-right">操作</span>
       </div>
       {t.documents.length === 0 && (
-        <p className="px-3 py-6 text-center text-xs text-muted-foreground">No documents yet.</p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">暫未有文件。</p>
       )}
       <ul className="divide-y divide-border">
         {t.documents.map((d) => (
@@ -781,7 +772,7 @@ export function DocumentsTab({
             disabled={isSaving}
             className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <Plus className="h-3.5 w-3.5" /> Add document
+            <Plus className="h-3.5 w-3.5" /> 新增文件
           </button>
         </div>
       )}
@@ -808,7 +799,7 @@ function DocumentRow({
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_170px_110px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
-        aria-label={`Document name: ${doc.label}`}
+        aria-label={`文件名稱：${doc.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => {
@@ -821,7 +812,7 @@ function DocumentRow({
         <input
           type="number"
           min={0}
-          aria-label={`Days before due for ${doc.label}`}
+          aria-label={`${doc.label} 的到期前日數`}
           value={daysBeforeDue}
           onChange={(e) => setDaysBeforeDue(Math.max(0, Number(e.target.value) || 0))}
           onBlur={() => {
@@ -830,7 +821,7 @@ function DocumentRow({
           disabled={dataMode === "demo" || isSaving}
           className="w-14 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
-        <span className="whitespace-nowrap text-muted-foreground">days before due</span>
+        <span className="whitespace-nowrap text-muted-foreground">日（到期前）</span>
       </div>
       <label className="inline-flex items-center gap-2 text-xs">
         <input
@@ -839,7 +830,7 @@ function DocumentRow({
           onChange={(e) => onUpdate({ required: e.target.checked })}
           disabled={dataMode === "demo" || isSaving}
         />
-        <span className="text-muted-foreground">Required</span>
+        <span className="text-muted-foreground">必需</span>
       </label>
       <div className="text-right">
         {dataMode === "production" && (
@@ -847,7 +838,7 @@ function DocumentRow({
             onClick={onRemove}
             disabled={isSaving}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
-            aria-label="Remove document"
+            aria-label="移除文件"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -887,7 +878,7 @@ function RemindersTab({
   function addReminder() {
     const newReminder: ReminderRule = {
       id: crypto.randomUUID(),
-      label: "New reminder",
+      label: "新提醒",
       daysBeforeDue: 7,
       channel: "WhatsApp",
     };
@@ -897,13 +888,13 @@ function RemindersTab({
   return (
     <div className="rounded-lg border border-border">
       <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_170px_130px_80px]">
-        <span>Reminder</span>
-        <span>Days before due</span>
-        <span>Channel</span>
-        <span className="text-right">Actions</span>
+        <span>提醒</span>
+        <span>到期前日數</span>
+        <span>渠道</span>
+        <span className="text-right">操作</span>
       </div>
       {t.reminders.length === 0 && (
-        <p className="px-3 py-6 text-center text-xs text-muted-foreground">No reminders yet.</p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">暫未有提醒。</p>
       )}
       <ul className="divide-y divide-border">
         {t.reminders.map((r) => (
@@ -925,7 +916,7 @@ function RemindersTab({
             disabled={isSaving}
             className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <Plus className="h-3.5 w-3.5" /> Add reminder
+            <Plus className="h-3.5 w-3.5" /> 新增提醒
           </button>
         </div>
       )}
@@ -954,7 +945,7 @@ function ReminderRow({
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_170px_130px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
-        aria-label={`Reminder name: ${reminder.label}`}
+        aria-label={`提醒名稱：${reminder.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => {
@@ -967,7 +958,7 @@ function ReminderRow({
         <input
           type="number"
           min={0}
-          aria-label={`Days before due for ${reminder.label}`}
+          aria-label={`${reminder.label} 的到期前日數`}
           value={daysBeforeDue}
           onChange={(e) => setDaysBeforeDue(Math.max(0, Number(e.target.value) || 0))}
           onBlur={() => {
@@ -976,9 +967,10 @@ function ReminderRow({
           disabled={dataMode === "demo" || isSaving}
           className="w-16 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         />
-        <span className="whitespace-nowrap text-muted-foreground">days before due</span>
+        <span className="whitespace-nowrap text-muted-foreground">日（到期前）</span>
       </div>
       <select
+        aria-label={`${reminder.label} 的渠道`}
         value={reminder.channel}
         onChange={(e) => onUpdate({ channel: e.target.value as ReminderRule["channel"] })}
         disabled={dataMode === "demo" || isSaving}
@@ -986,7 +978,7 @@ function ReminderRow({
       >
         {channels.map((c) => (
           <option key={c} value={c}>
-            {c}
+            {c === "Email" ? "電郵" : c}
           </option>
         ))}
       </select>
@@ -996,7 +988,7 @@ function ReminderRow({
             onClick={onRemove}
             disabled={isSaving}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
-            aria-label="Remove reminder"
+            aria-label="移除提醒"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -1038,9 +1030,9 @@ function RisksTab({
   function addRisk() {
     const newRisk: RiskRule = {
       id: crypto.randomUUID(),
-      label: "New risk rule",
+      label: "新風險規則",
       severity: "Medium",
-      trigger: "Describe the trigger…",
+      trigger: "請描述觸發條件…",
       enabled: true,
     };
     updateMutation.mutate({ id: t.id, patch: { riskRules: [...t.riskRules, newRisk] } });
@@ -1049,14 +1041,14 @@ function RisksTab({
   return (
     <div className="rounded-lg border border-border">
       <div className="hidden items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_110px_90px_80px]">
-        <span>Rule</span>
-        <span>Trigger</span>
-        <span>Severity</span>
-        <span>Enabled</span>
-        <span className="text-right">Actions</span>
+        <span>規則</span>
+        <span>觸發條件</span>
+        <span>嚴重程度</span>
+        <span>啟用</span>
+        <span className="text-right">操作</span>
       </div>
       {t.riskRules.length === 0 && (
-        <p className="px-3 py-6 text-center text-xs text-muted-foreground">No risk rules yet.</p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">暫未有風險規則。</p>
       )}
       <ul className="divide-y divide-border">
         {t.riskRules.map((r) => (
@@ -1079,7 +1071,7 @@ function RisksTab({
             disabled={isSaving}
             className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <Plus className="h-3.5 w-3.5" /> Add risk rule
+            <Plus className="h-3.5 w-3.5" /> 新增風險規則
           </button>
         </div>
       )}
@@ -1110,7 +1102,7 @@ function RiskRow({
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_110px_90px_80px] [&>input]:min-w-0 [&>input]:w-full">
       <input
-        aria-label={`Risk rule name: ${risk.label}`}
+        aria-label={`風險規則名稱：${risk.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => {
@@ -1120,7 +1112,7 @@ function RiskRow({
         className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <input
-        aria-label={`Trigger for ${risk.label}`}
+        aria-label={`${risk.label} 的觸發條件`}
         value={trigger}
         onChange={(e) => setTrigger(e.target.value)}
         onBlur={() => {
@@ -1130,9 +1122,9 @@ function RiskRow({
         className="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
       />
       <div className="flex items-center gap-2">
-        <StatusPill tone={tone(risk.severity)}>{risk.severity}</StatusPill>
+        <StatusPill tone={tone(risk.severity)}>{severityLabel(risk.severity)}</StatusPill>
         <select
-          aria-label={`Severity for ${risk.label}`}
+          aria-label={`${risk.label} 的嚴重程度`}
           value={risk.severity}
           onChange={(e) => onUpdate({ severity: e.target.value as RiskRule["severity"] })}
           disabled={dataMode === "demo" || isSaving}
@@ -1140,7 +1132,7 @@ function RiskRow({
         >
           {severities.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {severityLabel(s)}
             </option>
           ))}
         </select>
@@ -1152,7 +1144,7 @@ function RiskRow({
           onChange={(e) => onUpdate({ enabled: e.target.checked })}
           disabled={dataMode === "demo" || isSaving}
         />
-        <span className="text-muted-foreground">On</span>
+        <span className="text-muted-foreground">開啟</span>
       </label>
       <div className="text-right">
         {dataMode === "production" && (
@@ -1160,7 +1152,7 @@ function RiskRow({
             onClick={onRemove}
             disabled={isSaving}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
-            aria-label="Remove risk rule"
+            aria-label="移除風險規則"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -1171,6 +1163,10 @@ function RiskRow({
 }
 
 // ---------- small helpers ----------
+
+function severityLabel(severity: RiskRule["severity"]): string {
+  return { Low: "低", Medium: "中", High: "高" }[severity];
+}
 
 function SimpleCard({
   icon,

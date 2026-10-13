@@ -1,4 +1,4 @@
-import { formatDate, formatDueDate } from "@/lib/format-date";
+import { formatDate, formatDateTime, formatDueDate } from "@/lib/format-date";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
@@ -30,21 +30,21 @@ const ownerOptions = ["Iris Wong", "Calvin Ho", "Mandy Lee", "Operations"] as co
 type MetricTone = "red" | "orange" | "yellow" | "green" | "blue";
 
 const statusLabels: Record<AnnualReturnStatus, string> = {
-  preparing: "Preparing",
-  "waiting-documents": "Waiting documents",
-  "payment-pending": "Payment pending",
-  "internal-review": "Internal review",
-  "ready-to-file": "Ready to file",
-  filed: "Filed",
+  preparing: "準備中",
+  "waiting-documents": "等待文件",
+  "payment-pending": "待付款",
+  "internal-review": "內部覆核",
+  "ready-to-file": "可遞交",
+  filed: "已遞交",
 };
 
 const riskLabels: Record<AnnualReturnRiskLevel, string> = {
-  overdue: "Overdue",
-  "due-soon": "Due soon",
-  blocked: "Blocked",
-  healthy: "Healthy",
-  "ready-to-file": "Ready",
-  filed: "Filed",
+  overdue: "已逾期",
+  "due-soon": "即將到期",
+  blocked: "受阻",
+  healthy: "正常",
+  "ready-to-file": "可遞交",
+  filed: "已遞交",
 };
 
 const metricToneClasses: Record<MetricTone, string> = {
@@ -72,12 +72,10 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   if (!caseItem) {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Annual return case" title="Case not found" />
-        <p className="text-sm text-muted-foreground">
-          This annual return case does not exist in the mocked workspace.
-        </p>
+        <PageHeader eyebrow="案件與客戶" title="找不到案件" />
+        <p className="text-sm text-muted-foreground">示範工作區內沒有這宗周年申報案件。</p>
         <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          Back to command center
+          返回周年申報
         </Link>
       </main>
     );
@@ -100,13 +98,13 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
   return (
     <main className="flex-1 space-y-4 p-6">
       <PageHeader
-        eyebrow="Annual return case"
+        eyebrow="案件與客戶"
         title={caseItem.companyName}
-        subtitle={`${caseItem.contactName} · ${caseItem.phone} · Basis date ${formatDate(caseItem.basisDate)}`}
+        subtitle={`${caseItem.contactName} · ${caseItem.phone} · 申報基準日 ${formatDate(caseItem.basisDate)}`}
         actions={
           <>
             <Link className="rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-              Back
+              返回
             </Link>
             <Link
               className="rounded-md border px-3 py-2 text-sm"
@@ -120,7 +118,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 status: "all",
               }}
             >
-              Assignment &amp; SLA
+              分配及 SLA
             </Link>
             {enquiry ? (
               <Link
@@ -128,7 +126,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 to="/whatsapp"
                 search={{ enquiry: enquiry.id }}
               >
-                Ask AI
+                詢問 AI
               </Link>
             ) : null}
           </>
@@ -143,8 +141,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
         className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         role="status"
       >
-        Read-only demo. Case state is changed in production, through the annual-return server
-        actions.
+        唯讀示範。案件狀態只可在正式環境經周年申報伺服器操作更改。
       </p>
 
       <section className="rounded-lg border bg-card p-4">
@@ -162,25 +159,25 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
 
             <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
               <DenseStat
-                label="Due"
+                label="到期日"
                 value={formatDueDate(caseItem.dueDate, dueInDays)}
                 tone={dueInDays < 0 ? "red" : dueInDays <= 14 ? "orange" : "blue"}
               />
               <DenseStat
-                label="Readiness"
+                label="完成度"
                 value={`${readiness}%`}
                 tone={readiness === 100 ? "green" : readiness >= 60 ? "blue" : "yellow"}
               />
               <DenseStat
-                label="Next action"
+                label="下一步"
                 value={nextAction}
                 tone={
                   blockers.length > 0 ? "yellow" : caseItem.status === "filed" ? "blue" : "green"
                 }
               />
               <DenseStat
-                label="Blockers"
-                value={blockers.length === 0 ? "None" : `${blockers.length} open`}
+                label="阻礙事項"
+                value={blockers.length === 0 ? "沒有" : `${blockers.length} 項未解決`}
                 tone={blockers.length === 0 ? "green" : "yellow"}
               />
             </div>
@@ -189,10 +186,10 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <div className="grid gap-3 sm:min-w-72">
             <label className="space-y-1">
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Owner
+                負責同事
               </span>
               <select
-                aria-label="Assign owner"
+                aria-label="分配負責同事"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 disabled
                 value={caseItem.owner}
@@ -213,13 +210,13 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <section className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Blockers</h2>
+                <h2 className="text-lg font-semibold">阻礙事項</h2>
                 <p className="text-sm text-muted-foreground">
-                  Document, payment, signature, and review blockers holding readiness down.
+                  拖低完成度的文件、付款、簽署及覆核阻礙事項。
                 </p>
               </div>
               <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
-                {blockers.length} open
+                {blockers.length} 項未解決
               </span>
             </div>
 
@@ -232,7 +229,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   <div>
                     <p className="font-medium">{doc.label}</p>
                     <p className="text-sm text-muted-foreground">
-                      {doc.received ? "Received" : "Missing"}
+                      {doc.received ? "已收到" : "缺少"}
                     </p>
                   </div>
                   <button
@@ -240,7 +237,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                     disabled
                     type="button"
                   >
-                    {doc.received ? "Mark missing" : "Mark received"}
+                    {doc.received ? "標記為缺少" : "標記為已收到"}
                   </button>
                 </div>
               ))}
@@ -249,46 +246,46 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <label className="space-y-1">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Payment
+                  付款
                 </span>
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled
                   value={caseItem.paymentStatus}
                 >
-                  <option value="pending">Pending</option>
-                  <option value="paid">Paid</option>
-                  <option value="overdue">Overdue</option>
+                  <option value="pending">待付款</option>
+                  <option value="paid">已付款</option>
+                  <option value="overdue">逾期未付</option>
                 </select>
               </label>
 
               <label className="space-y-1">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Signature
+                  簽署
                 </span>
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled
                   value={caseItem.signatureStatus}
                 >
-                  <option value="missing">Missing</option>
-                  <option value="requested">Requested</option>
-                  <option value="received">Received</option>
+                  <option value="missing">缺少</option>
+                  <option value="requested">已要求</option>
+                  <option value="received">已收到</option>
                 </select>
               </label>
 
               <label className="space-y-1">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Review
+                  覆核
                 </span>
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled
                   value={caseItem.reviewStatus}
                 >
-                  <option value="not-started">Not started</option>
-                  <option value="in-review">In review</option>
-                  <option value="approved">Approved</option>
+                  <option value="not-started">未開始</option>
+                  <option value="in-review">覆核中</option>
+                  <option value="approved">已批准</option>
                 </select>
               </label>
             </div>
@@ -297,10 +294,8 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <section className="rounded-lg border bg-card p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Filing packet</h2>
-                <p className="text-sm text-muted-foreground">
-                  The mocked NAR1 packet as it stands before submission.
-                </p>
+                <h2 className="text-lg font-semibold">交件套件</h2>
+                <p className="text-sm text-muted-foreground">示範 NAR1 交件套件於遞交前的現況。</p>
               </div>
               <div className="text-right">
                 <span
@@ -309,7 +304,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   {packetStatusLabel(packetStatus)}
                 </span>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {packetReadiness}% packet ready
+                  交件套件完成度 {packetReadiness}%
                 </p>
               </div>
             </div>
@@ -323,21 +318,21 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   type="button"
                 >
                   <span>{requirement.label}</span>
-                  <span>{requirement.complete ? "Complete" : "Open"}</span>
+                  <span>{requirement.complete ? "已完成" : "未完成"}</span>
                 </button>
               ))}
             </div>
 
             {caseItem.submission ? (
               <div className="mt-4 rounded-md border bg-background px-3 py-3 text-sm">
-                <p className="font-medium">Submitted reference</p>
+                <p className="font-medium">遞交編號</p>
                 <p className="text-muted-foreground">{caseItem.submission.reference}</p>
               </div>
             ) : null}
 
             {caseItem.receipt ? (
               <div className="mt-3 rounded-md border bg-background px-3 py-3 text-sm">
-                <p className="font-medium">Receipt accepted</p>
+                <p className="font-medium">回條已接納</p>
                 <p className="text-muted-foreground">{caseItem.receipt.receiptNumber}</p>
               </div>
             ) : null}
@@ -348,14 +343,14 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 disabled
                 type="button"
               >
-                Submit packet
+                遞交交件套件
               </button>
               <button
                 className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 disabled
                 type="button"
               >
-                Accept receipt
+                接納回條
               </button>
             </div>
           </section>
@@ -363,19 +358,19 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <section className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Follow-ups</h2>
+                <h2 className="text-lg font-semibold">跟進</h2>
                 <p className="text-sm text-muted-foreground">
-                  Mock WhatsApp reminders generated from current blockers.
+                  按目前阻礙事項產生的示範 WhatsApp 提醒。
                 </p>
               </div>
               <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
-                {followUps.filter((draft) => draft.status === "draft").length} open
+                {followUps.filter((draft) => draft.status === "draft").length} 項待跟進
               </span>
             </div>
 
             <div className="mt-4 space-y-3">
               {followUps.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No follow-ups are needed.</p>
+                <p className="text-sm text-muted-foreground">毋須跟進。</p>
               ) : (
                 followUps.map((draft) => (
                   <FollowUpCard key={draft.id} caseItem={caseItem} draft={draft} />
@@ -387,9 +382,9 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <section className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Checklist</h2>
+                <h2 className="text-lg font-semibold">清單</h2>
                 <p className="text-sm text-muted-foreground">
-                  Operator tasks, ticked off as work moves forward or reopens.
+                  同事工作項目，隨工作推進或重開而更新。
                 </p>
               </div>
               <span className="text-sm text-muted-foreground">
@@ -407,7 +402,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   type="button"
                 >
                   <span>{item.label}</span>
-                  <span>{item.complete ? "Complete" : "Open"}</span>
+                  <span>{item.complete ? "已完成" : "未完成"}</span>
                 </button>
               ))}
             </div>
@@ -416,17 +411,15 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <section className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Notes</h2>
-                <p className="text-sm text-muted-foreground">
-                  Operator context captured against the case.
-                </p>
+                <h2 className="text-lg font-semibold">備註</h2>
+                <p className="text-sm text-muted-foreground">同事就此案件記錄的背景資料。</p>
               </div>
-              <span className="text-sm text-muted-foreground">{caseItem.notes.length} notes</span>
+              <span className="text-sm text-muted-foreground">{caseItem.notes.length} 則備註</span>
             </div>
 
             <div className="mt-4 space-y-3">
               <textarea
-                aria-label="New note"
+                aria-label="新增備註"
                 aria-readonly
                 className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm read-only:cursor-not-allowed read-only:bg-muted read-only:text-muted-foreground"
                 readOnly
@@ -438,21 +431,21 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   disabled
                   type="button"
                 >
-                  Add note
+                  加入備註
                 </button>
               </div>
             </div>
 
             <div className="mt-4 space-y-3">
               {caseItem.notes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No notes yet.</p>
+                <p className="text-sm text-muted-foreground">暫時沒有備註。</p>
               ) : (
                 caseItem.notes.map((entry) => (
                   <div key={entry.id} className="rounded-md border px-3 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium">{entry.author}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatTimestamp(entry.createdAt)}
+                        {formatDateTime(entry.createdAt)}
                       </p>
                     </div>
                     <p className="mt-2 text-sm">{entry.body}</p>
@@ -467,27 +460,25 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <section className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Client portal activity</h2>
-                <p className="text-sm text-muted-foreground">
-                  Client-facing actions and archive records for this case.
-                </p>
+                <h2 className="text-lg font-semibold">客戶入口活動</h2>
+                <p className="text-sm text-muted-foreground">此案件的客戶操作及存檔記錄。</p>
               </div>
               <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
-                {portalActions.filter((action) => action.status === "open").length} open
+                {portalActions.filter((action) => action.status === "open").length} 項待處理
               </span>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <DenseStat
-                label="Outstanding"
+                label="待處理"
                 value={`${portalActions.filter((action) => action.status === "open").length}`}
                 tone={portalActions.some((action) => action.status === "open") ? "yellow" : "green"}
               />
-              <DenseStat label="Archive" value={`${archiveRows.length}`} tone="blue" />
+              <DenseStat label="存檔" value={`${archiveRows.length}`} tone="blue" />
               <DenseStat
-                label="Latest"
+                label="最近活動"
                 value={
-                  latestPortalActivity ? formatTimestamp(latestPortalActivity.createdAt) : "None"
+                  latestPortalActivity ? formatDateTime(latestPortalActivity.createdAt) : "沒有"
                 }
                 tone={latestPortalActivity ? "green" : "blue"}
               />
@@ -499,14 +490,14 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 to="/documents"
                 search={{ caseId: caseItem.id }}
               >
-                Open archive
+                開啟存檔
               </Link>
               <Link
                 className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
                 to="/portal"
                 search={{ caseId: caseItem.id }}
               >
-                Open portal
+                開啟客戶入口
               </Link>
             </div>
           </section>
@@ -514,11 +505,11 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
           <section className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Timeline</h2>
-                <p className="text-sm text-muted-foreground">Newest case activity appears first.</p>
+                <h2 className="text-lg font-semibold">時間線</h2>
+                <p className="text-sm text-muted-foreground">最新的案件活動排在最前。</p>
               </div>
               <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
-                {caseItem.timeline.length} {caseItem.timeline.length === 1 ? "event" : "events"}
+                {caseItem.timeline.length} 項事件
               </span>
             </div>
 
@@ -528,7 +519,7 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">{event.label}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatTimestamp(event.createdAt)}
+                      {formatDateTime(event.createdAt)}
                     </p>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{event.detail}</p>
@@ -560,16 +551,6 @@ function RiskPill({ risk }: { risk: AnnualReturnRiskLevel }) {
       {riskLabel(risk)}
     </span>
   );
-}
-
-function formatTimestamp(value: string): string {
-  return new Date(value).toLocaleString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function statusLabel(status: AnnualReturnStatus): string {
@@ -609,19 +590,21 @@ function FollowUpCard({
             {draft.recipientName} / {draft.phone} / {draft.suggestedTiming}
           </p>
         </div>
-        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">{draft.status}</span>
+        <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">
+          {followUpStatusLabel(draft.status)}
+        </span>
       </div>
       <p className="mt-3 text-sm">{draft.messagePreview}</p>
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          {eligibility.ok ? "Drafted from the current blockers" : eligibility.reason}
+          {eligibility.ok ? "按目前阻礙事項草擬" : eligibility.reason}
         </p>
         <button
           className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
           disabled
           type="button"
         >
-          Send now
+          立即發送
         </button>
       </div>
     </div>
@@ -630,22 +613,26 @@ function FollowUpCard({
 
 function followUpTypeLabel(type: AnnualReturnFollowUpDraft["type"]): string {
   return {
-    "missing-document": "Missing document request",
-    "payment-reminder": "Payment reminder",
-    "signature-nudge": "Signature nudge",
-    "review-escalation": "Review escalation",
-    "packet-reminder": "Packet reminder",
+    "missing-document": "索取缺少文件",
+    "payment-reminder": "付款提醒",
+    "signature-nudge": "簽署提醒",
+    "review-escalation": "覆核升級處理",
+    "packet-reminder": "交件套件提醒",
   }[type];
+}
+
+function followUpStatusLabel(status: AnnualReturnFollowUpDraft["status"]): string {
+  return { draft: "草稿", sent: "已發送", blocked: "受阻" }[status];
 }
 
 function packetStatusLabel(status: AnnualReturnPacketStatus): string {
   return {
-    "not-started": "Not started",
-    building: "Building",
-    "ready-for-review": "Ready for review",
-    approved: "Approved",
-    submitted: "Submitted",
-    accepted: "Accepted",
+    "not-started": "未開始",
+    building: "準備中",
+    "ready-for-review": "待覆核",
+    approved: "已批准",
+    submitted: "已提交",
+    accepted: "已接納",
   }[status];
 }
 

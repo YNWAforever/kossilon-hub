@@ -23,7 +23,14 @@ import {
 } from "@/features/dashboard/dashboard-data";
 import { demoDashboardDependencies } from "@/features/dashboard/demo-dashboard-data";
 import type { DashboardCase } from "@/features/dashboard/types";
-import { buildDailyDigest, digestTone, type DailyDigestItem } from "@/lib/daily-digest";
+import { annualReturnStatusLabel } from "@/features/annual-return/labels";
+import {
+  buildDailyDigest,
+  DAILY_DIGEST_KIND_LABELS,
+  DAILY_DIGEST_SEVERITY_LABELS,
+  digestTone,
+  type DailyDigestItem,
+} from "@/lib/daily-digest";
 import type { StatusTone } from "@/lib/status";
 import { formatDate } from "@/lib/format-date";
 
@@ -36,11 +43,10 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "Dashboard — Kossilon CoSec OS" },
+      { title: "總覽 — Kossilon CoSec OS" },
       {
         name: "description",
-        content:
-          "Annual return deadlines, overdue cases, missing documents, and payments at a glance.",
+        content: "周年申報到期日、已逾期案件、欠缺文件及付款狀況一覽。",
       },
     ],
   }),
@@ -65,6 +71,8 @@ function DashboardPage() {
     myCases: realMetrics.assignedToMe,
   };
   const upcoming = upcomingAnnualReturns;
+  const firstName = session?.name.split(" ")[0];
+  const greeting = firstName ? `早晨，${firstName}` : "早晨";
   const digest = buildDailyDigest({
     annualReturnCases: upcoming,
     maxItems: 4,
@@ -73,12 +81,12 @@ function DashboardPage() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Operations"
-        title="Dashboard"
+        eyebrow="今日工作"
+        title="總覽"
         subtitle={
           annualReturnDataAvailable
-            ? `Good morning, ${session?.name.split(" ")[0] ?? "there"} — you have ${m.myCases} active cases.`
-            : `Good morning, ${session?.name.split(" ")[0] ?? "there"}.`
+            ? `${greeting}。你有 ${m.myCases} 宗進行中的案件。`
+            : `${greeting}。`
         }
       />
 
@@ -89,13 +97,13 @@ function DashboardPage() {
             <div>
               <h2 className="text-sm font-semibold text-foreground">
                 {annualReturnDataErrorKind === "forbidden"
-                  ? "You do not have access to annual return data"
-                  : "Annual return data is temporarily unavailable"}
+                  ? "你沒有權限查看周年申報資料"
+                  : "周年申報資料暫時無法載入"}
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {annualReturnDataErrorKind === "forbidden"
-                  ? "Sign in again, or ask an administrator to grant staff access."
-                  : "Annual-return figures are hidden until the live query recovers."}
+                  ? "請重新登入，或請管理員開通同事權限。"
+                  : "即時查詢恢復前，周年申報數字會暫時隱藏。"}
               </p>
               {annualReturnDataError && (
                 <p className="mt-1 text-xs text-muted-foreground/80">{annualReturnDataError}</p>
@@ -108,25 +116,25 @@ function DashboardPage() {
       {/* KPI grid */}
       <section data-testid="kpi-grid" className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <KpiCard
-          label="Due in 7 days"
+          label="7 日內到期"
           value={m.dueIn7}
-          hint="Annual returns"
+          hint="周年申報"
           icon={CalendarClock}
           tone="orange"
           unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
-          label="Due in 30 days"
+          label="30 日內到期"
           value={m.dueIn30}
-          hint="Annual returns"
+          hint="周年申報"
           icon={CalendarClock}
           tone="yellow"
           unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
-          label="Overdue cases"
+          label="已逾期案件"
           value={m.overdue}
-          hint="Immediate action"
+          hint="需即時處理"
           icon={Flame}
           tone="red"
           unavailable={!annualReturnDataAvailable}
@@ -140,17 +148,17 @@ function DashboardPage() {
           unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
-          label="Payment pending"
+          label="待付款"
           value={m.paymentPending}
-          hint="Clients unpaid"
+          hint="客戶未付款"
           icon={CreditCard}
           tone="orange"
           unavailable={!annualReturnDataAvailable}
         />
         <KpiCard
-          label="Assigned to me"
+          label="分配給我"
           value={m.myCases}
-          hint="Open cases"
+          hint="進行中案件"
           icon={UserCheck}
           tone="blue"
           unavailable={!annualReturnDataAvailable}
@@ -164,32 +172,29 @@ function DashboardPage() {
               <ListChecks className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <h2 className="font-display text-base font-semibold text-foreground">
-                Priority queue
-              </h2>
+              <h2 className="font-display text-base font-semibold text-foreground">優先處理</h2>
               <p className="text-xs text-muted-foreground">{digest.headline}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Ranked by filing deadline, risk level and missing required documents. No model reads
-                these cases.
+                按申報到期日、風險程度及欠缺的必要文件排序；案件資料不經任何 AI 模型處理。
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
             <StatusPill tone="red" className="!py-0.5 !text-[10px]">
-              {digest.counts.critical} critical
+              {digest.counts.critical} 項{DAILY_DIGEST_SEVERITY_LABELS.critical}
             </StatusPill>
             <StatusPill tone="orange" className="!py-0.5 !text-[10px]">
-              {digest.counts.high} high
+              {digest.counts.high} 項{DAILY_DIGEST_SEVERITY_LABELS.high}
             </StatusPill>
             <StatusPill tone="yellow" className="!py-0.5 !text-[10px]">
-              {digest.counts.medium} medium
+              {digest.counts.medium} 項{DAILY_DIGEST_SEVERITY_LABELS.medium}
             </StatusPill>
           </div>
         </div>
 
         {digest.items.length === 0 ? (
           <div className="px-5 py-4 text-sm text-muted-foreground">
-            No priority work detected from annual returns.
+            周年申報暫無需要優先處理的工作。
           </div>
         ) : (
           <ul className="divide-y divide-border">
@@ -200,17 +205,14 @@ function DashboardPage() {
                 key={item.id}
                 className="grid grid-cols-[auto_auto] items-start justify-between gap-x-3 gap-y-2 px-5 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
               >
-                <StatusPill
-                  tone={digestTone(item.severity)}
-                  className="justify-self-start capitalize"
-                >
-                  {item.severity}
+                <StatusPill tone={digestTone(item.severity)} className="justify-self-start">
+                  {DAILY_DIGEST_SEVERITY_LABELS[item.severity]}
                 </StatusPill>
                 <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                    <span className="text-[11px] capitalize text-muted-foreground">
-                      {item.kind.replace("-", " ")}
+                    <span className="text-[11px] text-muted-foreground">
+                      {DAILY_DIGEST_KIND_LABELS[item.kind]}
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
@@ -230,23 +232,23 @@ function DashboardPage() {
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div>
               <h2 className="font-display text-base font-semibold text-foreground">
-                Upcoming annual returns
+                即將到期的周年申報
               </h2>
-              <p className="text-xs text-muted-foreground">Sorted by deadline</p>
+              <p className="text-xs text-muted-foreground">按到期日排序</p>
             </div>
             <Link to="/annual-returns" className="text-xs font-medium text-primary hover:underline">
-              View board →
+              開啟案件板 →
             </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="px-5 py-3 font-medium">Company</th>
-                  <th className="px-5 py-3 font-medium">Deadline</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Owner</th>
-                  <th className="px-5 py-3 font-medium">Next action</th>
+                  <th className="px-5 py-3 font-medium">公司</th>
+                  <th className="px-5 py-3 font-medium">到期日</th>
+                  <th className="px-5 py-3 font-medium">狀態</th>
+                  <th className="px-5 py-3 font-medium">負責同事</th>
+                  <th className="px-5 py-3 font-medium">下一步</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -269,7 +271,7 @@ function DashboardPage() {
                     </td>
                     <td className="px-5 py-3">
                       <StatusPill tone={annualReturnStatusTone(c.currentStatus)}>
-                        {c.currentStatus}
+                        {annualReturnStatusLabel(c.currentStatus)}
                       </StatusPill>
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">{c.ownerName}</td>
@@ -300,16 +302,16 @@ function DashboardPage() {
               <AlertTriangle className="h-5 w-5 text-status-yellow-text" />
               <div>
                 <h2 className="font-display text-base font-semibold text-status-yellow-text">
-                  Overdue count unavailable
+                  已逾期數目無法載入
                 </h2>
                 <p className="mt-1 text-xs text-status-yellow-text">
-                  This is not the same as nothing being overdue. Open the board to check directly.
+                  這不代表沒有逾期案件，請開啟案件板直接核對。
                 </p>
                 <Link
                   to="/annual-returns"
                   className="mt-3 inline-flex items-center rounded-md border border-status-yellow px-3 py-1.5 text-xs font-medium text-status-yellow-text"
                 >
-                  Open the board
+                  開啟案件板
                 </Link>
               </div>
             </div>
@@ -322,16 +324,16 @@ function DashboardPage() {
               <AlertTriangle className="h-5 w-5 text-status-red-text" />
               <div>
                 <h2 className="font-display text-base font-semibold text-status-red-text">
-                  Requires immediate attention
+                  需即時處理
                 </h2>
                 <p className="mt-1 text-xs text-status-red-text">
-                  {`${m.overdue} annual return${m.overdue === 1 ? " is" : "s are"} overdue. Assign or escalate now to avoid Companies Registry penalties.`}
+                  {`${m.overdue} 宗周年申報已逾期。請立即分配或升級處理，以免被公司註冊處罰款。`}
                 </p>
                 <Link
                   to="/annual-returns"
                   className="mt-3 inline-flex items-center rounded-md bg-status-red px-3 py-1.5 text-xs font-medium text-white hover:bg-status-red/90"
                 >
-                  Review overdue cases
+                  查看已逾期案件
                 </Link>
               </div>
             </div>
@@ -341,7 +343,7 @@ function DashboardPage() {
         <section>
           <div className="rounded-xl border bg-card p-5">
             <p className="text-sm text-muted-foreground">
-              Nothing is overdue. Upcoming deadlines are on the annual returns board.
+              沒有已逾期案件。即將到期的案件可在周年申報案件板查看。
             </p>
           </div>
         </section>
@@ -367,22 +369,22 @@ function nextAnnualReturnAction(case_: DashboardCase) {
   ).length;
 
   if (missingRequired > 0) {
-    return `${missingRequired} evidence ${missingRequired === 1 ? "item" : "items"} to verify`;
+    return `${missingRequired} 項證明文件待核對`;
   }
 
   if (case_.payment?.status !== "Payment received") {
-    return "Collect payment";
+    return "收取付款";
   }
 
   if (!case_.filingReference || !case_.confirmationDocumentId) {
-    return "Record filing proof";
+    return "記錄遞交證明";
   }
 
   if (case_.currentStatus === "Completed") {
-    return "Completed";
+    return "已完成";
   }
 
-  return "Ready to complete";
+  return "可完成結案";
 }
 
 function annualReturnStatusTone(status: AnnualReturnStatus): StatusTone {

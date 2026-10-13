@@ -156,8 +156,8 @@ export function normalizeDateCell(
           raw,
           reason:
             cell.numeric === 60 && !date1904
-              ? "Excel serial 60 is 1900-02-29, which is not a real date."
-              : "Number is not a usable date serial.",
+              ? "Excel 序號 60 代表 1900-02-29，並非真實日期。"
+              : "此數字不是可用的日期序號。",
         };
   }
 
@@ -172,7 +172,7 @@ export function normalizeDateCell(
     };
   }
 
-  return { kind: "unparsed", raw, reason: "Not a recognised date." };
+  return { kind: "unparsed", raw, reason: "無法辨認的日期。" };
 }
 
 export type NormalizedDayMonth =
@@ -198,13 +198,13 @@ export function normalizeDayMonthCell(cell: WorkbookCell | undefined): Normalize
     return {
       kind: "unparsed",
       raw,
-      reason: "Expected a day/month like 02/08, found a date serial.",
+      reason: "應為日／月格式（例如 02/08），但讀到的是日期序號。",
     };
   }
 
   const parsed = parseDayMonthText(raw);
   if (!parsed) {
-    return { kind: "unparsed", raw, reason: "Not a recognised day/month." };
+    return { kind: "unparsed", raw, reason: "無法辨認的日／月。" };
   }
   return {
     kind: "dayMonth",

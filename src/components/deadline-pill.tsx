@@ -1,22 +1,9 @@
 import { cn } from "@/lib/utils";
 import { deadlineTone, formatDaysLeft, toneClasses } from "@/lib/status";
+import { formatDate } from "@/lib/format-date";
 import { hongKongBusinessDate } from "@/lib/hong-kong-time";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const MONTH_LABELS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
 
 function dateOnly(value: string): string {
   return value.slice(0, 10);
@@ -29,13 +16,6 @@ function utcTimeForDateOnly(value: string): number {
 
 function daysUntilDateOnly(dueDate: string, today = hongKongBusinessDate()): number {
   return Math.floor((utcTimeForDateOnly(dueDate) - utcTimeForDateOnly(today)) / MS_PER_DAY);
-}
-
-function formatDateOnly(value: string): string {
-  const [year, month, day] = dateOnly(value).split("-");
-  const monthLabel = MONTH_LABELS[Number(month) - 1] ?? month;
-
-  return `${day} ${monthLabel} ${year}`;
 }
 
 export function DeadlinePill({
@@ -59,7 +39,9 @@ export function DeadlinePill({
     >
       {formatDaysLeft(days)}
       {showDate && (
-        <span className="text-[10px] font-normal opacity-70">· {formatDateOnly(dueDate)}</span>
+        <span className="text-[10px] font-normal opacity-70">
+          · {formatDate(dateOnly(dueDate))}
+        </span>
       )}
     </span>
   );

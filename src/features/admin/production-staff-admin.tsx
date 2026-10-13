@@ -9,7 +9,14 @@ import {
   previewReassignment,
   listStaffAudit,
 } from "./server-fns";
-import { STAFF_ROLES, type StaffMember, type StaffFilters, type UpdateStaffInput } from "./types";
+import { annualReturnStatusLabel } from "@/features/annual-return/labels";
+import {
+  STAFF_ROLES,
+  STAFF_ROLE_LABELS,
+  type StaffMember,
+  type StaffFilters,
+  type UpdateStaffInput,
+} from "./types";
 import { staffInvitationCapability } from "./auth-provider";
 export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
   const [q, setQ] = useState(""),
@@ -42,14 +49,14 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
   ];
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Administration" title="Admin" subtitle="員工與團隊管理" />
+      <PageHeader eyebrow="管理" title="用戶管理" subtitle="員工與團隊管理" />
       <p>{staffInvitationCapability.message}</p>
       <p>只維護已核實綁定的既有身份。最後登入：沒有可靠紀錄時顯示未知。</p>
-      <section aria-label="Staff filters" className="flex flex-wrap gap-3">
+      <section aria-label="員工篩選" className="flex flex-wrap gap-3">
         <label>
           搜尋
           <input
-            aria-label="Search staff"
+            aria-label="搜尋員工"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="ml-2 rounded border"
@@ -57,24 +64,18 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
         </label>
         <label>
           角色
-          <select
-            aria-label="Staff role filter"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          >
+          <select aria-label="按角色篩選" value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="all">全部</option>
             {STAFF_ROLES.map((r) => (
-              <option key={r}>{r}</option>
+              <option key={r} value={r}>
+                {STAFF_ROLE_LABELS[r]}
+              </option>
             ))}
           </select>
         </label>
         <label>
           團隊
-          <select
-            aria-label="Staff team filter"
-            value={team}
-            onChange={(e) => setTeam(e.target.value)}
-          >
+          <select aria-label="按團隊篩選" value={team} onChange={(e) => setTeam(e.target.value)}>
             <option value="all">全部</option>
             {teams.data?.map((t) => (
               <option key={t.id} value={t.id}>
@@ -87,7 +88,7 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
         <label>
           狀態
           <select
-            aria-label="Staff active filter"
+            aria-label="按狀態篩選"
             value={active}
             onChange={(e) => setActive(e.target.value)}
           >
@@ -100,7 +101,7 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
       {staff.isError || teams.isError ? (
         <p role="alert">未能取得員工資料，請重新載入。已讀取紀錄仍可查閱。</p>
       ) : null}
-      {staff.isPending ? <p>Loading staff administration...</p> : null}
+      {staff.isPending ? <p>員工資料載入中…</p> : null}
       <section className="divide-y border-y">
         {rows.map((member) => (
           <StaffRow
@@ -186,8 +187,8 @@ function StaffRow({
         {member.displayName} · {member.teamName ?? "未有團隊"}
       </h2>
       <p>
-        {member.role} · {member.active ? "有效" : "停用"} · 未交案件 {member.openCases} · 未交工作{" "}
-        {member.openWorkItems} · 最後登入：未知
+        {STAFF_ROLE_LABELS[member.role] ?? member.role} · {member.active ? "有效" : "停用"} ·
+        未交案件 {member.openCases} · 未交工作 {member.openWorkItems} · 最後登入：未知
       </p>
       {member.stateMismatch ? (
         <p role="alert">身份及員工狀態不一致，請先核對；暫不可修改。</p>
@@ -198,19 +199,21 @@ function StaffRow({
           <label>
             帳戶角色
             <select
-              aria-label={`Role for ${member.displayName}`}
+              aria-label={`${member.displayName} 的帳戶角色`}
               value={role}
               onChange={(e) => setRole(e.target.value as typeof role)}
             >
               {STAFF_ROLES.map((r) => (
-                <option key={r}>{r}</option>
+                <option key={r} value={r}>
+                  {STAFF_ROLE_LABELS[r]}
+                </option>
               ))}
             </select>
           </label>
           <label>
             所屬團隊
             <select
-              aria-label={`Team for ${member.displayName}`}
+              aria-label={`${member.displayName} 的所屬團隊`}
               value={teamId}
               onChange={(e) => setTeamId(e.target.value)}
             >
@@ -226,7 +229,7 @@ function StaffRow({
           <label className="block">
             <input
               type="checkbox"
-              aria-label={`Active for ${member.displayName}`}
+              aria-label={`${member.displayName} 的帳戶有效狀態`}
               checked={active}
               onChange={(e) => setActive(e.target.checked)}
             />
@@ -244,7 +247,7 @@ function StaffRow({
               {preview.data.cases.map((c) => (
                 <p key={c.id}>
                   <Link to="/annual-returns/$id" params={{ id: c.id }}>
-                    {c.companyName} · {c.status}
+                    {c.companyName} · {annualReturnStatusLabel(c.status)}
                   </Link>
                 </p>
               ))}
@@ -267,7 +270,7 @@ function StaffRow({
               </Link>
             </div>
           ) : null}
-          {blocked ? <p>必須先完成轉交，才可停用、移隊或改為 Client。</p> : null}
+          {blocked ? <p>必須先完成轉交，才可停用、移隊或改為客戶。</p> : null}
           <button
             className="rounded border px-3 py-2 disabled:opacity-50"
             disabled={

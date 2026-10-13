@@ -10,7 +10,7 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocumentPage } from "../features/documents/server-fns";
 import { reviewAnnualReturnEvidenceAction } from "../features/annual-return/evidence-server-fns";
@@ -121,15 +121,14 @@ function DocumentsRoute() {
       });
       void queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
-    onError: (error) =>
-      setWarning(error instanceof Error ? error.message : "Unable to review document."),
+    onError: (error) => setWarning(error instanceof Error ? error.message : "未能覆核文件。"),
   });
 
   async function handlePreview(documentId: string, fileName: string, expectedVersionId?: string) {
     try {
       if (!expectedVersionId) throw new Error("文件版本未核實，請重新載入後再預覽或下載。");
       const response = await downloadDocument({ data: { documentId, expectedVersionId } });
-      if (!response.ok) throw new Error(`Preview failed (${response.status}).`);
+      if (!response.ok) throw new Error(`預覽失敗（${response.status}）。`);
       const href = URL.createObjectURL(await response.blob());
       // Opened rather than saved: a reviewer needs to look at the file to decide,
       // and forcing a download to disk for every pending document is how "review"
@@ -144,7 +143,7 @@ function DocumentsRoute() {
       // Revoked late so the new tab has time to load it.
       setTimeout(() => URL.revokeObjectURL(href), 60_000);
     } catch (error) {
-      setWarning(error instanceof Error ? error.message : "Unable to open document.");
+      setWarning(error instanceof Error ? error.message : "未能開啟文件。");
     }
   }
 
@@ -152,7 +151,7 @@ function DocumentsRoute() {
     try {
       if (!expectedVersionId) throw new Error("文件版本未核實，請重新載入後再預覽或下載。");
       const response = await downloadDocument({ data: { documentId, expectedVersionId } });
-      if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+      if (!response.ok) throw new Error(`下載失敗（${response.status}）。`);
       const href = URL.createObjectURL(await response.blob());
       const anchor = document.createElement("a");
       anchor.href = href;
@@ -160,7 +159,7 @@ function DocumentsRoute() {
       anchor.click();
       URL.revokeObjectURL(href);
     } catch (error) {
-      setWarning(error instanceof Error ? error.message : "Unable to download document.");
+      setWarning(error instanceof Error ? error.message : "未能下載文件。");
     }
   }
 
@@ -179,7 +178,7 @@ function DocumentsRoute() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Operations" title="Documents" />
+      <PageHeader eyebrow="文件與付款" title="文件" />
       {dataMode === "production" &&
       !invalidCaseId &&
       actor?.active &&
@@ -268,20 +267,22 @@ function DocumentsRoute() {
         <section className="rounded-lg border bg-card">
           <div className="grid gap-3 border-b p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
             <input
-              aria-label="Search documents"
+              aria-label="搜尋文件"
               className="rounded-md border bg-background px-3 py-2 text-sm sm:col-span-2 lg:col-span-1"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search company, contact, title, or filename"
+              placeholder="搜尋公司、聯絡人、標題或檔案名稱"
               value={query}
             />
             <FilterSelect
-              label="Filter by source"
+              label="按來源篩選"
+              allLabel="全部來源"
               value={source}
               onChange={setSource}
               values={["client-portal", "staff-packet", "filing-submission", "filing-receipt"]}
             />
             <FilterSelect
-              label="Filter by category"
+              label="按類別篩選"
+              allLabel="全部類別"
               value={category}
               onChange={setCategory}
               values={[
@@ -296,18 +297,19 @@ function DocumentsRoute() {
               ]}
             />
             <FilterSelect
-              label="Filter by status"
+              label="按狀態篩選"
+              allLabel="全部狀態"
               value={status}
               onChange={setStatus}
               values={["required", "uploaded", "superseded", "accepted", "rejected", "generated"]}
             />
             <select
-              aria-label="Filter by case"
+              aria-label="按案件篩選"
               className="rounded-md border bg-background px-3 py-2 text-sm"
               value={caseFilter}
               onChange={(event) => setCaseFilter(event.target.value)}
             >
-              <option value="all">All cases</option>
+              <option value="all">全部案件</option>
               {cases.map((caseItem) => (
                 <option key={caseItem.id} value={caseItem.id}>
                   {caseItem.companyName}
@@ -317,18 +319,18 @@ function DocumentsRoute() {
           </div>
 
           <div className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.5fr)_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
-            <span>Document</span>
-            <span>Company</span>
-            <span>Type</span>
-            <span>Status</span>
-            <span>Uploaded by</span>
-            <span>Review</span>
-            <span className="text-right">Case</span>
+            <span>文件</span>
+            <span>公司</span>
+            <span>類型</span>
+            <span>狀態</span>
+            <span>上載者</span>
+            <span>覆核</span>
+            <span className="text-right">案件</span>
           </div>
 
           <div className="divide-y">
             {visibleRows.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">No documents match these filters.</p>
+              <p className="p-4 text-sm text-muted-foreground">沒有符合篩選條件的文件。</p>
             ) : (
               visibleRows.map((row) => (
                 <DocumentRow
@@ -349,11 +351,13 @@ function DocumentsRoute() {
 
 function FilterSelect({
   label,
+  allLabel,
   value,
   values,
   onChange,
 }: {
   label: string;
+  allLabel: string;
   value: string;
   values: string[];
   onChange: (value: string) => void;
@@ -365,7 +369,7 @@ function FilterSelect({
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >
-      <option value="all">{label.replace("Filter by ", "All ")}</option>
+      <option value="all">{allLabel}</option>
       {values.map((item) => (
         <option key={item} value={item}>
           {labelValue(item)}
@@ -391,7 +395,7 @@ function DocumentRow({
   );
 
   function handleReview() {
-    onWarning("Demo archive rows are read-only; production records are reviewed above.");
+    onWarning("示範文件庫為唯讀；正式記錄請在上方覆核。");
   }
 
   return (
@@ -404,21 +408,21 @@ function DocumentRow({
           {row.filename}
         </p>
       </div>
-      <Field label="Company" value={row.companyName} className="col-span-2 lg:col-span-1" />
-      <Field label="Type" value={labelValue(row.category)} detail={labelValue(row.source)} />
-      <Field label="Status" value={labelValue(row.status)} />
-      <Field label="Uploaded by" value={row.actor} detail={formatDate(row.createdAt)} />
+      <Field label="公司" value={row.companyName} className="col-span-2 lg:col-span-1" />
+      <Field label="類型" value={labelValue(row.category)} detail={labelValue(row.source)} />
+      <Field label="狀態" value={labelValue(row.status)} />
+      <Field label="上載者" value={row.actor} detail={formatDate(row.createdAt)} />
       <div className="col-span-2 min-w-0 lg:col-span-1">
         <ReviewCell row={row} followUpStatus={followUp?.status} onReview={handleReview} />
       </div>
       <div className="col-span-2 flex justify-start lg:col-span-1 lg:justify-end">
         <Link
-          aria-label={`Open case for ${row.title}`}
+          aria-label={`開啟「${row.title}」的案件`}
           className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
           to="/annual-returns/$id"
           params={{ id: row.caseId }}
         >
-          Open
+          開啟
         </Link>
       </div>
     </div>
@@ -446,26 +450,26 @@ function ReviewCell({
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
           <button
-            aria-label={`Accept ${row.title}`}
+            aria-label={`接納「${row.title}」`}
             className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
             onClick={() => onReview("accepted")}
             type="button"
           >
-            Accept
+            接納
           </button>
           <button
-            aria-label={`Reject ${row.title}`}
+            aria-label={`退回「${row.title}」`}
             className="rounded-md border px-3 py-2 text-sm"
             onClick={() => setIsRejecting((current) => !current)}
             type="button"
           >
-            Reject
+            退回
           </button>
         </div>
         {isRejecting ? (
           <div className="space-y-2">
             <select
-              aria-label={`Rejection reason for ${row.title}`}
+              aria-label={`「${row.title}」的退回原因`}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={reasonCode}
               onChange={(event) =>
@@ -479,18 +483,18 @@ function ReviewCell({
               ))}
             </select>
             <input
-              aria-label={`Optional review note for ${row.title}`}
+              aria-label={`「${row.title}」的覆核備註（選填）`}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              placeholder="Optional review note"
+              placeholder="覆核備註（選填）"
             />
             <button
               className="rounded-md border px-3 py-2 text-sm"
               onClick={() => onReview("rejected", { reasonCode, note })}
               type="button"
             >
-              Confirm rejection
+              確認退回
             </button>
           </div>
         ) : null}
@@ -502,23 +506,18 @@ function ReviewCell({
     return (
       <div className="space-y-1 text-xs text-muted-foreground">
         <p className="truncate text-sm font-medium text-foreground">
-          {row.reviewSummary ?? "Reviewed"}
+          {row.reviewSummary ?? "已覆核"}
         </p>
         {row.reviewReasonLabel ? <p>{row.reviewReasonLabel}</p> : null}
         {row.reviewNote ? <p>{row.reviewNote}</p> : null}
-        {followUpStatus ? <p>{`Follow-up: ${followUpStatus}`}</p> : null}
-        {row.reviewedBy ? <p>{`Reviewed by ${row.reviewedBy}`}</p> : null}
-        {row.reviewedAt ? <p>{`Reviewed ${formatTimestamp(row.reviewedAt)}`}</p> : null}
+        {followUpStatus ? <p>{`跟進：${labelValue(followUpStatus)}`}</p> : null}
+        {row.reviewedBy ? <p>{`覆核人：${row.reviewedBy}`}</p> : null}
+        {row.reviewedAt ? <p>{`覆核時間：${formatDateTime(row.reviewedAt)}`}</p> : null}
       </div>
     );
   }
 
-  return (
-    <Field
-      label="Review"
-      value={row.reviewSummary ?? (row.readonly ? "Read-only" : "No review needed")}
-    />
-  );
+  return <Field label="覆核" value={row.reviewSummary ?? (row.readonly ? "唯讀" : "毋須覆核")} />;
 }
 
 function ProductionDocumentsSection({
@@ -565,9 +564,9 @@ function ProductionDocumentsSection({
     <section className="rounded-lg border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Production document vault</h2>
+          <h2 className="text-lg font-semibold">正式文件庫</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Private records stay quarantined until scanning and case-aware staff review.
+            私人記錄會先隔離，待完成掃描及同事按案件覆核後才會發放。
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -576,7 +575,7 @@ function ProductionDocumentsSection({
           </label>
           <select
             id="production-case-filter"
-            aria-label="Filter production documents by case"
+            aria-label="按案件篩選正式文件"
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={selectedCaseId ?? "all"}
             disabled={casesLoading}
@@ -592,16 +591,10 @@ function ProductionDocumentsSection({
           <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
         </div>
       </div>
-      {error ? (
-        <p className="mt-4 text-sm text-status-yellow-text">Production records unavailable.</p>
-      ) : null}
-      {loading ? (
-        <p className="mt-4 text-sm text-muted-foreground">Loading production records...</p>
-      ) : null}
+      {error ? <p className="mt-4 text-sm text-status-yellow-text">無法載入正式記錄。</p> : null}
+      {loading ? <p className="mt-4 text-sm text-muted-foreground">正式記錄載入中…</p> : null}
       {!loading && !error && documents.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          No production documents match this scope.
-        </p>
+        <p className="mt-4 text-sm text-muted-foreground">此範圍內沒有正式文件。</p>
       ) : null}
       <div className="mt-4 divide-y">
         {documents.map((document) => {
@@ -646,7 +639,7 @@ function ProductionDocumentsSection({
                 {isChecklistEvidence && document.reviewStatus === "pending" ? (
                   caseItem ? (
                     <select
-                      aria-label={"Checklist item for " + document.fileName}
+                      aria-label={`「${document.fileName}」對應的清單項目`}
                       className="mt-2 w-full rounded-md border bg-background px-2 py-1 text-xs"
                       value={checklistItemId}
                       onChange={(event) =>
@@ -656,7 +649,7 @@ function ProductionDocumentsSection({
                         }))
                       }
                     >
-                      <option value="">Select checklist item</option>
+                      <option value="">選擇清單項目</option>
                       {(caseItem.checklist ?? []).map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.itemLabel}
@@ -665,7 +658,7 @@ function ProductionDocumentsSection({
                     </select>
                   ) : (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Filter to one production case to review checklist evidence.
+                      請先在上方選擇一個案件，才可覆核清單證明文件。
                     </p>
                   )
                 ) : null}
@@ -718,16 +711,6 @@ function Field({
       ) : null}
     </div>
   );
-}
-
-function formatTimestamp(value: string): string {
-  return new Date(value).toLocaleString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 /**
@@ -870,7 +853,7 @@ function ReviewActions({
           onClick={() => onDownload(record.id, record.currentVersionId ?? undefined)}
           type="button"
         >
-          <Download className="h-4 w-4" /> Download
+          <Download className="h-4 w-4" /> 下載
         </button>
         {record.reviewStatus === "pending" ? (
           <>
@@ -888,7 +871,7 @@ function ReviewActions({
               }
               type="button"
             >
-              {pending ? "Reviewing..." : "Verify"}
+              {pending ? "覆核中…" : "核對"}
             </button>
             <button
               className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
@@ -896,7 +879,7 @@ function ReviewActions({
               onClick={() => setRejecting((current) => !current)}
               type="button"
             >
-              Reject
+              退回
             </button>
           </>
         ) : null}
@@ -905,11 +888,11 @@ function ReviewActions({
       {rejecting && record.reviewStatus === "pending" ? (
         <div className="w-full space-y-2 rounded-md border p-2 md:max-w-sm">
           <label className="sr-only" htmlFor={`reject-reason-${record.id}`}>
-            退件原因
+            退回原因
           </label>
           <select
             id={`reject-reason-${record.id}`}
-            aria-label={`Rejection reason for ${record.fileName}`}
+            aria-label={`「${record.fileName}」的退回原因`}
             className="w-full rounded-md border bg-background px-2 py-1 text-sm"
             value={reasonCode}
             onChange={(event) => setReasonCode(event.target.value as DocumentRejectionReasonCode)}
@@ -925,7 +908,7 @@ function ReviewActions({
           </label>
           <textarea
             id={`reject-note-${record.id}`}
-            aria-label={`Client explanation for ${record.fileName}`}
+            aria-label={`給客戶的「${record.fileName}」說明`}
             className="w-full rounded-md border bg-background px-2 py-1 text-sm"
             placeholder="給客戶的說明（例如：第 2 頁未有董事簽署）"
             rows={2}
@@ -949,7 +932,7 @@ function ReviewActions({
             }}
             type="button"
           >
-            確認退件
+            確認退回
           </button>
         </div>
       ) : null}

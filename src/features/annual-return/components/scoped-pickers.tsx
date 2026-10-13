@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { listDocumentPage } from "@/features/documents/server-fns";
@@ -216,7 +217,7 @@ export function DocumentPicker({
         ) : null}
         {candidates.map((document) => (
           <option key={document.id} value={document.id}>
-            {document.fileName} · {formatUploadedAt(document.uploadedAt)}
+            {document.fileName} · {formatDate(document.uploadedAt)}
           </option>
         ))}
       </select>
@@ -257,12 +258,4 @@ export function DocumentPicker({
       ) : null}
     </div>
   );
-}
-
-function formatUploadedAt(value: string): string {
-  return new Date(value).toLocaleDateString("en-HK", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }

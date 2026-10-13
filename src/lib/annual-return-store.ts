@@ -500,7 +500,7 @@ export function getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[] {
       id: `document-${doc.id}`,
       type: "document" as const,
       label: doc.label,
-      action: `Request ${doc.label}`,
+      action: `索取 ${doc.label}`,
     }));
 
   const blockers: AnnualReturnBlocker[] = [...documentBlockers];
@@ -509,8 +509,8 @@ export function getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[] {
     blockers.push({
       id: "payment",
       type: "payment",
-      label: caseItem.paymentStatus === "overdue" ? "Payment overdue" : "Payment pending",
-      action: "Follow up payment",
+      label: caseItem.paymentStatus === "overdue" ? "逾期未付" : "待付款",
+      action: "跟進付款",
     });
   }
 
@@ -518,8 +518,8 @@ export function getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[] {
     blockers.push({
       id: "signature",
       type: "signature",
-      label: caseItem.signatureStatus === "requested" ? "Signature requested" : "Signature missing",
-      action: "Collect signature",
+      label: caseItem.signatureStatus === "requested" ? "已要求簽署" : "欠缺簽署",
+      action: "收取簽署",
     });
   }
 
@@ -527,11 +527,8 @@ export function getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[] {
     blockers.push({
       id: "review",
       type: "review",
-      label:
-        caseItem.reviewStatus === "in-review"
-          ? "Internal review in progress"
-          : "Internal review not started",
-      action: "Complete internal review",
+      label: caseItem.reviewStatus === "in-review" ? "內部覆核進行中" : "內部覆核未開始",
+      action: "完成內部覆核",
     });
   }
 
@@ -539,8 +536,8 @@ export function getBlockers(caseItem: AnnualReturnCase): AnnualReturnBlocker[] {
     blockers.push({
       id: "owner",
       type: "owner",
-      label: "No owner assigned",
-      action: "Assign owner",
+      label: "未分配負責同事",
+      action: "分配負責同事",
     });
   }
 
@@ -573,7 +570,7 @@ export function getRiskLevel(
 
 export function getNextAction(caseItem: AnnualReturnCase, today = new Date()): string {
   const blockers = getBlockers(caseItem);
-  if (caseItem.status === "filed") return "No action needed";
+  if (caseItem.status === "filed") return "毋須跟進";
   const documentBlocker = blockers.find((blocker) => blocker.type === "document");
   if (documentBlocker) return documentBlocker.action;
   const paymentBlocker = blockers.find((blocker) => blocker.type === "payment");
@@ -582,8 +579,8 @@ export function getNextAction(caseItem: AnnualReturnCase, today = new Date()): s
   if (signatureBlocker) return signatureBlocker.action;
   const reviewBlocker = blockers.find((blocker) => blocker.type === "review");
   if (reviewBlocker) return reviewBlocker.action;
-  if (getReadinessScore(caseItem) === 100) return "File with Companies Registry";
-  return daysUntilDate(caseItem.dueDate, today) <= 14 ? "Review due-soon case" : "Monitor case";
+  if (getReadinessScore(caseItem) === 100) return "向公司註冊處遞交";
+  return daysUntilDate(caseItem.dueDate, today) <= 14 ? "覆核即將到期案件" : "持續留意案件";
 }
 
 export function getCaseMetrics(
@@ -672,11 +669,11 @@ function followUpTypeForBlocker(blocker: AnnualReturnBlocker): AnnualReturnFollo
 
 function followUpTiming(type: AnnualReturnFollowUpType): string {
   return {
-    "missing-document": "Send today",
-    "payment-reminder": "Send today",
-    "signature-nudge": "Send before 5pm",
-    "review-escalation": "Escalate internally",
-    "packet-reminder": "Review before submission",
+    "missing-document": "今日發送",
+    "payment-reminder": "今日發送",
+    "signature-nudge": "下午 5 時前發送",
+    "review-escalation": "內部升級處理",
+    "packet-reminder": "遞交前覆核",
   }[type];
 }
 
@@ -686,10 +683,10 @@ function followUpMessagePreview(
   label: string,
 ): string {
   if (type === "review-escalation") {
-    return `${caseItem.owner}, please clear "${label}" for ${caseItem.companyName} before filing.`;
+    return `${caseItem.owner}，請在遞交前處理 ${caseItem.companyName} 的「${label}」。`;
   }
 
-  return `Hi ${caseItem.contactName}, this is Kossilon. For ${caseItem.companyName}, we still need ${label.toLowerCase()} before we can complete the annual return filing.`;
+  return `${caseItem.contactName} 你好，我們是 Kossilon。${caseItem.companyName} 的周年申報尚有「${label}」待處理，完成後我們即可遞交。`;
 }
 
 function hasSentFollowUp(caseItem: AnnualReturnCase, draftId: string): boolean {
@@ -722,8 +719,7 @@ export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollo
     const type = followUpTypeForBlocker(blocker);
     const id = `follow-up-${caseItem.id}-${blocker.id}`;
     const sent = hasSentFollowUp(caseItem, id);
-    const blockedReason =
-      caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const blockedReason = caseItem.status === "filed" ? "已遞交的案件不能發送跟進" : undefined;
     const sentFollowUp = sentFollowUpsById.get(id);
 
     return sentFollowUp
@@ -748,8 +744,7 @@ export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollo
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")}`;
     const sent = hasSentFollowUp(caseItem, id);
-    const blockedReason =
-      caseItem.status === "filed" ? "Filed cases cannot send follow-ups" : undefined;
+    const blockedReason = caseItem.status === "filed" ? "已遞交的案件不能發送跟進" : undefined;
     const sentFollowUp = sentFollowUpsById.get(id);
 
     return sentFollowUp
@@ -762,7 +757,7 @@ export function getFollowUpDrafts(caseItem: AnnualReturnCase): AnnualReturnFollo
           recipientName: caseItem.owner,
           phone: caseItem.phone,
           suggestedTiming: followUpTiming("packet-reminder"),
-          messagePreview: `${caseItem.owner}, packet item "${label}" is still open for ${caseItem.companyName}.`,
+          messagePreview: `${caseItem.owner}，${caseItem.companyName} 的交件套件項目「${label}」仍未完成。`,
           status: sent ? "sent" : blockedReason ? "blocked" : "draft",
           blockedReason,
         } satisfies AnnualReturnFollowUpDraft);
@@ -780,15 +775,14 @@ export function canSendFollowUp(
   caseItem: AnnualReturnCase,
   draft: AnnualReturnFollowUpDraft,
 ): { ok: true } | { ok: false; reason: string } {
-  if (caseItem.status === "filed")
-    return { ok: false, reason: "Filed cases cannot send follow-ups" };
+  if (caseItem.status === "filed") return { ok: false, reason: "已遞交的案件不能發送跟進" };
   if (hasSentFollowUp(caseItem, draft.id) || draft.status === "sent") {
-    return { ok: false, reason: "Follow-up has already been sent" };
+    return { ok: false, reason: "此跟進已發送" };
   }
   const activeDraft = getFollowUpDrafts(caseItem).find((candidate) => candidate.id === draft.id);
-  if (!activeDraft) return { ok: false, reason: "The original blocker has been resolved" };
+  if (!activeDraft) return { ok: false, reason: "原有阻礙事項已解決" };
   if (activeDraft.status === "blocked") {
-    return { ok: false, reason: activeDraft.blockedReason ?? "Follow-up is blocked" };
+    return { ok: false, reason: activeDraft.blockedReason ?? "此跟進受阻" };
   }
   return { ok: true };
 }

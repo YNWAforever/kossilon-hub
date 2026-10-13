@@ -105,24 +105,24 @@ describe("annual returns route across data modes", () => {
     );
 
     // SSR renders the detail screen's pending state, which has no PageHeader.
-    expect(html).toContain("Loading annual return case");
+    expect(html).toContain("正在載入周年申報案件");
     // The load-bearing half: if the parent stops rendering <Outlet /> it draws its
     // own board here instead, and the detail screen silently disappears.
-    expect(html).not.toContain("Search company");
+    expect(html).not.toContain("搜尋公司");
   });
 
   it("still renders the demo detail screen through the parent outlet", async () => {
     const html = await renderRoute("/annual-returns/ar-delta", "demo");
 
     expect(html).toContain("Delta Bloom Ventures Limited");
-    expect(html).not.toContain("Search company or contact");
+    expect(html).not.toContain("搜尋公司或聯絡人");
   });
 
   it("renders the production board at /annual-returns in production mode", async () => {
     const html = await renderRoute("/annual-returns", "production");
 
-    expect(html).toContain("Search company");
-    expect(html).not.toContain("Search company or contact");
+    expect(html).toContain("搜尋公司");
+    expect(html).not.toContain("搜尋公司或聯絡人");
     expect(html).not.toContain("Delta Bloom Ventures Limited");
   });
 
@@ -139,14 +139,14 @@ describe("annual returns route across data modes", () => {
   it("renders the demo board at /annual-returns in demo mode", async () => {
     const html = await renderRoute("/annual-returns", "demo");
 
-    expect(html).toContain("Search company or contact");
+    expect(html).toContain("搜尋公司或聯絡人");
     expect(html).toContain("Delta Bloom Ventures Limited");
   });
 
   it("shows the New case action in production mode", async () => {
     const html = await renderRoute("/annual-returns", "production");
 
-    expect(html).toContain("New case");
+    expect(html).toContain("新增案件");
   });
 
   it("does not show production work-item placeholders on the demo board", async () => {
@@ -161,6 +161,6 @@ describe("annual returns route across data modes", () => {
   it("shows no New case action in demo mode", async () => {
     const html = await renderRoute("/annual-returns", "demo");
 
-    expect(html).not.toContain("New case");
+    expect(html).not.toContain("新增案件");
   });
 });

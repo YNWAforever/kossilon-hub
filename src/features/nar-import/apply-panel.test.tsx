@@ -145,10 +145,10 @@ describe("reviewed selected NAR apply UI", () => {
     fireEvent.click(await screen.findByRole("button", { name: "開啟套用工作" }));
     await screen.findByText("未選取34行");
     fireEvent.click(screen.getByRole("button", { name: "預覽補償" }));
-    await screen.findByText(/原申報限期：2025-02-15/);
-    expect(screen.getByText(/現申報限期：2025-02-16/)).toBeTruthy();
+    await screen.findByText(/原申報到期日：2025-02-15/);
+    expect(screen.getByText(/現申報到期日：2025-02-16/)).toBeTruthy();
     expect(screen.getAllByText(/Synthetic company · 第3行/).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("完整 before／current 資料")).toBeTruthy();
+    expect(screen.getByText("完整原有／現時資料")).toBeTruthy();
     expect(screen.getByText(/"amount": 1200/)).toBeTruthy();
     expect(mocks.resume).not.toHaveBeenCalled();
   });

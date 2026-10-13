@@ -75,8 +75,7 @@ export const toneClasses: Record<
 };
 
 export const formatDaysLeft = (daysLeft: number) => {
-  if (daysLeft < 0) return `${Math.abs(daysLeft)}d overdue`;
-  if (daysLeft === 0) return "Due today";
-  if (daysLeft === 1) return "1 day left";
-  return `${daysLeft} days left`;
+  if (daysLeft < 0) return `已逾期 ${Math.abs(daysLeft)} 日`;
+  if (daysLeft === 0) return "今日到期";
+  return `尚餘 ${daysLeft} 日`;
 };

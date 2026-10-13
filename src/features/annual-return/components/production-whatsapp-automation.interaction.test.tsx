@@ -104,25 +104,25 @@ describe("ProductionWhatsAppAutomation", () => {
   it("shows the full recipient and message before approval queues anything", async () => {
     serverFns.listProductionFollowUpDrafts.mockResolvedValue([drafts[0]]);
     renderAutomation();
-    fireEvent.click(await screen.findByRole("button", { name: "Preview and approve" }));
+    fireEvent.click(await screen.findByRole("button", { name: "預覽並批准" }));
     const preview = await screen.findByRole("dialog");
     expect(preview.textContent).toContain("+85291234567");
     expect(preview.textContent).toContain(drafts[0].messagePreview);
     expect(serverFns.sendProductionFollowUp).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Approve and queue" }));
+    fireEvent.click(screen.getByRole("button", { name: "批准並加入隊列" }));
     await waitFor(() => expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(1));
   });
   it("renders the explicit demo notice and invokes durable actions for all three sources", async () => {
     const invalidateSpy = renderAutomation();
-    expect(await screen.findByText("Demo simulation")).toBeTruthy();
-    expect(screen.getByText("No external WhatsApp or email message is sent.")).toBeTruthy();
+    expect(await screen.findByText("示範模擬")).toBeTruthy();
+    expect(screen.getByText("不會向外發送任何 WhatsApp 或電郵訊息。")).toBeTruthy();
 
-    const buttons = await screen.findAllByRole("button", { name: "Preview and approve" });
+    const buttons = await screen.findAllByRole("button", { name: "預覽並批准" });
     expect(buttons).toHaveLength(3);
 
     for (const button of buttons) {
       fireEvent.click(button);
-      fireEvent.click(await screen.findByRole("button", { name: "Approve and queue" }));
+      fireEvent.click(await screen.findByRole("button", { name: "批准並加入隊列" }));
       await waitFor(() =>
         expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(buttons.indexOf(button) + 1),
       );
@@ -151,12 +151,12 @@ describe("ProductionWhatsAppAutomation", () => {
 
   it("renders persisted rows and invokes the durable action for all three sources", async () => {
     const invalidateSpy = renderAutomation();
-    const buttons = await screen.findAllByRole("button", { name: "Preview and approve" });
+    const buttons = await screen.findAllByRole("button", { name: "預覽並批准" });
     expect(buttons).toHaveLength(3);
 
     for (const button of buttons) {
       fireEvent.click(button);
-      fireEvent.click(await screen.findByRole("button", { name: "Approve and queue" }));
+      fireEvent.click(await screen.findByRole("button", { name: "批准並加入隊列" }));
       await waitFor(() =>
         expect(serverFns.sendProductionFollowUp).toHaveBeenCalledTimes(buttons.indexOf(button) + 1),
       );
@@ -192,9 +192,9 @@ describe("ProductionWhatsAppAutomation", () => {
         }),
     );
     renderAutomation();
-    const buttons = await screen.findAllByRole("button", { name: "Preview and approve" });
+    const buttons = await screen.findAllByRole("button", { name: "預覽並批准" });
     fireEvent.click(buttons[1]);
-    fireEvent.click(await screen.findByRole("button", { name: "Approve and queue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "批准並加入隊列" }));
 
     await waitFor(() => expect((buttons[1] as HTMLButtonElement).disabled).toBe(true));
     expect((buttons[0] as HTMLButtonElement).disabled).toBe(false);

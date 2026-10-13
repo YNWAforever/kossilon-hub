@@ -7,10 +7,10 @@ import type { ServiceType } from "./types";
  * having a "standard" expectation elsewhere.
  */
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
-  secretary: "Company Secretary",
-  registered_office: "Registered Office",
-  director_correspondence_address: "Director Correspondence Address",
-  designated_representative: "Designated Representative",
+  secretary: "公司秘書",
+  registered_office: "註冊辦事處",
+  director_correspondence_address: "董事通訊地址",
+  designated_representative: "指定代表",
 };
 
 export const SERVICE_TYPE_DEFAULT_FEES: Record<ServiceType, number> = {

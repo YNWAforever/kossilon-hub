@@ -77,15 +77,13 @@ describe("demo annual return case detail", () => {
   it("says once, up front, that the case is read-only", () => {
     renderDetail();
 
-    expect(screen.getByRole("status").textContent).toContain(
-      "Read-only demo. Case state is changed in production",
-    );
+    expect(screen.getByRole("status").textContent).toContain("唯讀示範。案件狀態只可在正式環境");
   });
 
   it("leaves navigation links usable", () => {
     renderDetail();
 
-    expect(screen.getByRole("link", { name: "Back" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "返回" })).toBeTruthy();
   });
 });
 

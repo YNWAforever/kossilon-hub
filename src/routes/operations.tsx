@@ -4,7 +4,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import { getOperationsHealth } from "@/features/operations/server-fns";
-import { dispatchCountLabel, type MaintenanceHealthState } from "@/features/operations/health";
+import {
+  dispatchCountLabel,
+  type MaintenanceHealthState,
+  type MaintenanceRunOutcome,
+} from "@/features/operations/health";
 import type { JobQueueDepth } from "@/features/operations/repository";
 import { earliestMissingLabel, type SchemaHealthState } from "@/features/operations/schema-health";
 import { formatHongKongTimestamp } from "@/features/whatsapp/conversations";
@@ -39,6 +43,12 @@ const STATE_TONE: Record<MaintenanceHealthState, string> = {
   failing: "bg-status-red-soft text-status-red-text",
   degraded: "bg-status-yellow-soft text-status-yellow-text",
   healthy: "bg-status-green-soft text-status-green-text",
+};
+
+const OUTCOME_LABEL: Record<MaintenanceRunOutcome, string> = {
+  succeeded: "成功",
+  partial: "部分成功",
+  failed: "失敗",
 };
 
 const SCHEMA_LABEL: Record<SchemaHealthState, string> = {
@@ -97,7 +107,7 @@ function OperationsRoute() {
   if (dataMode !== "production") {
     return (
       <main className="flex-1 space-y-4 p-6">
-        <PageHeader eyebrow="Operations" title="系統運作" />
+        <PageHeader eyebrow="管理" title="系統運作" />
         <DemoUnavailable message="系統運作讀取正式資料。示範模式沒有排程，也沒有可讀取的執行紀錄。" />
       </main>
     );
@@ -112,7 +122,7 @@ function OperationsRoute() {
   return (
     <main className="flex-1 space-y-6 p-6">
       <PageHeader
-        eyebrow="Operations"
+        eyebrow="管理"
         title="系統運作"
         subtitle="所有時間均為香港時間（UTC+8）；此頁開啟時每分鐘更新。"
         actions={
@@ -271,11 +281,11 @@ function OperationsRoute() {
           ) : null}
           {view.schedulerLeases ? (
             <p className="text-sm">
-              已開始而結果待核對：{view.schedulerLeases.startedUnknown}；未開始的過期 lease：
+              已開始而結果待核對：{view.schedulerLeases.startedUnknown}；未開始而已過期的排程鎖：
               {view.schedulerLeases.claimedExpired}。未知結果不自動重跑。
             </p>
           ) : (
-            <p className="text-sm text-status-yellow-text">排程 lease 診斷未知。</p>
+            <p className="text-sm text-status-yellow-text">排程鎖診斷結果未知。</p>
           )}
           {view.diagnostics && view.diagnostics.failedReads.length > 0 ? (
             <p role="status" className="text-sm">
@@ -325,7 +335,7 @@ function OperationsRoute() {
             <div className="border-b p-4">
               <h2 className="text-base font-semibold">能力、配置與實際健康</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                程式實作、綁定配置及 runtime 驗證分開顯示。健康恢復不會取消正式操作的批准要求。
+                程式實作、綁定配置及運行驗證分開顯示。健康恢復不會取消正式操作的批准要求。
               </p>
               <a
                 className="mt-2 inline-block text-sm underline"
@@ -398,9 +408,7 @@ function OperationsRoute() {
                         <th className="px-4 py-2 font-medium">觸發</th>
                         <th className="px-4 py-2 font-medium">已派送</th>
                         <th className="px-4 py-2 font-medium">已攔截</th>
-                        <th className="px-4 py-2 font-medium">
-                          工作 claimed／completed／failed／unknown
-                        </th>
+                        <th className="px-4 py-2 font-medium">工作：已領取／已完成／失敗／未知</th>
                         <th className="px-4 py-2 font-medium">參考</th>
                         <th className="px-4 py-2 font-medium">失敗環節</th>
                       </tr>
@@ -411,7 +419,9 @@ function OperationsRoute() {
                           <td className="px-4 py-2 tabular-nums">
                             {formatHongKongTimestamp(entry.scheduledFor)}
                           </td>
-                          <td className="px-4 py-2">{entry.outcome}</td>
+                          <td className="px-4 py-2">
+                            {OUTCOME_LABEL[entry.outcome] ?? entry.outcome}
+                          </td>
                           <td className="px-4 py-2 tabular-nums">{entry.durationMs} ms</td>
                           <td className="px-4 py-2">
                             {entry.triggerSource === "scheduled"

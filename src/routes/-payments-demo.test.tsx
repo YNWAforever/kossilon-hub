@@ -3,6 +3,7 @@ import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/rea
 import { createElement, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { formatDate } from "@/lib/format-date";
 
 vi.mock("../styles.css?url", () => ({ default: "/styles.css" }));
 vi.mock("@/features/auth/auth-context-neon", async (importOriginal) => ({
@@ -33,16 +34,16 @@ describe("demo payments board", () => {
   it("formats due dates for people rather than printing ISO strings", async () => {
     const html = await renderPayments();
 
-    expect(html).toContain("Due 10 Jun 2026");
+    expect(html).toContain(`到期日 ${formatDate("2026-06-10")}`);
     expect(html).not.toMatch(/\| 2026-\d\d-\d\d/);
   });
 
-  it("explains a closed case instead of showing a dead button beside 'Awaiting proof'", async () => {
+  it("explains a closed case instead of showing a dead button beside '等待證明'", async () => {
     const html = await renderPayments();
     const summit = html.slice(html.indexOf("Summit Bamboo"));
 
-    expect(summit).toContain("Return filed — no proof needed.");
-    expect(summit).toContain("Not required");
-    expect(summit).not.toContain("Awaiting proof");
+    expect(summit).toContain("周年申報已遞交，毋須付款證明。");
+    expect(summit).toContain("毋須提供");
+    expect(summit).not.toContain("等待證明");
   });
 });

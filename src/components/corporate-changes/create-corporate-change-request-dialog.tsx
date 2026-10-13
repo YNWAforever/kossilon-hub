@@ -20,6 +20,8 @@ import type {
   NewOfficerType,
   OfficerAction,
 } from "@/features/corporate-changes/types";
+import { CORPORATE_CHANGE_TYPE_LABELS } from "@/features/corporate-changes/labels";
+import { IDENTIFICATION_TYPE_LABELS, OFFICER_TYPE_LABELS } from "@/features/clients/labels";
 
 type CompanyOption = { id: string; companyName: string };
 
@@ -37,13 +39,6 @@ type CreateChangePayload =
   | ({ changeType: "share_transfer" } & Omit<CreateShareTransferInput, "actorId">)
   | ({ changeType: "officer_change" } & Omit<CreateOfficerChangeInput, "actorId">)
   | ({ changeType: "address_change" } & Omit<CreateAddressChangeInput, "actorId">);
-
-const CHANGE_TYPE_LABELS: Record<CorporateChangeType, string> = {
-  name_change: "Name change",
-  share_transfer: "Share transfer",
-  officer_change: "Officer appointment/resignation/detail change",
-  address_change: "Registered address change",
-};
 
 const NEEDS_REGISTER = new Set<CorporateChangeType>(["share_transfer", "officer_change"]);
 
@@ -237,7 +232,7 @@ export function CreateCorporateChangeRequestDialog({
       onOpenChange(false);
       onCreated(created.id);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Failed to create request.");
+      setSubmitError(error instanceof Error ? error.message : "未能建立申請。");
     } finally {
       setSubmitting(false);
     }
@@ -250,23 +245,23 @@ export function CreateCorporateChangeRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New corporate change request</DialogTitle>
+          <DialogTitle>新增公司變更申請</DialogTitle>
           <DialogDescription>
-            Record an ad hoc name change, share transfer, officer change, or address change.
+            記錄臨時的公司名稱變更、股份轉讓、高級人員變更或註冊辦事處地址變更。
           </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">載入中…</p>
         ) : hasError ? (
           <p role="alert" className="text-sm text-destructive">
-            Failed to load companies. Try closing and reopening this dialog.
+            未能載入公司清單，請關閉後重新開啟此視窗。
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className={labelClass} htmlFor="corp-change-company">
-                Company
+                公司
               </label>
               <select
                 id="corp-change-company"
@@ -276,7 +271,7 @@ export function CreateCorporateChangeRequestDialog({
                 disabled={isLoading}
                 required
               >
-                <option value="">Select a company</option>
+                <option value="">選擇公司</option>
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
                     {company.companyName}
@@ -287,7 +282,7 @@ export function CreateCorporateChangeRequestDialog({
 
             <div>
               <label className={labelClass} htmlFor="corp-change-type">
-                Change type
+                變更類別
               </label>
               <select
                 id="corp-change-type"
@@ -295,7 +290,7 @@ export function CreateCorporateChangeRequestDialog({
                 value={form.changeType}
                 onChange={(event) => set("changeType", event.target.value as CorporateChangeType)}
               >
-                {Object.entries(CHANGE_TYPE_LABELS).map(([value, label]) => (
+                {Object.entries(CORPORATE_CHANGE_TYPE_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
@@ -305,7 +300,7 @@ export function CreateCorporateChangeRequestDialog({
 
             <div>
               <label className={labelClass} htmlFor="corp-change-quoted-fee">
-                Quoted fee (HKD)
+                報價（HKD）
               </label>
               <input
                 id="corp-change-quoted-fee"
@@ -322,7 +317,7 @@ export function CreateCorporateChangeRequestDialog({
             {form.changeType === "address_change" && (
               <div>
                 <label className={labelClass} htmlFor="corp-change-new-office">
-                  New registered office
+                  新註冊辦事處地址
                 </label>
                 <input
                   id="corp-change-new-office"
@@ -338,7 +333,7 @@ export function CreateCorporateChangeRequestDialog({
               <>
                 <div>
                   <label className={labelClass} htmlFor="corp-change-new-name-en">
-                    New English name
+                    新英文名稱
                   </label>
                   <input
                     id="corp-change-new-name-en"
@@ -350,7 +345,7 @@ export function CreateCorporateChangeRequestDialog({
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="corp-change-new-name-zh">
-                    New Chinese name (optional)
+                    新中文名稱（選填）
                   </label>
                   <input
                     id="corp-change-new-name-zh"
@@ -365,13 +360,11 @@ export function CreateCorporateChangeRequestDialog({
             {form.changeType === "share_transfer" && (
               <>
                 {registerLoading && (
-                  <p className="text-sm text-muted-foreground">
-                    Loading the company&apos;s register…
-                  </p>
+                  <p className="text-sm text-muted-foreground">載入公司登記冊中…</p>
                 )}
                 <div>
                   <label className={labelClass} htmlFor="corp-change-transferor-shareholding">
-                    Transferor shareholding
+                    轉讓人股權
                   </label>
                   <select
                     id="corp-change-transferor-shareholding"
@@ -380,7 +373,7 @@ export function CreateCorporateChangeRequestDialog({
                     onChange={(event) => set("transferorShareholdingId", event.target.value)}
                     required
                   >
-                    <option value="">Select a shareholding</option>
+                    <option value="">選擇股權</option>
                     {activeShareholdings.map((holding) => (
                       <option key={holding.id} value={holding.id}>
                         {holding.shareholderName}
@@ -390,7 +383,7 @@ export function CreateCorporateChangeRequestDialog({
                 </div>
 
                 <fieldset className="space-y-1">
-                  <legend className={labelClass}>Transferee</legend>
+                  <legend className={labelClass}>承讓人</legend>
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="radio"
@@ -398,7 +391,7 @@ export function CreateCorporateChangeRequestDialog({
                       checked={form.transfereeMode === "existing"}
                       onChange={() => set("transfereeMode", "existing")}
                     />
-                    Existing shareholder
+                    現有股東
                   </label>
                   <label className="flex items-center gap-2 text-sm">
                     <input
@@ -407,14 +400,14 @@ export function CreateCorporateChangeRequestDialog({
                       checked={form.transfereeMode === "new"}
                       onChange={() => set("transfereeMode", "new")}
                     />
-                    New shareholder
+                    新股東
                   </label>
                 </fieldset>
 
                 {form.transfereeMode === "existing" ? (
                   <div>
                     <label className={labelClass} htmlFor="corp-change-transferee-shareholding">
-                      Transferee shareholding
+                      承讓人股權
                     </label>
                     <select
                       id="corp-change-transferee-shareholding"
@@ -423,7 +416,7 @@ export function CreateCorporateChangeRequestDialog({
                       onChange={(event) => set("transfereeShareholdingId", event.target.value)}
                       required
                     >
-                      <option value="">Select a shareholding</option>
+                      <option value="">選擇股權</option>
                       {activeShareholdings
                         .filter((holding) => holding.id !== form.transferorShareholdingId)
                         .map((holding) => (
@@ -437,7 +430,7 @@ export function CreateCorporateChangeRequestDialog({
                   <>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-transferee-new-name">
-                        New shareholder name
+                        新股東名稱
                       </label>
                       <input
                         id="corp-change-transferee-new-name"
@@ -451,7 +444,7 @@ export function CreateCorporateChangeRequestDialog({
                     </div>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-transferee-new-address">
-                        New shareholder address
+                        新股東地址
                       </label>
                       <input
                         id="corp-change-transferee-new-address"
@@ -467,7 +460,7 @@ export function CreateCorporateChangeRequestDialog({
 
                 <div>
                   <label className={labelClass} htmlFor="corp-change-shares-transferred">
-                    Shares transferred
+                    轉讓股數
                   </label>
                   <input
                     id="corp-change-shares-transferred"
@@ -482,7 +475,7 @@ export function CreateCorporateChangeRequestDialog({
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="corp-change-consideration">
-                    Consideration (HKD)
+                    代價（HKD）
                   </label>
                   <input
                     id="corp-change-consideration"
@@ -497,7 +490,7 @@ export function CreateCorporateChangeRequestDialog({
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="corp-change-stamp-duty">
-                    Stamp duty (HKD)
+                    印花稅（HKD）
                   </label>
                   <input
                     id="corp-change-stamp-duty"
@@ -516,13 +509,11 @@ export function CreateCorporateChangeRequestDialog({
             {form.changeType === "officer_change" && (
               <>
                 {registerLoading && (
-                  <p className="text-sm text-muted-foreground">
-                    Loading the company&apos;s register…
-                  </p>
+                  <p className="text-sm text-muted-foreground">載入公司登記冊中…</p>
                 )}
                 <div>
                   <label className={labelClass} htmlFor="corp-change-officer-action">
-                    Officer action
+                    高級人員變更事項
                   </label>
                   <select
                     id="corp-change-officer-action"
@@ -530,16 +521,16 @@ export function CreateCorporateChangeRequestDialog({
                     value={form.officerAction}
                     onChange={(event) => set("officerAction", event.target.value as OfficerAction)}
                   >
-                    <option value="appoint">Appoint</option>
-                    <option value="resign">Resign</option>
-                    <option value="detail_change">Detail change</option>
+                    <option value="appoint">委任</option>
+                    <option value="resign">辭任</option>
+                    <option value="detail_change">資料變更</option>
                   </select>
                 </div>
 
                 {form.officerAction !== "appoint" && (
                   <div>
                     <label className={labelClass} htmlFor="corp-change-officer">
-                      Officer
+                      高級人員
                     </label>
                     <select
                       id="corp-change-officer"
@@ -548,7 +539,7 @@ export function CreateCorporateChangeRequestDialog({
                       onChange={(event) => set("officerId", event.target.value)}
                       required
                     >
-                      <option value="">Select an officer</option>
+                      <option value="">選擇高級人員</option>
                       {activeOfficers.map((officer) => (
                         <option key={officer.id} value={officer.id}>
                           {officer.name}
@@ -561,7 +552,7 @@ export function CreateCorporateChangeRequestDialog({
                 {form.officerAction === "appoint" && (
                   <div>
                     <label className={labelClass} htmlFor="corp-change-new-officer-type">
-                      New officer type
+                      新高級人員類別
                     </label>
                     <select
                       id="corp-change-new-officer-type"
@@ -571,8 +562,8 @@ export function CreateCorporateChangeRequestDialog({
                         set("newOfficerType", event.target.value as NewOfficerType)
                       }
                     >
-                      <option value="director">Director</option>
-                      <option value="secretary">Secretary</option>
+                      <option value="director">{OFFICER_TYPE_LABELS.director}</option>
+                      <option value="secretary">{OFFICER_TYPE_LABELS.secretary}</option>
                     </select>
                   </div>
                 )}
@@ -581,7 +572,7 @@ export function CreateCorporateChangeRequestDialog({
                   <>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-new-officer-name">
-                        {form.officerAction === "appoint" ? "New officer name" : "Updated name"}
+                        {form.officerAction === "appoint" ? "新高級人員姓名" : "更新後姓名"}
                       </label>
                       <input
                         id="corp-change-new-officer-name"
@@ -593,7 +584,7 @@ export function CreateCorporateChangeRequestDialog({
                     </div>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-new-officer-id-type">
-                        Identification type
+                        身份證明類別
                       </label>
                       <select
                         id="corp-change-new-officer-id-type"
@@ -606,15 +597,15 @@ export function CreateCorporateChangeRequestDialog({
                           )
                         }
                       >
-                        <option value="">None</option>
-                        <option value="hkid">HKID</option>
-                        <option value="passport">Passport</option>
-                        <option value="br_number">BR number</option>
+                        <option value="">無</option>
+                        <option value="hkid">{IDENTIFICATION_TYPE_LABELS.hkid}</option>
+                        <option value="passport">{IDENTIFICATION_TYPE_LABELS.passport}</option>
+                        <option value="br_number">BR 號碼</option>
                       </select>
                     </div>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-new-officer-id-number">
-                        Identification number
+                        身份證明號碼
                       </label>
                       <input
                         id="corp-change-new-officer-id-number"
@@ -627,7 +618,7 @@ export function CreateCorporateChangeRequestDialog({
                     </div>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-new-officer-address">
-                        Address
+                        地址
                       </label>
                       <input
                         id="corp-change-new-officer-address"
@@ -641,7 +632,7 @@ export function CreateCorporateChangeRequestDialog({
 
                 <div>
                   <label className={labelClass} htmlFor="corp-change-effective-date">
-                    Effective date
+                    生效日期
                   </label>
                   <input
                     id="corp-change-effective-date"
@@ -664,14 +655,14 @@ export function CreateCorporateChangeRequestDialog({
                 disabled={submitting}
                 className="rounded-md border border-border px-3 py-1.5 text-xs font-medium disabled:opacity-60"
               >
-                Cancel
+                取消
               </button>
               <button
                 type="submit"
                 disabled={submitting || !isValid()}
                 className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                {submitting ? "Creating…" : "Create request"}
+                {submitting ? "建立中…" : "建立申請"}
               </button>
             </DialogFooter>
           </form>

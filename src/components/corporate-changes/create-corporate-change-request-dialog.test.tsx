@@ -46,15 +46,15 @@ describe("CreateCorporateChangeRequestDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-1" } });
-    fireEvent.change(screen.getByLabelText(/change type/i), {
+    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "address_change" },
     });
-    fireEvent.change(screen.getByLabelText(/quoted fee/i), { target: { value: "2800" } });
-    fireEvent.change(screen.getByLabelText(/new registered office/i), {
+    fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "2800" } });
+    fireEvent.change(screen.getByLabelText("新註冊辦事處地址"), {
       target: { value: "88 New Road, Hong Kong" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /create request/i }));
+    fireEvent.click(screen.getByRole("button", { name: "建立申請" }));
 
     await waitFor(() => {
       expect(serverFns.createCorporateChangeRequest).toHaveBeenCalledWith({
@@ -114,8 +114,8 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-1" } });
-    fireEvent.change(screen.getByLabelText(/change type/i), {
+    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "share_transfer" },
     });
 
@@ -124,18 +124,18 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
     });
     await screen.findByRole("option", { name: /existing holder/i, hidden: true });
 
-    fireEvent.change(screen.getByLabelText(/quoted fee/i), { target: { value: "2500" } });
-    fireEvent.change(screen.getByLabelText(/transferor shareholding/i), {
+    fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "2500" } });
+    fireEvent.change(screen.getByLabelText("轉讓人股權"), {
       target: { value: "holding-1" },
     });
-    fireEvent.click(screen.getByLabelText(/^new shareholder$/i));
-    fireEvent.change(screen.getByLabelText(/new shareholder name/i), {
+    fireEvent.click(screen.getByLabelText("新股東"));
+    fireEvent.change(screen.getByLabelText("新股東名稱"), {
       target: { value: "New Holder" },
     });
-    fireEvent.change(screen.getByLabelText(/shares transferred/i), { target: { value: "400" } });
-    fireEvent.change(screen.getByLabelText(/consideration/i), { target: { value: "400000" } });
-    fireEvent.change(screen.getByLabelText(/stamp duty/i), { target: { value: "800" } });
-    fireEvent.click(screen.getByRole("button", { name: /create request/i }));
+    fireEvent.change(screen.getByLabelText("轉讓股數"), { target: { value: "400" } });
+    fireEvent.change(screen.getByLabelText("代價（HKD）"), { target: { value: "400000" } });
+    fireEvent.change(screen.getByLabelText("印花稅（HKD）"), { target: { value: "800" } });
+    fireEvent.click(screen.getByRole("button", { name: "建立申請" }));
 
     await waitFor(() => {
       expect(serverFns.createCorporateChangeRequest).toHaveBeenCalledWith({
@@ -168,8 +168,8 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-1" } });
-    fireEvent.change(screen.getByLabelText(/change type/i), {
+    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "officer_change" },
     });
 
@@ -177,14 +177,14 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
     });
 
-    fireEvent.change(screen.getByLabelText(/quoted fee/i), { target: { value: "1200" } });
-    fireEvent.change(screen.getByLabelText(/officer action/i), { target: { value: "resign" } });
+    fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "1200" } });
+    fireEvent.change(screen.getByLabelText("高級人員變更事項"), { target: { value: "resign" } });
     await screen.findByRole("option", { name: /existing director/i, hidden: true });
-    fireEvent.change(screen.getByLabelText(/^officer$/i), { target: { value: "officer-1" } });
-    fireEvent.change(screen.getByLabelText(/effective date/i), {
+    fireEvent.change(screen.getByLabelText("高級人員"), { target: { value: "officer-1" } });
+    fireEvent.change(screen.getByLabelText("生效日期"), {
       target: { value: "2026-09-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /create request/i }));
+    fireEvent.click(screen.getByRole("button", { name: "建立申請" }));
 
     await waitFor(() => {
       expect(serverFns.createCorporateChangeRequest).toHaveBeenCalledWith({
@@ -217,8 +217,8 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-1" } });
-    fireEvent.change(screen.getByLabelText(/change type/i), {
+    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "share_transfer" },
     });
 
@@ -227,34 +227,32 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
     });
     await screen.findByRole("option", { name: /existing holder/i, hidden: true });
 
-    fireEvent.change(screen.getByLabelText(/quoted fee/i), { target: { value: "2500" } });
-    fireEvent.change(screen.getByLabelText(/transferor shareholding/i), {
+    fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "2500" } });
+    fireEvent.change(screen.getByLabelText("轉讓人股權"), {
       target: { value: "holding-1" },
     });
-    fireEvent.change(screen.getByLabelText(/new shareholder name/i), {
+    fireEvent.change(screen.getByLabelText("新股東名稱"), {
       target: { value: "New Holder" },
     });
-    fireEvent.change(screen.getByLabelText(/shares transferred/i), { target: { value: "400" } });
-    fireEvent.change(screen.getByLabelText(/consideration/i), { target: { value: "400000" } });
-    fireEvent.change(screen.getByLabelText(/stamp duty/i), { target: { value: "800" } });
+    fireEvent.change(screen.getByLabelText("轉讓股數"), { target: { value: "400" } });
+    fireEvent.change(screen.getByLabelText("代價（HKD）"), { target: { value: "400000" } });
+    fireEvent.change(screen.getByLabelText("印花稅（HKD）"), { target: { value: "800" } });
 
-    expect(
-      (screen.getByRole("button", { name: /create request/i }) as HTMLButtonElement).disabled,
-    ).toBe(false);
+    expect((screen.getByRole("button", { name: "建立申請" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
 
     // Switching companies must clear the shareholding selected against the previous company's
     // register — otherwise the form could submit companyId: company-2 paired with a
     // shareholding id that actually belongs to company-1.
-    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-2" } });
+    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-2" } });
 
     await waitFor(() => {
-      expect((screen.getByLabelText(/transferor shareholding/i) as HTMLSelectElement).value).toBe(
-        "",
-      );
+      expect((screen.getByLabelText("轉讓人股權") as HTMLSelectElement).value).toBe("");
     });
-    expect(
-      (screen.getByRole("button", { name: /create request/i }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+    expect((screen.getByRole("button", { name: "建立申請" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
     expect(serverFns.createCorporateChangeRequest).not.toHaveBeenCalled();
   });
 
@@ -272,8 +270,8 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/company/i), { target: { value: "company-1" } });
-    fireEvent.change(screen.getByLabelText(/change type/i), {
+    fireEvent.change(screen.getByLabelText("公司"), { target: { value: "company-1" } });
+    fireEvent.change(screen.getByLabelText("變更類別"), {
       target: { value: "officer_change" },
     });
 
@@ -281,21 +279,21 @@ describe("CreateCorporateChangeRequestDialog — share_transfer and officer_chan
       expect(clientServerFns.getClient).toHaveBeenCalledWith({ data: { id: "company-1" } });
     });
 
-    fireEvent.change(screen.getByLabelText(/quoted fee/i), { target: { value: "1200" } });
-    fireEvent.change(screen.getByLabelText(/officer action/i), {
+    fireEvent.change(screen.getByLabelText("報價（HKD）"), { target: { value: "1200" } });
+    fireEvent.change(screen.getByLabelText("高級人員變更事項"), {
       target: { value: "detail_change" },
     });
     await screen.findByRole("option", { name: /existing director/i, hidden: true });
-    fireEvent.change(screen.getByLabelText(/^officer$/i), { target: { value: "officer-1" } });
-    fireEvent.change(screen.getByLabelText(/effective date/i), {
+    fireEvent.change(screen.getByLabelText("高級人員"), { target: { value: "officer-1" } });
+    fireEvent.change(screen.getByLabelText("生效日期"), {
       target: { value: "2026-09-01" },
     });
 
     // An officer is selected and the effective date is filled, but the "Updated name" field
     // (required by the JSX for both appoint and detail_change) is still empty.
-    expect(
-      (screen.getByRole("button", { name: /create request/i }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+    expect((screen.getByRole("button", { name: "建立申請" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
     expect(serverFns.createCorporateChangeRequest).not.toHaveBeenCalled();
   });
 });

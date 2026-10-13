@@ -31,17 +31,37 @@ const MONTH_LABELS = [
  */
 export const formatDate = (isoDate: string) => {
   const [year, month, day] = toHongKongBusinessDate(isoDate).split("-");
-  return `${day} ${MONTH_LABELS[Number(month) - 1] ?? month} ${year}`;
+  return `${year}年${Number(month)}月${Number(day)}日`;
 };
 
 /**
- * A due date with how far away it is, e.g. "10 Jun 2026 · 124d overdue".
+ * The same calendar day for English text written to a client (the WhatsApp AI
+ * draft), e.g. "12 Aug 2026". The UI itself uses formatDate.
+ */
+export const formatDateEnglish = (isoDate: string) => {
+  const [year, month, day] = toHongKongBusinessDate(isoDate).split("-");
+  return `${day} ${MONTH_LABELS[Number(month) - 1] ?? month} ${year}`;
+};
+
+const hongKongTime = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Hong_Kong",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+/** An instant as its Hong Kong date and 24-hour time, e.g. "2026年6月11日 09:00". */
+export const formatDateTime = (instant: string) =>
+  `${formatDate(instant)} ${hongKongTime.format(new Date(instant))}`;
+
+/**
+ * A due date with how far away it is, e.g. "2026年6月10日 · 已逾期 124 日".
  * `daysRemaining` is passed in rather than derived so each screen keeps its own
  * notion of "today" (fixtures pin one; production uses the Hong Kong day).
  */
 export const formatDueDate = (dueDate: string, daysRemaining: number) => {
   const date = formatDate(dueDate);
-  if (daysRemaining < 0) return `${date} · ${Math.abs(daysRemaining)}d overdue`;
-  if (daysRemaining === 0) return `${date} · due today`;
-  return `${date} · in ${daysRemaining}d`;
+  if (daysRemaining < 0) return `${date} · 已逾期 ${Math.abs(daysRemaining)} 日`;
+  if (daysRemaining === 0) return `${date} · 今日到期`;
+  return `${date} · 尚餘 ${daysRemaining} 日`;
 };

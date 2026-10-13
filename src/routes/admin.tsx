@@ -24,10 +24,10 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Admin - Kossilon CoSec OS" },
+      { title: "用戶管理 — Kossilon CoSec OS" },
       {
         name: "description",
-        content: "Manage prototype users, roles, and system settings.",
+        content: "管理原型用戶、角色及系統設定。",
       },
     ],
   }),
@@ -37,37 +37,48 @@ export const Route = createFileRoute("/admin")({
 type AdminTab = "users" | "system" | "audit";
 
 const adminTabs: { value: AdminTab; label: string; icon: LucideIcon }[] = [
-  { value: "users", label: "Users", icon: UserCog },
-  { value: "system", label: "System settings", icon: Building2 },
-  { value: "audit", label: "Audit preview", icon: Activity },
+  { value: "users", label: "用戶", icon: UserCog },
+  { value: "system", label: "系統設定", icon: Building2 },
+  { value: "audit", label: "審計記錄預覽", icon: Activity },
 ];
 
 const auditRows = [
   {
     actor: "Amy Chan",
-    action: "Opened admin console",
-    area: "Admin",
+    action: "開啟用戶管理",
+    area: "用戶管理",
     time: "2026-07-07 09:05",
   },
   {
     actor: "Amy Chan",
-    action: "Reviewed WhatsApp API settings",
-    area: "System settings",
+    action: "查閱 WhatsApp API 設定",
+    area: "系統設定",
     time: "2026-07-07 09:03",
   },
   {
     actor: "Ken Wong",
-    action: "Signed in as Manager demo",
-    area: "Authentication",
+    action: "以經理示範帳戶登入",
+    area: "登入驗證",
     time: "2026-07-06 17:30",
   },
   {
     actor: "Mei Lam",
-    action: "Checked assigned annual-return cases",
-    area: "Annual returns",
+    action: "查看已分配的周年申報案件",
+    area: "周年申報",
     time: "2026-07-06 16:20",
   },
 ];
+
+const roleLabels: Record<AuthRole, string> = {
+  Admin: "管理員",
+  Manager: "經理",
+  Staff: "同事",
+  Client: "客戶",
+};
+
+function roleLabel(role: string | undefined): string {
+  return role ? (roleLabels[role as AuthRole] ?? role) : "用戶";
+}
 
 /** Production reads verified staff profiles; demo fixtures stay in the demo console. */
 function AdminPage() {
@@ -82,7 +93,7 @@ function ProductionAdminConsole() {
   if (!isCurrentUserAdmin) {
     return (
       <main className="flex-1 space-y-6 p-6">
-        <PageHeader eyebrow="Administration" title="Admin" subtitle="Restricted area" />
+        <PageHeader eyebrow="管理" title="用戶管理" subtitle="限制存取" />
         <section className="rounded-xl border border-border bg-card p-6">
           <div className="flex max-w-2xl items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
@@ -90,17 +101,17 @@ function ProductionAdminConsole() {
             </div>
             <div className="min-w-0">
               <h2 className="font-display text-lg font-semibold text-foreground">
-                Admin access required
+                須具備管理員權限
               </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {session?.name ?? "This user"} is signed in as {session?.role ?? "User"}.
-                Administration is limited to Admin users.
+                {session?.name ?? "此用戶"}目前以「{roleLabel(session?.role)}
+                」身分登入。只有管理員可使用用戶管理。
               </p>
               <Link
                 to="/"
                 className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
               >
-                Back to dashboard
+                返回總覽
               </Link>
             </div>
           </div>
@@ -141,7 +152,7 @@ function DemoAdminConsole() {
   if (!canAdmin) {
     return (
       <main className="flex-1 space-y-6 p-6">
-        <PageHeader eyebrow="Administration" title="Admin" subtitle="Restricted area" />
+        <PageHeader eyebrow="管理" title="用戶管理" subtitle="限制存取" />
         <section className="rounded-xl border border-border bg-card p-6">
           <div className="flex max-w-2xl items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-status-yellow-soft">
@@ -149,17 +160,17 @@ function DemoAdminConsole() {
             </div>
             <div className="min-w-0">
               <h2 className="font-display text-lg font-semibold text-foreground">
-                Admin access required
+                須具備管理員權限
               </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {session?.name ?? "This user"} is signed in as {session?.role ?? "User"}. Prototype
-                user and system controls are limited to Admin users.
+                {session?.name ?? "此用戶"}目前以「{roleLabel(session?.role)}
+                」身分登入。只有管理員可使用原型的用戶及系統控制。
               </p>
               <Link
                 to="/"
                 className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
               >
-                Back to dashboard
+                返回總覽
               </Link>
             </div>
           </div>
@@ -170,20 +181,20 @@ function DemoAdminConsole() {
 
   return (
     <main className="flex-1 space-y-6 p-6">
-      <PageHeader eyebrow="Administration" title="Admin" subtitle="Users, roles, system settings" />
+      <PageHeader eyebrow="管理" title="用戶管理" subtitle="用戶、角色及系統設定" />
       <p className="text-sm text-muted-foreground">
-        Demo 帳戶資料只供查閱，角色及有效狀態不可修改。
+        示範帳戶資料只供查閱，角色及啟用狀態不可修改。
       </p>
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <AdminMetric icon={Users} label="Demo users" value={localUsers.length} />
-        <AdminMetric icon={CheckCircle2} label="Active users" value={activeUsers} />
-        <AdminMetric icon={ShieldCheck} label="Admin users" value={adminUsers} />
+        <AdminMetric icon={Users} label="示範用戶" value={localUsers.length} />
+        <AdminMetric icon={CheckCircle2} label="啟用中用戶" value={activeUsers} />
+        <AdminMetric icon={ShieldCheck} label="管理員" value={adminUsers} />
       </section>
 
       <section className="rounded-xl border border-border bg-card">
         <div
           className="flex flex-wrap gap-2 border-b border-border px-5 py-4"
-          aria-label="Admin sections"
+          aria-label="用戶管理分頁"
         >
           {adminTabs.map(({ value, label, icon: Icon }) => (
             <button
@@ -261,22 +272,22 @@ function UsersPanel({
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
             <th scope="col" className="px-4 py-3 font-medium">
-              User
+              用戶
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Role
+              角色
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Team
+              團隊
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Status
+              狀態
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Last login
+              最近登入
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Actions
+              操作
             </th>
           </tr>
         </thead>
@@ -299,18 +310,18 @@ function UsersPanel({
                   value={user.role}
                   disabled
                   onChange={(event) => onRoleChange(user.id, event.target.value as AuthRole)}
-                  aria-label={`Role for ${user.name}`}
+                  aria-label={`${user.name} 的角色`}
                   className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <option value="Admin">Admin</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Staff">Staff</option>
+                  <option value="Admin">{roleLabels.Admin}</option>
+                  <option value="Manager">{roleLabels.Manager}</option>
+                  <option value="Staff">{roleLabels.Staff}</option>
                 </select>
               </td>
               <td className="px-4 py-3 text-muted-foreground">{user.team}</td>
               <td className="px-4 py-3">
                 <StatusPill tone={user.active ? "green" : "yellow"}>
-                  {user.active ? "Active" : "Inactive"}
+                  {user.active ? "已啟用" : "已停用"}
                 </StatusPill>
               </td>
               <td className="px-4 py-3 text-muted-foreground">
@@ -322,19 +333,19 @@ function UsersPanel({
                     type="button"
                     onClick={() => onSwitchUser(user.id)}
                     disabled={!user.active}
-                    aria-label={`Sign in as ${user.name}`}
+                    aria-label={`以 ${user.name} 身分登入`}
                     className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Sign in as
+                    以此身分登入
                   </button>
                   <button
                     type="button"
                     disabled
                     onClick={() => onToggleActive(user.id)}
-                    aria-label={`${user.active ? "Deactivate" : "Activate"} ${user.name}`}
+                    aria-label={`${user.active ? "停用" : "啟用"} ${user.name}`}
                     className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                   >
-                    {user.active ? "Deactivate" : "Activate"}
+                    {user.active ? "停用" : "啟用"}
                   </button>
                 </div>
               </td>
@@ -351,27 +362,27 @@ function SystemPanel() {
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <SystemCard
         icon={Building2}
-        title="Firm profile"
+        title="公司資料"
         value="Kossilon"
-        detail="Company secretary operations workspace for annual-return filing, client evidence, and team follow-up."
+        detail="公司秘書營運工作區，處理周年申報遞交、客戶證明文件及團隊跟進。"
       />
       <SystemCard
         icon={Package}
-        title="Service packages"
-        value="3 active packages"
-        detail="Basic, Standard, and Premium annual-return service packages are available for prototype cases."
+        title="服務套餐"
+        value="3 個啟用中套餐"
+        detail="原型案件可使用基本、標準及尊尚三個周年申報服務套餐。"
       />
       <SystemCard
         icon={MessageCircle}
         title="WhatsApp API"
-        value="WOZTELL configured in Settings"
-        detail="Channel routing and API key management remain in Settings for the connected WhatsApp inbox."
+        value="WOZTELL 於「設定」配置"
+        detail="已連接的 WhatsApp 收件箱，其渠道路由及 API 金鑰管理仍在「設定」處理。"
       />
       <SystemCard
         icon={KeyRound}
-        title="Annual-return actor"
-        value="Server env required"
-        detail="Server-side filing actions still need the KOSSILON_ANNUAL_RETURN_ACTOR_ID environment value."
+        title="周年申報操作者"
+        value="須設定伺服器環境變數"
+        detail="伺服器端的遞交操作仍需要 KOSSILON_ANNUAL_RETURN_ACTOR_ID 環境變數。"
       />
     </div>
   );
@@ -407,16 +418,16 @@ function AuditPanel() {
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
             <th scope="col" className="px-4 py-3 font-medium">
-              Action
+              操作
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Area
+              範疇
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Actor
+              操作者
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Time
+              時間
             </th>
           </tr>
         </thead>
@@ -436,7 +447,7 @@ function AuditPanel() {
 }
 
 function formatLastLogin(value: string) {
-  return new Date(value).toLocaleString("en-HK", {
+  return new Date(value).toLocaleString("zh-HK", {
     month: "short",
     day: "numeric",
     hour: "2-digit",

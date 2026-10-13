@@ -40,6 +40,14 @@ const categoryTone = (c: FaqCategory) =>
           ? "orange"
           : "neutral";
 
+const categoryLabels: Record<FaqCategory, string> = {
+  Incorporation: "公司註冊",
+  "Annual Return": "周年申報",
+  Payments: "付款",
+  Deregistration: "撤銷註冊",
+  General: "一般",
+};
+
 export function KnowledgeBaseSection() {
   return (
     <section className="space-y-6">
@@ -71,12 +79,10 @@ function FaqManager() {
         <div>
           <div className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-base font-semibold text-foreground">
-              FAQ knowledge base
-            </h2>
+            <h2 className="font-display text-base font-semibold text-foreground">常見問題知識庫</h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {active} active · used by the AI to draft WhatsApp replies
+            {active} 則已啟用 · AI 會用於草擬 WhatsApp 回覆
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -85,7 +91,7 @@ function FaqManager() {
             onClick={() => setExpanded(kbStore.addFaq())}
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
-            <Plus className="h-3.5 w-3.5" /> Add FAQ
+            <Plus className="h-3.5 w-3.5" /> 新增常見問題
           </button>
         </div>
       </div>
@@ -96,20 +102,20 @@ function FaqManager() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search questions, answers, tags…"
+            placeholder="搜尋問題、答案或標籤…"
             className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-2 text-xs outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <select
-          aria-label="Filter FAQs by category"
+          aria-label="按類別篩選常見問題"
           value={category}
           onChange={(e) => setCategory(e.target.value as FaqCategory | "All")}
           className="rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
         >
-          <option value="All">All categories</option>
+          <option value="All">全部類別</option>
           {FAQ_CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {c}
+              {categoryLabels[c]}
             </option>
           ))}
         </select>
@@ -117,7 +123,9 @@ function FaqManager() {
 
       <ul className="max-h-[520px] divide-y divide-border overflow-y-auto">
         {filtered.length === 0 && (
-          <li className="px-5 py-8 text-center text-xs text-muted-foreground">No FAQs match.</li>
+          <li className="px-5 py-8 text-center text-xs text-muted-foreground">
+            沒有相符的常見問題。
+          </li>
         )}
         {filtered.map((f) => (
           <FaqRow
@@ -152,8 +160,8 @@ function FaqRow({
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <StatusPill tone={categoryTone(f.category)}>{f.category}</StatusPill>
-            {!f.active && <StatusPill tone="neutral">Draft</StatusPill>}
+            <StatusPill tone={categoryTone(f.category)}>{categoryLabels[f.category]}</StatusPill>
+            {!f.active && <StatusPill tone="neutral">草稿</StatusPill>}
           </div>
           <p className="mt-1 truncate text-sm font-medium text-foreground">{f.question}</p>
         </div>
@@ -164,7 +172,7 @@ function FaqRow({
               kbStore.duplicateFaq(f.id);
             }}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Duplicate"
+            aria-label="複製"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
@@ -174,7 +182,7 @@ function FaqRow({
               kbStore.removeFaq(f.id);
             }}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Delete"
+            aria-label="刪除"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -184,7 +192,7 @@ function FaqRow({
         <div className="space-y-3 border-t border-border bg-background/40 p-5">
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Question
+              問題
             </span>
             <input
               value={f.question}
@@ -194,7 +202,7 @@ function FaqRow({
           </label>
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Answer (markdown)
+              答案（Markdown）
             </span>
             <textarea
               value={f.answer}
@@ -206,7 +214,7 @@ function FaqRow({
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Category
+                類別
               </span>
               <select
                 value={f.category}
@@ -217,14 +225,14 @@ function FaqRow({
               >
                 {FAQ_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {categoryLabels[c]}
                   </option>
                 ))}
               </select>
             </label>
             <label className="block">
               <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Tags (comma separated)
+                標籤（以逗號分隔）
               </span>
               <input
                 value={f.tags.join(", ")}
@@ -246,7 +254,7 @@ function FaqRow({
               checked={f.active}
               onChange={(e) => kbStore.updateFaq(f.id, { active: e.target.checked })}
             />
-            <span className="text-muted-foreground">Active — used by the AI</span>
+            <span className="text-muted-foreground">已啟用（AI 會引用）</span>
           </label>
         </div>
       )}
@@ -270,11 +278,11 @@ function ReferenceDocsManager() {
         await kbStore.uploadDoc(file);
         ok++;
       } catch (err) {
-        toast.error(`${file.name}: ${err instanceof Error ? err.message : "Upload failed"}`);
+        toast.error(`${file.name}: ${err instanceof Error ? err.message : "上載失敗"}`);
       }
     }
     setUploading(false);
-    if (ok > 0) toast.success(`Indexed ${ok} document${ok === 1 ? "" : "s"}`);
+    if (ok > 0) toast.success(`已建立 ${ok} 份文件的索引`);
   };
 
   return (
@@ -283,12 +291,10 @@ function ReferenceDocsManager() {
         <div>
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-base font-semibold text-foreground">
-              Reference documents
-            </h2>
+            <h2 className="font-display text-base font-semibold text-foreground">參考文件</h2>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {docs.filter((d) => d.active).length} active · text-indexed for AI retrieval
+            {docs.filter((d) => d.active).length} 份已啟用 · 已建立文字索引供 AI 檢索
           </p>
         </div>
         <button
@@ -301,7 +307,7 @@ function ReferenceDocsManager() {
           ) : (
             <FileUp className="h-3.5 w-3.5" />
           )}
-          {uploading ? "Indexing…" : "Upload document"}
+          {uploading ? "建立索引中…" : "上載文件"}
         </button>
         <input
           ref={fileRef}
@@ -331,7 +337,7 @@ function ReferenceDocsManager() {
           dragOver && "border-primary bg-primary/5 text-primary",
         )}
       >
-        Drop PDF, DOCX, TXT, MD, or CSV here — text is extracted & indexed in your browser
+        將 PDF、DOCX、TXT、MD 或 CSV 檔案拖放至此，文字會在瀏覽器內擷取並建立索引
       </div>
       <ul className="max-h-[520px] divide-y divide-border overflow-y-auto">
         {docs.map((d) => (
@@ -356,20 +362,20 @@ function DocRow({ d }: { d: ReferenceDoc }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{d.title}</p>
           <p className="truncate text-[11px] text-muted-foreground">
-            {d.filename} · {d.sizeKb} KB{d.pageCount ? ` · ${d.pageCount}p` : ""}
+            {d.filename} · {d.sizeKb} KB{d.pageCount ? ` · ${d.pageCount} 頁` : ""}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <StatusPill tone={categoryTone(d.category)}>{d.category}</StatusPill>
+            <StatusPill tone={categoryTone(d.category)}>{categoryLabels[d.category]}</StatusPill>
             {d.chunks && d.chunks.length > 0 ? (
               <StatusPill tone="green">
                 <span className="inline-flex items-center gap-1">
-                  <Sparkles className="h-2.5 w-2.5" /> Indexed · {d.chunks.length} chunks
+                  <Sparkles className="h-2.5 w-2.5" /> 已索引 · {d.chunks.length} 段
                 </span>
               </StatusPill>
             ) : (
-              <StatusPill tone="neutral">Metadata only</StatusPill>
+              <StatusPill tone="neutral">只有基本資料</StatusPill>
             )}
-            {!d.active && <StatusPill tone="neutral">Inactive</StatusPill>}
+            {!d.active && <StatusPill tone="neutral">已停用</StatusPill>}
           </div>
         </div>
         <button
@@ -378,7 +384,7 @@ function DocRow({ d }: { d: ReferenceDoc }) {
             kbStore.removeDoc(d.id);
           }}
           className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Delete"
+          aria-label="刪除"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -387,7 +393,7 @@ function DocRow({ d }: { d: ReferenceDoc }) {
         <div className="space-y-2 border-t border-border bg-background/40 p-5">
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Title
+              標題
             </span>
             <input
               value={d.title}
@@ -397,7 +403,7 @@ function DocRow({ d }: { d: ReferenceDoc }) {
           </label>
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Summary
+              摘要
             </span>
             <textarea
               value={d.summary}
@@ -409,7 +415,7 @@ function DocRow({ d }: { d: ReferenceDoc }) {
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Category
+                類別
               </span>
               <select
                 value={d.category}
@@ -420,7 +426,7 @@ function DocRow({ d }: { d: ReferenceDoc }) {
               >
                 {FAQ_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {categoryLabels[c]}
                   </option>
                 ))}
               </select>
@@ -431,13 +437,13 @@ function DocRow({ d }: { d: ReferenceDoc }) {
                 checked={d.active}
                 onChange={(e) => kbStore.updateDoc(d.id, { active: e.target.checked })}
               />
-              <span className="text-muted-foreground">Active</span>
+              <span className="text-muted-foreground">已啟用</span>
             </label>
           </div>
           {d.extractedText && (
             <div>
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Indexed content preview
+                索引內容預覽
               </p>
               <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-background/60 p-2 font-mono text-[11px] leading-relaxed text-muted-foreground">
                 {d.extractedText.slice(0, 1200)}
@@ -459,7 +465,7 @@ function FaqImportButton() {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent"
       >
-        <Upload className="h-3.5 w-3.5" /> Import
+        <Upload className="h-3.5 w-3.5" /> 匯入
       </button>
       {open && <FaqImportDialog onClose={() => setOpen(false)} />}
     </>
@@ -491,9 +497,7 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
   const commit = () => {
     if (preview.length === 0) return;
     const { added, updated } = kbStore.importFaqs(preview);
-    toast.success(
-      `Imported ${preview.length} FAQ${preview.length === 1 ? "" : "s"} · ${added} new, ${updated} updated`,
-    );
+    toast.success(`已匯入 ${preview.length} 則常見問題 · 新增 ${added} 則，更新 ${updated} 則`);
     onClose();
   };
 
@@ -518,15 +522,16 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div>
-            <h3 className="font-display text-base font-semibold text-foreground">Import FAQs</h3>
+            <h3 className="font-display text-base font-semibold text-foreground">匯入常見問題</h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Upload a CSV or JSON file. Columns: <code className="text-foreground">question</code>,{" "}
-              <code className="text-foreground">answer</code>, <code>category</code>,{" "}
-              <code>tags</code>, <code>active</code>. Duplicates by question are updated in place.
+              上載 CSV 或 JSON 檔案。欄位：<code className="text-foreground">question</code>、
+              <code className="text-foreground">answer</code>、<code>category</code>、
+              <code>tags</code>、<code>active</code>。問題相同的項目會直接更新。
             </p>
           </div>
           <button
             onClick={onClose}
+            aria-label="關閉"
             className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <X className="h-4 w-4" />
@@ -539,18 +544,18 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
               onClick={() => fileRef.current?.click()}
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
             >
-              <FileUp className="h-3.5 w-3.5" /> Choose file
+              <FileUp className="h-3.5 w-3.5" /> 選擇檔案
             </button>
             <button
               onClick={downloadSample}
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-accent"
             >
-              <Download className="h-3.5 w-3.5" /> Sample CSV
+              <Download className="h-3.5 w-3.5" /> 範例 CSV
             </button>
             {parsed && (
               <span className="text-[11px] text-muted-foreground">
-                {filename} · {preview.length} valid row{preview.length === 1 ? "" : "s"}
-                {errors.length > 0 ? ` · ${errors.length} skipped` : ""}
+                {filename} · {preview.length} 行有效
+                {errors.length > 0 ? ` · 略過 ${errors.length} 行` : ""}
               </span>
             )}
             <input
@@ -568,7 +573,7 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
 
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Or paste CSV / JSON
+              或貼上 CSV／JSON
             </span>
             <textarea
               value={text}
@@ -585,14 +590,12 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
 
           {errors.length > 0 && (
             <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
-              <p className="text-xs font-semibold text-destructive">
-                Skipped {errors.length} row{errors.length === 1 ? "" : "s"}
-              </p>
+              <p className="text-xs font-semibold text-destructive">已略過 {errors.length} 行</p>
               <ul className="mt-1 list-inside list-disc space-y-0.5 text-[11px] text-destructive/80">
                 {errors.slice(0, 6).map((e, i) => (
                   <li key={i}>{e}</li>
                 ))}
-                {errors.length > 6 && <li>…and {errors.length - 6} more</li>}
+                {errors.length > 6 && <li>…另有 {errors.length - 6} 行</li>}
               </ul>
             </div>
           )}
@@ -600,8 +603,8 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
           {preview.length > 0 && (
             <div className="rounded-md border border-border">
               <div className="flex items-center justify-between border-b border-border px-3 py-2 text-[11px] text-muted-foreground">
-                <span>Preview ({preview.length})</span>
-                <span>Duplicates by question are merged</span>
+                <span>預覽（{preview.length}）</span>
+                <span>問題相同的項目會合併</span>
               </div>
               <ul className="max-h-56 divide-y divide-border overflow-y-auto">
                 {preview.slice(0, 40).map((r, i) => (
@@ -610,7 +613,7 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
                     <p className="line-clamp-2 text-[11px] text-muted-foreground">{r.answer}</p>
                     <div className="mt-1 flex items-center gap-1.5">
                       <StatusPill tone={categoryTone(r.category ?? "General")}>
-                        {r.category ?? "General"}
+                        {categoryLabels[r.category ?? "General"]}
                       </StatusPill>
                       {r.tags && r.tags.length > 0 && (
                         <span className="text-[10px] text-muted-foreground">
@@ -622,7 +625,7 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
                 ))}
                 {preview.length > 40 && (
                   <li className="px-3 py-2 text-center text-[11px] text-muted-foreground">
-                    …and {preview.length - 40} more
+                    …另有 {preview.length - 40} 則
                   </li>
                 )}
               </ul>
@@ -635,15 +638,15 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="rounded-md px-3 py-2 text-xs font-medium hover:bg-accent"
           >
-            Cancel
+            取消
           </button>
           <button
             onClick={commit}
             disabled={preview.length === 0}
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            <Upload className="h-3.5 w-3.5" /> Import{" "}
-            {preview.length > 0 ? `${preview.length} FAQ${preview.length === 1 ? "" : "s"}` : ""}
+            <Upload className="h-3.5 w-3.5" /> 匯入
+            {preview.length > 0 ? ` ${preview.length} 則常見問題` : ""}
           </button>
         </div>
       </div>

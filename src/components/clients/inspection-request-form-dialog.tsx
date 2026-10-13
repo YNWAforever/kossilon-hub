@@ -72,7 +72,7 @@ export function InspectionRequestFormDialog({ open, onOpenChange, companyId, onS
       onSaved();
       onOpenChange(false);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to record the request.");
+      setError(caught instanceof Error ? caught.message : "未能記錄查閱要求。");
     } finally {
       setSaving(false);
     }
@@ -82,16 +82,14 @@ export function InspectionRequestFormDialog({ open, onOpenChange, companyId, onS
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Record inspection request</DialogTitle>
-          <DialogDescription>
-            Log a request to inspect this company's significant controllers register.
-          </DialogDescription>
+          <DialogTitle>記錄查閱要求</DialogTitle>
+          <DialogDescription>記錄查閱此公司重要控制人登記冊的要求。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className={labelClass} htmlFor="inspection-form-requester">
-              Requester name
+              要求人名稱
             </label>
             <input
               id="inspection-form-requester"
@@ -104,21 +102,21 @@ export function InspectionRequestFormDialog({ open, onOpenChange, companyId, onS
 
           <div>
             <label className={labelClass} htmlFor="inspection-form-authority">
-              Requester authority
+              要求人身分／機構
             </label>
             <input
               id="inspection-form-authority"
               className={inputClass}
               value={requesterAuthority}
               onChange={(event) => setRequesterAuthority(event.target.value)}
-              placeholder="e.g. Companies Registry"
+              placeholder="例如：公司註冊處"
               required
             />
           </div>
 
           <div>
             <label className={labelClass} htmlFor="inspection-form-date">
-              Request date
+              要求日期
             </label>
             <input
               id="inspection-form-date"
@@ -138,14 +136,14 @@ export function InspectionRequestFormDialog({ open, onOpenChange, companyId, onS
               onClick={() => onOpenChange(false)}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              {saving ? "Saving…" : "Record request"}
+              {saving ? "儲存中…" : "記錄查閱要求"}
             </button>
           </DialogFooter>
         </form>

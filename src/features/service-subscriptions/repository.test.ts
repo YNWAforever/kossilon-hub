@@ -72,7 +72,7 @@ describe.skipIf(!databaseUrl)("service subscriptions integration", () => {
               renewalDate: "2027-06-01",
               actorId: owner.id,
             }),
-          ).rejects.toThrow("This company already has an active subscription for that service.");
+          ).rejects.toThrow("此公司已有該服務的有效訂閱。");
 
           throw new Error("rollback service subscription integration fixture");
         }),
