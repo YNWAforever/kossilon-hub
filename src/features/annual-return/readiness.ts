@@ -136,7 +136,11 @@ export function computeReadiness(input: ReadinessInput): ReadinessSnapshot {
         `${item.itemLabel} 欠當前版本、安全掃描或人手覆核證據。`,
         `/documents?caseId=${case_.id}`,
       );
-    if (!input.requirements.some((requirement) => requirement.instance.checklistItemId === item.id))
+    // With no instances at all, the case-level line above already says so.
+    if (
+      input.requirements.length &&
+      !input.requirements.some((requirement) => requirement.instance.checklistItemId === item.id)
+    )
       add("requirements_unknown", "prepare", `${item.itemLabel} 未有適用需求實例。`);
   }
   if (

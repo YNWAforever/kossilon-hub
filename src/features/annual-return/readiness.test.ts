@@ -230,4 +230,25 @@ describe("stage-specific current evidence readiness", () => {
     value.requirements = [];
     expect(codes(value)).toContain("requirements_unknown");
   });
+  // With no requirement instances at all, one line says so. Repeating it for
+  // every checklist item buried the case page under a dozen identical rows.
+  it("reports missing requirements once when the case has none at all", () => {
+    const value = input();
+    value.requirements = [];
+    value.case_.checklist = [
+      value.case_.checklist[0],
+      { ...value.case_.checklist[0], id: "item-2", itemLabel: "Register of directors" },
+    ];
+    expect(codes(value).filter((code) => code === "requirements_unknown")).toHaveLength(1);
+  });
+  it("still names the one checklist item that has no requirement instance", () => {
+    const value = input();
+    value.case_.checklist = [
+      value.case_.checklist[0],
+      { ...value.case_.checklist[0], id: "item-2", itemLabel: "Register of directors" },
+    ];
+    expect(computeReadiness(value).blockers.map((blocker) => blocker.message)).toContain(
+      "Register of directors 未有適用需求實例。",
+    );
+  });
 });

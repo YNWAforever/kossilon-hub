@@ -204,6 +204,36 @@ describe("ProductionAnnualReturnCaseDetail", () => {
     expect(serverFns.getAnnualReturnCase).not.toHaveBeenCalled();
   });
 
+  it("offers 處理 only for blockers whose fix lives on another page", async () => {
+    serverFns.getAnnualReturnCase.mockResolvedValue({
+      ...caseItem,
+      readiness: {
+        ...caseItem.readiness!,
+        readyToPrepare: false,
+        blockers: [
+          {
+            code: "required_document_missing",
+            stage: "prepare",
+            message: "CDD 尚欠可用文件。",
+            action: `/documents?caseId=${caseId}`,
+          },
+          {
+            code: "party_applicability_unknown",
+            stage: "prepare",
+            message: "案件人士尚未確認。",
+            action: `/annual-returns/${caseId}`,
+          },
+        ],
+      },
+    });
+    renderDetail();
+
+    const list = await screen.findByLabelText("交件阻礙事項");
+    const rows = within(list).getAllByRole("listitem");
+    expect(within(rows[0]).getByRole("link", { name: "處理" })).toBeTruthy();
+    expect(within(rows[1]).queryByRole("link", { name: "處理" })).toBeNull();
+  });
+
   it("disables preparation for unknown current evidence and shows an actionable blocker", async () => {
     serverFns.getAnnualReturnCase.mockResolvedValue({ ...caseItem, readiness: undefined });
     renderDetail();

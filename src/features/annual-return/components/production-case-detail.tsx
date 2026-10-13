@@ -454,7 +454,7 @@ function CaseDetail({
             <p className="mt-1 text-sm text-muted-foreground">
               先核對當前文件版本及付款證據，再準備套件；準備或下載不等於外部提交。
             </p>
-            <ul className="mt-2 space-y-1 text-sm" aria-label="交件阻礙事項">
+            <ul id="case-blockers" className="mt-2 space-y-1 text-sm" aria-label="交件阻礙事項">
               {readiness.blockers.map((blocker, index) => (
                 <li key={`${blocker.code}:${index}`}>
                   <span className="text-muted-foreground">
@@ -466,9 +466,13 @@ function CaseDetail({
                     ：
                   </span>
                   {blocker.message}
-                  <Button asChild variant="link" className="ml-2 underline">
-                    <a href={blocker.action}>處理</a>
-                  </Button>
+                  {/* A blocker with nowhere better to go points back at this
+                      page; a link that reloads the page you are on is noise. */}
+                  {blocker.action !== `/annual-returns/${caseItem.id}` ? (
+                    <Button asChild variant="link" className="ml-2 underline">
+                      <a href={blocker.action}>處理</a>
+                    </Button>
+                  ) : null}
                 </li>
               ))}
             </ul>

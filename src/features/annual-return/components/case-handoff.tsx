@@ -41,7 +41,8 @@ export function CaseHandoff({
     [withdrawNote, setWithdrawNote] = useState("");
   const data = workflow.data,
     p = data?.preview,
-    h = data?.handoffs.find((x) => x.id === selected) ?? data?.handoffs[0];
+    h = data?.handoffs.find((x) => x.id === selected) ?? data?.handoffs[0],
+    openBlockers = p?.blockers.filter((b) => b.stage !== "transmit").length ?? 0;
   useEffect(() => {
     setConfirmed(false);
   }, [p?.sourceVersion]);
@@ -109,13 +110,16 @@ export function CaseHandoff({
             <p className="break-all text-xs">
               當前 manifest SHA256：{p?.manifestSha256 ?? "未有可批准套件"}
             </p>
-            {p?.blockers
-              .filter((b) => b.stage !== "transmit")
-              .map((b) => (
-                <p key={`${b.code}-${b.message}`} className="text-sm text-status-yellow-text">
-                  {b.message}
-                </p>
-              ))}
+            {/* The packet section lists every blocker with a link to fix it;
+                repeating the list here doubled the page. */}
+            {openBlockers > 0 ? (
+              <p className="text-sm text-status-yellow-text">
+                尚有 {openBlockers} 項事項須先處理，未能批准。
+                <a href="#case-blockers" className="ml-1 underline">
+                  查看交件阻礙事項
+                </a>
+              </p>
+            ) : null}
             <label className="flex gap-2 text-sm">
               <input
                 type="checkbox"
