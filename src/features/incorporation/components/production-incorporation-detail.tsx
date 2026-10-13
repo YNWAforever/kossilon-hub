@@ -1,3 +1,9 @@
+import {
+  BR_NUMBER_MESSAGE,
+  CR_NUMBER_MESSAGE,
+  isValidBrNumber,
+  isValidCrNumber,
+} from "@/features/clients/identifiers";
 import { formatDate } from "@/lib/format-date";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,6 +51,8 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
   });
   const [completionError, setCompletionError] = useState<string | null>(null);
   const registryNumbersInvalid = completionError === REGISTRY_NUMBERS_ERROR;
+  const crInvalid = registryNumbersInvalid || completionError === CR_NUMBER_MESSAGE;
+  const brInvalid = registryNumbersInvalid || completionError === BR_NUMBER_MESSAGE;
 
   const caseQuery = useQuery({
     queryKey: ["incorporation-cases", caseId],
@@ -208,6 +216,14 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
                 setCompletionError(REGISTRY_NUMBERS_ERROR);
                 return;
               }
+              if (!isValidCrNumber(completionForm.crNumber)) {
+                setCompletionError(CR_NUMBER_MESSAGE);
+                return;
+              }
+              if (!isValidBrNumber(completionForm.brNumber)) {
+                setCompletionError(BR_NUMBER_MESSAGE);
+                return;
+              }
 
               setCompletionError(null);
               complete.mutate();
@@ -223,8 +239,8 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               </label>
               <Input
                 id="complete-cr"
-                aria-invalid={registryNumbersInvalid}
-                aria-describedby={registryNumbersInvalid ? "complete-error" : undefined}
+                aria-invalid={crInvalid}
+                aria-describedby={crInvalid ? "complete-error" : undefined}
                 size="sm"
                 className="w-full"
                 value={completionForm.crNumber}
@@ -243,8 +259,8 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               </label>
               <Input
                 id="complete-br"
-                aria-invalid={registryNumbersInvalid}
-                aria-describedby={registryNumbersInvalid ? "complete-error" : undefined}
+                aria-invalid={brInvalid}
+                aria-describedby={brInvalid ? "complete-error" : undefined}
                 size="sm"
                 className="w-full"
                 value={completionForm.brNumber}

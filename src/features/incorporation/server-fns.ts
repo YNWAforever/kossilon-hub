@@ -1,3 +1,11 @@
+import {
+  BR_NUMBER_MESSAGE,
+  CR_NUMBER_MESSAGE,
+  isValidBrNumber,
+  isValidCrNumber,
+  normalizeBrNumber,
+  normalizeCrNumber,
+} from "@/features/clients/identifiers";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
@@ -80,8 +88,8 @@ const updateCaseStatusSchema = z.object({
 
 const completeCaseSchema = z.object({
   caseId: z.string().uuid(),
-  crNumber: z.string().min(1),
-  brNumber: z.string().min(1),
+  crNumber: z.string().transform(normalizeCrNumber).refine(isValidCrNumber, CR_NUMBER_MESSAGE),
+  brNumber: z.string().transform(normalizeBrNumber).refine(isValidBrNumber, BR_NUMBER_MESSAGE),
   incorporationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 

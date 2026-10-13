@@ -1,3 +1,9 @@
+import {
+  BR_NUMBER_MESSAGE,
+  CR_NUMBER_MESSAGE,
+  isValidBrNumber,
+  isValidCrNumber,
+} from "@/features/clients/identifiers";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -128,6 +134,17 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setFieldError(null);
+
+    // Checked here as well as on the server so the message lands on the field
+    // being typed in, before a round trip.
+    if (!client && !isValidCrNumber(form.crNumber)) {
+      setFieldError({ field: "crNumber", message: CR_NUMBER_MESSAGE });
+      return;
+    }
+    if (!client && !isValidBrNumber(form.brNumber)) {
+      setFieldError({ field: "brNumber", message: BR_NUMBER_MESSAGE });
+      return;
+    }
     setSaving(true);
 
     try {
