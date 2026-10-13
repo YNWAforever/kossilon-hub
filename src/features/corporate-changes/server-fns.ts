@@ -2,6 +2,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { assertCorporateChangeRequestWritable } from "./authorization";
+import { getCorporateChangeRequestForActor } from "./read";
 import type { CorporateChangeRequestRepository } from "./repository";
 import type { CreateCorporateChangeRequestInput } from "./types";
 
@@ -218,6 +219,8 @@ export const getCorporateChangeRequest = createServerFn({ method: "GET" })
   .validator(z.object({ requestId: z.string().uuid() }))
   .handler(async ({ data }) => {
     const { getRequest, requireStaffActor } = await loadDefaultCorporateChangeContext();
-    await requireStaffActor(getRequest());
-    return withRepository((repository) => repository.getRequest(data.requestId));
+    const actor = await requireStaffActor(getRequest());
+    return withRepository((repository) =>
+      getCorporateChangeRequestForActor(actor, data.requestId, { repository }),
+    );
   });

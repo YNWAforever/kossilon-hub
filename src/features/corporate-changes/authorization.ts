@@ -29,6 +29,26 @@ export function assertCorporateChangeRequestWritable(
   }
 }
 
+/** Reading follows the same team scoping as the list: Admin sees all teams. */
+export function assertCorporateChangeRequestReadable(
+  actor: AuthenticatedActor,
+  company: CorporateChangeCompanyTeam,
+): void {
+  if (!actor.active) {
+    throw forbidden("inactive users cannot view corporate change requests.");
+  }
+
+  if (actor.role === "Client") {
+    throw forbidden("staff access is required.");
+  }
+
+  if (actor.role === "Admin") return;
+
+  if (!actor.teamId || actor.teamId !== company.assignedTeamId) {
+    throw forbidden("this company belongs to another team.");
+  }
+}
+
 export function assertCorporateChangeRequestCreatable(
   actor: AuthenticatedActor,
   input: { teamId: string },
