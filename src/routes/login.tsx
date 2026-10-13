@@ -67,13 +67,15 @@ export function LoginPage() {
 
     const searchRedirect = new URLSearchParams(window.location.search).get("redirect");
     const safeSearchRedirect = getSafeRedirectPath(searchRedirect);
-    const fallback = session.role === "Client" ? "/portal" : "/today";
+    // 今日工作 reads production work views only, so in the read-only demo it is an
+    // empty state; demo staff start on the fixture-backed dashboard instead.
+    const fallback = session.role === "Client" ? "/portal" : magicLinkEnabled ? "/today" : "/";
     const redirectPath =
       searchRedirect && safeSearchRedirect === searchRedirect
         ? safeSearchRedirect
         : consumeRedirectPath(undefined, fallback);
     void navigate({ href: redirectPath, replace: true });
-  }, [isHydrated, navigate, session]);
+  }, [isHydrated, magicLinkEnabled, navigate, session]);
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("denied") !== "1") return;

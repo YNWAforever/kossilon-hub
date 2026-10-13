@@ -8,8 +8,9 @@ test("Admin daily entry, all links, keyboard drawer, readable settings and touch
   page.on("pageerror", (e) => pageErrors.push(e.message));
   await page.goto("/login");
   await page.getByRole("button", { name: /Amy Chan/ }).click();
-  await expect(page).toHaveURL(/\/today/);
-  await expect(page.getByRole("heading", { name: "今日工作", exact: true })).toBeVisible();
+  // The read-only demo lands on the fixture-backed dashboard; 今日工作 is production-only.
+  await expect(page).toHaveURL(/\/(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
   const mobile = info.project.name === "mobile390",
     trigger = page.getByRole("button", { name: "Open navigation menu" });
   if (mobile) {
@@ -19,7 +20,7 @@ test("Admin daily entry, all links, keyboard drawer, readable settings and touch
   }
   const nav = page.getByRole("navigation", { name: "Primary navigation" });
   await expect(nav.getByRole("link")).toHaveCount(16);
-  await expect(nav.getByRole("link", { name: "今日工作", exact: true })).toHaveAttribute(
+  await expect(nav.getByRole("link", { name: "總覽", exact: true })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -65,7 +66,7 @@ test("Staff retains daily links while Admin settings/actions stay hidden", async
 }, info) => {
   await page.goto("/login");
   await page.getByRole("button", { name: /Mei Lam/ }).click();
-  await expect(page).toHaveURL(/\/today/);
+  await expect(page).toHaveURL(/\/(?:\?|$)/);
   if (info.project.name === "mobile390")
     await page.getByRole("button", { name: "Open navigation menu" }).click();
   const nav = page.getByRole("navigation", { name: "Primary navigation" });

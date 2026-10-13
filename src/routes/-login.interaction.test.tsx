@@ -98,6 +98,28 @@ describe("LoginPage", () => {
       }
     },
   );
+  it("lands demo staff on the populated dashboard instead of the empty 今日工作", async () => {
+    const originalHref = window.location.href;
+    history.replaceState(null, "", "/login");
+    window.sessionStorage.clear();
+    vi.stubEnv("VITE_ENABLE_DEMO_AUTH", "true");
+    mockSession = {
+      id: "controlled-local",
+      name: "Local",
+      email: "local@example.test",
+      role: "Staff",
+      initials: "L",
+      team: "x",
+      signedInAt: "2026-10-02T00:00:00Z",
+    };
+    try {
+      render(<LoginPage />);
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/", replace: true }));
+    } finally {
+      vi.unstubAllEnvs();
+      history.replaceState(null, "", originalHref);
+    }
+  });
   it("preserves an explicit dashboard return rather than treating slash as absence", async () => {
     const originalHref = window.location.href;
     history.replaceState(null, "", "/login?redirect=%2F");
