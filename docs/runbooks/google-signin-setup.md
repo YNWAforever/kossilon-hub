@@ -15,8 +15,8 @@
 
 **Step 1 — Create the Google OAuth client.** In Google Cloud Console, under
 APIs & Services → Credentials, create an OAuth 2.0 Client ID of type
-**Web application**. Add every environment's callback URL to *Authorized
-redirect URIs* — production, and any preview/demo origin that needs Google
+**Web application**. Add every environment's callback URL to _Authorized
+redirect URIs_ — production, and any preview/demo origin that needs Google
 sign-in:
 
 ```

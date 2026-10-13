@@ -17,6 +17,7 @@
 **This depends on P0-6** (live email transport, already merged to `main` — `getResendConfig`, the Resend transport, and composite channel routing in `createNotificationTransport` all exist and are wired through `dispatchDueNotificationsOnServer`). Nothing in this plan touches that work; it's a prerequisite, not part of this branch.
 
 **`buildReminderDraft` has five call sites, not two.** Grep confirms:
+
 1. `src/features/annual-return/whatsapp-reminders.ts:67` (production — the manual "send reminder now" flow; has a real `recipientName` in scope)
 2. `src/features/annual-return/whatsapp-reminders.test.ts:62,111` (tests, direct calls)
 3. `src/features/annual-return/follow-ups.ts:149` (production — the follow-up drafts list; recipient may be unresolved, since a draft is generated even for cases with no persisted recipient yet)
@@ -28,7 +29,7 @@ Every one of these needs updating in Task 3 or it won't compile. Call sites 3 an
 
 **Reuse `daysBetween`, don't reinvent date math.** `src/features/annual-return/workflow.ts` already exports `daysBetween(startDate, endDate): number`, and `riskForCase` in the same file already uses the identical 30/14/7-day thresholds this feature needs, for a different purpose (risk-level coloring). Use `daysBetween` in both `buildReminderDraft` (Task 3) and the new `dueMilestone` (Task 2) rather than writing new `Date.parse` arithmetic — it already handles date-only parsing correctly and matches the file's own convention.
 
-**`lockWritableCase` throws; the new pass needs a version that doesn't.** Every existing mutation in `repository.ts` (`assignOwner`, `addNote`, `updateStatus`, `recordReminder`, etc.) calls `lockWritableCase(tx, caseId)`, which throws if the case isn't found/writable — correct for a single-case, actor-driven mutation where "not writable" is an error. `evaluateReminders` processes many cases in a loop and must *skip* an ineligible one, not abort the whole batch — exactly how `evaluateEscalations` in `src/features/work-items/repository.ts` already handles this (`getWorkItem(tx, id, true)` returns `null`, caller does `if (!item) return;`). Task 4 extracts `lockWritableCase`'s query into a new `tryLockWritableCase` that returns `null` instead of throwing, with `lockWritableCase` becoming a thin wrapper — a small, behavior-preserving refactor of a heavily-used helper. Verify every existing caller of `lockWritableCase` still passes unchanged after this.
+**`lockWritableCase` throws; the new pass needs a version that doesn't.** Every existing mutation in `repository.ts` (`assignOwner`, `addNote`, `updateStatus`, `recordReminder`, etc.) calls `lockWritableCase(tx, caseId)`, which throws if the case isn't found/writable — correct for a single-case, actor-driven mutation where "not writable" is an error. `evaluateReminders` processes many cases in a loop and must _skip_ an ineligible one, not abort the whole batch — exactly how `evaluateEscalations` in `src/features/work-items/repository.ts` already handles this (`getWorkItem(tx, id, true)` returns `null`, caller does `if (!item) return;`). Task 4 extracts `lockWritableCase`'s query into a new `tryLockWritableCase` that returns `null` instead of throwing, with `lockWritableCase` becoming a thin wrapper — a small, behavior-preserving refactor of a heavily-used helper. Verify every existing caller of `lockWritableCase` still passes unchanged after this.
 
 **`recordReminder` cannot be reused for automated sends.** It requires and authorizes a human `actorId` via `assertActorCanMutateLockedCase`, which a cron pass has no way to satisfy. `evaluateReminders` does its own equivalent `reminders_sent`/`current_status` update directly (Task 4), and writes to `timeline_events` only — not `annual_return_audit_events` (`writeAuditEvent`), which is actor-scoped and reserved for staff actions per its existing usage throughout this file.
 
@@ -42,32 +43,33 @@ All paths below are relative to the repo root. Work on branch `codex/annual-retu
 
 ## File structure
 
-| File | Change | Responsibility |
-|---|---|---|
-| `db/migrations/0012_annual_return_reminder_events.sql` | Create | New event table, gates each milestone to fire once per case |
-| `src/server/db/schema.sql` | Modify | Reference copy of the new table, matching this repo's schema/migration sync convention |
-| `src/features/annual-return/reminder-cadence.ts` | Create | `ReminderMilestone` type + `dueMilestone` pure function |
-| `src/features/annual-return/reminder-cadence.test.ts` | Create | Tests for `dueMilestone` in isolation |
-| `src/features/annual-return/workflow.ts` | Modify | `buildReminderDraft` rewritten in Traditional Chinese, gains `contactName`/`today` params |
-| `src/features/annual-return/workflow.test.ts` | Modify | Updated for the new signature and Chinese content |
-| `src/features/annual-return/whatsapp-reminders.ts` | Modify | Threads `today` through to `buildReminderDraft` |
-| `src/features/annual-return/whatsapp-reminders.test.ts` | Modify | Updated call sites |
-| `src/features/annual-return/follow-ups.ts` | Modify | Threads `today` through; supplies the generic-contact fallback |
-| `src/features/annual-return/follow-ups.test.ts` | Modify | Updated call sites |
-| `src/features/annual-return/follow-up-server-fns.ts` | Modify | Supplies `hongKongBusinessDate()` at both call sites |
-| `src/features/annual-return/server-fns.ts` | Modify | Supplies `hongKongBusinessDate()` and the generic-contact fallback for the preview server fn |
-| `src/features/annual-return/repository.ts` | Modify | New `evaluateReminders` method; `tryLockWritableCase` extraction |
-| `src/features/annual-return/repository.test.ts` | Modify | New `evaluateReminders` integration tests |
-| `src/server/cron.ts` | Modify | New `evaluateAnnualReturnReminders` step in the maintenance pipeline |
-| `src/server/cron.test.ts` | Modify | Updated call-order assertion |
-| `src/server/maintenance.ts` | Modify | Wires the real `AnnualReturnRepository` through |
-| `src/server/maintenance.test.ts` | Modify | Updated dependency fixture |
+| File                                                    | Change | Responsibility                                                                               |
+| ------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------- |
+| `db/migrations/0012_annual_return_reminder_events.sql`  | Create | New event table, gates each milestone to fire once per case                                  |
+| `src/server/db/schema.sql`                              | Modify | Reference copy of the new table, matching this repo's schema/migration sync convention       |
+| `src/features/annual-return/reminder-cadence.ts`        | Create | `ReminderMilestone` type + `dueMilestone` pure function                                      |
+| `src/features/annual-return/reminder-cadence.test.ts`   | Create | Tests for `dueMilestone` in isolation                                                        |
+| `src/features/annual-return/workflow.ts`                | Modify | `buildReminderDraft` rewritten in Traditional Chinese, gains `contactName`/`today` params    |
+| `src/features/annual-return/workflow.test.ts`           | Modify | Updated for the new signature and Chinese content                                            |
+| `src/features/annual-return/whatsapp-reminders.ts`      | Modify | Threads `today` through to `buildReminderDraft`                                              |
+| `src/features/annual-return/whatsapp-reminders.test.ts` | Modify | Updated call sites                                                                           |
+| `src/features/annual-return/follow-ups.ts`              | Modify | Threads `today` through; supplies the generic-contact fallback                               |
+| `src/features/annual-return/follow-ups.test.ts`         | Modify | Updated call sites                                                                           |
+| `src/features/annual-return/follow-up-server-fns.ts`    | Modify | Supplies `hongKongBusinessDate()` at both call sites                                         |
+| `src/features/annual-return/server-fns.ts`              | Modify | Supplies `hongKongBusinessDate()` and the generic-contact fallback for the preview server fn |
+| `src/features/annual-return/repository.ts`              | Modify | New `evaluateReminders` method; `tryLockWritableCase` extraction                             |
+| `src/features/annual-return/repository.test.ts`         | Modify | New `evaluateReminders` integration tests                                                    |
+| `src/server/cron.ts`                                    | Modify | New `evaluateAnnualReturnReminders` step in the maintenance pipeline                         |
+| `src/server/cron.test.ts`                               | Modify | Updated call-order assertion                                                                 |
+| `src/server/maintenance.ts`                             | Modify | Wires the real `AnnualReturnRepository` through                                              |
+| `src/server/maintenance.test.ts`                        | Modify | Updated dependency fixture                                                                   |
 
 ---
 
 ## Task 1: `annual_return_reminder_events` migration
 
 **Files:**
+
 - Create: `db/migrations/0012_annual_return_reminder_events.sql`
 - Modify: `src/server/db/schema.sql`
 
@@ -116,6 +118,7 @@ git commit -m "feat(annual-return): add reminder milestone event tracking table"
 ## Task 2: `dueMilestone` — milestone selection
 
 **Files:**
+
 - Create: `src/features/annual-return/reminder-cadence.ts`
 - Create: `src/features/annual-return/reminder-cadence.test.ts`
 
@@ -235,6 +238,7 @@ git commit -m "feat(annual-return): add milestone selection for the reminder cad
 ## Task 3: Traditional Chinese `buildReminderDraft` + thread through every caller
 
 **Files:**
+
 - Modify: `src/features/annual-return/workflow.ts`
 - Modify: `src/features/annual-return/workflow.test.ts`
 - Modify: `src/features/annual-return/whatsapp-reminders.ts`
@@ -253,34 +257,34 @@ Read `src/features/annual-return/workflow.test.ts` in full first (it already def
 Replace the existing `buildReminderDraft` tests:
 
 ```typescript
-  it("builds a staff-copyable WhatsApp reminder draft", () => {
-    expect(buildReminderDraft(baseCase)).toContain("Harbour Trading Ltd");
-    expect(buildReminderDraft(baseCase)).toContain("2026-08-12");
-    expect(buildReminderDraft(baseCase)).toContain("Signed NAR1 form");
-  });
+it("builds a staff-copyable WhatsApp reminder draft", () => {
+  expect(buildReminderDraft(baseCase)).toContain("Harbour Trading Ltd");
+  expect(buildReminderDraft(baseCase)).toContain("2026-08-12");
+  expect(buildReminderDraft(baseCase)).toContain("Signed NAR1 form");
+});
 
-  it("does not ask for outstanding items when required documents are complete", () => {
-    expect(buildReminderDraft(readyCase)).not.toContain("outstanding items");
-  });
+it("does not ask for outstanding items when required documents are complete", () => {
+  expect(buildReminderDraft(readyCase)).not.toContain("outstanding items");
+});
 ```
 
 with:
 
 ```typescript
-  it("builds a staff-copyable Traditional Chinese reminder draft", () => {
-    const draft = buildReminderDraft(baseCase, "Ada Chan", "2026-07-13");
-    expect(draft).toContain("Ada Chan");
-    expect(draft).toContain("Harbour Trading Ltd");
-    expect(draft).toContain("2026-08-12");
-    expect(draft).toContain("Signed NAR1 form");
-    expect(draft).toContain("距離現時尚餘 30 天");
-  });
+it("builds a staff-copyable Traditional Chinese reminder draft", () => {
+  const draft = buildReminderDraft(baseCase, "Ada Chan", "2026-07-13");
+  expect(draft).toContain("Ada Chan");
+  expect(draft).toContain("Harbour Trading Ltd");
+  expect(draft).toContain("2026-08-12");
+  expect(draft).toContain("Signed NAR1 form");
+  expect(draft).toContain("距離現時尚餘 30 天");
+});
 
-  it("does not ask for outstanding items when required documents are complete", () => {
-    const draft = buildReminderDraft(readyCase, "Ada Chan", "2026-07-13");
-    expect(draft).not.toContain("我們已為貴公司準備申報文件");
-    expect(draft).toContain("貴公司提供的文件已經齊備");
-  });
+it("does not ask for outstanding items when required documents are complete", () => {
+  const draft = buildReminderDraft(readyCase, "Ada Chan", "2026-07-13");
+  expect(draft).not.toContain("我們已為貴公司準備申報文件");
+  expect(draft).toContain("貴公司提供的文件已經齊備");
+});
 ```
 
 Run: `npm run test -- src/features/annual-return/workflow.test.ts -t "reminder draft"`
@@ -393,7 +397,7 @@ Read the file in full first (it defines `harbourCase` and `actorId` at the top �
 Update the two direct `buildReminderDraft` calls to pass the new arguments:
 
 ```typescript
-    const draftBody = buildReminderDraft(harbourCase, "Ada Director", "2026-07-13");
+const draftBody = buildReminderDraft(harbourCase, "Ada Director", "2026-07-13");
 ```
 
 (replaces `const draftBody = buildReminderDraft(harbourCase);`)
@@ -439,33 +443,33 @@ with:
 Read the file in full first. Add a third `today` argument (e.g. `"2026-07-14"`) to all four `deriveProductionFollowUpDrafts` calls:
 
 ```typescript
-    const drafts = deriveProductionFollowUpDrafts([caseItem], state(), "2026-07-14");
+const drafts = deriveProductionFollowUpDrafts([caseItem], state(), "2026-07-14");
 ```
 
 ```typescript
-    const drafts = deriveProductionFollowUpDrafts([caseItem], state({ recipients: [] }), "2026-07-14");
+const drafts = deriveProductionFollowUpDrafts([caseItem], state({ recipients: [] }), "2026-07-14");
 ```
 
 ```typescript
-    const drafts = deriveProductionFollowUpDrafts(
-      [{ ...caseItem, currentStatus: "Filed" }],
-      state(),
-      "2026-07-14",
-    );
+const drafts = deriveProductionFollowUpDrafts(
+  [{ ...caseItem, currentStatus: "Filed" }],
+  state(),
+  "2026-07-14",
+);
 ```
 
 ```typescript
-    const drafts = deriveProductionFollowUpDrafts(
-      [caseItem],
-      state({
-        deliveries: [
-          { idempotencyKey: stableFollowUpIdempotencyKey(annualIdentity), status: "pending" },
-          { idempotencyKey: stableFollowUpIdempotencyKey(documentIdentity), status: "sent" },
-          { idempotencyKey: stableFollowUpIdempotencyKey(paymentIdentity), status: "failed" },
-        ],
-      }),
-      "2026-07-14",
-    );
+const drafts = deriveProductionFollowUpDrafts(
+  [caseItem],
+  state({
+    deliveries: [
+      { idempotencyKey: stableFollowUpIdempotencyKey(annualIdentity), status: "pending" },
+      { idempotencyKey: stableFollowUpIdempotencyKey(documentIdentity), status: "sent" },
+      { idempotencyKey: stableFollowUpIdempotencyKey(paymentIdentity), status: "failed" },
+    ],
+  }),
+  "2026-07-14",
+);
 ```
 
 None of these tests assert on `messagePreview`'s exact content, so no other changes are needed in this file.
@@ -481,7 +485,7 @@ import { hongKongBusinessDate } from "./workflow";
 Update both call sites of `deriveProductionFollowUpDrafts`:
 
 ```typescript
-  return deriveProductionFollowUpDrafts(authorizedCases, state, hongKongBusinessDate());
+return deriveProductionFollowUpDrafts(authorizedCases, state, hongKongBusinessDate());
 ```
 
 ```typescript
@@ -504,27 +508,27 @@ import {
 In the `buildAnnualReturnReminderDraft` server fn (this is a preview-only endpoint with no recipient in scope — only `caseId`), replace:
 
 ```typescript
-      return { draftBody: buildReminderDraft(case_) };
+return { draftBody: buildReminderDraft(case_) };
 ```
 
 with:
 
 ```typescript
-      return { draftBody: buildReminderDraft(case_, "貴公司", hongKongBusinessDate()) };
+return { draftBody: buildReminderDraft(case_, "貴公司", hongKongBusinessDate()) };
 ```
 
 Also fix `queueAnnualReturnWhatsAppReminderMessageForActor`'s call into `queueAnnualReturnWhatsAppReminder`, which now requires `today`:
 
 ```typescript
-  const result = await queueAnnualReturnWhatsAppReminder({
-    annualReturnRepository: dependencies.annualReturnRepository,
-    whatsAppRepository: dependencies.whatsAppRepository,
-    case_: caseItem,
-    actorId,
-    recipientName: data.recipientName,
-    recipientPhone: data.recipientPhone,
-    today: hongKongBusinessDate(),
-  });
+const result = await queueAnnualReturnWhatsAppReminder({
+  annualReturnRepository: dependencies.annualReturnRepository,
+  whatsAppRepository: dependencies.whatsAppRepository,
+  case_: caseItem,
+  actorId,
+  recipientName: data.recipientName,
+  recipientPhone: data.recipientPhone,
+  today: hongKongBusinessDate(),
+});
 ```
 
 `server-fns.authorization.test.ts` tests `buildAnnualReturnReminderDraft` for authorization scoping only (it never asserts on `draftBody`'s content), so it needs no changes.
@@ -557,6 +561,7 @@ git commit -m "feat(annual-return): rewrite the reminder draft in Traditional Ch
 ## Task 4: `evaluateReminders` on `AnnualReturnRepository`
 
 **Files:**
+
 - Modify: `src/features/annual-return/repository.ts`
 - Modify: `src/features/annual-return/repository.test.ts`
 
@@ -567,11 +572,8 @@ Read `src/features/annual-return/repository.ts` in full first — this is a larg
 Replace the current `lockWritableCase`:
 
 ```typescript
-  async function lockWritableCase(
-    tx: TransactionSqlClient,
-    caseId: string,
-  ): Promise<LockedCaseRow> {
-    const rows = await tx<LockedCaseRow[]>`
+async function lockWritableCase(tx: TransactionSqlClient, caseId: string): Promise<LockedCaseRow> {
+  const rows = await tx<LockedCaseRow[]>`
       select
         arc.id,
         arc.company_id,
@@ -591,19 +593,19 @@ Replace the current `lockWritableCase`:
       for update
     `;
 
-    assertSingleMutatedRow(rows, COMPLETED_CASE_LOCKED_MESSAGE);
-    return rows[0];
-  }
+  assertSingleMutatedRow(rows, COMPLETED_CASE_LOCKED_MESSAGE);
+  return rows[0];
+}
 ```
 
 with:
 
 ```typescript
-  async function tryLockWritableCase(
-    tx: TransactionSqlClient,
-    caseId: string,
-  ): Promise<LockedCaseRow | null> {
-    const rows = await tx<LockedCaseRow[]>`
+async function tryLockWritableCase(
+  tx: TransactionSqlClient,
+  caseId: string,
+): Promise<LockedCaseRow | null> {
+  const rows = await tx<LockedCaseRow[]>`
       select
         arc.id,
         arc.company_id,
@@ -623,17 +625,14 @@ with:
       for update
     `;
 
-    return rows[0] ?? null;
-  }
+  return rows[0] ?? null;
+}
 
-  async function lockWritableCase(
-    tx: TransactionSqlClient,
-    caseId: string,
-  ): Promise<LockedCaseRow> {
-    const lockedCase = await tryLockWritableCase(tx, caseId);
-    if (!lockedCase) throw new Error(COMPLETED_CASE_LOCKED_MESSAGE);
-    return lockedCase;
-  }
+async function lockWritableCase(tx: TransactionSqlClient, caseId: string): Promise<LockedCaseRow> {
+  const lockedCase = await tryLockWritableCase(tx, caseId);
+  if (!lockedCase) throw new Error(COMPLETED_CASE_LOCKED_MESSAGE);
+  return lockedCase;
+}
 ```
 
 This is a pure extraction — identical SQL, identical throw behavior for every existing caller.
@@ -656,118 +655,140 @@ Add a new `describe` block:
 
 ```typescript
 describe("evaluateReminders", () => {
-  it("sends a milestone reminder to the primary contact and enqueues a WhatsApp notification", async () => {
-    const fixture = await createMutableAnnualReturnFixture({ sequence: 24 });
-    const sql = sqlForTests();
-    await sql`
+  it(
+    "sends a milestone reminder to the primary contact and enqueues a WhatsApp notification",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 24 });
+      const sql = sqlForTests();
+      await sql`
       insert into company_contacts (company_id, name, role, email, phone, is_primary)
       values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
     `;
-    const repository = repositoryFor("2026-07-13"); // 30 days before the fixture's 2026-08-12 due date
+      const repository = repositoryFor("2026-07-13"); // 30 days before the fixture's 2026-08-12 due date
 
-    const result = await repository.evaluateReminders();
+      const result = await repository.evaluateReminders();
 
-    expect(result).toEqual({ sent: 1, skipped: 0 });
+      expect(result).toEqual({ sent: 1, skipped: 0 });
 
-    const eventRows = await sql<{ milestone: string }[]>`
+      const eventRows = await sql<{ milestone: string }[]>`
       select milestone from annual_return_reminder_events where case_id = ${fixture.caseId}
     `;
-    expect(eventRows).toEqual([{ milestone: "1_month" }]);
+      expect(eventRows).toEqual([{ milestone: "1_month" }]);
 
-    const outboxRows = await sql<
-      { channel: string; notification_type: string; recipient: string }[]
-    >`
+      const outboxRows = await sql<
+        { channel: string; notification_type: string; recipient: string }[]
+      >`
       select channel, notification_type, recipient from notification_outbox
       where company_id = ${fixture.companyId}
     `;
-    expect(outboxRows).toEqual([
-      {
-        channel: "whatsapp",
-        notification_type: "annual_return_reminder_1_month",
-        recipient: "+85291234567",
-      },
-    ]);
+      expect(outboxRows).toEqual([
+        {
+          channel: "whatsapp",
+          notification_type: "annual_return_reminder_1_month",
+          recipient: "+85291234567",
+        },
+      ]);
 
-    const updatedCase = await repository.getCase(fixture.caseId);
-    expect(updatedCase?.remindersSent).toBe(1);
-    expect(updatedCase?.currentStatus).toBe("Client reminder sent");
+      const updatedCase = await repository.getCase(fixture.caseId);
+      expect(updatedCase?.remindersSent).toBe(1);
+      expect(updatedCase?.currentStatus).toBe("Client reminder sent");
 
-    const timelineRows = await sql<{ event_type: string; actor_type: string }[]>`
+      const timelineRows = await sql<{ event_type: string; actor_type: string }[]>`
       select event_type, actor_type from timeline_events where case_id = ${fixture.caseId}
     `;
-    expect(timelineRows).toEqual([{ event_type: "annual_return_reminder_sent", actor_type: "system" }]);
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      expect(timelineRows).toEqual([
+        { event_type: "annual_return_reminder_sent", actor_type: "system" },
+      ]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("does not send a duplicate reminder for a milestone that already fired", async () => {
-    const fixture = await createMutableAnnualReturnFixture({ sequence: 25 });
-    const sql = sqlForTests();
-    await sql`
+  it(
+    "does not send a duplicate reminder for a milestone that already fired",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 25 });
+      const sql = sqlForTests();
+      await sql`
       insert into company_contacts (company_id, name, role, email, phone, is_primary)
       values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
     `;
-    const repository = repositoryFor("2026-07-13");
+      const repository = repositoryFor("2026-07-13");
 
-    await repository.evaluateReminders();
-    const secondResult = await repository.evaluateReminders();
+      await repository.evaluateReminders();
+      const secondResult = await repository.evaluateReminders();
 
-    expect(secondResult).toEqual({ sent: 0, skipped: 0 });
-    const outboxRows = await sql`
+      expect(secondResult).toEqual({ sent: 0, skipped: 0 });
+      const outboxRows = await sql`
       select id from notification_outbox where company_id = ${fixture.companyId}
     `;
-    expect(outboxRows).toHaveLength(1);
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      expect(outboxRows).toHaveLength(1);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("chooses email when the primary contact has no phone", async () => {
-    const fixture = await createMutableAnnualReturnFixture({ sequence: 26 });
-    const sql = sqlForTests();
-    await sql`
+  it(
+    "chooses email when the primary contact has no phone",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 26 });
+      const sql = sqlForTests();
+      await sql`
       insert into company_contacts (company_id, name, role, email, phone, is_primary)
       values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', null, true)
     `;
-    const repository = repositoryFor("2026-07-13");
+      const repository = repositoryFor("2026-07-13");
 
-    await repository.evaluateReminders();
+      await repository.evaluateReminders();
 
-    const outboxRows = await sql<{ channel: string; recipient: string }[]>`
+      const outboxRows = await sql<{ channel: string; recipient: string }[]>`
       select channel, recipient from notification_outbox where company_id = ${fixture.companyId}
     `;
-    expect(outboxRows).toEqual([{ channel: "email", recipient: "ada@example.test" }]);
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      expect(outboxRows).toEqual([{ channel: "email", recipient: "ada@example.test" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("skips and logs a timeline event when no primary contact exists", async () => {
-    const fixture = await createMutableAnnualReturnFixture({ sequence: 27 });
-    const sql = sqlForTests();
-    const repository = repositoryFor("2026-07-13");
+  it(
+    "skips and logs a timeline event when no primary contact exists",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({ sequence: 27 });
+      const sql = sqlForTests();
+      const repository = repositoryFor("2026-07-13");
 
-    const result = await repository.evaluateReminders();
+      const result = await repository.evaluateReminders();
 
-    expect(result).toEqual({ sent: 0, skipped: 1 });
-    const outboxRows = await sql`
+      expect(result).toEqual({ sent: 0, skipped: 1 });
+      const outboxRows = await sql`
       select id from notification_outbox where company_id = ${fixture.companyId}
     `;
-    expect(outboxRows).toHaveLength(0);
-    const timelineRows = await sql<{ event_type: string }[]>`
+      expect(outboxRows).toHaveLength(0);
+      const timelineRows = await sql<{ event_type: string }[]>`
       select event_type from timeline_events where case_id = ${fixture.caseId}
     `;
-    expect(timelineRows).toEqual([{ event_type: "annual_return_reminder_skipped" }]);
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      expect(timelineRows).toEqual([{ event_type: "annual_return_reminder_skipped" }]);
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 
-  it("never evaluates a Filed or Completed case", async () => {
-    const fixture = await createMutableAnnualReturnFixture({
-      sequence: 28,
-      currentStatus: "Filed",
-    });
-    const sql = sqlForTests();
-    await sql`
+  it(
+    "never evaluates a Filed or Completed case",
+    async () => {
+      const fixture = await createMutableAnnualReturnFixture({
+        sequence: 28,
+        currentStatus: "Filed",
+      });
+      const sql = sqlForTests();
+      await sql`
       insert into company_contacts (company_id, name, role, email, phone, is_primary)
       values (${fixture.companyId}, 'Ada Contact', 'Director', 'ada@example.test', '+85291234567', true)
     `;
-    const repository = repositoryFor("2026-07-13");
+      const repository = repositoryFor("2026-07-13");
 
-    const result = await repository.evaluateReminders();
+      const result = await repository.evaluateReminders();
 
-    expect(result).toEqual({ sent: 0, skipped: 0 });
-  }, INTEGRATION_TEST_TIMEOUT_MS);
+      expect(result).toEqual({ sent: 0, skipped: 0 });
+    },
+    INTEGRATION_TEST_TIMEOUT_MS,
+  );
 });
 ```
 
@@ -827,49 +848,49 @@ export type AnnualReturnRepository = {
 Add the implementation, right after `assertCanMutateCase`'s implementation (before `close`):
 
 ```typescript
-  async function evaluateReminders(
-    now: string = readToday(),
-  ): Promise<{ sent: number; skipped: number }> {
-    const candidates = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, now);
-    const openCases = candidates.filter(
-      (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
-    );
+async function evaluateReminders(
+  now: string = readToday(),
+): Promise<{ sent: number; skipped: number }> {
+  const candidates = await listCasesForToday({ limit: DASHBOARD_METRICS_SCAN_LIMIT }, now);
+  const openCases = candidates.filter(
+    (case_) => case_.currentStatus !== "Filed" && case_.currentStatus !== "Completed",
+  );
 
-    let sent = 0;
-    let skipped = 0;
+  let sent = 0;
+  let skipped = 0;
 
-    for (const case_ of openCases) {
-      const outcome = await withTransaction(sql, async (tx) => {
-        const lockedCase = await tryLockWritableCase(tx, case_.id);
-        if (!lockedCase) return null;
+  for (const case_ of openCases) {
+    const outcome = await withTransaction(sql, async (tx) => {
+      const lockedCase = await tryLockWritableCase(tx, case_.id);
+      if (!lockedCase) return null;
 
-        const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
+      const firedRows = await tx<{ milestone: ReminderMilestone }[]>`
           select milestone from annual_return_reminder_events where case_id = ${case_.id}
         `;
-        const milestone = dueMilestone(
-          case_.filingDueDate,
-          now,
-          firedRows.map((row) => row.milestone),
-        );
-        if (!milestone) return null;
+      const milestone = dueMilestone(
+        case_.filingDueDate,
+        now,
+        firedRows.map((row) => row.milestone),
+      );
+      if (!milestone) return null;
 
-        const insertedEvent = await tx<{ id: string }[]>`
+      const insertedEvent = await tx<{ id: string }[]>`
           insert into annual_return_reminder_events (case_id, milestone, occurred_at)
           values (${case_.id}, ${milestone}, ${now})
           on conflict (case_id, milestone) do nothing
           returning id
         `;
-        if (!insertedEvent[0]) return null;
+      if (!insertedEvent[0]) return null;
 
-        const contactRows = await tx<{ name: string; email: string | null; phone: string | null }[]>`
+      const contactRows = await tx<{ name: string; email: string | null; phone: string | null }[]>`
           select name, email, phone from company_contacts
           where company_id = ${lockedCase.company_id} and is_primary = true
           limit 1
         `;
-        const contact = contactRows[0];
+      const contact = contactRows[0];
 
-        if (!contact) {
-          await tx`
+      if (!contact) {
+        await tx`
             insert into timeline_events (
               company_id, case_id, event_type, actor_type, actor_id, description, metadata
             ) values (
@@ -878,27 +899,27 @@ Add the implementation, right after `assertCanMutateCase`'s implementation (befo
               ${tx.json({ milestone, reason: "no_primary_contact" })}
             )
           `;
-          return "skipped" as const;
-        }
+        return "skipped" as const;
+      }
 
-        const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
-        const recipient = contact.phone ?? contact.email;
-        if (!recipient) throw new Error("Primary contact has neither phone nor email.");
+      const channel: "whatsapp" | "email" = contact.phone ? "whatsapp" : "email";
+      const recipient = contact.phone ?? contact.email;
+      if (!recipient) throw new Error("Primary contact has neither phone nor email.");
 
-        await enqueueNotification(tx, {
-          companyId: lockedCase.company_id,
-          channel,
-          notificationType: `annual_return_reminder_${milestone}`,
-          recipient,
-          payload: {
-            caseId: case_.id,
-            milestone,
-            subject: `「${case_.companyName}」周年申報表提醒 — 請於 ${case_.filingDueDate} 前提供文件`,
-            body: buildReminderDraft(case_, contact.name, now),
-          },
-        });
+      await enqueueNotification(tx, {
+        companyId: lockedCase.company_id,
+        channel,
+        notificationType: `annual_return_reminder_${milestone}`,
+        recipient,
+        payload: {
+          caseId: case_.id,
+          milestone,
+          subject: `「${case_.companyName}」周年申報表提醒 — 請於 ${case_.filingDueDate} 前提供文件`,
+          body: buildReminderDraft(case_, contact.name, now),
+        },
+      });
 
-        await tx`
+      await tx`
           update annual_return_cases
           set reminders_sent = reminders_sent + 1,
               current_status = case
@@ -909,7 +930,7 @@ Add the implementation, right after `assertCanMutateCase`'s implementation (befo
           where id = ${case_.id}
         `;
 
-        await tx`
+      await tx`
           insert into timeline_events (
             company_id, case_id, event_type, actor_type, actor_id, description, metadata
           ) values (
@@ -919,36 +940,36 @@ Add the implementation, right after `assertCanMutateCase`'s implementation (befo
           )
         `;
 
-        return "sent" as const;
-      });
+      return "sent" as const;
+    });
 
-      if (outcome === "sent") sent += 1;
-      else if (outcome === "skipped") skipped += 1;
-    }
-
-    return { sent, skipped };
+    if (outcome === "sent") sent += 1;
+    else if (outcome === "skipped") skipped += 1;
   }
+
+  return { sent, skipped };
+}
 ```
 
 Add `evaluateReminders` to the returned object at the end of `createAnnualReturnRepository`:
 
 ```typescript
-  return {
-    listCases,
-    getCase,
-    dashboardMetrics,
-    assertCanMutateCase,
-    evaluateReminders,
-    assignOwner,
-    listNotes,
-    addNote,
-    updateStatus,
-    recordReminder,
-    updateChecklistItem,
-    updatePayment,
-    updateFilingProof,
-    close,
-  };
+return {
+  listCases,
+  getCase,
+  dashboardMetrics,
+  assertCanMutateCase,
+  evaluateReminders,
+  assignOwner,
+  listNotes,
+  addNote,
+  updateStatus,
+  recordReminder,
+  updateChecklistItem,
+  updatePayment,
+  updateFilingProof,
+  close,
+};
 ```
 
 ### Step 4: Run the tests
@@ -976,6 +997,7 @@ git commit -m "feat(annual-return): add the automated reminder evaluation pass"
 ## Task 5: Wire `evaluateReminders` through the maintenance cron
 
 **Files:**
+
 - Modify: `src/server/cron.ts`
 - Modify: `src/server/cron.test.ts`
 - Modify: `src/server/maintenance.ts`
@@ -1146,52 +1168,52 @@ function dependencies(
 Update the first test's assertion to include the new field:
 
 ```typescript
-    expect(result).toEqual({
-      now: "2026-07-26T00:00:00.000Z",
-      escalations: { warnings: 1, breaches: 2 },
-      annualReturnReminders: { sent: 1, skipped: 0 },
-      dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0, superseded: 0 },
-      uploads: { expired: 2 },
-      notifications: { strandedFailed: 2, redacted: 5 },
-    });
+expect(result).toEqual({
+  now: "2026-07-26T00:00:00.000Z",
+  escalations: { warnings: 1, breaches: 2 },
+  annualReturnReminders: { sent: 1, skipped: 0 },
+  dispatch: { claimed: 4, sent: 3, retried: 1, permanentlyFailed: 0, superseded: 0 },
+  uploads: { expired: 2 },
+  notifications: { strandedFailed: 2, redacted: 5 },
+});
 ```
 
 Update the `"closes both repositories even when a pass throws"` test to also verify the new repository closes:
 
 ```typescript
-  it("closes every repository even when a pass throws", async () => {
-    const closeWorkItems = vi.fn(async () => {});
-    const closeAnnualReturns = vi.fn(async () => {});
-    const closeDocuments = vi.fn(async () => {});
+it("closes every repository even when a pass throws", async () => {
+  const closeWorkItems = vi.fn(async () => {});
+  const closeAnnualReturns = vi.fn(async () => {});
+  const closeDocuments = vi.fn(async () => {});
 
-    // Escalation evaluation runs first, so its failure is the case that would
-    // leak a Postgres connection for every later pass as well.
-    await expect(
-      runFirmMaintenanceWithDependencies(
-        { now: "2026-07-26T00:00:00.000Z" },
-        dependencies({
-          createWorkItemRepository: () => ({
-            evaluateEscalations: vi.fn(async () => {
-              throw new Error("sla sweep failed");
-            }),
-            close: closeWorkItems,
+  // Escalation evaluation runs first, so its failure is the case that would
+  // leak a Postgres connection for every later pass as well.
+  await expect(
+    runFirmMaintenanceWithDependencies(
+      { now: "2026-07-26T00:00:00.000Z" },
+      dependencies({
+        createWorkItemRepository: () => ({
+          evaluateEscalations: vi.fn(async () => {
+            throw new Error("sla sweep failed");
           }),
-          createAnnualReturnRepository: () => ({
-            evaluateReminders: vi.fn(async () => ({ sent: 0, skipped: 0 })),
-            close: closeAnnualReturns,
-          }),
-          createDocumentRepository: () => ({
-            expireUploads: vi.fn(async () => []),
-            close: closeDocuments,
-          }),
+          close: closeWorkItems,
         }),
-      ),
-    ).rejects.toThrow("sla sweep failed");
+        createAnnualReturnRepository: () => ({
+          evaluateReminders: vi.fn(async () => ({ sent: 0, skipped: 0 })),
+          close: closeAnnualReturns,
+        }),
+        createDocumentRepository: () => ({
+          expireUploads: vi.fn(async () => []),
+          close: closeDocuments,
+        }),
+      }),
+    ),
+  ).rejects.toThrow("sla sweep failed");
 
-    expect(closeWorkItems).toHaveBeenCalledTimes(1);
-    expect(closeAnnualReturns).toHaveBeenCalledTimes(1);
-    expect(closeDocuments).toHaveBeenCalledTimes(1);
-  });
+  expect(closeWorkItems).toHaveBeenCalledTimes(1);
+  expect(closeAnnualReturns).toHaveBeenCalledTimes(1);
+  expect(closeDocuments).toHaveBeenCalledTimes(1);
+});
 ```
 
 Run: `npm run test -- src/server/maintenance.test.ts`

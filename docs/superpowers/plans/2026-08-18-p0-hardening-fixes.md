@@ -24,24 +24,25 @@ All paths below are relative to the repo root. Work on branch `codex/p0-hardenin
 
 ## File structure
 
-| File | Change | Responsibility |
-|---|---|---|
-| `src/features/documents/server-fns.ts` | Modify | New `documentFiltersForActor` + extracted `listDocumentsForActor`, matching the file's existing `*ForActor` convention |
-| `src/features/documents/repository.ts` | Modify | `listDocuments`/`documentRows` gain a `teamId` filter |
-| `src/features/documents/server-fns.test.ts` | Modify | New tests for `documentFiltersForActor`/`listDocumentsForActor` |
-| `src/routes/admin.tsx` | Modify | `ProductionAdminConsole` gates on `isCurrentUserAdmin` |
-| `src/routes/settings.tsx` | Modify | `SettingsPage` gates on `isCurrentUserAdmin` |
-| `src/routes/-admin-guard.test.tsx` | Create | Route-level test for both admin/non-admin states on `/admin` |
-| `src/routes/-settings-admin-guard.test.tsx` | Create | Route-level test for both admin/non-admin states on `/settings` |
-| `src/features/notifications/runtime-dispatch.ts` | Modify | New `assertAdminAccess` + extracted `dispatchDueNotificationsForActor`, with logging |
-| `src/features/notifications/runtime-dispatch.test.ts` | Modify | New tests for the extracted function |
-| `src/features/annual-return/server-fns.authorization.test.ts` | Modify | New behavioral test proving `getAnnualReturnDashboardMetricsForActor` actually scopes |
+| File                                                          | Change | Responsibility                                                                                                         |
+| ------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `src/features/documents/server-fns.ts`                        | Modify | New `documentFiltersForActor` + extracted `listDocumentsForActor`, matching the file's existing `*ForActor` convention |
+| `src/features/documents/repository.ts`                        | Modify | `listDocuments`/`documentRows` gain a `teamId` filter                                                                  |
+| `src/features/documents/server-fns.test.ts`                   | Modify | New tests for `documentFiltersForActor`/`listDocumentsForActor`                                                        |
+| `src/routes/admin.tsx`                                        | Modify | `ProductionAdminConsole` gates on `isCurrentUserAdmin`                                                                 |
+| `src/routes/settings.tsx`                                     | Modify | `SettingsPage` gates on `isCurrentUserAdmin`                                                                           |
+| `src/routes/-admin-guard.test.tsx`                            | Create | Route-level test for both admin/non-admin states on `/admin`                                                           |
+| `src/routes/-settings-admin-guard.test.tsx`                   | Create | Route-level test for both admin/non-admin states on `/settings`                                                        |
+| `src/features/notifications/runtime-dispatch.ts`              | Modify | New `assertAdminAccess` + extracted `dispatchDueNotificationsForActor`, with logging                                   |
+| `src/features/notifications/runtime-dispatch.test.ts`         | Modify | New tests for the extracted function                                                                                   |
+| `src/features/annual-return/server-fns.authorization.test.ts` | Modify | New behavioral test proving `getAnnualReturnDashboardMetricsForActor` actually scopes                                  |
 
 ---
 
 ## Task 1: P0-5 — Document listing team scoping
 
 **Files:**
+
 - Modify: `src/features/documents/server-fns.ts`
 - Modify: `src/features/documents/repository.ts`
 - Modify: `src/features/documents/server-fns.test.ts`
@@ -229,10 +230,10 @@ Update the `DocumentRepository` type's `listDocuments` signature:
 Replace `documentRows`:
 
 ```typescript
-  async function documentRows(
-    filters: { id?: string; companyId?: string; caseId?: string; teamId?: string } = {},
-  ) {
-    return sql<DocumentRow[]>`
+async function documentRows(
+  filters: { id?: string; companyId?: string; caseId?: string; teamId?: string } = {},
+) {
+  return sql<DocumentRow[]>`
       select d.*, i.content_type, i.expected_size_bytes, i.checksum_sha256, i.status upload_status
       from documents d
       join document_upload_intents i on i.document_id = d.id
@@ -242,7 +243,7 @@ Replace `documentRows`:
         and (${filters.caseId ?? null}::uuid is null or d.case_id = ${filters.caseId ?? null})
         and (${filters.teamId ?? null}::uuid is null or c.assigned_team_id = ${filters.teamId ?? null})
       order by d.uploaded_at desc, d.id`;
-  }
+}
 ```
 
 `documents.company_id` is `not null references companies(id)` (`schema.sql:57`), so the new `join companies c` is lossless — every document row already has a matching company.
@@ -276,6 +277,7 @@ git commit -m "fix(documents): scope document listing to the actor's team"
 ## Task 2: P0-7 — Admin route guards (client-side)
 
 **Files:**
+
 - Modify: `src/routes/admin.tsx`
 - Modify: `src/routes/settings.tsx`
 - Create: `src/routes/-admin-guard.test.tsx`
@@ -659,6 +661,7 @@ git commit -m "fix(routes): gate /admin and /settings behind isCurrentUserAdmin"
 ## Task 3: P0-8 — Outbox flush requires Admin, and is logged
 
 **Files:**
+
 - Modify: `src/features/notifications/runtime-dispatch.ts`
 - Modify: `src/features/notifications/runtime-dispatch.test.ts`
 
@@ -688,9 +691,9 @@ describe("dispatchDueNotificationsForActor", () => {
   it("rejects a non-admin actor", async () => {
     const dispatch = vi.fn();
 
-    await expect(
-      dispatchDueNotificationsForActor(staffActor, {}, { dispatch }),
-    ).rejects.toThrow("Forbidden: Admin access is required.");
+    await expect(dispatchDueNotificationsForActor(staffActor, {}, { dispatch })).rejects.toThrow(
+      "Forbidden: Admin access is required.",
+    );
     expect(dispatch).not.toHaveBeenCalled();
   });
 
@@ -737,7 +740,10 @@ export async function dispatchDueNotificationsForActor(
   actor: AuthenticatedActor,
   input: { limit?: number },
   dependencies: {
-    dispatch(input: { now: string; limit?: number }): ReturnType<typeof dispatchDueNotificationsOnServer>;
+    dispatch(input: {
+      now: string;
+      limit?: number;
+    }): ReturnType<typeof dispatchDueNotificationsOnServer>;
   } = { dispatch: dispatchDueNotificationsOnServer },
 ) {
   assertAdminAccess(actor);
@@ -794,6 +800,7 @@ git commit -m "fix(notifications): require Admin for manual outbox dispatch, and
 ## Task 4: P0-9 — Real behavioral test for dashboard-tile scoping
 
 **Files:**
+
 - Modify: `src/features/annual-return/server-fns.authorization.test.ts`
 
 **No production code changes** — `getAnnualReturnDashboardMetricsForActor` and `caseFiltersForActor` already work correctly (confirmed by reading both in full); only the regression coverage is missing. This test needs no database — it mocks `repository.dashboardMetrics` and asserts the correctly-computed scope is passed through, exactly mirroring how `listAnnualReturnCasesForActor` is already tested in this same file (`server-fns.authorization.test.ts:134-191`).
@@ -808,15 +815,17 @@ Add a new `describe` block, near the existing `"narrows the list to what the act
 
 ```typescript
 describe("getAnnualReturnDashboardMetricsForActor", () => {
-  function repositoryFor(dashboardMetrics = vi.fn(async () => ({
-    dueIn7: 0,
-    dueIn30: 0,
-    overdue: 0,
-    highRisk: 0,
-    missingDocuments: 0,
-    paymentPending: 0,
-    assignedToMe: 0,
-  }))) {
+  function repositoryFor(
+    dashboardMetrics = vi.fn(async () => ({
+      dueIn7: 0,
+      dueIn30: 0,
+      overdue: 0,
+      highRisk: 0,
+      missingDocuments: 0,
+      paymentPending: 0,
+      assignedToMe: 0,
+    })),
+  ) {
     return {
       dashboardMetrics,
       repository: { dashboardMetrics } as unknown as Pick<

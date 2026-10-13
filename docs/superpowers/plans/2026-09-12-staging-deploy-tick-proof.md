@@ -14,17 +14,17 @@
 
 ## File structure
 
-| File | Responsibility | Task |
-| --- | --- | --- |
-| `src/features/operations/health.ts` | `MaintenanceRunRecord.dispatch` field + `dispatchCountLabel` display rule | 1 |
-| `src/features/operations/health.test.ts` | Pins that unknown ≠ zero for dispatch counts | 1 |
-| `src/features/operations/repository.ts` | Reads `passes -> 'dispatch'` in both run queries | 1 |
-| `src/features/operations/repository.integration.test.ts` | Proves the jsonb read works against a real database | 1 |
-| `src/routes/operations.tsx` | Shows 已派送 / 已攔截 per run | 1 |
-| `docs/runbooks/firm-deployment.md` | Gains the missing render-and-deploy step | 2 |
-| `scripts/verify-firm-deployment.test.ts` | Asserts the runbook documents that step | 2 |
-| `docs/implementation/kossilon/status.md` | Stale claims corrected | 3 |
-| `src/features/operations/capabilities.ts` | `deployment-runtime` removed **only if** observed | 9 |
+| File                                                     | Responsibility                                                            | Task |
+| -------------------------------------------------------- | ------------------------------------------------------------------------- | ---- |
+| `src/features/operations/health.ts`                      | `MaintenanceRunRecord.dispatch` field + `dispatchCountLabel` display rule | 1    |
+| `src/features/operations/health.test.ts`                 | Pins that unknown ≠ zero for dispatch counts                              | 1    |
+| `src/features/operations/repository.ts`                  | Reads `passes -> 'dispatch'` in both run queries                          | 1    |
+| `src/features/operations/repository.integration.test.ts` | Proves the jsonb read works against a real database                       | 1    |
+| `src/routes/operations.tsx`                              | Shows 已派送 / 已攔截 per run                                             | 1    |
+| `docs/runbooks/firm-deployment.md`                       | Gains the missing render-and-deploy step                                  | 2    |
+| `scripts/verify-firm-deployment.test.ts`                 | Asserts the runbook documents that step                                   | 2    |
+| `docs/implementation/kossilon/status.md`                 | Stale claims corrected                                                    | 3    |
+| `src/features/operations/capabilities.ts`                | `deployment-runtime` removed **only if** observed                         | 9    |
 
 ---
 
@@ -35,6 +35,7 @@ Acceptance check 4 of the spec — fixture-origin notifications cancelled, `sent
 `ScheduledMaintenanceResult.dispatch` is a `DispatchSummary | null`, so the jsonb path is `passes -> 'dispatch' ->> 'sent'` and `passes -> 'dispatch' ->> 'suppressedFixtureOrigin'`.
 
 **Files:**
+
 - Modify: `src/features/operations/health.ts`
 - Modify: `src/features/operations/repository.ts`
 - Modify: `src/routes/operations.tsx`
@@ -111,59 +112,59 @@ Expected: PASS.
 Append inside the `describe.skipIf(!databaseUrl)("maintenance run repository", ...)` block in `src/features/operations/repository.integration.test.ts`:
 
 ```ts
-  it(
-    "reads the dispatch outcome back out of the passes column",
-    async () => {
-      const repository = createMaintenanceRunRepository(databaseUrl);
-      try {
-        await repository.recordRun(
-          draft({
-            passes: {
-              now: "2026-09-12T10:00:00.000Z",
-              dispatch: {
-                claimed: 3,
-                sent: 0,
-                retried: 0,
-                permanentlyFailed: 0,
-                superseded: 0,
-                sentButUnrecorded: 0,
-                suppressedFixtureOrigin: 3,
-              },
-              failures: [],
+it(
+  "reads the dispatch outcome back out of the passes column",
+  async () => {
+    const repository = createMaintenanceRunRepository(databaseUrl);
+    try {
+      await repository.recordRun(
+        draft({
+          passes: {
+            now: "2026-09-12T10:00:00.000Z",
+            dispatch: {
+              claimed: 3,
+              sent: 0,
+              retried: 0,
+              permanentlyFailed: 0,
+              superseded: 0,
+              sentButUnrecorded: 0,
+              suppressedFixtureOrigin: 3,
             },
-          }),
-        );
+            failures: [],
+          },
+        }),
+      );
 
-        const [latest] = await repository.listRecentRuns(1);
+      const [latest] = await repository.listRecentRuns(1);
 
-        // The safety fact this whole deploy turns on: three fixture reminders
-        // cancelled, none sent.
-        expect(latest?.dispatch).toEqual({ sent: 0, suppressedFixtureOrigin: 3 });
-      } finally {
-        await repository.close();
-      }
-    },
-    INTEGRATION_TEST_TIMEOUT_MS,
-  );
+      // The safety fact this whole deploy turns on: three fixture reminders
+      // cancelled, none sent.
+      expect(latest?.dispatch).toEqual({ sent: 0, suppressedFixtureOrigin: 3 });
+    } finally {
+      await repository.close();
+    }
+  },
+  INTEGRATION_TEST_TIMEOUT_MS,
+);
 
-  it(
-    "reports a run with no recorded dispatch as null rather than zero",
-    async () => {
-      const repository = createMaintenanceRunRepository(databaseUrl);
-      try {
-        await repository.recordRun(
-          draft({ passes: { now: "2026-09-12T10:05:00.000Z", failures: [] } }),
-        );
+it(
+  "reports a run with no recorded dispatch as null rather than zero",
+  async () => {
+    const repository = createMaintenanceRunRepository(databaseUrl);
+    try {
+      await repository.recordRun(
+        draft({ passes: { now: "2026-09-12T10:05:00.000Z", failures: [] } }),
+      );
 
-        const [latest] = await repository.listRecentRuns(1);
+      const [latest] = await repository.listRecentRuns(1);
 
-        expect(latest?.dispatch).toBeNull();
-      } finally {
-        await repository.close();
-      }
-    },
-    INTEGRATION_TEST_TIMEOUT_MS,
-  );
+      expect(latest?.dispatch).toBeNull();
+    } finally {
+      await repository.close();
+    }
+  },
+  INTEGRATION_TEST_TIMEOUT_MS,
+);
 ```
 
 - [ ] **Step 6: Run it and watch it fail**
@@ -178,8 +179,8 @@ Note: run the whole suite, not a single file. Filtering to one file leaves the `
 In `src/features/operations/repository.ts`, add to `type RunRow`:
 
 ```ts
-  dispatch_sent: number | string | null;
-  dispatch_suppressed: number | string | null;
+dispatch_sent: number | string | null;
+dispatch_suppressed: number | string | null;
 ```
 
 Add to `mapRun`, after `failedPasses`:
@@ -252,6 +253,7 @@ git commit -m "feat: show what the dispatch pass actually did on /operations"
 `docs/runbooks/firm-deployment.md` goes from "Migration rehearsal" straight to "Runtime health", whose first words are "After the deploy" — with no step that performs one.
 
 **Files:**
+
 - Modify: `docs/runbooks/firm-deployment.md`
 - Test: `scripts/verify-firm-deployment.test.ts`
 
@@ -335,6 +337,7 @@ git commit -m "docs: give the deployment runbook a step that actually deploys"
 ### Task 3: Correct the stale claims in status.md
 
 **Files:**
+
 - Modify: `docs/implementation/kossilon/status.md`
 
 - [ ] **Step 1: Find them**
@@ -383,10 +386,12 @@ git commit -m "docs: stop claiming nothing has been pushed and CI has not run"
 - [ ] **Step 1: Run the offline gates**
 
 Run:
+
 ```powershell
 npm.cmd run check:production-imports
 npm.cmd run verify:firm -- --dry-run
 ```
+
 Expected: both exit 0. `verify:firm --dry-run` reports binding **names** only; if it prints a value, stop and report it as a defect.
 
 - [ ] **Step 2: Run the full suite once more**
@@ -399,6 +404,7 @@ Expected: PASS with zero failures. Record the file and test counts; they go in t
 ### Task 5: Render the template
 
 **Files:**
+
 - Create: `wrangler.jsonc` (rendered; confirm it is gitignored before writing anything into it)
 
 - [ ] **Step 1: Confirm the rendered file cannot be committed**
@@ -413,9 +419,11 @@ Request `FIRM_ID`, `NEON_AUTH_URL`, `WOZTELL_API_BASE_URL`, `WOZTELL_CHANNEL_ID`
 - [ ] **Step 3: Operator sets the secrets**
 
 The operator runs, for each secret binding name:
+
 ```powershell
 npx wrangler secret put <BINDING_NAME>
 ```
+
 `RESEND_API_KEY` is required. The WOZTELL auth secret is **deliberately not set** in this phase — that is what keeps sending impossible.
 
 - [ ] **Step 4: Run the gate against the rendered file**
@@ -460,10 +468,12 @@ State which database is about to be migrated and that `0026` carries a backfill.
 - [ ] **Step 2: Apply**
 
 Run:
+
 ```powershell
 $env:DATABASE_URL = "<approved staging connection string>"
 npm.cmd run db:migrate
 ```
+
 Expected: `Applied 0023_...` through `Applied 0033_maintenance_runs.sql`.
 
 - [ ] **Step 3: Confirm the ledger**
@@ -499,12 +509,12 @@ Ten minutes. That is `MISSED_TICKS_BEFORE_STALE` — a tick absent after it is l
 
 - [ ] **Step 2: Open /operations and record four facts**
 
-| Check | Expected | Meaning if it fails |
-| --- | --- | --- |
-| Schema panel | 一致, applied = expected | `behind` names the earliest missing migration; `ahead` means the code is older than the database — do **not** migrate |
-| A run row | trigger 排程 | `never-observed` after 10 minutes means the cron did not fire; `deployment-runtime` stands |
-| Maintenance state | not `never-observed` | as above |
-| 已攔截 / 已派送 | 已攔截 > 0 and 已派送 = 0 | **Stop.** 已派送 > 0 means the send-gate did not hold; pause per `pilot-operations.md` before investigating |
+| Check             | Expected                  | Meaning if it fails                                                                                                   |
+| ----------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Schema panel      | 一致, applied = expected  | `behind` names the earliest missing migration; `ahead` means the code is older than the database — do **not** migrate |
+| A run row         | trigger 排程              | `never-observed` after 10 minutes means the cron did not fire; `deployment-runtime` stands                            |
+| Maintenance state | not `never-observed`      | as above                                                                                                              |
+| 已攔截 / 已派送   | 已攔截 > 0 and 已派送 = 0 | **Stop.** 已派送 > 0 means the send-gate did not hold; pause per `pilot-operations.md` before investigating           |
 
 - [ ] **Step 3: If, and only if, a 排程 run was observed — clear the blocker**
 
@@ -535,4 +545,4 @@ git commit -m "feat: record the first observed scheduled run on a real runtime"
 - Run the **whole** vitest suite rather than filtering to one file: the `db` project is pinned to `sequence.groupOrder: 1`, and filtering leaves group 0 empty, which hangs.
 - Local DB runs need `TEST_DATABASE_URL` **and** `DATABASE_SSL=disable`. Without the second, the client defaults to `ssl: "require"` and fails with `Client network socket disconnected before secure TLS connection was established`, which reads like a network fault rather than a configuration one.
 - **Do not try to set `VITE_PROVIDER_MODE=simulated` on staging.** `resolveProviderMode` rejects `simulated` unless `FIRM_ID === "kossilon-demo"`, and `local` throws in a production build; an absent value resolves to `live` deliberately. A staging deployment of any other firm is therefore forced into live provider mode, and there is no setting that means "this is staging, do not send". That is exactly why the safety argument rests on `data_origin` and the dispatcher's `cancelFixtureOriginNotifications` instead — and why Task 9's 已攔截 / 已派送 check is an acceptance criterion rather than a formality. Changing this would mean changing `resolveProviderMode`, which is out of scope here.
-- The two new integration tests in Task 1 use the existing `draft()` helper, whose default `failureSummary` carries `TEST_MARKER`, so the suite's existing teardown removes their rows. Do not write these fixtures without that marker: rows the teardown cannot see survive every run and break the *next* one.
+- The two new integration tests in Task 1 use the existing `draft()` helper, whose default `failureSummary` carries `TEST_MARKER`, so the suite's existing teardown removes their rows. Do not write these fixtures without that marker: rows the teardown cannot see survive every run and break the _next_ one.

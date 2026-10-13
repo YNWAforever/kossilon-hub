@@ -160,7 +160,7 @@ Mirrors P1-5's officer/shareholding mutations exactly: Staff/Manager can create 
 - No Companies Registry API integration — filing NNC2/NR1/ND2A/ND2B remains a manual, off-system step; the checklist only tracks that it happened.
 - No invoicing/payments-table integration — `quoted_fee` is a tracked number only, same as P1-1's manual fee field; no invoice is generated from it.
 - No person-dedup between a new shareholder/officer entered here and any existing `officers`/`shareholdings` row (same limitation P1-6 explicitly accepted for `significant_controllers`).
-- Concurrent in-flight requests of the *same type* on the *same company* are not blocked (e.g. two simultaneous name-change requests) — a known gap, not solved here, same posture as P1-1's basis-date-rollover gap.
+- Concurrent in-flight requests of the _same type_ on the _same company_ are not blocked (e.g. two simultaneous name-change requests) — a known gap, not solved here, same posture as P1-1's basis-date-rollover gap.
 
 ## Verification plan
 

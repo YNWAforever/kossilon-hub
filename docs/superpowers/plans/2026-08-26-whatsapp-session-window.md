@@ -24,25 +24,26 @@ This branch does **not** contain the P0-11 audit-trail work, and `src/features/a
 
 ## File structure
 
-| File | Responsibility |
-|---|---|
-| `src/features/whatsapp/phone.ts` *(new)* | Digits-only canonicalisation, for comparison only |
-| `src/features/whatsapp/session-window.ts` *(new)* | 24-hour window arithmetic, pure |
-| `src/features/whatsapp/fallback-templates.ts` *(new)* | Notification-type → re-engagement template policy |
-| `db/migrations/0021_whatsapp_session_window_indexes.sql` *(new)* | Two indexes supporting the resolver |
-| `src/server/db/schema.sql` | Same two indexes, appended under a marker |
-| `src/features/whatsapp/repository.ts` | `lastInboundAtForPhoneDigits` |
-| `src/features/whatsapp/woztell.ts` | `WoztellSendMode` replaces the templateName inference |
-| `src/features/notifications/types.ts` | `NotificationDispatchContext`, `LastInboundResolver`, widened `dispatch` |
-| `src/features/notifications/dispatcher.ts` | Resolution in `dispatchDue`; transport + composite router forward context; error logging |
-| `src/features/notifications/runtime-dispatch.ts` | Live-mode-gated resolver injection |
-| `docs/runbooks/firm-deployment.md` | The template-approval checklist |
+| File                                                             | Responsibility                                                                           |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `src/features/whatsapp/phone.ts` _(new)_                         | Digits-only canonicalisation, for comparison only                                        |
+| `src/features/whatsapp/session-window.ts` _(new)_                | 24-hour window arithmetic, pure                                                          |
+| `src/features/whatsapp/fallback-templates.ts` _(new)_            | Notification-type → re-engagement template policy                                        |
+| `db/migrations/0021_whatsapp_session_window_indexes.sql` _(new)_ | Two indexes supporting the resolver                                                      |
+| `src/server/db/schema.sql`                                       | Same two indexes, appended under a marker                                                |
+| `src/features/whatsapp/repository.ts`                            | `lastInboundAtForPhoneDigits`                                                            |
+| `src/features/whatsapp/woztell.ts`                               | `WoztellSendMode` replaces the templateName inference                                    |
+| `src/features/notifications/types.ts`                            | `NotificationDispatchContext`, `LastInboundResolver`, widened `dispatch`                 |
+| `src/features/notifications/dispatcher.ts`                       | Resolution in `dispatchDue`; transport + composite router forward context; error logging |
+| `src/features/notifications/runtime-dispatch.ts`                 | Live-mode-gated resolver injection                                                       |
+| `docs/runbooks/firm-deployment.md`                               | The template-approval checklist                                                          |
 
 ---
 
 ### Task 1: Digits-only phone comparison helper
 
 **Files:**
+
 - Create: `src/features/whatsapp/phone.ts`
 - Create: `src/features/whatsapp/phone.test.ts`
 
@@ -135,6 +136,7 @@ git commit -m "feat: add digits-only phone comparison helper"
 ### Task 2: Session window arithmetic
 
 **Files:**
+
 - Create: `src/features/whatsapp/session-window.ts`
 - Create: `src/features/whatsapp/session-window.test.ts`
 
@@ -252,6 +254,7 @@ git commit -m "feat: add WhatsApp 24-hour session window arithmetic"
 ### Task 3: Fallback template policy
 
 **Files:**
+
 - Create: `src/features/whatsapp/fallback-templates.ts`
 - Create: `src/features/whatsapp/fallback-templates.test.ts`
 
@@ -366,6 +369,7 @@ git commit -m "feat: add WhatsApp re-engagement fallback template policy"
 ### Task 4: Migration and schema for the resolver indexes
 
 **Files:**
+
 - Create: `db/migrations/0021_whatsapp_session_window_indexes.sql`
 - Modify: `src/server/db/schema.sql` (append at end of file)
 
@@ -425,6 +429,7 @@ create index if not exists whatsapp_messages_inbound_received_idx
 docker run -d --name kossilon-test-pg -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=kossilon_test -p 5432:5432 postgres:17-alpine
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_SSL=false bun scripts/db-migrate.ts
 ```
+
 Expected: all 21 migrations apply, including `0021_whatsapp_session_window_indexes.sql`.
 
 - [ ] **Step 4: Confirm both indexes exist**
@@ -434,6 +439,7 @@ Expected: all 21 migrations apply, including `0021_whatsapp_session_window_index
 ```bash
 docker exec kossilon-test-pg psql -U postgres -d kossilon_test -c "select indexname, indexdef from pg_indexes where indexname in ('whatsapp_contacts_phone_digits_idx','whatsapp_messages_inbound_received_idx');"
 ```
+
 Expected: **two** rows. The contacts index should be a btree over `regexp_replace(COALESCE(phone_e164, whatsapp_id), '[^0-9]'::text, ''::text, 'g'::text)`; the messages index `(contact_id, received_at DESC) WHERE (direction = 'inbound'::text)`.
 
 Note on idempotency: re-running `bun scripts/db-migrate.ts` proves nothing, because the script keeps a `schema_migrations` ledger and simply skips applied files. To exercise the SQL itself, delete the `0021` ledger row and re-run, or apply the statements directly with `psql -v ON_ERROR_STOP=1`.
@@ -452,6 +458,7 @@ git commit -m "feat: add digits-only phone indexes for session window resolution
 ### Task 5: `lastInboundAtForPhoneDigits` repository read
 
 **Files:**
+
 - Modify: `src/features/whatsapp/repository.ts`
 - Modify: `src/features/whatsapp/repository.test.ts`
 
@@ -468,31 +475,31 @@ In `src/features/whatsapp/repository.ts`, the type starts at `:149`. Add this me
 Add this function inside `createWhatsAppRepository`, immediately before the returned object literal (which starts around `:1278`):
 
 ```ts
-  /**
-   * The 24-hour session window clock. whatsapp_contacts.last_seen_at cannot serve
-   * here: its single write is reached from both recordInboundMessage AND
-   * queueOutboundTemplateMessage, and the outbound one fires at queue time.
-   *
-   * Matched digits-only because the two sides are stored in three incompatible
-   * formats (see phone.ts). This also spans the duplicate contact rows the format
-   * split has already created — a staff-created "+85291234567" and an
-   * inbound-created "85291234567" are distinct rows under
-   * whatsapp_contacts_provider_phone_uidx, and max() across both is the answer we
-   * want.
-   *
-   * The regexp_replace expression must stay character-identical to
-   * whatsapp_contacts_phone_digits_idx (migration 0021) or the planner will not
-   * use the index.
-   */
-  async function lastInboundAtForPhoneDigits(phoneDigits: string): Promise<string | null> {
-    // An empty string would match EVERY contact whose phone_e164 and whatsapp_id
-    // are both digitless — coalesce(...) yields '' for those — and max() would then
-    // return an unrelated contact's timestamp, silently opening the window for the
-    // wrong person. toPhoneDigits returns null rather than "" precisely so callers
-    // can avoid this, but the type signature cannot enforce it.
-    if (phoneDigits === "") return null;
+/**
+ * The 24-hour session window clock. whatsapp_contacts.last_seen_at cannot serve
+ * here: its single write is reached from both recordInboundMessage AND
+ * queueOutboundTemplateMessage, and the outbound one fires at queue time.
+ *
+ * Matched digits-only because the two sides are stored in three incompatible
+ * formats (see phone.ts). This also spans the duplicate contact rows the format
+ * split has already created — a staff-created "+85291234567" and an
+ * inbound-created "85291234567" are distinct rows under
+ * whatsapp_contacts_provider_phone_uidx, and max() across both is the answer we
+ * want.
+ *
+ * The regexp_replace expression must stay character-identical to
+ * whatsapp_contacts_phone_digits_idx (migration 0021) or the planner will not
+ * use the index.
+ */
+async function lastInboundAtForPhoneDigits(phoneDigits: string): Promise<string | null> {
+  // An empty string would match EVERY contact whose phone_e164 and whatsapp_id
+  // are both digitless — coalesce(...) yields '' for those — and max() would then
+  // return an unrelated contact's timestamp, silently opening the window for the
+  // wrong person. toPhoneDigits returns null rather than "" precisely so callers
+  // can avoid this, but the type signature cannot enforce it.
+  if (phoneDigits === "") return null;
 
-    const rows = await sql<{ last_inbound_at: string | Date | null }[]>`
+  const rows = await sql<{ last_inbound_at: string | Date | null }[]>`
       select max(wm.received_at) as last_inbound_at
       from whatsapp_messages wm
       join whatsapp_contacts wc on wc.id = wm.contact_id
@@ -500,10 +507,10 @@ Add this function inside `createWhatsAppRepository`, immediately before the retu
         and wm.direction = 'inbound'
     `;
 
-    const value = rows[0]?.last_inbound_at ?? null;
-    if (value === null) return null;
-    return typeof value === "string" ? value : value.toISOString();
-  }
+  const value = rows[0]?.last_inbound_at ?? null;
+  if (value === null) return null;
+  return typeof value === "string" ? value : value.toISOString();
+}
 ```
 
 - [ ] **Step 3: Add it to the returned object**
@@ -521,57 +528,57 @@ This is the test that matters. Fixtures that agree with each other by constructi
 Add inside the existing `describe.skipIf(!databaseUrl)` block in `src/features/whatsapp/repository.test.ts`, reusing that block's existing fixture helpers:
 
 ```ts
-  it(
-    "resolves the last inbound timestamp across real-world phone formats",
-    async () => {
-      const repository = repositoryFor();
-      // WOZTELL's documented inbound `from` is bare digits with no plus.
-      const inboundFrom = "85260903521";
-      const receivedAt = "2026-08-26T02:00:00.000Z";
+it(
+  "resolves the last inbound timestamp across real-world phone formats",
+  async () => {
+    const repository = repositoryFor();
+    // WOZTELL's documented inbound `from` is bare digits with no plus.
+    const inboundFrom = "85260903521";
+    const receivedAt = "2026-08-26T02:00:00.000Z";
 
-      await repository.recordInboundMessage({
-        provider: "woztell",
-        providerMessageId: `test-window-${inboundFrom}`,
-        channelId: null,
-        fromWhatsAppId: inboundFrom,
-        fromPhone: inboundFrom,
-        contactName: "Window Test",
-        messageType: "text",
-        body: "Hello",
-        receivedAt,
-        rawPayload: {},
-      });
+    await repository.recordInboundMessage({
+      provider: "woztell",
+      providerMessageId: `test-window-${inboundFrom}`,
+      channelId: null,
+      fromWhatsAppId: inboundFrom,
+      fromPhone: inboundFrom,
+      contactName: "Window Test",
+      messageType: "text",
+      body: "Hello",
+      receivedAt,
+      rawPayload: {},
+    });
 
-      // The sweeps enqueue company_contacts.phone verbatim, and the firm's house
-      // format is spaced. Exact string equality against phone_e164 would miss.
-      const sweepRecipient = "+852 6090 3521";
-      const resolved = await repository.lastInboundAtForPhoneDigits(
-        sweepRecipient.replace(/\D/g, ""),
-      );
+    // The sweeps enqueue company_contacts.phone verbatim, and the firm's house
+    // format is spaced. Exact string equality against phone_e164 would miss.
+    const sweepRecipient = "+852 6090 3521";
+    const resolved = await repository.lastInboundAtForPhoneDigits(
+      sweepRecipient.replace(/\D/g, ""),
+    );
 
-      expect(resolved).not.toBeNull();
-      expect(new Date(resolved!).toISOString()).toBe(receivedAt);
-    },
-    INTEGRATION_TEST_TIMEOUT_MS,
-  );
+    expect(resolved).not.toBeNull();
+    expect(new Date(resolved!).toISOString()).toBe(receivedAt);
+  },
+  INTEGRATION_TEST_TIMEOUT_MS,
+);
 
-  it(
-    "returns null for a number that has never messaged us",
-    async () => {
-      const repository = repositoryFor();
-      expect(await repository.lastInboundAtForPhoneDigits("85299999999")).toBeNull();
-    },
-    INTEGRATION_TEST_TIMEOUT_MS,
-  );
+it(
+  "returns null for a number that has never messaged us",
+  async () => {
+    const repository = repositoryFor();
+    expect(await repository.lastInboundAtForPhoneDigits("85299999999")).toBeNull();
+  },
+  INTEGRATION_TEST_TIMEOUT_MS,
+);
 
-  it(
-    "returns null for an empty digit string rather than matching digitless contacts",
-    async () => {
-      const repository = repositoryFor();
-      expect(await repository.lastInboundAtForPhoneDigits("")).toBeNull();
-    },
-    INTEGRATION_TEST_TIMEOUT_MS,
-  );
+it(
+  "returns null for an empty digit string rather than matching digitless contacts",
+  async () => {
+    const repository = repositoryFor();
+    expect(await repository.lastInboundAtForPhoneDigits("")).toBeNull();
+  },
+  INTEGRATION_TEST_TIMEOUT_MS,
+);
 ```
 
 `repositoryFor()` (`:34`) and `INTEGRATION_TEST_TIMEOUT_MS` (`:18`) are that file's existing helpers, and the `describe.skipIf(!databaseUrl)("WhatsApp repository", …)` block starts at `:251`. Read the surrounding tests and match their fixture-construction and cleanup conventions; confirm the new rows are covered by the existing teardown, and extend it if not.
@@ -581,6 +588,7 @@ Add inside the existing `describe.skipIf(!databaseUrl)` block in `src/features/w
 ```bash
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_SSL=false npx vitest run src/features/whatsapp/repository.test.ts
 ```
+
 Expected: PASS, including both new tests. `DATABASE_SSL=false` is required — without it the connection hangs indefinitely against the non-TLS container.
 
 Run it a second time to confirm no fixture leakage.
@@ -604,6 +612,7 @@ git commit -m "feat: resolve last inbound timestamp by digits-only phone match"
 ### Task 6: `WoztellSendMode` replaces the templateName inference
 
 **Files:**
+
 - Modify: `src/features/whatsapp/woztell.ts`
 - Modify: `src/features/whatsapp/woztell.test.ts`
 
@@ -661,7 +670,9 @@ At `:39`, change:
 ```ts
         response: [woztellResponseElement(input)],
 ```
+
 to:
+
 ```ts
         response: [woztellResponseElement(input.mode)],
 ```
@@ -671,26 +682,26 @@ to:
 `sendWoztellMessage` has exactly one production call site — `src/features/notifications/dispatcher.ts:112-124`. Changing the signature without touching it leaves the repo non-typechecking until Task 8, so this task must adapt it **behaviour-preservingly**: build the mode from the same payload fields, reproducing today's exact rule (a `templateName` present → TEMPLATE, otherwise TEXT). Task 8 replaces this block with the window-aware resolution.
 
 ```ts
-      const templateName = typeof payload.templateName === "string" ? payload.templateName : undefined;
-      const mode: WoztellSendMode = templateName
-        ? {
-            kind: "template",
-            elementName: templateName,
-            languageCode: typeof payload.languageCode === "string" ? payload.languageCode : "en",
-            components: Array.isArray(payload.templateComponents)
-              ? (payload.templateComponents as WoztellTemplateComponent[])
-              : [],
-          }
-        : { kind: "text", body };
+const templateName = typeof payload.templateName === "string" ? payload.templateName : undefined;
+const mode: WoztellSendMode = templateName
+  ? {
+      kind: "template",
+      elementName: templateName,
+      languageCode: typeof payload.languageCode === "string" ? payload.languageCode : "en",
+      components: Array.isArray(payload.templateComponents)
+        ? (payload.templateComponents as WoztellTemplateComponent[])
+        : [],
+    }
+  : { kind: "text", body };
 
-      return sendWoztellMessage(config, { toPhone: notification.recipient, mode }, fetchImpl);
+return sendWoztellMessage(config, { toPhone: notification.recipient, mode }, fetchImpl);
 ```
 
 `toWhatsAppId` disappears here — it was read from the payload and passed, but `sendWoztellMessage` never used it.
 
 - [ ] **Step 4: Update all five test call sites**
 
-`src/features/whatsapp/woztell.test.ts` calls `sendWoztellMessage` at `:172`, `:190`, `:221`, `:234`, `:252`. Each passes a `WoztellOutboundMessage`; convert each to the new shape. The two byte-exact wire assertions are at `:176-180` (TEXT) and `:201-208` (TEMPLATE) — they assert the *output*, which is unchanged, so only the inputs move. For example the TEXT case becomes:
+`src/features/whatsapp/woztell.test.ts` calls `sendWoztellMessage` at `:172`, `:190`, `:221`, `:234`, `:252`. Each passes a `WoztellOutboundMessage`; convert each to the new shape. The two byte-exact wire assertions are at `:176-180` (TEXT) and `:201-208` (TEMPLATE) — they assert the _output_, which is unchanged, so only the inputs move. For example the TEXT case becomes:
 
 ```ts
 await sendWoztellMessage(
@@ -737,6 +748,7 @@ git commit -m "feat: take an explicit send mode instead of inferring it from tem
 ### Task 7: Transport context type
 
 **Files:**
+
 - Modify: `src/features/notifications/types.ts`
 
 - [ ] **Step 1: Add the two new types and widen `dispatch`**
@@ -788,6 +800,7 @@ git commit -m "feat: add an optional dispatch context for the WhatsApp send mode
 ### Task 8: Resolve the send mode in `dispatchDue`
 
 **Files:**
+
 - Modify: `src/features/notifications/dispatcher.ts`
 
 - [ ] **Step 1: Add the resolver option**
@@ -884,17 +897,17 @@ import type { LastInboundResolver, NotificationDispatchContext } from "./types";
 In `dispatchDue`, replace the dispatch call at `:42` (`const result = await transport.dispatch(notification);`) with:
 
 ```ts
-          const context: NotificationDispatchContext | undefined =
-            notification.channel === "whatsapp" && options.lastInboundResolver
-              ? {
-                  whatsAppSendMode: await resolveWhatsAppSendMode(
-                    notification,
-                    now,
-                    options.lastInboundResolver,
-                  ),
-                }
-              : undefined;
-          const result = await transport.dispatch(notification, context);
+const context: NotificationDispatchContext | undefined =
+  notification.channel === "whatsapp" && options.lastInboundResolver
+    ? {
+        whatsAppSendMode: await resolveWhatsAppSendMode(
+          notification,
+          now,
+          options.lastInboundResolver,
+        ),
+      }
+    : undefined;
+const result = await transport.dispatch(notification, context);
 ```
 
 A resolver rejection (transient DB error) propagates into the existing catch and burns one attempt, which then retries and self-heals. That is deliberately preferred over degrading to a template: the composed body survives a short delay rather than being silently replaced.
@@ -904,17 +917,17 @@ A resolver rejection (transient DB error) propagates into the existing catch and
 Still in `dispatchDue`, inside the existing `catch` block (`:72-93`), immediately after `errorCode` is computed, add:
 
 ```ts
-          // The only screen that reads notification_outbox filters on
-          // idempotency_key like 'follow-up:%', so sweep failures are otherwise
-          // invisible — and redactExpired nulls last_error_code/message at
-          // retention, putting the evidence on a 90-day fuse. A permanently
-          // unapproved fallback template would surface only as an aggregate count.
-          console.error("notification dispatch failed", {
-            id: notification.id,
-            notificationType: notification.notificationType,
-            channel: notification.channel,
-            errorCode,
-          });
+// The only screen that reads notification_outbox filters on
+// idempotency_key like 'follow-up:%', so sweep failures are otherwise
+// invisible — and redactExpired nulls last_error_code/message at
+// retention, putting the evidence on a 90-day fuse. A permanently
+// unapproved fallback template would surface only as an aggregate count.
+console.error("notification dispatch failed", {
+  id: notification.id,
+  notificationType: notification.notificationType,
+  channel: notification.channel,
+  errorCode,
+});
 ```
 
 - [ ] **Step 5: Forward the context through the WOZTELL transport**
@@ -950,7 +963,9 @@ This is the step whose omission would break every live WhatsApp send. `dispatchD
     async dispatch(notification) {
       if (notification.channel === "whatsapp") return whatsappTransport.dispatch(notification);
 ```
+
 to:
+
 ```ts
     async dispatch(notification, context) {
       if (notification.channel === "whatsapp")
@@ -976,6 +991,7 @@ git commit -m "feat: resolve the WhatsApp session window in dispatchDue"
 ### Task 9: Gate the resolver to live mode
 
 **Files:**
+
 - Modify: `src/features/notifications/runtime-dispatch.ts`
 - Modify: `src/features/notifications/dispatcher.test.ts`
 - Modify: `src/features/notifications/runtime-dispatch.test.ts`
@@ -987,15 +1003,15 @@ git commit -m "feat: resolve the WhatsApp session window in dispatchDue"
 In `dispatchDueNotificationsWithDependencies`, change the `createNotificationDispatcher` options (`:47-49`) to:
 
 ```ts
-    return await createNotificationDispatcher(repository, transport, {
-      whatsAppRepository,
-      // Gated exactly as config/resendConfig are above: local and simulated modes
-      // keep their previous behaviour, with no window lookup at all.
-      lastInboundResolver:
-        providerMode === "live" && whatsAppRepository
-          ? (phoneDigits) => whatsAppRepository.lastInboundAtForPhoneDigits(phoneDigits)
-          : undefined,
-    }).dispatchDue(data.now, data.limit);
+return await createNotificationDispatcher(repository, transport, {
+  whatsAppRepository,
+  // Gated exactly as config/resendConfig are above: local and simulated modes
+  // keep their previous behaviour, with no window lookup at all.
+  lastInboundResolver:
+    providerMode === "live" && whatsAppRepository
+      ? (phoneDigits) => whatsAppRepository.lastInboundAtForPhoneDigits(phoneDigits)
+      : undefined,
+}).dispatchDue(data.now, data.limit);
 ```
 
 Read the surrounding code first — `providerMode` and `whatsAppRepository` are both already in scope at that point (`:36-41`).
@@ -1007,7 +1023,7 @@ Expected: PASS.
 
 - [ ] **Step 3: Fix the two live-composite tests**
 
-`src/features/notifications/dispatcher.test.ts:200-222` and `:245-279` dispatch live-mode WhatsApp through the composite router with **no second argument** (the dispatch calls are at `:218-220` and `:274-278`). They now hit the *no-send-mode* throw, so changing their payloads does not help — each must pass a context:
+`src/features/notifications/dispatcher.test.ts:200-222` and `:245-279` dispatch live-mode WhatsApp through the composite router with **no second argument** (the dispatch calls are at `:218-220` and `:274-278`). They now hit the _no-send-mode_ throw, so changing their payloads does not help — each must pass a context:
 
 ```ts
 await transport.dispatch(
@@ -1039,6 +1055,7 @@ git commit -m "feat: gate session window resolution to live provider mode"
 ### Task 10: Dispatcher decision-table tests
 
 **Files:**
+
 - Modify: `src/features/notifications/dispatcher.test.ts`
 
 - [ ] **Step 1: Write tests for all seven states**
@@ -1140,11 +1157,7 @@ describe("WhatsApp session window resolution", () => {
       recipient: "+852 6090 3521",
       payload: { body: "hi" },
     });
-    const dispatcher = createNotificationDispatcher(
-      repository([record]),
-      { dispatch },
-      {},
-    );
+    const dispatcher = createNotificationDispatcher(repository([record]), { dispatch }, {});
     await dispatcher.dispatchDue(now);
     expect(dispatch.mock.calls[0][1]).toBeUndefined();
   });
@@ -1170,6 +1183,7 @@ git commit -m "test: cover every session window decision state"
 ### Task 11: Runbook entry for the template-approval dependency
 
 **Files:**
+
 - Modify: `docs/runbooks/firm-deployment.md`
 
 - [ ] **Step 1: Add the checklist**
@@ -1238,6 +1252,7 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_SSL=false bun scripts/db-seed-annual-return.ts
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_SSL=false npm run test
 ```
+
 Expected: all pass with zero `TEST_DATABASE_URL`-gated skips. `DATABASE_SSL=false` is mandatory; omitting it hangs indefinitely.
 
 Note: a transient failure in `src/features/annual-return/repository.test.ts` count assertions caused by a concurrent WhatsApp fixture is a known pre-existing test-isolation race, not a regression — re-run to confirm before investigating.
@@ -1249,6 +1264,7 @@ With the container still running:
 ```bash
 docker exec kossilon-test-pg psql -U postgres -d kossilon_test -c "explain select max(wm.received_at) from whatsapp_messages wm join whatsapp_contacts wc on wc.id = wm.contact_id where regexp_replace(coalesce(wc.phone_e164, wc.whatsapp_id), '[^0-9]', '', 'g') = '85260903521' and wm.direction = 'inbound';"
 ```
+
 Expected: the plan references `whatsapp_contacts_phone_digits_idx`. On a near-empty table Postgres may prefer a sequential scan regardless — if so, note it and rely on Task 4's existence check rather than editing the query to force a match.
 
 Tear down: `docker rm -f kossilon-test-pg`

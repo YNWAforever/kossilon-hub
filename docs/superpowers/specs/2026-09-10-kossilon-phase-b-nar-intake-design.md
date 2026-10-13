@@ -80,25 +80,25 @@ Dates are normalized explicitly against the workbook's own epoch flag
 
 The supplied workbook drives these rules, each verified cell-by-cell against the file:
 
-| Observed | Rule |
-|---|---|
-| `dimension` is `A1:CO65`; rows 38–65 carry formatting and no values | Records are bounded by the first and last row carrying a client ID. A reader that counts `<row>` elements gets **65**, not 35. |
-| Column D is `dd/mm` text with **no year**; D37 is `30/8` with no leading zero | Parse day and month; leave the year `null`. Never infer an incorporation year. |
-| H7 is the **text** `5/9/2025` in a `d/m/yyyy;@` cell, beside serials elsewhere in the same column | Accept both, record which form it arrived in. |
-| F23 is `27/8/2025 (Ceredit fr deposit)` | Parse the date candidate, keep the note verbatim for confirmation. |
-| E8/E29/E32 and F8/F29/F32 are `(Nil)` — always paired | Preserve as a literal marker. Never map to paid, unpaid or cancelled. |
-| F17 is blank; column H has 11 blanks | Blank is unknown, not zero and not "no BR due". |
-| A7 is a single space | Column A is a row ordinal, never an identity. |
-| Invoice `IAHK-25-07071` appears on rows 14 and 28 — **two different companies** | Column E can never be an import identity or a dedupe key. Duplicate invoice numbers are a flagged conflict, not a match. |
-| G matches "anniversary + 42 days" on **34 of 35** rows — row 27 (`K13791`) is one day off | Never recompute column G from column D. The supplied due date is preserved with its provenance, and a derived value is only ever shown as a cross-check. |
-| F18 (2025-11-05) falls after G18 (2025-09-29) | A payment date after an AR due date is recorded, not read as late filing. |
+| Observed                                                                                          | Rule                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension` is `A1:CO65`; rows 38–65 carry formatting and no values                               | Records are bounded by the first and last row carrying a client ID. A reader that counts `<row>` elements gets **65**, not 35.                           |
+| Column D is `dd/mm` text with **no year**; D37 is `30/8` with no leading zero                     | Parse day and month; leave the year `null`. Never infer an incorporation year.                                                                           |
+| H7 is the **text** `5/9/2025` in a `d/m/yyyy;@` cell, beside serials elsewhere in the same column | Accept both, record which form it arrived in.                                                                                                            |
+| F23 is `27/8/2025 (Ceredit fr deposit)`                                                           | Parse the date candidate, keep the note verbatim for confirmation.                                                                                       |
+| E8/E29/E32 and F8/F29/F32 are `(Nil)` — always paired                                             | Preserve as a literal marker. Never map to paid, unpaid or cancelled.                                                                                    |
+| F17 is blank; column H has 11 blanks                                                              | Blank is unknown, not zero and not "no BR due".                                                                                                          |
+| A7 is a single space                                                                              | Column A is a row ordinal, never an identity.                                                                                                            |
+| Invoice `IAHK-25-07071` appears on rows 14 and 28 — **two different companies**                   | Column E can never be an import identity or a dedupe key. Duplicate invoice numbers are a flagged conflict, not a match.                                 |
+| G matches "anniversary + 42 days" on **34 of 35** rows — row 27 (`K13791`) is one day off         | Never recompute column G from column D. The supplied due date is preserved with its provenance, and a derived value is only ever shown as a cross-check. |
+| F18 (2025-11-05) falls after G18 (2025-09-29)                                                     | A payment date after an AR due date is recorded, not read as late filing.                                                                                |
 
 ### Identity and re-import
 
 The idempotent business identity is `source system + external client ID + service type +
 return year`, resolved to the existing authoritative company and case. The schema is
 single-firm — no table carries a firm column, `FIRM_ID` is a deployment-level Worker var
-whose only functional consumer is the provider-mode gate — so the deployment *is* the
+whose only functional consumer is the provider-mode gate — so the deployment _is_ the
 scope and no firm column is added.
 
 Re-import is a controlled merge. Source-owned fields may update with provenance; staff
@@ -190,7 +190,7 @@ Three consequences beyond the board, all worse than the audit stated:
 - The owner filter — the one control that could narrow the SQL enough to surface a late
   case — is itself populated from the truncated page.
 - The "Showing the first 200" warning is gated on `cases.length === 200` exact equality,
-  while the `risk` filter is applied *after* hydration, so the warning can be absent when
+  while the `risk` filter is applied _after_ hydration, so the warning can be absent when
   truncation happened.
 - `follow-up-server-fns.ts:62` builds the production WhatsApp follow-up drafts from
   `listCases({})` — the **200 earliest-due cases only**. Clients past row 200 are silently

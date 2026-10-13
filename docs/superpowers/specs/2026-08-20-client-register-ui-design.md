@@ -40,6 +40,7 @@ whatever is required to render them from a real screen.
 ## Scope
 
 **In scope:**
+
 - `src/routes/clients.tsx` — register (list) route.
 - `src/routes/clients.$id.tsx` — detail route.
 - `src/features/clients/components/production-client-register.tsx` — list screen.
@@ -50,6 +51,7 @@ whatever is required to render them from a real screen.
 - Route-level and screen-level tests for both new routes.
 
 **Out of scope:**
+
 - Any change to `repository.ts`, `server-fns.ts`, `authorization.ts`, `client-form-dialog.tsx`,
   or `contact-form-dialog.tsx` beyond passing them the props they already declare.
 - A demo-mode fixture store for clients (explicitly declined — see "Demo mode" below).
@@ -70,6 +72,7 @@ page-header convention test) plus one explanatory card, and performs no data fet
 ## Routes
 
 `src/routes/clients.tsx`:
+
 ```tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { DemoClientNotice } from "@/features/clients/components/demo-client-notice";
@@ -90,6 +93,7 @@ function ClientsRoute() {
 ```
 
 `src/routes/clients.$id.tsx`:
+
 ```tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { DemoClientNotice } from "@/features/clients/components/demo-client-notice";
@@ -127,6 +131,7 @@ The button opens `<ClientFormDialog open onOpenChange={...} options={assignmentO
 with no `client` prop. `onSaved` invalidates the `["clients"]` query key.
 
 **Controls row** (same input/select classes as `annual-returns.tsx`'s control row):
+
 - Search `<input>` — client-side filter against `companyName`, `crNumber`, `brNumber`
   (case-insensitive substring match).
 - Status filter buttons: All / Active / Inactive, filtering on `status`.
@@ -135,16 +140,16 @@ with no `client` prop. `onSaved` invalidates the `["clients"]` query key.
 **Table** — a `CASE_GRID_COLUMNS`-style grid (same technique as `CaseRow` in
 `annual-returns.tsx`, wrapped in `overflow-x-auto`), one row per `ClientSummary`:
 
-| Column | Source |
-|---|---|
+| Column  | Source                                                        |
+| ------- | ------------------------------------------------------------- |
 | Company | `companyName` (bold) + `crNumber` / `brNumber` (muted, below) |
-| Owner | `ownerName` |
-| Team | `teamName` |
-| Package | `packageName ?? "No package"` |
-| Status | pill: `status` |
-| AR due | `arDueDate ? formatted : "No case yet"` |
-| Payment | `paymentStatus` pill, or "—" when `null` |
-| Open | `<Link to="/clients/$id" params={{ id }}>Open</Link>` |
+| Owner   | `ownerName`                                                   |
+| Team    | `teamName`                                                    |
+| Package | `packageName ?? "No package"`                                 |
+| Status  | pill: `status`                                                |
+| AR due  | `arDueDate ? formatted : "No case yet"`                       |
+| Payment | `paymentStatus` pill, or "—" when `null`                      |
+| Open    | `<Link to="/clients/$id" params={{ id }}>Open</Link>`         |
 
 Empty state (post-filter): "No clients match the current filters." — same copy pattern as
 the annual-returns board's empty state.
@@ -167,7 +172,7 @@ no crash, no further sections rendered.
    latest AR due date, latest payment status.
 3. **Contacts** — `client.contacts.map(...)`, each row showing name, role, email/phone, and a
    "Primary" badge when `isPrimary`. Each row has "Edit" (opens `<ContactFormDialog
-   companyId={client.id} contact={contact} ... />`) and "Remove" (calls
+companyId={client.id} contact={contact} ... />`) and "Remove" (calls
    `removeClientContact({ data: { companyId, contactId, actorId } })` directly — no
    confirmation dialog needed beyond what the button label communicates, consistent with how
    `removeContact` in the repository has no soft-delete). A trailing "Add contact" button opens

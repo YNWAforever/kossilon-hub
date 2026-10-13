@@ -35,11 +35,14 @@ two-step authorization your new `assertAdminAccess` will perform.
 
 **`assertAdminAccess`** already exists once in this codebase, added in the P0-8 fix
 (`src/features/notifications/runtime-dispatch.ts:83-86`):
+
 ```typescript
 export function assertAdminAccess(actor: AuthenticatedActor): void {
-  if (!actor.active || actor.role !== "Admin") throw new Error("Forbidden: Admin access is required.");
+  if (!actor.active || actor.role !== "Admin")
+    throw new Error("Forbidden: Admin access is required.");
 }
 ```
+
 This plan defines a **second, local copy** of this exact function inside the new module rather than
 extracting a shared helper into `src/features/auth/authorization.ts`. That's a deliberate, narrow
 choice: extracting shared auth infrastructure was not part of the approved design spec, and this
@@ -70,27 +73,28 @@ All paths below are relative to the repo root.
 
 ## File structure
 
-| File | Change | Responsibility |
-|---|---|---|
-| `db/migrations/0013_checklist_templates.sql` | Create | New table + seed of the five current demo templates |
-| `src/server/db/schema.sql` | Modify | Add the same table definition, kept in sync with the migration |
-| `src/features/checklist-templates/types.ts` | Create | Canonical `ChecklistTemplate`/`DocumentItem`/`ReminderRule`/`RiskRule`/`ServiceType` types |
-| `src/features/checklist-templates/repository.ts` | Create | `ChecklistTemplateRepository` — tagged-template SQL against `checklist_templates` |
-| `src/features/checklist-templates/repository.test.ts` | Create | DB-integration tests, `describe.skipIf(!databaseUrl)` |
-| `src/features/checklist-templates/server-fns.ts` | Create | `assertAdminAccess` + `*ForActor` functions + `createServerFn` wrappers |
-| `src/features/checklist-templates/server-fns.test.ts` | Create | Mocked-repository unit tests |
-| `src/lib/templates.ts` | Modify | Trimmed to a read-only fixture importing shared types; all 13 mutation methods deleted |
-| `src/routes/-settings-sections.ts` | Modify | `checklistTemplates` becomes `true` unconditionally |
-| `src/routes/-settings-sections.test.ts` | Modify | Update the two assertions that currently expect `checklistTemplates: false`/`true` split by mode |
-| `src/routes/settings.tsx` | Modify | Template section branches on `dataMode`: read-only demo view, query/mutation-backed production view |
-| `src/routes/-final-review-restorations.test.ts` | Modify | Update the source-text assertions that reference deleted `templatesStore.*` calls |
-| `src/routes/-settings-templates.test.tsx` | Create | Route-level test: demo shows read-only rows, production Admin sees working controls |
+| File                                                  | Change | Responsibility                                                                                      |
+| ----------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
+| `db/migrations/0013_checklist_templates.sql`          | Create | New table + seed of the five current demo templates                                                 |
+| `src/server/db/schema.sql`                            | Modify | Add the same table definition, kept in sync with the migration                                      |
+| `src/features/checklist-templates/types.ts`           | Create | Canonical `ChecklistTemplate`/`DocumentItem`/`ReminderRule`/`RiskRule`/`ServiceType` types          |
+| `src/features/checklist-templates/repository.ts`      | Create | `ChecklistTemplateRepository` — tagged-template SQL against `checklist_templates`                   |
+| `src/features/checklist-templates/repository.test.ts` | Create | DB-integration tests, `describe.skipIf(!databaseUrl)`                                               |
+| `src/features/checklist-templates/server-fns.ts`      | Create | `assertAdminAccess` + `*ForActor` functions + `createServerFn` wrappers                             |
+| `src/features/checklist-templates/server-fns.test.ts` | Create | Mocked-repository unit tests                                                                        |
+| `src/lib/templates.ts`                                | Modify | Trimmed to a read-only fixture importing shared types; all 13 mutation methods deleted              |
+| `src/routes/-settings-sections.ts`                    | Modify | `checklistTemplates` becomes `true` unconditionally                                                 |
+| `src/routes/-settings-sections.test.ts`               | Modify | Update the two assertions that currently expect `checklistTemplates: false`/`true` split by mode    |
+| `src/routes/settings.tsx`                             | Modify | Template section branches on `dataMode`: read-only demo view, query/mutation-backed production view |
+| `src/routes/-final-review-restorations.test.ts`       | Modify | Update the source-text assertions that reference deleted `templatesStore.*` calls                   |
+| `src/routes/-settings-templates.test.tsx`             | Create | Route-level test: demo shows read-only rows, production Admin sees working controls                 |
 
 ---
 
 ## Task 1: Migration + schema
 
 **Files:**
+
 - Create: `db/migrations/0013_checklist_templates.sql`
 - Modify: `src/server/db/schema.sql`
 
@@ -266,6 +270,7 @@ git commit -m "feat(checklist-templates): add checklist_templates table"
 ## Task 2: Shared types module
 
 **Files:**
+
 - Create: `src/features/checklist-templates/types.ts`
 
 ### Step 1: Write the types
@@ -340,6 +345,7 @@ git commit -m "feat(checklist-templates): add shared types module"
 ## Task 3: Repository
 
 **Files:**
+
 - Create: `src/features/checklist-templates/repository.ts`
 - Create: `src/features/checklist-templates/repository.test.ts`
 - Create: `src/features/checklist-templates/errors.ts`
@@ -725,27 +731,27 @@ though it wasn't the case that surfaced this gap first.
 Add two tests to `repository.test.ts`, in the same `describe` block:
 
 ```typescript
-  it("translates a duplicate name into a friendly ChecklistTemplateWriteError", async () => {
-    const repository = createChecklistTemplateRepository({ sql: testSql! });
-    await repository.createTemplate("Annual Return — Private Ltd");
+it("translates a duplicate name into a friendly ChecklistTemplateWriteError", async () => {
+  const repository = createChecklistTemplateRepository({ sql: testSql! });
+  await repository.createTemplate("Annual Return — Private Ltd");
 
-    await expect(repository.createTemplate("Annual Return — Private Ltd")).rejects.toMatchObject({
-      name: "ChecklistTemplateWriteError",
-      field: "name",
-      message: "A checklist template with this name already exists.",
-    });
+  await expect(repository.createTemplate("Annual Return — Private Ltd")).rejects.toMatchObject({
+    name: "ChecklistTemplateWriteError",
+    field: "name",
+    message: "A checklist template with this name already exists.",
   });
+});
 
-  it("translates a duplicate-of-a-duplicate name the same way", async () => {
-    const repository = createChecklistTemplateRepository({ sql: testSql! });
-    const created = await repository.createTemplate("Annual Return — Private Ltd");
-    await repository.duplicateTemplate(created.id);
+it("translates a duplicate-of-a-duplicate name the same way", async () => {
+  const repository = createChecklistTemplateRepository({ sql: testSql! });
+  const created = await repository.createTemplate("Annual Return — Private Ltd");
+  await repository.duplicateTemplate(created.id);
 
-    await expect(repository.duplicateTemplate(created.id)).rejects.toMatchObject({
-      name: "ChecklistTemplateWriteError",
-      field: "name",
-    });
+  await expect(repository.duplicateTemplate(created.id)).rejects.toMatchObject({
+    name: "ChecklistTemplateWriteError",
+    field: "name",
   });
+});
 ```
 
 ### Step 4: Run the tests
@@ -770,6 +776,7 @@ git commit -m "feat(checklist-templates): add repository"
 ## Task 4: Server functions
 
 **Files:**
+
 - Create: `src/features/checklist-templates/server-fns.ts`
 - Create: `src/features/checklist-templates/server-fns.test.ts`
 
@@ -1183,6 +1190,7 @@ git commit -m "feat(checklist-templates): add Admin-gated server functions"
 ## Task 5: Trim the demo fixture to read-only
 
 **Files:**
+
 - Modify: `src/lib/templates.ts`
 
 ### Step 1: Read the current file and every caller
@@ -1203,7 +1211,13 @@ none — delete `templatesStore` entirely — and export only reads:
 import { useSyncExternalStore } from "react";
 import type { ChecklistTemplate, ServiceType } from "@/features/checklist-templates/types";
 
-export type { ChecklistTemplate, DocumentItem, ReminderRule, RiskRule, ServiceType } from "@/features/checklist-templates/types";
+export type {
+  ChecklistTemplate,
+  DocumentItem,
+  ReminderRule,
+  RiskRule,
+  ServiceType,
+} from "@/features/checklist-templates/types";
 export { SERVICE_TYPES } from "@/features/checklist-templates/types";
 
 const nowIso = () => new Date("2026-07-04T09:00:00+08:00").toISOString();
@@ -1218,12 +1232,32 @@ const initialTemplates: ChecklistTemplate[] = [
     updatedAt: nowIso(),
     documents: [
       { id: "doc-ar-priv-1", label: "Signed NAR1 form", required: true, daysBeforeDue: 7 },
-      { id: "doc-ar-priv-2", label: "Register of members (updated)", required: true, daysBeforeDue: 14 },
+      {
+        id: "doc-ar-priv-2",
+        label: "Register of members (updated)",
+        required: true,
+        daysBeforeDue: 14,
+      },
       { id: "doc-ar-priv-3", label: "Register of directors", required: true, daysBeforeDue: 14 },
       { id: "doc-ar-priv-4", label: "Register of secretaries", required: true, daysBeforeDue: 14 },
-      { id: "doc-ar-priv-5", label: "Business registration certificate copy", required: true, daysBeforeDue: 30 },
-      { id: "doc-ar-priv-6", label: "Proof of registered office address", required: true, daysBeforeDue: 30 },
-      { id: "doc-ar-priv-7", label: "ID copies of all directors", required: true, daysBeforeDue: 30 },
+      {
+        id: "doc-ar-priv-5",
+        label: "Business registration certificate copy",
+        required: true,
+        daysBeforeDue: 30,
+      },
+      {
+        id: "doc-ar-priv-6",
+        label: "Proof of registered office address",
+        required: true,
+        daysBeforeDue: 30,
+      },
+      {
+        id: "doc-ar-priv-7",
+        label: "ID copies of all directors",
+        required: true,
+        daysBeforeDue: 30,
+      },
     ],
     reminders: [
       { id: "rem-ar-priv-1", label: "First reminder", daysBeforeDue: 30, channel: "WhatsApp" },
@@ -1232,9 +1266,27 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: "rem-ar-priv-4", label: "Final reminder", daysBeforeDue: 2, channel: "WhatsApp" },
     ],
     riskRules: [
-      { id: "risk-ar-priv-1", label: "Deadline critical", severity: "High", trigger: "Deadline < 3 days & docs incomplete", enabled: true },
-      { id: "risk-ar-priv-2", label: "Client silent", severity: "Medium", trigger: "No client reply after 3 reminders", enabled: true },
-      { id: "risk-ar-priv-3", label: "Payment overdue", severity: "Medium", trigger: "Invoice unpaid > 14 days", enabled: true },
+      {
+        id: "risk-ar-priv-1",
+        label: "Deadline critical",
+        severity: "High",
+        trigger: "Deadline < 3 days & docs incomplete",
+        enabled: true,
+      },
+      {
+        id: "risk-ar-priv-2",
+        label: "Client silent",
+        severity: "Medium",
+        trigger: "No client reply after 3 reminders",
+        enabled: true,
+      },
+      {
+        id: "risk-ar-priv-3",
+        label: "Payment overdue",
+        severity: "Medium",
+        trigger: "Invoice unpaid > 14 days",
+        enabled: true,
+      },
     ],
   },
   {
@@ -1246,7 +1298,12 @@ const initialTemplates: ChecklistTemplate[] = [
     updatedAt: nowIso(),
     documents: [
       { id: "doc-ar-pub-1", label: "Signed NAR1 form", required: true, daysBeforeDue: 7 },
-      { id: "doc-ar-pub-2", label: "Audited financial statements", required: true, daysBeforeDue: 21 },
+      {
+        id: "doc-ar-pub-2",
+        label: "Audited financial statements",
+        required: true,
+        daysBeforeDue: 21,
+      },
       { id: "doc-ar-pub-3", label: "Auditor's report", required: true, daysBeforeDue: 21 },
       { id: "doc-ar-pub-4", label: "Register of members", required: true, daysBeforeDue: 14 },
       { id: "doc-ar-pub-5", label: "Register of directors", required: true, daysBeforeDue: 14 },
@@ -1258,8 +1315,20 @@ const initialTemplates: ChecklistTemplate[] = [
       { id: "rem-ar-pub-3", label: "Final reminder", daysBeforeDue: 7, channel: "WhatsApp" },
     ],
     riskRules: [
-      { id: "risk-ar-pub-1", label: "Auditor delay", severity: "High", trigger: "Audit report outstanding < 21 days to due", enabled: true },
-      { id: "risk-ar-pub-2", label: "Deadline critical", severity: "High", trigger: "Deadline < 3 days & docs incomplete", enabled: true },
+      {
+        id: "risk-ar-pub-1",
+        label: "Auditor delay",
+        severity: "High",
+        trigger: "Audit report outstanding < 21 days to due",
+        enabled: true,
+      },
+      {
+        id: "risk-ar-pub-2",
+        label: "Deadline critical",
+        severity: "High",
+        trigger: "Deadline < 3 days & docs incomplete",
+        enabled: true,
+      },
     ],
   },
   {
@@ -1272,16 +1341,37 @@ const initialTemplates: ChecklistTemplate[] = [
     documents: [
       { id: "doc-incorp-1", label: "NNC1 incorporation form", required: true, daysBeforeDue: 3 },
       { id: "doc-incorp-2", label: "Articles of association", required: true, daysBeforeDue: 3 },
-      { id: "doc-incorp-3", label: "IRBR1 business registration notice", required: true, daysBeforeDue: 3 },
-      { id: "doc-incorp-4", label: "ID / passport of each director & shareholder", required: true, daysBeforeDue: 5 },
-      { id: "doc-incorp-5", label: "Proof of address for each director", required: true, daysBeforeDue: 5 },
+      {
+        id: "doc-incorp-3",
+        label: "IRBR1 business registration notice",
+        required: true,
+        daysBeforeDue: 3,
+      },
+      {
+        id: "doc-incorp-4",
+        label: "ID / passport of each director & shareholder",
+        required: true,
+        daysBeforeDue: 5,
+      },
+      {
+        id: "doc-incorp-5",
+        label: "Proof of address for each director",
+        required: true,
+        daysBeforeDue: 5,
+      },
     ],
     reminders: [
       { id: "rem-incorp-1", label: "Docs kick-off", daysBeforeDue: 7, channel: "WhatsApp" },
       { id: "rem-incorp-2", label: "Signature reminder", daysBeforeDue: 2, channel: "WhatsApp" },
     ],
     riskRules: [
-      { id: "risk-incorp-1", label: "KYC incomplete", severity: "High", trigger: "Missing director ID > 3 days", enabled: true },
+      {
+        id: "risk-incorp-1",
+        label: "KYC incomplete",
+        severity: "High",
+        trigger: "Missing director ID > 3 days",
+        enabled: true,
+      },
     ],
   },
   {
@@ -1299,7 +1389,13 @@ const initialTemplates: ChecklistTemplate[] = [
     ],
     reminders: [{ id: "rem-cod-1", label: "Docs reminder", daysBeforeDue: 7, channel: "WhatsApp" }],
     riskRules: [
-      { id: "risk-cod-1", label: "Statutory 15-day window", severity: "High", trigger: "Filing not submitted within 15 days of change", enabled: true },
+      {
+        id: "risk-cod-1",
+        label: "Statutory 15-day window",
+        severity: "High",
+        trigger: "Filing not submitted within 15 days of change",
+        enabled: true,
+      },
     ],
   },
   {
@@ -1312,11 +1408,22 @@ const initialTemplates: ChecklistTemplate[] = [
     documents: [
       { id: "doc-dereg-1", label: "DR1 deregistration form", required: true, daysBeforeDue: 14 },
       { id: "doc-dereg-2", label: "IRD notice of no objection", required: true, daysBeforeDue: 30 },
-      { id: "doc-dereg-3", label: "Written consent from all directors", required: true, daysBeforeDue: 14 },
+      {
+        id: "doc-dereg-3",
+        label: "Written consent from all directors",
+        required: true,
+        daysBeforeDue: 14,
+      },
     ],
     reminders: [{ id: "rem-dereg-1", label: "IRD follow-up", daysBeforeDue: 21, channel: "Email" }],
     riskRules: [
-      { id: "risk-dereg-1", label: "Outstanding tax", severity: "High", trigger: "IRD clearance not received", enabled: true },
+      {
+        id: "risk-dereg-1",
+        label: "Outstanding tax",
+        severity: "High",
+        trigger: "IRD clearance not received",
+        enabled: true,
+      },
     ],
   },
 ];
@@ -1376,6 +1483,7 @@ this commit and Task 7's completion.
 ## Task 6: `-settings-sections` becomes checklist-templates-aware
 
 **Files:**
+
 - Modify: `src/routes/-settings-sections.ts`
 - Modify: `src/routes/-settings-sections.test.ts`
 
@@ -1475,6 +1583,7 @@ git commit -m "feat(settings): show checklist templates in production"
 ## Task 7: Rewire `settings.tsx`
 
 **Files:**
+
 - Modify: `src/routes/settings.tsx`
 - Modify: `src/routes/-settings.interaction.test.tsx`
 - Create: `src/lib/guard-mutation.ts`
@@ -1492,6 +1601,7 @@ currently lines 99-205) and its supporting components (`TemplateEditor`, `Docume
 ### Step 2: Update imports
 
 Replace:
+
 ```typescript
 import {
   useTemplates,
@@ -1503,7 +1613,9 @@ import {
   type ReminderRule,
 } from "@/lib/templates";
 ```
+
 with:
+
 ```typescript
 import { useTemplates as useDemoTemplates } from "@/lib/templates";
 import {
@@ -1524,16 +1636,20 @@ import {
 } from "@/features/checklist-templates/server-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 ```
+
 (`useQuery`/`useQueryClient` are likely already imported for `integrationQuery` — check the existing
 import line from `@tanstack/react-query` and extend it rather than duplicating the import statement.)
 
 ### Step 3: Replace the template data source in `SettingsPage`
 
 Replace:
+
 ```typescript
 const templates = useTemplates();
 ```
+
 with a branch on `dataMode`:
+
 ```typescript
 const queryClient = useQueryClient();
 const demoTemplates = useDemoTemplates();
@@ -1573,6 +1689,7 @@ const deleteMutation = useMutation({
   onSuccess: invalidateTemplates,
 });
 ```
+
 `(queryClient)` must be declared before any conditional return (it already sits below the existing
 `const { dataMode } = Route.useRouteContext();` / `useAuth()` calls per the Rules-of-Hooks discipline
 this codebase already follows in this exact component — see the `isCurrentUserAdmin` gate a few
@@ -1665,6 +1782,7 @@ and `RisksTab` (label/trigger text → blur; severity select/enabled checkbox �
 Their "add" buttons need explicit new-item defaults, matching the values the deleted in-memory
 store's own `addReminder`/`addRisk` methods used (`git show 4d5c5ab~1:src/lib/templates.ts` is the
 last commit before Task 5 trimmed them, if you need to confirm):
+
 ```typescript
 // RemindersTab's addReminder
 const newReminder: ReminderRule = {
@@ -1682,6 +1800,7 @@ const newRisk: RiskRule = {
   enabled: true,
 };
 ```
+
 The `trigger` default matters beyond cosmetics: `server-fns.ts`'s `riskRuleSchema` requires
 `trigger: z.string().min(1)` (Task 4), so an empty-string default would fail server-side Zod
 validation on every "Add risk rule" click — silently, since no mutation in this file has an
@@ -1690,6 +1809,7 @@ during Task 7's first pass (an implementer inferred `trigger: ""` since this exa
 spelled out here) and is now made explicit to prevent a repeat.
 
 For `onDuplicate`/`onDelete` on `TemplateEditor` itself, replace:
+
 ```tsx
 onDuplicate={() => {
   const id = templatesStore.duplicate(selected.id);
@@ -1701,7 +1821,9 @@ onDelete={() => {
   if (next) setSelectedId(next.id);
 }}
 ```
+
 with:
+
 ```tsx
 onDuplicate={() => duplicateMutation.mutate(selected.id)}
 onDelete={() => {
@@ -1710,6 +1832,7 @@ onDelete={() => {
   if (next) setSelectedId(next.id);
 }}
 ```
+
 (`duplicateMutation`'s `onSuccess` already calls `setSelectedId(duplicated.id)`, so `onDuplicate`
 itself needs no follow-up id handling, unlike today's synchronous version.)
 
@@ -1726,7 +1849,7 @@ delete control is present or functional" in demo.
 Two real gaps surfaced during code-quality review of this task's first pass, both worth building
 in from the start rather than treating as an afterthought:
 
-**Concurrent-write race.** Every mutation above builds its patch from the *current* `t` prop
+**Concurrent-write race.** Every mutation above builds its patch from the _current_ `t` prop
 (`[...t.documents, newDoc]`, `t.documents.filter(...)`, etc.), and `t` only refreshes once
 `onSuccess → invalidateTemplates() → refetch` completes. Nothing stops a second click — on the same
 control or a different one for the same template — from firing before that refresh lands, and
@@ -1737,6 +1860,7 @@ the re-render that flips `isPending` via `setTimeout(fn, 0)`, not synchronously 
 microtask, so two `mutate()` calls issued in the same tick can both fire before that timer runs.
 
 Create `src/lib/guard-mutation.ts`:
+
 ```typescript
 // Guards a `mutate` call with a plain ref flag, checked and set *synchronously* — independent of
 // any render or scheduler. TanStack Query's own `isPending` is not enough on its own: it defers
@@ -1759,6 +1883,7 @@ export function guardMutation<Args>(
   };
 }
 ```
+
 In `SettingsPage`, wrap every user-triggered mutation entry point (create, update, duplicate,
 delete) with `guardMutation` over a `useRef<boolean>(false)`, clearing the ref in that mutation's
 `onSettled` — not `onSuccess` alone, since `onSettled` only runs after `onSuccess`'s own async work
@@ -1819,6 +1944,7 @@ git commit -m "feat(settings): wire checklist templates to the real backend, mak
 ## Task 8: Update existing tests, add new route-level coverage
 
 **Files:**
+
 - Modify: `src/routes/-final-review-restorations.test.ts`
 - Create: `src/routes/-settings-templates.test.tsx`
 
@@ -1826,17 +1952,21 @@ git commit -m "feat(settings): wire checklist templates to the real backend, mak
 
 Read `src/routes/-final-review-restorations.test.ts` in full (107 lines). Its `"restores editable
 settings while retaining the knowledge base"` test currently asserts:
+
 ```typescript
 expect(settingsSource).toContain("templatesStore.update");
 expect(settingsSource).toContain("templatesStore.addDocument");
 ```
+
 Both strings no longer exist in `settings.tsx` after Task 7. Replace them with assertions on the new
 source shape that preserve the test's actual intent (confirming the templates section still renders
 with real controls, not proving it was deleted):
+
 ```typescript
 expect(settingsSource).toContain("updateChecklistTemplate");
 expect(settingsSource).toContain("createChecklistTemplate");
 ```
+
 Leave the rest of that test (`"Service packages"`, `"WOZTELL WhatsApp API"`, `"<KnowledgeBaseSection />"`)
 unchanged — those sections aren't touched by this plan.
 

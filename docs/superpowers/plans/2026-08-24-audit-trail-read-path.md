@@ -15,6 +15,7 @@
 ### Task 1: Pure case-history module (types, merge, and display formatting)
 
 **Files:**
+
 - Create: `src/features/annual-return/case-history.ts`
 - Create: `src/features/annual-return/case-history.test.ts`
 
@@ -134,7 +135,10 @@ describe("describeCaseHistoryEntry", () => {
   };
 
   it.each(Object.entries(auditActionLabels))("labels audit action %s as %s", (action, label) => {
-    const [entry] = mergeCaseHistory([{ ...baseAuditRow, action: action as AuditEventRow["action"] }], []);
+    const [entry] = mergeCaseHistory(
+      [{ ...baseAuditRow, action: action as AuditEventRow["action"] }],
+      [],
+    );
 
     expect(describeCaseHistoryEntry(entry).label).toBe(label);
   });
@@ -165,7 +169,10 @@ describe("describeCaseHistoryEntry", () => {
   });
 
   it("labels an accepted-recommendation assignment", () => {
-    const [entry] = mergeCaseHistory([], [{ ...baseAssignmentRow, decision: "accepted_recommendation" }]);
+    const [entry] = mergeCaseHistory(
+      [],
+      [{ ...baseAssignmentRow, decision: "accepted_recommendation" }],
+    );
 
     expect(describeCaseHistoryEntry(entry).label).toBe("Assignment: accepted recommendation");
   });
@@ -350,6 +357,7 @@ git commit -m "feat: add pure case-history merge and formatting for audit trail"
 ### Task 2: Repository read functions for audit and assignment events
 
 **Files:**
+
 - Modify: `src/features/annual-return/repository.ts`
 
 - [ ] **Step 1: Add the type import**
@@ -365,8 +373,8 @@ import type { AuditEventRow, AssignmentEventRow } from "./case-history";
 Insert immediately after the closing brace of `listNotes` (repository.ts:1247, the line reading `}` right before `async function addNote`):
 
 ```ts
-  async function listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]> {
-    return sql<AuditEventRow[]>`
+async function listAuditEventsForCase(caseId: string): Promise<AuditEventRow[]> {
+  return sql<AuditEventRow[]>`
       select
         e.id, e.actor_id, u.name as actor_name, e.actor_role,
         e.action, e.result, e.summary, e.metadata, e.created_at
@@ -376,10 +384,10 @@ Insert immediately after the closing brace of `listNotes` (repository.ts:1247, t
       order by e.created_at desc
       limit 200
     `;
-  }
+}
 
-  async function listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]> {
-    return sql<AssignmentEventRow[]>`
+async function listAssignmentEventsForCase(caseId: string): Promise<AssignmentEventRow[]> {
+  return sql<AssignmentEventRow[]>`
       select
         a.id, a.work_item_id,
         a.previous_assignee_id, pu.name as previous_assignee_name,
@@ -396,8 +404,7 @@ Insert immediately after the closing brace of `listNotes` (repository.ts:1247, t
       order by a.created_at desc
       limit 200
     `;
-  }
-
+}
 ```
 
 - [ ] **Step 3: Add both functions to the `AnnualReturnRepository` type**
@@ -423,8 +430,8 @@ In the same file, add these two lines to the object returned by `createAnnualRet
 In `src/features/annual-return/repository.test.ts`, find the test `"exposes owner assignment and case note commands"` (around line 480) and add two assertions after the existing three:
 
 ```ts
-    expect(repository.listAuditEventsForCase).toBeTypeOf("function");
-    expect(repository.listAssignmentEventsForCase).toBeTypeOf("function");
+expect(repository.listAuditEventsForCase).toBeTypeOf("function");
+expect(repository.listAssignmentEventsForCase).toBeTypeOf("function");
 ```
 
 - [ ] **Step 6: Run typecheck and the extended test**
@@ -449,6 +456,7 @@ git commit -m "feat: add repository reads for annual_return_audit_events and ass
 This task requires a real Postgres instance. Follow the pattern established throughout this codebase's history: run a local Docker Postgres, migrate and seed it, and run the DB-integration suite against it — do not rely on typecheck/build alone, since `describe.skipIf(!databaseUrl)` silently skips these tests when `TEST_DATABASE_URL` is unset.
 
 **Files:**
+
 - Modify: `src/features/annual-return/repository.test.ts`
 
 - [ ] **Step 1: Start a local Postgres and set `TEST_DATABASE_URL`**
@@ -464,42 +472,42 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/kossilon_test DATABASE_
 Add this test inside the existing `describe.skipIf(!databaseUrl)("annual return repository", ...)` block in `src/features/annual-return/repository.test.ts` (the block starting at line 508), anywhere after the existing owner-assignment test:
 
 ```ts
-  it(
-    "reads merged audit and assignment history for a case",
-    async () => {
-      const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });
-      const repository = repositoryFor("2026-07-05");
+it(
+  "reads merged audit and assignment history for a case",
+  async () => {
+    const fixture = await createMutableAnnualReturnFixture({ sequence: 23 });
+    const repository = repositoryFor("2026-07-05");
 
-      await repository.addNote({
-        caseId: fixture.caseId,
-        body: "Checked with the client.",
-        actorId: USER_AMY_ID,
-      });
-      await repository.assignOwner({
-        caseId: fixture.caseId,
-        ownerId: USER_MEI_ID,
-        actorId: USER_KEN_ID,
-      });
+    await repository.addNote({
+      caseId: fixture.caseId,
+      body: "Checked with the client.",
+      actorId: USER_AMY_ID,
+    });
+    await repository.assignOwner({
+      caseId: fixture.caseId,
+      ownerId: USER_MEI_ID,
+      actorId: USER_KEN_ID,
+    });
 
-      const auditEvents = await repository.listAuditEventsForCase(fixture.caseId);
-      const assignmentEvents = await repository.listAssignmentEventsForCase(fixture.caseId);
+    const auditEvents = await repository.listAuditEventsForCase(fixture.caseId);
+    const assignmentEvents = await repository.listAssignmentEventsForCase(fixture.caseId);
 
-      expect(auditEvents.length).toBeGreaterThanOrEqual(1);
-      expect(auditEvents.some((row) => row.action === "add_note")).toBe(true);
-      expect(auditEvents.some((row) => row.action === "assign_owner")).toBe(true);
-      expect(auditEvents.every((row) => typeof row.actor_name === "string")).toBe(true);
+    expect(auditEvents.length).toBeGreaterThanOrEqual(1);
+    expect(auditEvents.some((row) => row.action === "add_note")).toBe(true);
+    expect(auditEvents.some((row) => row.action === "assign_owner")).toBe(true);
+    expect(auditEvents.every((row) => typeof row.actor_name === "string")).toBe(true);
 
-      expect(assignmentEvents.length).toBeGreaterThanOrEqual(1);
-      expect(assignmentEvents[0]).toMatchObject({
-        assigned_to_id: USER_MEI_ID,
-        assigned_by_id: USER_KEN_ID,
-        assigned_to_name: expect.any(String),
-        assigned_by_name: expect.any(String),
-        decision: "manual",
-      });
-    },
-    INTEGRATION_TEST_TIMEOUT_MS,
-  );
+    expect(assignmentEvents.length).toBeGreaterThanOrEqual(1);
+    expect(assignmentEvents[0]).toMatchObject({
+      assigned_to_id: USER_MEI_ID,
+      assigned_by_id: USER_KEN_ID,
+      assigned_to_name: expect.any(String),
+      assigned_by_name: expect.any(String),
+      decision: "manual",
+    });
+  },
+  INTEGRATION_TEST_TIMEOUT_MS,
+);
 ```
 
 - [ ] **Step 3: Run the test to verify it fails**
@@ -532,6 +540,7 @@ git commit -m "test: verify audit and assignment history reads against a real da
 ### Task 4: Domain function and authorization tests
 
 **Files:**
+
 - Modify: `src/features/annual-return/server-fns.ts`
 - Modify: `src/features/annual-return/server-fns.test.ts`
 
@@ -706,6 +715,7 @@ git commit -m "feat: add listAnnualReturnCaseHistoryForActor with scoped visibil
 ### Task 5: Server function wrapper and query key
 
 **Files:**
+
 - Modify: `src/features/annual-return/server-fns.ts`
 - Modify: `src/features/annual-return/query-keys.ts`
 
@@ -751,6 +761,7 @@ git commit -m "feat: add listAnnualReturnCaseHistory server function"
 ### Task 6: Audit history UI section
 
 **Files:**
+
 - Modify: `src/features/annual-return/components/production-case-detail.tsx`
 - Modify: `src/features/annual-return/components/production-case-detail.interaction.test.tsx`
 
@@ -759,55 +770,55 @@ git commit -m "feat: add listAnnualReturnCaseHistory server function"
 In `src/features/annual-return/components/production-case-detail.interaction.test.tsx`, add `listAnnualReturnCaseHistory: vi.fn()` to the `serverFns` hoisted mock object (alongside `listAnnualReturnCaseNotes` at line 13), add a default `serverFns.listAnnualReturnCaseHistory.mockResolvedValue([]);` to the `beforeEach` block (alongside line 106), and add this new test inside `describe("ProductionAnnualReturnCaseDetail", ...)`:
 
 ```ts
-  it("renders merged audit history entries newest first", async () => {
-    serverFns.listAnnualReturnCaseHistory.mockResolvedValue([
-      {
-        kind: "audit",
-        id: "a1000000-0000-0000-0000-000000000001",
-        createdAt: "2026-08-01T09:00:00.000Z",
-        actorId: ownerId,
-        actorName: "Ada Chan",
-        actorRole: "Staff",
-        action: "add_note",
-        result: "succeeded",
-        summary: "Checked with the client.",
-        metadata: {},
-      },
-      {
-        kind: "assignment",
-        id: "b1000000-0000-0000-0000-000000000001",
-        createdAt: "2026-08-02T09:00:00.000Z",
-        workItemId: "c1000000-0000-0000-0000-000000000001",
-        previousAssigneeId: ownerId,
-        previousAssigneeName: "Ada Chan",
-        assignedToId: nextOwnerId,
-        assignedToName: "Ken Wong",
-        assignedById: ownerId,
-        assignedByName: "Ada Chan",
-        decision: "manual",
-        overrideReason: null,
-        recommendationRank: null,
-        recommendationScore: null,
-        recommendationFactors: {},
-      },
-    ]);
+it("renders merged audit history entries newest first", async () => {
+  serverFns.listAnnualReturnCaseHistory.mockResolvedValue([
+    {
+      kind: "audit",
+      id: "a1000000-0000-0000-0000-000000000001",
+      createdAt: "2026-08-01T09:00:00.000Z",
+      actorId: ownerId,
+      actorName: "Ada Chan",
+      actorRole: "Staff",
+      action: "add_note",
+      result: "succeeded",
+      summary: "Checked with the client.",
+      metadata: {},
+    },
+    {
+      kind: "assignment",
+      id: "b1000000-0000-0000-0000-000000000001",
+      createdAt: "2026-08-02T09:00:00.000Z",
+      workItemId: "c1000000-0000-0000-0000-000000000001",
+      previousAssigneeId: ownerId,
+      previousAssigneeName: "Ada Chan",
+      assignedToId: nextOwnerId,
+      assignedToName: "Ken Wong",
+      assignedById: ownerId,
+      assignedByName: "Ada Chan",
+      decision: "manual",
+      overrideReason: null,
+      recommendationRank: null,
+      recommendationScore: null,
+      recommendationFactors: {},
+    },
+  ]);
 
-    renderDetail();
-    await screen.findByRole("heading", { name: "Acme Company Limited" });
+  renderDetail();
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    const historySection = await screen.findByText("Audit history");
-    const [firstEntry, secondEntry] = screen.getAllByRole("listitem");
-    expect(historySection).toBeTruthy();
-    expect(firstEntry.textContent).toContain("Assignment: manual");
-    expect(secondEntry.textContent).toContain("Note added");
-  });
+  const historySection = await screen.findByText("Audit history");
+  const [firstEntry, secondEntry] = screen.getAllByRole("listitem");
+  expect(historySection).toBeTruthy();
+  expect(firstEntry.textContent).toContain("Assignment: manual");
+  expect(secondEntry.textContent).toContain("Note added");
+});
 
-  it("shows an empty state when no history exists", async () => {
-    renderDetail();
-    await screen.findByRole("heading", { name: "Acme Company Limited" });
+it("shows an empty state when no history exists", async () => {
+  renderDetail();
+  await screen.findByRole("heading", { name: "Acme Company Limited" });
 
-    expect(await screen.findByText("No history yet.")).toBeTruthy();
-  });
+  expect(await screen.findByText("No history yet.")).toBeTruthy();
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -820,7 +831,11 @@ Expected: FAIL — "Audit history" text not found (the section doesn't exist in 
 In `src/features/annual-return/components/production-case-detail.tsx`, update the import at line 17:
 
 ```ts
-import { getAnnualReturnCase, listAnnualReturnCaseHistory, listAnnualReturnCaseNotes } from "../server-fns";
+import {
+  getAnnualReturnCase,
+  listAnnualReturnCaseHistory,
+  listAnnualReturnCaseNotes,
+} from "../server-fns";
 ```
 
 Add this import near the top of the file, alongside the other local imports (e.g. after the `annualReturnQueryKeys` import at line 15):
@@ -832,47 +847,47 @@ import { describeCaseHistoryEntry } from "../case-history";
 Add a new query hook immediately after the `notesQuery` declaration (after line 86):
 
 ```ts
-  const historyQuery = useQuery({
-    queryKey: annualReturnQueryKeys.history(caseId),
-    queryFn: () => listAnnualReturnCaseHistory({ data: { caseId } }),
-  });
+const historyQuery = useQuery({
+  queryKey: annualReturnQueryKeys.history(caseId),
+  queryFn: () => listAnnualReturnCaseHistory({ data: { caseId } }),
+});
 ```
 
 Insert a new `<section>` between the closing `</section>` of Notes (line 477) and the opening `<section>` of WhatsApp reminder (line 479):
 
 ```tsx
-          <section className="border-b pb-4">
-            <h2 className="text-base font-semibold">Audit history</h2>
-            <ul className="mt-3 space-y-3">
-              {historyQuery.isPending ? (
-                <li className="text-sm text-muted-foreground">Loading history</li>
-              ) : historyQuery.isError ? (
-                <li role="alert" className="text-sm text-destructive">
-                  {historyQuery.error.message}
-                </li>
-              ) : historyQuery.data.length === 0 ? (
-                <li className="text-sm text-muted-foreground">No history yet.</li>
-              ) : (
-                historyQuery.data.map((entry) => {
-                  const { label, description } = describeCaseHistoryEntry(entry);
-                  const actorName = entry.kind === "audit" ? (entry.actorName ?? "System") : entry.assignedByName;
-                  return (
-                    <li key={entry.id} className="border-l-2 pl-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium">{label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(entry.createdAt).toLocaleString("en-HK")}
-                        </p>
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">by {actorName}</p>
-                    </li>
-                  );
-                })
-              )}
-            </ul>
-          </section>
-
+<section className="border-b pb-4">
+  <h2 className="text-base font-semibold">Audit history</h2>
+  <ul className="mt-3 space-y-3">
+    {historyQuery.isPending ? (
+      <li className="text-sm text-muted-foreground">Loading history</li>
+    ) : historyQuery.isError ? (
+      <li role="alert" className="text-sm text-destructive">
+        {historyQuery.error.message}
+      </li>
+    ) : historyQuery.data.length === 0 ? (
+      <li className="text-sm text-muted-foreground">No history yet.</li>
+    ) : (
+      historyQuery.data.map((entry) => {
+        const { label, description } = describeCaseHistoryEntry(entry);
+        const actorName =
+          entry.kind === "audit" ? (entry.actorName ?? "System") : entry.assignedByName;
+        return (
+          <li key={entry.id} className="border-l-2 pl-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium">{label}</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(entry.createdAt).toLocaleString("en-HK")}
+              </p>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">by {actorName}</p>
+          </li>
+        );
+      })
+    )}
+  </ul>
+</section>
 ```
 
 - [ ] **Step 4: Run the test to verify it passes**

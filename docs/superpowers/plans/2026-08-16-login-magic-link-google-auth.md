@@ -12,7 +12,7 @@
 
 ## Before you start: one unresolved external risk
 
-Everything in Task 1 depends on facts about the *deployed* Neon Auth backend that cannot be determined by reading this repository. Task 1 is a **live verification task**, not a coding task, and it must be completed — with a clear pass or fail outcome — before Task 5 (the Google client code) is started. If Task 1 fails, its two contingency fixes are written out in full below; apply the one that matches what you observe, then continue.
+Everything in Task 1 depends on facts about the _deployed_ Neon Auth backend that cannot be determined by reading this repository. Task 1 is a **live verification task**, not a coding task, and it must be completed — with a clear pass or fail outcome — before Task 5 (the Google client code) is started. If Task 1 fails, its two contingency fixes are written out in full below; apply the one that matches what you observe, then continue.
 
 ### Why this is the load-bearing risk
 
@@ -51,7 +51,7 @@ function firstPartyCookie(cookieHeader: string): string {
 
 Google's redirect back to `/api/auth/callback/google` is a **cross-site top-level navigation** (initiated by accounts.google.com). A `SameSite=Strict` cookie is not sent on that request; `SameSite=Lax` is. If Neon Auth's OAuth callback needs to read back a state/verifier cookie, this rewrite would break it independently of the prefix-allowlist problem above.
 
-Magic link cannot be used as reassurance here — read closely, its cross-site hop (the user clicking the link in their email client) is architected entirely separately in `src/features/auth/neon-auth-magic-link.ts` and never touches `/api/auth/*` or this cookie logic at all. It sets its own bespoke `__Host-kossilon.magic_link_ticket` cookie directly in `server.ts`, and every cross-site leg in that flow is a same-site redirect issued by *this* app to itself, not an inbound cross-site landing from a third party. The two flows share no code path that would make one flow's success predict the other's.
+Magic link cannot be used as reassurance here — read closely, its cross-site hop (the user clicking the link in their email client) is architected entirely separately in `src/features/auth/neon-auth-magic-link.ts` and never touches `/api/auth/*` or this cookie logic at all. It sets its own bespoke `__Host-kossilon.magic_link_ticket` cookie directly in `server.ts`, and every cross-site leg in that flow is a same-site redirect issued by _this_ app to itself, not an inbound cross-site landing from a third party. The two flows share no code path that would make one flow's success predict the other's.
 
 ### Contingency fixes, ready to apply if Task 1 finds a problem
 
@@ -73,7 +73,7 @@ export function neonAuthCookies(cookieHeader: string | null): string {
 
 Update both call sites' imports if the exported name changes, and update `neon-auth-proxy.test.ts` / `neon-auth-server.test.ts` fixtures accordingly.
 
-**If the callback fails and the state cookie *is* present in the request but still gets rejected** — or if you cannot tell which of the two causes applies — relax the forced encoding in `firstPartyCookie()` from `Strict` to `Lax`:
+**If the callback fails and the state cookie _is_ present in the request but still gets rejected** — or if you cannot tell which of the two causes applies — relax the forced encoding in `firstPartyCookie()` from `Strict` to `Lax`:
 
 ```typescript
 // src/features/auth/neon-auth-proxy.ts — inside firstPartyCookie
@@ -88,21 +88,21 @@ attributes.push("SameSite=Lax");
 
 ## File structure
 
-| File | Change |
-|---|---|
-| `src/features/auth/route-guard.ts` | Add `isForbiddenAuthError` |
-| `src/features/auth/route-guard.test.ts` | Test it |
-| `src/routes/__root.tsx` | Branch `beforeLoad`'s catch on `isForbiddenAuthError` |
-| `src/features/auth/auth-context-neon.tsx` | Add `loginWithGoogle` to the context; wire `client.signIn.social` |
-| `src/features/auth/auth-context-neon.test.tsx` | Test it |
-| `src/routes/login.tsx` | Un-gate magic link; add the Google button; render the denied state |
-| `src/routes/-login.interaction.test.tsx` | Rewrite the gating tests; add denied-state and Google tests |
-| `src/server/runtime-env.ts` | Add `RESEND_API_KEY`/`RESEND_FROM` to the binding contract |
-| `src/server/runtime-env.test.ts` | Test it |
-| `scripts/verify-firm-deployment.ts` | Add the same two names to its own binding list |
-| `scripts/verify-firm-deployment.test.ts` | Test it |
-| `wrangler.template.jsonc` | Add `RESEND_FROM` (not the secret) to `vars` |
-| `docs/runbooks/google-signin-setup.md` | **Create.** Dashboard steps for a non-developer |
+| File                                           | Change                                                             |
+| ---------------------------------------------- | ------------------------------------------------------------------ |
+| `src/features/auth/route-guard.ts`             | Add `isForbiddenAuthError`                                         |
+| `src/features/auth/route-guard.test.ts`        | Test it                                                            |
+| `src/routes/__root.tsx`                        | Branch `beforeLoad`'s catch on `isForbiddenAuthError`              |
+| `src/features/auth/auth-context-neon.tsx`      | Add `loginWithGoogle` to the context; wire `client.signIn.social`  |
+| `src/features/auth/auth-context-neon.test.tsx` | Test it                                                            |
+| `src/routes/login.tsx`                         | Un-gate magic link; add the Google button; render the denied state |
+| `src/routes/-login.interaction.test.tsx`       | Rewrite the gating tests; add denied-state and Google tests        |
+| `src/server/runtime-env.ts`                    | Add `RESEND_API_KEY`/`RESEND_FROM` to the binding contract         |
+| `src/server/runtime-env.test.ts`               | Test it                                                            |
+| `scripts/verify-firm-deployment.ts`            | Add the same two names to its own binding list                     |
+| `scripts/verify-firm-deployment.test.ts`       | Test it                                                            |
+| `wrangler.template.jsonc`                      | Add `RESEND_FROM` (not the secret) to `vars`                       |
+| `docs/runbooks/google-signin-setup.md`         | **Create.** Dashboard steps for a non-developer                    |
 
 ---
 
@@ -150,6 +150,7 @@ If Step 4 fails with a state/CSRF-shaped error: apply the relevant contingency f
 ## Task 2: Add RESEND bindings to the deployment-readiness contract
 
 **Files:**
+
 - Modify: `src/server/runtime-env.ts:9-38,152-172`
 - Modify: `src/server/runtime-env.test.ts`
 - Modify: `scripts/verify-firm-deployment.ts:20-31`
@@ -158,11 +159,11 @@ If Step 4 fails with a state/CSRF-shaped error: apply the relevant contingency f
 
 ### Context
 
-`src/server.ts`'s magic-link-webhook branch already reads `RESEND_API_KEY`/`RESEND_FROM` and throws if `RESEND_API_KEY` is empty — so a live deployment does not silently swallow a missing key; it 500s the moment Neon Auth's first magic-link webhook arrives. What is actually missing is *pre-deploy visibility*: `npm run verify:firm -- --dry-run` (the gate `CLAUDE.md` documents) has no way to tell an operator these two bindings are needed, because `getRuntimeReadiness()`'s `REQUIRED_BINDINGS` array in `runtime-env.ts` doesn't list them, and `scripts/verify-firm-deployment.ts` keeps its own separate copy of that same array (used only to populate the dry-run report's `blockedBindings` field — an audit list of binding *names*, per the existing rule that "validators and verifiers report binding names only, never values"). Both copies need the same two names or they drift.
+`src/server.ts`'s magic-link-webhook branch already reads `RESEND_API_KEY`/`RESEND_FROM` and throws if `RESEND_API_KEY` is empty — so a live deployment does not silently swallow a missing key; it 500s the moment Neon Auth's first magic-link webhook arrives. What is actually missing is _pre-deploy visibility_: `npm run verify:firm -- --dry-run` (the gate `CLAUDE.md` documents) has no way to tell an operator these two bindings are needed, because `getRuntimeReadiness()`'s `REQUIRED_BINDINGS` array in `runtime-env.ts` doesn't list them, and `scripts/verify-firm-deployment.ts` keeps its own separate copy of that same array (used only to populate the dry-run report's `blockedBindings` field — an audit list of binding _names_, per the existing rule that "validators and verifiers report binding names only, never values"). Both copies need the same two names or they drift.
 
 `docs/runbooks/neon-auth-demo.md` already lists `RESEND_API_KEY` and `RESEND_FROM` among the demo environment's required variables, confirming these are the correct names.
 
-**Do not** route `server.ts`'s existing inline `RESEND_API_KEY`/`RESEND_FROM` reads through `getFirmRuntimeEnv()`. That function throws if *any* required binding is missing, and would wrongly couple the magic-link webhook's readiness to unrelated bindings like `WOZTELL_ACCESS_TOKEN` — the opposite of how `server.ts` already scopes each webhook branch's validation to only what that branch needs (see the WhatsApp branch's `getWhatsAppWebhookConfig()` call, which validates only WOZTELL's webhook secret, not the whole per-firm env). Leave `server.ts` exactly as it is.
+**Do not** route `server.ts`'s existing inline `RESEND_API_KEY`/`RESEND_FROM` reads through `getFirmRuntimeEnv()`. That function throws if _any_ required binding is missing, and would wrongly couple the magic-link webhook's readiness to unrelated bindings like `WOZTELL_ACCESS_TOKEN` — the opposite of how `server.ts` already scopes each webhook branch's validation to only what that branch needs (see the WhatsApp branch's `getWhatsAppWebhookConfig()` call, which validates only WOZTELL's webhook secret, not the whole per-firm env). Leave `server.ts` exactly as it is.
 
 `RESEND_API_KEY` is a secret and follows the same pattern as `NEON_AUTH_COOKIE_SECRET`/`WOZTELL_ACCESS_TOKEN`/`WOZTELL_WEBHOOK_SECRET` — all three are **absent** from `wrangler.template.jsonc`'s `vars` block, provisioned instead via `wrangler secret put <NAME>`. `RESEND_FROM` is a plain address string like `EMAIL_FROM`/`WOZTELL_CHANNEL_ID`, which **are** in `vars`. Only `RESEND_FROM` goes in the template.
 
@@ -197,45 +198,45 @@ Extend the "requires one fixed firm id and every production binding" test's expe
 Extend the "returns a ready, normalized per-firm runtime" test's `toMatchObject`:
 
 ```typescript
-    expect(getFirmRuntimeEnv(validEnv)).toMatchObject({
-      firmId: "firm-a",
-      documentsBucket: fakeR2Bucket,
-      emailFrom: "operations@example.test",
-      resendApiKey: "test-resend-key",
-      resendFrom: "auth@example.test",
-    });
+expect(getFirmRuntimeEnv(validEnv)).toMatchObject({
+  firmId: "firm-a",
+  documentsBucket: fakeR2Bucket,
+  emailFrom: "operations@example.test",
+  resendApiKey: "test-resend-key",
+  resendFrom: "auth@example.test",
+});
 ```
 
 Extend the "rejects malformed production bindings" test — add `RESEND_FROM: "not-an-email"` to the spread override and `"RESEND_FROM"` to the expected `missing` array (after `"EMAIL_FROM"`):
 
 ```typescript
-  it("rejects malformed production bindings", () => {
-    expect(
-      getRuntimeReadiness({
-        ...validEnv,
-        FIRM_ID: "Firm A!",
-        NEON_AUTH_URL: "not-a-url",
-        NEON_AUTH_COOKIE_SECRET: "short",
-        DOCUMENTS_BUCKET: {},
-        EMAIL_FROM: "not-an-email",
-        RESEND_FROM: "not-an-email",
-      }).missing,
-    ).toEqual([
-      "FIRM_ID",
-      "NEON_AUTH_URL",
-      "NEON_AUTH_COOKIE_SECRET",
-      "DOCUMENTS_BUCKET",
-      "EMAIL_FROM",
-      "RESEND_FROM",
-    ]);
-  });
+it("rejects malformed production bindings", () => {
+  expect(
+    getRuntimeReadiness({
+      ...validEnv,
+      FIRM_ID: "Firm A!",
+      NEON_AUTH_URL: "not-a-url",
+      NEON_AUTH_COOKIE_SECRET: "short",
+      DOCUMENTS_BUCKET: {},
+      EMAIL_FROM: "not-an-email",
+      RESEND_FROM: "not-an-email",
+    }).missing,
+  ).toEqual([
+    "FIRM_ID",
+    "NEON_AUTH_URL",
+    "NEON_AUTH_COOKIE_SECRET",
+    "DOCUMENTS_BUCKET",
+    "EMAIL_FROM",
+    "RESEND_FROM",
+  ]);
+});
 ```
 
 In `scripts/verify-firm-deployment.test.ts`, find the "reports binding names but never values" test (it currently asserts `expect(result.blockedBindings).toContain("WOZTELL_ACCESS_TOKEN")`) and add:
 
 ```typescript
-    expect(result.blockedBindings).toContain("RESEND_API_KEY");
-    expect(result.blockedBindings).toContain("RESEND_FROM");
+expect(result.blockedBindings).toContain("RESEND_API_KEY");
+expect(result.blockedBindings).toContain("RESEND_FROM");
 ```
 
 ### Step 2: Run the tests to verify they fail
@@ -248,8 +249,8 @@ Expected: FAIL — `RESEND_API_KEY`/`RESEND_FROM` are not yet in either `REQUIRE
 Add to the `FirmRuntimeEnv` type (after `emailFrom: string;`):
 
 ```typescript
-  resendApiKey: string;
-  resendFrom: string;
+resendApiKey: string;
+resendFrom: string;
 ```
 
 Add to `REQUIRED_BINDINGS` (after `"EMAIL_FROM",`):
@@ -320,6 +321,7 @@ git commit -m "feat(auth): surface RESEND bindings in the pre-deploy readiness g
 ## Task 3: Distinguish "not signed in" from "signed in but no access"
 
 **Files:**
+
 - Modify: `src/features/auth/route-guard.ts`
 - Modify: `src/features/auth/route-guard.test.ts`
 - Modify: `src/routes/__root.tsx:119-148`
@@ -331,7 +333,7 @@ git commit -m "feat(auth): surface RESEND bindings in the pre-deploy readiness g
 - `"Unauthorized: a verified Neon Auth session is required."` — no session at all
 - `"Forbidden: user is not provisioned with an active company membership."` — a valid session, but no `staff_profiles`/`client_company_memberships` row
 
-`__root.tsx`'s `beforeLoad` catches both identically today and redirects to `/login` with a `redirect=` query param that will bounce the user right back once they sign in again — which, for the `Forbidden` case, they can do indefinitely, since Google/magic-link sign-in itself will keep succeeding; only the *authorisation* step fails, silently, every time.
+`__root.tsx`'s `beforeLoad` catches both identically today and redirects to `/login` with a `redirect=` query param that will bounce the user right back once they sign in again — which, for the `Forbidden` case, they can do indefinitely, since Google/magic-link sign-in itself will keep succeeding; only the _authorisation_ step fails, silently, every time.
 
 There is no existing test harness for `beforeLoad` in this codebase (no `__root`-focused test file). Rather than build a brittle router mock that doesn't verify real behaviour, this task unit-tests the pure classifier function and leaves the `beforeLoad` wiring itself to be exercised by the Task 4 login-page test (which drives the denied state the redirect leads to) and the live acceptance checks in this plan's final task.
 
@@ -445,6 +447,7 @@ git commit -m "fix(auth): distinguish an unprovisioned account from no session a
 ## Task 4: Render the denied state and un-gate magic link on `/login`
 
 **Files:**
+
 - Modify: `src/routes/login.tsx`
 - Modify: `src/routes/-login.interaction.test.tsx`
 
@@ -465,7 +468,7 @@ function isDemoMagicLinkEnabled(): boolean {
 }
 ```
 
-`VITE_ENABLE_NEON_AUTH_DEMO`/`VITE_PROVIDER_MODE` are a narrow pair specific to the *isolated Neon Auth demo stack* described in `docs/runbooks/neon-auth-demo.md` — a real Neon Auth backend, just a separate demo project. They are unrelated to `VITE_ENABLE_DEMO_AUTH`, which is what `isDemoAuthEnabled()` in `route-guard.ts` reads to choose between the fixture-based `DemoAuthProvider` (in-memory users, no real backend, no magic link possible at all) and the real `NeonAuthProvider`. The correct condition for "can this page actually attempt magic link" is simply "is `NeonAuthProvider` the one rendering" — `!isDemoAuthEnabled()`. That runbook already states `VITE_ENABLE_DEMO_AUTH` "must be false" whenever the isolated-demo flags are set, so this is a strict generalisation: everywhere the old check was `true`, the new one is too, and the new one is *also* `true` in real production, which is the point.
+`VITE_ENABLE_NEON_AUTH_DEMO`/`VITE_PROVIDER_MODE` are a narrow pair specific to the _isolated Neon Auth demo stack_ described in `docs/runbooks/neon-auth-demo.md` — a real Neon Auth backend, just a separate demo project. They are unrelated to `VITE_ENABLE_DEMO_AUTH`, which is what `isDemoAuthEnabled()` in `route-guard.ts` reads to choose between the fixture-based `DemoAuthProvider` (in-memory users, no real backend, no magic link possible at all) and the real `NeonAuthProvider`. The correct condition for "can this page actually attempt magic link" is simply "is `NeonAuthProvider` the one rendering" — `!isDemoAuthEnabled()`. That runbook already states `VITE_ENABLE_DEMO_AUTH` "must be false" whenever the isolated-demo flags are set, so this is a strict generalisation: everywhere the old check was `true`, the new one is too, and the new one is _also_ `true` in real production, which is the point.
 
 The Google button is gated on the same condition — `DemoAuthProvider` has no OAuth capability either.
 
@@ -589,51 +592,63 @@ function isDemoMagicLinkEnabled(): boolean {
 Add the import (alongside the existing `consumeRedirectPath, getSafeRedirectPath` import from `"@/features/auth/route-guard"`):
 
 ```typescript
-import { consumeRedirectPath, getSafeRedirectPath, isDemoAuthEnabled } from "@/features/auth/route-guard";
+import {
+  consumeRedirectPath,
+  getSafeRedirectPath,
+  isDemoAuthEnabled,
+} from "@/features/auth/route-guard";
 ```
 
 Inside `LoginPage`, replace:
 
 ```typescript
-  const magicLinkEnabled = isDemoMagicLinkEnabled();
-  const { session, isHydrated, login, loginWithMagicLink, loginDemo, demoUsers } = useAuth();
+const magicLinkEnabled = isDemoMagicLinkEnabled();
+const { session, isHydrated, login, loginWithMagicLink, loginDemo, demoUsers } = useAuth();
 ```
 
 with:
 
 ```typescript
-  const magicLinkEnabled = !isDemoAuthEnabled();
-  const { session, isHydrated, login, loginWithMagicLink, loginWithGoogle, loginDemo, demoUsers, signOut } =
-    useAuth();
-  const [denied, setDenied] = useState(false);
-  const [googleSubmitting, setGoogleSubmitting] = useState(false);
+const magicLinkEnabled = !isDemoAuthEnabled();
+const {
+  session,
+  isHydrated,
+  login,
+  loginWithMagicLink,
+  loginWithGoogle,
+  loginDemo,
+  demoUsers,
+  signOut,
+} = useAuth();
+const [denied, setDenied] = useState(false);
+const [googleSubmitting, setGoogleSubmitting] = useState(false);
 ```
 
 Add a denial effect, alongside the existing redirect effect:
 
 ```typescript
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("denied") !== "1") return;
+useEffect(() => {
+  if (new URLSearchParams(window.location.search).get("denied") !== "1") return;
 
-    setDenied(true);
-    void signOut();
-  }, [signOut]);
+  setDenied(true);
+  void signOut();
+}, [signOut]);
 ```
 
 Add a Google submit handler, alongside `submitDemoLogin`:
 
 ```typescript
-  async function submitGoogleLogin() {
-    setGoogleSubmitting(true);
-    setError(null);
-    const result = await loginWithGoogle();
-    if (!result.ok) {
-      setError(result.error);
-      setGoogleSubmitting(false);
-    }
-    // On success the browser is navigating to Google already; no further state
-    // update is meaningful before the page unloads.
+async function submitGoogleLogin() {
+  setGoogleSubmitting(true);
+  setError(null);
+  const result = await loginWithGoogle();
+  if (!result.ok) {
+    setError(result.error);
+    setGoogleSubmitting(false);
   }
+  // On success the browser is navigating to Google already; no further state
+  // update is meaningful before the page unloads.
+}
 ```
 
 Render the denied banner, placed just above the existing mode-toggle block (`{magicLinkEnabled && ( <div ... role="group" ...`):
@@ -679,7 +694,7 @@ Run: `npm run test -- src/routes/`
 Expected: PASS.
 
 Run: `npx tsc --noEmit`
-Expected: FAIL, because `loginWithGoogle` does not yet exist on `AuthContextValue` — Task 5 adds it. (`signOut` is unaffected; it is already part of the real type today, only newly *mocked* in this task's test file.) This failure is expected at this point in the plan; do not attempt to fix it here.
+Expected: FAIL, because `loginWithGoogle` does not yet exist on `AuthContextValue` — Task 5 adds it. (`signOut` is unaffected; it is already part of the real type today, only newly _mocked_ in this task's test file.) This failure is expected at this point in the plan; do not attempt to fix it here.
 
 ### Step 6: Commit
 
@@ -693,12 +708,13 @@ git commit -m "feat(auth): render the denied state and enable magic link/Google 
 ## Task 5: Add `loginWithGoogle` and `signOut` context surface
 
 **Files:**
+
 - Modify: `src/features/auth/auth-context-neon.tsx`
 - Modify: `src/features/auth/auth-context-neon.test.tsx`
 
 ### Context
 
-`signOut` already exists on `AuthContextValue` and on both providers — Task 4's test file only needed it *mocked*, nothing here changes. What's missing is `loginWithGoogle`.
+`signOut` already exists on `AuthContextValue` and on both providers — Task 4's test file only needed it _mocked_, nothing here changes. What's missing is `loginWithGoogle`.
 
 `signInSocial` is core to better-auth (`node_modules/better-auth/dist/api/routes/sign-in.d.mts` exports it alongside `signInEmail` — it is not a plugin), and its handler returns `{url, redirect}` on success. The client's default fetch plugin set includes a `redirectPlugin` (`node_modules/better-auth/dist/client/config.mjs:50`, active unless `disableDefaultFetchPlugins` is passed, which `createNeonAuthClient` does not do) that automatically does `window.location.href = data.url` whenever a response carries `{url, redirect: true}`. **No manual navigation code is needed or wanted** — writing one would race the plugin's own navigation.
 
@@ -810,49 +826,49 @@ Expected: FAIL — `loginWithGoogle` does not exist on the context, `authClient.
 In `src/features/auth/auth-context-neon.tsx`, add `loginWithGoogle` to the `AuthContextValue` type (after `loginWithMagicLink`):
 
 ```typescript
-  loginWithGoogle: () => Promise<AuthActionResult>;
+loginWithGoogle: () => Promise<AuthActionResult>;
 ```
 
 In `NeonAuthProvider`, add the implementation alongside `loginWithMagicLink`:
 
 ```typescript
-  const loginWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
-    const result = await client.signIn.social({
-      provider: "google",
-      callbackURL: `${window.location.origin}/login`,
-      newUserCallbackURL: `${window.location.origin}/login`,
-    });
+const loginWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
+  const result = await client.signIn.social({
+    provider: "google",
+    callbackURL: `${window.location.origin}/login`,
+    newUserCallbackURL: `${window.location.origin}/login`,
+  });
 
-    if (result.error) {
-      return { ok: false, error: result.error.message ?? "Google sign-in failed." };
-    }
+  if (result.error) {
+    return { ok: false, error: result.error.message ?? "Google sign-in failed." };
+  }
 
-    // better-auth's default redirectPlugin has already started navigating the
-    // browser to Google at this point (see client/config.mjs — active whenever
-    // the response carries {url, redirect: true}, which signIn.social's success
-    // response always does). There is nothing further to do here.
-    return { ok: true };
-  }, [client]);
+  // better-auth's default redirectPlugin has already started navigating the
+  // browser to Google at this point (see client/config.mjs — active whenever
+  // the response carries {url, redirect: true}, which signIn.social's success
+  // response always does). There is nothing further to do here.
+  return { ok: true };
+}, [client]);
 ```
 
 Add it to the memoised `value` object in `NeonAuthProvider` (alongside `login`, `loginWithMagicLink`):
 
 ```typescript
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      session,
-      isHydrated,
-      demoUsers: [],
-      isCurrentUserAdmin: isAdmin(session),
-      login,
-      loginWithMagicLink,
-      loginWithGoogle,
-      loginDemo: demoUnavailable,
-      loginDemoUser: demoUnavailable,
-      signOut,
-    }),
-    [demoUnavailable, isHydrated, login, loginWithGoogle, loginWithMagicLink, session, signOut],
-  );
+const value = useMemo<AuthContextValue>(
+  () => ({
+    session,
+    isHydrated,
+    demoUsers: [],
+    isCurrentUserAdmin: isAdmin(session),
+    login,
+    loginWithMagicLink,
+    loginWithGoogle,
+    loginDemo: demoUnavailable,
+    loginDemoUser: demoUnavailable,
+    signOut,
+  }),
+  [demoUnavailable, isHydrated, login, loginWithGoogle, loginWithMagicLink, session, signOut],
+);
 ```
 
 In `NeonAuthBootstrap`'s `unavailable`-backed fallback value, add:
@@ -864,21 +880,21 @@ In `NeonAuthBootstrap`'s `unavailable`-backed fallback value, add:
 In `DemoAuthProvider`, add a Google-unavailable stub — reuse the existing `magicLinkUnavailable` callback rather than creating a duplicate identical function:
 
 ```typescript
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      session,
-      isHydrated: true,
-      demoUsers,
-      isCurrentUserAdmin: isAdmin(session),
-      login,
-      loginWithMagicLink: magicLinkUnavailable,
-      loginWithGoogle: magicLinkUnavailable,
-      loginDemo,
-      loginDemoUser,
-      signOut,
-    }),
-    [login, loginDemo, loginDemoUser, magicLinkUnavailable, session, signOut],
-  );
+const value = useMemo<AuthContextValue>(
+  () => ({
+    session,
+    isHydrated: true,
+    demoUsers,
+    isCurrentUserAdmin: isAdmin(session),
+    login,
+    loginWithMagicLink: magicLinkUnavailable,
+    loginWithGoogle: magicLinkUnavailable,
+    loginDemo,
+    loginDemoUser,
+    signOut,
+  }),
+  [login, loginDemo, loginDemoUser, magicLinkUnavailable, session, signOut],
+);
 ```
 
 ### Step 4: Run the test
@@ -909,6 +925,7 @@ git commit -m "feat(auth): add Google sign-in via better-auth's core signIn.soci
 ## Task 6: Runbook — Google Cloud / Neon Auth dashboard configuration
 
 **Files:**
+
 - Create: `docs/runbooks/google-signin-setup.md`
 
 - [ ] **Step 1: Write the runbook**
@@ -931,13 +948,14 @@ git commit -m "feat(auth): add Google sign-in via better-auth's core signIn.soci
 
 **Step 1 — Create the Google OAuth client.** In Google Cloud Console, under
 APIs & Services → Credentials, create an OAuth 2.0 Client ID of type
-**Web application**. Add every environment's callback URL to *Authorized
-redirect URIs* — production, and any preview/demo origin that needs Google
+**Web application**. Add every environment's callback URL to _Authorized
+redirect URIs_ — production, and any preview/demo origin that needs Google
 sign-in:
+```
 
-```
 https://<production-origin>/api/auth/callback/google
-```
+
+````
 
 Record the Client ID and Client Secret. Treat the secret as a password.
 
@@ -978,9 +996,11 @@ Magic link delivery uses Resend, configured as:
 - `RESEND_API_KEY` — a Worker **secret**, set via:
   ```bash
   wrangler secret put RESEND_API_KEY
-  ```
-  Not a plain `vars` entry, and not templated in `wrangler.template.jsonc` —
-  same pattern as `NEON_AUTH_COOKIE_SECRET` and the WOZTELL access token.
+````
+
+Not a plain `vars` entry, and not templated in `wrangler.template.jsonc` —
+same pattern as `NEON_AUTH_COOKIE_SECRET` and the WOZTELL access token.
+
 - `RESEND_FROM` — a plain sender address, templated in
   `wrangler.template.jsonc`'s `vars` alongside `EMAIL_FROM`.
 
@@ -1021,14 +1041,15 @@ re-coupling Resend to `getFirmRuntimeEnv()` — see the comments in
   row is refused outright with an on-screen message. Provisioning access is an
   administrator action performed directly against the database, as it is for
   every other sign-in method today.
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add docs/runbooks/google-signin-setup.md
 git commit -m "docs(auth): add the Google sign-in dashboard runbook"
-```
+````
 
 ---
 

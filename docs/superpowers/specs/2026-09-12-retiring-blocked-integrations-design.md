@@ -28,10 +28,10 @@ Nothing anywhere asks whether a declared blocker is still true.
 
 Two failure modes, and they are not equally bad:
 
-| | Cost |
-| --- | --- |
-| A blocker outlives its cause | Staff distrust a capability that works; a release gate is held for nothing |
-| A blocker is cleared while still true | Someone trusts a disabled safety gate |
+|                                       | Cost                                                                       |
+| ------------------------------------- | -------------------------------------------------------------------------- |
+| A blocker outlives its cause          | Staff distrust a capability that works; a release gate is held for nothing |
+| A blocker is cleared while still true | Someone trusts a disabled safety gate                                      |
 
 Only the second is dangerous. So: **flag loudly, never auto-clear.** A blocker
 whose evidence appears fails a test or raises a notice; a human deletes the
@@ -67,14 +67,14 @@ protocol — and that sentence is itself reviewable.
 
 Assignments:
 
-| Entry | Kind |
-| --- | --- |
-| `local-postgres` | `build` |
-| `deployment-runtime` | `runtime` |
-| `malware-scanner-provider` | `external` |
-| `document-text-extraction` | `external` |
-| `ai-provider` | `external` |
-| `whatsapp-media-download` | `external` |
+| Entry                          | Kind       |
+| ------------------------------ | ---------- |
+| `local-postgres`               | `build`    |
+| `deployment-runtime`           | `runtime`  |
+| `malware-scanner-provider`     | `external` |
+| `document-text-extraction`     | `external` |
+| `ai-provider`                  | `external` |
+| `whatsapp-media-download`      | `external` |
 | `external-handoff-destination` | `external` |
 
 ## The two checkers
@@ -151,7 +151,7 @@ already reads on `/operations` do not justify a scheduling mechanism.
 
 **This catches nothing for the five `external` entries.** A scanner contract
 could be signed tomorrow and the product would keep claiming the capability is
-blocked, exactly as it does today. The design makes that gap *declared* rather
+blocked, exactly as it does today. The design makes that gap _declared_ rather
 than invisible; it does not close it.
 
 ## Immediate consequence

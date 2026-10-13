@@ -13,6 +13,7 @@
 A read path and a case-level history view for **annual-return cases only**, merging `annual_return_audit_events` and `assignment_events` into one chronological feed on the existing `/annual-returns/$id` production detail screen.
 
 **Explicitly out of scope** (real gaps, not solved here):
+
 - `corporate_change_requests` (P1-9) has no audit table at all yet. Adding one is a separate, not-yet-scoped item.
 - CSV/PDF export. The roadmap names this as a stretch goal ("ideally"); no CSV/PDF generation library exists anywhere in this codebase today. Ship the read path first; export is a natural fast-follow once the view is proven useful.
 - `timeline_events` is a separate, lower-fidelity activity-feed table written at the same call sites as `annual_return_audit_events`, and it already has a UI shape in demo mode (`demo-case-detail.tsx`'s "Timeline" panel, fed from a fixture store, not the real table). It is left untouched by this item — unifying it into one feed roughly doubles scope and touches a table the roadmap gap doesn't name.
@@ -104,7 +105,10 @@ export async function listAnnualReturnCaseHistoryForActor(
   actor: AuthenticatedActor,
   input: { caseId: string },
   dependencies: {
-    repository: Pick<AnnualReturnRepository, "getCase" | "listAuditEventsForCase" | "listAssignmentEventsForCase">;
+    repository: Pick<
+      AnnualReturnRepository,
+      "getCase" | "listAuditEventsForCase" | "listAssignmentEventsForCase"
+    >;
   },
 ): Promise<CaseHistoryEntry[]> {
   const case_ = await dependencies.repository.getCase(input.caseId);
@@ -127,6 +131,7 @@ A new `listAnnualReturnCaseHistory` server fn (TanStack Start `createServerFn`, 
 ## UI
 
 A new "Audit history" section on `src/features/annual-return/components/production-case-detail.tsx`, placed after the existing Notes section. Read-only — no mutation path, matching the nature of an audit log. Each entry renders:
+
 - Timestamp (formatted with the existing Hong Kong business-date helper already used elsewhere on this page)
 - Actor name + role (or "System" if `actorId` is null)
 - A human-readable label derived from `action` (audit) or `decision` (assignment) via a small formatter:

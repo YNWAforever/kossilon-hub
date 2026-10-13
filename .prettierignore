@@ -6,3 +6,7 @@ pnpm-lock.yaml
 package-lock.json
 bun.lock
 routeTree.gen.ts
+
+# Release evidence and receipts are byte-exact records (hashed manifests,
+# retained CI receipts); reformatting them would rewrite the audit trail.
+docs/audit-remediation/

@@ -13,6 +13,7 @@ WhatsApp permits free-form text only within 24 hours of a contact's last inbound
 `woztellResponseElement` (`src/features/whatsapp/woztell.ts:67-81`) branches purely on whether the caller supplied a `templateName`; its own comment names P2-3 as the missing piece. The result is a bug in **both** directions.
 
 **Outside the window, free-form is sent.** Two sweeps enqueue a composed body with no template fields:
+
 - `evaluateReminders` (`src/features/annual-return/repository.ts:1967-1978`, P1-2)
 - `evaluateReminders` (`src/features/service-subscriptions/repository.ts:359-375`, P1-8 — same function name)
 
@@ -26,11 +27,11 @@ Both reach the WOZTELL transport (`src/features/notifications/dispatcher.ts:100-
 
 The window can only be resolved by matching the outbox row's `recipient` to a contact. **Three mutually incompatible formats are in play today**, so exact string equality resolves nothing:
 
-| Source | Format | Evidence |
-|---|---|---|
-| Inbound-created contacts | bare digits, no `+` — `"85260903521"` | WOZTELL's `from` is unprefixed (`src/features/whatsapp/woztell-fixtures.ts:15`, copied verbatim from WOZTELL's docs); `normalizePhone` only *preserves* a leading `+`, never adds one (`woztell.ts:226-236`) |
-| Sweep recipients | raw, spaces retained — `"+852 6090 3521"` | `src/features/annual-return/repository.ts:1946` passes `contact.phone` verbatim; `company_contacts.phone` is `z.string().min(3)` with no transform (`src/features/clients/server-fns.ts:74`), and the house convention is spaced (`src/lib/mock-data.ts:443-450`) |
-| Staff recipients | `+` retained, spaces stripped — `"+85260903521"` | `src/features/whatsapp/repository.ts:934` |
+| Source                   | Format                                           | Evidence                                                                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Inbound-created contacts | bare digits, no `+` — `"85260903521"`            | WOZTELL's `from` is unprefixed (`src/features/whatsapp/woztell-fixtures.ts:15`, copied verbatim from WOZTELL's docs); `normalizePhone` only _preserves_ a leading `+`, never adds one (`woztell.ts:226-236`)                                                      |
+| Sweep recipients         | raw, spaces retained — `"+852 6090 3521"`        | `src/features/annual-return/repository.ts:1946` passes `contact.phone` verbatim; `company_contacts.phone` is `z.string().min(3)` with no transform (`src/features/clients/server-fns.ts:74`), and the house convention is spaced (`src/lib/mock-data.ts:443-450`) |
+| Staff recipients         | `+` retained, spaces stripped — `"+85260903521"` | `src/features/whatsapp/repository.ts:934`                                                                                                                                                                                                                         |
 
 `whatsapp_contacts.phone_e164` is **not** E.164 despite its name: `src/server/db/schema.sql:902-917` declares it plain `text` with no format CHECK, and its only writers are the two divergent `normalizePhone` copies (`woztell.ts:226-236` and `repository.ts:300-310`).
 
@@ -47,11 +48,11 @@ export function toPhoneDigits(value: string | null | undefined): string | null {
 }
 ```
 
-The two existing `normalizePhone` copies are left in place — collapsing them changes stored values and is a separate migration. `toPhoneDigits` is used only for *comparison*, never for storage, so it introduces no write-path change.
+The two existing `normalizePhone` copies are left in place — collapsing them changes stored values and is a separate migration. `toPhoneDigits` is used only for _comparison_, never for storage, so it introduces no write-path change.
 
 ## Window clock
 
-`whatsapp_contacts.last_seen_at` cannot serve as the clock: its single write (`src/features/whatsapp/repository.ts:553`) is reached from both `recordInboundMessage` (`:692-696`) and `queueOutboundTemplateMessage` (`:935-940`), and the outbound call happens at *queue* time.
+`whatsapp_contacts.last_seen_at` cannot serve as the clock: its single write (`src/features/whatsapp/repository.ts:553`) is reached from both `recordInboundMessage` (`:692-696`) and `queueOutboundTemplateMessage` (`:935-940`), and the outbound call happens at _queue_ time.
 
 The source is `whatsapp_messages`, whose CHECK constraint `whatsapp_messages_inbound_received_at_check` (`src/server/db/schema.sql:971-973`) guarantees `received_at` is non-null for every inbound row.
 
@@ -66,7 +67,7 @@ where regexp_replace(coalesce(wc.phone_e164, wc.whatsapp_id), '\D', '', 'g') = $
 
 `coalesce(phone_e164, whatsapp_id)` because inbound sets both from the same `from`, while staff-created contacts often have `whatsapp_id` null.
 
-**This also tolerates the duplicate-contact problem.** Because the unique index is on the literal string (`schema.sql:924-926`), a staff-created `"+85291234567"` and an inbound-created `"85291234567"` are *distinct rows today*. Digits-only matching spans both and takes the `max` across them, which is the desired answer. The duplicate rows themselves are a real pre-existing data problem this design surfaces but does not fix — see out of scope.
+**This also tolerates the duplicate-contact problem.** Because the unique index is on the literal string (`schema.sql:924-926`), a staff-created `"+85291234567"` and an inbound-created `"85291234567"` are _distinct rows today_. Digits-only matching spans both and takes the `max` across them, which is the desired answer. The duplicate rows themselves are a real pre-existing data problem this design surfaces but does not fix — see out of scope.
 
 Two indexes are required. Wrapping the predicate in a normalising expression makes the existing unique index unusable as an access path, so `whatsapp_contacts` would otherwise be sequentially scanned on every dispatch:
 
@@ -89,11 +90,11 @@ Both statements go in **a new `db/migrations/0021_*.sql` AND appended to `src/se
 
 **In `dispatchDue`, not in the transport.** The transport is the wrong layer for three reasons:
 
-1. **It has no clock.** `NotificationTransport.dispatch(notification)` takes only the record (`src/features/notifications/types.ts:48-50`). This pipeline deliberately threads an explicit `now` — cron passes the *intended* tick (`src/server.ts:82`), and the manual path's `now` was deliberately removed from caller control (`runtime-dispatch.ts:109-117`). A transport calling `new Date()` introduces a second clock inside one dispatch run.
+1. **It has no clock.** `NotificationTransport.dispatch(notification)` takes only the record (`src/features/notifications/types.ts:48-50`). This pipeline deliberately threads an explicit `now` — cron passes the _intended_ tick (`src/server.ts:82`), and the manual path's `now` was deliberately removed from caller control (`runtime-dispatch.ts:109-117`). A transport calling `new Date()` introduces a second clock inside one dispatch run.
 2. **The plumbing is cheaper in the dispatcher.** `dispatchDueNotificationsWithDependencies` already constructs the `WhatsAppRepository` (`runtime-dispatch.ts:37`), already passes it to `createNotificationDispatcher` (`:47-49`), already closes it in a `finally` (`:52`), and `dispatchDue` already branches on `channel === "whatsapp"` (`dispatcher.ts:55-59`). Resolving in the transport instead would thread a new parameter through three layers, two of which discard it.
 3. **Layering.** Every other transport is a pure record→HTTP mapper. Making WOZTELL the only one that opens a DB connection also makes the whole decision table unreachable in `local` and `simulated` provider modes.
 
-This is still *dispatch* time rather than enqueue time, so the self-healing-on-retry property is preserved: a send rejected because the window closed re-resolves on the next attempt and goes out as a template.
+This is still _dispatch_ time rather than enqueue time, so the self-healing-on-retry property is preserved: a send rejected because the window closed re-resolves on the next attempt and goes out as a template.
 
 ## Components
 
@@ -110,7 +111,7 @@ export function isWithinSessionWindow(
 
 `now` accepts `string | Date` because the pipeline's clock is ISO **text**, not a `Date`: `NotificationDispatcher.dispatchDue(now: string, …)` (`src/features/notifications/types.ts:85-87`), fed by `run({ now: new Date(scheduledTime).toISOString() })` (`src/server.ts:82`).
 
-`null` returns `false`. The boundary is **exclusive**: a timestamp exactly `WHATSAPP_SESSION_WINDOW_MS` old is outside. No safety margin is added, because boundary error self-heals in the dangerous direction — if we say inside and Meta says outside, the send is rejected and the retry re-resolves past 24h and succeeds as a template (cost: one attempt, ~1 minute). If we say outside and Meta says inside, the client gets a template instead of the composed body: degraded, never failed. A margin would convert a self-healing delay in a razor-thin window into an *unconditional* loss of the composed body for every client landing in the last N minutes.
+`null` returns `false`. The boundary is **exclusive**: a timestamp exactly `WHATSAPP_SESSION_WINDOW_MS` old is outside. No safety margin is added, because boundary error self-heals in the dangerous direction — if we say inside and Meta says outside, the send is rejected and the retry re-resolves past 24h and succeeds as a template (cost: one attempt, ~1 minute). If we say outside and Meta says inside, the client gets a template instead of the composed body: degraded, never failed. A margin would convert a self-healing delay in a razor-thin window into an _unconditional_ loss of the composed body for every client landing in the last N minutes.
 
 The comparison is inherently cross-clock and this is accepted: `received_at` derives from WOZTELL's epoch-seconds timestamp (`woztell.ts:196-224`, Meta's clock, second-truncated so it biases fail-closed), while `now` is ours and — being the cron's intended tick rather than actual execution time — biases fail-open under delivery drift. Both are bounded by seconds.
 
@@ -157,18 +158,18 @@ export type NotificationDispatchContext = { whatsAppSendMode?: WoztellSendMode }
 
 `dispatchDue` resolves the mode for whatsapp-channel rows using its existing `now` and `whatsAppRepository`, then passes it. Decision table:
 
-| Window state | `payload.templateName` | Sent |
-|---|---|---|
-| Inside | supplied | `TEXT` with the composed body |
-| Inside | absent | `TEXT` with the composed body |
-| Outside | supplied | `TEMPLATE` using the supplied name |
-| Outside | absent, fallback maps | `TEMPLATE` using `fallbackTemplateFor(notificationType)` |
-| Outside | absent, no fallback maps | throws with an explicit code |
+| Window state | `payload.templateName`   | Sent                                                     |
+| ------------ | ------------------------ | -------------------------------------------------------- |
+| Inside       | supplied                 | `TEXT` with the composed body                            |
+| Inside       | absent                   | `TEXT` with the composed body                            |
+| Outside      | supplied                 | `TEMPLATE` using the supplied name                       |
+| Outside      | absent, fallback maps    | `TEMPLATE` using `fallbackTemplateFor(notificationType)` |
+| Outside      | absent, no fallback maps | throws with an explicit code                             |
 
 Two further states, both previously unspecified:
 
 - **No `whatsAppRepository` available.** It is optional on the dependency type (`runtime-dispatch.ts:28`, invoked `?.()` at `:37`), so live mode can legitimately have none. The WOZTELL transport **throws** when it receives no `whatsAppSendMode` — a mis-wired deployment fails loudly rather than silently reverting to today's behaviour.
-- **`local` and `simulated` modes must not resolve at all.** `runtime-dispatch.ts:67` constructs the WhatsApp repository *unconditionally* for every provider mode — unlike `config`/`resendConfig`, which are already gated on `providerMode === "live"` (`runtime-dispatch.ts:40-41`). Left ungated, the resolver would run a DB query for every whatsapp row in local and simulated mode, and a transient DB error would burn a retry attempt on sends that previously always succeeded. **The resolver is therefore gated the same way `config` already is**: supplied to the dispatcher only in live mode, and `dispatchDue` resolves only when it is present. Local and simulated behaviour is then byte-identical to today.
+- **`local` and `simulated` modes must not resolve at all.** `runtime-dispatch.ts:67` constructs the WhatsApp repository _unconditionally_ for every provider mode — unlike `config`/`resendConfig`, which are already gated on `providerMode === "live"` (`runtime-dispatch.ts:40-41`). Left ungated, the resolver would run a DB query for every whatsapp row in local and simulated mode, and a transient DB error would burn a retry attempt on sends that previously always succeeded. **The resolver is therefore gated the same way `config` already is**: supplied to the dispatcher only in live mode, and `dispatchDue` resolves only when it is present. Local and simulated behaviour is then byte-identical to today.
 - **The lookup throws** (transient DB error). It propagates into the dispatcher's existing catch (`dispatcher.ts:72-93`) and burns one attempt, which then retries and self-heals. This is deliberately preferred over degrading to a template: the composed body survives a ~1-minute delay rather than being silently replaced.
 
 ## Observability
@@ -177,15 +178,15 @@ The dispatcher's catch currently writes `last_error_code`/`last_error_message` b
 
 This spec adds **one `console.error` in the dispatcher catch** carrying `notification.id`, `notificationType`, and the error code. Two lines, and it fixes diagnosability for every notification type, not just this feature. Without it the template-drift risk below is structurally unobservable.
 
-Correction to a common assumption: one screen *does* read `notification_outbox` — `src/features/annual-return/follow-up-repository.ts:130-135` — but it filters `idempotency_key like 'follow-up:%'`, and sweep rows use the default key format (`outbox.ts:65-80`), so they fall outside it. Sweep failures remain invisible.
+Correction to a common assumption: one screen _does_ read `notification_outbox` — `src/features/annual-return/follow-up-repository.ts:130-135` — but it filters `idempotency_key like 'follow-up:%'`, and sweep rows use the default key format (`outbox.ts:65-80`), so they fall outside it. Sweep failures remain invisible.
 
 ## Accepted limitations
 
-- **The detailed body does not reach a gone-quiet client.** The re-engagement template asks them to reply, which reopens the window; but sweeps are milestone-gated to fire once per milestone, so a reminder sent as a template is not re-sent with detail after the reply — the next *milestone* carries detail, and staff have the manual path meanwhile. Because the fallbacks are no-variable, the re-engagement message also **cannot name the client or the case**. This is a deliberate product trade, not an oversight.
+- **The detailed body does not reach a gone-quiet client.** The re-engagement template asks them to reply, which reopens the window; but sweeps are milestone-gated to fire once per milestone, so a reminder sent as a template is not re-sent with detail after the reply — the next _milestone_ carries detail, and staff have the manual path meanwhile. Because the fallbacks are no-variable, the re-engagement message also **cannot name the client or the case**. This is a deliberate product trade, not an oversight.
 - **Real setup dependency:** the fallback templates must be approved in the WOZTELL/Meta dashboard. No gate can ever verify this — `verify:firm` is offline by construction and reports whatsapp as `blocked` (`verify-firm-deployment.ts:308`). The runbook entry must therefore list the **literal** template names and `zh_HK` as a checklist, since it is the only enforcement that exists.
-- **A missing country code silently downgrades an engaged client.** The digits-only match is exact, so it closes the *format* mismatch (spaces, `+`) but not a *content* one. `company_contacts.phone` is unvalidated free text (`z.string().min(3)`, no transform), and nothing anywhere prepends a country code. A number stored locally as `"6090 3521"` yields digits `"60903521"`, which will never equal the `"85260903521"` an inbound-created contact carries — so the lookup returns `null`, the contact is treated as outside the window, and a client who messaged ten minutes ago receives a template with their composed body dropped. That is the inside-window half of the very bug this item exists to fix, surviving for one specific data shape.
+- **A missing country code silently downgrades an engaged client.** The digits-only match is exact, so it closes the _format_ mismatch (spaces, `+`) but not a _content_ one. `company_contacts.phone` is unvalidated free text (`z.string().min(3)`, no transform), and nothing anywhere prepends a country code. A number stored locally as `"6090 3521"` yields digits `"60903521"`, which will never equal the `"85260903521"` an inbound-created contact carries — so the lookup returns `null`, the contact is treated as outside the window, and a client who messaged ten minutes ago receives a template with their composed body dropped. That is the inside-window half of the very bug this item exists to fix, surviving for one specific data shape.
 
-  It fails *degraded* rather than broken — a template is still delivered — and every phone value currently in the codebase carries `+852`, so it is not evidenced today. Fixing it properly means normalising `company_contacts.phone` at the write boundary, which is a separate data migration with its own backfill; matching on trailing digits instead would trade this false negative for false positives across country codes, which is worse for a compliance record. Accepted here, and worth revisiting if the firm ever stores local-format numbers.
+  It fails _degraded_ rather than broken — a template is still delivered — and every phone value currently in the codebase carries `+852`, so it is not evidenced today. Fixing it properly means normalising `company_contacts.phone` at the write boundary, which is a separate data migration with its own backfill; matching on trailing digits instead would trade this false negative for false positives across country codes, which is worse for a compliance record. Accepted here, and worth revisiting if the firm ever stores local-format numbers.
 
 - **A never-satisfiable send burns five attempts** — ~15 minutes of cron ticks. The throw happens before the `fetch`, so it costs no provider traffic and no rate limit. Wiring a non-retryable path (the pattern exists at `documents/repository.ts:339-346`) is cheap but deferred; the invisibility above was the real gap and is fixed.
 - **Considered and rejected: let the provider be the oracle** — send TEXT, and on a re-engagement error code re-send as a template. This would delete the migration, both indexes, the resolver, and the entire clock-skew question, and it is more correct on authority (our `whatsapp_messages` replica is lossy by its own documentation at `woztell.ts:360-373`, and every gap makes it say "closed" when WhatsApp says "open"). It is rejected because this codebase has twice been burned guessing WOZTELL's response shape (`woztell.ts:30-31`, `:44-47`), and whether WOZTELL surfaces Meta's 131047 verbatim, remaps it, or swallows it is not knowable without a live send. Revisit once a live send confirms the code.
@@ -203,7 +204,7 @@ Correction to a common assumption: one screen *does* read `notification_outbox` 
 
 - Pure unit tests for `toPhoneDigits`, `isWithinSessionWindow` (null, just inside, exactly at the boundary, just outside), and `fallbackTemplateFor` (all six literals plus an unmapped type).
 - `dispatchDue` tests covering all seven states in the decision table including the two added ones, asserting the exact `WoztellSendMode` handed to the transport.
-- **A real-format end-to-end test, not self-consistent fixtures.** Insert a contact via `recordInboundMessage` using an *unmodified* WOZTELL fixture (bare digits), insert a `company_contacts.phone` in the house spaced `"+852 …"` format for the same person, and assert the resolver returns the inbound timestamp. Note that the existing `src/features/whatsapp/repository.test.ts` inbound test uses `from: "+85261234567"` — a `+`-prefixed value **WOZTELL never sends** — chosen so its own `phone_e164` assertion would be meaningful. That test would actively mask this bug, in tension with `woztell-fixtures.ts:5-8` ("if a fixture and the code disagree, the code is wrong"). It must be corrected to a real fixture format.
+- **A real-format end-to-end test, not self-consistent fixtures.** Insert a contact via `recordInboundMessage` using an _unmodified_ WOZTELL fixture (bare digits), insert a `company_contacts.phone` in the house spaced `"+852 …"` format for the same person, and assert the resolver returns the inbound timestamp. Note that the existing `src/features/whatsapp/repository.test.ts` inbound test uses `from: "+85261234567"` — a `+`-prefixed value **WOZTELL never sends** — chosen so its own `phone_e164` assertion would be meaningful. That test would actively mask this bug, in tension with `woztell-fixtures.ts:5-8` ("if a fixture and the code disagree, the code is wrong"). It must be corrected to a real fixture format.
 - Repository integration test for the resolver behind `describe.skipIf(!databaseUrl)` against a real local Postgres: ignores outbound rows, ignores other contacts, spans duplicate contact rows, returns `null` for an unknown phone. A green local run with `TEST_DATABASE_URL` unset is treated as inconclusive.
 - **The full regression surface, verified against this working tree:**
   - `woztell.test.ts` has **five** `sendWoztellMessage` call sites needing the new mode (`:172`, `:190`, `:221`, `:234`, `:252`), not two. The byte-exact wire assertions are at `:176-180` (TEXT) and `:201-208` (TEMPLATE) — not the `it()` declaration lines.

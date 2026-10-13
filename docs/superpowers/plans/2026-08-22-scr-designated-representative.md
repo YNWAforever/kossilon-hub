@@ -19,6 +19,7 @@ no new route, no demo-mode work (this screen has no fixture-backed demo tier).
 ## Task 1: Migration and schema.sql
 
 **Files:**
+
 - Create: `db/migrations/0016_significant_controllers_and_dr.sql`
 - Modify: `src/server/db/schema.sql:657-676`
 
@@ -161,6 +162,7 @@ git commit -m "feat: add significant_controllers and scr_inspection_requests tab
 ## Task 2: Types
 
 **Files:**
+
 - Modify: `src/features/clients/types.ts`
 
 - [ ] **Step 1: Add the new types**
@@ -295,6 +297,7 @@ git commit -m "feat: add significant-controller and inspection-request types"
 ## Task 3: Repository layer
 
 **Files:**
+
 - Modify: `src/features/clients/repository.ts`
 
 - [ ] **Step 1: Add row types and imports**
@@ -443,7 +446,7 @@ And change the `update officers` query on lines 775-781 to filter by the same ty
 being appointed, not a hard-coded `'secretary'`:
 
 ```ts
-          await tx`
+await tx`
             update officers
             set cessation_date = ${input.appointmentDate}, updated_at = now()
             where company_id = ${input.companyId}
@@ -457,10 +460,10 @@ unchanged but move it inside a narrower `if`, since DR has no denormalized colum
 sync:
 
 ```ts
-        if (input.officerType === "secretary" || input.officerType === "designated_representative") {
-          await tx`select id from companies where id = ${input.companyId} for update`;
+if (input.officerType === "secretary" || input.officerType === "designated_representative") {
+  await tx`select id from companies where id = ${input.companyId} for update`;
 
-          await tx`
+  await tx`
             update officers
             set cessation_date = ${input.appointmentDate}, updated_at = now()
             where company_id = ${input.companyId}
@@ -468,13 +471,13 @@ sync:
               and cessation_date is null
           `;
 
-          if (input.officerType === "secretary") {
-            await tx`
+  if (input.officerType === "secretary") {
+    await tx`
               update companies set company_secretary = ${input.name}, updated_at = now()
               where id = ${input.companyId}
             `;
-          }
-        }
+  }
+}
 ```
 
 - [ ] **Step 5: Add the significant-controller CRUD methods**
@@ -482,13 +485,13 @@ sync:
 After `assertShareholdingBelongsToCompany`/`ceaseShareholding` (line 890-939), add:
 
 ```ts
-  async function recordController(input: RecordControllerInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        await hydrateOrThrow(tx, input.companyId);
+async function recordController(input: RecordControllerInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      await hydrateOrThrow(tx, input.companyId);
 
-        await tx`
+      await tx`
           insert into significant_controllers (
             company_id, controller_name, identification_type, identification_number,
             address, control_bases, registered_date, register_update_due_date
@@ -499,26 +502,26 @@ After `assertShareholdingBelongsToCompany`/`ceaseShareholding` (line 890-939), a
           )
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "controller_recorded",
-          actorId: input.actorId,
-          description: `Recorded significant controller ${input.controllerName}.`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "controller_recorded",
+        actorId: input.actorId,
+        description: `Recorded significant controller ${input.controllerName}.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
-  }
 
-  async function assertControllerBelongsToCompany(
-    tx: TransactionSqlClient,
-    companyId: string,
-    controllerId: string,
-  ): Promise<SignificantControllerRow> {
-    const rows = await tx<SignificantControllerRow[]>`
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
+  }
+}
+
+async function assertControllerBelongsToCompany(
+  tx: TransactionSqlClient,
+  companyId: string,
+  controllerId: string,
+): Promise<SignificantControllerRow> {
+  const rows = await tx<SignificantControllerRow[]>`
       select id, company_id, controller_name, identification_type, identification_number,
              address, control_bases, registered_date, cessation_date, register_update_due_date
       from significant_controllers
@@ -526,28 +529,28 @@ After `assertShareholdingBelongsToCompany`/`ceaseShareholding` (line 890-939), a
       limit 1
     `;
 
-    const [row] = rows;
+  const [row] = rows;
 
-    if (!row) {
-      throw new Error("Significant controller not found for this company.");
-    }
-
-    return row;
+  if (!row) {
+    throw new Error("Significant controller not found for this company.");
   }
 
-  async function updateControllerParticulars(
-    input: UpdateControllerParticularsInput,
-  ): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        const controller = await assertControllerBelongsToCompany(
-          tx,
-          input.companyId,
-          input.controllerId,
-        );
+  return row;
+}
 
-        await tx`
+async function updateControllerParticulars(
+  input: UpdateControllerParticularsInput,
+): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      const controller = await assertControllerBelongsToCompany(
+        tx,
+        input.companyId,
+        input.controllerId,
+      );
+
+      await tx`
           update significant_controllers
           set address = ${input.address},
               control_bases = ${input.controlBases},
@@ -556,59 +559,57 @@ After `assertShareholdingBelongsToCompany`/`ceaseShareholding` (line 890-939), a
           where id = ${input.controllerId} and company_id = ${input.companyId}
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "controller_updated",
-          actorId: input.actorId,
-          description: `Updated particulars for significant controller ${controller.controller_name}.`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "controller_updated",
+        actorId: input.actorId,
+        description: `Updated particulars for significant controller ${controller.controller_name}.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 
-  async function ceaseController(input: CeaseControllerInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        const controller = await assertControllerBelongsToCompany(
-          tx,
-          input.companyId,
-          input.controllerId,
-        );
+async function ceaseController(input: CeaseControllerInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      const controller = await assertControllerBelongsToCompany(
+        tx,
+        input.companyId,
+        input.controllerId,
+      );
 
-        await tx`
+      await tx`
           update significant_controllers
           set cessation_date = ${input.cessationDate}, updated_at = now()
           where id = ${input.controllerId} and company_id = ${input.companyId}
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "controller_ceased",
-          actorId: input.actorId,
-          description: `Ceased significant controller ${controller.controller_name}.`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "controller_ceased",
+        actorId: input.actorId,
+        description: `Ceased significant controller ${controller.controller_name}.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 
-  async function recordInspectionRequest(
-    input: RecordInspectionRequestInput,
-  ): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        await hydrateOrThrow(tx, input.companyId);
+async function recordInspectionRequest(input: RecordInspectionRequestInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      await hydrateOrThrow(tx, input.companyId);
 
-        await tx`
+      await tx`
           insert into scr_inspection_requests (
             company_id, requester_name, requester_authority, request_date
           ) values (
@@ -617,26 +618,26 @@ After `assertShareholdingBelongsToCompany`/`ceaseShareholding` (line 890-939), a
           )
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "inspection_request_recorded",
-          actorId: input.actorId,
-          description: `Recorded inspection request from ${input.requesterName} (${input.requesterAuthority}).`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "inspection_request_recorded",
+        actorId: input.actorId,
+        description: `Recorded inspection request from ${input.requesterName} (${input.requesterAuthority}).`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
-  }
 
-  async function assertInspectionRequestBelongsToCompany(
-    tx: TransactionSqlClient,
-    companyId: string,
-    inspectionRequestId: string,
-  ): Promise<InspectionRequestRow> {
-    const rows = await tx<InspectionRequestRow[]>`
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
+  }
+}
+
+async function assertInspectionRequestBelongsToCompany(
+  tx: TransactionSqlClient,
+  companyId: string,
+  inspectionRequestId: string,
+): Promise<InspectionRequestRow> {
+  const rows = await tx<InspectionRequestRow[]>`
       select id, company_id, requester_name, requester_authority, request_date,
              resolution_note, resolved_at
       from scr_inspection_requests
@@ -644,46 +645,46 @@ After `assertShareholdingBelongsToCompany`/`ceaseShareholding` (line 890-939), a
       limit 1
     `;
 
-    const [row] = rows;
+  const [row] = rows;
 
-    if (!row) {
-      throw new Error("Inspection request not found for this company.");
-    }
-
-    return row;
+  if (!row) {
+    throw new Error("Inspection request not found for this company.");
   }
 
-  async function resolveInspectionRequest(
-    input: ResolveInspectionRequestInput,
-  ): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        const request = await assertInspectionRequestBelongsToCompany(
-          tx,
-          input.companyId,
-          input.inspectionRequestId,
-        );
+  return row;
+}
 
-        await tx`
+async function resolveInspectionRequest(
+  input: ResolveInspectionRequestInput,
+): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      const request = await assertInspectionRequestBelongsToCompany(
+        tx,
+        input.companyId,
+        input.inspectionRequestId,
+      );
+
+      await tx`
           update scr_inspection_requests
           set resolution_note = ${input.resolutionNote}, resolved_at = now(), updated_at = now()
           where id = ${input.inspectionRequestId} and company_id = ${input.companyId}
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "inspection_request_resolved",
-          actorId: input.actorId,
-          description: `Resolved inspection request from ${request.requester_name}.`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "inspection_request_resolved",
+        actorId: input.actorId,
+        description: `Resolved inspection request from ${request.requester_name}.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 ```
 
 - [ ] **Step 6: Register the new methods on `ClientRepository` and the returned object**
@@ -726,6 +727,7 @@ git commit -m "feat: add significant-controller and inspection-request repositor
 ## Task 4: Repository integration tests + cleanup-fixture fix
 
 **Files:**
+
 - Modify: `src/features/clients/repository.test.ts`
 
 **This task's cleanup-fixture update is not optional or deferrable** — see the design
@@ -769,10 +771,10 @@ async function cleanupClientFixtures() {
 Add two more deletes alongside the `officers`/`shareholdings` ones:
 
 ```ts
-  await sql`delete from officers where company_id = any(${allCompanyIds}::uuid[])`;
-  await sql`delete from shareholdings where company_id = any(${allCompanyIds}::uuid[])`;
-  await sql`delete from significant_controllers where company_id = any(${allCompanyIds}::uuid[])`;
-  await sql`delete from scr_inspection_requests where company_id = any(${allCompanyIds}::uuid[])`;
+await sql`delete from officers where company_id = any(${allCompanyIds}::uuid[])`;
+await sql`delete from shareholdings where company_id = any(${allCompanyIds}::uuid[])`;
+await sql`delete from significant_controllers where company_id = any(${allCompanyIds}::uuid[])`;
+await sql`delete from scr_inspection_requests where company_id = any(${allCompanyIds}::uuid[])`;
 ```
 
 - [ ] **Step 2: Add a `describe.skipIf(!databaseUrl)("significant controllers integration", ...)` block**
@@ -962,9 +964,9 @@ describe.skipIf(!databaseUrl)("designated representative integration", () => {
           });
 
           expect(firstDr.companySecretary).toBe("A Secretary Ltd");
-          expect(
-            firstDr.officers.find((o) => o.name === "First DR")?.officerType,
-          ).toBe("designated_representative");
+          expect(firstDr.officers.find((o) => o.name === "First DR")?.officerType).toBe(
+            "designated_representative",
+          );
 
           const secondDr = await repository.appointOfficer({
             companyId: client.id,
@@ -1112,7 +1114,9 @@ describe.skipIf(!databaseUrl)("inspection requests integration", () => {
             actorId: owner.id,
           });
 
-          const request = recorded.inspectionRequests.find((r) => r.requesterName === "Officer Lee");
+          const request = recorded.inspectionRequests.find(
+            (r) => r.requesterName === "Officer Lee",
+          );
           expect(request).toBeDefined();
           expect(request?.resolvedAt).toBeNull();
 
@@ -1156,6 +1160,7 @@ git commit -m "test: add significant-controller, DR, and inspection-request inte
 ## Task 5: Server functions
 
 **Files:**
+
 - Modify: `src/features/clients/server-fns.ts`
 
 - [ ] **Step 1: Widen `appointOfficerSchema`'s `officerType` enum**
@@ -1316,6 +1321,7 @@ git commit -m "feat: add significant-controller and inspection-request server fu
 ## Task 6: Officer dialog gets the DR option
 
 **Files:**
+
 - Modify: `src/components/clients/officer-form-dialog.tsx`
 
 - [ ] **Step 1: Add the third `<option>`**
@@ -1358,38 +1364,38 @@ fails"`), both using the default `officerType` select value (`"director"`). Add 
 third test after the first one (after line 51) that selects the new DR option:
 
 ```tsx
-  it("appoints a Designated Representative when that type is selected", async () => {
-    serverFns.appointClientOfficer.mockResolvedValue({ id: "client-1" });
-    const onSaved = vi.fn();
+it("appoints a Designated Representative when that type is selected", async () => {
+  serverFns.appointClientOfficer.mockResolvedValue({ id: "client-1" });
+  const onSaved = vi.fn();
 
-    render(
-      <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
-    );
+  render(
+    <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
+  );
 
-    fireEvent.change(screen.getByLabelText("Type"), {
-      target: { value: "designated_representative" },
-    });
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Jane DR" } });
-    fireEvent.change(screen.getByLabelText("Appointment date"), {
-      target: { value: "2026-01-01" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Appoint officer" }));
-
-    await waitFor(() =>
-      expect(serverFns.appointClientOfficer).toHaveBeenCalledWith({
-        data: {
-          companyId: "company-1",
-          officerType: "designated_representative",
-          name: "Jane DR",
-          identificationType: null,
-          identificationNumber: null,
-          address: null,
-          appointmentDate: "2026-01-01",
-        },
-      }),
-    );
-    expect(onSaved).toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("Type"), {
+    target: { value: "designated_representative" },
   });
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Jane DR" } });
+  fireEvent.change(screen.getByLabelText("Appointment date"), {
+    target: { value: "2026-01-01" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Appoint officer" }));
+
+  await waitFor(() =>
+    expect(serverFns.appointClientOfficer).toHaveBeenCalledWith({
+      data: {
+        companyId: "company-1",
+        officerType: "designated_representative",
+        name: "Jane DR",
+        identificationType: null,
+        identificationNumber: null,
+        address: null,
+        appointmentDate: "2026-01-01",
+      },
+    }),
+  );
+  expect(onSaved).toHaveBeenCalled();
+});
 ```
 
 - [ ] **Step 4: Run the dialog's tests**
@@ -1409,6 +1415,7 @@ git commit -m "feat: add Designated Representative as an officer type option"
 ## Task 7: Controller form dialog (add + edit)
 
 **Files:**
+
 - Create: `src/components/clients/controller-form-dialog.tsx`
 - Create: `src/components/clients/controller-form-dialog.test.tsx`
 
@@ -1567,7 +1574,9 @@ export function ControllerFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{controller ? "Edit controller particulars" : "Record significant controller"}</DialogTitle>
+          <DialogTitle>
+            {controller ? "Edit controller particulars" : "Record significant controller"}
+          </DialogTitle>
           <DialogDescription>
             A controller must satisfy at least one of the four control tests.
           </DialogDescription>
@@ -1771,7 +1780,12 @@ describe("ControllerFormDialog", () => {
 
   it("rejects submitting with no control basis selected, without calling the server", async () => {
     render(
-      <ControllerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={() => {}} />,
+      <ControllerFormDialog
+        open
+        onOpenChange={() => {}}
+        companyId="company-1"
+        onSaved={() => {}}
+      />,
     );
 
     fireEvent.change(screen.getByLabelText("Controller name"), {
@@ -1847,6 +1861,7 @@ git commit -m "feat: add ControllerFormDialog for recording and editing signific
 ## Task 8: Inspection request dialogs (record + resolve)
 
 **Files:**
+
 - Create: `src/components/clients/inspection-request-form-dialog.tsx`
 - Create: `src/components/clients/inspection-request-form-dialog.test.tsx`
 - Create: `src/components/clients/resolve-inspection-request-dialog.tsx`
@@ -2283,6 +2298,7 @@ git commit -m "feat: add inspection request record and resolve dialogs"
 ## Task 9: Wire the two new sections into the client detail page
 
 **Files:**
+
 - Modify: `src/features/clients/components/production-client-detail.tsx`
 
 - [ ] **Step 1: Add imports**
@@ -2346,38 +2362,38 @@ const officerTypeLabel: Record<"director" | "secretary" | "designated_representa
 Add to the state declarations (after `ceasingShareholdingId`, line 79):
 
 ```tsx
-  const [controllerDialog, setControllerDialog] = useState<{
-    open: boolean;
-    controller?: SignificantController;
-  }>({ open: false });
-  const [ceasingControllerId, setCeasingControllerId] = useState<string | null>(null);
-  const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
-  const [resolvingInspectionRequestId, setResolvingInspectionRequestId] = useState<string | null>(
-    null,
-  );
+const [controllerDialog, setControllerDialog] = useState<{
+  open: boolean;
+  controller?: SignificantController;
+}>({ open: false });
+const [ceasingControllerId, setCeasingControllerId] = useState<string | null>(null);
+const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
+const [resolvingInspectionRequestId, setResolvingInspectionRequestId] = useState<string | null>(
+  null,
+);
 ```
 
 Add a handler after `handleCeaseShareholding` (line 130-147):
 
 ```tsx
-  async function handleCeaseController(controllerId: string) {
-    setCeasingControllerId(controllerId);
+async function handleCeaseController(controllerId: string) {
+  setCeasingControllerId(controllerId);
 
-    try {
-      await ceaseClientController({
-        data: {
-          companyId: clientId,
-          controllerId,
-          cessationDate: today(),
-        },
-      });
-      invalidate();
-    } catch {
-      toast.error("Unable to cease the controller. Try again.");
-    } finally {
-      setCeasingControllerId(null);
-    }
+  try {
+    await ceaseClientController({
+      data: {
+        companyId: clientId,
+        controllerId,
+        cessationDate: today(),
+      },
+    });
+    invalidate();
+  } catch {
+    toast.error("Unable to cease the controller. Try again.");
+  } finally {
+    setCeasingControllerId(null);
   }
+}
 ```
 
 - [ ] **Step 4: Add the Significant Controllers section**
@@ -2553,6 +2569,7 @@ git commit -m "feat: add significant controllers and inspection requests section
 ## Task 10: Update the client-detail interaction test
 
 **Files:**
+
 - Modify: `src/features/clients/components/production-client-detail.interaction.test.tsx`
 
 - [ ] **Step 1: Add the new server-fn mocks**
@@ -2600,7 +2617,7 @@ Add the corresponding `mockReset()` call in `beforeEach` (after
 `serverFns.ceaseClientShareholding.mockReset();`, line 97):
 
 ```tsx
-    serverFns.ceaseClientController.mockReset();
+serverFns.ceaseClientController.mockReset();
 ```
 
 - [ ] **Step 3: Add a new test for the two new sections**
@@ -2609,50 +2626,50 @@ Add after the existing `"renders officers and shareholdings, and ceases an offic
 click"` test (after line 270, before the closing `});` of the `describe` block):
 
 ```tsx
-  it("renders significant controllers and inspection requests, and ceases a controller on click", async () => {
-    serverFns.getClient.mockResolvedValue(
-      makeClient({
-        significantControllers: [
-          {
-            id: "controller-1",
-            companyId: clientId,
-            controllerName: "Jane Controller",
-            identificationType: null,
-            identificationNumber: null,
-            address: null,
-            controlBases: ["shares_over_25pct"],
-            registeredDate: "2020-01-15",
-            cessationDate: null,
-            registerUpdateDueDate: null,
-          },
-        ],
-        inspectionRequests: [
-          {
-            id: "request-1",
-            companyId: clientId,
-            requesterName: "Officer Lee",
-            requesterAuthority: "Companies Registry",
-            requestDate: "2026-01-15",
-            resolutionNote: null,
-            resolvedAt: null,
-          },
-        ],
-      }),
-    );
-    serverFns.ceaseClientController.mockResolvedValue({});
-    renderDetail();
+it("renders significant controllers and inspection requests, and ceases a controller on click", async () => {
+  serverFns.getClient.mockResolvedValue(
+    makeClient({
+      significantControllers: [
+        {
+          id: "controller-1",
+          companyId: clientId,
+          controllerName: "Jane Controller",
+          identificationType: null,
+          identificationNumber: null,
+          address: null,
+          controlBases: ["shares_over_25pct"],
+          registeredDate: "2020-01-15",
+          cessationDate: null,
+          registerUpdateDueDate: null,
+        },
+      ],
+      inspectionRequests: [
+        {
+          id: "request-1",
+          companyId: clientId,
+          requesterName: "Officer Lee",
+          requesterAuthority: "Companies Registry",
+          requestDate: "2026-01-15",
+          resolutionNote: null,
+          resolvedAt: null,
+        },
+      ],
+    }),
+  );
+  serverFns.ceaseClientController.mockResolvedValue({});
+  renderDetail();
 
-    await screen.findByText("Jane Controller");
-    expect(screen.getByText("Officer Lee")).toBeTruthy();
+  await screen.findByText("Jane Controller");
+  expect(screen.getByText("Officer Lee")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cease" }));
+  fireEvent.click(screen.getByRole("button", { name: "Cease" }));
 
-    await waitFor(() =>
-      expect(serverFns.ceaseClientController).toHaveBeenCalledWith({
-        data: expect.objectContaining({ companyId: clientId, controllerId: "controller-1" }),
-      }),
-    );
-  });
+  await waitFor(() =>
+    expect(serverFns.ceaseClientController).toHaveBeenCalledWith({
+      data: expect.objectContaining({ companyId: clientId, controllerId: "controller-1" }),
+    }),
+  );
+});
 ```
 
 - [ ] **Step 4: Run the interaction test**
@@ -2694,8 +2711,7 @@ CLAUDE.md's testing conventions.
 - [ ] **Step 4: Offline pre-deploy gate**
 
 Run: `npm run verify:firm -- --dry-run`
-Expected: passes, including the `migration-schema` consistency check for migration
-0016.
+Expected: passes, including the `migration-schema` consistency check for migration 0016.
 
 - [ ] **Step 5: Manual smoke test in demo mode**
 

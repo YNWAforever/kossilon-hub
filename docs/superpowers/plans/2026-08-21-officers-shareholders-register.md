@@ -17,6 +17,7 @@ Two new dialogs mirror `ContactFormDialog`'s existing shape. Two new sections la
 TypeScript 5.8 strict · React 19 · TanStack Query 5 · Vitest 4 + Testing Library.
 
 **Reference files** (read, not modified beyond what's specified):
+
 - `src/features/clients/types.ts`, `repository.ts`, `server-fns.ts`, `authorization.ts` — the
   existing client-register module this plan extends.
 - `src/components/clients/contact-form-dialog.tsx` — the exact dialog shape/styling both new
@@ -29,6 +30,7 @@ TypeScript 5.8 strict · React 19 · TanStack Query 5 · Vitest 4 + Testing Libr
 ### Task 1: Schema migration
 
 **Files:**
+
 - Create: `db/migrations/0015_officers_and_shareholdings.sql`
 - Modify: `src/server/db/schema.sql` (add the two tables after `company_contacts`, around
   line 633)
@@ -112,6 +114,7 @@ git commit -m "feat: add officers and shareholdings tables"
 ### Task 2: Types layer
 
 **Files:**
+
 - Modify: `src/features/clients/types.ts`
 
 - [ ] **Step 1: Add the new types**
@@ -282,6 +285,7 @@ git commit -m "feat: add officer/shareholding types, remove companySecretary fro
 ### Task 3: Repository layer — officers
 
 **Files:**
+
 - Modify: `src/features/clients/repository.ts`
 - Modify: `src/features/clients/repository.test.ts`
 
@@ -343,7 +347,9 @@ describe.skipIf(!databaseUrl)("officers integration", () => {
             actorId: owner.id,
           });
 
-          const originalSecretary = updated.officers.find((o) => o.name === "Original Secretary Ltd");
+          const originalSecretary = updated.officers.find(
+            (o) => o.name === "Original Secretary Ltd",
+          );
           const newSecretary = updated.officers.find((o) => o.name === "New Secretary Ltd");
 
           expect(originalSecretary?.cessationDate).toBe("2026-01-01");
@@ -477,30 +483,30 @@ Add a new query to the `Promise.all` in `hydrateClient` (around line 310-363), a
 existing `contacts`/`timeline`/`history`/`documents` queries:
 
 ```ts
-    const [contacts, officers, timeline, history, documents] = await Promise.all([
-      client<ContactRow[]>`
+const [contacts, officers, timeline, history, documents] = await Promise.all([
+  client<ContactRow[]>`
         select id, company_id, name, role, email, phone, is_primary
         from company_contacts
         where company_id = ${id}
         order by is_primary desc, name asc
       `,
-      client<OfficerRow[]>`
+  client<OfficerRow[]>`
         select id, company_id, officer_type, name, identification_type,
                identification_number, address, appointment_date, cessation_date
         from officers
         where company_id = ${id}
         order by (cessation_date is not null), appointment_date desc
       `,
-      client<
-        {
-          id: string;
-          event_type: string;
-          actor_type: "system" | "user";
-          actor_name: string | null;
-          description: string;
-          created_at: string | Date;
-        }[]
-      >`
+  client<
+    {
+      id: string;
+      event_type: string;
+      actor_type: "system" | "user";
+      actor_name: string | null;
+      description: string;
+      created_at: string | Date;
+    }[]
+  >`
         select te.id, te.event_type, te.actor_type, u.name as actor_name,
                te.description, te.created_at
         from timeline_events te
@@ -509,35 +515,35 @@ existing `contacts`/`timeline`/`history`/`documents` queries:
         order by te.created_at desc
         limit 50
       `,
-      client<
-        {
-          id: string;
-          return_year: number;
-          made_up_date: string | Date;
-          filing_due_date: string | Date;
-          current_status: string;
-        }[]
-      >`
+  client<
+    {
+      id: string;
+      return_year: number;
+      made_up_date: string | Date;
+      filing_due_date: string | Date;
+      current_status: string;
+    }[]
+  >`
         select id, return_year, made_up_date, filing_due_date, current_status
         from annual_return_cases
         where company_id = ${id}
         order by return_year desc
       `,
-      client<
-        {
-          id: string;
-          file_name: string;
-          file_type: string;
-          verification_status: ClientDocument["verificationStatus"];
-          uploaded_at: string | Date;
-        }[]
-      >`
+  client<
+    {
+      id: string;
+      file_name: string;
+      file_type: string;
+      verification_status: ClientDocument["verificationStatus"];
+      uploaded_at: string | Date;
+    }[]
+  >`
         select id, file_name, file_type, verification_status, uploaded_at
         from documents
         where company_id = ${id}
         order by uploaded_at desc
       `,
-    ]);
+]);
 ```
 
 (`order by (cessation_date is not null), appointment_date desc` — `false` sorts before `true`
@@ -553,12 +559,12 @@ Then add `officers: officers.map(mapOfficer),` to the returned object, right aft
 Change the transaction body (around lines 480-513) from:
 
 ```ts
-  async function createClient(input: CreateClientInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
+async function createClient(input: CreateClientInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
 
-        const rows = await tx<{ id: string }[]>`
+      const rows = await tx<{ id: string }[]>`
           insert into companies (
             company_name, cr_number, br_number, incorporation_date,
             annual_return_basis_date, registered_office, company_secretary,
@@ -573,36 +579,36 @@ Change the transaction body (around lines 480-513) from:
           returning id
         `;
 
-        const companyId = rows[0].id;
+      const companyId = rows[0].id;
 
-        for (const contact of input.contacts) {
-          await insertContact(tx, companyId, contact);
-        }
+      for (const contact of input.contacts) {
+        await insertContact(tx, companyId, contact);
+      }
 
-        await writeTimelineEvent(tx, {
-          companyId,
-          eventType: "client_created",
-          actorId: input.actorId,
-          description: `Client ${input.companyName} added to the register.`,
-        });
-
-        return hydrateOrThrow(tx, companyId);
+      await writeTimelineEvent(tx, {
+        companyId,
+        eventType: "client_created",
+        actorId: input.actorId,
+        description: `Client ${input.companyName} added to the register.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 ```
 
 to:
 
 ```ts
-  async function createClient(input: CreateClientInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
+async function createClient(input: CreateClientInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
 
-        const rows = await tx<{ id: string }[]>`
+      const rows = await tx<{ id: string }[]>`
           insert into companies (
             company_name, cr_number, br_number, incorporation_date,
             annual_return_basis_date, registered_office, company_secretary,
@@ -617,30 +623,30 @@ to:
           returning id
         `;
 
-        const companyId = rows[0].id;
+      const companyId = rows[0].id;
 
-        for (const contact of input.contacts) {
-          await insertContact(tx, companyId, contact);
-        }
+      for (const contact of input.contacts) {
+        await insertContact(tx, companyId, contact);
+      }
 
-        await tx`
+      await tx`
           insert into officers (company_id, officer_type, name, appointment_date)
           values (${companyId}, 'secretary', ${input.companySecretary}, ${input.incorporationDate})
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId,
-          eventType: "client_created",
-          actorId: input.actorId,
-          description: `Client ${input.companyName} added to the register.`,
-        });
-
-        return hydrateOrThrow(tx, companyId);
+      await writeTimelineEvent(tx, {
+        companyId,
+        eventType: "client_created",
+        actorId: input.actorId,
+        description: `Client ${input.companyName} added to the register.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 ```
 
 - [ ] **Step 6: Remove `companySecretary` from `updateClient`**
@@ -649,42 +655,42 @@ Remove it from `changedFields`'s comparison list and from the `update companies 
 clause. Change:
 
 ```ts
-  function changedFields(before: ClientDetail, input: UpdateClientInput): string[] {
-    const comparisons: [string, unknown, unknown][] = [
-      ["companyName", before.companyName, input.companyName],
-      ["registeredOffice", before.registeredOffice, input.registeredOffice],
-      ["companySecretary", before.companySecretary, input.companySecretary],
-      ["status", before.status, input.status],
-      ["ownerId", before.ownerId, input.ownerId],
-      ["teamId", before.teamId, input.teamId],
-      ["packageId", before.packageId, input.packageId],
-    ];
+function changedFields(before: ClientDetail, input: UpdateClientInput): string[] {
+  const comparisons: [string, unknown, unknown][] = [
+    ["companyName", before.companyName, input.companyName],
+    ["registeredOffice", before.registeredOffice, input.registeredOffice],
+    ["companySecretary", before.companySecretary, input.companySecretary],
+    ["status", before.status, input.status],
+    ["ownerId", before.ownerId, input.ownerId],
+    ["teamId", before.teamId, input.teamId],
+    ["packageId", before.packageId, input.packageId],
+  ];
 
-    return comparisons.filter(([, previous, next]) => previous !== next).map(([field]) => field);
-  }
+  return comparisons.filter(([, previous, next]) => previous !== next).map(([field]) => field);
+}
 ```
 
 to:
 
 ```ts
-  function changedFields(before: ClientDetail, input: UpdateClientInput): string[] {
-    const comparisons: [string, unknown, unknown][] = [
-      ["companyName", before.companyName, input.companyName],
-      ["registeredOffice", before.registeredOffice, input.registeredOffice],
-      ["status", before.status, input.status],
-      ["ownerId", before.ownerId, input.ownerId],
-      ["teamId", before.teamId, input.teamId],
-      ["packageId", before.packageId, input.packageId],
-    ];
+function changedFields(before: ClientDetail, input: UpdateClientInput): string[] {
+  const comparisons: [string, unknown, unknown][] = [
+    ["companyName", before.companyName, input.companyName],
+    ["registeredOffice", before.registeredOffice, input.registeredOffice],
+    ["status", before.status, input.status],
+    ["ownerId", before.ownerId, input.ownerId],
+    ["teamId", before.teamId, input.teamId],
+    ["packageId", before.packageId, input.packageId],
+  ];
 
-    return comparisons.filter(([, previous, next]) => previous !== next).map(([field]) => field);
-  }
+  return comparisons.filter(([, previous, next]) => previous !== next).map(([field]) => field);
+}
 ```
 
 And change the `update companies set ...` clause inside `updateClient` from:
 
 ```ts
-        await tx`
+await tx`
           update companies
           set company_name = ${input.companyName},
               registered_office = ${input.registeredOffice},
@@ -701,7 +707,7 @@ And change the `update companies set ...` clause inside `updateClient` from:
 to:
 
 ```ts
-        await tx`
+await tx`
           update companies
           set company_name = ${input.companyName},
               registered_office = ${input.registeredOffice},
@@ -719,14 +725,14 @@ to:
 Add after `removeContact` (around line 683):
 
 ```ts
-  async function appointOfficer(input: AppointOfficerInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        await hydrateOrThrow(tx, input.companyId);
+async function appointOfficer(input: AppointOfficerInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      await hydrateOrThrow(tx, input.companyId);
 
-        if (input.officerType === "secretary") {
-          await tx`
+      if (input.officerType === "secretary") {
+        await tx`
             update officers
             set cessation_date = ${input.appointmentDate}, updated_at = now()
             where company_id = ${input.companyId}
@@ -734,13 +740,13 @@ Add after `removeContact` (around line 683):
               and cessation_date is null
           `;
 
-          await tx`
+        await tx`
             update companies set company_secretary = ${input.name}, updated_at = now()
             where id = ${input.companyId}
           `;
-        }
+      }
 
-        await tx`
+      await tx`
           insert into officers (
             company_id, officer_type, name, identification_type,
             identification_number, address, appointment_date
@@ -750,26 +756,26 @@ Add after `removeContact` (around line 683):
           )
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "officer_appointed",
-          actorId: input.actorId,
-          description: `Appointed ${input.name} as ${input.officerType}.`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "officer_appointed",
+        actorId: input.actorId,
+        description: `Appointed ${input.name} as ${input.officerType}.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
-  }
 
-  async function assertOfficerBelongsToCompany(
-    tx: TransactionSqlClient,
-    companyId: string,
-    officerId: string,
-  ): Promise<OfficerRow> {
-    const rows = await tx<OfficerRow[]>`
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
+  }
+}
+
+async function assertOfficerBelongsToCompany(
+  tx: TransactionSqlClient,
+  companyId: string,
+  officerId: string,
+): Promise<OfficerRow> {
+  const rows = await tx<OfficerRow[]>`
       select id, company_id, officer_type, name, identification_type,
              identification_number, address, appointment_date, cessation_date
       from officers
@@ -777,39 +783,39 @@ Add after `removeContact` (around line 683):
       limit 1
     `;
 
-    const [row] = rows;
+  const [row] = rows;
 
-    if (!row) {
-      throw new Error("Officer not found for this company.");
-    }
-
-    return row;
+  if (!row) {
+    throw new Error("Officer not found for this company.");
   }
 
-  async function ceaseOfficer(input: CeaseOfficerInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        const officer = await assertOfficerBelongsToCompany(tx, input.companyId, input.officerId);
+  return row;
+}
 
-        await tx`
+async function ceaseOfficer(input: CeaseOfficerInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      const officer = await assertOfficerBelongsToCompany(tx, input.companyId, input.officerId);
+
+      await tx`
           update officers set cessation_date = ${input.cessationDate}, updated_at = now()
           where id = ${input.officerId} and company_id = ${input.companyId}
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "officer_ceased",
-          actorId: input.actorId,
-          description: `Ceased ${officer.name} as ${officer.officer_type}.`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "officer_ceased",
+        actorId: input.actorId,
+        description: `Ceased ${officer.name} as ${officer.officer_type}.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 ```
 
 (`appointOfficer`'s secretary-cessation `update` runs before the `insert` — it only touches
@@ -844,6 +850,7 @@ git commit -m "feat: add officer appointment/cessation with secretary sync"
 ### Task 4: Repository layer — shareholdings
 
 **Files:**
+
 - Modify: `src/features/clients/repository.ts`
 - Modify: `src/features/clients/repository.test.ts`
 
@@ -853,71 +860,73 @@ Add to `src/features/clients/repository.test.ts`, in the same `describe.skipIf(!
 block added in Task 3 (or a sibling one — match whichever style Task 3 actually used):
 
 ```ts
-  it("records and ceases a shareholding independently of officers", async () => {
-    const sql = createSqlClient(databaseUrl!, { max: 1 });
+it("records and ceases a shareholding independently of officers", async () => {
+  const sql = createSqlClient(databaseUrl!, { max: 1 });
 
-    try {
-      await expect(
-        sql.begin(async (tx) => {
-          const repository = createClientRepository({ sql: tx });
+  try {
+    await expect(
+      sql.begin(async (tx) => {
+        const repository = createClientRepository({ sql: tx });
 
-          const [owner] = await tx<{ id: string }[]>`
+        const [owner] = await tx<{ id: string }[]>`
             select id from users where active limit 1
           `;
-          const [team] = await tx<{ id: string }[]>`
+        const [team] = await tx<{ id: string }[]>`
             select id from teams where active limit 1
           `;
 
-          const client = await repository.createClient({
-            companyName: "Shareholder Test Co Ltd",
-            crNumber: `CR-SH-${crypto.randomUUID().slice(0, 8)}`,
-            brNumber: `BR-SH-${crypto.randomUUID().slice(0, 8)}`,
-            incorporationDate: "2020-01-15",
-            annualReturnBasisDate: "2020-01-15",
-            registeredOffice: "1 Test Street, Hong Kong",
-            companySecretary: "A Secretary Ltd",
-            ownerId: owner.id,
-            teamId: team.id,
-            packageId: null,
-            contacts: [],
-            actorId: owner.id,
-          });
+        const client = await repository.createClient({
+          companyName: "Shareholder Test Co Ltd",
+          crNumber: `CR-SH-${crypto.randomUUID().slice(0, 8)}`,
+          brNumber: `BR-SH-${crypto.randomUUID().slice(0, 8)}`,
+          incorporationDate: "2020-01-15",
+          annualReturnBasisDate: "2020-01-15",
+          registeredOffice: "1 Test Street, Hong Kong",
+          companySecretary: "A Secretary Ltd",
+          ownerId: owner.id,
+          teamId: team.id,
+          packageId: null,
+          contacts: [],
+          actorId: owner.id,
+        });
 
-          expect(client.shareholdings).toEqual([]);
+        expect(client.shareholdings).toEqual([]);
 
-          const recorded = await repository.recordShareholding({
-            companyId: client.id,
-            shareholderName: "Jane Shareholder",
-            shareholderAddress: "3 Test Street, Hong Kong",
-            shareClass: "Ordinary",
-            numberOfShares: 100,
-            allotmentDate: "2020-01-15",
-            actorId: owner.id,
-          });
+        const recorded = await repository.recordShareholding({
+          companyId: client.id,
+          shareholderName: "Jane Shareholder",
+          shareholderAddress: "3 Test Street, Hong Kong",
+          shareClass: "Ordinary",
+          numberOfShares: 100,
+          allotmentDate: "2020-01-15",
+          actorId: owner.id,
+        });
 
-          const shareholding = recorded.shareholdings.find((s) => s.shareholderName === "Jane Shareholder");
-          expect(shareholding).toBeDefined();
-          expect(shareholding?.numberOfShares).toBe(100);
-          expect(shareholding?.cessationDate).toBeNull();
+        const shareholding = recorded.shareholdings.find(
+          (s) => s.shareholderName === "Jane Shareholder",
+        );
+        expect(shareholding).toBeDefined();
+        expect(shareholding?.numberOfShares).toBe(100);
+        expect(shareholding?.cessationDate).toBeNull();
 
-          const ceased = await repository.ceaseShareholding({
-            companyId: client.id,
-            shareholdingId: shareholding!.id,
-            cessationDate: "2026-06-01",
-            actorId: owner.id,
-          });
+        const ceased = await repository.ceaseShareholding({
+          companyId: client.id,
+          shareholdingId: shareholding!.id,
+          cessationDate: "2026-06-01",
+          actorId: owner.id,
+        });
 
-          expect(
-            ceased.shareholdings.find((s) => s.id === shareholding!.id)?.cessationDate,
-          ).toBe("2026-06-01");
+        expect(ceased.shareholdings.find((s) => s.id === shareholding!.id)?.cessationDate).toBe(
+          "2026-06-01",
+        );
 
-          throw new Error("rollback shareholdings integration fixture");
-        }),
-      ).rejects.toThrow("rollback shareholdings integration fixture");
-    } finally {
-      await sql.end();
-    }
-  });
+        throw new Error("rollback shareholdings integration fixture");
+      }),
+    ).rejects.toThrow("rollback shareholdings integration fixture");
+  } finally {
+    await sql.end();
+  }
+});
 ```
 
 - [ ] **Step 2: Run the test and confirm it fails**
@@ -969,37 +978,37 @@ Extend the `Promise.all` destructuring and query list from Task 3's Step 4 to al
 shareholdings:
 
 ```ts
-    const [contacts, officers, shareholdings, timeline, history, documents] = await Promise.all([
-      client<ContactRow[]>`
+const [contacts, officers, shareholdings, timeline, history, documents] = await Promise.all([
+  client<ContactRow[]>`
         select id, company_id, name, role, email, phone, is_primary
         from company_contacts
         where company_id = ${id}
         order by is_primary desc, name asc
       `,
-      client<OfficerRow[]>`
+  client<OfficerRow[]>`
         select id, company_id, officer_type, name, identification_type,
                identification_number, address, appointment_date, cessation_date
         from officers
         where company_id = ${id}
         order by (cessation_date is not null), appointment_date desc
       `,
-      client<ShareholdingRow[]>`
+  client<ShareholdingRow[]>`
         select id, company_id, shareholder_name, shareholder_address, share_class,
                number_of_shares, allotment_date, cessation_date
         from shareholdings
         where company_id = ${id}
         order by (cessation_date is not null), allotment_date desc
       `,
-      client<
-        {
-          id: string;
-          event_type: string;
-          actor_type: "system" | "user";
-          actor_name: string | null;
-          description: string;
-          created_at: string | Date;
-        }[]
-      >`
+  client<
+    {
+      id: string;
+      event_type: string;
+      actor_type: "system" | "user";
+      actor_name: string | null;
+      description: string;
+      created_at: string | Date;
+    }[]
+  >`
         select te.id, te.event_type, te.actor_type, u.name as actor_name,
                te.description, te.created_at
         from timeline_events te
@@ -1008,35 +1017,35 @@ shareholdings:
         order by te.created_at desc
         limit 50
       `,
-      client<
-        {
-          id: string;
-          return_year: number;
-          made_up_date: string | Date;
-          filing_due_date: string | Date;
-          current_status: string;
-        }[]
-      >`
+  client<
+    {
+      id: string;
+      return_year: number;
+      made_up_date: string | Date;
+      filing_due_date: string | Date;
+      current_status: string;
+    }[]
+  >`
         select id, return_year, made_up_date, filing_due_date, current_status
         from annual_return_cases
         where company_id = ${id}
         order by return_year desc
       `,
-      client<
-        {
-          id: string;
-          file_name: string;
-          file_type: string;
-          verification_status: ClientDocument["verificationStatus"];
-          uploaded_at: string | Date;
-        }[]
-      >`
+  client<
+    {
+      id: string;
+      file_name: string;
+      file_type: string;
+      verification_status: ClientDocument["verificationStatus"];
+      uploaded_at: string | Date;
+    }[]
+  >`
         select id, file_name, file_type, verification_status, uploaded_at
         from documents
         where company_id = ${id}
         order by uploaded_at desc
       `,
-    ]);
+]);
 ```
 
 Then add `shareholdings: shareholdings.map(mapShareholding),` to the returned object, right
@@ -1047,13 +1056,13 @@ after `officers: officers.map(mapOfficer),` (added in Task 3).
 Add after `ceaseOfficer` (added in Task 3):
 
 ```ts
-  async function recordShareholding(input: RecordShareholdingInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        await hydrateOrThrow(tx, input.companyId);
+async function recordShareholding(input: RecordShareholdingInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      await hydrateOrThrow(tx, input.companyId);
 
-        await tx`
+      await tx`
           insert into shareholdings (
             company_id, shareholder_name, shareholder_address, share_class,
             number_of_shares, allotment_date
@@ -1063,26 +1072,26 @@ Add after `ceaseOfficer` (added in Task 3):
           )
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "shareholding_recorded",
-          actorId: input.actorId,
-          description: `Recorded shareholding for ${input.shareholderName} (${input.numberOfShares} ${input.shareClass} shares).`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "shareholding_recorded",
+        actorId: input.actorId,
+        description: `Recorded shareholding for ${input.shareholderName} (${input.numberOfShares} ${input.shareClass} shares).`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
-  }
 
-  async function assertShareholdingBelongsToCompany(
-    tx: TransactionSqlClient,
-    companyId: string,
-    shareholdingId: string,
-  ): Promise<ShareholdingRow> {
-    const rows = await tx<ShareholdingRow[]>`
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
+  }
+}
+
+async function assertShareholdingBelongsToCompany(
+  tx: TransactionSqlClient,
+  companyId: string,
+  shareholdingId: string,
+): Promise<ShareholdingRow> {
+  const rows = await tx<ShareholdingRow[]>`
       select id, company_id, shareholder_name, shareholder_address, share_class,
              number_of_shares, allotment_date, cessation_date
       from shareholdings
@@ -1090,43 +1099,43 @@ Add after `ceaseOfficer` (added in Task 3):
       limit 1
     `;
 
-    const [row] = rows;
+  const [row] = rows;
 
-    if (!row) {
-      throw new Error("Shareholding not found for this company.");
-    }
-
-    return row;
+  if (!row) {
+    throw new Error("Shareholding not found for this company.");
   }
 
-  async function ceaseShareholding(input: CeaseShareholdingInput): Promise<ClientDetail> {
-    try {
-      return await withTransaction(sql, async (tx) => {
-        await assertActor(tx, input.actorId);
-        const shareholding = await assertShareholdingBelongsToCompany(
-          tx,
-          input.companyId,
-          input.shareholdingId,
-        );
+  return row;
+}
 
-        await tx`
+async function ceaseShareholding(input: CeaseShareholdingInput): Promise<ClientDetail> {
+  try {
+    return await withTransaction(sql, async (tx) => {
+      await assertActor(tx, input.actorId);
+      const shareholding = await assertShareholdingBelongsToCompany(
+        tx,
+        input.companyId,
+        input.shareholdingId,
+      );
+
+      await tx`
           update shareholdings set cessation_date = ${input.cessationDate}, updated_at = now()
           where id = ${input.shareholdingId} and company_id = ${input.companyId}
         `;
 
-        await writeTimelineEvent(tx, {
-          companyId: input.companyId,
-          eventType: "shareholding_ceased",
-          actorId: input.actorId,
-          description: `Ceased shareholding for ${shareholding.shareholder_name}.`,
-        });
-
-        return hydrateOrThrow(tx, input.companyId);
+      await writeTimelineEvent(tx, {
+        companyId: input.companyId,
+        eventType: "shareholding_ceased",
+        actorId: input.actorId,
+        description: `Ceased shareholding for ${shareholding.shareholder_name}.`,
       });
-    } catch (error) {
-      rethrowClientWriteError(error);
-    }
+
+      return hydrateOrThrow(tx, input.companyId);
+    });
+  } catch (error) {
+    rethrowClientWriteError(error);
   }
+}
 ```
 
 - [ ] **Step 6: Add the new methods to `ClientRepository` and the returned object**
@@ -1155,6 +1164,7 @@ git commit -m "feat: add shareholding recording and cessation"
 ### Task 5: Server-fns layer and client-form-dialog fix
 
 **Files:**
+
 - Modify: `src/features/clients/server-fns.ts`
 - Modify: `src/components/clients/client-form-dialog.tsx`
 
@@ -1307,6 +1317,7 @@ git commit -m "feat: add officer and shareholding server functions"
 ### Task 6: `OfficerFormDialog` component
 
 **Files:**
+
 - Create: `src/components/clients/officer-form-dialog.tsx`
 - Test: `src/components/clients/officer-form-dialog.test.tsx`
 
@@ -1340,12 +1351,7 @@ describe("OfficerFormDialog", () => {
     const onSaved = vi.fn();
 
     render(
-      <OfficerFormDialog
-        open
-        onOpenChange={() => {}}
-        companyId="company-1"
-        onSaved={onSaved}
-      />,
+      <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={onSaved} />,
     );
 
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Jane Director" } });
@@ -1371,7 +1377,9 @@ describe("OfficerFormDialog", () => {
   });
 
   it("shows an error and does not close when the server call fails", async () => {
-    serverFns.appointClientOfficer.mockRejectedValue(new Error("Officer not found for this company."));
+    serverFns.appointClientOfficer.mockRejectedValue(
+      new Error("Officer not found for this company."),
+    );
 
     render(
       <OfficerFormDialog open onOpenChange={() => {}} companyId="company-1" onSaved={() => {}} />,
@@ -1616,6 +1624,7 @@ git commit -m "feat: add the officer appointment dialog"
 ### Task 7: `ShareholdingFormDialog` component
 
 **Files:**
+
 - Create: `src/components/clients/shareholding-form-dialog.tsx`
 - Test: `src/components/clients/shareholding-form-dialog.test.tsx`
 
@@ -1912,6 +1921,7 @@ git commit -m "feat: add the shareholding recording dialog"
 ### Task 8: Wire the two new sections into `production-client-detail.tsx`
 
 **Files:**
+
 - Modify: `src/features/clients/components/production-client-detail.tsx`
 - Test: `src/features/clients/components/production-client-detail.interaction.test.tsx` (check
   whether this file already exists from P1-3; if so extend it, otherwise this task creates it
@@ -1936,49 +1946,53 @@ inferred).
 Add state alongside the existing `isEditOpen`/`contactDialog`/`removingContactId`:
 
 ```ts
-  const [isOfficerDialogOpen, setIsOfficerDialogOpen] = useState(false);
-  const [isShareholdingDialogOpen, setIsShareholdingDialogOpen] = useState(false);
-  const [ceasingOfficerId, setCeasingOfficerId] = useState<string | null>(null);
-  const [ceasingShareholdingId, setCeasingShareholdingId] = useState<string | null>(null);
+const [isOfficerDialogOpen, setIsOfficerDialogOpen] = useState(false);
+const [isShareholdingDialogOpen, setIsShareholdingDialogOpen] = useState(false);
+const [ceasingOfficerId, setCeasingOfficerId] = useState<string | null>(null);
+const [ceasingShareholdingId, setCeasingShareholdingId] = useState<string | null>(null);
 ```
 
 Add handlers alongside `handleRemoveContact`, following its exact try/catch/finally +
 `toast.error` shape:
 
 ```ts
-  async function handleCeaseOfficer(officerId: string) {
-    setCeasingOfficerId(officerId);
+async function handleCeaseOfficer(officerId: string) {
+  setCeasingOfficerId(officerId);
 
-    try {
-      await ceaseClientOfficer({
-        data: { companyId: clientId, officerId, cessationDate: new Date().toISOString().slice(0, 10) },
-      });
-      invalidate();
-    } catch {
-      toast.error("Unable to cease the officer. Try again.");
-    } finally {
-      setCeasingOfficerId(null);
-    }
+  try {
+    await ceaseClientOfficer({
+      data: {
+        companyId: clientId,
+        officerId,
+        cessationDate: new Date().toISOString().slice(0, 10),
+      },
+    });
+    invalidate();
+  } catch {
+    toast.error("Unable to cease the officer. Try again.");
+  } finally {
+    setCeasingOfficerId(null);
   }
+}
 
-  async function handleCeaseShareholding(shareholdingId: string) {
-    setCeasingShareholdingId(shareholdingId);
+async function handleCeaseShareholding(shareholdingId: string) {
+  setCeasingShareholdingId(shareholdingId);
 
-    try {
-      await ceaseClientShareholding({
-        data: {
-          companyId: clientId,
-          shareholdingId,
-          cessationDate: new Date().toISOString().slice(0, 10),
-        },
-      });
-      invalidate();
-    } catch {
-      toast.error("Unable to cease the shareholding. Try again.");
-    } finally {
-      setCeasingShareholdingId(null);
-    }
+  try {
+    await ceaseClientShareholding({
+      data: {
+        companyId: clientId,
+        shareholdingId,
+        cessationDate: new Date().toISOString().slice(0, 10),
+      },
+    });
+    invalidate();
+  } catch {
+    toast.error("Unable to cease the shareholding. Try again.");
+  } finally {
+    setCeasingShareholdingId(null);
   }
+}
 ```
 
 - [ ] **Step 2: Add tone maps and the two sections**
@@ -2122,50 +2136,50 @@ include `officers: []` and `shareholdings: []` in its default return value (requ
 needs this or it won't typecheck), then add two new test cases:
 
 ```tsx
-  it("renders officers and shareholdings, and ceases an officer on click", async () => {
-    serverFns.getClient.mockResolvedValue(
-      makeClient({
-        officers: [
-          {
-            id: "officer-1",
-            companyId: clientId,
-            officerType: "secretary",
-            name: "Kossilon Secretaries Ltd",
-            identificationType: null,
-            identificationNumber: null,
-            address: null,
-            appointmentDate: "2020-01-15",
-            cessationDate: null,
-          },
-        ],
-        shareholdings: [
-          {
-            id: "shareholding-1",
-            companyId: clientId,
-            shareholderName: "Jane Shareholder",
-            shareholderAddress: null,
-            shareClass: "Ordinary",
-            numberOfShares: 100,
-            allotmentDate: "2020-01-15",
-            cessationDate: null,
-          },
-        ],
-      }),
-    );
-    serverFns.ceaseClientOfficer.mockResolvedValue({});
-    renderDetail();
+it("renders officers and shareholdings, and ceases an officer on click", async () => {
+  serverFns.getClient.mockResolvedValue(
+    makeClient({
+      officers: [
+        {
+          id: "officer-1",
+          companyId: clientId,
+          officerType: "secretary",
+          name: "Kossilon Secretaries Ltd",
+          identificationType: null,
+          identificationNumber: null,
+          address: null,
+          appointmentDate: "2020-01-15",
+          cessationDate: null,
+        },
+      ],
+      shareholdings: [
+        {
+          id: "shareholding-1",
+          companyId: clientId,
+          shareholderName: "Jane Shareholder",
+          shareholderAddress: null,
+          shareClass: "Ordinary",
+          numberOfShares: 100,
+          allotmentDate: "2020-01-15",
+          cessationDate: null,
+        },
+      ],
+    }),
+  );
+  serverFns.ceaseClientOfficer.mockResolvedValue({});
+  renderDetail();
 
-    await screen.findByText("Kossilon Secretaries Ltd");
-    expect(screen.getByText("Jane Shareholder")).toBeTruthy();
+  await screen.findByText("Kossilon Secretaries Ltd");
+  expect(screen.getByText("Jane Shareholder")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cease" }));
+  fireEvent.click(screen.getByRole("button", { name: "Cease" }));
 
-    await waitFor(() =>
-      expect(serverFns.ceaseClientOfficer).toHaveBeenCalledWith({
-        data: expect.objectContaining({ companyId: clientId, officerId: "officer-1" }),
-      }),
-    );
-  });
+  await waitFor(() =>
+    expect(serverFns.ceaseClientOfficer).toHaveBeenCalledWith({
+      data: expect.objectContaining({ companyId: clientId, officerId: "officer-1" }),
+    }),
+  );
+});
 ```
 
 Add `ceaseClientOfficer: vi.fn()` and `ceaseClientShareholding: vi.fn()` to the file's existing

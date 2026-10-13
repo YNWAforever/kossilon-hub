@@ -17,6 +17,7 @@ completes.
 ## Scope
 
 In scope:
+
 - A new case type tracking new-HK-company incorporation intake from case creation
   through Companies Registry approval, ending in a real `companies` row.
 - A document checklist (status tracking only — see Data model) seeded from the
@@ -25,9 +26,10 @@ In scope:
   mode only.
 
 Out of scope (explicitly deferred):
+
 - **Shelf company transfer.** The roadmap names it alongside new-HK incorporation,
   but it is a materially different workflow — transferring officers/shareholders on
-  an *already-existing* company — closer in shape to P1-9's ad hoc change requests
+  an _already-existing_ company — closer in shape to P1-9's ad hoc change requests
   than to fresh incorporation. Left for a future item.
 - **Any change to `work_items`, `documents`, `document_upload_intents`, or the
   SLA-policy engine.** An incorporation case has no `company_id` to satisfy those
@@ -88,8 +90,9 @@ create index if not exists incorporation_cases_company_idx on incorporation_case
 ```
 
 Notes:
+
 - **Status is a 5-state linear machine** (`Intake → Documents pending → Ready to
-  file → Filed with Registrar → Completed`), matching `annual_return_cases`'s
+file → Filed with Registrar → Completed`), matching `annual_return_cases`'s
   naming convention and its forward-one-step-at-a-time transition guard
   (`isAllowedStatusTransition` in `annual-return/workflow.ts`) — a new,
   structurally identical `isAllowedIntakeStatusTransition` guards this table.

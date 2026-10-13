@@ -15,6 +15,7 @@ the owner, submit — that creates a real `annual_return_cases` row, instantiate
 from the template, and opens the same work item every other case lifecycle event already uses.
 
 **Confirmed via direct exploration of the current codebase, not assumption:**
+
 - `companies` has no service-type/public-vs-private column at all (`schema.sql:39-53`) — nothing on
   the company record indicates which checklist template applies.
 - `annual_return_basis_date` is set once at company creation and never updated by any code path
@@ -41,6 +42,7 @@ from the template, and opens the same work item every other case lifecycle event
 ## Scope
 
 **In scope:**
+
 - A "New case" button on `/annual-returns`, production mode only (matching the read-only-demo
   convention used everywhere else in this app — demo mode's command centre gets no create affordance).
 - A dialog: company picker → active-template picker → owner field (pre-filled, editable; team shown
@@ -49,6 +51,7 @@ from the template, and opens the same work item every other case lifecycle event
   item.
 
 **Out of scope** (matching the roadmap's own boundaries, confirmed deliberately, not by omission):
+
 - Automatic/bulk case generation from company records. The existing dead-code helper
   `shouldGenerateCase` (`workflow.ts:76-78`, `daysBetween(today, filingDueDate) <= 90`, zero
   production call sites) stays unused — this is a manual, one-at-a-time staff action.
@@ -67,7 +70,7 @@ information available on the company record, and what the case is fundamentally 
 a fixed 42-day offset from the basis date, matching the HK Companies Ordinance NAR1 filing window).
 No changes to this function.
 
-**Checklist item due dates**: derived per item from the *template*, as
+**Checklist item due dates**: derived per item from the _template_, as
 `filingDueDate - documentItem.daysBeforeDue`, using each `DocumentItem`'s own offset
 (`checklist-templates/types.ts`) — correcting the seed script's shortcut of applying one flat date
 to every item (`scripts/db-seed-annual-return.ts:1311-1350`).
@@ -95,7 +98,7 @@ context — see the team correction below for why team isn't editable) and pre-f
 ## Create-case dialog: fields & validation
 
 - `companyId` (from the picker, required) — must be one of the currently-eligible companies.
-- `templateId` (dropdown of *active* checklist templates filtered to the two Annual Return service
+- `templateId` (dropdown of _active_ checklist templates filtered to the two Annual Return service
   types — `"Annual Return — Private Ltd"`, `"Annual Return — Public Ltd"` — required). Since
   `companies` has no service-type field to auto-resolve this from, the acting staff member picks the
   template explicitly at creation time — this was confirmed as the preferred approach over always
@@ -191,7 +194,7 @@ authorization step specifically (see Authorization below for why).
    (`event_type: "annual_return_case_created"`) and a `writeAuditEvent` call. This needs
    `"create_case"` added to the `AnnualReturnAction` union in `permissions.ts` (currently
    `"assign_owner" | "add_note" | "record_reminder" | "update_checklist" | "update_payment" |
-   "update_filing_proof" | "change_status" | "complete"` — `annual_return_audit_events.action` is a
+"update_filing_proof" | "change_status" | "complete"` — `annual_return_audit_events.action` is a
    plain `text` column with no CHECK constraint, so this needs no migration).
 10. Return the hydrated case.
 
@@ -202,7 +205,7 @@ the same shape as every other function in this module — pure, dependency-injec
 without a database.
 
 **A second gap discovered during planning, in a different, already-shipped file:** the dialog's
-template dropdown needs to read active checklist templates, but the *only* existing read path,
+template dropdown needs to read active checklist templates, but the _only_ existing read path,
 `listChecklistTemplates` (`checklist-templates/server-fns.ts`), calls `assertAdminAccess` — so a
 Manager/Staff actor creating a case (per the authorization policy below) couldn't see the template
 list at all. This needs one new, narrowly-scoped addition to that file: a

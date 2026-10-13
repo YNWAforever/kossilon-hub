@@ -73,13 +73,13 @@ createNotificationTransport ("live")
                     └─ "in_app"   ─→ throws, exactly as every channel does today (no regression)
 ```
 
-Each sub-transport is constructed independently of the other's configuration. If Resend isn't configured, WhatsApp dispatch is completely unaffected — only an actual `channel: "email"` notification fails, and it fails through the dispatcher's *existing* retry/fail mechanism (no new error-handling path needed there).
+Each sub-transport is constructed independently of the other's configuration. If Resend isn't configured, WhatsApp dispatch is completely unaffected — only an actual `channel: "email"` notification fails, and it fails through the dispatcher's _existing_ retry/fail mechanism (no new error-handling path needed there).
 
 ### Why Resend config must NOT go through `getFirmRuntimeEnv()`
 
-`runtime-dispatch.ts`'s `getLiveConfig()` already calls `getFirmRuntimeEnv()` — the all-or-nothing function — to build the WOZTELL config for the *existing* WhatsApp path. `getFirmRuntimeEnv()` throws if **any** entry in `REQUIRED_BINDINGS` is missing. `RESEND_API_KEY`/`RESEND_FROM` were deliberately removed from that array in an earlier fix (`src/server/runtime-env.ts`'s own comment explains why: adding them there once broke WhatsApp dispatch and document storage for any firm without Resend configured, since those call sites need `getFirmRuntimeEnv()` for fields that have nothing to do with email).
+`runtime-dispatch.ts`'s `getLiveConfig()` already calls `getFirmRuntimeEnv()` — the all-or-nothing function — to build the WOZTELL config for the _existing_ WhatsApp path. `getFirmRuntimeEnv()` throws if **any** entry in `REQUIRED_BINDINGS` is missing. `RESEND_API_KEY`/`RESEND_FROM` were deliberately removed from that array in an earlier fix (`src/server/runtime-env.ts`'s own comment explains why: adding them there once broke WhatsApp dispatch and document storage for any firm without Resend configured, since those call sites need `getFirmRuntimeEnv()` for fields that have nothing to do with email).
 
-Reusing that same function here would silently reintroduce exactly that coupling: a firm without Resend configured would fail to build *any* live transport, including WhatsApp. So this design reads Resend's config through a new, independent accessor:
+Reusing that same function here would silently reintroduce exactly that coupling: a firm without Resend configured would fail to build _any_ live transport, including WhatsApp. So this design reads Resend's config through a new, independent accessor:
 
 ```typescript
 // src/server/runtime-env.ts — a sibling to getFirmRuntimeEnv, not part of it.
@@ -87,7 +87,9 @@ Reusing that same function here would silently reintroduce exactly that coupling
 // Resend config must fail only the email channel, never the WhatsApp one.
 export type ResendConfig = { apiKey: string; from: string };
 
-export function getResendConfig(env: Record<string, unknown> = defaultRuntimeSource()): ResendConfig | null {
+export function getResendConfig(
+  env: Record<string, unknown> = defaultRuntimeSource(),
+): ResendConfig | null {
   const apiKey = env.RESEND_API_KEY;
   const from = env.RESEND_FROM;
   if (typeof apiKey !== "string" || apiKey.trim().length === 0) return null;
@@ -202,7 +204,7 @@ export function createResendNotificationTransport(
 Notes on choices made here:
 
 - **No HTML body.** `work-items/repository.ts`'s existing payload is plain text (`payload.body`), and nothing today constructs HTML for a notification. Sending `text` only is correct for what's actually enqueued; a future caller wanting HTML can extend `notificationPayload` to read an optional `payload.html` without touching this transport's error handling.
-- **Subject defaults, doesn't require a schema change.** Extending `work-items/repository.ts`'s enqueue call to supply a subject is possible later but out of scope — this transport must work with what's enqueued *today* without requiring every existing and future caller to be rewritten first.
+- **Subject defaults, doesn't require a schema change.** Extending `work-items/repository.ts`'s enqueue call to supply a subject is possible later but out of scope — this transport must work with what's enqueued _today_ without requiring every existing and future caller to be rewritten first.
 - **Error shaping matches the WOZTELL transport's convention** (`code: "resend_<status>"`), so `notification_outbox.last_error_code` becomes genuinely diagnostic instead of falling back to the dispatcher's generic `"dispatch_failed"`.
 
 ---
@@ -223,7 +225,7 @@ All transport tests are already fully injectable via `fetchImpl`, matching the e
 - The `in_app` channel. Nothing enqueues it today; it remains unsupported, unchanged from current behavior.
 - Rewriting `work-items/repository.ts`'s enqueue call to add a `subject`/`html` field. The new transport works with the existing payload; improving the payload is a separate, optional follow-up.
 - The annual-return automated reminder cadence (P1-2) and its Traditional Chinese content rewrite. That is the next spec, and depends on this one only for its email-fallback path — its WhatsApp path is unaffected by whether this lands.
-- Retry/backoff tuning, alerting on `permanentlyFailed` rows (roadmap P3-1/P3-2) — this fix makes email notifications *capable* of succeeding; observability into ongoing failures is separate, already-tracked work.
+- Retry/backoff tuning, alerting on `permanentlyFailed` rows (roadmap P3-1/P3-2) — this fix makes email notifications _capable_ of succeeding; observability into ongoing failures is separate, already-tracked work.
 
 ---
 

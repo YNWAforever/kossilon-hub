@@ -36,19 +36,19 @@ work (and the P0/P1 work before it) entirely.
 
 Every file exporting a `createServerFn`, and whether it already uses the safe lazy pattern:
 
-| File | Status | Reachable from |
-|---|---|---|
-| `documents/server-fns.ts` | ✅ Already correct | — |
-| `checklist-templates/server-fns.ts` | ✅ Already correct | — |
-| `work-items/server-fns.ts` | ✅ Already correct | — |
-| `notifications/runtime-dispatch.ts` | ✅ Already correct | — |
-| `auth/neon-auth-rpc.ts` | ✅ Already correct (inline `await import()` per-handler, no separate wrapper needed — equally valid) | — |
-| `annual-return/server-fns.ts` | ❌ Defective | `documents.tsx`, `payments.tsx`, `portal.tsx` — actively breaking |
-| `annual-return/client-portal-server-fns.ts` | ❌ Defective | `portal.tsx` — actively breaking |
-| `annual-return/evidence-server-fns.ts` | ❌ Defective | `documents.tsx`, `payments.tsx` — actively breaking |
-| `annual-return/follow-up-server-fns.ts` | ❌ Defective | `documents.tsx`, `payments.tsx`, `portal.tsx` — actively breaking |
-| `whatsapp/server-fns.ts` | ❌ Defective | `settings.tsx` — actively breaking |
-| `clients/server-fns.ts` | ❌ Defective | none today (P1-3's client register UI was never wired to routes) — dormant, will break the instant a route imports it |
+| File                                        | Status                                                                                               | Reachable from                                                                                                        |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `documents/server-fns.ts`                   | ✅ Already correct                                                                                   | —                                                                                                                     |
+| `checklist-templates/server-fns.ts`         | ✅ Already correct                                                                                   | —                                                                                                                     |
+| `work-items/server-fns.ts`                  | ✅ Already correct                                                                                   | —                                                                                                                     |
+| `notifications/runtime-dispatch.ts`         | ✅ Already correct                                                                                   | —                                                                                                                     |
+| `auth/neon-auth-rpc.ts`                     | ✅ Already correct (inline `await import()` per-handler, no separate wrapper needed — equally valid) | —                                                                                                                     |
+| `annual-return/server-fns.ts`               | ❌ Defective                                                                                         | `documents.tsx`, `payments.tsx`, `portal.tsx` — actively breaking                                                     |
+| `annual-return/client-portal-server-fns.ts` | ❌ Defective                                                                                         | `portal.tsx` — actively breaking                                                                                      |
+| `annual-return/evidence-server-fns.ts`      | ❌ Defective                                                                                         | `documents.tsx`, `payments.tsx` — actively breaking                                                                   |
+| `annual-return/follow-up-server-fns.ts`     | ❌ Defective                                                                                         | `documents.tsx`, `payments.tsx`, `portal.tsx` — actively breaking                                                     |
+| `whatsapp/server-fns.ts`                    | ❌ Defective                                                                                         | `settings.tsx` — actively breaking                                                                                    |
+| `clients/server-fns.ts`                     | ❌ Defective                                                                                         | none today (P1-3's client register UI was never wired to routes) — dormant, will break the instant a route imports it |
 
 Six files need the fix. The underlying defect is identical in every case: a static top-level
 `import` of a repository factory (or of another feature's repository, or of `getRequest` combined
@@ -164,7 +164,7 @@ grep step.
 1. `npm run dev` (demo mode) renders every route in a real browser with no `[import-protection]`
    error, for both `/` and every route reachable from the sidebar.
 2. All 6 identified files use the lazy `createServerOnlyFn` + dynamic-`import()` pattern; `grep -rlL
-   "createServerOnlyFn" $(grep -rl "= createServerFn(" src/features/)` (adjusted to also accept the
+"createServerOnlyFn" $(grep -rl "= createServerFn(" src/features/)` (adjusted to also accept the
    inline-dynamic-import variant `neon-auth-rpc.ts` already uses) shows no remaining defective file.
 3. Full test suite passes unchanged in count (no regressions, no changes needed to existing tests).
 4. `npm run build` still passes (unaffected, already did).

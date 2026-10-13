@@ -10,7 +10,7 @@
 
 `/login` currently offers email + password to everyone, and an email magic link only in demo mode. This design adds Google sign-in and makes magic link available in production, on the same single login page, for every user.
 
-**Nothing about authorisation changes.** `staff_profiles` and `client_company_memberships` remain the only source of access. A new sign-in method proves *who you are*; it never decides *what you may see*.
+**Nothing about authorisation changes.** `staff_profiles` and `client_company_memberships` remain the only source of access. A new sign-in method proves _who you are_; it never decides _what you may see_.
 
 ### Findings that shaped this design
 
@@ -24,13 +24,13 @@ Three things were established by reading the code, and they make the work smalle
 
 ### Decisions taken during brainstorming
 
-| Question | Decision |
-|---|---|
-| Magic link in production? | Yes — enable for real sign-in |
+| Question                                    | Decision                                                                          |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| Magic link in production?                   | Yes — enable for real sign-in                                                     |
 | How does a Google identity map to a person? | **Invite-only.** Sign-in succeeds only if a `users` row and profile already exist |
-| Who sees the new methods? | Everyone on `/login` — one page, no new routes |
-| Keep password? | Yes. Adding methods, not replacing them |
-| Google implementation? | better-auth social sign-in through the existing auth proxy |
+| Who sees the new methods?                   | Everyone on `/login` — one page, no new routes                                    |
+| Keep password?                              | Yes. Adding methods, not replacing them                                           |
+| Google implementation?                      | better-auth social sign-in through the existing auth proxy                        |
 
 ---
 
@@ -47,7 +47,7 @@ function isDemoMagicLinkEnabled(): boolean {
 }
 ```
 
-This is replaced by a check meaning *"is a real Neon Auth backend in play"* — that is, the inverse of demo auth. `isDemoAuthEnabled()` already exists in `src/features/auth/route-guard.ts:17` and is the same predicate `AuthProvider` uses at `auth-context-neon.tsx:44` to choose between the demo and Neon providers, so the login page should read from it rather than re-deriving the condition from `import.meta.env`. Magic link is offered whenever auth is **not** in demo mode; the existing demo-simulated path keeps its current behaviour so demo sign-in is unaffected.
+This is replaced by a check meaning _"is a real Neon Auth backend in play"_ — that is, the inverse of demo auth. `isDemoAuthEnabled()` already exists in `src/features/auth/route-guard.ts:17` and is the same predicate `AuthProvider` uses at `auth-context-neon.tsx:44` to choose between the demo and Neon providers, so the login page should read from it rather than re-deriving the condition from `import.meta.env`. Magic link is offered whenever auth is **not** in demo mode; the existing demo-simulated path keeps its current behaviour so demo sign-in is unaffected.
 
 The send-and-confirm flow itself does not change: it is already implemented and tested.
 
@@ -69,7 +69,7 @@ The implementation plan must therefore add `RESEND_API_KEY` and `RESEND_FROM` to
 
 ### Where the secrets live
 
-Google's client ID and secret are configured **on the Neon Auth backend**, exactly as the magic-link sender is. They do not enter this repository, `REQUIRED_BINDINGS`, or `wrangler.template.jsonc`. This follows the codebase's existing rule that validators report binding *names* only and perform no network calls.
+Google's client ID and secret are configured **on the Neon Auth backend**, exactly as the magic-link sender is. They do not enter this repository, `REQUIRED_BINDINGS`, or `wrangler.template.jsonc`. This follows the codebase's existing rule that validators report binding _names_ only and perform no network calls.
 
 ### Dashboard configuration
 
@@ -94,7 +94,9 @@ try {
 } catch {
   const redirectPath = getSafeRedirectPath(location.href);
   rememberRedirectPath(redirectPath);
-  throw redirect({ /* to /login */ });
+  throw redirect({
+    /* to /login */
+  });
 }
 ```
 
@@ -104,10 +106,10 @@ A bare `catch` cannot tell "you are not signed in" from "you are signed in but h
 
 Branch on the prefix the server already throws:
 
-| Server throws | Meaning | Client behaviour |
-|---|---|---|
-| `Unauthorized: …` | No valid session | Redirect to `/login` — unchanged from today |
-| `Forbidden: …` | Valid session, no profile | Sign the session out, return to `/login` in an explicit **denied** state |
+| Server throws     | Meaning                   | Client behaviour                                                         |
+| ----------------- | ------------------------- | ------------------------------------------------------------------------ |
+| `Unauthorized: …` | No valid session          | Redirect to `/login` — unchanged from today                              |
+| `Forbidden: …`    | Valid session, no profile | Sign the session out, return to `/login` in an explicit **denied** state |
 
 The denied state tells the user plainly that the account authenticated but has no access, and that an administrator must grant it. Signing the session out matters: leaving a valid-but-useless session in place is what produces the loop.
 
@@ -121,13 +123,13 @@ No self-service request-access flow, no invitation emails, no auto-provisioning.
 
 ## 5. Testing
 
-| Area | Test | Runs without a DB |
-|---|---|---|
-| Magic-link gate | Shows in production config; hidden when the auth backend is unconfigured; still shows in demo-simulated | yes |
-| Error classification | `Forbidden:` and `Unauthorized:` route to different outcomes; an unrecognised error is treated as `Unauthorized` (fail closed) | yes |
-| Login page render | All three methods present; Google button present and labelled | yes |
-| Denied state | Renders the no-access message and offers sign-out; does not loop | yes |
-| Required bindings | `RESEND_API_KEY` / `RESEND_FROM` are required and reported by name when missing | yes |
+| Area                 | Test                                                                                                                           | Runs without a DB |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| Magic-link gate      | Shows in production config; hidden when the auth backend is unconfigured; still shows in demo-simulated                        | yes               |
+| Error classification | `Forbidden:` and `Unauthorized:` route to different outcomes; an unrecognised error is treated as `Unauthorized` (fail closed) | yes               |
+| Login page render    | All three methods present; Google button present and labelled                                                                  | yes               |
+| Denied state         | Renders the no-access message and offers sign-out; does not loop                                                               | yes               |
+| Required bindings    | `RESEND_API_KEY` / `RESEND_FROM` are required and reported by name when missing                                                | yes               |
 
 Existing patterns to follow: `src/routes/-login.interaction.test.tsx` for interaction, `src/features/auth/neon-auth-server.test.ts` for actor resolution, and `src/server/runtime-env.ts`'s existing binding tests.
 
