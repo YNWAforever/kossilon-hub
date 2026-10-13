@@ -1,3 +1,4 @@
+import { roleLabel } from "@/features/auth/role-labels";
 import { Link } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,7 +78,7 @@ export function AccountBlock() {
         <div className="truncate text-xs font-semibold text-foreground">
           {session?.name ?? "已登入"}
         </div>
-        <div className="truncate text-[10px] text-muted-foreground">{session?.role ?? "用戶"}</div>
+        <div className="truncate text-[10px] text-muted-foreground">{roleLabel(session?.role)}</div>
       </div>
       <Button
         variant="ghost"

@@ -1,3 +1,4 @@
+import { roleLabel } from "@/features/auth/role-labels";
 import { formatDate } from "@/lib/format-date";
 import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -98,7 +99,7 @@ export function StaffPicker({
         ) : null}
         {options.map((member) => (
           <option key={member.id} value={member.id}>
-            {member.name} · {member.role}
+            {member.name} · {roleLabel(member.role)}
             {member.teamName ? ` · ${member.teamName}` : ""}
           </option>
         ))}

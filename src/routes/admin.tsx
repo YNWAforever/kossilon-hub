@@ -1,3 +1,4 @@
+import { ROLE_LABELS, roleLabel } from "@/features/auth/role-labels";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -71,17 +72,6 @@ const auditRows = [
     time: "2026-07-06 16:20",
   },
 ];
-
-const roleLabels: Record<AuthRole, string> = {
-  Admin: "管理員",
-  Manager: "經理",
-  Staff: "同事",
-  Client: "客戶",
-};
-
-function roleLabel(role: string | undefined): string {
-  return role ? (roleLabels[role as AuthRole] ?? role) : "用戶";
-}
 
 /** Production reads verified staff profiles; demo fixtures stay in the demo console. */
 function AdminPage() {
@@ -310,9 +300,9 @@ function UsersPanel({
                   onChange={(event) => onRoleChange(user.id, event.target.value as AuthRole)}
                   aria-label={`${user.name} 的角色`}
                 >
-                  <option value="Admin">{roleLabels.Admin}</option>
-                  <option value="Manager">{roleLabels.Manager}</option>
-                  <option value="Staff">{roleLabels.Staff}</option>
+                  <option value="Admin">{ROLE_LABELS.Admin}</option>
+                  <option value="Manager">{ROLE_LABELS.Manager}</option>
+                  <option value="Staff">{ROLE_LABELS.Staff}</option>
                 </Select>
               </td>
               <td className="px-4 py-3 text-muted-foreground">{user.team}</td>

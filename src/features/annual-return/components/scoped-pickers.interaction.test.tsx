@@ -28,7 +28,7 @@ it("searches all authorised staff before the bounded page", async () => {
   );
   wrap(<StaffPicker id="owner" label="Owner" value="" onChange={() => {}} actorScope="actorA" />);
   fireEvent.change(screen.getByLabelText("搜尋Owner"), { target: { value: "5001" } });
-  expect(await screen.findByText("Member5001 · Staff")).toBeTruthy();
+  expect(await screen.findByText("Member5001 · 同事")).toBeTruthy();
   expect(mocks.staff).toHaveBeenLastCalledWith({ data: { q: "5001", limit: 200 } });
 });
 it("clears the submitted staff selection when the operator changes its search", async () => {
@@ -37,7 +37,7 @@ it("clears the submitted staff selection when the operator changes its search", 
   wrap(
     <StaffPicker id="owner" label="Owner" value="memberA" onChange={changed} actorScope="actorA" />,
   );
-  await screen.findByText("Member A · Staff");
+  await screen.findByText("Member A · 同事");
   fireEvent.change(screen.getByLabelText("搜尋Owner"), { target: { value: "B" } });
   expect(changed).toHaveBeenCalledWith("");
 });

@@ -1,3 +1,4 @@
+import { roleLabel } from "@/features/auth/role-labels";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -366,7 +367,7 @@ export function LoginPage() {
 
                     <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                       <UserRound className="h-3.5 w-3.5" />
-                      {user.role}
+                      {roleLabel(user.role)}
                     </span>
                   </button>
                 ))}
