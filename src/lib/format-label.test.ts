@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import { labelValue } from "./format-label";
 
 describe("labelValue", () => {
-  it("title-cases a kebab-case database value", () => {
-    expect(labelValue("payment-pending")).toBe("Payment Pending");
+  it("labels a known value in Traditional Chinese (docs/ui-language.md)", () => {
+    expect(labelValue("payment-pending")).toBe("待付款");
+    expect(labelValue("ready-to-file")).toBe("可遞交");
+  });
+
+  it("title-cases a kebab-case value it has no label for", () => {
     expect(labelValue("available")).toBe("Available");
   });
 
