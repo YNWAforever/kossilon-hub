@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
 import { readSnapshotMembership } from "@/features/bulk-operations/membership";
@@ -263,18 +264,19 @@ function SelectionControls({
         每頁{pageSize}；已載入{page.length}；全部{total ?? "未知"}
       </p>
       <div className="flex flex-wrap gap-3">
-        <button
+        <Button
+          size="sm"
           disabled={busy || page.length === 0}
           onClick={() => change({ mode: "explicit_ids", ids: page.map((p) => p.id) })}
         >
           選取已載入紀錄
-        </button>
-        <button disabled={busy || total === null} onClick={() => snapshot.mutate()}>
+        </Button>
+        <Button size="sm" disabled={busy || total === null} onClick={() => snapshot.mutate()}>
           選取全部篩選結果
-        </button>
-        <button disabled={busy} onClick={() => change({ mode: "explicit_ids", ids: [] })}>
+        </Button>
+        <Button size="sm" disabled={busy} onClick={() => change({ mode: "explicit_ids", ids: [] })}>
           清空選取
-        </button>
+        </Button>
       </div>
       <p>已選取{count}筆</p>
       {selection.mode === "filtered_snapshot" ? (
@@ -434,7 +436,9 @@ function SelectionControls({
           />
         </label>
       ) : null}
-      <button
+      <Button
+        variant="primary"
+        size="sm"
         disabled={
           busy ||
           count === 0 ||
@@ -445,7 +449,7 @@ function SelectionControls({
         onClick={() => dryRun.mutate()}
       >
         {maintenanceActions ? "預覽批量維護" : "預覽批量分配"}
-      </button>
+      </Button>
       {preview ? (
         <div role="status">
           <p>
@@ -468,12 +472,14 @@ function SelectionControls({
               </p>
             </div>
           ))}
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             disabled={busy || preview.eligibleCount === 0 || !request}
             onClick={() => execute.mutate()}
           >
             {maintenanceActions ? "批准並建立維護工作" : "批准並建立分配工作"}
-          </button>
+          </Button>
         </div>
       ) : null}
       {snapshot.isError ||
@@ -583,15 +589,20 @@ function BulkJobProgress({
         </select>
       </label>
       {jobs.hasNextPage ? (
-        <button
+        <Button
+          size="sm"
           disabled={jobs.isFetchingNextPage}
           onClick={() => void jobs.fetchNextPage({ cancelRefetch: false })}
         >
           載入較早的工作
-        </button>
+        </Button>
       ) : null}
       {jobs.isError ? <p role="alert">未能讀取已保存工作，請重新載入。</p> : null}
-      {jobId ? <button onClick={() => void result.refetch()}>刷新工作結果</button> : null}
+      {jobId ? (
+        <Button size="sm" onClick={() => void result.refetch()}>
+          刷新工作結果
+        </Button>
+      ) : null}
       {first ? (
         <>
           <p>
@@ -603,29 +614,35 @@ function BulkJobProgress({
             {first.counts.cancelled ?? 0}
           </p>
           <div className="flex flex-wrap gap-3">
-            <button
+            <Button
+              size="sm"
               disabled={busy || !["queued", "running"].includes(first.state)}
               onClick={() => resume.mutate()}
             >
               繼續最多100筆
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
               disabled={busy || !["queued", "running"].includes(first.state)}
               onClick={() => cancel.mutate()}
             >
               取消尚未開始項目
-            </button>
-            <button disabled={busy || !first.retryableFailedCount} onClick={() => retry.mutate()}>
+            </Button>
+            <Button
+              size="sm"
+              disabled={busy || !first.retryableFailedCount}
+              onClick={() => retry.mutate()}
+            >
               只重試可重試失敗
-            </button>
+            </Button>
             {(first.counts.unknown ?? 0) > 0 ? (
-              <button disabled={busy} onClick={() => reconcile.mutate()}>
+              <Button size="sm" disabled={busy} onClick={() => reconcile.mutate()}>
                 先核對未知結果
-              </button>
+              </Button>
             ) : null}
-            <button disabled={exporting.isPending} onClick={() => exporting.mutate()}>
+            <Button size="sm" disabled={exporting.isPending} onClick={() => exporting.mutate()}>
               匯出可查閱結果
-            </button>
+            </Button>
           </div>
           <p>衝突需重新預覽；取消保留成功項。匯出結果不等於交件。</p>
           {items.map((i) => (
@@ -662,12 +679,13 @@ function BulkJobProgress({
             </p>
           ))}
           {result.hasNextPage ? (
-            <button
+            <Button
+              size="sm"
               disabled={result.isFetchingNextPage}
               onClick={() => void result.fetchNextPage({ cancelRefetch: false })}
             >
               載入更多逐筆結果
-            </button>
+            </Button>
           ) : null}
         </>
       ) : null}

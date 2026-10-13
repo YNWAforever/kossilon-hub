@@ -11,6 +11,7 @@ import {
 import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import {
   consumeRedirectPath,
@@ -211,30 +212,32 @@ export function LoginPage() {
 
           {magicLinkEnabled && (
             <div
-              className="mt-6 grid grid-cols-2 rounded-md border border-border bg-muted/40 p-1"
+              className="mt-6 grid grid-cols-2 gap-1 rounded-md border border-border bg-muted/40 p-1"
               role="group"
               aria-label="登入方式"
             >
-              <button
-                type="button"
+              <Button
+                variant={mode === "password" ? "primary" : "outline"}
+                size="sm"
                 aria-pressed={mode === "password"}
                 onClick={() => changeMode("password")}
                 disabled={isSubmitting || !isHydrated}
-                className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-auto min-h-9 whitespace-normal py-2"
               >
                 <KeyRound className="h-3.5 w-3.5" />
                 密碼
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant={mode === "magic-link" ? "primary" : "outline"}
+                size="sm"
                 aria-pressed={mode === "magic-link"}
                 onClick={() => changeMode("magic-link")}
                 disabled={isSubmitting || !isHydrated}
-                className="flex min-h-9 items-center justify-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-auto min-h-9 whitespace-normal py-2"
               >
                 <Mail className="h-3.5 w-3.5" />
                 電郵登入連結
-              </button>
+              </Button>
             </div>
           )}
 
@@ -286,10 +289,11 @@ export function LoginPage() {
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={!isHydrated || isSubmitting}
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full"
             >
               {mode === "password" ? (
                 <>
@@ -302,18 +306,18 @@ export function LoginPage() {
                   以電郵傳送登入連結
                 </>
               )}
-            </button>
+            </Button>
           </form>
 
           {magicLinkEnabled && (
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => void submitGoogleLogin()}
               disabled={!isHydrated || googleSubmitting}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 w-full"
             >
               <Chrome className="h-4 w-4" />以 Google 帳戶登入
-            </button>
+            </Button>
           )}
 
           {magicLinkEnabled && (

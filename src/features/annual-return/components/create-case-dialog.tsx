@@ -14,6 +14,7 @@ import type { ClientAssignmentOptions } from "@/features/clients/types";
 import { createAnnualReturnCase } from "../server-fns";
 import type { EligibleCompanyForCase } from "../repository";
 import { dataOriginLabel } from "@/features/clients/data-origin";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   companySearch?: string;
@@ -292,20 +293,17 @@ export function CreateCaseDialog({
             </div>
 
             <DialogFooter>
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
-              >
+              <Button size="sm" onClick={() => onOpenChange(false)}>
                 取消
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
+                size="sm"
                 disabled={saving || !selectedCompany}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
                 {saving ? "建立中…" : "建立案件"}
-              </button>
+              </Button>
             </DialogFooter>
           </form>
         )}

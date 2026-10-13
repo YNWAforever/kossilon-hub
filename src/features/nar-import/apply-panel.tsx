@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { NarImportRow } from "./repository";
@@ -290,13 +291,13 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
           ) : null}
         </div>
       ))}
-      <button
+      <Button
         type="button"
         disabled={busy || !selected.length || options.isPending || options.isError}
         onClick={() => preview.mutate()}
       >
         預覽所選行
-      </button>
+      </Button>
       {approvedPreview ? (
         <div className="space-y-2 border-t pt-3">
           <p>
@@ -353,37 +354,39 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
             />
             確認此版本及逐行差異；被阻擋行不會寫入
           </label>
-          <button
+          <Button
             type="button"
             disabled={busy || !confirmation || !approvedPreview.value.eligibleCount}
             onClick={() => execute.mutate()}
           >
             批准建立套用工作
-          </button>
+          </Button>
         </div>
       ) : null}
       <h3>已批准工作</h3>
       {jobs.data?.pages
         .flatMap((p) => p.items)
         .map((j) => (
-          <button
+          <Button
             key={j.id}
             type="button"
             aria-label="開啟套用工作"
+            size="sm"
+            className="h-auto whitespace-normal py-2 text-left"
             disabled={busy}
             onClick={() => setJobId(j.id)}
           >
             {j.createdAt} · {narApplyStateLabel(j.state)}
-          </button>
+          </Button>
         ))}
       {jobs.hasNextPage ? (
-        <button
+        <Button
           type="button"
           disabled={busy || jobs.isFetchingNextPage}
           onClick={() => void jobs.fetchNextPage()}
         >
           載入較早的套用工作
-        </button>
+        </Button>
       ) : null}
       {job.data ? (
         <div className="space-y-2">
@@ -400,26 +403,26 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
               {r.company_name} · 第{r.row_number}行 · {narApplyStateLabel(r.state)} {r.reason}
             </p>
           ))}
-          <button
+          <Button
             type="button"
             disabled={busy || !job.data.counts.pending}
             onClick={() => resume.mutate()}
           >
             繼續處理最多100行
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={busy || !job.data.counts.pending}
             onClick={() => cancel.mutate()}
           >
             取消待處理行
-          </button>
-          <button type="button" disabled={busy} onClick={() => void compensation.refetch()}>
+          </Button>
+          <Button type="button" disabled={busy} onClick={() => void compensation.refetch()}>
             預覽補償
-          </button>
-          <button type="button" disabled={busy} onClick={refresh}>
+          </Button>
+          <Button type="button" disabled={busy} onClick={refresh}>
             重新載入工作狀態
-          </button>
+          </Button>
           {compensation.isError ? <p role="alert">未能載入補償資料，請重新載入。</p> : null}
           {compensation.data ? (
             <div>

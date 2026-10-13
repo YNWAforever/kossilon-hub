@@ -27,6 +27,7 @@ import {
   Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { parseFaqImport, SAMPLE_CSV, type ImportRow } from "@/lib/faq-import";
 
 const categoryTone = (c: FaqCategory) =>
@@ -87,12 +88,9 @@ function FaqManager() {
         </div>
         <div className="flex items-center gap-1.5">
           <FaqImportButton />
-          <button
-            onClick={() => setExpanded(kbStore.addFaq())}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-          >
+          <Button onClick={() => setExpanded(kbStore.addFaq())} variant="primary" size="sm">
             <Plus className="h-3.5 w-3.5" /> 新增常見問題
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -166,26 +164,30 @@ function FaqRow({
           <p className="mt-1 truncate text-sm font-medium text-foreground">{f.question}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <button
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               kbStore.duplicateFaq(f.id);
             }}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             aria-label="複製"
           >
             <Copy className="h-3.5 w-3.5" />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               kbStore.removeFaq(f.id);
             }}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             aria-label="刪除"
           >
             <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
       {expanded && (
@@ -297,10 +299,11 @@ function ReferenceDocsManager() {
             {docs.filter((d) => d.active).length} 份已啟用 · 已建立文字索引供 AI 檢索
           </p>
         </div>
-        <button
+        <Button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          variant="primary"
+          size="sm"
         >
           {uploading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -308,7 +311,7 @@ function ReferenceDocsManager() {
             <FileUp className="h-3.5 w-3.5" />
           )}
           {uploading ? "建立索引中…" : "上載文件"}
-        </button>
+        </Button>
         <input
           ref={fileRef}
           type="file"
@@ -378,16 +381,18 @@ function DocRow({ d }: { d: ReferenceDoc }) {
             {!d.active && <StatusPill tone="neutral">已停用</StatusPill>}
           </div>
         </div>
-        <button
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             kbStore.removeDoc(d.id);
           }}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           aria-label="刪除"
         >
           <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </div>
       {open && (
         <div className="space-y-2 border-t border-border bg-background/40 p-5">
@@ -461,12 +466,9 @@ function FaqImportButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent"
-      >
+      <Button onClick={() => setOpen(true)} variant="outline" size="sm">
         <Upload className="h-3.5 w-3.5" /> 匯入
-      </button>
+      </Button>
       {open && <FaqImportDialog onClose={() => setOpen(false)} />}
     </>
   );
@@ -529,29 +531,25 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
               <code>tags</code>、<code>active</code>。問題相同的項目會直接更新。
             </p>
           </div>
-          <button
+          <Button
             onClick={onClose}
             aria-label="關閉"
-            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1 space-y-3 overflow-y-auto p-5">
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
+            <Button onClick={() => fileRef.current?.click()} variant="primary" size="sm">
               <FileUp className="h-3.5 w-3.5" /> 選擇檔案
-            </button>
-            <button
-              onClick={downloadSample}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-accent"
-            >
+            </Button>
+            <Button onClick={downloadSample} variant="outline" size="sm">
               <Download className="h-3.5 w-3.5" /> 範例 CSV
-            </button>
+            </Button>
             {parsed && (
               <span className="text-[11px] text-muted-foreground">
                 {filename} · {preview.length} 行有效
@@ -634,20 +632,13 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3">
-          <button
-            onClick={onClose}
-            className="rounded-md px-3 py-2 text-xs font-medium hover:bg-accent"
-          >
+          <Button onClick={onClose} variant="ghost" size="sm">
             取消
-          </button>
-          <button
-            onClick={commit}
-            disabled={preview.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
+          </Button>
+          <Button onClick={commit} disabled={preview.length === 0} variant="primary" size="sm">
             <Upload className="h-3.5 w-3.5" /> 匯入
             {preview.length > 0 ? ` ${preview.length} 則常見問題` : ""}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

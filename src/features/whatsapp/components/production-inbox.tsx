@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Paperclip } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { labelValue } from "@/lib/format-label";
 import { MessageIntake } from "./message-intake";
 import {
@@ -157,13 +158,14 @@ export function ProductionWhatsAppInbox() {
             <p>該對話已不在收件箱的這一頁。</p>
             {/* Without this the notice is a dead end: selectedContactId is only
                 otherwise reassigned by clicking a row, and the list may be empty. */}
-            <button
+            <Button
               type="button"
-              className="mt-1 underline"
+              variant="link"
+              className="mt-1"
               onClick={() => setSelectedContactId(undefined)}
             >
               顯示最新對話
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -226,13 +228,11 @@ export function ProductionWhatsAppInbox() {
                   </p>
                 </div>
                 {selected.caseId ? (
-                  <Link
-                    className="shrink-0 rounded-md border px-3 py-2 text-sm"
-                    to="/annual-returns/$id"
-                    params={{ id: selected.caseId }}
-                  >
-                    周年申報
-                  </Link>
+                  <Button asChild>
+                    <Link to="/annual-returns/$id" params={{ id: selected.caseId }}>
+                      周年申報
+                    </Link>
+                  </Button>
                 ) : null}
               </div>
             </div>

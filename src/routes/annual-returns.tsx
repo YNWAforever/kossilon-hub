@@ -18,6 +18,7 @@ import {
 import { daysUntil } from "../lib/app-data";
 import { formatDate, formatDueDate } from "../lib/format-date";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/components/production-command-center";
 import { boardSearchFromUrl } from "../features/annual-return/board-filters";
 
@@ -97,20 +98,21 @@ function DemoAnnualReturnCommandCenter() {
         eyebrow="案件與客戶"
         title="周年申報"
         actions={
-          <Link
-            to="/work-queue"
-            search={{
-              view: "team",
-              owner: "all",
-              workType: "all",
-              sla: "all",
-              priority: "all",
-              status: "all",
-            }}
-            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-          >
-            開啟工作隊列
-          </Link>
+          <Button asChild>
+            <Link
+              to="/work-queue"
+              search={{
+                view: "team",
+                owner: "all",
+                workType: "all",
+                sla: "all",
+                priority: "all",
+                status: "all",
+              }}
+            >
+              開啟工作隊列
+            </Link>
+          </Button>
         }
       />
 
@@ -143,16 +145,15 @@ function DemoAnnualReturnCommandCenter() {
                 "filed",
               ] as const
             ).map((value) => (
-              <button
+              <Button
                 key={value}
-                className={`rounded-md border px-3 py-2 text-sm ${
-                  filter === value ? "bg-primary text-primary-foreground" : "bg-background"
-                }`}
+                variant={filter === value ? "primary" : "outline"}
+                size="sm"
+                aria-pressed={filter === value}
                 onClick={() => setFilter(value)}
-                type="button"
               >
                 {filterLabel(value)}
-              </button>
+              </Button>
             ))}
           </div>
           <select
@@ -255,8 +256,8 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
         : `${blockers[0].label} +${blockers.length - 1}`;
 
   return (
-    <div className={`grid gap-3 px-4 py-4 lg:items-center ${CASE_GRID_COLUMNS}`}>
-      <div className="min-w-0">
+    <div className={`grid grid-cols-2 gap-3 px-4 py-4 lg:items-center ${CASE_GRID_COLUMNS}`}>
+      <div className="col-span-2 min-w-0 lg:col-span-1">
         <p className="font-medium leading-5 [overflow-wrap:anywhere]">{caseItem.companyName}</p>
         <p className="truncate text-sm text-muted-foreground">{caseItem.contactName}</p>
       </div>
@@ -302,6 +303,7 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
       />
       <Field
         label="下一步"
+        className="col-span-2 lg:col-span-1"
         value={
           <div>
             <p>{nextAction}</p>
@@ -314,23 +316,32 @@ function CaseRow({ caseItem }: { caseItem: AnnualReturnCase }) {
         }
       />
 
-      <div className="flex justify-start lg:justify-end">
-        <Link
-          aria-label={`開啟 ${caseItem.companyName}`}
-          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
-          to="/annual-returns/$id"
-          params={{ id: caseItem.id }}
-        >
-          開啟
-        </Link>
+      <div className="col-span-2 flex justify-start lg:col-span-1 lg:justify-end">
+        <Button asChild>
+          <Link
+            aria-label={`開啟 ${caseItem.companyName}`}
+            to="/annual-returns/$id"
+            params={{ id: caseItem.id }}
+          >
+            開啟
+          </Link>
+        </Button>
       </div>
     </div>
   );
 }
 
-function Field({ label, value }: { label: string; value: ReactNode }) {
+function Field({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="min-w-0">
+    <div className={className ? `min-w-0 ${className}` : "min-w-0"}>
       <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
         {label}
       </p>

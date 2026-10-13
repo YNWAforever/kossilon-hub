@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import {
@@ -132,14 +133,14 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               {INCORPORATION_STATUS_LABELS[incorporationCase.status]}
             </StatusPill>
             {upcoming ? (
-              <button
-                type="button"
+              <Button
+                size="sm"
+                className="h-auto whitespace-normal py-2"
                 onClick={() => advanceStatus.mutate(upcoming)}
                 disabled={advanceStatus.isPending}
-                className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-60"
               >
                 推進至「{INCORPORATION_STATUS_LABELS[upcoming]}」
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
@@ -268,13 +269,9 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               <p className="text-xs text-destructive md:col-span-3">{completionError}</p>
             )}
             <div className="md:col-span-3">
-              <button
-                type="submit"
-                disabled={complete.isPending}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-              >
+              <Button variant="primary" size="sm" type="submit" disabled={complete.isPending}>
                 {complete.isPending ? "處理中…" : "完成受理"}
-              </button>
+              </Button>
             </div>
           </form>
         </section>

@@ -13,6 +13,7 @@ import type { ProductionFollowUpDraft } from "../follow-ups";
 import { listProductionFollowUpDrafts, sendProductionFollowUp } from "../follow-up-server-fns";
 import { getWhatsAppIntegrationStatus } from "@/features/whatsapp/server-fns";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 
 function errorMessage(error: unknown): string {
@@ -177,22 +178,18 @@ export function ProductionWhatsAppAutomation({
             </p>
           ) : null}
           <DialogFooter>
-            <button
-              type="button"
-              disabled={sendMutation.isPending}
-              onClick={() => setPreview(null)}
-            >
+            <Button disabled={sendMutation.isPending} onClick={() => setPreview(null)}>
               取消
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
               disabled={!preview || sendMutation.isPending}
               onClick={() => {
                 if (preview) sendMutation.mutate(preview);
               }}
             >
               批准並加入隊列
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -230,11 +227,10 @@ function ProductionAutomationRow({
         <p className="truncate text-xs text-muted-foreground">{draft.reasonLabel}</p>
       </div>
       <div className="flex justify-start lg:justify-end">
-        <button
-          className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+        <Button
+          className="disabled:bg-muted disabled:text-muted-foreground"
           disabled={disabled}
           onClick={onSend}
-          type="button"
         >
           {active
             ? "加入隊列中…"
@@ -251,7 +247,7 @@ function ProductionAutomationRow({
                       : draft.status === "queued"
                         ? "已排隊"
                         : "預覽並批准"}
-        </button>
+        </Button>
       </div>
     </div>
   );

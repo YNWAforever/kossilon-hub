@@ -40,4 +40,14 @@ describe("Button", () => {
 
     expect(screen.getByRole("button", { name: "全部" }).className).toContain("w-full");
   });
+
+  it("keeps a link-variant button inline, without the size's height and padding", () => {
+    render(<Button variant="link">查看</Button>);
+
+    const classes = screen.getByRole("button", { name: "查看" }).className.split(" ");
+    expect(classes).toContain("h-auto");
+    expect(classes).toContain("px-0");
+    expect(classes).not.toContain("h-10");
+    expect(classes).not.toContain("px-4");
+  });
 });

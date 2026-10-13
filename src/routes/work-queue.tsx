@@ -5,6 +5,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-react";
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { BulkFilters } from "@/features/bulk-operations/types";
 import {
@@ -465,12 +466,12 @@ export function WorkQueueRoute() {
         ) : null}
       </main>
       {visibleItems.length > pageItems.length ? (
-        <button
-          className="m-4 rounded border px-3 py-2"
+        <Button
+          className="m-4"
           onClick={() => setLoadedScope({ scope: presentationScope, limit: visibleLimit + 50 })}
         >
           載入更多工作（每次 50 項）
-        </button>
+        </Button>
       ) : null}
       {assignmentItem && items.some((i) => i.id === assignmentItem.id) ? (
         <AssignmentDialog
@@ -588,16 +589,14 @@ function AssignmentDialog({
           ) : null}
         </div>
         <DialogFooter className="border-t border-border px-5 py-4">
-          <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm">
-            取消
-          </button>
-          <button
+          <Button onClick={onClose}>取消</Button>
+          <Button
+            variant="primary"
             disabled={!selected || (requiresReason && !reason.trim()) || assign.isPending}
             onClick={() => assign.mutate()}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             確認分配
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -641,16 +640,14 @@ function AcknowledgementDialog({
           <p className="text-sm text-destructive">未能儲存確認知悉記錄。</p>
         ) : null}
         <DialogFooter>
-          <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm">
-            取消
-          </button>
-          <button
+          <Button onClick={onClose}>取消</Button>
+          <Button
+            variant="primary"
             disabled={!note.trim() || acknowledge.isPending}
             onClick={() => acknowledge.mutate()}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             確認知悉
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -756,22 +753,14 @@ function QueueActions({
   return (
     <div className="flex justify-end gap-2">
       {canManage ? (
-        <button
-          title="分配工作項目"
-          onClick={() => onAssign(item)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
-        >
+        <Button size="icon" title="分配工作項目" onClick={() => onAssign(item)}>
           <UserRoundPlus className="h-4 w-4" />
-        </button>
+        </Button>
       ) : null}
       {canManage && (item.escalationState === "warning" || item.escalationState === "breach") ? (
-        <button
-          title="確認知悉升級"
-          onClick={() => onAcknowledge(item)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-muted"
-        >
+        <Button size="icon" title="確認知悉升級" onClick={() => onAcknowledge(item)}>
           <Check className="h-4 w-4" />
-        </button>
+        </Button>
       ) : null}
     </div>
   );

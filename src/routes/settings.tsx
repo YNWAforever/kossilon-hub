@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
 import { useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import {
@@ -301,22 +302,17 @@ function SettingsPage() {
           {warning}
           {failed ? (
             <>
-              <button
-                type="button"
-                disabled={isSaving}
-                onClick={retrySave}
-                className="ml-3 rounded-md border px-3 py-2"
-              >
+              <Button type="button" disabled={isSaving} onClick={retrySave} className="ml-3">
                 重試儲存
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 disabled={isSaving}
                 onClick={reloadTemplates}
-                className="ml-3 rounded-md border px-3 py-2"
+                className="ml-3 h-auto whitespace-normal py-2"
               >
                 重新載入（放棄未儲存輸入）
-              </button>
+              </Button>
             </>
           ) : null}
         </div>
@@ -336,7 +332,9 @@ function SettingsPage() {
           {productionTemplatesQuery.isError ? (
             <div role="alert">
               無法載入最新模板，這不代表沒有模板。
-              <button onClick={() => void productionTemplatesQuery.refetch()}>重新載入模板</button>
+              <Button variant="link" onClick={() => void productionTemplatesQuery.refetch()}>
+                重新載入模板
+              </Button>
             </div>
           ) : null}
         </>
@@ -354,13 +352,14 @@ function SettingsPage() {
               </p>
             </div>
             {dataMode === "production" && (
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => guardedCreateTemplate("Annual Return — Private Ltd")}
                 disabled={isSaving}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <Plus className="h-3.5 w-3.5" /> 新增模板
-              </button>
+                <Plus /> 新增模板
+              </Button>
             )}
           </div>
 
@@ -631,20 +630,12 @@ function TemplateEditor({
         </div>
         {dataMode === "production" && (
           <div className="flex gap-2">
-            <button
-              onClick={onDuplicate}
-              disabled={isSaving}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <Copy className="h-3.5 w-3.5" /> 複製
-            </button>
-            <button
-              onClick={onDelete}
-              disabled={isSaving}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> 刪除
-            </button>
+            <Button size="sm" onClick={onDuplicate} disabled={isSaving}>
+              <Copy /> 複製
+            </Button>
+            <Button variant="destructive" size="sm" onClick={onDelete} disabled={isSaving}>
+              <Trash2 /> 刪除
+            </Button>
           </div>
         )}
       </div>
@@ -767,13 +758,9 @@ export function DocumentsTab({
       </ul>
       {dataMode === "production" && (
         <div className="border-t border-border p-2">
-          <button
-            onClick={addDocument}
-            disabled={isSaving}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            <Plus className="h-3.5 w-3.5" /> 新增文件
-          </button>
+          <Button size="sm" onClick={addDocument} disabled={isSaving}>
+            <Plus /> 新增文件
+          </Button>
         </div>
       )}
     </div>
@@ -834,14 +821,16 @@ function DocumentRow({
       </label>
       <div className="text-right">
         {dataMode === "production" && (
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onRemove}
             disabled={isSaving}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
+            className="text-muted-foreground hover:text-destructive"
             aria-label="移除文件"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+            <Trash2 />
+          </Button>
         )}
       </div>
     </li>
@@ -911,13 +900,9 @@ function RemindersTab({
       </ul>
       {dataMode === "production" && (
         <div className="border-t border-border p-2">
-          <button
-            onClick={addReminder}
-            disabled={isSaving}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            <Plus className="h-3.5 w-3.5" /> 新增提醒
-          </button>
+          <Button size="sm" onClick={addReminder} disabled={isSaving}>
+            <Plus /> 新增提醒
+          </Button>
         </div>
       )}
     </div>
@@ -984,14 +969,16 @@ function ReminderRow({
       </select>
       <div className="text-right">
         {dataMode === "production" && (
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onRemove}
             disabled={isSaving}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
+            className="text-muted-foreground hover:text-destructive"
             aria-label="移除提醒"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+            <Trash2 />
+          </Button>
         )}
       </div>
     </li>
@@ -1066,13 +1053,9 @@ function RisksTab({
       </ul>
       {dataMode === "production" && (
         <div className="border-t border-border p-2">
-          <button
-            onClick={addRisk}
-            disabled={isSaving}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            <Plus className="h-3.5 w-3.5" /> 新增風險規則
-          </button>
+          <Button size="sm" onClick={addRisk} disabled={isSaving}>
+            <Plus /> 新增風險規則
+          </Button>
         </div>
       )}
     </div>
@@ -1148,14 +1131,16 @@ function RiskRow({
       </label>
       <div className="text-right">
         {dataMode === "production" && (
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onRemove}
             disabled={isSaving}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-70"
+            className="text-muted-foreground hover:text-destructive"
             aria-label="移除風險規則"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+            <Trash2 />
+          </Button>
         )}
       </div>
     </li>

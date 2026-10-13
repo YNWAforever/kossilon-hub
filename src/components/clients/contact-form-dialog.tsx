@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -156,20 +157,12 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
           {error && <p className="text-xs text-destructive">{error}</p>}
 
           <DialogFooter>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
-            >
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               取消
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-            >
+            </Button>
+            <Button type="submit" variant="primary" size="sm" disabled={saving}>
               {saving ? "儲存中…" : "儲存聯絡人"}
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

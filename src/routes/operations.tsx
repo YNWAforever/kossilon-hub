@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { getOperationsHealth } from "@/features/operations/server-fns";
 import {
   dispatchCountLabel,
@@ -126,14 +127,13 @@ function OperationsRoute() {
         title="系統運作"
         subtitle="所有時間均為香港時間（UTC+8）；此頁開啟時每分鐘更新。"
         actions={
-          <button
+          <Button
             type="button"
-            className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
             onClick={() => void healthQuery.refetch()}
             disabled={healthQuery.isFetching}
           >
             {healthQuery.isFetching ? "正在更新" : "重新載入"}
-          </button>
+          </Button>
         }
       />
 

@@ -10,6 +10,7 @@ import { useMutation, useMutationState, useQuery, useQueryClient } from "@tansta
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import {
   CheckSquare,
   FileCheck2,
@@ -198,9 +199,9 @@ export function ProductionAnnualReturnCaseDetail({
         <p role="alert" className="text-sm text-destructive">
           {caseQuery.error.message}
         </p>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          返回周年申報
-        </Link>
+        <Button asChild>
+          <Link to="/annual-returns">返回周年申報</Link>
+        </Button>
       </main>
     );
   }
@@ -209,9 +210,9 @@ export function ProductionAnnualReturnCaseDetail({
     return (
       <main className="flex-1 space-y-3 p-6">
         <PageHeader eyebrow="案件與客戶" title="找不到案件" />
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          返回周年申報
-        </Link>
+        <Button asChild>
+          <Link to="/annual-returns">返回周年申報</Link>
+        </Button>
       </main>
     );
   }
@@ -232,36 +233,32 @@ export function ProductionAnnualReturnCaseDetail({
           actions={
             <div className="flex flex-wrap items-center gap-3">
               {caseReturnPath(returnTo).startsWith("/today") ? (
-                <Link
-                  to="/today"
-                  search={dailyViewSearch(
-                    Object.fromEntries(
-                      new URL(caseReturnPath(returnTo), "https://kossilon.invalid").searchParams,
-                    ),
-                  )}
-                  className="inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm"
-                >
-                  返回工作列表
-                </Link>
+                <Button asChild className="min-h-11">
+                  <Link
+                    to="/today"
+                    search={dailyViewSearch(
+                      Object.fromEntries(
+                        new URL(caseReturnPath(returnTo), "https://kossilon.invalid").searchParams,
+                      ),
+                    )}
+                  >
+                    返回工作列表
+                  </Link>
+                </Button>
               ) : (
-                <Link
-                  to="/annual-returns"
-                  className="inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm"
-                >
-                  返回工作列表
-                </Link>
+                <Button asChild className="min-h-11">
+                  <Link to="/annual-returns">返回工作列表</Link>
+                </Button>
               )}
 
               {/* The demo case detail has always had this. Without it in
                   production there was no link anywhere carrying a caseId, so
                   /portal was unreachable except by hand-editing the URL. */}
-              <Link
-                className="rounded-md border px-3 py-2 text-sm"
-                to="/portal"
-                search={{ caseId: caseItem.id }}
-              >
-                開啟客戶入口
-              </Link>
+              <Button asChild>
+                <Link to="/portal" search={{ caseId: caseItem.id }}>
+                  開啟客戶入口
+                </Link>
+              </Button>
               <div className="text-right text-sm">
                 <p className="font-medium">{annualReturnStatusLabel(caseItem.currentStatus)}</p>
                 <p className="text-muted-foreground">風險：{riskLevelLabel(caseItem.riskLevel)}</p>
@@ -285,8 +282,8 @@ export function ProductionAnnualReturnCaseDetail({
                   onChange={setOwnerId}
                   disabled={locked || ownerMutation.isPending}
                 />
-                <button
-                  className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                <Button
+                  className="mt-2"
                   disabled={locked || ownerMutation.isPending || !isUuid(ownerId)}
                   onClick={() => ownerMutation.mutate(ownerId)}
                   type="button"
@@ -294,7 +291,7 @@ export function ProductionAnnualReturnCaseDetail({
                   <PendingIcon pending={ownerMutation.isPending} />
                   <UserRoundCheck aria-hidden className="h-4 w-4" />
                   分配
-                </button>
+                </Button>
                 <MutationMessage error={ownerMutation.error} />
               </div>
 
@@ -315,8 +312,7 @@ export function ProductionAnnualReturnCaseDetail({
                       </option>
                     ))}
                   </select>
-                  <button
-                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                  <Button
                     disabled={
                       locked || statusMutation.isPending || nextStatus === caseItem.currentStatus
                     }
@@ -325,7 +321,7 @@ export function ProductionAnnualReturnCaseDetail({
                   >
                     <PendingIcon pending={statusMutation.isPending} />
                     更新
-                  </button>
+                  </Button>
                 </div>
                 <MutationMessage error={statusMutation.error} />
               </div>
@@ -356,8 +352,7 @@ export function ProductionAnnualReturnCaseDetail({
                         {checklistStatusLabel(item.status)}
                       </p>
                     </div>
-                    <button
-                      className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                    <Button
                       disabled={locked || pendingChecklistItemIds.includes(item.id)}
                       onClick={() =>
                         checklistMutation.mutate({
@@ -374,7 +369,7 @@ export function ProductionAnnualReturnCaseDetail({
                         : nextChecklistStatus === "Missing"
                           ? "標記為缺少"
                           : "標記為已收到"}
-                    </button>
+                    </Button>
                   </div>
                 );
               })}
@@ -413,8 +408,7 @@ export function ProductionAnnualReturnCaseDetail({
                 onChange={setPaymentProofDocumentId}
                 disabled={locked || paymentMutation.isPending}
               />
-              <button
-                className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              <Button
                 disabled={
                   locked ||
                   paymentMutation.isPending ||
@@ -431,7 +425,7 @@ export function ProductionAnnualReturnCaseDetail({
               >
                 <PendingIcon pending={paymentMutation.isPending} />
                 更新付款
-              </button>
+              </Button>
             </div>
             <MutationMessage error={paymentMutation.error} />
           </section>
@@ -453,15 +447,14 @@ export function ProductionAnnualReturnCaseDetail({
                     ：
                   </span>
                   {blocker.message}
-                  <a className="ml-2 underline" href={blocker.action}>
-                    處理
-                  </a>
+                  <Button asChild variant="link" className="ml-2 underline">
+                    <a href={blocker.action}>處理</a>
+                  </Button>
                 </li>
               ))}
             </ul>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              <Button
                 disabled={locked || packetMutation.isPending || !packetReady}
                 onClick={() => packetMutation.mutate()}
                 type="button"
@@ -469,7 +462,7 @@ export function ProductionAnnualReturnCaseDetail({
                 <PendingIcon pending={packetMutation.isPending} />
                 <FileCheck2 aria-hidden className="h-4 w-4" />
                 準備交件套件
-              </button>
+              </Button>
             </div>
             <MutationMessage error={packetMutation.error} />
           </section>
@@ -494,8 +487,7 @@ export function ProductionAnnualReturnCaseDetail({
                 onChange={setConfirmationDocumentId}
                 disabled={locked || receiptMutation.isPending}
               />
-              <button
-                className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              <Button
                 disabled={
                   locked ||
                   receiptMutation.isPending ||
@@ -513,7 +505,7 @@ export function ProductionAnnualReturnCaseDetail({
                 <PendingIcon pending={receiptMutation.isPending} />
                 <ReceiptText aria-hidden className="h-4 w-4" />
                 接納回條
-              </button>
+              </Button>
             </div>
             <MutationMessage error={receiptMutation.error} />
           </section>
@@ -528,8 +520,8 @@ export function ProductionAnnualReturnCaseDetail({
               value={note}
               onChange={(event) => setNote(event.target.value)}
             />
-            <button
-              className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            <Button
+              className="mt-2"
               disabled={locked || noteMutation.isPending || !note.trim()}
               onClick={() => noteMutation.mutate(note.trim())}
               type="button"
@@ -537,7 +529,7 @@ export function ProductionAnnualReturnCaseDetail({
               <PendingIcon pending={noteMutation.isPending} />
               <MessageSquarePlus aria-hidden className="h-4 w-4" />
               加入備註
-            </button>
+            </Button>
             <MutationMessage error={noteMutation.error} />
             <div className="mt-4 space-y-3">
               {notesQuery.isPending ? (
@@ -618,8 +610,7 @@ export function ProductionAnnualReturnCaseDetail({
                 value={recipientPhone}
                 onChange={(event) => setRecipientPhone(event.target.value)}
               />
-              <button
-                className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              <Button
                 disabled={
                   locked ||
                   reminderMutation.isPending ||
@@ -637,7 +628,7 @@ export function ProductionAnnualReturnCaseDetail({
                 <PendingIcon pending={reminderMutation.isPending} />
                 <Send aria-hidden className="h-4 w-4" />
                 發送提醒
-              </button>
+              </Button>
             </div>
             <MutationMessage error={reminderMutation.error} />
           </section>

@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { NarApplyPanel } from "@/features/nar-import/apply-panel";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DataMode } from "@/features/runtime/data-mode";
@@ -249,14 +250,14 @@ function ImportsWorkspace({
               onChange={(event) => setSheetName(event.target.value)}
             />
           </label>
-          <button
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+          <Button
+            variant="primary"
             disabled={!file || stageMutation.isPending}
             onClick={() => stageMutation.mutate()}
             type="button"
           >
             {stageMutation.isPending ? "讀取中…" : "讀取並預覽"}
-          </button>
+          </Button>
         </div>
 
         {stageMutation.data?.reused ? (
@@ -308,7 +309,7 @@ function ImportsWorkspace({
             />
             已覆核與工作表名稱的年度差異
           </label>
-          <button
+          <Button
             type="button"
             disabled={
               confirmYearMutation.isPending ||
@@ -319,7 +320,7 @@ function ImportsWorkspace({
             onClick={() => confirmYearMutation.mutate()}
           >
             確認既有批次年度
-          </button>
+          </Button>
         </section>
       ) : null}
       {review ? (
@@ -411,13 +412,14 @@ function ImportsWorkspace({
                       預覽會重新核對最新映射；更改既有映射必須再確認。
                     </span>
                     {pendingMapping?.externalClientId === row.externalClientId ? (
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         disabled={mapMutation.isPending}
                         onClick={() => mapMutation.mutate(pendingMapping)}
                       >
                         確認公司映射
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                 ) : null}

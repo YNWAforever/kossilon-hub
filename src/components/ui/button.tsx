@@ -28,7 +28,7 @@ export const buttonVariants = cva(
         /** Irreversible or rejecting actions. */
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         /** An inline text action. */
-        link: "h-auto px-0 text-primary underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         sm: "h-8 px-3 text-xs",
@@ -36,6 +36,9 @@ export const buttonVariants = cva(
         icon: "h-10 w-10",
       },
     },
+    // A link sits inline with text, so it drops the size's height and padding;
+    // as a compound variant it is applied after the size and wins the merge.
+    compoundVariants: [{ variant: "link", className: "h-auto px-0" }],
     defaultVariants: { variant: "outline", size: "md" },
   },
 );

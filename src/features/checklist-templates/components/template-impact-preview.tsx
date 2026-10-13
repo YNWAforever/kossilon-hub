@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { previewChecklistTemplateMigration } from "../server-fns";
 import type { ChecklistTemplate } from "../types";
 
@@ -21,21 +22,18 @@ export function TemplateImpactPreview({ template }: { template: ChecklistTemplat
       <p className="text-sm">
         目前版本：{template.revision ?? "未知"}。新案件使用當時版本快照；現有案件不會自動更新。
       </p>
-      <button
-        type="button"
-        className="rounded-md border px-3 py-2"
-        aria-expanded={open}
-        onClick={() => setOpen((x) => !x)}
-      >
+      <Button type="button" aria-expanded={open} onClick={() => setOpen((x) => !x)}>
         現有案件版本差異預覽
-      </button>
+      </Button>
       {open ? (
         <>
           {query.isPending ? <p>正在載入差異…</p> : null}
           {query.isError ? (
             <p role="alert">
               無法載入差異，沒有執行更改。
-              <button onClick={() => void query.refetch()}>重試預覽</button>
+              <Button variant="link" onClick={() => void query.refetch()}>
+                重試預覽
+              </Button>
             </p>
           ) : null}
           {query.data ? (
@@ -66,12 +64,17 @@ export function TemplateImpactPreview({ template }: { template: ChecklistTemplat
               </p>
               <div className="flex gap-2">
                 {cursors.length > 1 ? (
-                  <button onClick={() => setCursors((x) => x.slice(0, -1))}>上一頁</button>
+                  <Button size="sm" onClick={() => setCursors((x) => x.slice(0, -1))}>
+                    上一頁
+                  </Button>
                 ) : null}
                 {query.data.nextCursor ? (
-                  <button onClick={() => setCursors((x) => [...x, query.data!.nextCursor!])}>
+                  <Button
+                    size="sm"
+                    onClick={() => setCursors((x) => [...x, query.data!.nextCursor!])}
+                  >
                     下一頁
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             </>

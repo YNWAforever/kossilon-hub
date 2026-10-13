@@ -10,6 +10,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { formatDate, formatDateTime } from "@/lib/format-date";
@@ -116,16 +117,14 @@ function PortalRoute() {
           <p role="alert" className="text-sm text-destructive">
             案件 ID 格式無效。請重新選擇案件。
           </p>
-          <Link
-            to="/portal"
-            search={{}}
-            className="inline-flex rounded-md border px-3 py-2 text-sm"
-          >
-            重新選擇案件
-          </Link>
-          <Link to="/today" className="inline-flex rounded-md border px-3 py-2 text-sm">
-            返回今日工作
-          </Link>
+          <Button asChild>
+            <Link to="/portal" search={{}}>
+              重新選擇案件
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/today">返回今日工作</Link>
+          </Button>
         </main>
       );
     // A Client sign-in gets its own companies' cases. Every other read in this
@@ -180,12 +179,12 @@ function PortalRoute() {
               無法載入授權案件，請稍後再試。
             </p>
           ) : null}
-          <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-            瀏覽周年申報
-          </Link>
-          <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/today">
-            返回今日工作
-          </Link>
+          <Button asChild>
+            <Link to="/annual-returns">瀏覽周年申報</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/today">返回今日工作</Link>
+          </Button>
         </main>
       );
     }
@@ -207,9 +206,9 @@ function PortalRoute() {
     return (
       <main className="flex-1 space-y-4 p-6">
         <PageHeader eyebrow="客戶入口" title="找不到案件" />
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          返回周年申報
-        </Link>
+        <Button asChild>
+          <Link to="/annual-returns">返回周年申報</Link>
+        </Button>
       </main>
     );
   }
@@ -406,8 +405,8 @@ function PortalActionRow({
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
         {showPrimaryAction ? (
-          <button
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button
+            variant="primary"
             disabled={primaryDisabled}
             onClick={handlePrimaryAction}
             type="button"
@@ -420,7 +419,7 @@ function PortalActionRow({
             }
           >
             {primaryActionLabel(action)}
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>
@@ -488,13 +487,11 @@ function ArchivePreview({
             客戶入口上載的檔案及系統產生的遞交記錄，會顯示於此及「文件」頁。
           </p>
         </div>
-        <Link
-          className="rounded-md border px-3 py-2 text-sm"
-          to="/documents"
-          search={{ caseId: selectedCase.id }}
-        >
-          開啟文件
-        </Link>
+        <Button asChild>
+          <Link to="/documents" search={{ caseId: selectedCase.id }}>
+            開啟文件
+          </Link>
+        </Button>
       </div>
       <div className="mt-4 divide-y">
         {previewRows.length === 0 ? (
@@ -603,9 +600,9 @@ function ClientPortalCaseView({ caseItem }: { caseItem: ClientPortalCaseDetail }
         requirements={outstanding}
         onWarning={setWarning}
       />
-      <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/portal">
-        返回您的周年申報
-      </Link>
+      <Button asChild>
+        <Link to="/portal">返回您的周年申報</Link>
+      </Button>
     </main>
   );
 }
@@ -641,9 +638,9 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
       <main className="flex-1 space-y-3 p-6">
         <PageHeader eyebrow="客戶入口" title="找不到周年申報" />
         <p className="text-sm text-muted-foreground">此周年申報並不屬於您公司的申報。</p>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/portal">
-          返回您的周年申報
-        </Link>
+        <Button asChild>
+          <Link to="/portal">返回您的周年申報</Link>
+        </Button>
       </main>
     );
   }
@@ -659,7 +656,10 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
       <PageHeader eyebrow="客戶入口" title="您的周年申報" subtitle="我們正為貴公司準備的周年申報" />
       {casesQuery.isError ? (
         <p role="alert">
-          未能讀取您的周年申報。<button onClick={() => void casesQuery.refetch()}>重試</button>
+          未能讀取您的周年申報。
+          <Button variant="link" onClick={() => void casesQuery.refetch()}>
+            重試
+          </Button>
         </p>
       ) : null}
       {cases.length === 0 ? (
@@ -684,13 +684,11 @@ function ClientPortalView({ caseId }: { caseId?: string }) {
                   ? ` · 尚需您提供 ${caseItem.outstandingRequiredItems} 份文件`
                   : " · 您毋須再提供文件"}
               </p>
-              <Link
-                className="mt-3 inline-flex rounded-md border px-3 py-2 text-sm"
-                to="/portal"
-                search={{ caseId: caseItem.id }}
-              >
-                開啟
-              </Link>
+              <Button asChild className="mt-3">
+                <Link to="/portal" search={{ caseId: caseItem.id }}>
+                  開啟
+                </Link>
+              </Button>
             </li>
           ))}
         </ul>
@@ -909,14 +907,14 @@ function ScopedDocumentPanel({
                 onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
               />
             </label>
-            <button
-              className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            <Button
+              variant="primary"
               disabled={files.length === 0 || uploading}
               onClick={() => void uploadAll(files)}
               type="button"
             >
               {uploading ? "上載中…" : `安全上載${files.length > 1 ? `（${files.length}）` : ""}`}
-            </button>
+            </Button>
           </div>
 
           {files.length > 0 ? (
@@ -932,13 +930,9 @@ function ScopedDocumentPanel({
                     <span className="flex items-center gap-2">
                       <UploadOutcomeLabel outcome={outcome} />
                       {outcome?.state === "failed" ? (
-                        <button
-                          className="rounded-md border px-2 py-1 text-xs"
-                          onClick={() => void uploadOne(candidate)}
-                          type="button"
-                        >
+                        <Button size="sm" onClick={() => void uploadOne(candidate)} type="button">
                           重試
-                        </button>
+                        </Button>
                       ) : null}
                     </span>
                   </li>
@@ -968,25 +962,21 @@ function ScopedDocumentPanel({
                   </p>
                 </div>
                 {document.uploadStatus === "available" && document.reviewStatus === "verified" ? (
-                  <button
-                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2"
-                    onClick={() => handleDownload(document.id)}
-                    type="button"
-                  >
-                    <Download className="h-4 w-4" /> 下載
-                  </button>
+                  <Button onClick={() => handleDownload(document.id)} type="button">
+                    <Download /> 下載
+                  </Button>
                 ) : null}
               </div>
             ))}
             {documentsQuery.hasNextPage ? (
-              <button
+              <Button
                 type="button"
-                className="min-h-11 rounded border px-3"
+                className="min-h-11"
                 disabled={documentsQuery.isFetchingNextPage}
                 onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
               >
                 載入更多文件
-              </button>
+              </Button>
             ) : null}
           </div>
         </>

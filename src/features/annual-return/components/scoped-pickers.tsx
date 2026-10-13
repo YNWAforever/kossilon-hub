@@ -6,6 +6,7 @@ import type { DocumentSummary } from "@/features/documents/repository";
 import { documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentCategory } from "@/features/documents/types";
 import { listAssignableStaff } from "../server-fns";
+import { Button } from "@/components/ui/button";
 
 /**
  * The pickers that replace this screen's UUID text boxes.
@@ -102,9 +103,9 @@ export function StaffPicker({
         ))}
       </select>
       {staffQuery.error ? (
-        <button type="button" className="min-h-11" onClick={() => void staffQuery.refetch()}>
+        <Button className="min-h-11" onClick={() => void staffQuery.refetch()}>
           重試同事搜尋
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -222,20 +223,18 @@ export function DocumentPicker({
         ))}
       </select>
       {documentsQuery.hasNextPage ? (
-        <button
-          type="button"
-          className="min-h-11 rounded border px-3"
+        <Button
+          className="min-h-11"
           disabled={documentsQuery.isFetchingNextPage}
           onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多{label}文件
-        </button>
+        </Button>
       ) : null}
       {documentsQuery.error ? (
         <div role="alert">
           文件搜尋未完成。
-          <button
-            type="button"
+          <Button
             className="min-h-11"
             onClick={() =>
               void (documentsQuery.isFetchNextPageError
@@ -244,7 +243,7 @@ export function DocumentPicker({
             }
           >
             重試文件搜尋
-          </button>
+          </Button>
         </div>
       ) : null}
       {/* Naming why the list is short is more useful than an empty dropdown. */}

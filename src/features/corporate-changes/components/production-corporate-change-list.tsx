@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-dialog";
 import { listCorporateChangeRequests } from "@/features/corporate-changes/server-fns";
@@ -63,13 +64,9 @@ export function ProductionCorporateChangeList() {
         title="公司變更"
         subtitle="公司名稱變更、股份轉讓、高級人員變更及註冊辦事處變更。"
         actions={
-          <button
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
+          <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
             新增申請
-          </button>
+          </Button>
         }
       />
 

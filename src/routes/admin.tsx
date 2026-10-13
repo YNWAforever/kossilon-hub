@@ -17,6 +17,7 @@ import {
 import { StatusPill } from "@/components/status-pill";
 import { ProductionStaffAdmin } from "@/features/admin/production-staff-admin";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import { isAdmin, type AuthRole, type DemoUser } from "@/features/auth/session";
 import { cn } from "@/lib/utils";
@@ -107,12 +108,9 @@ function ProductionAdminConsole() {
                 {session?.name ?? "此用戶"}目前以「{roleLabel(session?.role)}
                 」身分登入。只有管理員可使用用戶管理。
               </p>
-              <Link
-                to="/"
-                className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-              >
-                返回總覽
-              </Link>
+              <Button asChild variant="primary" className="mt-4">
+                <Link to="/">返回總覽</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -166,12 +164,9 @@ function DemoAdminConsole() {
                 {session?.name ?? "此用戶"}目前以「{roleLabel(session?.role)}
                 」身分登入。只有管理員可使用原型的用戶及系統控制。
               </p>
-              <Link
-                to="/"
-                className="mt-4 inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-              >
-                返回總覽
-              </Link>
+              <Button asChild variant="primary" className="mt-4">
+                <Link to="/">返回總覽</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -329,24 +324,24 @@ function UsersPanel({
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-2">
-                  <button
+                  <Button
                     type="button"
+                    size="sm"
                     onClick={() => onSwitchUser(user.id)}
                     disabled={!user.active}
                     aria-label={`以 ${user.name} 身分登入`}
-                    className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     以此身分登入
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    size="sm"
                     disabled
                     onClick={() => onToggleActive(user.id)}
                     aria-label={`${user.active ? "停用" : "啟用"} ${user.name}`}
-                    className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                   >
                     {user.active ? "停用" : "啟用"}
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
@@ -87,14 +88,9 @@ export function ProductionClientRegister({
         eyebrow="案件與客戶"
         title="客戶"
         actions={
-          <button
-            type="button"
-            disabled={!optionsQuery.data}
-            onClick={() => setIsCreateOpen(true)}
-            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
-          >
+          <Button disabled={!optionsQuery.data} onClick={() => setIsCreateOpen(true)}>
             新增客戶
-          </button>
+          </Button>
         }
       />
       <p className="text-sm text-muted-foreground">
@@ -132,9 +128,13 @@ export function ProductionClientRegister({
       {clientsQuery.isError ? (
         <p role="alert" className="text-sm text-destructive">
           客戶資料暫時無法載入，請稍後再試。
-          <button className="min-h-11 px-3" onClick={() => void clientsQuery.refetch()}>
+          <Button
+            variant="ghost"
+            className="min-h-11 px-3"
+            onClick={() => void clientsQuery.refetch()}
+          >
             重試客戶頁面
-          </button>
+          </Button>
         </p>
       ) : null}
 
@@ -155,16 +155,13 @@ export function ProductionClientRegister({
           />
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((value) => (
-              <button
+              <Button
                 key={value}
-                type="button"
-                className={`rounded-md border px-3 py-2 text-sm ${
-                  statusFilter === value ? "bg-primary text-primary-foreground" : "bg-background"
-                }`}
+                variant={statusFilter === value ? "primary" : "outline"}
                 onClick={() => setStatusFilter(value)}
               >
                 {STATUS_FILTER_LABELS[value]}
-              </button>
+              </Button>
             ))}
           </div>
           <select
@@ -214,21 +211,18 @@ export function ProductionClientRegister({
       </section>
       <div className="flex gap-3">
         {cursor ? (
-          <button
-            className="min-h-11 rounded border px-3"
-            onClick={() => setPagination({ key: filterKey })}
-          >
+          <Button className="min-h-11" onClick={() => setPagination({ key: filterKey })}>
             回第一頁客戶
-          </button>
+          </Button>
         ) : null}
         {page?.nextCursor ? (
-          <button
+          <Button
             disabled={clientsQuery.isFetching || clientsQuery.isError}
-            className="min-h-11 rounded border px-3"
+            className="min-h-11"
             onClick={() => setPagination({ key: filterKey, cursor: page.nextCursor! })}
           >
             下一頁客戶
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -278,13 +272,11 @@ function ClientRow({ client }: { client: ClientSummary }) {
         }
       />
       <div className="flex justify-start lg:justify-end">
-        <Link
-          className="rounded-md border px-3 py-2 text-center text-sm"
-          to="/clients/$id"
-          params={{ id: client.id }}
-        >
-          開啟
-        </Link>
+        <Button asChild>
+          <Link to="/clients/$id" params={{ id: client.id }}>
+            開啟
+          </Link>
+        </Button>
       </div>
     </div>
   );

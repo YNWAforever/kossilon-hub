@@ -3,6 +3,7 @@ import { Link, createFileRoute, useNavigate, type SearchSchemaInput } from "@tan
 
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import {
   getAnnualReturnWorkPage,
   getAnnualReturnWorkMetrics,
@@ -129,23 +130,19 @@ function TodayRoute() {
           className="rounded-md bg-status-yellow-soft px-3 py-2 text-sm text-status-yellow-text"
         >
           無法載入今日工作。這不代表沒有工作，請直接開啟案件板。
-          <button
-            className="ml-3 min-h-11 rounded-md border px-3"
-            onClick={() => void viewsQuery.refetch()}
-          >
+          <Button className="ml-3 min-h-11" onClick={() => void viewsQuery.refetch()}>
             重新載入
-          </button>
+          </Button>
         </p>
       ) : null}
 
       <nav className="flex flex-wrap gap-2" aria-label="今日工作分類">
         {WORK_VIEWS.map((definition) => (
-          <button
+          <Button
             key={definition.key}
             aria-pressed={definition.key === active}
-            className={`min-h-11 rounded-md border px-3 py-2 text-sm ${
-              definition.key === active ? "bg-primary text-primary-foreground" : ""
-            }`}
+            variant={definition.key === active ? "primary" : "outline"}
+            className="min-h-11"
             onClick={() => setActive(definition.key)}
             type="button"
           >
@@ -155,15 +152,15 @@ function TodayRoute() {
             {definition.released && metricsQuery.data
               ? ` (${metricsQuery.data[definition.key]})`
               : ""}
-          </button>
+          </Button>
         ))}
       </nav>
       {metricsQuery.isError ? (
         <p role="alert">
           工作總數未能載入；已顯示列表不是全範圍總數。
-          <button className="min-h-11 px-3" onClick={() => void metricsQuery.refetch()}>
+          <Button variant="ghost" className="min-h-11" onClick={() => void metricsQuery.refetch()}>
             重試總數
-          </button>
+          </Button>
         </p>
       ) : null}
 
@@ -213,14 +210,15 @@ function TodayRoute() {
                       ? `已逾期 ${-row.daysRemaining} 日`
                       : `尚餘 ${row.daysRemaining} 日`}
                   </p>
-                  <Link
-                    className="inline-flex min-h-11 items-center justify-self-start rounded-md border px-3 py-2 text-sm md:justify-self-end"
-                    to="/annual-returns/$id"
-                    params={{ id: row.caseId }}
-                    search={{ returnTo: dailyReturnPath(search) }}
-                  >
-                    開啟案件
-                  </Link>
+                  <Button asChild className="min-h-11 justify-self-start md:justify-self-end">
+                    <Link
+                      to="/annual-returns/$id"
+                      params={{ id: row.caseId }}
+                      search={{ returnTo: dailyReturnPath(search) }}
+                    >
+                      開啟案件
+                    </Link>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -229,21 +227,21 @@ function TodayRoute() {
       ) : null}
       <div className="flex flex-wrap gap-3">
         {search.cursor ? (
-          <button
-            className="min-h-11 rounded border px-3"
+          <Button
+            className="min-h-11"
             onClick={() => void navigate({ search: { ...search, cursor: undefined } })}
           >
             回第一頁工作
-          </button>
+          </Button>
         ) : null}
         {page?.nextCursor ? (
-          <button
+          <Button
             disabled={viewsQuery.isFetching || viewsQuery.isError}
-            className="min-h-11 rounded border px-3"
+            className="min-h-11"
             onClick={() => void navigate({ search: { ...search, cursor: page.nextCursor! } })}
           >
             下一頁工作
-          </button>
+          </Button>
         ) : null}
       </div>
     </main>

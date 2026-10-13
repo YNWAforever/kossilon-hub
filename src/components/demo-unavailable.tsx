@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, DatabaseZap } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * The one empty state for a screen that reads only production data.
@@ -21,13 +22,12 @@ export function DemoUnavailable({ message }: { message: string }) {
       </span>
       <p className="mt-4 text-base font-semibold text-foreground">示範模式未提供此資料</p>
       <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">{message}</p>
-      <Link
-        className="mt-5 inline-flex min-h-10 items-center gap-1.5 rounded-md border bg-background px-4 text-sm font-medium hover:bg-accent"
-        to="/annual-returns"
-      >
-        瀏覽周年申報案件
-        <ArrowRight aria-hidden="true" className="h-4 w-4" />
-      </Link>
+      <Button asChild variant="outline" className="mt-5">
+        <Link to="/annual-returns">
+          瀏覽周年申報案件
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
+        </Link>
+      </Button>
     </section>
   );
 }

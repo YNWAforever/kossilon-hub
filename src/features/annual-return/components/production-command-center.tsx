@@ -5,6 +5,7 @@ import type { AuthenticatedActor } from "@/features/auth/types";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
@@ -174,27 +175,24 @@ export function ProductionAnnualReturnCommandCenter({
         title="周年申報"
         actions={
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setIsCreateOpen(true)}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
+            <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
               新增案件
-            </button>
-            <Link
-              to="/work-queue"
-              search={{
-                view: "team",
-                owner: "all",
-                workType: "all",
-                sla: "all",
-                priority: "all",
-                status: "all",
-              }}
-              className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-            >
-              開啟工作隊列
-            </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                to="/work-queue"
+                search={{
+                  view: "team",
+                  owner: "all",
+                  workType: "all",
+                  sla: "all",
+                  priority: "all",
+                  status: "all",
+                }}
+              >
+                開啟工作隊列
+              </Link>
+            </Button>
           </div>
         }
       />
@@ -404,18 +402,16 @@ export function ProductionAnnualReturnCommandCenter({
                 未能載入下一頁，請重試。
               </p>
             ) : null}
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            <Button
               disabled={casesQuery.isFetchingNextPage}
               onClick={() => void casesQuery.fetchNextPage({ cancelRefetch: false })}
-              type="button"
             >
               {casesQuery.isFetchingNextPage
                 ? "載入中…"
                 : casesQuery.isFetchNextPageError
                   ? "重試下一頁"
                   : "載入更多"}
-            </button>
+            </Button>
           </div>
         ) : null}
         {!casesQuery.isPending && !casesQuery.isError && visibleCases.length === 0 ? (
@@ -479,13 +475,11 @@ function BoardRow({
       <Field label="付款" value={paymentStatusLabel(caseItem.payment?.status ?? "Not invoiced")} />
       <Field label="提醒" value={`${caseItem.remindersSent}`} />
       <div className="flex justify-start lg:justify-end">
-        <Link
-          className="rounded-md border px-3 py-1.5 text-sm"
-          to="/annual-returns/$id"
-          params={{ id: caseItem.id }}
-        >
-          開啟
-        </Link>
+        <Button asChild size="sm">
+          <Link to="/annual-returns/$id" params={{ id: caseItem.id }}>
+            開啟
+          </Link>
+        </Button>
       </div>
     </div>
   );

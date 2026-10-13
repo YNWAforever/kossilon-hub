@@ -3,6 +3,7 @@ import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router"
 
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { ProductionWhatsAppInbox } from "../features/whatsapp/components/production-inbox";
 import {
   enquiries,
@@ -118,21 +119,16 @@ function DemoWhatsAppInbox() {
             onChange={(event) => setComposer(event.target.value)}
           />
           <div className="mt-3 flex items-center justify-between gap-3">
-            <button
-              className="rounded-md border px-3 py-2 text-sm"
-              onClick={() => showNotice("已開啟 AI 草稿面板")}
-            >
-              AI
-            </button>
-            <button
-              className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
+            <Button onClick={() => showNotice("已開啟 AI 草稿面板")}>AI</Button>
+            <Button
+              variant="primary"
               onClick={() => {
                 setComposer("");
                 showNotice("示範回覆已發送");
               }}
             >
               發送回覆
-            </button>
+            </Button>
           </div>
         </div>
       </section>

@@ -10,6 +10,7 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocumentPage } from "../features/documents/server-fns";
@@ -246,13 +247,13 @@ function DocumentsRoute() {
         />
       ) : null}
       {dataMode === "production" && productionDocumentsQuery.hasNextPage ? (
-        <button
-          className="min-h-11 rounded border px-3"
+        <Button
+          className="min-h-11"
           disabled={productionDocumentsQuery.isFetchingNextPage}
           onClick={() => void productionDocumentsQuery.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多文件
-        </button>
+        </Button>
       ) : null}
       {productionDocumentsQuery.isFetchNextPageError ? (
         <p role="alert">下一頁文件未能載入；保留已讀資料，請重試。</p>
@@ -416,14 +417,15 @@ function DocumentRow({
         <ReviewCell row={row} followUpStatus={followUp?.status} onReview={handleReview} />
       </div>
       <div className="col-span-2 flex justify-start lg:col-span-1 lg:justify-end">
-        <Link
-          aria-label={`開啟「${row.title}」的案件`}
-          className="inline-flex min-h-10 items-center rounded-md border px-3 text-sm hover:bg-accent"
-          to="/annual-returns/$id"
-          params={{ id: row.caseId }}
-        >
-          開啟
-        </Link>
+        <Button asChild>
+          <Link
+            aria-label={`開啟「${row.title}」的案件`}
+            to="/annual-returns/$id"
+            params={{ id: row.caseId }}
+          >
+            開啟
+          </Link>
+        </Button>
       </div>
     </div>
   );
@@ -449,22 +451,21 @@ function ReviewCell({
     return (
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
-          <button
+          <Button
             aria-label={`接納「${row.title}」`}
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+            variant="primary"
             onClick={() => onReview("accepted")}
             type="button"
           >
             接納
-          </button>
-          <button
+          </Button>
+          <Button
             aria-label={`退回「${row.title}」`}
-            className="rounded-md border px-3 py-2 text-sm"
             onClick={() => setIsRejecting((current) => !current)}
             type="button"
           >
             退回
-          </button>
+          </Button>
         </div>
         {isRejecting ? (
           <div className="space-y-2">
@@ -489,13 +490,13 @@ function ReviewCell({
               onChange={(event) => setNote(event.target.value)}
               placeholder="覆核備註（選填）"
             />
-            <button
-              className="rounded-md border px-3 py-2 text-sm"
+            <Button
+              variant="destructive"
               onClick={() => onReview("rejected", { reasonCode, note })}
               type="button"
             >
               確認退回
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>
@@ -839,26 +840,24 @@ function ReviewActions({
   return (
     <div className="flex flex-col gap-2 md:items-end">
       <div className="flex flex-wrap justify-start gap-2 md:justify-end">
-        <button
-          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+        <Button
           onClick={() =>
             onPreview(record.id, record.fileName, record.currentVersionId ?? undefined)
           }
           type="button"
         >
-          <Eye className="h-4 w-4" /> 開啟原件
-        </button>
-        <button
-          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+          <Eye /> 開啟原件
+        </Button>
+        <Button
           onClick={() => onDownload(record.id, record.currentVersionId ?? undefined)}
           type="button"
         >
-          <Download className="h-4 w-4" /> 下載
-        </button>
+          <Download /> 下載
+        </Button>
         {record.reviewStatus === "pending" ? (
           <>
-            <button
-              className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+            <Button
+              variant="primary"
               disabled={!canReview || !record.currentVersionId || pending}
               onClick={() =>
                 onReview({
@@ -872,15 +871,14 @@ function ReviewActions({
               type="button"
             >
               {pending ? "覆核中…" : "核對"}
-            </button>
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            </Button>
+            <Button
               disabled={!canReview || !record.currentVersionId || pending}
               onClick={() => setRejecting((current) => !current)}
               type="button"
             >
               退回
-            </button>
+            </Button>
           </>
         ) : null}
       </div>
@@ -915,8 +913,9 @@ function ReviewActions({
             value={note}
             onChange={(event) => setNote(event.target.value)}
           />
-          <button
-            className="w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+          <Button
+            variant="destructive"
+            className="w-full"
             disabled={!canSubmitRejection}
             onClick={() => {
               onReview({
@@ -933,7 +932,7 @@ function ReviewActions({
             type="button"
           >
             確認退回
-          </button>
+          </Button>
         </div>
       ) : null}
       <DocumentRecoveryPanel

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserCheck, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import {
   confirmAnnualReturnCaseParty,
@@ -111,15 +112,14 @@ export function CaseParties({ caseId, locked }: { caseId: string; locked: boolea
               {party.confirmedByUserId ? (
                 <span className="text-xs text-muted-foreground">已確認</span>
               ) : (
-                <button
-                  className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
+                <Button
+                  size="sm"
                   disabled={locked || confirmMutation.isPending}
                   onClick={() => confirmMutation.mutate({ partyId: party.id })}
-                  type="button"
                 >
                   <UserCheck aria-hidden className="h-3.5 w-3.5" />
                   確認為相關人士
-                </button>
+                </Button>
               )}
             </div>
           ))}

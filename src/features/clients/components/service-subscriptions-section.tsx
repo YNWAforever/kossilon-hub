@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -72,13 +73,9 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold">服務訂閱</h2>
         {offeredTypes.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setIsAddOpen(true)}
-            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-          >
+          <Button size="sm" onClick={() => setIsAddOpen(true)}>
             新增訂閱
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -105,24 +102,23 @@ export function ServiceSubscriptionsSection({ companyId }: Props) {
             )}
             {subscription.status === "Active" ? (
               <div className="flex shrink-0 gap-2">
-                <button
-                  type="button"
+                <Button
+                  size="sm"
                   disabled={renewMutation.isPending && renewMutation.variables === subscription.id}
                   onClick={() => renewMutation.mutate(subscription.id)}
-                  className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-60"
                 >
                   標記已續期
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
                   disabled={
                     cancelMutation.isPending && cancelMutation.variables === subscription.id
                   }
                   onClick={() => cancelMutation.mutate(subscription.id)}
-                  className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
                   取消訂閱
-                </button>
+                </Button>
               </div>
             ) : null}
           </div>
@@ -271,20 +267,12 @@ function AddSubscriptionDialog({
               />
             </div>
             <DialogFooter>
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium"
-              >
+              <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
                 取消
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-              >
+              </Button>
+              <Button type="submit" variant="primary" size="sm" disabled={saving}>
                 {saving ? "新增中…" : "新增訂閱"}
-              </button>
+              </Button>
             </DialogFooter>
           </form>
         )}

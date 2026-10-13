@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -204,9 +205,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         <p role="alert" className="text-sm text-destructive">
           客戶資料暫時無法載入，請稍後再試。
         </p>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/clients">
-          Back to clients
-        </Link>
+        <Button asChild>
+          <Link to="/clients">Back to clients</Link>
+        </Button>
       </main>
     );
   }
@@ -217,9 +218,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
     return (
       <main className="flex-1 space-y-3 p-6">
         <PageHeader eyebrow="案件與客戶" title="找不到客戶" />
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/clients">
-          Back to clients
-        </Link>
+        <Button asChild>
+          <Link to="/clients">Back to clients</Link>
+        </Button>
       </main>
     );
   }
@@ -231,15 +232,7 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
         title={client.companyName}
         subtitle={`CR ${client.crNumber} · BR ${client.brNumber}`}
         actions={
-          optionsQuery.data ? (
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(true)}
-              className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-            >
-              編輯客戶
-            </button>
-          ) : null
+          optionsQuery.data ? <Button onClick={() => setIsEditOpen(true)}>編輯客戶</Button> : null
         }
       />
 
@@ -281,13 +274,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">高級人員</h2>
-          <button
-            type="button"
-            onClick={() => setIsOfficerDialogOpen(true)}
-            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-          >
+          <Button size="sm" onClick={() => setIsOfficerDialogOpen(true)}>
             委任高級人員
-          </button>
+          </Button>
         </div>
         <div className="divide-y">
           {client.officers.map((officer) => (
@@ -310,14 +299,14 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   {officer.cessationDate ? "已終止" : "在任"}
                 </StatusPill>
                 {!officer.cessationDate ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => void handleCeaseOfficer(officer.id)}
                     disabled={ceasingOfficerId === officer.id}
-                    className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                   >
                     終止
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             </div>
@@ -331,13 +320,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">股東</h2>
-          <button
-            type="button"
-            onClick={() => setIsShareholdingDialogOpen(true)}
-            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-          >
+          <Button size="sm" onClick={() => setIsShareholdingDialogOpen(true)}>
             記錄股權
-          </button>
+          </Button>
         </div>
         <div className="divide-y">
           {client.shareholdings.map((shareholding) => (
@@ -357,14 +342,14 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   {shareholding.cessationDate ? "已終止" : "有效"}
                 </StatusPill>
                 {!shareholding.cessationDate ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => void handleCeaseShareholding(shareholding.id)}
                     disabled={ceasingShareholdingId === shareholding.id}
-                    className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                   >
                     終止
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             </div>
@@ -380,13 +365,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">重要控制人</h2>
-          <button
-            type="button"
-            onClick={() => setControllerDialog({ open: true })}
-            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-          >
+          <Button size="sm" onClick={() => setControllerDialog({ open: true })}>
             記錄重要控制人
-          </button>
+          </Button>
         </div>
         <div className="divide-y">
           {client.significantControllers.map((controller) => (
@@ -419,21 +400,20 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                 </StatusPill>
                 {!controller.cessationDate ? (
                   <>
-                    <button
-                      type="button"
+                    <Button
+                      size="sm"
                       onClick={() => setControllerDialog({ open: true, controller })}
-                      className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
                     >
                       編輯資料
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
                       onClick={() => void handleCeaseController(controller.id)}
                       disabled={ceasingControllerId === controller.id}
-                      className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                     >
                       終止
-                    </button>
+                    </Button>
                   </>
                 ) : null}
               </div>
@@ -448,13 +428,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">查閱要求</h2>
-          <button
-            type="button"
-            onClick={() => setIsInspectionDialogOpen(true)}
-            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-          >
+          <Button size="sm" onClick={() => setIsInspectionDialogOpen(true)}>
             記錄查閱要求
-          </button>
+          </Button>
         </div>
         <div className="divide-y">
           {client.inspectionRequests.map((request) => (
@@ -471,13 +447,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                   {request.resolvedAt ? "已處理" : "待處理"}
                 </StatusPill>
                 {!request.resolvedAt ? (
-                  <button
-                    type="button"
-                    onClick={() => setResolvingInspectionRequestId(request.id)}
-                    className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-                  >
+                  <Button size="sm" onClick={() => setResolvingInspectionRequestId(request.id)}>
                     處理
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             </div>
@@ -491,13 +463,9 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">聯絡人</h2>
-          <button
-            type="button"
-            onClick={() => setContactDialog({ open: true })}
-            className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-          >
+          <Button size="sm" onClick={() => setContactDialog({ open: true })}>
             新增聯絡人
-          </button>
+          </Button>
         </div>
         <div className="divide-y">
           {client.contacts.map((contact) => (
@@ -516,21 +484,17 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setContactDialog({ open: true, contact })}
-                  className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
-                >
+                <Button size="sm" onClick={() => setContactDialog({ open: true, contact })}>
                   編輯
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
                   onClick={() => void handleRemoveContact(contact.id)}
                   disabled={removingContactId === contact.id}
-                  className="rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
                   移除
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -554,13 +518,11 @@ export function ProductionClientDetail({ clientId }: { clientId: string }) {
                 到期日 {formatDate(entry.filingDueDate)}
               </span>
               <span>{entry.currentStatus}</span>
-              <Link
-                className="rounded-md border px-2 py-1 text-xs"
-                to="/annual-returns/$id"
-                params={{ id: entry.id }}
-              >
-                開啟案件
-              </Link>
+              <Button asChild size="sm">
+                <Link to="/annual-returns/$id" params={{ id: entry.id }}>
+                  開啟案件
+                </Link>
+              </Button>
             </div>
           ))}
           {client.annualReturnHistory.length === 0 ? (

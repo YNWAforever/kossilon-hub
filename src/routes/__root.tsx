@@ -17,6 +17,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { errorDetails } from "../lib/error-details";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppMobileNav } from "@/components/app-mobile-nav";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context-neon";
 import { getAuthenticatedActor } from "@/features/auth/neon-auth-rpc";
@@ -92,24 +93,23 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
         </details>
 
         <div className="mt-6 flex justify-center gap-2">
-          <button
+          <Button
+            variant="primary"
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             重試
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => {
               void navigator.clipboard?.writeText(details).then(() => setCopied(true));
             }}
-            className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-            type="button"
           >
             {copied ? "已複製" : "複製詳情"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

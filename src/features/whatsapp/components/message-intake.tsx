@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAnnualReturnCase, listAnnualReturnCasePage } from "@/features/annual-return/server-fns";
 import { annualReturnQueryKeys } from "@/features/annual-return/query-keys";
@@ -92,9 +93,9 @@ export function MessageIntake({
   const selectedCase = cases.data?.cases.find((candidate) => candidate.id === caseId);
   return (
     <div className="mt-3 space-y-3 border-t pt-3">
-      <button type="button" className="underline" onClick={() => setOpen((value) => !value)}>
+      <Button type="button" variant="link" onClick={() => setOpen((value) => !value)}>
         覆核訊息配對及附件
-      </button>
+      </Button>
       {open ? (
         <section aria-label="訊息收件覆核" className="space-y-3">
           <p className="text-xs text-muted-foreground">
@@ -122,8 +123,9 @@ export function MessageIntake({
                       className="block w-full border p-2"
                     />
                   </label>
-                  <button
+                  <Button
                     type="button"
+                    size="sm"
                     onClick={() => {
                       setQuery(search.trim());
                       setCursor(undefined);
@@ -131,7 +133,7 @@ export function MessageIntake({
                     }}
                   >
                     搜尋案件
-                  </button>
+                  </Button>
                   <label className="block">
                     目標客戶案件
                     <select
@@ -159,15 +161,16 @@ export function MessageIntake({
                     </select>
                   </label>
                   {cases.data?.nextCursor ? (
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
                       onClick={() => {
                         setCursor(cases.data!.nextCursor!);
                         setCaseId("");
                       }}
                     >
                       下一頁案件
-                    </button>
+                    </Button>
                   ) : null}
                   <label className="block">
                     配對確認原因
@@ -185,15 +188,17 @@ export function MessageIntake({
                       年度周年申報。只會配對此訊息。
                     </p>
                   ) : null}
-                  <button
+                  <Button
                     type="button"
+                    variant="primary"
+                    size="sm"
                     disabled={
                       !selectedCase || !reason.trim() || mapping.isPending || intake.isPending
                     }
                     onClick={() => mapping.mutate()}
                   >
                     批准案件配對
-                  </button>
+                  </Button>
                 </div>
               ) : null}
               {preview.data.media.length ? (
@@ -239,13 +244,14 @@ export function MessageIntake({
                   {media.documentId ? (
                     <p>已收到附件。掃描及覆核狀態可在案件文件流程查看。</p>
                   ) : media.kind === "file" ? (
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
                       disabled={!preview.data?.caseId || intake.isPending || mapping.isPending}
                       onClick={() => intake.mutate(media.id)}
                     >
                       將附件收入隔離區
-                    </button>
+                    </Button>
                   ) : (
                     <p>舊式媒體參考：須由供應商提供通用 fileId，或請客戶使用上載入口。</p>
                   )}

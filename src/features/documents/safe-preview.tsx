@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { downloadDocument } from "./server-fns";
 import { canApproveDocument, documentSafetyOf } from "./safety";
 import type { DocumentSummary } from "./repository";
@@ -46,14 +47,9 @@ export function SafeDocumentPreview({
   }
   return (
     <div>
-      <button
-        type="button"
-        className="rounded border px-3 py-2"
-        disabled={pending}
-        onClick={() => void preview()}
-      >
+      <Button type="button" disabled={pending} onClick={() => void preview()}>
         {pending ? "載入中…" : label}
-      </button>
+      </Button>
       {error ? <p role="alert">預覽未能載入或版本已更新，請重新載入案件。</p> : null}
       {source ? (
         source.type === "application/pdf" ? (

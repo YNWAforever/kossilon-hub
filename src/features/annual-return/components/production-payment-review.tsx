@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { listDocumentPage } from "@/features/documents/server-fns";
 import { SafeDocumentPreview } from "@/features/documents/safe-preview";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
@@ -115,22 +116,21 @@ export function ProductionPaymentReview({
         <p>沒有待覆核的付款憑證。</p>
       ) : null}
       {casesQuery.hasNextPage ? (
-        <button
-          className="rounded border px-3 py-2"
+        <Button
           disabled={casesQuery.isFetchingNextPage}
           onClick={() => void casesQuery.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多案件
-        </button>
+        </Button>
       ) : null}
       {documentsQuery.hasNextPage ? (
-        <button
-          className="min-h-11 rounded border px-3"
+        <Button
+          className="min-h-11"
           disabled={documentsQuery.isFetchingNextPage}
           onClick={() => void documentsQuery.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多付款憑證
-        </button>
+        </Button>
       ) : null}
       {documentsQuery.isFetchNextPageError ? (
         <p role="alert">下一頁付款憑證未能載入，請重試。</p>
@@ -283,27 +283,21 @@ function PaymentEvidenceRow({
                 className="ml-2 rounded border"
               />
             </label>
-            <button
-              type="button"
-              disabled={disabled || !amount || !date}
-              onClick={() => record.mutate()}
-              className="rounded border px-3 py-2 disabled:opacity-50"
-            >
+            <Button disabled={disabled || !amount || !date} onClick={() => record.mutate()}>
               儲存憑證資料
-            </button>
+            </Button>
           </>
         )}
         {!returned && (!entry || entry.status === "pending") ? (
           <>
             {entry ? (
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 disabled={disabled}
-                className="rounded bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50"
                 onClick={() => review.mutate("verified")}
               >
                 批准此筆憑證金額
-              </button>
+              </Button>
             ) : null}
             <label className="block">
               退回原因
@@ -326,14 +320,9 @@ function PaymentEvidenceRow({
               placeholder="指出需要補回或修正的內容"
               className="block w-full rounded border"
             />
-            <button
-              type="button"
-              disabled={disabled || !reason.trim()}
-              onClick={() => review.mutate("rejected")}
-              className="rounded border px-3 py-2 disabled:opacity-50"
-            >
+            <Button disabled={disabled || !reason.trim()} onClick={() => review.mutate("rejected")}>
               退回補傳
-            </button>
+            </Button>
           </>
         ) : null}
         {payment?.evidenceEntries

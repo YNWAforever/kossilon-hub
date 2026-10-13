@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CircleHelp, FileSearch, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import {
   describeSilence,
@@ -205,8 +206,8 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
                         </div>
 
                         {entry.resolvedByUserId ? null : (
-                          <button
-                            className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
+                          <Button
+                            size="sm"
                             disabled={locked || resolveMutation.isPending}
                             onClick={() =>
                               resolveMutation.mutate({
@@ -214,7 +215,6 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
                                 expectedDocumentVersionId: view.documentVersionId,
                               })
                             }
-                            type="button"
                           >
                             {entry.finding.outcome === "uncertain" ? (
                               <CircleHelp aria-hidden className="h-3.5 w-3.5" />
@@ -222,7 +222,7 @@ export function CaseFindings({ caseId, locked }: { caseId: string; locked: boole
                               <AlertTriangle aria-hidden className="h-3.5 w-3.5" />
                             )}
                             標記為已處理
-                          </button>
+                          </Button>
                         )}
                       </li>
                     );

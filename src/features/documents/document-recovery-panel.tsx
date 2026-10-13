@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import {
   createDocumentUploadIntent,
   finalizeDocumentUpload,
@@ -75,14 +76,9 @@ export function DocumentRecoveryPanel({
   return (
     <div className="space-y-2 text-sm">
       {!preview.data ? (
-        <button
-          type="button"
-          className="rounded-md border px-3 py-2"
-          disabled={preview.isPending}
-          onClick={() => preview.mutate()}
-        >
+        <Button type="button" disabled={preview.isPending} onClick={() => preview.mutate()}>
           預覽受控補傳
-        </button>
+        </Button>
       ) : null}
       {preview.isError ? <p role="alert">無法取得已授權預覽，請重新核對權限及來源。</p> : null}
       {preview.data && preview.data.availability !== "available" ? (
@@ -113,9 +109,9 @@ export function DocumentRecoveryPanel({
               className="mt-1 w-full rounded-md border bg-background p-2"
             />
           </label>
-          <button
+          <Button
             type="button"
-            className="rounded-md border px-3 py-2 disabled:opacity-50"
+            variant="primary"
             disabled={!file || !reason.trim() || attempted}
             onClick={() => {
               setAttempted(true);
@@ -123,7 +119,7 @@ export function DocumentRecoveryPanel({
             }}
           >
             批准並補傳
-          </button>
+          </Button>
         </div>
       ) : null}
       {preview.data?.availability === "available" ? (

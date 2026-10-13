@@ -16,6 +16,7 @@ import {
 } from "../lib/client-portal-store";
 import { ProductionWhatsAppAutomation } from "../features/annual-return/components/production-whatsapp-automation";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/whatsapp/automation")({
   component: WhatsAppAutomationRoute,
@@ -114,16 +115,15 @@ function DemoWhatsAppAutomationRoute() {
         eyebrow="通訊"
         title="WhatsApp 追件"
         actions={(["open", "sent", "all"] as const).map((value) => (
-          <button
+          <Button
             key={value}
-            className={`rounded-md border px-3 py-2 text-sm ${
-              filter === value ? "bg-primary text-primary-foreground" : "bg-background"
-            }`}
+            variant={filter === value ? "primary" : "outline"}
+            aria-pressed={filter === value}
             onClick={() => setFilter(value)}
             type="button"
           >
             {value === "open" ? "待發送" : value === "sent" ? "已發送" : "全部"}
-          </button>
+          </Button>
         ))}
       />
 
@@ -193,13 +193,9 @@ function AutomationRow({ row }: { row: AutomationQueueRow }) {
       />
       <Field label="預覽" value={draft.messagePreview} />
       <div className="flex justify-start lg:justify-end">
-        <button
-          className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-          disabled
-          type="button"
-        >
+        <Button disabled type="button">
           {draft.status === "sent" ? "已發送" : draft.status === "blocked" ? "受阻" : "立即發送"}
-        </button>
+        </Button>
       </div>
     </div>
   );

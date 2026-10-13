@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import {
   cancelCorporateChangeRequest,
@@ -93,22 +94,16 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
         title="公司變更申請"
         actions={
           <>
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => complete.mutate()}
               disabled={!canComplete || complete.isPending}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
               完成
-            </button>
-            <button
-              type="button"
-              onClick={() => cancel.mutate()}
-              disabled={!canCancel || cancel.isPending}
-              className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
-            >
+            </Button>
+            <Button onClick={() => cancel.mutate()} disabled={!canCancel || cancel.isPending}>
               取消申請
-            </button>
+            </Button>
           </>
         }
       />

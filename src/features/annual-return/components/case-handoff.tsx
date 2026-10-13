@@ -5,9 +5,9 @@ import { handoffFactLabel } from "../handoff";
 import { DocumentPicker } from "./scoped-pickers";
 import { DOCUMENT_CATEGORIES } from "@/features/documents/types";
 import { annualReturnQueryKeys } from "../query-keys";
+import { Button } from "@/components/ui/button";
 const categories = DOCUMENT_CATEGORIES;
 const control = "mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm";
-const button = "rounded-md border px-3 py-2 text-sm disabled:opacity-50";
 export function CaseHandoff({
   caseId,
   locked,
@@ -125,9 +125,8 @@ export function CaseHandoff({
               />
               已核對當前文件、付款及 manifest，批准此版本
             </label>
-            <button
+            <Button
               type="button"
-              className={button}
               disabled={disabled || !confirmed || !p?.sourceVersion || !p.manifestSha256}
               onClick={() =>
                 command.mutate({
@@ -139,7 +138,7 @@ export function CaseHandoff({
               }
             >
               批准當前套件
-            </button>
+            </Button>
           </div>
           {data?.handoffs.length ? (
             <>
@@ -172,9 +171,8 @@ export function CaseHandoff({
                   {h.manualRecordedAt} · 參考：{h.manualReference} · {h.manualNote}
                 </p>
               ) : null}
-              <button
+              <Button
                 type="button"
-                className={button}
                 disabled={
                   disabled ||
                   !current ||
@@ -185,7 +183,7 @@ export function CaseHandoff({
                 onClick={() => archive.mutate()}
               >
                 匯出已批准 ZIP（未提交）
-              </button>
+              </Button>
               {h?.status === "prepared" ? (
                 <>
                   <form
@@ -253,8 +251,8 @@ export function CaseHandoff({
                       onChange={setEvidenceId}
                       disabled={disabled}
                     />
-                    <button
-                      className={button}
+                    <Button
+                      type="submit"
                       disabled={
                         disabled ||
                         !current ||
@@ -264,7 +262,7 @@ export function CaseHandoff({
                       }
                     >
                       記錄人工提交（無系統收據）
-                    </button>
+                    </Button>
                   </form>
                   <label className="block text-sm">
                     撤回未提交套件原因
@@ -275,9 +273,8 @@ export function CaseHandoff({
                       onChange={(e) => setWithdrawNote(e.target.value)}
                     />
                   </label>
-                  <button
+                  <Button
                     type="button"
-                    className={button}
                     disabled={disabled || !withdrawNote.trim() || !p?.sourceVersion}
                     onClick={() =>
                       command.mutate({
@@ -289,7 +286,7 @@ export function CaseHandoff({
                     }
                   >
                     撤回此批准，重新覆核
-                  </button>
+                  </Button>
                 </>
               ) : null}
               {h?.manualRecordedAt || h?.providerAccepted ? (
@@ -325,9 +322,9 @@ export function CaseHandoff({
                   <p className="text-sm">
                     先在文件頁上載回件；附件會留在掃描隔離流程。核對不會自動記付款、已交件或結案。
                   </p>
-                  <a className="text-sm underline" href={`/documents?caseId=${caseId}`}>
-                    上載及覆核回件附件
-                  </a>
+                  <Button asChild variant="link" className="underline">
+                    <a href={`/documents?caseId=${caseId}`}>上載及覆核回件附件</a>
+                  </Button>
                   <label className="block text-sm">
                     回件指向的 manifest SHA256
                     <input
@@ -389,12 +386,12 @@ export function CaseHandoff({
                     requireVerified={false}
                     disabled={disabled}
                   />
-                  <button
-                    className={button}
+                  <Button
+                    type="submit"
                     disabled={disabled || (!!returnDocId && !evidence(returnDocId))}
                   >
                     登記人工回件，待核對
-                  </button>
+                  </Button>
                 </form>
               ) : null}
             </>
@@ -430,9 +427,8 @@ export function CaseHandoff({
                       }
                     />
                   </label>
-                  <button
+                  <Button
                     type="button"
-                    className={button}
                     disabled={
                       disabled ||
                       !(reconciliationNotes[r.id] ?? "").trim() ||
@@ -447,7 +443,7 @@ export function CaseHandoff({
                     }
                   >
                     核對原 manifest 及回件證據
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

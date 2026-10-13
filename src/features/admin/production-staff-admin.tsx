@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import {
   listStaff,
   updateStaff,
@@ -116,13 +117,12 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
         <p>沒有符合條件的員工紀錄。</p>
       ) : null}
       {staff.hasNextPage ? (
-        <button
-          className="rounded border px-3 py-2"
+        <Button
           disabled={staff.isFetchingNextPage}
           onClick={() => void staff.fetchNextPage({ cancelRefetch: false })}
         >
           載入更多員工
-        </button>
+        </Button>
       ) : null}
       {staff.isFetchNextPageError ? (
         <p role="alert">下一頁未能載入；保留已讀取資料，可重試。</p>
@@ -271,8 +271,8 @@ function StaffRow({
             </div>
           ) : null}
           {blocked ? <p>必須先完成轉交，才可停用、移隊或改為客戶。</p> : null}
-          <button
-            className="rounded border px-3 py-2 disabled:opacity-50"
+          <Button
+            variant="primary"
             disabled={
               mutation.isPending ||
               member.stateMismatch ||
@@ -283,7 +283,7 @@ function StaffRow({
             onClick={() => mutation.mutate()}
           >
             套用帳戶變更
-          </button>
+          </Button>
           {mutation.isError ? (
             <p role="alert">
               未能保存。身份、版本或未交工作可能已改變，請重新載入並核對；沒有自動重試。

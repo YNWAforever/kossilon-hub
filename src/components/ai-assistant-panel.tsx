@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 
 import {
   draftReply,
@@ -111,12 +112,9 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
               </p>
             )}
           </div>
-          <button
-            className="rounded-md border px-3 py-2 text-sm"
-            onClick={() => setGeneration((value) => value + 1)}
-          >
+          <Button variant="outline" onClick={() => setGeneration((value) => value + 1)}>
             重新產生
-          </button>
+          </Button>
         </div>
 
         <div className="max-w-none space-y-2 p-4 text-sm leading-6 text-foreground">
@@ -124,24 +122,18 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
         </div>
 
         <div className="flex flex-wrap gap-2 border-t p-4">
-          <button
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-            onClick={() => onInsert(draft.markdown)}
-          >
+          <Button variant="primary" onClick={() => onInsert(draft.markdown)}>
             插入回覆框
-          </button>
-          <button
-            className="rounded-md border px-3 py-2 text-sm"
-            onClick={() => onSend(draft.markdown)}
-          >
+          </Button>
+          <Button variant="outline" onClick={() => onSend(draft.markdown)}>
             直接發送
-          </button>
-          <button
-            className="rounded-md border px-3 py-2 text-sm"
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => void navigator.clipboard?.writeText(draft.markdown)}
           >
             複製
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -152,13 +144,11 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
               <h3 className="font-semibold">案件即時資料</h3>
               <p className="text-sm text-muted-foreground">{clientCase.companyName}</p>
             </div>
-            <Link
-              className="rounded-md border px-3 py-2 text-sm"
-              to="/annual-returns/$id"
-              params={{ id: clientCase.annualReturnCaseId }}
-            >
-              開啟
-            </Link>
+            <Button asChild variant="outline">
+              <Link to="/annual-returns/$id" params={{ id: clientCase.annualReturnCaseId }}>
+                開啟
+              </Link>
+            </Button>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div>
@@ -205,15 +195,18 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
         <h3 className="font-semibold">參考來源</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           {draft.sources.map((source) => (
-            <button
+            <Button
               key={source.id}
-              className="rounded-full border px-3 py-1 text-left text-xs"
+              variant={expandedSource === source.id ? "primary" : "outline"}
+              size="sm"
+              aria-expanded={expandedSource === source.id}
+              className="h-auto max-w-full shrink whitespace-normal rounded-full py-1 text-left"
               onClick={() =>
                 setExpandedSource(expandedSource === source.id ? undefined : source.id)
               }
             >
               {sourceTypeLabels[source.type]}：{source.label}
-            </button>
+            </Button>
           ))}
         </div>
         {expandedSource ? (
@@ -227,15 +220,16 @@ export function AiAssistantPanel({ enquiry, clientCase, onInsert, onSend }: AiAs
         <h3 className="font-semibold">相關常見問題</h3>
         <div className="mt-3 space-y-2">
           {relatedFaqs.map((faq) => (
-            <button
+            <Button
               key={faq.id}
-              className="w-full rounded-md border px-3 py-2 text-left text-sm hover:bg-muted"
+              variant="outline"
+              className="h-auto w-full justify-start whitespace-normal py-2 text-left"
               onClick={() =>
                 onSend(`Hi ${contactName},\n\n${faq.answer}\n\nRegards,\nKossilon team`)
               }
             >
               {faq.question}
-            </button>
+            </Button>
           ))}
         </div>
       </section>

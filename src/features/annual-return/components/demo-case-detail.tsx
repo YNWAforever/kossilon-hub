@@ -2,6 +2,7 @@ import { formatDate, formatDateTime, formatDueDate } from "@/lib/format-date";
 import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { daysUntil, findEnquiryForClient } from "@/lib/app-data";
 import {
   type AnnualReturnCase,
@@ -74,9 +75,9 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
       <main className="flex-1 space-y-4 p-6">
         <PageHeader eyebrow="案件與客戶" title="找不到案件" />
         <p className="text-sm text-muted-foreground">示範工作區內沒有這宗周年申報案件。</p>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-          返回周年申報
-        </Link>
+        <Button asChild>
+          <Link to="/annual-returns">返回周年申報</Link>
+        </Button>
       </main>
     );
   }
@@ -103,31 +104,30 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
         subtitle={`${caseItem.contactName} · ${caseItem.phone} · 申報基準日 ${formatDate(caseItem.basisDate)}`}
         actions={
           <>
-            <Link className="rounded-md border px-3 py-2 text-sm" to="/annual-returns">
-              返回
-            </Link>
-            <Link
-              className="rounded-md border px-3 py-2 text-sm"
-              to="/work-queue"
-              search={{
-                view: "team",
-                owner: "all",
-                workType: "all",
-                sla: "all",
-                priority: "all",
-                status: "all",
-              }}
-            >
-              分配及 SLA
-            </Link>
-            {enquiry ? (
+            <Button asChild>
+              <Link to="/annual-returns">返回</Link>
+            </Button>
+            <Button asChild>
               <Link
-                className="rounded-md border px-3 py-2 text-sm"
-                to="/whatsapp"
-                search={{ enquiry: enquiry.id }}
+                to="/work-queue"
+                search={{
+                  view: "team",
+                  owner: "all",
+                  workType: "all",
+                  sla: "all",
+                  priority: "all",
+                  status: "all",
+                }}
               >
-                詢問 AI
+                分配及 SLA
               </Link>
+            </Button>
+            {enquiry ? (
+              <Button asChild>
+                <Link to="/whatsapp" search={{ enquiry: enquiry.id }}>
+                  詢問 AI
+                </Link>
+              </Button>
             ) : null}
           </>
         }
@@ -232,13 +232,12 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                       {doc.received ? "已收到" : "缺少"}
                     </p>
                   </div>
-                  <button
-                    className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  <Button
+                    className="h-auto whitespace-normal py-2 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                     disabled
-                    type="button"
                   >
                     {doc.received ? "標記為缺少" : "標記為已收到"}
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -338,20 +337,19 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
             ) : null}
 
             <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <button
-                className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              <Button
+                className="disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 disabled
-                type="button"
               >
                 遞交交件套件
-              </button>
-              <button
-                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              </Button>
+              <Button
+                variant="primary"
+                className="disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 disabled
-                type="button"
               >
                 接納回條
-              </button>
+              </Button>
             </div>
           </section>
 
@@ -426,13 +424,12 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 value=""
               />
               <div className="flex justify-end">
-                <button
-                  className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                <Button
+                  className="disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   disabled
-                  type="button"
                 >
                   加入備註
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -485,20 +482,16 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
             </div>
 
             <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <Link
-                className="rounded-md border px-3 py-2 text-sm"
-                to="/documents"
-                search={{ caseId: caseItem.id }}
-              >
-                開啟存檔
-              </Link>
-              <Link
-                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-                to="/portal"
-                search={{ caseId: caseItem.id }}
-              >
-                開啟客戶入口
-              </Link>
+              <Button asChild>
+                <Link to="/documents" search={{ caseId: caseItem.id }}>
+                  開啟存檔
+                </Link>
+              </Button>
+              <Button asChild variant="primary">
+                <Link to="/portal" search={{ caseId: caseItem.id }}>
+                  開啟客戶入口
+                </Link>
+              </Button>
             </div>
           </section>
 
@@ -599,13 +592,12 @@ function FollowUpCard({
         <p className="text-xs text-muted-foreground">
           {eligibility.ok ? "按目前阻礙事項草擬" : eligibility.reason}
         </p>
-        <button
-          className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+        <Button
+          className="disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
           disabled
-          type="button"
         >
           立即發送
-        </button>
+        </Button>
       </div>
     </div>
   );

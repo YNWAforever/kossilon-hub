@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { DeadlinePill } from "@/components/deadline-pill";
@@ -67,13 +68,9 @@ export function ProductionIncorporationList() {
         subtitle="新香港公司註冊受理，由開立案件至公司註冊處批核。"
         actions={
           optionsQuery.data ? (
-            <button
-              type="button"
-              onClick={() => setIsCreateOpen(true)}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
+            <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
               開始公司註冊
-            </button>
+            </Button>
           ) : null
         }
       />
@@ -101,13 +98,11 @@ export function ProductionIncorporationList() {
                 <DeadlinePill dueDate={incorporationCase.targetCompletionDate} />
               ) : null}
               <span className="text-muted-foreground">{incorporationCase.ownerName}</span>
-              <Link
-                to="/incorporation/$id"
-                params={{ id: incorporationCase.id }}
-                className="rounded-md border px-2 py-1 text-xs"
-              >
-                開啟
-              </Link>
+              <Button asChild size="sm">
+                <Link to="/incorporation/$id" params={{ id: incorporationCase.id }}>
+                  開啟
+                </Link>
+              </Button>
             </div>
           ))}
           {cases.length === 0 ? (

@@ -2,6 +2,7 @@ import { ProductionPaymentReview } from "@/features/annual-return/components/pro
 import { type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 
 import {
@@ -97,8 +98,8 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
   const previousProofs = history.filter((candidate) => candidate.id !== proof?.id);
 
   return (
-    <div className="grid gap-3 px-4 py-4 text-sm lg:grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] lg:items-start">
-      <div className="min-w-0">
+    <div className="grid grid-cols-2 gap-3 px-4 py-4 text-sm lg:grid-cols-[minmax(0,1.4fr)_120px_120px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(200px,1fr)] lg:items-start">
+      <div className="col-span-2 min-w-0 lg:col-span-1">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
           公司
         </p>
@@ -138,7 +139,7 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
       <ProofCell proof={proof} previousProofs={previousProofs} />
       <ReviewOutcome proof={proof} closed={isClosed} />
 
-      <div className="min-w-0">
+      <div className="col-span-2 min-w-0 lg:col-span-1">
         <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
           操作
         </p>
@@ -176,14 +177,9 @@ function PaymentReviewRow({ caseItem, proof, history }: PaymentReviewRowProps) {
 
 function DemoAction({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <button
-      aria-label={label}
-      className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-      disabled
-      type="button"
-    >
+    <Button aria-label={label} disabled type="button">
       {children}
-    </button>
+    </Button>
   );
 }
 

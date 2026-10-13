@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -649,21 +650,17 @@ export function CreateCorporateChangeRequestDialog({
             {submitError && <p className="text-xs text-destructive">{submitError}</p>}
 
             <DialogFooter>
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => onOpenChange(false)}
                 disabled={submitting}
-                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium disabled:opacity-60"
               >
                 取消
-              </button>
-              <button
-                type="submit"
-                disabled={submitting || !isValid()}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-              >
+              </Button>
+              <Button type="submit" variant="primary" size="sm" disabled={submitting || !isValid()}>
                 {submitting ? "建立中…" : "建立申請"}
-              </button>
+              </Button>
             </DialogFooter>
           </form>
         )}

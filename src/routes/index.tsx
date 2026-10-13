@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/kpi-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { StatusPill } from "@/components/status-pill";
@@ -236,9 +237,9 @@ function DashboardPage() {
               </h2>
               <p className="text-xs text-muted-foreground">按到期日排序</p>
             </div>
-            <Link to="/annual-returns" className="text-xs font-medium text-primary hover:underline">
-              開啟案件板 →
-            </Link>
+            <Button asChild variant="link" className="text-xs">
+              <Link to="/annual-returns">開啟案件板 →</Link>
+            </Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -307,12 +308,13 @@ function DashboardPage() {
                 <p className="mt-1 text-xs text-status-yellow-text">
                   這不代表沒有逾期案件，請開啟案件板直接核對。
                 </p>
-                <Link
-                  to="/annual-returns"
-                  className="mt-3 inline-flex items-center rounded-md border border-status-yellow px-3 py-1.5 text-xs font-medium text-status-yellow-text"
+                <Button
+                  asChild
+                  size="sm"
+                  className="mt-3 border-status-yellow text-status-yellow-text"
                 >
-                  開啟案件板
-                </Link>
+                  <Link to="/annual-returns">開啟案件板</Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -329,12 +331,9 @@ function DashboardPage() {
                 <p className="mt-1 text-xs text-status-red-text">
                   {`${m.overdue} 宗周年申報已逾期。請立即分配或升級處理，以免被公司註冊處罰款。`}
                 </p>
-                <Link
-                  to="/annual-returns"
-                  className="mt-3 inline-flex items-center rounded-md bg-status-red px-3 py-1.5 text-xs font-medium text-white hover:bg-status-red/90"
-                >
-                  查看已逾期案件
-                </Link>
+                <Button asChild variant="destructive" size="sm" className="mt-3">
+                  <Link to="/annual-returns">查看已逾期案件</Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -353,13 +352,12 @@ function DashboardPage() {
 }
 
 function DigestActionLink({ item }: { item: DailyDigestItem }) {
-  const className =
-    "inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent";
-
   return (
-    <Link to={item.route.to} params={item.route.params} className={className}>
-      {item.actionLabel} <ArrowRight className="h-3 w-3" />
-    </Link>
+    <Button asChild size="sm" className="gap-1">
+      <Link to={item.route.to} params={item.route.params}>
+        {item.actionLabel} <ArrowRight className="h-3 w-3" />
+      </Link>
+    </Button>
   );
 }
 
