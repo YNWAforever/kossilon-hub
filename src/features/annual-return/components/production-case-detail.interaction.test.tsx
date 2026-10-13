@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { annualReturnQueryKeys } from "../query-keys";
 import type { AnnualReturnCase } from "../types";
 import { ProductionAnnualReturnCaseDetail } from "./production-case-detail";
@@ -47,6 +48,7 @@ vi.mock("@/features/documents/server-fns", () => ({
     nextCursor: null,
   }),
 }));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/annual-returns">{children}</a>,
 }));
@@ -306,6 +308,19 @@ describe("ProductionAnnualReturnCaseDetail", () => {
 
     expect(invalidateSpy).toHaveBeenCalled();
     expect(queryClient.getQueryData(annualReturnQueryKeys.detail(caseId))).toEqual(caseItem);
+    await waitFor(() =>
+      expect(vi.mocked(toast.success).mock.calls.map(([message]) => message)).toEqual(
+        expect.arrayContaining([
+          "已分配負責同事。",
+          "已更新案件狀態。",
+          "已更新付款。",
+          "已加入備註。",
+          "已排入 WhatsApp 提醒。",
+          "已準備文件套件。",
+          "已接納回條。",
+        ]),
+      ),
+    );
   });
 
   it("disables only the owner control while assignment is pending", async () => {

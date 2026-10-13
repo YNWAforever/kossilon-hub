@@ -9,6 +9,7 @@ import { CaseParties } from "./case-parties";
 import { useEffect, useState } from "react";
 import { useMutation, useMutationState, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -151,14 +152,21 @@ function CaseDetail({
     queryClient.setQueryData(annualReturnQueryKeys.detail(caseId), caseItem);
     void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.all });
   };
+  // Commands used to succeed silently: the form simply re-rendered, which
+  // left it to the user to spot whether anything happened. Checklist rows are
+  // the exception — their status pill changes in place, right where you clicked.
+  const updateCaseCacheAndConfirm = (message: string) => (caseItem: AnnualReturnCase) => {
+    updateCaseCache(caseItem);
+    toast.success(message);
+  };
 
   const ownerMutation = useMutation({
     mutationFn: actions.assignOwner,
-    onSuccess: updateCaseCache,
+    onSuccess: updateCaseCacheAndConfirm("已分配負責同事。"),
   });
   const statusMutation = useMutation({
     mutationFn: actions.updateStatus,
-    onSuccess: updateCaseCache,
+    onSuccess: updateCaseCacheAndConfirm("已更新案件狀態。"),
   });
   const checklistMutation = useMutation({
     mutationKey: checklistMutationKey,
@@ -167,29 +175,31 @@ function CaseDetail({
   });
   const paymentMutation = useMutation({
     mutationFn: actions.updatePayment,
-    onSuccess: updateCaseCache,
+    onSuccess: updateCaseCacheAndConfirm("已更新付款。"),
   });
   const noteMutation = useMutation({
     mutationFn: actions.addNote,
     onSuccess: () => {
       setNote("");
+      toast.success("已加入備註。");
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notes(caseId) });
     },
   });
   const reminderMutation = useMutation({
     mutationFn: actions.sendReminder,
     onSuccess: () => {
+      toast.success("已排入 WhatsApp 提醒。");
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.detail(caseId) });
       void queryClient.invalidateQueries({ queryKey: annualReturnQueryKeys.notifications(caseId) });
     },
   });
   const packetMutation = useMutation({
     mutationFn: actions.submitPacket,
-    onSuccess: updateCaseCache,
+    onSuccess: updateCaseCacheAndConfirm("已準備文件套件。"),
   });
   const receiptMutation = useMutation({
     mutationFn: actions.acceptReceipt,
-    onSuccess: updateCaseCache,
+    onSuccess: updateCaseCacheAndConfirm("已接納回條。"),
   });
 
   const caseItem = caseQuery.data;
