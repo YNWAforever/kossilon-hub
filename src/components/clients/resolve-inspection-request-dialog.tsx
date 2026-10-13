@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -70,9 +71,9 @@ export function ResolveInspectionRequestDialog({
             <label className={labelClass} htmlFor="resolve-inspection-note">
               處理備註
             </label>
-            <textarea
+            <Textarea
               id="resolve-inspection-note"
-              className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none"
+              className="w-full"
               rows={3}
               value={resolutionNote}
               onChange={(event) => setResolutionNote(event.target.value)}
@@ -80,7 +81,11 @@ export function ResolveInspectionRequestDialog({
             />
           </div>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p id="resolve-inspection-error" role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
 
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>

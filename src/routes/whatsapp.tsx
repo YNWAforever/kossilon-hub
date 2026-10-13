@@ -5,6 +5,7 @@ import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router"
 import { AiAssistantPanel } from "../components/ai-assistant-panel";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/field";
 import { ProductionWhatsAppInbox } from "../features/whatsapp/components/production-inbox";
 import {
   enquiries,
@@ -114,8 +115,8 @@ function DemoWhatsAppInbox() {
               {notice}
             </p>
           ) : null}
-          <textarea
-            className="min-h-32 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm"
+          <Textarea
+            className="min-h-32 w-full resize-y"
             placeholder="輸入回覆，或插入 AI 草稿…"
             value={composer}
             onChange={(event) => setComposer(event.target.value)}

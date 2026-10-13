@@ -12,6 +12,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { Download, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { labelValue } from "@/lib/format-label";
 import { downloadDocument, listDocumentPage } from "../features/documents/server-fns";
@@ -222,8 +223,8 @@ function DocumentsRoute() {
       {dataMode === "production" ? (
         <label className="block text-sm">
           搜尋全範圍案件
-          <input
-            className="min-h-11 ml-2 rounded border px-3"
+          <Input
+            className="min-h-11 ml-2"
             value={caseQueryText}
             onChange={(event) => setCaseQueryText(event.target.value)}
           />
@@ -269,9 +270,9 @@ function DocumentsRoute() {
       {dataMode === "demo" ? (
         <section className="rounded-lg border bg-card">
           <div className="grid gap-3 border-b p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
-            <input
+            <Input
               aria-label="搜尋文件"
-              className="rounded-md border bg-background px-3 py-2 text-sm sm:col-span-2 lg:col-span-1"
+              className="w-full sm:col-span-2 lg:col-span-1"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="搜尋公司、聯絡人、標題或檔案名稱"
               value={query}
@@ -306,9 +307,9 @@ function DocumentsRoute() {
               onChange={setStatus}
               values={["required", "uploaded", "superseded", "accepted", "rejected", "generated"]}
             />
-            <select
+            <Select
               aria-label="按案件篩選"
-              className="rounded-md border bg-background px-3 py-2 text-sm"
+              className="w-full"
               value={caseFilter}
               onChange={(event) => setCaseFilter(event.target.value)}
             >
@@ -318,7 +319,7 @@ function DocumentsRoute() {
                   {caseItem.companyName}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1.5fr)_72px] gap-3 border-b px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
@@ -366,9 +367,9 @@ function FilterSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <select
+    <Select
       aria-label={label}
-      className="rounded-md border bg-background px-3 py-2 text-sm"
+      className="w-full"
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >
@@ -378,7 +379,7 @@ function FilterSelect({
           {labelValue(item)}
         </option>
       ))}
-    </select>
+    </Select>
   );
 }
 
@@ -471,9 +472,9 @@ function ReviewCell({
         </div>
         {isRejecting ? (
           <div className="space-y-2">
-            <select
+            <Select
               aria-label={`「${row.title}」的退回原因`}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              className="w-full"
               value={reasonCode}
               onChange={(event) =>
                 setReasonCode(event.target.value as ClientPortalReviewReasonCode)
@@ -484,10 +485,10 @@ function ReviewCell({
                   {reason.label}
                 </option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               aria-label={`「${row.title}」的覆核備註（選填）`}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              className="w-full"
               value={note}
               onChange={(event) => setNote(event.target.value)}
               placeholder="覆核備註（選填）"
@@ -576,10 +577,9 @@ function ProductionDocumentsSection({
           <label className="sr-only" htmlFor="production-case-filter">
             篩選案件
           </label>
-          <select
+          <Select
             id="production-case-filter"
             aria-label="按案件篩選正式文件"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
             value={selectedCaseId ?? "all"}
             disabled={casesLoading}
             onChange={(event) => onSelectCase(event.target.value)}
@@ -590,7 +590,7 @@ function ProductionDocumentsSection({
                 {item.companyName} · {item.returnYear}
               </option>
             ))}
-          </select>
+          </Select>
           <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">Neon + R2</span>
         </div>
       </div>
@@ -641,9 +641,10 @@ function ProductionDocumentsSection({
                 <span>{labelValue(document.reviewStatus)}</span>
                 {isChecklistEvidence && document.reviewStatus === "pending" ? (
                   caseItem ? (
-                    <select
+                    <Select
+                      size="sm"
                       aria-label={`「${document.fileName}」對應的清單項目`}
-                      className="mt-2 w-full rounded-md border bg-background px-2 py-1 text-xs"
+                      className="mt-2 w-full"
                       value={checklistItemId}
                       onChange={(event) =>
                         setChecklistItemIds((current) => ({
@@ -658,7 +659,7 @@ function ProductionDocumentsSection({
                           {item.itemLabel}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   ) : (
                     <p className="mt-1 text-xs text-muted-foreground">
                       請先在上方選擇一個案件，才可覆核清單證明文件。
@@ -890,10 +891,11 @@ function ReviewActions({
           <label className="sr-only" htmlFor={`reject-reason-${record.id}`}>
             退回原因
           </label>
-          <select
+          <Select
+            size="sm"
             id={`reject-reason-${record.id}`}
             aria-label={`「${record.fileName}」的退回原因`}
-            className="w-full rounded-md border bg-background px-2 py-1 text-sm"
+            className="w-full"
             value={reasonCode}
             onChange={(event) => setReasonCode(event.target.value as DocumentRejectionReasonCode)}
           >
@@ -902,14 +904,14 @@ function ReviewActions({
                 {reason.label}
               </option>
             ))}
-          </select>
+          </Select>
           <label className="sr-only" htmlFor={`reject-note-${record.id}`}>
             給客戶的說明
           </label>
-          <textarea
+          <Textarea
             id={`reject-note-${record.id}`}
             aria-label={`給客戶的「${record.fileName}」說明`}
-            className="w-full rounded-md border bg-background px-2 py-1 text-sm"
+            className="w-full"
             placeholder="給客戶的說明（例如：第 2 頁未有董事簽署）"
             rows={2}
             value={note}

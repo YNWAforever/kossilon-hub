@@ -5,6 +5,7 @@ import { Link, createFileRoute, useNavigate, type SearchSchemaInput } from "@tan
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   getAnnualReturnWorkPage,
   getAnnualReturnWorkMetrics,
@@ -88,8 +89,8 @@ function TodayRoute() {
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-col gap-1 text-sm">
           搜尋今日工作
-          <input
-            className="min-h-11 rounded-md border px-3"
+          <Input
+            className="min-h-11"
             value={search.q}
             onChange={(event) =>
               void navigate({
@@ -101,8 +102,8 @@ function TodayRoute() {
         </label>
         <label className="flex flex-col gap-1 text-sm">
           排列
-          <select
-            className="min-h-11 rounded-md border px-3"
+          <Select
+            className="min-h-11"
             value={search.sort}
             onChange={(event) =>
               void navigate({
@@ -117,7 +118,7 @@ function TodayRoute() {
           >
             <option value="deadline">到期日先後</option>
             <option value="company">公司名稱</option>
-          </select>
+          </Select>
         </label>
       </div>
       {viewsQuery.isPending ? (

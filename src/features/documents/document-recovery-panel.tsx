@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/field";
 import {
   createDocumentUploadIntent,
   finalizeDocumentUpload,
@@ -100,13 +101,13 @@ export function DocumentRecoveryPanel({
           </label>
           <label className="block">
             核對原因
-            <textarea
+            <Textarea
               aria-label="核對原因"
               maxLength={500}
               value={reason}
               disabled={attempted}
               onChange={(event) => setReason(event.target.value)}
-              className="mt-1 w-full rounded-md border bg-background p-2"
+              className="mt-1 w-full"
             />
           </label>
           <Button

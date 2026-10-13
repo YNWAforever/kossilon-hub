@@ -11,6 +11,7 @@ import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import {
   CheckSquare,
   FileCheck2,
@@ -300,9 +301,9 @@ export function ProductionAnnualReturnCaseDetail({
                   案件狀態
                 </label>
                 <div className="mt-1 flex gap-2">
-                  <select
+                  <Select
                     id="case-status"
-                    className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                    className="min-w-0 flex-1"
                     value={nextStatus}
                     onChange={(event) => setNextStatus(event.target.value as AnnualReturnStatus)}
                   >
@@ -311,7 +312,7 @@ export function ProductionAnnualReturnCaseDetail({
                         {annualReturnStatusLabel(status)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   <Button
                     disabled={
                       locked || statusMutation.isPending || nextStatus === caseItem.currentStatus
@@ -386,9 +387,9 @@ export function ProductionAnnualReturnCaseDetail({
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">付款</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto]">
-              <select
+              <Select
                 aria-label="付款狀態"
-                className="rounded-md border bg-background px-3 py-2 text-sm"
+                className="w-full"
                 value={paymentStatus}
                 onChange={(event) => setPaymentStatus(event.target.value as PaymentStatus)}
               >
@@ -397,7 +398,7 @@ export function ProductionAnnualReturnCaseDetail({
                     {paymentStatusLabel(status)}
                   </option>
                 ))}
-              </select>
+              </Select>
               <DocumentPicker
                 actorScope={actorScope}
                 id="payment-proof-document"
@@ -470,9 +471,9 @@ export function ProductionAnnualReturnCaseDetail({
           <section className="pb-2">
             <h2 className="text-base font-semibold">接納遞交回條</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-              <input
+              <Input
                 aria-label="遞交編號"
-                className="min-w-0 rounded-md border bg-background px-3 py-2 text-sm"
+                className="w-full min-w-0"
                 placeholder="遞交編號"
                 value={filingReference}
                 onChange={(event) => setFilingReference(event.target.value)}
@@ -514,9 +515,9 @@ export function ProductionAnnualReturnCaseDetail({
         <aside className="space-y-4 border-t pt-4 xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
           <section className="border-b pb-4">
             <h2 className="text-base font-semibold">備註</h2>
-            <textarea
+            <Textarea
               aria-label="案件備註"
-              className="mt-3 min-h-24 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm"
+              className="mt-3 min-h-24 w-full resize-y"
               value={note}
               onChange={(event) => setNote(event.target.value)}
             />
@@ -596,16 +597,16 @@ export function ProductionAnnualReturnCaseDetail({
           <section>
             <h2 className="text-base font-semibold">WhatsApp 提醒</h2>
             <div className="mt-3 space-y-2">
-              <input
+              <Input
                 aria-label="提醒收件人姓名"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                className="w-full"
                 placeholder="收件人姓名"
                 value={recipientName}
                 onChange={(event) => setRecipientName(event.target.value)}
               />
-              <input
+              <Input
                 aria-label="提醒電話號碼"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                className="w-full"
                 placeholder="+852..."
                 value={recipientPhone}
                 onChange={(event) => setRecipientPhone(event.target.value)}

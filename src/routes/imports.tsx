@@ -6,6 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { NarApplyPanel } from "@/features/nar-import/apply-panel";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import type { DataMode } from "@/features/runtime/data-mode";
@@ -232,9 +233,9 @@ function ImportsWorkspace({
           </label>
           <label className="grid gap-1 text-sm">
             申報年度
-            <input
+            <Input
               aria-label="申報年度"
-              className="rounded-md border bg-background px-3 py-2"
+              className="w-full"
               type="number"
               min={1900}
               max={2100}
@@ -244,9 +245,9 @@ function ImportsWorkspace({
           </label>
           <label className="grid gap-1 text-sm">
             工作表（可留空）
-            <input
+            <Input
               aria-label="工作表名稱"
-              className="rounded-md border bg-background px-3 py-2"
+              className="w-full"
               placeholder="8.2025"
               value={sheetName}
               onChange={(event) => setSheetName(event.target.value)}
@@ -285,7 +286,7 @@ function ImportsWorkspace({
           <p>舊版本沒有保存選定年度。檔名不是年度批准證據；確認後不可更改。</p>
           <label>
             已覆核年度
-            <input
+            <Input
               aria-label="既有批次已覆核年度"
               type="number"
               min="1900"
@@ -296,7 +297,7 @@ function ImportsWorkspace({
           </label>
           <label>
             來源及確認理由
-            <textarea
+            <Textarea
               minLength={10}
               maxLength={1000}
               value={legacyReason}
@@ -389,10 +390,10 @@ function ImportsWorkspace({
                     <label className="sr-only" htmlFor={`map-${row.id}`}>
                       對應公司
                     </label>
-                    <select
+                    <Select
+                      size="sm"
                       id={`map-${row.id}`}
                       aria-label={`將客戶編號 ${row.externalClientId} 對應公司`}
-                      className="rounded-md border bg-background px-2 py-1 text-sm"
                       defaultValue=""
                       onChange={(event) => {
                         if (!event.target.value) return;
@@ -409,7 +410,7 @@ function ImportsWorkspace({
                           {company.companyName} · {company.crNumber}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     <span className="text-xs text-muted-foreground">
                       預覽會重新核對最新映射；更改既有映射必須再確認。
                     </span>

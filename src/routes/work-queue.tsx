@@ -7,6 +7,7 @@ import { AlertTriangle, Check, Clock3, Search, UserRoundPlus } from "lucide-reac
 import { DemoUnavailable } from "@/components/demo-unavailable";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { BulkFilters } from "@/features/bulk-operations/types";
 import {
@@ -237,13 +238,13 @@ export function WorkQueueRoute() {
             ))}
           </nav>
           <label className="relative block w-full lg:w-80">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <span className="sr-only">搜尋工作隊列</span>
-            <input
+            <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="搜尋案件或工作類型"
-              className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
+              className="w-full pl-9"
             />
           </label>
         </div>
@@ -552,7 +553,7 @@ function AssignmentDialog({
           </DialogHeader>
         </div>
         <div className="max-h-[55vh] space-y-2 overflow-y-auto p-5">
-          <select
+          <Select
             aria-label="分配角色"
             value={target}
             onChange={(event) => {
@@ -563,7 +564,7 @@ function AssignmentDialog({
           >
             <option value="owner">負責同事</option>
             <option value="reviewer">覆核人</option>
-          </select>
+          </Select>
           {recommendations.isError ? <p role="alert">可分配名單未能載入，請重新載入。</p> : null}
           {recommendations.isLoading ? (
             <p className="text-sm text-muted-foreground">建議人選載入中…</p>
@@ -578,12 +579,12 @@ function AssignmentDialog({
             />
           ))}
           {requiresReason ? (
-            <textarea
+            <Textarea
               aria-label="例外理由"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               placeholder="不選首選人選或超出工作量的理由"
-              className="mt-3 min-h-20 w-full rounded-md border border-input bg-background p-3 text-sm"
+              className="mt-3 min-h-20 w-full"
             />
           ) : null}
           {assign.isError ? (
@@ -630,13 +631,13 @@ function AcknowledgementDialog({
           <DialogTitle>確認知悉升級</DialogTitle>
           <DialogDescription>記錄已覆核的內容，以及「{item.title}」的下一步。</DialogDescription>
         </DialogHeader>
-        <textarea
+        <Textarea
           autoFocus
           aria-label="確認知悉備註"
           value={note}
           onChange={(event) => setNote(event.target.value)}
           placeholder="覆核結果及下一步"
-          className="min-h-24 w-full rounded-md border border-input bg-background p-3 text-sm"
+          className="min-h-24 w-full"
         />
         {acknowledge.isError ? (
           <p className="text-sm text-destructive">未能儲存確認知悉記錄。</p>
@@ -730,14 +731,15 @@ function FilterSelect({
   children: React.ReactNode;
 }) {
   return (
-    <select
+    <Select
+      size="sm"
       aria-label={label}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+      className="w-full"
     >
       {children}
-    </select>
+    </Select>
   );
 }
 

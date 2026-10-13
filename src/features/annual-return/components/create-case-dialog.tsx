@@ -15,6 +15,7 @@ import { createAnnualReturnCase } from "../server-fns";
 import type { EligibleCompanyForCase } from "../repository";
 import { dataOriginLabel } from "@/features/clients/data-origin";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 
 type Props = {
   companySearch?: string;
@@ -78,8 +79,6 @@ function emptyForm(
   };
 }
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 export function CreateCaseDialog({
@@ -166,8 +165,9 @@ export function CreateCaseDialog({
         {onCompanySearch ? (
           <label className="text-sm">
             搜尋全範圍可建立案件的公司
-            <input
-              className={inputClass}
+            <Input
+              size="sm"
+              className="w-full"
               value={companySearch ?? ""}
               onChange={(event) => onCompanySearch(event.target.value)}
             />
@@ -197,9 +197,10 @@ export function CreateCaseDialog({
               <label className={labelClass} htmlFor="case-company">
                 公司
               </label>
-              <select
+              <Select
                 id="case-company"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={selectedCompany ? form.companyId : ""}
                 onChange={(event) => selectCompany(event.target.value)}
                 required
@@ -215,7 +216,7 @@ export function CreateCaseDialog({
                     {dataOriginLabel(company.dataOrigin)}
                   </option>
                 ))}
-              </select>
+              </Select>
               {selectedCompany ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   申報基準日 {formatDate(selectedCompany.annualReturnBasisDate)} · 團隊{" "}
@@ -228,9 +229,10 @@ export function CreateCaseDialog({
               <label className={labelClass} htmlFor="case-template">
                 清單模板
               </label>
-              <select
+              <Select
                 id="case-template"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.templateId}
                 onChange={(event) => set("templateId", event.target.value)}
                 required
@@ -240,16 +242,17 @@ export function CreateCaseDialog({
                     {template.name} — {template.serviceType}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
               <label className={labelClass} htmlFor="case-owner">
                 負責同事
               </label>
-              <select
+              <Select
                 id="case-owner"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.ownerId}
                 onChange={(event) => set("ownerId", event.target.value)}
                 required
@@ -259,7 +262,7 @@ export function CreateCaseDialog({
                     {owner.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -267,9 +270,10 @@ export function CreateCaseDialog({
                 <label className={labelClass} htmlFor="case-invoice">
                   發票編號
                 </label>
-                <input
+                <Input
                   id="case-invoice"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.invoiceNumber}
                   onChange={(event) => set("invoiceNumber", event.target.value)}
                   required
@@ -279,12 +283,13 @@ export function CreateCaseDialog({
                 <label className={labelClass} htmlFor="case-fee">
                   費用（HKD）
                 </label>
-                <input
+                <Input
                   id="case-fee"
                   type="number"
                   min="1"
                   step="1"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.feeAmount}
                   onChange={(event) => set("feeAmount", event.target.value)}
                   required

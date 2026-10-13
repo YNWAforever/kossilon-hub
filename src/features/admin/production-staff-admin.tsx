@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   listStaff,
   updateStaff,
@@ -56,27 +57,37 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
       <section aria-label="員工篩選" className="flex flex-wrap gap-3">
         <label>
           搜尋
-          <input
+          <Input
             aria-label="搜尋員工"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="ml-2 rounded border"
+            className="ml-2"
           />
         </label>
         <label>
           角色
-          <select aria-label="按角色篩選" value={role} onChange={(e) => setRole(e.target.value)}>
+          <Select
+            className="ml-2"
+            aria-label="按角色篩選"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          >
             <option value="all">全部</option>
             {STAFF_ROLES.map((r) => (
               <option key={r} value={r}>
                 {STAFF_ROLE_LABELS[r]}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label>
           團隊
-          <select aria-label="按團隊篩選" value={team} onChange={(e) => setTeam(e.target.value)}>
+          <Select
+            className="ml-2"
+            aria-label="按團隊篩選"
+            value={team}
+            onChange={(e) => setTeam(e.target.value)}
+          >
             <option value="all">全部</option>
             {teams.data?.map((t) => (
               <option key={t.id} value={t.id}>
@@ -84,11 +95,12 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
                 {!t.active ? "（停用）" : ""}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label>
           狀態
-          <select
+          <Select
+            className="ml-2"
             aria-label="按狀態篩選"
             value={active}
             onChange={(e) => setActive(e.target.value)}
@@ -96,7 +108,7 @@ export function ProductionStaffAdmin({ actorScope }: { actorScope: string }) {
             <option value="all">全部</option>
             <option value="true">有效</option>
             <option value="false">停用</option>
-          </select>
+          </Select>
         </label>
       </section>
       {staff.isError || teams.isError ? (
@@ -198,7 +210,8 @@ function StaffRow({
         <div className="space-y-3 py-3">
           <label>
             帳戶角色
-            <select
+            <Select
+              className="ml-2"
               aria-label={`${member.displayName} 的帳戶角色`}
               value={role}
               onChange={(e) => setRole(e.target.value as typeof role)}
@@ -208,11 +221,12 @@ function StaffRow({
                   {STAFF_ROLE_LABELS[r]}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label>
             所屬團隊
-            <select
+            <Select
+              className="ml-2"
               aria-label={`${member.displayName} 的所屬團隊`}
               value={teamId}
               onChange={(e) => setTeamId(e.target.value)}
@@ -224,7 +238,7 @@ function StaffRow({
                   {!t.active ? "（停用）" : ""}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="block">
             <input

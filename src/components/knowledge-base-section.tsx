@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { parseFaqImport, SAMPLE_CSV, type ImportRow } from "@/lib/faq-import";
 
 const categoryTone = (c: FaqCategory) =>
@@ -97,18 +98,19 @@ function FaqManager() {
       <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
         <div className="relative flex-1 min-w-40">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Input
+            size="sm"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="搜尋問題、答案或標籤…"
-            className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+            className="w-full pl-8"
           />
         </div>
-        <select
+        <Select
+          size="sm"
           aria-label="按類別篩選常見問題"
           value={category}
           onChange={(e) => setCategory(e.target.value as FaqCategory | "All")}
-          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="All">全部類別</option>
           {FAQ_CATEGORIES.map((c) => (
@@ -116,7 +118,7 @@ function FaqManager() {
               {categoryLabels[c]}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <ul className="max-h-[520px] divide-y divide-border overflow-y-auto">
@@ -196,21 +198,21 @@ function FaqRow({
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               問題
             </span>
-            <input
+            <Input
               value={f.question}
               onChange={(e) => kbStore.updateFaq(f.id, { question: e.target.value })}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full"
             />
           </label>
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               答案（Markdown）
             </span>
-            <textarea
+            <Textarea
               value={f.answer}
               onChange={(e) => kbStore.updateFaq(f.id, { answer: e.target.value })}
               rows={5}
-              className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
+              className="w-full resize-y font-mono text-xs"
             />
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -218,25 +220,25 @@ function FaqRow({
               <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 類別
               </span>
-              <select
+              <Select
                 value={f.category}
                 onChange={(e) =>
                   kbStore.updateFaq(f.id, { category: e.target.value as FaqCategory })
                 }
-                className="w-full rounded-md border border-border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="w-full"
               >
                 {FAQ_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {categoryLabels[c]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="block">
               <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 標籤（以逗號分隔）
               </span>
-              <input
+              <Input
                 value={f.tags.join(", ")}
                 onChange={(e) =>
                   kbStore.updateFaq(f.id, {
@@ -246,7 +248,7 @@ function FaqRow({
                       .filter(Boolean),
                   })
                 }
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="w-full"
               />
             </label>
           </div>
@@ -400,21 +402,21 @@ function DocRow({ d }: { d: ReferenceDoc }) {
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               標題
             </span>
-            <input
+            <Input
               value={d.title}
               onChange={(e) => kbStore.updateDoc(d.id, { title: e.target.value })}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full"
             />
           </label>
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               摘要
             </span>
-            <textarea
+            <Textarea
               value={d.summary}
               onChange={(e) => kbStore.updateDoc(d.id, { summary: e.target.value })}
               rows={2}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+              className="w-full resize-none text-xs"
             />
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -422,19 +424,19 @@ function DocRow({ d }: { d: ReferenceDoc }) {
               <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 類別
               </span>
-              <select
+              <Select
                 value={d.category}
                 onChange={(e) =>
                   kbStore.updateDoc(d.id, { category: e.target.value as FaqCategory })
                 }
-                className="w-full rounded-md border border-border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="w-full"
               >
                 {FAQ_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {categoryLabels[c]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="inline-flex items-end gap-2 text-xs">
               <input
@@ -573,7 +575,7 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               或貼上 CSV／JSON
             </span>
-            <textarea
+            <Textarea
               value={text}
               onChange={(e) => {
                 setText(e.target.value);
@@ -582,7 +584,7 @@ function FaqImportDialog({ onClose }: { onClose: () => void }) {
               onBlur={() => text.trim() && runParse(text, filename)}
               rows={6}
               placeholder={SAMPLE_CSV}
-              className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
+              className="w-full resize-y font-mono text-xs"
             />
           </label>
 

@@ -12,6 +12,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Download, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { formatDate, formatDateTime } from "@/lib/format-date";
@@ -148,8 +149,8 @@ function PortalRoute() {
           </p>
           <label className="block text-sm">
             搜尋全範圍案件
-            <input
-              className="min-h-11 ml-2 rounded border px-3"
+            <Input
+              className="min-h-11 ml-2"
               value={caseSearch}
               onChange={(event) => setCaseSearch(event.target.value)}
             />
@@ -159,9 +160,9 @@ function PortalRoute() {
           </label>
           <label className="block text-sm">
             選擇案件
-            <select
+            <Select
               aria-label="選擇案件"
-              className="ml-2 rounded-md border bg-background px-3 py-2"
+              className="ml-2"
               value=""
               onChange={(event) => {
                 const id = parseEntityId(event.target.value);
@@ -174,7 +175,7 @@ function PortalRoute() {
                   {item.companyName} · {item.returnYear}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           {pickerQuery.isError ? (
             <p role="alert" className="text-sm text-destructive">
@@ -230,9 +231,8 @@ function PortalRoute() {
         title={selectedCase.companyName}
         subtitle={`周年申報到期日 ${formatDate(selectedCase.dueDate)} · 交件套件：${labelValue(packetStatus)}`}
         actions={
-          <select
+          <Select
             aria-label="選擇客戶入口案件"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
             value={selectedCase.id}
             onChange={(event) => {
               setWarning(undefined);
@@ -246,7 +246,7 @@ function PortalRoute() {
                 {caseItem.companyName}
               </option>
             ))}
-          </select>
+          </Select>
         }
       />
 
@@ -868,8 +868,8 @@ function ScopedDocumentPanel({
           <div className="mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end">
             <label className="grid gap-1 text-sm">
               類別
-              <select
-                className="rounded-md border bg-background px-3 py-2"
+              <Select
+                className="w-full"
                 value={category}
                 onChange={(event) => setCategory(event.target.value as DocumentCategory)}
               >
@@ -878,14 +878,14 @@ function ScopedDocumentPanel({
                     {labelValue(item)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             {requirements.length > 0 ? (
               <label className="grid gap-1 text-sm">
                 回應哪一項要求
-                <select
+                <Select
                   aria-label="回應哪一項要求"
-                  className="rounded-md border bg-background px-3 py-2"
+                  className="w-full"
                   value={checklistItemId}
                   onChange={(event) => setChecklistItemId(event.target.value)}
                 >
@@ -895,7 +895,7 @@ function ScopedDocumentPanel({
                       {requirement.itemLabel}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             ) : null}
             <label className="grid gap-1 text-sm">

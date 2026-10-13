@@ -7,6 +7,7 @@ import { documentSafetyOf } from "@/features/documents/safety";
 import type { DocumentCategory } from "@/features/documents/types";
 import { listAssignableStaff } from "../server-fns";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 
 /**
  * The pickers that replace this screen's UUID text boxes.
@@ -63,8 +64,8 @@ export function StaffPicker({
     <div>
       <label className="text-sm">
         搜尋{label}
-        <input
-          className="min-h-11 w-full rounded border px-3"
+        <Input
+          className="min-h-11 w-full"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -76,9 +77,9 @@ export function StaffPicker({
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
       </label>
-      <select
+      <Select
         id={id}
-        className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+        className="mt-1 w-full"
         disabled={disabled || staffQuery.isLoading || Boolean(staffQuery.error)}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -101,7 +102,7 @@ export function StaffPicker({
             {member.teamName ? ` · ${member.teamName}` : ""}
           </option>
         ))}
-      </select>
+      </Select>
       {staffQuery.error ? (
         <Button className="min-h-11" onClick={() => void staffQuery.refetch()}>
           重試同事搜尋
@@ -179,8 +180,8 @@ export function DocumentPicker({
     <div className="min-w-0">
       <label className="text-sm">
         搜尋{label}文件
-        <input
-          className="min-h-11 w-full rounded border px-3"
+        <Input
+          className="min-h-11 w-full"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -192,9 +193,9 @@ export function DocumentPicker({
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
       </label>
-      <select
+      <Select
         id={id}
-        className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+        className="mt-1 w-full"
         disabled={disabled || documentsQuery.isLoading || Boolean(documentsQuery.error)}
         value={value}
         onChange={(event) => {
@@ -221,7 +222,7 @@ export function DocumentPicker({
             {document.fileName} · {formatDate(document.uploadedAt)}
           </option>
         ))}
-      </select>
+      </Select>
       {documentsQuery.hasNextPage ? (
         <Button
           className="min-h-11"

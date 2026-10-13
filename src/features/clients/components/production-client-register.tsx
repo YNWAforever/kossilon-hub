@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
@@ -146,8 +147,8 @@ export function ProductionClientRegister({
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto]">
-          <input
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          <Input
+            className="w-full"
             aria-label="搜尋公司名稱、CR 或 BR 號碼"
             placeholder="搜尋公司名稱、CR 或 BR 號碼"
             value={query}
@@ -164,8 +165,8 @@ export function ProductionClientRegister({
               </Button>
             ))}
           </div>
-          <select
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          <Select
+            className="w-full"
             aria-label="按團隊篩選"
             value={teamFilter}
             onChange={(event) => setTeamFilter(event.target.value)}
@@ -176,7 +177,7 @@ export function ProductionClientRegister({
                 {team.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="overflow-x-auto">

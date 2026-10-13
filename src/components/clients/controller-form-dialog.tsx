@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +29,8 @@ type Props = {
   onSaved: () => void;
 };
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
+const DUE_DATE_ERROR = "登記冊更新到期日不可早於登記日期。";
+const CONTROL_BASIS_ERROR = "請選擇最少一項控制條件。";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
@@ -100,18 +101,21 @@ export function ControllerFormDialog({
     );
   }
 
+  const dueDateInvalid = error === DUE_DATE_ERROR;
+  const controlBasisInvalid = error === CONTROL_BASIS_ERROR;
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
     if (controlBases.length === 0) {
-      setError("請選擇最少一項控制條件。");
+      setError(CONTROL_BASIS_ERROR);
       return;
     }
 
     const registeredDateForComparison = controller?.registeredDate ?? registeredDate;
 
     if (registerUpdateDueDate && registerUpdateDueDate < registeredDateForComparison) {
-      setError("登記冊更新到期日不可早於登記日期。");
+      setError(DUE_DATE_ERROR);
       return;
     }
 
@@ -167,9 +171,10 @@ export function ControllerFormDialog({
               <label className={labelClass} htmlFor="controller-form-name">
                 重要控制人名稱
               </label>
-              <input
+              <Input
                 id="controller-form-name"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={controllerName}
                 onChange={(event) => setControllerName(event.target.value)}
                 required
@@ -179,7 +184,13 @@ export function ControllerFormDialog({
 
           <div>
             <p className={labelClass}>控制條件</p>
-            <div className="mt-1 space-y-1">
+            <div
+              role="group"
+              aria-label="控制條件"
+              aria-invalid={controlBasisInvalid}
+              aria-describedby={controlBasisInvalid ? "controller-form-error" : undefined}
+              className="mt-1 space-y-1"
+            >
               {CONTROL_BASIS_OPTIONS.map((option) => (
                 <label key={option.value} className="flex items-center gap-2 text-sm">
                   <input
@@ -199,9 +210,10 @@ export function ControllerFormDialog({
                 <label className={labelClass} htmlFor="controller-form-id-type">
                   身份證明類別
                 </label>
-                <select
+                <Select
                   id="controller-form-id-type"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={identificationType}
                   onChange={(event) =>
                     setIdentificationType(event.target.value as IdentificationType | "")
@@ -211,15 +223,16 @@ export function ControllerFormDialog({
                   <option value="hkid">{IDENTIFICATION_TYPE_LABELS.hkid}</option>
                   <option value="passport">{IDENTIFICATION_TYPE_LABELS.passport}</option>
                   <option value="br_number">{IDENTIFICATION_TYPE_LABELS.br_number}</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label className={labelClass} htmlFor="controller-form-id-number">
                   身份證明號碼
                 </label>
-                <input
+                <Input
                   id="controller-form-id-number"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={identificationNumber}
                   onChange={(event) => setIdentificationNumber(event.target.value)}
                 />
@@ -231,9 +244,10 @@ export function ControllerFormDialog({
             <label className={labelClass} htmlFor="controller-form-address">
               地址
             </label>
-            <input
+            <Input
               id="controller-form-address"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={address}
               onChange={(event) => setAddress(event.target.value)}
             />
@@ -245,10 +259,11 @@ export function ControllerFormDialog({
                 <label className={labelClass} htmlFor="controller-form-registered-date">
                   登記日期
                 </label>
-                <input
+                <Input
                   id="controller-form-registered-date"
                   type="date"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={registeredDate}
                   onChange={(event) => setRegisteredDate(event.target.value)}
                   required
@@ -259,17 +274,24 @@ export function ControllerFormDialog({
               <label className={labelClass} htmlFor="controller-form-due-date">
                 登記冊更新到期日
               </label>
-              <input
+              <Input
                 id="controller-form-due-date"
+                aria-invalid={dueDateInvalid}
+                aria-describedby={dueDateInvalid ? "controller-form-error" : undefined}
                 type="date"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={registerUpdateDueDate}
                 onChange={(event) => setRegisterUpdateDueDate(event.target.value)}
               />
             </div>
           </div>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p id="controller-form-error" role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
 
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>

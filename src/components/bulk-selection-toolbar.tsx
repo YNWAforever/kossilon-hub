@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
 import { readSnapshotMembership } from "@/features/bulk-operations/membership";
@@ -238,7 +239,7 @@ function SelectionControls({
         <>
           <label>
             操作
-            <select
+            <Select
               aria-label="批量操作"
               value={actionKind}
               disabled={busy}
@@ -255,7 +256,7 @@ function SelectionControls({
                   {maintenanceLabels[kind]}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <p>草稿須另作單筆批准；清單不包含文件內容，不代表已付款、已派送或已交件。</p>
         </>
@@ -313,9 +314,9 @@ function SelectionControls({
         <>
           <label>
             搜尋同事
-            <input
+            <Input
               aria-label="搜尋同事"
-              className="min-h-11 rounded border px-3"
+              className="min-h-11"
               value={assigneeSearch}
               disabled={busy}
               onChange={(event) => {
@@ -330,7 +331,7 @@ function SelectionControls({
           </label>
           <label>
             負責角色
-            <select
+            <Select
               aria-label="負責角色"
               disabled={busy}
               value={target}
@@ -342,12 +343,12 @@ function SelectionControls({
             >
               <option value="owner">負責同事</option>
               <option value="reviewer">覆核人</option>
-            </select>
+            </Select>
           </label>
           {actionKind === "client_maintenance" ? (
             <label>
               目標團隊
-              <select
+              <Select
                 aria-label="目標團隊"
                 value={teamId}
                 disabled={busy}
@@ -369,12 +370,12 @@ function SelectionControls({
                     {name ?? id}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           ) : null}
           <label>
             同事
-            <select
+            <Select
               aria-label="同事"
               disabled={busy || assignees.isError}
               value={assigneeId}
@@ -390,7 +391,7 @@ function SelectionControls({
                   {labels.get(s.id)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </>
       ) : null}
@@ -406,7 +407,7 @@ function SelectionControls({
             .map((p) => (
               <label className="block" key={p.id}>
                 {p.label}
-                <input
+                <Input
                   aria-label={`退回原因：${p.label}`}
                   maxLength={500}
                   disabled={busy}
@@ -424,7 +425,7 @@ function SelectionControls({
       {resource === "work_item" ? (
         <label>
           非首選或超額原因
-          <input
+          <Input
             aria-label="非首選或超額原因"
             value={overrideReason}
             disabled={busy}
@@ -572,7 +573,7 @@ function BulkJobProgress({
     <div className="space-y-2 border-t pt-3">
       <label>
         已保存工作
-        <select
+        <Select
           aria-label="已保存工作"
           value={jobId ?? ""}
           onChange={(e) => onJobChange(e.target.value || null)}
@@ -586,7 +587,7 @@ function BulkJobProgress({
                 {j.total}筆 · {stateLabel(jobStateLabels, j.state)}
               </option>
             ))}
-        </select>
+        </Select>
       </label>
       {jobs.hasNextPage ? (
         <Button

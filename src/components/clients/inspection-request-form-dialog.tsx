@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -17,8 +18,6 @@ type Props = {
   onSaved: () => void;
 };
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
@@ -92,9 +91,10 @@ export function InspectionRequestFormDialog({ open, onOpenChange, companyId, onS
             <label className={labelClass} htmlFor="inspection-form-requester">
               要求人名稱
             </label>
-            <input
+            <Input
               id="inspection-form-requester"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={requesterName}
               onChange={(event) => setRequesterName(event.target.value)}
               required
@@ -105,9 +105,10 @@ export function InspectionRequestFormDialog({ open, onOpenChange, companyId, onS
             <label className={labelClass} htmlFor="inspection-form-authority">
               要求人身分／機構
             </label>
-            <input
+            <Input
               id="inspection-form-authority"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={requesterAuthority}
               onChange={(event) => setRequesterAuthority(event.target.value)}
               placeholder="例如：公司註冊處"
@@ -119,17 +120,22 @@ export function InspectionRequestFormDialog({ open, onOpenChange, companyId, onS
             <label className={labelClass} htmlFor="inspection-form-date">
               要求日期
             </label>
-            <input
+            <Input
               id="inspection-form-date"
               type="date"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={requestDate}
               onChange={(event) => setRequestDate(event.target.value)}
               required
             />
           </div>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p id="inspection-form-error" role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
 
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>

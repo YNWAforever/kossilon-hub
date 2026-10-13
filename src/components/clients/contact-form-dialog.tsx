@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +22,8 @@ type Props = {
   onSaved: () => void;
 };
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
+/** Shown by this dialog and by the server's reachability constraint (ClientWriteError "contact"). */
+const REACHABILITY_MESSAGE = "請提供電郵地址或電話號碼。";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSaved }: Props) {
@@ -45,11 +46,14 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
     setError(null);
   }, [open, contact]);
 
+  // The missing-email-and-phone message belongs to those two fields; anything else is form-level.
+  const reachabilityError = error === REACHABILITY_MESSAGE;
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
     if (!email.trim() && !phone.trim()) {
-      setError("請提供電郵地址或電話號碼。");
+      setError(REACHABILITY_MESSAGE);
       return;
     }
 
@@ -97,9 +101,10 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
               <label className={labelClass} htmlFor="contact-form-name">
                 姓名
               </label>
-              <input
+              <Input
                 id="contact-form-name"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 required
@@ -109,9 +114,10 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
               <label className={labelClass} htmlFor="contact-form-role">
                 職位
               </label>
-              <input
+              <Input
                 id="contact-form-role"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={role}
                 onChange={(event) => setRole(event.target.value)}
                 required
@@ -121,10 +127,13 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
               <label className={labelClass} htmlFor="contact-form-email">
                 電郵
               </label>
-              <input
+              <Input
                 id="contact-form-email"
+                aria-invalid={reachabilityError}
+                aria-describedby={reachabilityError ? "contact-form-error" : undefined}
                 type="email"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
@@ -133,9 +142,12 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
               <label className={labelClass} htmlFor="contact-form-phone">
                 電話
               </label>
-              <input
+              <Input
                 id="contact-form-phone"
-                className={inputClass}
+                aria-invalid={reachabilityError}
+                aria-describedby={reachabilityError ? "contact-form-error" : undefined}
+                size="sm"
+                className="w-full"
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
               />
@@ -154,7 +166,11 @@ export function ContactFormDialog({ open, onOpenChange, companyId, contact, onSa
             設為主要聯絡人後，公司現有的主要聯絡人會改為一般聯絡人。
           </p>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p id="contact-form-error" role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
 
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>

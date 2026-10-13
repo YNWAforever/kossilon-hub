@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -76,8 +77,6 @@ function formFor(client: ClientDetail): FormState {
   };
 }
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 /** ClientWriteError fields this dialog renders an inline message for. Anything else toasts. */
@@ -100,7 +99,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
 
   // `listAssignmentOptions()` only returns active users/teams, so if the company's
   // currently-assigned owner or team has since been deactivated it will not appear in
-  // `options`. A <select> whose value matches no <option> renders blank or silently falls
+  // `options`. A <Select> whose value matches no <option> renders blank or silently falls
   // back to the browser's first option, so saving the form could silently reassign the
   // company. When editing, append a synthetic "(inactive)" option for the current owner
   // and team so the select always has a matching option and reflects the true value.
@@ -210,9 +209,10 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             <label className={labelClass} htmlFor="client-name">
               公司名稱
             </label>
-            <input
+            <Input
               id="client-name"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={form.companyName}
               onChange={(event) => set("companyName", event.target.value)}
               required
@@ -225,40 +225,55 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 <label className={labelClass} htmlFor="client-cr">
                   CR 號碼
                 </label>
-                <input
+                <Input
                   id="client-cr"
-                  className={inputClass}
+                  size="sm"
+                  aria-invalid={fieldError?.field === "crNumber"}
+                  aria-describedby={
+                    fieldError?.field === "crNumber" ? "client-cr-error" : undefined
+                  }
+                  className="w-full"
                   value={form.crNumber}
                   onChange={(event) => set("crNumber", event.target.value)}
                   required
                 />
                 {fieldError?.field === "crNumber" && (
-                  <p className="mt-1 text-xs text-destructive">{fieldError.message}</p>
+                  <p id="client-cr-error" className="mt-1 text-xs text-destructive">
+                    {fieldError.message}
+                  </p>
                 )}
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-br">
                   BR 號碼
                 </label>
-                <input
+                <Input
                   id="client-br"
-                  className={inputClass}
+                  size="sm"
+                  aria-invalid={fieldError?.field === "brNumber"}
+                  aria-describedby={
+                    fieldError?.field === "brNumber" ? "client-br-error" : undefined
+                  }
+                  className="w-full"
                   value={form.brNumber}
                   onChange={(event) => set("brNumber", event.target.value)}
                   required
                 />
                 {fieldError?.field === "brNumber" && (
-                  <p className="mt-1 text-xs text-destructive">{fieldError.message}</p>
+                  <p id="client-br-error" className="mt-1 text-xs text-destructive">
+                    {fieldError.message}
+                  </p>
                 )}
               </div>
               <div>
                 <label className={labelClass} htmlFor="client-incorporated">
                   成立日期
                 </label>
-                <input
+                <Input
                   id="client-incorporated"
                   type="date"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.incorporationDate}
                   onChange={(event) => set("incorporationDate", event.target.value)}
                   required
@@ -268,10 +283,11 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                 <label className={labelClass} htmlFor="client-basis">
                   周年申報基準日
                 </label>
-                <input
+                <Input
                   id="client-basis"
                   type="date"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.annualReturnBasisDate}
                   onChange={(event) => set("annualReturnBasisDate", event.target.value)}
                   required
@@ -284,9 +300,10 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
             <label className={labelClass} htmlFor="client-office">
               註冊辦事處
             </label>
-            <input
+            <Input
               id="client-office"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={form.registeredOffice}
               onChange={(event) => set("registeredOffice", event.target.value)}
               required
@@ -298,9 +315,10 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               <label className={labelClass} htmlFor="client-owner">
                 負責同事
               </label>
-              <select
+              <Select
                 id="client-owner"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.ownerId}
                 onChange={(event) => set("ownerId", event.target.value)}
               >
@@ -309,15 +327,16 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                     {owner.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className={labelClass} htmlFor="client-team">
                 團隊
               </label>
-              <select
+              <Select
                 id="client-team"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.teamId}
                 onChange={(event) => set("teamId", event.target.value)}
               >
@@ -326,7 +345,7 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                     {team.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -335,15 +354,16 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
               <label className={labelClass} htmlFor="client-status">
                 狀態
               </label>
-              <select
+              <Select
                 id="client-status"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.status}
                 onChange={(event) => set("status", event.target.value as "active" | "inactive")}
               >
                 <option value="active">有效</option>
                 <option value="inactive">已停用</option>
-              </select>
+              </Select>
               <p className="mt-1 text-xs text-muted-foreground">
                 客戶只會停用而不會刪除——刪除公司會一併移除其周年申報紀錄。
               </p>
@@ -358,9 +378,10 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                   <label className={labelClass} htmlFor="contact-name">
                     姓名
                   </label>
-                  <input
+                  <Input
                     id="contact-name"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.contactName}
                     onChange={(event) => set("contactName", event.target.value)}
                   />
@@ -369,9 +390,10 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                   <label className={labelClass} htmlFor="contact-role">
                     職位
                   </label>
-                  <input
+                  <Input
                     id="contact-role"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.contactRole}
                     onChange={(event) => set("contactRole", event.target.value)}
                   />
@@ -380,10 +402,15 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                   <label className={labelClass} htmlFor="contact-email">
                     電郵
                   </label>
-                  <input
+                  <Input
                     id="contact-email"
+                    aria-invalid={fieldError?.field === "contact"}
+                    aria-describedby={
+                      fieldError?.field === "contact" ? "client-contact-error" : undefined
+                    }
                     type="email"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.contactEmail}
                     onChange={(event) => set("contactEmail", event.target.value)}
                   />
@@ -392,16 +419,23 @@ export function ClientFormDialog({ open, onOpenChange, options, client, onSaved 
                   <label className={labelClass} htmlFor="contact-phone">
                     電話
                   </label>
-                  <input
+                  <Input
                     id="contact-phone"
-                    className={inputClass}
+                    aria-invalid={fieldError?.field === "contact"}
+                    aria-describedby={
+                      fieldError?.field === "contact" ? "client-contact-error" : undefined
+                    }
+                    size="sm"
+                    className="w-full"
                     value={form.contactPhone}
                     onChange={(event) => set("contactPhone", event.target.value)}
                   />
                 </div>
               </div>
               {fieldError?.field === "contact" && (
-                <p className="mt-2 text-xs text-destructive">{fieldError.message}</p>
+                <p id="client-contact-error" className="mt-2 text-xs text-destructive">
+                  {fieldError.message}
+                </p>
               )}
             </div>
           )}

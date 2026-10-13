@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -17,8 +18,7 @@ type Props = {
   onSaved: () => void;
 };
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
+const SHARES_ERROR = "請輸入大於零的整數股數。";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 const HONG_KONG_TIME_ZONE = "Asia/Hong_Kong";
@@ -64,6 +64,8 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
     setError(null);
   }, [open]);
 
+  const sharesInvalid = error === SHARES_ERROR;
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
@@ -71,7 +73,7 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
     const parsedShares = Number.parseInt(trimmedShares, 10);
 
     if (!/^\d+$/.test(trimmedShares) || parsedShares <= 0) {
-      setError("請輸入大於零的整數股數。");
+      setError(SHARES_ERROR);
       return;
     }
 
@@ -112,9 +114,10 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
             <label className={labelClass} htmlFor="shareholding-form-name">
               股東名稱
             </label>
-            <input
+            <Input
               id="shareholding-form-name"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={shareholderName}
               onChange={(event) => setShareholderName(event.target.value)}
               required
@@ -125,9 +128,10 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
             <label className={labelClass} htmlFor="shareholding-form-address">
               地址
             </label>
-            <input
+            <Input
               id="shareholding-form-address"
-              className={inputClass}
+              size="sm"
+              className="w-full"
               value={shareholderAddress}
               onChange={(event) => setShareholderAddress(event.target.value)}
             />
@@ -138,9 +142,10 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
               <label className={labelClass} htmlFor="shareholding-form-class">
                 股份類別
               </label>
-              <input
+              <Input
                 id="shareholding-form-class"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={shareClass}
                 onChange={(event) => setShareClass(event.target.value)}
                 required
@@ -150,12 +155,15 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
               <label className={labelClass} htmlFor="shareholding-form-number">
                 股數
               </label>
-              <input
+              <Input
                 id="shareholding-form-number"
+                aria-invalid={sharesInvalid}
+                aria-describedby={sharesInvalid ? "shareholding-form-error" : undefined}
                 type="number"
                 min="1"
                 step="1"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={numberOfShares}
                 onChange={(event) => setNumberOfShares(event.target.value)}
                 required
@@ -165,10 +173,11 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
               <label className={labelClass} htmlFor="shareholding-form-date">
                 配發日期
               </label>
-              <input
+              <Input
                 id="shareholding-form-date"
                 type="date"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={allotmentDate}
                 onChange={(event) => setAllotmentDate(event.target.value)}
                 required
@@ -176,7 +185,11 @@ export function ShareholdingFormDialog({ open, onOpenChange, companyId, onSaved 
             </div>
           </div>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p id="shareholding-form-error" role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
 
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>

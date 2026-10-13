@@ -19,6 +19,7 @@ import { StatusPill } from "@/components/status-pill";
 import { ProductionStaffAdmin } from "@/features/admin/production-staff-admin";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import { isAdmin, type AuthRole, type DemoUser } from "@/features/auth/session";
 import { cn } from "@/lib/utils";
@@ -302,17 +303,17 @@ function UsersPanel({
                 </div>
               </td>
               <td className="px-4 py-3">
-                <select
+                <Select
+                  size="sm"
                   value={user.role}
                   disabled
                   onChange={(event) => onRoleChange(user.id, event.target.value as AuthRole)}
                   aria-label={`${user.name} 的角色`}
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="Admin">{roleLabels.Admin}</option>
                   <option value="Manager">{roleLabels.Manager}</option>
                   <option value="Staff">{roleLabels.Staff}</option>
-                </select>
+                </Select>
               </td>
               <td className="px-4 py-3 text-muted-foreground">{user.team}</td>
               <td className="px-4 py-3">

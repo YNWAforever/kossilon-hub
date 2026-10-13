@@ -1,4 +1,5 @@
 import { RiskPill } from "@/features/annual-return/components/risk-pill";
+import { Input, Select } from "@/components/ui/field";
 import { pageTitle } from "@/lib/page-title";
 import { type ReactNode, useMemo, useState } from "react";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
@@ -129,8 +130,8 @@ function DemoAnnualReturnCommandCenter() {
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto]">
-          <input
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          <Input
+            className="w-full"
             aria-label="搜尋公司或聯絡人"
             placeholder="搜尋公司或聯絡人"
             value={query}
@@ -159,8 +160,8 @@ function DemoAnnualReturnCommandCenter() {
               </Button>
             ))}
           </div>
-          <select
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+          <Select
+            className="w-full"
             value={owner}
             onChange={(event) => setOwner(event.target.value)}
             aria-label="按負責同事篩選"
@@ -171,7 +172,7 @@ function DemoAnnualReturnCommandCenter() {
                 {ownerName}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="overflow-x-auto">

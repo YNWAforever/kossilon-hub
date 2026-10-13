@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { listDocumentPage } from "@/features/documents/server-fns";
 import { SafeDocumentPreview } from "@/features/documents/safe-preview";
 import { canApproveDocument, documentSafetyOf } from "@/features/documents/safety";
@@ -256,31 +257,31 @@ function PaymentEvidenceRow({
             <p>憑證金額及收款日期：待補；以下由人手從文件記錄。</p>
             <label className="block">
               文件所示金額（HKD）
-              <input
+              <Input
                 aria-label="憑證金額"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 inputMode="decimal"
-                className="ml-2 rounded border"
+                className="ml-2"
               />
             </label>
             <label className="block">
               文件所示收款日期
-              <input
+              <Input
                 aria-label="憑證收款日期"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 type="date"
-                className="ml-2 rounded border"
+                className="ml-2"
               />
             </label>
             <label className="block">
               交易識別／備註
-              <input
+              <Input
                 aria-label="憑證交易參考"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                className="ml-2 rounded border"
+                className="ml-2"
               />
             </label>
             <Button disabled={disabled || !amount || !date} onClick={() => record.mutate()}>
@@ -301,7 +302,7 @@ function PaymentEvidenceRow({
             ) : null}
             <label className="block">
               退回原因
-              <select
+              <Select
                 aria-label="退回原因類別"
                 value={reasonCode}
                 onChange={(e) => setReasonCode(e.target.value as typeof reasonCode)}
@@ -311,14 +312,14 @@ function PaymentEvidenceRow({
                     {returnReasonLabel(code)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
-            <textarea
+            <Textarea
               aria-label="具體退回原因"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="指出需要補回或修正的內容"
-              className="block w-full rounded border"
+              className="block w-full"
             />
             <Button disabled={disabled || !reason.trim()} onClick={() => review.mutate("rejected")}>
               退回補傳

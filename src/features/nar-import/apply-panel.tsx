@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { assignmentLabels } from "@/features/work-items/assignment-labels";
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { NarImportRow } from "./repository";
@@ -147,7 +148,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
       ) : null}
       <label>
         案件用途{" "}
-        <select
+        <Select
           aria-label="案件用途"
           disabled={busy}
           value={mode}
@@ -159,7 +160,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
         >
           <option value="historical">歷史記錄（禁止外發）</option>
           <option value="client">本年度正式案件</option>
-        </select>
+        </Select>
       </label>
       {mode === "client" ? (
         <label className="block">
@@ -200,7 +201,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
             <div className="grid gap-2 md:grid-cols-2">
               <label>
                 實際費用（HKD）
-                <input
+                <Input
                   aria-label={`第${row.rowNumber}行實際費用`}
                   type="number"
                   min="1"
@@ -216,7 +217,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
               </label>
               <label>
                 結算日期{" "}
-                <input
+                <Input
                   aria-label={`第${row.rowNumber}行結算日期`}
                   type="date"
                   disabled={busy}
@@ -226,7 +227,7 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
               </label>
               <label>
                 清單模板
-                <select
+                <Select
                   aria-label={`第${row.rowNumber}行模板`}
                   disabled={busy}
                   value={inputs[row.id]?.templateId ?? ""}
@@ -238,11 +239,11 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                       {t.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label>
                 負責同事
-                <select
+                <Select
                   aria-label={`第${row.rowNumber}行負責同事`}
                   disabled={busy}
                   value={inputs[row.id]?.ownerId ?? ""}
@@ -254,11 +255,11 @@ export function NarApplyPanel({ batchId, rows, actorKey, onApplied }: Props) {
                       {ownerLabels.get(o.id)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label>
                 發票編號（可沿用來源；來源為 Nil 時需確認）
-                <input
+                <Input
                   disabled={busy}
                   value={inputs[row.id]?.invoiceNumber ?? ""}
                   onChange={(e) => update(row.id, { invoiceNumber: e.target.value || undefined })}

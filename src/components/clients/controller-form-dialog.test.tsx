@@ -100,6 +100,9 @@ describe("ControllerFormDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "記錄重要控制人" }));
 
     expect(await screen.findByText("登記冊更新到期日不可早於登記日期。")).toBeTruthy();
+    const dueDate = screen.getByLabelText("登記冊更新到期日");
+    expect(dueDate.getAttribute("aria-invalid")).toBe("true");
+    expect(dueDate.getAttribute("aria-describedby")).toBe("controller-form-error");
     expect(serverFns.recordClientController).not.toHaveBeenCalled();
   });
 

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
 import { PageHeader } from "@/components/page-header";
 import { CreateCorporateChangeRequestDialog } from "@/components/corporate-changes/create-corporate-change-request-dialog";
 import { listCorporateChangeRequests } from "@/features/corporate-changes/server-fns";
@@ -72,8 +73,8 @@ export function ProductionCorporateChangeList() {
 
       <label className="block text-sm">
         搜尋可選公司
-        <input
-          className="min-h-11 ml-2 rounded border px-3"
+        <Input
+          className="min-h-11 ml-2"
           value={companySearch}
           onChange={(event) => setCompanySearch(event.target.value)}
         />

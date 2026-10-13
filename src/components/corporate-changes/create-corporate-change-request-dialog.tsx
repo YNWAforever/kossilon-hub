@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -43,8 +44,6 @@ type CreateChangePayload =
 
 const NEEDS_REGISTER = new Set<CorporateChangeType>(["share_transfer", "officer_change"]);
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 function emptyForm() {
@@ -264,9 +263,10 @@ export function CreateCorporateChangeRequestDialog({
               <label className={labelClass} htmlFor="corp-change-company">
                 公司
               </label>
-              <select
+              <Select
                 id="corp-change-company"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.companyId}
                 onChange={(event) => set("companyId", event.target.value)}
                 disabled={isLoading}
@@ -278,16 +278,17 @@ export function CreateCorporateChangeRequestDialog({
                     {company.companyName}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
               <label className={labelClass} htmlFor="corp-change-type">
                 變更類別
               </label>
-              <select
+              <Select
                 id="corp-change-type"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.changeType}
                 onChange={(event) => set("changeType", event.target.value as CorporateChangeType)}
               >
@@ -296,19 +297,20 @@ export function CreateCorporateChangeRequestDialog({
                     {label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
               <label className={labelClass} htmlFor="corp-change-quoted-fee">
                 報價（HKD）
               </label>
-              <input
+              <Input
                 id="corp-change-quoted-fee"
                 type="number"
                 min="0"
                 step="1"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.quotedFee}
                 onChange={(event) => set("quotedFee", event.target.value)}
                 required
@@ -320,9 +322,10 @@ export function CreateCorporateChangeRequestDialog({
                 <label className={labelClass} htmlFor="corp-change-new-office">
                   新註冊辦事處地址
                 </label>
-                <input
+                <Input
                   id="corp-change-new-office"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.newRegisteredOffice}
                   onChange={(event) => set("newRegisteredOffice", event.target.value)}
                   required
@@ -336,9 +339,10 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-new-name-en">
                     新英文名稱
                   </label>
-                  <input
+                  <Input
                     id="corp-change-new-name-en"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.newNameEn}
                     onChange={(event) => set("newNameEn", event.target.value)}
                     required
@@ -348,9 +352,10 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-new-name-zh">
                     新中文名稱（選填）
                   </label>
-                  <input
+                  <Input
                     id="corp-change-new-name-zh"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.newNameZh}
                     onChange={(event) => set("newNameZh", event.target.value)}
                   />
@@ -367,9 +372,10 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-transferor-shareholding">
                     轉讓人股權
                   </label>
-                  <select
+                  <Select
                     id="corp-change-transferor-shareholding"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.transferorShareholdingId}
                     onChange={(event) => set("transferorShareholdingId", event.target.value)}
                     required
@@ -380,7 +386,7 @@ export function CreateCorporateChangeRequestDialog({
                         {holding.shareholderName}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <fieldset className="space-y-1">
@@ -410,9 +416,10 @@ export function CreateCorporateChangeRequestDialog({
                     <label className={labelClass} htmlFor="corp-change-transferee-shareholding">
                       承讓人股權
                     </label>
-                    <select
+                    <Select
                       id="corp-change-transferee-shareholding"
-                      className={inputClass}
+                      size="sm"
+                      className="w-full"
                       value={form.transfereeShareholdingId}
                       onChange={(event) => set("transfereeShareholdingId", event.target.value)}
                       required
@@ -425,7 +432,7 @@ export function CreateCorporateChangeRequestDialog({
                             {holding.shareholderName}
                           </option>
                         ))}
-                    </select>
+                    </Select>
                   </div>
                 ) : (
                   <>
@@ -433,9 +440,10 @@ export function CreateCorporateChangeRequestDialog({
                       <label className={labelClass} htmlFor="corp-change-transferee-new-name">
                         新股東名稱
                       </label>
-                      <input
+                      <Input
                         id="corp-change-transferee-new-name"
-                        className={inputClass}
+                        size="sm"
+                        className="w-full"
                         value={form.transfereeNewShareholderName}
                         onChange={(event) =>
                           set("transfereeNewShareholderName", event.target.value)
@@ -447,9 +455,10 @@ export function CreateCorporateChangeRequestDialog({
                       <label className={labelClass} htmlFor="corp-change-transferee-new-address">
                         新股東地址
                       </label>
-                      <input
+                      <Input
                         id="corp-change-transferee-new-address"
-                        className={inputClass}
+                        size="sm"
+                        className="w-full"
                         value={form.transfereeNewShareholderAddress}
                         onChange={(event) =>
                           set("transfereeNewShareholderAddress", event.target.value)
@@ -463,12 +472,13 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-shares-transferred">
                     轉讓股數
                   </label>
-                  <input
+                  <Input
                     id="corp-change-shares-transferred"
                     type="number"
                     min="1"
                     step="1"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.sharesTransferred}
                     onChange={(event) => set("sharesTransferred", event.target.value)}
                     required
@@ -478,12 +488,13 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-consideration">
                     代價（HKD）
                   </label>
-                  <input
+                  <Input
                     id="corp-change-consideration"
                     type="number"
                     min="0"
                     step="1"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.consideration}
                     onChange={(event) => set("consideration", event.target.value)}
                     required
@@ -493,12 +504,13 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-stamp-duty">
                     印花稅（HKD）
                   </label>
-                  <input
+                  <Input
                     id="corp-change-stamp-duty"
                     type="number"
                     min="0"
                     step="1"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.stampDutyAmount}
                     onChange={(event) => set("stampDutyAmount", event.target.value)}
                     required
@@ -516,16 +528,17 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-officer-action">
                     高級人員變更事項
                   </label>
-                  <select
+                  <Select
                     id="corp-change-officer-action"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.officerAction}
                     onChange={(event) => set("officerAction", event.target.value as OfficerAction)}
                   >
                     <option value="appoint">委任</option>
                     <option value="resign">辭任</option>
                     <option value="detail_change">資料變更</option>
-                  </select>
+                  </Select>
                 </div>
 
                 {form.officerAction !== "appoint" && (
@@ -533,9 +546,10 @@ export function CreateCorporateChangeRequestDialog({
                     <label className={labelClass} htmlFor="corp-change-officer">
                       高級人員
                     </label>
-                    <select
+                    <Select
                       id="corp-change-officer"
-                      className={inputClass}
+                      size="sm"
+                      className="w-full"
                       value={form.officerId}
                       onChange={(event) => set("officerId", event.target.value)}
                       required
@@ -546,7 +560,7 @@ export function CreateCorporateChangeRequestDialog({
                           {officer.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 )}
 
@@ -555,9 +569,10 @@ export function CreateCorporateChangeRequestDialog({
                     <label className={labelClass} htmlFor="corp-change-new-officer-type">
                       新高級人員類別
                     </label>
-                    <select
+                    <Select
                       id="corp-change-new-officer-type"
-                      className={inputClass}
+                      size="sm"
+                      className="w-full"
                       value={form.newOfficerType}
                       onChange={(event) =>
                         set("newOfficerType", event.target.value as NewOfficerType)
@@ -565,7 +580,7 @@ export function CreateCorporateChangeRequestDialog({
                     >
                       <option value="director">{OFFICER_TYPE_LABELS.director}</option>
                       <option value="secretary">{OFFICER_TYPE_LABELS.secretary}</option>
-                    </select>
+                    </Select>
                   </div>
                 )}
 
@@ -575,9 +590,10 @@ export function CreateCorporateChangeRequestDialog({
                       <label className={labelClass} htmlFor="corp-change-new-officer-name">
                         {form.officerAction === "appoint" ? "新高級人員姓名" : "更新後姓名"}
                       </label>
-                      <input
+                      <Input
                         id="corp-change-new-officer-name"
-                        className={inputClass}
+                        size="sm"
+                        className="w-full"
                         value={form.newOfficerName}
                         onChange={(event) => set("newOfficerName", event.target.value)}
                         required
@@ -587,9 +603,10 @@ export function CreateCorporateChangeRequestDialog({
                       <label className={labelClass} htmlFor="corp-change-new-officer-id-type">
                         身份證明類別
                       </label>
-                      <select
+                      <Select
                         id="corp-change-new-officer-id-type"
-                        className={inputClass}
+                        size="sm"
+                        className="w-full"
                         value={form.newOfficerIdentificationType}
                         onChange={(event) =>
                           set(
@@ -602,15 +619,16 @@ export function CreateCorporateChangeRequestDialog({
                         <option value="hkid">{IDENTIFICATION_TYPE_LABELS.hkid}</option>
                         <option value="passport">{IDENTIFICATION_TYPE_LABELS.passport}</option>
                         <option value="br_number">BR 號碼</option>
-                      </select>
+                      </Select>
                     </div>
                     <div>
                       <label className={labelClass} htmlFor="corp-change-new-officer-id-number">
                         身份證明號碼
                       </label>
-                      <input
+                      <Input
                         id="corp-change-new-officer-id-number"
-                        className={inputClass}
+                        size="sm"
+                        className="w-full"
                         value={form.newOfficerIdentificationNumber}
                         onChange={(event) =>
                           set("newOfficerIdentificationNumber", event.target.value)
@@ -621,9 +639,10 @@ export function CreateCorporateChangeRequestDialog({
                       <label className={labelClass} htmlFor="corp-change-new-officer-address">
                         地址
                       </label>
-                      <input
+                      <Input
                         id="corp-change-new-officer-address"
-                        className={inputClass}
+                        size="sm"
+                        className="w-full"
                         value={form.newOfficerAddress}
                         onChange={(event) => set("newOfficerAddress", event.target.value)}
                       />
@@ -635,10 +654,11 @@ export function CreateCorporateChangeRequestDialog({
                   <label className={labelClass} htmlFor="corp-change-effective-date">
                     生效日期
                   </label>
-                  <input
+                  <Input
                     id="corp-change-effective-date"
                     type="date"
-                    className={inputClass}
+                    size="sm"
+                    className="w-full"
                     value={form.effectiveDate}
                     onChange={(event) => set("effectiveDate", event.target.value)}
                     required
@@ -647,7 +667,11 @@ export function CreateCorporateChangeRequestDialog({
               </>
             )}
 
-            {submitError && <p className="text-xs text-destructive">{submitError}</p>}
+            {submitError && (
+              <p role="alert" className="text-xs text-destructive">
+                {submitError}
+              </p>
+            )}
 
             <DialogFooter>
               <Button

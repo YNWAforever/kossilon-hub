@@ -103,6 +103,9 @@ describe("CreateIncorporationCaseDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "開始公司註冊" }));
 
     expect(await screen.findByText("註冊資本須為大於零的整數金額。")).toBeTruthy();
+    const capital = screen.getByLabelText("註冊資本（HKD）");
+    expect(capital.getAttribute("aria-invalid")).toBe("true");
+    expect(capital.getAttribute("aria-describedby")).toBe("intake-form-error");
     expect(serverFns.createIncorporationCase).not.toHaveBeenCalled();
   });
 

@@ -6,8 +6,8 @@ import { DocumentPicker } from "./scoped-pickers";
 import { DOCUMENT_CATEGORIES } from "@/features/documents/types";
 import { annualReturnQueryKeys } from "../query-keys";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 const categories = DOCUMENT_CATEGORIES;
-const control = "mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm";
 export function CaseHandoff({
   caseId,
   locked,
@@ -144,9 +144,9 @@ export function CaseHandoff({
             <>
               <label className="block text-sm">
                 交件套件
-                <select
+                <Select
                   aria-label="交件套件"
-                  className={control}
+                  className="mt-1 w-full"
                   value={h?.id ?? ""}
                   onChange={(e) => {
                     setSelected(e.target.value);
@@ -159,7 +159,7 @@ export function CaseHandoff({
                       {handoffFactLabel(row.deliveryFact)} · {row.createdAt}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <p className="text-sm">{handoffFactLabel(h?.deliveryFact ?? null)}</p>
               <p className="break-all text-xs">
@@ -205,31 +205,31 @@ export function CaseHandoff({
                     <h3 className="font-medium">人手外部上載後，記錄操作證明</h3>
                     <label className="block text-sm">
                       實際提交時間
-                      <input
+                      <Input
                         required
                         type="datetime-local"
                         step="1"
-                        className={control}
+                        className="mt-1 w-full"
                         value={occurredAt}
                         onChange={(e) => setOccurredAt(e.target.value)}
                       />
                     </label>
                     <label className="block text-sm">
                       人工提交參考
-                      <input
+                      <Input
                         required
                         maxLength={200}
-                        className={control}
+                        className="mt-1 w-full"
                         value={reference}
                         onChange={(e) => setReference(e.target.value)}
                       />
                     </label>
                     <label className="block text-sm">
                       操作說明
-                      <textarea
+                      <Textarea
                         required
                         maxLength={1000}
-                        className={control}
+                        className="mt-1 w-full"
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                       />
@@ -266,9 +266,9 @@ export function CaseHandoff({
                   </form>
                   <label className="block text-sm">
                     撤回未提交套件原因
-                    <input
+                    <Input
                       maxLength={1000}
-                      className={control}
+                      className="mt-1 w-full"
                       value={withdrawNote}
                       onChange={(e) => setWithdrawNote(e.target.value)}
                     />
@@ -327,28 +327,28 @@ export function CaseHandoff({
                   </Button>
                   <label className="block text-sm">
                     回件指向的 manifest SHA256
-                    <input
+                    <Input
                       required
                       pattern="[a-f0-9]{64}"
-                      className={control}
+                      className="mt-1 w-full"
                       value={returnHash}
                       onChange={(e) => setReturnHash(e.target.value)}
                     />
                   </label>
                   <label className="block text-sm">
                     回件參考
-                    <input
+                    <Input
                       required
                       maxLength={200}
-                      className={control}
+                      className="mt-1 w-full"
                       value={returnReference}
                       onChange={(e) => setReturnReference(e.target.value)}
                     />
                   </label>
                   <label className="block text-sm">
                     回件結果
-                    <select
-                      className={control}
+                    <Select
+                      className="mt-1 w-full"
                       value={outcome}
                       onChange={(e) => setOutcome(e.target.value as typeof outcome)}
                     >
@@ -356,14 +356,14 @@ export function CaseHandoff({
                       <option value="partial">部分回件</option>
                       <option value="accepted">對方聲稱接收（待核對）</option>
                       <option value="unmatched">未能匹配</option>
-                    </select>
+                    </Select>
                   </label>
                   <label className="block text-sm">
                     原始回件說明
-                    <textarea
+                    <Textarea
                       required
                       maxLength={2000}
-                      className={control}
+                      className="mt-1 w-full"
                       value={detail}
                       onChange={(e) => setDetail(e.target.value)}
                     />
@@ -418,9 +418,9 @@ export function CaseHandoff({
                 <>
                   <label className="block text-sm">
                     核對說明
-                    <textarea
+                    <Textarea
                       maxLength={1000}
-                      className={control}
+                      className="mt-1 w-full"
                       value={reconciliationNotes[r.id] ?? ""}
                       onChange={(e) =>
                         setReconciliationNotes({ ...reconciliationNotes, [r.id]: e.target.value })

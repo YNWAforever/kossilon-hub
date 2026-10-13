@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { StatusPill } from "@/components/status-pill";
 import type { StatusTone } from "@/lib/status";
 import {
@@ -32,6 +33,8 @@ function nextStatus(current: IncorporationStatus): IncorporationStatus | null {
     : null;
 }
 
+const REGISTRY_NUMBERS_ERROR = "必須填寫 CR 號碼及 BR 號碼。";
+
 export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -41,6 +44,7 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
     incorporationDate: "",
   });
   const [completionError, setCompletionError] = useState<string | null>(null);
+  const registryNumbersInvalid = completionError === REGISTRY_NUMBERS_ERROR;
 
   const caseQuery = useQuery({
     queryKey: ["incorporation-cases", caseId],
@@ -170,8 +174,8 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
                 <StatusPill tone={statusTone[item.status]}>
                   {CHECKLIST_ITEM_STATUS_LABELS[item.status]}
                 </StatusPill>
-                <select
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+                <Select
+                  size="sm"
                   value={item.status}
                   onChange={(event) =>
                     updateItem.mutate({
@@ -186,7 +190,7 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
                   <option value="Received">{CHECKLIST_ITEM_STATUS_LABELS.Received}</option>
                   <option value="Verified">{CHECKLIST_ITEM_STATUS_LABELS.Verified}</option>
                   <option value="Rejected">{CHECKLIST_ITEM_STATUS_LABELS.Rejected}</option>
-                </select>
+                </Select>
               </div>
             </div>
           ))}
@@ -201,7 +205,7 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               event.preventDefault();
 
               if (!completionForm.crNumber.trim() || !completionForm.brNumber.trim()) {
-                setCompletionError("必須填寫 CR 號碼及 BR 號碼。");
+                setCompletionError(REGISTRY_NUMBERS_ERROR);
                 return;
               }
 
@@ -217,9 +221,12 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               >
                 CR 號碼
               </label>
-              <input
+              <Input
                 id="complete-cr"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none"
+                aria-invalid={registryNumbersInvalid}
+                aria-describedby={registryNumbersInvalid ? "complete-error" : undefined}
+                size="sm"
+                className="w-full"
                 value={completionForm.crNumber}
                 onChange={(event) =>
                   setCompletionForm((current) => ({ ...current, crNumber: event.target.value }))
@@ -234,9 +241,12 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               >
                 BR 號碼
               </label>
-              <input
+              <Input
                 id="complete-br"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none"
+                aria-invalid={registryNumbersInvalid}
+                aria-describedby={registryNumbersInvalid ? "complete-error" : undefined}
+                size="sm"
+                className="w-full"
                 value={completionForm.brNumber}
                 onChange={(event) =>
                   setCompletionForm((current) => ({ ...current, brNumber: event.target.value }))
@@ -251,10 +261,11 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               >
                 成立日期
               </label>
-              <input
+              <Input
                 id="complete-incorporation-date"
                 type="date"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none"
+                size="sm"
+                className="w-full"
                 value={completionForm.incorporationDate}
                 onChange={(event) =>
                   setCompletionForm((current) => ({
@@ -266,7 +277,13 @@ export function ProductionIncorporationDetail({ caseId }: { caseId: string }) {
               />
             </div>
             {completionError && (
-              <p className="text-xs text-destructive md:col-span-3">{completionError}</p>
+              <p
+                id="complete-error"
+                role="alert"
+                className="text-xs text-destructive md:col-span-3"
+              >
+                {completionError}
+              </p>
             )}
             <div className="md:col-span-3">
               <Button variant="primary" size="sm" type="submit" disabled={complete.isPending}>

@@ -13,6 +13,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { StatusPill } from "@/components/status-pill";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import {
   consumeRedirectPath,
@@ -245,7 +246,7 @@ export function LoginPage() {
           <form onSubmit={submitLogin} className="mt-4 space-y-4">
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">電郵</span>
-              <input
+              <Input
                 value={email}
                 onChange={(event) => {
                   setEmail(event.target.value);
@@ -254,19 +255,19 @@ export function LoginPage() {
                 }}
                 type="email"
                 autoComplete="email"
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                className="mt-1 w-full"
               />
             </label>
 
             {mode === "password" && (
               <label className="block">
                 <span className="text-xs font-medium text-muted-foreground">密碼</span>
-                <input
+                <Input
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   type="password"
                   autoComplete="current-password"
-                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                  className="mt-1 w-full"
                 />
               </label>
             )}

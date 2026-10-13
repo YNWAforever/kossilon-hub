@@ -101,6 +101,9 @@ describe("ShareholdingFormDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "記錄股權" }));
 
     expect(await screen.findByText("請輸入大於零的整數股數。")).toBeTruthy();
+    const shares = screen.getByLabelText("股數");
+    expect(shares.getAttribute("aria-invalid")).toBe("true");
+    expect(shares.getAttribute("aria-describedby")).toBe("shareholding-form-error");
     expect(serverFns.recordClientShareholding).not.toHaveBeenCalled();
   });
 });

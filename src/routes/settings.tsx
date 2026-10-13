@@ -5,6 +5,7 @@ import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
 import { useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth } from "@/features/auth/auth-context-neon";
 import {
@@ -370,12 +371,13 @@ function SettingsPage() {
               <div className="p-3">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <input
+                  <Input
+                    size="sm"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="搜尋模板"
                     aria-label="搜尋模板"
-                    className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-8"
                   />
                 </div>
               </div>
@@ -571,7 +573,7 @@ function TemplateEditor({
       {/* Meta */}
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex-1 space-y-3">
-          <input
+          <Input
             aria-label="模板名稱"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -579,9 +581,9 @@ function TemplateEditor({
               if (name !== t.name) updateMutation.mutate({ id: t.id, patch: { name } });
             }}
             disabled={dataMode === "demo" || isSaving}
-            className="w-full border-b border-transparent bg-transparent font-display text-xl font-semibold text-foreground outline-none focus:border-border disabled:cursor-not-allowed disabled:opacity-70"
+            className="min-h-11 w-full border-transparent shadow-none hover:border-input focus-visible:border-input font-display text-xl font-semibold"
           />
-          <textarea
+          <Textarea
             aria-label="模板說明"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -592,12 +594,13 @@ function TemplateEditor({
             placeholder="說明此模板適用的情況…"
             rows={2}
             disabled={dataMode === "demo" || isSaving}
-            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full resize-none text-xs"
           />
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <label className="flex items-center gap-2">
               <span className="text-muted-foreground">服務類型</span>
-              <select
+              <Select
+                size="sm"
                 value={t.serviceType}
                 onChange={(e) =>
                   updateMutation.mutate({
@@ -606,14 +609,13 @@ function TemplateEditor({
                   })
                 }
                 disabled={dataMode === "demo" || isSaving}
-                className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {SERVICE_TYPES.map((s) => (
                   <option key={s} value={s}>
                     {serviceTypeLabel(s)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -786,7 +788,8 @@ function DocumentRow({
 
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_170px_110px_80px] [&>input]:min-w-0 [&>input]:w-full">
-      <input
+      <Input
+        size="sm"
         aria-label={`文件名稱：${doc.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
@@ -794,10 +797,11 @@ function DocumentRow({
           if (label !== doc.label) onUpdate({ label });
         }}
         disabled={dataMode === "demo" || isSaving}
-        className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        className="border-transparent shadow-none hover:border-input focus-visible:border-input"
       />
       <div className="flex items-center gap-1 text-xs">
-        <input
+        <Input
+          size="sm"
           type="number"
           min={0}
           aria-label={`${doc.label} 的到期前日數`}
@@ -807,7 +811,7 @@ function DocumentRow({
             if (daysBeforeDue !== doc.daysBeforeDue) onUpdate({ daysBeforeDue });
           }}
           disabled={dataMode === "demo" || isSaving}
-          className="w-14 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-14 text-right tabular-nums"
         />
         <span className="whitespace-nowrap text-muted-foreground">日（到期前）</span>
       </div>
@@ -930,7 +934,8 @@ function ReminderRow({
 
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_170px_130px_80px] [&>input]:min-w-0 [&>input]:w-full">
-      <input
+      <Input
+        size="sm"
         aria-label={`提醒名稱：${reminder.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
@@ -938,10 +943,11 @@ function ReminderRow({
           if (label !== reminder.label) onUpdate({ label });
         }}
         disabled={dataMode === "demo" || isSaving}
-        className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        className="border-transparent shadow-none hover:border-input focus-visible:border-input"
       />
       <div className="flex items-center gap-1 text-xs">
-        <input
+        <Input
+          size="sm"
           type="number"
           min={0}
           aria-label={`${reminder.label} 的到期前日數`}
@@ -951,23 +957,24 @@ function ReminderRow({
             if (daysBeforeDue !== reminder.daysBeforeDue) onUpdate({ daysBeforeDue });
           }}
           disabled={dataMode === "demo" || isSaving}
-          className="w-16 rounded-md border border-border bg-background px-1.5 py-1 text-right tabular-nums outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-16 text-right tabular-nums"
         />
         <span className="whitespace-nowrap text-muted-foreground">日（到期前）</span>
       </div>
-      <select
+      <Select
+        size="sm"
         aria-label={`${reminder.label} 的渠道`}
         value={reminder.channel}
         onChange={(e) => onUpdate({ channel: e.target.value as ReminderRule["channel"] })}
         disabled={dataMode === "demo" || isSaving}
-        className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        className="w-full"
       >
         {channels.map((c) => (
           <option key={c} value={c}>
             {c === "Email" ? "電郵" : c}
           </option>
         ))}
-      </select>
+      </Select>
       <div className="text-right">
         {dataMode === "production" && (
           <Button
@@ -1085,7 +1092,8 @@ function RiskRow({
 
   return (
     <li className="grid grid-cols-1 items-center gap-2 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_110px_90px_80px] [&>input]:min-w-0 [&>input]:w-full">
-      <input
+      <Input
+        size="sm"
         aria-label={`風險規則名稱：${risk.label}`}
         value={label}
         onChange={(e) => setLabel(e.target.value)}
@@ -1093,9 +1101,10 @@ function RiskRow({
           if (label !== risk.label) onUpdate({ label });
         }}
         disabled={dataMode === "demo" || isSaving}
-        className="rounded-md border border-transparent bg-transparent px-2 py-1 outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        className="border-transparent shadow-none hover:border-input focus-visible:border-input"
       />
-      <input
+      <Input
+        size="sm"
         aria-label={`${risk.label} 的觸發條件`}
         value={trigger}
         onChange={(e) => setTrigger(e.target.value)}
@@ -1103,23 +1112,23 @@ function RiskRow({
           if (trigger !== risk.trigger) onUpdate({ trigger });
         }}
         disabled={dataMode === "demo" || isSaving}
-        className="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none hover:border-border focus:border-border focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+        className="border-transparent shadow-none hover:border-input focus-visible:border-input text-muted-foreground"
       />
       <div className="flex items-center gap-2">
         <StatusPill tone={tone(risk.severity)}>{severityLabel(risk.severity)}</StatusPill>
-        <select
+        <Select
+          size="sm"
           aria-label={`${risk.label} 的嚴重程度`}
           value={risk.severity}
           onChange={(e) => onUpdate({ severity: e.target.value as RiskRule["severity"] })}
           disabled={dataMode === "demo" || isSaving}
-          className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
         >
           {severities.map((s) => (
             <option key={s} value={s}>
               {severityLabel(s)}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <label className="inline-flex items-center gap-2 text-xs">
         <input
@@ -1201,14 +1210,11 @@ function LabeledInput({
   label,
   className,
   ...rest
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+}: Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> & { label: string }) {
   return (
     <label className={cn("block", className)}>
       <span className="text-xs font-medium text-foreground">{label}</span>
-      <input
-        {...rest}
-        className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-      />
+      <Input {...rest} className="mt-1 w-full" />
     </label>
   );
 }

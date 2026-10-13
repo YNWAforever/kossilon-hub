@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -51,8 +52,7 @@ function emptyForm(
   };
 }
 
-const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none";
+const CAPITAL_ERROR = "註冊資本須為大於零的整數金額。";
 const labelClass = "text-[10px] uppercase tracking-wider text-muted-foreground";
 
 export function CreateIncorporationCaseDialog({
@@ -88,6 +88,8 @@ export function CreateIncorporationCaseDialog({
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
+  const capitalInvalid = error === CAPITAL_ERROR;
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
@@ -95,7 +97,7 @@ export function CreateIncorporationCaseDialog({
     const parsedCapital = Number.parseInt(trimmedCapital, 10);
 
     if (!/^\d+$/.test(trimmedCapital) || parsedCapital <= 0) {
-      setError("註冊資本須為大於零的整數金額。");
+      setError(CAPITAL_ERROR);
       return;
     }
 
@@ -155,9 +157,10 @@ export function CreateIncorporationCaseDialog({
                 <label className={labelClass} htmlFor="intake-name-en">
                   擬用名稱（英文）
                 </label>
-                <input
+                <Input
                   id="intake-name-en"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.proposedCompanyNameEn}
                   onChange={(event) => set("proposedCompanyNameEn", event.target.value)}
                   required
@@ -167,9 +170,10 @@ export function CreateIncorporationCaseDialog({
                 <label className={labelClass} htmlFor="intake-name-zh">
                   擬用名稱（中文）
                 </label>
-                <input
+                <Input
                   id="intake-name-zh"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.proposedCompanyNameZh}
                   onChange={(event) => set("proposedCompanyNameZh", event.target.value)}
                 />
@@ -180,9 +184,10 @@ export function CreateIncorporationCaseDialog({
               <label className={labelClass} htmlFor="intake-office">
                 擬用註冊辦事處
               </label>
-              <input
+              <Input
                 id="intake-office"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.proposedRegisteredOffice}
                 onChange={(event) => set("proposedRegisteredOffice", event.target.value)}
                 required
@@ -193,9 +198,10 @@ export function CreateIncorporationCaseDialog({
               <label className={labelClass} htmlFor="intake-secretary">
                 擬任公司秘書
               </label>
-              <input
+              <Input
                 id="intake-secretary"
-                className={inputClass}
+                size="sm"
+                className="w-full"
                 value={form.proposedCompanySecretary}
                 onChange={(event) => set("proposedCompanySecretary", event.target.value)}
                 required
@@ -207,12 +213,15 @@ export function CreateIncorporationCaseDialog({
                 <label className={labelClass} htmlFor="intake-capital">
                   註冊資本（HKD）
                 </label>
-                <input
+                <Input
                   id="intake-capital"
+                  aria-invalid={capitalInvalid}
+                  aria-describedby={capitalInvalid ? "intake-form-error" : undefined}
                   type="number"
                   min="1"
                   step="1"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.registeredCapital}
                   onChange={(event) => set("registeredCapital", event.target.value)}
                   required
@@ -222,9 +231,10 @@ export function CreateIncorporationCaseDialog({
                 <label className={labelClass} htmlFor="intake-nature">
                   業務性質
                 </label>
-                <input
+                <Input
                   id="intake-nature"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.businessNature}
                   onChange={(event) => set("businessNature", event.target.value)}
                   required
@@ -237,9 +247,10 @@ export function CreateIncorporationCaseDialog({
                 <label className={labelClass} htmlFor="intake-owner">
                   負責同事
                 </label>
-                <select
+                <Select
                   id="intake-owner"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.ownerId}
                   onChange={(event) => set("ownerId", event.target.value)}
                   required
@@ -249,15 +260,16 @@ export function CreateIncorporationCaseDialog({
                       {owner.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <label className={labelClass} htmlFor="intake-team">
                   團隊
                 </label>
-                <select
+                <Select
                   id="intake-team"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.teamId}
                   onChange={(event) => set("teamId", event.target.value)}
                   required
@@ -267,16 +279,17 @@ export function CreateIncorporationCaseDialog({
                       {team.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <label className={labelClass} htmlFor="intake-target-date">
                   目標完成日期
                 </label>
-                <input
+                <Input
                   id="intake-target-date"
                   type="date"
-                  className={inputClass}
+                  size="sm"
+                  className="w-full"
                   value={form.targetCompletionDate}
                   onChange={(event) => set("targetCompletionDate", event.target.value)}
                   required
@@ -284,7 +297,11 @@ export function CreateIncorporationCaseDialog({
               </div>
             </div>
 
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && (
+              <p id="intake-form-error" role="alert" className="text-xs text-destructive">
+                {error}
+              </p>
+            )}
 
             <DialogFooter>
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>

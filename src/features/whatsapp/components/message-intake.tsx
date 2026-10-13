@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAnnualReturnCase, listAnnualReturnCasePage } from "@/features/annual-return/server-fns";
 import { annualReturnQueryKeys } from "@/features/annual-return/query-keys";
@@ -115,12 +116,12 @@ export function MessageIntake({
                 <div className="space-y-2">
                   <label className="block">
                     搜尋客戶案件
-                    <input
+                    <Input
                       aria-label="搜尋客戶案件"
                       value={search}
                       maxLength={120}
                       onChange={(event) => setSearch(event.target.value)}
-                      className="block w-full border p-2"
+                      className="block w-full"
                     />
                   </label>
                   <Button
@@ -136,14 +137,14 @@ export function MessageIntake({
                   </Button>
                   <label className="block">
                     目標客戶案件
-                    <select
+                    <Select
                       aria-label="目標客戶案件"
                       value={caseId}
                       onChange={(event) => {
                         setCaseId(event.target.value);
                         setChecklistItemId("");
                       }}
-                      className="block w-full border p-2"
+                      className="block w-full"
                     >
                       <option value="">選擇已確認的客戶案件</option>
                       {cases.data?.cases
@@ -158,7 +159,7 @@ export function MessageIntake({
                             {candidate.companyName} · {candidate.returnYear}
                           </option>
                         ))}
-                    </select>
+                    </Select>
                   </label>
                   {cases.data?.nextCursor ? (
                     <Button
@@ -174,12 +175,12 @@ export function MessageIntake({
                   ) : null}
                   <label className="block">
                     配對確認原因
-                    <textarea
+                    <Textarea
                       aria-label="配對確認原因"
                       value={reason}
                       maxLength={1000}
                       onChange={(event) => setReason(event.target.value)}
-                      className="block w-full border p-2"
+                      className="block w-full"
                     />
                   </label>
                   {selectedCase ? (
@@ -204,18 +205,18 @@ export function MessageIntake({
               {preview.data.media.length ? (
                 <label className="block">
                   附件類別
-                  <select
+                  <Select
                     aria-label="附件類別"
                     value={category}
                     onChange={(event) => setCategory(event.target.value as DocumentCategory)}
-                    className="block border p-2"
+                    className="block"
                   >
                     {DOCUMENT_CATEGORIES.map((value) => (
                       <option key={value} value={value}>
                         {labelValue(value)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
               ) : (
                 <p>未有媒體記錄。</p>
@@ -223,11 +224,11 @@ export function MessageIntake({
               {mappedCase.data ? (
                 <label className="block">
                   對應清單項目
-                  <select
+                  <Select
                     aria-label="對應清單項目"
                     value={checklistItemId}
                     onChange={(event) => setChecklistItemId(event.target.value)}
-                    className="block w-full border p-2"
+                    className="block w-full"
                   >
                     <option value="">未連結 — 須於內部覆核時連結要求</option>
                     {mappedCase.data.checklist.map((item) => (
@@ -235,7 +236,7 @@ export function MessageIntake({
                         {item.itemLabel} · {checklistStatusLabel(item.status)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
               ) : null}
               {preview.data.media.map((media) => (

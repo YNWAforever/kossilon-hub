@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -211,9 +212,10 @@ function AddSubscriptionDialog({
               >
                 服務
               </label>
-              <select
+              <Select
                 id="subscription-type"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+                size="sm"
+                className="w-full"
                 value={serviceType}
                 onChange={(event) => {
                   const nextType = event.target.value as ServiceType;
@@ -230,7 +232,7 @@ function AddSubscriptionDialog({
                     {SERVICE_TYPE_LABELS[type]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label
@@ -239,12 +241,13 @@ function AddSubscriptionDialog({
               >
                 費用（HKD）
               </label>
-              <input
+              <Input
                 id="subscription-fee"
                 type="number"
                 min="1"
                 step="1"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+                size="sm"
+                className="w-full"
                 value={fee}
                 onChange={(event) => setFee(event.target.value)}
                 required
@@ -257,10 +260,11 @@ function AddSubscriptionDialog({
               >
                 續期日期
               </label>
-              <input
+              <Input
                 id="subscription-renewal"
                 type="date"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+                size="sm"
+                className="w-full"
                 value={renewalDate}
                 onChange={(event) => setRenewalDate(event.target.value)}
                 required

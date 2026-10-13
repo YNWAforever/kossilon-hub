@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/field";
 import { PageHeader } from "@/components/page-header";
 import {
   cancelCorporateChangeRequest,
@@ -144,9 +145,10 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
                 {item.itemLabel}
                 {item.required ? "" : "（選填）"}
               </span>
-              <select
+              <Select
+                size="sm"
                 aria-label={`${item.itemLabel} 狀態`}
-                className="shrink-0 rounded-md border border-border bg-background px-2 py-1 text-xs"
+                className="shrink-0"
                 value={item.status}
                 onChange={(event) =>
                   updateItem.mutate({
@@ -161,7 +163,7 @@ export function ProductionCorporateChangeDetail({ requestId }: { requestId: stri
                 <option value="Received">{CHECKLIST_ITEM_STATUS_LABELS.Received}</option>
                 <option value="Verified">{CHECKLIST_ITEM_STATUS_LABELS.Verified}</option>
                 <option value="Rejected">{CHECKLIST_ITEM_STATUS_LABELS.Rejected}</option>
-              </select>
+              </Select>
             </div>
           ))}
         </div>

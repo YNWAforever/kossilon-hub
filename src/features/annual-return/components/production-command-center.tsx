@@ -6,6 +6,7 @@ import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
 import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import { listActiveAnnualReturnTemplates } from "@/features/checklist-templates/server-fns";
 import { listClientAssignmentOptions } from "@/features/clients/server-fns";
@@ -297,26 +298,26 @@ export function ProductionAnnualReturnCommandCenter({
 
       <section className="rounded-lg border bg-card">
         <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto_auto]">
-          <input
+          <Input
             aria-label="搜尋公司"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+            className="w-full"
             placeholder="搜尋公司"
             value={search.q ?? ""}
             onChange={(event) => update({ q: event.target.value })}
           />
           <label>
             搜尋負責同事
-            <input
+            <Input
               aria-label="搜尋負責同事"
-              className="min-h-11 rounded border px-3"
+              className="min-h-11"
               value={ownerSearch}
               onChange={(event) => setOwnerSearch(event.target.value)}
             />
             <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權同事。</span>
           </label>
-          <select
+          <Select
             aria-label="按負責同事篩選"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+            className="w-full"
             value={search.ownerId ?? ""}
             onChange={(event) => update({ ownerId: event.target.value || undefined })}
           >
@@ -329,10 +330,10 @@ export function ProductionAnnualReturnCommandCenter({
                 {owner.name}
               </option>
             ))}
-          </select>
-          <select
+          </Select>
+          <Select
             aria-label="按狀態篩選"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+            className="w-full"
             value={search.status ?? ""}
             onChange={(event) =>
               update({ status: (event.target.value as AnnualReturnStatus) || undefined })
@@ -344,10 +345,10 @@ export function ProductionAnnualReturnCommandCenter({
                 {annualReturnStatusLabel(status)}
               </option>
             ))}
-          </select>
-          <select
+          </Select>
+          <Select
             aria-label="按風險篩選"
-            className="rounded-md border bg-background px-3 py-2 text-sm"
+            className="w-full"
             value={search.risk ?? ""}
             onChange={(event) => update({ risk: (event.target.value as RiskLevel) || undefined })}
           >
@@ -356,7 +357,7 @@ export function ProductionAnnualReturnCommandCenter({
             <option value="orange">橙色</option>
             <option value="yellow">黃色</option>
             <option value="green">綠色</option>
-          </select>
+          </Select>
         </div>
 
         <div className="overflow-x-auto">

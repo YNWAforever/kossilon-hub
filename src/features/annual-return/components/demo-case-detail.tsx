@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Select, Textarea } from "@/components/ui/field";
 import { daysUntil, findEnquiryForClient } from "@/lib/app-data";
 import {
   type AnnualReturnCase,
@@ -170,18 +171,13 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 負責同事
               </span>
-              <select
-                aria-label="分配負責同事"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                disabled
-                value={caseItem.owner}
-              >
+              <Select aria-label="分配負責同事" className="w-full" disabled value={caseItem.owner}>
                 {ownerOptions.map((owner) => (
                   <option key={owner} value={owner}>
                     {owner}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           </div>
         </div>
@@ -229,45 +225,33 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   付款
                 </span>
-                <select
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled
-                  value={caseItem.paymentStatus}
-                >
+                <Select className="w-full" disabled value={caseItem.paymentStatus}>
                   <option value="pending">待付款</option>
                   <option value="paid">已付款</option>
                   <option value="overdue">逾期未付</option>
-                </select>
+                </Select>
               </label>
 
               <label className="space-y-1">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   簽署
                 </span>
-                <select
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled
-                  value={caseItem.signatureStatus}
-                >
+                <Select className="w-full" disabled value={caseItem.signatureStatus}>
                   <option value="missing">缺少</option>
                   <option value="requested">已要求</option>
                   <option value="received">已收到</option>
-                </select>
+                </Select>
               </label>
 
               <label className="space-y-1">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   覆核
                 </span>
-                <select
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  disabled
-                  value={caseItem.reviewStatus}
-                >
+                <Select className="w-full" disabled value={caseItem.reviewStatus}>
                   <option value="not-started">未開始</option>
                   <option value="in-review">覆核中</option>
                   <option value="approved">已批准</option>
-                </select>
+                </Select>
               </label>
             </div>
           </section>
@@ -398,10 +382,10 @@ export function DemoAnnualReturnCaseDetail({ caseId }: { caseId: string }) {
             </div>
 
             <div className="mt-4 space-y-3">
-              <textarea
+              <Textarea
                 aria-label="新增備註"
                 aria-readonly
-                className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm read-only:cursor-not-allowed read-only:bg-muted read-only:text-muted-foreground"
+                className="min-h-28 w-full resize-y read-only:cursor-not-allowed"
                 readOnly
                 value=""
               />
