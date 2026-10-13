@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate, type SearchSchemaInput } from "@tanstack/react-router";
 
@@ -25,6 +26,7 @@ import { useRetainedPage } from "@/lib/use-retained-page";
  */
 
 export const Route = createFileRoute("/today")({
+  head: () => ({ meta: [{ title: pageTitle("今日工作") }] }),
   validateSearch: (
     input: SearchSchemaInput & { view?: unknown; q?: unknown; sort?: unknown; cursor?: unknown },
   ) => dailyViewSearch(input),

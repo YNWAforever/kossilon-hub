@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWhatsAppIntegrationStatus } from "../features/whatsapp/server-fns";
@@ -48,7 +49,7 @@ import { TemplateImpactPreview } from "@/features/checklist-templates/components
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "設定 — Kossilon CoSec OS" },
+      { title: pageTitle("設定") },
       {
         name: "description",
         content: "管理清單模板、所需文件、提醒節奏、風險規則、服務套餐及 WOZTELL WhatsApp 整合。",

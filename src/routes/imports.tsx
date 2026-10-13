@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -33,6 +34,7 @@ import { formatDate } from "@/lib/format-date";
  */
 
 export const Route = createFileRoute("/imports")({
+  head: () => ({ meta: [{ title: pageTitle("月表匯入") }] }),
   component: ImportsRoute,
 });
 

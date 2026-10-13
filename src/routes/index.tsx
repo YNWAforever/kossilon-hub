@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   CalendarClock,
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "總覽 — Kossilon CoSec OS" },
+      { title: pageTitle("總覽") },
       {
         name: "description",
         content: "周年申報到期日、已逾期案件、欠缺文件及付款狀況一覽。",

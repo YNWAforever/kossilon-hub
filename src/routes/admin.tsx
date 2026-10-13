@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
@@ -25,7 +26,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "用戶管理 — Kossilon CoSec OS" },
+      { title: pageTitle("用戶管理") },
       {
         name: "description",
         content: "管理原型用戶、角色及系統設定。",

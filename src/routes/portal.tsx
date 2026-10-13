@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { annualReturnQueryKeys } from "../features/annual-return/query-keys";
 import {
   getAnnualReturnCase,
@@ -55,6 +56,7 @@ type PortalSearch = {
 };
 
 export const Route = createFileRoute("/portal")({
+  head: () => ({ meta: [{ title: pageTitle("客戶入口") }] }),
   validateSearch: (search): PortalSearch => ({
     caseId: search.caseId,
   }),

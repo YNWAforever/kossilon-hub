@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { useMemo, useState } from "react";
 import { parseEntityId } from "@/lib/entity-id";
 import {
@@ -45,6 +46,7 @@ type DocumentsSearch = {
 };
 
 export const Route = createFileRoute("/documents")({
+  head: () => ({ meta: [{ title: pageTitle("文件") }] }),
   validateSearch: (search): DocumentsSearch => ({
     caseId: search.caseId,
   }),

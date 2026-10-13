@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { useMemo, useState } from "react";
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
@@ -13,6 +14,7 @@ import {
 } from "../lib/app-data";
 
 export const Route = createFileRoute("/whatsapp")({
+  head: () => ({ meta: [{ title: pageTitle("WhatsApp 收件箱") }] }),
   // `enquiry` addresses a demo fixture. Production conversations are keyed by
   // whatsapp_contacts.id and are selected in-page, so it is ignored there.
   validateSearch: (search: Record<string, unknown>) => ({

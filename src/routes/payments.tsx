@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { ProductionPaymentReview } from "@/features/annual-return/components/production-payment-review";
 import { type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -20,6 +21,7 @@ import {
 } from "../lib/client-portal-store";
 
 export const Route = createFileRoute("/payments")({
+  head: () => ({ meta: [{ title: pageTitle("付款") }] }),
   component: PaymentsRoute,
 });
 

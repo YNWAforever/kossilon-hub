@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -25,6 +26,7 @@ import { formatHongKongTimestamp } from "@/features/whatsapp/conversations";
  */
 
 export const Route = createFileRoute("/operations")({
+  head: () => ({ meta: [{ title: pageTitle("系統運作") }] }),
   component: OperationsRoute,
 });
 

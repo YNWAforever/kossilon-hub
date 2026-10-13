@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { type ReactNode, useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -19,6 +20,7 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/whatsapp/automation")({
+  head: () => ({ meta: [{ title: pageTitle("WhatsApp 追件") }] }),
   component: WhatsAppAutomationRoute,
 });
 

@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
@@ -22,7 +23,7 @@ import {
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "登入 - Kossilon CoSec OS" },
+      { title: pageTitle("登入") },
       {
         name: "description",
         content: "登入 Kossilon Compliance Core。",

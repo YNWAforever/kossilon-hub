@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { formatDateTime } from "@/lib/format-date";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,6 +65,7 @@ export function caseDetailLinkFor(item: PersistedWorkItem): CaseDetailLink | nul
 }
 
 export const Route = createFileRoute("/work-queue")({
+  head: () => ({ meta: [{ title: pageTitle("工作隊列") }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     view:
       search.view === "team" || search.view === "breached"

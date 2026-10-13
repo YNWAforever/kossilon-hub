@@ -1,8 +1,10 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { DemoClientNotice } from "@/features/clients/components/demo-client-notice";
 import { ProductionClientRegister } from "@/features/clients/components/production-client-register";
 
 export const Route = createFileRoute("/clients")({
+  head: () => ({ meta: [{ title: pageTitle("客戶") }] }),
   component: ClientsRoute,
 });
 

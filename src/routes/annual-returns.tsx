@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { type ReactNode, useMemo, useState } from "react";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 
@@ -23,6 +24,7 @@ import { ProductionAnnualReturnCommandCenter } from "../features/annual-return/c
 import { boardSearchFromUrl } from "../features/annual-return/board-filters";
 
 export const Route = createFileRoute("/annual-returns")({
+  head: () => ({ meta: [{ title: pageTitle("周年申報") }] }),
   // Board filters live in the URL so they survive a reload and a return from a
   // detail screen. The sanitiser is in board-filters.ts so it can be unit-tested;
   // a route file cannot export a non-component without tripping react-refresh.
