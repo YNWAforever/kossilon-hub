@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import { type ReactNode, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -16,9 +17,11 @@ import { BulkSelectionToolbar } from "@/components/bulk-selection-toolbar";
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { useRetainedPage } from "@/lib/use-retained-page";
 
-const REGISTER_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.6fr)_140px_140px_100px_120px_110px_72px]";
-const REGISTER_GRID_MIN_WIDTH = "lg:min-w-[1180px]";
+// The tracks, six 12px gaps and row padding come to ~944px, so the register fits
+// the content area of a 1280px laptop. The old 1180px floor scrolled sideways
+// even at 1440px and clipped the 開啟 column.
+const REGISTER_GRID_COLUMNS = "lg:grid-cols-[minmax(220px,1.6fr)_140px_120px_88px_112px_96px_64px]";
+const REGISTER_GRID_MIN_WIDTH = "lg:min-w-[944px]";
 
 const STATUS_FILTERS = ["all", "active", "inactive"] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
@@ -259,7 +262,10 @@ function ClientRow({ client }: { client: ClientSummary }) {
           </StatusPill>
         }
       />
-      <Field label="周年申報到期日" value={client.arDueDate ?? "尚未有案件"} />
+      <Field
+        label="周年申報到期日"
+        value={client.arDueDate ? formatDate(client.arDueDate) : "尚未有案件"}
+      />
       <Field
         label="付款"
         value={

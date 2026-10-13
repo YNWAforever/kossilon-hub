@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown, Layers } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
@@ -74,14 +75,43 @@ export function BulkSelectionToolbar(props: Props) {
 }
 function BulkSession(props: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
+  const title = props.maintenanceActions ? "批量日常維護" : "批量分配";
+  // Bulk work is an occasional manager tool, so it starts collapsed instead of
+  // filling the top of every list above the records people came to read. The
+  // native <details> keeps its selection state while closed, and job progress
+  // sits outside it so a running job is never hidden.
   return (
-    <section aria-label="批量分配" className="space-y-3 rounded border p-4">
-      <SelectionControls
-        key={JSON.stringify([props.resource, props.filters])}
-        {...props}
-        onCreated={setJobId}
-      />
-      <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
+    <section aria-label={title} className="rounded-lg border bg-card text-sm">
+      <details className="group">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-2 font-medium hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            <Layers aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
+            {title}
+            <span className="text-xs font-normal text-muted-foreground">管理員及經理</span>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
+          />
+        </summary>
+        <div className="border-t px-4 py-4">
+          <SelectionControls
+            key={JSON.stringify([props.resource, props.filters])}
+            {...props}
+            onCreated={setJobId}
+          />
+          {jobId ? null : (
+            <div className="mt-4 border-t pt-4">
+              <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
+            </div>
+          )}
+        </div>
+      </details>
+      {jobId ? (
+        <div className="border-t px-4 py-4">
+          <BulkJobProgress actorScope={props.actorScope} jobId={jobId} onJobChange={setJobId} />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -233,8 +263,7 @@ function SelectionControls({
       : fixedCount - selection.excludedIds.length;
   const busy = snapshot.isPending || dryRun.isPending || execute.isPending;
   return (
-    <div className="space-y-3">
-      <h2 className="font-semibold">{maintenanceActions ? "批量日常維護" : "批量分配"}</h2>
+    <div className="space-y-3 text-muted-foreground [&_label]:text-foreground">
       {maintenanceActions ? (
         <>
           <label>

@@ -24,11 +24,14 @@ export const paymentStatusLabels: Record<PaymentStatus, string> = {
   Overdue: "逾期未付",
 };
 
+// What each level means for the filing (workflow.ts riskForCase), not its colour:
+// red is overdue or due within 7 days with work outstanding; orange is due within
+// 14 days with documents missing; yellow is due within 30 days with work open.
 export const riskLevelLabels: Record<RiskLevel, string> = {
-  red: "紅色",
-  orange: "橙色",
-  yellow: "黃色",
-  green: "綠色",
+  red: "緊急",
+  orange: "高風險",
+  yellow: "需留意",
+  green: "正常",
 };
 
 export const checklistStatusLabels: Record<ChecklistStatus, string> = {

@@ -1,3 +1,4 @@
+import { StatusPill } from "@/components/status-pill";
 import { LoadingRows } from "@/components/ui/skeleton";
 import { formatDate, formatDueDate } from "@/lib/format-date";
 import { useMemo, useState } from "react";
@@ -38,16 +39,12 @@ const BOARD_PAGE_SIZE = 50;
 // One template, defined once, with real floors on both flexible tracks. A track
 // of minmax(0, …) collapses to zero and lets its text draw over the neighbouring
 // column, which is what happened on the demo board.
+// Risk sits over status and reminders under payment, so the tracks, gaps and
+// padding come to ~900px and the board fits a 1280px laptop beside the sidebar.
+// The 1200px floor it replaces hid 提醒 and 開啟 behind a sideways scroll there.
 const BOARD_GRID_COLUMNS =
-  "lg:grid-cols-[minmax(220px,1.6fr)_140px_150px_96px_minmax(130px,1fr)_110px_120px_90px_72px]";
-const BOARD_GRID_MIN_WIDTH = "lg:min-w-[1200px]";
-
-const riskToneClasses: Record<RiskLevel, string> = {
-  red: "bg-red-100 text-red-700",
-  orange: "bg-orange-100 text-orange-700",
-  yellow: "bg-yellow-100 text-yellow-800",
-  green: "bg-green-100 text-green-700",
-};
+  "lg:grid-cols-[minmax(180px,1.6fr)_128px_120px_minmax(96px,1fr)_96px_104px_72px]";
+const BOARD_GRID_MIN_WIDTH = "lg:min-w-[900px]";
 
 export function ProductionAnnualReturnCommandCenter({
   search,
@@ -298,7 +295,7 @@ export function ProductionAnnualReturnCommandCenter({
       ) : null}
 
       <section className="rounded-lg border bg-card">
-        <div className="grid gap-3 border-b p-4 lg:grid-cols-[1fr_auto_auto_auto]">
+        <div className="grid gap-3 border-b p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
           <Input
             aria-label="搜尋公司"
             className="w-full"
@@ -306,16 +303,19 @@ export function ProductionAnnualReturnCommandCenter({
             value={search.q ?? ""}
             onChange={(event) => update({ q: event.target.value })}
           />
-          <label>
-            搜尋負責同事
+          <div className="min-w-0">
             <Input
               aria-label="搜尋負責同事"
-              className="min-h-11"
+              aria-describedby="owner-search-hint"
+              className="w-full"
+              placeholder="搜尋負責同事"
               value={ownerSearch}
               onChange={(event) => setOwnerSearch(event.target.value)}
             />
-            <span className="block text-xs">最多200項；搜尋涵蓋全部獲授權同事。</span>
-          </label>
+            <p id="owner-search-hint" className="mt-1 text-xs text-muted-foreground">
+              最多200項；涵蓋全部獲授權同事。
+            </p>
+          </div>
           <Select
             aria-label="按負責同事篩選"
             className="w-full"
@@ -354,10 +354,10 @@ export function ProductionAnnualReturnCommandCenter({
             onChange={(event) => update({ risk: (event.target.value as RiskLevel) || undefined })}
           >
             <option value="">全部風險級別</option>
-            <option value="red">紅色</option>
-            <option value="orange">橙色</option>
-            <option value="yellow">黃色</option>
-            <option value="green">綠色</option>
+            <option value="red">{riskLevelLabel("red")}</option>
+            <option value="orange">{riskLevelLabel("orange")}</option>
+            <option value="yellow">{riskLevelLabel("yellow")}</option>
+            <option value="green">{riskLevelLabel("green")}</option>
           </Select>
         </div>
 
@@ -369,11 +369,9 @@ export function ProductionAnnualReturnCommandCenter({
               <span>公司</span>
               <span>到期日</span>
               <span>狀態</span>
-              <span>風險</span>
               <span>負責同事</span>
               <span>清單</span>
               <span>付款</span>
-              <span>提醒</span>
               <span className="text-right">開啟</span>
             </div>
 
@@ -458,22 +456,37 @@ function BoardRow({
               : "沒有工作項目"}
         </p>
       </div>
-      <Field label="到期日" value={formatDueDate(caseItem.filingDueDate, daysRemaining)} />
-      <Field label="狀態" value={annualReturnStatusLabel(caseItem.currentStatus)} />
       <Field
-        label="風險"
+        label="到期日"
         value={
-          <span
-            className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${riskToneClasses[caseItem.riskLevel]}`}
-          >
-            {riskLevelLabel(caseItem.riskLevel)}
-          </span>
+          <>
+            <p>{formatDate(caseItem.filingDueDate)}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatDueDate(caseItem.filingDueDate, daysRemaining).split(" · ")[1]}
+            </p>
+          </>
+        }
+      />
+      <Field
+        label="狀態"
+        value={
+          <div className="space-y-1">
+            <StatusPill tone={caseItem.riskLevel}>{riskLevelLabel(caseItem.riskLevel)}</StatusPill>
+            <p>{annualReturnStatusLabel(caseItem.currentStatus)}</p>
+          </div>
         }
       />
       <Field label="負責同事" value={caseItem.ownerName} />
       <Field label="清單" value={`已核對 ${verified.length}/${required.length}`} />
-      <Field label="付款" value={paymentStatusLabel(caseItem.payment?.status ?? "Not invoiced")} />
-      <Field label="提醒" value={`${caseItem.remindersSent}`} />
+      <Field
+        label="付款"
+        value={
+          <>
+            <p>{paymentStatusLabel(caseItem.payment?.status ?? "Not invoiced")}</p>
+            <p className="text-xs text-muted-foreground">已提醒 {caseItem.remindersSent} 次</p>
+          </>
+        }
+      />
       <div className="flex justify-start lg:justify-end">
         <Button asChild size="sm">
           <Link to="/annual-returns/$id" params={{ id: caseItem.id }}>
