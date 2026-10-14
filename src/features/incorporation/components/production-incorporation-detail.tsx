@@ -1,3 +1,4 @@
+import { checklistItemText } from "@/lib/checklist-item-label";
 import { ChecklistItemLabel } from "@/components/checklist-item-label";
 import { parseEntityId } from "@/lib/entity-id";
 import { LoadingRows } from "@/components/ui/skeleton";
@@ -200,6 +201,7 @@ function IncorporationDetail({ caseId }: { caseId: string }) {
                 </StatusPill>
                 <Select
                   size="sm"
+                  aria-label={`${checklistItemText(item.itemLabel)} 狀態`}
                   value={item.status}
                   onChange={(event) =>
                     updateItem.mutate({
