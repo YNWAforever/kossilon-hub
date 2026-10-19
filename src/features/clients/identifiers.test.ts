@@ -29,4 +29,14 @@ describe("Hong Kong company identifiers", () => {
     expect(normalizeCrNumber(" f001 2345 ")).toBe("F0012345");
     expect(normalizeBrNumber("6000 0138-000")).toBe("60000138-000");
   });
+
+  // The number printed on a BR certificate carries the certificate's expiry and
+  // a check character after the branch number. Staff paste it whole; the
+  // business registration number itself is only the first two parts.
+  it("accepts a BR number pasted in its full certificate form and keeps the number itself", () => {
+    expect(isValidBrNumber("60000138-000-07-27-A")).toBe(true);
+    expect(isValidBrNumber("60000138-000-07-27-3")).toBe(true);
+    expect(normalizeBrNumber("60000138-000-07-27-a")).toBe("60000138-000");
+    expect(isValidBrNumber("60000138-000-07-27")).toBe(false);
+  });
 });

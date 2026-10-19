@@ -9,7 +9,10 @@
  *  - CR (Company Registration) number: 7 digits, 8 for the newest companies,
  *    with an "F" prefix for registered non-Hong Kong companies.
  *  - BR (Business Registration) number: the 8-digit file number, optionally
- *    followed by the 3-digit branch number (12345678-000).
+ *    followed by the 3-digit branch number (12345678-000). The certificate
+ *    prints more after it — expiry month and year and a check character
+ *    (12345678-000-07-27-A) — which is accepted when pasted and dropped, since
+ *    it changes with every renewal and is not part of the number.
  *
  * Spaces are ignored, so a number pasted from a certificate still validates.
  */
@@ -23,8 +26,11 @@ export function normalizeCrNumber(value: string): string {
   return value.replace(/\s+/g, "").toUpperCase();
 }
 
+const BR_CERTIFICATE_SUFFIX = /^(\d{8}-\d{3})-\d{2}-\d{2}-[0-9A-Z]$/;
+
 export function normalizeBrNumber(value: string): string {
-  return value.replace(/\s+/g, "");
+  const compact = value.replace(/\s+/g, "").toUpperCase();
+  return BR_CERTIFICATE_SUFFIX.exec(compact)?.[1] ?? compact;
 }
 
 export function isValidCrNumber(value: string): boolean {
