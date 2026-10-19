@@ -30,3 +30,14 @@ export async function getCorporateChangeRequestForActor(
   assertCorporateChangeRequestReadable(actor, { assignedTeamId });
   return request;
 }
+
+/**
+ * The team a request list is limited to: none for an Admin, otherwise the
+ * actor's own. A non-Admin without a team is refused, matching the detail
+ * read — an unscoped list would show them every team's requests.
+ */
+export function corporateChangeListTeamScope(actor: AuthenticatedActor): string | undefined {
+  if (actor.role === "Admin") return undefined;
+  if (!actor.teamId) throw new Error("Forbidden: staff actor has no assigned team.");
+  return actor.teamId;
+}

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { AuthenticatedActor } from "@/features/auth/types";
 import { CorporateChangeRequestNotFoundError } from "./errors";
-import { getCorporateChangeRequestForActor } from "./read";
+import { corporateChangeListTeamScope, getCorporateChangeRequestForActor } from "./read";
 import type { CorporateChangeRequestDetail } from "./types";
 
 const requestId = "11111111-1111-4111-8111-111111111111";
@@ -69,5 +69,21 @@ describe("getCorporateChangeRequestForActor", () => {
     await expect(
       getCorporateChangeRequestForActor(actor(), requestId, { repository: failing }),
     ).rejects.toThrow("connection reset");
+  });
+});
+
+describe("corporateChangeListTeamScope", () => {
+  it("lets an Admin list every team", () => {
+    expect(corporateChangeListTeamScope(actor({ role: "Admin", teamId: null }))).toBeUndefined();
+  });
+
+  it("limits anyone else to their own team", () => {
+    expect(corporateChangeListTeamScope(actor())).toBe("team-a");
+  });
+
+  // A staff member with no team used to get an unscoped list — every team's
+  // requests — while opening any one of them was refused.
+  it("refuses a staff member with no team rather than listing every team", () => {
+    expect(() => corporateChangeListTeamScope(actor({ teamId: null }))).toThrow(/^Forbidden: /);
   });
 });
